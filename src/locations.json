@@ -1,0 +1,218 @@
+[
+    {
+        "label": "Bihar",
+        "value": "1234",
+        "state_id": "10",
+        "district": [
+            {
+                "label": "Gaya",
+                "value": "2",
+                "district_id": "54",
+                "blocks": [
+                    {
+                        "label": "Mohanpur",
+                        "value": "1",
+                        "block_id": "636"
+                    }
+                ]
+            },
+            {
+                "label": "Patna",
+                "value": "1",
+                "district_id": "48",
+                "blocks": [
+                    {
+                        "label": "Maner",
+                        "value": "1",
+                        "block_id": "525"
+                    }
+                ]
+            },
+            {
+                "label": "Jamui",
+                "value": "3",
+                "district_id": "56",
+                "blocks": [
+                    {
+                        "label": "Gidhaur",
+                        "value": "1",
+                        "block_id": "658"
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "label": "Jharkhand",
+        "value": "1235",
+        "state_id": "20",
+        "district": [
+            {
+                "label": "Dumka",
+                "value": "1",
+                "district_id": "75",
+                "blocks": [
+                    {
+                        "label": "Masalia",
+                        "value": "1",
+                        "block_id": "856"
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "label": "Odisha",
+        "value": "1236",
+        "state_id": "21",
+        "district": [
+            {
+                "label": "Angul",
+                "value": "1",
+                "district_id": "126",
+                "blocks": [
+                    {
+                        "label": "Angul",
+                        "value": "1",
+                        "block_id": "1415"
+                    }
+                ]
+            },
+            {
+                "label": "Koraput",
+                "value": "2",
+                "district_id": "139",
+                "blocks": [
+                    {
+                        "label": "Lakshmipur",
+                        "value": "1",
+                        "block_id": "1590"
+                    },
+                    {
+                        "label": "Narayanpatana",
+                        "value": "2",
+                        "block_id": "1591"
+                    },
+                    {
+                        "label": "Koraput",
+                        "value": "3",
+                        "block_id": "1594"
+                    },
+                    {
+                        "label": "Kundura",
+                        "value": "4",
+                        "block_id": "1597"
+                    },
+                    {
+                        "label": "Boipariguda",
+                        "value": "5",
+                        "block_id": "1598"
+                    },
+                    {
+                        "label": "Nandapur",
+                        "value": "6",
+                        "block_id": "1601"
+                    },
+                    {
+                        "label": "Similiguda",
+                        "value": "7",
+                        "block_id": "1602"
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "label": "Madhya pradesh",
+        "value": "1237",
+        "state_id": "23",
+        "district": [
+            {
+                "label": "Chhindwara",
+                "value": "1",
+                "district_id": "229",
+                "blocks": [
+                    {
+                        "label": "Sausar",
+                        "value": "1",
+                        "block_id": "2394"
+                    }
+                ]
+            },
+            {
+                "label": "Guna",
+                "value": "2",
+                "district_id": "232",
+                "blocks": [
+                    {
+                        "label": "Bamori",
+                        "value": "1",
+                        "block_id": "2419"
+                    }
+                ]
+            },
+            {
+                "label": "Khandwa (east nimar)",
+                "value": "3",
+                "district_id": "240",
+                "blocks": [
+                    {
+                        "label": "Khalwa",
+                        "value": "1",
+                        "block_id": "2468"
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "label": "Rajasthan",
+        "value": "1238",
+        "state_id": "8",
+        "district": [
+            {
+                "label": "Sirohi",
+                "value": "1",
+                "district_id": "177",
+                "blocks": [
+                    {
+                        "label": "Pindwara",
+                        "value": "1",
+                        "block_id": "1909"
+                    }
+                ]
+            },
+            {
+                "label": "Bhilwara",
+                "value": "2",
+                "district_id": "182",
+                "blocks": [
+                    {
+                        "label": "Mandalgarh",
+                        "value": "1",
+                        "block_id": "1965"
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "label": "Uttar pradesh",
+        "value": "1239",
+        "state_id": "9",
+        "district": [
+            {
+                "label": "Balrampur",
+                "value": "1",
+                "district_id": "292",
+                "blocks": [
+                    {
+                        "label": "Tulsipur",
+                        "value": "1",
+                        "block_id": "2732"
+                    }
+                ]
+            }
+        ]
+    }
+]
