@@ -134,11 +134,20 @@ const MapZoomControls = ({ mapRef }) => {
     );
 };
 
-// Simplified Legend component
 // Updated MapLegend component
 const MapLegend = ({ showMWS, showVillages, currentLayer }) => {
+
+    // Add state for collapsed status
+    const [isCollapsed, setIsCollapsed] = useState(false);
+
     // If no layers are shown, don't display legend
     if (!showMWS && !showVillages && (!currentLayer || currentLayer.length === 0)) return null;
+
+
+
+    const toggleCollapse = () => {
+        setIsCollapsed(!isCollapsed);
+    };
 
     const mwsLegendItems = [
         {
@@ -159,6 +168,15 @@ const MapLegend = ({ showMWS, showVillages, currentLayer }) => {
     ];
 
     const lulcLegendItems = [
+        { color: '#A9A9A9', label: 'Barren Lands' },
+        { color: '#c6e46d', label: 'Single Kharif' },
+        { color: '#eee05d', label: 'Single Non-Kharif' },
+        { color: '#f9b249', label: 'Double Cropping' },
+        { color: '#fb5139', label: 'Triple Cropping' },
+        { color: '#ff0000', label: 'Shrubs and Scrubs' }
+    ];
+
+    const terrainLegendItems = [
         { color: '#313695', label: 'V-shape river valleys, Deep narrow canyons' },
         { color: '#4575b4', label: 'Lateral midslope incised drainages, Local valleys in plains' },
         { color: '#91bfdb', label: 'Local ridge/hilltops within broad valleys' },
@@ -170,14 +188,6 @@ const MapLegend = ({ showMWS, showVillages, currentLayer }) => {
         { color: '#a50026', label: 'Upland incised drainages Stream headwaters' },
         { color: '#800000', label: 'Lateral midslope drainage divides, Local ridges in plains' },
         { color: '#4d0000', label: 'Mountain tops, high ridges' }
-    ];
-
-    const terrainLegendItems = [
-        { color: '#313695', label: 'Valleys' },
-        { color: '#1a9850', label: 'Plains' },
-        { color: '#fee08b', label: 'Broad Slopes' },
-        { color: '#fc8d59', label: 'Steep Slopes' },
-        { color: '#d73027', label: 'Ridges' }
     ]
 
     const rainfallLegendItems = [
@@ -321,298 +331,347 @@ const MapLegend = ({ showMWS, showVillages, currentLayer }) => {
     );
 
     return (
-        <div className="absolute bottom-24 left-6 z-10 bg-white p-4 rounded-lg shadow-md max-h-[60vh] overflow-y-auto">
-            <h3 className="text-sm font-medium text-gray-700 mb-3">Legend</h3>
-            <div className="space-y-4">
-                {/* MWS Legend Section */}
-                {showMWS && (
-                    <div className="space-y-2">
-                        <h4 className="text-xs font-medium text-gray-600">MWS Layers</h4>
-                        {mwsLegendItems.map((item, index) => (
-                            <div key={`mws-${index}`} className="flex items-center gap-2">
-                                <div
-                                    className="w-4 h-4 rounded"
-                                    style={{
-                                        backgroundColor: item.color,
-                                        border: `2px solid ${item.border}`
-                                    }}
-                                />
-                                <span className="text-sm text-gray-600">{item.name}</span>
-                            </div>
-                        ))}
+        <div 
+            className={`absolute bottom-24 left-0 z-10 transition-all duration-300 ${isCollapsed ? 'translate-x-2' : 'translate-x-6'}`}
+        >
+            {/* Collapse toggle button */}
+            <button 
+                onClick={toggleCollapse}
+                className="absolute top-2 right-2 z-20 bg-white rounded-full p-1 shadow-sm hover:bg-gray-100 transition-colors"
+                style={{ right: isCollapsed ? '-12px' : '8px' }}
+            >
+                <svg 
+                    xmlns="http://www.w3.org/2000/svg" 
+                    width="20" 
+                    height="20" 
+                    viewBox="0 0 24 24" 
+                    fill="none" 
+                    stroke="currentColor" 
+                    strokeWidth="2" 
+                    strokeLinecap="round" 
+                    strokeLinejoin="round"
+                >
+                    {isCollapsed 
+                        ? <path d="M9 18l6-6-6-6" /> // right arrow when collapsed
+                        : <path d="M15 18l-6-6 6-6" /> // left arrow when expanded
+                    }
+                </svg>
+            </button>
+
+            {/* Main legend container */}
+            <div 
+                className={`bg-white rounded-lg shadow-md overflow-hidden transition-all duration-300 ${
+                    isCollapsed 
+                        ? 'w-10 h-48 opacity-80 hover:opacity-100' 
+                        : 'w-72 max-h-[60vh] opacity-100'
+                }`}
+            >
+                {/* Collapsed state - vertical "Legend" text */}
+                {isCollapsed && (
+                    <div className="h-full flex items-center justify-center">
+                        <span className="text-gray-700 font-medium rotate-90 whitespace-nowrap transform origin-center">
+                            Legend
+                        </span>
                     </div>
                 )}
 
-                {/* Village Boundaries Legend Section */}
-                {showVillages && (
-                    <div className="space-y-2">
-                        <h4 className="text-xs font-medium text-gray-600">Administrative Boundaries</h4>
-                        {villageLegendItems.map((item, index) => (
-                            <div key={`village-${index}`} className="flex items-center gap-2">
-                                <div
-                                    className="w-4 h-4 rounded"
-                                    style={{
-                                        backgroundColor: item.color,
-                                        border: `2px solid ${item.border}`
-                                    }}
-                                />
-                                <span className="text-sm text-gray-600">{item.name}</span>
-                            </div>
-                        ))}
+                {/* Expanded state - full legend content */}
+                {!isCollapsed && (
+                    <div className="p-4 overflow-y-auto max-h-[60vh]">
+                        <h3 className="text-sm font-medium text-gray-700 mb-3">Legend</h3>
+                        <div className="space-y-4">
+                            {/* MWS Legend Section */}
+                            {showMWS && (
+                                <div className="space-y-2">
+                                    <h4 className="text-xs font-medium text-gray-600">MWS Layers</h4>
+                                    {mwsLegendItems.map((item, index) => (
+                                        <div key={`mws-${index}`} className="flex items-center gap-2">
+                                            <div
+                                                className="w-4 h-4 rounded"
+                                                style={{
+                                                    backgroundColor: item.color,
+                                                    border: `2px solid ${item.border}`
+                                                }}
+                                            />
+                                            <span className="text-sm text-gray-600">{item.name}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+
+                            {/* Village Boundaries Legend Section */}
+                            {showVillages && (
+                                <div className="space-y-2">
+                                    <h4 className="text-xs font-medium text-gray-600">Administrative Boundaries</h4>
+                                    {villageLegendItems.map((item, index) => (
+                                        <div key={`village-${index}`} className="flex items-center gap-2">
+                                            <div
+                                                className="w-4 h-4 rounded"
+                                                style={{
+                                                    backgroundColor: item.color,
+                                                    border: `2px solid ${item.border}`
+                                                }}
+                                            />
+                                            <span className="text-sm text-gray-600">{item.name}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+
+                            {/* LULC Legend Section */}
+                            {isLulcLayerActive && (
+                                <div className="space-y-2">
+                                    <h4 className="text-xs font-medium text-gray-600">Land Use Land Cover</h4>
+                                    {lulcLegendItems.map((item, index) => (
+                                        <div key={`lulc-${index}`} className="flex items-center gap-2">
+                                            <div
+                                                className="w-4 h-4 rounded"
+                                                style={{
+                                                    backgroundColor: item.color,
+                                                    border: `1px solid rgba(0,0,0,0.2)`
+                                                }}
+                                            />
+                                            <span className="text-sm text-gray-600">{item.label}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+
+                            {/* Terrain Legend Section */}
+                            {isTerrainLayerActive && (
+                                <div className="space-y-2">
+                                    <h4 className="text-xs font-medium text-gray-600">Terrain Raster</h4>
+                                    {terrainLegendItems.map((item, index) => (
+                                        <div key={`terrain-${index}`} className="flex items-center gap-2">
+                                            <div
+                                                className="w-4 h-4 rounded"
+                                                style={{
+                                                    backgroundColor: item.color,
+                                                    border: `1px solid rgba(0,0,0,0.2)`
+                                                }}
+                                            />
+                                            <span className="text-sm text-gray-600">{item.label}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+
+                            {/* Rainfall Legend Section */}
+                            {isRainfallLayerActive && (
+                                <div className="space-y-2">
+                                    <h4 className="text-xs font-medium text-gray-600">Rainfall Vector</h4>
+                                    {rainfallLegendItems.map((item, index) => (
+                                        <div key={`rainfall-${index}`} className="flex items-center gap-2">
+                                            <div
+                                                className="w-4 h-4 rounded"
+                                                style={{
+                                                    backgroundColor: item.color,
+                                                    border: `1px solid rgba(0,0,0,0.2)`
+                                                }}
+                                            />
+                                            <span className="text-sm text-gray-600">{item.label}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+
+                            {/* Drought Legend Section */}
+                            {isDroughtLayerActive && (
+                                <div className="space-y-2">
+                                    <h4 className="text-xs font-medium text-gray-600">Drought Vector</h4>
+                                    {droughtLengendItems.map((item, index) => (
+                                        <div key={`drought-${index}`} className="flex items-center gap-2">
+                                            <div
+                                                className="w-4 h-4 rounded"
+                                                style={{
+                                                    backgroundColor: item.color,
+                                                    border: `1px solid rgba(0,0,0,0.2)`
+                                                }}
+                                            />
+                                            <span className="text-sm text-gray-600">{item.label}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+
+                            {/* Runoff Legend Section */}
+                            {isRunoffLayerActive && (
+                                <div className="space-y-2">
+                                    <h4 className="text-xs font-medium text-gray-600">Runoff Vector</h4>
+                                    {runoffLengendItems.map((item, index) => (
+                                        <div key={`runoff-${index}`} className="flex items-center gap-2">
+                                            <div
+                                                className="w-4 h-4 rounded"
+                                                style={{
+                                                    backgroundColor: item.color,
+                                                    border: `1px solid rgba(0,0,0,0.2)`
+                                                }}
+                                            />
+                                            <span className="text-sm text-gray-600">{item.label}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+
+                            {/* Dryspell Legend Section */}
+                            {isDryspellLayerActive && (
+                                <div className="space-y-2">
+                                    <h4 className="text-xs font-medium text-gray-600">Dryspell Vector</h4>
+                                    {dryspellLengendItems.map((item, index) => (
+                                        <div key={`dryspell-${index}`} className="flex items-center gap-2">
+                                            <div
+                                                className="w-4 h-4 rounded"
+                                                style={{
+                                                    backgroundColor: item.color,
+                                                    border: `1px solid rgba(0,0,0,0.2)`
+                                                }}
+                                            />
+                                            <span className="text-sm text-gray-600">{item.label}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+
+                            {/* Population Legend Section */}
+                            {isPopulationLayerActive && (
+                                <div className="space-y-2">
+                                    <h4 className="text-xs font-medium text-gray-600">Population Vector</h4>
+                                    {populationLengendItems.map((item, index) => (
+                                        <div key={`population-${index}`} className="flex items-center gap-2">
+                                            <div
+                                                className="w-4 h-4 rounded"
+                                                style={{
+                                                    backgroundColor: item.color,
+                                                    border: `1px solid rgba(0,0,0,0.2)`
+                                                }}
+                                            />
+                                            <span className="text-sm text-gray-600">{item.label}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+
+                            {/* ST Population Legend Section */}
+                            {isSTPopulationLayerActive && (
+                                <div className="space-y-2">
+                                    <h4 className="text-xs font-medium text-gray-600">ST Population Vector</h4>
+                                    {STpopLengendItems.map((item, index) => (
+                                        <div key={`stpop-${index}`} className="flex items-center gap-2">
+                                            <div
+                                                className="w-4 h-4 rounded"
+                                                style={{
+                                                    backgroundColor: item.color,
+                                                    border: `1px solid rgba(0,0,0,0.2)`
+                                                }}
+                                            />
+                                            <span className="text-sm text-gray-600">{item.label}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+
+                            {/* SC Population Legend Section */}
+                            {isSCPopulationLayerActive && (
+                                <div className="space-y-2">
+                                    <h4 className="text-xs font-medium text-gray-600">SC Population Vector</h4>
+                                    {SCpopLengendItems.map((item, index) => (
+                                        <div key={`scpop-${index}`} className="flex items-center gap-2">
+                                            <div
+                                                className="w-4 h-4 rounded"
+                                                style={{
+                                                    backgroundColor: item.color,
+                                                    border: `1px solid rgba(0,0,0,0.2)`
+                                                }}
+                                            />
+                                            <span className="text-sm text-gray-600">{item.label}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+
+                            {/* Literacy Legend Section */}
+                            {isLiteracyLayerActive && (
+                                <div className="space-y-2">
+                                    <h4 className="text-xs font-medium text-gray-600">Literacy Vector</h4>
+                                    {LiteracyLengendItems.map((item, index) => (
+                                        <div key={`literacy-${index}`} className="flex items-center gap-2">
+                                            <div
+                                                className="w-4 h-4 rounded"
+                                                style={{
+                                                    backgroundColor: item.color,
+                                                    border: `1px solid rgba(0,0,0,0.2)`
+                                                }}
+                                            />
+                                            <span className="text-sm text-gray-600">{item.label}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+
+                            {/* Water Pixel Legend Section */}
+                            {isWaterLayerActive && (
+                                <div className="space-y-2">
+                                    <h4 className="text-xs font-medium text-gray-600">Water Pixels</h4>
+                                    {WaterLengendItems.map((item, index) => (
+                                        <div key={`water-${index}`} className="flex items-center gap-2">
+                                            <div
+                                                className="w-4 h-4 rounded"
+                                                style={{
+                                                    backgroundColor: item.color,
+                                                    border: `1px solid rgba(0,0,0,0.2)`
+                                                }}
+                                            />
+                                            <span className="text-sm text-gray-600">{item.label}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+
+                            {/* NREGA Legend Section */}
+                            {isNREGALayerActive && (
+                                <div className="space-y-2">
+                                    <h4 className="text-xs font-medium text-gray-600">NREGA Works</h4>
+                                    {NregaLegendItems.map((item, index) => (
+                                        <div key={`nrega-${index}`} className="flex items-center gap-2">
+                                            <div
+                                                className="w-4 h-4 rounded"
+                                                style={{
+                                                    backgroundColor: item.color,
+                                                    border: `1px solid rgba(0,0,0,0.2)`
+                                                }}
+                                            />
+                                            <span className="text-sm text-gray-600">{item.label}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+
+                            {/* Trend Legend Section */}
+                            {isTrendLayerActive && (
+                                <div className="space-y-2">
+                                    <h4 className="text-xs font-medium text-gray-600">Groundwater Trend</h4>
+                                    {TrendLegendItems.map((item, index) => (
+                                        <div key={`trend-${index}`} className="flex items-center gap-2">
+                                            <div
+                                                className="w-4 h-4 rounded"
+                                                style={{
+                                                    backgroundColor: item.color,
+                                                    border: `1px solid rgba(0,0,0,0.2)`
+                                                }}
+                                            />
+                                            <span className="text-sm text-gray-600">{item.label}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
                     </div>
                 )}
-
-                {/* LULC Legend Section */}
-                {isLulcLayerActive && (
-                    <div className="space-y-2">
-                        <h4 className="text-xs font-medium text-gray-600">Land Use Land Cover</h4>
-                        {lulcLegendItems.map((item, index) => (
-                            <div key={`lulc-${index}`} className="flex items-center gap-2">
-                                <div
-                                    className="w-4 h-4 rounded"
-                                    style={{
-                                        backgroundColor: item.color,
-                                        border: `1px solid rgba(0,0,0,0.2)`
-                                    }}
-                                />
-                                <span className="text-sm text-gray-600">{item.label}</span>
-                            </div>
-                        ))}
-                    </div>
-                )}
-
-                {/* Terrain Legend Section */}
-                {isTerrainLayerActive && (
-                    <div className="space-y-2">
-                        <h4 className="text-xs font-medium text-gray-600">Terrain Raster</h4>
-                        {terrainLegendItems.map((item, index) => (
-                            <div key={`lulc-${index}`} className="flex items-center gap-2">
-                                <div
-                                    className="w-4 h-4 rounded"
-                                    style={{
-                                        backgroundColor: item.color,
-                                        border: `1px solid rgba(0,0,0,0.2)`
-                                    }}
-                                />
-                                <span className="text-sm text-gray-600">{item.label}</span>
-                            </div>
-                        ))}
-                    </div>
-                )}
-
-                {/* Rainfall Legend Section */}
-                {isRainfallLayerActive && (
-                    <div className="space-y-2">
-                        <h4 className="text-xs font-medium text-gray-600">Rainfall Vector</h4>
-                        {rainfallLegendItems.map((item, index) => (
-                            <div key={`lulc-${index}`} className="flex items-center gap-2">
-                                <div
-                                    className="w-4 h-4 rounded"
-                                    style={{
-                                        backgroundColor: item.color,
-                                        border: `1px solid rgba(0,0,0,0.2)`
-                                    }}
-                                />
-                                <span className="text-sm text-gray-600">{item.label}</span>
-                            </div>
-                        ))}
-                    </div>
-                )}
-
-                {/* Drought Legend Section */}
-                {isDroughtLayerActive && (
-                    <div className="space-y-2">
-                        <h4 className="text-xs font-medium text-gray-600">Drought Vector</h4>
-                        {droughtLengendItems.map((item, index) => (
-                            <div key={`lulc-${index}`} className="flex items-center gap-2">
-                                <div
-                                    className="w-4 h-4 rounded"
-                                    style={{
-                                        backgroundColor: item.color,
-                                        border: `1px solid rgba(0,0,0,0.2)`
-                                    }}
-                                />
-                                <span className="text-sm text-gray-600">{item.label}</span>
-                            </div>
-                        ))}
-                    </div>
-                )}
-
-                {/* Runoff Legend Section */}
-                {isRunoffLayerActive && (
-                    <div className="space-y-2">
-                        <h4 className="text-xs font-medium text-gray-600">Runoff Vector</h4>
-                        {runoffLengendItems.map((item, index) => (
-                            <div key={`lulc-${index}`} className="flex items-center gap-2">
-                                <div
-                                    className="w-4 h-4 rounded"
-                                    style={{
-                                        backgroundColor: item.color,
-                                        border: `1px solid rgba(0,0,0,0.2)`
-                                    }}
-                                />
-                                <span className="text-sm text-gray-600">{item.label}</span>
-                            </div>
-                        ))}
-                    </div>
-                )}
-
-                {/* Dryspell Legend Section */}
-                {isDryspellLayerActive && (
-                    <div className="space-y-2">
-                        <h4 className="text-xs font-medium text-gray-600">Dryspell Vector</h4>
-                        {dryspellLengendItems.map((item, index) => (
-                            <div key={`lulc-${index}`} className="flex items-center gap-2">
-                                <div
-                                    className="w-4 h-4 rounded"
-                                    style={{
-                                        backgroundColor: item.color,
-                                        border: `1px solid rgba(0,0,0,0.2)`
-                                    }}
-                                />
-                                <span className="text-sm text-gray-600">{item.label}</span>
-                            </div>
-                        ))}
-                    </div>
-                )}
-
-                {/* Population Legend Section */}
-                {isPopulationLayerActive && (
-                    <div className="space-y-2">
-                        <h4 className="text-xs font-medium text-gray-600">Population Vector</h4>
-                        {populationLengendItems.map((item, index) => (
-                            <div key={`lulc-${index}`} className="flex items-center gap-2">
-                                <div
-                                    className="w-4 h-4 rounded"
-                                    style={{
-                                        backgroundColor: item.color,
-                                        border: `1px solid rgba(0,0,0,0.2)`
-                                    }}
-                                />
-                                <span className="text-sm text-gray-600">{item.label}</span>
-                            </div>
-                        ))}
-                    </div>
-                )}
-
-                {/* ST Population Legend Section */}
-                {isSTPopulationLayerActive && (
-                    <div className="space-y-2">
-                        <h4 className="text-xs font-medium text-gray-600">ST Population Vector</h4>
-                        {STpopLengendItems.map((item, index) => (
-                            <div key={`lulc-${index}`} className="flex items-center gap-2">
-                                <div
-                                    className="w-4 h-4 rounded"
-                                    style={{
-                                        backgroundColor: item.color,
-                                        border: `1px solid rgba(0,0,0,0.2)`
-                                    }}
-                                />
-                                <span className="text-sm text-gray-600">{item.label}</span>
-                            </div>
-                        ))}
-                    </div>
-                )}
-
-                {/* SC Population Legend Section */}
-                {isSCPopulationLayerActive && (
-                    <div className="space-y-2">
-                        <h4 className="text-xs font-medium text-gray-600">SC Population Vector</h4>
-                        {SCpopLengendItems.map((item, index) => (
-                            <div key={`lulc-${index}`} className="flex items-center gap-2">
-                                <div
-                                    className="w-4 h-4 rounded"
-                                    style={{
-                                        backgroundColor: item.color,
-                                        border: `1px solid rgba(0,0,0,0.2)`
-                                    }}
-                                />
-                                <span className="text-sm text-gray-600">{item.label}</span>
-                            </div>
-                        ))}
-                    </div>
-                )}
-
-                {/* Literacy Legend Section */}
-                {isLiteracyLayerActive && (
-                    <div className="space-y-2">
-                        <h4 className="text-xs font-medium text-gray-600">Literacy Vector</h4>
-                        {LiteracyLengendItems.map((item, index) => (
-                            <div key={`lulc-${index}`} className="flex items-center gap-2">
-                                <div
-                                    className="w-4 h-4 rounded"
-                                    style={{
-                                        backgroundColor: item.color,
-                                        border: `1px solid rgba(0,0,0,0.2)`
-                                    }}
-                                />
-                                <span className="text-sm text-gray-600">{item.label}</span>
-                            </div>
-                        ))}
-                    </div>
-                )}
-
-                {/* Water Pixel Legend Section */}
-                {isWaterLayerActive && (
-                    <div className="space-y-2">
-                        <h4 className="text-xs font-medium text-gray-600">Water Pixels</h4>
-                        {WaterLengendItems.map((item, index) => (
-                            <div key={`lulc-${index}`} className="flex items-center gap-2">
-                                <div
-                                    className="w-4 h-4 rounded"
-                                    style={{
-                                        backgroundColor: item.color,
-                                        border: `1px solid rgba(0,0,0,0.2)`
-                                    }}
-                                />
-                                <span className="text-sm text-gray-600">{item.label}</span>
-                            </div>
-                        ))}
-                    </div>
-                )}
-
-                {/* NREGA Legend Section */}
-                {isNREGALayerActive && (
-                    <div className="space-y-2">
-                        <h4 className="text-xs font-medium text-gray-600">NREGA Works</h4>
-                        {NregaLegendItems.map((item, index) => (
-                            <div key={`lulc-${index}`} className="flex items-center gap-2">
-                                <div
-                                    className="w-4 h-4 rounded"
-                                    style={{
-                                        backgroundColor: item.color,
-                                        border: `1px solid rgba(0,0,0,0.2)`
-                                    }}
-                                />
-                                <span className="text-sm text-gray-600">{item.label}</span>
-                            </div>
-                        ))}
-                    </div>
-                )}
-
-                {/* Trend Legend Section */}
-                {isTrendLayerActive && (
-                    <div className="space-y-2">
-                        <h4 className="text-xs font-medium text-gray-600">Groundwater Trend</h4>
-                        {TrendLegendItems.map((item, index) => (
-                            <div key={`lulc-${index}`} className="flex items-center gap-2">
-                                <div
-                                    className="w-4 h-4 rounded"
-                                    style={{
-                                        backgroundColor: item.color,
-                                        border: `1px solid rgba(0,0,0,0.2)`
-                                    }}
-                                />
-                                <span className="text-sm text-gray-600">{item.label}</span>
-                            </div>
-                        ))}
-                    </div>
-                )}
-
             </div>
         </div>
     );
 };
+
 
 
 // Main Container component

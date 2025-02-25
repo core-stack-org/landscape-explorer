@@ -24,8 +24,6 @@ const KYLLocationSearchBar = ({ statesData, onLocationSelect }) => {
 
   // Process statesData to create a flat array of searchable locations
   const getAllLocations = () => {
-    console.log("search bar", state, district, block);
-    console.log(statesData);
     if (!statesData) return [];
 
     const locations = [];
@@ -71,7 +69,6 @@ const KYLLocationSearchBar = ({ statesData, onLocationSelect }) => {
   };
 
   useEffect(() => {
-    console.log(gmap);
     if (!places) {
       console.log("Places not available");
     }
@@ -101,6 +98,7 @@ const KYLLocationSearchBar = ({ statesData, onLocationSelect }) => {
       )
       .slice(0, 5); // Limit to 5 suggestions
   };
+
   const fetchPredictions = useCallback(
     async (inputValue) => {
       if (!autocompleteService || !inputValue) {
@@ -191,10 +189,10 @@ const KYLLocationSearchBar = ({ statesData, onLocationSelect }) => {
               <div className="flex items-start">
                 <div className="ml-3 flex-1">
                   <p className="text-sm font-medium text-gray-900">
-                    New Request
+                    Location Request
                   </p>
                   <p className="mt-1 text-sm text-gray-500">
-                    Would you like to submit a new request?
+                    Would you like to submit a Location request?
                   </p>
                 </div>
               </div>

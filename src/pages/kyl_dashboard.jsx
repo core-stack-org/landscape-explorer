@@ -489,7 +489,6 @@ const KYLDashboardPage = () => {
 
             const result = await response.json();
             setDataJson(result)
-            //setDataJson(tempDataJson)
         } catch (e) {
             console.log(e)
         }
@@ -576,6 +575,16 @@ const KYLDashboardPage = () => {
                     layerRef.push(tempLayer);
                     mapRef.current.addLayer(tempLayer)
                 }
+                else if (filter.layer_store[i] === "LULC" && filter.rasterStyle === "lulc_water_pixels") {
+                    tempLayer = await getImageLayer(
+                        `${filter.layer_store[i]}_${filter.layer_name[i]}`,
+                        `LULC_22_23_${block.label.toLowerCase().split(" ").join("_")}_${filter.layer_name[i]}`,
+                        true,
+                        filter.rasterStyle
+                    )
+                    layerRef.push(tempLayer);
+                    mapRef.current.addLayer(tempLayer)
+                }
                 else if (filter.layer_store[i] === "LULC") {
                     tempLayer = await getImageLayer(
                         `${filter.layer_store[i]}_${filter.layer_name[i]}`,
@@ -645,7 +654,7 @@ const KYLDashboardPage = () => {
     //? Assets Selection Handler
     const handleAssetSelection = (assetType, isChecked) => {
 
-        if (currentPlan === null) { console.log("Plan not selected  !"); return }
+        if (currentPlan === null) { toast.error("Plan not selected  !"); return }
 
         if (assetType) {
             if (isChecked) {
@@ -678,30 +687,6 @@ const KYLDashboardPage = () => {
     }
 
     const initializeMap = async() => {
-        // let SessionToken = await fetch(`https://tile.googleapis.com/v1/createSession?key=${process.env.REACT_APP_GOOGLE_KEY}`,{
-        //     method : "POST",
-        //     headers : {
-        //         "Content-Type" : "application/json"
-        //     },
-        //     body : JSON.stringify({
-        //         "mapType": "satellite",
-        //         "language": "en-US",
-        //         "region": "IN",
-        //         "layerTypes" : "layerRoadmap"
-        //     })
-        // })
-
-        // let result = await SessionToken.json();
-
-        // const baseLayer = new TileLayer({
-        //     source: new XYZ({
-        //         url: `https://tile.googleapis.com/v1/2dtiles/{z}/{x}/{y}?session=${result.session}&key=${process.env.REACT_APP_GOOGLE_KEY}`,
-        //         maxZoom: 30,
-        //         transition: 500,
-        //     }),
-        //     preload: 4
-        // });
-
         const baseLayer = new TileLayer({
             source: new XYZ({
                 url: `https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}`,
@@ -794,8 +779,6 @@ const KYLDashboardPage = () => {
         if (!mapRef.current) return;
 
         const handleMapClick = (event) => {
-            console.log("Map clicked, selection enabled:", isSelectionEnabled); // Debug log
-
             if (!isSelectionEnabled) return;
 
             const feature = mapRef.current.forEachFeatureAtPixel(event.pixel,
@@ -808,7 +791,6 @@ const KYLDashboardPage = () => {
 
             if (feature) {
                 const clickedMwsId = feature.get('uid');
-                console.log("Selected MWS:", clickedMwsId); // Debug log
 
                 if(selectedMWS.includes(clickedMwsId)){
 
@@ -818,16 +800,6 @@ const KYLDashboardPage = () => {
                         toast.dismiss(toastId);
                         setToastId(null);
                     }
-
-                    // feature.setStyle(new Style({
-                    //     stroke: new Stroke({
-                    //         color: "#166534", // dark green
-                    //         width: 2.0,
-                    //     }),
-                    //     fill: new Fill({
-                    //         color: "rgba(34, 197, 94, 0.4)", // light green with opacity
-                    //     }),
-                    // }));
 
                     mwsLayerRef.current.setStyle((feature) => {
                         if (clickedMwsId === feature.values_.uid) {
@@ -916,11 +888,6 @@ const KYLDashboardPage = () => {
                             const filter = getAllFilters().find(f => f.name === item);
 
                             if (filter?.type === 2) {
-                                // console.log(!selectedOption.value?.upper)
-                                // if (!selectedOption.value?.lower || !selectedOption.value?.upper) {
-                                //     console.warn('Invalid range values:', selectedOption.value);
-                                //     return;
-                                // }
 
                                 dataJson.forEach((tempItem) => {
                                     try {
@@ -1181,17 +1148,6 @@ const KYLDashboardPage = () => {
                         });
                     }
                 });
-
-                // demandLayerRefs[2].current = await getVectorLayers(
-                //     "works",
-                //     "main_swb" +
-                //     "_" +
-                //     currentPlan.value.plan_id + "_"
-                //     + district.label.toLowerCase().split(" ").join("_") + "_"
-                //     + block.label.toLowerCase().split(" ").join("_"),
-                //     true,
-                //     true,
-                // );
             }
 
             fetchResourcesLayers().catch(console.error);
