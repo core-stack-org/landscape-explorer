@@ -161,7 +161,7 @@ const MapLegend = ({ showMWS, showVillages, currentLayer }) => {
     const villageLegendItems = [
         {
             color: 'transparent',
-            border: 'rgb(0, 0, 255)',
+            border: 'rgb(0, 0, 0)',
             name: 'Village Boundaries',
             type: 'village'
         }
