@@ -7,7 +7,7 @@ import "ol/ol.css";
 import XYZ from "ol/source/XYZ";
 import TileLayer from "ol/layer/Tile";
 import Control from 'ol/control/Control.js';
-import {defaults as defaultControls} from 'ol/control/defaults.js';
+import { defaults as defaultControls } from 'ol/control/defaults.js';
 import { Map, View } from "ol";
 import { Fill, Stroke, Style, Icon } from "ol/style.js";
 
@@ -97,18 +97,18 @@ const KYLDashboardPage = () => {
 
     const handleResetMWS = () => {
         if (!selectedMWSProfile) return; // If no MWS is selected, do nothing
-        
+
         setSelectedMWSProfile(null);
         setIsSelectionEnabled(false);
-        
+
         // Only reset the style of the currently selected (green) MWS
         if (mwsLayerRef.current) {
             // const source = mwsLayerRef.current.getSource();
             // const features = source.getFeatures();
-            
+
             // // Find the feature that matches the selected profile's uid
             // const selectedFeature = features.find(f => f.get('uid') === selectedMWSProfile.uid);
-            
+
             // if (selectedFeature) {
             //     // Reset only this feature back to red
             //     selectedFeature.setStyle(new Style({
@@ -123,7 +123,7 @@ const KYLDashboardPage = () => {
             // }
             fetchMWSLayer(selectedMWS)
         }
-    
+
         if (toastId) {
             toast.dismiss(toastId);
             setToastId(null);
@@ -188,7 +188,7 @@ const KYLDashboardPage = () => {
                             layer_name: selectedOption.layer_name,
                             rasterStyle: selectedOption.rasterStyle,
                             vectorStyle: selectedOption.vectorStyle,
-                            styleIdx : selectedOption.styleIdx,
+                            styleIdx: selectedOption.styleIdx,
                         });
                     });
                 }
@@ -218,12 +218,13 @@ const KYLDashboardPage = () => {
     // Filter selection handlers
     const handleFilterSelection = (name, option, isChecked) => {
         const sourceType = determineFilterSource(name);
-        option = { ...option, 
-            "layer_store": sourceType["layer_store"], 
-            "layer_name": sourceType["layer_name"], 
-            "rasterStyle": sourceType["rasterStyle"], 
-            "vectorStyle": sourceType["vectorStyle"], 
-            "styleIdx" : sourceType["styleIdx"] 
+        option = {
+            ...option,
+            "layer_store": sourceType["layer_store"],
+            "layer_name": sourceType["layer_name"],
+            "rasterStyle": sourceType["rasterStyle"],
+            "vectorStyle": sourceType["vectorStyle"],
+            "styleIdx": sourceType["styleIdx"]
         }
         if (sourceType.name === "MWS") {
             setFilterSelections(prev => ({
@@ -309,7 +310,7 @@ const KYLDashboardPage = () => {
                             })
                         });
                     }
-                    else if(tempMWS.length > 0 && tempMWS.includes(feature.values_.uid)){
+                    else if (tempMWS.length > 0 && tempMWS.includes(feature.values_.uid)) {
                         return new Style({
                             stroke: new Stroke({
                                 color: "#254871",
@@ -327,7 +328,7 @@ const KYLDashboardPage = () => {
     const fetchAdminLayer = async (tempVillages) => {
         if (!district || !block) return;
 
-        if(tempVillages.length === 0){
+        if (tempVillages.length === 0) {
             try {
                 boundaryLayerRef.current.setStyle((feature) => {
                     if (tempVillages.length > 0 && tempVillages.includes(feature.values_.vill_ID)) {
@@ -353,7 +354,7 @@ const KYLDashboardPage = () => {
                 console.error("Error styling admin layer:", error);
             }
         }
-        else{
+        else {
             boundaryLayerRef.current.setStyle((feature) => {
                 if (tempVillages.length > 0 && tempVillages.includes(feature.values_.vill_ID)) {
                     // Filtered villages - gold
@@ -526,7 +527,7 @@ const KYLDashboardPage = () => {
             checkIfPresent.layerRef.map((item) => {
                 mapRef.current.removeLayer(item)
             })
-            if(!existingLayer){
+            if (!existingLayer) {
                 mapRef.current.addLayer(boundaryLayerRef.current)
             }
             mwsLayerRef.current.setStyle((feature) => {
@@ -559,7 +560,7 @@ const KYLDashboardPage = () => {
             }));
             setFiltersEnabled(true)
 
-        } else if(currentLayer.length === 0) {
+        } else if (currentLayer.length === 0) {
             let layerRef = [];
             mapRef.current.removeLayer(mwsLayerRef.current);
             mapRef.current.removeLayer(boundaryLayerRef.current)
@@ -601,7 +602,7 @@ const KYLDashboardPage = () => {
                         `${district.label.toLowerCase().split(" ").join("_")}_${block.label.toLowerCase().split(" ").join("_")}_${filter.layer_name[i]}`
                     )
                 }
-                else if(filter.layer_store[i] === "panchayat_boundaries"){
+                else if (filter.layer_store[i] === "panchayat_boundaries") {
                     tempLayer = await getVectorLayers(
                         filter.layer_store[i],
                         `${district.label.toLowerCase().split(" ").join("_")}_${block.label.toLowerCase().split(" ").join("_")}`
@@ -613,14 +614,14 @@ const KYLDashboardPage = () => {
                         `${filter.layer_name[i]}_${district.label.toLowerCase().split(" ").join("_")}_${block.label.toLowerCase().split(" ").join("_")}`
                     )
                 }
-                if(filter.layer_store[i] !== "terrain" && filter.layer_store[i] !== "LULC"){
+                if (filter.layer_store[i] !== "terrain" && filter.layer_store[i] !== "LULC") {
                     tempLayer.setStyle((feature) => {
                         return layerStyle(feature, filter.vectorStyle, filter.styleIdx, villageJson, dataJson)
                     })
                     layerRef.push(tempLayer);
                     mapRef.current.addLayer(tempLayer);
                 }
-                
+
             }
             mwsLayerRef.current.setStyle((feature) => {
                 if (selectedMWS.length > 0 && selectedMWS.includes(feature.values_.uid)) {
@@ -645,7 +646,7 @@ const KYLDashboardPage = () => {
             setFiltersEnabled(false);
             setIndicatorType(null)
         }
-        else{
+        else {
             toast.error("Please Turn off previous layer before turning on new one !")
         }
         setCurrentLayer(tempArr);
@@ -686,7 +687,7 @@ const KYLDashboardPage = () => {
         }
     }
 
-    const initializeMap = async() => {
+    const initializeMap = async () => {
         const baseLayer = new TileLayer({
             source: new XYZ({
                 url: `https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}`,
@@ -701,20 +702,20 @@ const KYLDashboardPage = () => {
 
         class GoogleLogoControl extends Control {
             constructor() {
-              const element = document.createElement('div');
-              element.style.pointerEvents = 'none';
-              element.style.position = 'absolute';
-              element.style.bottom = '5px';
-              element.style.left = '5px';
-              element.style.background = '#f2f2f27f'
-              element.style.fontSize='10px'
-              element.style.padding='5px'   
-              element.innerHTML = '&copy; Google Satellite Hybrid contributors'
-              super({
-                element: element,
-              });
+                const element = document.createElement('div');
+                element.style.pointerEvents = 'none';
+                element.style.position = 'absolute';
+                element.style.bottom = '5px';
+                element.style.left = '5px';
+                element.style.background = '#f2f2f27f'
+                element.style.fontSize = '10px'
+                element.style.padding = '5px'
+                element.innerHTML = '&copy; Google Satellite Hybrid contributors'
+                super({
+                    element: element,
+                });
             }
-          }
+        }
 
         const view = new View({
             center: [78.9, 23.6],
@@ -728,7 +729,7 @@ const KYLDashboardPage = () => {
         const map = new Map({
             target: mapElement.current,
             layers: [baseLayer],
-            controls : defaultControls().extend([new GoogleLogoControl()]),
+            controls: defaultControls().extend([new GoogleLogoControl()]),
             view: view,
             loadTilesWhileAnimating: true,
             loadTilesWhileInteracting: true,
@@ -792,7 +793,7 @@ const KYLDashboardPage = () => {
             if (feature) {
                 const clickedMwsId = feature.get('uid');
 
-                if(selectedMWS.includes(clickedMwsId)){
+                if (selectedMWS.includes(clickedMwsId)) {
 
                     setSelectedMWSProfile(feature.getProperties());
                     console.log(feature.getProperties())
@@ -813,7 +814,7 @@ const KYLDashboardPage = () => {
                                 })
                             });
                         }
-                        else if(selectedMWS.length > 0 && selectedMWS.includes(feature.values_.uid)){
+                        else if (selectedMWS.length > 0 && selectedMWS.includes(feature.values_.uid)) {
                             return new Style({
                                 stroke: new Stroke({
                                     color: "#661E1E",
@@ -829,7 +830,7 @@ const KYLDashboardPage = () => {
 
                     setIsSelectionEnabled(false);
                 }
-                else{
+                else {
                     toast.error("Please Select a valid MWS !")
                 }
             }
@@ -874,9 +875,13 @@ const KYLDashboardPage = () => {
 
             if (keys.length > 0) {
                 try {
+                    const filterHasMatches = {};
+
                     keys.forEach((item) => {
                         const mwsValues = filterSelections.selectedMWSValues[item];
                         if (!mwsValues) return;
+
+                        filterHasMatches[item] = false;
 
                         mwsValues.forEach((selectedOption) => {
                             if (!selectedOption?.value) {
@@ -888,7 +893,6 @@ const KYLDashboardPage = () => {
                             const filter = getAllFilters().find(f => f.name === item);
 
                             if (filter?.type === 2) {
-
                                 dataJson.forEach((tempItem) => {
                                     try {
                                         if (tempItem && typeof tempItem[item] !== 'undefined' && tempItem.mws_id) {
@@ -898,7 +902,6 @@ const KYLDashboardPage = () => {
                                                 itemValue <= selectedOption.value.upper) {
                                                 tempArr.push(tempItem.mws_id);
                                                 tempItem.mws_intersect_villages.forEach((ids) => mwsVillageList.add(ids))
-
                                             }
                                         }
                                     } catch (err) {
@@ -918,6 +921,10 @@ const KYLDashboardPage = () => {
                                 });
                             }
 
+                            if (tempArr.length > 0) {
+                                filterHasMatches[item] = true;
+                            }
+
                             if (tempMWS.length > 0) {
                                 tempMWS = tempMWS.filter(id => tempArr.includes(id));
                             } else {
@@ -925,9 +932,16 @@ const KYLDashboardPage = () => {
                             }
                         });
                     });
+
+                    if (Object.keys(filterHasMatches).length > 0 && Object.values(filterHasMatches).includes(false)) {
+                        console.log('At least one filter found no matching MWS, clearing results');
+                        tempMWS = [];
+                        mwsVillageList = new Set([]);
+                    }
+
                     setSelectedMWS(tempMWS);
                     fetchMWSLayer(tempMWS);
-                    setVillageIdList(mwsVillageList)
+                    setVillageIdList(mwsVillageList);
                 } catch (error) {
                     console.error('Error processing MWS data:', error);
                     setSelectedMWS([]);
@@ -1181,29 +1195,29 @@ const KYLDashboardPage = () => {
             // Return early to wait for mapRef.current to be available after initialization
             return;
         }
-        
+
         // Once mapRef.current is available, proceed with other operations
         if (district && block) {
             const view = mapRef.current.getView();
             view.cancelAnimations();
-            
+
             fetchBoundaryAndZoom(district.label, block.label);
             setCurrentPlan(null);
             fetchDataJson();
             fetchVillageJson();
             fetchPlans();
-    
+
             setFiltersEnabled(true);
             setToggleStates({});
             setCurrentLayer([]);
         }
-    
+
         // Cleanup function
         return () => {
             if (mapRef.current) {
                 const view = mapRef.current.getView();
                 view.cancelAnimations();
-    
+
                 // Clear layers
                 assetsLayerRefs.forEach(ref => {
                     if (ref.current) {
