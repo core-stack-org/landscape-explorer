@@ -43,7 +43,7 @@
   transition: transform 0.35s;
   z-index: 1002;
   overflow: hidden;
-  background-color: #047857;
+  background-color: rgba(0, 40, 109, 0.1); /* 10% opacity */
   backdrop-filter: blur(10px);
 }
 
@@ -65,7 +65,7 @@
     transition: transform 0.35s;
     z-index: 1002;
     overflow-y: scroll;
-    background-color: #4F8883;
+    background-color: rgba(0, 40, 109, 0.1); /* 10% opacity */
     backdrop-filter: blur(10px);
     
 }
@@ -99,5 +99,6 @@
     justify-content: center;
     font-family: 'Mulish', Helvetica, Arial, Lucida, sans-serif;
 }
+
 
 

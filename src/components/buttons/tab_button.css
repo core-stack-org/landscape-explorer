@@ -2,7 +2,7 @@
 .button-68 {
   appearance: none;
   backface-visibility: hidden;
-  background-color: #27ae60;
+  background-color: #00286D;
   border-radius: 8px;
   border-style: none;
   box-shadow: rgba(39, 174, 96, .15) 0 4px 9px;
@@ -33,7 +33,7 @@
 }
 
 .button-68:hover {
-  background-color: #1e8449;
+  background-color: #00286D;
   opacity: 1;
   transform: translateY(0);
   transition-duration: .35s;
