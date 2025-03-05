@@ -958,38 +958,37 @@ const KYLDashboardPage = () => {
                         console.warn('VillageJson not loaded or invalid format');
                         return;
                     }
-
+            
+                    const filterHasMatches = {};
+            
                     villageKeys.forEach((item) => {
                         const villageValues = filterSelections.selectedVillageValues[item];
                         if (!villageValues) return;
-
+            
+                        filterHasMatches[item] = false;
+            
                         villageValues.forEach((selectedOption) => {
                             if (!selectedOption?.value) {
                                 console.warn('Invalid village option:', selectedOption);
                                 return;
                             }
-
+            
                             let tempArr = [];
-
+            
                             if (typeof selectedOption.value === 'object') {
                                 villageJson.forEach((tempItem) => {
                                     try {
-                                        if (villageIdList.size > 0 && tempItem && typeof tempItem[item] !== 'undefined' && tempItem.village_id) {
-                                            const itemValue = Number(tempItem[item]);
-                                            if (!isNaN(itemValue) &&
-                                                itemValue >= selectedOption.value.lower &&
-                                                itemValue <= selectedOption.value.upper &&
-                                                villageIdList.has(tempItem.village_id)
-                                            ) {
-                                                tempArr.push(tempItem.village_id);
-                                            }
-                                        }
-                                        else if (villageIdList.size === 0 && tempItem && typeof tempItem[item] !== 'undefined' && tempItem.village_id) {
+                                        if (tempItem && typeof tempItem[item] !== 'undefined' && tempItem.village_id) {
                                             const itemValue = Number(tempItem[item]);
                                             if (!isNaN(itemValue) &&
                                                 itemValue >= selectedOption.value.lower &&
                                                 itemValue <= selectedOption.value.upper) {
-                                                tempArr.push(tempItem.village_id);
+                                                
+                                                // Only include villages that are in MWS selection if we have an MWS selection
+                                                if (villageIdList.size === 0 || villageIdList.has(tempItem.village_id)) {
+                                                    tempArr.push(tempItem.village_id);
+                                                    filterHasMatches[item] = true;
+                                                }
                                             }
                                         }
                                     } catch (err) {
@@ -999,18 +998,19 @@ const KYLDashboardPage = () => {
                             } else {
                                 villageJson.forEach((tempItem) => {
                                     try {
-                                        if (villageIdList.size > 0 && tempItem && tempItem[item] === selectedOption.value && tempItem.village_id && villageIdList.has(tempItem.village_id)) {
-                                            tempArr.push(tempItem.village_id);
-                                        }
-                                        else if (villageIdList.size === 0 && tempItem && tempItem[item] === selectedOption.value && tempItem.village_id) {
-                                            tempArr.push(tempItem.village_id);
+                                        if (tempItem && tempItem[item] === selectedOption.value && tempItem.village_id) {
+                                            // Only include villages that are in MWS selection if we have an MWS selection
+                                            if (villageIdList.size === 0 || villageIdList.has(tempItem.village_id)) {
+                                                tempArr.push(tempItem.village_id);
+                                                filterHasMatches[item] = true;
+                                            }
                                         }
                                     } catch (err) {
                                         console.warn('Error processing village item:', err);
                                     }
                                 });
                             }
-
+            
                             if (tempVillages.length > 0) {
                                 tempVillages = tempVillages.filter(id => tempArr.includes(id));
                             } else {
@@ -1018,6 +1018,13 @@ const KYLDashboardPage = () => {
                             }
                         });
                     });
+            
+                    // If any filter has no matches, clear results
+                    if (Object.keys(filterHasMatches).length > 0 && Object.values(filterHasMatches).includes(false)) {
+                        console.log('At least one village filter found no matching villages, clearing results');
+                        tempVillages = [];
+                    }
+            
                     setSelectedVillages(tempVillages);
                     fetchAdminLayer(tempVillages);
                 } catch (error) {
@@ -1037,6 +1044,79 @@ const KYLDashboardPage = () => {
             fetchAdminLayer([]);
         }
     }, [filterSelections, dataJson, villageJson]);
+
+    useEffect(() => {
+        // Skip if no village filters or no data
+        if (!villageJson || !Object.keys(filterSelections.selectedVillageValues).length) return;
+        
+        // Re-process village filters when villageIdList changes
+        try {
+            let tempVillages = [];
+            const villageKeys = Object.keys(filterSelections.selectedVillageValues);
+            
+            villageKeys.forEach((item) => {
+                const villageValues = filterSelections.selectedVillageValues[item];
+                if (!villageValues) return;
+                
+                villageValues.forEach((selectedOption) => {
+                    if (!selectedOption?.value) return;
+                    
+                    let tempArr = [];
+                    
+                    if (typeof selectedOption.value === 'object') {
+                        // Range filter (numeric)
+                        villageJson.forEach((tempItem) => {
+                            try {
+                                // Key change: Always check against villageIdList if it has entries
+                                if (tempItem && typeof tempItem[item] !== 'undefined' && tempItem.village_id) {
+                                    const itemValue = Number(tempItem[item]);
+                                    
+                                    if (!isNaN(itemValue) &&
+                                        itemValue >= selectedOption.value.lower &&
+                                        itemValue <= selectedOption.value.upper) {
+                                        
+                                        // Only include villages that are in the MWS selection if we have an MWS selection
+                                        if (villageIdList.size === 0 || villageIdList.has(tempItem.village_id)) {
+                                            tempArr.push(tempItem.village_id);
+                                        }
+                                    }
+                                }
+                            } catch (err) {
+                                console.warn('Error processing village item:', err);
+                            }
+                        });
+                    } else {
+                        // Value match filter
+                        villageJson.forEach((tempItem) => {
+                            try {
+                                if (tempItem && tempItem[item] === selectedOption.value && tempItem.village_id) {
+                                    // Only include villages that are in the MWS selection if we have an MWS selection
+                                    if (villageIdList.size === 0 || villageIdList.has(tempItem.village_id)) {
+                                        tempArr.push(tempItem.village_id);
+                                    }
+                                }
+                            } catch (err) {
+                                console.warn('Error processing village item:', err);
+                            }
+                        });
+                    }
+                    
+                    if (tempVillages.length > 0) {
+                        tempVillages = tempVillages.filter(id => tempArr.includes(id));
+                    } else {
+                        tempVillages = tempArr;
+                    }
+                });
+            });
+            
+            setSelectedVillages(tempVillages);
+            fetchAdminLayer(tempVillages);
+        } catch (error) {
+            console.error('Error re-processing village data:', error);
+            setSelectedVillages([]);
+            fetchAdminLayer([]);
+        }
+    }, [villageIdList, villageJson, filterSelections.selectedVillageValues]);
 
     useEffect(() => {
         if (currentPlan !== null) {
