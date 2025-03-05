@@ -192,7 +192,7 @@ const KYLLocationSearchBar = ({ statesData, onLocationSelect }) => {
                     Location Request
                   </p>
                   <p className="mt-1 text-sm text-gray-500">
-                    Would you like to submit a Location request?
+                  We have not generated maps for this location as yet. Would you like to submit a request?
                   </p>
                 </div>
               </div>
