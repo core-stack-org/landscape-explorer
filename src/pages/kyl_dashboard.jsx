@@ -879,11 +879,6 @@ const KYLDashboardPage = () => {
                         if (!mwsValues) return;
 
                         mwsValues.forEach((selectedOption) => {
-                            if (!selectedOption?.value) {
-                                console.warn('Invalid selected option:', selectedOption);
-                                return;
-                            }
-
                             let tempArr = [];
                             const filter = getAllFilters().find(f => f.name === item);
 
@@ -950,10 +945,6 @@ const KYLDashboardPage = () => {
                         if (!villageValues) return;
 
                         villageValues.forEach((selectedOption) => {
-                            if (!selectedOption?.value) {
-                                console.warn('Invalid village option:', selectedOption);
-                                return;
-                            }
 
                             let tempArr = [];
 
