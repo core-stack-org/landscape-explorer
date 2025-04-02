@@ -6,10 +6,10 @@ import { stateDataAtom, stateAtom, districtAtom, blockAtom } from '../store/loca
 import SelectButton from '../components/buttons/select_button.jsx';
 import landingPageBg from '../assets/landingpagebg.svg';
 import Navbar from '../components/navbar.jsx';
-import getStates from "../actions/getStates"
+import getStates from "../actions/getStates";
+import { trackPageView, trackEvent, initializeAnalytics } from "../services/analytics";
 
 const LandingPage = () => {
-
     const navigate = useNavigate();
 
     //? States for Populating and handling the selections for location
@@ -19,7 +19,22 @@ const LandingPage = () => {
     const [block, setBlock] = useRecoilState(blockAtom);
   
     const handleItemSelect = (setter, value) => {
+      // Track selection events with Google Analytics
+      if (setter === setState && value) {
+        trackEvent('Location', 'select_state', value.label);
+      } else if (setter === setDistrict && value) {
+        trackEvent('Location', 'select_district', value.label);
+      } else if (setter === setBlock && value) {
+        trackEvent('Location', 'select_block', value.label);
+      }
+      
       setter(value);
+    };
+
+    const handleNavigate = (path, buttonName) => {
+      // Track navigation events
+      trackEvent('Navigation', 'button_click', buttonName);
+      navigate(path);
     };
 
     const getStatesData = async () => {
@@ -28,10 +43,16 @@ const LandingPage = () => {
     };
 
     useEffect(() => {
-      getStatesData()
-    }, [])
+      // Initialize Google Analytics
+      initializeAnalytics();
+      
+      // Track page view when component mounts
+      trackPageView('/');
+      
+      // Load states data
+      getStatesData();
+    }, []);
     
-
     return (
       <div className="h-screen flex flex-col">
         <Navbar />
@@ -63,20 +84,11 @@ const LandingPage = () => {
                     A complete technology stack to enable bottom-up planning, execution, and
                     monitoring of watershed interventions.
                   </p>
-                  {/* <p className="text-[16px] leading-relaxed text-gray-600 max-w-[560px]">
-                    A brief description about this dashboard. Main functionalities. Lorem ipsum dolor sit amet consectetur.
-                    Quisque in quis purus at ipsum. Id neque sollicitudin lobortis bibendum. Purus egestas ornare id curabitur.
-                    Sociis sit nulla ut ligula rutrum vitae varius auctor quisque.
-                  </p> */}
                 </div>
   
                 {/* Right Section */}
                 <div className="w-[45%] mt-10 font-montserrat">
                   <div className="bg-neutral-100 rounded-lg shadow-sm p-14 max-w-[500px]">
-                    {/* <p className="text-[14px] text-gray-600 mb-8">
-                      Lorem ipsum dolor sit amet consectetur. Egestas nisi semper magna non eu nisi.
-                    </p> */}
-  
                     <div className="space-y-5">
                       <div>
                         <SelectButton
@@ -109,13 +121,13 @@ const LandingPage = () => {
                     <div className="mt-8 flex gap-3">
                       <button 
                         className="bg-[#8B5CF6] text-white px-6 py-2.5 rounded-md text-sm font-medium hover:bg-[#7C3AED] transition-colors"
-                        onClick={() => navigate("/kyl_dashboard")}
+                        onClick={() => handleNavigate("/kyl_dashboard", "Know Your Landscape")}
                       >
                         Know Your Landscape
                       </button>
                       <button 
                         className="bg-[#EDE9FE] text-[#8B5CF6] px-6 py-2.5 rounded-md text-sm font-medium hover:bg-[#DDD6FE] transition-colors"
-                        onClick={() => navigate("/landscape_explorer")}
+                        onClick={() => handleNavigate("/landscape_explorer", "Download Layers")}
                       >
                         Download Layers
                       </button>
