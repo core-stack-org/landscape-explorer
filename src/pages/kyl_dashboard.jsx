@@ -884,11 +884,6 @@ const KYLDashboardPage = () => {
                         filterHasMatches[item] = false;
 
                         mwsValues.forEach((selectedOption) => {
-                            if (!selectedOption?.value) {
-                                console.warn('Invalid selected option:', selectedOption);
-                                return;
-                            }
-
                             let tempArr = [];
                             const filter = getAllFilters().find(f => f.name === item);
 
@@ -968,11 +963,7 @@ const KYLDashboardPage = () => {
                         filterHasMatches[item] = false;
             
                         villageValues.forEach((selectedOption) => {
-                            if (!selectedOption?.value) {
-                                console.warn('Invalid village option:', selectedOption);
-                                return;
-                            }
-            
+
                             let tempArr = [];
             
                             if (typeof selectedOption.value === 'object') {

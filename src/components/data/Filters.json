@@ -8,7 +8,7 @@
                 "values" : [
                     {"label" : "Low (Between 10-30%)", "value" : {"lower" : 10, "upper" : 30}},
                     {"label" : "Moderate (30-70%)", "value" : {"lower" : 30, "upper" : 70}},
-                    {"label" : "High (70-90%)", "value" : {"lower" : 70, "upper" : 90}}
+                    {"label" : "More than 70%", "value" : {"lower" : 70, "upper" : 999999}}
                 ],
                 "layer_store" : ["water_bodies","LULC"],
                 "layer_name" : ["surface_waterbodies","level_3"],
@@ -26,7 +26,7 @@
                 "values" : [
                     {"label" : "Low (Less than 25%)", "value" : {"lower" : 0, "upper" : 25}},
                     {"label" : "Moderate (25-50%)", "value" : {"lower" : 25, "upper" : 50}},
-                    {"label" : "High (50-75%)", "value" : {"lower" : 50, "upper" : 75}}
+                    {"label" : "High (More than 50%)", "value" : {"lower" : 50, "upper" : 99999}}
                 ],
                 "layer_store" : ["water_bodies","LULC"],
                 "layer_name" : ["surface_waterbodies","level_3"],
@@ -136,7 +136,7 @@
                 "label" : "Average number of weeks of dry spells",
                 "type" : 2,
                 "values" : [
-                    {"label" : "0 dry spell weeks", "value" : {"lower" : 0, "upper" : 1}},
+                    {"label" : "No week of dry spell", "value" : {"lower" : 0, "upper" : 1}},
                     {"label" : "1 or more dry spell weeks", "value" : {"lower" : 1, "upper" : 999999999}},
                     {"label" : "2 or more dry spell weeks", "value" : {"lower" : 2, "upper" : 9999999999}}
                 ],
@@ -198,9 +198,9 @@
                 "label" : "Drought years",
                 "type" : 1,
                 "values" : [
-                    {"label" : "0 drought", "value" : 0},
-                    {"label" : "1 or more drought", "value" : 1},
-                    {"label" : "2 or more drought", "value" : 2}
+                    {"label" : "No Drought", "value" : 0},
+                    {"label" : "1 or more drought year", "value" : 1},
+                    {"label" : "2 or more drought year", "value" : 2}
                 ],
                 "layer_store" : ["cropping_drought"],
                 "layer_name" : ["drought"],
@@ -233,7 +233,7 @@
                 "values" : [
                     {"label" : "Less than 30%", "value" : {"lower" : 0, "upper" : 30}},
                     {"label" : "30% - 60%", "value" : {"lower" : 30, "upper" : 60}},
-                    {"label" : "60% - 90%", "value" : {"lower" : 60, "upper" : 90}}
+                    {"label" : "More than 60%", "value" : {"lower" : 60, "upper" : 999999}}
                 ],
                 "layer_store" : ["LULC"],
                 "layer_name" : ["level_3"],
