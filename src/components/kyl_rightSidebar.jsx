@@ -36,6 +36,27 @@ const KYLRightSidebar = ({
     selectedMWSProfile,
 }) => {
 
+    const handleMultiReport = () => {
+        const filtersList = getFormattedSelectedFilters()
+
+        fetch(`http://127.0.0.1:8000/api/v1/generate_multi_report/?state=${state.label.toLowerCase().split(" ").join("_")}&district=${district.label.toLowerCase().split(" ").join("_")}&block=${block.label.toLowerCase().split(" ").join("_")}`,{
+            method : 'POST',
+            headers : {
+                'Content-Type': 'application/json',
+            },
+            body : JSON.stringify({
+                filters : filtersList,
+                mwsList : selectedMWS
+            })
+        }).then(response => response.text())
+        .then(html => {
+            const newWindow = window.open('','_blank')
+            newWindow.document.open();
+            newWindow.document.write(html);
+            newWindow.document.close();
+        }).catch(err => console.log('Error in fetching the page : ', err))
+    }
+
     const handleIndicatorRemoval = (filter) => {
         // First, remove the visualization if it exists
         if (toggleStates[filter.name]) {
@@ -181,7 +202,7 @@ const KYLRightSidebar = ({
                 )}
                 {getFormattedSelectedFilters().length > 0 && (
                     <div className="mt-6 space-y-2">
-                        <button className="w-full flex items-center justify-center gap-2 text-indigo-600 py-2 text-sm hover:bg-indigo-50 rounded-md">
+                        <button className="w-full flex items-center justify-center gap-2 text-indigo-600 py-2 text-sm hover:bg-indigo-50 rounded-md" onClick={() => handleMultiReport()}>
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                             </svg>
