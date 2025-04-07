@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useRecoilState, useRecoilValue } from 'recoil';
-import { stateDataAtom, stateAtom, districtAtom, blockAtom, filterSelectionsAtom, yearAtom } from '../store/locationStore.jsx';
+import { stateDataAtom, stateAtom, districtAtom, blockAtom, filterSelectionsAtom, yearAtom, dataJsonAtom } from '../store/locationStore.jsx';
 
 //* OpenLayers imports
 import "ol/ol.css";
@@ -49,7 +49,7 @@ const KYLDashboardPage = () => {
     const [selectedMWS, setSelectedMWS] = useState(null);
     const [selectedVillages, setSelectedVillages] = useState([]);
 
-    const [dataJson, setDataJson] = useState(null);
+    const [dataJson, setDataJson] = useRecoilState(dataJsonAtom);
     const [villageJson, setVillageJson] = useState(null)
 
     const [plans, setPlans] = useState(null)
@@ -103,24 +103,6 @@ const KYLDashboardPage = () => {
 
         // Only reset the style of the currently selected (green) MWS
         if (mwsLayerRef.current) {
-            // const source = mwsLayerRef.current.getSource();
-            // const features = source.getFeatures();
-
-            // // Find the feature that matches the selected profile's uid
-            // const selectedFeature = features.find(f => f.get('uid') === selectedMWSProfile.uid);
-
-            // if (selectedFeature) {
-            //     // Reset only this feature back to red
-            //     selectedFeature.setStyle(new Style({
-            //         stroke: new Stroke({
-            //             color: "#00FFFFFF",
-            //             width: 1.0,
-            //         }),
-            //         fill: new Fill({
-            //             color: "rgba(0, 0, 0, 0)",
-            //         })
-            //     }));
-            // }
             fetchMWSLayer(selectedMWS)
         }
 
@@ -129,7 +111,6 @@ const KYLDashboardPage = () => {
             setToastId(null);
         }
     };
-
 
     const getAllFilterTypes = () => {
         const types = new Set();
@@ -796,7 +777,6 @@ const KYLDashboardPage = () => {
                 if (selectedMWS.includes(clickedMwsId)) {
 
                     setSelectedMWSProfile(feature.getProperties());
-                    console.log(feature.getProperties())
                     if (toastId) {
                         toast.dismiss(toastId);
                         setToastId(null);
@@ -884,10 +864,6 @@ const KYLDashboardPage = () => {
                         filterHasMatches[item] = false;
 
                         mwsValues.forEach((selectedOption) => {
-                            if (!selectedOption?.value) {
-                                console.warn('Invalid selected option:', selectedOption);
-                                return;
-                            }
 
                             let tempArr = [];
                             const filter = getAllFilters().find(f => f.name === item);
@@ -968,11 +944,7 @@ const KYLDashboardPage = () => {
                         filterHasMatches[item] = false;
             
                         villageValues.forEach((selectedOption) => {
-                            if (!selectedOption?.value) {
-                                console.warn('Invalid village option:', selectedOption);
-                                return;
-                            }
-            
+  
                             let tempArr = [];
             
                             if (typeof selectedOption.value === 'object') {
