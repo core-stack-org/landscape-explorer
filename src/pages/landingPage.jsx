@@ -110,7 +110,7 @@ const LandingPage = () => {
   
                       <div>
                         <SelectButton
-                          currVal={block || { label: "Select Block" }}
+                          currVal={block || { label: "Select Tehsil" }}
                           stateData={district !== null ? district.blocks : null}
                           handleItemSelect={handleItemSelect}
                           setState={setBlock}

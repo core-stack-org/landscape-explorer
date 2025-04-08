@@ -147,7 +147,7 @@ const KYLRightSidebar = ({
                     <div className="flex items-center gap-3">
                         <label className="text-sm text-gray-600 min-w-[45px]">Block</label>
                         <SelectButton
-                            currVal={block || { label: "Select Block" }}
+                            currVal={block || { label: "Select Tehsil" }}
                             stateData={district !== null ? district.blocks : null}
                             handleItemSelect={handleItemSelect}
                             setState={setBlock}
