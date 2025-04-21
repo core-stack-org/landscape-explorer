@@ -16,6 +16,105 @@
                 "vectorStyle" : [{}],
                 "rasterStyle" : "Terrain_Style_11_Classes",
                 "styleIdx" : 0
+            }, {
+                "name": "degradation_land_area",
+                "label" : "Degradation of land (farmlands that have been converted to barren, pastures, built-up areas)",
+                "type" : 2,
+                "values" : [
+                    {"label" : "Less than 20 hectares", "value" : {"lower" : 0, "upper" : 20}},
+                    {"label" : "20 hectares - 50 hectares", "value" : {"lower" : 20, "upper" : 50}},
+                    {"label" : "More than 50 hectares", "value" : {"lower" : 50, "upper" : 999999}}
+                ],
+                "layer_store" : [],
+                "layer_name" : [],
+                "vectorStyle" : [{}],
+                "rasterStyle" : "",
+                "styleIdx" : 0
+            },
+            {
+                "name": "deforestation_land_area",
+                "label" : "Reduction in tree cover",
+                "type" : 2,
+                "values" : [
+                    {"label" : "Less than 50 hectares", "value" : {"lower" : 0, "upper" : 50}},
+                    {"label" : "50 hectares - 100 hectares", "value" : {"lower" : 50, "upper" : 100}},
+                    {"label" : "More than 100 hectares", "value" : {"lower" : 100, "upper" : 999999}}
+                ],
+                "layer_store" : [],
+                "layer_name" : [],
+                "vectorStyle" : [{}],
+                "rasterStyle" : "",
+                "styleIdx" : 0
+            },   {
+                "name": "afforestation_land_area",
+                "label" : "Increase in tree cover",
+                "type" : 2,
+                "values" : [
+                    {"label" : "Less than 50 hectares", "value" : {"lower" : 0, "upper" : 50}},
+                    {"label" : "50 hectares - 100 hectares", "value" : {"lower" : 50, "upper" : 100}},
+                    {"label" : "More than 100 hectares", "value" : {"lower" : 100, "upper" : 999999}}
+                ],
+                "layer_store" : [],
+                "layer_name" : [],
+                "vectorStyle" : [{}],
+                "rasterStyle" : "",
+                "styleIdx" : 0
+            },{
+                "name": "area_wide_scale_restoration",
+                "label" : "Area that requires wide-scale restoration",
+                "type" : 2,
+                "values" : [
+                    {"label" : "Less than 200 hectares", "value" : {"lower" : 0, "upper" : 200}},
+                    {"label" : "200 hectares - 600 hectares", "value" : {"lower" : 200, "upper" : 600}},
+                    {"label" : "More than 600 hectares", "value" : {"lower" : 600, "upper" : 999999}}
+                ],
+                "layer_store" : [],
+                "layer_name" : [],
+                "vectorStyle" : [{}],
+                "rasterStyle" : "",
+                "styleIdx" : 0
+            },{
+                "name": "area_protection",
+                "label" : "Area that requires protection",
+                "type" : 2,
+                "values" : [
+                    {"label" : "Less than 400 hectares", "value" : {"lower" : 0, "upper" : 400}},
+                    {"label" : "400 hectares - 800 hectares", "value" : {"lower" : 400, "upper" : 800}},
+                    {"label" : "More than 800 hectares", "value" : {"lower" : 800, "upper" : 999999}}
+                ],
+                "layer_store" : [],
+                "layer_name" : [],
+                "vectorStyle" : [{}],
+                "rasterStyle" : "",
+                "styleIdx" : 0
+            },{
+                "name": "lulc_slope_category",
+                "label" : "Predominant category of land-use on slopes",
+                "type" : 1,
+                "values" : [
+                    {"label" : "Less than 400 hectares", "value" : {"lower" : 0, "upper" : 400}},
+                    {"label" : "400 hectares - 800 hectares", "value" : {"lower" : 400, "upper" : 800}},
+                    {"label" : "More than 800 hectares", "value" : {"lower" : 800, "upper" : 999999}}
+                ],
+                "layer_store" : [],
+                "layer_name" : [],
+                "vectorStyle" : [{}],
+                "rasterStyle" : "",
+                "styleIdx" : 0
+            },{
+                "name": "lulc_plain_category",
+                "label" : "Predominant category of land-use on plains",
+                "type" : 1,
+                "values" : [
+                    {"label" : "Less than 400 hectares", "value" : {"lower" : 0, "upper" : 400}},
+                    {"label" : "400 hectares - 800 hectares", "value" : {"lower" : 400, "upper" : 800}},
+                    {"label" : "More than 800 hectares", "value" : {"lower" : 800, "upper" : 999999}}
+                ],
+                "layer_store" : [],
+                "layer_name" : [],
+                "vectorStyle" : [{}],
+                "rasterStyle" : "",
+                "styleIdx" : 0
             }
         ],
         "Climate" : [
