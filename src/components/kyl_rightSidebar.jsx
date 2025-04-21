@@ -38,23 +38,36 @@ const KYLRightSidebar = ({
 
     const handleMultiReport = () => {
         const filtersList = getFormattedSelectedFilters()
-
-        fetch(`http://127.0.0.1:8000/api/v1/generate_multi_report/?state=${state.label.toLowerCase().split(" ").join("_")}&district=${district.label.toLowerCase().split(" ").join("_")}&block=${block.label.toLowerCase().split(" ").join("_")}`,{
-            method : 'POST',
-            headers : {
+    
+        fetch(`http://127.0.0.1:8000/api/v1/generate_multi_report/?state=${state.label.toLowerCase().split(" ").join("_")}&district=${district.label.toLowerCase().split(" ").join("_")}&block=${block.label.toLowerCase().split(" ").join("_")}`, {
+            method: 'POST',
+            headers: {
                 'Content-Type': 'application/json',
             },
-            body : JSON.stringify({
-                filters : filtersList,
-                mwsList : selectedMWS
+            body: JSON.stringify({
+                filters: filtersList,
+                mwsList: selectedMWS
             })
-        }).then(response => response.text())
+        })
+        .then(response => response.text())
         .then(html => {
-            const newWindow = window.open('','_blank')
-            newWindow.document.open();
-            newWindow.document.write(html);
-            newWindow.document.close();
-        }).catch(err => console.log('Error in fetching the page : ', err))
+            // Create a blob from the HTML content
+            const blob = new Blob([html], { type: 'text/html' });
+            // Create an object URL for the blob
+            const blobUrl = URL.createObjectURL(blob);
+            
+            // Open a new window with the blob URL
+            const newWindow = window.open(blobUrl, '_blank');
+            
+            // Clean up the object URL when no longer needed
+            // This will happen when the new window is closed
+            if (newWindow) {
+                newWindow.addEventListener('beforeunload', () => {
+                    URL.revokeObjectURL(blobUrl);
+                });
+            }
+        })
+        .catch(err => console.log('Error in fetching the page : ', err));
     }
 
     const handleIndicatorRemoval = (filter) => {
