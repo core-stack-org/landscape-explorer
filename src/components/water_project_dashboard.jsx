@@ -112,13 +112,16 @@ const WaterProjectDashboard = () => {
   };
 
   useEffect(() => {
-    initializeMap();
+    if (view === "map" && mapElement.current) {
+      initializeMap();
+    }
+
     return () => {
       if (mapRef.current) {
         mapRef.current.setTarget(null);
       }
     };
-  }, []);
+  }, [view]);
 
   const rows = [
     {
@@ -361,8 +364,6 @@ const WaterProjectDashboard = () => {
               sx={{
                 width: "50%",
                 padding: 2,
-                backgroundColor: "#f5f5f5",
-                borderRadius: "5px",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
@@ -370,13 +371,25 @@ const WaterProjectDashboard = () => {
             >
               <Typography
                 variant="h6"
-                sx={{ color: "gray", textAlign: "center", fontWeight: "500" }}
+                sx={{
+                  textAlign: "left", // textAlign "center" doesn't behave well with flex text wrapping
+                  display: "flex",
+                  alignItems: "flex-start", // or "center" depending on vertical alignment preference
+                  gap: 2,
+                  border: "10px solid #11000080",
+                  padding: 2,
+                  backgroundColor: "#f5f5f5",
+                  borderRadius: "5px",
+                }}
               >
-                Under the project {projectId}, 79 waterbodies have been
-                de-silted, spanning around 90 hectares. On average, the surface
-                water availability during summer season has changed from 16% to
-                25%. The average zone of influence distance has increased from
-                200 m to 450 m.
+                <Lightbulb size={48} color="black" />
+                <span>
+                  Under the project {projectId}, 79 waterbodies have been
+                  de-silted, spanning around 90 hectares. On average, the
+                  surface water availability during summer season has changed
+                  from 16% to 25%. The average zone of influence distance has
+                  increased from 200 m to 450 m.
+                </span>
               </Typography>
             </Box>
           </Box>
