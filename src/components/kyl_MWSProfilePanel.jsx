@@ -13,7 +13,7 @@ const KYLMWSProfilePanel = ({ mwsData, onBack }) => {
   const [dataString, setDataString] = useState("")
 
   const handleReportDownload = (id) =>{
-    window.open(`${process.env.REACT_APP_API_URL}/generate_mws_report/?state=${state.label.toLowerCase().split(" ").join("_")}&district=${district.label.toLowerCase().split(" ").join("_")}&block=${block.label.toLowerCase().split(" ").join("_")}&uid=${id}`, '_blank');
+    window.open(`http://127.0.0.1:8000/api/v1/generate_mws_report/?state=${state.label.toLowerCase().split(" ").join("_")}&district=${district.label.toLowerCase().split(" ").join("_")}&block=${block.label.toLowerCase().split(" ").join("_")}&uid=${id}`, '_blank');
   }
 
   useEffect(()=>{
