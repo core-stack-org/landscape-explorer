@@ -101,7 +101,7 @@
                 "styleIdx" : 0
             },
             {
-                "name": "deforestation_land_area",
+                "name": "decrease_in_tree_cover",
                 "label" : "Reduction in tree cover",
                 "type" : 2,
                 "values" : [
@@ -115,7 +115,7 @@
                 "rasterStyle" : "",
                 "styleIdx" : 0
             },   {
-                "name": "afforestation_land_area",
+                "name": "increase_in_tree_cover",
                 "label" : "Increase in tree cover",
                 "type" : 2,
                 "values" : [
@@ -128,63 +128,8 @@
                 "vectorStyle" : [{}],
                 "rasterStyle" : "",
                 "styleIdx" : 0
-            },{
-                "name": "area_wide_scale_restoration",
-                "label" : "Area that requires wide-scale restoration",
-                "type" : 2,
-                "values" : [
-                    {"label" : "Less than 200 hectares", "value" : {"lower" : 0, "upper" : 200}},
-                    {"label" : "200 hectares - 600 hectares", "value" : {"lower" : 200, "upper" : 600}},
-                    {"label" : "More than 600 hectares", "value" : {"lower" : 600, "upper" : 999999}}
-                ],
-                "layer_store" : [],
-                "layer_name" : [],
-                "vectorStyle" : [{}],
-                "rasterStyle" : "",
-                "styleIdx" : 0
-            },{
-                "name": "area_protection",
-                "label" : "Area that requires protection",
-                "type" : 2,
-                "values" : [
-                    {"label" : "Less than 400 hectares", "value" : {"lower" : 0, "upper" : 400}},
-                    {"label" : "400 hectares - 800 hectares", "value" : {"lower" : 400, "upper" : 800}},
-                    {"label" : "More than 800 hectares", "value" : {"lower" : 800, "upper" : 999999}}
-                ],
-                "layer_store" : [],
-                "layer_name" : [],
-                "vectorStyle" : [{}],
-                "rasterStyle" : "",
-                "styleIdx" : 0
-            },{
-                "name": "lulc_slope_category",
-                "label" : "Predominant category of land-use on slopes",
-                "type" : 1,
-                "values" : [
-                    {"label" : "Less than 400 hectares", "value" : {"lower" : 0, "upper" : 400}},
-                    {"label" : "400 hectares - 800 hectares", "value" : {"lower" : 400, "upper" : 800}},
-                    {"label" : "More than 800 hectares", "value" : {"lower" : 800, "upper" : 999999}}
-                ],
-                "layer_store" : [],
-                "layer_name" : [],
-                "vectorStyle" : [{}],
-                "rasterStyle" : "",
-                "styleIdx" : 0
-            },{
-                "name": "lulc_plain_category",
-                "label" : "Predominant category of land-use on plains",
-                "type" : 1,
-                "values" : [
-                    {"label" : "Less than 400 hectares", "value" : {"lower" : 0, "upper" : 400}},
-                    {"label" : "400 hectares - 800 hectares", "value" : {"lower" : 400, "upper" : 800}},
-                    {"label" : "More than 800 hectares", "value" : {"lower" : 800, "upper" : 999999}}
-                ],
-                "layer_store" : [],
-                "layer_name" : [],
-                "vectorStyle" : [{}],
-                "rasterStyle" : "",
-                "styleIdx" : 0
             }
+           
         ],
         "Climate" : [
             {
@@ -336,6 +281,22 @@
                 ],
                 "layer_store" : ["LULC"],
                 "layer_name" : ["level_3"],
+                "vectorStyle" : [{}],
+                "rasterStyle" : "",
+                "styleIdx" : 0
+            }
+        ],  "Socio-economic" : [
+            {
+                "name": "built_up_area",
+                "label" : "Built-up area(Urbanization)",
+                "type" : 2,
+                "values" : [
+                    {"label" : "Less than 40 hectares", "value" : {"lower" : 0, "upper" : 40}},
+                    {"label" : "40 hectares - 120 hectares", "value" : {"lower" : 40, "upper" : 120}},
+                    {"label" : "More than 120 hectares", "value" : {"lower" : 120, "upper" : 999999}}
+                ],
+                "layer_store" : ["LULC"],
+                "layer_name" : ["level_1"],
                 "vectorStyle" : [{}],
                 "rasterStyle" : "",
                 "styleIdx" : 0
