@@ -41,27 +41,39 @@ const KYLRightSidebar = ({
     onResetMWS,
     selectedMWSProfile,
 }) => {
+  const handleMultiReport = () => {
+    const filtersList = getFormattedSelectedFilters();
 
-    const handleMultiReport = () => {
-        const filtersList = getFormattedSelectedFilters()
-
-        fetch(`http://127.0.0.1:8000/api/v1/generate_multi_report/?state=${state.label.toLowerCase().split(" ").join("_")}&district=${district.label.toLowerCase().split(" ").join("_")}&block=${block.label.toLowerCase().split(" ").join("_")}`,{
-            method : 'POST',
-            headers : {
-                'Content-Type': 'application/json',
-            },
-            body : JSON.stringify({
-                filters : filtersList,
-                mwsList : selectedMWS
-            })
-        }).then(response => response.text())
-        .then(html => {
-            const newWindow = window.open('','_blank')
-            newWindow.document.open();
-            newWindow.document.write(html);
-            newWindow.document.close();
-        }).catch(err => console.log('Error in fetching the page : ', err))
-    }
+    fetch(
+      `${
+        process.env.REACT_APP_API_URL
+      }/generate_multi_report/?state=${state.label
+        .toLowerCase()
+        .split(" ")
+        .join("_")}&district=${district.label
+        .toLowerCase()
+        .split(" ")
+        .join("_")}&block=${block.label.toLowerCase().split(" ").join("_")}`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          filters: filtersList,
+          mwsList: selectedMWS,
+        }),
+      }
+    )
+      .then((response) => response.text())
+      .then((html) => {
+        const newWindow = window.open("", "_blank");
+        newWindow.document.open();
+        newWindow.document.write(html);
+        newWindow.document.close();
+      })
+      .catch((err) => console.log("Error in fetching the page : ", err));
+  };
 
     const handleIndicatorRemoval = (filter) => {
         // First, remove the visualization if it exists
