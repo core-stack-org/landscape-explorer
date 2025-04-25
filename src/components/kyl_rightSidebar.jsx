@@ -45,7 +45,9 @@ const KYLRightSidebar = ({
     const filtersList = getFormattedSelectedFilters();
 
     fetch(
-      `http://127.0.0.1:8000/api/v1/generate_multi_report/?state=${state.label
+      `${
+        process.env.REACT_APP_API_URL
+      }/generate_multi_report/?state=${state.label
         .toLowerCase()
         .split(" ")
         .join("_")}&district=${district.label
