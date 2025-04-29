@@ -74,26 +74,8 @@ const KYLDashboardPage = () => {
     const [filtersEnabled, setFiltersEnabled] = useState(false);
 
     const [toastId, setToastId] = useState(null);
-    const [isSelectionEnabled, setIsSelectionEnabled] = useState(false);
+    const [isSelectionEnabled, setIsSelectionEnabled] = useState(true);
     const [selectedMWSProfile, setSelectedMWSProfile] = useState(null);
-
-    const handleAnalyzeClick = () => {
-        // Enable selection mode
-        setIsSelectionEnabled(true);
-
-        // Show persistent toast
-        const id = toast('Please select a micro-watershed on the map', {
-            position: 'top-center',
-            duration: Infinity,
-            style: {
-                background: '#4B5563',
-                color: '#fff',
-                padding: '16px',
-                borderRadius: '8px',
-            },
-        });
-        setToastId(id);
-    };
 
     const handleResetMWS = () => {
         if (!selectedMWSProfile) return; // If no MWS is selected, do nothing
@@ -761,7 +743,6 @@ const KYLDashboardPage = () => {
         if (!mapRef.current) return;
 
         const handleMapClick = (event) => {
-            if (!isSelectionEnabled) return;
 
             const feature = mapRef.current.forEachFeatureAtPixel(event.pixel,
                 (feature, layer) => {
@@ -774,7 +755,9 @@ const KYLDashboardPage = () => {
             if (feature) {
                 const clickedMwsId = feature.get('uid');
 
-                if (selectedMWS.includes(clickedMwsId)) {
+                console.log(selectedMWS)
+
+                if (selectedMWS !== null && selectedMWS.includes(clickedMwsId)) {
 
                     setSelectedMWSProfile(feature.getProperties());
                     if (toastId) {
@@ -806,9 +789,6 @@ const KYLDashboardPage = () => {
                             });
                         }
                     });
-
-
-                    setIsSelectionEnabled(false);
                 }
                 else {
                     toast.error("Please Select a valid MWS !")
@@ -823,7 +803,7 @@ const KYLDashboardPage = () => {
                 mapRef.current.un('click', handleMapClick);
             }
         };
-    }, [mapRef.current, isSelectionEnabled, toastId]);
+    }, [mapRef.current, selectedMWS]);
 
     useEffect(() => {
         if (mwsLayerRef.current) {
@@ -1382,7 +1362,7 @@ const KYLDashboardPage = () => {
                     currentLayer={currentLayer}
                     setCurrentLayer={setCurrentLayer}
                     mapRef={mapRef}
-                    onAnalyzeClick={handleAnalyzeClick}
+                    //onAnalyzeClick={handleAnalyzeClick}
                     onResetMWS={handleResetMWS}
                     selectedMWSProfile={selectedMWSProfile}
                 />
