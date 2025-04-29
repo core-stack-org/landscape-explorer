@@ -152,42 +152,6 @@ const HeaderSelect = ({
                 menuPosition="fixed"
               />
             </Box>
-
-            {/* Right: Filter Dropdown */}
-            {showExtras && (
-              <Box sx={{ ml: "auto" }}>
-                <Select
-                  value={filter}
-                  onChange={handleFilterChange}
-                  displayEmpty
-                  sx={{
-                    minWidth: 200,
-                    backgroundColor: "#fff",
-                    px: 1,
-                    height: 48,
-                    color: filter ? "inherit" : "#9e9e9e",
-                    "& .MuiSelect-select": {
-                      display: "flex",
-                      alignItems: "center",
-                    },
-                  }}
-                  renderValue={() => (
-                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                      <TuneIcon fontSize="small" />
-                      <span style={{ color: filter ? "#000" : "#9e9e9e" }}>
-                        {getSelectedLabel()}
-                      </span>
-                    </Box>
-                  )}
-                >
-                  {filterOptions.map((option) => (
-                    <MenuItem key={option.value} value={option.value}>
-                      {option.label}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </Box>
-            )}
           </Toolbar>
         </Container>
       </AppBar>

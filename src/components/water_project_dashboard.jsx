@@ -13,7 +13,13 @@ import {
   TableHead,
   TableRow,
   Paper,
+  Select,
+  MenuItem,
   Checkbox,
+  Menu,
+  IconButton,
+  ListItemText,
+  TextField,
 } from "@mui/material";
 import { Download, Lightbulb } from "lucide-react";
 import Map from "ol/Map";
@@ -21,6 +27,7 @@ import View from "ol/View";
 import TileLayer from "ol/layer/Tile";
 import XYZ from "ol/source/XYZ";
 import { Control, defaults as defaultControls } from "ol/control";
+import FilterListIcon from "@mui/icons-material/FilterList";
 
 const WaterProjectDashboard = () => {
   const { projectId } = useParams();
@@ -29,6 +36,10 @@ const WaterProjectDashboard = () => {
   const mapElement = useRef();
   const mapRef = useRef();
   const baseLayerRef = useRef();
+
+  const [sortField, setSortField] = useState(null);
+  const [sortOrder, setSortOrder] = useState("asc");
+  const [searchText, setSearchText] = useState("");
 
   const [organization, setOrganization] = useState(() => {
     const storedOrg = sessionStorage.getItem("selectedOrganization");
@@ -39,16 +50,108 @@ const WaterProjectDashboard = () => {
     const storedProject = sessionStorage.getItem("selectedProject");
     return storedProject || "";
   });
+  const rows = [
+    {
+      id: 1,
+      state: "Bihar",
+      district: "Patna",
+      village: "Rampur",
+      waterbody: "Pond A",
+      siltRemoved: 1500,
+      waterAvailability: "25%",
+    },
+    {
+      id: 2,
+      state: "Jharkhand",
+      district: "Patna",
+      village: "Rampur",
+      waterbody: "Pond B",
+      siltRemoved: 1800,
+      waterAvailability: "20%",
+    },
+    {
+      id: 3,
+      state: "Gujarat",
+      district: "Valsad",
+      village: "Kaprada",
+      waterbody: "Pond C",
+      siltRemoved: 15000,
+      waterAvailability: "35%",
+    },
+    {
+      id: 4,
+      state: "Rajasthan",
+      district: "Bhilwada",
+      village: "Manadalgarh",
+      waterbody: "Pond D",
+      siltRemoved: 1880,
+      waterAvailability: "50%",
+    },
+    {
+      id: 5,
+      state: "Bihar",
+      district: "Patna",
+      village: "Rampur",
+      waterbody: "Pond E",
+      siltRemoved: 500,
+      waterAvailability: "5%",
+    },
+    {
+      id: 6,
+      state: "Jharkhand",
+      district: "Dumka",
+      village: "Masalia",
+      waterbody: "Pond F",
+      siltRemoved: 2800,
+      waterAvailability: "10%",
+    },
+  ];
+  const [filters, setFilters] = useState({
+    state: [],
+    district: [],
+    village: [],
+  });
+
+  const handleFilterChange = (type, option) => {
+    setFilters((prev) => {
+      const prevOptions = prev[type] || [];
+      const isSelected = prevOptions.includes(option);
+      let updatedOptions;
+      if (isSelected) {
+        updatedOptions = prevOptions.filter((o) => o !== option);
+      } else {
+        updatedOptions = [...prevOptions, option];
+      }
+      return {
+        ...prev,
+        [type]: updatedOptions,
+      };
+    });
+  };
+
+  const [anchorEl, setAnchorEl] = useState(null);
+  const [filterType, setFilterType] = useState("");
+
+  const handleFilterClick = (event, type) => {
+    setAnchorEl(event.currentTarget);
+    setFilterType(type);
+    setSearchText("");
+  };
+
+  const handleFilterClose = () => {
+    setAnchorEl(null);
+    setFilterType("");
+  };
 
   useEffect(() => {
     const storedOrg = sessionStorage.getItem("selectedOrganization");
     const storedProject = sessionStorage.getItem("selectedProject");
 
     if (storedOrg) {
-      setOrganization(JSON.parse(storedOrg)); // selectReact expects object: { label, value }
+      setOrganization(JSON.parse(storedOrg));
     }
     if (storedProject) {
-      setProject(storedProject); // this is just the string value
+      setProject(storedProject);
     }
   }, []);
 
@@ -56,6 +159,63 @@ const WaterProjectDashboard = () => {
     if (newView !== null) {
       setView(newView);
     }
+  };
+
+  const handleSort = (field) => {
+    if (sortField === field) {
+      setSortOrder((prevOrder) => (prevOrder === "asc" ? "desc" : "asc"));
+    } else {
+      setSortField(field);
+      setSortOrder("asc");
+    }
+  };
+
+  const filteredRows = rows.filter((row) => {
+    console.log("Row:", row); // Check the current row being evaluated
+    return (
+      Object.keys(row).some((key) => {
+        if (!row[key]) return false; // Ignore null/undefined values
+        return row[key]
+          .toString()
+          .toLowerCase()
+          .includes(searchText.toLowerCase());
+      }) &&
+      Object.keys(filters).every((key) => {
+        if (filters[key].length === 0) return true;
+        return filters[key].includes(String(row[key]));
+      })
+    );
+  });
+  console.log("Filtered Rows:", filteredRows);
+
+  const sortedRows = [...filteredRows].sort((a, b) => {
+    if (!sortField) return 0;
+    const aValue = a[sortField];
+    const bValue = b[sortField];
+
+    if (sortField === "waterAvailability") {
+      const aNumeric = parseFloat(aValue.replace("%", ""));
+      const bNumeric = parseFloat(bValue.replace("%", ""));
+      return sortOrder === "asc" ? aNumeric - bNumeric : bNumeric - aNumeric;
+    }
+
+    if (!isNaN(parseFloat(aValue)) && !isNaN(parseFloat(bValue))) {
+      return sortOrder === "asc"
+        ? parseFloat(aValue) - parseFloat(bValue)
+        : parseFloat(bValue) - parseFloat(aValue);
+    }
+
+    return sortOrder === "asc"
+      ? String(aValue).localeCompare(String(bValue))
+      : String(bValue).localeCompare(String(aValue));
+  });
+
+  const handleClearSingleFilter = (type) => {
+    setFilters((prev) => ({
+      ...prev,
+      [type]: [],
+    }));
+    handleFilterClose();
   };
 
   const initializeMap = () => {
@@ -122,41 +282,6 @@ const WaterProjectDashboard = () => {
       }
     };
   }, [view]);
-
-  const rows = [
-    {
-      id: 1,
-      state: "Bihar",
-      district: "Patna",
-      village: "Rampur",
-      waterbody: "Pond A",
-      siltRemoved: 1500,
-      waterAvailability: "25%",
-    },
-    {
-      id: 2,
-      state: "Bihar",
-      district: "Patna",
-      village: "Rampur",
-      waterbody: "Pond B",
-      siltRemoved: 1800,
-      waterAvailability: "20%",
-    },
-  ];
-
-  const handleSelectAll = (event) => {
-    if (event.target.checked) {
-      setSelectedRows(rows.map((row) => row.id));
-    } else {
-      setSelectedRows([]);
-    }
-  };
-
-  const handleSelectRow = (id) => {
-    setSelectedRows((prev) =>
-      prev.includes(id) ? prev.filter((r) => r !== id) : [...prev, id]
-    );
-  };
 
   return (
     <Box sx={{ position: "relative" }}>
@@ -288,52 +413,98 @@ const WaterProjectDashboard = () => {
               average zone of influence distance has increased from 200 m to 450
               m.
             </Typography>
-
             <TableContainer component={Paper} sx={{ mt: 4, boxShadow: 0 }}>
               <Table>
                 <TableHead sx={{ backgroundColor: "#f5f5f5" }}>
                   <TableRow>
-                    <TableCell padding="checkbox">
-                      <Checkbox
-                        indeterminate={
-                          selectedRows.length > 0 &&
-                          selectedRows.length < rows.length
-                        }
-                        checked={
-                          rows.length > 0 && selectedRows.length === rows.length
-                        }
-                        onChange={handleSelectAll}
-                      />
-                    </TableCell>
                     <TableCell>
-                      <strong>State</strong>
+                      <div style={{ display: "flex", alignItems: "center" }}>
+                        State
+                        <IconButton
+                          onClick={(e) => handleFilterClick(e, "state")}
+                          size="small"
+                        >
+                          <FilterListIcon fontSize="small" />
+                        </IconButton>
+                      </div>
                     </TableCell>
+
                     <TableCell>
-                      <strong>District</strong>
+                      <div style={{ display: "flex", alignItems: "center" }}>
+                        District
+                        <IconButton
+                          onClick={(e) => handleFilterClick(e, "district")}
+                          size="small"
+                        >
+                          <FilterListIcon fontSize="small" />
+                        </IconButton>
+                      </div>
                     </TableCell>
+
                     <TableCell>
-                      <strong>GP/Village</strong>
+                      <div style={{ display: "flex", alignItems: "center" }}>
+                        GP/Village
+                        <IconButton
+                          onClick={(e) => handleFilterClick(e, "village")}
+                          size="small"
+                        >
+                          <FilterListIcon fontSize="small" />
+                        </IconButton>
+                      </div>
                     </TableCell>
-                    <TableCell>
-                      <strong>Waterbody</strong>
+
+                    <TableCell>Waterbody</TableCell>
+
+                    {/* Silt Removed Column */}
+                    <TableCell
+                      onClick={() => handleSort("siltRemoved")}
+                      sx={{ cursor: "pointer", userSelect: "none" }}
+                    >
+                      <div style={{ display: "flex", alignItems: "center" }}>
+                        Silt Removed (Cu.m.)
+                        <span
+                          style={{
+                            marginLeft: 4,
+                            fontWeight:
+                              sortField === "siltRemoved" ? "bold" : "normal",
+                          }}
+                        >
+                          {sortField === "siltRemoved" && sortOrder === "asc"
+                            ? "🔼"
+                            : "🔽"}
+                        </span>
+                      </div>
                     </TableCell>
-                    <TableCell>
-                      <strong>Silt Removed (Cu.m.)</strong>
-                    </TableCell>
-                    <TableCell>
-                      <strong>Avg. Water Availability During Zaid (%)</strong>
+
+                    {/* Water Availability Column */}
+                    <TableCell
+                      onClick={() => handleSort("waterAvailability")}
+                      sx={{ cursor: "pointer", userSelect: "none" }}
+                    >
+                      <div style={{ display: "flex", alignItems: "center" }}>
+                        Avg. Water Availability During Zaid (%)
+                        <span
+                          style={{
+                            marginLeft: 4,
+                            fontWeight:
+                              sortField === "waterAvailability"
+                                ? "bold"
+                                : "normal",
+                          }}
+                        >
+                          {sortField === "waterAvailability" &&
+                          sortOrder === "asc"
+                            ? "🔼"
+                            : "🔽"}
+                        </span>
+                      </div>
                     </TableCell>
                   </TableRow>
                 </TableHead>
+
                 <TableBody>
-                  {rows.map((row) => (
+                  {sortedRows.map((row) => (
                     <TableRow key={row.id} hover>
-                      <TableCell padding="checkbox">
-                        <Checkbox
-                          checked={selectedRows.includes(row.id)}
-                          onChange={() => handleSelectRow(row.id)}
-                        />
-                      </TableCell>
                       <TableCell>{row.state}</TableCell>
                       <TableCell>{row.district}</TableCell>
                       <TableCell>{row.village}</TableCell>
@@ -344,6 +515,43 @@ const WaterProjectDashboard = () => {
                   ))}
                 </TableBody>
               </Table>
+              <Menu
+                anchorEl={anchorEl}
+                open={Boolean(anchorEl)}
+                onClose={handleFilterClose}
+              >
+                <TextField
+                  size="small"
+                  placeholder="Search..."
+                  value={searchText}
+                  onChange={(e) => setSearchText(e.target.value)}
+                  sx={{ marginBottom: "16px" }}
+                />
+
+                <MenuItem onClick={() => handleClearSingleFilter(filterType)}>
+                  Clear {filterType} Filter
+                </MenuItem>
+
+                {Array.from(new Set(rows.map((row) => String(row[filterType]))))
+                  .filter((option) => {
+                    // To make sure we are handling first letter case properly:
+                    return option
+                      .toLowerCase()
+                      .startsWith(searchText.toLowerCase());
+                  })
+                  .map((option) => (
+                    <MenuItem
+                      key={option}
+                      onClick={() => handleFilterChange(filterType, option)}
+                    >
+                      <Checkbox
+                        size="small"
+                        checked={filters[filterType]?.includes(option)}
+                      />
+                      <ListItemText primary={option} />
+                    </MenuItem>
+                  ))}
+              </Menu>
             </TableContainer>
           </>
         ) : (
@@ -353,7 +561,7 @@ const WaterProjectDashboard = () => {
               ref={mapElement}
               style={{
                 height: "400px",
-                width: "50%", // Adjust width as needed
+                width: "50%",
                 border: "1px solid #ccc",
                 borderRadius: "5px",
               }}
@@ -372,9 +580,9 @@ const WaterProjectDashboard = () => {
               <Typography
                 variant="h6"
                 sx={{
-                  textAlign: "left", // textAlign "center" doesn't behave well with flex text wrapping
+                  textAlign: "left",
                   display: "flex",
-                  alignItems: "flex-start", // or "center" depending on vertical alignment preference
+                  alignItems: "flex-start",
                   gap: 2,
                   border: "10px solid #11000080",
                   padding: 2,
