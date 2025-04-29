@@ -294,6 +294,28 @@ const MapLegend = ({ showMWS, showVillages, currentLayer }) => {
     { color: "#FFD700", label: "No trend of G" },
   ];
 
+  const CropDegradationItems = [
+    { color: "#f7fcf5", label: "Double - Single" },
+    { color: "#ff4500", label: "Triple - Single" },
+    { color: "#ff0000", label: "Triple - Double" },
+  ];
+
+  const CropDeforestationItems = [
+    { color: "#73bb53", label: "Forest - Forest" },
+    { color: "#ff0000", label: "Forest - Built Up" },
+    { color: "#eee05d", label: "Forest -  Farm" },
+    { color: "#a9a9a9", label: "Forest -  Barren" },
+    { color: "#eaa4f0", label: "Forest -  Scrub land" },
+  ];
+
+  const CropAfforestationtems = [
+    { color: "#73bb53", label: "Forest - Forest" },
+    { color: "#ff0000", label: "Forest - Built Up" },
+    { color: "#eee05d", label: "Forest -  Farm" },
+    { color: "#a9a9a9", label: "Forest -  Barren" },
+    { color: "#eaa4f0", label: "Forest -  Scrub land" },
+  ];
+
   // Check if LULC layer is active
   const isLulcLayerActive = currentLayer?.some(
     (layer) =>
@@ -369,6 +391,22 @@ const MapLegend = ({ showMWS, showVillages, currentLayer }) => {
 
   const isTrendLayerActive = currentLayer?.some(
     (layer) => layer.name === "trend_g" || layer.name.includes("mws_layers")
+  );
+
+  const isCropDegradationActive = currentLayer?.some(
+    (layer) =>
+      layer.name === "degradation_land_area" ||
+      layer.name.includes("degradation")
+  );
+
+  const isCropDeforestationActive = currentLayer?.some(
+    (layer) =>
+      layer.name === "decrease_in_tree_cover" || layer.name.includes("decrease")
+  );
+
+  const isCropAfforestationActive = currentLayer?.some(
+    (layer) =>
+      layer.name === "increase_in_tree_cover" || layer.name.includes("increase")
   );
 
   return (
@@ -793,6 +831,84 @@ const MapLegend = ({ showMWS, showVillages, currentLayer }) => {
                     Groundwater Trend
                   </h4>
                   {TrendLegendItems.map((item, index) => (
+                    <div
+                      key={`trend-${index}`}
+                      className="flex items-center gap-2"
+                    >
+                      <div
+                        className="w-4 h-4 rounded"
+                        style={{
+                          backgroundColor: item.color,
+                          border: `1px solid rgba(0,0,0,0.2)`,
+                        }}
+                      />
+                      <span className="text-sm text-gray-600">
+                        {item.label}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Cropping Degradation Section */}
+              {isCropDegradationActive && (
+                <div className="space-y-2">
+                  <h4 className="text-xs font-medium text-gray-600">
+                    Groundwater Trend
+                  </h4>
+                  {CropDegradationItems.map((item, index) => (
+                    <div
+                      key={`trend-${index}`}
+                      className="flex items-center gap-2"
+                    >
+                      <div
+                        className="w-4 h-4 rounded"
+                        style={{
+                          backgroundColor: item.color,
+                          border: `1px solid rgba(0,0,0,0.2)`,
+                        }}
+                      />
+                      <span className="text-sm text-gray-600">
+                        {item.label}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Crop Deforstation Section */}
+              {isCropDeforestationActive && (
+                <div className="space-y-2">
+                  <h4 className="text-xs font-medium text-gray-600">
+                    Groundwater Trend
+                  </h4>
+                  {CropDeforestationItems.map((item, index) => (
+                    <div
+                      key={`trend-${index}`}
+                      className="flex items-center gap-2"
+                    >
+                      <div
+                        className="w-4 h-4 rounded"
+                        style={{
+                          backgroundColor: item.color,
+                          border: `1px solid rgba(0,0,0,0.2)`,
+                        }}
+                      />
+                      <span className="text-sm text-gray-600">
+                        {item.label}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Cropping Degradation Section */}
+              {isCropAfforestationActive && (
+                <div className="space-y-2">
+                  <h4 className="text-xs font-medium text-gray-600">
+                    Groundwater Trend
+                  </h4>
+                  {CropAfforestationtems.map((item, index) => (
                     <div
                       key={`trend-${index}`}
                       className="flex items-center gap-2"

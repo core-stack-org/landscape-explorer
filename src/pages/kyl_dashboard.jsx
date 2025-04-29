@@ -638,6 +638,22 @@ const KYLDashboardPage = () => {
           );
           layerRef.push(tempLayer);
           mapRef.current.addLayer(tempLayer);
+        }
+        //	change_detection:change_west_singhbhum_chaibasa_CropIntensity
+        else if (filter.layer_store[i] === "change_detection") {
+          tempLayer = await getImageLayer(
+            `${filter.layer_store[i]}`,
+            `change_${district.label
+              .toLowerCase()
+              .split(" ")
+              .join("_")}_${block.label.toLowerCase().split(" ").join("_")}_${
+              filter.layer_name[i]
+            }`,
+            true,
+            filter.rasterStyle
+          );
+          layerRef.push(tempLayer);
+          mapRef.current.addLayer(tempLayer);
         } else if (filter.layer_store[i] === "LULC") {
           tempLayer = await getImageLayer(
             `${filter.layer_store[i]}_${filter.layer_name[i]}`,
@@ -677,7 +693,8 @@ const KYLDashboardPage = () => {
         }
         if (
           filter.layer_store[i] !== "terrain" &&
-          filter.layer_store[i] !== "LULC"
+          filter.layer_store[i] !== "LULC" &&
+          filter.layer_store[i] !== "change_detection"
         ) {
           tempLayer.setStyle((feature) => {
             return layerStyle(
