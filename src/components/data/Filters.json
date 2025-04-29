@@ -1,74 +1,5 @@
 {
     "MWS" : {
-        "Hydrology" : [
-            {
-                "name": "avg_rabi_surface_water_mws",
-                "label" : "Percentage of Average surface water availability during Rabi in micro-watershed",
-                "type" : 2,
-                "values" : [
-                    {"label" : "Low (Between 10-30%)", "value" : {"lower" : 10, "upper" : 30}},
-                    {"label" : "Moderate (30-70%)", "value" : {"lower" : 30, "upper" : 70}},
-                    {"label" : "More than 70%", "value" : {"lower" : 70, "upper" : 999999}}
-                ],
-                "layer_store" : ["water_bodies","LULC"],
-                "layer_name" : ["surface_waterbodies","level_3"],
-                "vectorStyle" : [{
-                    "fill" : "rgba(100, 149, 237, 0.5)",
-                    "stroke" : "rgba(100, 149, 237, 1)"
-                }],
-                "rasterStyle" : "lulc_water_pixels",
-                "styleIdx" : 0
-            },
-            {
-                "name": "avg_zaid_surface_water_mws",
-                "label" : "Percentage of Average surface water availability during Zaid in micro-watershed",
-                "type" : 2,
-                "values" : [
-                    {"label" : "Low (Less than 25%)", "value" : {"lower" : 0, "upper" : 25}},
-                    {"label" : "Moderate (25-50%)", "value" : {"lower" : 25, "upper" : 50}},
-                    {"label" : "High (More than 50%)", "value" : {"lower" : 50, "upper" : 99999}}
-                ],
-                "layer_store" : ["water_bodies","LULC"],
-                "layer_name" : ["surface_waterbodies","level_3"],
-                "vectorStyle" : [{
-                    "fill" : "rgba(100, 149, 237, 0.5)",
-                    "stroke" : "rgba(100, 149, 237, 1)"
-                }],
-                "rasterStyle" : "lulc_water_pixels",
-                "styleIdx" : 0
-            },
-            {
-                "name": "trend_g",
-                "label" : "Trend over Groundwater level",
-                "type" : 1,
-                "values" : [
-                    {"label" : "No trend", "value" : "0"},
-                    {"label" : "Increasing", "value" : "1"},
-                    {"label" : "Decreasing", "value" : "-1"}
-                ],
-                "layer_store" : ["mws_layers"],
-                "layer_name" : ["deltaG_well_depth"],
-                "vectorStyle" : [
-                    {
-                        "fill" : "rgba(184, 134, 11, 0.5)",
-                        "stroke" : "rgba(184, 134, 11, 1)",
-                        "lower" : 0, "upper" : 0
-                    },
-                    {
-                        "fill" : "rgba(255, 236, 179, 0.5)",
-                        "stroke" : "rgba(255, 236, 179, 1)",
-                        "lower" : 1, "upper" : 1
-                    },
-                    {
-                        "fill" : "rgba(255, 215, 0, 0.5)",
-                        "stroke" : "rgba(255, 215, 0, 1)",
-                        "lower" : -1, "upper" : -1
-                    }
-                ],
-                "rasterStyle" : "",
-                "styleIdx" : 10
-            }
-        ],
         "Land" : [
             {
                 "name": "terrainCluster_ID",
@@ -85,56 +16,12 @@
                 "vectorStyle" : [{}],
                 "rasterStyle" : "Terrain_Style_11_Classes",
                 "styleIdx" : 0
-            }, {
-                "name": "degradation_land_area",
-                "label" : "Degradation of land (farmlands that have been converted to barren, pastures, built-up areas)",
-                "type" : 2,
-                "values" : [
-                    {"label" : "Less than 20 hectares", "value" : {"lower" : 0, "upper" : 20}},
-                    {"label" : "20 hectares - 50 hectares", "value" : {"lower" : 20, "upper" : 50}},
-                    {"label" : "More than 50 hectares", "value" : {"lower" : 50, "upper" : 999999}}
-                ],
-                "layer_store" : [],
-                "layer_name" : [],
-                "vectorStyle" : [{}],
-                "rasterStyle" : "",
-                "styleIdx" : 0
-            },
-            {
-                "name": "decrease_in_tree_cover",
-                "label" : "Reduction in tree cover",
-                "type" : 2,
-                "values" : [
-                    {"label" : "Less than 50 hectares", "value" : {"lower" : 0, "upper" : 50}},
-                    {"label" : "50 hectares - 100 hectares", "value" : {"lower" : 50, "upper" : 100}},
-                    {"label" : "More than 100 hectares", "value" : {"lower" : 100, "upper" : 999999}}
-                ],
-                "layer_store" : [],
-                "layer_name" : [],
-                "vectorStyle" : [{}],
-                "rasterStyle" : "",
-                "styleIdx" : 0
-            },   {
-                "name": "increase_in_tree_cover",
-                "label" : "Increase in tree cover",
-                "type" : 2,
-                "values" : [
-                    {"label" : "Less than 50 hectares", "value" : {"lower" : 0, "upper" : 50}},
-                    {"label" : "50 hectares - 100 hectares", "value" : {"lower" : 50, "upper" : 100}},
-                    {"label" : "More than 100 hectares", "value" : {"lower" : 100, "upper" : 999999}}
-                ],
-                "layer_store" : [],
-                "layer_name" : [],
-                "vectorStyle" : [{}],
-                "rasterStyle" : "",
-                "styleIdx" : 0
             }
-           
         ],
         "Climate" : [
             {
                 "name": "avg_precipitation",
-                "label" : "Average annual rainfall",
+                "label" : "Average rainfall over the years 2017 to 2023",
                 "type" : 2,
                 "values" : [
                     {"label" : "Semi-arid: <740 mm", "value" : {"lower" : 0, "upper" : 740}},
@@ -177,12 +64,12 @@
             },
             {
                 "name": "avg_number_dry_spell",
-                "label" : "Average number of weeks of dry spells",
+                "label" : "Average number of weeks of dry spells over the years 2017 to 2023",
                 "type" : 2,
                 "values" : [
-                    {"label" : "No week of dry spell", "value" : {"lower" : 0, "upper" : 1}},
-                    {"label" : "1 or more dry spell weeks", "value" : {"lower" : 1, "upper" : 999999999}},
-                    {"label" : "2 or more dry spell weeks", "value" : {"lower" : 2, "upper" : 9999999999}}
+                    {"label" : "No weeks of dry spells", "value" : {"lower" : 0, "upper" : 1}},
+                    {"label" : "Minimum one week of dry spell", "value" : {"lower" : 1, "upper" : 999999999}},
+                    {"label" : "Minimum two weeks of dry spells", "value" : {"lower" : 2, "upper" : 9999999999}}
                 ],
                 "layer_store" : ["cropping_drought"],
                 "layer_name" : ["drought"],
@@ -208,12 +95,12 @@
             },
             {
                 "name": "avg_runoff",
-                "label" : "Runoff",
+                "label" : "Average runoff over the years 2017 to 2023",
                 "type" : 2,
                 "values" : [
-                    {"label" : "Low runoff (<100mm)", "value" : {"lower" : 0, "upper" : 100}},
-                    {"label" : "Moderate runoff (100-300mm)", "value" : {"lower" : 100, "upper" : 300}},
-                    {"label" : "High runoff (>300 mm)", "value" : {"lower" : 300, "upper" : 9999999999}}
+                    {"label" : "Less than 100mm", "value" : {"lower" : 0, "upper" : 100}},
+                    {"label" : "Between 100mm to 300mm", "value" : {"lower" : 100, "upper" : 300}},
+                    {"label" : "More than 300mm", "value" : {"lower" : 300, "upper" : 9999999999}}
                 ],
                 "layer_store" : ["mws_layers"],
                 "layer_name" : ["deltaG_well_depth"],
@@ -239,12 +126,12 @@
             },
             {
                 "name": "drought_category",
-                "label" : "Drought years",
+                "label" : "Number of drought years",
                 "type" : 1,
                 "values" : [
                     {"label" : "No Drought", "value" : 0},
-                    {"label" : "1 or more drought year", "value" : 1},
-                    {"label" : "2 or more drought year", "value" : 2}
+                    {"label" : "Minimum one drought year", "value" : 1},
+                    {"label" : "Minimum two drought years", "value" : 2}
                 ],
                 "layer_store" : ["cropping_drought"],
                 "layer_name" : ["drought"],
@@ -269,14 +156,83 @@
                 "styleIdx" : 4
             }
         ],
+        "Hydrology" : [
+            {
+                "name": "avg_rabi_surface_water_mws",
+                "label" : "Percentage of average surface water availability during Rabi in micro-watershed",
+                "type" : 2,
+                "values" : [
+                    {"label" : "Less than 30%", "value" : {"lower" : 10, "upper" : 30}},
+                    {"label" : "Between 30% to 70%", "value" : {"lower" : 30, "upper" : 70}},
+                    {"label" : "More than 70%", "value" : {"lower" : 70, "upper" : 999999}}
+                ],
+                "layer_store" : ["water_bodies","LULC"],
+                "layer_name" : ["surface_waterbodies","level_3"],
+                "vectorStyle" : [{
+                    "fill" : "rgba(100, 149, 237, 0.5)",
+                    "stroke" : "rgba(100, 149, 237, 1)"
+                }],
+                "rasterStyle" : "lulc_water_pixels",
+                "styleIdx" : 0
+            },
+            {
+                "name": "avg_zaid_surface_water_mws",
+                "label" : "Percentage of average surface water availability during Zaid in micro-watershed",
+                "type" : 2,
+                "values" : [
+                    {"label" : "Less than 25%", "value" : {"lower" : 0, "upper" : 25}},
+                    {"label" : "Between 25%-50%", "value" : {"lower" : 25, "upper" : 50}},
+                    {"label" : "More than 50%", "value" : {"lower" : 50, "upper" : 99999}}
+                ],
+                "layer_store" : ["water_bodies","LULC"],
+                "layer_name" : ["surface_waterbodies","level_3"],
+                "vectorStyle" : [{
+                    "fill" : "rgba(100, 149, 237, 0.5)",
+                    "stroke" : "rgba(100, 149, 237, 1)"
+                }],
+                "rasterStyle" : "lulc_water_pixels",
+                "styleIdx" : 0
+            },
+            {
+                "name": "trend_g",
+                "label" : "Groundwater level trend over the years 2017 to 2023",
+                "type" : 1,
+                "values" : [
+                    {"label" : "Steady groundwater levels", "value" : "0"},
+                    {"label" : "Increase in levels of groundwater", "value" : "1"},
+                    {"label" : "Decrease in levels of groundwater", "value" : "-1"}
+                ],
+                "layer_store" : ["mws_layers"],
+                "layer_name" : ["deltaG_well_depth"],
+                "vectorStyle" : [
+                    {
+                        "fill" : "rgba(184, 134, 11, 0.5)",
+                        "stroke" : "rgba(184, 134, 11, 1)",
+                        "lower" : 0, "upper" : 0
+                    },
+                    {
+                        "fill" : "rgba(255, 236, 179, 0.5)",
+                        "stroke" : "rgba(255, 236, 179, 1)",
+                        "lower" : 1, "upper" : 1
+                    },
+                    {
+                        "fill" : "rgba(255, 215, 0, 0.5)",
+                        "stroke" : "rgba(255, 215, 0, 1)",
+                        "lower" : -1, "upper" : -1
+                    }
+                ],
+                "rasterStyle" : "",
+                "styleIdx" : 10
+            }
+        ],     
         "Agriculture" : [
             {
                 "name": "avg_double_cropped",
-                "label" : "Average percentage of double cropped area",
+                "label" : "Average percentage of double cropped area over the years 2017 to 2023",
                 "type" : 2,
                 "values" : [
                     {"label" : "Less than 30%", "value" : {"lower" : 0, "upper" : 30}},
-                    {"label" : "30% - 60%", "value" : {"lower" : 30, "upper" : 60}},
+                    {"label" : "Between 30% to 60%", "value" : {"lower" : 30, "upper" : 60}},
                     {"label" : "More than 60%", "value" : {"lower" : 60, "upper" : 999999}}
                 ],
                 "layer_store" : ["LULC"],
@@ -284,23 +240,83 @@
                 "vectorStyle" : [{}],
                 "rasterStyle" : "",
                 "styleIdx" : 0
-            }
-        ],  "Socio-economic" : [
+            },
             {
-                "name": "built_up_area",
-                "label" : "Built-up area(Urbanization)",
+                "name": "degradation_land_area",
+                "label" : "Cropping degradation",
                 "type" : 2,
                 "values" : [
-                    {"label" : "Less than 40 hectares", "value" : {"lower" : 0, "upper" : 40}},
-                    {"label" : "40 hectares - 120 hectares", "value" : {"lower" : 40, "upper" : 120}},
-                    {"label" : "More than 120 hectares", "value" : {"lower" : 120, "upper" : 999999}}
+                    {"label" : "Less than 30 hectares", "value" : {"lower" : 0, "upper" : 30}},
+                    {"label" : "Between 30 hectares to 90 hectares", "value" : {"lower" : 30, "upper" : 90}},
+                    {"label" : "More than 90 hectares", "value" : {"lower" : 90, "upper" : 999999}}
                 ],
-                "layer_store" : ["LULC"],
-                "layer_name" : ["level_1"],
+                "layer_store" : ["change_detection"],
+                "layer_name" : ["CropIntensity"],
+                "vectorStyle" : [{}],
+                "rasterStyle" : "cropping_intensity",
+                "styleIdx" : 0
+            }
+        ], 
+        "Restoration" : [
+            {
+                "name": "decrease_in_tree_cover",
+                "label" : "Reduction in tree cover",
+                "type" : 2,
+                "values" : [
+                    {"label" : "Less than 50 hectares", "value" : {"lower" : 0, "upper" : 50}},
+                    {"label" : "Between 50 to 100 hectares", "value" : {"lower" : 50, "upper" : 100}},
+                    {"label" : "More than 100 hectares", "value" : {"lower" : 100, "upper" : 999999}}
+                ],
+                "layer_store" : ["change_detection"],
+                "layer_name" : ["Deforestation"],
+                "vectorStyle" : [{}],
+                "rasterStyle" : "change_detection_deforestation",
+                "styleIdx" : 0
+            },   {
+                "name": "increase_in_tree_cover",
+                "label" : "Increase in tree cover",
+                "type" : 2,
+                "values" : [
+                    {"label" : "Less than 50 hectares", "value" : {"lower" : 0, "upper" : 50}},
+                    {"label" : "Between 50 to 100 hectares", "value" : {"lower" : 50, "upper" : 100}},
+                    {"label" : "More than 100 hectares", "value" : {"lower" : 100, "upper" : 999999}}
+                ],
+                "layer_store" : ["change_detection"],
+                "layer_name" : ["Afforestation"],
+                "vectorStyle" : [{}],
+                "rasterStyle" : "change_detection_deforestation",
+                "styleIdx" : 0
+            },
+              {
+                "name": "area_wide_scale_restoration",
+                "label" : "Area that requires wide-scale restoration",
+                "type" : 2,
+                "values" : [
+                    {"label" : "Less than 200 hectares", "value" : {"lower" : 0, "upper" : 200}},
+                    {"label" : "Between 200 to 600 hectares", "value" : {"lower" : 200, "upper" : 600}},
+                    {"label" : "More than 600 hectares", "value" : {"lower" : 600, "upper" : 999999}}
+                ],
+                "layer_store" : [],
+                "layer_name" : [],
+                "vectorStyle" : [{}],
+                "rasterStyle" : "",
+                "styleIdx" : 0
+            },   {
+                "name": "area_protection",
+                "label" : "Area that requires protection",
+                "type" : 2,
+                "values" : [
+                    {"label" : "Less than 400 hectares", "value" : {"lower" : 0, "upper" : 400}},
+                    {"label" : "Between 400 to 800 hectares", "value" : {"lower" : 400, "upper" : 800}},
+                    {"label" : "More than 800 hectares", "value" : {"lower" : 800, "upper" : 999999}}
+                ],
+                "layer_store" : [],
+                "layer_name" : [],
                 "vectorStyle" : [{}],
                 "rasterStyle" : "",
                 "styleIdx" : 0
             }
+           
         ]
     },
     "Village" : {
@@ -311,8 +327,8 @@
                 "type" : 2,
                 "values" : [
                     {"label" : "Less than 100", "value" : {"lower" : 0, "upper" : 100}},
-                    {"label" : "100 - 300", "value" : {"lower" : 100, "upper" : 300}},
-                    {"label" : "Greater than 300", "value" : {"lower" : 300, "upper" : 999999999}}
+                    {"label" : "Between 100 to 300", "value" : {"lower" : 100, "upper" : 300}},
+                    {"label" : "More than 300", "value" : {"lower" : 300, "upper" : 999999999}}
                 ],
                 "layer_store" : ["panchayat_boundaries"],
                 "layer_name" : [],
@@ -344,9 +360,9 @@
                 "type" : 2,
                 "values" : [
                     {"label" : "Less than 800", "value" : {"lower" : 0, "upper" : 800}},
-                    {"label" : "800 - 2400", "value" : {"lower" : 100, "upper" : 2400}},
-                    {"label" : "2400 - 8900", "value" : {"lower" : 2400, "upper" : 8900}},
-                    {"label" : "Greater than 8900", "value" : {"lower" : 8900, "upper" : 9999999999}}
+                    {"label" : "Between 800 to 2400", "value" : {"lower" : 100, "upper" : 2400}},
+                    {"label" : "Between 2400 - 8900", "value" : {"lower" : 2400, "upper" : 8900}},
+                    {"label" : "More than 8900", "value" : {"lower" : 8900, "upper" : 9999999999}}
 
                 ],
                 "layer_store" : ["panchayat_boundaries"],
@@ -378,12 +394,12 @@
             },
             {
                 "name": "percent_st_population",
-                "label" : "Percent ST population",
+                "label" : "Percentage ST population",
                 "type" : 2,
                 "values" : [
                     {"label" : "Less than 18%", "value" : {"lower" : 0, "upper" : 18}},
-                    {"label" : "18% - 33%", "value" : {"lower" : 18, "upper" : 33}},
-                    {"label" : "Greater than 33%", "value" : {"lower" : 33, "upper" : 999999999}}
+                    {"label" : "Between 18% to 33%", "value" : {"lower" : 18, "upper" : 33}},
+                    {"label" : "More than 33%", "value" : {"lower" : 33, "upper" : 999999999}}
                 ],
                 "layer_store" : ["panchayat_boundaries"],
                 "layer_name" : [],
@@ -409,13 +425,13 @@
             },
             {
                 "name": "percent_sc_population",
-                "label" : "Percent SC population",
+                "label" : "Percentage SC population",
                 "type" : 2,
                 "values" : [
                     {"label" : "Less than 5%", "value" : {"lower" : 0, "upper" : 5}},
-                    {"label" : "5% - 17%", "value" : {"lower" : 5, "upper" : 17}},
-                    {"label" : "17% - 37%", "value" : {"lower" : 17, "upper" : 37}},
-                    {"label" : "Greater than 37%", "value" : {"lower" : 37, "upper" : 100}}
+                    {"label" : "Between 5% to 17%", "value" : {"lower" : 5, "upper" : 17}},
+                    {"label" : "Between 17% to 37%", "value" : {"lower" : 17, "upper" : 37}},
+                    {"label" : "More than 37%", "value" : {"lower" : 37, "upper" : 100}}
                 ],
                 "layer_store" : ["panchayat_boundaries"],
                 "layer_name" : [],
@@ -446,13 +462,13 @@
             },
             {
                 "name": "literacy_level",
-                "label" : "Literacy Levels",
+                "label" : "Percentage literacy levels",
                 "type" : 2,
                 "values" : [
                     {"label" : "Less than 46%", "value" : {"lower" : 0, "upper" : 46}},
-                    {"label" : "46% - 59%", "value" : {"lower" : 46, "upper" : 59}},
-                    {"label" : "59% - 70%", "value" : {"lower" : 59, "upper" : 70}},
-                    {"label" : "Greater than 70%", "value" : {"lower" : 70, "upper" : 999999999}}
+                    {"label" : "Between 46% to 59%", "value" : {"lower" : 46, "upper" : 59}},
+                    {"label" : "Between 59% to 70%", "value" : {"lower" : 59, "upper" : 70}},
+                    {"label" : "More than 70%", "value" : {"lower" : 70, "upper" : 999999999}}
                 ],
                 "layer_store" : ["panchayat_boundaries"],
                 "layer_name" : [],
