@@ -16,51 +16,7 @@
                 "vectorStyle" : [{}],
                 "rasterStyle" : "Terrain_Style_11_Classes",
                 "styleIdx" : 0
-            }, {
-                "name": "degradation_land_area",
-                "label" : "Degradation of land (farmlands that have been converted to barren, pastures, built-up areas)",
-                "type" : 2,
-                "values" : [
-                    {"label" : "Less than 20 hectares", "value" : {"lower" : 0, "upper" : 20}},
-                    {"label" : "20 hectares - 50 hectares", "value" : {"lower" : 20, "upper" : 50}},
-                    {"label" : "More than 50 hectares", "value" : {"lower" : 50, "upper" : 999999}}
-                ],
-                "layer_store" : [],
-                "layer_name" : [],
-                "vectorStyle" : [{}],
-                "rasterStyle" : "",
-                "styleIdx" : 0
-            },
-            {
-                "name": "decrease_in_tree_cover",
-                "label" : "Reduction in tree cover",
-                "type" : 2,
-                "values" : [
-                    {"label" : "Less than 50 hectares", "value" : {"lower" : 0, "upper" : 50}},
-                    {"label" : "50 hectares - 100 hectares", "value" : {"lower" : 50, "upper" : 100}},
-                    {"label" : "More than 100 hectares", "value" : {"lower" : 100, "upper" : 999999}}
-                ],
-                "layer_store" : [],
-                "layer_name" : [],
-                "vectorStyle" : [{}],
-                "rasterStyle" : "",
-                "styleIdx" : 0
-            },   {
-                "name": "increase_in_tree_cover",
-                "label" : "Increase in tree cover",
-                "type" : 2,
-                "values" : [
-                    {"label" : "Less than 50 hectares", "value" : {"lower" : 0, "upper" : 50}},
-                    {"label" : "50 hectares - 100 hectares", "value" : {"lower" : 50, "upper" : 100}},
-                    {"label" : "More than 100 hectares", "value" : {"lower" : 100, "upper" : 999999}}
-                ],
-                "layer_store" : [],
-                "layer_name" : [],
-                "vectorStyle" : [{}],
-                "rasterStyle" : "",
-                "styleIdx" : 0
             }
-           
         ],
         "Climate" : [
             {
