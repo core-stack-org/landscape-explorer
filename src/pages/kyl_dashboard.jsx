@@ -871,6 +871,7 @@ const KYLDashboardPage = () => {
                         setToastId(null);
                     }
 
+<<<<<<< HEAD
           mwsLayerRef.current.setStyle((feature) => {
             if (clickedMwsId === feature.values_.uid) {
               return new Style({
@@ -895,6 +896,44 @@ const KYLDashboardPage = () => {
                   color: "rgba(255, 75, 75, 0.8)",
                 }),
               });
+=======
+                    mwsLayerRef.current.setStyle((feature) => {
+                        if (clickedMwsId === feature.values_.uid) {
+                            return new Style({
+                                stroke: new Stroke({
+                                    color: "#166534",
+                                    width: 2.0,
+                                }),
+                                fill: new Fill({
+                                    color: "rgba(34, 197, 94, 0.4)",
+                                })
+                            });
+                        }
+                        else if (selectedMWS.length > 0 && selectedMWS.includes(feature.values_.uid)) {
+                            return new Style({
+                                stroke: new Stroke({
+                                    color: "#661E1E",
+                                    width: 1.0,
+                                }),
+                                fill: new Fill({
+                                    color: "rgba(255, 75, 75, 0.8)",
+                                })
+                            });
+                        }
+                    });
+                }
+                else {
+                    toast.error("Please Select a valid MWS !")
+                }
+            }
+        };
+        mapRef.current.on('click', handleMapClick);
+
+        // Cleanup
+        return () => {
+            if (mapRef.current) {
+                mapRef.current.un('click', handleMapClick);
+>>>>>>> cf6b4b6 (Revert "Merge remote-tracking branch 'origin/development-new-indicator' into development-new-indicator")
             }
           });
 
