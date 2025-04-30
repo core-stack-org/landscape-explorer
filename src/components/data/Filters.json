@@ -286,7 +286,7 @@
                 "layer_store" : ["change_detection"],
                 "layer_name" : ["Afforestation"],
                 "vectorStyle" : [{}],
-                "rasterStyle" : "change_detection_deforestation",
+                "rasterStyle" : "change_detection_afforestation",
                 "styleIdx" : 0
             },
               {
