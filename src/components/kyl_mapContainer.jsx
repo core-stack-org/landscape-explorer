@@ -309,11 +309,10 @@ const MapLegend = ({ showMWS, showVillages, currentLayer }) => {
   ];
 
   const CropAfforestationtems = [
-    { color: "#73bb53", label: "Forest - Forest" },
-    { color: "#ff0000", label: "Forest - Built Up" },
-    { color: "#eee05d", label: "Forest -  Farm" },
-    { color: "#a9a9a9", label: "Forest -  Barren" },
-    { color: "#eaa4f0", label: "Forest -  Scrub land" },
+    { color: "#ff0000", label: " Built Up - Forest " },
+    { color: "#eee05d", label: "Farm - Forest " },
+    { color: "#a9a9a9", label: "Barren - Forest " },
+    { color: "#eaa4f0", label: "Scrub land - Forest " },
   ];
 
   // Check if LULC layer is active
