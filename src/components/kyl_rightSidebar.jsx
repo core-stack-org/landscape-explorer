@@ -164,6 +164,7 @@ const KYLRightSidebar = ({
                     </div>
                     <div className="flex items-center gap-3">
                         <label className="text-sm text-gray-600 min-w-[45px]">Tehsil</label>
+                        <label className="text-sm text-gray-600 min-w-[45px]">Tehsil</label>
                         <SelectButton
                             currVal={block || { label: "Select Tehsil" }}
                             stateData={district !== null ? district.blocks : null}
@@ -220,7 +221,7 @@ const KYLRightSidebar = ({
                 )}
                 {getFormattedSelectedFilters().length > 0 && (
                     <div className="mt-6 space-y-2">
-                        <button className="w-full flex items-center justify-center gap-2 text-gray-300 py-2 text-sm hover:bg-indigo-50 rounded-md" 
+                        <button className="w-full flex items-center justify-center gap-2 text-gray-400 py-2 text-sm hover:bg-indigo-50 rounded-md" 
                         //onClick={handleMultiReport}
                         >
                         <svg

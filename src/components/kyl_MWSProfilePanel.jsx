@@ -26,7 +26,7 @@ const KYLMWSProfilePanel = ({ mwsData, onBack }) => {
 
       setDataString(dataStr)
     }
-  }, [dataJson])
+  }, [dataJson, mwsData])
 
   return (
     <div className="bg-white rounded-lg border border-gray-100 p-3">
