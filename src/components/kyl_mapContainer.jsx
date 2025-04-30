@@ -854,7 +854,7 @@ const MapLegend = ({ showMWS, showVillages, currentLayer }) => {
               {isCropDegradationActive && (
                 <div className="space-y-2">
                   <h4 className="text-xs font-medium text-gray-600">
-                    Groundwater Trend
+                    Cropping Degradation
                   </h4>
                   {CropDegradationItems.map((item, index) => (
                     <div
@@ -880,7 +880,7 @@ const MapLegend = ({ showMWS, showVillages, currentLayer }) => {
               {isCropDeforestationActive && (
                 <div className="space-y-2">
                   <h4 className="text-xs font-medium text-gray-600">
-                    Groundwater Trend
+                    Deforestation
                   </h4>
                   {CropDeforestationItems.map((item, index) => (
                     <div
@@ -906,7 +906,7 @@ const MapLegend = ({ showMWS, showVillages, currentLayer }) => {
               {isCropAfforestationActive && (
                 <div className="space-y-2">
                   <h4 className="text-xs font-medium text-gray-600">
-                    Groundwater Trend
+                    Afforestation
                   </h4>
                   {CropAfforestationtems.map((item, index) => (
                     <div
