@@ -163,7 +163,7 @@ const KYLRightSidebar = ({
                         />
                     </div>
                     <div className="flex items-center gap-3">
-                        <label className="text-sm text-gray-600 min-w-[45px]">Block</label>
+                        <label className="text-sm text-gray-600 min-w-[45px]">Tehsil</label>
                         <SelectButton
                             currVal={block || { label: "Select Tehsil" }}
                             stateData={district !== null ? district.blocks : null}
@@ -220,11 +220,30 @@ const KYLRightSidebar = ({
                 )}
                 {getFormattedSelectedFilters().length > 0 && (
                     <div className="mt-6 space-y-2">
-                        <button className="w-full flex items-center justify-center gap-2 text-indigo-400 py-2 text-sm hover:bg-indigo-50 rounded-md" onClick={handleMultiReport}>
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                        <button className="w-full flex items-center justify-center gap-2 text-gray-400 py-2 text-sm hover:bg-indigo-50 rounded-md" 
+                        //onClick={handleMultiReport}
+                        >
+                        <svg
+                            className="w-4 h-4"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                            xmlns="http://www.w3.org/2000/svg"
+                            >
+                            <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                            />
+                            <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M2.458 12C3.732 7.943 7.523 5 12 5s8.268 2.943 9.542 7c-1.274 4.057-5.065 7-9.542 7s-8.268-2.943-9.542-7z"
+                            />
                             </svg>
-                            View MWS's Report
+                            View Micro Watershed Report
                         </button>
                         {/* <button 
                         onClick={onAnalyzeClick}
