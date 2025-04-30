@@ -6,10 +6,10 @@
                 "label" : "Terrain Type",
                 "type" : 1,
                 "values" : [
+                    {"label" : "Hills and Valleys", "value" : 2},
                     {"label" : "Broad Slopes and Hilly", "value" : 0},
                     {"label" : "Broad Slopes and Plains", "value" : 3},
-                    {"label" : "Mostly Plains", "value" : 1},
-                    {"label" : "Hills and Valleys", "value" : 2}
+                    {"label" : "Mostly Plains", "value" : 1}
                 ],
                 "layer_store" : ["terrain"],
                 "layer_name" : ["terrain_raster"],
@@ -24,11 +24,11 @@
                 "label" : "Average rainfall over the years 2017 to 2023",
                 "type" : 2,
                 "values" : [
-                    {"label" : "Semi-arid: <740 mm", "value" : {"lower" : 0, "upper" : 740}},
-                    {"label" : "Arid: 740-960 mm", "value" : {"lower" : 740, "upper" : 960}},
-                    {"label" : "Moderate: 960-1200 mm", "value" : {"lower" : 960, "upper" : 1200}},
-                    {"label" : "High: 1200-1620", "value" : {"lower" : 1200, "upper" : 1620}},
-                    {"label" : "Very high: >1620", "value" : {"lower" : 1620, "upper" : 9999999999}}
+                    {"label" : "Arid: <740 mm", "value" : {"lower" : 0, "upper" : 740}},
+                    {"label" : "Semi -arid: 740mm-960 mm", "value" : {"lower" : 740, "upper" : 960}},
+                    {"label" : "Moderate: 960mm-1200 mm", "value" : {"lower" : 960, "upper" : 1200}},
+                    {"label" : "High: 1200mm-1620 mm", "value" : {"lower" : 1200, "upper" : 1620}},
+                    {"label" : "Very high: >1620 mm", "value" : {"lower" : 1620, "upper" : 9999999999}}
                 ],
                 "layer_store" : ["mws_layers"],
                 "layer_name" : ["deltaG_well_depth"],
@@ -61,37 +61,6 @@
                 ],
                 "rasterStyle" : "",
                 "styleIdx" : 1
-            },
-            {
-                "name": "avg_number_dry_spell",
-                "label" : "Average number of weeks of dry spells over the years 2017 to 2023",
-                "type" : 2,
-                "values" : [
-                    {"label" : "No weeks of dry spells", "value" : {"lower" : 0, "upper" : 1}},
-                    {"label" : "Minimum one week of dry spell", "value" : {"lower" : 1, "upper" : 999999999}},
-                    {"label" : "Minimum two weeks of dry spells", "value" : {"lower" : 2, "upper" : 9999999999}}
-                ],
-                "layer_store" : ["cropping_drought"],
-                "layer_name" : ["drought"],
-                "vectorStyle" : [
-                    {
-                        "fill" : "rgba(210, 180, 140, 0.5)",
-                        "stroke" : "rgba(210, 180, 140, 1)",
-                        "lower" : 0, "upper" : 1
-                    },
-                    {
-                        "fill" : "rgba(139, 69, 19, 0.5)",
-                        "stroke" : "rgba(139, 69, 19, 1)",
-                        "lower" : 1, "upper" : 999999999
-                    },
-                    {
-                        "fill" : "rgba(90, 46, 15, 0.5)",
-                        "stroke" : "rgba(90, 46, 15, 1)",
-                        "lower" : 2, "upper" : 999999999
-                    }
-                ],
-                "rasterStyle" : "",
-                "styleIdx" : 2
             },
             {
                 "name": "avg_runoff",
@@ -154,7 +123,40 @@
                 ],
                 "rasterStyle" : "",
                 "styleIdx" : 4
+            },
+            {
+                "name": "avg_number_dry_spell",
+                "label" : "Average number of weeks of dry spells over the years 2017 to 2023",
+                "type" : 2,
+                "values" : [
+                    {"label" : "No weeks of dry spells", "value" : {"lower" : 0, "upper" : 1}},
+                    {"label" : "Minimum one week of dry spell", "value" : {"lower" : 1, "upper" : 999999999}},
+                    {"label" : "Minimum two weeks of dry spells", "value" : {"lower" : 2, "upper" : 9999999999}}
+                ],
+                "layer_store" : ["cropping_drought"],
+                "layer_name" : ["drought"],
+                "vectorStyle" : [
+                    {
+                        "fill" : "rgba(210, 180, 140, 0.5)",
+                        "stroke" : "rgba(210, 180, 140, 1)",
+                        "lower" : 0, "upper" : 1
+                    },
+                    {
+                        "fill" : "rgba(139, 69, 19, 0.5)",
+                        "stroke" : "rgba(139, 69, 19, 1)",
+                        "lower" : 1, "upper" : 999999999
+                    },
+                    {
+                        "fill" : "rgba(90, 46, 15, 0.5)",
+                        "stroke" : "rgba(90, 46, 15, 1)",
+                        "lower" : 2, "upper" : 999999999
+                    }
+                ],
+                "rasterStyle" : "",
+                "styleIdx" : 2
             }
+           
+           
         ],
         "Hydrology" : [
             {
@@ -198,9 +200,9 @@
                 "label" : "Groundwater level trend over the years 2017 to 2023",
                 "type" : 1,
                 "values" : [
-                    {"label" : "Steady groundwater levels", "value" : "0"},
                     {"label" : "Increase in levels of groundwater", "value" : "1"},
-                    {"label" : "Decrease in levels of groundwater", "value" : "-1"}
+                    {"label" : "Decrease in levels of groundwater", "value" : "-1"},
+                    {"label" : "Steady groundwater levels", "value" : "0"}   
                 ],
                 "layer_store" : ["mws_layers"],
                 "layer_name" : ["deltaG_well_depth"],
