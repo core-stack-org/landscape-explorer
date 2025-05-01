@@ -33,3 +33,8 @@ export const yearAtom = atom({
   key: 'yearAtom', 
   default: null,
 });
+
+export const dataJsonAtom = atom({
+  key: 'dataJsonAtom', 
+  default: null,
+}) 
