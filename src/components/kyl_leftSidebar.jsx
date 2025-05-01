@@ -54,8 +54,9 @@ const KYLLeftSidebar = ({
             <div className="space-y-2">
                 <button
                     className="w-full py-2 px-2 text-indigo-600 bg-indigo-50 rounded-lg text-sm font-medium text-left"
+                    onClick={() => window.open("https://docs.google.com/document/d/13wht82tXmw0x-ORfVLYBnfUDkkabzqOxvqwmIXGRmpk/edit?usp=sharing", '_blank', 'noopener,noreferrer')}
                 >
-                    Browse locations based on indicators
+                    Click to Know More About Indicators
                 </button>
 
                 <div className="flex flex-wrap gap-2 pt-2">

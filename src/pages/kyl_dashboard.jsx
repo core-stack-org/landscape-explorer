@@ -863,7 +863,7 @@ const KYLDashboardPage = () => {
 
                 console.log(selectedMWS)
 
-                if (selectedMWS !== null && selectedMWS.includes(clickedMwsId)) {
+                if (selectedMWS !== null) {
 
                     setSelectedMWSProfile(feature.getProperties());
                     if (toastId) {
@@ -893,6 +893,17 @@ const KYLDashboardPage = () => {
                                     color: "rgba(255, 75, 75, 0.8)",
                                 })
                             });
+                        }
+                        else{
+                          return new Style({
+                            stroke: new Stroke({
+                              color: "#4a90e2",
+                              width: 1.0,
+                            }),
+                            fill: new Fill({
+                              color: "rgba(74, 144, 226, 0.2)",
+                            }),
+                          });
                         }
                     });
                 }
