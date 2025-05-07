@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Box,
   Avatar,
@@ -19,6 +19,7 @@ const HeaderSelect = ({
   project: initialProject,
 }) => {
   const [organization, setOrganization] = useState(initialOrg || null);
+  const [organizationOptions, setOrganizationOptions] = useState([]);
   const [project, setProject] = useState(initialProject || "");
   const [filter, setFilter] = useState("");
 
@@ -26,22 +27,47 @@ const HeaderSelect = ({
   const location = useLocation();
   const isOnDashboard = location.pathname.includes("/dashboard");
 
-  const organizationOptions = [
-    { label: "Org1", value: "Org1" },
-    { label: "Org2", value: "Org2" },
-  ];
+  useEffect(() => {
+    const fetchOrganizations = async () => {
+      const options = await loadOrganization();
+      setOrganizationOptions(options);
 
-  const filterOptions = [
-    { label: "State", value: "state" },
-    { label: "District", value: "district" },
-    { label: "GP/Village", value: "gp/village" },
-    { label: "Waterbody", value: "waterbody" },
-    { label: "Silt Removed", value: "siltremoved" },
-    {
-      label: "Avg. Water Availability During Zaid (%)",
-      value: "avgwaterAvailabilityDuringZaid",
-    },
-  ];
+      // Optional: Set initial org from session storage or first option
+      if (!organization && isOnDashboard) {
+        const storedOrg = sessionStorage.getItem("selectedOrganization");
+        if (storedOrg) {
+          setOrganization(JSON.parse(storedOrg));
+        } else if (options.length > 0) {
+          setOrganization(options[0]);
+        }
+      }
+    };
+
+    fetchOrganizations();
+  }, []);
+
+  const loadOrganization = async () => {
+    try {
+      const response = await fetch(
+        `${process.env.REACT_APP_BASEURL}/api/v1/auth/register/available_organizations/`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            "ngrok-skip-browser-warning": "420",
+          },
+        }
+      );
+      const data = await response.json();
+      return data.map((org) => ({
+        value: org.id,
+        label: org.name,
+      }));
+    } catch (error) {
+      console.error("Error fetching organizations:", error);
+      return [];
+    }
+  };
 
   const customStyles = {
     control: (base) => ({
@@ -64,14 +90,6 @@ const HeaderSelect = ({
     }),
   };
 
-  const handleFilterChange = (event) => {
-    setFilter(event.target.value);
-    // Apply filter logic here (e.g., fetch filtered data based on selected filter)
-  };
-  const getSelectedLabel = () => {
-    const selected = filterOptions.find((option) => option.value === filter);
-    return selected?.label || "Filter";
-  };
   const handleOrganizationChange = (selectedOption) => {
     setOrganization(selectedOption);
     sessionStorage.setItem(

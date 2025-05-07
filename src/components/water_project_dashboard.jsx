@@ -1,6 +1,15 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import HeaderSelect from "../components/water_headerSection";
+import water_rej from "../components/data/waterbody_rej_data.json";
 import { useParams } from "react-router-dom";
+import getVectorLayersWater from "../actions/getVectorLayerWater";
+import VectorLayer from "ol/layer/Vector";
+import VectorSource from "ol/source/Vector";
+import OSM from "ol/source/OSM";
+import GeoJSON from "ol/format/GeoJSON";
+import Map from "ol/Map";
+import { Style, Fill, Stroke } from "ol/style";
+
 import {
   Box,
   Typography,
@@ -22,24 +31,29 @@ import {
   TextField,
 } from "@mui/material";
 import { Download, Lightbulb } from "lucide-react";
-import Map from "ol/Map";
 import View from "ol/View";
 import TileLayer from "ol/layer/Tile";
 import XYZ from "ol/source/XYZ";
 import { Control, defaults as defaultControls } from "ol/control";
 import FilterListIcon from "@mui/icons-material/FilterList";
+import SurfaceWaterChart from "./waterChart";
 
 const WaterProjectDashboard = () => {
   const { projectId } = useParams();
   const [view, setView] = useState("table");
-  const [selectedRows, setSelectedRows] = useState([]);
+  const [anchorEl, setAnchorEl] = useState(null);
+  const [filterType, setFilterType] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+
   const mapElement = useRef();
   const mapRef = useRef();
   const baseLayerRef = useRef();
+  const AdminLayerRef = useRef(null);
 
   const [sortField, setSortField] = useState(null);
   const [sortOrder, setSortOrder] = useState("asc");
   const [searchText, setSearchText] = useState("");
+  const [geoData, setGeoData] = useState(null);
 
   const [organization, setOrganization] = useState(() => {
     const storedOrg = sessionStorage.getItem("selectedOrganization");
@@ -50,62 +64,7 @@ const WaterProjectDashboard = () => {
     const storedProject = sessionStorage.getItem("selectedProject");
     return storedProject || "";
   });
-  const rows = [
-    {
-      id: 1,
-      state: "Bihar",
-      district: "Patna",
-      village: "Rampur",
-      waterbody: "Pond A",
-      siltRemoved: 1500,
-      waterAvailability: "25%",
-    },
-    {
-      id: 2,
-      state: "Jharkhand",
-      district: "Patna",
-      village: "Rampur",
-      waterbody: "Pond B",
-      siltRemoved: 1800,
-      waterAvailability: "20%",
-    },
-    {
-      id: 3,
-      state: "Gujarat",
-      district: "Valsad",
-      village: "Kaprada",
-      waterbody: "Pond C",
-      siltRemoved: 15000,
-      waterAvailability: "35%",
-    },
-    {
-      id: 4,
-      state: "Rajasthan",
-      district: "Bhilwada",
-      village: "Manadalgarh",
-      waterbody: "Pond D",
-      siltRemoved: 1880,
-      waterAvailability: "50%",
-    },
-    {
-      id: 5,
-      state: "Bihar",
-      district: "Patna",
-      village: "Rampur",
-      waterbody: "Pond E",
-      siltRemoved: 500,
-      waterAvailability: "5%",
-    },
-    {
-      id: 6,
-      state: "Jharkhand",
-      district: "Dumka",
-      village: "Masalia",
-      waterbody: "Pond F",
-      siltRemoved: 2800,
-      waterAvailability: "10%",
-    },
-  ];
+
   const [filters, setFilters] = useState({
     state: [],
     district: [],
@@ -128,9 +87,6 @@ const WaterProjectDashboard = () => {
       };
     });
   };
-
-  const [anchorEl, setAnchorEl] = useState(null);
-  const [filterType, setFilterType] = useState("");
 
   const handleFilterClick = (event, type) => {
     setAnchorEl(event.currentTarget);
@@ -155,6 +111,160 @@ const WaterProjectDashboard = () => {
     }
   }, []);
 
+  useEffect(() => {
+    console.log(water_rej);
+  }, []);
+
+  const rows = useMemo(() => {
+    if (!water_rej?.features) return [];
+
+    return water_rej.features.map((feature, index) => {
+      const props = feature.properties || {};
+      const matchedProps = feature?.properties?.matched?.properties || {};
+      const kKrValues = Object.entries(matchedProps)
+        .filter(
+          ([key]) =>
+            (key.startsWith("k_") || key.startsWith("kr_")) &&
+            !key.startsWith("krz_")
+        )
+        .map(([_, value]) => Number(value))
+        .filter((val) => !isNaN(val));
+
+      const avgKKr = kKrValues.length
+        ? (
+            kKrValues.reduce((acc, val) => acc + val, 0) / kKrValues.length
+          ).toFixed(2)
+        : null;
+
+      console.log(`Row ${index + 1}: Avg K + KR % = ${avgKKr}`);
+
+      const krzValues = Object.entries(matchedProps)
+        .filter(([key]) => key.startsWith("krz_"))
+        .map(([_, value]) => Number(value))
+        .filter((val) => !isNaN(val));
+
+      const avgKrz = krzValues.length
+        ? (
+            krzValues.reduce((acc, val) => acc + val, 0) / krzValues.length
+          ).toFixed(2)
+        : null;
+
+      console.log(
+        `Row ${index + 1}: Avg K + KR % = ${avgKKr}, Avg KRZ % = ${avgKrz}`
+      );
+
+      return {
+        id: index + 1,
+        state: props.State || "NA",
+        district: props.District || "NA",
+        block: props.Taluka || "NA",
+        waterbody: props.waterbody_name || "NA",
+        siltRemoved: props.slit_excavated || 0,
+        avgWaterAvailabilityZaid: avgKrz,
+        avgWaterAvailabilityKharifAndRabi: avgKKr,
+      };
+    });
+  }, [water_rej]);
+
+  const fetchBoundaryAndZoom = async (district, block) => {
+    console.log(district, block);
+    setIsLoading(true);
+    try {
+      const boundaryLayer = await getVectorLayersWater(
+        "panchayat_boundaries",
+        `${district.toLowerCase().replace(/\s+/g, "_")}_${block
+          .toLowerCase()
+          .replace(/\s+/g, "_")}`,
+        true,
+        true
+      );
+      boundaryLayer.setStyle(
+        new Style({
+          stroke: new Stroke({
+            color: "#000000",
+            width: 1.0,
+          }),
+        })
+      );
+
+      const vectorLayerWater = new VectorSource({
+        features: new GeoJSON().readFeatures(water_rej),
+      });
+
+      const waterBodyLayer = new VectorLayer({
+        source: vectorLayerWater,
+        style: new Style({
+          stroke: new Stroke({ color: "#6495ed", width: 5 }),
+          fill: new Fill({ color: "rgba(100, 149, 237, 0.5)" }),
+        }),
+      });
+      console.log(vectorLayerWater);
+      boundaryLayer.setOpacity(0);
+
+      mapRef.current.addLayer(boundaryLayer);
+      mapRef.current.addLayer(waterBodyLayer);
+
+      AdminLayerRef.current = boundaryLayer;
+
+      const vectorSource = boundaryLayer.getSource();
+
+      await new Promise((resolve, reject) => {
+        const checkFeatures = () => {
+          if (vectorSource.getFeatures().length > 0) {
+            resolve();
+          } else {
+            vectorSource.once("featuresloadend", () => {
+              vectorSource.getFeatures().length > 0
+                ? resolve()
+                : reject(new Error("No features loaded"));
+            });
+            setTimeout(() => {
+              vectorSource.getFeatures().length > 0
+                ? resolve()
+                : reject(new Error("Timeout loading features"));
+            }, 1000);
+          }
+        };
+        checkFeatures();
+      });
+
+      const extent = vectorSource.getExtent();
+      const view = mapRef.current.getView();
+      view.cancelAnimations();
+      view.animate(
+        {
+          zoom: Math.max(view.getZoom() - 0.5, 5),
+          duration: 750,
+        },
+        () => {
+          view.fit(extent, {
+            padding: [50, 50, 50, 50],
+            duration: 1000,
+            maxZoom: 15,
+            easing: (t) => (t === 1 ? 1 : 1 - Math.pow(2, -10 * t)),
+            callback: () => {
+              let opacity = 0;
+              const interval = setInterval(() => {
+                opacity += 0.1;
+                boundaryLayer.setOpacity(opacity);
+                if (opacity >= 1) {
+                  clearInterval(interval);
+                  setIsLoading(false);
+                }
+              }, 50);
+            },
+          });
+        }
+      );
+    } catch (error) {
+      console.error("Error loading boundary:", error);
+      setIsLoading(false);
+      const view = mapRef.current.getView();
+      view.setCenter([78.9, 23.6]);
+      view.setZoom(5);
+    }
+  };
+
   const handleViewChange = (event, newView) => {
     if (newView !== null) {
       setView(newView);
@@ -171,10 +281,9 @@ const WaterProjectDashboard = () => {
   };
 
   const filteredRows = rows.filter((row) => {
-    console.log("Row:", row); // Check the current row being evaluated
     return (
       Object.keys(row).some((key) => {
-        if (!row[key]) return false; // Ignore null/undefined values
+        if (!row[key]) return false;
         return row[key]
           .toString()
           .toLowerCase()
@@ -186,6 +295,7 @@ const WaterProjectDashboard = () => {
       })
     );
   });
+
   console.log("Filtered Rows:", filteredRows);
 
   const sortedRows = [...filteredRows].sort((a, b) => {
@@ -282,6 +392,19 @@ const WaterProjectDashboard = () => {
       }
     };
   }, [view]);
+
+  const handleWaterbodyClick = (row) => {
+    const district = row.district;
+    const block = row.block;
+
+    setView("map");
+
+    setTimeout(() => {
+      fetchBoundaryAndZoom(district, block);
+    }, 500);
+
+    console.log("Waterbody clicked:", row.waterbody, district, block);
+  };
 
   return (
     <Box sx={{ position: "relative" }}>
@@ -387,7 +510,7 @@ const WaterProjectDashboard = () => {
           top: "calc(20% + 88px + 16px)",
           left: "2.5%",
           width: "92%",
-          height: "600px",
+          height: "auto",
           backgroundColor: "white",
           padding: "20px",
           borderRadius: "5px",
@@ -499,6 +622,29 @@ const WaterProjectDashboard = () => {
                         </span>
                       </div>
                     </TableCell>
+
+                    <TableCell
+                      onClick={() => handleSort("waterAvailability")}
+                      sx={{ cursor: "pointer", userSelect: "none" }}
+                    >
+                      <div style={{ display: "flex", alignItems: "center" }}>
+                        Avg. Water Availability During Kharif and Rabi (%)
+                        <span
+                          style={{
+                            marginLeft: 4,
+                            fontWeight:
+                              sortField === "waterAvailability"
+                                ? "bold"
+                                : "normal",
+                          }}
+                        >
+                          {sortField === "waterAvailability" &&
+                          sortOrder === "asc"
+                            ? "🔼"
+                            : "🔽"}
+                        </span>
+                      </div>
+                    </TableCell>
                   </TableRow>
                 </TableHead>
 
@@ -507,10 +653,18 @@ const WaterProjectDashboard = () => {
                     <TableRow key={row.id} hover>
                       <TableCell>{row.state}</TableCell>
                       <TableCell>{row.district}</TableCell>
-                      <TableCell>{row.village}</TableCell>
-                      <TableCell>{row.waterbody}</TableCell>
+                      <TableCell>{row.block}</TableCell>{" "}
+                      <TableCell
+                        onClick={() => handleWaterbodyClick(row)}
+                        sx={{ cursor: "pointer" }}
+                      >
+                        {row.waterbody}
+                      </TableCell>
                       <TableCell>{row.siltRemoved}</TableCell>
-                      <TableCell>{row.waterAvailability}</TableCell>
+                      <TableCell>{row.avgWaterAvailabilityZaid}</TableCell>
+                      <TableCell>
+                        {row.avgWaterAvailabilityKharifAndRabi}
+                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -554,54 +708,77 @@ const WaterProjectDashboard = () => {
               </Menu>
             </TableContainer>
           </>
-        ) : (
-          <Box sx={{ display: "flex", gap: 2, marginTop: 2 }}>
-            {/* Map */}
-            <div
-              ref={mapElement}
-              style={{
-                height: "400px",
-                width: "50%",
-                border: "1px solid #ccc",
-                borderRadius: "5px",
-              }}
-            />
-
-            {/* Paragraph */}
-            <Box
-              sx={{
-                width: "50%",
-                padding: 2,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
-              <Typography
-                variant="h6"
-                sx={{
-                  textAlign: "left",
-                  display: "flex",
-                  alignItems: "flex-start",
-                  gap: 2,
-                  border: "10px solid #11000080",
-                  padding: 2,
-                  backgroundColor: "#f5f5f5",
+        ) : view === "map" ? (
+          <Box
+            sx={{
+              display: "flex",
+              flexDirection: "column",
+              gap: 2,
+              marginTop: 2,
+            }}
+          >
+            {/* Map and paragraph side by side */}
+            <Box sx={{ display: "flex", gap: 2 }}>
+              {/* Map */}
+              <div
+                ref={mapElement}
+                style={{
+                  height: "800px",
+                  width: "50%",
+                  border: "1px solid #ccc",
                   borderRadius: "5px",
                 }}
+              />
+
+              {/* Paragraph */}
+              <Box
+                sx={{
+                  width: "50%",
+                  padding: 2,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
               >
-                <Lightbulb size={48} color="black" />
-                <span>
-                  Under the project {projectId}, 79 waterbodies have been
-                  de-silted, spanning around 90 hectares. On average, the
-                  surface water availability during summer season has changed
-                  from 16% to 25%. The average zone of influence distance has
-                  increased from 200 m to 450 m.
-                </span>
-              </Typography>
+                <Typography
+                  variant="h6"
+                  sx={{
+                    textAlign: "left",
+                    display: "flex",
+                    alignItems: "flex-start",
+                    gap: 2,
+                    border: "10px solid #11000080",
+                    padding: 2,
+                    backgroundColor: "#f5f5f5",
+                    borderRadius: "5px",
+                  }}
+                >
+                  <Lightbulb size={48} color="black" />
+                  <span>
+                    Under the project {projectId}, 79 waterbodies have been
+                    de-silted, spanning around 90 hectares. On average, the
+                    surface water availability during summer season has changed
+                    from 16% to 25%. The average zone of influence distance has
+                    increased from 200 m to 450 m.
+                  </span>
+                </Typography>
+              </Box>
+            </Box>
+
+            {/* Chart below */}
+            <Box
+              sx={{
+                width: "500px",
+                height: "310px",
+                padding: 2,
+                display: "flex",
+                justifyContent: "flex-start",
+              }}
+            >
+              <SurfaceWaterChart water_rej={water_rej} />
             </Box>
           </Box>
-        )}
+        ) : null}
       </Box>
     </Box>
   );
