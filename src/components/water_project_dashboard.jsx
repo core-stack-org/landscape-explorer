@@ -9,6 +9,9 @@ import OSM from "ol/source/OSM";
 import GeoJSON from "ol/format/GeoJSON";
 import Map from "ol/Map";
 import { Style, Fill, Stroke } from "ol/style";
+import { fromLonLat } from "ol/proj";
+import SurfaceWaterBodiesChart from "./WaterAvailabilityChart";
+import LocationOnIcon from "@mui/icons-material/LocationOn";
 
 import {
   Box,
@@ -37,6 +40,7 @@ import XYZ from "ol/source/XYZ";
 import { Control, defaults as defaultControls } from "ol/control";
 import FilterListIcon from "@mui/icons-material/FilterList";
 import SurfaceWaterChart from "./waterChart";
+import getImageLayer from "../actions/getImageLayers";
 
 const WaterProjectDashboard = () => {
   const { projectId } = useParams();
@@ -44,6 +48,9 @@ const WaterProjectDashboard = () => {
   const [anchorEl, setAnchorEl] = useState(null);
   const [filterType, setFilterType] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [cords, setCords] = useState([]);
+  const [selectedWaterbody, setSelectedWaterbody] = useState(null);
+  const [waterBodyLayer, setWaterBodyLayer] = useState(null);
 
   const mapElement = useRef();
   const mapRef = useRef();
@@ -120,8 +127,31 @@ const WaterProjectDashboard = () => {
 
     return water_rej.features.map((feature, index) => {
       const props = feature.properties || {};
-      const matchedProps = feature?.properties?.matched?.properties || {};
-      const kKrValues = Object.entries(matchedProps)
+      const geometry = feature.geometry || {};
+
+      // Extract coordinates if available
+      let coordinates = null;
+      if (geometry.type === "Point") {
+        coordinates = geometry.coordinates;
+      } else if (geometry.type === "Polygon") {
+        // Calculate centroid for polygons
+        const coords = geometry.coordinates[0];
+        if (coords && coords.length > 0) {
+          const sumX = coords.reduce((acc, coord) => acc + coord[0], 0);
+          const sumY = coords.reduce((acc, coord) => acc + coord[1], 0);
+          coordinates = [sumX / coords.length, sumY / coords.length];
+        }
+      } else if (
+        geometry.type === "LineString" &&
+        geometry.coordinates &&
+        geometry.coordinates.length > 0
+      ) {
+        // Use middle point for LineString
+        const middleIndex = Math.floor(geometry.coordinates.length / 2);
+        coordinates = geometry.coordinates[middleIndex];
+      }
+
+      const kKrValues = Object.entries(props)
         .filter(
           ([key]) =>
             (key.startsWith("k_") || key.startsWith("kr_")) &&
@@ -136,9 +166,7 @@ const WaterProjectDashboard = () => {
           ).toFixed(2)
         : null;
 
-      console.log(`Row ${index + 1}: Avg K + KR % = ${avgKKr}`);
-
-      const krzValues = Object.entries(matchedProps)
+      const krzValues = Object.entries(props)
         .filter(([key]) => key.startsWith("krz_"))
         .map(([_, value]) => Number(value))
         .filter((val) => !isNaN(val));
@@ -149,10 +177,6 @@ const WaterProjectDashboard = () => {
           ).toFixed(2)
         : null;
 
-      console.log(
-        `Row ${index + 1}: Avg K + KR % = ${avgKKr}, Avg KRZ % = ${avgKrz}`
-      );
-
       return {
         id: index + 1,
         state: props.State || "NA",
@@ -162,108 +186,11 @@ const WaterProjectDashboard = () => {
         siltRemoved: props.slit_excavated || 0,
         avgWaterAvailabilityZaid: avgKrz,
         avgWaterAvailabilityKharifAndRabi: avgKKr,
+        coordinates: coordinates,
+        featureIndex: index, // Store feature index for later reference
       };
     });
   }, [water_rej]);
-
-  const fetchBoundaryAndZoom = async (district, block) => {
-    console.log(district, block);
-    setIsLoading(true);
-    try {
-      const boundaryLayer = await getVectorLayersWater(
-        "panchayat_boundaries",
-        `${district.toLowerCase().replace(/\s+/g, "_")}_${block
-          .toLowerCase()
-          .replace(/\s+/g, "_")}`,
-        true,
-        true
-      );
-      boundaryLayer.setStyle(
-        new Style({
-          stroke: new Stroke({
-            color: "#000000",
-            width: 1.0,
-          }),
-        })
-      );
-
-      const vectorLayerWater = new VectorSource({
-        features: new GeoJSON().readFeatures(water_rej),
-      });
-
-      const waterBodyLayer = new VectorLayer({
-        source: vectorLayerWater,
-        style: new Style({
-          stroke: new Stroke({ color: "#6495ed", width: 5 }),
-          fill: new Fill({ color: "rgba(100, 149, 237, 0.5)" }),
-        }),
-      });
-      console.log(vectorLayerWater);
-      boundaryLayer.setOpacity(0);
-
-      mapRef.current.addLayer(boundaryLayer);
-      mapRef.current.addLayer(waterBodyLayer);
-
-      AdminLayerRef.current = boundaryLayer;
-
-      const vectorSource = boundaryLayer.getSource();
-
-      await new Promise((resolve, reject) => {
-        const checkFeatures = () => {
-          if (vectorSource.getFeatures().length > 0) {
-            resolve();
-          } else {
-            vectorSource.once("featuresloadend", () => {
-              vectorSource.getFeatures().length > 0
-                ? resolve()
-                : reject(new Error("No features loaded"));
-            });
-            setTimeout(() => {
-              vectorSource.getFeatures().length > 0
-                ? resolve()
-                : reject(new Error("Timeout loading features"));
-            }, 1000);
-          }
-        };
-        checkFeatures();
-      });
-
-      const extent = vectorSource.getExtent();
-      const view = mapRef.current.getView();
-      view.cancelAnimations();
-      view.animate(
-        {
-          zoom: Math.max(view.getZoom() - 0.5, 5),
-          duration: 750,
-        },
-        () => {
-          view.fit(extent, {
-            padding: [50, 50, 50, 50],
-            duration: 1000,
-            maxZoom: 15,
-            easing: (t) => (t === 1 ? 1 : 1 - Math.pow(2, -10 * t)),
-            callback: () => {
-              let opacity = 0;
-              const interval = setInterval(() => {
-                opacity += 0.1;
-                boundaryLayer.setOpacity(opacity);
-                if (opacity >= 1) {
-                  clearInterval(interval);
-                  setIsLoading(false);
-                }
-              }, 50);
-            },
-          });
-        }
-      );
-    } catch (error) {
-      console.error("Error loading boundary:", error);
-      setIsLoading(false);
-      const view = mapRef.current.getView();
-      view.setCenter([78.9, 23.6]);
-      view.setZoom(5);
-    }
-  };
 
   const handleViewChange = (event, newView) => {
     if (newView !== null) {
@@ -284,6 +211,7 @@ const WaterProjectDashboard = () => {
     return (
       Object.keys(row).some((key) => {
         if (!row[key]) return false;
+        if (typeof row[key] === "object") return false; // Skip objects like coordinates
         return row[key]
           .toString()
           .toLowerCase()
@@ -328,7 +256,7 @@ const WaterProjectDashboard = () => {
     handleFilterClose();
   };
 
-  const initializeMap = () => {
+  const initializeMap = async () => {
     console.log("Map target:", mapElement.current);
     console.log("Map instance created");
 
@@ -354,15 +282,11 @@ const WaterProjectDashboard = () => {
         element.style.fontSize = "10px";
         element.style.padding = "5px";
         element.innerHTML = "&copy; Google Satellite Hybrid contributors";
-        super({
-          element: element,
-        });
+        super({ element });
       }
     }
 
     const view = new View({
-      center: [78.9, 23.6], // EPSG:4326, center over India
-      zoom: 5,
       projection: "EPSG:4326",
       constrainResolution: true,
       smoothExtentConstraint: true,
@@ -379,6 +303,53 @@ const WaterProjectDashboard = () => {
     });
 
     mapRef.current = map;
+
+    // Create water body layer
+    const vectorLayerWater = new VectorSource({
+      features: new GeoJSON({
+        dataProjection: "EPSG:4326",
+        featureProjection: "EPSG:4326",
+      }).readFeatures(water_rej),
+    });
+
+    const waterBodyLayer = new VectorLayer({
+      source: vectorLayerWater,
+      style: new Style({
+        stroke: new Stroke({ color: "#6495ed", width: 5 }),
+        fill: new Fill({ color: "rgba(100, 149, 237, 0.5)" }),
+      }),
+    });
+
+    // Load and add the LULC image layer
+    const lulcWaterRej = await getImageLayer(
+      "waterrej",
+      "clipped_lulc_waterrej_test",
+      true,
+      "waterrej_lulc"
+    );
+
+    // Add water body layer after LULC
+    map.addLayer(waterBodyLayer);
+    map.addLayer(lulcWaterRej);
+    setWaterBodyLayer(waterBodyLayer);
+
+    // Fit to waterbody extent if features exist
+    const features = vectorLayerWater.getFeatures();
+    if (!selectedWaterbody && features.length > 0) {
+      const extent = vectorLayerWater.getExtent();
+      view.fit(extent, {
+        padding: [50, 50, 50, 50],
+        duration: 1000,
+        maxZoom: 14,
+      });
+    }
+
+    // Safely zoom to selected waterbody after all layers are rendered
+    map.once("rendercomplete", () => {
+      if (selectedWaterbody && selectedWaterbody.coordinates) {
+        zoomToWaterbody(selectedWaterbody);
+      }
+    });
   };
 
   useEffect(() => {
@@ -393,17 +364,118 @@ const WaterProjectDashboard = () => {
     };
   }, [view]);
 
+  // Add effect to handle selected waterbody changes when map is already initialized
+  useEffect(() => {
+    if (
+      view === "map" &&
+      mapRef.current &&
+      selectedWaterbody &&
+      selectedWaterbody.coordinates
+    ) {
+      zoomToWaterbody(selectedWaterbody);
+    }
+  }, [selectedWaterbody, view]);
+
+  const zoomToWaterbody = (waterbody) => {
+    if (!waterbody.coordinates) {
+      console.error("No coordinates found for waterbody:", waterbody.waterbody);
+      return;
+    }
+
+    console.log("Zooming to coordinates:", waterbody.coordinates);
+
+    const mapView = mapRef.current.getView();
+
+    // Animate to the waterbody coordinates
+    mapView.animate({
+      center: waterbody.coordinates,
+      zoom: 18, // Higher zoom level for better detail
+      duration: 1000,
+    });
+
+    // Highlight the selected waterbody
+    if (waterBodyLayer) {
+      const source = waterBodyLayer.getSource();
+      const features = source.getFeatures();
+
+      // Reset style for all features
+      features.forEach((feature) => {
+        feature.setStyle(null);
+      });
+
+      // Apply highlight style to the selected feature
+      if (
+        waterbody.featureIndex !== undefined &&
+        features[waterbody.featureIndex]
+      ) {
+        const selectedFeature = features[waterbody.featureIndex];
+        selectedFeature.setStyle(
+          new Style({
+            stroke: new Stroke({ color: "#FF0000", width: 5 }),
+            fill: new Fill({ color: "rgba(255, 0, 0, 0.5)" }),
+          })
+        );
+      }
+    }
+  };
+
   const handleWaterbodyClick = (row) => {
-    const district = row.district;
-    const block = row.block;
+    console.log("Waterbody clicked:", row.waterbody);
 
-    setView("map");
+    // Find the feature in the GeoJSON data for this row
+    const waterbodyFeature = water_rej.features.find(
+      (feature, index) => index === row.featureIndex
+    );
 
-    setTimeout(() => {
-      fetchBoundaryAndZoom(district, block);
-    }, 500);
+    if (waterbodyFeature) {
+      let coordinates;
+      const geometry = waterbodyFeature.geometry;
 
-    console.log("Waterbody clicked:", row.waterbody, district, block);
+      // Extract coordinates based on geometry type
+      if (geometry.type === "Point") {
+        coordinates = geometry.coordinates;
+      } else if (
+        geometry.type === "Polygon" &&
+        geometry.coordinates &&
+        geometry.coordinates[0]
+      ) {
+        // Calculate centroid of polygon
+        const coords = geometry.coordinates[0];
+        const sumX = coords.reduce((acc, coord) => acc + coord[0], 0);
+        const sumY = coords.reduce((acc, coord) => acc + coord[1], 0);
+        coordinates = [sumX / coords.length, sumY / coords.length];
+      } else if (
+        geometry.type === "LineString" &&
+        geometry.coordinates &&
+        geometry.coordinates.length > 0
+      ) {
+        // Use middle point for LineString
+        const middleIndex = Math.floor(geometry.coordinates.length / 2);
+        coordinates = geometry.coordinates[middleIndex];
+      }
+
+      if (coordinates) {
+        console.log("Found coordinates:", coordinates);
+        // Update the row with coordinates if not already set
+        if (!row.coordinates) {
+          row.coordinates = coordinates;
+        }
+        setSelectedWaterbody(row);
+        setView("map");
+      } else {
+        console.error(
+          "Could not extract coordinates from feature:",
+          waterbodyFeature
+        );
+      }
+    } else {
+      console.error("Could not find feature for waterbody:", row.waterbody);
+      // If we have coordinates directly in the row, use them
+      if (row.coordinates) {
+        setSelectedWaterbody(row);
+        setView("map");
+      }
+    }
   };
 
   return (
@@ -718,22 +790,121 @@ const WaterProjectDashboard = () => {
             }}
           >
             {/* Map and paragraph side by side */}
-            <Box sx={{ display: "flex", gap: 2 }}>
+            <Box sx={{ display: "flex" }}>
               {/* Map */}
-              <div
-                ref={mapElement}
-                style={{
-                  height: "800px",
-                  width: "50%",
-                  border: "1px solid #ccc",
-                  borderRadius: "5px",
+
+              <Box
+                sx={{
+                  position: "relative",
+                  width: "100%",
+                  height: "100%",
                 }}
-              />
+              >
+                {/* OpenLayers map container */}
+                <div
+                  ref={mapElement}
+                  style={{
+                    height: "800px",
+
+                    border: "1px solid #ccc",
+                    borderRadius: "5px",
+                  }}
+                />
+                {/* Top-left label */}
+                <Box
+                  sx={{
+                    position: "absolute",
+                    top: 16,
+                    left: 16,
+                    backgroundColor: "rgba(255, 255, 255, 0.9)",
+                    padding: "8px 12px",
+                    borderRadius: "6px",
+                    fontWeight: "bold",
+                    boxShadow: 1,
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "flex-start",
+                    gap: 1,
+                  }}
+                >
+                  <Box display="flex" alignItems="center" gap={1}>
+                    <LocationOnIcon fontSize="small" color="primary" />
+                    <Typography variant="body1" fontWeight={600}>
+                      {selectedWaterbody?.waterbody || "Waterbody Name"}
+                    </Typography>
+                  </Box>
+
+                  <Typography variant="body2" color="text.secondary">
+                    Silt Removed: {selectedWaterbody?.siltRemoved || "silt"}{" "}
+                    cubic metre
+                  </Typography>
+                </Box>
+
+                {/* Legend overlayed on the map */}
+                <Box
+                  sx={{
+                    position: "absolute",
+                    bottom: 16,
+                    left: 16,
+                    backgroundColor: "rgba(255, 255, 255, 0.9)",
+                    padding: 2,
+                    borderRadius: 1,
+                    boxShadow: 2,
+                  }}
+                >
+                  <Typography variant="subtitle2">
+                    Water Layer Legend
+                  </Typography>
+
+                  <Box display="flex" alignItems="center" gap={1} mt={1}>
+                    <Box
+                      sx={{
+                        width: 20,
+                        height: 20,
+                        backgroundColor: "#74CCF4",
+                        opacity: 0.7,
+                        border: "1px solid #000",
+                      }}
+                    />
+                    <Typography variant="body2">Kharif Water</Typography>
+                  </Box>
+
+                  <Box display="flex" alignItems="center" gap={1} mt={1}>
+                    <Box
+                      sx={{
+                        width: 20,
+                        height: 20,
+                        backgroundColor: "#1ca3ec",
+                        opacity: 0.7,
+                        border: "1px solid #000",
+                      }}
+                    />
+                    <Typography variant="body2">
+                      Kharif and Rabi Water
+                    </Typography>
+                  </Box>
+
+                  <Box display="flex" alignItems="center" gap={1} mt={1}>
+                    <Box
+                      sx={{
+                        width: 20,
+                        height: 20,
+                        backgroundColor: "#0f5e9c",
+                        opacity: 0.7,
+                        border: "1px solid #000",
+                      }}
+                    />
+                    <Typography variant="body2">
+                      Kharif, Rabi and Zaid Water
+                    </Typography>
+                  </Box>
+                </Box>
+              </Box>
 
               {/* Paragraph */}
               <Box
                 sx={{
-                  width: "50%",
+                  width: "80%",
                   padding: 2,
                   display: "flex",
                   alignItems: "center",
@@ -764,19 +935,12 @@ const WaterProjectDashboard = () => {
                 </Typography>
               </Box>
             </Box>
-
-            {/* Chart below */}
-            <Box
-              sx={{
-                width: "500px",
-                height: "310px",
-                padding: 2,
-                display: "flex",
-                justifyContent: "flex-start",
-              }}
-            >
-              <SurfaceWaterChart water_rej={water_rej} />
-            </Box>
+            {selectedWaterbody && (
+              <SurfaceWaterBodiesChart
+                waterbody={selectedWaterbody}
+                water_rej={water_rej}
+              />
+            )}
           </Box>
         ) : null}
       </Box>

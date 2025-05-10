@@ -50,11 +50,9 @@ const SurfaceWaterChart = ({ water_rej }) => {
       "2024-25",
     ];
 
-    // Aggregate area by year
     const totals = yearKeys.map((key) =>
       water_rej.features.reduce((sum, feature) => {
-        const area =
-          parseFloat(feature?.properties?.matched?.properties?.[key]) || 0;
+        const area = parseFloat(feature?.properties?.[key]) || 0;
         return sum + area;
       }, 0)
     );
