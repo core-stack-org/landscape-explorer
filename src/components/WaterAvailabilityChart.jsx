@@ -1,121 +1,122 @@
-import { useEffect, useState } from "react";
-import { Bar } from "react-chartjs-2";
+import React from "react";
 import {
   Chart as ChartJS,
-  BarElement,
   CategoryScale,
   LinearScale,
-  Title,
+  BarElement,
   Tooltip,
   Legend,
 } from "chart.js";
-import WaterProjectDashboard from "./water_project_dashboard";
+import { Bar } from "react-chartjs-2";
 
-// Register the required chart components
-ChartJS.register(
-  BarElement,
-  CategoryScale,
-  LinearScale,
-  Title,
-  Tooltip,
-  Legend
-);
+ChartJS.register(CategoryScale, LinearScale, BarElement, Tooltip, Legend);
 
-const SurfaceWaterBodiesChart = ({ water_rej }) => {
-  const years = [
-    { key: "17-18", label: "2017-18" },
-    { key: "18-19", label: "2018-19" },
-    { key: "19-20", label: "2019-20" },
-    { key: "20-21", label: "2020-21" },
-    { key: "21-22", label: "2021-22" },
-    { key: "22-23", label: "2022-23" },
-    { key: "23-24", label: "2023-24" },
-  ];
+const years = [
+  "17-18",
+  "18-19",
+  "19-20",
+  "20-21",
+  "21-22",
+  "22-23",
+  "23-24",
+  "24-25",
+];
 
-  const [chartData, setChartData] = useState({ labels: [], datasets: [] });
-  console.log(water_rej);
+export default function WaterAvailabilityGraph({ water_rej }) {
+  // Initialize arrays for data
+  const kharifData = new Array(years.length).fill(0);
+  const rabiData = new Array(years.length).fill(0);
+  const zaidData = new Array(years.length).fill(0);
 
-  useEffect(() => {
-    if (!water_rej?.features) return;
+  // Iterate over each feature in water_rej
+  water_rej.features.forEach((feature) => {
+    const featureProps = feature.properties;
 
-    const kharifZaidData = [];
-    const kharifRabiData = [];
-    const kharifData = [];
+    console.log("Feature Properties: ", featureProps); // Log entire properties to check
 
-    years.forEach(({ key }) => {
-      let kharifZaidSum = 0;
-      let kharifRabiSum = 0;
-      let kharifSum = 0;
+    years.forEach((year, index) => {
+      // Check if `k`, `kr`, `krz` values exist for this feature and year
+      const k_value = featureProps[`k_${year}`] ?? 0;
+      const kr_value = featureProps[`kr_${year}`] ?? 0;
+      const krz_value = featureProps[`krz_${year}`] ?? 0;
 
-      water_rej.features.forEach((feature) => {
-        const props = feature?.properties || {};
-        kharifZaidSum += parseFloat(props[`krz_${key}`]) || 0; // KRZ (Kharif Rabi Zaid)
-        kharifRabiSum += parseFloat(props[`kr_${key}`]) || 0; // KR (Kharif-Rabi)
-        kharifSum += parseFloat(props[`k_${key}`]) || 0; // K (Kharif)
-      });
+      // Log the specific values for `k`, `kr`, and `krz` for debugging
+      console.log(
+        `Year: ${year} | k: ${k_value} | kr: ${kr_value} | krz: ${krz_value}`
+      );
 
-      kharifZaidData.push(kharifZaidSum);
-      kharifRabiData.push(kharifRabiSum - kharifZaidSum); // KR - KRZ (Kharif-Rabi minus Kharif Rabi Zaid)
-      kharifData.push(kharifSum - kharifRabiSum); // K - KR (Kharif minus Kharif-Rabi)
+      // Calculate the values based on `k`, `kr`, `krz`
+      kharifData[index] += k_value - kr_value; // Kharif = k - kr
+      rabiData[index] += kr_value - krz_value; // Rabi = kr - krz
+      zaidData[index] += krz_value; // Zaid = krz
+
+      // Log data for each year after calculation
+      console.log(`After processing ${year}:`);
+      console.log("Kharif Data: ", kharifData);
+      console.log("Rabi Data: ", rabiData);
+      console.log("Zaid Data: ", zaidData);
     });
+  });
 
-    setChartData({
-      labels: years.map((y) => y.label),
-      datasets: [
-        {
-          label: "Kharif Rabi Zaid",
-          data: kharifZaidData,
-          backgroundColor: "#0f5e9c",
-          stack: "stack1",
-        },
-        {
-          label: "Kharif-Rabi",
-          data: kharifRabiData,
-          backgroundColor: "#1ca3ec",
-          stack: "stack1",
-        },
-        {
-          label: "Kharif",
-          data: kharifData,
-          backgroundColor: "#74CCF4",
-          stack: "stack1",
-        },
-      ],
-    });
-  }, [water_rej]);
+  // Log final datasets to verify if the data is correctly populated
+  console.log("Kharif Data: ", kharifData);
+  console.log("Rabi Data: ", rabiData);
+  console.log("Zaid Data: ", zaidData);
 
-  const chartOptions = {
+  const data = {
+    labels: years,
+    datasets: [
+      {
+        label: "Kharif",
+        data: kharifData,
+        backgroundColor: "#ffbe0b",
+      },
+      {
+        label: "Rabi",
+        data: rabiData,
+        backgroundColor: "#fb5607",
+      },
+      {
+        label: "Zaid",
+        data: zaidData,
+        backgroundColor: "#ff006e",
+      },
+    ],
+  };
+
+  const options = {
+    maintainAspectRatio: false,
     responsive: true,
     plugins: {
-      title: {
-        display: true,
-        text: "Surface Waterbody Area Over Years (Stacked)",
-      },
       legend: {
         position: "top",
       },
+      title: {
+        display: true,
+        text: "Water Availability Over Time (Area in Hectares)",
+      },
     },
     scales: {
-      y: {
-        beginAtZero: true,
-        title: { display: true, text: "Area (sq.m)" },
-      },
       x: {
-        title: { display: true, text: "Year" },
+        stacked: true,
+        title: {
+          display: true,
+          text: "Year",
+        },
+      },
+      y: {
+        stacked: true,
+        title: {
+          display: true,
+          text: "Area (Hectares)",
+        },
       },
     },
   };
 
   return (
-    <div className="px-6 py-4 w-full max-w-5xl mx-auto">
-      <div className="text-xl font-semibold text-center mb-4">
-        Surface Waterbody Analysis (Stacked)
-      </div>
-      <div style={{ width: "100%", height: "400px" }}>
-        <Bar data={chartData} options={chartOptions} />
-      </div>
+    <div style={{ width: "100%", height: "400px" }}>
+      <Bar options={options} data={data} />
     </div>
   );
-};
-
-export default SurfaceWaterBodiesChart;
+}

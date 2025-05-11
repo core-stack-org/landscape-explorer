@@ -936,10 +936,17 @@ const WaterProjectDashboard = () => {
               </Box>
             </Box>
             {selectedWaterbody && (
-              <SurfaceWaterBodiesChart
-                waterbody={selectedWaterbody}
-                water_rej={water_rej}
-              />
+              <div style={{ display: "flex", gap: "16px" }}>
+                <div style={{ width: "50%", height: "400px" }}>
+                  <SurfaceWaterBodiesChart
+                    waterbody={selectedWaterbody}
+                    water_rej={water_rej}
+                  />
+                </div>
+                <div style={{ width: "50%", height: "400px" }}>
+                  <SurfaceWaterChart water_rej={water_rej} />
+                </div>
+              </div>
             )}
           </Box>
         ) : null}
