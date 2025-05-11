@@ -83,13 +83,13 @@ const SurfaceWaterChart = ({waterbody, water_rej }) => {
     plugins: {
       title: {
         display: true,
-        text: "Area of Surface Waterbody (in sq.m)",
+        text: "Area of Surface Waterbody (in Heactare)",
       },
     },
     scales: {
       y: {
         beginAtZero: true,
-        title: { display: true, text: "Area (sq.m)" },
+        title: { display: true, text: "Area (Heactare)" },
       },
       x: {
         title: { display: true, text: "Year" },
