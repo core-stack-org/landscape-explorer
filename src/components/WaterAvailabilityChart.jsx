@@ -22,94 +22,66 @@ const years = [
   "24-25",
 ];
 
-export default function WaterAvailabilityGraph({ water_rej }) {
-  // Initialize arrays for data
+const WaterAvailabilityChart = ({ waterbody, water_rej }) => {
+  // Prepare empty arrays that will hold season‑wise values for each year
   const kharifData = new Array(years.length).fill(0);
-  const rabiData = new Array(years.length).fill(0);
-  const zaidData = new Array(years.length).fill(0);
+  const rabiData   = new Array(years.length).fill(0);
+  const zaidData   = new Array(years.length).fill(0);
 
-  // Iterate over each feature in water_rej
+  // Populate the arrays from feature properties
   water_rej.features.forEach((feature) => {
-    const featureProps = feature.properties;
+    if (feature.properties.waterbody_name === waterbody.waterbody) {
+      const p = feature.properties;
 
-    console.log("Feature Properties: ", featureProps); // Log entire properties to check
-
-    years.forEach((year, index) => {
-      // Check if `k`, `kr`, `krz` values exist for this feature and year
-      const k_value = featureProps[`k_${year}`] ?? 0;
-      const kr_value = featureProps[`kr_${year}`] ?? 0;
-      const krz_value = featureProps[`krz_${year}`] ?? 0;
-
-      // Log the specific values for `k`, `kr`, and `krz` for debugging
-      console.log(
-        `Year: ${year} | k: ${k_value} | kr: ${kr_value} | krz: ${krz_value}`
-      );
-
-      // Calculate the values based on `k`, `kr`, `krz`
-      kharifData[index] += k_value - kr_value; // Kharif = k - kr
-      rabiData[index] += kr_value - krz_value; // Rabi = kr - krz
-      zaidData[index] += krz_value; // Zaid = krz
-
-      // Log data for each year after calculation
-      console.log(`After processing ${year}:`);
-      console.log("Kharif Data: ", kharifData);
-      console.log("Rabi Data: ", rabiData);
-      console.log("Zaid Data: ", zaidData);
-    });
+      years.forEach((year, i) => {
+        kharifData[i] += p[`k_${year}`]  ?? 0; // Kharif
+        rabiData[i]   += p[`kr_${year}`] ?? 0; // Rabi
+        zaidData[i]   += p[`krz_${year}`]?? 0; // Zaid
+      });
+    }
   });
 
-  // Log final datasets to verify if the data is correctly populated
-  console.log("Kharif Data: ", kharifData);
-  console.log("Rabi Data: ", rabiData);
-  console.log("Zaid Data: ", zaidData);
-
+  // Chart.js dataset structure
   const data = {
     labels: years,
     datasets: [
       {
         label: "Kharif",
         data: kharifData,
-        backgroundColor: "#ffbe0b",
+        backgroundColor: "#74CCF4",
       },
       {
         label: "Rabi",
         data: rabiData,
-        backgroundColor: "#fb5607",
+        backgroundColor: "#1ca3ec",
       },
       {
         label: "Zaid",
         data: zaidData,
-        backgroundColor: "#ff006e",
+        backgroundColor: "#0f5e9c",
       },
     ],
   };
 
+  // Options: turn *off* stacking so bars are grouped
   const options = {
     maintainAspectRatio: false,
     responsive: true,
     plugins: {
-      legend: {
-        position: "top",
-      },
+      legend: { position: "top" },
       title: {
         display: true,
-        text: "Water Availability Over Time (Area in Hectares)",
+        text: "Water Availability Over Time",
       },
     },
     scales: {
       x: {
-        stacked: true,
-        title: {
-          display: true,
-          text: "Year",
-        },
+        stacked: false,       // grouped bars on X‑axis
+        title: { display: true, text: "Year" },
       },
       y: {
-        stacked: true,
-        title: {
-          display: true,
-          text: "Area (Hectares)",
-        },
+        stacked: false,       // independent Y values
+        title: { display: true, text: "Area (in Percent)" },
       },
     },
   };
@@ -119,4 +91,6 @@ export default function WaterAvailabilityGraph({ water_rej }) {
       <Bar options={options} data={data} />
     </div>
   );
-}
+};
+
+export default WaterAvailabilityChart;

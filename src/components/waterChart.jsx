@@ -19,7 +19,7 @@ ChartJS.register(
   Legend
 );
 
-const SurfaceWaterChart = ({ water_rej }) => {
+const SurfaceWaterChart = ({waterbody, water_rej }) => {
   const [chartData, setChartData] = useState({
     labels: [],
     datasets: [],
@@ -27,6 +27,7 @@ const SurfaceWaterChart = ({ water_rej }) => {
 
   useEffect(() => {
     if (!water_rej || !water_rej.features) return;
+
 
     const yearKeys = [
       "area_17-18",
@@ -50,18 +51,24 @@ const SurfaceWaterChart = ({ water_rej }) => {
       "2024-25",
     ];
 
-    const totals = yearKeys.map((key) =>
-      water_rej.features.reduce((sum, feature) => {
-        const area = parseFloat(feature?.properties?.[key]) || 0;
-        return sum + area;
-      }, 0)
-    );
+    const totals = new Array(yearKeys.length).fill(0);
+
+    water_rej.features.forEach((feature) => {
+      if(feature.properties.waterbody_name === waterbody.waterbody){
+        const featureProps = feature.properties;
+        
+        yearKeys.map((key, idx) =>{
+          const area = parseFloat(feature?.properties?.[key]) || 0;
+          totals[idx] = area
+        })
+      }
+    })
 
     setChartData({
       labels: yearLabels,
       datasets: [
         {
-          label: "Area of Surface Waterbody (sq.m)",
+          label: "Area of Surface Waterbody (Hectare)",
           data: totals,
           backgroundColor: "rgba(75, 192, 192, 0.6)",
           borderColor: "rgba(75, 192, 192, 1)",

@@ -2,15 +2,12 @@ import React, { useState, useEffect, useRef, useMemo } from "react";
 import HeaderSelect from "../components/water_headerSection";
 import water_rej from "../components/data/waterbody_rej_data.json";
 import { useParams } from "react-router-dom";
-import getVectorLayersWater from "../actions/getVectorLayerWater";
 import VectorLayer from "ol/layer/Vector";
 import VectorSource from "ol/source/Vector";
-import OSM from "ol/source/OSM";
 import GeoJSON from "ol/format/GeoJSON";
 import Map from "ol/Map";
 import { Style, Fill, Stroke } from "ol/style";
-import { fromLonLat } from "ol/proj";
-import SurfaceWaterBodiesChart from "./WaterAvailabilityChart";
+import SurfaceWaterBodiesChart from "./WaterUsedChart";
 import LocationOnIcon from "@mui/icons-material/LocationOn";
 
 import {
@@ -25,7 +22,6 @@ import {
   TableHead,
   TableRow,
   Paper,
-  Select,
   MenuItem,
   Checkbox,
   Menu,
@@ -41,6 +37,7 @@ import { Control, defaults as defaultControls } from "ol/control";
 import FilterListIcon from "@mui/icons-material/FilterList";
 import SurfaceWaterChart from "./waterChart";
 import getImageLayer from "../actions/getImageLayers";
+import WaterAvailabilityChart from "./WaterAvailabilityChart";
 
 const WaterProjectDashboard = () => {
   const { projectId } = useParams();
@@ -116,10 +113,6 @@ const WaterProjectDashboard = () => {
     if (storedProject) {
       setProject(storedProject);
     }
-  }, []);
-
-  useEffect(() => {
-    console.log(water_rej);
   }, []);
 
   const rows = useMemo(() => {
@@ -224,8 +217,6 @@ const WaterProjectDashboard = () => {
     );
   });
 
-  console.log("Filtered Rows:", filteredRows);
-
   const sortedRows = [...filteredRows].sort((a, b) => {
     if (!sortField) return 0;
     const aValue = a[sortField];
@@ -257,8 +248,6 @@ const WaterProjectDashboard = () => {
   };
 
   const initializeMap = async () => {
-    console.log("Map target:", mapElement.current);
-    console.log("Map instance created");
 
     const baseLayer = new TileLayer({
       source: new XYZ({
@@ -382,8 +371,6 @@ const WaterProjectDashboard = () => {
       return;
     }
 
-    console.log("Zooming to coordinates:", waterbody.coordinates);
-
     const mapView = mapRef.current.getView();
 
     // Animate to the waterbody coordinates
@@ -420,7 +407,6 @@ const WaterProjectDashboard = () => {
   };
 
   const handleWaterbodyClick = (row) => {
-    console.log("Waterbody clicked:", row.waterbody);
 
     // Find the feature in the GeoJSON data for this row
     const waterbodyFeature = water_rej.features.find(
@@ -455,7 +441,6 @@ const WaterProjectDashboard = () => {
       }
 
       if (coordinates) {
-        console.log("Found coordinates:", coordinates);
         // Update the row with coordinates if not already set
         if (!row.coordinates) {
           row.coordinates = coordinates;
@@ -935,7 +920,7 @@ const WaterProjectDashboard = () => {
                 </Typography>
               </Box>
             </Box>
-            {selectedWaterbody && (
+            {selectedWaterbody !== undefined && (
               <div style={{ display: "flex", gap: "16px" }}>
                 <div style={{ width: "50%", height: "400px" }}>
                   <SurfaceWaterBodiesChart
@@ -944,10 +929,21 @@ const WaterProjectDashboard = () => {
                   />
                 </div>
                 <div style={{ width: "50%", height: "400px" }}>
-                  <SurfaceWaterChart water_rej={water_rej} />
+                  <SurfaceWaterChart 
+                    waterbody={selectedWaterbody}
+                    water_rej={water_rej}
+                  />
                 </div>
               </div>
             )}
+            <Box sx={{ display: "flex" }}>
+                <div style={{ width: "50%", height: "400px" }}>
+                  <WaterAvailabilityChart
+                    waterbody={selectedWaterbody}
+                    water_rej={water_rej}
+                  />
+                </div>
+            </Box>
           </Box>
         ) : null}
       </Box>
