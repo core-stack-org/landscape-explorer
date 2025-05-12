@@ -248,7 +248,6 @@ const WaterProjectDashboard = () => {
   };
 
   const initializeMap = async () => {
-
     const baseLayer = new TileLayer({
       source: new XYZ({
         url: `https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}`,
@@ -407,7 +406,6 @@ const WaterProjectDashboard = () => {
   };
 
   const handleWaterbodyClick = (row) => {
-
     // Find the feature in the GeoJSON data for this row
     const waterbodyFeature = water_rej.features.find(
       (feature, index) => index === row.featureIndex
@@ -589,9 +587,7 @@ const WaterProjectDashboard = () => {
               <Lightbulb size={94} color="black" />
               Under the project {projectId}, 79 waterbodies have been de-silted,
               spanning around 90 hectares. On average, the surface water
-              availability during summer season has changed from 16% to 25%. The
-              average zone of influence distance has increased from 200 m to 450
-              m.
+              availability during summer season has changed from 16% to 25%.
             </Typography>
             <TableContainer component={Paper} sx={{ mt: 4, boxShadow: 0 }}>
               <Table>
@@ -914,36 +910,37 @@ const WaterProjectDashboard = () => {
                     Under the project {projectId}, 79 waterbodies have been
                     de-silted, spanning around 90 hectares. On average, the
                     surface water availability during summer season has changed
-                    from 16% to 25%. The average zone of influence distance has
-                    increased from 200 m to 450 m.
+                    from 16% to 25%.
                   </span>
                 </Typography>
               </Box>
             </Box>
-            {selectedWaterbody !== undefined && (
-              <div style={{ display: "flex", gap: "16px" }}>
-                <div style={{ width: "50%", height: "400px" }}>
-                  <SurfaceWaterBodiesChart
-                    waterbody={selectedWaterbody}
-                    water_rej={water_rej}
-                  />
+            {selectedWaterbody !== undefined && selectedWaterbody !== null && (
+              <>
+                <div style={{ display: "flex", gap: "16px" }}>
+                  <div style={{ width: "50%", height: "400px" }}>
+                    <SurfaceWaterBodiesChart
+                      waterbody={selectedWaterbody}
+                      water_rej={water_rej}
+                    />
+                  </div>
+                  <div style={{ width: "50%", height: "400px" }}>
+                    <SurfaceWaterChart
+                      waterbody={selectedWaterbody}
+                      water_rej={water_rej}
+                    />
+                  </div>
                 </div>
-                <div style={{ width: "50%", height: "400px" }}>
-                  <SurfaceWaterChart 
-                    waterbody={selectedWaterbody}
-                    water_rej={water_rej}
-                  />
-                </div>
-              </div>
+                <Box sx={{ display: "flex" }}>
+                  <div style={{ width: "50%", height: "400px" }}>
+                    <WaterAvailabilityChart
+                      waterbody={selectedWaterbody}
+                      water_rej={water_rej}
+                    />
+                  </div>
+                </Box>
+              </>
             )}
-            <Box sx={{ display: "flex" }}>
-                <div style={{ width: "50%", height: "400px" }}>
-                  <WaterAvailabilityChart
-                    waterbody={selectedWaterbody}
-                    water_rej={water_rej}
-                  />
-                </div>
-            </Box>
           </Box>
         ) : null}
       </Box>

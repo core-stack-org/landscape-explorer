@@ -8,6 +8,7 @@ import {
   Legend,
 } from "chart.js";
 import { Bar } from "react-chartjs-2";
+import { ChartNoAxesGantt } from "lucide-react";
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Tooltip, Legend);
 
@@ -23,17 +24,21 @@ const years = [
 ];
 
 export default function WaterAvailabilityGraph({ waterbody, water_rej }) {
+  console.log(water_rej);
+  console.log(waterbody);
+  if (!waterbody || !waterbody.waterbody || !water_rej?.features) {
+    return <div>No data available</div>;
+  }
   // Initialize arrays for data
   const kharifData = new Array(years.length).fill(0);
   const rabiData = new Array(years.length).fill(0);
   const zaidData = new Array(years.length).fill(0);
 
-
   // Iterate over each feature in water_rej
   water_rej.features.forEach((feature) => {
-    if(feature.properties.waterbody_name === waterbody.waterbody){
+    if (feature.properties.waterbody_name === waterbody.waterbody) {
       const featureProps = feature.properties;
-      
+
       years.forEach((year, index) => {
         // Check if `k`, `kr`, `krz` values exist for this feature and year
         const k_value = featureProps[`k_${year}`] ?? 0;
@@ -44,14 +49,16 @@ export default function WaterAvailabilityGraph({ waterbody, water_rej }) {
         kharifData[index] += k_value - kr_value; // Kharif = k - kr
         rabiData[index] += kr_value - krz_value; // Rabi = kr - krz
         zaidData[index] += krz_value; // Zaid = krz
-        
-        kharifData[index] = ((featureProps[`area_${year}`] ?? 0) / 100) * kharifData[index];
-        rabiData[index] = ((featureProps[`area_${year}`] ?? 0) / 100) * rabiData[index];
-        zaidData[index] = ((featureProps[`area_${year}`] ?? 0) / 100) * zaidData[index];
+
+        kharifData[index] =
+          ((featureProps[`area_${year}`] ?? 0) / 100) * kharifData[index];
+        rabiData[index] =
+          ((featureProps[`area_${year}`] ?? 0) / 100) * rabiData[index];
+        zaidData[index] =
+          ((featureProps[`area_${year}`] ?? 0) / 100) * zaidData[index];
       });
     }
   });
-
 
   const data = {
     labels: years,
