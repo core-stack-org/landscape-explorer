@@ -68,7 +68,7 @@ const SurfaceWaterChart = ({waterbody, water_rej }) => {
       labels: yearLabels,
       datasets: [
         {
-          label: "Area of Surface Waterbody (Hectare)",
+          label: "Area of Surface Waterbody (Sq.m)",
           data: totals,
           backgroundColor: "rgba(75, 192, 192, 0.6)",
           borderColor: "rgba(75, 192, 192, 1)",
@@ -83,13 +83,13 @@ const SurfaceWaterChart = ({waterbody, water_rej }) => {
     plugins: {
       title: {
         display: true,
-        text: "Area of Surface Waterbody (in Heactare)",
+        text: "Area of Surface Waterbody (Sq.m)",
       },
     },
     scales: {
       y: {
         beginAtZero: true,
-        title: { display: true, text: "Area (Heactare)" },
+        title: { display: true, text: "Area (in Sq.m)" },
       },
       x: {
         title: { display: true, text: "Year" },

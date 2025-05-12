@@ -83,7 +83,7 @@ export default function WaterAvailabilityGraph({ waterbody, water_rej }) {
       },
       title: {
         display: true,
-        text: "Water Used Over Time (Area in Hectares)",
+        text: "Water Used Over Time (Sq.m)",
       },
     },
     scales: {
@@ -98,7 +98,7 @@ export default function WaterAvailabilityGraph({ waterbody, water_rej }) {
         stacked: true,
         title: {
           display: true,
-          text: "Area (Hectares)",
+          text: "Area (Sq.m)",
         },
       },
     },
