@@ -48,26 +48,79 @@ const MapControls = ({
     }
   };
 
+  // Filter function to get only active layers
+  const getActiveLayersByCategory = (category) => {
+    if (category === 'resources') {
+      return [
+        { id: 'settlement', label: 'Settlement' },
+        { id: 'water_structure', label: 'Water Structure' },
+        { id: 'well_structure', label: 'Well Structure' }
+      ].filter(layer => toggledLayers[layer.id] === true);
+    } 
+    else if (category === 'planning') {
+      return [
+        { id: 'agri_structure', label: 'Agriculture Structure' },
+        { id: 'livelihood_structure', label: 'Livelihood Structure' },
+        { id: 'recharge_structure', label: 'Recharge Structure' }
+      ].filter(layer => toggledLayers[layer.id] === true);
+    } 
+    else if (category === 'demographics') {
+      return [
+        { id: 'demographics', label: 'Demographics' },
+        { id: 'drainage', label: 'Drainage' },
+        { id: 'remote_sensed_waterbodies', label: 'Remote-Sensed Waterbodies' },
+        { id: 'hydrological_boundaries', label: 'Hydrological Boundaries' },
+        { id: 'hydrological_variables', label: 'Hydrological Variables' },
+        { id: 'clart', label: 'CLART' },
+        { id: 'nrega', label: 'NREGA' },
+        { id: 'drought', label: 'Drought' },
+        { id: 'terrain', label: 'Terrain' },
+        { id: 'administrative_boundaries', label: 'Administrative Boundaries' },
+        { id: 'cropping_intensity', label: 'Cropping Intensity' },
+        { id: 'terrain_vector', label: 'Terrain Vector' },
+        { id: 'terrain_lulc_slope', label: 'Terrain LULC Slope' },
+        { id: 'terrain_lulc_plain', label: 'Terrain LULC Plain' }
+      ].filter(layer => toggledLayers[layer.id] === true);
+    }
+    return [];
+  };
+
+  // Check if any layers are active in a category
+  const hasActiveLayers = (category) => {
+    return getActiveLayersByCategory(category).length > 0;
+  };
+
+  // Count total active layers
+  const totalActiveLayers = 
+    getActiveLayersByCategory('resources').length + 
+    getActiveLayersByCategory('planning').length + 
+    getActiveLayersByCategory('demographics').length;
+
   return (
     <div className="absolute bottom-6 right-6 flex flex-col space-y-2">
-      {/* Layer controls button */}
+      {/* Layer controls button - show active layer count */}
       <button
         onClick={() => setShowLayerControls(!showLayerControls)}
-        className="bg-white rounded-lg shadow-lg p-2 flex items-center justify-center hover:bg-gray-100"
+        className="bg-white rounded-lg shadow-lg p-2 flex items-center justify-center hover:bg-gray-100 relative"
         title="Toggle layer controls"
       >
         <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 6h11M9 12h11M9 18h11M5 6a1 1 0 11-2 0 1 1 0 012 0zM5 12a1 1 0 11-2 0 1 1 0 012 0zM5 18a1 1 0 11-2 0 1 1 0 012 0z" />
         </svg>
+        {totalActiveLayers > 0 && (
+          <span className="absolute -top-2 -right-2 bg-blue-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+            {totalActiveLayers}
+          </span>
+        )}
       </button>
 
       {/* Layer control panel */}
       {showLayerControls && (
-        <div className="bg-white rounded-lg shadow-lg p-3 w-60">
+        <div className="bg-white rounded-lg shadow-lg p-3 w-60 max-h-[calc(100vh-150px)] overflow-auto">
           <h3 className="font-medium text-gray-700 mb-2">Layer Controls</h3>
           
-          {/* Layer category buttons */}
-          <div className="flex space-x-1 mb-3">
+          {/* Layer category buttons in a wrapped grid */}
+          <div className="grid grid-cols-2 gap-1 mb-3">
             <button 
               className={`px-2 py-1 text-xs rounded ${activeCategory === 'base' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100'}`}
               onClick={() => setActiveCategory('base')}
@@ -75,22 +128,25 @@ const MapControls = ({
               Base
             </button>
             <button 
-              className={`px-2 py-1 text-xs rounded ${activeCategory === 'resources' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100'}`}
+              className={`px-2 py-1 text-xs rounded ${activeCategory === 'resources' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100'} ${!hasActiveLayers('resources') ? 'opacity-50' : ''}`}
               onClick={() => setActiveCategory('resources')}
+              disabled={!hasActiveLayers('resources')}
             >
-              Resources
+              Resources {hasActiveLayers('resources') && `(${getActiveLayersByCategory('resources').length})`}
             </button>
             <button 
-              className={`px-2 py-1 text-xs rounded ${activeCategory === 'planning' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100'}`}
+              className={`px-2 py-1 text-xs rounded ${activeCategory === 'planning' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100'} ${!hasActiveLayers('planning') ? 'opacity-50' : ''}`}
               onClick={() => setActiveCategory('planning')}
+              disabled={!hasActiveLayers('planning')}
             >
-              Planning
+              Planning {hasActiveLayers('planning') && `(${getActiveLayersByCategory('planning').length})`}
             </button>
             <button 
-              className={`px-2 py-1 text-xs rounded ${activeCategory === 'demographics' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100'}`}
+              className={`px-2 py-1 text-xs rounded ${activeCategory === 'demographics' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100'} ${!hasActiveLayers('demographics') ? 'opacity-50' : ''}`}
               onClick={() => setActiveCategory('demographics')}
+              disabled={!hasActiveLayers('demographics')}
             >
-              Demographics
+              Other {hasActiveLayers('demographics') && `(${getActiveLayersByCategory('demographics').length})`}
             </button>
           </div>
 
@@ -118,105 +174,69 @@ const MapControls = ({
             </div>
           )}
 
-          {/* Resources Layers */}
+          {/* Resources Layers - only active ones */}
           {activeCategory === 'resources' && (
             <div className="space-y-2 mb-3">
               <h4 className="text-xs font-medium text-gray-600 mb-1">Resources Layers</h4>
-              <label className="flex items-center space-x-2 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={toggledLayers.settlement || false}
-                  onChange={(e) => handleToggleClick('settlement', e.target.checked)}
-                  className="form-checkbox h-4 w-4 text-blue-600 rounded"
-                />
-                <span className="text-sm text-gray-700">Settlement</span>
-              </label>
-              <label className="flex items-center space-x-2 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={toggledLayers.water_structure || false}
-                  onChange={(e) => handleToggleClick('water_structure', e.target.checked)}
-                  className="form-checkbox h-4 w-4 text-blue-600 rounded"
-                />
-                <span className="text-sm text-gray-700">Water Structure</span>
-              </label>
-              <label className="flex items-center space-x-2 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={toggledLayers.well_structure || false}
-                  onChange={(e) => handleToggleClick('well_structure', e.target.checked)}
-                  className="form-checkbox h-4 w-4 text-blue-600 rounded"
-                />
-                <span className="text-sm text-gray-700">Well Structure</span>
-              </label>
+              {getActiveLayersByCategory('resources').length === 0 ? (
+                <p className="text-xs text-gray-500 italic">No active resource layers</p>
+              ) : (
+                getActiveLayersByCategory('resources').map(layer => (
+                  <label key={layer.id} className="flex items-center space-x-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={toggledLayers[layer.id] || false}
+                      onChange={(e) => handleToggleClick(layer.id, e.target.checked)}
+                      className="form-checkbox h-4 w-4 text-blue-600 rounded"
+                    />
+                    <span className="text-sm text-gray-700">{layer.label}</span>
+                  </label>
+                ))
+              )}
             </div>
           )}
 
-          {/* Planning Layers */}
+          {/* Planning Layers - only active ones */}
           {activeCategory === 'planning' && (
             <div className="space-y-2 mb-3">
               <h4 className="text-xs font-medium text-gray-600 mb-1">Planning Layers</h4>
-              <label className="flex items-center space-x-2 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={toggledLayers.agri_structure || false}
-                  onChange={(e) => handleToggleClick('agri_structure', e.target.checked)}
-                  className="form-checkbox h-4 w-4 text-blue-600 rounded"
-                />
-                <span className="text-sm text-gray-700">Agriculture Structure</span>
-              </label>
-              <label className="flex items-center space-x-2 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={toggledLayers.livelihood_structure || false}
-                  onChange={(e) => handleToggleClick('livelihood_structure', e.target.checked)}
-                  className="form-checkbox h-4 w-4 text-blue-600 rounded"
-                />
-                <span className="text-sm text-gray-700">Livelihood Structure</span>
-              </label>
-              <label className="flex items-center space-x-2 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={toggledLayers.recharge_structure || false}
-                  onChange={(e) => handleToggleClick('recharge_structure', e.target.checked)}
-                  className="form-checkbox h-4 w-4 text-blue-600 rounded"
-                />
-                <span className="text-sm text-gray-700">Recharge Structure</span>
-              </label>
+              {getActiveLayersByCategory('planning').length === 0 ? (
+                <p className="text-xs text-gray-500 italic">No active planning layers</p>
+              ) : (
+                getActiveLayersByCategory('planning').map(layer => (
+                  <label key={layer.id} className="flex items-center space-x-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={toggledLayers[layer.id] || false}
+                      onChange={(e) => handleToggleClick(layer.id, e.target.checked)}
+                      className="form-checkbox h-4 w-4 text-blue-600 rounded"
+                    />
+                    <span className="text-sm text-gray-700">{layer.label}</span>
+                  </label>
+                ))
+              )}
             </div>
           )}
 
-          {/* Other Layers */}
+          {/* Other Layers - only active ones */}
           {activeCategory === 'demographics' && (
             <div className="space-y-2 mb-3">
               <h4 className="text-xs font-medium text-gray-600 mb-1">Other Layers</h4>
-              <label className="flex items-center space-x-2 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={toggledLayers.demographics || false}
-                  onChange={(e) => handleToggleClick('demographics', e.target.checked)}
-                  className="form-checkbox h-4 w-4 text-blue-600 rounded"
-                />
-                <span className="text-sm text-gray-700">Demographics</span>
-              </label>
-              <label className="flex items-center space-x-2 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={toggledLayers.drainage || false}
-                  onChange={(e) => handleToggleClick('drainage', e.target.checked)}
-                  className="form-checkbox h-4 w-4 text-blue-600 rounded"
-                />
-                <span className="text-sm text-gray-700">Drainage</span>
-              </label>
-              <label className="flex items-center space-x-2 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={toggledLayers.remote_sensed_waterbodies || false}
-                  onChange={(e) => handleToggleClick('remote_sensed_waterbodies', e.target.checked)}
-                  className="form-checkbox h-4 w-4 text-blue-600 rounded"
-                />
-                <span className="text-sm text-gray-700">Remote-Sensed Waterbodies</span>
-              </label>
+              {getActiveLayersByCategory('demographics').length === 0 ? (
+                <p className="text-xs text-gray-500 italic">No active layers</p>
+              ) : (
+                getActiveLayersByCategory('demographics').map(layer => (
+                  <label key={layer.id} className="flex items-center space-x-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={toggledLayers[layer.id] || false}
+                      onChange={(e) => handleToggleClick(layer.id, e.target.checked)}
+                      className="form-checkbox h-4 w-4 text-blue-600 rounded"
+                    />
+                    <span className="text-sm text-gray-700">{layer.label}</span>
+                  </label>
+                ))
+              )}
             </div>
           )}
         </div>

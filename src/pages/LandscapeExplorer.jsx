@@ -102,7 +102,58 @@ const LandscapeExplorer = () => {
   // Flag to track if we need to enable the fetch button
   const [canFetchLayers, setCanFetchLayers] = useState(false);
 
-  // Handle location selection
+  // Handle auto-fetching layers when plan is selected
+  const handlePlanSelection = (plan) => {
+    if (!plan || !block) return;
+    
+    // Wait a moment to ensure plan is set
+    setTimeout(() => {
+      // Toggle resource and planning layers directly through map component
+      if (mapRef.current && mapRef.current.toggleLayer) {
+        // First, turn off any currently active layers to avoid conflicts
+        // This is important because resource and planning layers get added
+        // even if their toggles are currently OFF
+        
+        // Toggle resource layers
+        ['settlement', 'water_structure', 'well_structure'].forEach(layerId => {
+          // If we're in resources category or no category is selected, 
+          // turn these layers ON, otherwise keep their current state
+          const shouldToggleOn = activeResourceCategory === 'resources' || !activeResourceCategory;
+          
+          if (shouldToggleOn) {
+            // First set the parent state directly to avoid toggle animation in UI
+            setToggledLayers(prev => ({
+              ...prev,
+              [layerId]: true
+            }));
+            
+            // Then tell the map to display these layers
+            mapRef.current.toggleLayer(layerId, true);
+          }
+        });
+        
+        // Toggle planning layers
+        ['agri_structure', 'livelihood_structure', 'recharge_structure'].forEach(layerId => {
+          // If we're in planning category or no category is selected,
+          // turn these layers ON, otherwise keep their current state
+          const shouldToggleOn = activeResourceCategory === 'planning' || !activeResourceCategory;
+          
+          if (shouldToggleOn) {
+            // First set the parent state directly to avoid toggle animation in UI
+            setToggledLayers(prev => ({
+              ...prev,
+              [layerId]: true
+            }));
+            
+            // Then tell the map to display these layers
+            mapRef.current.toggleLayer(layerId, true);
+          }
+        });
+      }
+    }, 200); // Slight delay to ensure plan is fully registered
+  };
+
+  // Handle item selection for dropdowns
   const handleItemSelect = (setter, value) => {
     // Handle the setState case specially if it affects parent component state
     if (setter === setState) {
@@ -157,7 +208,6 @@ const LandscapeExplorer = () => {
       selectedVillageValues: {}
     });
     
-    // Reset toggled layers, but keep demographics on
     setToggledLayers({
       demographics: true, // Keep demographics on
       drainage: false,
@@ -183,55 +233,7 @@ const LandscapeExplorer = () => {
     
     setLayersReady(false);
     setCanFetchLayers(false);
-    setSelectedPlan(null);
-  };
-
-  // Handle auto-fetching layers when plan is selected
-  const handlePlanSelection = (plan) => {
-    if (!plan || !block) return;
-    
-    if (activeResourceCategory === 'resources') {
-      // Auto-toggle resources layers without calling parent toggleLayer (avoid recursion)
-      setToggledLayers(prev => ({
-        ...prev,
-        settlement: true,
-        water_structure: true,
-        well_structure: true
-      }));
-      
-      // Call the map methods directly
-      if (mapRef.current) {
-        // Using a slight delay to ensure state has updated
-        setTimeout(() => {
-          if (mapRef.current.toggleLayer) {
-            mapRef.current.toggleLayer('settlement', true);
-            mapRef.current.toggleLayer('water_structure', true);
-            mapRef.current.toggleLayer('well_structure', true);
-          }
-        }, 100);
-      }
-    } 
-    else if (activeResourceCategory === 'planning') {
-      // Auto-toggle planning layers without calling parent toggleLayer (avoid recursion)
-      setToggledLayers(prev => ({
-        ...prev,
-        agri_structure: true,
-        livelihood_structure: true,
-        recharge_structure: true
-      }));
-      
-      // Call the map methods directly
-      if (mapRef.current) {
-        // Using a slight delay to ensure state has updated
-        setTimeout(() => {
-          if (mapRef.current.toggleLayer) {
-            mapRef.current.toggleLayer('agri_structure', true);
-            mapRef.current.toggleLayer('livelihood_structure', true);
-            mapRef.current.toggleLayer('recharge_structure', true);
-          }
-        }, 100);
-      }
-    }
+    setSelectedPlan(null); // Ensure plan is reset
   };
 
   // Handle layer toggle from RightSidebar
@@ -241,16 +243,31 @@ const LandscapeExplorer = () => {
       return;
     }
     
-    // Update local state
+    // Prevent toggling resource/planning layers without a plan
+    const resourceOrPlanningLayers = [
+      'settlement', 'water_structure', 'well_structure',
+      'agri_structure', 'livelihood_structure', 'recharge_structure'
+    ];
+    
+    if (resourceOrPlanningLayers.includes(layerName) && !selectedPlan && isVisible) {
+      alert('Please select a plan first to enable this layer');
+      return;
+    }
+    
+    console.log(`Toggling ${layerName} to ${isVisible ? 'ON' : 'OFF'}`);
+    
+    // Update local state immediately
     setToggledLayers(prev => ({
       ...prev,
       [layerName]: isVisible
     }));
     
-    // Only call map's toggle function if we have a reference and are not already updating from map
-    if (mapRef.current && mapRef.current.toggleLayer) {
-      mapRef.current.toggleLayer(layerName, isVisible);
-    }
+    // Then update the map with a slight delay
+    setTimeout(() => {
+      if (mapRef.current && mapRef.current.toggleLayer) {
+        mapRef.current.toggleLayer(layerName, isVisible);
+      }
+    }, 50);
   };
 
   // Handle GeoJSON download
@@ -379,9 +396,9 @@ const LandscapeExplorer = () => {
     setActiveResourceCategory(category);
     
     // If we have a plan selected and change to resources/planning, auto-fetch those layers
-    if (selectedPlan && (category === 'resources' || category === 'planning')) {
-      handlePlanSelection(selectedPlan);
-    }
+    // if (selectedPlan && (category === 'resources' || category === 'planning')) {
+    //   handlePlanSelection(selectedPlan);
+    // }
   };
 
   // Fetch states data on component mount
@@ -405,9 +422,9 @@ const LandscapeExplorer = () => {
               setPlans(fetchedPlans);
               
               // If plans exist and there's no selectedPlan yet, select the first one
-              if (fetchedPlans.length > 0 && !selectedPlan) {
-                setSelectedPlan(fetchedPlans[0]);
-              }
+              // if (fetchedPlans.length > 0 && !selectedPlan) {
+              //   setSelectedPlan(fetchedPlans[0]);
+              // }
             }
           } catch (error) {
             console.error("Error fetching plans:", error);

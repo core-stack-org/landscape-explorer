@@ -149,38 +149,12 @@ const Map = forwardRef(({
         
         const layerName = layerMap[layerId] || layerId;
         
-        // Find layer reference
-        const findLayerRef = (name) => {
-          // Check basic layers
-          for (const layer of LayersArray) {
-            if (layer.name === name) {
-              return layer.LayerRef;
-            }
-          }
-          
-          // Check resource layers
-          for (const layer of ResourceLayersArray) {
-            if (layer.name === name) {
-              return layer.LayerRef;
-            }
-          }
-          
-          // Check planning layers
-          for (const layer of PlanningLayersArray) {
-            if (layer.name === name) {
-              return layer.LayerRef;
-            }
-          }
-          
-          return null;
-        };
+        // Find if the layer is currently visible in our internal state
+        const isCurrentlyVisible = currentLayers.includes(layerName);
         
-        const layerRef = findLayerRef(layerName);
-        
-        if (layerRef) {
-          handleLayerToggle(layerName, layerRef);
-        } else {
-          console.warn(`Layer reference not found for: ${layerName} (ID: ${layerId})`);
+        // Only toggle if the requested state is different from current state
+        if (isVisible !== isCurrentlyVisible) {
+          handleLayerToggle(layerName, layerName);
         }
       } finally {
         // Reset flag regardless of success or failure
@@ -903,6 +877,9 @@ const Map = forwardRef(({
       const districtFormatted = district.label.toLowerCase().split(" ").join("_");
       const blockFormatted = block.label.toLowerCase().split(" ").join("_");
       
+      // Track which layers are actually loaded
+      let loadedLayers = [];
+      
       //? Code for settlement Layer
       let settlementLayer = await getVectorLayers(
         "resources",
@@ -929,6 +906,7 @@ const Map = forwardRef(({
         );
         
         safeAddLayer(settlementLayer);
+        loadedLayers.push("Settlement");
       }
 
       //? Code For Water Structures Layer
@@ -975,6 +953,7 @@ const Map = forwardRef(({
         });
         
         safeAddLayer(WaterStructuresLayer);
+        loadedLayers.push("Water Structure");
       }
 
       //? Code for Well Layer
@@ -1003,6 +982,35 @@ const Map = forwardRef(({
         );
         
         safeAddLayer(WellLayer);
+        loadedLayers.push("Well Structure");
+      }
+
+      // Update currentLayers to include all loaded resource layers
+      setCurrentLayers(prevLayers => {
+        // Filter out any existing resource layers
+        const filteredLayers = prevLayers.filter(layer => 
+          !["Settlement", "Water Structure", "Well Structure"].includes(layer)
+        );
+        // Add only the layers that were successfully loaded
+        return [...filteredLayers, ...loadedLayers];
+      });
+
+      // Notify parent of visible layers if needed
+      if (toggleLayer && !handlingExternalToggle.current) {
+        loadedLayers.forEach(layerName => {
+          const layerMap = {
+            'Settlement': 'settlement',
+            'Water Structure': 'water_structure',
+            'Well Structure': 'well_structure'
+          };
+          
+          const uiLayerName = layerMap[layerName];
+          if (uiLayerName) {
+            setTimeout(() => {
+              toggleLayer(uiLayerName, true);
+            }, 100);
+          }
+        });
       }
 
       setIsOtherLayersFetched(true);
@@ -1026,6 +1034,9 @@ const Map = forwardRef(({
       // Format district and block names
       const districtFormatted = district.label.toLowerCase().split(" ").join("_");
       const blockFormatted = block.label.toLowerCase().split(" ").join("_");
+      
+      // Track which layers are actually loaded
+      let loadedLayers = [];
       
       //? Code for Agri Structures Layer
       let AgriStructuresLayer = await getVectorLayers(
@@ -1071,6 +1082,7 @@ const Map = forwardRef(({
         });
         
         safeAddLayer(AgriStructuresLayer);
+        loadedLayers.push("Agriculture Structure");
       }
 
       //? Code for Livelihood Layer
@@ -1099,6 +1111,7 @@ const Map = forwardRef(({
         );
         
         safeAddLayer(LivelihoodLayer);
+        loadedLayers.push("Livelihood Structure");
       }
 
       //? Code for Water Structure Layer
@@ -1153,6 +1166,35 @@ const Map = forwardRef(({
         });
         
         safeAddLayer(WaterStructureLayer);
+        loadedLayers.push("Recharge Structures");
+      }
+      
+      // Update currentLayers to include all loaded planning layers
+      setCurrentLayers(prevLayers => {
+        // Filter out any existing planning layers
+        const filteredLayers = prevLayers.filter(layer => 
+          !["Agriculture Structure", "Livelihood Structure", "Recharge Structures"].includes(layer)
+        );
+        // Add only the layers that were successfully loaded
+        return [...filteredLayers, ...loadedLayers];
+      });
+
+      // Notify parent of visible layers if needed
+      if (toggleLayer && !handlingExternalToggle.current) {
+        loadedLayers.forEach(layerName => {
+          const layerMap = {
+            'Agriculture Structure': 'agri_structure',
+            'Livelihood Structure': 'livelihood_structure',
+            'Recharge Structures': 'recharge_structure'
+          };
+          
+          const uiLayerName = layerMap[layerName];
+          if (uiLayerName) {
+            setTimeout(() => {
+              toggleLayer(uiLayerName, true);
+            }, 100);
+          }
+        });
       }
       
     } catch (error) {
@@ -1166,7 +1208,7 @@ const Map = forwardRef(({
     }
   };
 
-  // Handle layer toggling - using the same approach as original
+  // Handle layer toggling - using the same approach as original but with fixes for visibility
   const handleLayerToggle = (name, layerRef) => {
     if (!isLayersFetched && name !== "Demographics") {
       return;
@@ -1197,7 +1239,6 @@ const Map = forwardRef(({
       return null;
     };
 
-    // If name is a string, find the layer reference
     if (typeof layerRef === 'string' || layerRef instanceof String) {
       const foundRef = findLayerRef(layerRef);
       if (foundRef) {
@@ -1208,88 +1249,123 @@ const Map = forwardRef(({
       }
     }
 
-    // Special handling for NREGA layer
-    if (name === "NREGA" && currentLayers.includes(name)) {
-      tempLayer = tempLayer.filter(item => item !== name);
-      if (LayersArray[6].LayerRef.current) {
-        safeRemoveLayer(LayersArray[6].LayerRef.current);
-      }
-    }
-    else if (name === "NREGA" && !currentLayers.includes(name)) {
-      const tempNregaStyle = {
-        "shape-points": 12,
-        "shape-radius": 6,
-        "shape-fill-color": [
-            "match",
-            ["get", "itemColor"],
-            4, "#6495ED",
-            1, "#C2678D",
-            3, "#FFA500",
-            5, "#1A759F",
-            6, "#52B69A",
-            2, "#355070",
-            7, "#6D597A",
-            "#00000000"
-        ]
-      };
-      
-      if (LayersArray[6].LayerRef.current) {
-        const nregaVectorSource = LayersArray[6].LayerRef.current.getSource();
-        if (nregaVectorSource) {
+    // Check if the layer is currently active in our internal state
+    const isCurrentlyActive = currentLayers.includes(name);
+
+    // TOGGLE OFF: Remove the layer if it's active
+    if (isCurrentlyActive) {
+      // Special case for NREGA
+      if (name === "NREGA") {
+        tempLayer = tempLayer.filter(item => item !== name);
+        if (LayersArray[6].LayerRef.current) {
+          LayersArray[6].LayerRef.current.setVisible(false);
           safeRemoveLayer(LayersArray[6].LayerRef.current);
-          
-          let nregaWebGlLayer = new WebGLPointsLayer({
-            source: nregaVectorSource,
-            style: tempNregaStyle,
-          });
-          
-          safeAddLayer(nregaWebGlLayer);
-          LayersArray[6].LayerRef.current = nregaWebGlLayer;
-          tempLayer.push(name);
+        }
+      }
+      else {
+        // Standard toggle OFF for all other layers
+        tempLayer = tempLayer.filter(item => item !== name);
+        if (layerRef?.current) {
+          layerRef.current.setVisible(false);
+          safeRemoveLayer(layerRef.current);
         }
       }
     }
-    // Regular handling for other layers
-    else if (currentLayers.includes(name)) {
-      tempLayer = tempLayer.filter(item => item !== name);
-      if (layerRef?.current) {
-        safeRemoveLayer(layerRef.current);
-      }
-    }
-    else if (name === "Hydrological Boundries" && currentLayers.includes("Hydrological Variables")) {
-      tempLayer = tempLayer.filter(item => item !== "Hydrological Variables");
-      if (LayersArray[5].LayerRef.current) {
-        safeRemoveLayer(LayersArray[5].LayerRef.current);
-      }
-      tempLayer.push(name);
-      if (layerRef?.current) {
-        safeAddLayer(layerRef.current);
-      }
-    }
-    else if (name === "Hydrological Variables" && currentLayers.includes("Hydrological Boundries")) {
-      tempLayer = tempLayer.filter(item => item !== "Hydrological Boundries");
-      if (LayersArray[3].LayerRef.current) {
-        safeRemoveLayer(LayersArray[3].LayerRef.current);
-      }
-      tempLayer.push(name);
-      if (layerRef?.current) {
-        safeAddLayer(layerRef.current);
-      }
-    }
+    // TOGGLE ON: Add the layer if it's not active
     else {
-      tempLayer.push(name);
-      if (layerRef?.current) {
-        safeAddLayer(layerRef.current);
+      // Special case for NREGA
+      if (name === "NREGA") {
+        const tempNregaStyle = {
+          "shape-points": 12,
+          "shape-radius": 6,
+          "shape-fill-color": [
+              "match",
+              ["get", "itemColor"],
+              4, "#6495ED",
+              1, "#C2678D",
+              3, "#FFA500",
+              5, "#1A759F",
+              6, "#52B69A",
+              2, "#355070",
+              7, "#6D597A",
+              "#00000000"
+          ]
+        };
+        
+        if (LayersArray[6].LayerRef.current) {
+          const nregaVectorSource = LayersArray[6].LayerRef.current.getSource();
+          if (nregaVectorSource) {
+            safeRemoveLayer(LayersArray[6].LayerRef.current);
+            
+            let nregaWebGlLayer = new WebGLPointsLayer({
+              source: nregaVectorSource,
+              style: tempNregaStyle,
+            });
+            
+            nregaWebGlLayer.setVisible(true);
+            safeAddLayer(nregaWebGlLayer);
+            LayersArray[6].LayerRef.current = nregaWebGlLayer;
+            tempLayer.push(name);
+          }
+        }
+      }
+      // Special cases for hydrology layers (they're mutually exclusive)
+      else if (name === "Hydrological Boundries" && currentLayers.includes("Hydrological Variables")) {
+        tempLayer = tempLayer.filter(item => item !== "Hydrological Variables");
+        if (LayersArray[5].LayerRef.current) {
+          LayersArray[5].LayerRef.current.setVisible(false);
+          safeRemoveLayer(LayersArray[5].LayerRef.current);
+        }
+        tempLayer.push(name);
+        if (layerRef?.current) {
+          layerRef.current.setVisible(true);
+          safeAddLayer(layerRef.current);
+        }
+      }
+      else if (name === "Hydrological Variables" && currentLayers.includes("Hydrological Boundries")) {
+        tempLayer = tempLayer.filter(item => item !== "Hydrological Boundries");
+        if (LayersArray[3].LayerRef.current) {
+          LayersArray[3].LayerRef.current.setVisible(false);
+          safeRemoveLayer(LayersArray[3].LayerRef.current);
+        }
+        tempLayer.push(name);
+        if (layerRef?.current) {
+          layerRef.current.setVisible(true);
+          safeAddLayer(layerRef.current);
+        }
+      }
+      // Standard toggle ON for all other layers (including resource and planning)
+      else {
+        tempLayer.push(name);
+        if (layerRef?.current) {
+          layerRef.current.setVisible(true);
+          
+          if (mapRef.current) {
+            const mapLayers = mapRef.current.getLayers().getArray();
+            const exists = mapLayers.some(l => l === layerRef.current);
+            
+            if (!exists) {
+              safeAddLayer(layerRef.current);
+            }
+          } else {
+            safeAddLayer(layerRef.current);
+          }
+        }
       }
     }
 
+    // Update the current layers state
     setCurrentLayers(tempLayer);
-    
-    // Notify parent about layer toggling if necessary
-    // IMPORTANT: Only notify parent if this is not triggered by parent
+
+    // Only notify parent if not handling an external toggle event
     if (!handlingExternalToggle.current && toggleLayer && typeof toggleLayer === 'function') {
       const layerName = name.toLowerCase().replace(/\s+/g, '_');
-      toggleLayer(layerName, tempLayer.includes(name));
+      console.log(`Map is notifying parent that ${layerName} is now ${tempLayer.includes(name) ? 'ON' : 'OFF'}`);
+      
+      // Small delay to ensure state is consistent
+      setTimeout(() => {
+        toggleLayer(layerName, tempLayer.includes(name));
+      }, 10);
     }
   };
 
@@ -1342,7 +1418,7 @@ const Map = forwardRef(({
     }
   }, [selectedPlan, isLayersFetched]);
   
-  // Handle toggle layer changes from parent
+  // Modified useEffect for handling toggledLayers changes to fix resource/planning layer toggling
   useEffect(() => {
     if (!mapRef.current || !isLayersFetched) return;
     
@@ -1379,39 +1455,14 @@ const Map = forwardRef(({
         const layerName = layerMap[id];
         if (!layerName) return;
         
-        // Find the layer reference
-        let layerRef = null;
+        // Find if the layer is currently visible in our internal state
+        const isCurrentlyVisible = currentLayers.includes(layerName);
         
-        const basicLayer = LayersArray.find(l => l.name === layerName);
-        const resourceLayer = ResourceLayersArray.find(l => l.name === layerName);
-        const planningLayer = PlanningLayersArray.find(l => l.name === layerName);
-        
-        if (basicLayer) {
-          layerRef = basicLayer.LayerRef;
-        } else if (resourceLayer) {
-          layerRef = resourceLayer.LayerRef;
-        } else if (planningLayer) {
-          layerRef = planningLayer.LayerRef;
-        }
-        
-        if (layerRef && layerRef.current) {
-          // Toggle the layer directly
-          const isCurrentlyVisible = currentLayers.includes(layerName);
-          
-          if (isVisible !== isCurrentlyVisible) {
-            // Direct manipulation instead of calling handleLayerToggle to avoid recursion
-            if (isVisible) {
-              if (!currentLayers.includes(layerName)) {
-                setCurrentLayers(prev => [...prev, layerName]);
-                safeAddLayer(layerRef.current);
-              }
-            } else {
-              if (currentLayers.includes(layerName)) {
-                setCurrentLayers(prev => prev.filter(item => item !== layerName));
-                safeRemoveLayer(layerRef.current);
-              }
-            }
-          }
+        // If there's a mismatch between toggle state and visibility, 
+        // use handleLayerToggle to fix it
+        if (isVisible !== isCurrentlyVisible) {
+          // Use the same handleLayerToggle function that works for direct toggles
+          handleLayerToggle(layerName, layerName);
         }
       });
     } finally {

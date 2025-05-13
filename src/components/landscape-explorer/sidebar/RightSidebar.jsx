@@ -21,11 +21,11 @@ const ChevronRightIcon = () => (
 );
 
 const ToggleOnIcon = () => (
-  <span className="px-2 py-0.5 bg-green-600 text-white text-xs font-medium rounded-full">ON</span>
+  <span className="px-2 py-0.5 bg-[#8B5CF6] text-white text-xs font-medium rounded-full">ON</span>
 );
 
 const ToggleOffIcon = () => (
-  <span className="px-2 py-0.5 bg-gray-400 text-white text-xs font-medium rounded-full">OFF</span>
+  <span className="px-2 py-0.5 bg-[#EDE9FE] text-[#8B5CF6] text-xs font-medium rounded-full">OFF</span>
 );
 
 const DownloadIcon = () => (
@@ -114,8 +114,8 @@ const DownloadButton = ({
     }
   };
 
-  const buttonClasses = `px-2 py-1 bg-blue-100 text-blue-700 rounded-md text-xs 
-    hover:bg-blue-200 text-center transition-colors duration-200 
+  const buttonClasses = `px-2 py-1 bg-[#EDE9FE] text-[#8B5CF6] rounded-md text-xs 
+    hover:bg-[#DDD6FE] text-center transition-colors duration-200 
     flex items-center justify-center ${isDisabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'} ${className}`;
 
   return href ? (
@@ -141,14 +141,31 @@ const DownloadButton = ({
 };
 
 // Single Layer Item Component
-const LayerItem = ({ layer, isSelected, onToggle, onDownload, isLayersFetched, isLoading }) => {
+const LayerItem = ({ layer, isSelected, onToggle, onDownload, isLayersFetched, isLoading, selectedPlan }) => {
+  // Define resource/planning layers array outside of the onClick handler
+  const resourceOrPlanningLayers = [
+    'settlement', 'water_structure', 'well_structure',
+    'agri_structure', 'livelihood_structure', 'recharge_structure'
+  ];
+  
+  // Check if this layer needs a plan to be toggled
+  const needsPlan = resourceOrPlanningLayers.includes(layer.name);
+  const isDisabled = needsPlan && !selectedPlan;
+  
   return (
     <div className="border-b border-gray-200 py-3">
       <div className="flex items-center justify-between">
         <span className="text-sm font-medium text-gray-700">{layer.label}</span>
         <button 
-          onClick={() => onToggle(layer.name)}
+          onClick={() => {
+            if (needsPlan && !selectedPlan) {
+              alert('Please select a plan first to toggle this layer');
+              return;
+            }
+            onToggle(layer.name);
+          }}
           className="text-xs"
+          disabled={isDisabled}
         >
           {isSelected 
             ? <ToggleOnIcon /> 
@@ -164,6 +181,7 @@ const LayerItem = ({ layer, isSelected, onToggle, onDownload, isLayersFetched, i
               name="GeoJSON"
               onClickEvent={() => onDownload(layer.name, 'geojson')}
               isDisabled={!isLayersFetched || isLoading}
+              className="bg-[#EDE9FE] text-[#8B5CF6] hover:bg-[#DDD6FE]"
             />
           )}
           {layer.hasKml && (
@@ -171,6 +189,7 @@ const LayerItem = ({ layer, isSelected, onToggle, onDownload, isLayersFetched, i
               name="KML"
               onClickEvent={() => onDownload(layer.name, 'kml')}
               isDisabled={!isLayersFetched || isLoading}
+              className="bg-[#EDE9FE] text-[#8B5CF6] hover:bg-[#DDD6FE]"
             />
           )}
           {layer.hasGeoTiff && (
@@ -178,6 +197,7 @@ const LayerItem = ({ layer, isSelected, onToggle, onDownload, isLayersFetched, i
               name="GeoTIFF"
               onClickEvent={() => onDownload(layer.name, 'geotiff')}
               isDisabled={!isLayersFetched || isLoading}
+              className="bg-[#EDE9FE] text-[#8B5CF6] hover:bg-[#DDD6FE]"
             />
           )}
         </div>
@@ -283,10 +303,10 @@ const RightSidebar = ({
   const handleToggleClick = (filterName) => {
     // If there's a handleLayerToggle prop, call it
     if (handleLayerToggle) {
-      handleLayerToggle(filterName, !(toggledLayers?.[filterName] || false));
+      const currentState = toggledLayers?.[filterName] || false;
+      handleLayerToggle(filterName, !currentState);
     }
   };
-
   // Handle download click with proper URL formatting and direct download
   const handleDownloadClick = (filterName, format) => {
     if (!district || !block) {
@@ -601,6 +621,7 @@ const RightSidebar = ({
                     onDownload={handleDownloadClick}
                     isLayersFetched={isLayersFetched}
                     isLoading={isLoading}
+                    selectedPlan={selectedPlan} // Add this prop
                   />
                 ))}
               </div>
@@ -618,6 +639,7 @@ const RightSidebar = ({
                     onDownload={handleDownloadClick}
                     isLayersFetched={isLayersFetched}
                     isLoading={isLoading}
+                    selectedPlan={selectedPlan} // Add this prop
                   />
                 ))}
               </div>
@@ -635,6 +657,7 @@ const RightSidebar = ({
                     onDownload={handleDownloadClick}
                     isLayersFetched={isLayersFetched}
                     isLoading={isLoading}
+                    selectedPlan={selectedPlan} // Add this prop
                   />
                 ))}
               </div>

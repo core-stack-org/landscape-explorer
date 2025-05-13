@@ -11,7 +11,7 @@ function App() {
       <Routes>
         <Route path="/" element={<LandingPage/>}/>
         <Route path="/kyl_dashboard" element={<KYLDashboardPage/>}/>
-        <Route path="/landscape_explorer" element={<LE_page/>}/>
+        {/* <Route path="/landscape_explorer" element={<LE_page/>}/> */}
         <Route path="/landscape-explorer-new" element={<LandscapeExplorer/>}/>
       </Routes>
     </BrowserRouter>
