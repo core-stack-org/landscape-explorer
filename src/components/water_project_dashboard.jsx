@@ -174,7 +174,8 @@ const WaterProjectDashboard = () => {
                 .toLowerCase()
                 .split(" ")
                 .join("_")}`,
-              true
+              true,
+              "lulc_water_pixels"
             );
             tempLayer.setZIndex(0);
 
