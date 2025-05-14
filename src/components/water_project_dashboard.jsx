@@ -1,4 +1,7 @@
 import React, { useState, useEffect, useRef, useMemo } from "react";
+import { useRecoilState, useRecoilValue } from "recoil";
+import { yearAtom } from "../store/locationStore.jsx";
+
 import HeaderSelect from "../components/water_headerSection";
 import water_rej from "../components/data/waterbody_rej_data.json";
 import { useParams } from "react-router-dom";
@@ -9,6 +12,7 @@ import Map from "ol/Map";
 import { Style, Fill, Stroke } from "ol/style";
 import SurfaceWaterBodiesChart from "./WaterUsedChart";
 import LocationOnIcon from "@mui/icons-material/LocationOn";
+import YearSlider from "./yearSlider";
 
 import {
   Box,
@@ -48,6 +52,8 @@ const WaterProjectDashboard = () => {
   const [cords, setCords] = useState([]);
   const [selectedWaterbody, setSelectedWaterbody] = useState(null);
   const [waterBodyLayer, setWaterBodyLayer] = useState(null);
+  const lulcYear = useRecoilValue(yearAtom);
+  const [currentLayer, setCurrentLayer] = useState([]);
 
   const mapElement = useRef();
   const mapRef = useRef();
@@ -68,6 +74,9 @@ const WaterProjectDashboard = () => {
     const storedProject = sessionStorage.getItem("selectedProject");
     return storedProject || "";
   });
+
+  const [year, setYear] = useState(2024);
+  const handleYearChange = (newYear) => setYear(newYear);
 
   const [filters, setFilters] = useState({
     state: [],
@@ -114,6 +123,91 @@ const WaterProjectDashboard = () => {
       setProject(storedProject);
     }
   }, []);
+  useEffect(() => {
+    console.log("slider vala useffct");
+    const fetchUpdateLulc = async () => {
+      console.log("fetchupdate vala block");
+
+      // Make sure currentLayer is set before proceeding
+      if (currentLayer !== null && currentLayer.length > 0) {
+        console.log("currentLayer:", currentLayer); // Check structure
+
+        let tempArr = currentLayer;
+        let tempLen = tempArr.length;
+        console.log(lulcYear);
+
+        for (let i = 0; i < tempLen; ++i) {
+          console.log(`Layer ${i} Name:`, tempArr[i].name); // Check name
+
+          if (tempArr[i].name === "lulcWaterrej") {
+            console.log("Layer name matches lulcWaterrej, processing...");
+
+            // Check if mapRef.current and the layerRef are valid before removing the layer
+            if (
+              mapRef.current &&
+              tempArr[i].layerRef &&
+              tempArr[i].layerRef[0]
+            ) {
+              // mapRef.current.removeLayer(tempArr[i].layerRef[0]);
+              console.log("Layer removed successfully");
+            } else {
+              console.log(
+                "Unable to remove layer: mapRef or layerRef is not valid"
+              );
+            }
+            console.log(lulcYear);
+
+            // Convert '17_18' to '2017_2018'
+            // Assuming lulcYear = '17_18'
+            const fullYear = lulcYear
+              .split("_")
+              .map((part) => `20${part}`) // Add '20' to both parts
+              .join("_"); // Join back with underscore
+
+            console.log("Full Year:", fullYear); // Should output: '2017_2018'
+            // Should output: 2017_2018
+            mapRef.current.removeLayer(tempArr[i].layerRef[0]);
+
+            let tempLayer = await getImageLayer(
+              "waterrej",
+              `clipped_lulc_filtered_mws_ATCF_UP_${fullYear
+                .toLowerCase()
+                .split(" ")
+                .join("_")}`,
+              true
+            );
+            tempLayer.setZIndex(0);
+
+            console.log(tempLayer);
+
+            if (mapRef.current) {
+              mapRef.current.addLayer(tempLayer);
+              console.log("New layer added successfully");
+              const view = mapRef.current.getView();
+              view.setZoom(10);
+            } else {
+              console.log("Unable to add layer: mapRef is not valid");
+            }
+
+            tempArr[i].layerRef[0] = tempLayer;
+          } else {
+            console.log(
+              `Layer ${i} skipped, name does not match "lulcWaterrej"`
+            );
+          }
+        }
+        setCurrentLayer(tempArr);
+      } else {
+        console.log("currentLayer is empty or not initialized properly");
+        // Set a default value or handle the empty case
+        setCurrentLayer([
+          { name: "lulcWaterrej", layerRef: [] }, // Example structure
+        ]);
+      }
+    };
+
+    fetchUpdateLulc().catch(console.error);
+  }, [lulcYear, currentLayer]);
 
   const rows = useMemo(() => {
     if (!water_rej?.features) return [];
@@ -307,21 +401,19 @@ const WaterProjectDashboard = () => {
         fill: new Fill({ color: "rgba(100, 149, 237, 0.5)" }),
       }),
     });
+    waterBodyLayer.setZIndex(1);
 
-    // Load and add the LULC image layer
-    const lulcWaterRej = await getImageLayer(
-      "waterrej",
-      "clipped_lulc_waterrej_test",
-      true,
-      "waterrej_lulc"
-    );
+    // const lulcWaterRej = await getImageLayer(
+    //   "waterrej",
+    //   "clipped_lulc_filtered_mws_ATCF_UP_2017_2018",
+    //   true,
+    //   "lulc_level_3_style"
+    // );
 
-    // Add water body layer after LULC
+    // map.addLayer(lulcWaterRej);
     map.addLayer(waterBodyLayer);
-    map.addLayer(lulcWaterRej);
     setWaterBodyLayer(waterBodyLayer);
 
-    // Fit to waterbody extent if features exist
     const features = vectorLayerWater.getFeatures();
     if (!selectedWaterbody && features.length > 0) {
       const extent = vectorLayerWater.getExtent();
@@ -371,25 +463,19 @@ const WaterProjectDashboard = () => {
     }
 
     const mapView = mapRef.current.getView();
-
-    // Animate to the waterbody coordinates
     mapView.animate({
       center: waterbody.coordinates,
-      zoom: 18, // Higher zoom level for better detail
+      zoom: 14,
       duration: 1000,
     });
-
-    // Highlight the selected waterbody
     if (waterBodyLayer) {
       const source = waterBodyLayer.getSource();
       const features = source.getFeatures();
 
-      // Reset style for all features
       features.forEach((feature) => {
         feature.setStyle(null);
       });
 
-      // Apply highlight style to the selected feature
       if (
         waterbody.featureIndex !== undefined &&
         features[waterbody.featureIndex]
@@ -406,7 +492,6 @@ const WaterProjectDashboard = () => {
   };
 
   const handleWaterbodyClick = (row) => {
-    // Find the feature in the GeoJSON data for this row
     const waterbodyFeature = water_rej.features.find(
       (feature, index) => index === row.featureIndex
     );
@@ -415,31 +500,32 @@ const WaterProjectDashboard = () => {
       let coordinates;
       const geometry = waterbodyFeature.geometry;
 
-      // Extract coordinates based on geometry type
       if (geometry.type === "Point") {
         coordinates = geometry.coordinates;
-      } else if (
-        geometry.type === "Polygon" &&
-        geometry.coordinates &&
-        geometry.coordinates[0]
-      ) {
-        // Calculate centroid of polygon
+      } else if (geometry.type === "Polygon" && geometry.coordinates?.[0]) {
         const coords = geometry.coordinates[0];
         const sumX = coords.reduce((acc, coord) => acc + coord[0], 0);
         const sumY = coords.reduce((acc, coord) => acc + coord[1], 0);
         coordinates = [sumX / coords.length, sumY / coords.length];
       } else if (
         geometry.type === "LineString" &&
-        geometry.coordinates &&
-        geometry.coordinates.length > 0
+        geometry.coordinates?.length
       ) {
-        // Use middle point for LineString
+        // Middle point of a LineString
         const middleIndex = Math.floor(geometry.coordinates.length / 2);
         coordinates = geometry.coordinates[middleIndex];
+      } else if (
+        geometry.type === "MultiPolygon" &&
+        geometry.coordinates?.[0]?.[0]
+      ) {
+        // Handle MultiPolygon - Use first polygon's coordinates to compute centroid
+        const coords = geometry.coordinates[0][0];
+        const sumX = coords.reduce((acc, coord) => acc + coord[0], 0);
+        const sumY = coords.reduce((acc, coord) => acc + coord[1], 0);
+        coordinates = [sumX / coords.length, sumY / coords.length];
       }
 
       if (coordinates) {
-        // Update the row with coordinates if not already set
         if (!row.coordinates) {
           row.coordinates = coordinates;
         }
@@ -453,7 +539,6 @@ const WaterProjectDashboard = () => {
       }
     } else {
       console.error("Could not find feature for waterbody:", row.waterbody);
-      // If we have coordinates directly in the row, use them
       if (row.coordinates) {
         setSelectedWaterbody(row);
         setView("map");
@@ -585,7 +670,7 @@ const WaterProjectDashboard = () => {
               }}
             >
               <Lightbulb size={94} color="black" />
-              Under the project {projectId}, 79 waterbodies have been de-silted,
+              Under the project {projectId}, 18 waterbodies have been de-silted,
               spanning around 90 hectares. On average, the surface water
               availability during summer season has changed from 16% to 25%.
             </Typography>
@@ -880,6 +965,21 @@ const WaterProjectDashboard = () => {
                     </Typography>
                   </Box>
                 </Box>
+                <Box
+                  sx={{
+                    position: "absolute",
+                    bottom: 16,
+                    right: 16,
+                    backgroundColor: "rgba(255, 255, 255, 0.9)",
+                    padding: 2,
+                    borderRadius: 1,
+                    boxShadow: 2,
+                    zIndex: 1000, // Make sure it stays on top
+                    minWidth: "600px",
+                  }}
+                >
+                  <YearSlider currentLayer={{ name: "lulcWaterrej" }} />
+                </Box>
               </Box>
 
               {/* Paragraph */}
@@ -907,7 +1007,7 @@ const WaterProjectDashboard = () => {
                 >
                   <Lightbulb size={48} color="black" />
                   <span>
-                    Under the project {projectId}, 79 waterbodies have been
+                    Under the project {projectId}, 18 waterbodies have been
                     de-silted, spanning around 90 hectares. On average, the
                     surface water availability during summer season has changed
                     from 16% to 25%.
@@ -919,25 +1019,18 @@ const WaterProjectDashboard = () => {
               <>
                 <div style={{ display: "flex", gap: "16px" }}>
                   <div style={{ width: "50%", height: "400px" }}>
-                    <SurfaceWaterBodiesChart
-                      waterbody={selectedWaterbody}
-                      water_rej={water_rej}
-                    />
-                  </div>
-                  <div style={{ width: "50%", height: "400px" }}>
-                    <SurfaceWaterChart
-                      waterbody={selectedWaterbody}
-                      water_rej={water_rej}
-                    />
-                  </div>
-                </div>
-                <Box sx={{ display: "flex" }}>
-                  <div style={{ width: "50%", height: "400px" }}>
                     <WaterAvailabilityChart
                       waterbody={selectedWaterbody}
                       water_rej={water_rej}
                     />
+                    {/* <SurfaceWaterChart
+                      waterbody={selectedWaterbody}
+                      water_rej={water_rej}
+                    /> */}
                   </div>
+                </div>
+                <Box sx={{ display: "flex" }}>
+                  <div style={{ width: "50%", height: "400px" }}></div>
                 </Box>
               </>
             )}

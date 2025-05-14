@@ -31,8 +31,6 @@ const HeaderSelect = ({
     const fetchOrganizations = async () => {
       const options = await loadOrganization();
       setOrganizationOptions(options);
-
-      // Optional: Set initial org from session storage or first option
       if (!organization && isOnDashboard) {
         const storedOrg = sessionStorage.getItem("selectedOrganization");
         if (storedOrg) {
@@ -101,7 +99,7 @@ const HeaderSelect = ({
   const handleProjectChange = (selectedOption) => {
     const selectedValue = selectedOption?.value || "";
     setProject(selectedValue);
-    sessionStorage.setItem("selectedProject", selectedValue); // save only value
+    sessionStorage.setItem("selectedProject", selectedValue);
     if (selectedValue) {
       navigate(`/dashboard/${selectedValue}`);
     }

@@ -1,8 +1,11 @@
-import { useEffect, useState } from 'react';
-import { yearAtom } from '../store/locationStore.jsx';
-import { useRecoilState } from 'recoil';
+import { useEffect, useState } from "react";
+import { yearAtom } from "../store/locationStore.jsx";
+import { useRecoilState } from "recoil";
 
 const YearSlider = ({ currentLayer }) => {
+  console.log(typeof currentLayer);
+  console.log("YearSlider received currentLayer:", currentLayer);
+
   const yearDataLulc = [
     { label: "2017-2018", value: "17_18" },
     { label: "2018-2019", value: "18_19" },
@@ -17,11 +20,20 @@ const YearSlider = ({ currentLayer }) => {
   const [yearvalue, setYearAtom] = useRecoilState(yearAtom);
 
   // Check if any LULC layer is currently active
-  const isLulcLayerActive = currentLayer.some(layer => 
-    layer.name === "avg_double_cropped" || 
-    layer.name.includes("LULC") || 
-    layer.name.includes("lulc")
-  );
+  // const isLulcLayerActive = currentLayer.some(
+  //   (layer) =>
+  //     layer.name === "avg_double_cropped" ||
+  //     layer.name.includes("LULC") ||
+  //     layer.name.includes("lulc") ||
+  //     layer.name.includes("lulcWaterrej")
+  // );
+
+  const isLulcLayerActive =
+    currentLayer &&
+    (currentLayer.name === "avg_double_cropped" ||
+      currentLayer.name.includes("LULC") ||
+      currentLayer.name.includes("lulc") ||
+      currentLayer.name.includes("lulcWaterrej"));
 
   useEffect(() => {
     setYearAtom(yearDataLulc[0].value);
@@ -39,24 +51,28 @@ const YearSlider = ({ currentLayer }) => {
       <div className="relative">
         <div className="relative">
           <div className="bg-white bg-opacity-70 rounded-lg px-4 py-2">
-            <div className="text-sm font-medium text-gray-700 mb-1">Year Slider</div>
+            <div className="text-sm font-medium text-gray-700 mb-1">
+              Year Slider
+            </div>
             <div className="relative">
               {showTooltip && (
-                <div 
+                <div
                   className="absolute -top-8 transform -translate-x-1/2 bg-white rounded px-2 py-1 text-xs shadow"
-                  style={{ 
-                    left: `${(currentValue / (yearDataLulc.length - 1)) * 100}%`
+                  style={{
+                    left: `${
+                      (currentValue / (yearDataLulc.length - 1)) * 100
+                    }%`,
                   }}
                 >
                   {yearDataLulc[currentValue].label}
                 </div>
               )}
-            
-              <div className='flex items-center gap-2'>
+
+              <div className="flex items-center gap-2">
                 <span className="text-xs text-gray-600 min-w-[70px]">
                   {yearDataLulc[0].label}
                 </span>
-              
+
                 <input
                   type="range"
                   min={0}
@@ -67,8 +83,8 @@ const YearSlider = ({ currentLayer }) => {
                   onMouseLeave={() => setShowTooltip(false)}
                   className="flex-grow h-1.5 bg-gray-200 rounded-lg appearance-none cursor-pointer"
                   style={{
-                    '--thumb-color': '#3B82F6',
-                    '--track-color': '#E5E7EB',
+                    "--thumb-color": "#3B82F6",
+                    "--track-color": "#E5E7EB",
                   }}
                 />
 
@@ -82,7 +98,7 @@ const YearSlider = ({ currentLayer }) => {
       </div>
 
       <style jsx>{`
-        input[type='range'] {
+        input[type="range"] {
           -webkit-appearance: none;
           appearance: none;
           height: 6px;
@@ -91,7 +107,7 @@ const YearSlider = ({ currentLayer }) => {
           outline: none;
         }
 
-        input[type='range']::-webkit-slider-thumb {
+        input[type="range"]::-webkit-slider-thumb {
           -webkit-appearance: none;
           appearance: none;
           width: 16px;
@@ -102,7 +118,7 @@ const YearSlider = ({ currentLayer }) => {
           border: 2px solid white;
         }
 
-        input[type='range']::-moz-range-thumb {
+        input[type="range"]::-moz-range-thumb {
           width: 16px;
           height: 16px;
           border-radius: 50%;
