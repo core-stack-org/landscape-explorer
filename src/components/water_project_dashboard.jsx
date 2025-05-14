@@ -212,72 +212,78 @@ const WaterProjectDashboard = () => {
   const rows = useMemo(() => {
     if (!water_rej?.features) return [];
 
-    return water_rej.features.map((feature, index) => {
-      const props = feature.properties || {};
-      const geometry = feature.geometry || {};
+    return water_rej.features
+      .map((feature, index) => {
+        const props = feature.properties || {};
+        const geometry = feature.geometry || {};
 
-      // Extract coordinates if available
-      let coordinates = null;
-      if (geometry.type === "Point") {
-        coordinates = geometry.coordinates;
-      } else if (geometry.type === "Polygon") {
-        // Calculate centroid for polygons
-        const coords = geometry.coordinates[0];
-        if (coords && coords.length > 0) {
-          const sumX = coords.reduce((acc, coord) => acc + coord[0], 0);
-          const sumY = coords.reduce((acc, coord) => acc + coord[1], 0);
-          coordinates = [sumX / coords.length, sumY / coords.length];
+        let coordinates = null;
+        if (geometry.type === "Point") {
+          coordinates = geometry.coordinates;
+        } else if (geometry.type === "Polygon") {
+          const coords = geometry.coordinates[0];
+          if (coords?.length > 0) {
+            const sumX = coords.reduce((acc, coord) => acc + coord[0], 0);
+            const sumY = coords.reduce((acc, coord) => acc + coord[1], 0);
+            coordinates = [sumX / coords.length, sumY / coords.length];
+          }
+        } else if (
+          geometry.type === "LineString" &&
+          geometry.coordinates?.length > 0
+        ) {
+          const middleIndex = Math.floor(geometry.coordinates.length / 2);
+          coordinates = geometry.coordinates[middleIndex];
         }
-      } else if (
-        geometry.type === "LineString" &&
-        geometry.coordinates &&
-        geometry.coordinates.length > 0
-      ) {
-        // Use middle point for LineString
-        const middleIndex = Math.floor(geometry.coordinates.length / 2);
-        coordinates = geometry.coordinates[middleIndex];
-      }
 
-      const kKrValues = Object.entries(props)
-        .filter(
-          ([key]) =>
-            (key.startsWith("k_") || key.startsWith("kr_")) &&
-            !key.startsWith("krz_")
-        )
-        .map(([_, value]) => Number(value))
-        .filter((val) => !isNaN(val));
+        const kKrValues = Object.entries(props)
+          .filter(
+            ([key]) =>
+              (key.startsWith("k_") || key.startsWith("kr_")) &&
+              !key.startsWith("krz_")
+          )
+          .map(([_, value]) => Number(value))
+          .filter((val) => !isNaN(val));
 
-      const avgKKr = kKrValues.length
-        ? (
-            kKrValues.reduce((acc, val) => acc + val, 0) / kKrValues.length
-          ).toFixed(2)
-        : null;
+        const avgKKr = kKrValues.length
+          ? (
+              kKrValues.reduce((acc, val) => acc + val, 0) / kKrValues.length
+            ).toFixed(2)
+          : null;
 
-      const krzValues = Object.entries(props)
-        .filter(([key]) => key.startsWith("krz_"))
-        .map(([_, value]) => Number(value))
-        .filter((val) => !isNaN(val));
+        const krzValues = Object.entries(props)
+          .filter(([key]) => key.startsWith("krz_"))
+          .map(([_, value]) => Number(value))
+          .filter((val) => !isNaN(val));
 
-      const avgKrz = krzValues.length
-        ? (
-            krzValues.reduce((acc, val) => acc + val, 0) / krzValues.length
-          ).toFixed(2)
-        : null;
+        const avgKrz = krzValues.length
+          ? (
+              krzValues.reduce((acc, val) => acc + val, 0) / krzValues.length
+            ).toFixed(2)
+          : null;
 
-      return {
-        id: index + 1,
-        state: props.State || "NA",
-        district: props.District || "NA",
-        block: props.Taluka || "NA",
-        waterbody: props.waterbody_name || "NA",
-        siltRemoved: props.slit_excavated || 0,
-        avgWaterAvailabilityZaid: avgKrz,
-        avgWaterAvailabilityKharifAndRabi: avgKKr,
-        coordinates: coordinates,
-        featureIndex: index, // Store feature index for later reference
-      };
-    });
-  }, [water_rej]);
+        return {
+          id: index + 1,
+          state: props.State || "NA",
+          district: props.District || "NA",
+          block: props.Taluka || "NA",
+          waterbody: props.waterbody_name || "NA",
+          siltRemoved: props.slit_excavated || 0,
+          avgWaterAvailabilityZaid: avgKrz,
+          avgWaterAvailabilityKharifAndRabi: avgKKr,
+          coordinates,
+          featureIndex: index,
+        };
+      })
+      .filter((row) => {
+        const state = row.state?.toLowerCase() || "";
+
+        if (project === "ATECH_UP") return state.includes("uttar");
+        if (project === "ATE_MP") return state.includes("madhya");
+        if (project === "ATE_Water_Tamil") return state.includes("tamil");
+        // Add more filters as needed
+        return true; // default: show all
+      });
+  }, [water_rej, project]);
 
   const handleViewChange = (event, newView) => {
     if (newView !== null) {

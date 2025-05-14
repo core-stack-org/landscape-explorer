@@ -156,7 +156,7 @@ const HeaderSelect = ({
                 value={project ? { label: project, value: project } : null}
                 onChange={handleProjectChange}
                 options={[
-                  { label: "ATE_Maharashtra", value: "ATE_Maharashtra" },
+                  { label: "ATE_MP", value: "ATE_MP" },
                   { label: "ATECH_UP", value: "ATECH_UP" },
                   { label: "ATE_Water_Tamil", value: "ATE_Water_Tamil" },
                 ]}
