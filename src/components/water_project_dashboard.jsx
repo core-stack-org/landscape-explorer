@@ -354,6 +354,7 @@ const WaterProjectDashboard = () => {
         url: `https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}`,
         maxZoom: 30,
         transition: 500,
+        zoom: 18,
       }),
       preload: 4,
     });
@@ -427,11 +428,10 @@ const WaterProjectDashboard = () => {
       view.fit(extent, {
         padding: [50, 50, 50, 50],
         duration: 1000,
-        maxZoom: 14,
+        maxZoom: 35,
+        zoom: 18,
       });
     }
-
-    // Safely zoom to selected waterbody after all layers are rendered
     map.once("rendercomplete", () => {
       if (selectedWaterbody && selectedWaterbody.coordinates) {
         zoomToWaterbody(selectedWaterbody);
@@ -472,7 +472,7 @@ const WaterProjectDashboard = () => {
     const mapView = mapRef.current.getView();
     mapView.animate({
       center: waterbody.coordinates,
-      zoom: 14,
+      zoom: 18,
       duration: 1000,
     });
     if (waterBodyLayer) {
@@ -986,6 +986,64 @@ const WaterProjectDashboard = () => {
                   }}
                 >
                   <YearSlider currentLayer={{ name: "lulcWaterrej" }} />
+                </Box>
+
+                {/* Zoom Controls */}
+                <Box
+                  sx={{
+                    position: "absolute",
+                    top: 80,
+                    right: 16,
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 1,
+                    zIndex: 1100,
+                  }}
+                >
+                  <button
+                    style={{
+                      backgroundColor: "#fff",
+                      border: "1px solid #ccc",
+                      borderRadius: "4px",
+                      width: "40px",
+                      height: "40px",
+                      fontSize: "20px",
+                      cursor: "pointer",
+                    }}
+                    onClick={() => {
+                      const view = mapRef.current?.getView();
+                      if (view) {
+                        view.animate({
+                          zoom: view.getZoom() + 1,
+                          duration: 300,
+                        });
+                      }
+                    }}
+                  >
+                    +
+                  </button>
+                  <button
+                    style={{
+                      backgroundColor: "#fff",
+                      border: "1px solid #ccc",
+                      borderRadius: "4px",
+                      width: "40px",
+                      height: "40px",
+                      fontSize: "20px",
+                      cursor: "pointer",
+                    }}
+                    onClick={() => {
+                      const view = mapRef.current?.getView();
+                      if (view) {
+                        view.animate({
+                          zoom: view.getZoom() - 1,
+                          duration: 300,
+                        });
+                      }
+                    }}
+                  >
+                    –
+                  </button>
                 </Box>
               </Box>
 
