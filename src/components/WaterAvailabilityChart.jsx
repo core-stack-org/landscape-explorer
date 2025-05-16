@@ -23,10 +23,11 @@ const years = [
 ];
 
 const WaterAvailabilityChart = ({ waterbody, water_rej }) => {
+  console.log(water_rej);
   // Prepare empty arrays that will hold season‑wise values for each year
   const kharifData = new Array(years.length).fill(0);
-  const rabiData   = new Array(years.length).fill(0);
-  const zaidData   = new Array(years.length).fill(0);
+  const rabiData = new Array(years.length).fill(0);
+  const zaidData = new Array(years.length).fill(0);
 
   // Populate the arrays from feature properties
   water_rej.features.forEach((feature) => {
@@ -34,9 +35,10 @@ const WaterAvailabilityChart = ({ waterbody, water_rej }) => {
       const p = feature.properties;
 
       years.forEach((year, i) => {
-        kharifData[i] += p[`k_${year}`]  ?? 0; // Kharif
-        rabiData[i]   += p[`kr_${year}`] ?? 0; // Rabi
-        zaidData[i]   += p[`krz_${year}`]?? 0; // Zaid
+        kharifData[i] += p[`k_${year}`] ?? 0; // Kharif
+        rabiData[i] += p[`kr_${year}`] ?? 0; // Rabi
+        zaidData[i] += p[`krz_${year}`] ?? 0; // Zaid
+        console.log(kharifData);
       });
     }
   });
@@ -76,11 +78,11 @@ const WaterAvailabilityChart = ({ waterbody, water_rej }) => {
     },
     scales: {
       x: {
-        stacked: false,       // grouped bars on X‑axis
+        stacked: false, // grouped bars on X‑axis
         title: { display: true, text: "Year" },
       },
       y: {
-        stacked: false,       // independent Y values
+        stacked: false, // independent Y values
         title: { display: true, text: "Area (in Percent)" },
       },
     },

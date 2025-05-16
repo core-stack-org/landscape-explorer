@@ -1189,7 +1189,7 @@ const WaterProjectDashboard = () => {
                   <div style={{ width: "50%", height: "400px" }}>
                     <WaterAvailabilityChart
                       waterbody={selectedWaterbody}
-                      water_rej={water_rej}
+                      water_rej={geoData}
                     />
                     {/* <SurfaceWaterChart
                       waterbody={selectedWaterbody}
