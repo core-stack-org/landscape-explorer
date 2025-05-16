@@ -95,12 +95,12 @@
             },
             {
                 "name": "drought_category",
-                "label" : "Number of drought years",
+                "label" : "Number of drought years since 2017",
                 "type" : 1,
                 "values" : [
                     {"label" : "No Drought", "value" : 0},
-                    {"label" : "Minimum one drought year", "value" : 1},
-                    {"label" : "Minimum two drought years", "value" : 2}
+                    {"label" : "At least one drought year", "value" : 1},
+                    {"label" : "At least two drought years", "value" : 2}
                 ],
                 "layer_store" : ["cropping_drought"],
                 "layer_name" : ["drought"],
