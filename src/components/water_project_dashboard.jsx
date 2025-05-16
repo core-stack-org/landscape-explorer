@@ -321,156 +321,6 @@ const WaterProjectDashboard = () => {
     fetchUpdateLulc().catch(console.error);
   }, [lulcYear, currentLayer, selectedWaterbody, waterBodyLayer]);
 
-  // useEffect(() => {
-  //   const updateLulcAndHighlight = async () => {
-  //     if (!mapRef.current || !lulcYear || !currentLayer?.length) return;
-
-  //     let tempArr = [...currentLayer];
-
-  //     for (let i = 0; i < tempArr.length; i++) {
-  //       if (tempArr[i].name === "lulcWaterrej") {
-  //         // Remove old layer if exists
-  //         const oldLayer = tempArr[i].layerRef?.[0];
-  //         if (oldLayer) {
-  //           mapRef.current.removeLayer(oldLayer);
-  //         }
-
-  //         // Convert '17_18' to '2017_2018'
-  //         const fullYear = lulcYear
-  //           .split("_")
-  //           .map((part) => `20${part}`)
-  //           .join("_");
-
-  //         // Add new LULC layer
-  //         const newLulcLayer = await getImageLayer(
-  //           "waterrej",
-  //           `clipped_lulc_filtered_mws_ATCF_UP_${fullYear}`,
-  //           true,
-  //           "lulc_water_pixels"
-  //         );
-  //         newLulcLayer.setZIndex(0);
-  //         mapRef.current.addLayer(newLulcLayer);
-  //         tempArr[i].layerRef[0] = newLulcLayer;
-  //       }
-  //     }
-
-  //     setCurrentLayer(tempArr);
-
-  //     // Re-apply waterbody highlight
-  //     if (
-  //       selectedWaterbody &&
-  //       selectedWaterbody.featureIndex !== undefined &&
-  //       waterBodyLayer
-  //     ) {
-  //       const source = waterBodyLayer.getSource();
-  //       const features = source.getFeatures();
-
-  //       // Clear previous styles
-  //       features.forEach((feature) => {
-  //         feature.setStyle(null);
-  //       });
-
-  //       const selectedFeature = features[selectedWaterbody.featureIndex];
-  //       if (selectedFeature) {
-  //         selectedFeature.setStyle(
-  //           new Style({
-  //             stroke: new Stroke({ color: "#FF0000", width: 5 }),
-  //             fill: new Fill({ color: "rgba(255, 0, 0, 0.5)" }),
-  //           })
-  //         );
-  //       }
-  //     }
-  //   };
-
-  //   updateLulcAndHighlight().catch(console.error);
-  // }, [lulcYear]);
-
-  // useEffect(() => {
-  //   const fetchUpdateLulc = async () => {
-  //     if (currentLayer !== null && currentLayer.length > 0) {
-  //       let tempArr = currentLayer;
-  //       let tempLen = tempArr.length;
-
-  //       for (let i = 0; i < tempLen; ++i) {
-  //         if (tempArr[i].name === "lulcWaterrej") {
-  //           if (
-  //             mapRef.current &&
-  //             tempArr[i].layerRef &&
-  //             tempArr[i].layerRef[0]
-  //           ) {
-  //             mapRef.current.removeLayer(tempArr[i].layerRef[0]);
-  //           }
-
-  //           const fullYear = lulcYear
-  //             .split("_")
-  //             .map((part) => `20${part}`)
-  //             .join("_")
-  //             .toLowerCase()
-  //             .split(" ")
-  //             .join("_");
-
-  //           let tempLayer = await getImageLayer(
-  //             "waterrej",
-  //             `clipped_lulc_filtered_mws_ATCF_UP_${fullYear}`,
-  //             true,
-  //             "lulc_water_pixels"
-  //           );
-  //           tempLayer.setZIndex(0);
-
-  //           if (mapRef.current) {
-  //             mapRef.current.addLayer(tempLayer);
-  //           }
-
-  //           tempArr[i].layerRef[0] = tempLayer;
-  //         }
-  //       }
-  //       setCurrentLayer(tempArr);
-
-  //       // Highlight and ZOOM to selected waterbody
-  //       if (
-  //         selectedWaterbody &&
-  //         selectedWaterbody.featureIndex !== undefined &&
-  //         waterBodyLayer &&
-  //         mapRef.current
-  //       ) {
-  //         const source = waterBodyLayer.getSource();
-  //         const features = source.getFeatures();
-
-  //         // Clear previous styles
-  //         features.forEach((feature) => {
-  //           feature.setStyle(null);
-  //         });
-
-  //         const selectedFeature = features[selectedWaterbody.featureIndex];
-  //         if (selectedFeature) {
-  //           selectedFeature.setStyle(
-  //             new Style({
-  //               stroke: new Stroke({ color: "blue", width: 5 }),
-  //               fill: new Fill({ color: "rgba(255, 0, 0, 0.3)" }),
-  //             })
-  //           );
-
-  //           // ✅ ZOOM to selected waterbody's geometry
-  //           const geometry = selectedFeature.getGeometry();
-  //           const view = mapRef.current.getView();
-  //           if (geometry) {
-  //             const extent = geometry.getExtent();
-  //             view.fit(extent, {
-  //               duration: 500,
-  //               padding: [50, 50, 50, 50], // top, right, bottom, left
-  //               maxZoom: 16, // prevent zooming in too far
-  //             });
-  //           }
-  //         }
-  //       }
-  //     } else {
-  //       setCurrentLayer([{ name: "lulcWaterrej", layerRef: [] }]);
-  //     }
-  //   };
-
-  //   fetchUpdateLulc().catch(console.error);
-  // }, [lulcYear, currentLayer, selectedWaterbody, waterBodyLayer]);
-
   const handleViewChange = (event, newView) => {
     if (newView !== null) {
       setView(newView);
@@ -683,55 +533,25 @@ const WaterProjectDashboard = () => {
   };
 
   const handleWaterbodyClick = (row) => {
-    const waterbodyFeature = water_rej.features.find(
-      (feature, index) => index === row.featureIndex
-    );
+    const feature = geoData.features.find((f, idx) => idx === row.featureIndex);
 
-    if (waterbodyFeature) {
-      let coordinates;
-      const geometry = waterbodyFeature.geometry;
+    if (
+      feature &&
+      feature.properties?.latitude &&
+      feature.properties?.longitude
+    ) {
+      const coordinates = [
+        feature.properties.longitude,
+        feature.properties.latitude,
+      ];
+      row.coordinates = coordinates;
 
-      if (geometry.type === "Point") {
-        coordinates = geometry.coordinates;
-      } else if (geometry.type === "Polygon" && geometry.coordinates?.[0]) {
-        const coords = geometry.coordinates[0];
-        const sumX = coords.reduce((acc, coord) => acc + coord[0], 0);
-        const sumY = coords.reduce((acc, coord) => acc + coord[1], 0);
-        coordinates = [sumX / coords.length, sumY / coords.length];
-      } else if (
-        geometry.type === "LineString" &&
-        geometry.coordinates?.length
-      ) {
-        const middleIndex = Math.floor(geometry.coordinates.length / 2);
-        coordinates = geometry.coordinates[middleIndex];
-      } else if (
-        geometry.type === "MultiPolygon" &&
-        geometry.coordinates?.[0]?.[0]
-      ) {
-        const coords = geometry.coordinates[0][0];
-        const sumX = coords.reduce((acc, coord) => acc + coord[0], 0);
-        const sumY = coords.reduce((acc, coord) => acc + coord[1], 0);
-        coordinates = [sumX / coords.length, sumY / coords.length];
-      }
+      setSelectedWaterbody(row);
+      setView("map");
 
-      if (coordinates) {
-        if (!row.coordinates) {
-          row.coordinates = coordinates;
-        }
-        setSelectedWaterbody(row);
-        setView("map");
-      } else {
-        console.error(
-          "Could not extract coordinates from feature:",
-          waterbodyFeature
-        );
-      }
+      zoomToWaterbody(coordinates, mapRef); // ✅ Direct zoom
     } else {
-      console.error("Could not find feature for waterbody:", row.waterbody);
-      if (row.coordinates) {
-        setSelectedWaterbody(row);
-        setView("map");
-      }
+      console.error("Coordinates not found in feature properties.");
     }
   };
 
