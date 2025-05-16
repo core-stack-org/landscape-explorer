@@ -248,7 +248,10 @@ const WaterProjectDashboard = () => {
     console.log("slider vala useEffect");
 
     const fetchUpdateLulc = async () => {
-      console.log("fetchUpdateLulc running...");
+      if (!lulcYear || !lulcYear.includes("_")) {
+        console.warn("Invalid lulcYear:", lulcYear);
+        return;
+      }
 
       if (currentLayer !== null && currentLayer.length > 0) {
         let tempArr = currentLayer;
@@ -256,13 +259,10 @@ const WaterProjectDashboard = () => {
 
         for (let i = 0; i < tempLen; ++i) {
           if (tempArr[i].name === "lulcWaterrej") {
-            // Remove old layer
             if (mapRef.current && tempArr[i].layerRef?.[0]) {
               mapRef.current.removeLayer(tempArr[i].layerRef[0]);
-              console.log("Old layer removed");
             }
 
-            // Get formatted year string
             const fullYear = lulcYear
               .split("_")
               .map((part) => `20${part}`)
@@ -270,7 +270,6 @@ const WaterProjectDashboard = () => {
               .toLowerCase()
               .replace(/\s/g, "_");
 
-            // Get new layer
             let tempLayer = await getImageLayer(
               "waterrej",
               `clipped_lulc_filtered_mws_ATCF_UP_${fullYear}`,
@@ -279,39 +278,30 @@ const WaterProjectDashboard = () => {
             );
             tempLayer.setZIndex(0);
 
-            // Add new layer to map
             if (mapRef.current) {
               mapRef.current.addLayer(tempLayer);
-              console.log("New LULC layer added");
             }
 
-            // Save new layer ref
             tempArr[i].layerRef[0] = tempLayer;
           }
         }
 
         setCurrentLayer(tempArr);
 
-        // ✅ Re-zoom and highlight selected waterbody
         if (selectedWaterbody?.geometry && mapRef.current && waterBodyLayer) {
           const source = waterBodyLayer.getSource();
           const features = source.getFeatures();
 
-          // Clear all styles
-          features.forEach((feature) => {
-            feature.setStyle(null);
-          });
+          features.forEach((feature) => feature.setStyle(null));
 
           const extent = selectedWaterbody.geometry.getExtent();
 
-          // Zoom to that extent
           mapRef.current.getView().fit(extent, {
             padding: [40, 40, 40, 40],
             duration: 500,
             maxZoom: 17,
           });
 
-          // Highlight matching feature by geometry
           features.forEach((feature) => {
             if (feature.getGeometry().intersectsExtent(extent)) {
               feature.setStyle(
@@ -324,7 +314,6 @@ const WaterProjectDashboard = () => {
           });
         }
       } else {
-        console.log("Empty or missing currentLayer, resetting...");
         setCurrentLayer([{ name: "lulcWaterrej", layerRef: [] }]);
       }
     };
