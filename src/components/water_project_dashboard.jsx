@@ -129,32 +129,6 @@ const WaterProjectDashboard = () => {
     return storedProject || "";
   });
 
-  // useEffect(() => {
-  //   const fetchGeoJSON = async () => {
-  //     const typeName = `waterrej:WaterRejapp-${project}_${projectId}`;
-  //     const url =
-  //       `https://geoserver.core-stack.org:8443/geoserver/waterrej/ows?` +
-  //       new URLSearchParams({
-  //         service: "WFS",
-  //         version: "1.0.0",
-  //         request: "GetFeature",
-  //         typeName,
-  //         maxFeatures: "50",
-  //         outputFormat: "application/json",
-  //       });
-
-  //     try {
-  //       const response = await fetch(url);
-  //       const data = await response.json();
-  //       setWaterRej(data);
-  //     } catch (error) {
-  //       console.error("Failed to fetch GeoJSON from GeoServer", error);
-  //     }
-  //   };
-
-  //   fetchGeoJSON();
-  // }, [project, projectId]);
-
   const geoData = useWaterRejData(project, projectId);
   const rows = useMemo(() => {
     if (!geoData?.features) return [];
@@ -270,92 +244,153 @@ const WaterProjectDashboard = () => {
       setProject(storedProject);
     }
   }, []);
+  // useEffect(() => {
+  //   console.log("slider vala useffct");
+  //   const fetchUpdateLulc = async () => {
+  //     console.log("fetchupdate vala block");
+
+  //     // Make sure currentLayer is set before proceeding
+  //     if (currentLayer !== null && currentLayer.length > 0) {
+  //       console.log("currentLayer:", currentLayer); // Check structure
+
+  //       let tempArr = currentLayer;
+  //       let tempLen = tempArr.length;
+  //       console.log(lulcYear);
+
+  //       for (let i = 0; i < tempLen; ++i) {
+  //         console.log(`Layer ${i} Name:`, tempArr[i].name); // Check name
+
+  //         if (tempArr[i].name === "lulcWaterrej") {
+  //           console.log("Layer name matches lulcWaterrej, processing...");
+
+  //           // Check if mapRef.current and the layerRef are valid before removing the layer
+  //           if (
+  //             mapRef.current &&
+  //             tempArr[i].layerRef &&
+  //             tempArr[i].layerRef[0]
+  //           ) {
+  //             // mapRef.current.removeLayer(tempArr[i].layerRef[0]);
+  //             console.log("Layer removed successfully");
+  //           } else {
+  //             console.log(
+  //               "Unable to remove layer: mapRef or layerRef is not valid"
+  //             );
+  //           }
+  //           console.log(lulcYear);
+
+  //           const fullYear = lulcYear
+  //             .split("_")
+  //             .map((part) => `20${part}`)
+  //             .join("_");
+
+  //           console.log("Full Year:", fullYear);
+  //           mapRef.current.removeLayer(tempArr[i].layerRef[0]);
+
+  //           let tempLayer = await getImageLayer(
+  //             "waterrej",
+  //             `clipped_lulc_filtered_mws_ATCF_UP_${fullYear
+  //               .toLowerCase()
+  //               .split(" ")
+  //               .join("_")}`,
+  //             true,
+  //             "lulc_water_pixels"
+  //           );
+  //           tempLayer.setZIndex(0);
+
+  //           console.log(tempLayer);
+
+  //           if (mapRef.current) {
+  //             mapRef.current.addLayer(tempLayer);
+  //             console.log("New layer added successfully");
+  //             const view = mapRef.current.getView();
+  //             view.setZoom(10);
+  //           } else {
+  //             console.log("Unable to add layer: mapRef is not valid");
+  //           }
+
+  //           tempArr[i].layerRef[0] = tempLayer;
+  //         } else {
+  //           console.log(
+  //             `Layer ${i} skipped, name does not match "lulcWaterrej"`
+  //           );
+  //         }
+  //       }
+  //       setCurrentLayer(tempArr);
+  //     } else {
+  //       console.log("currentLayer is empty or not initialized properly");
+  //       // Set a default value or handle the empty case
+  //       setCurrentLayer([
+  //         { name: "lulcWaterrej", layerRef: [] }, // Example structure
+  //       ]);
+  //     }
+  //   };
+
+  //   fetchUpdateLulc().catch(console.error);
+  // }, [lulcYear, currentLayer]);
+
   useEffect(() => {
-    console.log("slider vala useffct");
-    const fetchUpdateLulc = async () => {
-      console.log("fetchupdate vala block");
+    const updateLulcAndHighlight = async () => {
+      if (!mapRef.current || !lulcYear || !currentLayer?.length) return;
 
-      // Make sure currentLayer is set before proceeding
-      if (currentLayer !== null && currentLayer.length > 0) {
-        console.log("currentLayer:", currentLayer); // Check structure
+      let tempArr = [...currentLayer];
 
-        let tempArr = currentLayer;
-        let tempLen = tempArr.length;
-        console.log(lulcYear);
-
-        for (let i = 0; i < tempLen; ++i) {
-          console.log(`Layer ${i} Name:`, tempArr[i].name); // Check name
-
-          if (tempArr[i].name === "lulcWaterrej") {
-            console.log("Layer name matches lulcWaterrej, processing...");
-
-            // Check if mapRef.current and the layerRef are valid before removing the layer
-            if (
-              mapRef.current &&
-              tempArr[i].layerRef &&
-              tempArr[i].layerRef[0]
-            ) {
-              // mapRef.current.removeLayer(tempArr[i].layerRef[0]);
-              console.log("Layer removed successfully");
-            } else {
-              console.log(
-                "Unable to remove layer: mapRef or layerRef is not valid"
-              );
-            }
-            console.log(lulcYear);
-
-            // Convert '17_18' to '2017_2018'
-            // Assuming lulcYear = '17_18'
-            const fullYear = lulcYear
-              .split("_")
-              .map((part) => `20${part}`) // Add '20' to both parts
-              .join("_"); // Join back with underscore
-
-            console.log("Full Year:", fullYear); // Should output: '2017_2018'
-            // Should output: 2017_2018
-            mapRef.current.removeLayer(tempArr[i].layerRef[0]);
-
-            let tempLayer = await getImageLayer(
-              "waterrej",
-              `clipped_lulc_filtered_mws_ATCF_UP_${fullYear
-                .toLowerCase()
-                .split(" ")
-                .join("_")}`,
-              true,
-              "lulc_water_pixels"
-            );
-            tempLayer.setZIndex(0);
-
-            console.log(tempLayer);
-
-            if (mapRef.current) {
-              mapRef.current.addLayer(tempLayer);
-              console.log("New layer added successfully");
-              const view = mapRef.current.getView();
-              view.setZoom(10);
-            } else {
-              console.log("Unable to add layer: mapRef is not valid");
-            }
-
-            tempArr[i].layerRef[0] = tempLayer;
-          } else {
-            console.log(
-              `Layer ${i} skipped, name does not match "lulcWaterrej"`
-            );
+      for (let i = 0; i < tempArr.length; i++) {
+        if (tempArr[i].name === "lulcWaterrej") {
+          // Remove old layer if exists
+          const oldLayer = tempArr[i].layerRef?.[0];
+          if (oldLayer) {
+            mapRef.current.removeLayer(oldLayer);
           }
+
+          // Convert '17_18' to '2017_2018'
+          const fullYear = lulcYear
+            .split("_")
+            .map((part) => `20${part}`)
+            .join("_");
+
+          // Add new LULC layer
+          const newLulcLayer = await getImageLayer(
+            "waterrej",
+            `clipped_lulc_filtered_mws_ATCF_UP_${fullYear}`,
+            true,
+            "lulc_water_pixels"
+          );
+          newLulcLayer.setZIndex(0);
+          mapRef.current.addLayer(newLulcLayer);
+          tempArr[i].layerRef[0] = newLulcLayer;
         }
-        setCurrentLayer(tempArr);
-      } else {
-        console.log("currentLayer is empty or not initialized properly");
-        // Set a default value or handle the empty case
-        setCurrentLayer([
-          { name: "lulcWaterrej", layerRef: [] }, // Example structure
-        ]);
+      }
+
+      setCurrentLayer(tempArr);
+
+      // Re-apply waterbody highlight
+      if (
+        selectedWaterbody &&
+        selectedWaterbody.featureIndex !== undefined &&
+        waterBodyLayer
+      ) {
+        const source = waterBodyLayer.getSource();
+        const features = source.getFeatures();
+
+        // Clear previous styles
+        features.forEach((feature) => {
+          feature.setStyle(null);
+        });
+
+        const selectedFeature = features[selectedWaterbody.featureIndex];
+        if (selectedFeature) {
+          selectedFeature.setStyle(
+            new Style({
+              stroke: new Stroke({ color: "#FF0000", width: 5 }),
+              fill: new Fill({ color: "rgba(255, 0, 0, 0.5)" }),
+            })
+          );
+        }
       }
     };
 
-    fetchUpdateLulc().catch(console.error);
-  }, [lulcYear, currentLayer]);
+    updateLulcAndHighlight().catch(console.error);
+  }, [lulcYear]);
 
   const handleViewChange = (event, newView) => {
     if (newView !== null) {
