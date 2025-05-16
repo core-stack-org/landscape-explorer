@@ -43,13 +43,69 @@ import SurfaceWaterChart from "./waterChart";
 import getImageLayer from "../actions/getImageLayers";
 import WaterAvailabilityChart from "./WaterAvailabilityChart";
 
+const useWaterRejData = () => {
+  const [geoData, setGeoData] = useState(null);
+
+  const [project, setProject] = useState(() => {
+    const stored = sessionStorage.getItem("selectedProject");
+    try {
+      return stored ? JSON.parse(stored) : null;
+    } catch (err) {
+      console.error("Failed to parse stored project:", err);
+      return null;
+    }
+  });
+
+  const projectName = project?.label; // e.g. "ATCF_UP"
+  const projectId = project?.value; // e.g. "5"
+
+  useEffect(() => {
+    if (!projectName || !projectId) return;
+
+    const fetchGeoJSON = async () => {
+      const typeName = `waterrej:WaterRejapp-${projectName}_${projectId}`;
+      const url =
+        `https://geoserver.core-stack.org:8443/geoserver/waterrej/ows?` +
+        new URLSearchParams({
+          service: "WFS",
+          version: "1.0.0",
+          request: "GetFeature",
+          typeName,
+          maxFeatures: "50",
+          outputFormat: "application/json",
+        });
+
+      console.log("Fetching GeoJSON from:", url);
+
+      try {
+        const response = await fetch(url);
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error("GeoServer error response:", errorText);
+          throw new Error(`GeoServer returned status ${response.status}`);
+        }
+
+        const data = await response.json();
+        console.log(data);
+        setGeoData(data);
+      } catch (err) {
+        console.error("❌ Failed to fetch or parse GeoJSON:", err);
+        setGeoData(null);
+      }
+    };
+
+    fetchGeoJSON();
+  }, [projectName, projectId]);
+
+  return geoData;
+};
+
 const WaterProjectDashboard = () => {
   const { projectId } = useParams();
   const [view, setView] = useState("table");
   const [anchorEl, setAnchorEl] = useState(null);
   const [filterType, setFilterType] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
-  const [cords, setCords] = useState([]);
+
   const [selectedWaterbody, setSelectedWaterbody] = useState(null);
   const [waterBodyLayer, setWaterBodyLayer] = useState(null);
   const lulcYear = useRecoilValue(yearAtom);
@@ -58,12 +114,10 @@ const WaterProjectDashboard = () => {
   const mapElement = useRef();
   const mapRef = useRef();
   const baseLayerRef = useRef();
-  const AdminLayerRef = useRef(null);
 
   const [sortField, setSortField] = useState(null);
   const [sortOrder, setSortOrder] = useState("asc");
   const [searchText, setSearchText] = useState("");
-  const [geoData, setGeoData] = useState(null);
 
   const [organization, setOrganization] = useState(() => {
     const storedOrg = sessionStorage.getItem("selectedOrganization");
@@ -74,6 +128,99 @@ const WaterProjectDashboard = () => {
     const storedProject = sessionStorage.getItem("selectedProject");
     return storedProject || "";
   });
+
+  // useEffect(() => {
+  //   const fetchGeoJSON = async () => {
+  //     const typeName = `waterrej:WaterRejapp-${project}_${projectId}`;
+  //     const url =
+  //       `https://geoserver.core-stack.org:8443/geoserver/waterrej/ows?` +
+  //       new URLSearchParams({
+  //         service: "WFS",
+  //         version: "1.0.0",
+  //         request: "GetFeature",
+  //         typeName,
+  //         maxFeatures: "50",
+  //         outputFormat: "application/json",
+  //       });
+
+  //     try {
+  //       const response = await fetch(url);
+  //       const data = await response.json();
+  //       setWaterRej(data);
+  //     } catch (error) {
+  //       console.error("Failed to fetch GeoJSON from GeoServer", error);
+  //     }
+  //   };
+
+  //   fetchGeoJSON();
+  // }, [project, projectId]);
+
+  const geoData = useWaterRejData(project, projectId);
+  const rows = useMemo(() => {
+    if (!geoData?.features) return [];
+
+    return geoData.features.map((feature, index) => {
+      const props = feature.properties || {};
+      const geometry = feature.geometry || {};
+
+      let coordinates = null;
+      if (geometry.type === "Point") {
+        coordinates = geometry.coordinates;
+      } else if (geometry.type === "Polygon") {
+        const coords = geometry.coordinates[0];
+        if (coords?.length > 0) {
+          const sumX = coords.reduce((acc, coord) => acc + coord[0], 0);
+          const sumY = coords.reduce((acc, coord) => acc + coord[1], 0);
+          coordinates = [sumX / coords.length, sumY / coords.length];
+        }
+      } else if (
+        geometry.type === "LineString" &&
+        geometry.coordinates?.length > 0
+      ) {
+        const middleIndex = Math.floor(geometry.coordinates.length / 2);
+        coordinates = geometry.coordinates[middleIndex];
+      }
+
+      const kKrValues = Object.entries(props)
+        .filter(
+          ([key]) =>
+            (key.startsWith("k_") || key.startsWith("kr_")) &&
+            !key.startsWith("krz_")
+        )
+        .map(([_, value]) => Number(value))
+        .filter((val) => !isNaN(val));
+
+      const avgKKr = kKrValues.length
+        ? (
+            kKrValues.reduce((acc, val) => acc + val, 0) / kKrValues.length
+          ).toFixed(2)
+        : null;
+
+      const krzValues = Object.entries(props)
+        .filter(([key]) => key.startsWith("krz_"))
+        .map(([_, value]) => Number(value))
+        .filter((val) => !isNaN(val));
+
+      const avgKrz = krzValues.length
+        ? (
+            krzValues.reduce((acc, val) => acc + val, 0) / krzValues.length
+          ).toFixed(2)
+        : null;
+
+      return {
+        id: index + 1,
+        state: props.State || "NA",
+        district: props.District || "NA",
+        block: props.Taluka || "NA",
+        waterbody: props.waterbody_name || "NA",
+        siltRemoved: props.slit_excavated || 0,
+        avgWaterAvailabilityZaid: avgKrz,
+        avgWaterAvailabilityKharifAndRabi: avgKKr,
+        coordinates,
+        featureIndex: index,
+      };
+    });
+  }, [geoData]);
 
   const [year, setYear] = useState(2024);
   const handleYearChange = (newYear) => setYear(newYear);
@@ -209,82 +356,6 @@ const WaterProjectDashboard = () => {
 
     fetchUpdateLulc().catch(console.error);
   }, [lulcYear, currentLayer]);
-
-  const rows = useMemo(() => {
-    if (!water_rej?.features) return [];
-
-    return water_rej.features
-      .map((feature, index) => {
-        const props = feature.properties || {};
-        const geometry = feature.geometry || {};
-
-        let coordinates = null;
-        if (geometry.type === "Point") {
-          coordinates = geometry.coordinates;
-        } else if (geometry.type === "Polygon") {
-          const coords = geometry.coordinates[0];
-          if (coords?.length > 0) {
-            const sumX = coords.reduce((acc, coord) => acc + coord[0], 0);
-            const sumY = coords.reduce((acc, coord) => acc + coord[1], 0);
-            coordinates = [sumX / coords.length, sumY / coords.length];
-          }
-        } else if (
-          geometry.type === "LineString" &&
-          geometry.coordinates?.length > 0
-        ) {
-          const middleIndex = Math.floor(geometry.coordinates.length / 2);
-          coordinates = geometry.coordinates[middleIndex];
-        }
-
-        const kKrValues = Object.entries(props)
-          .filter(
-            ([key]) =>
-              (key.startsWith("k_") || key.startsWith("kr_")) &&
-              !key.startsWith("krz_")
-          )
-          .map(([_, value]) => Number(value))
-          .filter((val) => !isNaN(val));
-
-        const avgKKr = kKrValues.length
-          ? (
-              kKrValues.reduce((acc, val) => acc + val, 0) / kKrValues.length
-            ).toFixed(2)
-          : null;
-
-        const krzValues = Object.entries(props)
-          .filter(([key]) => key.startsWith("krz_"))
-          .map(([_, value]) => Number(value))
-          .filter((val) => !isNaN(val));
-
-        const avgKrz = krzValues.length
-          ? (
-              krzValues.reduce((acc, val) => acc + val, 0) / krzValues.length
-            ).toFixed(2)
-          : null;
-
-        return {
-          id: index + 1,
-          state: props.State || "NA",
-          district: props.District || "NA",
-          block: props.Taluka || "NA",
-          waterbody: props.waterbody_name || "NA",
-          siltRemoved: props.slit_excavated || 0,
-          avgWaterAvailabilityZaid: avgKrz,
-          avgWaterAvailabilityKharifAndRabi: avgKKr,
-          coordinates,
-          featureIndex: index,
-        };
-      })
-      .filter((row) => {
-        const state = row.state?.toLowerCase() || "";
-
-        if (project === "ATECH_UP") return state.includes("uttar");
-        if (project === "ATE_MP") return state.includes("madhya");
-        if (project === "ATE_Water_Tamil") return state.includes("tamil");
-        // Add more filters as needed
-        return true; // default: show all
-      });
-  }, [water_rej, project]);
 
   const handleViewChange = (event, newView) => {
     if (newView !== null) {
@@ -451,7 +522,6 @@ const WaterProjectDashboard = () => {
     };
   }, [view]);
 
-  // Add effect to handle selected waterbody changes when map is already initialized
   useEffect(() => {
     if (
       view === "map" &&
@@ -518,14 +588,12 @@ const WaterProjectDashboard = () => {
         geometry.type === "LineString" &&
         geometry.coordinates?.length
       ) {
-        // Middle point of a LineString
         const middleIndex = Math.floor(geometry.coordinates.length / 2);
         coordinates = geometry.coordinates[middleIndex];
       } else if (
         geometry.type === "MultiPolygon" &&
         geometry.coordinates?.[0]?.[0]
       ) {
-        // Handle MultiPolygon - Use first polygon's coordinates to compute centroid
         const coords = geometry.coordinates[0][0];
         const sumX = coords.reduce((acc, coord) => acc + coord[0], 0);
         const sumY = coords.reduce((acc, coord) => acc + coord[1], 0);

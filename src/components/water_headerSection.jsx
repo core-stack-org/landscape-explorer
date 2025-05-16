@@ -20,23 +20,39 @@ const HeaderSelect = ({
 }) => {
   const [organization, setOrganization] = useState(initialOrg || null);
   const [organizationOptions, setOrganizationOptions] = useState([]);
-  const [project, setProject] = useState(initialProject || "");
+  const [project, setProject] = useState(initialProject || null);
   const [filter, setFilter] = useState("");
 
   const navigate = useNavigate();
   const location = useLocation();
   const isOnDashboard = location.pathname.includes("/dashboard");
 
+  const projectOptions = [
+    { label: "ATE_MP", value: "1" },
+    { label: "ATCF_UP", value: "5" },
+    { label: "ATE_Water_Tamil", value: "2" },
+  ];
+
   useEffect(() => {
     const fetchOrganizations = async () => {
       const options = await loadOrganization();
       setOrganizationOptions(options);
+
       if (!organization && isOnDashboard) {
         const storedOrg = sessionStorage.getItem("selectedOrganization");
         if (storedOrg) {
           setOrganization(JSON.parse(storedOrg));
         } else if (options.length > 0) {
           setOrganization(options[0]);
+        }
+      }
+
+      const storedProject = sessionStorage.getItem("selectedProject");
+      if (storedProject) {
+        const parsed = JSON.parse(storedProject);
+        const matched = projectOptions.find((p) => p.value === parsed.value);
+        if (matched) {
+          setProject(matched);
         }
       }
     };
@@ -97,11 +113,10 @@ const HeaderSelect = ({
   };
 
   const handleProjectChange = (selectedOption) => {
-    const selectedValue = selectedOption?.value || "";
-    setProject(selectedValue);
-    sessionStorage.setItem("selectedProject", selectedValue);
-    if (selectedValue) {
-      navigate(`/dashboard/${selectedValue}`);
+    setProject(selectedOption);
+    sessionStorage.setItem("selectedProject", JSON.stringify(selectedOption));
+    if (selectedOption?.value) {
+      navigate(`/dashboard/${selectedOption.value}`);
     }
   };
 
@@ -153,16 +168,12 @@ const HeaderSelect = ({
               />
 
               <SelectReact
-                value={project ? { label: project, value: project } : null}
+                value={project}
                 onChange={handleProjectChange}
-                options={[
-                  { label: "ATE_MP", value: "ATE_MP" },
-                  { label: "ATECH_UP", value: "ATECH_UP" },
-                  { label: "ATE_Water_Tamil", value: "ATE_Water_Tamil" },
-                ]}
+                options={projectOptions}
                 placeholder="Select Project"
                 styles={customStyles}
-                isClearable
+                isClearable={!isOnDashboard}
                 isDisabled={isOnDashboard}
                 menuPortalTarget={document.body}
                 menuPosition="fixed"
