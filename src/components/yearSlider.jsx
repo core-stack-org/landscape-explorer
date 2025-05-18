@@ -13,6 +13,7 @@ const YearSlider = ({ currentLayer }) => {
     { label: "2020-2021", value: "20_21" },
     { label: "2021-2022", value: "21_22" },
     { label: "2022-2023", value: "22_23" },
+    { label: "2023-2024", value: "23_24" },
   ];
 
   const [currentValue, setCurrentValue] = useState(0);

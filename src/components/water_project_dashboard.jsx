@@ -269,12 +269,26 @@ const WaterProjectDashboard = () => {
               .join("_")
               .toLowerCase()
               .replace(/\s/g, "_");
+            console.log(project);
+            console.log("project in useEffect:", project);
+            console.log("typeof project:", typeof project);
+            let parsedProject;
+            try {
+              parsedProject = JSON.parse(project); // project is a string
+            } catch (err) {
+              console.error("Failed to parse project string:", err);
+              return;
+            }
 
+            const projectName = parsedProject.label;
+            const projectId = parsedProject.value;
+            const layerName = `clipped_lulc_filtered_mws_${projectName}_${projectId}_${fullYear}`;
+            console.log(layerName);
             let tempLayer = await getImageLayer(
               "waterrej",
-              `clipped_lulc_filtered_mws_ATCF_UP_${fullYear}`,
+              layerName,
               true,
-              "lulc_water_pixels"
+              ""
             );
             tempLayer.setZIndex(0);
 
@@ -299,7 +313,7 @@ const WaterProjectDashboard = () => {
           mapRef.current.getView().fit(extent, {
             padding: [40, 40, 40, 40],
             duration: 500,
-            maxZoom: 17,
+            maxZoom: 15,
           });
 
           features.forEach((feature) => {
