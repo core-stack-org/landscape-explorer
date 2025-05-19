@@ -288,7 +288,7 @@ const WaterProjectDashboard = () => {
               "waterrej",
               layerName,
               true,
-              ""
+              "lulc_water_pixels"
             );
             tempLayer.setZIndex(0);
 
