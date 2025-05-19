@@ -315,6 +315,18 @@ const MapLegend = ({ showMWS, showVillages, currentLayer }) => {
     { color: "#eaa4f0", label: "Scrub land - Forest " },
   ];
 
+  const AquiferItems = [
+    { color: "#f4d03f", label: " Alluvial " },
+    { color: "#e74c3c", label: "Hard Rock " },
+  ];
+
+  const SOGEItems = [
+    { color: "#ffffff", label: " Safe " },
+    { color: "#e0f3f8", label: "Semi - Critical " },
+    { color: "#4575b4", label: " Critical " },
+    { color: "#313695", label: "Over - Exploited " },
+  ];
+
   // Check if LULC layer is active
   const isLulcLayerActive = currentLayer?.some(
     (layer) =>
@@ -408,6 +420,13 @@ const MapLegend = ({ showMWS, showVillages, currentLayer }) => {
       layer.name === "increase_in_tree_cover" || layer.name.includes("increase")
   );
 
+  const isAquiferActive = currentLayer?.some(
+    (layer) => layer.name === "aquifer_class" || layer.name.includes("aquifer")
+  );
+
+  const isSOGEActive = currentLayer?.some(
+    (layer) => layer.name === "soge_class" || layer.name.includes("soge")
+  );
   return (
     <div
       className={`absolute bottom-24 left-0 z-10 transition-all duration-300 ${
@@ -908,6 +927,54 @@ const MapLegend = ({ showMWS, showVillages, currentLayer }) => {
                     Afforestation
                   </h4>
                   {CropAfforestationtems.map((item, index) => (
+                    <div
+                      key={`trend-${index}`}
+                      className="flex items-center gap-2"
+                    >
+                      <div
+                        className="w-4 h-4 rounded"
+                        style={{
+                          backgroundColor: item.color,
+                          border: `1px solid rgba(0,0,0,0.2)`,
+                        }}
+                      />
+                      <span className="text-sm text-gray-600">
+                        {item.label}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Aquifer Section */}
+              {isAquiferActive && (
+                <div className="space-y-2">
+                  <h4 className="text-xs font-medium text-gray-600">Aquifer</h4>
+                  {AquiferItems.map((item, index) => (
+                    <div
+                      key={`trend-${index}`}
+                      className="flex items-center gap-2"
+                    >
+                      <div
+                        className="w-4 h-4 rounded"
+                        style={{
+                          backgroundColor: item.color,
+                          border: `1px solid rgba(0,0,0,0.2)`,
+                        }}
+                      />
+                      <span className="text-sm text-gray-600">
+                        {item.label}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* SOGE Section */}
+              {isSOGEActive && (
+                <div className="space-y-2">
+                  <h4 className="text-xs font-medium text-gray-600">SOGE</h4>
+                  {SOGEItems.map((item, index) => (
                     <div
                       key={`trend-${index}`}
                       className="flex items-center gap-2"
