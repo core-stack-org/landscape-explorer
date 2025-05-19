@@ -372,7 +372,7 @@ const WaterProjectDashboard = () => {
     const aValue = a[sortField];
     const bValue = b[sortField];
 
-    if (sortField === "waterAvailability") {
+    if (sortField === "avgWaterAvailabilityZaid") {
       const aNumeric = parseFloat(aValue.replace("%", ""));
       const bNumeric = parseFloat(bValue.replace("%", ""));
       return sortOrder === "asc" ? aNumeric - bNumeric : bNumeric - aNumeric;
@@ -569,6 +569,57 @@ const WaterProjectDashboard = () => {
     }
   };
 
+  const downloadCSV = () => {
+    if (!sortedRows || sortedRows.length === 0) {
+      return;
+    }
+
+    const headers = [
+      "State",
+      "District",
+      "GP/Village",
+      "Waterbody",
+      "Silt Removed (Cu.m.)",
+      "Avg. Water Availability During Zaid (%)",
+      "Avg. Water Availability During Kharif and Rabi (%)",
+    ];
+
+    const csvRows = [
+      headers.join(","), // Header row
+      ...sortedRows.map((row) =>
+        [
+          row.state,
+          row.district,
+          row.block,
+          row.waterbody,
+          row.siltRemoved,
+          row.avgWaterAvailabilityZaid,
+          row.avgWaterAvailabilityKharifAndRabi,
+        ]
+          .map((cell) => `"${cell}"`) // Wrap in quotes for safety
+          .join(",")
+      ),
+    ];
+    let parsedProject;
+    try {
+      parsedProject = JSON.parse(project); // project is a string
+    } catch (err) {
+      console.error("Failed to parse project string:", err);
+      return;
+    }
+
+    const projectName = parsedProject.label;
+    const csvContent = "data:text/csv;charset=utf-8," + csvRows.join("\n");
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    const fileName = `${projectName}_waterbodies_report.csv`;
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", fileName);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   return (
     <Box sx={{ position: "relative" }}>
       <HeaderSelect showExtras organization={organization} project={project} />
@@ -660,6 +711,7 @@ const WaterProjectDashboard = () => {
               height: "88px",
               width: "48px",
             }}
+            onClick={downloadCSV}
           >
             <Download size={94} strokeWidth={1.2} color="black" />
           </Box>
@@ -1064,7 +1116,7 @@ const WaterProjectDashboard = () => {
               </Box>
 
               {/* Paragraph */}
-              <Box
+              {/* <Box
                 sx={{
                   width: "80%",
                   padding: 2,
@@ -1094,7 +1146,7 @@ const WaterProjectDashboard = () => {
                     from 16% to 25%.
                   </span>
                 </Typography>
-              </Box>
+              </Box> */}
             </Box>
             {selectedWaterbody !== undefined && selectedWaterbody !== null && (
               <>
