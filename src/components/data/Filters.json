@@ -220,12 +220,54 @@
                 "values" : [
                     {"label" : "Hard rock", "value" : 0},
                     {"label" : "Alluvial", "value" : 1}                ],
-                "layer_store" : [],
-                "layer_name" : [],
+                "layer_store" : ["aquifer"],
+                "layer_name" : ["aquifer_vector"],
                 "vectorStyle" : [{
-                    "fill" : "rgba(100, 149, 237, 0.5)",
-                    "stroke" : "rgba(100, 149, 237, 1)"
-                }],
+                    "fill" : "rgba(244, 208, 63, 0.5)",
+                    "stroke" : "rgba(244, 208, 63, 1)",
+                    "lower" : 0, "upper" : 0
+                },
+                {
+                    "fill" : "rgba(231, 76, 60, 0.5)",
+                    "stroke" : "rgba(231, 76, 60, 1)",
+                    "lower" : 1, "upper" : 1
+                }
+            ],
+                "rasterStyle" : "",
+                "styleIdx" : 0
+            },
+            {
+                "name": "soge_class",
+                "label" : "State of groundwater extraction",
+                "type" : 1,
+                "values" : [
+                    {"label" : "Safe", "value" : 0},
+                    {"label" : "Semi-Critical", "value" : 1},
+                    {"label" : "Critical", "value" : 2},
+                    {"label" : "Over-exploited", "value" : 3}                      ],
+                "layer_store" : ["soge"],
+                "layer_name" : ["soge_vector"],
+                "vectorStyle" : [{
+                    "fill" : "rgba(255, 255, 255, 0.5)",
+                    "stroke" : "rgba(255, 255, 255, 1)",
+                    "lower" : 0, "upper" : 0
+                },
+                {
+                    "fill" : "rgba(224, 243, 248, 0.5)",
+                    "stroke" : "rgba(224, 243, 248, 1)",
+                    "lower" : 1, "upper" : 1
+                },
+                {
+                    "fill" : "rgba(69, 117, 180, 0.5)",
+                    "stroke" : "rgba(69, 117, 180, 1)",
+                    "lower" : 2, "upper" : 2
+                },
+                {
+                    "fill" : "rgba(49, 54, 149, 0.5)",
+                    "stroke" : "rgba(49, 54, 149, 1)",
+                    "lower" : 3, "upper" : 3
+                }
+            ],
                 "rasterStyle" : "",
                 "styleIdx" : 0
             },
@@ -325,7 +367,7 @@
             },
               {
                 "name": "area_wide_scale_restoration",
-                "label" : "Area that requires wide-scale restoration",
+                "label" : "Area with potential for wide-scale restoration",
                 "type" : 2,
                 "values" : [
                     {"label" : "Less than 200 hectares", "value" : {"lower" : 0, "upper" : 200}},
@@ -339,7 +381,7 @@
                 "styleIdx" : 0
             },   {
                 "name": "area_protection",
-                "label" : "Area that requires protection",
+                "label" : "Area with potential for protection",
                 "type" : 2,
                 "values" : [
                     {"label" : "Less than 400 hectares", "value" : {"lower" : 0, "upper" : 400}},
