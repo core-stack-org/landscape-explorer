@@ -3,7 +3,6 @@ import { useRecoilState, useRecoilValue } from "recoil";
 import { yearAtom } from "../store/locationStore.jsx";
 
 import HeaderSelect from "../components/water_headerSection";
-import water_rej from "../components/data/waterbody_rej_data.json";
 import { useParams } from "react-router-dom";
 import VectorLayer from "ol/layer/Vector";
 import VectorSource from "ol/source/Vector";
@@ -448,13 +447,13 @@ const WaterProjectDashboard = () => {
       features: new GeoJSON({
         dataProjection: "EPSG:4326",
         featureProjection: "EPSG:4326",
-      }).readFeatures(water_rej),
+      }).readFeatures(geoData),
     });
 
     const waterBodyLayer = new VectorLayer({
       source: vectorLayerWater,
       style: new Style({
-        stroke: new Stroke({ color: "#6495ed", width: 5 }),
+        stroke: new Stroke({ color: "#ff0000", width: 5 }),
         fill: new Fill({ color: "rgba(100, 149, 237, 0.5)" }),
       }),
     });
@@ -1156,10 +1155,6 @@ const WaterProjectDashboard = () => {
                       waterbody={selectedWaterbody}
                       water_rej={geoData}
                     />
-                    {/* <SurfaceWaterChart
-                      waterbody={selectedWaterbody}
-                      water_rej={water_rej}
-                    /> */}
                   </div>
                 </div>
                 <Box sx={{ display: "flex" }}>
