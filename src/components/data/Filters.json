@@ -196,45 +196,28 @@
                 "styleIdx" : 0
             },
             {
-                "name": "avg_zaid_surface_water_mws",
-                "label" : "Percentage of average surface water availability during Zaid in micro-watershed",
-                "type" : 2,
-                "values" : [
-                    {"label" : "Less than 25%", "value" : {"lower" : 0, "upper" : 25}},
-                    {"label" : "Between 25%-50%", "value" : {"lower" : 25, "upper" : 50}},
-                    {"label" : "More than 50%", "value" : {"lower" : 50, "upper" : 99999}}
-                ],
-                "layer_store" : ["water_bodies","LULC"],
-                "layer_name" : ["surface_waterbodies","level_3"],
-                "vectorStyle" : [{
-                    "fill" : "rgba(100, 149, 237, 0.5)",
-                    "stroke" : "rgba(100, 149, 237, 1)"
-                }],
-                "rasterStyle" : "lulc_water_pixels",
-                "styleIdx" : 0
-            },
-            {
                 "name": "aquifer_class",
                 "label" : "Aquifer type",
                 "type" : 1,
                 "values" : [
                     {"label" : "Hard rock", "value" : 0},
-                    {"label" : "Alluvial", "value" : 1}                ],
+                    {"label" : "Alluvial", "value" : 1}                
+                ],
                 "layer_store" : ["aquifer"],
                 "layer_name" : ["aquifer_vector"],
                 "vectorStyle" : [{
-                    "fill" : "rgba(244, 208, 63, 0.5)",
-                    "stroke" : "rgba(244, 208, 63, 1)",
-                    "lower" : 0, "upper" : 0
-                },
-                {
-                    "fill" : "rgba(231, 76, 60, 0.5)",
-                    "stroke" : "rgba(231, 76, 60, 1)",
-                    "lower" : 1, "upper" : 1
-                }
-            ],
+                        "fill" : "rgba(244, 208, 63, 0.5)",
+                        "stroke" : "rgba(244, 208, 63, 1)",
+                        "lower" : 0, "upper" : 0
+                    },
+                    {
+                        "fill" : "rgba(231, 76, 60, 0.5)",
+                        "stroke" : "rgba(231, 76, 60, 1)",
+                        "lower" : 1, "upper" : 1
+                    }
+                ],
                 "rasterStyle" : "",
-                "styleIdx" : 0
+                "styleIdx" : 11
             },
             {
                 "name": "soge_class",
@@ -244,7 +227,8 @@
                     {"label" : "Safe", "value" : 0},
                     {"label" : "Semi-Critical", "value" : 1},
                     {"label" : "Critical", "value" : 2},
-                    {"label" : "Over-exploited", "value" : 3}                      ],
+                    {"label" : "Over-exploited", "value" : 3}                      
+                    ],
                 "layer_store" : ["soge"],
                 "layer_name" : ["soge_vector"],
                 "vectorStyle" : [{
@@ -269,7 +253,7 @@
                 }
             ],
                 "rasterStyle" : "",
-                "styleIdx" : 0
+                "styleIdx" : 12
             },
             {
                 "name": "trend_g",
