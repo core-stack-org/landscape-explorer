@@ -28,6 +28,7 @@ const HeaderSelect = ({
   const isOnDashboard = location.pathname.includes("/dashboard");
 
   const projectOptions = [
+    { label: "ATCF_UP", value: "5" },
     { label: "ATCEF_Demo_UP", value: "10" },
     { label: "ATCEF_Demo_MP", value: "11" },
     { label: "ATCEF_Demo_RJ", value: "12" },
