@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo } from "react";
 import { useRecoilState, useRecoilValue } from "recoil";
 import { yearAtom } from "../store/locationStore.jsx";
-
 import HeaderSelect from "../components/water_headerSection";
 import { useParams } from "react-router-dom";
 import VectorLayer from "ol/layer/Vector";
@@ -41,6 +40,7 @@ import FilterListIcon from "@mui/icons-material/FilterList";
 import SurfaceWaterChart from "./waterChart";
 import getImageLayer from "../actions/getImageLayers";
 import WaterAvailabilityChart from "./WaterAvailabilityChart";
+import { getCenter } from "ol/extent";
 
 const useWaterRejData = () => {
   const [geoData, setGeoData] = useState(null);
@@ -57,6 +57,7 @@ const useWaterRejData = () => {
 
   const projectName = project?.label; // e.g. "ATCF_UP"
   const projectId = project?.value; // e.g. "5"
+  console.log(projectName);
 
   useEffect(() => {
     if (!projectName || !projectId) return;
@@ -74,8 +75,6 @@ const useWaterRejData = () => {
           outputFormat: "application/json",
         });
 
-      console.log("Fetching GeoJSON from:", url);
-
       try {
         const response = await fetch(url);
         if (!response.ok) {
@@ -85,7 +84,7 @@ const useWaterRejData = () => {
         }
 
         const data = await response.json();
-        console.log(data);
+
         setGeoData(data);
       } catch (err) {
         console.error("❌ Failed to fetch or parse GeoJSON:", err);
@@ -110,6 +109,8 @@ const WaterProjectDashboard = () => {
   const lulcYear = useRecoilValue(yearAtom);
   const [currentLayer, setCurrentLayer] = useState([]);
 
+  const [selectedFeature, setSelectedFeature] = useState(null);
+
   const mapElement = useRef();
   const mapRef = useRef();
   const baseLayerRef = useRef();
@@ -123,16 +124,45 @@ const WaterProjectDashboard = () => {
     return storedOrg ? JSON.parse(storedOrg) : null;
   });
 
+  // const [project, setProject] = useState(() => {
+  //   const storedProject = sessionStorage.getItem("selectedProject");
+  //   return storedProject || "";
+  // });
   const [project, setProject] = useState(() => {
-    const storedProject = sessionStorage.getItem("selectedProject");
-    return storedProject || "";
+    const stored = sessionStorage.getItem("selectedProject");
+    console.log("Stored project string:", stored);
+    try {
+      return stored ? JSON.parse(stored) : null;
+    } catch (err) {
+      console.error("Failed to parse stored project:", err);
+      return null;
+    }
   });
 
-  const geoData = useWaterRejData(project, projectId);
-  const rows = useMemo(() => {
-    if (!geoData?.features) return [];
+  // useEffect(() => {
+  //   const storedOrg = sessionStorage.getItem("selectedOrganization");
+  //   const storedProject = sessionStorage.getItem("selectedProject");
 
-    return geoData.features.map((feature, index) => {
+  //   if (storedOrg) {
+  //     setOrganization(JSON.parse(storedOrg));
+  //   }
+  //   if (storedProject) {
+  //     setProject(JSON.parse(storedProject));
+  //   }
+  // }, []);
+
+  // Access project name from project object safely
+  const projectName = project?.label || "No project selected";
+
+  console.log("Project Name:", projectName);
+
+  const geoData = useWaterRejData(project, projectId);
+  const { rows, avgSiltRemoved } = useMemo(() => {
+    if (!geoData?.features) return { rows: [], avgSiltRemoved: 0 };
+
+    let totalSiltRemoved = 0;
+
+    const mappedRows = geoData.features.map((feature, index) => {
       const props = feature.properties || {};
       const geometry = feature.geometry || {};
 
@@ -154,31 +184,39 @@ const WaterProjectDashboard = () => {
         coordinates = geometry.coordinates[middleIndex];
       }
 
-      const kKrValues = Object.entries(props)
-        .filter(
-          ([key]) =>
-            (key.startsWith("k_") || key.startsWith("kr_")) &&
-            !key.startsWith("krz_")
-        )
+      // KHARIF
+      const kharifEntries = Object.entries(props).filter(([key]) =>
+        /^k_\d{2}-\d{2}$/i.test(key)
+      );
+      const kharifValues = kharifEntries
         .map(([_, value]) => Number(value))
         .filter((val) => !isNaN(val));
+      const sumKharif = kharifValues.reduce((acc, val) => acc + val, 0);
+      const avgKharif = (sumKharif / 7).toFixed(2);
 
-      const avgKKr = kKrValues.length
-        ? (
-            kKrValues.reduce((acc, val) => acc + val, 0) / kKrValues.length
-          ).toFixed(2)
-        : null;
-
-      const krzValues = Object.entries(props)
-        .filter(([key]) => key.startsWith("krz_"))
+      // RABI
+      const rabiEntries = Object.entries(props).filter(([key]) =>
+        /^kr_\d{2}-\d{2}$/i.test(key)
+      );
+      const rabiValues = rabiEntries
         .map(([_, value]) => Number(value))
         .filter((val) => !isNaN(val));
+      const sumRabi = rabiValues.reduce((acc, val) => acc + val, 0);
+      const avgRabi = (sumRabi / 7).toFixed(2);
 
-      const avgKrz = krzValues.length
-        ? (
-            krzValues.reduce((acc, val) => acc + val, 0) / krzValues.length
-          ).toFixed(2)
-        : null;
+      // ZAID
+      const zaidEntries = Object.entries(props).filter(([key]) =>
+        /^krz_\d{2}-\d{2}$/i.test(key)
+      );
+      const zaidValues = zaidEntries
+        .map(([_, value]) => Number(value))
+        .filter((val) => !isNaN(val));
+      const sumZaid = zaidValues.reduce((acc, val) => acc + val, 0);
+      const avgZaid = (sumZaid / 7).toFixed(2);
+
+      // Parse silt removed safely, default to 0 if missing or NaN
+      const siltRemoved = Number(props.slit_excavated) || 0;
+      totalSiltRemoved += siltRemoved;
 
       return {
         id: index + 1,
@@ -186,14 +224,25 @@ const WaterProjectDashboard = () => {
         district: props.District || "NA",
         block: props.Taluka || "NA",
         waterbody: props.waterbody_name || "NA",
-        siltRemoved: props.slit_excavated || 0,
-        avgWaterAvailabilityZaid: avgKrz,
-        avgWaterAvailabilityKharifAndRabi: avgKKr,
+        siltRemoved,
+
+        avgWaterAvailabilityKharif: avgKharif,
+        avgWaterAvailabilityRabi: avgRabi,
+        avgWaterAvailabilityZaid: avgZaid,
+
         coordinates,
         featureIndex: index,
       };
     });
+
+    const avgSiltRemoved = mappedRows.length
+      ? totalSiltRemoved / mappedRows.length
+      : 0;
+
+    return { rows: mappedRows, avgSiltRemoved };
   }, [geoData]);
+
+  const totalRows = rows.length;
 
   const [year, setYear] = useState(2024);
   const handleYearChange = (newYear) => setYear(newYear);
@@ -233,19 +282,6 @@ const WaterProjectDashboard = () => {
   };
 
   useEffect(() => {
-    const storedOrg = sessionStorage.getItem("selectedOrganization");
-    const storedProject = sessionStorage.getItem("selectedProject");
-
-    if (storedOrg) {
-      setOrganization(JSON.parse(storedOrg));
-    }
-    if (storedProject) {
-      setProject(storedProject);
-    }
-  }, []);
-  useEffect(() => {
-    console.log("slider vala useEffect");
-
     const fetchUpdateLulc = async () => {
       if (!lulcYear || !lulcYear.includes("_")) {
         console.warn("Invalid lulcYear:", lulcYear);
@@ -268,21 +304,28 @@ const WaterProjectDashboard = () => {
               .join("_")
               .toLowerCase()
               .replace(/\s/g, "_");
-            console.log(project);
-            console.log("project in useEffect:", project);
-            console.log("typeof project:", typeof project);
-            let parsedProject;
-            try {
-              parsedProject = JSON.parse(project); // project is a string
-            } catch (err) {
-              console.error("Failed to parse project string:", err);
+
+            // let parsedProject;
+            // try {
+            //   parsedProject = JSON.parse(project); // project is a string
+            // } catch (err) {
+            //   console.error("Failed to parse project string:", err);
+            //   return;
+            // }
+
+            // const projectName = parsedProject.label;
+            // const projectId = parsedProject.value;
+            if (!project || typeof project !== "object") {
+              console.error("Invalid project object:", project);
               return;
             }
 
-            const projectName = parsedProject.label;
-            const projectId = parsedProject.value;
+            const projectName = project.label;
+            const projectId = project.value;
+
             const layerName = `clipped_lulc_filtered_mws_${projectName}_${projectId}_${fullYear}`;
             console.log(layerName);
+
             let tempLayer = await getImageLayer(
               "waterrej",
               layerName,
@@ -332,7 +375,8 @@ const WaterProjectDashboard = () => {
     };
 
     fetchUpdateLulc().catch(console.error);
-  }, [lulcYear, currentLayer, selectedWaterbody, waterBodyLayer]);
+  }, [lulcYear, currentLayer, selectedWaterbody, waterBodyLayer, project]);
+  console.log(project);
 
   const handleViewChange = (event, newView) => {
     if (newView !== null) {
@@ -397,6 +441,7 @@ const WaterProjectDashboard = () => {
   };
 
   const initializeMap = async () => {
+    console.log("Initialized Map");
     const baseLayer = new TileLayer({
       source: new XYZ({
         url: `https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}`,
@@ -459,14 +504,6 @@ const WaterProjectDashboard = () => {
     });
     waterBodyLayer.setZIndex(1);
 
-    // const lulcWaterRej = await getImageLayer(
-    //   "waterrej",
-    //   "clipped_lulc_filtered_mws_ATCF_UP_2017_2018",
-    //   true,
-    //   "lulc_level_3_style"
-    // );
-
-    // map.addLayer(lulcWaterRej);
     map.addLayer(waterBodyLayer);
     setWaterBodyLayer(waterBodyLayer);
 
@@ -482,7 +519,8 @@ const WaterProjectDashboard = () => {
     }
     map.once("rendercomplete", () => {
       if (selectedWaterbody && selectedWaterbody.coordinates) {
-        zoomToWaterbody(selectedWaterbody);
+        console.log(selectedWaterbody);
+        zoomToWaterbody(selectedWaterbody, selectedFeature);
       }
     });
   };
@@ -502,23 +540,33 @@ const WaterProjectDashboard = () => {
   useEffect(() => {
     if (
       view === "map" &&
-      mapRef.current &&
+      mapRef.current !== null &&
       selectedWaterbody &&
       selectedWaterbody.coordinates
     ) {
-      zoomToWaterbody(selectedWaterbody);
+      zoomToWaterbody(selectedWaterbody, selectedFeature);
     }
   }, [selectedWaterbody, view]);
 
-  const zoomToWaterbody = (waterbody) => {
+  const zoomToWaterbody = (waterbody, tempFeature) => {
     if (!waterbody.coordinates) {
       console.error("No coordinates found for waterbody:", waterbody.waterbody);
       return;
     }
+    console.log(waterbody);
+    console.log(tempFeature);
 
     const mapView = mapRef.current.getView();
+
+    const olFeature = new GeoJSON().readFeature(tempFeature, {
+      dataProjection: "EPSG:4326",
+      featureProjection: mapView.getProjection(),
+    });
+
+    const FeatureExtent = olFeature.getGeometry().getExtent();
+
     mapView.animate({
-      center: waterbody.coordinates,
+      center: getCenter(FeatureExtent),
       zoom: 18,
       duration: 1000,
     });
@@ -562,10 +610,23 @@ const WaterProjectDashboard = () => {
       setSelectedWaterbody(row);
       setView("map");
 
-      zoomToWaterbody(coordinates, mapRef); // ✅ Direct zoom
+      setSelectedFeature(feature);
+      zoomToWaterbody(coordinates, feature); // ✅ Direct zoom
     } else {
       console.error("Coordinates not found in feature properties.");
     }
+    // const olFeature = new GeoJSON().readFeature(feature, {
+    // dataProjection: 'EPSG:4326',
+    // featureProjection: mapRef.current.getView().getProjection()
+    // });
+
+    // const FeatureExtent = olFeature.getGeometry().getExtent();
+
+    // mapRef.current.getView().animate({
+    // center: getCenter(FeatureExtent),
+    // zoom: 16,
+    // duration: 500
+    // });
   };
 
   const downloadCSV = () => {
@@ -592,8 +653,9 @@ const WaterProjectDashboard = () => {
           row.block,
           row.waterbody,
           row.siltRemoved,
+          row.avgWaterAvailabilityKharif,
+          row.avgWaterAvailabilityRabi,
           row.avgWaterAvailabilityZaid,
-          row.avgWaterAvailabilityKharifAndRabi,
         ]
           .map((cell) => `"${cell}"`) // Wrap in quotes for safety
           .join(",")
@@ -691,9 +753,9 @@ const WaterProjectDashboard = () => {
               >
                 <path
                   d="M256 8C119 8 8 119 8 256s111 248 248 248 
-                  248-111 248-248S393 8 256 8zm82.4 368.2-17.6 17.6h-64l-32-32v-32h-32l-48-48 
-                  16-48 32-16v-32l32-32h32l16 16 32-32-16-48h-32l-48 16-16-16v-48l64-16 80 
-                  32v48l16 16 48-16 16 16v80l-32 48h-32v32l16 48-32 32z"
+ 248-111 248-248S393 8 256 8zm82.4 368.2-17.6 17.6h-64l-32-32v-32h-32l-48-48 
+ 16-48 32-16v-32l32-32h32l16 16 32-32-16-48h-32l-48 16-16-16v-48l64-16 80 
+ 32v48l16 16 48-16 16 16v80l-32 48h-32v32l16 48-32 32z"
                 />
               </svg>
             </ToggleButton>
@@ -744,9 +806,12 @@ const WaterProjectDashboard = () => {
               }}
             >
               <Lightbulb size={94} color="black" />
-              Under the project {projectId}, 18 waterbodies have been de-silted,
-              spanning around 90 hectares. On average, the surface water
-              availability during summer season has changed from 16% to 25%.
+              Under the project {project?.label}, {totalRows} waterbodies have
+              been de-silted, spanning around {avgSiltRemoved.toFixed(2)}{" "}
+              hectares.
+              {/* On average, the surface
+              water availability during summer season has changed from 16% to
+              25%. */}
             </Typography>
             <TableContainer component={Paper} sx={{ mt: 4, boxShadow: 0 }}>
               <Table>
@@ -812,6 +877,53 @@ const WaterProjectDashboard = () => {
                     </TableCell>
 
                     {/* Water Availability Column */}
+
+                    <TableCell
+                      onClick={() => handleSort("waterAvailability")}
+                      sx={{ cursor: "pointer", userSelect: "none" }}
+                    >
+                      <div style={{ display: "flex", alignItems: "center" }}>
+                        Avg. Water Availability During Kharif (%)
+                        <span
+                          style={{
+                            marginLeft: 4,
+                            fontWeight:
+                              sortField === "waterAvailability"
+                                ? "bold"
+                                : "normal",
+                          }}
+                        >
+                          {sortField === "waterAvailability" &&
+                          sortOrder === "asc"
+                            ? "🔼"
+                            : "🔽"}
+                        </span>
+                      </div>
+                    </TableCell>
+
+                    <TableCell
+                      onClick={() => handleSort("waterAvailability")}
+                      sx={{ cursor: "pointer", userSelect: "none" }}
+                    >
+                      <div style={{ display: "flex", alignItems: "center" }}>
+                        Avg. Water Availability During Rabi (%)
+                        <span
+                          style={{
+                            marginLeft: 4,
+                            fontWeight:
+                              sortField === "waterAvailability"
+                                ? "bold"
+                                : "normal",
+                          }}
+                        >
+                          {sortField === "waterAvailability" &&
+                          sortOrder === "asc"
+                            ? "🔼"
+                            : "🔽"}
+                        </span>
+                      </div>
+                    </TableCell>
+
                     <TableCell
                       onClick={() => handleSort("waterAvailability")}
                       sx={{ cursor: "pointer", userSelect: "none" }}
@@ -835,7 +947,7 @@ const WaterProjectDashboard = () => {
                       </div>
                     </TableCell>
 
-                    <TableCell
+                    {/* <TableCell
                       onClick={() => handleSort("waterAvailability")}
                       sx={{ cursor: "pointer", userSelect: "none" }}
                     >
@@ -856,7 +968,7 @@ const WaterProjectDashboard = () => {
                             : "🔽"}
                         </span>
                       </div>
-                    </TableCell>
+                    </TableCell> */}
                   </TableRow>
                 </TableHead>
 
@@ -873,9 +985,14 @@ const WaterProjectDashboard = () => {
                         {row.waterbody}
                       </TableCell>
                       <TableCell>{row.siltRemoved}</TableCell>
-                      <TableCell>{row.avgWaterAvailabilityZaid}</TableCell>
                       <TableCell>
-                        {row.avgWaterAvailabilityKharifAndRabi}
+                        {row.avgWaterAvailabilityKharif ?? "NA"}
+                      </TableCell>
+                      <TableCell>
+                        {row.avgWaterAvailabilityRabi ?? "NA"}
+                      </TableCell>
+                      <TableCell>
+                        {row.avgWaterAvailabilityZaid ?? "NA"}
                       </TableCell>
                     </TableRow>
                   ))}
@@ -1116,36 +1233,36 @@ const WaterProjectDashboard = () => {
 
               {/* Paragraph */}
               {/* <Box
-                sx={{
-                  width: "80%",
-                  padding: 2,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
-                <Typography
-                  variant="h6"
-                  sx={{
-                    textAlign: "left",
-                    display: "flex",
-                    alignItems: "flex-start",
-                    gap: 2,
-                    border: "10px solid #11000080",
-                    padding: 2,
-                    backgroundColor: "#f5f5f5",
-                    borderRadius: "5px",
-                  }}
-                >
-                  <Lightbulb size={48} color="black" />
-                  <span>
-                    Under the project {projectId}, 18 waterbodies have been
-                    de-silted, spanning around 90 hectares. On average, the
-                    surface water availability during summer season has changed
-                    from 16% to 25%.
-                  </span>
-                </Typography>
-              </Box> */}
+ sx={{
+ width: "80%",
+ padding: 2,
+ display: "flex",
+ alignItems: "center",
+ justifyContent: "center",
+ }}
+ >
+ <Typography
+ variant="h6"
+ sx={{
+ textAlign: "left",
+ display: "flex",
+ alignItems: "flex-start",
+ gap: 2,
+ border: "10px solid #11000080",
+ padding: 2,
+ backgroundColor: "#f5f5f5",
+ borderRadius: "5px",
+ }}
+ >
+ <Lightbulb size={48} color="black" />
+ <span>
+ Under the project {projectId}, 18 waterbodies have been
+ de-silted, spanning around 90 hectares. On average, the
+ surface water availability during summer season has changed
+ from 16% to 25%.
+ </span>
+ </Typography>
+ </Box> */}
             </Box>
             {selectedWaterbody !== undefined && selectedWaterbody !== null && (
               <>

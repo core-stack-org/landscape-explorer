@@ -28,9 +28,9 @@ const HeaderSelect = ({
   const isOnDashboard = location.pathname.includes("/dashboard");
 
   const projectOptions = [
-    { label: "ATCF_MP", value: "6" },
-    { label: "ATCF_UP", value: "5" },
-    { label: "ATE_Water_Tamil", value: "2" },
+    { label: "ATCEF_Demo_UP", value: "10" },
+    { label: "ATCEF_Demo_MP", value: "11" },
+    { label: "ATCEF_Demo_RJ", value: "12" },
   ];
 
   useEffect(() => {
