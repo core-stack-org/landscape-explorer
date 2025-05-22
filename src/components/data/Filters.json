@@ -315,7 +315,7 @@
                 "layer_store" : ["change_detection"],
                 "layer_name" : ["CropIntensity"],
                 "vectorStyle" : [{}],
-                "rasterStyle" : "cropping_intensity",
+                "rasterStyle" : "croppingintensity",
                 "styleIdx" : 0
             }
         ], 
@@ -332,7 +332,7 @@
                 "layer_store" : ["change_detection"],
                 "layer_name" : ["Deforestation"],
                 "vectorStyle" : [{}],
-                "rasterStyle" : "change_detection_deforestation",
+                "rasterStyle" : "deforestation",
                 "styleIdx" : 0
             },   {
                 "name": "increase_in_tree_cover",
@@ -346,7 +346,7 @@
                 "layer_store" : ["change_detection"],
                 "layer_name" : ["Afforestation"],
                 "vectorStyle" : [{}],
-                "rasterStyle" : "change_detection_afforestation",
+                "rasterStyle" : "afforestation",
                 "styleIdx" : 0
             },
               {
