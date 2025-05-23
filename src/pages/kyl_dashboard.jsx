@@ -72,25 +72,21 @@ const KYLDashboardPage = () => {
   const [state, setState] = useRecoilState(stateAtom);
   const [district, setDistrict] = useRecoilState(districtAtom);
   const [block, setBlock] = useRecoilState(blockAtom);
-  const [filterSelections, setFilterSelections] =
-    useRecoilState(filterSelectionsAtom);
+  const [filterSelections, setFilterSelections] = useRecoilState(filterSelectionsAtom);
   const lulcYear = useRecoilValue(yearAtom);
 
   const [indicatorType, setIndicatorType] = useState(null);
-  const [showMapControls, setShowMapControls] = useState(false);
   const [showMWS, setShowMWS] = useState(true);
   const [showVillages, setShowVillages] = useState(true);
   const [filtersEnabled, setFiltersEnabled] = useState(false);
 
     const [toastId, setToastId] = useState(null);
-    const [isSelectionEnabled, setIsSelectionEnabled] = useState(true);
     const [selectedMWSProfile, setSelectedMWSProfile] = useState(null);
 
   const handleResetMWS = () => {
     if (!selectedMWSProfile) return; // If no MWS is selected, do nothing
 
     setSelectedMWSProfile(null);
-    setIsSelectionEnabled(false);
 
     // Only reset the style of the currently selected (green) MWS
     if (mwsLayerRef.current) {
@@ -340,7 +336,6 @@ const KYLDashboardPage = () => {
           }
         });
       } catch (error) {
-        console.log(boundaryLayerRef.current);
         console.error("Error styling admin layer:", error);
       }
     } else {
@@ -588,7 +583,8 @@ const KYLDashboardPage = () => {
         [filter.name]: false,
       }));
       setFiltersEnabled(true);
-    } else if (currentLayer.length === 0) {
+    } 
+    else if (currentLayer.length === 0) {
       let layerRef = [];
       mapRef.current.removeLayer(mwsLayerRef.current);
       mapRef.current.removeLayer(boundaryLayerRef.current);
@@ -621,7 +617,6 @@ const KYLDashboardPage = () => {
           layerRef.push(tempLayer);
           mapRef.current.addLayer(tempLayer);
         }
-        //	change_detection:change_west_singhbhum_chaibasa_CropIntensity
         else if (filter.layer_store[i] === "change_detection") {
           tempLayer = await getImageLayer(
             `${filter.layer_store[i]}`,
@@ -632,11 +627,12 @@ const KYLDashboardPage = () => {
               filter.layer_name[i]
             }`,
             true,
-            filter.rasterStyle
+            filter.rasterStyle[i]
           );
           layerRef.push(tempLayer);
           mapRef.current.addLayer(tempLayer);
-        } else if (filter.layer_store[i] === "LULC") {
+        } 
+        else if (filter.layer_store[i] === "LULC") {
           tempLayer = await getImageLayer(
             `${filter.layer_store[i]}_${filter.layer_name[i]}`,
             `LULC_${lulcYear}_${block.label
@@ -648,7 +644,8 @@ const KYLDashboardPage = () => {
           );
           layerRef.push(tempLayer);
           mapRef.current.addLayer(tempLayer);
-        } else if (filter.layer_store[i] === "cropping_drought") {
+        } 
+        else if (filter.layer_store[i] === "cropping_drought") {
           tempLayer = await getVectorLayers(
             filter.layer_store[i],
             `${district.label.toLowerCase().split(" ").join("_")}_${block.label
@@ -656,7 +653,8 @@ const KYLDashboardPage = () => {
               .split(" ")
               .join("_")}_${filter.layer_name[i]}`
           );
-        } else if (filter.layer_store[i] === "panchayat_boundaries") {
+        } 
+        else if (filter.layer_store[i] === "panchayat_boundaries") {
           tempLayer = await getVectorLayers(
             filter.layer_store[i],
             `${district.label.toLowerCase().split(" ").join("_")}_${block.label
@@ -664,7 +662,8 @@ const KYLDashboardPage = () => {
               .split(" ")
               .join("_")}`
           );
-        } else {
+        } 
+        else {
           tempLayer = await getVectorLayers(
             filter.layer_store[i],
             `${filter.layer_name[i]}_${district.label
@@ -830,7 +829,6 @@ const KYLDashboardPage = () => {
 
     setIndicatorType(null);
 
-    setShowMapControls(false);
     setCurrentPlan(null);
     setMappedAssets(false);
     setMappedDemands(false);
@@ -841,7 +839,6 @@ const KYLDashboardPage = () => {
     setShowMWS(true);
     setShowVillages(true);
     setSelectedMWSProfile(null);
-    setIsSelectionEnabled(false);
   };
 
   useEffect(() => {
@@ -861,7 +858,7 @@ const KYLDashboardPage = () => {
       if (feature) {
         const clickedMwsId = feature.get("uid");
 
-                console.log(selectedMWS)
+
 
                 if (selectedMWS !== null) {
 
@@ -1025,9 +1022,6 @@ const KYLDashboardPage = () => {
             Object.keys(filterHasMatches).length > 0 &&
             Object.values(filterHasMatches).includes(false)
           ) {
-            console.log(
-              "At least one filter found no matching MWS, clearing results"
-            );
             tempMWS = [];
             mwsVillageList = new Set([]);
           }
@@ -1129,9 +1123,6 @@ const KYLDashboardPage = () => {
             Object.keys(filterHasMatches).length > 0 &&
             Object.values(filterHasMatches).includes(false)
           ) {
-            console.log(
-              "At least one village filter found no matching villages, clearing results"
-            );
             tempVillages = [];
           }
 

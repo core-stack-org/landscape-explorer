@@ -312,10 +312,10 @@
                     {"label" : "Between 30 hectares to 90 hectares", "value" : {"lower" : 30, "upper" : 90}},
                     {"label" : "More than 90 hectares", "value" : {"lower" : 90, "upper" : 999999}}
                 ],
-                "layer_store" : ["change_detection"],
-                "layer_name" : ["CropIntensity"],
+                "layer_store" : ["change_detection","change_detection"],
+                "layer_name" : ["CropIntensity","Degradation"],
                 "vectorStyle" : [{}],
-                "rasterStyle" : "croppingintensity",
+                "rasterStyle" : ["cropping_intensity","KYL_Crop_Degradation"],
                 "styleIdx" : 0
             }
         ], 
