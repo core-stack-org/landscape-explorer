@@ -1,53 +1,12 @@
 import React from "react";
 import Navbar from "../components/navbar";
-import SelectButton from "../components/buttons/select_button.jsx";
-import { useEffect } from "react";
-import { useNavigate } from "react-router";
-
-import { useRecoilState } from "recoil";
-import {
-  stateDataAtom,
-  stateAtom,
-  districtAtom,
-  blockAtom,
-} from "../store/locationStore";
-import {
-  trackPageView,
-  trackEvent,
-  initializeAnalytics,
-} from "../services/analytics";
+import { FaSearch } from "react-icons/fa";
 
 export default function KYLHomePage() {
-  const navigate = useNavigate();
-
-  //? States for Populating and handling the selections for location
-  const [statesData, setStatesData] = useRecoilState(stateDataAtom);
-  const [state, setState] = useRecoilState(stateAtom);
-  const [district, setDistrict] = useRecoilState(districtAtom);
-  const [block, setBlock] = useRecoilState(blockAtom);
-
-  const handleItemSelect = (setter, value) => {
-    // Track selection events with Google Analytics
-    if (setter === setState && value) {
-      trackEvent("Location", "select_state", value.label);
-    } else if (setter === setDistrict && value) {
-      trackEvent("Location", "select_district", value.label);
-    } else if (setter === setBlock && value) {
-      trackEvent("Location", "select_block", value.label);
-    }
-
-    setter(value);
-  };
-
-  const handleNavigate = (path, buttonName) => {
-    // Track navigation events
-    trackEvent("Navigation", "button_click", buttonName);
-    navigate(path);
-  };
-
   return (
     <div className="font-sans">
       <Navbar />
+      {/* Know Section */}
       <section className="bg-[#d3d0d0] py-12 px-6">
         <div className="flex flex-col md:flex-row md:items-start md:justify-between">
           <div className="pl-16 pr-8 md:w-1/2">
@@ -62,61 +21,89 @@ export default function KYLHomePage() {
               Lorem ipsum dolor sit amet consectetur. Egestas nisl semper magna
               non eu nisi.
             </p>
-            <div className="w-[45%] mt-10 font-montserrat">
-              <div className="bg-neutral-100 rounded-lg shadow-sm p-14 max-w-[500px]">
-                <div className="space-y-15">
-                  <div>
-                    <SelectButton
-                      currVal={state || { label: "Select State" }}
-                      stateData={statesData}
-                      handleItemSelect={handleItemSelect}
-                      setState={setState}
-                    />
-                  </div>
-
-                  <div>
-                    <SelectButton
-                      currVal={district || { label: "Select District" }}
-                      stateData={state !== null ? state.district : null}
-                      handleItemSelect={handleItemSelect}
-                      setState={setDistrict}
-                    />
-                  </div>
-
-                  <div>
-                    <SelectButton
-                      currVal={block || { label: "Select Tehsil" }}
-                      stateData={district !== null ? district.blocks : null}
-                      handleItemSelect={handleItemSelect}
-                      setState={setBlock}
-                    />
-                  </div>
-                </div>
-
-                <div className="mt-8 flex gap-3">
-                  <button
-                    className="bg-[#8B5CF6] text-white px-6 py-2.5 rounded-md text-sm font-medium hover:bg-[#7C3AED] transition-colors"
-                    onClick={() =>
-                      handleNavigate("/kyl_dashboard", "Know Your Landscape")
-                    }
+            <div className="space-y-4">
+              <div className="flex items-center space-x-3">
+                <label htmlFor="state" className="w-24 font-semibold">
+                  Select State
+                </label>
+                <div className="relative flex-grow">
+                  <select
+                    id="state"
+                    className="w-full appearance-none border border-gray-300 rounded px-3 py-2 pr-8"
+                    defaultValue=""
                   >
-                    Know Your Landscape
-                  </button>
-                  <button
-                    className="bg-[#EDE9FE] text-[#8B5CF6] px-6 py-2.5 rounded-md text-sm font-medium hover:bg-[#DDD6FE] transition-colors"
-                    onClick={() =>
-                      handleNavigate("/landscape_explorer", "Download Layers")
-                    }
-                  >
-                    Download Layers
-                  </button>
+                    <option value=""> </option>
+                    {/* add your state options here */}
+                    <option value="state1">State 1</option>
+                    <option value="state2">State 2</option>
+                  </select>
+                  <FaSearch
+                    className="pointer-events-none absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400"
+                    size={14}
+                  />
                 </div>
               </div>
+
+              {/* District */}
+              <div className="flex items-center space-x-3">
+                <label htmlFor="district" className="w-24 font-semibold">
+                  Select District
+                </label>
+                <div className="relative flex-grow">
+                  <select
+                    id="district"
+                    className="w-full appearance-none border border-gray-300 rounded px-3 py-2 pr-8"
+                    defaultValue=""
+                  >
+                    <option value=""> </option>
+                    {/* add your district options here */}
+                    <option value="district1">District 1</option>
+                    <option value="district2">District 2</option>
+                  </select>
+                  <FaSearch
+                    className="pointer-events-none absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400"
+                    size={14}
+                  />
+                </div>
+              </div>
+
+              {/* Block/Tehsil */}
+              <div className="flex items-center space-x-3">
+                <label htmlFor="block" className="w-24 font-semibold">
+                  Select Tehsil
+                </label>
+                <div className="relative flex-grow">
+                  <select
+                    id="block"
+                    className="w-full appearance-none border border-gray-300 rounded px-3 py-2 pr-8"
+                    defaultValue=""
+                  >
+                    <option value=""> </option>
+                    {/* add your block options here */}
+                    <option value="block1">Block 1</option>
+                    <option value="block2">Block 2</option>
+                  </select>
+                  <FaSearch
+                    className="pointer-events-none absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400"
+                    size={14}
+                  />
+                </div>
+              </div>
+            </div>
+            <div className="flex justify-between mt-4">
+              <button className="bg-purple-600 text-white px-4 py-2 rounded">
+                Know Your Landscape
+              </button>
+              <button className="bg-gray-300 text-black px-4 py-2 rounded">
+                Download Layers
+              </button>
             </div>
           </div>
         </div>
       </section>
 
+      {/* Plan Section */}
+      {/* Plan Section */}
       <section className="bg-[#eac5c5] py-12 px-6">
         <div className="px-16">
           <div className="flex flex-col md:flex-row md:items-start md:justify-between">
@@ -181,6 +168,8 @@ export default function KYLHomePage() {
         </div>
       </section>
 
+      {/* Track Section */}
+      {/* Track Section */}
       <section className="bg-[#cbaaaa] py-12 px-6 text-center">
         <h2 className="text-3xl font-bold text-purple-700 mb-2">Track</h2>
         <p className="font-semibold text-black mb-8 max-w-2xl mx-auto">
@@ -213,6 +202,7 @@ export default function KYLHomePage() {
           ))}
         </div>
 
+        {/* Centered 4th box on next line */}
         <div className="flex justify-center mt-6">
           <div className="bg-white p-4 rounded shadow flex items-start gap-4 text-left max-w-md w-full">
             <div className="text-yellow-400 text-2xl">☀️</div>
