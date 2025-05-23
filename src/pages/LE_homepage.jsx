@@ -48,7 +48,6 @@ export default function KYLHomePage() {
   return (
     <div className="font-sans">
       <Navbar />
-      {/* Know Section */}
       <section className="bg-[#d3d0d0] py-12 px-6">
         <div className="flex flex-col md:flex-row md:items-start md:justify-between">
           <div className="pl-16 pr-8 md:w-1/2">
@@ -118,8 +117,6 @@ export default function KYLHomePage() {
         </div>
       </section>
 
-      {/* Plan Section */}
-      {/* Plan Section */}
       <section className="bg-[#eac5c5] py-12 px-6">
         <div className="px-16">
           <div className="flex flex-col md:flex-row md:items-start md:justify-between">
@@ -184,8 +181,6 @@ export default function KYLHomePage() {
         </div>
       </section>
 
-      {/* Track Section */}
-      {/* Track Section */}
       <section className="bg-[#cbaaaa] py-12 px-6 text-center">
         <h2 className="text-3xl font-bold text-purple-700 mb-2">Track</h2>
         <p className="font-semibold text-black mb-8 max-w-2xl mx-auto">
@@ -218,7 +213,6 @@ export default function KYLHomePage() {
           ))}
         </div>
 
-        {/* Centered 4th box on next line */}
         <div className="flex justify-center mt-6">
           <div className="bg-white p-4 rounded shadow flex items-start gap-4 text-left max-w-md w-full">
             <div className="text-yellow-400 text-2xl">☀️</div>
