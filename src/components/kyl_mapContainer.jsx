@@ -295,6 +295,8 @@ const MapLegend = ({ showMWS, showVillages, currentLayer }) => {
   ];
 
   const CropDegradationItems = [
+    { color: "#a9a9a9", label: "Farmland - Barren" },
+    { color: "#eaa4f0", label: "Farmland - Shrub" },
     { color: "#f7fcf5", label: "Double - Single" },
     { color: "#ff4500", label: "Triple - Single" },
     { color: "#ff0000", label: "Triple - Double" },

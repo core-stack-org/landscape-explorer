@@ -859,6 +859,7 @@ const KYLDashboardPage = () => {
         const clickedMwsId = feature.get("uid");
 
 
+
                 if (selectedMWS !== null) {
 
                     setSelectedMWSProfile(feature.getProperties());
