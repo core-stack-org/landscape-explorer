@@ -1,8 +1,58 @@
-import React from "react";
+import React, { useEffect } from "react";
+import { useNavigate } from "react-router";
+import { useRecoilState } from "recoil";
+import {
+  stateDataAtom,
+  stateAtom,
+  districtAtom,
+  blockAtom,
+} from "../store/locationStore";
+import SelectButton from "../components/buttons/select_button.jsx";
+import getStates from "../actions/getStates";
+import {
+  trackPageView,
+  trackEvent,
+  initializeAnalytics,
+} from "../services/analytics";
 import Navbar from "../components/navbar";
-import { FaSearch } from "react-icons/fa";
 
 export default function KYLHomePage() {
+  const navigate = useNavigate();
+
+  const [statesData, setStatesData] = useRecoilState(stateDataAtom);
+  const [state, setState] = useRecoilState(stateAtom);
+  const [district, setDistrict] = useRecoilState(districtAtom);
+  const [block, setBlock] = useRecoilState(blockAtom);
+
+  useEffect(() => {
+    initializeAnalytics();
+    trackPageView("/kyl_home");
+
+    const fetchStates = async () => {
+      const data = await getStates();
+      setStatesData(data);
+    };
+
+    fetchStates();
+  }, []);
+
+  const handleItemSelect = (setter, value) => {
+    if (setter === setState && value) {
+      trackEvent("Location", "select_state", value.label);
+    } else if (setter === setDistrict && value) {
+      trackEvent("Location", "select_district", value.label);
+    } else if (setter === setBlock && value) {
+      trackEvent("Location", "select_block", value.label);
+    }
+    setter(value);
+  };
+
+  const handleNavigate = (path, buttonName) => {
+    // Track navigation events
+    trackEvent("Navigation", "button_click", buttonName);
+    navigate(path);
+  };
+
   return (
     <div className="font-sans">
       <Navbar />
@@ -22,79 +72,40 @@ export default function KYLHomePage() {
               non eu nisi.
             </p>
             <div className="space-y-4">
-              <div className="flex items-center space-x-3">
-                <label htmlFor="state" className="w-24 font-semibold">
-                  Select State
-                </label>
-                <div className="relative flex-grow">
-                  <select
-                    id="state"
-                    className="w-full appearance-none border border-gray-300 rounded px-3 py-2 pr-8"
-                    defaultValue=""
-                  >
-                    <option value=""> </option>
-                    {/* add your state options here */}
-                    <option value="state1">State 1</option>
-                    <option value="state2">State 2</option>
-                  </select>
-                  <FaSearch
-                    className="pointer-events-none absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400"
-                    size={14}
-                  />
-                </div>
-              </div>
-
-              {/* District */}
-              <div className="flex items-center space-x-3">
-                <label htmlFor="district" className="w-24 font-semibold">
-                  Select District
-                </label>
-                <div className="relative flex-grow">
-                  <select
-                    id="district"
-                    className="w-full appearance-none border border-gray-300 rounded px-3 py-2 pr-8"
-                    defaultValue=""
-                  >
-                    <option value=""> </option>
-                    {/* add your district options here */}
-                    <option value="district1">District 1</option>
-                    <option value="district2">District 2</option>
-                  </select>
-                  <FaSearch
-                    className="pointer-events-none absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400"
-                    size={14}
-                  />
-                </div>
-              </div>
-
-              {/* Block/Tehsil */}
-              <div className="flex items-center space-x-3">
-                <label htmlFor="block" className="w-24 font-semibold">
-                  Select Tehsil
-                </label>
-                <div className="relative flex-grow">
-                  <select
-                    id="block"
-                    className="w-full appearance-none border border-gray-300 rounded px-3 py-2 pr-8"
-                    defaultValue=""
-                  >
-                    <option value=""> </option>
-                    {/* add your block options here */}
-                    <option value="block1">Block 1</option>
-                    <option value="block2">Block 2</option>
-                  </select>
-                  <FaSearch
-                    className="pointer-events-none absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400"
-                    size={14}
-                  />
-                </div>
-              </div>
+              <SelectButton
+                currVal={state || { label: "Select State" }}
+                stateData={statesData}
+                handleItemSelect={handleItemSelect}
+                setState={setState}
+              />
+              <SelectButton
+                currVal={district || { label: "Select District" }}
+                stateData={state !== null ? state.district : null}
+                handleItemSelect={handleItemSelect}
+                setState={setDistrict}
+              />
+              <SelectButton
+                currVal={block || { label: "Select Tehsil" }}
+                stateData={district !== null ? district.blocks : null}
+                handleItemSelect={handleItemSelect}
+                setState={setBlock}
+              />
             </div>
             <div className="flex justify-between mt-4">
-              <button className="bg-purple-600 text-white px-4 py-2 rounded">
+              <button
+                className="bg-purple-600 text-white px-4 py-2 rounded"
+                onClick={() =>
+                  handleNavigate("/kyl_dashboard", "Know Your Landscape")
+                }
+              >
                 Know Your Landscape
               </button>
-              <button className="bg-gray-300 text-black px-4 py-2 rounded">
+              <button
+                className="bg-gray-300 text-black px-4 py-2 rounded"
+                onClick={() =>
+                  handleNavigate("/landscape_explorer", "Download Layers")
+                }
+              >
                 Download Layers
               </button>
             </div>
@@ -102,7 +113,6 @@ export default function KYLHomePage() {
         </div>
       </section>
 
-      {/* Plan Section */}
       {/* Plan Section */}
       <section className="bg-[#eac5c5] py-12 px-6">
         <div className="px-16">
@@ -120,55 +130,63 @@ export default function KYLHomePage() {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-4">
             {/* Card 1 */}
-            <div className="bg-white p-4 rounded shadow text-left">
-              <div className="bg-gray-400 h-48 mb-4 w-full"></div>
-              <h3 className="font-bold mb-2 text-sm">
-                How to do Participatory Planning ?
-              </h3>
-              <p className="text-xs text-gray-700 mb-2">
-                Greater orch pack chuck teritorial federal midlothian organic
-                class american explict. Mark s soft cover terrapass key salsa,
-                guide expansion.
-              </p>
-              <a href="#" className="text-purple-700 text-sm font-semibold">
-                Learn More →
-              </a>
+            <div>
+              {/* Image block */}
+              <div className="bg-gray-400 h-48 w-full rounded shadow mb-4"></div>
+
+              {/* Content block */}
+              <div className=" p-4 rounded text-left">
+                <h3 className="font-bold mb-2 text-sm">
+                  How to do Participatory Planning?
+                </h3>
+                <p className="text-xs text-gray-700 mb-2">
+                  Greater orch pack chuck teritorial federal midlothian organic
+                  class american explict. Mark s soft cover terrapass key salsa,
+                  guide expansion.
+                </p>
+                <a href="#" className="text-purple-700 text-sm font-semibold">
+                  Learn More →
+                </a>
+              </div>
             </div>
 
             {/* Card 2 */}
-            <div className="bg-white p-4 rounded shadow text-left">
-              <div className="bg-gray-400 h-48 mb-4 w-full"></div>
-              <h3 className="font-bold mb-2 text-sm">
-                Download Commons Connect App
-              </h3>
-              <p className="text-xs text-gray-700 mb-2">
-                Greater orch pack chuck teritorial federal midlothian organic
-                class american explict. Mark s soft cover terrapass key salsa,
-                guide expansion.
-              </p>
-              <a href="#" className="text-purple-700 text-sm font-semibold">
-                Download now →
-              </a>
+            <div>
+              <div className="bg-gray-400 h-48 w-full rounded shadow mb-4"></div>
+              <div className=" p-4 rounded-b text-left">
+                <h3 className="font-bold mb-2 text-sm">
+                  Download Commons Connect App
+                </h3>
+                <p className="text-xs text-gray-700 mb-2">
+                  Access tools and resources for landscape planning directly on
+                  your smartphone using our free mobile app.
+                </p>
+                <a href="#" className="text-purple-700 text-sm font-semibold">
+                  Download now →
+                </a>
+              </div>
             </div>
 
             {/* Card 3 */}
-            <div className="bg-white p-4 rounded shadow text-left">
-              <div className="bg-gray-400 h-48 mb-4 w-full"></div>
-              <h3 className="font-bold mb-2 text-sm">View and Support Plans</h3>
-              <p className="text-xs text-gray-700 mb-2">
-                Greater orch pack chuck teritorial federal midlothian organic
-                class american explict. Mark s soft cover terrapass key salsa,
-                guide expansion.
-              </p>
-              <a href="#" className="text-purple-700 text-sm font-semibold">
-                Learn More →
-              </a>
+            <div>
+              <div className="bg-gray-400 h-48 w-full rounded shadow mb-4"></div>
+              <div className=" p-4 rounded-b  text-left">
+                <h3 className="font-bold mb-2 text-sm">
+                  View and Support Plans
+                </h3>
+                <p className="text-xs text-gray-700 mb-2">
+                  Explore existing community plans and find opportunities to
+                  support or collaborate with ongoing initiatives.
+                </p>
+                <a href="#" className="text-purple-700 text-sm font-semibold">
+                  Learn More →
+                </a>
+              </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Track Section */}
       {/* Track Section */}
       <section className="bg-[#cbaaaa] py-12 px-6 text-center">
         <h2 className="text-3xl font-bold text-purple-700 mb-2">Track</h2>
@@ -202,7 +220,6 @@ export default function KYLHomePage() {
           ))}
         </div>
 
-        {/* Centered 4th box on next line */}
         <div className="flex justify-center mt-6">
           <div className="bg-white p-4 rounded shadow flex items-start gap-4 text-left max-w-md w-full">
             <div className="text-yellow-400 text-2xl">☀️</div>
