@@ -93,6 +93,28 @@ const layerStyles = (feature, vectorStyle, idx = 0, villageJson, dataJson) => {
                 }
             }
             break;
+        
+        case 11:
+            // For Aquifer Types
+            if(feature.values_.aquifer_cl === "Hard-Rock"){
+                avg_Res = 0
+            }
+            else{
+                avg_Res = 1
+            }
+            break;
+        
+        case 12:
+            // For SOGE Types
+            if(feature.values_.class === "Safe"){
+                avg_Res = 0
+            }
+            else if(feature.values_.class === "Semi-Critical"){avg_Res = 1}
+            else if(feature.values_.class === "Critical"){avg_Res = 2}
+            else{
+                avg_Res = 3
+            }
+            break;
     }
     
     for(tempIdx = 0; tempIdx < vectorStyle.length; ++tempIdx){

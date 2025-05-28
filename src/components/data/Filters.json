@@ -95,12 +95,12 @@
             },
             {
                 "name": "drought_category",
-                "label" : "Number of drought years",
+                "label" : "Number of drought years since 2017",
                 "type" : 1,
                 "values" : [
                     {"label" : "No Drought", "value" : 0},
-                    {"label" : "Minimum one drought year", "value" : 1},
-                    {"label" : "Minimum two drought years", "value" : 2}
+                    {"label" : "At least one drought year", "value" : 1},
+                    {"label" : "At least two drought years", "value" : 2}
                 ],
                 "layer_store" : ["cropping_drought"],
                 "layer_name" : ["drought"],
@@ -196,6 +196,66 @@
                 "styleIdx" : 0
             },
             {
+                "name": "aquifer_class",
+                "label" : "Aquifer type",
+                "type" : 1,
+                "values" : [
+                    {"label" : "Hard rock", "value" : 0},
+                    {"label" : "Alluvial", "value" : 1}                
+                ],
+                "layer_store" : ["aquifer"],
+                "layer_name" : ["aquifer_vector"],
+                "vectorStyle" : [{
+                        "fill" : "rgba(244, 208, 63, 0.5)",
+                        "stroke" : "rgba(244, 208, 63, 1)",
+                        "lower" : 0, "upper" : 0
+                    },
+                    {
+                        "fill" : "rgba(231, 76, 60, 0.5)",
+                        "stroke" : "rgba(231, 76, 60, 1)",
+                        "lower" : 1, "upper" : 1
+                    }
+                ],
+                "rasterStyle" : "",
+                "styleIdx" : 11
+            },
+            {
+                "name": "soge_class",
+                "label" : "State of groundwater extraction",
+                "type" : 1,
+                "values" : [
+                    {"label" : "Safe", "value" : 0},
+                    {"label" : "Semi-Critical", "value" : 1},
+                    {"label" : "Critical", "value" : 2},
+                    {"label" : "Over-exploited", "value" : 3}                      
+                    ],
+                "layer_store" : ["soge"],
+                "layer_name" : ["soge_vector"],
+                "vectorStyle" : [{
+                    "fill" : "rgba(255, 255, 255, 0.5)",
+                    "stroke" : "rgba(255, 255, 255, 1)",
+                    "lower" : 0, "upper" : 0
+                },
+                {
+                    "fill" : "rgba(224, 243, 248, 0.5)",
+                    "stroke" : "rgba(224, 243, 248, 1)",
+                    "lower" : 1, "upper" : 1
+                },
+                {
+                    "fill" : "rgba(69, 117, 180, 0.5)",
+                    "stroke" : "rgba(69, 117, 180, 1)",
+                    "lower" : 2, "upper" : 2
+                },
+                {
+                    "fill" : "rgba(49, 54, 149, 0.5)",
+                    "stroke" : "rgba(49, 54, 149, 1)",
+                    "lower" : 3, "upper" : 3
+                }
+            ],
+                "rasterStyle" : "",
+                "styleIdx" : 12
+            },
+            {
                 "name": "trend_g",
                 "label" : "Groundwater level trend over the years 2017 to 2023",
                 "type" : 1,
@@ -252,10 +312,10 @@
                     {"label" : "Between 30 hectares to 90 hectares", "value" : {"lower" : 30, "upper" : 90}},
                     {"label" : "More than 90 hectares", "value" : {"lower" : 90, "upper" : 999999}}
                 ],
-                "layer_store" : ["change_detection"],
-                "layer_name" : ["CropIntensity"],
+                "layer_store" : ["change_detection","change_detection"],
+                "layer_name" : ["CropIntensity","Degradation"],
                 "vectorStyle" : [{}],
-                "rasterStyle" : "cropping_intensity",
+                "rasterStyle" : ["cropping_intensity","KYL_Crop_Degradation"],
                 "styleIdx" : 0
             }
         ], 
@@ -272,7 +332,7 @@
                 "layer_store" : ["change_detection"],
                 "layer_name" : ["Deforestation"],
                 "vectorStyle" : [{}],
-                "rasterStyle" : "change_detection_deforestation",
+                "rasterStyle" : "deforestation",
                 "styleIdx" : 0
             },   {
                 "name": "increase_in_tree_cover",
@@ -286,12 +346,12 @@
                 "layer_store" : ["change_detection"],
                 "layer_name" : ["Afforestation"],
                 "vectorStyle" : [{}],
-                "rasterStyle" : "change_detection_afforestation",
+                "rasterStyle" : "afforestation",
                 "styleIdx" : 0
             },
               {
                 "name": "area_wide_scale_restoration",
-                "label" : "Area that requires wide-scale restoration",
+                "label" : "Area with potential for wide-scale restoration",
                 "type" : 2,
                 "values" : [
                     {"label" : "Less than 200 hectares", "value" : {"lower" : 0, "upper" : 200}},
@@ -305,7 +365,7 @@
                 "styleIdx" : 0
             },   {
                 "name": "area_protection",
-                "label" : "Area that requires protection",
+                "label" : "Area with potential for protection",
                 "type" : 2,
                 "values" : [
                     {"label" : "Less than 400 hectares", "value" : {"lower" : 0, "upper" : 400}},
