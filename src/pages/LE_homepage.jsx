@@ -8,6 +8,7 @@ import {
   blockAtom,
 } from "../store/locationStore";
 import SelectButton from "../components/buttons/select_button.jsx";
+import landingPageBg from "../assets/landingpagebg.svg";
 import getStates from "../actions/getStates";
 import {
   trackPageView,
@@ -57,7 +58,11 @@ export default function KYLHomePage() {
     <div className="font-sans">
       <Navbar />
       {/* Know Section */}
-      <section className="bg-[#d3d0d0] py-12 px-6">
+      <section
+        className="bg-cover bg-center bg-no-repeat py-12 px-6"
+        style={{ backgroundImage: `url(${landingPageBg})` }}
+      >
+        {" "}
         <div className="flex flex-col md:flex-row md:items-start md:justify-between">
           <div className="pl-16 pr-8 md:w-1/2">
             <h2 className="text-3xl font-bold text-purple-700 mb-2">Know</h2>
@@ -66,7 +71,7 @@ export default function KYLHomePage() {
               your surroundings
             </p>
           </div>
-          <div className="bg-white p-6 rounded shadow max-w-md w-full">
+          <div className="bg-white p-6 rounded shadow max-w-md w-full mr-10">
             <p className="mb-4">
               Lorem ipsum dolor sit amet consectetur. Egestas nisl semper magna
               non eu nisi.
