@@ -70,20 +70,11 @@ const Map = forwardRef(({
     { LayerRef: useRef(null), name: "Administrative Boundaries", isRaster: false },
     { LayerRef: useRef(null), name: "Cropping Intensity", isRaster: false },
     { LayerRef: useRef(null), name: "Terrain Vector", isRaster: false },
-    { LayerRef: useRef(null), name: "Terrain Lulc Slope", isRaster: false },
-    { LayerRef: useRef(null), name: "Terrain Lulc Plain", isRaster: false },
-  ];
-  
-  const ResourceLayersArray = [
-    { LayerRef: useRef(null), name: "Settlement" },
-    { LayerRef: useRef(null), name: "Water Structure" },
-    { LayerRef: useRef(null), name: "Well Structure" },
-  ];
-  
-  const PlanningLayersArray = [
-    { LayerRef: useRef(null), name: "Agriculture Structure" },
-    { LayerRef: useRef(null), name: "Livelihood Structure" },
-    { LayerRef: useRef(null), name: "Recharge Structures" },
+    { LayerRef: useRef(null), name: "Change Detection Afforestation", isRaster: false },
+    { LayerRef: useRef(null), name: "Change Detection Deforestation", isRaster: false },
+    { LayerRef: useRef(null), name: "Change Detection Degradation", isRaster: false },
+    { LayerRef: useRef(null), name: "Change Detection Urbanization", isRaster: false },
+    { LayerRef: useRef(null), name: "Change Detection Crop-Intensity", isRaster: false },
   ];
 
   // Track active layers
@@ -91,7 +82,6 @@ const Map = forwardRef(({
   const [bbox, setBBox] = useState(null);
   const [layerErrors, setLayerErrors] = useState({});
   const [isLayersFetched, setIsLayersFetched] = useState(false);
-  const [isOtherLayersFetched, setIsOtherLayersFetched] = useState(false);
   const [stateData, setStateData] = useState(null);
   const [isInitialized, setIsInitialized] = useState(false);
   
@@ -144,7 +134,12 @@ const Map = forwardRef(({
           'well_structure': 'Well Structure',
           'agri_structure': 'Agriculture Structure',
           'livelihood_structure': 'Livelihood Structure',
-          'recharge_structure': 'Recharge Structures'
+          'recharge_structure': 'Recharge Structures',
+          'afforestation' : 'Change Detection Afforestation',
+          'deforestation' : 'Change Detection Deforestation',
+          'degradation' : 'Change Detection Degradation',
+          'urbanization' : 'Change Detection Urbanization',
+          'cropintensity' : 'Change Detection Crop-Intensity'
         };
         
         const layerName = layerMap[layerId] || layerId;
@@ -212,7 +207,7 @@ const Map = forwardRef(({
     // Create Google base layer - using same URL as original implementation
     const baseLayer = new TileLayer({
       source: new XYZ({
-        url: "https://www.google.cn/maps/vt?lyrs=s@189&gl=cn&x={x}&y={y}&z={z}",
+        url: "https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}",
         maxZoom: 30,
       }),
       visible: true,
@@ -812,40 +807,94 @@ const Map = forwardRef(({
         LayersArray[11].LayerRef.current = TerrainVectorLayer;
       }
 
-      // === Terrain Lulc Slope Layer ===
-      let TerrainLulcSlopeLayer = await getVectorLayers(
-        "terrain_lulc",
+      // === Afforestation Layer ===
+      let AfforestationLayer = await getImageLayers(
+        "change_detection",
+        "change_" +
         district.label.toLowerCase().split(" ").join("_") +
           "_" +
-          block.label.toLowerCase().split(" ").join("_") +
-          "_lulc_slope",
+          block.label.toLowerCase().split(" ").join("_") + "_Afforestation",
         true,
-        true
+        "afforestation"
       );
 
-      if (TerrainLulcSlopeLayer) {
+      if (AfforestationLayer) {
         if (LayersArray[12].LayerRef.current != null) {
           safeRemoveLayer(LayersArray[12].LayerRef.current);
         }
-        LayersArray[12].LayerRef.current = TerrainLulcSlopeLayer;
+        LayersArray[12].LayerRef.current = AfforestationLayer;
       }
 
-      // === Terrain Lulc Plain Layer ===
-      let TerrainLulcPlainLayer = await getVectorLayers(
-        "terrain_lulc",
+      // === Deforestation Layer ===
+      let DeforestationLayer = await getImageLayers(
+        "change_detection",
+        "change_" +
         district.label.toLowerCase().split(" ").join("_") +
           "_" +
-          block.label.toLowerCase().split(" ").join("_") +
-          "_lulc_plain",
+          block.label.toLowerCase().split(" ").join("_") + "_Deforestation",
         true,
-        true
+        "	deforestation"
       );
 
-      if (TerrainLulcPlainLayer) {
+      if (DeforestationLayer) {
         if (LayersArray[13].LayerRef.current != null) {
           safeRemoveLayer(LayersArray[13].LayerRef.current);
         }
-        LayersArray[13].LayerRef.current = TerrainLulcPlainLayer;
+        LayersArray[13].LayerRef.current = DeforestationLayer;
+      }
+
+      // === Degradation Layer ===
+      let DegradationLayer = await getImageLayers(
+        "change_detection",
+        "change_" +
+        district.label.toLowerCase().split(" ").join("_") +
+          "_" +
+          block.label.toLowerCase().split(" ").join("_") + "_Degradation",
+        true,
+        "degradation"
+      );
+
+      if (DegradationLayer) {
+        if (LayersArray[14].LayerRef.current != null) {
+          safeRemoveLayer(LayersArray[14].LayerRef.current);
+        }
+        LayersArray[14].LayerRef.current = DegradationLayer;
+      }
+
+      // === Urbanization Layer ===
+      let UrbanizationLayer = await getImageLayers(
+        "change_detection",
+        "change_" +
+        district.label.toLowerCase().split(" ").join("_") +
+          "_" +
+          block.label.toLowerCase().split(" ").join("_") + "_Urbanization",
+        true,
+        "urbanization"
+      );
+
+      if (UrbanizationLayer) {
+        if (LayersArray[15].LayerRef.current != null) {
+          safeRemoveLayer(LayersArray[15].LayerRef.current);
+        }
+        LayersArray[15].LayerRef.current = UrbanizationLayer;
+      }
+
+      // === CropIntensity Layer ===
+      let CropIntensityLayer = await getImageLayers(
+        "change_detection",
+        "change_" +
+        district.label.toLowerCase().split(" ").join("_") +
+          "_" +
+          block.label.toLowerCase().split(" ").join("_") + "_CropIntensity",
+        true,
+        "croppingintensity"
+      );
+
+      if (CropIntensityLayer) {
+        if (LayersArray[16].LayerRef.current != null) {
+          safeRemoveLayer(LayersArray[16].LayerRef.current);
+        }
+        LayersArray[16].LayerRef.current = CropIntensityLayer;
       }
 
       // Enable Demographics layer by default
@@ -867,353 +916,12 @@ const Map = forwardRef(({
     }
   };
 
-  // Fetch resource layers
-  const fetchResourcesLayers = async () => {
-    if (!selectedPlan || !district || !block) return;
-    
-    setIsLoading(true);
-    try {
-      // Format district and block names
-      const districtFormatted = district.label.toLowerCase().split(" ").join("_");
-      const blockFormatted = block.label.toLowerCase().split(" ").join("_");
-      
-      // Track which layers are actually loaded
-      let loadedLayers = [];
-      
-      //? Code for settlement Layer
-      let settlementLayer = await getVectorLayers(
-        "resources",
-        "hemlet_layer" + block.label.toLowerCase(),
-        true,
-        true,
-        "settlement",
-        selectedPlan.value.plan_id,
-        districtFormatted,
-        blockFormatted
-      );
-
-      if (settlementLayer) {
-        if (ResourceLayersArray[0].LayerRef.current != null) {
-          safeRemoveLayer(ResourceLayersArray[0].LayerRef.current);
-        }
-
-        ResourceLayersArray[0].LayerRef.current = settlementLayer;
-
-        ResourceLayersArray[0].LayerRef.current.setStyle(
-          new Style({
-            image: new Icon({ src: settlementIcon }),
-          })
-        );
-        
-        safeAddLayer(settlementLayer);
-        loadedLayers.push("Settlement");
-      }
-
-      //? Code For Water Structures Layer
-      let WaterStructuresLayer = await getVectorLayers(
-        "resources",
-        "plan_layer_gw" + block.label.toLowerCase(),
-        true,
-        false,
-        "plan_gw",
-        selectedPlan.value.plan_id,
-        districtFormatted,
-        blockFormatted
-      );
-
-      if (WaterStructuresLayer) {
-        if (ResourceLayersArray[1].LayerRef.current != null) {
-          safeRemoveLayer(ResourceLayersArray[1].LayerRef.current);
-        }
-
-        ResourceLayersArray[1].LayerRef.current = WaterStructuresLayer;
-
-        ResourceLayersArray[1].LayerRef.current.setStyle(function (feature) {
-          if (!feature || !feature.values_) return null;
-          
-          const status = feature.values_;
-
-          if (status.work_type == "new farm pond") {
-            return new Style({
-              image: new Icon({ src: farmPondIcon }),
-            });
-          } else if (status.work_type == "new trench cum bund network") {
-            return new Style({
-              image: new Icon({ src: tcbIcon }),
-            });
-          } else if (status.work_type == "new check dam") {
-            return new Style({
-              image: new Icon({ src: checkDamIcon }),
-            });
-          } else {
-            return new Style({
-              image: new Icon({ src: boulderIcon }),
-            });
-          }
-        });
-        
-        safeAddLayer(WaterStructuresLayer);
-        loadedLayers.push("Water Structure");
-      }
-
-      //? Code for Well Layer
-      let WellLayer = await getVectorLayers(
-        "resources",
-        "well_layer" + block.label.toLowerCase(),
-        true,
-        true,
-        "well",
-        selectedPlan.value.plan_id,
-        districtFormatted,
-        blockFormatted
-      );
-
-      if (WellLayer) {
-        if (ResourceLayersArray[2].LayerRef.current != null) {
-          safeRemoveLayer(ResourceLayersArray[2].LayerRef.current);
-        }
-
-        ResourceLayersArray[2].LayerRef.current = WellLayer;
-
-        ResourceLayersArray[2].LayerRef.current.setStyle(
-          new Style({
-            image: new Icon({ src: wellIcon }),
-          })
-        );
-        
-        safeAddLayer(WellLayer);
-        loadedLayers.push("Well Structure");
-      }
-
-      // Update currentLayers to include all loaded resource layers
-      setCurrentLayers(prevLayers => {
-        // Filter out any existing resource layers
-        const filteredLayers = prevLayers.filter(layer => 
-          !["Settlement", "Water Structure", "Well Structure"].includes(layer)
-        );
-        // Add only the layers that were successfully loaded
-        return [...filteredLayers, ...loadedLayers];
-      });
-
-      // Notify parent of visible layers if needed
-      if (toggleLayer && !handlingExternalToggle.current) {
-        loadedLayers.forEach(layerName => {
-          const layerMap = {
-            'Settlement': 'settlement',
-            'Water Structure': 'water_structure',
-            'Well Structure': 'well_structure'
-          };
-          
-          const uiLayerName = layerMap[layerName];
-          if (uiLayerName) {
-            setTimeout(() => {
-              toggleLayer(uiLayerName, true);
-            }, 100);
-          }
-        });
-      }
-
-      setIsOtherLayersFetched(true);
-    } catch (error) {
-      console.error("Error fetching resource layers:", error);
-      setLayerErrors(prev => ({
-        ...prev,
-        resources: error.message
-      }));
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // Fetch planning layers
-  const fetchPlanningLayers = async () => {
-    if (!selectedPlan || !district || !block) return;
-    
-    setIsLoading(true);
-    try {
-      // Format district and block names
-      const districtFormatted = district.label.toLowerCase().split(" ").join("_");
-      const blockFormatted = block.label.toLowerCase().split(" ").join("_");
-      
-      // Track which layers are actually loaded
-      let loadedLayers = [];
-      
-      //? Code for Agri Structures Layer
-      let AgriStructuresLayer = await getVectorLayers(
-        "works",
-        "plan_layer_agri" + block.label.toLowerCase(),
-        true,
-        false,
-        "plan_agri",
-        selectedPlan.value.plan_id,
-        districtFormatted,
-        blockFormatted
-      );
-
-      if (AgriStructuresLayer) {
-        if (PlanningLayersArray[0].LayerRef.current != null) {
-          safeRemoveLayer(PlanningLayersArray[0].LayerRef.current);
-        }
-
-        PlanningLayersArray[0].LayerRef.current = AgriStructuresLayer;
-
-        PlanningLayersArray[0].LayerRef.current.setStyle(function (feature) {
-          if (!feature || !feature.values_) return null;
-          
-          const status = feature.values_;
-
-          if (status.TYPE_OF_WO == "New farm pond") {
-            return new Style({
-              image: new Icon({ src: farmPondIcon }),
-            });
-          } else if (status.TYPE_OF_WO == "Land leveling") {
-            return new Style({
-              image: new Icon({ src: landLevelingIcon }),
-            });
-          } else if (status.TYPE_OF_WO == "New well") {
-            return new Style({
-              image: new Icon({ src: wellIcon }),
-            });
-          } else {
-            return new Style({
-              image: new Icon({ src: waterbodyIcon }),
-            });
-          }
-        });
-        
-        safeAddLayer(AgriStructuresLayer);
-        loadedLayers.push("Agriculture Structure");
-      }
-
-      //? Code for Livelihood Layer
-      let LivelihoodLayer = await getVectorLayers(
-        "works",
-        "hemlet_layer" + block.label.toLowerCase(),
-        true,
-        false,
-        "livelihood",
-        selectedPlan.value.plan_id,
-        districtFormatted,
-        blockFormatted
-      );
-
-      if (LivelihoodLayer) {
-        if (PlanningLayersArray[1].LayerRef.current != null) {
-          safeRemoveLayer(PlanningLayersArray[1].LayerRef.current);
-        }
-
-        PlanningLayersArray[1].LayerRef.current = LivelihoodLayer;
-
-        PlanningLayersArray[1].LayerRef.current.setStyle(
-          new Style({
-            image: new Icon({ src: livelihoodIcon }),
-          })
-        );
-        
-        safeAddLayer(LivelihoodLayer);
-        loadedLayers.push("Livelihood Structure");
-      }
-
-      //? Code for Water Structure Layer
-      let WaterStructureLayer = await getVectorLayers(
-        "works",
-        "plan_layer_gw" + block.label.toLowerCase(),
-        true,
-        false,
-        "plan_gw",
-        selectedPlan.value.plan_id,
-        districtFormatted,
-        blockFormatted
-      );
-
-      if (WaterStructureLayer) {
-        if (PlanningLayersArray[2].LayerRef.current != null) {
-          safeRemoveLayer(PlanningLayersArray[2].LayerRef.current);
-        }
-
-        PlanningLayersArray[2].LayerRef.current = WaterStructureLayer;
-
-        PlanningLayersArray[2].LayerRef.current.setStyle((feature) => {
-          if (!feature || !feature.values_) return null;
-          
-          const status = feature.values_;
-
-          if (status.selected_w == "new farm pond") {
-            return new Style({
-              image: new Icon({ src: farmPondIcon }),
-            });
-          } else if (status.selected_w == "new trench cum bund network") {
-            return new Style({
-              image: new Icon({ src: tcbIcon }),
-            });
-          } else if (status.selected_w == "new check dam") {
-            return new Style({
-              image: new Icon({ src: checkDamIcon }),
-            });
-          } else if (status.selected_w == "Loose Boulder Structure") {
-            return new Style({
-              image: new Icon({ src: boulderIcon }),
-            });
-          } else if (status.selected_w == "Works in Drainage lines") {
-            return new Style({
-              image: new Icon({ src: waterbodyIcon }),
-            });
-          } else {
-            return new Style({
-              image: new Icon({ src: waterbodyIcon }),
-            });
-          }
-        });
-        
-        safeAddLayer(WaterStructureLayer);
-        loadedLayers.push("Recharge Structures");
-      }
-      
-      // Update currentLayers to include all loaded planning layers
-      setCurrentLayers(prevLayers => {
-        // Filter out any existing planning layers
-        const filteredLayers = prevLayers.filter(layer => 
-          !["Agriculture Structure", "Livelihood Structure", "Recharge Structures"].includes(layer)
-        );
-        // Add only the layers that were successfully loaded
-        return [...filteredLayers, ...loadedLayers];
-      });
-
-      // Notify parent of visible layers if needed
-      if (toggleLayer && !handlingExternalToggle.current) {
-        loadedLayers.forEach(layerName => {
-          const layerMap = {
-            'Agriculture Structure': 'agri_structure',
-            'Livelihood Structure': 'livelihood_structure',
-            'Recharge Structures': 'recharge_structure'
-          };
-          
-          const uiLayerName = layerMap[layerName];
-          if (uiLayerName) {
-            setTimeout(() => {
-              toggleLayer(uiLayerName, true);
-            }, 100);
-          }
-        });
-      }
-      
-    } catch (error) {
-      console.error("Error fetching planning layers:", error);
-      setLayerErrors(prev => ({
-        ...prev,
-        planning: error.message
-      }));
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   // Handle layer toggling - using the same approach as original but with fixes for visibility
   const handleLayerToggle = (name, layerRef) => {
     if (!isLayersFetched && name !== "Demographics") {
       return;
     }
-    
+
     let tempLayer = [...currentLayers];
 
     // Helper function to find layer reference
@@ -1221,18 +929,6 @@ const Map = forwardRef(({
       for (let i = 0; i < LayersArray.length; i++) {
         if (LayersArray[i].name === name) {
           return LayersArray[i].LayerRef;
-        }
-      }
-      
-      for (let i = 0; i < ResourceLayersArray.length; i++) {
-        if (ResourceLayersArray[i].name === name) {
-          return ResourceLayersArray[i].LayerRef;
-        }
-      }
-      
-      for (let i = 0; i < PlanningLayersArray.length; i++) {
-        if (PlanningLayersArray[i].name === name) {
-          return PlanningLayersArray[i].LayerRef;
         }
       }
       
@@ -1410,13 +1106,6 @@ const Map = forwardRef(({
     }
   }, [district, block]);
   
-  // Handle select plan changes
-  useEffect(() => {
-    if (selectedPlan && district && block && isLayersFetched) {
-      fetchResourcesLayers();
-      fetchPlanningLayers();
-    }
-  }, [selectedPlan, isLayersFetched]);
   
   // Modified useEffect for handling toggledLayers changes to fix resource/planning layer toggling
   useEffect(() => {
@@ -1449,7 +1138,12 @@ const Map = forwardRef(({
           'well_structure': 'Well Structure',
           'agri_structure': 'Agriculture Structure',
           'livelihood_structure': 'Livelihood Structure',
-          'recharge_structure': 'Recharge Structures'
+          'recharge_structure': 'Recharge Structures',
+          'afforestation': 'Change Detection Afforestation',
+          'deforestation': 'Change Detection Deforestation',
+          'degradation': 'Change Detection Degradation',
+          'urbanization': 'Change Detection Urbanization',
+          'cropintensity': 'Change Detection Crop-Intensity'
         };
         
         const layerName = layerMap[id];

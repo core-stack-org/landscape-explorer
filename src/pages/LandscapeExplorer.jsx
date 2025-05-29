@@ -74,16 +74,11 @@ const LandscapeExplorer = () => {
     terrain_vector: false,
     terrain_lulc_slope: false,
     terrain_lulc_plain: false,
-    
-    // Resources layers
-    settlement: false,
-    water_structure: false,
-    well_structure: false,
-    
-    // Planning layers
-    agri_structure: false,
-    livelihood_structure: false,
-    recharge_structure: false,
+    afforestation : false,
+    deforestation : false,
+    degradation : false,
+    urbanization : false,
+    cropintensity : false,
   });
 
   // State for map view settings
@@ -229,6 +224,11 @@ const LandscapeExplorer = () => {
       agri_structure: false,
       livelihood_structure: false,
       recharge_structure: false,
+      afforestation : false,
+      deforestation : false,
+      degradation : false,
+      urbanization : false,
+      cropintensity : false,
     });
     
     setLayersReady(false);
@@ -253,8 +253,6 @@ const LandscapeExplorer = () => {
       alert('Please select a plan first to enable this layer');
       return;
     }
-    
-    console.log(`Toggling ${layerName} to ${isVisible ? 'ON' : 'OFF'}`);
     
     // Update local state immediately
     setToggledLayers(prev => ({

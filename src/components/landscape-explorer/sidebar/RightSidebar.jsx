@@ -37,54 +37,77 @@ const DownloadIcon = () => (
 
 // Main layer categories
 const mainCategories = [
-  { id: 'basic', label: 'Basic Layers' },
-  { id: 'resources', label: 'Resources Layers' },
-  { id: 'planning', label: 'Planning Layers' },
-  { id: 'lulc', label: 'LULC Layers' }
+  { id: 'land', label: 'Land' },
+  { id: 'climate', label: 'Climate' },
+  { id: 'hydro', label: 'Hydrology' },
+  { id: 'agri', label: 'Agriculture' },
+  { id: 'restore', label: 'Restoration' },
+  { id: 'nrega', label: 'NREGA' },
+  { id: 'social', label: 'Demographic' },
 ];
 
 // Basic layers data
-const basicLayersData = [
-  { id: 1, name: "demographics", label: "Demographics", hasGeojson: true, hasKml: true },
-  { id: 2, name: "drainage", label: "Drainage", hasGeojson: true, hasKml: true },
-  { id: 3, name: "remote_sensed_waterbodies", label: "Remote-Sensed Waterbodies", hasGeojson: true, hasKml: true },
-  { id: 4, name: "hydrological_boundaries", label: "Hydrological Boundaries", hasGeojson: true, hasKml: true },
-  { id: 5, name: "clart", label: "CLART", hasGeojson: false, hasKml: false, hasGeoTiff: true },
-  { id: 6, name: "hydrological_variables", label: "Hydrological Variables", hasGeojson: true, hasKml: true },
-  { id: 7, name: "nrega", label: "NREGA", hasGeojson: true, hasKml: true },
-  { id: 8, name: "drought", label: "Drought", hasGeojson: true, hasKml: true },
-  { id: 9, name: "terrain", label: "Terrain", hasGeojson: false, hasKml: false, hasGeoTiff: true },
-  { id: 10, name: "administrative_boundaries", label: "Administrative Boundaries", hasGeojson: true, hasKml: true },
-  { id: 11, name: "cropping_intensity", label: "Cropping Intensity", hasGeojson: true, hasKml: true },
-  { id: 12, name: "terrain_vector", label: "Terrain Vector", hasGeojson: true, hasKml: true },
-  { id: 13, name: "terrain_lulc_slope", label: "Terrain LULC Slope", hasGeojson: true, hasKml: true },
-  { id: 14, name: "terrain_lulc_plain", label: "Terrain LULC Plain", hasGeojson: true, hasKml: true }
-];
+// const basicLayersData = [
+//   { id: 1, name: "demographics", label: "Demographics", hasGeojson: true, hasKml: true },
+//   { id: 2, name: "drainage", label: "Drainage", hasGeojson: true, hasKml: true },
+//   { id: 3, name: "remote_sensed_waterbodies", label: "Remote-Sensed Waterbodies", hasGeojson: true, hasKml: true },
+//   { id: 4, name: "hydrological_boundaries", label: "Hydrological Boundaries", hasGeojson: true, hasKml: true },
+//   { id: 5, name: "clart", label: "CLART", hasGeojson: false, hasKml: false, hasGeoTiff: true },
+//   { id: 6, name: "hydrological_variables", label: "Hydrological Variables", hasGeojson: true, hasKml: true },
+//   { id: 7, name: "nrega", label: "NREGA", hasGeojson: true, hasKml: true },
+//   { id: 8, name: "drought", label: "Drought", hasGeojson: true, hasKml: true },
+//   { id: 9, name: "terrain", label: "Terrain", hasGeojson: false, hasKml: false, hasGeoTiff: true },
+//   { id: 10, name: "administrative_boundaries", label: "Administrative Boundaries", hasGeojson: true, hasKml: true },
+//   { id: 11, name: "cropping_intensity", label: "Cropping Intensity", hasGeojson: true, hasKml: true },
+//   { id: 12, name: "terrain_vector", label: "Terrain Vector", hasGeojson: true, hasKml: true },
+//   { id: 13, name: "terrain_lulc_slope", label: "Terrain LULC Slope", hasGeojson: true, hasKml: true },
+//   { id: 14, name: "terrain_lulc_plain", label: "Terrain LULC Plain", hasGeojson: true, hasKml: true }
+// ];
 
-// Resources layers data
-const resourcesLayersData = [
-  { id: 15, name: "settlement", label: "Settlement", hasGeojson: true, hasKml: true },
-  { id: 16, name: "water_structure", label: "Water Structure", hasGeojson: true, hasKml: true },
-  { id: 17, name: "well_structure", label: "Well Structure", hasGeojson: true, hasKml: true }
-];
+// Land Layers
 
-// Planning layers data
-const planningLayersData = [
-  { id: 18, name: "agri_structure", label: "Agriculture Structure", hasGeojson: true, hasKml: true },
-  { id: 19, name: "livelihood_structure", label: "Livelihood Structure", hasGeojson: true, hasKml: true },
-  { id: 20, name: "recharge_structure", label: "Recharge Structure", hasGeojson: true, hasKml: true }
-];
-
-// LULC layers data
-const lulcLevels = [
+const landLayersData = [
+  { id: 1, name: "terrain", label: "Terrain", hasGeojson: false, hasKml: false, hasGeoTiff: true },
+  { id: 2, name: "terrain_vector", label: "Terrain Vector", hasGeojson: true, hasKml: true },
   { id: "lulc_level_1", label: "LULC Layer Level 1" },
   { id: "lulc_level_2", label: "LULC Layer Level 2" },
-  { id: "lulc_level_3", label: "LULC Layer Level 3" }
-];
+]
+
+const climateLayersData = [
+  { id: 1, name: "hydrological_variables", label: "Hydrological Variables", hasGeojson: true, hasKml: true },
+]
+
+const hydrologyLayersData = [
+  { id: 1, name: "drainage", label: "Drainage", hasGeojson: true, hasKml: true },
+  { id: 2, name: "remote_sensed_waterbodies", label: "Remote-Sensed Waterbodies", hasGeojson: true, hasKml: true },
+  { id: 3, name: "clart", label: "CLART", hasGeojson: false, hasKml: false, hasGeoTiff: true },
+]
+
+const agriLayersData = [
+  { id: "lulc_level_3", label: "LULC Layer Level 3" },
+  { id: 1, name: "cropping_intensity", label: "Cropping Intensity", hasGeojson: true, hasKml: true },
+  { id: 2, name: "drought", label: "Drought", hasGeojson: true, hasKml: true },
+]
+
+const restorationLayersData = [
+  { id: 1, name: "afforestation", label: "Change Detection Afforestation", hasGeojson: false, hasKml: false, hasGeoTiff: true },
+  { id: 2, name: "deforestation", label: "Change Detection Deforestation", hasGeojson: false, hasKml: false, hasGeoTiff: true },
+  { id: 3, name: "degradation", label: "Change Detection Degradation", hasGeojson: false, hasKml: false, hasGeoTiff: true },
+  { id: 4, name: "urbanization", label: "Change Detection Urbanization", hasGeojson: false, hasKml: false, hasGeoTiff: true },
+  { id: 5, name: "cropintensity", label: "Change Detection Crop-Intensity", hasGeojson: false, hasKml: false, hasGeoTiff: true },
+]
+
+const NREGALayerData = [
+  { id: 1, name: "nrega", label: "NREGA", hasGeojson: true, hasKml: true },
+]
+
+const demographicLayerData =[
+  { id: 1, name: "administrative_boundaries", label: "Administrative Boundaries", hasGeojson: true, hasKml: true },
+  { id: 2, name: "demographics", label: "Socio-Economic", hasGeojson: true, hasKml: true },
+]
 
 // Years data for LULC
 const yearDataLulc = [
-  { label: "2016-2017", value: "16_17" },
   { label: "2017-2018", value: "17_18" },
   { label: "2018-2019", value: "18_19" },
   { label: "2019-2020", value: "19_20" },
@@ -279,9 +302,7 @@ const RightSidebar = ({
   const [lulcYear2, setLulcYear2] = useState(null);
   const [lulcYear3, setLulcYear3] = useState(null);
   const [isLayersFetched, setIsLayersFetched] = useState(false);
-  
-  // Flag to determine if plan selector should be shown
-  const showPlanSelector = selectedCategory === 'resources' || selectedCategory === 'planning';
+
 
   // When category changes, inform the parent
   useEffect(() => {
@@ -299,9 +320,10 @@ const RightSidebar = ({
     }
   }, [district, block, canFetchLayers]);
 
-  // Handle toggle click
+  // Handle toggle clicklandLayersData
   const handleToggleClick = (filterName) => {
     // If there's a handleLayerToggle prop, call it
+    console.log(filterName)
     if (handleLayerToggle) {
       const currentState = toggledLayers?.[filterName] || false;
       handleLayerToggle(filterName, !currentState);
@@ -313,7 +335,7 @@ const RightSidebar = ({
       alert('Please select a district and block first');
       return;
     }
-    
+
     const districtFormatted = district.label.toLowerCase().split(" ").join("_");
     const blockFormatted = block.label.toLowerCase().split(" ").join("_");
     
@@ -405,7 +427,7 @@ const RightSidebar = ({
       // Handle GeoTIFF download based on layer
       if (filterName.includes('lulc')) {
         handleLulcLayerDownload(filterName);
-      } else if (filterName === 'clart' || filterName === 'terrain') {
+      } else {
         handleImageLayerDownload(filterName);
       }
     }
@@ -433,7 +455,7 @@ const RightSidebar = ({
       return;
     }
     
-    const url = `https://geoserver.core-stack.org:8443/geoserver/LULC_${level.split('_').pop()}/wcs?service=WCS&version=2.0.1&request=GetCoverage&CoverageId=LULC_${level.split('_').pop()}:LULC_${yearValue}_${block.label.toLowerCase().split(" ").join("_")}_level_${level.split('_').pop()}&format=geotiff&compression=LZW&tiling=false`;
+    const url = `https://geoserver.core-stack.org:8443/geoserver/LULC_level_${level.split('_').pop()}/wcs?service=WCS&version=2.0.1&request=GetCoverage&CoverageId=LULC_level_${level.split('_').pop()}:LULC_${yearValue}_${block.label.toLowerCase().split(" ").join("_")}_level_${level.split('_').pop()}&format=geotiff&compression=LZW&tiling=false`;
     
     // Use our direct geotiff download function
     downloadGeoTiff(url, `LULC_${level.split('_').pop()}_${yearValue}`);
@@ -441,6 +463,9 @@ const RightSidebar = ({
 
   // Image layer download handler
   const handleImageLayerDownload = (layerName) => {
+
+    console.log(layerName)
+
     if (!district || !block) {
       alert('Please select a district and block first');
       return;
@@ -456,7 +481,9 @@ const RightSidebar = ({
     } else if (layerName === 'terrain') {
       url = `https://geoserver.core-stack.org:8443/geoserver/terrain/wcs?service=WCS&version=2.0.1&request=GetCoverage&CoverageId=terrain:${districtFormatted}_${blockFormatted}_terrain_raster&format=geotiff&compression=LZW&tiling=true&tileheight=256&tilewidth=256`;
     }
-    
+    else{
+      url = `https://geoserver.core-stack.org:8443/geoserver/change_detection/wcs?service=WCS&version=2.0.1&request=GetCoverage&CoverageId=change_detection:change_${districtFormatted}_${blockFormatted}_${layerName.charAt(0).toUpperCase() + layerName.slice(1)}&format=geotiff&compression=LZW&tiling=true&tileheight=256&tilewidth=256`
+    }
     if (url) {
       // Use our direct geotiff download function
       downloadGeoTiff(url, layerName);
@@ -484,26 +511,6 @@ const RightSidebar = ({
     }
   };
 
-  // When plan changes, fetch appropriate layers
-  useEffect(() => {
-    const autoFetchLayersForPlan = () => {
-      if (!selectedPlan || !block) return;
-      
-      if (selectedCategory === 'resources') {
-        // Auto-toggle resources layers
-        handleToggleClick('settlement');
-        handleToggleClick('water_structure');
-        handleToggleClick('well_structure');
-      } else if (selectedCategory === 'planning') {
-        // Auto-toggle planning layers
-        handleToggleClick('agri_structure');
-        handleToggleClick('livelihood_structure');
-        handleToggleClick('recharge_structure');
-      }
-    };
-
-    autoFetchLayersForPlan();
-  }, [selectedPlan, block, selectedCategory]);
 
   return (
     <div className="w-[380px] flex flex-col h-full bg-white shadow-md relative">
@@ -560,29 +567,6 @@ const RightSidebar = ({
           isLoading={isLoading}
           canFetchLayers={canFetchLayers}
         />
-        
-        {/* Plan Selector - Only show for resources or planning */}
-        {block && showPlanSelector && plans && plans.length > 0 && (
-          <div className="mb-2">
-            <h4 className="text-sm font-medium text-gray-700 mb-2">Select Plan</h4>
-            <select 
-              className="w-full p-2 border border-gray-300 rounded-md bg-white text-gray-700 text-sm"
-              value={selectedPlan ? selectedPlan.label : ""}
-              onChange={(e) => {
-                const selected = plans.find(p => p.label === e.target.value);
-                if (selected) {
-                  handleItemSelect(setSelectedPlan, selected);
-                }
-              }}
-              disabled={isLoading}
-            >
-              <option value="" disabled>{selectedPlan ? selectedPlan.label : "Select..."}</option>
-              {plans.map((plan, idx) => (
-                <option key={idx} value={plan.label}>{plan.label}</option>
-              ))}
-            </select>
-          </div>
-        )}
       </div>
 
       {/* Only show category tabs and layers if all location dropdowns are selected */}
@@ -610,9 +594,48 @@ const RightSidebar = ({
           {/* Scrollable container for layers */}
           <div className="flex-1 overflow-y-auto p-3">
             {/* Basic Layers */}
-            {selectedCategory === 'basic' && (
+            {selectedCategory === 'land' && (
               <div>
-                {basicLayersData.map(layer => (
+                {landLayersData.map(layer => {
+                  if(layer.id === "lulc_level_1"){
+                    return <LulcSelector 
+                      level={layer}
+                      lulcYear={lulcYear1}
+                      setLulcYear={setLulcYear1}
+                      onDownload={handleDownloadClick}
+                      isLayersFetched={isLayersFetched}
+                      isLoading={isLoading}
+                    />;
+                  }
+                  else if(layer.id === "lulc_level_2"){
+                    return <LulcSelector 
+                      level={layer}
+                      lulcYear={lulcYear2}
+                      setLulcYear={setLulcYear2}
+                      onDownload={handleDownloadClick}
+                      isLayersFetched={isLayersFetched}
+                      isLoading={isLoading}
+                    />;
+                  }
+                  else{
+                    return <LayerItem 
+                      key={layer.id}
+                      layer={layer}
+                      isSelected={toggledLayers?.[layer.name] || false}
+                      onToggle={handleToggleClick}
+                      onDownload={handleDownloadClick}
+                      isLayersFetched={isLayersFetched}
+                      isLoading={isLoading}
+                      selectedPlan={selectedPlan} // Add this prop
+                    />
+                  }
+                })}
+              </div>
+            )}
+
+            {selectedCategory === 'climate' && (
+              <div>
+                {climateLayersData.map(layer => (
                   <LayerItem 
                     key={layer.id}
                     layer={layer}
@@ -627,10 +650,9 @@ const RightSidebar = ({
               </div>
             )}
 
-            {/* Resources Layers */}
-            {selectedCategory === 'resources' && (
+            {selectedCategory === 'hydro' && (
               <div>
-                {resourcesLayersData.map(layer => (
+                {hydrologyLayersData.map(layer => (
                   <LayerItem 
                     key={layer.id}
                     layer={layer}
@@ -645,10 +667,38 @@ const RightSidebar = ({
               </div>
             )}
 
-            {/* Planning Layers */}
-            {selectedCategory === 'planning' && (
+            {selectedCategory === 'agri' && (
               <div>
-                {planningLayersData.map(layer => (
+                {agriLayersData.map(layer => {
+                  if(layer.id === "lulc_level_3"){
+                    return <LulcSelector 
+                      level={layer}
+                      lulcYear={lulcYear3}
+                      setLulcYear={setLulcYear3}
+                      onDownload={handleDownloadClick}
+                      isLayersFetched={isLayersFetched}
+                      isLoading={isLoading}
+                    />;
+                  }
+                  else{
+                   return <LayerItem 
+                      key={layer.id}
+                      layer={layer}
+                      isSelected={toggledLayers?.[layer.name] || false}
+                      onToggle={handleToggleClick}
+                      onDownload={handleDownloadClick}
+                      isLayersFetched={isLayersFetched}
+                      isLoading={isLoading}
+                      selectedPlan={selectedPlan} // Add this prop
+                    />
+                  }
+                })}
+              </div>
+            )}
+
+            {selectedCategory === 'restore' && (
+              <div>
+                {restorationLayersData.map(layer => (
                   <LayerItem 
                     key={layer.id}
                     layer={layer}
@@ -663,33 +713,37 @@ const RightSidebar = ({
               </div>
             )}
 
-            {/* LULC Layers */}
-            {selectedCategory === 'lulc' && (
-              <div className="space-y-4">
-                <LulcSelector 
-                  level={lulcLevels[0]}
-                  lulcYear={lulcYear1}
-                  setLulcYear={setLulcYear1}
-                  onDownload={handleDownloadClick}
-                  isLayersFetched={isLayersFetched}
-                  isLoading={isLoading}
-                />
-                <LulcSelector 
-                  level={lulcLevels[1]}
-                  lulcYear={lulcYear2}
-                  setLulcYear={setLulcYear2}
-                  onDownload={handleDownloadClick}
-                  isLayersFetched={isLayersFetched}
-                  isLoading={isLoading}
-                />
-                <LulcSelector 
-                  level={lulcLevels[2]}
-                  lulcYear={lulcYear3}
-                  setLulcYear={setLulcYear3}
-                  onDownload={handleDownloadClick}
-                  isLayersFetched={isLayersFetched}
-                  isLoading={isLoading}
-                />
+            {selectedCategory === 'nrega' && (
+              <div>
+                {NREGALayerData.map(layer => (
+                  <LayerItem 
+                    key={layer.id}
+                    layer={layer}
+                    isSelected={toggledLayers?.[layer.name] || false}
+                    onToggle={handleToggleClick}
+                    onDownload={handleDownloadClick}
+                    isLayersFetched={isLayersFetched}
+                    isLoading={isLoading}
+                    selectedPlan={selectedPlan} // Add this prop
+                  />
+                ))}
+              </div>
+            )}
+
+            {selectedCategory === 'social' && (
+              <div>
+                {demographicLayerData.map(layer => (
+                  <LayerItem 
+                    key={layer.id}
+                    layer={layer}
+                    isSelected={toggledLayers?.[layer.name] || false}
+                    onToggle={handleToggleClick}
+                    onDownload={handleDownloadClick}
+                    isLayersFetched={isLayersFetched}
+                    isLoading={isLoading}
+                    selectedPlan={selectedPlan} // Add this prop
+                  />
+                ))}
               </div>
             )}
           </div>
