@@ -57,7 +57,6 @@ const useWaterRejData = () => {
 
   const projectName = project?.label; // e.g. "ATCF_UP"
   const projectId = project?.value; // e.g. "5"
-  console.log(projectName);
 
   useEffect(() => {
     if (!projectName || !projectId) return;
@@ -124,13 +123,8 @@ const WaterProjectDashboard = () => {
     return storedOrg ? JSON.parse(storedOrg) : null;
   });
 
-  // const [project, setProject] = useState(() => {
-  //   const storedProject = sessionStorage.getItem("selectedProject");
-  //   return storedProject || "";
-  // });
   const [project, setProject] = useState(() => {
     const stored = sessionStorage.getItem("selectedProject");
-    console.log("Stored project string:", stored);
     try {
       return stored ? JSON.parse(stored) : null;
     } catch (err) {
@@ -139,22 +133,7 @@ const WaterProjectDashboard = () => {
     }
   });
 
-  // useEffect(() => {
-  //   const storedOrg = sessionStorage.getItem("selectedOrganization");
-  //   const storedProject = sessionStorage.getItem("selectedProject");
-
-  //   if (storedOrg) {
-  //     setOrganization(JSON.parse(storedOrg));
-  //   }
-  //   if (storedProject) {
-  //     setProject(JSON.parse(storedProject));
-  //   }
-  // }, []);
-
-  // Access project name from project object safely
   const projectName = project?.label || "No project selected";
-
-  console.log("Project Name:", projectName);
 
   const geoData = useWaterRejData(project, projectId);
   const { rows, avgSiltRemoved } = useMemo(() => {
@@ -191,6 +170,22 @@ const WaterProjectDashboard = () => {
       const kharifValues = kharifEntries
         .map(([_, value]) => Number(value))
         .filter((val) => !isNaN(val));
+      console.log(kharifValues);
+      let nonZeroStartIndexK = kharifValues.findIndex((val) => val !== 0);
+
+      const filteredKharifValues = kharifValues.slice(nonZeroStartIndexK);
+      console.log(filteredKharifValues);
+      const sumFilteredKharif = filteredKharifValues.reduce(
+        (acc, val) => acc + val,
+        0
+      );
+      const meanFilteredKharif =
+        filteredKharifValues.length > 0
+          ? (sumFilteredKharif / filteredKharifValues.length).toFixed(2)
+          : "0.00";
+
+      console.log("Mean of filteredKharifValues:", meanFilteredKharif);
+
       const sumKharif = kharifValues.reduce((acc, val) => acc + val, 0);
       const avgKharif = (sumKharif / 7).toFixed(2);
 
@@ -201,6 +196,22 @@ const WaterProjectDashboard = () => {
       const rabiValues = rabiEntries
         .map(([_, value]) => Number(value))
         .filter((val) => !isNaN(val));
+
+      let nonZeroStartIndexR = rabiValues.findIndex((val) => val !== 0);
+
+      const filteredRabiValues = rabiValues.slice(nonZeroStartIndexR);
+      console.log(filteredRabiValues);
+      const sumFilteredRabi = filteredRabiValues.reduce(
+        (acc, val) => acc + val,
+        0
+      );
+      const meanFilteredRabi =
+        filteredRabiValues.length > 0
+          ? (sumFilteredRabi / filteredRabiValues.length).toFixed(2)
+          : "0.00";
+
+      console.log("Mean of filteredRabiValues:", meanFilteredRabi);
+
       const sumRabi = rabiValues.reduce((acc, val) => acc + val, 0);
       const avgRabi = (sumRabi / 7).toFixed(2);
 
@@ -211,6 +222,22 @@ const WaterProjectDashboard = () => {
       const zaidValues = zaidEntries
         .map(([_, value]) => Number(value))
         .filter((val) => !isNaN(val));
+
+      let nonZeroStartIndexZ = zaidValues.findIndex((val) => val !== 0);
+
+      const filteredZaidValues = zaidValues.slice(nonZeroStartIndexZ);
+      console.log(filteredZaidValues);
+      const sumFilteredzaid = filteredZaidValues.reduce(
+        (acc, val) => acc + val,
+        0
+      );
+      const meanFilteredZaid =
+        filteredZaidValues.length > 0
+          ? (sumFilteredzaid / filteredZaidValues.length).toFixed(2)
+          : "0.00";
+
+      console.log("Mean of filteredZaidValues:", meanFilteredZaid);
+
       const sumZaid = zaidValues.reduce((acc, val) => acc + val, 0);
       const avgZaid = (sumZaid / 7).toFixed(2);
 
@@ -225,10 +252,12 @@ const WaterProjectDashboard = () => {
         block: props.Taluka || "NA",
         waterbody: props.waterbody_name || "NA",
         siltRemoved,
-
-        avgWaterAvailabilityKharif: avgKharif,
-        avgWaterAvailabilityRabi: avgRabi,
-        avgWaterAvailabilityZaid: avgZaid,
+        avgWaterAvailabilityKharif: meanFilteredKharif,
+        avgWaterAvailabilityRabi: meanFilteredRabi,
+        avgWaterAvailabilityZaid: meanFilteredZaid,
+        // avgWaterAvailabilityKharif: avgKharif,
+        // avgWaterAvailabilityRabi: avgRabi,
+        // avgWaterAvailabilityZaid: avgZaid,
 
         coordinates,
         featureIndex: index,
@@ -305,16 +334,6 @@ const WaterProjectDashboard = () => {
               .toLowerCase()
               .replace(/\s/g, "_");
 
-            // let parsedProject;
-            // try {
-            //   parsedProject = JSON.parse(project); // project is a string
-            // } catch (err) {
-            //   console.error("Failed to parse project string:", err);
-            //   return;
-            // }
-
-            // const projectName = parsedProject.label;
-            // const projectId = parsedProject.value;
             if (!project || typeof project !== "object") {
               console.error("Invalid project object:", project);
               return;
@@ -324,7 +343,6 @@ const WaterProjectDashboard = () => {
             const projectId = project.value;
 
             const layerName = `clipped_lulc_filtered_mws_${projectName}_${projectId}_${fullYear}`;
-            console.log(layerName);
 
             let tempLayer = await getImageLayer(
               "waterrej",
@@ -376,7 +394,6 @@ const WaterProjectDashboard = () => {
 
     fetchUpdateLulc().catch(console.error);
   }, [lulcYear, currentLayer, selectedWaterbody, waterBodyLayer, project]);
-  console.log(project);
 
   const handleViewChange = (event, newView) => {
     if (newView !== null) {
@@ -441,7 +458,6 @@ const WaterProjectDashboard = () => {
   };
 
   const initializeMap = async () => {
-    console.log("Initialized Map");
     const baseLayer = new TileLayer({
       source: new XYZ({
         url: `https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}`,
@@ -519,7 +535,6 @@ const WaterProjectDashboard = () => {
     }
     map.once("rendercomplete", () => {
       if (selectedWaterbody && selectedWaterbody.coordinates) {
-        console.log(selectedWaterbody);
         zoomToWaterbody(selectedWaterbody, selectedFeature);
       }
     });
@@ -550,11 +565,8 @@ const WaterProjectDashboard = () => {
 
   const zoomToWaterbody = (waterbody, tempFeature) => {
     if (!waterbody.coordinates) {
-      console.error("No coordinates found for waterbody:", waterbody.waterbody);
       return;
     }
-    console.log(waterbody);
-    console.log(tempFeature);
 
     const mapView = mapRef.current.getView();
 
@@ -615,18 +627,6 @@ const WaterProjectDashboard = () => {
     } else {
       console.error("Coordinates not found in feature properties.");
     }
-    // const olFeature = new GeoJSON().readFeature(feature, {
-    // dataProjection: 'EPSG:4326',
-    // featureProjection: mapRef.current.getView().getProjection()
-    // });
-
-    // const FeatureExtent = olFeature.getGeometry().getExtent();
-
-    // mapRef.current.getView().animate({
-    // center: getCenter(FeatureExtent),
-    // zoom: 16,
-    // duration: 500
-    // });
   };
 
   const downloadCSV = () => {
@@ -645,7 +645,7 @@ const WaterProjectDashboard = () => {
     ];
 
     const csvRows = [
-      headers.join(","), // Header row
+      headers.join(","),
       ...sortedRows.map((row) =>
         [
           row.state,
@@ -657,13 +657,13 @@ const WaterProjectDashboard = () => {
           row.avgWaterAvailabilityRabi,
           row.avgWaterAvailabilityZaid,
         ]
-          .map((cell) => `"${cell}"`) // Wrap in quotes for safety
+          .map((cell) => `"${cell}"`)
           .join(",")
       ),
     ];
     let parsedProject;
     try {
-      parsedProject = JSON.parse(project); // project is a string
+      parsedProject = JSON.parse(project);
     } catch (err) {
       console.error("Failed to parse project string:", err);
       return;
@@ -882,7 +882,7 @@ const WaterProjectDashboard = () => {
                       sx={{ cursor: "pointer", userSelect: "none" }}
                     >
                       <div style={{ display: "flex", alignItems: "center" }}>
-                        Avg. Water Availability During Kharif (%)
+                        Mean Water Availability During Kharif (%)
                         <span
                           style={{
                             marginLeft: 4,
@@ -905,7 +905,7 @@ const WaterProjectDashboard = () => {
                       sx={{ cursor: "pointer", userSelect: "none" }}
                     >
                       <div style={{ display: "flex", alignItems: "center" }}>
-                        Avg. Water Availability During Rabi (%)
+                        Mean Water Availability During Rabi (%)
                         <span
                           style={{
                             marginLeft: 4,
@@ -928,7 +928,7 @@ const WaterProjectDashboard = () => {
                       sx={{ cursor: "pointer", userSelect: "none" }}
                     >
                       <div style={{ display: "flex", alignItems: "center" }}>
-                        Avg. Water Availability During Zaid (%)
+                        Mean Water Availability During Zaid (%)
                         <span
                           style={{
                             marginLeft: 4,
