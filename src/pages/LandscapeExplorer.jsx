@@ -20,7 +20,7 @@ const LandscapeNavbar = () => {
         <div className="flex items-center h-16">
           <Link to="/" className="flex items-center gap-2 cursor-pointer">
             <img src={logo} alt="KYL Logo" className="h-8 w-8" />
-            <span className="text-xl font-semibold text-gray-800">Landscape Explorer</span>
+            <span className="text-xl font-semibold text-gray-800">Download Layers</span>
           </Link>
         </div>
       </div>
