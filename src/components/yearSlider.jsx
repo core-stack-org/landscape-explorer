@@ -20,15 +20,6 @@ const YearSlider = ({ currentLayer }) => {
   const [showTooltip, setShowTooltip] = useState(false);
   const [yearvalue, setYearAtom] = useRecoilState(yearAtom);
 
-  // Check if any LULC layer is currently active
-  // const isLulcLayerActive = currentLayer.some(
-  //   (layer) =>
-  //     layer.name === "avg_double_cropped" ||
-  //     layer.name.includes("LULC") ||
-  //     layer.name.includes("lulc") ||
-  //     layer.name.includes("lulcWaterrej")
-  // );
-
   const isLulcLayerActive =
     currentLayer &&
     (currentLayer.name === "avg_double_cropped" ||
@@ -92,6 +83,13 @@ const YearSlider = ({ currentLayer }) => {
                 <span className="text-xs text-gray-600 min-w-[70px] text-right">
                   {yearDataLulc[yearDataLulc.length - 1].label}
                 </span>
+              </div>
+              <div className="flex justify-between mt-1 px-1 text-[10px] text-gray-600 select-none">
+                {yearDataLulc.map(({ label }, index) => (
+                  <span key={index} className="flex-1 text-center">
+                    {label}
+                  </span>
+                ))}
               </div>
             </div>
           </div>

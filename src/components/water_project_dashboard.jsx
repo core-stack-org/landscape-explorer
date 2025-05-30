@@ -117,6 +117,7 @@ const WaterProjectDashboard = () => {
   const [sortField, setSortField] = useState(null);
   const [sortOrder, setSortOrder] = useState("asc");
   const [searchText, setSearchText] = useState("");
+  const [waterbodySearch, setWaterbodySearch] = useState("");
 
   const [organization, setOrganization] = useState(() => {
     const storedOrg = sessionStorage.getItem("selectedOrganization");
@@ -250,6 +251,7 @@ const WaterProjectDashboard = () => {
         state: props.State || "NA",
         district: props.District || "NA",
         block: props.Taluka || "NA",
+        village: props.village || "NA",
         waterbody: props.waterbody_name || "NA",
         siltRemoved,
         avgWaterAvailabilityKharif: meanFilteredKharif,
@@ -279,6 +281,7 @@ const WaterProjectDashboard = () => {
   const [filters, setFilters] = useState({
     state: [],
     district: [],
+    block: [],
     village: [],
   });
 
@@ -411,20 +414,30 @@ const WaterProjectDashboard = () => {
   };
 
   const filteredRows = rows.filter((row) => {
-    return (
-      Object.keys(row).some((key) => {
-        if (!row[key]) return false;
-        if (typeof row[key] === "object") return false; // Skip objects like coordinates
-        return row[key]
-          .toString()
-          .toLowerCase()
-          .includes(searchText.toLowerCase());
-      }) &&
-      Object.keys(filters).every((key) => {
-        if (filters[key].length === 0) return true;
-        return filters[key].includes(String(row[key]));
-      })
-    );
+    // First: global searchText (any field)
+    const matchesGlobalSearch = Object.keys(row).some((key) => {
+      if (!row[key]) return false;
+      if (typeof row[key] === "object") return false; // skip objects like coordinates
+      return row[key]
+        .toString()
+        .toLowerCase()
+        .includes(searchText.toLowerCase());
+    });
+
+    // Second: your existing filters object per field
+    const matchesFilters = Object.keys(filters).every((key) => {
+      if (filters[key].length === 0) return true;
+      return filters[key].includes(String(row[key]));
+    });
+
+    // Third: waterbodySearch only on waterbody column
+    const matchesWaterbodySearch = row.waterbody
+      ?.toString()
+      .toLowerCase()
+      .includes(waterbodySearch.toLowerCase());
+
+    // Final combined condition:
+    return matchesGlobalSearch && matchesFilters && matchesWaterbodySearch;
   });
 
   const sortedRows = [...filteredRows].sort((a, b) => {
@@ -637,11 +650,13 @@ const WaterProjectDashboard = () => {
     const headers = [
       "State",
       "District",
+      "Taluka",
       "GP/Village",
       "Waterbody",
       "Silt Removed (Cu.m.)",
-      "Avg. Water Availability During Zaid (%)",
-      "Avg. Water Availability During Kharif and Rabi (%)",
+      "Mean Water Availability During Kharif (%)",
+      "Mean Water Availability During Rabi (%)",
+      "Mean Water Availability During Zaid (%)",
     ];
 
     const csvRows = [
@@ -651,6 +666,7 @@ const WaterProjectDashboard = () => {
           row.state,
           row.district,
           row.block,
+          row.village,
           row.waterbody,
           row.siltRemoved,
           row.avgWaterAvailabilityKharif,
@@ -842,6 +858,18 @@ const WaterProjectDashboard = () => {
 
                     <TableCell>
                       <div style={{ display: "flex", alignItems: "center" }}>
+                        Taluka
+                        <IconButton
+                          onClick={(e) => handleFilterClick(e, "block")}
+                          size="small"
+                        >
+                          <FilterListIcon fontSize="small" />
+                        </IconButton>
+                      </div>
+                    </TableCell>
+
+                    <TableCell>
+                      <div style={{ display: "flex", alignItems: "center" }}>
                         GP/Village
                         <IconButton
                           onClick={(e) => handleFilterClick(e, "village")}
@@ -852,7 +880,19 @@ const WaterProjectDashboard = () => {
                       </div>
                     </TableCell>
 
-                    <TableCell>Waterbody</TableCell>
+                    <TableCell>
+                      <div style={{ display: "flex", flexDirection: "column" }}>
+                        <span>Waterbody</span>
+                        <TextField
+                          variant="standard"
+                          placeholder="Search Waterbody"
+                          value={waterbodySearch}
+                          onChange={(e) => setWaterbodySearch(e.target.value)}
+                          size="small"
+                          InputProps={{ style: { fontSize: 12 } }}
+                        />
+                      </div>
+                    </TableCell>
 
                     {/* Silt Removed Column */}
                     <TableCell
@@ -878,7 +918,7 @@ const WaterProjectDashboard = () => {
                     {/* Water Availability Column */}
 
                     <TableCell
-                      onClick={() => handleSort("waterAvailability")}
+                      onClick={() => handleSort("avgWaterAvailabilityKharif")}
                       sx={{ cursor: "pointer", userSelect: "none" }}
                     >
                       <div style={{ display: "flex", alignItems: "center" }}>
@@ -887,12 +927,12 @@ const WaterProjectDashboard = () => {
                           style={{
                             marginLeft: 4,
                             fontWeight:
-                              sortField === "waterAvailability"
+                              sortField === "avgWaterAvailabilityKharif"
                                 ? "bold"
                                 : "normal",
                           }}
                         >
-                          {sortField === "waterAvailability" &&
+                          {sortField === "avgWaterAvailabilityKharif" &&
                           sortOrder === "asc"
                             ? "🔼"
                             : "🔽"}
@@ -901,7 +941,7 @@ const WaterProjectDashboard = () => {
                     </TableCell>
 
                     <TableCell
-                      onClick={() => handleSort("waterAvailability")}
+                      onClick={() => handleSort("avgWaterAvailabilityRabi")}
                       sx={{ cursor: "pointer", userSelect: "none" }}
                     >
                       <div style={{ display: "flex", alignItems: "center" }}>
@@ -910,12 +950,12 @@ const WaterProjectDashboard = () => {
                           style={{
                             marginLeft: 4,
                             fontWeight:
-                              sortField === "waterAvailability"
+                              sortField === "avgWaterAvailabilityRabi"
                                 ? "bold"
                                 : "normal",
                           }}
                         >
-                          {sortField === "waterAvailability" &&
+                          {sortField === "avgWaterAvailabilityRabi" &&
                           sortOrder === "asc"
                             ? "🔼"
                             : "🔽"}
@@ -924,7 +964,7 @@ const WaterProjectDashboard = () => {
                     </TableCell>
 
                     <TableCell
-                      onClick={() => handleSort("waterAvailability")}
+                      onClick={() => handleSort("avgWaterAvailabilityZaid")}
                       sx={{ cursor: "pointer", userSelect: "none" }}
                     >
                       <div style={{ display: "flex", alignItems: "center" }}>
@@ -933,41 +973,18 @@ const WaterProjectDashboard = () => {
                           style={{
                             marginLeft: 4,
                             fontWeight:
-                              sortField === "waterAvailability"
+                              sortField === "avgWaterAvailabilityZaid"
                                 ? "bold"
                                 : "normal",
                           }}
                         >
-                          {sortField === "waterAvailability" &&
+                          {sortField === "avgWaterAvailabilityZaid" &&
                           sortOrder === "asc"
                             ? "🔼"
                             : "🔽"}
                         </span>
                       </div>
                     </TableCell>
-
-                    {/* <TableCell
-                      onClick={() => handleSort("waterAvailability")}
-                      sx={{ cursor: "pointer", userSelect: "none" }}
-                    >
-                      <div style={{ display: "flex", alignItems: "center" }}>
-                        Avg. Water Availability During Kharif and Rabi (%)
-                        <span
-                          style={{
-                            marginLeft: 4,
-                            fontWeight:
-                              sortField === "waterAvailability"
-                                ? "bold"
-                                : "normal",
-                          }}
-                        >
-                          {sortField === "waterAvailability" &&
-                          sortOrder === "asc"
-                            ? "🔼"
-                            : "🔽"}
-                        </span>
-                      </div>
-                    </TableCell> */}
                   </TableRow>
                 </TableHead>
 
@@ -976,7 +993,8 @@ const WaterProjectDashboard = () => {
                     <TableRow key={row.id} hover>
                       <TableCell>{row.state}</TableCell>
                       <TableCell>{row.district}</TableCell>
-                      <TableCell>{row.block}</TableCell>{" "}
+                      <TableCell>{row.block}</TableCell>
+                      <TableCell>{row.village}</TableCell>{" "}
                       <TableCell
                         onClick={() => handleWaterbodyClick(row)}
                         sx={{ cursor: "pointer" }}
