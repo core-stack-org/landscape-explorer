@@ -46,26 +46,7 @@ const mainCategories = [
   { id: 'social', label: 'Demographic' },
 ];
 
-// Basic layers data
-// const basicLayersData = [
-//   { id: 1, name: "demographics", label: "Demographics", hasGeojson: true, hasKml: true },
-//   { id: 2, name: "drainage", label: "Drainage", hasGeojson: true, hasKml: true },
-//   { id: 3, name: "remote_sensed_waterbodies", label: "Remote-Sensed Waterbodies", hasGeojson: true, hasKml: true },
-//   { id: 4, name: "hydrological_boundaries", label: "Hydrological Boundaries", hasGeojson: true, hasKml: true },
-//   { id: 5, name: "clart", label: "CLART", hasGeojson: false, hasKml: false, hasGeoTiff: true },
-//   { id: 6, name: "hydrological_variables", label: "Hydrological Variables", hasGeojson: true, hasKml: true },
-//   { id: 7, name: "nrega", label: "NREGA", hasGeojson: true, hasKml: true },
-//   { id: 8, name: "drought", label: "Drought", hasGeojson: true, hasKml: true },
-//   { id: 9, name: "terrain", label: "Terrain", hasGeojson: false, hasKml: false, hasGeoTiff: true },
-//   { id: 10, name: "administrative_boundaries", label: "Administrative Boundaries", hasGeojson: true, hasKml: true },
-//   { id: 11, name: "cropping_intensity", label: "Cropping Intensity", hasGeojson: true, hasKml: true },
-//   { id: 12, name: "terrain_vector", label: "Terrain Vector", hasGeojson: true, hasKml: true },
-//   { id: 13, name: "terrain_lulc_slope", label: "Terrain LULC Slope", hasGeojson: true, hasKml: true },
-//   { id: 14, name: "terrain_lulc_plain", label: "Terrain LULC Plain", hasGeojson: true, hasKml: true }
-// ];
-
 // Land Layers
-
 const landLayersData = [
   { id: 1, name: "terrain", label: "Terrain", hasGeojson: false, hasKml: false, hasGeoTiff: true },
   { id: 2, name: "terrain_vector", label: "Terrain Vector", hasGeojson: true, hasKml: true },
@@ -81,6 +62,8 @@ const hydrologyLayersData = [
   { id: 1, name: "drainage", label: "Drainage", hasGeojson: true, hasKml: true },
   { id: 2, name: "remote_sensed_waterbodies", label: "Remote-Sensed Waterbodies", hasGeojson: true, hasKml: true },
   { id: 3, name: "clart", label: "CLART", hasGeojson: false, hasKml: false, hasGeoTiff: true },
+  { id: 4, name: "soge", label: "SOGE", hasGeojson: true, hasKml: false, hasGeoTiff: false },
+  { id: 5, name: "aquifer", label: "Aquifer", hasGeojson: true, hasKml: false, hasGeoTiff: false },
 ]
 
 const agriLayersData = [
@@ -355,24 +338,11 @@ const RightSidebar = ({
         case 'hydrological_boundaries':
           url = `https://geoserver.core-stack.org:8443/geoserver/mws_layers/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=mws_layers:deltaG_well_depth_${districtFormatted}_${blockFormatted}&outputFormat=application/json&screen=main`;
           break;
-        // Add cases for resource and planning layers
-        case 'settlement':
-          url = `https://geoserver.core-stack.org:8443/geoserver/resources/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=resources:hemlet_layer${blockFormatted}&outputFormat=application/json&screen=main`;
+        case 'soge':
+          url = `https://geoserver.core-stack.org:8443/geoserver/aquifer/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=	aquifer:aquifer_vector_${districtFormatted}_${blockFormatted}&outputFormat=application/json&screen=main`;
           break;
-        case 'water_structure':
-          url = `https://geoserver.core-stack.org:8443/geoserver/resources/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=resources:plan_layer_gw${blockFormatted}&outputFormat=application/json&screen=main`;
-          break;
-        case 'well_structure':
-          url = `https://geoserver.core-stack.org:8443/geoserver/resources/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=resources:well_layer${blockFormatted}&outputFormat=application/json&screen=main`;
-          break;
-        case 'agri_structure':
-          url = `https://geoserver.core-stack.org:8443/geoserver/works/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=works:plan_layer_agri${blockFormatted}&outputFormat=application/json&screen=main`;
-          break;
-        case 'livelihood_structure':
-          url = `https://geoserver.core-stack.org:8443/geoserver/works/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=works:hemlet_layer${blockFormatted}&outputFormat=application/json&screen=main`;
-          break;
-        case 'recharge_structure':
-          url = `https://geoserver.core-stack.org:8443/geoserver/works/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=works:plan_layer_gw${blockFormatted}&outputFormat=application/json&screen=main`;
+        case 'aquifer':
+          url = `https://geoserver.core-stack.org:8443/geoserver/aquifer/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=soge:soge_vector_${districtFormatted}_${blockFormatted}&outputFormat=application/json&screen=main`;
           break;
         default:
           url = `https://geoserver.core-stack.org:8443/geoserver/${filterName}/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=${filterName}:${districtFormatted}_${blockFormatted}&outputFormat=application/json&screen=main`;

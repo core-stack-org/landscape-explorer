@@ -70,11 +70,13 @@ const Map = forwardRef(({
     { LayerRef: useRef(null), name: "Administrative Boundaries", isRaster: false },
     { LayerRef: useRef(null), name: "Cropping Intensity", isRaster: false },
     { LayerRef: useRef(null), name: "Terrain Vector", isRaster: false },
-    { LayerRef: useRef(null), name: "Change Detection Afforestation", isRaster: false },
-    { LayerRef: useRef(null), name: "Change Detection Deforestation", isRaster: false },
-    { LayerRef: useRef(null), name: "Change Detection Degradation", isRaster: false },
-    { LayerRef: useRef(null), name: "Change Detection Urbanization", isRaster: false },
-    { LayerRef: useRef(null), name: "Change Detection Crop-Intensity", isRaster: false },
+    { LayerRef: useRef(null), name: "Change Detection Afforestation", isRaster: true },
+    { LayerRef: useRef(null), name: "Change Detection Deforestation", isRaster: true },
+    { LayerRef: useRef(null), name: "Change Detection Degradation", isRaster: true },
+    { LayerRef: useRef(null), name: "Change Detection Urbanization", isRaster: true },
+    { LayerRef: useRef(null), name: "Change Detection Crop-Intensity", isRaster: true },
+    { LayerRef: useRef(null), name: "SOGE", isRaster: true },
+    { LayerRef: useRef(null), name: "Aquifer", isRaster: true },
   ];
 
   // Track active layers
@@ -139,7 +141,9 @@ const Map = forwardRef(({
           'deforestation' : 'Change Detection Deforestation',
           'degradation' : 'Change Detection Degradation',
           'urbanization' : 'Change Detection Urbanization',
-          'cropintensity' : 'Change Detection Crop-Intensity'
+          'cropintensity' : 'Change Detection Crop-Intensity',
+          'soge' : 'SOGE',
+          'aquifer' : 'Aquifer'
         };
         
         const layerName = layerMap[layerId] || layerId;
@@ -895,6 +899,42 @@ const Map = forwardRef(({
           safeRemoveLayer(LayersArray[16].LayerRef.current);
         }
         LayersArray[16].LayerRef.current = CropIntensityLayer;
+      }
+
+      // === SOGE Layer ===
+      let SOGELayer = await getVectorLayers(
+        "soge",
+        "soge_vector_" +
+        district.label.toLowerCase().split(" ").join("_") +
+          "_" +
+          block.label.toLowerCase().split(" ").join("_"),
+        true,
+        true
+      );
+
+      if (SOGELayer) {
+        if (LayersArray[17].LayerRef.current != null) {
+          safeRemoveLayer(LayersArray[17].LayerRef.current);
+        }
+        LayersArray[17].LayerRef.current = SOGELayer;
+      }
+
+      // === Aquifer Layer ===
+      let AquiferLayer = await getVectorLayers(
+        "aquifer",
+        "aquifer_vector_" +
+        district.label.toLowerCase().split(" ").join("_") +
+          "_" +
+          block.label.toLowerCase().split(" ").join("_"),
+        true,
+        true
+      );
+
+      if (AquiferLayer) {
+        if (LayersArray[18].LayerRef.current != null) {
+          safeRemoveLayer(LayersArray[18].LayerRef.current);
+        }
+        LayersArray[18].LayerRef.current = AquiferLayer;
       }
 
       // Enable Demographics layer by default

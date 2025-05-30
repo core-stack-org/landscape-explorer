@@ -2,7 +2,6 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import logo from '../assets/logo.png';
 import { useState, useEffect, useRef, useCallback } from "react";
-import Navbar from "../components/navbar.jsx";
 import Map from "../components/landscape-explorer/map/Map.jsx";
 import LeftSidebar from "../components/landscape-explorer/sidebar/LeftSidebar.jsx";
 import RightSidebar from "../components/landscape-explorer/sidebar/RightSidebar.jsx";
@@ -79,6 +78,8 @@ const LandscapeExplorer = () => {
     degradation : false,
     urbanization : false,
     cropintensity : false,
+    soge : false,
+    aquifer : false
   });
 
   // State for map view settings
@@ -229,6 +230,8 @@ const LandscapeExplorer = () => {
       degradation : false,
       urbanization : false,
       cropintensity : false,
+      soge : false,
+      aquifer : false
     });
     
     setLayersReady(false);
