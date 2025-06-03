@@ -206,14 +206,74 @@
                 "layer_store" : ["aquifer"],
                 "layer_name" : ["aquifer_vector"],
                 "vectorStyle" : [{
-                        "fill" : "rgba(244, 208, 63, 0.5)",
-                        "stroke" : "rgba(244, 208, 63, 1)",
+                        "fill" : "rgba(255, 253, 181, 0.5)",
+                        "stroke" : "rgba(255, 253, 181, 1)",
                         "lower" : 0, "upper" : 0
                     },
                     {
-                        "fill" : "rgba(231, 76, 60, 0.5)",
-                        "stroke" : "rgba(231, 76, 60, 1)",
+                        "fill" : "rgba(243, 164, 37, 0.5)",
+                        "stroke" : "rgba(243, 164, 37, 1)",
                         "lower" : 1, "upper" : 1
+                    },
+                    {
+                        "fill" : "rgba(153, 236, 241, 0.5)",
+                        "stroke" : "rgba(153, 236, 241, 1)",
+                        "lower" : 2, "upper" : 2
+                    },
+                    {
+                        "fill" : "rgba(165, 248, 197, 0.5)",
+                        "stroke" : "rgba(165, 248, 197, 1)",
+                        "lower" : 3, "upper" : 3
+                    },
+                    {
+                        "fill" : "rgba(245, 124, 153, 0.5)",
+                        "stroke" : "rgba(245, 124, 153, 1)",
+                        "lower" : 4, "upper" : 4
+                    },
+                    {
+                        "fill" : "rgba(232, 213, 46, 0.5)",
+                        "stroke" : "rgba(232, 213, 46, 1)",
+                        "lower" : 5, "upper" : 5
+                    },
+                    {
+                        "fill" : "rgba(60, 146, 242, 0.5)",
+                        "stroke" : "rgba(60, 146, 242, 1)",
+                        "lower" : 6, "upper" : 6
+                    },
+                    {
+                        "fill" : "rgba(213, 219, 33, 0.5)",
+                        "stroke" : "rgba(213, 219, 33, 1)",
+                        "lower" : 7, "upper" : 7
+                    },
+                    {
+                        "fill" : "rgba(207, 127, 244, 0.5)",
+                        "stroke" : "rgba(207, 127, 244, 1)",
+                        "lower" : 8, "upper" : 8
+                    },
+                    {
+                        "fill" : "rgba(244, 219, 255, 0.5)",
+                        "stroke" : "rgba(244, 219, 255, 1)",
+                        "lower" : 9, "upper" : 9
+                    },
+                    {
+                        "fill" : "rgba(80, 192, 43, 0.5)",
+                        "stroke" : "rgba(80, 192, 43, 1)",
+                        "lower" : 10, "upper" : 10
+                    },
+                    {
+                        "fill" : "rgba(255, 225, 181, 0.5)",
+                        "stroke" : "rgba(255, 225, 181, 1)",
+                        "lower" : 11, "upper" : 11
+                    },
+                    {
+                        "fill" : "rgba(228, 207, 241, 0.5)",
+                        "stroke" : "rgba(228, 207, 241, 1)",
+                        "lower" : 12, "upper" : 12
+                    },
+                    {
+                        "fill" : "rgba(87, 210, 255, 0.5)",
+                        "stroke" : "rgba(87, 210, 255, 1)",
+                        "lower" : 13, "upper" : 13
                     }
                 ],
                 "rasterStyle" : "",

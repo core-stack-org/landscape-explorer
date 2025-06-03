@@ -434,8 +434,6 @@ const RightSidebar = ({
   // Image layer download handler
   const handleImageLayerDownload = (layerName) => {
 
-    console.log(layerName)
-
     if (!district || !block) {
       alert('Please select a district and block first');
       return;

@@ -96,11 +96,47 @@ const layerStyles = (feature, vectorStyle, idx = 0, villageJson, dataJson) => {
         
         case 11:
             // For Aquifer Types
-            if(feature.values_.aquifer_cl === "Hard-Rock"){
+            if(feature.values_.Principal_ === "Alluvium"){
                 avg_Res = 0
             }
-            else{
+            else if (feature.values_.Principal_ === "Laterite"){
                 avg_Res = 1
+            }
+            else if (feature.values_.Principal_ === "Basalt"){
+                avg_Res = 2
+            }
+            else if (feature.values_.Principal_ === "Sandstone"){
+                avg_Res = 3
+            }
+            else if (feature.values_.Principal_ === "Shale"){
+                avg_Res = 4
+            }
+            else if (feature.values_.Principal_ === "Limestone"){
+                avg_Res = 5
+            }
+            else if (feature.values_.Principal_ === "Granite"){
+                avg_Res = 6
+            }
+            else if (feature.values_.Principal_ === "Schist"){
+                avg_Res = 7
+            }
+            else if (feature.values_.Principal_ === "Quartzite"){
+                avg_Res = 8
+            }
+            else if (feature.values_.Principal_ === "Charnockite"){
+                avg_Res = 9
+            }
+            else if (feature.values_.Principal_ === "Khondalite"){
+                avg_Res = 10
+            }
+            else if (feature.values_.Principal_ === "Banded Gneissic Complex"){
+                avg_Res = 11
+            }
+            else if (feature.values_.Principal_ === "Gneiss"){
+                avg_Res = 12
+            }
+            else {
+                avg_Res = 13
             }
             break;
         

@@ -21,16 +21,326 @@ import getImageLayers from "../../../actions/getImageLayers";
 import getStates from "../../../actions/getStates";
 
 // Import asset icons
-import settlementIcon from '../../../assets/settlement_icon.svg';
-import wellIcon from '../../../assets/well_proposed.svg';
-import waterbodyIcon from '../../../assets/waterbodies_proposed.svg';
-import farmPondIcon from '../../../assets/farm_pond_proposed.svg';
-import landLevelingIcon from '../../../assets/land_leveling_proposed.svg';
-import tcbIcon from '../../../assets/tcb_proposed.svg';
-import checkDamIcon from '../../../assets/check_dam_proposed.svg';
-import boulderIcon from '../../../assets/boulder_proposed.svg';
-import livelihoodIcon from '../../../assets/livelihood_proposed.svg';
 import mapMarker from '../../../assets/map_marker.svg';
+
+
+const MapLegend = ({toggledLayers}) => {
+
+  const [isCollapsed, setIsCollapsed] = useState(true);
+
+  const toggleCollapse = () => {
+    setIsCollapsed(!isCollapsed);
+  };
+
+  const terrainLegendItems = [
+    { color: "#313695", label: "V-shape river valleys, Deep narrow canyons" },
+    {
+      color: "#4575b4",
+      label: "Lateral midslope incised drainages, Local valleys in plains",
+    },
+    { color: "#91bfdb", label: "Local ridge/hilltops within broad valleys" },
+    { color: "#e0f3f8", label: "U-shape valleys" },
+    { color: "#fffc00", label: "Broad Flat Areas" },
+    { color: "#feb24c", label: "Broad open slopes" },
+    { color: "#f46d43", label: "Mesa tops" },
+    { color: "#d73027", label: "Upper Slopes" },
+    { color: "#a50026", label: "Upland incised drainages Stream headwaters" },
+    {
+      color: "#800000",
+      label: "Lateral midslope drainage divides, Local ridges in plains",
+    },
+    { color: "#4d0000", label: "Mountain tops, high ridges" },
+  ];
+
+  const CLARTLegendItems = [
+    { color: "#F5F6FE", label: "Empty" },
+    { color: "#4EE323", label: "Good recharge" },
+    { color: "#F3FF33", label: "Moderate recharge" },
+    { color: "#B40F7D", label: "Regeneration" },
+    { color: "#1774DE", label: "High runoff zone" },
+    { color: "#F21223", label: "Surface water harvesting" },
+  ];
+
+  const cropIntensityItems = [
+    { color: "#f7fcf5", label: "Double - Single" },
+    { color: "#ff4500", label: "Triple - Single" },
+    { color: "#ff0000", label: "Triple - Double" },
+    { color: "#00ff00", label: "Single - Double" },
+    { color: "#32cd32", label: "Single - Triple" },
+    { color: "#228b22", label: "Double - Triple" },
+    { color: "#712103", label: "As it is" },
+  ]
+
+  const deforestationItems = [
+    { color: "#73bb53", label: "Forest - Forest" },
+    { color: "#ff0000", label: "Forest - Built Up" },
+    { color: "#eee05d", label: "Forest - Farm" },
+    { color: "#a9a9a9", label: "Forest - Barren" },
+    { color: "#eaa4f0", label: "Forest - Scrub land" },
+  ]
+
+  const degradationItems = [
+    { color: "#eee05d", label: "Farm - Farm" },
+    { color: "#ff0000", label: "Farm - Built Up" },
+    { color: "#a9a9a9", label: "Farm - Barren" },
+    { color: "#eaa4f0", label: "Farm - Scrub Land" },
+  ]
+
+  const urbanizationItems = [
+    { color: "#ff0000", label: "Built Up - Built Up" },
+    { color: "#1ca3ec", label: "Water - Built Up" },
+    { color: "#73bb53", label: "Tree/Farm - Built Up" },
+    { color: "#a9a9a9", label: "Barren/Shrub - Built Up" },
+  ]
+
+  const afforestationItems = [
+    { color: "#73bb53", label: "Forest - Forest" },
+    { color: "#ff0000", label: "Built Up - Forest" },
+    { color: "#eee05d", label: "Farm - Forest" },
+    { color: "#a9a9a9", label: "Barren - Forest" },
+    { color: "#eaa4f0", label: "Scrub Land - Forest" },
+  ]
+
+  const isTerrainActive = toggledLayers["terrain"]
+  const isCLARTActive = toggledLayers["clart"]
+  const isCropIntensityActive = toggledLayers["cropintensity"]
+  const isDeforestationActive = toggledLayers["deforestation"]
+  const isDegradationActive = toggledLayers["degradation"]
+  const isUrbanizationActive = toggledLayers["urbanization"]
+  const isAfforestationActive = toggledLayers["afforestation"]
+
+  return (
+    <div
+      className={`absolute bottom-24 left-0 z-10 transition-all duration-300 ${
+        isCollapsed ? "translate-x-2" : "translate-x-6"
+      }`}
+    >
+      {/* Collapse toggle button */}
+      <button
+        onClick={toggleCollapse}
+        className="absolute top-2 right-2 z-20 bg-white rounded-full p-1 shadow-sm hover:bg-gray-100 transition-colors"
+        style={{ right: isCollapsed ? "-12px" : "8px" }}
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="20"
+          height="20"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          {
+            isCollapsed ? (
+              <path d="M9 18l6-6-6-6" /> // right arrow when collapsed
+            ) : (
+              <path d="M15 18l-6-6 6-6" />
+            ) // left arrow when expanded
+          }
+        </svg>
+      </button>
+
+      {/* Main legend container */}
+      <div
+        className={`bg-white rounded-lg shadow-md overflow-hidden transition-all duration-300 ${
+          isCollapsed
+            ? "w-10 h-48 opacity-80 hover:opacity-100"
+            : "w-72 max-h-[60vh] opacity-100"
+        }`}
+      >
+        {/* Collapsed state - vertical "Legend" text */}
+        {isCollapsed && (
+          <div className="h-full flex items-center justify-center">
+            <span className="text-gray-700 font-medium rotate-90 whitespace-nowrap transform origin-center">
+              Legend
+            </span>
+          </div>
+        )}
+
+        {/* Expanded state - full legend content */}
+        {!isCollapsed && (
+          <div className="p-4 overflow-y-auto max-h-[60vh]">
+            <h3 className="text-sm font-medium text-gray-700 mb-3">Legend</h3>
+            <div className="space-y-4">
+
+              {/* Terrain Section */}
+              {isTerrainActive && (
+                <div className="space-y-2">
+                  <h4 className="text-xs font-medium text-gray-600">Terrain</h4>
+                  {terrainLegendItems.map((item, index) => (
+                    <div
+                      key={`trend-${index}`}
+                      className="flex items-center gap-2"
+                    >
+                      <div
+                        className="w-4 h-4 rounded"
+                        style={{
+                          backgroundColor: item.color,
+                          border: `1px solid rgba(0,0,0,0.2)`,
+                        }}
+                      />
+                      <span className="text-sm text-gray-600">
+                        {item.label}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* CLART Section */}
+              {isCLARTActive && (
+                <div className="space-y-2">
+                  <h4 className="text-xs font-medium text-gray-600">CLART</h4>
+                  {CLARTLegendItems.map((item, index) => (
+                    <div
+                      key={`trend-${index}`}
+                      className="flex items-center gap-2"
+                    >
+                      <div
+                        className="w-4 h-4 rounded"
+                        style={{
+                          backgroundColor: item.color,
+                          border: `1px solid rgba(0,0,0,0.2)`,
+                        }}
+                      />
+                      <span className="text-sm text-gray-600">
+                        {item.label}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* CRopIntensity Section */}
+              {isCropIntensityActive && (
+                <div className="space-y-2">
+                  <h4 className="text-xs font-medium text-gray-600">Crop-Intensity</h4>
+                  {cropIntensityItems.map((item, index) => (
+                    <div
+                      key={`trend-${index}`}
+                      className="flex items-center gap-2"
+                    >
+                      <div
+                        className="w-4 h-4 rounded"
+                        style={{
+                          backgroundColor: item.color,
+                          border: `1px solid rgba(0,0,0,0.2)`,
+                        }}
+                      />
+                      <span className="text-sm text-gray-600">
+                        {item.label}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Deforestation Section */}
+              {isDeforestationActive && (
+                <div className="space-y-2">
+                  <h4 className="text-xs font-medium text-gray-600">Deforestation</h4>
+                  {deforestationItems.map((item, index) => (
+                    <div
+                      key={`trend-${index}`}
+                      className="flex items-center gap-2"
+                    >
+                      <div
+                        className="w-4 h-4 rounded"
+                        style={{
+                          backgroundColor: item.color,
+                          border: `1px solid rgba(0,0,0,0.2)`,
+                        }}
+                      />
+                      <span className="text-sm text-gray-600">
+                        {item.label}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Degradation Section */}
+              {isDegradationActive && (
+                <div className="space-y-2">
+                  <h4 className="text-xs font-medium text-gray-600">Degradation</h4>
+                  {degradationItems.map((item, index) => (
+                    <div
+                      key={`trend-${index}`}
+                      className="flex items-center gap-2"
+                    >
+                      <div
+                        className="w-4 h-4 rounded"
+                        style={{
+                          backgroundColor: item.color,
+                          border: `1px solid rgba(0,0,0,0.2)`,
+                        }}
+                      />
+                      <span className="text-sm text-gray-600">
+                        {item.label}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Urbanization Section */}
+              {isUrbanizationActive && (
+                <div className="space-y-2">
+                  <h4 className="text-xs font-medium text-gray-600">Urbanization</h4>
+                  {urbanizationItems.map((item, index) => (
+                    <div
+                      key={`trend-${index}`}
+                      className="flex items-center gap-2"
+                    >
+                      <div
+                        className="w-4 h-4 rounded"
+                        style={{
+                          backgroundColor: item.color,
+                          border: `1px solid rgba(0,0,0,0.2)`,
+                        }}
+                      />
+                      <span className="text-sm text-gray-600">
+                        {item.label}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Afforestation Section */}
+              {isAfforestationActive && (
+                <div className="space-y-2">
+                  <h4 className="text-xs font-medium text-gray-600">Afforestation</h4>
+                  {afforestationItems.map((item, index) => (
+                    <div
+                      key={`trend-${index}`}
+                      className="flex items-center gap-2"
+                    >
+                      <div
+                        className="w-4 h-4 rounded"
+                        style={{
+                          backgroundColor: item.color,
+                          border: `1px solid rgba(0,0,0,0.2)`,
+                        }}
+                      />
+                      <span className="text-sm text-gray-600">
+                        {item.label}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 
 const Map = forwardRef(({
   isLoading,
@@ -46,7 +356,6 @@ const Map = forwardRef(({
   setShowMWS,
   showVillages = true,
   setShowVillages,
-  selectedPlan = null
 }, ref) => {
   const mapElement = useRef(null);
   const mapRef = useRef(null);
@@ -738,7 +1047,8 @@ const Map = forwardRef(({
         district.label.toLowerCase().split(" ").join("_") +
           "_" +
           block.label.toLowerCase().split(" ").join("_") + "_terrain_raster",
-        true
+        true,
+        "Terrain_Style_11_Classes"
       );
 
       if (TerrainLayer) {
@@ -1213,6 +1523,8 @@ const Map = forwardRef(({
         aria-label="Map"
       />
       
+      <MapLegend toggledLayers={toggledLayers} />
+
       <MapControls 
         showMWS={showMWS}
         setShowMWS={setShowMWS}
