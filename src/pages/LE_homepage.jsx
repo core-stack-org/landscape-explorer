@@ -67,15 +67,34 @@ export default function KYLHomePage() {
           <div className="pl-16 pr-8 md:w-1/2">
             <h2 className="text-3xl font-bold text-purple-700 mb-2">Know</h2>
             <p className="font-semibold text-black mb-6">
-              Know More About your Landscape qualities and see what’s there in
-              your surroundings
+              By bringing together over two dozen geospatial layers and
+              datapoints, the Know Your Landscape dashboard allows unprecedented
+              ability to understand the diversity and plan context-sensitive
+              action strategies suited to different areas. This can be used to
+              get an instant report on any micro-watershed (about 10km
+              <sup>2</sup> areal extent) in a Tehsil in terms of its terrain,
+              land-use, cropping pattern, forest health, rainfall, groundwater
+              stress, socio-economic information, etc. It also allows users to
+              discover unique patterns in different parts of a Tehsil/Block and
+              plan Natural Resource Management (NRM) activities accordingly.
             </p>
+
+            <div className="bg-purple-50 border-l-4 border-purple-500 text-purple-700 p-4 rounded-md mb-6">
+              <p className="text-sm">
+                Generate data for a specific location?{" "}
+                <a
+                  href="https://forms.gle/HoyfwBbHU8c29TYb8"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="underline font-medium hover:text-purple-900"
+                >
+                  Let us know here →
+                </a>
+              </p>
+            </div>
           </div>
           <div className="bg-white p-6 rounded shadow max-w-md w-full mr-10">
-            <p className="mb-4">
-              Lorem ipsum dolor sit amet consectetur. Egestas nisl semper magna
-              non eu nisi.
-            </p>
+            <p className="mb-4">Select Location</p>
             <div className="space-y-4">
               <SelectButton
                 currVal={state || { label: "Select State" }}
@@ -125,10 +144,17 @@ export default function KYLHomePage() {
             <div>
               <h2 className="text-3xl font-bold text-purple-700 mb-2">Plan</h2>
             </div>
-            <div className="md:max-w-xl">
+            <div className="w-full max-w-5xl">
               <p className="font-semibold text-black mb-6">
-                Know More About on what can be done in your area, and have tools
-                which empower your Planning
+                The Commons Connect application empowers communities and
+                landscape stewards to plan Natural Resource Management (NRM)
+                works in their villages in a participatory manner. It provides
+                decision support to determine appropriate sites for different
+                types of works, features to encourage communities to reflect on
+                the equity in resource ownership and access and factor it in
+                future planning, and develop Detailed Project Reports (DPRs) in
+                an automated manner that can be integrated into the GPDP,
+                MGNREGS, and other processes.
               </p>
             </div>
           </div>
@@ -166,7 +192,11 @@ export default function KYLHomePage() {
                   Access tools and resources for landscape planning directly on
                   your smartphone using our free mobile app.
                 </p>
-                <a href="#" className="text-purple-700 text-sm font-semibold">
+                <a
+                  href="https://drive.google.com/file/d/1E0IoKT85MVnDghhkqe0O7Dj_q0tbLji5/view?usp=sharing"
+                  target="_blank"
+                  className="text-purple-700 text-sm font-semibold"
+                >
                   Download now →
                 </a>
               </div>
@@ -193,51 +223,82 @@ export default function KYLHomePage() {
       </section>
 
       {/* Track Section */}
-      <section className="bg-[#cbaaaa] py-12 px-6 text-center">
-        <h2 className="text-3xl font-bold text-purple-700 mb-2">Track</h2>
-        <p className="font-semibold text-black mb-8 max-w-2xl mx-auto">
-          Using our powerful set of tools you can track the work going on in the
-          area, and what others are doing.
-        </p>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-7xl mx-auto">
-          {[
-            "Jalti App",
-            "Agroforestry Plantations",
-            "Waterbody Rejuvenation",
-          ].map((title, index) => (
-            <div
-              key={index}
-              className="bg-white p-4 rounded shadow flex items-start gap-4 text-left"
-            >
-              <div className="text-yellow-400 text-2xl">☀️</div>
-              <div>
-                <h3 className="font-bold mb-1">{title}</h3>
-                <p className="text-sm mb-2">
-                  Some brief description about the tool and how it helps track
-                  landscape work.
-                </p>
-                <a href="#" className="text-purple-700 font-semibold text-sm">
-                  Learn More →
-                </a>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        <div className="flex justify-center mt-6">
-          <div className="bg-white p-4 rounded shadow flex items-start gap-4 text-left max-w-md w-full">
-            <div className="text-yellow-400 text-2xl">☀️</div>
+      <section className="bg-[#cbaaaa] py-12 px-6">
+        <div className="px-16">
+          <div className="flex flex-col md:flex-row md:items-start md:justify-between">
             <div>
-              <h3 className="font-bold mb-1">Commons Connect Plans</h3>
-              <p className="text-sm mb-2">
-                The tools, guides and plans that folks trust when they need to
-                organize and track their landscape efforts.
-              </p>
-              <a href="#" className="text-purple-700 font-semibold text-sm">
-                Learn More →
-              </a>
+              <h2 className="text-3xl font-bold text-purple-700 mb-2">
+                Monitor and Access
+              </h2>
             </div>
+            <div className="w-full max-w-5xl">
+              <p className="font-semibold text-black mb-6">
+                A suite of dashboards enables continuous monitoring of Natural
+                Resource Management (NRM) interventions undertaken in an area,
+                and ex-post assessment of their impact. This includes Jaltol to
+                observe changes in cropping pattern that have taken place in
+                villages where extensive watershed development programmes were
+                undertaken. For agroforestry practitioners, it provides the
+                ability to monitor the health of tree plantations over time.
+                Similarly, it provides a dashboard to track waterbody
+                rejuvenation interventions and their impact on cropping in
+                nearby areas.
+              </p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-7xl mx-auto mt-8">
+            {[
+              {
+                title: "Jaltol App",
+                description:
+                  "Monitor changes in cropping patterns and assess the impact of watershed development interventions.",
+                icon: "🌾",
+              },
+              {
+                title: "Agroforestry Plantations",
+                description:
+                  "Track the health and growth of plantations across time and space using satellite-based monitoring.",
+                icon: "🌳",
+              },
+              {
+                title: "Waterbody Rejuvenation",
+                description:
+                  "Visualize waterbody interventions and evaluate their effects on water availability and agriculture.",
+                icon: "💧",
+              },
+              {
+                title: "Commons Connect Plans",
+                description:
+                  "The tools, guides and plans that folks trust when they need to organize and track their landscape efforts.",
+                icon: "☀️",
+              },
+            ].map((item, index) => (
+              <div
+                key={index}
+                className="bg-white rounded-2xl shadow-md p-8 transform transition-all duration-300 hover:shadow-xl hover:-translate-y-1 hover:scale-[1.02]"
+              >
+                <div className="flex items-start gap-4">
+                  <div className="bg-yellow-100 text-yellow-500 rounded-full w-14 h-14 flex items-center justify-center text-2xl">
+                    {item.icon}
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-semibold mb-2 text-gray-900">
+                      {item.title}
+                    </h3>
+                    <p className="text-sm text-gray-700 mb-3">
+                      {item.description}
+                    </p>
+                    <a
+                      href="#"
+                      className="text-purple-700 font-medium text-sm hover:underline"
+                    >
+                      Learn More →
+                    </a>
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </section>
