@@ -48,45 +48,45 @@ const mainCategories = [
 
 // Land Layers
 const landLayersData = [
-  { id: 1, name: "terrain", label: "Terrain", hasGeojson: false, hasKml: false, hasGeoTiff: true },
-  { id: 2, name: "terrain_vector", label: "Terrain Vector", hasGeojson: true, hasKml: true },
+  { id: 1, name: "terrain", label: "Terrain", hasGeojson: false, hasKml: false, hasGeoTiff: true, hasStyle : true},
+  { id: 2, name: "terrain_vector", label: "Terrain Vector", hasGeojson: true, hasKml: true, hasStyle : false },
   { id: "lulc_level_1", label: "LULC Layer Level 1" },
   { id: "lulc_level_2", label: "LULC Layer Level 2" },
 ]
 
 const climateLayersData = [
-  { id: 1, name: "hydrological_variables", label: "Hydrological Variables", hasGeojson: true, hasKml: true },
+  { id: 1, name: "hydrological_variables", label: "Hydrological Variables", hasGeojson: true, hasKml: true, hasStyle : false },
 ]
 
 const hydrologyLayersData = [
-  { id: 1, name: "drainage", label: "Drainage", hasGeojson: true, hasKml: true },
-  { id: 2, name: "remote_sensed_waterbodies", label: "Remote-Sensed Waterbodies", hasGeojson: true, hasKml: true },
-  { id: 3, name: "clart", label: "CLART", hasGeojson: false, hasKml: false, hasGeoTiff: true },
-  { id: 4, name: "soge", label: "SOGE", hasGeojson: true, hasKml: false, hasGeoTiff: false },
-  { id: 5, name: "aquifer", label: "Aquifer", hasGeojson: true, hasKml: false, hasGeoTiff: false },
+  { id: 1, name: "drainage", label: "Drainage", hasGeojson: true, hasKml: true, hasStyle : true},
+  { id: 2, name: "remote_sensed_waterbodies", label: "Remote-Sensed Waterbodies", hasGeojson: true, hasKml: true, hasStyle : false },
+  { id: 3, name: "clart", label: "CLART", hasGeojson: false, hasKml: false, hasGeoTiff: true, hasStyle : true },
+  { id: 4, name: "soge", label: "SOGE", hasGeojson: true, hasKml: false, hasGeoTiff: false, hasStyle : false },
+  { id: 5, name: "aquifer", label: "Aquifer", hasGeojson: true, hasKml: false, hasGeoTiff: false, hasStyle : false },
 ]
 
 const agriLayersData = [
   { id: "lulc_level_3", label: "LULC Layer Level 3" },
-  { id: 1, name: "cropping_intensity", label: "Cropping Intensity", hasGeojson: true, hasKml: true },
-  { id: 2, name: "drought", label: "Drought", hasGeojson: true, hasKml: true },
+  { id: 1, name: "cropping_intensity", label: "Cropping Intensity", hasGeojson: true, hasKml: true, hasStyle : false },
+  { id: 2, name: "drought", label: "Drought", hasGeojson: true, hasKml: true, hasStyle : false },
 ]
 
 const restorationLayersData = [
-  { id: 1, name: "afforestation", label: "Change Detection Afforestation", hasGeojson: false, hasKml: false, hasGeoTiff: true },
-  { id: 2, name: "deforestation", label: "Change Detection Deforestation", hasGeojson: false, hasKml: false, hasGeoTiff: true },
-  { id: 3, name: "degradation", label: "Change Detection Degradation", hasGeojson: false, hasKml: false, hasGeoTiff: true },
-  { id: 4, name: "urbanization", label: "Change Detection Urbanization", hasGeojson: false, hasKml: false, hasGeoTiff: true },
-  { id: 5, name: "cropintensity", label: "Change Detection Crop-Intensity", hasGeojson: false, hasKml: false, hasGeoTiff: true },
+  { id: 1, name: "afforestation", label: "Change Detection Afforestation", hasGeojson: false, hasKml: false, hasGeoTiff: true, hasStyle : true },
+  { id: 2, name: "deforestation", label: "Change Detection Deforestation", hasGeojson: false, hasKml: false, hasGeoTiff: true, hasStyle : true },
+  { id: 3, name: "degradation", label: "Change Detection Degradation", hasGeojson: false, hasKml: false, hasGeoTiff: true, hasStyle : true },
+  { id: 4, name: "urbanization", label: "Change Detection Urbanization", hasGeojson: false, hasKml: false, hasGeoTiff: true, hasStyle : true },
+  { id: 5, name: "cropintensity", label: "Change Detection Crop-Intensity", hasGeojson: false, hasKml: false, hasGeoTiff: true, hasStyle : true },
 ]
 
 const NREGALayerData = [
-  { id: 1, name: "nrega", label: "NREGA", hasGeojson: true, hasKml: true },
+  { id: 1, name: "nrega", label: "NREGA", hasGeojson: true, hasKml: true, hasStyle : false },
 ]
 
 const demographicLayerData =[
-  { id: 1, name: "administrative_boundaries", label: "Administrative Boundaries", hasGeojson: true, hasKml: true },
-  { id: 2, name: "demographics", label: "Socio-Economic", hasGeojson: true, hasKml: true },
+  { id: 1, name: "administrative_boundaries", label: "Administrative Boundaries", hasGeojson: true, hasKml: true, hasStyle : false },
+  { id: 2, name: "demographics", label: "Socio-Economic", hasGeojson: true, hasKml: true, hasStyle : false },
 ]
 
 // Years data for LULC
@@ -146,6 +146,31 @@ const DownloadButton = ({
   );
 };
 
+const handleStyleDownload = (layerName) => {
+  let url = ""
+
+  switch(layerName){
+    case "afforestation" :
+      url = ""
+    case "deforestation" :
+      url = ""
+    case "degradation":
+      url = ""
+    case "urbanization":
+      url = ""
+    case "cropintensity":
+      url = ""
+    case "clart":
+      url = ""
+    case "drainage":
+      url = ""
+    case "terrain":
+      url = ""
+  }
+
+  window.open(url, "_blank");
+}
+
 // Single Layer Item Component
 const LayerItem = ({ layer, isSelected, onToggle, onDownload, isLayersFetched, isLoading, selectedPlan }) => {
   // Define resource/planning layers array outside of the onClick handler
@@ -164,10 +189,6 @@ const LayerItem = ({ layer, isSelected, onToggle, onDownload, isLayersFetched, i
         <span className="text-sm font-medium text-gray-700">{layer.label}</span>
         <button 
           onClick={() => {
-            if (needsPlan && !selectedPlan) {
-              alert('Please select a plan first to toggle this layer');
-              return;
-            }
             onToggle(layer.name);
           }}
           className="text-xs"
@@ -206,6 +227,13 @@ const LayerItem = ({ layer, isSelected, onToggle, onDownload, isLayersFetched, i
               className="bg-[#EDE9FE] text-[#8B5CF6] hover:bg-[#DDD6FE]"
             />
           )}
+          {layer.hasStyle && (<DownloadButton 
+              name="Style"
+              onClickEvent={() => handleStyleDownload(layer.name)}
+              isDisabled={!isLayersFetched || isLoading}
+              className="bg-[#EDE9FE] text-[#8B5CF6] hover:bg-[#DDD6FE]"
+            />)
+          }
         </div>
       )}
     </div>
