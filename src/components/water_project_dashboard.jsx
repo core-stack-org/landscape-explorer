@@ -244,7 +244,7 @@ const WaterProjectDashboard = () => {
       const avgZaid = (sumZaid / 7).toFixed(2);
 
       // Parse silt removed safely, default to 0 if missing or NaN
-      const siltRemoved = Number(props.slit_excav) || 0;
+      const siltRemoved = Number(props.slit_excavated) || 0;
       totalSiltRemoved += siltRemoved;
 
       return {
@@ -253,7 +253,7 @@ const WaterProjectDashboard = () => {
         district: props.District || "NA",
         block: props.Taluka || "NA",
         village: props.village || "NA",
-        waterbody: props.waterbody_ || "NA",
+        waterbody: props.waterbody_name || "NA",
         siltRemoved,
         avgWaterAvailabilityKharif: meanFilteredKharif,
         avgWaterAvailabilityRabi: meanFilteredRabi,
