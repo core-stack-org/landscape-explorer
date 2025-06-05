@@ -151,21 +151,21 @@ const handleStyleDownload = (layerName) => {
 
   switch(layerName){
     case "afforestation" :
-      url = ""
+      url = "https://drive.google.com/file/d/10RvFu28sIa-OpQvJ2z6D8-V5RROUUeZz/view?usp=drive_link"
     case "deforestation" :
-      url = ""
+      url = "https://drive.google.com/file/d/1MFKAXiW5mpfCoBBMJR-K7Y5O_Uwp0kOR/view?usp=drive_link"
     case "degradation":
-      url = ""
+      url = "https://drive.google.com/file/d/1tPtEqhWO_RisycKnK8Bl_2yEnrfgWqfE/view?usp=drive_link"
     case "urbanization":
-      url = ""
+      url = "https://drive.google.com/file/d/16JHaWXxdq5y-g2wr5D_f7OB70jiA9QuA/view?usp=sharing"
     case "cropintensity":
-      url = ""
+      url = "https://drive.google.com/file/d/13cgF1Cg6YWZMCQXH7XV7cITxsg9v2SBu/view?usp=sharing"
     case "clart":
-      url = ""
+      url = "https://drive.google.com/file/d/1B8ibmiv8dBNYZZ1gZWIp4AQPdu82t1yl/view?usp=drive_link"
     case "drainage":
-      url = ""
+      url = "https://drive.google.com/file/d/1s57ufrKk_iKWxIJTpy_S1Yt3nQD0DMjc/view?usp=drive_link"
     case "terrain":
-      url = ""
+      url = "https://drive.google.com/file/d/1gMh9Dj3ICJuw1vqgP9vEI9oIU_PLNsPs/view?usp=sharing"
   }
 
   window.open(url, "_blank");

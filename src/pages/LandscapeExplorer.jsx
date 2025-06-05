@@ -129,8 +129,7 @@ const LandscapeExplorer = () => {
           setLayersReady(true);
           setToggledLayers(prev => ({
             ...prev,
-            demographics: true,
-            nrega: true
+            demographics: true
           }));
           setIsLoading(false);
         }

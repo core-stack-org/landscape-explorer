@@ -1017,8 +1017,6 @@ const Map = forwardRef(({
         if (LayersArray[6].LayerRef.current != null) {
           safeRemoveLayer(LayersArray[6].LayerRef.current);
         }
-
-        safeAddLayer(NregaLayer);
         LayersArray[6].LayerRef.current = NregaLayer;
         currentActiveLayers.push(LayersArray[6].name);
       }
