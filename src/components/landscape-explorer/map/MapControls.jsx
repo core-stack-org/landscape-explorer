@@ -50,21 +50,7 @@ const MapControls = ({
 
   // Filter function to get only active layers
   const getActiveLayersByCategory = (category) => {
-    if (category === 'resources') {
-      return [
-        { id: 'settlement', label: 'Settlement' },
-        { id: 'water_structure', label: 'Water Structure' },
-        { id: 'well_structure', label: 'Well Structure' }
-      ].filter(layer => toggledLayers[layer.id] === true);
-    } 
-    else if (category === 'planning') {
-      return [
-        { id: 'agri_structure', label: 'Agriculture Structure' },
-        { id: 'livelihood_structure', label: 'Livelihood Structure' },
-        { id: 'recharge_structure', label: 'Recharge Structure' }
-      ].filter(layer => toggledLayers[layer.id] === true);
-    } 
-    else if (category === 'demographics') {
+    if (category === 'demographics') {
       return [
         { id: 'demographics', label: 'Demographics' },
         { id: 'drainage', label: 'Drainage' },
@@ -78,8 +64,11 @@ const MapControls = ({
         { id: 'administrative_boundaries', label: 'Administrative Boundaries' },
         { id: 'cropping_intensity', label: 'Cropping Intensity' },
         { id: 'terrain_vector', label: 'Terrain Vector' },
-        { id: 'terrain_lulc_slope', label: 'Terrain LULC Slope' },
-        { id: 'terrain_lulc_plain', label: 'Terrain LULC Plain' }
+        { id: 'afforestation', label: 'Change Detection Afforestation' },
+        { id: 'deforestation', label: 'Change Detection Deforestation' },
+        { id: 'degradation', label: 'Change Detection Degradation' },
+        { id: 'urbanization', label: 'Change Detection Urbanization' },
+        { id: 'cropintensity', label: 'Change Detection Crop-Intensity' },
       ].filter(layer => toggledLayers[layer.id] === true);
     }
     return [];
@@ -92,9 +81,7 @@ const MapControls = ({
 
   // Count total active layers
   const totalActiveLayers = 
-    getActiveLayersByCategory('resources').length + 
-    getActiveLayersByCategory('planning').length + 
-    getActiveLayersByCategory('demographics').length;
+    getActiveLayersByCategory('resources').length
 
   return (
     <div className="absolute bottom-6 right-6 flex flex-col space-y-2">
@@ -120,7 +107,7 @@ const MapControls = ({
           <h3 className="font-medium text-gray-700 mb-2">Layer Controls</h3>
           
           {/* Layer category buttons in a wrapped grid */}
-          <div className="grid grid-cols-2 gap-1 mb-3">
+          {/* <div className="grid grid-cols-2 gap-1 mb-3">
             <button 
               className={`px-2 py-1 text-xs rounded ${activeCategory === 'base' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100'}`}
               onClick={() => setActiveCategory('base')}
@@ -148,7 +135,7 @@ const MapControls = ({
             >
               Other {hasActiveLayers('demographics') && `(${getActiveLayersByCategory('demographics').length})`}
             </button>
-          </div>
+          </div> */}
 
           {/* Base layers (always visible) */}
           {(activeCategory === 'base' || activeCategory === null) && (
@@ -171,50 +158,6 @@ const MapControls = ({
                 />
                 <span className="text-sm text-gray-700">Show Boundaries</span>
               </label>
-            </div>
-          )}
-
-          {/* Resources Layers - only active ones */}
-          {activeCategory === 'resources' && (
-            <div className="space-y-2 mb-3">
-              <h4 className="text-xs font-medium text-gray-600 mb-1">Resources Layers</h4>
-              {getActiveLayersByCategory('resources').length === 0 ? (
-                <p className="text-xs text-gray-500 italic">No active resource layers</p>
-              ) : (
-                getActiveLayersByCategory('resources').map(layer => (
-                  <label key={layer.id} className="flex items-center space-x-2 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={toggledLayers[layer.id] || false}
-                      onChange={(e) => handleToggleClick(layer.id, e.target.checked)}
-                      className="form-checkbox h-4 w-4 text-blue-600 rounded"
-                    />
-                    <span className="text-sm text-gray-700">{layer.label}</span>
-                  </label>
-                ))
-              )}
-            </div>
-          )}
-
-          {/* Planning Layers - only active ones */}
-          {activeCategory === 'planning' && (
-            <div className="space-y-2 mb-3">
-              <h4 className="text-xs font-medium text-gray-600 mb-1">Planning Layers</h4>
-              {getActiveLayersByCategory('planning').length === 0 ? (
-                <p className="text-xs text-gray-500 italic">No active planning layers</p>
-              ) : (
-                getActiveLayersByCategory('planning').map(layer => (
-                  <label key={layer.id} className="flex items-center space-x-2 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={toggledLayers[layer.id] || false}
-                      onChange={(e) => handleToggleClick(layer.id, e.target.checked)}
-                      className="form-checkbox h-4 w-4 text-blue-600 rounded"
-                    />
-                    <span className="text-sm text-gray-700">{layer.label}</span>
-                  </label>
-                ))
-              )}
             </div>
           )}
 

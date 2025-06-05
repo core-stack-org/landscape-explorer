@@ -318,8 +318,20 @@ const MapLegend = ({ showMWS, showVillages, currentLayer }) => {
   ];
 
   const AquiferItems = [
-    { color: "#f4d03f", label: " Alluvial " },
-    { color: "#e74c3c", label: "Hard Rock " },
+    { color: "#fffdb5", label: "Alluvium" },
+    { color: "#f3a425", label: "Laterite" },
+    { color: "#99ecf1", label: "Basalt" },
+    { color: "#a5f8c5", label: "Sandstone" },
+    { color: "#f57c99", label: "Shale" },
+    { color: "#e8d52e", label: "Limestone" },
+    { color: "#3c92f2", label: "Granite" },
+    { color: "#d5db21", label: "Schist" },
+    { color: "#cf7ff4", label: "Quartzite" },
+    { color: "#f4dbff", label: "Charnockite" },
+    { color: "#50c02b", label: "Khondalite" },
+    { color: "#ffe1b5", label: "Banded Gneissic Complex" },
+    { color: "#e4cff1", label: "Gneiss" },
+    { color: "#57d2ff", label: "Intrusive" }
   ];
 
   const SOGEItems = [
