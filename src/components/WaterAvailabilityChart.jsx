@@ -7,9 +7,17 @@ import {
   Tooltip,
   Legend,
 } from "chart.js";
+import annotationPlugin from "chartjs-plugin-annotation";
 import { Bar } from "react-chartjs-2";
 
-ChartJS.register(CategoryScale, LinearScale, BarElement, Tooltip, Legend);
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Tooltip,
+  Legend,
+  annotationPlugin
+);
 
 const years = ["17-18", "18-19", "19-20", "20-21", "21-22", "22-23", "23-24"];
 
@@ -66,22 +74,56 @@ const WaterAvailabilityChart = ({ waterbody, water_rej }) => {
         display: true,
         text: "Water Availability Over Time",
       },
+      annotation: {
+        annotations: {
+          interventionLine: {
+            type: "line",
+            scaleID: "x",
+            value: "22-23", // Will appear *before* this label
+            borderColor: "black",
+            borderWidth: 2,
+            label: {
+              content: "Intervention Year",
+              enabled: true,
+              position: "start",
+              color: "black",
+              font: {
+                weight: "bold",
+              },
+            },
+          },
+        },
+      },
     },
     scales: {
       x: {
-        stacked: false, // grouped bars on X‑axis
+        stacked: false,
         title: { display: true, text: "Year" },
       },
       y: {
-        stacked: false, // independent Y values
+        stacked: false,
         title: { display: true, text: "Area (in Percent)" },
       },
     },
   };
 
   return (
-    <div style={{ width: "100%", height: "400px" }}>
-      <Bar options={options} data={data} />
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        height: "400px",
+        width: "100%",
+      }}
+    >
+      <div style={{ flex: 1, height: "100%" }}>
+        <Bar options={options} data={data} />
+      </div>
+      <div style={{ marginLeft: "16px", fontSize: "14px", color: "#333" }}>
+        This{" "}
+        <span style={{ color: "black", fontWeight: "bold" }}>black line</span>{" "}
+        represents the year of intervention.
+      </div>
     </div>
   );
 };

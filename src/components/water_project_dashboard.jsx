@@ -1070,8 +1070,9 @@ const WaterProjectDashboard = () => {
               <Box
                 sx={{
                   position: "relative",
-                  width: "100%",
+                  width: "85%",
                   height: "100%",
+                  margin: "0 auto",
                 }}
               >
                 {/* OpenLayers map container */}
@@ -1284,7 +1285,7 @@ const WaterProjectDashboard = () => {
             {selectedWaterbody !== undefined && selectedWaterbody !== null && (
               <>
                 <div style={{ display: "flex", gap: "16px" }}>
-                  <div style={{ width: "50%", height: "400px" }}>
+                  <div style={{ width: "80%", height: "400px" }}>
                     <WaterAvailabilityChart
                       waterbody={selectedWaterbody}
                       water_rej={geoData}
