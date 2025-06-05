@@ -73,9 +73,10 @@ const useWaterRejData = () => {
           maxFeatures: "50",
           outputFormat: "application/json",
         });
-
+      console.log(url);
       try {
         const response = await fetch(url);
+
         if (!response.ok) {
           const errorText = await response.text();
           console.error("GeoServer error response:", errorText);
@@ -252,7 +253,7 @@ const WaterProjectDashboard = () => {
         district: props.District || "NA",
         block: props.Taluka || "NA",
         village: props.village || "NA",
-        waterbody: props.waterbody_name || "NA",
+        waterbody: props.waterbody_ || "NA",
         siltRemoved,
         avgWaterAvailabilityKharif: meanFilteredKharif,
         avgWaterAvailabilityRabi: meanFilteredRabi,
@@ -696,6 +697,8 @@ const WaterProjectDashboard = () => {
     link.click();
     document.body.removeChild(link);
   };
+
+  console.log(geoData);
 
   return (
     <Box sx={{ position: "relative" }}>
@@ -1248,39 +1251,6 @@ const WaterProjectDashboard = () => {
                   </button>
                 </Box>
               </Box>
-
-              {/* Paragraph */}
-              {/* <Box
- sx={{
- width: "80%",
- padding: 2,
- display: "flex",
- alignItems: "center",
- justifyContent: "center",
- }}
- >
- <Typography
- variant="h6"
- sx={{
- textAlign: "left",
- display: "flex",
- alignItems: "flex-start",
- gap: 2,
- border: "10px solid #11000080",
- padding: 2,
- backgroundColor: "#f5f5f5",
- borderRadius: "5px",
- }}
- >
- <Lightbulb size={48} color="black" />
- <span>
- Under the project {projectId}, 18 waterbodies have been
- de-silted, spanning around 90 hectares. On average, the
- surface water availability during summer season has changed
- from 16% to 25%.
- </span>
- </Typography>
- </Box> */}
             </Box>
             {selectedWaterbody !== undefined && selectedWaterbody !== null && (
               <>
@@ -1288,7 +1258,7 @@ const WaterProjectDashboard = () => {
                   <div style={{ width: "80%", height: "400px" }}>
                     <WaterAvailabilityChart
                       waterbody={selectedWaterbody}
-                      water_rej={geoData}
+                      water_rej_data={geoData}
                     />
                   </div>
                 </div>

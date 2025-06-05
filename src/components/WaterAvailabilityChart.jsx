@@ -21,15 +21,16 @@ ChartJS.register(
 
 const years = ["17-18", "18-19", "19-20", "20-21", "21-22", "22-23", "23-24"];
 
-const WaterAvailabilityChart = ({ waterbody, water_rej }) => {
-  console.log(water_rej);
+const WaterAvailabilityChart = ({ waterbody, water_rej_data }) => {
+  console.log(water_rej_data);
+  console.log("qqqqqqqqqqqqqqqqqqqqqqqqqqqqqq");
   // Prepare empty arrays that will hold season‑wise values for each year
   const kharifData = new Array(years.length).fill(0);
   const rabiData = new Array(years.length).fill(0);
   const zaidData = new Array(years.length).fill(0);
 
   // Populate the arrays from feature properties
-  water_rej.features.forEach((feature) => {
+  water_rej_data.features.forEach((feature) => {
     if (feature.properties.waterbody_name === waterbody.waterbody) {
       const p = feature.properties;
 
