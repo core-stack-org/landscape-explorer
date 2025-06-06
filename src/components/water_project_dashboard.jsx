@@ -41,6 +41,7 @@ import SurfaceWaterChart from "./waterChart";
 import getImageLayer from "../actions/getImageLayers";
 import WaterAvailabilityChart from "./WaterAvailabilityChart";
 import { getCenter } from "ol/extent";
+import MultiPolygon from "ol/geom/MultiPolygon";
 
 const useWaterRejData = () => {
   const [geoData, setGeoData] = useState(null);
@@ -70,7 +71,7 @@ const useWaterRejData = () => {
           version: "1.0.0",
           request: "GetFeature",
           typeName,
-          maxFeatures: "50",
+
           outputFormat: "application/json",
         });
       console.log(url);
@@ -569,47 +570,49 @@ const WaterProjectDashboard = () => {
   useEffect(() => {
     if (
       view === "map" &&
-      mapRef.current !== null &&
+      mapRef.current &&
       selectedWaterbody &&
-      selectedWaterbody.coordinates
+      selectedFeature
     ) {
       zoomToWaterbody(selectedWaterbody, selectedFeature);
     }
-  }, [selectedWaterbody, view]);
+  }, [selectedWaterbody, selectedFeature, view]);
 
   const zoomToWaterbody = (waterbody, tempFeature) => {
-    if (!waterbody.coordinates) {
+    if (!tempFeature || !mapRef.current) return;
+
+    const view = mapRef.current.getView();
+    const feature = new GeoJSON().readFeature(tempFeature, {
+      dataProjection: "EPSG:4326",
+      featureProjection: view.getProjection(),
+    });
+
+    const geometry = feature.getGeometry();
+
+    if (!geometry) {
+      console.error("No geometry found.");
       return;
     }
 
-    const mapView = mapRef.current.getView();
-
-    const olFeature = new GeoJSON().readFeature(tempFeature, {
-      dataProjection: "EPSG:4326",
-      featureProjection: mapView.getProjection(),
-    });
-
-    const FeatureExtent = olFeature.getGeometry().getExtent();
-
-    mapView.animate({
-      center: getCenter(FeatureExtent),
-      zoom: 18,
+    const extent = geometry.getExtent();
+    view.fit(extent, {
       duration: 1000,
+      padding: [50, 50, 50, 50],
+      maxZoom: 18,
     });
+
+    // Styling logic remains unchanged
     if (waterBodyLayer) {
       const source = waterBodyLayer.getSource();
       const features = source.getFeatures();
 
-      features.forEach((feature) => {
-        feature.setStyle(null);
-      });
+      features.forEach((feature) => feature.setStyle(null));
 
       if (
         waterbody.featureIndex !== undefined &&
         features[waterbody.featureIndex]
       ) {
-        const selectedFeature = features[waterbody.featureIndex];
-        selectedFeature.setStyle(
+        features[waterbody.featureIndex].setStyle(
           new Style({
             stroke: new Stroke({ color: "#FF0000", width: 5 }),
             fill: new Fill({ color: "rgba(255, 0, 0, 0.5)" }),
@@ -619,27 +622,52 @@ const WaterProjectDashboard = () => {
     }
   };
 
+  // const handleWaterbodyClick = (row) => {
+  //   const feature = geoData.features.find((f, idx) => idx === row.featureIndex);
+
+  //   if (
+  //     feature &&
+  //     feature.properties?.latitude &&
+  //     feature.properties?.longitude
+  //   ) {
+  //     const coordinates = [
+  //       feature.properties.longitude,
+  //       feature.properties.latitude,
+  //     ];
+  //     row.coordinates = coordinates;
+
+  //     setSelectedWaterbody(row);
+  //     setView("map");
+
+  //     setSelectedFeature(feature);
+  //     zoomToWaterbody(coordinates, feature); // ✅ Direct zoom
+  //   } else {
+  //     console.error("Coordinates not found in feature properties.");
+  //   }
+  // };
+
   const handleWaterbodyClick = (row) => {
     const feature = geoData.features.find((f, idx) => idx === row.featureIndex);
 
-    if (
-      feature &&
-      feature.properties?.latitude &&
-      feature.properties?.longitude
-    ) {
-      const coordinates = [
-        feature.properties.longitude,
-        feature.properties.latitude,
-      ];
-      row.coordinates = coordinates;
+    if (feature) {
+      if (feature.geometry?.type === "MultiPolygon") {
+        row.coordinates = null; // not needed, but avoids confusion
+      } else if (
+        feature.properties?.latitude &&
+        feature.properties?.longitude
+      ) {
+        const coordinates = [
+          feature.properties.longitude,
+          feature.properties.latitude,
+        ];
+        row.coordinates = coordinates;
+      }
 
       setSelectedWaterbody(row);
-      setView("map");
-
       setSelectedFeature(feature);
-      zoomToWaterbody(coordinates, feature); // ✅ Direct zoom
+      setView("map");
     } else {
-      console.error("Coordinates not found in feature properties.");
+      console.error("Feature not found.");
     }
   };
 
