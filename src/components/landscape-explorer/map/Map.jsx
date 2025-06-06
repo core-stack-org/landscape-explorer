@@ -349,13 +349,15 @@ const Map = forwardRef(({
   district,
   block,
   filterSelections,
-  lulcYear,
   toggledLayers = {},
   toggleLayer,
   showMWS = true,
   setShowMWS,
   showVillages = true,
   setShowVillages,
+  lulcYear1,
+  lulcYear2,
+  lulcYear3
 }, ref) => {
   const mapElement = useRef(null);
   const mapRef = useRef(null);
@@ -386,6 +388,9 @@ const Map = forwardRef(({
     { LayerRef: useRef(null), name: "Change Detection Crop-Intensity", isRaster: true },
     { LayerRef: useRef(null), name: "SOGE", isRaster: true },
     { LayerRef: useRef(null), name: "Aquifer", isRaster: true },
+    { LayerRef: useRef(null), name: "LULC_1", isRaster: true },
+    { LayerRef: useRef(null), name: "LULC_2", isRaster: true },
+    { LayerRef: useRef(null), name: "LULC_3", isRaster: true },
   ];
 
   // Track active layers
@@ -1412,6 +1417,97 @@ const Map = forwardRef(({
       }, 10);
     }
   };
+
+  // Handle LULC Year Change
+  useEffect(() => {
+    const fetchLulc = async() => {
+      if (!isLayersFetched) {
+        return;
+      }
+
+      if(lulcYear1.value === null){
+        if (LayersArray[19].LayerRef.current != null) {
+          safeRemoveLayer(LayersArray[19].LayerRef.current);
+        }
+      }
+
+      let LulcLayer = await getImageLayers(
+        "LULC_level_1",
+        `LULC_${lulcYear1.value}_${block.label.toLowerCase().split(" ").join("_")}_level_1`,
+        true,
+        ""
+      );
+
+      if (LulcLayer) {
+        if (LayersArray[19].LayerRef.current != null) {
+          safeRemoveLayer(LayersArray[19].LayerRef.current);
+        }
+        safeAddLayer(LulcLayer)
+        LayersArray[19].LayerRef.current = LulcLayer;
+      }
+    }
+    fetchLulc()
+  },[lulcYear1])
+
+  useEffect(() => {
+    const fetchLulc = async() => {
+      if (!isLayersFetched) {
+        return;
+      }
+
+      if(lulcYear2.value === null){
+        if (LayersArray[20].LayerRef.current != null) {
+          safeRemoveLayer(LayersArray[20].LayerRef.current);
+        }
+      }
+
+      let LulcLayer = await getImageLayers(
+        "LULC_level_2",
+        `LULC_${lulcYear2.value}_${block.label.toLowerCase().split(" ").join("_")}_level_2`,
+        true,
+        ""
+      );
+
+      if (LulcLayer) {
+        if (LayersArray[20].LayerRef.current != null) {
+          safeRemoveLayer(LayersArray[20].LayerRef.current);
+        }
+        safeAddLayer(LulcLayer)
+        LayersArray[20].LayerRef.current = LulcLayer;
+      }
+    }
+    fetchLulc()
+  },[lulcYear2])
+
+  useEffect(() => {
+    const fetchLulc = async() => {
+      if (!isLayersFetched) {
+        return;
+      }
+
+      if(lulcYear3.value === null){
+        if (LayersArray[21].LayerRef.current != null) {
+          safeRemoveLayer(LayersArray[21].LayerRef.current);
+        }
+      }
+
+      let LulcLayer = await getImageLayers(
+        "LULC_level_3",
+        `LULC_${lulcYear3.value}_${block.label.toLowerCase().split(" ").join("_")}_level_3`,
+        true,
+        ""
+      );
+
+      if (LulcLayer) {
+        if (LayersArray[21].LayerRef.current != null) {
+          safeRemoveLayer(LayersArray[21].LayerRef.current);
+        }
+        safeAddLayer(LulcLayer)
+        LayersArray[21].LayerRef.current = LulcLayer;
+      }
+    }
+    fetchLulc()
+  },[lulcYear3])
 
   // Initialize map once
   useEffect(() => {

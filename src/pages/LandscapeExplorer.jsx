@@ -5,10 +5,9 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import Map from "../components/landscape-explorer/map/Map.jsx";
 import LeftSidebar from "../components/landscape-explorer/sidebar/LeftSidebar.jsx";
 import RightSidebar from "../components/landscape-explorer/sidebar/RightSidebar.jsx";
-import { useRecoilState, useRecoilValue } from 'recoil';
+import { useRecoilState } from 'recoil';
 import { stateDataAtom, stateAtom, districtAtom, blockAtom, filterSelectionsAtom, yearAtom } from '../store/locationStore.jsx';
 import getStates from "../actions/getStates.js";
-import getPlans from "../actions/getPlans.js";
 import * as downloadHelper from "../components/landscape-explorer/utils/downloadHelper";
 
 // Custom navbar specifically for Landscape Explorer page
@@ -38,8 +37,10 @@ const LandscapeExplorer = () => {
   const [district, setDistrict] = useRecoilState(districtAtom);
   const [block, setBlock] = useRecoilState(blockAtom);
   const [filterSelections, setFilterSelections] = useRecoilState(filterSelectionsAtom);
-  const lulcYear = useRecoilValue(yearAtom);
-
+  const [lulcYear1, setLulcYear1] = useState(null);
+  const [lulcYear2, setLulcYear2] = useState(null);
+  const [lulcYear3, setLulcYear3] = useState(null);
+  
   // Map ref for accessing map instance from other components
   const mapRef = useRef(null);
   
@@ -85,9 +86,6 @@ const LandscapeExplorer = () => {
   // State for map view settings
   const [showMWS, setShowMWS] = useState(true);
   const [showVillages, setShowVillages] = useState(true);
-
-  // Add state for selectedPlan
-  const [selectedPlan, setSelectedPlan] = useState(null);
 
   // Add plans state
   const [plans, setPlans] = useState([]);
@@ -180,24 +178,12 @@ const LandscapeExplorer = () => {
     
     setLayersReady(false);
     setCanFetchLayers(false);
-    setSelectedPlan(null); // Ensure plan is reset
   };
 
   // Handle layer toggle from RightSidebar
   const handleLayerToggle = (layerName, isVisible) => {
     // Prevent recursion if the update is coming from the map component
     if (isUpdatingFromMap.current) {
-      return;
-    }
-    
-    // Prevent toggling resource/planning layers without a plan
-    const resourceOrPlanningLayers = [
-      'settlement', 'water_structure', 'well_structure',
-      'agri_structure', 'livelihood_structure', 'recharge_structure'
-    ];
-    
-    if (resourceOrPlanningLayers.includes(layerName) && !selectedPlan && isVisible) {
-      alert('Please select a plan first to enable this layer');
       return;
     }
     
@@ -348,38 +334,6 @@ const LandscapeExplorer = () => {
     }
   }, [statesData, setStatesData]);
 
-  // Effect to fetch plans when block changes
-  useEffect(() => {
-    if (block) {
-      const fetchPlans = async () => {
-        try {
-          setIsLoading(true);
-          
-          // Fix CORS issue by using proper headers and error handling
-          try {
-            const fetchedPlans = await getPlans(block.block_id);
-            if (fetchedPlans) {
-              setPlans(fetchedPlans);
-              
-              // If plans exist and there's no selectedPlan yet, select the first one
-              // if (fetchedPlans.length > 0 && !selectedPlan) {
-              //   setSelectedPlan(fetchedPlans[0]);
-              // }
-            }
-          } catch (error) {
-            console.error("Error fetching plans:", error);
-            // Fallback to empty plans if API fails
-            setPlans([]);
-          }
-        } finally {
-          setIsLoading(false);
-        }
-      };
-      
-      fetchPlans();
-    }
-  }, [block]);
-
   // Handle map-initiated layer toggle updates
   const handleMapToggle = (layerName, isVisible) => {
     // Set the recursion prevention flag
@@ -436,13 +390,15 @@ const LandscapeExplorer = () => {
             district={district}
             block={block}
             filterSelections={filterSelections}
-            lulcYear={lulcYear}
             toggledLayers={toggledLayers}
             toggleLayer={handleMapToggle} // Use handleMapToggle to properly handle map-initiated updates
             showMWS={showMWS}
             setShowMWS={setShowMWS}
             showVillages={showVillages}
             setShowVillages={setShowVillages}
+            lulcYear1={lulcYear1}
+            lulcYear2={lulcYear2}
+            lulcYear3={lulcYear3}
           />
         </div>
         
@@ -463,13 +419,15 @@ const LandscapeExplorer = () => {
             toggledLayers={toggledLayers}
             toggleLayer={handleLayerToggle}
             handleExcelDownload={handleExcelDownload}
-            plans={plans}
-            selectedPlan={selectedPlan}
-            setSelectedPlan={setSelectedPlan}
             isLoading={isLoading}
             canFetchLayers={canFetchLayers}
             onCategoryChange={handleCategoryChange}
-            handleFetchLayers={handleFetchLayers}
+            lulcYear1={lulcYear1}
+            lulcYear2={lulcYear2}
+            lulcYear3={lulcYear3}
+            setLulcYear1={setLulcYear1}
+            setLulcYear2={setLulcYear2}
+            setLulcYear3={setLulcYear3}
           />
         )}
         
