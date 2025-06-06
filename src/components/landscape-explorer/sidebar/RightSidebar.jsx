@@ -91,6 +91,7 @@ const demographicLayerData =[
 
 // Years data for LULC
 const yearDataLulc = [
+  { label: "None", value: null },
   { label: "2017-2018", value: "17_18" },
   { label: "2018-2019", value: "18_19" },
   { label: "2019-2020", value: "19_20" },
@@ -172,16 +173,7 @@ const handleStyleDownload = (layerName) => {
 }
 
 // Single Layer Item Component
-const LayerItem = ({ layer, isSelected, onToggle, onDownload, isLayersFetched, isLoading, selectedPlan }) => {
-  // Define resource/planning layers array outside of the onClick handler
-  const resourceOrPlanningLayers = [
-    'settlement', 'water_structure', 'well_structure',
-    'agri_structure', 'livelihood_structure', 'recharge_structure'
-  ];
-  
-  // Check if this layer needs a plan to be toggled
-  const needsPlan = resourceOrPlanningLayers.includes(layer.name);
-  const isDisabled = needsPlan && !selectedPlan;
+const LayerItem = ({ layer, isSelected, onToggle, onDownload, isLayersFetched, isLoading }) => {
   
   return (
     <div className="border-b border-gray-200 py-3">
@@ -192,7 +184,6 @@ const LayerItem = ({ layer, isSelected, onToggle, onDownload, isLayersFetched, i
             onToggle(layer.name);
           }}
           className="text-xs"
-          disabled={isDisabled}
         >
           {isSelected 
             ? <ToggleOnIcon /> 
@@ -299,19 +290,18 @@ const RightSidebar = ({
   onClose,
   handleLayerToggle,
   toggledLayers,
-  handleFetchLayers,
   handleExcelDownload,
-  selectedPlan,
-  setSelectedPlan,
-  plans = [],
   isLoading = false,
   canFetchLayers = false,
-  onCategoryChange
+  onCategoryChange,
+  lulcYear1,
+  setLulcYear1,
+  lulcYear2,
+  setLulcYear2,
+  lulcYear3,
+  setLulcYear3
 }) => {
   const [selectedCategory, setSelectedCategory] = useState('basic');
-  const [lulcYear1, setLulcYear1] = useState(null);
-  const [lulcYear2, setLulcYear2] = useState(null);
-  const [lulcYear3, setLulcYear3] = useState(null);
   const [isLayersFetched, setIsLayersFetched] = useState(false);
 
 
@@ -622,7 +612,6 @@ const RightSidebar = ({
                       onDownload={handleDownloadClick}
                       isLayersFetched={isLayersFetched}
                       isLoading={isLoading}
-                      selectedPlan={selectedPlan} // Add this prop
                     />
                   }
                 })}
@@ -640,7 +629,6 @@ const RightSidebar = ({
                     onDownload={handleDownloadClick}
                     isLayersFetched={isLayersFetched}
                     isLoading={isLoading}
-                    selectedPlan={selectedPlan} // Add this prop
                   />
                 ))}
               </div>
@@ -657,7 +645,6 @@ const RightSidebar = ({
                     onDownload={handleDownloadClick}
                     isLayersFetched={isLayersFetched}
                     isLoading={isLoading}
-                    selectedPlan={selectedPlan} // Add this prop
                   />
                 ))}
               </div>
@@ -685,7 +672,6 @@ const RightSidebar = ({
                       onDownload={handleDownloadClick}
                       isLayersFetched={isLayersFetched}
                       isLoading={isLoading}
-                      selectedPlan={selectedPlan} // Add this prop
                     />
                   }
                 })}
@@ -703,7 +689,6 @@ const RightSidebar = ({
                     onDownload={handleDownloadClick}
                     isLayersFetched={isLayersFetched}
                     isLoading={isLoading}
-                    selectedPlan={selectedPlan} // Add this prop
                   />
                 ))}
               </div>
@@ -720,7 +705,6 @@ const RightSidebar = ({
                     onDownload={handleDownloadClick}
                     isLayersFetched={isLayersFetched}
                     isLoading={isLoading}
-                    selectedPlan={selectedPlan} // Add this prop
                   />
                 ))}
               </div>
@@ -737,7 +721,6 @@ const RightSidebar = ({
                     onDownload={handleDownloadClick}
                     isLayersFetched={isLayersFetched}
                     isLoading={isLoading}
-                    selectedPlan={selectedPlan} // Add this prop
                   />
                 ))}
               </div>
