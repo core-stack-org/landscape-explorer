@@ -55,7 +55,7 @@ const landLayersData = [
 ]
 
 const climateLayersData = [
-  { id: 1, name: "hydrological_variables", label: "Hydrological Variables", hasGeojson: true, hasKml: true, hasStyle : false },
+  { id: 1, name: "mws_layers", label: "Hydrological Variables", hasGeojson: true, hasKml: true, hasStyle : false },
 ]
 
 const hydrologyLayersData = [
@@ -356,16 +356,22 @@ const RightSidebar = ({
         case 'hydrological_boundaries':
           url = `https://geoserver.core-stack.org:8443/geoserver/mws_layers/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=mws_layers:deltaG_well_depth_${districtFormatted}_${blockFormatted}&outputFormat=application/json&screen=main`;
           break;
-        case 'soge':
-          url = `https://geoserver.core-stack.org:8443/geoserver/aquifer/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=	aquifer:aquifer_vector_${districtFormatted}_${blockFormatted}&outputFormat=application/json&screen=main`;
-          break;
         case 'aquifer':
-          url = `https://geoserver.core-stack.org:8443/geoserver/aquifer/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=soge:soge_vector_${districtFormatted}_${blockFormatted}&outputFormat=application/json&screen=main`;
+          url = `https://geoserver.core-stack.org:8443/geoserver/aquifer/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=aquifer:aquifer_vector_${districtFormatted}_${blockFormatted}&outputFormat=application/json&screen=main`;
+          break;
+        case 'soge':
+          url = `https://geoserver.core-stack.org:8443/geoserver/soge/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=soge:soge_vector_${districtFormatted}_${blockFormatted}&outputFormat=application/json&screen=main`;
+          break;
+        case 'terrain_vector':
+          url = `https://geoserver.core-stack.org:8443/geoserver/terrain/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=terrain:${districtFormatted}_${blockFormatted}_cluster&outputFormat=application/json&screen=main`;
+          break;
+        case 'mws_layers':
+          url = `https://geoserver.core-stack.org:8443/geoserver/mws_layers/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=mws_layers:deltaG_well_depth_${districtFormatted}_${blockFormatted}&outputFormat=application/json&screen=main`;
           break;
         default:
           url = `https://geoserver.core-stack.org:8443/geoserver/${filterName}/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=${filterName}:${districtFormatted}_${blockFormatted}&outputFormat=application/json&screen=main`;
       }
-      
+
       // Use our direct download function
       downloadGeoJson(url, filterName);
     } 

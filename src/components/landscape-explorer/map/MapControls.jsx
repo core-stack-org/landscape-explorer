@@ -56,7 +56,7 @@ const MapControls = ({
         { id: 'drainage', label: 'Drainage' },
         { id: 'remote_sensed_waterbodies', label: 'Remote-Sensed Waterbodies' },
         { id: 'hydrological_boundaries', label: 'Hydrological Boundaries' },
-        { id: 'hydrological_variables', label: 'Hydrological Variables' },
+        { id: 'mws_layers', label: 'Hydrological Variables' },
         { id: 'clart', label: 'CLART' },
         { id: 'nrega', label: 'NREGA' },
         { id: 'drought', label: 'Drought' },

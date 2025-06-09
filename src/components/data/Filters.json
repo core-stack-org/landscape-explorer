@@ -25,7 +25,7 @@
                 "type" : 2,
                 "values" : [
                     {"label" : "Arid: <740 mm", "value" : {"lower" : 0, "upper" : 740}},
-                    {"label" : "Semi -arid: 740mm-960 mm", "value" : {"lower" : 740, "upper" : 960}},
+                    {"label" : "Semi-arid: 740mm-960 mm", "value" : {"lower" : 740, "upper" : 960}},
                     {"label" : "Moderate: 960mm-1200 mm", "value" : {"lower" : 960, "upper" : 1200}},
                     {"label" : "High: 1200mm-1620 mm", "value" : {"lower" : 1200, "upper" : 1620}},
                     {"label" : "Very high: >1620 mm", "value" : {"lower" : 1620, "upper" : 9999999999}}
@@ -49,7 +49,7 @@
                         "lower" : 960, "upper" : 1200
                     },
                     {
-                        "fill" : "#rgba(0, 115, 230, 0.5)",
+                        "fill" : "rgba(0, 115, 230, 0.5)",
                         "stroke" : "rgba(0, 115, 230, 1)",
                         "lower" : 1200, "upper" : 1620
                     },
