@@ -8,9 +8,9 @@ import VectorSource from "ol/source/Vector";
 import GeoJSON from "ol/format/GeoJSON";
 import Map from "ol/Map";
 import { Style, Fill, Stroke } from "ol/style";
-import SurfaceWaterBodiesChart from "./WaterUsedChart";
 import LocationOnIcon from "@mui/icons-material/LocationOn";
 import YearSlider from "./yearSlider";
+import PrecipitationStackChart from "./PrecipitationStackChart.jsx";
 
 import {
   Box,
@@ -40,11 +40,10 @@ import FilterListIcon from "@mui/icons-material/FilterList";
 import SurfaceWaterChart from "./waterChart";
 import getImageLayer from "../actions/getImageLayers";
 import WaterAvailabilityChart from "./WaterAvailabilityChart";
-import { getCenter } from "ol/extent";
-import MultiPolygon from "ol/geom/MultiPolygon";
 
 const useWaterRejData = () => {
   const [geoData, setGeoData] = useState(null);
+  const [mwsGeoData, setMwsGeoData] = useState(null);
 
   const [project, setProject] = useState(() => {
     const stored = sessionStorage.getItem("selectedProject");
@@ -56,8 +55,8 @@ const useWaterRejData = () => {
     }
   });
 
-  const projectName = project?.label; // e.g. "ATCF_UP"
-  const projectId = project?.value; // e.g. "5"
+  const projectName = project?.label;
+  const projectId = project?.value;
 
   useEffect(() => {
     if (!projectName || !projectId) return;
@@ -71,13 +70,12 @@ const useWaterRejData = () => {
           version: "1.0.0",
           request: "GetFeature",
           typeName,
-
           outputFormat: "application/json",
         });
       console.log(url);
+
       try {
         const response = await fetch(url);
-
         if (!response.ok) {
           const errorText = await response.text();
           console.error("GeoServer error response:", errorText);
@@ -85,7 +83,6 @@ const useWaterRejData = () => {
         }
 
         const data = await response.json();
-
         setGeoData(data);
       } catch (err) {
         console.error("❌ Failed to fetch or parse GeoJSON:", err);
@@ -96,7 +93,41 @@ const useWaterRejData = () => {
     fetchGeoJSON();
   }, [projectName, projectId]);
 
-  return geoData;
+  useEffect(() => {
+    if (!projectName || !projectId) return;
+
+    const fetchMWSGeoJSON = async () => {
+      const typeName = `waterrej:WaterRejapp_mws_${projectName}_${projectId}`;
+      const url =
+        `https://geoserver.core-stack.org:8443/geoserver/waterrej/ows?` +
+        new URLSearchParams({
+          service: "WFS",
+          version: "1.0.0",
+          request: "GetFeature",
+          typeName,
+          outputFormat: "application/json",
+        });
+
+      try {
+        const response = await fetch(url);
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error("MWS GeoServer error response:", errorText);
+          throw new Error(`GeoServer returned status ${response.status}`);
+        }
+
+        const data = await response.json();
+        setMwsGeoData(data);
+      } catch (err) {
+        console.error("Failed to fetch or parse MWS GeoJSON:", err);
+      }
+    };
+
+    fetchMWSGeoJSON();
+  }, [projectName, projectId]);
+
+  // ✅ Return both datasets
+  return { geoData, mwsGeoData };
 };
 
 const WaterProjectDashboard = () => {
@@ -120,6 +151,7 @@ const WaterProjectDashboard = () => {
   const [sortOrder, setSortOrder] = useState("asc");
   const [searchText, setSearchText] = useState("");
   const [waterbodySearch, setWaterbodySearch] = useState("");
+  const [selectedMWSFeature, setSelectedMWSFeature] = useState(null);
 
   const [organization, setOrganization] = useState(() => {
     const storedOrg = sessionStorage.getItem("selectedOrganization");
@@ -137,8 +169,9 @@ const WaterProjectDashboard = () => {
   });
 
   const projectName = project?.label || "No project selected";
+  const { geoData, mwsGeoData } = useWaterRejData(project, projectId);
 
-  const geoData = useWaterRejData(project, projectId);
+  // const geoData = useWaterRejData(project, projectId);
   const { rows, avgSiltRemoved } = useMemo(() => {
     if (!geoData?.features) return { rows: [], avgSiltRemoved: 0 };
 
@@ -173,11 +206,11 @@ const WaterProjectDashboard = () => {
       const kharifValues = kharifEntries
         .map(([_, value]) => Number(value))
         .filter((val) => !isNaN(val));
-      console.log(kharifValues);
+      // console.log(kharifValues);
       let nonZeroStartIndexK = kharifValues.findIndex((val) => val !== 0);
 
       const filteredKharifValues = kharifValues.slice(nonZeroStartIndexK);
-      console.log(filteredKharifValues);
+      // console.log(filteredKharifValues);
       const sumFilteredKharif = filteredKharifValues.reduce(
         (acc, val) => acc + val,
         0
@@ -187,7 +220,7 @@ const WaterProjectDashboard = () => {
           ? (sumFilteredKharif / filteredKharifValues.length).toFixed(2)
           : "0.00";
 
-      console.log("Mean of filteredKharifValues:", meanFilteredKharif);
+      // console.log("Mean of filteredKharifValues:", meanFilteredKharif);
 
       const sumKharif = kharifValues.reduce((acc, val) => acc + val, 0);
       const avgKharif = (sumKharif / 7).toFixed(2);
@@ -203,7 +236,7 @@ const WaterProjectDashboard = () => {
       let nonZeroStartIndexR = rabiValues.findIndex((val) => val !== 0);
 
       const filteredRabiValues = rabiValues.slice(nonZeroStartIndexR);
-      console.log(filteredRabiValues);
+      // console.log(filteredRabiValues);
       const sumFilteredRabi = filteredRabiValues.reduce(
         (acc, val) => acc + val,
         0
@@ -213,7 +246,7 @@ const WaterProjectDashboard = () => {
           ? (sumFilteredRabi / filteredRabiValues.length).toFixed(2)
           : "0.00";
 
-      console.log("Mean of filteredRabiValues:", meanFilteredRabi);
+      // console.log("Mean of filteredRabiValues:", meanFilteredRabi);
 
       const sumRabi = rabiValues.reduce((acc, val) => acc + val, 0);
       const avgRabi = (sumRabi / 7).toFixed(2);
@@ -229,7 +262,7 @@ const WaterProjectDashboard = () => {
       let nonZeroStartIndexZ = zaidValues.findIndex((val) => val !== 0);
 
       const filteredZaidValues = zaidValues.slice(nonZeroStartIndexZ);
-      console.log(filteredZaidValues);
+      // console.log(filteredZaidValues);
       const sumFilteredzaid = filteredZaidValues.reduce(
         (acc, val) => acc + val,
         0
@@ -239,7 +272,7 @@ const WaterProjectDashboard = () => {
           ? (sumFilteredzaid / filteredZaidValues.length).toFixed(2)
           : "0.00";
 
-      console.log("Mean of filteredZaidValues:", meanFilteredZaid);
+      // console.log("Mean of filteredZaidValues:", meanFilteredZaid);
 
       const sumZaid = zaidValues.reduce((acc, val) => acc + val, 0);
       const avgZaid = (sumZaid / 7).toFixed(2);
@@ -622,36 +655,16 @@ const WaterProjectDashboard = () => {
     }
   };
 
-  // const handleWaterbodyClick = (row) => {
-  //   const feature = geoData.features.find((f, idx) => idx === row.featureIndex);
-
-  //   if (
-  //     feature &&
-  //     feature.properties?.latitude &&
-  //     feature.properties?.longitude
-  //   ) {
-  //     const coordinates = [
-  //       feature.properties.longitude,
-  //       feature.properties.latitude,
-  //     ];
-  //     row.coordinates = coordinates;
-
-  //     setSelectedWaterbody(row);
-  //     setView("map");
-
-  //     setSelectedFeature(feature);
-  //     zoomToWaterbody(coordinates, feature); // ✅ Direct zoom
-  //   } else {
-  //     console.error("Coordinates not found in feature properties.");
-  //   }
-  // };
-
   const handleWaterbodyClick = (row) => {
     const feature = geoData.features.find((f, idx) => idx === row.featureIndex);
 
     if (feature) {
+      // First: extract MWS UID
+      const mwsId = feature.properties?.MWS_UID;
+      console.log(mwsId);
+
       if (feature.geometry?.type === "MultiPolygon") {
-        row.coordinates = null; // not needed, but avoids confusion
+        row.coordinates = null;
       } else if (
         feature.properties?.latitude &&
         feature.properties?.longitude
@@ -661,6 +674,21 @@ const WaterProjectDashboard = () => {
           feature.properties.latitude,
         ];
         row.coordinates = coordinates;
+      }
+
+      // Then: use mwsId to search MWS GeoData
+      const matchingMWSFeature = mwsGeoData?.features?.find(
+        (f) => f.properties?.uid === mwsId
+      );
+
+      if (matchingMWSFeature) {
+        console.log(
+          "✅ Matching MWS Feature:qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqeeeeeeeeeeeeee",
+          matchingMWSFeature
+        );
+        setSelectedMWSFeature(matchingMWSFeature);
+      } else {
+        console.warn("❌ No matching MWS found for:", mwsId);
       }
 
       setSelectedWaterbody(row);
@@ -725,8 +753,6 @@ const WaterProjectDashboard = () => {
     link.click();
     document.body.removeChild(link);
   };
-
-  console.log(geoData);
 
   return (
     <Box sx={{ position: "relative" }}>
@@ -1283,16 +1309,22 @@ const WaterProjectDashboard = () => {
             {selectedWaterbody !== undefined && selectedWaterbody !== null && (
               <>
                 <div style={{ display: "flex", gap: "16px" }}>
-                  <div style={{ width: "80%", height: "400px" }}>
+                  <div style={{ width: "70%", height: "400px" }}>
                     <WaterAvailabilityChart
                       waterbody={selectedWaterbody}
                       water_rej_data={geoData}
                     />
                   </div>
                 </div>
-                <Box sx={{ display: "flex" }}>
-                  <div style={{ width: "50%", height: "400px" }}></div>
-                </Box>
+              </>
+            )}
+            {selectedMWSFeature && (
+              <>
+                <div style={{ display: "flex" }}>
+                  <div style={{ width: "80%", height: "400px" }}>
+                    <PrecipitationStackChart feature={selectedMWSFeature} />
+                  </div>
+                </div>
               </>
             )}
           </Box>

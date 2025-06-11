@@ -3,9 +3,6 @@ import { yearAtom } from "../store/locationStore.jsx";
 import { useRecoilState } from "recoil";
 
 const YearSlider = ({ currentLayer }) => {
-  console.log(typeof currentLayer);
-  console.log("YearSlider received currentLayer:", currentLayer);
-
   const yearDataLulc = [
     { label: "2017-2018", value: "17_18" },
     { label: "2018-2019", value: "18_19" },

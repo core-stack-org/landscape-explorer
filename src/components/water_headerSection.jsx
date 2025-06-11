@@ -22,18 +22,48 @@ const HeaderSelect = ({
   const [organizationOptions, setOrganizationOptions] = useState([]);
   const [project, setProject] = useState(initialProject || null);
   const [filter, setFilter] = useState("");
+  const [projects, setProjects] = useState([]);
+  const [projectCount, setProjectCount] = useState(0);
+  const [projectOptions, setProjectOptions] = useState([]);
 
   const navigate = useNavigate();
   const location = useLocation();
   const isOnDashboard = location.pathname.includes("/dashboard");
 
-  const projectOptions = [
-    { label: "ATCF_UP", value: "5" },
-    { label: "ATCEF_Demo_UP", value: "10" },
-    { label: "ATCEF_Demo_MP", value: "11" },
-    { label: "ATCEF_Demo_RJ", value: "12" },
-    { label: "ATCEF_UP_WB", value: "13" },
-  ];
+  // const projectOptions = [
+  //   { label: "ATCF_UP", value: "5" },
+  //   { label: "ATCEF_Demo_UP", value: "10" },
+  //   { label: "ATCEF_Demo_MP", value: "11" },
+  //   { label: "ATCEF_Demo_RJ", value: "12" },
+  //   { label: "ATCEF_UP_WB", value: "13" },
+  // ];
+
+  const loginAndGetToken = async () => {
+    try {
+      const response = await fetch(
+        `${process.env.REACT_APP_BASEURL}api/v1/auth/login/`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            username: process.env.REACT_APP_WATERBODYREJ_USERNAME,
+            password: process.env.REACT_APP_WATERBODYREJ_PASSWORD,
+          }),
+        }
+      );
+
+      if (!response.ok) throw new Error("Login failed");
+
+      const data = await response.json();
+      sessionStorage.setItem("accessToken", data.access);
+      return data.access;
+    } catch (err) {
+      console.error("❌ Auto-login failed:", err);
+      return null;
+    }
+  };
 
   useEffect(() => {
     const fetchOrganizations = async () => {
@@ -62,10 +92,64 @@ const HeaderSelect = ({
     fetchOrganizations();
   }, []);
 
+  useEffect(() => {
+    const fetchProjects = async () => {
+      let token = sessionStorage.getItem("accessToken");
+
+      if (!token) {
+        token = await loginAndGetToken(); // Perform auto-login
+        if (!token) return;
+      }
+
+      try {
+        const response = await fetch(
+          `${process.env.REACT_APP_BASEURL}/api/v1/projects/`,
+          {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+              "ngrok-skip-browser-warning": "420",
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+
+        const data = await response.json();
+
+        const options = data.map((project) => ({
+          label: project.name,
+          value: String(project.id),
+        }));
+
+        setProjectOptions(options); // ✅ Now this runs
+        setProjectCount(data.length);
+        setProjects(data);
+
+        // Try setting from sessionStorage
+        const storedProject = sessionStorage.getItem("selectedProject");
+        if (storedProject) {
+          const parsed = JSON.parse(storedProject);
+          const matched = options.find((p) => p.value === parsed.value);
+          if (matched) {
+            setProject(matched);
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching projects:", error);
+      }
+    };
+
+    fetchProjects();
+  }, []);
+
   const loadOrganization = async () => {
     try {
       const response = await fetch(
-        `${process.env.REACT_APP_API_URL}/auth/register/available_organizations/`,
+        `${process.env.REACT_APP_BASEURL}api/v1/auth/register/available_organizations/`,
         {
           method: "GET",
           headers: {

@@ -22,8 +22,6 @@ ChartJS.register(
 const years = ["17-18", "18-19", "19-20", "20-21", "21-22", "22-23", "23-24"];
 
 const WaterAvailabilityChart = ({ waterbody, water_rej_data }) => {
-  console.log(water_rej_data);
-  console.log("qqqqqqqqqqqqqqqqqqqqqqqqqqqqqq");
   // Prepare empty arrays that will hold season‑wise values for each year
   const kharifData = new Array(years.length).fill(0);
   const rabiData = new Array(years.length).fill(0);
@@ -38,7 +36,6 @@ const WaterAvailabilityChart = ({ waterbody, water_rej_data }) => {
         kharifData[i] += p[`k_${year}`] ?? 0; // Kharif
         rabiData[i] += p[`kr_${year}`] ?? 0; // Rabi
         zaidData[i] += p[`krz_${year}`] ?? 0; // Zaid
-        console.log(kharifData);
       });
     }
   });
