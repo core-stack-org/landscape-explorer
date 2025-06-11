@@ -149,24 +149,41 @@ const DownloadButton = ({
 
 const handleStyleDownload = (layerName) => {
   let url = ""
-
+  console.log(typeof(layerName))
   switch(layerName){
     case "afforestation" :
       url = "https://drive.google.com/file/d/10RvFu28sIa-OpQvJ2z6D8-V5RROUUeZz/view?usp=drive_link"
+      break;
     case "deforestation" :
       url = "https://drive.google.com/file/d/1MFKAXiW5mpfCoBBMJR-K7Y5O_Uwp0kOR/view?usp=drive_link"
+      break;
     case "degradation":
       url = "https://drive.google.com/file/d/1tPtEqhWO_RisycKnK8Bl_2yEnrfgWqfE/view?usp=drive_link"
+      break;
     case "urbanization":
       url = "https://drive.google.com/file/d/16JHaWXxdq5y-g2wr5D_f7OB70jiA9QuA/view?usp=sharing"
+      break;
     case "cropintensity":
       url = "https://drive.google.com/file/d/13cgF1Cg6YWZMCQXH7XV7cITxsg9v2SBu/view?usp=sharing"
+      break;
     case "clart":
       url = "https://drive.google.com/file/d/1B8ibmiv8dBNYZZ1gZWIp4AQPdu82t1yl/view?usp=drive_link"
+      break;
     case "drainage":
       url = "https://drive.google.com/file/d/1s57ufrKk_iKWxIJTpy_S1Yt3nQD0DMjc/view?usp=drive_link"
+      break;
     case "terrain":
       url = "https://drive.google.com/file/d/1gMh9Dj3ICJuw1vqgP9vEI9oIU_PLNsPs/view?usp=sharing"
+      break;
+    case "lulc_level_1":
+      url = "https://drive.google.com/file/d/1mIVKi9N5QQI3QqFYj9y8uJGet5oRAVqA/view?usp=sharing"
+      break;
+    case "lulc_level_2":
+      url = "https://drive.google.com/file/d/1q7Tzs7zwn3T4jhRqqYc7RgCNAktkWa9m/view?usp=drive_link"
+      break;
+    case "lulc_level_3":
+      url = "https://drive.google.com/file/d/1GFc7W2AtlrYJbnveWkT08uSyeTasFQxT/view?usp=drive_link"
+      break;
   }
 
   window.open(url, "_blank");
@@ -245,13 +262,21 @@ const LulcSelector = ({ level, lulcYear, setLulcYear, onDownload, isLayersFetche
           setState={setLulcYear}
         />
       </div>
-      
+      <div className="flex mt-2 space-x-2">
       <DownloadButton 
         name="GeoTIFF"
         onClickEvent={() => onDownload(level.id, 'geotiff')}
         isDisabled={!lulcYear || !isLayersFetched || isLoading}
-        className={`w-full ${!lulcYear ? 'bg-gray-100 text-gray-400' : ''}`}
+        className={`${!lulcYear ? 'bg-gray-100 text-gray-400' : ''}`}
       />
+
+      <DownloadButton 
+        name="Style"
+        onClickEvent={() => handleStyleDownload(level.id)}
+        isDisabled={!isLayersFetched || isLoading}
+        className="bg-[#EDE9FE] text-[#8B5CF6] hover:bg-[#DDD6FE]"
+      />
+      </div>
     </div>
   );
 };
