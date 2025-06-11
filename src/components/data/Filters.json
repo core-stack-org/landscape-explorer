@@ -25,7 +25,7 @@
                 "type" : 2,
                 "values" : [
                     {"label" : "Arid: <740 mm", "value" : {"lower" : 0, "upper" : 740}},
-                    {"label" : "Semi -arid: 740mm-960 mm", "value" : {"lower" : 740, "upper" : 960}},
+                    {"label" : "Semi-arid: 740mm-960 mm", "value" : {"lower" : 740, "upper" : 960}},
                     {"label" : "Moderate: 960mm-1200 mm", "value" : {"lower" : 960, "upper" : 1200}},
                     {"label" : "High: 1200mm-1620 mm", "value" : {"lower" : 1200, "upper" : 1620}},
                     {"label" : "Very high: >1620 mm", "value" : {"lower" : 1620, "upper" : 9999999999}}
@@ -49,7 +49,7 @@
                         "lower" : 960, "upper" : 1200
                     },
                     {
-                        "fill" : "#rgba(0, 115, 230, 0.5)",
+                        "fill" : "rgba(0, 115, 230, 0.5)",
                         "stroke" : "rgba(0, 115, 230, 1)",
                         "lower" : 1200, "upper" : 1620
                     },
@@ -95,12 +95,12 @@
             },
             {
                 "name": "drought_category",
-                "label" : "Number of drought years",
+                "label" : "Number of drought years since 2017",
                 "type" : 1,
                 "values" : [
                     {"label" : "No Drought", "value" : 0},
-                    {"label" : "Minimum one drought year", "value" : 1},
-                    {"label" : "Minimum two drought years", "value" : 2}
+                    {"label" : "At least one drought year", "value" : 1},
+                    {"label" : "At least two drought years", "value" : 2}
                 ],
                 "layer_store" : ["cropping_drought"],
                 "layer_name" : ["drought"],
@@ -111,14 +111,14 @@
                         "lower" : 0, "upper" : 0
                     },
                     {
-                        "fill" : "rgba(235, 152, 78, 0.5)",
-                        "stroke" : "rgba(235, 152, 78, 1)",
-                        "lower" : 1, "upper" : 99999 
-                    },
-                    {
                         "fill" : "rgba(231, 76, 60, 0.5)",
                         "stroke" : "rgba(231, 76, 60, 1)",
                         "lower" : 2, "upper" : 99999
+                    },
+                    {
+                        "fill" : "rgba(235, 152, 78, 0.5)",
+                        "stroke" : "rgba(235, 152, 78, 1)",
+                        "lower" : 1, "upper" : 99999 
                     }
                 ],
                 "rasterStyle" : "",
@@ -196,6 +196,126 @@
                 "styleIdx" : 0
             },
             {
+                "name": "aquifer_class",
+                "label" : "Aquifer type",
+                "type" : 1,
+                "values" : [
+                    {"label" : "Hard rock", "value" : 0},
+                    {"label" : "Alluvial", "value" : 1}                
+                ],
+                "layer_store" : ["aquifer"],
+                "layer_name" : ["aquifer_vector"],
+                "vectorStyle" : [{
+                        "fill" : "rgba(255, 253, 181, 0.5)",
+                        "stroke" : "rgba(255, 253, 181, 1)",
+                        "lower" : 0, "upper" : 0
+                    },
+                    {
+                        "fill" : "rgba(243, 164, 37, 0.5)",
+                        "stroke" : "rgba(243, 164, 37, 1)",
+                        "lower" : 1, "upper" : 1
+                    },
+                    {
+                        "fill" : "rgba(153, 236, 241, 0.5)",
+                        "stroke" : "rgba(153, 236, 241, 1)",
+                        "lower" : 2, "upper" : 2
+                    },
+                    {
+                        "fill" : "rgba(165, 248, 197, 0.5)",
+                        "stroke" : "rgba(165, 248, 197, 1)",
+                        "lower" : 3, "upper" : 3
+                    },
+                    {
+                        "fill" : "rgba(245, 124, 153, 0.5)",
+                        "stroke" : "rgba(245, 124, 153, 1)",
+                        "lower" : 4, "upper" : 4
+                    },
+                    {
+                        "fill" : "rgba(232, 213, 46, 0.5)",
+                        "stroke" : "rgba(232, 213, 46, 1)",
+                        "lower" : 5, "upper" : 5
+                    },
+                    {
+                        "fill" : "rgba(60, 146, 242, 0.5)",
+                        "stroke" : "rgba(60, 146, 242, 1)",
+                        "lower" : 6, "upper" : 6
+                    },
+                    {
+                        "fill" : "rgba(213, 219, 33, 0.5)",
+                        "stroke" : "rgba(213, 219, 33, 1)",
+                        "lower" : 7, "upper" : 7
+                    },
+                    {
+                        "fill" : "rgba(207, 127, 244, 0.5)",
+                        "stroke" : "rgba(207, 127, 244, 1)",
+                        "lower" : 8, "upper" : 8
+                    },
+                    {
+                        "fill" : "rgba(244, 219, 255, 0.5)",
+                        "stroke" : "rgba(244, 219, 255, 1)",
+                        "lower" : 9, "upper" : 9
+                    },
+                    {
+                        "fill" : "rgba(80, 192, 43, 0.5)",
+                        "stroke" : "rgba(80, 192, 43, 1)",
+                        "lower" : 10, "upper" : 10
+                    },
+                    {
+                        "fill" : "rgba(255, 225, 181, 0.5)",
+                        "stroke" : "rgba(255, 225, 181, 1)",
+                        "lower" : 11, "upper" : 11
+                    },
+                    {
+                        "fill" : "rgba(228, 207, 241, 0.5)",
+                        "stroke" : "rgba(228, 207, 241, 1)",
+                        "lower" : 12, "upper" : 12
+                    },
+                    {
+                        "fill" : "rgba(87, 210, 255, 0.5)",
+                        "stroke" : "rgba(87, 210, 255, 1)",
+                        "lower" : 13, "upper" : 13
+                    }
+                ],
+                "rasterStyle" : "",
+                "styleIdx" : 11
+            },
+            {
+                "name": "soge_class",
+                "label" : "State of groundwater extraction",
+                "type" : 1,
+                "values" : [
+                    {"label" : "Safe", "value" : 0},
+                    {"label" : "Semi-Critical", "value" : 1},
+                    {"label" : "Critical", "value" : 2},
+                    {"label" : "Over-exploited", "value" : 3}                      
+                    ],
+                "layer_store" : ["soge"],
+                "layer_name" : ["soge_vector"],
+                "vectorStyle" : [{
+                    "fill" : "rgba(255, 255, 255, 0.5)",
+                    "stroke" : "rgba(255, 255, 255, 1)",
+                    "lower" : 0, "upper" : 0
+                },
+                {
+                    "fill" : "rgba(224, 243, 248, 0.5)",
+                    "stroke" : "rgba(224, 243, 248, 1)",
+                    "lower" : 1, "upper" : 1
+                },
+                {
+                    "fill" : "rgba(69, 117, 180, 0.5)",
+                    "stroke" : "rgba(69, 117, 180, 1)",
+                    "lower" : 2, "upper" : 2
+                },
+                {
+                    "fill" : "rgba(49, 54, 149, 0.5)",
+                    "stroke" : "rgba(49, 54, 149, 1)",
+                    "lower" : 3, "upper" : 3
+                }
+            ],
+                "rasterStyle" : "",
+                "styleIdx" : 12
+            },
+            {
                 "name": "trend_g",
                 "label" : "Groundwater level trend over the years 2017 to 2023",
                 "type" : 1,
@@ -252,10 +372,10 @@
                     {"label" : "Between 30 hectares to 90 hectares", "value" : {"lower" : 30, "upper" : 90}},
                     {"label" : "More than 90 hectares", "value" : {"lower" : 90, "upper" : 999999}}
                 ],
-                "layer_store" : ["change_detection"],
-                "layer_name" : ["CropIntensity"],
+                "layer_store" : ["change_detection","change_detection"],
+                "layer_name" : ["CropIntensity","Degradation"],
                 "vectorStyle" : [{}],
-                "rasterStyle" : "cropping_intensity",
+                "rasterStyle" : ["cropping_intensity","KYL_Crop_Degradation"],
                 "styleIdx" : 0
             }
         ], 
@@ -272,7 +392,7 @@
                 "layer_store" : ["change_detection"],
                 "layer_name" : ["Deforestation"],
                 "vectorStyle" : [{}],
-                "rasterStyle" : "change_detection_deforestation",
+                "rasterStyle" : "deforestation",
                 "styleIdx" : 0
             },   {
                 "name": "increase_in_tree_cover",
@@ -286,12 +406,12 @@
                 "layer_store" : ["change_detection"],
                 "layer_name" : ["Afforestation"],
                 "vectorStyle" : [{}],
-                "rasterStyle" : "change_detection_afforestation",
+                "rasterStyle" : "afforestation",
                 "styleIdx" : 0
             },
               {
                 "name": "area_wide_scale_restoration",
-                "label" : "Area that requires wide-scale restoration",
+                "label" : "Area with potential for wide-scale restoration",
                 "type" : 2,
                 "values" : [
                     {"label" : "Less than 200 hectares", "value" : {"lower" : 0, "upper" : 200}},
@@ -305,7 +425,7 @@
                 "styleIdx" : 0
             },   {
                 "name": "area_protection",
-                "label" : "Area that requires protection",
+                "label" : "Area with potential for protection",
                 "type" : 2,
                 "values" : [
                     {"label" : "Less than 400 hectares", "value" : {"lower" : 0, "upper" : 400}},

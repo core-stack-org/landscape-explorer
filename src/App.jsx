@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import LE_page from './pages/LE_page';
 import LandingPage from "./pages/landingPage";
 import KYLDashboardPage from "./pages/kyl_dashboard";
+import LandscapeExplorer from "./pages/LandscapeExplorer";
 
 function App() {
   return (
@@ -10,7 +11,8 @@ function App() {
       <Routes>
         <Route path="/" element={<LandingPage/>}/>
         <Route path="/kyl_dashboard" element={<KYLDashboardPage/>}/>
-        <Route path="/landscape_explorer" element={<LE_page/>}/>
+        {/* <Route path="/landscape_explorer" element={<LE_page/>}/> */}
+        <Route path="/landscape-explorer-new" element={<LandscapeExplorer/>}/>
       </Routes>
     </BrowserRouter>
   </>
