@@ -49,7 +49,7 @@ const layerStyles = (feature, vectorStyle, idx = 0, villageJson, dataJson) => {
             // DROUGHT YEARS
             years.map((item) => {
                 let tempDro = (feature.values_["drlb_"+item].match(/2/g) || []).length + (feature.values_["drlb_"+item].match(/3/g)||[]).length;
-                if(tempDro > 5){avg_Res++;}
+                if(tempDro >= 5){avg_Res++;}
             })
             break;
 
