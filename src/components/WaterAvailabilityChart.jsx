@@ -106,23 +106,24 @@ const WaterAvailabilityChart = ({ waterbody, water_rej_data }) => {
   };
 
   return (
-    <div
-      style={{
-        display: "flex",
-        alignItems: "center",
-        height: "400px",
-        width: "100%",
-      }}
-    >
-      <div style={{ flex: 1, height: "100%" }}>
-        <Bar options={options} data={data} />
-      </div>
-      <div style={{ marginLeft: "16px", fontSize: "14px", color: "#333" }}>
-        The{" "}
-        <span style={{ color: "black", fontWeight: "bold" }}>black line</span>{" "}
-        represents the year of intervention.
-      </div>
+    <div style={{ width: "100%", height: "100%" }}>
+      <Bar options={options} data={data} />
     </div>
+    // <div
+    //   style={{
+    //     display: "flex",
+    //     alignItems: "center",
+    //   }}
+    // >
+    //   <div style={{ flex: 1 }}>
+    //     <Bar options={options} data={data} />
+    //   </div>
+    //   <div style={{ marginLeft: "16px", fontSize: "14px", color: "#333" }}>
+    //     The{" "}
+    //     <span style={{ color: "black", fontWeight: "bold" }}>black line</span>{" "}
+    //     represents the year of intervention.
+    //   </div>
+    // </div>
   );
 };
 

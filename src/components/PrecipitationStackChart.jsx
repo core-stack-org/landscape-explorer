@@ -77,6 +77,7 @@ const PrecipitationStackChart = ({ feature }) => {
   };
 
   const options = {
+    maintainAspectRatio: false,
     responsive: true,
     plugins: {
       tooltip: {
@@ -102,16 +103,19 @@ const PrecipitationStackChart = ({ feature }) => {
   };
 
   return (
-    <div
-      style={{
-        display: "flex",
-        alignItems: "center",
-        height: "400px",
-        width: "100%",
-      }}
-    >
-      <Bar data={data} options={options} />;
+    <div style={{ width: "100%", height: "100%" }}>
+      <Bar options={options} data={data} />
     </div>
+    // <div
+    //   style={{
+    //     display: "flex",
+    //     alignItems: "center",
+    //   }}
+    // >
+    //   <div style={{ flex: 1 }}>
+    //     <Bar data={data} options={options} />;
+    //   </div>
+    // </div>
   );
 };
 

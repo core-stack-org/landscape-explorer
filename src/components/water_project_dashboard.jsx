@@ -1306,7 +1306,44 @@ const WaterProjectDashboard = () => {
                 </Box>
               </Box>
             </Box>
-            {selectedWaterbody !== undefined && selectedWaterbody !== null && (
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                gap: "16px",
+                width: "100%",
+              }}
+            >
+              {/* Top Chart */}
+              {selectedWaterbody && (
+                <div
+                  style={{ display: "flex", gap: "16px", alignItems: "center" }}
+                >
+                  <div style={{ width: "800px", height: "400px" }}>
+                    <WaterAvailabilityChart
+                      waterbody={selectedWaterbody}
+                      water_rej_data={geoData}
+                    />
+                  </div>
+                  <div style={{ fontSize: "14px", color: "#333" }}>
+                    The{" "}
+                    <span style={{ color: "black", fontWeight: "bold" }}>
+                      black line
+                    </span>{" "}
+                    represents the year of intervention.
+                  </div>
+                </div>
+              )}
+
+              {/* Bottom Chart */}
+              {selectedMWSFeature && (
+                <div style={{ width: "800px", height: "400px" }}>
+                  <PrecipitationStackChart feature={selectedMWSFeature} />
+                </div>
+              )}
+            </div>
+
+            {/* {selectedWaterbody !== undefined && selectedWaterbody !== null && (
               <>
                 <div style={{ display: "flex", gap: "16px" }}>
                   <div style={{ width: "70%", height: "400px" }}>
@@ -1320,13 +1357,13 @@ const WaterProjectDashboard = () => {
             )}
             {selectedMWSFeature && (
               <>
-                <div style={{ display: "flex" }}>
-                  <div style={{ width: "80%", height: "400px" }}>
+                <div style={{ display: "flex", gap: "16px" }}>
+                  <div style={{ width: "70%", height: "400px" }}>
                     <PrecipitationStackChart feature={selectedMWSFeature} />
                   </div>
                 </div>
               </>
-            )}
+            )} */}
           </Box>
         ) : null}
       </Box>
