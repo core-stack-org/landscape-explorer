@@ -111,14 +111,14 @@
                         "lower" : 0, "upper" : 0
                     },
                     {
-                        "fill" : "rgba(235, 152, 78, 0.5)",
-                        "stroke" : "rgba(235, 152, 78, 1)",
-                        "lower" : 1, "upper" : 99999 
-                    },
-                    {
                         "fill" : "rgba(231, 76, 60, 0.5)",
                         "stroke" : "rgba(231, 76, 60, 1)",
                         "lower" : 2, "upper" : 99999
+                    },
+                    {
+                        "fill" : "rgba(235, 152, 78, 0.5)",
+                        "stroke" : "rgba(235, 152, 78, 1)",
+                        "lower" : 1, "upper" : 99999 
                     }
                 ],
                 "rasterStyle" : "",
