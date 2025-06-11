@@ -110,7 +110,7 @@ const LandingPage = () => {
   
                       <div>
                         <SelectButton
-                          currVal={block || { label: "Select Block" }}
+                          currVal={block || { label: "Select Tehsil" }}
                           stateData={district !== null ? district.blocks : null}
                           handleItemSelect={handleItemSelect}
                           setState={setBlock}
@@ -127,7 +127,7 @@ const LandingPage = () => {
                       </button>
                       <button 
                         className="bg-[#EDE9FE] text-[#8B5CF6] px-6 py-2.5 rounded-md text-sm font-medium hover:bg-[#DDD6FE] transition-colors"
-                        onClick={() => handleNavigate("/landscape_explorer", "Download Layers")}
+                        onClick={() => handleNavigate("/landscape-explorer-new", "Download Layers")}
                       >
                         Download Layers
                       </button>
