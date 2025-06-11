@@ -118,7 +118,7 @@ const WaterAvailabilityChart = ({ waterbody, water_rej_data }) => {
         <Bar options={options} data={data} />
       </div>
       <div style={{ marginLeft: "16px", fontSize: "14px", color: "#333" }}>
-        This{" "}
+        The{" "}
         <span style={{ color: "black", fontWeight: "bold" }}>black line</span>{" "}
         represents the year of intervention.
       </div>
