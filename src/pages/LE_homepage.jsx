@@ -65,7 +65,7 @@ export default function KYLHomePage() {
         style={{ backgroundImage: `url(${landingPageBg})` }}
       >
         {/* Know Section */}
-        <section className="backdrop-brightness-90 backdrop-blur-sm bg-white/0 p-8 rounded-xl mx-6 my-10">
+        <section className="backdrop-brightness-90 backdrop-blur-sm bg-white/0 p-8 rounded-xl mx-6 my-2">
           {" "}
           <div className="flex flex-col md:flex-row md:items-start md:justify-between">
             <div className="pl-16 pr-8 md:w-1/2">

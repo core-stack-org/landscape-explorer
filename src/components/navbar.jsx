@@ -4,8 +4,9 @@ import newLogo from "../assets/newLogo.png";
 
 const Navbar = () => {
   return (
-    <nav className="bg-white shadow-sm">
-      <div className="max-w-7xl mx-auto px-4">
+    <nav className="bg-white shadow-2xl">
+      <div className="w-full px-10">
+        {" "}
         <div className="flex items-center h-16">
           <Link to="/" className="flex items-center gap-2 cursor-pointer">
             <img src={newLogo} alt="KYL Logo" className="h-8 w-8" />
