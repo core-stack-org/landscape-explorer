@@ -1183,7 +1183,7 @@ const WaterProjectDashboard = () => {
                     fontWeight={800}
                   >
                     Area (in hectare):{" "}
-                    {selectedWaterbody?.areaOred || "areaOred"} hectares
+                    {(selectedWaterbody?.areaOred || 0).toFixed(2)} hectares
                   </Typography>
                 </Box>
 
