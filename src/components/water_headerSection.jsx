@@ -94,10 +94,11 @@ const HeaderSelect = ({
 
   useEffect(() => {
     const fetchProjects = async () => {
-      let token = sessionStorage.getItem("accessToken");
+      if (!organization) return;
 
+      let token = sessionStorage.getItem("accessToken");
       if (!token) {
-        token = await loginAndGetToken(); // Perform auto-login
+        token = await loginAndGetToken();
         if (!token) return;
       }
 
@@ -120,16 +121,19 @@ const HeaderSelect = ({
 
         const data = await response.json();
 
-        const options = data.map((project) => ({
+        const filtered = data.filter(
+          (project) => project.organization === organization.value
+        );
+
+        const options = filtered.map((project) => ({
           label: project.name,
           value: String(project.id),
         }));
 
-        setProjectOptions(options); // ✅ Now this runs
-        setProjectCount(data.length);
-        setProjects(data);
+        setProjectOptions(options);
+        setProjectCount(filtered.length);
+        setProjects(filtered);
 
-        // Try setting from sessionStorage
         const storedProject = sessionStorage.getItem("selectedProject");
         if (storedProject) {
           const parsed = JSON.parse(storedProject);
@@ -144,7 +148,7 @@ const HeaderSelect = ({
     };
 
     fetchProjects();
-  }, []);
+  }, [organization]);
 
   const loadOrganization = async () => {
     try {
@@ -263,6 +267,7 @@ const HeaderSelect = ({
                 isDisabled={isOnDashboard}
                 menuPortalTarget={document.body}
                 menuPosition="fixed"
+                noOptionsMessage={() => "No projects available"}
               />
             </Box>
           </Toolbar>
