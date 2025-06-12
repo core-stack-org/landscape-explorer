@@ -164,7 +164,7 @@
                 "label" : "Percentage of average surface water availability during Rabi in micro-watershed",
                 "type" : 2,
                 "values" : [
-                    {"label" : "Less than 30%", "value" : {"lower" : 10, "upper" : 30}},
+                    {"label" : "Less than 30%", "value" : {"lower" : 0, "upper" : 30}},
                     {"label" : "Between 30% to 70%", "value" : {"lower" : 30, "upper" : 70}},
                     {"label" : "More than 70%", "value" : {"lower" : 70, "upper" : 999999}}
                 ],
