@@ -81,11 +81,21 @@ const YearSlider = ({ currentLayer }) => {
                   {yearDataLulc[yearDataLulc.length - 1].label}
                 </span>
               </div>
-              <div className="flex justify-between mt-1 px-1 text-[10px] text-gray-600 select-none">
+              <div className="relative w-full mt-3 h-8">
                 {yearDataLulc.map(({ label }, index) => (
-                  <span key={index} className="flex-1 text-center">
-                    {label}
-                  </span>
+                  <div
+                    key={index}
+                    className="absolute  text-[10px] text-gray-700 text-center whitespace-nowrap"
+                    style={{
+                      left: `${
+                        (index / (yearDataLulc.length - 1)) * 65 + 15.5
+                      }%`,
+                    }}
+                  >
+                    {label.split("-")[0]}
+                    <br />
+                    {label.split("-")[1]}
+                  </div>
                 ))}
               </div>
             </div>
