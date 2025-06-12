@@ -1049,17 +1049,17 @@ const WaterProjectDashboard = () => {
 
                 <TableBody>
                   {sortedRows.map((row) => (
-                    <TableRow key={row.id} hover>
+                    <TableRow
+                      key={row.id}
+                      hover
+                      sx={{ cursor: "pointer" }}
+                      onClick={() => handleWaterbodyClick(row)}
+                    >
                       <TableCell>{row.state}</TableCell>
                       <TableCell>{row.district}</TableCell>
                       <TableCell>{row.block}</TableCell>
                       <TableCell>{row.village}</TableCell>{" "}
-                      <TableCell
-                        onClick={() => handleWaterbodyClick(row)}
-                        sx={{ cursor: "pointer" }}
-                      >
-                        {row.waterbody}
-                      </TableCell>
+                      <TableCell>{row.waterbody}</TableCell>
                       <TableCell>{row.siltRemoved}</TableCell>
                       <TableCell>
                         {row.avgWaterAvailabilityKharif ?? "NA"}
