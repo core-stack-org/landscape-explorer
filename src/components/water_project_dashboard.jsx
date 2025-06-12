@@ -179,6 +179,7 @@ const WaterProjectDashboard = () => {
 
     const mappedRows = geoData.features.map((feature, index) => {
       const props = feature.properties || {};
+      console.log("area_ored:", props.area_ored);
       const geometry = feature.geometry || {};
 
       let coordinates = null;
@@ -292,6 +293,7 @@ const WaterProjectDashboard = () => {
         avgWaterAvailabilityKharif: meanFilteredKharif,
         avgWaterAvailabilityRabi: meanFilteredRabi,
         avgWaterAvailabilityZaid: meanFilteredZaid,
+        areaOred: props.area_ored || 0,
         // avgWaterAvailabilityKharif: avgKharif,
         // avgWaterAvailabilityRabi: avgRabi,
         // avgWaterAvailabilityZaid: avgZaid,
@@ -563,7 +565,7 @@ const WaterProjectDashboard = () => {
       source: vectorLayerWater,
       style: new Style({
         stroke: new Stroke({ color: "#ff0000", width: 5 }),
-        fill: new Fill({ color: "rgba(100, 149, 237, 0.5)" }),
+        // fill: new Fill({ color: "rgba(100, 149, 237, 0.5)" }),
       }),
     });
     waterBodyLayer.setZIndex(1);
@@ -1166,9 +1168,22 @@ const WaterProjectDashboard = () => {
                     </Typography>
                   </Box>
 
-                  <Typography variant="body2" color="text.secondary">
+                  <Typography
+                    variant="body2"
+                    color="text.secondary"
+                    fontWeight={800}
+                  >
                     Silt Removed: {selectedWaterbody?.siltRemoved || "silt"}{" "}
                     cubic metre
+                  </Typography>
+
+                  <Typography
+                    variant="body2"
+                    color="text.secondary"
+                    fontWeight={800}
+                  >
+                    Area (in hectare):{" "}
+                    {selectedWaterbody?.areaOred || "areaOred"} hectares
                   </Typography>
                 </Box>
 
