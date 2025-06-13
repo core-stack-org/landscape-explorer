@@ -201,83 +201,152 @@ const WaterProjectDashboard = () => {
         coordinates = geometry.coordinates[middleIndex];
       }
 
-      // KHARIF
-      const kharifEntries = Object.entries(props).filter(([key]) =>
-        /^k_\d{2}-\d{2}$/i.test(key)
-      );
-      const kharifValues = kharifEntries
-        .map(([_, value]) => Number(value))
-        .filter((val) => !isNaN(val));
-      // console.log(kharifValues);
-      let nonZeroStartIndexK = kharifValues.findIndex((val) => val !== 0);
+      const seasonKeys = ["k_", "kr_", "krz_"];
+      const seasonYears = [
+        "17-18",
+        "18-19",
+        "19-20",
+        "20-21",
+        "21-22",
+        "22-23",
+        "23-24",
+      ];
 
-      const filteredKharifValues = kharifValues.slice(nonZeroStartIndexK);
-      // console.log(filteredKharifValues);
-      const sumFilteredKharif = filteredKharifValues.reduce(
-        (acc, val) => acc + val,
-        0
-      );
-      const meanFilteredKharif =
-        filteredKharifValues.length > 0
-          ? (sumFilteredKharif / filteredKharifValues.length).toFixed(2)
-          : "0.00";
+      let startIndex = -1;
 
-      // console.log("Mean of filteredKharifValues:", meanFilteredKharif);
+      // Step 1: Find the first year from where we have any non-zero value in any season
+      for (let i = 0; i < seasonYears.length; i++) {
+        const year = seasonYears[i];
 
-      const sumKharif = kharifValues.reduce((acc, val) => acc + val, 0);
-      const avgKharif = (sumKharif / 7).toFixed(2);
+        const k = Number(props[`k_${year}`]) || 0;
+        const kr = Number(props[`kr_${year}`]) || 0;
+        const krz = Number(props[`krz_${year}`]) || 0;
 
-      // RABI
-      const rabiEntries = Object.entries(props).filter(([key]) =>
-        /^kr_\d{2}-\d{2}$/i.test(key)
-      );
-      const rabiValues = rabiEntries
-        .map(([_, value]) => Number(value))
-        .filter((val) => !isNaN(val));
+        if (k !== 0 || kr !== 0 || krz !== 0) {
+          startIndex = i;
+          break;
+        }
+      }
 
-      let nonZeroStartIndexR = rabiValues.findIndex((val) => val !== 0);
+      let kharifValues = [];
+      let rabiValues = [];
+      let zaidValues = [];
+      let meanKharif = "0.00";
+      let meanRabi = "0.00";
+      let meanZaid = "0.00";
 
-      const filteredRabiValues = rabiValues.slice(nonZeroStartIndexR);
-      // console.log(filteredRabiValues);
-      const sumFilteredRabi = filteredRabiValues.reduce(
-        (acc, val) => acc + val,
-        0
-      );
-      const meanFilteredRabi =
-        filteredRabiValues.length > 0
-          ? (sumFilteredRabi / filteredRabiValues.length).toFixed(2)
-          : "0.00";
+      if (startIndex !== -1) {
+        for (let i = startIndex; i < seasonYears.length; i++) {
+          const year = seasonYears[i];
 
-      // console.log("Mean of filteredRabiValues:", meanFilteredRabi);
+          const k = Number(props[`k_${year}`]);
+          const kr = Number(props[`kr_${year}`]);
+          const krz = Number(props[`krz_${year}`]);
 
-      const sumRabi = rabiValues.reduce((acc, val) => acc + val, 0);
-      const avgRabi = (sumRabi / 7).toFixed(2);
+          kharifValues.push(!isNaN(k) ? k : 0);
+          rabiValues.push(!isNaN(kr) ? kr : 0);
+          zaidValues.push(!isNaN(krz) ? krz : 0);
+        }
 
-      // ZAID
-      const zaidEntries = Object.entries(props).filter(([key]) =>
-        /^krz_\d{2}-\d{2}$/i.test(key)
-      );
-      const zaidValues = zaidEntries
-        .map(([_, value]) => Number(value))
-        .filter((val) => !isNaN(val));
+        const numYears = seasonYears.length - startIndex;
 
-      let nonZeroStartIndexZ = zaidValues.findIndex((val) => val !== 0);
+        meanKharif = (
+          kharifValues.reduce((a, b) => a + b, 0) / numYears
+        ).toFixed(2);
 
-      const filteredZaidValues = zaidValues.slice(nonZeroStartIndexZ);
-      // console.log(filteredZaidValues);
-      const sumFilteredzaid = filteredZaidValues.reduce(
-        (acc, val) => acc + val,
-        0
-      );
-      const meanFilteredZaid =
-        filteredZaidValues.length > 0
-          ? (sumFilteredzaid / filteredZaidValues.length).toFixed(2)
-          : "0.00";
+        meanRabi = (rabiValues.reduce((a, b) => a + b, 0) / numYears).toFixed(
+          2
+        );
 
-      // console.log("Mean of filteredZaidValues:", meanFilteredZaid);
+        meanZaid = (zaidValues.reduce((a, b) => a + b, 0) / numYears).toFixed(
+          2
+        );
 
-      const sumZaid = zaidValues.reduce((acc, val) => acc + val, 0);
-      const avgZaid = (sumZaid / 7).toFixed(2);
+        // 🔍 Debug:
+        console.log("Start Year:", seasonYears[startIndex]);
+        console.log("Years Count (used for mean):", numYears);
+        console.log("Kharif:", kharifValues, "Mean:", meanKharif);
+        console.log("Rabi:", rabiValues, "Mean:", meanRabi);
+        console.log("Zaid:", zaidValues, "Mean:", meanZaid);
+      }
+
+      // // KHARIF
+      // const kharifEntries = Object.entries(props).filter(([key]) =>
+      //   /^k_\d{2}-\d{2}$/i.test(key)
+      // );
+      // const kharifValues = kharifEntries
+      //   .map(([_, value]) => Number(value))
+      //   .filter((val) => !isNaN(val));
+      // // console.log(kharifValues);
+      // let nonZeroStartIndexK = kharifValues.findIndex((val) => val !== 0);
+
+      // const filteredKharifValues = kharifValues.slice(nonZeroStartIndexK);
+      // // console.log(filteredKharifValues);
+      // const sumFilteredKharif = filteredKharifValues.reduce(
+      //   (acc, val) => acc + val,
+      //   0
+      // );
+      // const meanFilteredKharif =
+      //   filteredKharifValues.length > 0
+      //     ? (sumFilteredKharif / filteredKharifValues.length).toFixed(2)
+      //     : "0.00";
+
+      // // console.log("Mean of filteredKharifValues:", meanFilteredKharif);
+
+      // const sumKharif = kharifValues.reduce((acc, val) => acc + val, 0);
+      // const avgKharif = (sumKharif / 7).toFixed(2);
+
+      // // RABI
+      // const rabiEntries = Object.entries(props).filter(([key]) =>
+      //   /^kr_\d{2}-\d{2}$/i.test(key)
+      // );
+      // const rabiValues = rabiEntries
+      //   .map(([_, value]) => Number(value))
+      //   .filter((val) => !isNaN(val));
+
+      // let nonZeroStartIndexR = rabiValues.findIndex((val) => val !== 0);
+
+      // const filteredRabiValues = rabiValues.slice(nonZeroStartIndexR);
+      // // console.log(filteredRabiValues);
+      // const sumFilteredRabi = filteredRabiValues.reduce(
+      //   (acc, val) => acc + val,
+      //   0
+      // );
+      // const meanFilteredRabi =
+      //   filteredRabiValues.length > 0
+      //     ? (sumFilteredRabi / filteredRabiValues.length).toFixed(2)
+      //     : "0.00";
+
+      // // console.log("Mean of filteredRabiValues:", meanFilteredRabi);
+
+      // const sumRabi = rabiValues.reduce((acc, val) => acc + val, 0);
+      // const avgRabi = (sumRabi / 7).toFixed(2);
+
+      // // ZAID
+      // const zaidEntries = Object.entries(props).filter(([key]) =>
+      //   /^krz_\d{2}-\d{2}$/i.test(key)
+      // );
+      // const zaidValues = zaidEntries
+      //   .map(([_, value]) => Number(value))
+      //   .filter((val) => !isNaN(val));
+
+      // let nonZeroStartIndexZ = zaidValues.findIndex((val) => val !== 0);
+
+      // const filteredZaidValues = zaidValues.slice(nonZeroStartIndexZ);
+      // // console.log(filteredZaidValues);
+      // const sumFilteredzaid = filteredZaidValues.reduce(
+      //   (acc, val) => acc + val,
+      //   0
+      // );
+      // const meanFilteredZaid =
+      //   filteredZaidValues.length > 0
+      //     ? (sumFilteredzaid / filteredZaidValues.length).toFixed(2)
+      //     : "0.00";
+
+      // // console.log("Mean of filteredZaidValues:", meanFilteredZaid);
+
+      // const sumZaid = zaidValues.reduce((acc, val) => acc + val, 0);
+      // const avgZaid = (sumZaid / 7).toFixed(2);
 
       // Parse silt removed safely, default to 0 if missing or NaN
       const siltRemoved = Number(props.slit_excavated) || 0;
@@ -291,9 +360,9 @@ const WaterProjectDashboard = () => {
         village: props.village || "NA",
         waterbody: props.waterbody_name || "NA",
         siltRemoved,
-        avgWaterAvailabilityKharif: meanFilteredKharif,
-        avgWaterAvailabilityRabi: meanFilteredRabi,
-        avgWaterAvailabilityZaid: meanFilteredZaid,
+        avgWaterAvailabilityKharif: meanKharif,
+        avgWaterAvailabilityRabi: meanRabi,
+        avgWaterAvailabilityZaid: meanZaid,
         areaOred: props.area_ored || 0,
         // avgWaterAvailabilityKharif: avgKharif,
         // avgWaterAvailabilityRabi: avgRabi,
