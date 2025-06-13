@@ -7,11 +7,13 @@ import {
   Container,
   Select,
   MenuItem,
+  Button,
 } from "@mui/material";
 import { useNavigate, useLocation } from "react-router-dom";
 import SelectReact from "react-select";
 import TuneIcon from "@mui/icons-material/Tune";
 import water from "../assets/water.jpeg";
+import ArrowBackIosNewIcon from "@mui/icons-material/ArrowBackIosNew";
 
 const HeaderSelect = ({
   showExtras = false,
@@ -81,11 +83,7 @@ const HeaderSelect = ({
 
       const storedProject = sessionStorage.getItem("selectedProject");
       if (storedProject) {
-        const parsed = JSON.parse(storedProject);
-        const matched = projectOptions.find((p) => p.value === parsed.value);
-        if (matched) {
-          setProject(matched);
-        }
+        setProject(JSON.parse(storedProject)); // ✅ just set, match will happen after `fetchProjects`
       }
     };
 
@@ -270,6 +268,35 @@ const HeaderSelect = ({
                 noOptionsMessage={() => "No projects available"}
               />
             </Box>
+            {isOnDashboard && (
+              <Box sx={{ ml: "auto" }}>
+                <Button
+                  variant="outlined"
+                  startIcon={<ArrowBackIosNewIcon />}
+                  onClick={() => {
+                    sessionStorage.removeItem("selectedProject");
+                    navigate("/water_dashboard");
+                  }}
+                  sx={{
+                    color: "#333",
+                    borderColor: "#bbb",
+                    borderRadius: "8px",
+                    textTransform: "none",
+                    fontWeight: 500,
+                    px: 2.5,
+                    py: 1,
+                    ml: "auto",
+                    backgroundColor: "#fff",
+                    "&:hover": {
+                      backgroundColor: "#f0f0f0",
+                      borderColor: "#999",
+                    },
+                  }}
+                >
+                  Back
+                </Button>
+              </Box>
+            )}
           </Toolbar>
         </Container>
       </AppBar>

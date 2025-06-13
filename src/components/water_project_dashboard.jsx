@@ -180,6 +180,7 @@ const WaterProjectDashboard = () => {
     const mappedRows = geoData.features.map((feature, index) => {
       const props = feature.properties || {};
       console.log("area_ored:", props.area_ored);
+      console.log(props.slit_excavated);
       const geometry = feature.geometry || {};
 
       let coordinates = null;
@@ -311,6 +312,7 @@ const WaterProjectDashboard = () => {
   }, [geoData]);
 
   const totalRows = rows.length;
+  console.log(totalRows);
 
   const [year, setYear] = useState(2024);
   const handleYearChange = (newYear) => setYear(newYear);
@@ -882,7 +884,7 @@ const WaterProjectDashboard = () => {
             >
               <Lightbulb size={94} color="black" />
               Under the project {project?.label}, {totalRows} waterbodies have
-              been de-silted, spanning around {avgSiltRemoved.toFixed(2)} Cu.m..
+              been de-silted, spanning around {avgSiltRemoved.toFixed(2)} Cu.m.
               {/* On average, the surface
               water availability during summer season has changed from 16% to
               25%. */}
@@ -1357,28 +1359,6 @@ const WaterProjectDashboard = () => {
                 </div>
               )}
             </div>
-
-            {/* {selectedWaterbody !== undefined && selectedWaterbody !== null && (
-              <>
-                <div style={{ display: "flex", gap: "16px" }}>
-                  <div style={{ width: "70%", height: "400px" }}>
-                    <WaterAvailabilityChart
-                      waterbody={selectedWaterbody}
-                      water_rej_data={geoData}
-                    />
-                  </div>
-                </div>
-              </>
-            )}
-            {selectedMWSFeature && (
-              <>
-                <div style={{ display: "flex", gap: "16px" }}>
-                  <div style={{ width: "70%", height: "400px" }}>
-                    <PrecipitationStackChart feature={selectedMWSFeature} />
-                  </div>
-                </div>
-              </>
-            )} */}
           </Box>
         ) : null}
       </Box>
