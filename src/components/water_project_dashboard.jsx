@@ -172,7 +172,7 @@ const WaterProjectDashboard = () => {
   const { geoData, mwsGeoData } = useWaterRejData(project, projectId);
 
   // const geoData = useWaterRejData(project, projectId);
-  const { rows, avgSiltRemoved } = useMemo(() => {
+  const { rows, totalSiltRemoved } = useMemo(() => {
     if (!geoData?.features) return { rows: [], avgSiltRemoved: 0 };
 
     let totalSiltRemoved = 0;
@@ -377,7 +377,7 @@ const WaterProjectDashboard = () => {
       ? totalSiltRemoved / mappedRows.length
       : 0;
 
-    return { rows: mappedRows, avgSiltRemoved };
+    return { rows: mappedRows, totalSiltRemoved };
   }, [geoData]);
 
   const totalRows = rows.length;
@@ -953,7 +953,8 @@ const WaterProjectDashboard = () => {
             >
               <Lightbulb size={94} color="black" />
               Under the project {project?.label}, {totalRows} waterbodies have
-              been de-silted, spanning around {avgSiltRemoved.toFixed(2)} Cu.m.
+              been de-silted, spanning around{" "}
+              {(totalSiltRemoved || 0).toFixed(2)} Cu.m.
               {/* On average, the surface
               water availability during summer season has changed from 16% to
               25%. */}
