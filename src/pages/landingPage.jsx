@@ -127,7 +127,7 @@ const LandingPage = () => {
                       </button>
                       <button 
                         className="bg-[#EDE9FE] text-[#8B5CF6] px-6 py-2.5 rounded-md text-sm font-medium hover:bg-[#DDD6FE] transition-colors"
-                        onClick={() => handleNavigate("/landscape-explorer-new", "Download Layers")}
+                        onClick={() => handleNavigate("/download_layers", "Download Layers")}
                       >
                         Download Layers
                       </button>
