@@ -107,7 +107,7 @@ const LandscapeExplorer = () => {
   const [layersReady, setLayersReady] = useState(false);
   
   // Flag to track if we need to enable the fetch button
-  const [canFetchLayers, setCanFetchLayers] = useState(false);
+  const [canFetchLayers, setCanFetchLayers] = useState(block !== null);
 
 
   // Handle item selection for dropdowns
@@ -288,11 +288,6 @@ const LandscapeExplorer = () => {
     downloadHelper.downloadKml(downloadUrl, layerName);
   };
 
-  // Keep handleFetchLayers as a no-op since it's still referenced in props
-  const handleFetchLayers = () => {
-    // This function is kept as a no-op to prevent errors, since it's still passed to RightSidebar
-    console.log('Fetch layers functionality has been automated');
-  };
 
   // Handle Excel download
   const handleExcelDownload = () => {
