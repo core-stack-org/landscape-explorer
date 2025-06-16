@@ -138,6 +138,9 @@ const HeaderSelect = ({
           const matched = options.find((p) => p.value === parsed.value);
           if (matched) {
             setProject(matched);
+          } else {
+            setProject(null);
+            sessionStorage.removeItem("selectedProject");
           }
         }
       } catch (error) {
@@ -208,6 +211,19 @@ const HeaderSelect = ({
     }
   };
 
+  useEffect(() => {
+    const savedOrg = sessionStorage.getItem("selectedOrganization");
+    const savedProject = sessionStorage.getItem("selectedProject");
+
+    if (savedOrg) {
+      setOrganization(JSON.parse(savedOrg));
+    }
+
+    if (savedProject) {
+      setProject(JSON.parse(savedProject));
+    }
+  }, []);
+
   return (
     <Box
       sx={{ height: "100vh", overflow: "hidden", backgroundColor: "#EAEAEA" }}
@@ -274,7 +290,6 @@ const HeaderSelect = ({
                   variant="outlined"
                   startIcon={<ArrowBackIosNewIcon />}
                   onClick={() => {
-                    sessionStorage.removeItem("selectedProject");
                     navigate("/water_dashboard");
                   }}
                   sx={{
