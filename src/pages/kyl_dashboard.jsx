@@ -80,8 +80,8 @@ const KYLDashboardPage = () => {
   const [showVillages, setShowVillages] = useState(true);
   const [filtersEnabled, setFiltersEnabled] = useState(false);
 
-    const [toastId, setToastId] = useState(null);
-    const [selectedMWSProfile, setSelectedMWSProfile] = useState(null);
+  const [toastId, setToastId] = useState(null);
+  const [selectedMWSProfile, setSelectedMWSProfile] = useState(null);
 
   const handleResetMWS = () => {
     if (!selectedMWSProfile) return; // If no MWS is selected, do nothing
@@ -1518,49 +1518,49 @@ const KYLDashboardPage = () => {
           currentLayer={currentLayer}
         />
 
-                {/* Right Sidebar */}
-                <KYLRightSidebar
-                    state={state}
-                    district={district}
-                    block={block}
-                    setState={setState}
-                    setDistrict={setDistrict}
-                    setBlock={setBlock}
-                    statesData={statesData}
-                    handleItemSelect={handleItemSelect}
-                    setFilterSelections={setFilterSelections}
-                    getFormattedSelectedFilters={getFormattedSelectedFilters}
-                    selectedMWS={selectedMWS}
-                    selectedVillages={selectedVillages}
-                    plansState={plans}
-                    currentPlan={currentPlan}
-                    setCurrentPlan={setCurrentPlan}
-                    onLocationSelect={(location) => {
-                        if (location.type === 'block') {
-                            setTimeout(() => {
-                                fetchBoundaryAndZoom(
-                                    location.data.district.label,
-                                    location.data.block.label
-                                );
-                                resetAllStates();
-                            }, 0);
-                        }
-                    }}
-                    handleAssetSelection={handleAssetSelection}
-                    mappedAssets={mappedAssets}
-                    mappedDemands={mappedDemands}
-                    handleLayerSelection={handleLayerSelection}
-                    toggleStates={toggleStates}
-                    setToggleStates={setToggleStates}
-                    currentLayer={currentLayer}
-                    setCurrentLayer={setCurrentLayer}
-                    mapRef={mapRef}
-                    //onAnalyzeClick={handleAnalyzeClick}
-                    onResetMWS={handleResetMWS}
-                    selectedMWSProfile={selectedMWSProfile}
-                />
-            </div>
+        {/* Right Sidebar */}
+        <KYLRightSidebar
+          state={state}
+          district={district}
+          block={block}
+          setState={setState}
+          setDistrict={setDistrict}
+          setBlock={setBlock}
+          statesData={statesData}
+          handleItemSelect={handleItemSelect}
+          setFilterSelections={setFilterSelections}
+          getFormattedSelectedFilters={getFormattedSelectedFilters}
+          selectedMWS={selectedMWS}
+          selectedVillages={selectedVillages}
+          plansState={plans}
+          currentPlan={currentPlan}
+          setCurrentPlan={setCurrentPlan}
+          onLocationSelect={(location) => {
+              if (location.type === 'block') {
+                  setTimeout(() => {
+                      fetchBoundaryAndZoom(
+                          location.data.district.label,
+                          location.data.block.label
+                      );
+                      resetAllStates();
+                  }, 0);
+              }
+          }}
+          handleAssetSelection={handleAssetSelection}
+          mappedAssets={mappedAssets}
+          mappedDemands={mappedDemands}
+          handleLayerSelection={handleLayerSelection}
+          toggleStates={toggleStates}
+          setToggleStates={setToggleStates}
+          currentLayer={currentLayer}
+          setCurrentLayer={setCurrentLayer}
+          mapRef={mapRef}
+          //onAnalyzeClick={handleAnalyzeClick}
+          onResetMWS={handleResetMWS}
+          selectedMWSProfile={selectedMWSProfile}
+        />
         </div>
+    </div>
     );
 };
 
