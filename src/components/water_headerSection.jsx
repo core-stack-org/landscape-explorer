@@ -89,10 +89,14 @@ const HeaderSelect = ({
 
     fetchOrganizations();
   }, []);
-
   useEffect(() => {
     const fetchProjects = async () => {
-      if (!organization) return;
+      if (!organization) {
+        console.log("No organization selected yet.");
+        return;
+      }
+
+      console.log("Selected org for project fetch:", organization);
 
       let token = sessionStorage.getItem("accessToken");
       if (!token) {
@@ -132,6 +136,7 @@ const HeaderSelect = ({
         setProjectCount(filtered.length);
         setProjects(filtered);
 
+        // Handle session-matched project
         const storedProject = sessionStorage.getItem("selectedProject");
         if (storedProject) {
           const parsed = JSON.parse(storedProject);
@@ -164,6 +169,7 @@ const HeaderSelect = ({
         }
       );
       const data = await response.json();
+      console.log(data);
       return data.map((org) => ({
         value: org.id,
         label: org.name,
