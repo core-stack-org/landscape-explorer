@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router";
 import { useRecoilState } from "recoil";
 import {
@@ -9,9 +9,9 @@ import {
 } from "../store/locationStore";
 import SelectButton from "../components/buttons/select_button.jsx";
 import landingPageBg from "../assets/landingpagebg.svg";
-import participatoryImg from "../assets/Plan - participatory planning thumbnail.png";
-import newLogo from "../assets/newLogo.png";
-import planAndView from "../assets/Plan - view and support plans thumbnail.png";
+import participatoryImg from "../assets/RevisedPlanningCrop.png";
+import newLogo from "../assets/RevisedLogoCrop.png";
+import planAndView from "../assets/RevisedViewAndSupportCrop.png";
 import getStates from "../actions/getStates";
 import {
   trackPageView,
@@ -27,6 +27,8 @@ export default function KYLHomePage() {
   const [state, setState] = useRecoilState(stateAtom);
   const [district, setDistrict] = useRecoilState(districtAtom);
   const [block, setBlock] = useRecoilState(blockAtom);
+  const [showOverlay, setShowOverlay] = useState(false);
+  const [showVideo, setShowVideo] = useState(false);
 
   useEffect(() => {
     initializeAnalytics();
@@ -171,11 +173,13 @@ export default function KYLHomePage() {
               {/* Card 1 */}
               <div>
                 {/* Image block */}
-                <img
-                  src={participatoryImg}
-                  alt="Participatory Planning"
-                  className="h-62 w-full object-fill rounded shadow mb-4"
-                />
+                <div className="w-full aspect-[4/4] overflow-hidden rounded shadow mb-4">
+                  <img
+                    src={participatoryImg}
+                    alt="Participatory Planning"
+                    className="h-full w-full object-fill"
+                  />
+                </div>
 
                 {/* Content block */}
                 <div className=" p-4 rounded text-left">
@@ -187,19 +191,49 @@ export default function KYLHomePage() {
                     organic class american explict. Mark s soft cover terrapass
                     key salsa, guide expansion.
                   </p>
-                  <a href="#" className="text-purple-700 text-sm font-semibold">
+                  {/* Inside Card 1 */}
+                  <button
+                    onClick={() => setShowVideo(true)}
+                    className="text-purple-700 text-sm font-semibold"
+                  >
                     Learn More →
-                  </a>
+                  </button>
+
+                  {showVideo && (
+                    <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50">
+                      <div className="bg-white  rounded-xl max-w-4xl w-full relative">
+                        <button
+                          onClick={() => setShowVideo(false)}
+                          className="absolute top-2 right-2 text-gray-600 text-xl font-bold"
+                        >
+                          ✕
+                        </button>
+
+                        {/* Responsive video container */}
+                        <div className="aspect-[4/3] w-full rounded overflow-hidden">
+                          <iframe
+                            className="w-full h-full"
+                            src="https://www.youtube.com/embed/videoseries?list=PLZ0pcz8ccRmIU8wHzHv-CbDOs4JOqgNHC"
+                            title="Participatory Planning Playlist"
+                            frameBorder="0"
+                            allowFullScreen
+                          ></iframe>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
 
               {/* Card 2 */}
               <div>
-                <img
-                  src={newLogo}
-                  alt="Participatory Planning"
-                  className="h-62 w-full object-fill rounded shadow mb-4"
-                />{" "}
+                <div className="w-full aspect-[4/4] rounded overflow-hidden shadow mb-4 relative">
+                  <img
+                    src={newLogo}
+                    alt="Participatory Planning"
+                    className="absolute inset-0 w-full h-full object-cover object-center"
+                  />
+                </div>
                 <div className=" p-4 rounded-b text-left">
                   <h3 className="font-bold mb-2 text-sm">
                     Download Commons Connect App
@@ -208,24 +242,37 @@ export default function KYLHomePage() {
                     Access tools and resources for landscape planning directly
                     on your smartphone using our free mobile app.
                   </p>
-                  <a
-                    href="https://drive.google.com/file/d/1E0IoKT85MVnDghhkqe0O7Dj_q0tbLji5/view?usp=sharing"
-                    target="_blank"
-                    className="text-purple-700 text-sm font-semibold"
-                  >
-                    Download now →
-                  </a>
+                  <p className="text-purple-700 text-sm font-semibold">
+                    Please mail us at{" "}
+                    <a
+                      href="mailto:support@core-stack.org"
+                      className="underline"
+                    >
+                      support@core-stack.org
+                    </a>{" "}
+                    to download the app →
+                  </p>
                 </div>
               </div>
 
               {/* Card 3 */}
               <div>
-                <img
-                  src={planAndView}
-                  alt="Participatory Planning"
-                  className="h-62 w-full object-fill rounded shadow mb-4"
-                />{" "}
-                <div className=" p-4 rounded-b  text-left">
+                <div className="w-full aspect-[4/4] rounded overflow-hidden shadow mb-4 relative">
+                  <img
+                    src={planAndView}
+                    alt="Participatory Planning"
+                    className="absolute inset-0 w-full h-full object-cover"
+                  />
+                  {showOverlay && (
+                    <div className="absolute inset-0 bg-gray-800 bg-opacity-75 flex items-center justify-center z-10">
+                      <p className="text-white text-lg font-semibold">
+                        Coming Soon...
+                      </p>
+                    </div>
+                  )}
+                </div>
+
+                <div className="p-4 rounded-b text-left">
                   <h3 className="font-bold mb-2 text-sm">
                     View and Support Plans
                   </h3>
@@ -233,9 +280,15 @@ export default function KYLHomePage() {
                     Explore existing community plans and find opportunities to
                     support or collaborate with ongoing initiatives.
                   </p>
-                  <a href="#" className="text-purple-700 text-sm font-semibold">
+                  <button
+                    onClick={() => {
+                      setShowOverlay(true);
+                      setTimeout(() => setShowOverlay(false), 5000);
+                    }}
+                    className="text-purple-700 text-sm font-semibold"
+                  >
                     Learn More →
-                  </a>
+                  </button>
                 </div>
               </div>
             </div>
@@ -248,7 +301,7 @@ export default function KYLHomePage() {
             <div className="flex flex-col md:flex-row md:items-start md:justify-between">
               <div>
                 <h2 className="text-3xl font-bold text-purple-700 mb-2">
-                  Monitor and Access
+                  Track and Assess
                 </h2>
               </div>
               <div className="w-full max-w-5xl">
@@ -274,6 +327,7 @@ export default function KYLHomePage() {
                   description:
                     "Monitor changes in cropping patterns and assess the impact of watershed development interventions.",
                   icon: "🌾",
+                  link: "https://welllabs.org/jaltol/",
                 },
                 {
                   title: "Agroforestry Plantations",
@@ -286,6 +340,7 @@ export default function KYLHomePage() {
                   description:
                     "Visualize waterbody interventions and evaluate their effects on water availability and agriculture.",
                   icon: "💧",
+                  link: "https://development-waterbody-dashboard.d2s4eeyazvtd2g.amplifyapp.com/water_dashboard",
                 },
                 {
                   title: "Commons Connect Plans",
@@ -309,12 +364,20 @@ export default function KYLHomePage() {
                       <p className="text-sm text-gray-700 mb-3">
                         {item.description}
                       </p>
-                      <a
-                        href="#"
-                        className="text-purple-700 font-medium text-sm hover:underline"
-                      >
-                        Learn More →
-                      </a>
+                      {item.link ? (
+                        <a
+                          href={item.link}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-purple-700 font-medium text-sm hover:underline"
+                        >
+                          Learn More →
+                        </a>
+                      ) : (
+                        <span className="text-gray-400 text-sm italic">
+                          Coming soon...
+                        </span>
+                      )}
                     </div>
                   </div>
                 </div>
