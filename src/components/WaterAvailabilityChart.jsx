@@ -101,6 +101,11 @@ const WaterAvailabilityChart = ({ waterbody, water_rej_data }) => {
       y: {
         stacked: false,
         title: { display: true, text: "Area (in Percent)" },
+        min: 0,
+        max: 100,
+        ticks: {
+          callback: (value) => `${value}`, // Optional: show '%' symbol
+        },
       },
     },
   };
