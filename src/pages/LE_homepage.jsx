@@ -205,7 +205,7 @@ export default function KYLHomePage() {
                     organic class american explict. Mark s soft cover terrapass
                     key salsa, guide expansion.
                   </p>
-                  <button
+                  {/* <button
                     onClick={() => setShowVideo(true)}
                     className="text-purple-700 text-sm font-semibold"
                   >
@@ -231,7 +231,16 @@ export default function KYLHomePage() {
                         </div>
                       </div>
                     </div>
-                  )}
+                  )} */}
+
+                  <a
+                    href="https://www.youtube.com/playlist?list=PLZ0pcz8ccRmIU8wHzHv-CbDOs4JOqgNHC"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-purple-700 text-sm font-semibold"
+                  >
+                    Learn More →
+                  </a>
                 </div>
               </div>
 
@@ -327,17 +336,19 @@ export default function KYLHomePage() {
               </li>
               <li>
                 Agroforestry practitioners can assess the health of tree
-                plantations over time with <b>&lt;Plantation Dashboard&gt;</b>.
+                plantations over time with our{" "}
+                <b>Plantation Health Assessment Dashboard</b>.
               </li>
               <li>
                 Track waterbody rejuvenation interventions and their impact on
-                cropping in nearby areas with <b>&lt;WaterBody Dashboard&gt;</b>
-                .
+                cropping in nearby areas with{" "}
+                <b>WaterBody Rejuvenation Assessment Dashboard</b>.
               </li>
             </ul>
 
             {/* Cards Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-7xl mx-auto mt-8">
+            {/* <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-7xl mx-auto mt-8"> */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mt-8 px-0">
               {[
                 {
                   title: "Jaltol App",
