@@ -71,14 +71,14 @@ export default function KYLHomePage() {
           {" "}
           <div className="flex flex-col md:flex-row md:items-start md:justify-between">
             <div className="pl-16 pr-8 md:w-1/2">
-              <h2 className="text-3xl mb-2">
+              <h2 className="text-4xl mb-2">
                 <span className="font-bold text-purple-700">Know</span>{" "}
                 <span className="font-normal text-purple-700">
                   your landscape
                 </span>
               </h2>
 
-              <ul className="list-disc list-inside text-black text-sm space-y-2 font-medium">
+              <ul className="list-disc list-inside text-black text-xl space-y-2 font-medium">
                 <li>
                   With 20+ geospatial layers, explore your landscape’s
                   diversity, build evidence-based proposals, and plan
@@ -109,9 +109,12 @@ export default function KYLHomePage() {
                 </p>
               </div>
             </div>
-            <div className="bg-white p-6 rounded shadow max-w-md w-full mr-10">
-              <p className="mb-4 text-center font-semibold">Select Location</p>
-              <div className="space-y-4">
+            <div className="bg-white p-6 rounded shadow max-w-md w-full mr-10 min-h-[350px] flex flex-col justify-between">
+              <p className="mb-0 text-center font-semibold text-3xl leading-none">
+                Select Location
+              </p>
+
+              <div className="space-y-5 mt-1">
                 <SelectButton
                   currVal={state || { label: "Select State" }}
                   stateData={statesData}
@@ -131,7 +134,7 @@ export default function KYLHomePage() {
                   setState={setBlock}
                 />
               </div>
-              <div className="flex justify-between mt-4">
+              <div className="flex justify-between mt-2">
                 <button
                   className="bg-purple-600 text-white px-4 py-2 rounded"
                   onClick={() =>
@@ -158,14 +161,14 @@ export default function KYLHomePage() {
           <div className="px-16">
             {/* Heading + Bullet Points */}
             <div className="w-full md:w-2/3 mb-10">
-              <h2 className="text-3xl mb-2">
+              <h2 className="text-4xl mb-2">
                 <span className="font-bold text-purple-700">Plan</span>{" "}
                 <span className="font-normal text-purple-700">
                   for a sustainable tomorrow
                 </span>
               </h2>
 
-              <ul className="list-disc list-inside text-black text-sm space-y-2 font-medium">
+              <ul className="list-disc list-inside text-black text-xl space-y-2 font-medium">
                 <li>
                   <b>Identifying the right problems</b> is key to sustainable
                   Natural Resource Management (NRM). Commons Connect is a
@@ -317,13 +320,13 @@ export default function KYLHomePage() {
         <section className="backdrop-brightness-90 backdrop-blur-sm bg-white/0 p-8 rounded-xl mx-6 my-10">
           <div className="px-16">
             {/* Heading */}
-            <h2 className="text-3xl mb-4 text-purple-700">
+            <h2 className="text-4xl mb-4 text-purple-700">
               <span className="font-bold">Track and Assess </span>
               <span className="font-normal">planned interventions</span>
             </h2>
 
             {/* Bullet Points */}
-            <ul className="list-disc list-inside text-black text-sm font-medium space-y-3 mb-6">
+            <ul className="list-disc list-inside text-black text-xl font-medium space-y-3 mb-6">
               <li>
                 Presenting you a suite of dashboards enabling continuous
                 monitoring of Natural Resource Management (NRM) interventions
@@ -382,7 +385,7 @@ export default function KYLHomePage() {
                     onClick={() =>
                       item.link && window.open(item.link, "_blank")
                     }
-                    className="cursor-pointer bg-white rounded-2xl shadow-md p-8 h-full min-h-[280px] flex flex-col justify-start transform transition-all duration-300 hover:shadow-xl hover:-translate-y-1 hover:scale-[1.02]"
+                    className="cursor-pointer bg-white rounded-2xl shadow-md p-8 h-full min-h-[200px] flex flex-col justify-start transform transition-all duration-300 hover:shadow-xl hover:-translate-y-1 hover:scale-[1.02]"
                   >
                     <div className="flex items-start gap-4">
                       <div className="bg-yellow-100 text-yellow-500 rounded-full w-14 h-14 flex items-center justify-center text-2xl">
