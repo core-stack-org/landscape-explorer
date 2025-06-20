@@ -22,7 +22,7 @@ const KYLMWSProfilePanel = ({ mwsData, onBack }) => {
 
       const terrainType = ["Broad Slopes and Hilly","Mostly Plains","Hills and Valleys","Broad Slopes and Plains"]
       
-      let dataStr = `The Selected MWS has a Terrain of type ${terrainType[found.terrainCluster_ID]}, intersecting with ${found.mws_intersect_villages.length} villages also having ${found.total_nrega_assets} nrega assets which lies in the selected MWS. The average cropping intensity across the MWS's is ${found.cropping_intensity_avg} with an ${found.avg_precipitation}ppm average precipitation.`
+      let dataStr = `The Selected MWS has a Terrain of type ${terrainType[found.terrainCluster_ID]}, intersecting with ${found.mws_intersect_villages.length} villages also having ${found.total_nrega_assets} NREGA assets which lies in the selected MWS. The average cropping intensity across the MWS's is ${found.cropping_intensity_avg.toFixed(2)} with an ${Math.round(found.avg_precipitation)} mm average precipitation.`
 
       setDataString(dataStr)
     }
