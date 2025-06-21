@@ -12,7 +12,7 @@ export default async function getStates() {
         })
 
         return await response.json()
-    }catch(err){
+    } catch(err){
         console.log(err);
         return locations;
     }

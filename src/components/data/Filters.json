@@ -168,7 +168,7 @@
                     {"label" : "Between 30% to 70%", "value" : {"lower" : 30, "upper" : 70}},
                     {"label" : "More than 70%", "value" : {"lower" : 70, "upper" : 999999}}
                 ],
-                "layer_store" : ["water_bodies","LULC"],
+                "layer_store" : ["swb","LULC"],
                 "layer_name" : ["surface_waterbodies","level_3"],
                 "vectorStyle" : [{
                     "fill" : "rgba(100, 149, 237, 0.5)",
@@ -186,7 +186,7 @@
                     {"label" : "Between 25%-50%", "value" : {"lower" : 25, "upper" : 50}},
                     {"label" : "More than 50%", "value" : {"lower" : 50, "upper" : 99999}}
                 ],
-                "layer_store" : ["water_bodies","LULC"],
+                "layer_store" : ["swb","LULC"],
                 "layer_name" : ["surface_waterbodies","level_3"],
                 "vectorStyle" : [{
                     "fill" : "rgba(100, 149, 237, 0.5)",
