@@ -33,13 +33,14 @@ const PanchayatBoundariesStyle = (feature, resolution) => {
 }
 
 export default async function getVectorLayers (layer_store, layer_name, setVisible = true, setActive = true, resource_type = null , plan_id = null, district, block) {
-   
+    
     let url = 
     (plan_id === null ? 
         `${process.env.REACT_APP_GEOSERVER_URL}` + layer_store + '/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=' + layer_store + ':' + layer_name + "&outputFormat=application/json&screen=main"
         :
         `${process.env.REACT_APP_GEOSERVER_URL}` + layer_store + '/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=' + layer_store +':' + resource_type + "_" + plan_id + "_" + district + "_" + block + "&outputFormat=application/json&screen=main")
   
+        console.log(url)
 
     const vectorSource = new Vector({
       url: url,
