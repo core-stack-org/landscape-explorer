@@ -270,10 +270,10 @@ const MapLegend = ({ showMWS, showVillages, currentLayer }) => {
   ];
 
   const LiteracyLengendItems = [
-    { color: "#E6E6FA", label: "%age SC population < 5" },
-    { color: "#DA70D6", label: "%age SC population (5 - 17)" },
-    { color: "#7851A9", label: "%age SC population (17 - 37)" },
-    { color: "#4B0082", label: "%age SC population > 37" },
+    { color: "#98FB98", label: "%age literacy level <46" },
+    { color: "#32CD32", label: "%age literacy level (46-59)" },
+    { color: "#228B22", label: "%age literacy level (59-70)" },
+    { color: "#006400", label: "%age literacy level >70" },
   ];
 
   const WaterLengendItems = [
