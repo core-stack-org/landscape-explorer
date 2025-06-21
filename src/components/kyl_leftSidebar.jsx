@@ -53,12 +53,18 @@ const KYLLeftSidebar = ({
         <div className="w-[320px] bg-white rounded-lg border border-gray-100 p-4">
             <div className="space-y-2">
                 <button
-                    className="w-full py-2 px-2 text-indigo-600 bg-indigo-50 rounded-lg text-sm font-medium text-left"
+                    className="w-full py-2 px-2 text-indigo-600 bg-indigo-100 rounded-lg text-sm font-medium text-left"
                     onClick={() => window.open("https://docs.google.com/document/d/13wht82tXmw0x-ORfVLYBnfUDkkabzqOxvqwmIXGRmpk/edit?usp=sharing", '_blank', 'noopener,noreferrer')}
                 >
                     Click to Know More About Indicators
                 </button>
-
+                {(Object.keys(filterSelections.selectedMWSValues).length === 0 && Object.keys(filterSelections.selectedVillageValues).length === 0) &&
+                    <button
+                        className="w-full py-2 px-2 text-indigo-600 bg-indigo-100 rounded-lg text-xs font-medium text-left mb-1"
+                    >
+                        Click on a micro-watershed (blue outline) to view its report or select filters from amongst the different indicators shown below
+                    </button>
+                }
                 <div className="flex flex-wrap gap-2 pt-2">
                     {getAllFilterTypes().map((category) => (
                         <button
