@@ -934,7 +934,7 @@ const Map = forwardRef(({
 
       // === Remote Sensed Waterbodies Layer ===
       let RemoteSensedWaterbodiesLayer = await getVectorLayers(
-        "water_bodies",
+        "swb",
         "surface_waterbodies_" + district.label.toLowerCase().split(" ").join("_") +
         "_" +
         block.label.toLowerCase().split(" ").join("_"),
