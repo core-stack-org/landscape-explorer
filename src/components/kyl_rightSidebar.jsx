@@ -136,6 +136,7 @@ const KYLRightSidebar = ({
 
   return (
     <div className="w-[320px] flex flex-col gap-2">
+      
       {selectedMWSProfile ? (
         <KYLMWSProfilePanel mwsData={selectedMWSProfile} onBack={onResetMWS} />
       ) : (
@@ -254,7 +255,7 @@ const KYLRightSidebar = ({
                             Analyze micro-watershed profiles
                         </button> */}
               </div>
-            )}
+                )}
           </div>
         </div>
       )}
