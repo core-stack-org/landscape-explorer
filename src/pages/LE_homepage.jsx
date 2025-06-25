@@ -170,15 +170,15 @@ export default function KYLHomePage() {
 
               <ul className="list-disc list-inside text-black text-xl space-y-2 font-medium">
                 <li>
-                  <b>Identifying the right problems</b> is key to sustainable
-                  Natural Resource Management (NRM). Commons Connect is a
-                  community-focused app enabling landscape stewards to plan NRM
-                  works participatorily.
+                  <b>Identification of the right problems</b> is key to
+                  sustainable Natural Resource Management (NRM). Commons Connect
+                  is a community-focused app enabling landscape stewards to plan
+                  NRM works in a participatorily manner.
                 </li>
                 <li>
                   <b>Assess and raise demands</b>: This tool provides decision
-                  support to identify suitable work sites and supports community
-                  reflection on resource equity.
+                  support to identify suitable sites for NRM assets and supports
+                  community reflection on equity in resource ownership and use.
                 </li>
                 <li>
                   <b>Develop Detailed Project Reports (DPRs)</b> in an automated
@@ -204,37 +204,9 @@ export default function KYLHomePage() {
                     How to do Participatory Planning?
                   </h3>
                   <p className="text-xs text-gray-700 mb-2">
-                    Greater orch pack chuck territorial federal midlothian
-                    organic class american explict. Mark s soft cover terrapass
-                    key salsa, guide expansion.
+                    View tutorial videos to conduct a rapid PRA and create DPRs
+                    using Commons Connect.
                   </p>
-                  {/* <button
-                    onClick={() => setShowVideo(true)}
-                    className="text-purple-700 text-sm font-semibold"
-                  >
-                    Learn More →
-                  </button>
-                  {showVideo && (
-                    <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50">
-                      <div className="bg-white rounded-xl max-w-4xl w-full relative">
-                        <button
-                          onClick={() => setShowVideo(false)}
-                          className="absolute top-2 right-2 text-gray-600 text-xl font-bold"
-                        >
-                          ✕
-                        </button>
-                        <div className="aspect-[4/3] w-full rounded overflow-hidden">
-                          <iframe
-                            className="w-full h-full"
-                            src="https://www.youtube.com/embed/videoseries?list=PLZ0pcz8ccRmIU8wHzHv-CbDOs4JOqgNHC"
-                            title="Participatory Planning Playlist"
-                            frameBorder="0"
-                            allowFullScreen
-                          ></iframe>
-                        </div>
-                      </div>
-                    </div>
-                  )} */}
 
                   <a
                     href="https://www.youtube.com/playlist?list=PLZ0pcz8ccRmIU8wHzHv-CbDOs4JOqgNHC"
@@ -261,8 +233,8 @@ export default function KYLHomePage() {
                     Download Commons Connect App
                   </h3>
                   <p className="text-xs text-gray-700 mb-2">
-                    Access tools and resources for landscape planning directly
-                    on your smartphone using our free mobile app.
+                    An Android app to guide you in a step-by-step manner to
+                    record community demands for NRM assets.
                   </p>
                   <p className="text-purple-700 text-sm font-semibold">
                     Please mail us at{" "}
@@ -322,35 +294,34 @@ export default function KYLHomePage() {
             {/* Heading */}
             <h2 className="text-4xl mb-4 text-purple-700">
               <span className="font-bold">Track and Assess </span>
-              <span className="font-normal">planned interventions</span>
+              <span className="font-normal">NRM interventions</span>
             </h2>
 
             {/* Bullet Points */}
             <ul className="list-disc list-inside text-black text-xl font-medium space-y-3 mb-6">
               <li>
-                Presenting you a suite of dashboards enabling continuous
-                monitoring of Natural Resource Management (NRM) interventions
-                undertaken in an area, and ex-post assessment of their impact.
+                A suite of dashboards enabling continuous monitoring of Natural
+                Resource Management (NRM) interventions undertaken in an area,
+                and ex-post assessment of their impact.
               </li>
               <li>
-                Use <b>Jaltol</b> to monitor changes in cropping pattern in
-                villages where extensive watershed development programmes were
-                undertaken.
+                Use <b>Jaltol</b> to monitor changes in cropping patterns in
+                villages where extensive watershed development programmes have
+                been undertaken.
               </li>
               <li>
                 Agroforestry practitioners can assess the health of tree
-                plantations over time with our{" "}
+                plantations over time using the{" "}
                 <b>Plantation Health Assessment Dashboard</b>.
               </li>
               <li>
                 Track waterbody rejuvenation interventions and their impact on
-                cropping in nearby areas with{" "}
+                cropping in nearby areas with the{" "}
                 <b>WaterBody Rejuvenation Assessment Dashboard</b>.
               </li>
             </ul>
 
             {/* Cards Grid */}
-            {/* <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-7xl mx-auto mt-8"> */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mt-8 px-0">
               {[
                 {
@@ -363,7 +334,7 @@ export default function KYLHomePage() {
                 {
                   title: "Agroforestry Plantations",
                   description:
-                    "Track the health and growth of plantations across time and space using satellite-based monitoring.",
+                    "Track the health and growth of plantations across time using satellite-based monitoring.",
                   icon: "🌳",
                 },
                 {
@@ -376,7 +347,7 @@ export default function KYLHomePage() {
                 {
                   title: "Commons Connect Plans",
                   description:
-                    "The tools, guides and plans that folks trust when they need to organize and track their landscape efforts.",
+                    "Site and landscape level tracking of plans built using Commons Connect",
                   icon: "☀️",
                 },
               ].map((item, index) => (
