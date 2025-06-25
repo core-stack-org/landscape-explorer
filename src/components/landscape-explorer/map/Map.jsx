@@ -101,6 +101,31 @@ const MapLegend = ({toggledLayers}) => {
     { color: "#eaa4f0", label: "Scrub Land - Forest" },
   ]
 
+  const aquiferItems = [
+    { color: "#fffdb5", label: "Alluvium" },
+    { color: "#f3a425", label: "Laterite" },
+    { color: "#99ecf1", label: "Basalt" },
+    { color: "#a5f8c5", label: "Sandstone" },
+    { color: "#f57c99", label: "Shale" },
+    { color: "#e8d52e", label: "Limestone" },
+    { color: "#3c92f2", label: "Granite" },
+    { color: "#d5db21", label: "Schist" },
+    { color: "#cf7ff4", label: "Quartzite" },
+    { color: "#f4dbff", label: "Charnockite" },
+    { color: "#50c02b", label: "Khondalite" },
+    { color: "#ffe1b5", label: "Banded Gneissic Complex" },
+    { color: "#e4cff1", label: "Gneiss" },
+    { color: "#57d2ff", label: "Intrusive" }
+  ];
+
+  const SOGEItems = [
+    { color: "#ffffff", label: " Safe " },
+    { color: "#e0f3f8", label: "Semi - Critical " },
+    { color: "#4575b4", label: " Critical " },
+    { color: "#313695", label: "Over - Exploited " },
+  ];
+
+
   const isTerrainActive = toggledLayers["terrain"]
   const isCLARTActive = toggledLayers["clart"]
   const isCropIntensityActive = toggledLayers["cropintensity"]
@@ -108,6 +133,8 @@ const MapLegend = ({toggledLayers}) => {
   const isDegradationActive = toggledLayers["degradation"]
   const isUrbanizationActive = toggledLayers["urbanization"]
   const isAfforestationActive = toggledLayers["afforestation"]
+  const isSOGEActive = toggledLayers["soge"]
+  const isAquiferActive = toggledLayers["aquifer"]
 
   return (
     <div
@@ -314,6 +341,54 @@ const MapLegend = ({toggledLayers}) => {
                 <div className="space-y-2">
                   <h4 className="text-xs font-medium text-gray-600">Afforestation</h4>
                   {afforestationItems.map((item, index) => (
+                    <div
+                      key={`trend-${index}`}
+                      className="flex items-center gap-2"
+                    >
+                      <div
+                        className="w-4 h-4 rounded"
+                        style={{
+                          backgroundColor: item.color,
+                          border: `1px solid rgba(0,0,0,0.2)`,
+                        }}
+                      />
+                      <span className="text-sm text-gray-600">
+                        {item.label}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Afforestation Section */}
+              {isSOGEActive && (
+                <div className="space-y-2">
+                  <h4 className="text-xs font-medium text-gray-600">SOGE</h4>
+                  {SOGEItems.map((item, index) => (
+                    <div
+                      key={`trend-${index}`}
+                      className="flex items-center gap-2"
+                    >
+                      <div
+                        className="w-4 h-4 rounded"
+                        style={{
+                          backgroundColor: item.color,
+                          border: `1px solid rgba(0,0,0,0.2)`,
+                        }}
+                      />
+                      <span className="text-sm text-gray-600">
+                        {item.label}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Afforestation Section */}
+              {isAquiferActive && (
+                <div className="space-y-2">
+                  <h4 className="text-xs font-medium text-gray-600">Aquifer</h4>
+                  {aquiferItems.map((item, index) => (
                     <div
                       key={`trend-${index}`}
                       className="flex items-center gap-2"
@@ -1226,6 +1301,38 @@ const Map = forwardRef(({
       );
 
       if (SOGELayer) {
+        SOGELayer.setStyle(function (feature) {
+          if (!feature || !feature.values_) return null;
+          
+          if(feature.values_.class === "safe"){
+            return new Style({
+              fill: new Fill({
+                color: "#ffffff",
+              }),
+            });
+          }
+          else if(feature.values_.class === "Semi-Critical"){
+            return new Style({
+              fill: new Fill({
+                color: "#e0f3f8",
+              }),
+            });
+          }
+          else if(feature.values_.class === "Critical"){
+            return new Style({
+              fill: new Fill({
+                color: "#4575b4",
+              }),
+            });
+          }
+          else{
+            return new Style({
+              fill: new Fill({
+                color: "#313695",
+              }),
+            });
+          }
+        });
         if (LayersArray[17].LayerRef.current != null) {
           safeRemoveLayer(LayersArray[17].LayerRef.current);
         }
@@ -1244,6 +1351,108 @@ const Map = forwardRef(({
       );
 
       if (AquiferLayer) {
+        AquiferLayer.setStyle(function (feature) {
+          if (!feature || !feature.values_) return null;
+          
+          if(feature.values_.Principal_ === "Alluvium"){
+            return new Style({
+              fill: new Fill({
+                color: "#fffdb5",
+              }),
+            });
+          }
+          else if(feature.values_.Principal_ === "Laterite"){
+            return new Style({
+              fill: new Fill({
+                color: "#f3a425",
+              }),
+            });
+          }
+          else if(feature.values_.Principal_ === "Basalt"){
+            return new Style({
+              fill: new Fill({
+                color: "#99ecf1",
+              }),
+            });
+          }
+          else if(feature.values_.Principal_ === "Sandstone"){
+            return new Style({
+              fill: new Fill({
+                color: "#a5f8c5",
+              }),
+            });
+          }
+          else if(feature.values_.Principal_ === "Shale"){
+            return new Style({
+              fill: new Fill({
+                color: "#f57c99",
+              }),
+            });
+          }
+          else if(feature.values_.Principal_ === "Limestone"){
+            return new Style({
+              fill: new Fill({
+                color: "#e8d52e",
+              }),
+            });
+          }
+          else if(feature.values_.Principal_ === "Granite"){
+            return new Style({
+              fill: new Fill({
+                color: "#3c92f2",
+              }),
+            });
+          }
+          else if(feature.values_.Principal_ === "Schist"){
+            return new Style({
+              fill: new Fill({
+                color: "#d5db21",
+              }),
+            });
+          }
+          else if(feature.values_.Principal_ === "Quartzite"){
+            return new Style({
+              fill: new Fill({
+                color: "#cf7ff4",
+              }),
+            });
+          }
+          else if(feature.values_.Principal_ === "Charnockite"){
+            return new Style({
+              fill: new Fill({
+                color: "#f4dbff",
+              }),
+            });
+          }
+          else if(feature.values_.Principal_ === "Khondalite"){
+            return new Style({
+              fill: new Fill({
+                color: "#50c02b",
+              }),
+            });
+          }
+          else if(feature.values_.Principal_ === "Banded Gneissic Complex"){
+            return new Style({
+              fill: new Fill({
+                color: "#ffe1b5",
+              }),
+            });
+          }
+          else if(feature.values_.Principal_ === "Gneiss"){
+            return new Style({
+              fill: new Fill({
+                color: "#e4cff1",
+              }),
+            });
+          }
+          else{
+            return new Style({
+              fill: new Fill({
+                color: "#57d2ff",
+              }),
+            });
+          }
+        });
         if (LayersArray[18].LayerRef.current != null) {
           safeRemoveLayer(LayersArray[18].LayerRef.current);
         }
