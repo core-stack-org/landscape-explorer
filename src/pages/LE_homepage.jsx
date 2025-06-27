@@ -18,7 +18,8 @@ import {
   trackEvent,
   initializeAnalytics,
 } from "../services/analytics";
-import Navbar from "../components/navbar";
+import Footer from "../components/footer.jsx";
+import LandingNavbar from "../components/landing_navbar.jsx";
 
 export default function KYLHomePage() {
   const navigate = useNavigate();
@@ -60,25 +61,28 @@ export default function KYLHomePage() {
   };
 
   return (
-    <div className="font-sans">
-      <Navbar />
+    <div className="font-sans overflow-x-hidden">
+      <LandingNavbar />
       <div
-        className="bg-cover bg-center bg-no-repeat min-h-screen"
-        style={{ backgroundImage: `url(${landingPageBg})` }}
+        className="min-h-screen snap-y snap-mandatory bg-cover bg-center bg-no-repeat"
+        style={{
+          backgroundImage: `url(${landingPageBg})`,
+          scrollBehavior: "smooth",
+        }}
       >
         {/* Know Section */}
-        <section className="backdrop-brightness-90 backdrop-blur-sm bg-white/0 p-8 rounded-xl mx-6 my-2">
+        <section className="snap-start backdrop-brightness-90 backdrop-blur-sm bg-white/0 px-4 py-6 md:px-8 md:py-10 rounded-xl mx-2 md:mx-6 mt-0 mb-4 md:mb-6">
           {" "}
-          <div className="flex flex-col md:flex-row md:items-start md:justify-between">
-            <div className="pl-16 pr-8 md:w-1/2">
-              <h2 className="text-4xl mb-2">
+          <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-8">
+            <div className="w-full lg:w-1/2">
+              <h2 className="text-3xl md:text-4xl mb-4">
                 <span className="font-bold text-purple-700">Know</span>{" "}
                 <span className="font-normal text-purple-700">
                   your landscape
                 </span>
               </h2>
 
-              <ul className="list-disc list-inside text-black text-xl space-y-2 font-medium">
+              <ul className="list-disc list-inside text-black text-base md:text-lg space-y-3 font-medium">
                 <li>
                   With 20+ geospatial layers, explore your landscape’s
                   diversity, build evidence-based proposals, and plan
@@ -95,7 +99,8 @@ export default function KYLHomePage() {
                   the context.
                 </li>
               </ul>
-              <div className="bg-purple-50 border-l-4 border-purple-500 text-purple-700 p-4 rounded-md mb-6 mt-8">
+
+              <div className="bg-purple-50 border-l-4 border-purple-500 text-purple-700 p-4 rounded-md mt-8">
                 <p className="text-sm">
                   Generate data for a specific location?{" "}
                   <a
@@ -109,12 +114,12 @@ export default function KYLHomePage() {
                 </p>
               </div>
             </div>
-            <div className="bg-white p-6 rounded shadow max-w-md w-full mr-10 min-h-[350px] flex flex-col justify-between">
-              <p className="mb-0 text-center font-semibold text-3xl leading-none">
+            <div className="w-full max-w-lg bg-white p-6 rounded shadow min-h-[350px] flex flex-col justify-between">
+              <p className="mb-0 text-center font-semibold text-2xl md:text-3xl leading-none">
                 Select Location
               </p>
 
-              <div className="space-y-5 mt-1">
+              <div className="space-y-5 mt-4">
                 <SelectButton
                   currVal={state || { label: "Select State" }}
                   stateData={statesData}
@@ -134,9 +139,10 @@ export default function KYLHomePage() {
                   setState={setBlock}
                 />
               </div>
-              <div className="flex justify-between mt-2">
+
+              <div className="flex flex-col sm:flex-row justify-between gap-3 mt-4">
                 <button
-                  className="bg-purple-600 text-white px-4 py-2 rounded"
+                  className="bg-purple-600 text-white px-4 py-2 rounded w-full sm:w-auto"
                   onClick={() =>
                     handleNavigate("/kyl_dashboard", "Know Your Landscape")
                   }
@@ -144,7 +150,7 @@ export default function KYLHomePage() {
                   Know Your Landscape
                 </button>
                 <button
-                  className="bg-gray-300 text-black px-4 py-2 rounded"
+                  className="bg-gray-300 text-black px-4 py-2 rounded w-full sm:w-auto"
                   onClick={() =>
                     handleNavigate("/landscape_explorer", "Download Layers")
                   }
@@ -157,18 +163,17 @@ export default function KYLHomePage() {
         </section>
 
         {/* Plan Section */}
-        <section className="backdrop-brightness-90 backdrop-blur-sm bg-white/0 p-8 rounded-xl mx-6 my-10">
-          <div className="px-16">
-            {/* Heading + Bullet Points */}
-            <div className="w-full md:w-2/3 mb-10">
-              <h2 className="text-4xl mb-2">
+        <section className="snap-start backdrop-brightness-90 backdrop-blur-sm bg-white/0 px-4 py-6 md:px-16 md:py-10 rounded-xl mx-2 md:mx-6 my-6">
+          <div>
+            <div className="w-full lg:w-2/3 mb-10">
+              <h2 className="text-3xl md:text-4xl mb-4">
                 <span className="font-bold text-purple-700">Plan</span>{" "}
                 <span className="font-normal text-purple-700">
                   for a sustainable tomorrow
                 </span>
               </h2>
 
-              <ul className="list-disc list-inside text-black text-xl space-y-2 font-medium">
+              <ul className="list-disc list-inside text-black text-base md:text-lg space-y-3 font-medium">
                 <li>
                   <b>Identification of the right problems</b> is key to
                   sustainable Natural Resource Management (NRM). Commons Connect
@@ -188,18 +193,17 @@ export default function KYLHomePage() {
               </ul>
             </div>
 
-            {/* Card Grid - Now comes BELOW */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {/* === Card 1 === */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {/* Card 1 */}
               <div>
-                <div className="w-full aspect-[4/4] overflow-hidden rounded shadow mb-4">
+                <div className="w-full aspect-square overflow-hidden rounded shadow mb-4">
                   <img
                     src={participatoryImg}
                     alt="Participatory Planning"
-                    className="h-full w-full object-fill"
+                    className="w-full h-full object-cover"
                   />
                 </div>
-                <div className="p-4 rounded text-left">
+                <div className="p-4 text-left">
                   <h3 className="font-bold mb-2 text-sm">
                     How to do Participatory Planning?
                   </h3>
@@ -207,7 +211,6 @@ export default function KYLHomePage() {
                     View tutorial videos to conduct a rapid PRA and create DPRs
                     using Commons Connect.
                   </p>
-
                   <a
                     href="https://www.youtube.com/playlist?list=PLZ0pcz8ccRmIU8wHzHv-CbDOs4JOqgNHC"
                     target="_blank"
@@ -219,16 +222,16 @@ export default function KYLHomePage() {
                 </div>
               </div>
 
-              {/* === Card 2 === */}
+              {/* Card 2  */}
               <div>
-                <div className="w-full aspect-[4/4] rounded overflow-hidden shadow mb-4 relative">
+                <div className="w-full aspect-square rounded overflow-hidden shadow mb-4 relative">
                   <img
                     src={newLogo}
                     alt="Commons Connect App"
                     className="absolute inset-0 w-full h-full object-cover object-center"
                   />
                 </div>
-                <div className="p-4 rounded-b text-left">
+                <div className="p-4 text-left">
                   <h3 className="font-bold mb-2 text-sm">
                     Download Commons Connect App
                   </h3>
@@ -249,9 +252,9 @@ export default function KYLHomePage() {
                 </div>
               </div>
 
-              {/* === Card 3 === */}
+              {/*  Card 3 */}
               <div>
-                <div className="w-full aspect-[4/4] rounded overflow-hidden shadow mb-4 relative">
+                <div className="w-full aspect-square rounded overflow-hidden shadow mb-4 relative">
                   <img
                     src={planAndView}
                     alt="View and Support Plans"
@@ -265,7 +268,7 @@ export default function KYLHomePage() {
                     </div>
                   )}
                 </div>
-                <div className="p-4 rounded-b text-left">
+                <div className="p-4 text-left">
                   <h3 className="font-bold mb-2 text-sm">
                     View and Support Plans
                   </h3>
@@ -289,16 +292,13 @@ export default function KYLHomePage() {
         </section>
 
         {/* Track Section */}
-        <section className="backdrop-brightness-90 backdrop-blur-sm bg-white/0 p-8 rounded-xl mx-6 my-10">
-          <div className="px-16">
-            {/* Heading */}
-            <h2 className="text-4xl mb-4 text-purple-700">
+        <section className="snap-start backdrop-brightness-90 backdrop-blur-sm bg-white/0 px-4 py-6 md:px-16 md:py-10 rounded-xl mx-2 md:mx-6 mt-6">
+          <div>
+            <h2 className="text-2xl md:text-4xl mb-4 text-purple-700">
               <span className="font-bold">Track and Assess </span>
               <span className="font-normal">NRM interventions</span>
             </h2>
-
-            {/* Bullet Points */}
-            <ul className="list-disc list-inside text-black text-xl font-medium space-y-3 mb-6">
+            <ul className="list-disc list-inside text-black text-base md:text-xl font-medium space-y-3 mb-6">
               <li>
                 A suite of dashboards enabling continuous monitoring of Natural
                 Resource Management (NRM) interventions undertaken in an area,
@@ -321,8 +321,7 @@ export default function KYLHomePage() {
               </li>
             </ul>
 
-            {/* Cards Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mt-8 px-0">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mt-8">
               {[
                 {
                   title: "Jaltol App",
@@ -356,14 +355,14 @@ export default function KYLHomePage() {
                     onClick={() =>
                       item.link && window.open(item.link, "_blank")
                     }
-                    className="cursor-pointer bg-white rounded-2xl shadow-md p-8 h-full min-h-[200px] flex flex-col justify-start transform transition-all duration-300 hover:shadow-xl hover:-translate-y-1 hover:scale-[1.02]"
+                    className="cursor-pointer bg-white rounded-2xl shadow-md p-6 sm:p-8 h-full min-h-[220px] flex flex-col justify-start transform transition-all duration-300 hover:shadow-xl hover:-translate-y-1 hover:scale-[1.02]"
                   >
                     <div className="flex items-start gap-4">
-                      <div className="bg-yellow-100 text-yellow-500 rounded-full w-14 h-14 flex items-center justify-center text-2xl">
+                      <div className="bg-yellow-100 text-yellow-500 rounded-full w-12 h-12 sm:w-14 sm:h-14 flex items-center justify-center text-xl sm:text-2xl">
                         {item.icon}
                       </div>
                       <div>
-                        <h3 className="text-xl font-semibold mb-2 text-gray-900">
+                        <h3 className="text-lg sm:text-xl font-semibold mb-2 text-gray-900">
                           {item.title}
                         </h3>
                         <p className="text-sm text-gray-700 mb-3">
@@ -387,6 +386,7 @@ export default function KYLHomePage() {
           </div>
         </section>
       </div>
+      <Footer />
     </div>
   );
 }
