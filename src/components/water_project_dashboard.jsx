@@ -40,6 +40,12 @@ import FilterListIcon from "@mui/icons-material/FilterList";
 import SurfaceWaterChart from "./waterChart";
 import getImageLayer from "../actions/getImageLayers";
 import WaterAvailabilityChart from "./WaterAvailabilityChart";
+import Crop from "ol-ext/filter/Crop";
+import MultiPolygon from "ol/geom/MultiPolygon";
+import Feature from "ol/Feature";
+import MouseWheelZoom from "ol/interaction/MouseWheelZoom";
+import PinchZoom from "ol/interaction/PinchZoom";
+import DoubleClickZoom from "ol/interaction/DoubleClickZoom";
 
 const useWaterRejData = () => {
   const [geoData, setGeoData] = useState(null);
@@ -179,8 +185,7 @@ const WaterProjectDashboard = () => {
 
     const mappedRows = geoData.features.map((feature, index) => {
       const props = feature.properties || {};
-      console.log("area_ored:", props.area_ored);
-      console.log(props.slit_excavated);
+
       const geometry = feature.geometry || {};
 
       let coordinates = null;
@@ -261,13 +266,6 @@ const WaterProjectDashboard = () => {
         meanZaid = (zaidValues.reduce((a, b) => a + b, 0) / numYears).toFixed(
           2
         );
-
-        // 🔍 Debug:
-        console.log("Start Year:", seasonYears[startIndex]);
-        console.log("Years Count (used for mean):", numYears);
-        console.log("Kharif:", kharifValues, "Mean:", meanKharif);
-        console.log("Rabi:", rabiValues, "Mean:", meanRabi);
-        console.log("Zaid:", zaidValues, "Mean:", meanZaid);
       }
 
       // // KHARIF
@@ -349,6 +347,7 @@ const WaterProjectDashboard = () => {
       // const avgZaid = (sumZaid / 7).toFixed(2);
 
       // Parse silt removed safely, default to 0 if missing or NaN
+
       const siltRemoved = Number(props.slit_excavated) || 0;
       totalSiltRemoved += siltRemoved;
 
@@ -381,7 +380,6 @@ const WaterProjectDashboard = () => {
   }, [geoData]);
 
   const totalRows = rows.length;
-  console.log(totalRows);
 
   const [year, setYear] = useState(2024);
   const handleYearChange = (newYear) => setYear(newYear);
@@ -505,6 +503,141 @@ const WaterProjectDashboard = () => {
 
     fetchUpdateLulc().catch(console.error);
   }, [lulcYear, currentLayer, selectedWaterbody, waterBodyLayer, project]);
+
+  // useEffect(() => {
+  //   const fetchUpdateLulc = async () => {
+  //     if (!lulcYear || !lulcYear.includes("_")) {
+  //       console.warn("Invalid lulcYear:", lulcYear);
+  //       return;
+  //     }
+
+  //     if (currentLayer !== null && currentLayer.length > 0) {
+  //       let tempArr = currentLayer;
+  //       let tempLen = tempArr.length;
+
+  //       for (let i = 0; i < tempLen; ++i) {
+  //         if (tempArr[i].name === "lulcWaterrej") {
+  //           if (mapRef.current && tempArr[i].layerRef?.[0]) {
+  //             mapRef.current.removeLayer(tempArr[i].layerRef[0]);
+  //           }
+
+  //           const fullYear = lulcYear
+  //             .split("_")
+  //             .map((part) => `20${part}`)
+  //             .join("_")
+  //             .toLowerCase()
+  //             .replace(/\s/g, "_");
+
+  //           if (!project || typeof project !== "object") {
+  //             console.error("Invalid project object:", project);
+  //             return;
+  //           }
+
+  //           const projectName = project.label;
+  //           const projectId = project.value;
+
+  //           const layerName = `clipped_lulc_filtered_mws_${projectName}_${projectId}_${fullYear}`;
+
+  //           let tempLayer = await getImageLayer(
+  //             "waterrej",
+  //             layerName,
+  //             true,
+  //             "lulc_water_pixels"
+  //           );
+  //           tempLayer.setZIndex(1);
+  //           if (mapRef.current) {
+  //             mapRef.current.addLayer(tempLayer);
+  //           }
+  //           console.log(
+  //             "LULC Layer Projection:",
+  //             tempLayer.getSource().getProjection?.()
+  //           );
+  //           const zoiFeatures = await fetchZOI();
+  //           if (zoiFeatures.length > 0) {
+  //             const zoiLayer = new VectorLayer({
+  //               source: new VectorSource({
+  //                 features: zoiFeatures,
+  //               }),
+  //               style: new Style({
+  //                 stroke: new Stroke({ color: "yellow", width: 2 }),
+  //                 fill: new Fill({ color: "rgba(255, 255, 153, 0.3)" }), // light yellow
+  //               }),
+  //             });
+  //             zoiLayer.setZIndex(0);
+  //             mapRef.current.addLayer(zoiLayer);
+
+  //             zoiFeatures.forEach((feature, index) => {
+  //               console.log(
+  //                 `Applying crop to ZOI ${index}`,
+  //                 feature.getGeometry().getType()
+  //               );
+  //               const crop = new Crop({
+  //                 feature,
+  //                 wrapX: true,
+  //                 inner: false,
+  //               });
+
+  //               // tempLayer.addFilter(crop); // 👈 Add each crop filter to tempLayer
+  //             });
+  //           }
+
+  //           tempArr[i].layerRef[0] = tempLayer;
+  //         }
+  //       }
+
+  //       setCurrentLayer(tempArr);
+
+  //       if (selectedWaterbody?.geometry && mapRef.current && waterBodyLayer) {
+  //         const source = waterBodyLayer.getSource();
+  //         const features = source.getFeatures();
+
+  //         features.forEach((feature) => feature.setStyle(null));
+
+  //         const extent = selectedWaterbody.geometry.getExtent();
+
+  //         mapRef.current.getView().fit(extent, {
+  //           padding: [40, 40, 40, 40],
+  //           duration: 500,
+  //           maxZoom: 15,
+  //         });
+
+  //         features.forEach((feature) => {
+  //           if (feature.getGeometry().intersectsExtent(extent)) {
+  //             feature.setStyle(
+  //               new Style({
+  //                 stroke: new Stroke({ color: "#FF0000", width: 5 }),
+  //                 fill: new Fill({ color: "rgba(255, 0, 0, 0.3)" }),
+  //               })
+  //             );
+  //           }
+  //         });
+  //       }
+  //     } else {
+  //       setCurrentLayer([{ name: "lulcWaterrej", layerRef: [] }]);
+  //     }
+  //   };
+
+  //   fetchUpdateLulc().catch(console.error);
+  // }, [lulcYear, currentLayer, selectedWaterbody, waterBodyLayer, project]);
+
+  // const fetchZOI = async () => {
+  //   const response = await fetch(
+  //     "https://geoserver.core-stack.org:8443/geoserver/waterrej/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=waterrej:WaterRejapp_zoi_ATCEF_MP_CHATTARPUR_15&outputFormat=application/json"
+  //   );
+  //   const data = await response.json();
+
+  //   const features = new GeoJSON().readFeatures(data, {
+  //     dataProjection: "EPSG:4326",
+  //     featureProjection: "EPSG:4326",
+  //   });
+
+  //   if (!features || features.length === 0) {
+  //     console.warn("No ZOI features found");
+  //     return [];
+  //   }
+
+  //   return features; // Return as array
+  // };
 
   const handleViewChange = (event, newView) => {
     if (newView !== null) {
@@ -726,6 +859,15 @@ const WaterProjectDashboard = () => {
         );
       }
     }
+    mapRef.current.getInteractions().forEach((interaction) => {
+      if (
+        interaction instanceof MouseWheelZoom ||
+        interaction instanceof PinchZoom ||
+        interaction instanceof DoubleClickZoom
+      ) {
+        interaction.setActive(false);
+      }
+    });
   };
 
   const handleWaterbodyClick = (row) => {

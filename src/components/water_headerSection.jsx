@@ -32,14 +32,6 @@ const HeaderSelect = ({
   const location = useLocation();
   const isOnDashboard = location.pathname.includes("/dashboard");
 
-  // const projectOptions = [
-  //   { label: "ATCF_UP", value: "5" },
-  //   { label: "ATCEF_Demo_UP", value: "10" },
-  //   { label: "ATCEF_Demo_MP", value: "11" },
-  //   { label: "ATCEF_Demo_RJ", value: "12" },
-  //   { label: "ATCEF_UP_WB", value: "13" },
-  // ];
-
   const loginAndGetToken = async () => {
     try {
       const response = await fetch(
@@ -69,7 +61,10 @@ const HeaderSelect = ({
 
   useEffect(() => {
     const fetchOrganizations = async () => {
+      const start = performance.now();
       const options = await loadOrganization();
+      const end = performance.now();
+      console.log("Time to load orgs:", end - start, "ms");
       setOrganizationOptions(options);
 
       if (!organization && isOnDashboard) {
