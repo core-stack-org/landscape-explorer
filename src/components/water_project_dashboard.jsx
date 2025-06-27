@@ -173,6 +173,9 @@ const WaterProjectDashboard = () => {
       return null;
     }
   });
+  useEffect(() => {
+    console.log("View now:", view);
+  }, [view]);
 
   const projectName = project?.label || "No project selected";
   const { geoData, mwsGeoData } = useWaterRejData(project, projectId);
@@ -971,7 +974,12 @@ const WaterProjectDashboard = () => {
 
   return (
     <Box sx={{ position: "relative" }}>
-      <HeaderSelect showExtras organization={organization} project={project} />
+      <HeaderSelect
+        showExtras
+        organization={organization}
+        project={project}
+        setView={setView}
+      />
 
       {/* Project Dashboard Text */}
       <Box

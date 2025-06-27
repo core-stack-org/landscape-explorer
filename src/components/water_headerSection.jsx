@@ -19,6 +19,7 @@ const HeaderSelect = ({
   showExtras = false,
   organization: initialOrg,
   project: initialProject,
+  setView,
 }) => {
   const location = useLocation();
   const [organization, setOrganization] = useState(initialOrg || null);
@@ -296,6 +297,7 @@ const HeaderSelect = ({
                   startIcon={<ArrowBackIosNewIcon />}
                   onClick={() => {
                     setDashboardLocked(false);
+                    if (setView) setView("table");
                   }}
                   sx={{
                     color: "#333",
