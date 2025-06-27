@@ -61,17 +61,17 @@ export default function KYLHomePage() {
   };
 
   return (
-    <div className="font-sans overflow-x-hidden">
+    <div className="font-sans ">
       <LandingNavbar />
       <div
-        className="min-h-screen snap-y snap-mandatory bg-cover bg-center bg-no-repeat"
+        className="min-h-screen snap-y snap-mandatory h-screen bg-cover bg-center bg-no-repeat "
         style={{
           backgroundImage: `url(${landingPageBg})`,
           scrollBehavior: "smooth",
         }}
       >
         {/* Know Section */}
-        <section className="snap-start backdrop-brightness-90 backdrop-blur-sm bg-white/0 px-4 py-6 md:px-8 md:py-10 rounded-xl mx-2 md:mx-6 mt-0 mb-4 md:mb-6">
+        <section className=" snap-start backdrop-brightness-90 backdrop-blur-sm bg-white/0 px-4 py-6 md:px-8 md:py-10 rounded-xl mx-2 md:mx-6 mt-0 mb-4 md:mb-6">
           {" "}
           <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-8">
             <div className="w-full lg:w-1/2">
@@ -163,7 +163,7 @@ export default function KYLHomePage() {
         </section>
 
         {/* Plan Section */}
-        <section className="snap-start backdrop-brightness-90 backdrop-blur-sm bg-white/0 px-4 py-6 md:px-16 md:py-10 rounded-xl mx-2 md:mx-6 my-6">
+        <section className="  snap-start backdrop-brightness-90 backdrop-blur-sm bg-white/0 px-4 py-6 md:px-16 md:py-10 rounded-xl mx-2 md:mx-6 my-6">
           <div>
             <div className="w-full lg:w-2/3 mb-10">
               <h2 className="text-3xl md:text-4xl mb-4">
@@ -292,7 +292,7 @@ export default function KYLHomePage() {
         </section>
 
         {/* Track Section */}
-        <section className="snap-start backdrop-brightness-90 backdrop-blur-sm bg-white/0 px-4 py-6 md:px-16 md:py-10 rounded-xl mx-2 md:mx-6 mt-6">
+        <section className="  snap-start backdrop-brightness-90 backdrop-blur-sm bg-white/0 px-4 py-6 md:px-16 md:py-10 rounded-xl mx-2 md:mx-6 mt-6">
           <div>
             <h2 className="text-2xl md:text-4xl mb-4 text-purple-700">
               <span className="font-bold">Track and Assess </span>
