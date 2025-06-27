@@ -20,6 +20,7 @@ const HeaderSelect = ({
   organization: initialOrg,
   project: initialProject,
 }) => {
+  const location = useLocation();
   const [organization, setOrganization] = useState(initialOrg || null);
   const [organizationOptions, setOrganizationOptions] = useState([]);
   const [project, setProject] = useState(initialProject || null);
@@ -27,9 +28,12 @@ const HeaderSelect = ({
   const [projects, setProjects] = useState([]);
   const [projectCount, setProjectCount] = useState(0);
   const [projectOptions, setProjectOptions] = useState([]);
+  const [dashboardLocked, setDashboardLocked] = useState(
+    location.pathname.includes("/dashboard")
+  );
 
   const navigate = useNavigate();
-  const location = useLocation();
+
   const isOnDashboard = location.pathname.includes("/dashboard");
 
   const loginAndGetToken = async () => {
@@ -266,8 +270,8 @@ const HeaderSelect = ({
                 options={organizationOptions}
                 placeholder="Select Organization"
                 styles={customStyles}
-                isClearable={!isOnDashboard}
-                isDisabled={isOnDashboard}
+                isClearable={!dashboardLocked}
+                isDisabled={dashboardLocked}
                 menuPortalTarget={document.body}
                 menuPosition="fixed"
               />
@@ -278,20 +282,20 @@ const HeaderSelect = ({
                 options={projectOptions}
                 placeholder="Select Project"
                 styles={customStyles}
-                isClearable={!isOnDashboard}
-                isDisabled={isOnDashboard}
+                isClearable={!dashboardLocked}
+                isDisabled={dashboardLocked}
                 menuPortalTarget={document.body}
                 menuPosition="fixed"
                 noOptionsMessage={() => "No projects available"}
               />
             </Box>
-            {isOnDashboard && (
+            {dashboardLocked && (
               <Box sx={{ ml: "auto" }}>
                 <Button
                   variant="outlined"
                   startIcon={<ArrowBackIosNewIcon />}
                   onClick={() => {
-                    navigate("/water_dashboard");
+                    setDashboardLocked(false);
                   }}
                   sx={{
                     color: "#333",
