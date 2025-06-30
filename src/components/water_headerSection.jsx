@@ -230,6 +230,24 @@ const HeaderSelect = ({
     }
   }, []);
 
+  useEffect(() => {
+    const handlePopState = (event) => {
+      // Check if the dashboard is currently locked
+      if (dashboardLocked) {
+        setDashboardLocked(false);
+        if (setView) setView("table");
+        window.history.pushState(null, "", window.location.pathname);
+      }
+    };
+    window.addEventListener("popstate", handlePopState);
+
+    window.history.pushState(null, "", window.location.pathname);
+
+    return () => {
+      window.removeEventListener("popstate", handlePopState);
+    };
+  }, [dashboardLocked, setView]);
+
   return (
     <Box
       sx={{ height: "100vh", overflow: "hidden", backgroundColor: "#EAEAEA" }}
