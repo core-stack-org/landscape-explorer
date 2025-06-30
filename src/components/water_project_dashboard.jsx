@@ -52,6 +52,7 @@ const useWaterRejData = (projectName, projectId) => {
   console.log(projectId, projectName);
   const [geoData, setGeoData] = useState(null);
   const [mwsGeoData, setMwsGeoData] = useState(null);
+  const [zoiFeatures, setZoiFeatures] = useState([]);
 
   useEffect(() => {
     if (!projectName || !projectId) return;
@@ -121,8 +122,44 @@ const useWaterRejData = (projectName, projectId) => {
     fetchMWSGeoJSON();
   }, [projectName, projectId]);
 
-  // ✅ Return both datasets
-  return { geoData, mwsGeoData };
+  useEffect(() => {
+    if (!projectName || !projectId) return;
+
+    const fetchZOI = async () => {
+      try {
+        const response = await fetch(
+          "https://geoserver.core-stack.org:8443/geoserver/waterrej/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=waterrej%3AWaterRejapp_zoi_ATCEF_MP_CHATTARPUR_15&outputFormat=application%2Fjson"
+        );
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error("ZOI GeoServer error response:", errorText);
+          throw new Error(`GeoServer returned status ${response.status}`);
+        }
+
+        const data = await response.json();
+
+        const features = new GeoJSON().readFeatures(data, {
+          dataProjection: "EPSG:4326",
+          featureProjection: "EPSG:4326",
+        });
+
+        if (!features || features.length === 0) {
+          console.warn("No ZOI features found");
+          return;
+        }
+
+        setZoiFeatures(features); // ✅ Save in state
+        console.log("✅ ZOI features loaded", features);
+      } catch (error) {
+        console.error("Error fetching ZOI:", error);
+      }
+    };
+
+    fetchZOI();
+  }, [projectName, projectId]);
+
+  return { geoData, mwsGeoData, zoiFeatures };
 };
 
 const WaterProjectDashboard = () => {
@@ -151,35 +188,40 @@ const WaterProjectDashboard = () => {
   const [waterbodySearch, setWaterbodySearch] = useState("");
   const [selectedMWSFeature, setSelectedMWSFeature] = useState(null);
 
-  const [organization, setOrganization] = useState(() => {
-    const storedOrg = sessionStorage.getItem("selectedOrganization");
-    return storedOrg ? JSON.parse(storedOrg) : null;
-  });
-  const [project, setProject] = useState(() => {
-    const stored = sessionStorage.getItem("selectedProject");
-    try {
-      return stored ? JSON.parse(stored) : null;
-    } catch (err) {
-      console.error("Failed to parse stored project:", err);
-      return null;
-    }
-  });
+  const [organization, setOrganization] = useState(null);
+  const [project, setProject] = useState(null);
+
   useEffect(() => {
     const storedOrg = sessionStorage.getItem("selectedOrganization");
     const storedProject = sessionStorage.getItem("selectedProject");
 
+    // Only update if something changed
     if (storedOrg) {
-      setOrganization(JSON.parse(storedOrg));
+      const parsedOrg = JSON.parse(storedOrg);
+      setOrganization((prev) =>
+        prev?.value !== parsedOrg.value ? parsedOrg : prev
+      );
+    } else {
+      setOrganization(null);
     }
+
     if (storedProject) {
-      setProject(JSON.parse(storedProject));
+      const parsedProj = JSON.parse(storedProject);
+      setProject((prev) =>
+        prev?.value !== parsedProj.value ? parsedProj : prev
+      );
+    } else {
+      setProject(null);
     }
-  }, [location.pathname]);
+  }, [location.key]); // ✅ Triggers on actual route change
 
   const projectName = project?.label;
   const projectId = project?.value;
 
-  const { geoData, mwsGeoData } = useWaterRejData(projectName, projectId);
+  const { geoData, mwsGeoData, zoiFeatures } = useWaterRejData(
+    projectName,
+    projectId
+  );
 
   // const geoData = useWaterRejData(project, projectId);
   const { rows, totalSiltRemoved } = useMemo(() => {
@@ -508,140 +550,137 @@ const WaterProjectDashboard = () => {
     fetchUpdateLulc().catch(console.error);
   }, [lulcYear, currentLayer, selectedWaterbody, waterBodyLayer, project]);
 
-  // useEffect(() => {
-  //   const fetchUpdateLulc = async () => {
-  //     if (!lulcYear || !lulcYear.includes("_")) {
-  //       console.warn("Invalid lulcYear:", lulcYear);
-  //       return;
-  //     }
+  useEffect(() => {
+    const fetchUpdateLulcZOI = async () => {
+      if (!lulcYear || !lulcYear.includes("_")) {
+        console.warn("Invalid lulcYear:", lulcYear);
+        return;
+      }
 
-  //     if (currentLayer !== null && currentLayer.length > 0) {
-  //       let tempArr = currentLayer;
-  //       let tempLen = tempArr.length;
+      if (currentLayer !== null && currentLayer.length > 0) {
+        let tempArr = [...currentLayer];
+        let tempLen = tempArr.length;
 
-  //       for (let i = 0; i < tempLen; ++i) {
-  //         if (tempArr[i].name === "lulcWaterrej") {
-  //           if (mapRef.current && tempArr[i].layerRef?.[0]) {
-  //             mapRef.current.removeLayer(tempArr[i].layerRef[0]);
-  //           }
+        for (let i = 0; i < tempLen; ++i) {
+          if (tempArr[i].name === "lulcWaterrej") {
+            if (mapRef2.current && tempArr[i].layerRef?.[0]) {
+              mapRef2.current.removeLayer(tempArr[i].layerRef[0]);
+            }
 
-  //           const fullYear = lulcYear
-  //             .split("_")
-  //             .map((part) => `20${part}`)
-  //             .join("_")
-  //             .toLowerCase()
-  //             .replace(/\s/g, "_");
+            const fullYear = lulcYear
+              .split("_")
+              .map((part) => `20${part}`)
+              .join("_")
+              .toLowerCase()
+              .replace(/\s/g, "_");
 
-  //           if (!project || typeof project !== "object") {
-  //             console.error("Invalid project object:", project);
-  //             return;
-  //           }
+            if (!project || typeof project !== "object") {
+              console.error("Invalid project object:", project);
+              return;
+            }
 
-  //           const projectName = project.label;
-  //           const projectId = project.value;
+            const projectName = project.label;
+            const projectId = project.value;
 
-  //           const layerName = `clipped_lulc_filtered_mws_${projectName}_${projectId}_${fullYear}`;
+            const layerName = `clipped_lulc_filtered_mws_${projectName}_${projectId}_${fullYear}`;
 
-  //           let tempLayer = await getImageLayer(
-  //             "waterrej",
-  //             layerName,
-  //             true,
-  //             "lulc_water_pixels"
-  //           );
-  //           tempLayer.setZIndex(1);
-  //           if (mapRef.current) {
-  //             mapRef.current.addLayer(tempLayer);
-  //           }
-  //           console.log(
-  //             "LULC Layer Projection:",
-  //             tempLayer.getSource().getProjection?.()
-  //           );
-  //           const zoiFeatures = await fetchZOI();
-  //           if (zoiFeatures.length > 0) {
-  //             const zoiLayer = new VectorLayer({
-  //               source: new VectorSource({
-  //                 features: zoiFeatures,
-  //               }),
-  //               style: new Style({
-  //                 stroke: new Stroke({ color: "yellow", width: 2 }),
-  //                 fill: new Fill({ color: "rgba(255, 255, 153, 0.3)" }), // light yellow
-  //               }),
-  //             });
-  //             zoiLayer.setZIndex(0);
-  //             mapRef.current.addLayer(zoiLayer);
+            let tempLayer = await getImageLayer(
+              "waterrej",
+              layerName,
+              true,
+              "lulc_water_pixels"
+            );
+            tempLayer.setZIndex(1);
+            if (mapRef2.current) {
+              mapRef2.current.addLayer(tempLayer);
+            }
 
-  //             zoiFeatures.forEach((feature, index) => {
-  //               console.log(
-  //                 `Applying crop to ZOI ${index}`,
-  //                 feature.getGeometry().getType()
-  //               );
-  //               const crop = new Crop({
-  //                 feature,
-  //                 wrapX: true,
-  //                 inner: false,
-  //               });
+            // 👇 Add fetchZOI inline here:
+            const fetchZOI = async () => {
+              try {
+                const response = await fetch(
+                  "https://geoserver.core-stack.org:8443/geoserver/waterrej/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=waterrej%3AWaterRejapp_zoi_ATCEF_MP_CHATTARPUR_15&outputFormat=application%2Fjson"
+                );
+                const data = await response.json();
+                const features = new GeoJSON().readFeatures(data, {
+                  dataProjection: "EPSG:4326",
+                  featureProjection: "EPSG:4326",
+                });
 
-  //               // tempLayer.addFilter(crop); // 👈 Add each crop filter to tempLayer
-  //             });
-  //           }
+                return features || [];
+              } catch (err) {
+                console.error("Failed to fetch ZOI:", err);
+                return [];
+              }
+            };
 
-  //           tempArr[i].layerRef[0] = tempLayer;
-  //         }
-  //       }
+            const zoiFeatures = await fetchZOI();
 
-  //       setCurrentLayer(tempArr);
+            if (zoiFeatures.length > 0) {
+              const zoiLayer = new VectorLayer({
+                source: new VectorSource({ features: zoiFeatures }),
+                style: new Style({
+                  stroke: new Stroke({ color: "yellow", width: 2 }),
+                  fill: new Fill({ color: "rgba(255, 255, 153, 0.3)" }),
+                }),
+              });
+              zoiLayer.setZIndex(0);
+              mapRef2.current.addLayer(zoiLayer);
 
-  //       if (selectedWaterbody?.geometry && mapRef.current && waterBodyLayer) {
-  //         const source = waterBodyLayer.getSource();
-  //         const features = source.getFeatures();
+              zoiFeatures.forEach((feature, index) => {
+                console.log(
+                  `Applying crop to ZOI ${index}`,
+                  feature.getGeometry().getType()
+                );
+                const crop = new Crop({
+                  feature,
+                  wrapX: true,
+                  inner: false,
+                });
 
-  //         features.forEach((feature) => feature.setStyle(null));
+                // Uncomment this to apply the filter
+                // tempLayer.addFilter(crop);
+              });
+            }
 
-  //         const extent = selectedWaterbody.geometry.getExtent();
+            tempArr[i].layerRef[0] = tempLayer;
+          }
+        }
 
-  //         mapRef.current.getView().fit(extent, {
-  //           padding: [40, 40, 40, 40],
-  //           duration: 500,
-  //           maxZoom: 15,
-  //         });
+        setCurrentLayer(tempArr);
 
-  //         features.forEach((feature) => {
-  //           if (feature.getGeometry().intersectsExtent(extent)) {
-  //             feature.setStyle(
-  //               new Style({
-  //                 stroke: new Stroke({ color: "#FF0000", width: 5 }),
-  //                 fill: new Fill({ color: "rgba(255, 0, 0, 0.3)" }),
-  //               })
-  //             );
-  //           }
-  //         });
-  //       }
-  //     } else {
-  //       setCurrentLayer([{ name: "lulcWaterrej", layerRef: [] }]);
-  //     }
-  //   };
+        if (selectedWaterbody?.geometry && mapRef2.current && waterBodyLayer) {
+          const source = waterBodyLayer.getSource();
+          const features = source.getFeatures();
 
-  //   fetchUpdateLulc().catch(console.error);
-  // }, [lulcYear, currentLayer, selectedWaterbody, waterBodyLayer, project]);
+          features.forEach((feature) => feature.setStyle(null));
 
-  // const fetchZOI = async () => {
-  //   const response = await fetch(
-  //     "https://geoserver.core-stack.org:8443/geoserver/waterrej/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=waterrej:WaterRejapp_zoi_ATCEF_MP_CHATTARPUR_15&outputFormat=application/json"
-  //   );
-  //   const data = await response.json();
+          const extent = selectedWaterbody.geometry.getExtent();
 
-  //   const features = new GeoJSON().readFeatures(data, {
-  //     dataProjection: "EPSG:4326",
-  //     featureProjection: "EPSG:4326",
-  //   });
+          mapRef2.current.getView().fit(extent, {
+            padding: [40, 40, 40, 40],
+            duration: 500,
+            maxZoom: 15,
+          });
 
-  //   if (!features || features.length === 0) {
-  //     console.warn("No ZOI features found");
-  //     return [];
-  //   }
+          features.forEach((feature) => {
+            if (feature.getGeometry().intersectsExtent(extent)) {
+              feature.setStyle(
+                new Style({
+                  stroke: new Stroke({ color: "#FF0000", width: 5 }),
+                  fill: new Fill({ color: "rgba(255, 0, 0, 0.3)" }),
+                })
+              );
+            }
+          });
+        }
+      } else {
+        setCurrentLayer([{ name: "lulcWaterrej", layerRef: [] }]);
+      }
+    };
 
-  //   return features; // Return as array
-  // };
+    fetchUpdateLulcZOI().catch(console.error);
+  }, [lulcYear, selectedWaterbody, waterBodyLayer, project]);
 
   const handleViewChange = (event, newView) => {
     if (newView !== null) {
@@ -1649,6 +1688,76 @@ const WaterProjectDashboard = () => {
                   borderRadius: "5px",
                 }}
               />
+              {/* YearSlider */}
+              <Box
+                sx={{
+                  position: "absolute",
+                  bottom: 16,
+                  right: 16,
+                  backgroundColor: "rgba(255, 255, 255, 0.9)",
+                  padding: 2,
+                  borderRadius: 1,
+                  boxShadow: 2,
+                  zIndex: 1000,
+                  minWidth: "500px",
+                }}
+              >
+                <YearSlider currentLayer={{ name: "lulcWaterrej" }} />
+              </Box>
+
+              {/* Zoom Controls */}
+              <Box
+                sx={{
+                  position: "absolute",
+                  top: 80,
+                  right: 16,
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 1,
+                  zIndex: 1100,
+                }}
+              >
+                <button
+                  style={{
+                    backgroundColor: "#fff",
+                    border: "1px solid #ccc",
+                    borderRadius: "4px",
+                    width: "40px",
+                    height: "40px",
+                    fontSize: "20px",
+                    cursor: "pointer",
+                  }}
+                  onClick={() => {
+                    const view = mapRef2.current?.getView();
+                    view?.animate({
+                      zoom: view.getZoom() + 1,
+                      duration: 300,
+                    });
+                  }}
+                >
+                  +
+                </button>
+                <button
+                  style={{
+                    backgroundColor: "#fff",
+                    border: "1px solid #ccc",
+                    borderRadius: "4px",
+                    width: "40px",
+                    height: "40px",
+                    fontSize: "20px",
+                    cursor: "pointer",
+                  }}
+                  onClick={() => {
+                    const view = mapRef2.current?.getView();
+                    view?.animate({
+                      zoom: view.getZoom() - 1,
+                      duration: 300,
+                    });
+                  }}
+                >
+                  –
+                </button>
+              </Box>
             </Box>
           </Box>
         ) : null}
