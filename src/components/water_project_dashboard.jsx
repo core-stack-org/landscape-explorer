@@ -46,23 +46,12 @@ import Feature from "ol/Feature";
 import MouseWheelZoom from "ol/interaction/MouseWheelZoom";
 import PinchZoom from "ol/interaction/PinchZoom";
 import DoubleClickZoom from "ol/interaction/DoubleClickZoom";
+import { useLocation } from "react-router-dom";
 
-const useWaterRejData = () => {
+const useWaterRejData = (projectName, projectId) => {
+  console.log(projectId, projectName);
   const [geoData, setGeoData] = useState(null);
   const [mwsGeoData, setMwsGeoData] = useState(null);
-
-  const [project, setProject] = useState(() => {
-    const stored = sessionStorage.getItem("selectedProject");
-    try {
-      return stored ? JSON.parse(stored) : null;
-    } catch (err) {
-      console.error("Failed to parse stored project:", err);
-      return null;
-    }
-  });
-
-  const projectName = project?.label;
-  const projectId = project?.value;
 
   useEffect(() => {
     if (!projectName || !projectId) return;
@@ -137,7 +126,7 @@ const useWaterRejData = () => {
 };
 
 const WaterProjectDashboard = () => {
-  const { projectId } = useParams();
+  // const { projectId } = useParams();
   const [view, setView] = useState("table");
   const [anchorEl, setAnchorEl] = useState(null);
   const [filterType, setFilterType] = useState("");
@@ -154,6 +143,7 @@ const WaterProjectDashboard = () => {
   const mapRef1 = useRef();
   const mapRef2 = useRef();
   const baseLayerRef = useRef();
+  const location = useLocation();
 
   const [sortField, setSortField] = useState(null);
   const [sortOrder, setSortOrder] = useState("asc");
@@ -165,7 +155,6 @@ const WaterProjectDashboard = () => {
     const storedOrg = sessionStorage.getItem("selectedOrganization");
     return storedOrg ? JSON.parse(storedOrg) : null;
   });
-
   const [project, setProject] = useState(() => {
     const stored = sessionStorage.getItem("selectedProject");
     try {
@@ -176,11 +165,21 @@ const WaterProjectDashboard = () => {
     }
   });
   useEffect(() => {
-    console.log("View now:", view);
-  }, [view]);
+    const storedOrg = sessionStorage.getItem("selectedOrganization");
+    const storedProject = sessionStorage.getItem("selectedProject");
 
-  const projectName = project?.label || "No project selected";
-  const { geoData, mwsGeoData } = useWaterRejData(project, projectId);
+    if (storedOrg) {
+      setOrganization(JSON.parse(storedOrg));
+    }
+    if (storedProject) {
+      setProject(JSON.parse(storedProject));
+    }
+  }, [location.pathname]);
+
+  const projectName = project?.label;
+  const projectId = project?.value;
+
+  const { geoData, mwsGeoData } = useWaterRejData(projectName, projectId);
 
   // const geoData = useWaterRejData(project, projectId);
   const { rows, totalSiltRemoved } = useMemo(() => {
@@ -1634,7 +1633,7 @@ const WaterProjectDashboard = () => {
             </Box>
 
             {/* Map 2 (ZOI Map) */}
-            {/* <Box
+            <Box
               sx={{
                 position: "relative",
                 width: "100%",
@@ -1650,7 +1649,7 @@ const WaterProjectDashboard = () => {
                   borderRadius: "5px",
                 }}
               />
-            </Box> */}
+            </Box>
           </Box>
         ) : null}
       </Box>
