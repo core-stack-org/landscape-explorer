@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
 import { yearAtom } from "../store/locationStore.jsx";
 import { useRecoilState } from "recoil";
+import { yearAtomFamily } from "../store/locationStore.jsx";
 
-const YearSlider = ({ currentLayer }) => {
+const YearSlider = ({ currentLayer, sliderId = null }) => {
   const yearDataLulc = [
     { label: "2017-2018", value: "17_18" },
     { label: "2018-2019", value: "18_19" },
@@ -15,7 +16,10 @@ const YearSlider = ({ currentLayer }) => {
 
   const [currentValue, setCurrentValue] = useState(0);
   const [showTooltip, setShowTooltip] = useState(false);
-  const [yearvalue, setYearAtom] = useRecoilState(yearAtom);
+  // const [yearvalue, setYearAtom] = useRecoilState(yearAtom);
+  const [yearValue, setYearAtom] = useRecoilState(
+    sliderId ? yearAtomFamily(sliderId) : yearAtom
+  );
 
   const isLulcLayerActive =
     currentLayer &&

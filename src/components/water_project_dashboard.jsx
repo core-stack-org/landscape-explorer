@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo } from "react";
 import { useRecoilState, useRecoilValue } from "recoil";
-import { yearAtom } from "../store/locationStore.jsx";
+// import { yearAtom } from "../store/locationStore.jsx";
 import HeaderSelect from "../components/water_headerSection";
 import { useParams } from "react-router-dom";
 import VectorLayer from "ol/layer/Vector";
@@ -11,6 +11,7 @@ import { Style, Fill, Stroke } from "ol/style";
 import LocationOnIcon from "@mui/icons-material/LocationOn";
 import YearSlider from "./yearSlider";
 import PrecipitationStackChart from "./PrecipitationStackChart.jsx";
+import { yearAtomFamily } from "../store/locationStore";
 
 import {
   Box,
@@ -49,7 +50,6 @@ import DoubleClickZoom from "ol/interaction/DoubleClickZoom";
 import { useLocation } from "react-router-dom";
 
 const useWaterRejData = (projectName, projectId) => {
-  console.log(projectId, projectName);
   const [geoData, setGeoData] = useState(null);
   const [mwsGeoData, setMwsGeoData] = useState(null);
   const [zoiFeatures, setZoiFeatures] = useState([]);
@@ -125,11 +125,22 @@ const useWaterRejData = (projectName, projectId) => {
   useEffect(() => {
     if (!projectName || !projectId) return;
 
+    const zoiTypeName = `waterrej:WaterRejapp_zoi_${projectName}_${projectId}`;
+    const zoiUrl =
+      `https://geoserver.core-stack.org:8443/geoserver/waterrej/ows?` +
+      new URLSearchParams({
+        service: "WFS",
+        version: "1.0.0",
+        request: "GetFeature",
+        typeName: zoiTypeName,
+        outputFormat: "application/json",
+      });
+
+    console.log("[ZOI] Fetching from URL:", zoiUrl);
+
     const fetchZOI = async () => {
       try {
-        const response = await fetch(
-          "https://geoserver.core-stack.org:8443/geoserver/waterrej/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=waterrej%3AWaterRejapp_zoi_ATCEF_MP_CHATTARPUR_15&outputFormat=application%2Fjson"
-        );
+        const response = await fetch(zoiUrl);
 
         if (!response.ok) {
           const errorText = await response.text();
@@ -149,8 +160,7 @@ const useWaterRejData = (projectName, projectId) => {
           return;
         }
 
-        setZoiFeatures(features); // ✅ Save in state
-        console.log("✅ ZOI features loaded", features);
+        setZoiFeatures(features);
       } catch (error) {
         console.error("Error fetching ZOI:", error);
       }
@@ -170,7 +180,7 @@ const WaterProjectDashboard = () => {
 
   const [selectedWaterbody, setSelectedWaterbody] = useState(null);
   const [waterBodyLayer, setWaterBodyLayer] = useState(null);
-  const lulcYear = useRecoilValue(yearAtom);
+  // const lulcYear = useRecoilValue(yearAtom);
   const [currentLayer, setCurrentLayer] = useState([]);
 
   const [selectedFeature, setSelectedFeature] = useState(null);
@@ -181,6 +191,8 @@ const WaterProjectDashboard = () => {
   const mapRef2 = useRef();
   const baseLayerRef = useRef();
   const location = useLocation();
+  const lulcYear1 = useRecoilValue(yearAtomFamily("map1"));
+  const lulcYear2 = useRecoilValue(yearAtomFamily("map2"));
 
   const [sortField, setSortField] = useState(null);
   const [sortOrder, setSortOrder] = useState("asc");
@@ -467,93 +479,100 @@ const WaterProjectDashboard = () => {
 
   useEffect(() => {
     const fetchUpdateLulc = async () => {
-      if (!lulcYear || !lulcYear.includes("_")) {
-        console.warn("Invalid lulcYear:", lulcYear);
+      if (!lulcYear1 || !lulcYear1.includes("_")) {
+        console.warn("[LULC] Invalid lulcYear:", lulcYear1);
         return;
       }
 
-      if (currentLayer !== null && currentLayer.length > 0) {
-        let tempArr = currentLayer;
-        let tempLen = tempArr.length;
+      if (!project || typeof project !== "object") {
+        console.error("[LULC] Invalid project object:", project);
+        return;
+      }
 
-        for (let i = 0; i < tempLen; ++i) {
-          if (tempArr[i].name === "lulcWaterrej") {
-            if (mapRef1.current && tempArr[i].layerRef?.[0]) {
-              mapRef1.current.removeLayer(tempArr[i].layerRef[0]);
-            }
+      const fullYear = lulcYear1
+        .split("_")
+        .map((part) => `20${part}`)
+        .join("_")
+        .toLowerCase()
+        .replace(/\s/g, "_");
 
-            const fullYear = lulcYear
-              .split("_")
-              .map((part) => `20${part}`)
-              .join("_")
-              .toLowerCase()
-              .replace(/\s/g, "_");
+      const projectName = project.label;
+      const projectId = project.value;
 
-            if (!project || typeof project !== "object") {
-              console.error("Invalid project object:", project);
-              return;
-            }
+      const layerName = `clipped_lulc_filtered_mws_${projectName}_${projectId}_${fullYear}`;
+      const uniqueLayerId = "lulcWaterrejLayer1";
 
-            const projectName = project.label;
-            const projectId = project.value;
+      if (mapRef1.current) {
+        const layersBefore = mapRef1.current.getLayers().getArray();
 
-            const layerName = `clipped_lulc_filtered_mws_${projectName}_${projectId}_${fullYear}`;
-
-            let tempLayer = await getImageLayer(
-              "waterrej",
-              layerName,
-              true,
-              "lulc_water_pixels"
-            );
-            tempLayer.setZIndex(0);
-
-            if (mapRef1.current) {
-              mapRef1.current.addLayer(tempLayer);
-            }
-
-            tempArr[i].layerRef[0] = tempLayer;
+        layersBefore.forEach((layer) => {
+          if (layer.get("id") === uniqueLayerId) {
+            mapRef1.current.removeLayer(layer);
           }
-        }
+        });
+      }
 
-        setCurrentLayer(tempArr);
+      const newLayer = await getImageLayer(
+        "waterrej",
+        layerName,
+        true,
+        "lulc_water_pixels"
+      );
 
-        if (selectedWaterbody?.geometry && mapRef1.current && waterBodyLayer) {
-          const source = waterBodyLayer.getSource();
-          const features = source.getFeatures();
+      newLayer.setZIndex(0);
+      newLayer.set("id", uniqueLayerId);
 
-          features.forEach((feature) => feature.setStyle(null));
+      if (mapRef1.current) {
+        mapRef1.current.addLayer(newLayer);
+      }
 
-          const extent = selectedWaterbody.geometry.getExtent();
+      setCurrentLayer((prev) => {
+        const others = prev.filter((l) => l.name !== "lulcWaterrej");
+        const updated = [
+          ...others,
+          {
+            name: "lulcWaterrej",
+            layerRef: [newLayer],
+          },
+        ];
+        return updated;
+      });
 
-          mapRef1.current.getView().fit(extent, {
-            padding: [40, 40, 40, 40],
-            duration: 500,
-            maxZoom: 15,
-          });
+      if (selectedWaterbody?.geometry && mapRef1.current && waterBodyLayer) {
+        const source = waterBodyLayer.getSource();
+        const features = source.getFeatures();
 
-          features.forEach((feature) => {
-            if (feature.getGeometry().intersectsExtent(extent)) {
-              feature.setStyle(
-                new Style({
-                  stroke: new Stroke({ color: "#FF0000", width: 5 }),
-                  fill: new Fill({ color: "rgba(255, 0, 0, 0.3)" }),
-                })
-              );
-            }
-          });
-        }
-      } else {
-        setCurrentLayer([{ name: "lulcWaterrej", layerRef: [] }]);
+        features.forEach((feature) => feature.setStyle(null));
+
+        const extent = selectedWaterbody.geometry.getExtent();
+        mapRef1.current.getView().fit(extent, {
+          padding: [40, 40, 40, 40],
+          duration: 500,
+          maxZoom: 15,
+        });
+
+        features.forEach((feature) => {
+          if (feature.getGeometry().intersectsExtent(extent)) {
+            feature.setStyle(
+              new Style({
+                stroke: new Stroke({ color: "#FF0000", width: 5 }),
+                fill: new Fill({ color: "rgba(255, 0, 0, 0.3)" }),
+              })
+            );
+          }
+        });
       }
     };
 
-    fetchUpdateLulc().catch(console.error);
-  }, [lulcYear, currentLayer, selectedWaterbody, waterBodyLayer, project]);
+    fetchUpdateLulc().catch((error) => {
+      console.error("[LULC] Error during fetchUpdateLulc:", error);
+    });
+  }, [lulcYear1, selectedWaterbody, waterBodyLayer, project]);
 
   useEffect(() => {
     const fetchUpdateLulcZOI = async () => {
-      if (!lulcYear || !lulcYear.includes("_")) {
-        console.warn("Invalid lulcYear:", lulcYear);
+      if (!lulcYear2 || !lulcYear2.includes("_")) {
+        console.warn("Invalid lulcYear:", lulcYear2);
         return;
       }
 
@@ -562,12 +581,12 @@ const WaterProjectDashboard = () => {
         let tempLen = tempArr.length;
 
         for (let i = 0; i < tempLen; ++i) {
-          if (tempArr[i].name === "lulcWaterrej") {
+          if (tempArr[i].name === "lulcWaterrejZOI") {
             if (mapRef2.current && tempArr[i].layerRef?.[0]) {
               mapRef2.current.removeLayer(tempArr[i].layerRef[0]);
             }
 
-            const fullYear = lulcYear
+            const fullYear = lulcYear2
               .split("_")
               .map((part) => `20${part}`)
               .join("_")
@@ -595,7 +614,6 @@ const WaterProjectDashboard = () => {
               mapRef2.current.addLayer(tempLayer);
             }
 
-            // 👇 Add fetchZOI inline here:
             const fetchZOI = async () => {
               try {
                 const response = await fetch(
@@ -627,18 +645,12 @@ const WaterProjectDashboard = () => {
               zoiLayer.setZIndex(0);
               mapRef2.current.addLayer(zoiLayer);
 
-              zoiFeatures.forEach((feature, index) => {
-                console.log(
-                  `Applying crop to ZOI ${index}`,
-                  feature.getGeometry().getType()
-                );
+              zoiFeatures.forEach((feature) => {
                 const crop = new Crop({
                   feature,
                   wrapX: true,
                   inner: false,
                 });
-
-                // Uncomment this to apply the filter
                 // tempLayer.addFilter(crop);
               });
             }
@@ -675,12 +687,12 @@ const WaterProjectDashboard = () => {
           });
         }
       } else {
-        setCurrentLayer([{ name: "lulcWaterrej", layerRef: [] }]);
+        setCurrentLayer([{ name: "lulcWaterrejZOI", layerRef: [] }]);
       }
     };
 
     fetchUpdateLulcZOI().catch(console.error);
-  }, [lulcYear, selectedWaterbody, waterBodyLayer, project]);
+  }, [lulcYear2, selectedWaterbody, waterBodyLayer, project]);
 
   const handleViewChange = (event, newView) => {
     if (newView !== null) {
@@ -1571,7 +1583,10 @@ const WaterProjectDashboard = () => {
                     minWidth: "500px",
                   }}
                 >
-                  <YearSlider currentLayer={{ name: "lulcWaterrej" }} />
+                  <YearSlider
+                    currentLayer={{ name: "lulcWaterrej" }}
+                    sliderId="map1"
+                  />
                 </Box>
 
                 {/* Zoom Controls */}
@@ -1702,7 +1717,10 @@ const WaterProjectDashboard = () => {
                   minWidth: "500px",
                 }}
               >
-                <YearSlider currentLayer={{ name: "lulcWaterrej" }} />
+                <YearSlider
+                  currentLayer={{ name: "lulcWaterrej" }}
+                  sliderId="map2"
+                />
               </Box>
 
               {/* Zoom Controls */}
