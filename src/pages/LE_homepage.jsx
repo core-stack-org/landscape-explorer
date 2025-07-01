@@ -177,7 +177,7 @@ export default function KYLHomePage() {
                 <button
                   className="bg-gray-300 text-black px-4 py-2 rounded w-full sm:w-auto"
                   onClick={() =>
-                    handleNavigate("/landscape_explorer", "Download Layers")
+                    handleNavigate("/download_layers", "Download Layers")
                   }
                 >
                   Download Layers
