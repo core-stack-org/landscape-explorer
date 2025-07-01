@@ -129,7 +129,7 @@ export default function KYLHomePage() {
               className="w-full max-w-lg bg-white p-6 rounded shadow min-h-[350px] flex flex-col justify-between relative"
               style={{ overflow: "visible", zIndex: 100 }}
             >
-              <p className="mb-0 text-center font-semibold text-2xl md:text-3xl leading-none">
+              <p className="mb-0 text-center font-semibold text-2xl md:text-2xl leading-none">
                 Select Location
               </p>
 
@@ -366,7 +366,7 @@ export default function KYLHomePage() {
                   description:
                     "Visualize waterbody interventions and evaluate their effects on water availability and agriculture.",
                   icon: "💧",
-                  link: "https://development-waterbody-dashboard.d2s4eeyazvtd2g.amplifyapp.com/water_dashboard",
+                  // link: "https://development-waterbody-dashboard.d2s4eeyazvtd2g.amplifyapp.com/water_dashboard",
                 },
                 {
                   title: "Commons Connect Plans",
