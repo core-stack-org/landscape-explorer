@@ -73,7 +73,7 @@ export default function KYLHomePage() {
     <div className="font-sans ">
       <LandingNavbar />
       <div
-        className="min-h-screen snap-y snap-mandatory h-screen bg-cover bg-center bg-no-repeat "
+        className="min-h-screen snap-y snap-mandatory bg-cover bg-center bg-no-repeat "
         style={{
           backgroundImage: `url(${landingPageBg})`,
           scrollBehavior: "smooth",
@@ -411,6 +411,7 @@ export default function KYLHomePage() {
           </div>
         </section>
       </div>
+
       <Footer />
     </div>
   );
