@@ -1687,7 +1687,7 @@ const WaterProjectDashboard = () => {
             </Box>
 
             {/* Map 2 (ZOI Map) */}
-            <Box
+            {/* <Box
               sx={{
                 position: "relative",
                 width: "100%",
@@ -1703,7 +1703,6 @@ const WaterProjectDashboard = () => {
                   borderRadius: "5px",
                 }}
               />
-              {/* YearSlider */}
               <Box
                 sx={{
                   position: "absolute",
@@ -1723,7 +1722,6 @@ const WaterProjectDashboard = () => {
                 />
               </Box>
 
-              {/* Zoom Controls */}
               <Box
                 sx={{
                   position: "absolute",
@@ -1776,7 +1774,7 @@ const WaterProjectDashboard = () => {
                   –
                 </button>
               </Box>
-            </Box>
+            </Box> */}
           </Box>
         ) : null}
       </Box>
