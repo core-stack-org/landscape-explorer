@@ -411,6 +411,7 @@ export default function KYLHomePage() {
           </div>
         </section>
       </div>
+
       <Footer />
     </div>
   );
