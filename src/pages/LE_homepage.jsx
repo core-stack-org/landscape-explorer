@@ -44,14 +44,23 @@ export default function KYLHomePage() {
   }, []);
 
   const handleItemSelect = (setter, value) => {
-    if (setter === setState && value) {
-      trackEvent("Location", "select_state", value.label);
-    } else if (setter === setDistrict && value) {
-      trackEvent("Location", "select_district", value.label);
+    if (setter === setState) {
+      if (value) {
+        trackEvent("Location", "select_state", value.label);
+      }
+      setter(value);
+      setDistrict(null);
+      setBlock(null);
+    } else if (setter === setDistrict) {
+      if (value) {
+        trackEvent("Location", "select_district", value.label);
+      }
+      setter(value);
+      setBlock(null);
     } else if (setter === setBlock && value) {
       trackEvent("Location", "select_block", value.label);
+      setter(value);
     }
-    setter(value);
   };
 
   const handleNavigate = (path, buttonName) => {
@@ -71,8 +80,10 @@ export default function KYLHomePage() {
         }}
       >
         {/* Know Section */}
-        <section className=" snap-start backdrop-brightness-90 backdrop-blur-sm bg-white/0 px-4 py-6 md:px-8 md:py-10 rounded-xl mx-2 md:mx-6 mt-0 mb-4 md:mb-6">
-          {" "}
+        <section
+          className="snap-start backdrop-brightness-90 backdrop-blur-sm bg-white/0 px-4 py-6 md:px-8 md:py-10 rounded-xl mx-2 md:mx-6 mt-0 mb-4 md:mb-6"
+          style={{ position: "relative", overflow: "visible", zIndex: 10 }}
+        >
           <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-8">
             <div className="w-full lg:w-1/2">
               <h2 className="text-3xl md:text-4xl mb-4">
@@ -114,30 +125,44 @@ export default function KYLHomePage() {
                 </p>
               </div>
             </div>
-            <div className="w-full max-w-lg bg-white p-6 rounded shadow min-h-[350px] flex flex-col justify-between">
+            <div
+              className="w-full max-w-lg bg-white p-6 rounded shadow min-h-[350px] flex flex-col justify-between relative"
+              style={{ overflow: "visible", zIndex: 100 }}
+            >
               <p className="mb-0 text-center font-semibold text-2xl md:text-3xl leading-none">
                 Select Location
               </p>
 
-              <div className="space-y-5 mt-4">
-                <SelectButton
-                  currVal={state || { label: "Select State" }}
-                  stateData={statesData}
-                  handleItemSelect={handleItemSelect}
-                  setState={setState}
-                />
-                <SelectButton
-                  currVal={district || { label: "Select District" }}
-                  stateData={state !== null ? state.district : null}
-                  handleItemSelect={handleItemSelect}
-                  setState={setDistrict}
-                />
-                <SelectButton
-                  currVal={block || { label: "Select Tehsil" }}
-                  stateData={district !== null ? district.blocks : null}
-                  handleItemSelect={handleItemSelect}
-                  setState={setBlock}
-                />
+              <div className="space-y-5 mt-4 relative">
+                {/* State */}
+                <div className="relative z-[9999]">
+                  <SelectButton
+                    currVal={state || { label: "Select State" }}
+                    stateData={statesData}
+                    handleItemSelect={handleItemSelect}
+                    setState={setState}
+                  />
+                </div>
+
+                {/* District */}
+                <div className="relative z-[9998]">
+                  <SelectButton
+                    currVal={district || { label: "Select District" }}
+                    stateData={state !== null ? state.district : null}
+                    handleItemSelect={handleItemSelect}
+                    setState={setDistrict}
+                  />
+                </div>
+
+                {/* Block */}
+                <div className="relative z-[9997]">
+                  <SelectButton
+                    currVal={block || { label: "Select Tehsil" }}
+                    stateData={district !== null ? district.blocks : null}
+                    handleItemSelect={handleItemSelect}
+                    setState={setBlock}
+                  />
+                </div>
               </div>
 
               <div className="flex flex-col sm:flex-row justify-between gap-3 mt-4">
