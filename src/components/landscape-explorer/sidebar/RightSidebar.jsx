@@ -49,7 +49,7 @@ const mainCategories = [
 // Land Layers
 const landLayersData = [
   { id: 1, name: "terrain", label: "Terrain", hasGeojson: false, hasKml: false, hasGeoTiff: true, hasStyle : true},
-  { id: 2, name: "terrain_vector", label: "Terrain Vector", hasGeojson: true, hasKml: true, hasStyle : false },
+  { id: 2, name: "terrain_vector", label: "Terrain Vector", hasGeojson: true, hasKml: true, hasStyle : true },
   { id: "lulc_level_1", label: "LULC Layer Level 1" },
   { id: "lulc_level_2", label: "LULC Layer Level 2" },
 ]
@@ -156,6 +156,9 @@ const handleStyleDownload = (layerName) => {
       break;
     case "deforestation" :
       url = "https://drive.google.com/file/d/1MFKAXiW5mpfCoBBMJR-K7Y5O_Uwp0kOR/view?usp=drive_link"
+      break;
+    case "terrain_vector":
+      url = "https://drive.google.com/file/d/1RTogX5nacJYQLP2IFMQiQEBrQyyqPf-G/view?usp=sharing"
       break;
     case "degradation":
       url = "https://drive.google.com/file/d/1tPtEqhWO_RisycKnK8Bl_2yEnrfgWqfE/view?usp=drive_link"
