@@ -1487,6 +1487,7 @@ const WaterProjectDashboard = () => {
                     borderRadius: "5px",
                   }}
                 />
+
                 {/* Top-left Label */}
                 <Box
                   sx={{
@@ -1502,6 +1503,8 @@ const WaterProjectDashboard = () => {
                     flexDirection: "column",
                     alignItems: "flex-start",
                     gap: 1,
+                    zIndex: 1000,
+                    maxWidth: { xs: "90%", sm: "300px" },
                   }}
                 >
                   <Box display="flex" alignItems="center" gap={1}>
@@ -1528,65 +1531,81 @@ const WaterProjectDashboard = () => {
                   </Typography>
                 </Box>
 
-                {/* Legend */}
+                {/* Legend + YearSlider wrapper for responsiveness */}
                 <Box
                   sx={{
                     position: "absolute",
                     bottom: 16,
                     left: 16,
-                    backgroundColor: "rgba(255, 255, 255, 0.9)",
-                    padding: 2,
-                    borderRadius: 1,
-                    boxShadow: 2,
-                  }}
-                >
-                  <Typography variant="subtitle2">
-                    Water Layer Legend
-                  </Typography>
-                  {[
-                    { color: "#74CCF4", label: "Kharif Water" },
-                    { color: "#1ca3ec", label: "Kharif and Rabi Water" },
-                    { color: "#0f5e9c", label: "Kharif, Rabi and Zaid Water" },
-                  ].map((item, idx) => (
-                    <Box
-                      key={idx}
-                      display="flex"
-                      alignItems="center"
-                      gap={1}
-                      mt={1}
-                    >
-                      <Box
-                        sx={{
-                          width: 20,
-                          height: 20,
-                          backgroundColor: item.color,
-                          opacity: 0.7,
-                          border: "1px solid #000",
-                        }}
-                      />
-                      <Typography variant="body2">{item.label}</Typography>
-                    </Box>
-                  ))}
-                </Box>
-
-                {/* YearSlider */}
-                <Box
-                  sx={{
-                    position: "absolute",
-                    bottom: 16,
                     right: 16,
-                    backgroundColor: "rgba(255, 255, 255, 0.9)",
-                    padding: 2,
-                    borderRadius: 1,
-                    boxShadow: 2,
+                    display: "flex",
+                    flexDirection: { xs: "column", sm: "row" },
+                    justifyContent: "space-between",
+                    gap: 2,
+                    flexWrap: "wrap",
                     zIndex: 1000,
-                    minWidth: "500px",
                   }}
                 >
-                  <YearSlider
-                    currentLayer={{ name: "lulcWaterrej" }}
-                    sliderId="map1"
-                  />
+                  {/* Legend */}
+                  <Box
+                    sx={{
+                      backgroundColor: "rgba(255, 255, 255, 0.9)",
+                      padding: 2,
+                      borderRadius: 1,
+                      boxShadow: 2,
+                      flex: "1 1 180px",
+                      minWidth: "260px",
+                      maxWidth: "200px",
+                    }}
+                  >
+                    <Typography variant="subtitle2">
+                      Water Layer Legend
+                    </Typography>
+                    {[
+                      { color: "#74CCF4", label: "Kharif Water" },
+                      { color: "#1ca3ec", label: "Kharif and Rabi Water" },
+                      {
+                        color: "#0f5e9c",
+                        label: "Kharif, Rabi and Zaid Water",
+                      },
+                    ].map((item, idx) => (
+                      <Box
+                        key={idx}
+                        display="flex"
+                        alignItems="center"
+                        gap={1}
+                        mt={1}
+                      >
+                        <Box
+                          sx={{
+                            width: 20,
+                            height: 20,
+                            backgroundColor: item.color,
+                            opacity: 0.7,
+                            border: "1px solid #000",
+                          }}
+                        />
+                        <Typography variant="body2">{item.label}</Typography>
+                      </Box>
+                    ))}
+                  </Box>
+
+                  {/* YearSlider */}
+                  <Box
+                    sx={{
+                      backgroundColor: "rgba(255, 255, 255, 0.9)",
+                      padding: 2,
+                      borderRadius: 1,
+                      boxShadow: 2,
+                      flex: "1 1 240px",
+                      minWidth: { xs: "220px", sm: "300px", md: "500px" },
+                    }}
+                  >
+                    <YearSlider
+                      currentLayer={{ name: "lulcWaterrej" }}
+                      sliderId="map1"
+                    />
+                  </Box>
                 </Box>
 
                 {/* Zoom Controls */}
@@ -1601,46 +1620,30 @@ const WaterProjectDashboard = () => {
                     zIndex: 1100,
                   }}
                 >
-                  <button
-                    style={{
-                      backgroundColor: "#fff",
-                      border: "1px solid #ccc",
-                      borderRadius: "4px",
-                      width: "40px",
-                      height: "40px",
-                      fontSize: "20px",
-                      cursor: "pointer",
-                    }}
-                    onClick={() => {
-                      const view = mapRef1.current?.getView();
-                      view?.animate({
-                        zoom: view.getZoom() + 1,
-                        duration: 300,
-                      });
-                    }}
-                  >
-                    +
-                  </button>
-                  <button
-                    style={{
-                      backgroundColor: "#fff",
-                      border: "1px solid #ccc",
-                      borderRadius: "4px",
-                      width: "40px",
-                      height: "40px",
-                      fontSize: "20px",
-                      cursor: "pointer",
-                    }}
-                    onClick={() => {
-                      const view = mapRef1.current?.getView();
-                      view?.animate({
-                        zoom: view.getZoom() - 1,
-                        duration: 300,
-                      });
-                    }}
-                  >
-                    –
-                  </button>
+                  {["+", "–"].map((sign, i) => (
+                    <button
+                      key={sign}
+                      style={{
+                        backgroundColor: "#fff",
+                        border: "1px solid #ccc",
+                        borderRadius: "4px",
+                        width: "40px",
+                        height: "40px",
+                        fontSize: "20px",
+                        cursor: "pointer",
+                      }}
+                      onClick={() => {
+                        const view = mapRef1.current?.getView();
+                        const delta = sign === "+" ? 1 : -1;
+                        view?.animate({
+                          zoom: view.getZoom() + delta,
+                          duration: 300,
+                        });
+                      }}
+                    >
+                      {sign}
+                    </button>
+                  ))}
                 </Box>
               </Box>
 
@@ -1655,30 +1658,27 @@ const WaterProjectDashboard = () => {
                 }}
               >
                 {selectedWaterbody && (
-                  <Box sx={{ width: "700px", height: "400px" }}>
+                  <Box
+                    sx={{ width: "100%", maxWidth: "700px", height: "400px" }}
+                  >
                     <WaterAvailabilityChart
                       waterbody={selectedWaterbody}
                       water_rej_data={geoData}
                     />
-                    This <b>Black line</b> represents the year of intervention.
-                    {/* <Typography fontSize={14} color="#333">
-                      The{" "}
-                      <Box
-                        component="span"
-                        fontWeight="bold"
-                        color="black"
-                        display="inline"
-                      >
-                        black line
-                      </Box>{" "}
-                      represents the year of intervention.
-                    </Typography> */}
+                    <Typography fontSize={14} color="#333" mt={1}>
+                      <b>Black line</b> represents the year of intervention.
+                    </Typography>
                   </Box>
                 )}
 
                 {selectedMWSFeature && (
                   <Box
-                    sx={{ width: "700px", height: "400px", marginTop: "1%" }}
+                    sx={{
+                      width: "100%",
+                      maxWidth: "700px",
+                      height: "400px",
+                      marginTop: "1%",
+                    }}
                   >
                     <PrecipitationStackChart feature={selectedMWSFeature} />
                   </Box>
