@@ -571,128 +571,86 @@ const WaterProjectDashboard = () => {
 
   useEffect(() => {
     const fetchUpdateLulcZOI = async () => {
-      if (!lulcYear2 || !lulcYear2.includes("_")) {
-        console.warn("Invalid lulcYear:", lulcYear2);
-        return;
-      }
+      if (!lulcYear2 || !lulcYear2.includes("_")) return;
+      if (!zoiFeatures?.length) return;
+      if (!mapRef2.current) return;
 
-      if (currentLayer !== null && currentLayer.length > 0) {
-        let tempArr = [...currentLayer];
-        let tempLen = tempArr.length;
+      const fullYear = lulcYear2
+        .split("_")
+        .map((part) => `20${part}`)
+        .join("_")
+        .toLowerCase()
+        .replace(/\s/g, "_");
 
-        for (let i = 0; i < tempLen; ++i) {
-          if (tempArr[i].name === "lulcWaterrejZOI") {
-            if (mapRef2.current && tempArr[i].layerRef?.[0]) {
-              mapRef2.current.removeLayer(tempArr[i].layerRef[0]);
-            }
+      const projectName = project?.label;
+      const projectId = project?.value;
+      if (!projectName || !projectId) return;
 
-            const fullYear = lulcYear2
-              .split("_")
-              .map((part) => `20${part}`)
-              .join("_")
-              .toLowerCase()
-              .replace(/\s/g, "_");
+      const map = mapRef2.current;
+      const layerName = `clipped_lulc_filtered_mws_${projectName}_${projectId}_${fullYear}`;
 
-            if (!project || typeof project !== "object") {
-              console.error("Invalid project object:", project);
-              return;
-            }
-
-            const projectName = project.label;
-            const projectId = project.value;
-
-            const layerName = `clipped_lulc_filtered_mws_${projectName}_${projectId}_${fullYear}`;
-
-            let tempLayer = await getImageLayer(
-              "waterrej",
-              layerName,
-              true,
-              "lulc_water_pixels"
-            );
-            tempLayer.setZIndex(1);
-            if (mapRef2.current) {
-              mapRef2.current.addLayer(tempLayer);
-            }
-
-            const fetchZOI = async () => {
-              try {
-                const response = await fetch(
-                  "https://geoserver.core-stack.org:8443/geoserver/waterrej/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=waterrej%3AWaterRejapp_zoi_ATCEF_MP_CHATTARPUR_15&outputFormat=application%2Fjson"
-                );
-                const data = await response.json();
-                const features = new GeoJSON().readFeatures(data, {
-                  dataProjection: "EPSG:4326",
-                  featureProjection: "EPSG:4326",
-                });
-
-                return features || [];
-              } catch (err) {
-                console.error("Failed to fetch ZOI:", err);
-                return [];
-              }
-            };
-
-            const zoiFeatures = await fetchZOI();
-
-            if (zoiFeatures.length > 0) {
-              const zoiLayer = new VectorLayer({
-                source: new VectorSource({ features: zoiFeatures }),
-                style: new Style({
-                  stroke: new Stroke({ color: "yellow", width: 2 }),
-                  fill: new Fill({ color: "rgba(255, 255, 153, 0.3)" }),
-                }),
-              });
-              zoiLayer.setZIndex(0);
-              mapRef2.current.addLayer(zoiLayer);
-
-              zoiFeatures.forEach((feature) => {
-                const crop = new Crop({
-                  feature,
-                  wrapX: true,
-                  inner: false,
-                });
-                // tempLayer.addFilter(crop);
-              });
-            }
-
-            tempArr[i].layerRef[0] = tempLayer;
+      const idsToRemove = [
+        "lulc_zoi_layer",
+        "zoi_border_layer",
+        "waterbody_layer",
+      ];
+      map
+        .getLayers()
+        .getArray()
+        .forEach((layer) => {
+          if (idsToRemove.includes(layer.get("id"))) {
+            map.removeLayer(layer);
           }
-        }
+        });
 
-        setCurrentLayer(tempArr);
+      const tempLayer = await getImageLayer(
+        "waterrej",
+        layerName,
+        true,
+        "waterrej_lulc"
+      );
+      tempLayer.setZIndex(0);
+      tempLayer.set("id", "lulc_zoi_layer");
 
-        if (selectedWaterbody?.geometry && mapRef2.current && waterBodyLayer) {
-          const source = waterBodyLayer.getSource();
-          const features = source.getFeatures();
+      const geometries = zoiFeatures.map((f) => f.getGeometry().clone());
+      const multiPolygon = new MultiPolygon(
+        geometries.map((g) => g.getCoordinates())
+      );
+      const combinedFeature = new Feature(multiPolygon);
+      const crop = new Crop({
+        feature: combinedFeature,
+        wrapX: true,
+        inner: false,
+      });
+      tempLayer.addFilter(crop);
 
-          features.forEach((feature) => feature.setStyle(null));
+      map.addLayer(tempLayer);
 
-          const extent = selectedWaterbody.geometry.getExtent();
+      const zoiLayer = new VectorLayer({
+        source: new VectorSource({ features: zoiFeatures }),
+        style: new Style({
+          stroke: new Stroke({ color: "yellow", width: 5 }),
+          // fill: new Fill({ color: "rgba(255, 255, 153, 0.3)" }),
+        }),
+      });
+      zoiLayer.setZIndex(1);
+      zoiLayer.set("id", "zoi_border_layer");
+      map.addLayer(zoiLayer);
 
-          mapRef2.current.getView().fit(extent, {
-            padding: [40, 40, 40, 40],
-            duration: 500,
-            maxZoom: 15,
-          });
-
-          features.forEach((feature) => {
-            if (feature.getGeometry().intersectsExtent(extent)) {
-              feature.setStyle(
-                new Style({
-                  stroke: new Stroke({ color: "#FF0000", width: 5 }),
-                  fill: new Fill({ color: "rgba(255, 0, 0, 0.3)" }),
-                })
-              );
-            }
-          });
-        }
-      } else {
-        setCurrentLayer([{ name: "lulcWaterrejZOI", layerRef: [] }]);
+      if (waterBodyLayer) {
+        waterBodyLayer.setZIndex(2);
+        waterBodyLayer.set("id", "waterbody_layer");
+        map.addLayer(waterBodyLayer);
       }
+
+      setCurrentLayer((prev) => {
+        const others = prev.filter((l) => l.name !== "lulcWaterrejZOI");
+        return [...others, { name: "lulcWaterrejZOI", layerRef: [tempLayer] }];
+      });
     };
 
     fetchUpdateLulcZOI().catch(console.error);
-  }, [lulcYear2, selectedWaterbody, waterBodyLayer, project]);
+  }, [lulcYear2, project, zoiFeatures, mapRef2.current]);
 
   const handleViewChange = (event, newView) => {
     if (newView !== null) {
@@ -726,13 +684,11 @@ const WaterProjectDashboard = () => {
       return filters[key].includes(String(row[key]));
     });
 
-    // Third: waterbodySearch only on waterbody column
     const matchesWaterbodySearch = row.waterbody
       ?.toString()
       .toLowerCase()
       .includes(waterbodySearch.toLowerCase());
 
-    // Final combined condition:
     return matchesGlobalSearch && matchesFilters && matchesWaterbodySearch;
   });
 
@@ -827,7 +783,7 @@ const WaterProjectDashboard = () => {
         // fill: new Fill({ color: "rgba(100, 149, 237, 0.5)" }),
       }),
     });
-    waterBodyLayerSecond.setZIndex(1);
+    waterBodyLayerSecond.setZIndex(2);
 
     map.addLayer(waterBodyLayerSecond);
     setWaterBodyLayer(waterBodyLayerSecond);
@@ -1687,7 +1643,7 @@ const WaterProjectDashboard = () => {
             </Box>
 
             {/* Map 2 (ZOI Map) */}
-            {/* <Box
+            <Box
               sx={{
                 position: "relative",
                 width: "100%",
@@ -1774,7 +1730,7 @@ const WaterProjectDashboard = () => {
                   –
                 </button>
               </Box>
-            </Box> */}
+            </Box>
           </Box>
         ) : null}
       </Box>
