@@ -207,11 +207,17 @@ const HeaderSelect = ({
       "selectedOrganization",
       JSON.stringify(selectedOption)
     );
+    if (setView) setView("table");
+    setDashboardLocked(false);
   };
 
   const handleProjectChange = (selectedOption) => {
     setProject(selectedOption);
     sessionStorage.setItem("selectedProject", JSON.stringify(selectedOption));
+
+    if (setView) setView("table");
+    setDashboardLocked(false);
+
     if (selectedOption?.value) {
       navigate(`/dashboard/${selectedOption.value}`);
     }
