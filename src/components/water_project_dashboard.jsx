@@ -1565,42 +1565,44 @@ const WaterProjectDashboard = () => {
                 </Box>
 
                 {/* Zoom Controls */}
-                <Box
-                  sx={{
-                    position: "absolute",
-                    top: 80,
-                    right: 16,
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: 1,
-                    zIndex: 1100,
-                  }}
-                >
-                  {["+", "–"].map((sign, i) => (
-                    <button
-                      key={sign}
-                      style={{
-                        backgroundColor: "#fff",
-                        border: "1px solid #ccc",
-                        borderRadius: "4px",
-                        width: "40px",
-                        height: "40px",
-                        fontSize: "20px",
-                        cursor: "pointer",
-                      }}
-                      onClick={() => {
-                        const view = mapRef1.current?.getView();
-                        const delta = sign === "+" ? 1 : -1;
-                        view?.animate({
-                          zoom: view.getZoom() + delta,
-                          duration: 300,
-                        });
-                      }}
-                    >
-                      {sign}
-                    </button>
-                  ))}
-                </Box>
+                {!selectedWaterbody && (
+                  <Box
+                    sx={{
+                      position: "absolute",
+                      top: 80,
+                      right: 16,
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: 1,
+                      zIndex: 1100,
+                    }}
+                  >
+                    {["+", "–"].map((sign) => (
+                      <button
+                        key={sign}
+                        style={{
+                          backgroundColor: "#fff",
+                          border: "1px solid #ccc",
+                          borderRadius: "4px",
+                          width: "40px",
+                          height: "40px",
+                          fontSize: "20px",
+                          cursor: "pointer",
+                        }}
+                        onClick={() => {
+                          const view = mapRef1.current?.getView();
+                          const delta = sign === "+" ? 1 : -1;
+                          view?.animate({
+                            zoom: view.getZoom() + delta,
+                            duration: 300,
+                          });
+                        }}
+                      >
+                        {sign}
+                      </button>
+                    ))}
+                  </Box>
+                )}
               </Box>
 
               {/* Charts Section */}
@@ -1643,7 +1645,7 @@ const WaterProjectDashboard = () => {
             </Box>
 
             {/* Map 2 (ZOI Map) */}
-            <Box
+            {/* <Box
               sx={{
                 position: "relative",
                 width: "100%",
@@ -1730,7 +1732,7 @@ const WaterProjectDashboard = () => {
                   –
                 </button>
               </Box>
-            </Box>
+            </Box> */}
           </Box>
         ) : null}
       </Box>
