@@ -24,7 +24,7 @@ import getStates from "../../../actions/getStates";
 import mapMarker from '../../../assets/map_marker.svg';
 
 
-const MapLegend = ({toggledLayers}) => {
+const MapLegend = ({toggledLayers, lulcYear1, lulcYear2, lulcYear3}) => {
 
   const [isCollapsed, setIsCollapsed] = useState(true);
 
@@ -125,6 +125,54 @@ const MapLegend = ({toggledLayers}) => {
     { color: "#313695", label: "Over - Exploited " },
   ];
 
+  const terrainVector = [
+    { color: "#324A1C", label: "Broad Sloppy and Hilly" },
+    { color: "#97C76B", label: "Mostly Plains" },
+    { color: "#673A13", label: "Mostly Hills and Valleys" },
+    { color: "#E5E059", label: "Broad Plains and Slopes" },
+  ]
+
+  const LULCLvl1Item = [
+    { color: "#ff0000", label: "Built Up" },
+    { color: "#1ca3ec", label: "Water" },
+    { color: "#73bb53", label: "Trees / Forests / Cropping" },
+    { color: "#A9A9A9", label: "Barren Lands" },
+    { color: "#eaa4f0", label: "Shrubs and Scrubs" },
+  ]
+
+  const LULCLvl2Item = [
+    { color: "#73bb53", label: "Trees/Forests" },
+    { color: "#fad36f", label: "Cropping" },
+  ]
+
+  const LULCLvl3Item = [
+    { color: "#ff0000", label: "Barren Lands" },
+    { color: "#c6e46d", label: "Single Kharif" },
+    { color: "#eee05d", label: "Single Non-Kharif" },
+    { color: "#f9b249", label: "Double Cropping" },
+    { color: "#fb5139", label: "Triple Cropping" },
+    { color: "#ff0000", label: "Shrubs and Scrubs" },
+  ]
+
+  const socioEconomicItem = [
+    { color: "#98FB98", label: "%age literacy level < 46" },
+    { color: "#32CD32", label: "%age literacy level (46 - 59)" },
+    { color: "#228B22", label: "%age literacy level (59 - 70)" },
+    { color: "#006400", label: "%age literacy level > 70" },
+  ]
+
+  const wellDepthItem = [
+    { color: "rgba(255, 0, 0, 1.0)", label: "Less than -5m" },
+    { color: "rgba(255, 255, 0, 1.0)", label: ">-5m to -1m" },
+    { color: "rgba(0, 255, 0, 1.0)", label: ">-1m to 1m" },
+    { color: "rgba(0, 0, 255, 1.0)", label: "More than 1m" },
+  ]
+
+  const droughtItem = [
+    { color: "rgba(244, 208, 63, 1)", label: "No Drought" },
+    { color: "rgba(235, 152, 78, 1)", label: "At least one drought year" },
+    { color: "rgba(231, 76, 60, 1)", label: "At least two drought years" },
+  ]
 
   const isTerrainActive = toggledLayers["terrain"]
   const isCLARTActive = toggledLayers["clart"]
@@ -135,6 +183,10 @@ const MapLegend = ({toggledLayers}) => {
   const isAfforestationActive = toggledLayers["afforestation"]
   const isSOGEActive = toggledLayers["soge"]
   const isAquiferActive = toggledLayers["aquifer"]
+  const isTerrainVector = toggledLayers["terrain_vector"]
+  const socioEconomic = toggledLayers["demographics"]
+  const wellDepthActive = toggledLayers["mws_layers"]
+  const droughtActive = toggledLayers["drought"]
 
   return (
     <div
@@ -384,11 +436,179 @@ const MapLegend = ({toggledLayers}) => {
                 </div>
               )}
 
-              {/* Afforestation Section */}
+              {/* Aquifer Section */}
               {isAquiferActive && (
                 <div className="space-y-2">
                   <h4 className="text-xs font-medium text-gray-600">Aquifer</h4>
                   {aquiferItems.map((item, index) => (
+                    <div
+                      key={`trend-${index}`}
+                      className="flex items-center gap-2"
+                    >
+                      <div
+                        className="w-4 h-4 rounded"
+                        style={{
+                          backgroundColor: item.color,
+                          border: `1px solid rgba(0,0,0,0.2)`,
+                        }}
+                      />
+                      <span className="text-sm text-gray-600">
+                        {item.label}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Terrain Vector Section */}
+              {isTerrainVector && (
+                <div className="space-y-2">
+                  <h4 className="text-xs font-medium text-gray-600">Terrain Vector</h4>
+                  {terrainVector.map((item, index) => (
+                    <div
+                      key={`trend-${index}`}
+                      className="flex items-center gap-2"
+                    >
+                      <div
+                        className="w-4 h-4 rounded"
+                        style={{
+                          backgroundColor: item.color,
+                          border: `1px solid rgba(0,0,0,0.2)`,
+                        }}
+                      />
+                      <span className="text-sm text-gray-600">
+                        {item.label}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Socio Vector Section */}
+              {socioEconomic && (
+                <div className="space-y-2">
+                  <h4 className="text-xs font-medium text-gray-600">Litracy Percent</h4>
+                  {socioEconomicItem.map((item, index) => (
+                    <div
+                      key={`trend-${index}`}
+                      className="flex items-center gap-2"
+                    >
+                      <div
+                        className="w-4 h-4 rounded"
+                        style={{
+                          backgroundColor: item.color,
+                          border: `1px solid rgba(0,0,0,0.2)`,
+                        }}
+                      />
+                      <span className="text-sm text-gray-600">
+                        {item.label}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Well Depth Section */}
+              {wellDepthActive && (
+                <div className="space-y-2">
+                  <h4 className="text-xs font-medium text-gray-600">Well Depth</h4>
+                  {wellDepthItem.map((item, index) => (
+                    <div
+                      key={`trend-${index}`}
+                      className="flex items-center gap-2"
+                    >
+                      <div
+                        className="w-4 h-4 rounded"
+                        style={{
+                          backgroundColor: item.color,
+                          border: `1px solid rgba(0,0,0,0.2)`,
+                        }}
+                      />
+                      <span className="text-sm text-gray-600">
+                        {item.label}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* LULC lvl 1 Section */}
+              {lulcYear1 !== null && (
+                <div className="space-y-2">
+                  <h4 className="text-xs font-medium text-gray-600">LULC Legend</h4>
+                  {LULCLvl1Item.map((item, index) => (
+                    <div
+                      key={`trend-${index}`}
+                      className="flex items-center gap-2"
+                    >
+                      <div
+                        className="w-4 h-4 rounded"
+                        style={{
+                          backgroundColor: item.color,
+                          border: `1px solid rgba(0,0,0,0.2)`,
+                        }}
+                      />
+                      <span className="text-sm text-gray-600">
+                        {item.label}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* LULC lvl 2 Section */}
+              {lulcYear2 !== null && (
+                <div className="space-y-2">
+                  <h4 className="text-xs font-medium text-gray-600">LULC Legend</h4>
+                  {LULCLvl2Item.map((item, index) => (
+                    <div
+                      key={`trend-${index}`}
+                      className="flex items-center gap-2"
+                    >
+                      <div
+                        className="w-4 h-4 rounded"
+                        style={{
+                          backgroundColor: item.color,
+                          border: `1px solid rgba(0,0,0,0.2)`,
+                        }}
+                      />
+                      <span className="text-sm text-gray-600">
+                        {item.label}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* LULC lvl 3 Section */}
+              {lulcYear3 !== null && (
+                <div className="space-y-2">
+                  <h4 className="text-xs font-medium text-gray-600">LULC Legend</h4>
+                  {LULCLvl3Item.map((item, index) => (
+                    <div
+                      key={`trend-${index}`}
+                      className="flex items-center gap-2"
+                    >
+                      <div
+                        className="w-4 h-4 rounded"
+                        style={{
+                          backgroundColor: item.color,
+                          border: `1px solid rgba(0,0,0,0.2)`,
+                        }}
+                      />
+                      <span className="text-sm text-gray-600">
+                        {item.label}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Drought Section */}
+              {droughtActive && (
+                <div className="space-y-2">
+                  <h4 className="text-xs font-medium text-gray-600">Drought Legend</h4>
+                  {droughtItem.map((item, index) => (
                     <div
                       key={`trend-${index}`}
                       className="flex items-center gap-2"
@@ -481,6 +701,7 @@ const Map = forwardRef(({
   const drainageColors = [
     "03045E", "023E8A", "0077B6", "0096C7", "00B4D8", "48CAE4", "90E0EF", "ADE8F4", "CAF0F8",
   ];
+  let years = ["2017","2018","2019","2020","2021","2022"]
 
   // Helper function to change polygon color (from original)
   function changePolygonColor(color) {
@@ -940,6 +1161,53 @@ const Map = forwardRef(({
         true,
         true
       );
+      adminLayer.setStyle(function (feature) {
+        if (!feature || !feature.values_) return null;
+        
+        let bin = (feature.values_.P_LIT / feature.values_.TOT_P) * 100;
+        if (bin < 46) {
+          return new Style({
+              stroke: new Stroke({
+                  color: "#000000",
+                  width: 0.5,
+              }),
+              fill: new Fill({
+                  color: "#98FB98",
+              })
+          })
+        } else if (bin >= 46 && bin < 59) {
+          return new Style({
+              stroke: new Stroke({
+                  color: "#000000",
+                  width: 0.5,
+              }),
+              fill: new Fill({
+                  color: "#32CD32",
+              })
+          })
+        } else if (bin >= 59 && bin <= 70) {
+          return new Style({
+              stroke: new Stroke({
+                  color: "#000000",
+                  width: 0.5,
+              }),
+              fill: new Fill({
+                  color: "#228B22",
+              })
+          })
+        } else if (bin > 70) {
+          return new Style({
+            stroke: new Stroke({
+                color: "#000000",
+                width: 0.5,
+            }),
+            fill: new Fill({
+                color: "#006400",
+            })
+        })
+        }
+        return null;
+      });
 
       // Remove the admin Layer if exists to display only one admin layer at a time
       if (LayersArray[0].LayerRef.current != null) {
@@ -1113,6 +1381,52 @@ const Map = forwardRef(({
       );
 
       if (DroughtLayer) {
+        
+        DroughtLayer.setStyle(function (feature) {
+          if (!feature || !feature.values_) return null;
+          
+          let avg_Res = 0
+          
+          years.map((item) => {
+            let tempDro = (feature.values_["drlb_"+item].match(/2/g) || []).length + (feature.values_["drlb_"+item].match(/3/g)||[]).length;
+            if(tempDro >= 5){avg_Res++;}
+          })
+
+          if(avg_Res === 0){
+            return new Style({
+                stroke: new Stroke({
+                    color: "rgba(244, 208, 63, 1)",
+                    width: 1.0,
+                }),
+                fill: new Fill({
+                    color: "rgba(244, 208, 63, 0.5)",
+                })
+            })
+          }
+          else if(avg_Res >= 2){
+            return new Style({
+                stroke: new Stroke({
+                    color: "rgba(231, 76, 60, 1)",
+                    width: 1.0,
+                }),
+                fill: new Fill({
+                    color: "rgba(231, 76, 60, 0.5)",
+                })
+            })
+          }
+          else{
+            return new Style({
+              stroke: new Stroke({
+                  color: "rgba(235, 152, 78, 1)",
+                  width: 1.0,
+              }),
+              fill: new Fill({
+                  color: "rgba(235, 152, 78, 0.5)",
+              })
+          })
+          }
+        });
+
         if (LayersArray[7].LayerRef.current != null) {
           safeRemoveLayer(LayersArray[7].LayerRef.current);
         }
@@ -1826,7 +2140,7 @@ const Map = forwardRef(({
         aria-label="Map"
       />
       
-      <MapLegend toggledLayers={toggledLayers} />
+      <MapLegend toggledLayers={toggledLayers} lulcYear1={lulcYear1} lulcYear2={lulcYear2} lulcYear3={lulcYear3} />
 
       <MapControls 
         showMWS={showMWS}
