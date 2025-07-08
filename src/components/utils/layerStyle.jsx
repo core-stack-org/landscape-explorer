@@ -71,7 +71,7 @@ const layerStyles = (feature, vectorStyle, idx = 0, villageJson, dataJson) => {
             break;
 
         case 8:
-            // PERCENT SC POPULATION
+            // PERCENT LITERACY POPULATION
             if(feature.values_.P_LIT !== 0)
                 avg_Res = (feature.values_.P_LIT / feature.values_.TOT_P) * 100;
             break;
