@@ -50,8 +50,8 @@ const mainCategories = [
 const landLayersData = [
   { id: 1, name: "terrain", label: "Terrain", hasGeojson: false, hasKml: false, hasGeoTiff: true, hasStyle : true},
   { id: 2, name: "terrain_vector", label: "Terrain Vector", hasGeojson: true, hasKml: true, hasStyle : true },
-  { id: "lulc_level_1", label: "LULC Layer Level 1" },
-  { id: "lulc_level_2", label: "LULC Layer Level 2" },
+  { id: "lulc_level_1", name:"lulc_level_1", label: "LULC Layer Level 1" },
+  { id: "lulc_level_2", name:"lulc_level_2", label: "LULC Layer Level 2" },
 ]
 
 const climateLayersData = [
@@ -67,7 +67,7 @@ const hydrologyLayersData = [
 ]
 
 const agriLayersData = [
-  { id: "lulc_level_3", label: "LULC Layer Level 3" },
+  { id: "lulc_level_3", name:"lulc_level_2", label: "LULC Layer Level 3" },
   { id: 1, name: "cropping_intensity", label: "Cropping Intensity", hasGeojson: true, hasKml: true, hasStyle : false },
   { id: 2, name: "drought", label: "Drought", hasGeojson: true, hasKml: true, hasStyle : false },
 ]
