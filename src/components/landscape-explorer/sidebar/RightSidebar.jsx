@@ -417,29 +417,25 @@ const RightSidebar = ({
           url = `https://geoserver.core-stack.org:8443/geoserver/drainage/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=drainage:${districtFormatted}_${blockFormatted}&outputFormat=application/vnd.google-earth.kml+xml&screen=main`;
           break;
         case 'remote_sensed_waterbodies':
-          url = `https://geoserver.core-stack.org:8443/geoserver/water_bodies/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=water_bodies:surface_waterbodies_${districtFormatted}_${blockFormatted}&outputFormat=application/vnd.google-earth.kml+xml&screen=main`;
+          url = `https://geoserver.core-stack.org:8443/geoserver/swb/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=swb:surface_waterbodies_${districtFormatted}_${blockFormatted}&outputFormat=application/vnd.google-earth.kml+xml&screen=main`;
           break;
-        case 'hydrological_boundaries':
+        case 'aquifer':
+          url = `https://geoserver.core-stack.org:8443/geoserver/aquifer/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=aquifer:aquifer_vector_${districtFormatted}_${blockFormatted}&outputFormat=application/vnd.google-earth.kml+xml&screen=main`;
+          break;
+        case 'soge':
+          url = `https://geoserver.core-stack.org:8443/geoserver/soge/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=soge:soge_vector_${districtFormatted}_${blockFormatted}&outputFormat=application/vnd.google-earth.kml+xml&screen=main`;
+          break;
+        case 'terrain_vector':
+          url = `https://geoserver.core-stack.org:8443/geoserver/terrain/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=terrain:${districtFormatted}_${blockFormatted}_cluster&outputFormat=application/vnd.google-earth.kml+xml&screen=main`;
+          break;
+        case 'mws_layers':
           url = `https://geoserver.core-stack.org:8443/geoserver/mws_layers/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=mws_layers:deltaG_well_depth_${districtFormatted}_${blockFormatted}&outputFormat=application/vnd.google-earth.kml+xml&screen=main`;
           break;
-        // Add cases for resource and planning layers
-        case 'settlement':
-          url = `https://geoserver.core-stack.org:8443/geoserver/resources/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=resources:hemlet_layer${blockFormatted}&outputFormat=application/vnd.google-earth.kml+xml&screen=main`;
+        case 'drought':
+          url = `https://geoserver.core-stack.org:8443/geoserver/cropping_drought/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=cropping_drought:${districtFormatted}_${blockFormatted}_drought&outputFormat=application/vnd.google-earth.kml+xml&screen=main`;
           break;
-        case 'water_structure':
-          url = `https://geoserver.core-stack.org:8443/geoserver/resources/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=resources:plan_layer_gw${blockFormatted}&outputFormat=application/vnd.google-earth.kml+xml&screen=main`;
-          break;
-        case 'well_structure':
-          url = `https://geoserver.core-stack.org:8443/geoserver/resources/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=resources:well_layer${blockFormatted}&outputFormat=application/vnd.google-earth.kml+xml&screen=main`;
-          break;
-        case 'agri_structure':
-          url = `https://geoserver.core-stack.org:8443/geoserver/works/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=works:plan_layer_agri${blockFormatted}&outputFormat=application/vnd.google-earth.kml+xml&screen=main`;
-          break;
-        case 'livelihood_structure':
-          url = `https://geoserver.core-stack.org:8443/geoserver/works/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=works:hemlet_layer${blockFormatted}&outputFormat=application/vnd.google-earth.kml+xml&screen=main`;
-          break;
-        case 'recharge_structure':
-          url = `https://geoserver.core-stack.org:8443/geoserver/works/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=works:plan_layer_gw${blockFormatted}&outputFormat=application/vnd.google-earth.kml+xml&screen=main`;
+        case 'nrega':
+          url = `https://geoserver.core-stack.org:8443/geoserver/nrega_assets/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=nrega_assets:${districtFormatted}_${blockFormatted}&outputFormat=application/vnd.google-earth.kml+xml&screen=main`;
           break;
         default:
           url = `https://geoserver.core-stack.org:8443/geoserver/${filterName}/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=${filterName}:${districtFormatted}_${blockFormatted}&outputFormat=application/vnd.google-earth.kml+xml&screen=main`;
