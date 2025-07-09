@@ -1616,15 +1616,17 @@ const Map = forwardRef(({
       if (SOGELayer) {
         SOGELayer.setStyle(function (feature) {
           if (!feature || !feature.values_) return null;
+
+          console.log(feature.values_)
           
-          if(feature.values_.class === "safe"){
+          if(feature.values_.class === "Safe"){
             return new Style({
               fill: new Fill({
                 color: "#ffffff",
               }),
             });
           }
-          else if(feature.values_.class === "Semi-Critical"){
+          else if(feature.values_.class === "Semi-critical"){
             return new Style({
               fill: new Fill({
                 color: "#e0f3f8",
