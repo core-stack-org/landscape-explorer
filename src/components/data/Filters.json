@@ -281,7 +281,7 @@
             },
             {
                 "name": "soge_class",
-                "label" : "State of groundwater extraction",
+                "label" : "Stage of groundwater extraction",
                 "type" : 1,
                 "values" : [
                     {"label" : "Safe", "value" : 0},
