@@ -533,7 +533,7 @@ const MapLegend = ({toggledLayers, lulcYear1, lulcYear2, lulcYear3}) => {
               )}
 
               {/* LULC lvl 1 Section */}
-              {lulcYear1 !== null && (
+              {lulcYear1 !== null && lulcYear1.label !== "None" && (
                 <div className="space-y-2">
                   <h4 className="text-xs font-medium text-gray-600">LULC Legend</h4>
                   {LULCLvl1Item.map((item, index) => (
@@ -557,7 +557,7 @@ const MapLegend = ({toggledLayers, lulcYear1, lulcYear2, lulcYear3}) => {
               )}
 
               {/* LULC lvl 2 Section */}
-              {lulcYear2 !== null && (
+              {lulcYear2 !== null && lulcYear2.label !== "None" && (
                 <div className="space-y-2">
                   <h4 className="text-xs font-medium text-gray-600">LULC Legend</h4>
                   {LULCLvl2Item.map((item, index) => (
@@ -581,7 +581,7 @@ const MapLegend = ({toggledLayers, lulcYear1, lulcYear2, lulcYear3}) => {
               )}
 
               {/* LULC lvl 3 Section */}
-              {lulcYear3 !== null && (
+              {lulcYear3 !== null && lulcYear3.label !== "None" && (
                 <div className="space-y-2">
                   <h4 className="text-xs font-medium text-gray-600">LULC Legend</h4>
                   {LULCLvl3Item.map((item, index) => (
@@ -1452,11 +1452,10 @@ const Map = forwardRef(({
 
       // === Admin Without Metadata Layer ===
       let AdminBoundaryLayer = await getVectorLayers(
-        "admin_boundaries",
+        "panchayat_boundaries",
         district.label.toLowerCase().split(" ").join("_") +
           "_" +
-          block.label.toLowerCase().split(" ").join("_") +
-          "_boundaries",
+          block.label.toLowerCase().split(" ").join("_"),
         true,
         true
       );

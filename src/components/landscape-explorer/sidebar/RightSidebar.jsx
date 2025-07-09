@@ -368,8 +368,6 @@ const RightSidebar = ({
     const districtFormatted = district.label.toLowerCase().split(" ").join("_");
     const blockFormatted = block.label.toLowerCase().split(" ").join("_");
 
-    console.log(filterName)
-    
     if (format === 'geojson') {
       let url = '';
     
