@@ -62,14 +62,14 @@ const hydrologyLayersData = [
   { id: 1, name: "drainage", label: "Drainage", hasGeojson: true, hasKml: true, hasStyle : true},
   { id: 2, name: "remote_sensed_waterbodies", label: "Remote-Sensed Waterbodies", hasGeojson: true, hasKml: true, hasStyle : false },
   { id: 3, name: "clart", label: "CLART", hasGeojson: false, hasKml: false, hasGeoTiff: true, hasStyle : true },
-  { id: 4, name: "soge", label: "SOGE", hasGeojson: true, hasKml: false, hasGeoTiff: false, hasStyle : false },
-  { id: 5, name: "aquifer", label: "Aquifer", hasGeojson: true, hasKml: false, hasGeoTiff: false, hasStyle : false },
+  { id: 4, name: "soge", label: "SOGE", hasGeojson: true, hasKml: false, hasGeoTiff: false, hasStyle : true },
+  { id: 5, name: "aquifer", label: "Aquifer", hasGeojson: true, hasKml: false, hasGeoTiff: false, hasStyle : true },
 ]
 
 const agriLayersData = [
   { id: "lulc_level_3", name:"lulc_level_2", label: "LULC Layer Level 3" },
   { id: 1, name: "cropping_intensity", label: "Cropping Intensity", hasGeojson: true, hasKml: true, hasStyle : false },
-  { id: 2, name: "drought", label: "Drought", hasGeojson: true, hasKml: true, hasStyle : false },
+  { id: 2, name: "drought", label: "Drought", hasGeojson: true, hasKml: true, hasStyle : true },
 ]
 
 const restorationLayersData = [
@@ -186,6 +186,15 @@ const handleStyleDownload = (layerName) => {
       break;
     case "lulc_level_3":
       url = "https://drive.google.com/file/d/1GFc7W2AtlrYJbnveWkT08uSyeTasFQxT/view?usp=drive_link"
+      break;
+    case "soge":
+      url = "https://drive.google.com/file/d/1iSgiTZOCxQ6t0tYVgVSI059Cz-3YimuR/view?usp=sharing"
+      break;
+    case "aquifer":
+      url = "https://drive.google.com/file/d/1xHjtq893yQcCfBsuQ0G_SKko111xkv6F/view?usp=sharing"
+      break;
+    case "drought":
+      url = "https://drive.google.com/file/d/1BIDbbsLaFxBO4YHMX-vyEt0VTSJLLlmL/view?usp=sharing"
       break;
   }
 
