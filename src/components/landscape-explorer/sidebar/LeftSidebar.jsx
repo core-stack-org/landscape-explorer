@@ -15,11 +15,11 @@ import landscape_icon from "../../../assets/eco.png";
 
 const LeftSidebar = ({ onClose }) => {
   const [currTab, setCurrTab] = useState("panchayat_boundaries");
-  const [currSection, setCurrSection] = useState("Panchayat Boundaries");
+  const [currSection, setCurrSection] = useState("Administrative Boundaries");
 
   // Button mappings
   const buttonMap = [
-    {json_name: "panchayat_boundaries", name: "Panchayat Demographics"},
+    {json_name: "panchayat_boundaries", name: "Administrative Boundaries"},
     {json_name: "drainage_layer", name: "Drainage Layer"},
     {json_name: "mws_layer", name: "Hydrological Variables Layer"},
     {json_name: "nrega_layer", name: "NREGA Layer"},
