@@ -176,7 +176,7 @@ const MapLegend = ({toggledLayers, lulcYear1, lulcYear2, lulcYear3}) => {
 
   const isTerrainActive = toggledLayers["terrain"]
   const isCLARTActive = toggledLayers["clart"]
-  const isCropIntensityActive = toggledLayers["cropintensity"]
+  const isCropIntensityActive = toggledLayers["cropIntensity"]
   const isDeforestationActive = toggledLayers["deforestation"]
   const isDegradationActive = toggledLayers["degradation"]
   const isUrbanizationActive = toggledLayers["urbanization"]
@@ -2132,7 +2132,7 @@ const Map = forwardRef(({
           'deforestation': 'Change Detection Deforestation',
           'degradation': 'Change Detection Degradation',
           'urbanization': 'Change Detection Urbanization',
-          'cropintensity': 'Change Detection Crop-Intensity'
+          'cropIntensity': 'Change Detection Crop-Intensity'
         };
         
         const layerName = layerMap[id];
