@@ -681,6 +681,7 @@ const Map = forwardRef(({
     { LayerRef: useRef(null), name: "Change Detection Degradation", isRaster: true },
     { LayerRef: useRef(null), name: "Change Detection Urbanization", isRaster: true },
     { LayerRef: useRef(null), name: "Change Detection Crop-Intensity", isRaster: true },
+    { LayerRef: useRef(null), name: "Change Detection Restoration", isRaster: true },
     { LayerRef: useRef(null), name: "SOGE", isRaster: true },
     { LayerRef: useRef(null), name: "Aquifer", isRaster: true },
     { LayerRef: useRef(null), name: "LULC_1", isRaster: true },
@@ -752,6 +753,7 @@ const Map = forwardRef(({
           'degradation' : 'Change Detection Degradation',
           'urbanization' : 'Change Detection Urbanization',
           'cropintensity' : 'Change Detection Crop-Intensity',
+          'restoration' : 'Change Detection Restoration',
           'soge' : 'SOGE',
           'aquifer' : 'Aquifer'
         };
@@ -1602,6 +1604,25 @@ const Map = forwardRef(({
         LayersArray[16].LayerRef.current = CropIntensityLayer;
       }
 
+      // === Restoration Layer ===
+      let RestorationLayer = await getImageLayers(
+        "restoration",
+        "restoration_" +
+        district.label.toLowerCase().split(" ").join("_") +
+          "_" +
+          block.label.toLowerCase().split(" ").join("_") + "_raster",
+        true,
+        "restoration_style"
+      );
+
+      if (RestorationLayer) {
+        if (LayersArray[17].LayerRef.current != null) {
+          safeRemoveLayer(LayersArray[17].LayerRef.current);
+        }
+        LayersArray[17].LayerRef.current = RestorationLayer;
+      }
+      
+
       // === SOGE Layer ===
       let SOGELayer = await getVectorLayers(
         "soge",
@@ -1648,10 +1669,10 @@ const Map = forwardRef(({
             });
           }
         });
-        if (LayersArray[17].LayerRef.current != null) {
-          safeRemoveLayer(LayersArray[17].LayerRef.current);
+        if (LayersArray[18].LayerRef.current != null) {
+          safeRemoveLayer(LayersArray[18].LayerRef.current);
         }
-        LayersArray[17].LayerRef.current = SOGELayer;
+        LayersArray[18].LayerRef.current = SOGELayer;
       }
 
       // === Aquifer Layer ===
@@ -1768,10 +1789,10 @@ const Map = forwardRef(({
             });
           }
         });
-        if (LayersArray[18].LayerRef.current != null) {
-          safeRemoveLayer(LayersArray[18].LayerRef.current);
+        if (LayersArray[19].LayerRef.current != null) {
+          safeRemoveLayer(LayersArray[19].LayerRef.current);
         }
-        LayersArray[18].LayerRef.current = AquiferLayer;
+        LayersArray[19].LayerRef.current = AquiferLayer;
       }
 
       // Enable Demographics layer by default
