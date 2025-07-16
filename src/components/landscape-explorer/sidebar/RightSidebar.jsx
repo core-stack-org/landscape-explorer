@@ -78,6 +78,7 @@ const restorationLayersData = [
   { id: 3, name: "degradation", label: "Change Detection Degradation", hasGeojson: false, hasKml: false, hasGeoTiff: true, hasStyle : true },
   { id: 4, name: "urbanization", label: "Change Detection Urbanization", hasGeojson: false, hasKml: false, hasGeoTiff: true, hasStyle : true },
   { id: 5, name: "cropintensity", label: "Change Detection Crop-Intensity", hasGeojson: false, hasKml: false, hasGeoTiff: true, hasStyle : true },
+  { id: 6, name: "restoration", label: "Change Detection Restoration", hasGeojson: false, hasKml: false, hasGeoTiff: true, hasStyle : true }
 ]
 
 const NREGALayerData = [
@@ -168,6 +169,9 @@ const handleStyleDownload = (layerName) => {
       break;
     case "cropintensity":
       url = "https://drive.google.com/file/d/13cgF1Cg6YWZMCQXH7XV7cITxsg9v2SBu/view?usp=sharing"
+      break;
+    case "restoration":
+      url = "https://drive.google.com/file/d/1D_4MoPiraKZcXpsLsp2wRQ65B3Tf-d89/view?usp=sharing"
       break;
     case "clart":
       url = "https://drive.google.com/file/d/1B8ibmiv8dBNYZZ1gZWIp4AQPdu82t1yl/view?usp=drive_link"
@@ -521,6 +525,9 @@ const RightSidebar = ({
     } else if (layerName === 'terrain') {
       url = `https://geoserver.core-stack.org:8443/geoserver/terrain/wcs?service=WCS&version=2.0.1&request=GetCoverage&CoverageId=terrain:${districtFormatted}_${blockFormatted}_terrain_raster&format=geotiff&compression=LZW&tiling=true&tileheight=256&tilewidth=256`;
     }
+    else if(layerName === 'restoration'){
+      url = `https://geoserver.core-stack.org:8443/geoserver/restoration/wcs?service=WCS&version=2.0.1&request=GetCoverage&CoverageId=restoration:restoration_${districtFormatted}_${blockFormatted}_raster&format=geotiff&compression=LZW&tiling=true&tileheight=256&tilewidth=256`
+    }
     else{
       url = `https://geoserver.core-stack.org:8443/geoserver/change_detection/wcs?service=WCS&version=2.0.1&request=GetCoverage&CoverageId=change_detection:change_${districtFormatted}_${blockFormatted}_${layerName.charAt(0).toUpperCase() + layerName.slice(1)}&format=geotiff&compression=LZW&tiling=true&tileheight=256&tilewidth=256`
     }
@@ -588,7 +595,7 @@ const RightSidebar = ({
             />
           </div>
           <div className="flex items-center gap-2">
-            <label className="text-sm text-gray-600 min-w-[45px]">Block</label>
+            <label className="text-sm text-gray-600 min-w-[45px]">Tehsil</label>
             <SelectButton
               currVal={block || { label: "Select Block" }}
               stateData={district !== null ? district.blocks : null}

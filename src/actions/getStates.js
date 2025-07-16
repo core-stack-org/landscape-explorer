@@ -10,7 +10,7 @@ export default async function getStates() {
                 "Content-Type": "application/json",
             },
         })
-
+        //console.log(await response.json())
         return await response.json()
     } catch(err){
         console.log(err);
