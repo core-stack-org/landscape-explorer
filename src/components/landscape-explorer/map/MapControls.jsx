@@ -68,7 +68,7 @@ const MapControls = ({
         { id: 'deforestation', label: 'Change Detection Deforestation' },
         { id: 'degradation', label: 'Change Detection Degradation' },
         { id: 'urbanization', label: 'Change Detection Urbanization' },
-        { id: 'cropintensity', label: 'Change Detection Crop-Intensity' },
+        { id: 'cropIntensity', label: 'Change Detection Crop-Intensity' },
         { id: 'restoration', label: 'Change Detection Restoration' },
       ].filter(layer => toggledLayers[layer.id] === true);
     }
