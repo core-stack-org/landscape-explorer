@@ -283,9 +283,16 @@ const MapLegend = ({ showMWS, showVillages, currentLayer }) => {
   ];
 
   const NregaLegendItems = [
-    { color: "#87CEEB", label: "Less than 100 NREGA works" },
-    { color: "#4169E1", label: "Between 100 - 300 NREGA works" },
-    { color: "#000080", label: "More than 300 NREGA works" },
+    { label: "Household Livelihood", color: "#C2678D" },
+    { label: "Others - HH, Community", color: "#355070" },
+    { label: "Agri Impact - HH, Community", color: "#FFA500" },
+    { label: "SWC - Landscape level impact", color: "#6495ED" },
+    { label: "Irrigation - Site level impact", color: "#1A759F" },
+    { label: "Plantation", color: "#52B69A" },
+    { label: "Un Identified", color: "#6D597A" },
+    // { color: "#87CEEB", label: "Less than 100 NREGA works" },
+    // { color: "#4169E1", label: "Between 100 - 300 NREGA works" },
+    // { color: "#000080", label: "More than 300 NREGA works" },
   ];
 
   const TrendLegendItems = [
@@ -331,7 +338,7 @@ const MapLegend = ({ showMWS, showVillages, currentLayer }) => {
     { color: "#50c02b", label: "Khondalite" },
     { color: "#ffe1b5", label: "Banded Gneissic Complex" },
     { color: "#e4cff1", label: "Gneiss" },
-    { color: "#57d2ff", label: "Intrusive" }
+    { color: "#57d2ff", label: "Intrusive" },
   ];
 
   const SOGEItems = [
