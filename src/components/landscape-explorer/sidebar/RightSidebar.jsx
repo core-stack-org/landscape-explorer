@@ -77,7 +77,7 @@ const restorationLayersData = [
   { id: 2, name: "deforestation", label: "Change Detection Deforestation", hasGeojson: false, hasKml: false, hasGeoTiff: true, hasStyle : true },
   { id: 3, name: "degradation", label: "Change Detection Degradation", hasGeojson: false, hasKml: false, hasGeoTiff: true, hasStyle : true },
   { id: 4, name: "urbanization", label: "Change Detection Urbanization", hasGeojson: false, hasKml: false, hasGeoTiff: true, hasStyle : true },
-  { id: 5, name: "cropintensity", label: "Change Detection Crop-Intensity", hasGeojson: false, hasKml: false, hasGeoTiff: true, hasStyle : true },
+  { id: 5, name: "cropIntensity", label: "Change Detection Crop-Intensity", hasGeojson: false, hasKml: false, hasGeoTiff: true, hasStyle : true },
   { id: 6, name: "restoration", label: "Change Detection Restoration", hasGeojson: false, hasKml: false, hasGeoTiff: true, hasStyle : true }
 ]
 
@@ -528,6 +528,9 @@ const RightSidebar = ({
     else if(layerName === 'restoration'){
       url = `https://geoserver.core-stack.org:8443/geoserver/restoration/wcs?service=WCS&version=2.0.1&request=GetCoverage&CoverageId=restoration:restoration_${districtFormatted}_${blockFormatted}_raster&format=geotiff&compression=LZW&tiling=true&tileheight=256&tilewidth=256`
     }
+    // else if(layerName === 'cropintensity') {
+    //   url = `https://geoserver.core-stack.org:8443/geoserver/change_detection/wcs?service=WCS&version=2.0.1&request=GetCoverage&CoverageId=change_detection:change_${districtFormatted}_${blockFormatted}_}&format=geotiff&compression=LZW&tiling=true&tileheight=256&tilewidth=256`
+    // }
     else{
       url = `https://geoserver.core-stack.org:8443/geoserver/change_detection/wcs?service=WCS&version=2.0.1&request=GetCoverage&CoverageId=change_detection:change_${districtFormatted}_${blockFormatted}_${layerName.charAt(0).toUpperCase() + layerName.slice(1)}&format=geotiff&compression=LZW&tiling=true&tileheight=256&tilewidth=256`
     }
