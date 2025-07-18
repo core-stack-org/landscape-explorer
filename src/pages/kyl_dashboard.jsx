@@ -35,11 +35,8 @@ import layerStyle from "../components/utils/layerStyle.jsx";
 import settlementIcon from "../assets/settlement_icon.svg";
 import wellIcon from "../assets/well_proposed.svg";
 import waterbodyIcon from "../assets/waterbodies_proposed.svg";
-import farmPondIcon from "../assets/farm_pond_proposed.svg";
-import landLevelingIcon from "../assets/land_leveling_proposed.svg";
-import tcbIcon from "../assets/tcb_proposed.svg";
-import checkDamIcon from "../assets/check_dam_proposed.svg";
-import boulderIcon from "../assets/boulder_proposed.svg";
+import RechargeIcon from "../assets/recharge_icon.svg"
+import IrrigationIcon from "../assets/irrigation_icon.svg"
 
 import { toast, Toaster } from "react-hot-toast";
 
@@ -229,7 +226,7 @@ const KYLDashboardPage = () => {
           const layerName = `deltaG_well_depth_${district.label
             .toLowerCase()
             .split(" ")
-            .join("_")}_${block.label.toLowerCase().split(" ").join("_")}`;
+            .join("_")}_${block.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_')}`;
           const mwsLayer = await getVectorLayers(
             "mws_layers",
             layerName,
@@ -362,18 +359,12 @@ const KYLDashboardPage = () => {
     try {
       const boundaryLayer = await getVectorLayers(
         "panchayat_boundaries",
-        `${districtName.toLowerCase().split(" ").join("_")}_${blockName
-          .toLowerCase()
-          .split(" ")
-          .join("_")}`,
+        `${districtName.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_')}_${blockName.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_')}`,
         true,
         true
       );
 
-      const layerName = `deltaG_well_depth_${district.label
-        .toLowerCase()
-        .split(" ")
-        .join("_")}_${block.label.toLowerCase().split(" ").join("_")}`;
+      const layerName = `deltaG_well_depth_${district.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_')}_${block.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_')}`;
       const mwsLayer = await getVectorLayers(
         "mws_layers",
         layerName,
@@ -480,16 +471,8 @@ const KYLDashboardPage = () => {
   const fetchDataJson = async () => {
     try {
       const response = await fetch(
-        `${process.env.REACT_APP_API_URL}/download_kyl_data?state=${state.label
-          .toLowerCase()
-          .split(" ")
-          .join("_")}&district=${district.label
-          .toLowerCase()
-          .split(" ")
-          .join("_")}&block=${block.label
-          .toLowerCase()
-          .split(" ")
-          .join("_")}&file_type=json`
+        `${process.env.REACT_APP_API_URL}/download_kyl_data?state=${state.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_')}
+        &district=${district.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_')}&block=${block.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_')}&file_type=json`
       );
 
       if (!response.ok) {
@@ -502,22 +485,13 @@ const KYLDashboardPage = () => {
       console.log(e);
     }
   };
-
+  
   const fetchVillageJson = async () => {
     try {
       const response = await fetch(
         `${
           process.env.REACT_APP_API_URL
-        }/download_kyl_village_data?state=${state.label
-          .toLowerCase()
-          .split(" ")
-          .join("_")}&district=${district.label
-          .toLowerCase()
-          .split(" ")
-          .join("_")}&block=${block.label
-          .toLowerCase()
-          .split(" ")
-          .join("_")}&file_type=json`
+        }/download_kyl_village_data?state=${state.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_')}&district=${district.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_')}&block=${block.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_')}&file_type=json`
       );
 
       if (!response.ok) {
@@ -593,7 +567,7 @@ const KYLDashboardPage = () => {
         if (filter.layer_store[i] === "terrain") {
           tempLayer = await getImageLayer(
             filter.layer_store[i],
-            `${district.label.toLowerCase().split(" ").join("_")}_${block.label
+            `${district.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_')}_${block.label
               .toLowerCase()
               .split(" ")
               .join("_")}_${filter.layer_name[i]}`,
@@ -608,7 +582,7 @@ const KYLDashboardPage = () => {
         ) {
           tempLayer = await getImageLayer(
             `${filter.layer_store[i]}_${filter.layer_name[i]}`,
-            `LULC_22_23_${block.label.toLowerCase().split(" ").join("_")}_${
+            `LULC_22_23_${block.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_')}_${
               filter.layer_name[i]
             }`,
             true,
@@ -623,7 +597,7 @@ const KYLDashboardPage = () => {
             `change_${district.label
               .toLowerCase()
               .split(" ")
-              .join("_")}_${block.label.toLowerCase().split(" ").join("_")}_${
+              .join("_")}_${block.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_')}_${
               filter.layer_name[i]
             }`,
             true,
@@ -648,7 +622,7 @@ const KYLDashboardPage = () => {
         else if (filter.layer_store[i] === "cropping_drought") {
           tempLayer = await getVectorLayers(
             filter.layer_store[i],
-            `${district.label.toLowerCase().split(" ").join("_")}_${block.label
+            `${district.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_')}_${block.label
               .toLowerCase()
               .split(" ")
               .join("_")}_${filter.layer_name[i]}`
@@ -657,7 +631,7 @@ const KYLDashboardPage = () => {
         else if (filter.layer_store[i] === "panchayat_boundaries") {
           tempLayer = await getVectorLayers(
             filter.layer_store[i],
-            `${district.label.toLowerCase().split(" ").join("_")}_${block.label
+            `${district.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_')}_${block.label
               .toLowerCase()
               .split(" ")
               .join("_")}`
@@ -669,7 +643,7 @@ const KYLDashboardPage = () => {
             `${filter.layer_name[i]}_${district.label
               .toLowerCase()
               .split(" ")
-              .join("_")}_${block.label.toLowerCase().split(" ").join("_")}`
+              .join("_")}_${block.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_')}`
           );
         }
         if (
@@ -854,11 +828,8 @@ const KYLDashboardPage = () => {
           }
         }
       );
-
       if (feature) {
         const clickedMwsId = feature.get("uid");
-
-
 
                 if (selectedMWS !== null) {
 
@@ -917,7 +888,11 @@ const KYLDashboardPage = () => {
                 mapRef.current.un('click', handleMapClick);
             }
         };
-    }, [mapRef.current, selectedMWS]);
+  }, [mapRef.current, selectedMWS]);
+
+  // useEffect(() => {
+
+  // },[selectedMWSProfile])
 
   useEffect(() => {
     if (mwsLayerRef.current) {
@@ -1240,16 +1215,22 @@ const KYLDashboardPage = () => {
 
   useEffect(() => {
     if (currentPlan !== null) {
+
       const fetchResourcesLayers = async () => {
+        if(assetsLayerRefs[0].current !== null){
+          mapRef.current.removeLayer(assetsLayerRefs[0].current);
+          mapRef.current.removeLayer(assetsLayerRefs[1].current);
+          mapRef.current.removeLayer(assetsLayerRefs[2].current);
+        }
         assetsLayerRefs[0].current = await getVectorLayers(
           "resources",
           "settlement" +
             "_" +
             currentPlan.value.plan_id +
             "_" +
-            district.label.toLowerCase().split(" ").join("_") +
+            district.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_') +
             "_" +
-            block.label.toLowerCase().split(" ").join("_"),
+            block.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_'),
           true,
           true
         );
@@ -1265,9 +1246,9 @@ const KYLDashboardPage = () => {
             "_" +
             currentPlan.value.plan_id +
             "_" +
-            district.label.toLowerCase().split(" ").join("_") +
+            district.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_') +
             "_" +
-            block.label.toLowerCase().split(" ").join("_"),
+            block.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_'),
           true,
           true
         );
@@ -1283,9 +1264,9 @@ const KYLDashboardPage = () => {
             "_" +
             currentPlan.value.plan_id +
             "_" +
-            district.label.toLowerCase().split(" ").join("_") +
+            district.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_') +
             "_" +
-            block.label.toLowerCase().split(" ").join("_"),
+            block.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_'),
           true,
           true
         );
@@ -1294,41 +1275,35 @@ const KYLDashboardPage = () => {
             image: new Icon({ src: waterbodyIcon }),
           })
         );
+
+        if(mappedAssets){
+          mapRef.current.addLayer(assetsLayerRefs[0].current);
+          mapRef.current.addLayer(assetsLayerRefs[1].current);
+          mapRef.current.addLayer(assetsLayerRefs[2].current);
+        }
       };
 
       const fetchDemandLayers = async () => {
+        if(demandLayerRefs[0].current !== null){
+          mapRef.current.removeLayer(demandLayerRefs[0].current);
+          mapRef.current.removeLayer(demandLayerRefs[1].current);
+        }
         demandLayerRefs[0].current = await getVectorLayers(
           "works",
           "plan_agri" +
             "_" +
             currentPlan.value.plan_id +
             "_" +
-            district.label.toLowerCase().split(" ").join("_") +
+            district.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_') +
             "_" +
-            block.label.toLowerCase().split(" ").join("_"),
+            block.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_'),
           true,
           true
         );
         demandLayerRefs[0].current.setStyle((feature) => {
-          const status = feature.values_;
-
-          if (status.TYPE_OF_WO == "New farm pond") {
-            return new Style({
-              image: new Icon({ src: farmPondIcon }),
-            });
-          } else if (status.TYPE_OF_WO == "Land leveling") {
-            return new Style({
-              image: new Icon({ src: landLevelingIcon }),
-            });
-          } else if (status.TYPE_OF_WO == "New well") {
-            return new Style({
-              image: new Icon({ src: wellIcon }),
-            });
-          } else {
-            return new Style({
-              image: new Icon({ src: waterbodyIcon }),
-            });
-          }
+          return new Style({
+            image: new Icon({ src: IrrigationIcon }),
+          });
         });
 
         demandLayerRefs[1].current = await getVectorLayers(
@@ -1337,41 +1312,23 @@ const KYLDashboardPage = () => {
             "_" +
             currentPlan.value.plan_id +
             "_" +
-            district.label.toLowerCase().split(" ").join("_") +
+            district.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_') +
             "_" +
-            block.label.toLowerCase().split(" ").join("_"),
+            block.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_'),
           true,
           true
         );
-        demandLayerRefs[2].current.setStyle((feature) => {
-          const status = feature.values_;
 
-          if (status.selected_w == "new farm pond") {
-            return new Style({
-              image: new Icon({ src: farmPondIcon }),
-            });
-          } else if (status.selected_w == "new trench cum bund network") {
-            return new Style({
-              image: new Icon({ src: tcbIcon }),
-            });
-          } else if (status.selected_w == "new check dam") {
-            return new Style({
-              image: new Icon({ src: checkDamIcon }),
-            });
-          } else if (status.selected_w == "Loose Boulder Structure") {
-            return new Style({
-              image: new Icon({ src: boulderIcon }),
-            });
-          } else if (status.selected_w == "Works in Drainage lines") {
-            return new Style({
-              image: new Icon({ src: waterbodyIcon }),
-            });
-          } else {
-            return new Style({
-              image: new Icon({ src: waterbodyIcon }),
-            });
-          }
+        demandLayerRefs[1].current.setStyle((feature) => {
+          return new Style({
+            image: new Icon({ src: RechargeIcon }),
+          });
         });
+
+        if(mappedDemands){
+          mapRef.current.addLayer(demandLayerRefs[0].current);
+          mapRef.current.addLayer(demandLayerRefs[1].current);
+        }
       };
 
       fetchResourcesLayers().catch(console.error);

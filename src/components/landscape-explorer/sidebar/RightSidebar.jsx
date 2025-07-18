@@ -55,7 +55,7 @@ const landLayersData = [
 ]
 
 const climateLayersData = [
-  { id: 1, name: "mws_layers", label: "Hydrological Variables", hasGeojson: true, hasKml: true, hasStyle : false },
+  { id: 1, name: "mws_layers", label: "Hydrological Variables (Precipitation, ET, Groundwater, etc.)", hasGeojson: true, hasKml: true, hasStyle : true },
 ]
 
 const hydrologyLayersData = [
@@ -68,7 +68,7 @@ const hydrologyLayersData = [
 
 const agriLayersData = [
   { id: "lulc_level_3", name:"lulc_level_2", label: "LULC Layer Level 3" },
-  { id: 1, name: "cropping_intensity", label: "Cropping Intensity", hasGeojson: true, hasKml: true, hasStyle : false },
+  { id: 1, name: "cropping_intensity", label: "Cropping Intensity", hasGeojson: true, hasKml: true, hasStyle : true },
   { id: 2, name: "drought", label: "Drought", hasGeojson: true, hasKml: true, hasStyle : true },
 ]
 
@@ -199,6 +199,12 @@ const handleStyleDownload = (layerName) => {
       break;
     case "drought":
       url = "https://drive.google.com/file/d/1BIDbbsLaFxBO4YHMX-vyEt0VTSJLLlmL/view?usp=sharing"
+      break;
+    case "cropping_intensity":
+      url = "https://drive.google.com/file/d/1cAZBQu4DUUPUS3u3VZtCzK4PYuSDgflW/view?usp=sharing"
+      break;
+    case "mws_layers":
+      url = "https://github.com/core-stack-org/QGIS-Styles/tree/main/Climate"
       break;
   }
 
