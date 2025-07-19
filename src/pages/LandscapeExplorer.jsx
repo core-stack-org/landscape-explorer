@@ -223,8 +223,8 @@ const LandscapeExplorer = () => {
     
     console.log(`Downloading GeoJSON for ${layerName}`);
     
-    const districtFormatted = district.label.toLowerCase().split(" ").join("_");
-    const blockFormatted = block.label.toLowerCase().split(" ").join("_");
+    const districtFormatted = district.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_');
+    const blockFormatted = block.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_');
     
     // Create download URL based on layer name (following the original implementation's URL format)
     let downloadUrl = '';
@@ -260,8 +260,8 @@ const LandscapeExplorer = () => {
     
     console.log(`Downloading KML for ${layerName}`);
     
-    const districtFormatted = district.label.toLowerCase().split(" ").join("_");
-    const blockFormatted = block.label.toLowerCase().split(" ").join("_");
+    const districtFormatted = district.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_');
+    const blockFormatted = block.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_');
     
     // Create download URL based on layer name (following original implementation)
     let downloadUrl = '';
