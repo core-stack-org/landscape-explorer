@@ -45,7 +45,7 @@ const KYLRightSidebar = ({
     const handleMultiReport = () => {
         const filtersList = getFormattedSelectedFilters()
     
-        fetch(`http://127.0.0.1:8000/api/v1/generate_multi_report/?state=${state.label.toLowerCase().split(" ").join("_")}&district=${district.label.toLowerCase().split(" ").join("_")}&block=${block.label.toLowerCase().split(" ").join("_")}`, {
+        fetch(`http://127.0.0.1:8000/api/v1/generate_multi_report/?state=${state.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_')}&district=${district.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_')}&block=${block.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_')}`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
