@@ -384,8 +384,8 @@ const RightSidebar = ({
       return;
     }
 
-    const districtFormatted = district.label.toLowerCase().split(" ").join("_");
-    const blockFormatted = block.label.toLowerCase().split(" ").join("_");
+    const districtFormatted = district.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_');
+    const blockFormatted = block.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_');
 
     if (format === 'geojson') {
       let url = '';
@@ -507,7 +507,7 @@ const RightSidebar = ({
       return;
     }
     
-    const url = `https://geoserver.core-stack.org:8443/geoserver/LULC_level_${level.split('_').pop()}/wcs?service=WCS&version=2.0.1&request=GetCoverage&CoverageId=LULC_level_${level.split('_').pop()}:LULC_${yearValue}_${block.label.toLowerCase().split(" ").join("_")}_level_${level.split('_').pop()}&format=geotiff&compression=LZW&tiling=false`;
+    const url = `https://geoserver.core-stack.org:8443/geoserver/LULC_level_${level.split('_').pop()}/wcs?service=WCS&version=2.0.1&request=GetCoverage&CoverageId=LULC_level_${level.split('_').pop()}:LULC_${yearValue}_${block.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_')}_level_${level.split('_').pop()}&format=geotiff&compression=LZW&tiling=false`;
     
     // Use our direct geotiff download function
     downloadGeoTiff(url, `LULC_${level.split('_').pop()}_${yearValue}`);
@@ -521,8 +521,8 @@ const RightSidebar = ({
       return;
     }
     
-    const districtFormatted = district.label.toLowerCase().split(" ").join("_");
-    const blockFormatted = block.label.toLowerCase().split(" ").join("_");
+    const districtFormatted = district.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_');
+    const blockFormatted = block.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_');
     
     let url = '';
     
