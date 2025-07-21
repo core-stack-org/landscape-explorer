@@ -80,7 +80,7 @@ export default function KYLHomePage() {
       >
         {/* Know Section */}
         <section
-          className="snap-start backdrop-brightness-90 backdrop-blur-sm bg-white/0 px-4 py-6 md:px-8 md:py-10 rounded-xl mx-2 md:mx-6 mt-0 mb-4 md:mb-6"
+          className="snap-start backdrop-brightness-90 backdrop-blur-sm bg-white/0 px-4 py-6 md:px-8 md:py-10 rounded-xl mx-2 md:mx-6 mt-10 mb-4 md:mb-6"
           style={{ position: "relative", overflow: "visible", zIndex: 10 }}
         >
           <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-8">
@@ -125,7 +125,7 @@ export default function KYLHomePage() {
               </div>
             </div>
             <div
-              className="w-full max-w-lg bg-white p-6 rounded shadow min-h-[350px] flex flex-col justify-between relative"
+              className="w-full max-w-lg bg-white p-6 rounded shadow min-h-[350px] flex flex-col justify-between relative rounded-xl"
               style={{ overflow: "visible", zIndex: 100 }}
             >
               <p className="mb-0 text-center font-semibold text-2xl md:text-2xl leading-none">
@@ -166,7 +166,7 @@ export default function KYLHomePage() {
 
               <div className="flex flex-col sm:flex-row justify-between gap-3 mt-4">
                 <button
-                  className="bg-purple-600 text-white px-4 py-2 rounded w-full sm:w-auto"
+                  className="bg-purple-600 text-white px-4 py-2 rounded-lg w-full sm:w-auto"
                   onClick={() =>
                     handleNavigate("/kyl_dashboard", "Know Your Landscape")
                   }
@@ -174,7 +174,7 @@ export default function KYLHomePage() {
                   Know Your Landscape
                 </button>
                 <button
-                  className="bg-gray-300 text-black px-4 py-2 rounded w-full sm:w-auto"
+                  className="bg-gray-300 text-black px-4 py-2 rounded-lg w-full sm:w-auto"
                   onClick={() =>
                     handleNavigate("/download_layers", "Download Layers")
                   }
