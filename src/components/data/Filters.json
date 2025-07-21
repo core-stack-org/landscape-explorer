@@ -452,7 +452,7 @@
                     {"label" : "Between 100 to 300", "value" : {"lower" : 100, "upper" : 300}},
                     {"label" : "More than 300", "value" : {"lower" : 300, "upper" : 999999999}}
                 ],
-                "layer_store" : ["panchayat_boundaries"],
+                "layer_store" : ["nrega_assets"],
                 "layer_name" : [],
                 "vectorStyle" : [
                     {
