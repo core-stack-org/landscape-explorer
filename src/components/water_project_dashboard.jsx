@@ -225,7 +225,7 @@ const WaterProjectDashboard = () => {
     } else {
       setProject(null);
     }
-  }, [location.key]); // ✅ Triggers on actual route change
+  }, [location.key]);
 
   const projectName = project?.label;
   const projectId = project?.value;
@@ -326,86 +326,6 @@ const WaterProjectDashboard = () => {
         );
       }
 
-      // // KHARIF
-      // const kharifEntries = Object.entries(props).filter(([key]) =>
-      //   /^k_\d{2}-\d{2}$/i.test(key)
-      // );
-      // const kharifValues = kharifEntries
-      //   .map(([_, value]) => Number(value))
-      //   .filter((val) => !isNaN(val));
-      // // console.log(kharifValues);
-      // let nonZeroStartIndexK = kharifValues.findIndex((val) => val !== 0);
-
-      // const filteredKharifValues = kharifValues.slice(nonZeroStartIndexK);
-      // // console.log(filteredKharifValues);
-      // const sumFilteredKharif = filteredKharifValues.reduce(
-      //   (acc, val) => acc + val,
-      //   0
-      // );
-      // const meanFilteredKharif =
-      //   filteredKharifValues.length > 0
-      //     ? (sumFilteredKharif / filteredKharifValues.length).toFixed(2)
-      //     : "0.00";
-
-      // // console.log("Mean of filteredKharifValues:", meanFilteredKharif);
-
-      // const sumKharif = kharifValues.reduce((acc, val) => acc + val, 0);
-      // const avgKharif = (sumKharif / 7).toFixed(2);
-
-      // // RABI
-      // const rabiEntries = Object.entries(props).filter(([key]) =>
-      //   /^kr_\d{2}-\d{2}$/i.test(key)
-      // );
-      // const rabiValues = rabiEntries
-      //   .map(([_, value]) => Number(value))
-      //   .filter((val) => !isNaN(val));
-
-      // let nonZeroStartIndexR = rabiValues.findIndex((val) => val !== 0);
-
-      // const filteredRabiValues = rabiValues.slice(nonZeroStartIndexR);
-      // // console.log(filteredRabiValues);
-      // const sumFilteredRabi = filteredRabiValues.reduce(
-      //   (acc, val) => acc + val,
-      //   0
-      // );
-      // const meanFilteredRabi =
-      //   filteredRabiValues.length > 0
-      //     ? (sumFilteredRabi / filteredRabiValues.length).toFixed(2)
-      //     : "0.00";
-
-      // // console.log("Mean of filteredRabiValues:", meanFilteredRabi);
-
-      // const sumRabi = rabiValues.reduce((acc, val) => acc + val, 0);
-      // const avgRabi = (sumRabi / 7).toFixed(2);
-
-      // // ZAID
-      // const zaidEntries = Object.entries(props).filter(([key]) =>
-      //   /^krz_\d{2}-\d{2}$/i.test(key)
-      // );
-      // const zaidValues = zaidEntries
-      //   .map(([_, value]) => Number(value))
-      //   .filter((val) => !isNaN(val));
-
-      // let nonZeroStartIndexZ = zaidValues.findIndex((val) => val !== 0);
-
-      // const filteredZaidValues = zaidValues.slice(nonZeroStartIndexZ);
-      // // console.log(filteredZaidValues);
-      // const sumFilteredzaid = filteredZaidValues.reduce(
-      //   (acc, val) => acc + val,
-      //   0
-      // );
-      // const meanFilteredZaid =
-      //   filteredZaidValues.length > 0
-      //     ? (sumFilteredzaid / filteredZaidValues.length).toFixed(2)
-      //     : "0.00";
-
-      // // console.log("Mean of filteredZaidValues:", meanFilteredZaid);
-
-      // const sumZaid = zaidValues.reduce((acc, val) => acc + val, 0);
-      // const avgZaid = (sumZaid / 7).toFixed(2);
-
-      // Parse silt removed safely, default to 0 if missing or NaN
-
       const siltRemoved = Number(props.slit_excavated) || 0;
       totalSiltRemoved += siltRemoved;
 
@@ -477,6 +397,98 @@ const WaterProjectDashboard = () => {
     setFilterType("");
   };
 
+  // useEffect(() => {
+  //   const fetchUpdateLulc = async () => {
+  //     if (!lulcYear1 || !lulcYear1.includes("_")) {
+  //       console.warn("[LULC] Invalid lulcYear:", lulcYear1);
+  //       return;
+  //     }
+
+  //     if (!project || typeof project !== "object") {
+  //       console.error("[LULC] Invalid project object:", project);
+  //       return;
+  //     }
+
+  //     const fullYear = lulcYear1
+  //       .split("_")
+  //       .map((part) => `20${part}`)
+  //       .join("_")
+  //       .toLowerCase()
+  //       .replace(/\s/g, "_");
+
+  //     const projectName = project.label;
+  //     const projectId = project.value;
+
+  //     const layerName = `clipped_lulc_filtered_mws_${projectName}_${projectId}_${fullYear}`;
+  //     const uniqueLayerId = "lulcWaterrejLayer1";
+
+  //     if (mapRef1.current) {
+  //       const layersBefore = mapRef1.current.getLayers().getArray();
+
+  //       layersBefore.forEach((layer) => {
+  //         if (layer.get("id") === uniqueLayerId) {
+  //           mapRef1.current.removeLayer(layer);
+  //         }
+  //       });
+  //     }
+
+  //     const newLayer = await getImageLayer(
+  //       "waterrej",
+  //       layerName,
+  //       true,
+  //       "lulc_water_pixels"
+  //     );
+
+  //     newLayer.setZIndex(0);
+  //     newLayer.set("id", uniqueLayerId);
+
+  //     if (mapRef1.current) {
+  //       mapRef1.current.addLayer(newLayer);
+  //     }
+
+  //     setCurrentLayer((prev) => {
+  //       const others = prev.filter((l) => l.name !== "lulcWaterrej");
+  //       const updated = [
+  //         ...others,
+  //         {
+  //           name: "lulcWaterrej",
+  //           layerRef: [newLayer],
+  //         },
+  //       ];
+  //       return updated;
+  //     });
+
+  //     if (selectedWaterbody?.geometry && mapRef1.current && waterBodyLayer) {
+  //       const source = waterBodyLayer.getSource();
+  //       const features = source.getFeatures();
+
+  //       features.forEach((feature) => feature.setStyle(null));
+
+  //       const extent = selectedWaterbody.geometry.getExtent();
+  //       mapRef1.current.getView().fit(extent, {
+  //         padding: [40, 40, 40, 40],
+  //         duration: 500,
+  //         maxZoom: 15,
+  //       });
+
+  //       features.forEach((feature) => {
+  //         if (feature.getGeometry().intersectsExtent(extent)) {
+  //           feature.setStyle(
+  //             new Style({
+  //               stroke: new Stroke({ color: "#FF0000", width: 5 }),
+  //               fill: new Fill({ color: "rgba(255, 0, 0, 0.3)" }),
+  //             })
+  //           );
+  //         }
+  //       });
+  //     }
+  //   };
+
+  //   fetchUpdateLulc().catch((error) => {
+  //     console.error("[LULC] Error during fetchUpdateLulc:", error);
+  //   });
+  // }, [lulcYear1, selectedWaterbody, waterBodyLayer, project]);
+
   useEffect(() => {
     const fetchUpdateLulc = async () => {
       if (!lulcYear1 || !lulcYear1.includes("_")) {
@@ -516,11 +528,54 @@ const WaterProjectDashboard = () => {
         "waterrej",
         layerName,
         true,
-        "lulc_water_pixels"
+        "lulc_all_pixels"
       );
 
       newLayer.setZIndex(0);
       newLayer.set("id", uniqueLayerId);
+
+      // ADD CLIPPING HERE - Get waterbody features and clip the LULC layer
+      if (waterBodyLayer) {
+        const waterBodySource = waterBodyLayer.getSource();
+        const waterBodyFeatures = waterBodySource.getFeatures();
+
+        if (waterBodyFeatures.length > 0) {
+          let combinedFeature;
+
+          if (waterBodyFeatures.length === 1) {
+            combinedFeature = waterBodyFeatures[0];
+          } else {
+            const geometries = waterBodyFeatures.map((f) => f.getGeometry());
+            const firstGeometry = geometries[0];
+            if (
+              firstGeometry.getType() === "Polygon" ||
+              firstGeometry.getType() === "MultiPolygon"
+            ) {
+              const allCoordinates = [];
+              geometries.forEach((geom) => {
+                if (geom.getType() === "Polygon") {
+                  allCoordinates.push(geom.getCoordinates());
+                } else if (geom.getType() === "MultiPolygon") {
+                  allCoordinates.push(...geom.getCoordinates());
+                }
+              });
+
+              const multiPolygon = new MultiPolygon(allCoordinates);
+              combinedFeature = new Feature(multiPolygon);
+            } else {
+              combinedFeature = waterBodyFeatures[0];
+            }
+          }
+
+          const crop = new Crop({
+            feature: combinedFeature,
+            wrapX: true,
+            inner: false,
+          });
+
+          newLayer.addFilter(crop);
+        }
+      }
 
       if (mapRef1.current) {
         mapRef1.current.addLayer(newLayer);
@@ -568,7 +623,6 @@ const WaterProjectDashboard = () => {
       console.error("[LULC] Error during fetchUpdateLulc:", error);
     });
   }, [lulcYear1, selectedWaterbody, waterBodyLayer, project]);
-
   useEffect(() => {
     const fetchUpdateLulcZOI = async () => {
       if (!lulcYear2 || !lulcYear2.includes("_")) return;
@@ -1387,7 +1441,6 @@ const WaterProjectDashboard = () => {
 
                 {Array.from(new Set(rows.map((row) => String(row[filterType]))))
                   .filter((option) => {
-                    // To make sure we are handling first letter case properly:
                     return option
                       .toLowerCase()
                       .startsWith(searchText.toLowerCase());
@@ -1622,6 +1675,7 @@ const WaterProjectDashboard = () => {
                     <WaterAvailabilityChart
                       waterbody={selectedWaterbody}
                       water_rej_data={geoData}
+                      mwsFeature={selectedMWSFeature}
                     />
                     <Typography fontSize={14} color="#333" mt={1}>
                       <b>Black line</b> represents the year of intervention.
@@ -1644,8 +1698,73 @@ const WaterProjectDashboard = () => {
               </Box>
             </Box>
 
+            <Box
+              sx={{
+                width: "100%",
+                display: "flex",
+                flexDirection: { xs: "column", md: "row" },
+                justifyContent: "space-between",
+                gap: 3,
+                mt: 4,
+                px: { xs: 2, md: 0 },
+              }}
+            >
+              {[
+                { label: "Max Catchment Area", value: "56.3 sq km" },
+                { label: "Max Stream Order", value: "5th Order" },
+              ].map((item, idx) => (
+                <Box
+                  key={idx}
+                  sx={{
+                    flex: 1,
+                    background:
+                      "linear-gradient(135deg, #f9fafb 0%, #f1f3f5 100%)",
+                    padding: 3,
+                    borderRadius: 3,
+                    boxShadow: "0 4px 12px rgba(0, 0, 0, 0.05)",
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    textAlign: "center",
+                    minHeight: "120px",
+                    transition: "all 0.3s ease",
+                    "&:hover": {
+                      transform: "translateY(-2px)",
+                      boxShadow: "0 6px 16px rgba(0, 0, 0, 0.08)",
+                    },
+                    border: "1px solid #e0e0e0",
+                  }}
+                >
+                  <Typography
+                    variant="h6"
+                    fontWeight={700}
+                    color="text.primary"
+                    sx={{
+                      textTransform: "uppercase",
+                      letterSpacing: 0.8,
+                      fontSize: "0.95rem",
+                      color: "#333",
+                    }}
+                  >
+                    {item.label}
+                  </Typography>
+                  <Typography
+                    variant="h5"
+                    fontWeight={600}
+                    color="primary"
+                    sx={{
+                      mt: 1,
+                      fontSize: "1.3rem",
+                    }}
+                  >
+                    {item.value}
+                  </Typography>
+                </Box>
+              ))}
+            </Box>
+
             {/* Map 2 (ZOI Map) */}
-            {/* <Box
+            <Box
               sx={{
                 position: "relative",
                 width: "100%",
@@ -1732,7 +1851,7 @@ const WaterProjectDashboard = () => {
                   –
                 </button>
               </Box>
-            </Box> */}
+            </Box>
           </Box>
         ) : null}
       </Box>
