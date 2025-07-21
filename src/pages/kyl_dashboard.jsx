@@ -579,25 +579,19 @@ const KYLDashboardPage = () => {
     setPlans(tempPlans);
   };
 
- 
-  const handleLayerSelection = async (selectedFilter) => {
-    let existingFilter = currentLayer.find(
-      (layer) => layer.name === selectedFilter.name
-    );
-    let mapLayers = mapRef.current.getLayers().getArray();
-    let isBoundaryLayerOnMap = mapLayers.find(
-      (layer) => layer.ol_uid === boundaryLayerRef.current.ol_uid
-    );
-
-    let updatedLayerArray = currentLayer;
-    let totalLayersInFilter = selectedFilter.layer_store.length;
-
-    if (existingFilter) {
-
-      existingFilter.layerRef.map((layer) => {
-        mapRef.current.removeLayer(layer);
+  const handleLayerSelection = async (filter) => {
+    let checkIfPresent = currentLayer.find((f) => f.name === filter.name);
+    let checkIfInMap = mapRef.current.getLayers().getArray();
+    let existingLayer = checkIfInMap.find((layer) => {
+      return layer.ol_uid === boundaryLayerRef.current.ol_uid;
+    });
+    let tempArr = currentLayer;
+    let len = filter.layer_store.length;
+    if (checkIfPresent) {
+      checkIfPresent.layerRef.map((item) => {
+        mapRef.current.removeLayer(item);
       });
-      if (!isBoundaryLayerOnMap) {
+      if (!existingLayer) {
         mapRef.current.addLayer(boundaryLayerRef.current);
       }
       mwsLayerRef.current.setStyle((feature) => {
@@ -606,199 +600,180 @@ const KYLDashboardPage = () => {
           selectedMWS.includes(feature.values_.uid)
         ) {
           return new Style({
-            stroke: new Stroke({ color: "#661E1E", width: 1.0 }),
-            fill: new Fill({ color: "rgba(255, 75, 75, 0.8)" }),
+            stroke: new Stroke({
+              color: "#661E1E",
+              width: 1.0,
+            }),
+            fill: new Fill({
+              color: "rgba(255, 75, 75, 0.8)",
+            }),
           });
         } else {
           return new Style({
-            stroke: new Stroke({ color: "#4a90e2", width: 1.0 }),
-            fill: new Fill({ color: "rgba(74, 144, 226, 0.2)" }),
+            stroke: new Stroke({
+              color: "#4a90e2",
+              width: 1.0,
+            }),
+            fill: new Fill({
+              color: "rgba(74, 144, 226, 0.2)",
+            }),
           });
         }
       });
-      updatedLayerArray = currentLayer.filter(
-        (layer) => layer.name !== selectedFilter.name
-      );
-      setToggleStates((prevState) => ({
-        ...prevState,
-        [selectedFilter.name]: false,
+      tempArr = currentLayer.filter((item) => item.name !== filter.name);
+      setToggleStates((prevStates) => ({
+        ...prevStates,
+        [filter.name]: false,
       }));
       setFiltersEnabled(true);
     } else if (currentLayer.length === 0) {
-      let layersToAdd = [];
+      let layerRef = [];
       mapRef.current.removeLayer(mwsLayerRef.current);
       mapRef.current.removeLayer(boundaryLayerRef.current);
-
-      const existingNregaLayer = currentLayer.find(
-        (layer) => layer.name === "NREGA" || layer.name === "total_assets"
-      );
-      if (existingNregaLayer) {
-        existingNregaLayer.layerRef.forEach((layer) => {
-          mapRef.current.removeLayer(layer);
-        });
-      }
-
-      if (
-        selectedFilter.name === "NREGA" ||
-        selectedFilter.name === "total_assets"
-      ) {
-        const districtName = district?.label?.toLowerCase().replace(/\s/g, "_");
-        const blockName = block?.label?.toLowerCase().replace(/\s/g, "_");
-        const nregaLayerName = `${districtName}_${blockName}`;
-
-        const nregaPointLayer = await getWebGlLayers(
-          "nrega_assets",
-          nregaLayerName,
-          true,
-          true,
-          null,
-          null,
-          districtName,
-          blockName
-        );
-
-        if (mapRef.current && nregaPointLayer) {
-          mapRef.current.addLayer(nregaPointLayer);
-          updatedLayerArray.push({
-            name: selectedFilter.name,
-            layerRef: [nregaPointLayer],
-          });
-          setToggleStates((prevState) => ({
-            ...prevState,
-            [selectedFilter.name]: true,
-          }));
-          setFiltersEnabled(false);
-          setIndicatorType(null);
-          setCurrentLayer(updatedLayerArray);
-          console.log("NREGA Point Layer added successfully.");
-          return;
-        }
-      }
-
-      for (let i = 0; i < totalLayersInFilter; ++i) {
-        let layer;
-        const storeType = selectedFilter.layer_store[i];
-        const layerName = selectedFilter.layer_name[i];
-
-        if (storeType === "terrain") {
-          layer = await getImageLayer(
-            storeType,
-            `${district.label.toLowerCase().replace(/\s/g, "_")}_${block.label
+      for (let i = 0; i < len; ++i) {
+        let tempLayer;
+        if (filter.layer_store[i] === "terrain") {
+          tempLayer = await getImageLayer(
+            filter.layer_store[i],
+            `${district.label.toLowerCase().split(" ").join("_")}_${block.label
               .toLowerCase()
-              .replace(/\s/g, "_")}_${layerName}`,
+              .split(" ")
+              .join("_")}_${filter.layer_name[i]}`,
             true,
-            selectedFilter.rasterStyle
+            filter.rasterStyle
           );
-          layersToAdd.push(layer);
-          mapRef.current.addLayer(layer);
+          layerRef.push(tempLayer);
+          mapRef.current.addLayer(tempLayer);
         } else if (
-          storeType === "LULC" &&
-          selectedFilter.rasterStyle === "lulc_water_pixels"
+          filter.layer_store[i] === "LULC" &&
+          filter.rasterStyle === "lulc_water_pixels"
         ) {
-          layer = await getImageLayer(
-            `${storeType}_${layerName}`,
-            `LULC_22_23_${block.label
-              .toLowerCase()
-              .replace(/\s/g, "_")}_${layerName}`,
+          tempLayer = await getImageLayer(
+            `${filter.layer_store[i]}_${filter.layer_name[i]}`,
+            `LULC_22_23_${block.label.toLowerCase().split(" ").join("_")}_${
+              filter.layer_name[i]
+            }`,
             true,
-            selectedFilter.rasterStyle
+            filter.rasterStyle
           );
-          layersToAdd.push(layer);
-          mapRef.current.addLayer(layer);
-        } else if (storeType === "change_detection") {
-          layer = await getImageLayer(
-            `${storeType}`,
+          layerRef.push(tempLayer);
+          mapRef.current.addLayer(tempLayer);
+        } else if (filter.layer_store[i] === "change_detection") {
+          tempLayer = await getImageLayer(
+            `${filter.layer_store[i]}`,
             `change_${district.label
               .toLowerCase()
-              .replace(/\s/g, "_")}_${block.label
-              .toLowerCase()
-              .replace(/\s/g, "_")}_${layerName}`,
+              .split(" ")
+              .join("_")}_${block.label.toLowerCase().split(" ").join("_")}_${
+              filter.layer_name[i]
+            }`,
             true,
-            selectedFilter.rasterStyle[i]
+            filter.rasterStyle[i]
           );
-          layersToAdd.push(layer);
-          mapRef.current.addLayer(layer);
-        } else if (storeType === "LULC") {
-          layer = await getImageLayer(
-            `${storeType}_${layerName}`,
+          layerRef.push(tempLayer);
+          mapRef.current.addLayer(tempLayer);
+        } else if (filter.layer_store[i] === "nrega_assets") {
+          const nregaLayerName = `${district.label
+            .toLowerCase()
+            .split(" ")
+            .join("_")}_${block.label.toLowerCase().split(" ").join("_")}`;
+          tempLayer = await getWebGlLayers(
+            filter.layer_store[i],
+            nregaLayerName,
+            true,
+            true,
+            null,
+            null,
+            district.label.toLowerCase().split(" ").join("_"),
+            block.label.toLowerCase().split(" ").join("_")
+          );
+          layerRef.push(tempLayer);
+          mapRef.current.addLayer(tempLayer);
+        } else if (filter.layer_store[i] === "LULC") {
+          tempLayer = await getImageLayer(
+            `${filter.layer_store[i]}_${filter.layer_name[i]}`,
             `LULC_${lulcYear}_${block.label
               .toLowerCase()
-              .replace(/\s/g, "_")}_${layerName}`,
+              .split(" ")
+              .join("_")}_${filter.layer_name[i]}`,
             true,
-            selectedFilter.rasterStyle
+            filter.rasterStyle
           );
-          layersToAdd.push(layer);
-          mapRef.current.addLayer(layer);
-        } else if (storeType === "cropping_drought") {
-          layer = await getVectorLayers(
-            storeType,
-            `${district.label.toLowerCase().replace(/\s/g, "_")}_${block.label
+          layerRef.push(tempLayer);
+          mapRef.current.addLayer(tempLayer);
+        } else if (filter.layer_store[i] === "cropping_drought") {
+          tempLayer = await getVectorLayers(
+            filter.layer_store[i],
+            `${district.label.toLowerCase().split(" ").join("_")}_${block.label
               .toLowerCase()
-              .replace(/\s/g, "_")}_${layerName}`
+              .split(" ")
+              .join("_")}_${filter.layer_name[i]}`
           );
-        } else if (storeType === "panchayat_boundaries") {
-          layer = await getVectorLayers(
-            storeType,
-            `${district.label.toLowerCase().replace(/\s/g, "_")}_${block.label
+        } else if (filter.layer_store[i] === "panchayat_boundaries") {
+          tempLayer = await getVectorLayers(
+            filter.layer_store[i],
+            `${district.label.toLowerCase().split(" ").join("_")}_${block.label
               .toLowerCase()
-              .replace(/\s/g, "_")}`
+              .split(" ")
+              .join("_")}`
           );
         } else {
-          layer = await getVectorLayers(
-            storeType,
-            `${layerName}_${district.label
+          tempLayer = await getVectorLayers(
+            filter.layer_store[i],
+            `${filter.layer_name[i]}_${district.label
               .toLowerCase()
-              .replace(/\s/g, "_")}_${block.label
-              .toLowerCase()
-              .replace(/\s/g, "_")}`
+              .split(" ")
+              .join("_")}_${block.label.toLowerCase().split(" ").join("_")}`
           );
         }
-
         if (
-          storeType !== "terrain" &&
-          storeType !== "LULC" &&
-          storeType !== "change_detection"
+          filter.layer_store[i] !== "terrain" &&
+          filter.layer_store[i] !== "LULC" &&
+          filter.layer_store[i] !== "change_detection" &&
+          filter.layer_store[i] !== "nrega_assets"
         ) {
-          layer.setStyle((feature) => {
+          tempLayer.setStyle((feature) => {
             return layerStyle(
               feature,
-              selectedFilter.vectorStyle,
-              selectedFilter.styleIdx,
+              filter.vectorStyle,
+              filter.styleIdx,
               villageJson,
               dataJson
             );
           });
-          layersToAdd.push(layer);
-          mapRef.current.addLayer(layer);
+          layerRef.push(tempLayer);
+          mapRef.current.addLayer(tempLayer);
         }
       }
-
       mwsLayerRef.current.setStyle((feature) => {
         if (
           selectedMWS.length > 0 &&
           selectedMWS.includes(feature.values_.uid)
         ) {
           return new Style({
-            stroke: new Stroke({ color: "#254871", width: 2.0 }),
+            stroke: new Stroke({
+              color: "#254871",
+              width: 2.0,
+            }),
           });
         }
       });
       mapRef.current.addLayer(mwsLayerRef.current);
-      updatedLayerArray.push({
-        name: selectedFilter.name,
-        layerRef: layersToAdd,
-      });
-      setToggleStates((prevState) => ({
-        ...prevState,
-        [selectedFilter.name]: true,
+      let tempObj = {
+        name: filter.name,
+        layerRef: layerRef,
+      };
+      tempArr.push(tempObj);
+      setToggleStates((prevStates) => ({
+        ...prevStates,
+        [filter.name]: true,
       }));
       setFiltersEnabled(false);
       setIndicatorType(null);
     } else {
-      toast.error("Please Turn off previous layer before turning on new one!");
+      toast.error("Please Turn off previous layer before turning on new one !");
     }
-
-    setCurrentLayer(updatedLayerArray);
+    setCurrentLayer(tempArr);
   };
 
   //? Assets Selection Handler
