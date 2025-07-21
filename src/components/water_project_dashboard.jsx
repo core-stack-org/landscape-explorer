@@ -12,6 +12,7 @@ import LocationOnIcon from "@mui/icons-material/LocationOn";
 import YearSlider from "./yearSlider";
 import PrecipitationStackChart from "./PrecipitationStackChart.jsx";
 import { yearAtomFamily } from "../store/locationStore";
+import Overlay from "ol/Overlay";
 
 import {
   Box,
@@ -179,6 +180,7 @@ const WaterProjectDashboard = () => {
   const [filterType, setFilterType] = useState("");
 
   const [selectedWaterbody, setSelectedWaterbody] = useState(null);
+  const [mapClickedWaterbody, setMapClickedWaterbody] = useState(null);
   const [waterBodyLayer, setWaterBodyLayer] = useState(null);
   // const lulcYear = useRecoilValue(yearAtom);
   const [currentLayer, setCurrentLayer] = useState([]);
@@ -344,6 +346,8 @@ const WaterProjectDashboard = () => {
         // avgWaterAvailabilityKharif: avgKharif,
         // avgWaterAvailabilityRabi: avgRabi,
         // avgWaterAvailabilityZaid: avgZaid,
+        maxCatchmentArea: props.max_catchment_area || 0,
+        maxStreamOrder: props.max_stream_order || 0,
 
         coordinates,
         featureIndex: index,
@@ -354,7 +358,10 @@ const WaterProjectDashboard = () => {
       ? totalSiltRemoved / mappedRows.length
       : 0;
 
-    return { rows: mappedRows, totalSiltRemoved };
+    return {
+      rows: mappedRows,
+      totalSiltRemoved,
+    };
   }, [geoData]);
 
   const totalRows = rows.length;
@@ -842,6 +849,24 @@ const WaterProjectDashboard = () => {
     map.addLayer(waterBodyLayerSecond);
     setWaterBodyLayer(waterBodyLayerSecond);
 
+    map.on("singleclick", (evt) => {
+      let found = false;
+      map.forEachFeatureAtPixel(evt.pixel, (feature) => {
+        const props = feature.getProperties();
+        if (props.waterbody_name) {
+          setMapClickedWaterbody({
+            name: props.waterbody_name,
+            Village: props.Village,
+            Taluka: props.Taluka,
+          });
+          found = true;
+        }
+      });
+      if (!found) {
+        setMapClickedWaterbody(null);
+      }
+    });
+
     const features = vectorLayerWater.getFeatures();
     if (!selectedWaterbody && features.length > 0) {
       const extent = vectorLayerWater.getExtent();
@@ -1040,6 +1065,19 @@ const WaterProjectDashboard = () => {
       setView("map");
     } else {
       console.error("Feature not found.");
+    }
+  };
+
+  const handleMapBoxClick = () => {
+    const matchingRow = rows.find(
+      (row) => row.waterbody === mapClickedWaterbody.name
+    );
+
+    if (matchingRow) {
+      console.log("Passing to handleWaterbodyClick:", matchingRow);
+      handleWaterbodyClick(matchingRow);
+    } else {
+      console.warn("No matching row found.");
     }
   };
 
@@ -1498,124 +1536,128 @@ const WaterProjectDashboard = () => {
                 />
 
                 {/* Top-left Label */}
-                <Box
-                  sx={{
-                    position: "absolute",
-                    top: 16,
-                    left: 16,
-                    backgroundColor: "rgba(255, 255, 255, 0.9)",
-                    padding: "8px 12px",
-                    borderRadius: "6px",
-                    fontWeight: "bold",
-                    boxShadow: 1,
-                    display: "flex",
-                    flexDirection: "column",
-                    alignItems: "flex-start",
-                    gap: 1,
-                    zIndex: 1000,
-                    maxWidth: { xs: "90%", sm: "300px" },
-                  }}
-                >
-                  <Box display="flex" alignItems="center" gap={1}>
-                    <LocationOnIcon fontSize="small" color="primary" />
-                    <Typography variant="body1" fontWeight={600}>
-                      {selectedWaterbody?.waterbody || "Waterbody Name"}
+                {selectedWaterbody && (
+                  <Box
+                    sx={{
+                      position: "absolute",
+                      top: 16,
+                      left: 16,
+                      backgroundColor: "rgba(255, 255, 255, 0.9)",
+                      padding: "8px 12px",
+                      borderRadius: "6px",
+                      fontWeight: "bold",
+                      boxShadow: 1,
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "flex-start",
+                      gap: 1,
+                      zIndex: 1000,
+                      maxWidth: { xs: "90%", sm: "300px" },
+                    }}
+                  >
+                    <Box display="flex" alignItems="center" gap={1}>
+                      <LocationOnIcon fontSize="small" color="primary" />
+                      <Typography variant="body1" fontWeight={600}>
+                        {selectedWaterbody?.waterbody || "Waterbody Name"}
+                      </Typography>
+                    </Box>
+                    <Typography
+                      variant="body2"
+                      color="text.secondary"
+                      fontWeight={800}
+                    >
+                      Silt Removed: {selectedWaterbody?.siltRemoved || "silt"}{" "}
+                      cubic metre
+                    </Typography>
+                    <Typography
+                      variant="body2"
+                      color="text.secondary"
+                      fontWeight={800}
+                    >
+                      Area (in hectare):{" "}
+                      {(selectedWaterbody?.areaOred || 0).toFixed(2)} hectares
                     </Typography>
                   </Box>
-                  <Typography
-                    variant="body2"
-                    color="text.secondary"
-                    fontWeight={800}
-                  >
-                    Silt Removed: {selectedWaterbody?.siltRemoved || "silt"}{" "}
-                    cubic metre
-                  </Typography>
-                  <Typography
-                    variant="body2"
-                    color="text.secondary"
-                    fontWeight={800}
-                  >
-                    Area (in hectare):{" "}
-                    {(selectedWaterbody?.areaOred || 0).toFixed(2)} hectares
-                  </Typography>
-                </Box>
+                )}
 
                 {/* Legend + YearSlider wrapper for responsiveness */}
-                <Box
-                  sx={{
-                    position: "absolute",
-                    bottom: 16,
-                    left: 16,
-                    right: 16,
-                    display: "flex",
-                    flexDirection: { xs: "column", sm: "row" },
-                    justifyContent: "space-between",
-                    gap: 2,
-                    flexWrap: "wrap",
-                    zIndex: 1000,
-                  }}
-                >
-                  {/* Legend */}
+                {selectedWaterbody && (
                   <Box
                     sx={{
-                      backgroundColor: "rgba(255, 255, 255, 0.9)",
-                      padding: 2,
-                      borderRadius: 1,
-                      boxShadow: 2,
-                      flex: "1 1 180px",
-                      minWidth: "260px",
-                      maxWidth: "200px",
+                      position: "absolute",
+                      bottom: 16,
+                      left: 16,
+                      right: 16,
+                      display: "flex",
+                      flexDirection: { xs: "column", sm: "row" },
+                      justifyContent: "space-between",
+                      gap: 2,
+                      flexWrap: "wrap",
+                      zIndex: 1000,
                     }}
                   >
-                    <Typography variant="subtitle2">
-                      Water Layer Legend
-                    </Typography>
-                    {[
-                      { color: "#74CCF4", label: "Kharif Water" },
-                      { color: "#1ca3ec", label: "Kharif and Rabi Water" },
-                      {
-                        color: "#0f5e9c",
-                        label: "Kharif, Rabi and Zaid Water",
-                      },
-                    ].map((item, idx) => (
-                      <Box
-                        key={idx}
-                        display="flex"
-                        alignItems="center"
-                        gap={1}
-                        mt={1}
-                      >
+                    {/* Legend */}
+                    <Box
+                      sx={{
+                        backgroundColor: "rgba(255, 255, 255, 0.9)",
+                        padding: 2,
+                        borderRadius: 1,
+                        boxShadow: 2,
+                        flex: "1 1 180px",
+                        minWidth: "260px",
+                        maxWidth: "200px",
+                      }}
+                    >
+                      <Typography variant="subtitle2">
+                        Water Layer Legend
+                      </Typography>
+                      {[
+                        { color: "#74CCF4", label: "Kharif Water" },
+                        { color: "#1ca3ec", label: "Kharif and Rabi Water" },
+                        {
+                          color: "#0f5e9c",
+                          label: "Kharif, Rabi and Zaid Water",
+                        },
+                      ].map((item, idx) => (
                         <Box
-                          sx={{
-                            width: 20,
-                            height: 20,
-                            backgroundColor: item.color,
-                            opacity: 0.7,
-                            border: "1px solid #000",
-                          }}
-                        />
-                        <Typography variant="body2">{item.label}</Typography>
-                      </Box>
-                    ))}
-                  </Box>
+                          key={idx}
+                          display="flex"
+                          alignItems="center"
+                          gap={1}
+                          mt={1}
+                        >
+                          <Box
+                            sx={{
+                              width: 20,
+                              height: 20,
+                              backgroundColor: item.color,
+                              opacity: 0.7,
+                              border: "1px solid #000",
+                            }}
+                          />
+                          <Typography variant="body2">{item.label}</Typography>
+                        </Box>
+                      ))}
+                    </Box>
 
-                  {/* YearSlider */}
-                  <Box
-                    sx={{
-                      backgroundColor: "rgba(255, 255, 255, 0.9)",
-                      padding: 2,
-                      borderRadius: 1,
-                      boxShadow: 2,
-                      flex: "1 1 240px",
-                      minWidth: { xs: "220px", sm: "300px", md: "500px" },
-                    }}
-                  >
-                    <YearSlider
-                      currentLayer={{ name: "lulcWaterrej" }}
-                      sliderId="map1"
-                    />
+                    {/* YearSlider */}
+                    <Box
+                      sx={{
+                        backgroundColor: "rgba(255, 255, 255, 0.9)",
+                        padding: 2,
+                        borderRadius: 1,
+                        boxShadow: 2,
+                        flex: "1 1 240px",
+                        minWidth: { xs: "220px", sm: "300px", md: "500px" },
+                      }}
+                    >
+                      <YearSlider
+                        currentLayer={{ name: "lulcWaterrej" }}
+                        sliderId="map1"
+                      />
+                    </Box>
                   </Box>
-                </Box>
+                )}
 
                 {/* Zoom Controls */}
                 {!selectedWaterbody && (
@@ -1657,6 +1699,72 @@ const WaterProjectDashboard = () => {
                   </Box>
                 )}
               </Box>
+              {mapClickedWaterbody && !selectedWaterbody && (
+                <Box
+                  sx={{
+                    position: "absolute",
+                    right: 100,
+                    top: 100,
+                    width: 500,
+                    padding: 3,
+                    background: "#f9fafb",
+                    boxShadow: "0px 4px 12px rgba(0, 0, 0, 0.05)",
+                    borderRadius: 2,
+                    border: "1px solid #e0e0e0",
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 1.5,
+                    cursor: "pointer",
+                  }}
+                  onClick={handleMapBoxClick}
+                >
+                  <Typography
+                    variant="h6"
+                    fontWeight={700}
+                    sx={{
+                      color: "#333",
+                      borderBottom: "1px solid #ddd",
+                      pb: 1,
+                    }}
+                  >
+                    {mapClickedWaterbody.name}
+                  </Typography>
+
+                  <Box display="flex" justifyContent="space-between">
+                    <Typography
+                      variant="body2"
+                      fontWeight={600}
+                      color="text.secondary"
+                    >
+                      Village:
+                    </Typography>
+                    <Typography
+                      variant="body2"
+                      fontWeight={500}
+                      color="text.primary"
+                    >
+                      {mapClickedWaterbody.Village ?? "NA"}
+                    </Typography>
+                  </Box>
+
+                  <Box display="flex" justifyContent="space-between">
+                    <Typography
+                      variant="body2"
+                      fontWeight={600}
+                      color="text.secondary"
+                    >
+                      Taluka:
+                    </Typography>
+                    <Typography
+                      variant="body2"
+                      fontWeight={500}
+                      color="text.primary"
+                    >
+                      {mapClickedWaterbody.Taluka ?? "NA"}
+                    </Typography>
+                  </Box>
+                </Box>
+              )}
 
               {/* Charts Section */}
               <Box
@@ -1697,71 +1805,80 @@ const WaterProjectDashboard = () => {
                 )}
               </Box>
             </Box>
-
-            <Box
-              sx={{
-                width: "100%",
-                display: "flex",
-                flexDirection: { xs: "column", md: "row" },
-                justifyContent: "space-between",
-                gap: 3,
-                mt: 4,
-                px: { xs: 2, md: 0 },
-              }}
-            >
-              {[
-                { label: "Max Catchment Area", value: "56.3 sq km" },
-                { label: "Max Stream Order", value: "5th Order" },
-              ].map((item, idx) => (
-                <Box
-                  key={idx}
-                  sx={{
-                    flex: 1,
-                    background:
-                      "linear-gradient(135deg, #f9fafb 0%, #f1f3f5 100%)",
-                    padding: 3,
-                    borderRadius: 3,
-                    boxShadow: "0 4px 12px rgba(0, 0, 0, 0.05)",
-                    display: "flex",
-                    flexDirection: "column",
-                    alignItems: "center",
-                    textAlign: "center",
-                    minHeight: "120px",
-                    transition: "all 0.3s ease",
-                    "&:hover": {
-                      transform: "translateY(-2px)",
-                      boxShadow: "0 6px 16px rgba(0, 0, 0, 0.08)",
-                    },
-                    border: "1px solid #e0e0e0",
-                  }}
-                >
-                  <Typography
-                    variant="h6"
-                    fontWeight={700}
-                    color="text.primary"
+            {selectedWaterbody && (
+              <Box
+                sx={{
+                  width: "100%",
+                  display: "flex",
+                  flexDirection: { xs: "column", md: "row" },
+                  justifyContent: "space-between",
+                  gap: 3,
+                  mt: 4,
+                  px: { xs: 2, md: 0 },
+                }}
+              >
+                {[
+                  {
+                    label: "Max Catchment Area",
+                    value: `${selectedWaterbody?.maxCatchmentArea?.toFixed(
+                      2
+                    )} sq km`,
+                  },
+                  {
+                    label: "Max Stream Order",
+                    value: `${selectedWaterbody?.maxStreamOrder}th Order`,
+                  },
+                ].map((item, idx) => (
+                  <Box
+                    key={idx}
                     sx={{
-                      textTransform: "uppercase",
-                      letterSpacing: 0.8,
-                      fontSize: "0.95rem",
-                      color: "#333",
+                      flex: 1,
+                      background:
+                        "linear-gradient(135deg, #f9fafb 0%, #f1f3f5 100%)",
+                      padding: 3,
+                      borderRadius: 3,
+                      boxShadow: "0 4px 12px rgba(0, 0, 0, 0.05)",
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "center",
+                      textAlign: "center",
+                      minHeight: "120px",
+                      transition: "all 0.3s ease",
+                      "&:hover": {
+                        transform: "translateY(-2px)",
+                        boxShadow: "0 6px 16px rgba(0, 0, 0, 0.08)",
+                      },
+                      border: "1px solid #e0e0e0",
                     }}
                   >
-                    {item.label}
-                  </Typography>
-                  <Typography
-                    variant="h5"
-                    fontWeight={600}
-                    color="primary"
-                    sx={{
-                      mt: 1,
-                      fontSize: "1.3rem",
-                    }}
-                  >
-                    {item.value}
-                  </Typography>
-                </Box>
-              ))}
-            </Box>
+                    <Typography
+                      variant="h6"
+                      fontWeight={700}
+                      color="text.primary"
+                      sx={{
+                        textTransform: "uppercase",
+                        letterSpacing: 0.8,
+                        fontSize: "0.95rem",
+                        color: "#333",
+                      }}
+                    >
+                      {item.label}
+                    </Typography>
+                    <Typography
+                      variant="h5"
+                      fontWeight={600}
+                      color="primary"
+                      sx={{
+                        mt: 1,
+                        fontSize: "1.3rem",
+                      }}
+                    >
+                      {item.value}
+                    </Typography>
+                  </Box>
+                ))}
+              </Box>
+            )}
 
             {/* Map 2 (ZOI Map) */}
             <Box

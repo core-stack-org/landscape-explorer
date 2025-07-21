@@ -178,9 +178,11 @@ const WaterAvailabilityChart = ({ waterbody, water_rej_data, mwsFeature }) => {
     const longYear = yearMap[year];
 
     const kharif =
-      mwsFeature.properties[`precipitation_kharif_${longYear}`] ?? 0;
-    const rabi = mwsFeature.properties[`precipitation_rabi_${longYear}`] ?? 0;
-    const zaid = mwsFeature.properties[`precipitation_zaid_${longYear}`] ?? 0;
+      mwsFeature?.properties?.[`precipitation_kharif_${longYear}`] ?? 0;
+    const rabi =
+      mwsFeature?.properties?.[`precipitation_rabi_${longYear}`] ?? 0;
+    const zaid =
+      mwsFeature?.properties?.[`precipitation_zaid_${longYear}`] ?? 0;
 
     acc[`TR${year}`] = kharif + rabi + zaid;
     return acc;
