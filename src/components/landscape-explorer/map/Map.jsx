@@ -180,6 +180,13 @@ const MapLegend = ({toggledLayers, lulcYear1, lulcYear2, lulcYear3}) => {
     { color: "#BAD93E", label: "Greater than 1.5" },
   ]
 
+  const restorationItem = [
+    { color: "#ffa500", label: "Protection" },
+    { color: "#007500", label: "Wide-scale Restoration" },
+    { color: "#000000", label: "Mosaic Restoration" },
+    { color: "#ffff00", label: "Excluded Areas" },
+  ]
+
   const isTerrainActive = toggledLayers["terrain"]
   const isCLARTActive = toggledLayers["clart"]
   const isCropIntensityActive = toggledLayers["cropIntensity"]
@@ -187,6 +194,7 @@ const MapLegend = ({toggledLayers, lulcYear1, lulcYear2, lulcYear3}) => {
   const isDegradationActive = toggledLayers["degradation"]
   const isUrbanizationActive = toggledLayers["urbanization"]
   const isAfforestationActive = toggledLayers["afforestation"]
+  const isRestorationActive = toggledLayers["restoration"]
   const isSOGEActive = toggledLayers["soge"]
   const isAquiferActive = toggledLayers["aquifer"]
   const isTerrainVector = toggledLayers["terrain_vector"]
@@ -640,6 +648,30 @@ const MapLegend = ({toggledLayers, lulcYear1, lulcYear2, lulcYear3}) => {
                 <div className="space-y-2">
                   <h4 className="text-xs font-medium text-gray-600">Cropping Intensity Legend</h4>
                   {cropIntenItem.map((item, index) => (
+                    <div
+                      key={`trend-${index}`}
+                      className="flex items-center gap-2"
+                    >
+                      <div
+                        className="w-4 h-4 rounded"
+                        style={{
+                          backgroundColor: item.color,
+                          border: `1px solid rgba(0,0,0,0.2)`,
+                        }}
+                      />
+                      <span className="text-sm text-gray-600">
+                        {item.label}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Restoration Section */}
+              {isRestorationActive && (
+                <div className="space-y-2">
+                  <h4 className="text-xs font-medium text-gray-600">Restoration Legend</h4>
+                  {restorationItem.map((item, index) => (
                     <div
                       key={`trend-${index}`}
                       className="flex items-center gap-2"
