@@ -11,6 +11,7 @@ import { Style, Fill, Stroke } from "ol/style";
 import LocationOnIcon from "@mui/icons-material/LocationOn";
 import YearSlider from "./yearSlider";
 import PrecipitationStackChart from "./PrecipitationStackChart.jsx";
+import CroppingIntensityStackChart from "./CroppingIntensityStackChart.jsx";
 import { yearAtomFamily } from "../store/locationStore";
 import Overlay from "ol/Overlay";
 
@@ -237,7 +238,6 @@ const WaterProjectDashboard = () => {
     projectId
   );
 
-  // const geoData = useWaterRejData(project, projectId);
   const { rows, totalSiltRemoved } = useMemo(() => {
     if (!geoData?.features) return { rows: [], avgSiltRemoved: 0 };
 
@@ -630,6 +630,7 @@ const WaterProjectDashboard = () => {
       console.error("[LULC] Error during fetchUpdateLulc:", error);
     });
   }, [lulcYear1, selectedWaterbody, waterBodyLayer, project]);
+
   useEffect(() => {
     const fetchUpdateLulcZOI = async () => {
       if (!lulcYear2 || !lulcYear2.includes("_")) return;
@@ -968,7 +969,7 @@ const WaterProjectDashboard = () => {
   useEffect(() => {
     if (view === "map" && selectedWaterbody && selectedFeature) {
       zoomToWaterbody(selectedWaterbody, selectedFeature, mapRef1);
-      zoomToWaterbody(selectedWaterbody, selectedFeature, mapRef2);
+      zoomToZoiWaterbody(selectedWaterbody, selectedFeature, mapRef2);
     }
   }, [selectedWaterbody, selectedFeature, view]);
 
@@ -992,6 +993,58 @@ const WaterProjectDashboard = () => {
       duration: 1000,
       padding: [50, 50, 50, 50],
       maxZoom: 18,
+    });
+
+    if (waterBodyLayer) {
+      const source = waterBodyLayer.getSource();
+      const features = source.getFeatures();
+
+      features.forEach((feature) => feature.setStyle(null));
+
+      if (
+        waterbody.featureIndex !== undefined &&
+        features[waterbody.featureIndex]
+      ) {
+        features[waterbody.featureIndex].setStyle(
+          new Style({
+            stroke: new Stroke({ color: "#FF0000", width: 5 }),
+            fill: new Fill({ color: "rgba(255, 0, 0, 0.5)" }),
+          })
+        );
+      }
+    }
+
+    targetMapRef.current.getInteractions().forEach((interaction) => {
+      if (
+        interaction instanceof MouseWheelZoom ||
+        interaction instanceof PinchZoom ||
+        interaction instanceof DoubleClickZoom
+      ) {
+        interaction.setActive(false);
+      }
+    });
+  };
+
+  const zoomToZoiWaterbody = (waterbody, tempFeature, targetMapRef) => {
+    if (!tempFeature || !targetMapRef?.current) return;
+
+    const view = targetMapRef.current.getView();
+    const feature = new GeoJSON().readFeature(tempFeature, {
+      dataProjection: "EPSG:4326",
+      featureProjection: view.getProjection(),
+    });
+
+    const geometry = feature.getGeometry();
+    if (!geometry) {
+      console.error("No geometry found.");
+      return;
+    }
+
+    const extent = geometry.getExtent();
+    view.fit(extent, {
+      duration: 1000,
+      padding: [50, 50, 50, 50],
+      maxZoom: 15,
     });
 
     if (waterBodyLayer) {
@@ -1881,7 +1934,7 @@ const WaterProjectDashboard = () => {
             )}
 
             {/* Map 2 (ZOI Map) */}
-            <Box
+            {/* <Box
               sx={{
                 position: "relative",
                 width: "100%",
@@ -1967,6 +2020,124 @@ const WaterProjectDashboard = () => {
                 >
                   –
                 </button>
+              </Box>
+            </Box> */}
+
+            {/* ZOI Section with Map + Side Chart */}
+            <Box
+              sx={{
+                display: "flex",
+                flexDirection: { xs: "column", md: "row" },
+                alignItems: "flex-start",
+                gap: 4,
+                width: "100%",
+                mt: 6,
+              }}
+            >
+              {/* ZOI Map (same dimensions as first map) */}
+              <Box
+                sx={{
+                  position: "relative",
+                  width: { xs: "100%", md: "65%" },
+                }}
+              >
+                <div
+                  ref={mapElement2}
+                  style={{
+                    height: "850px",
+                    width: "100%",
+                    border: "1px solid #ccc",
+                    borderRadius: "5px",
+                  }}
+                />
+
+                {/* Year Slider (bottom right) */}
+                <Box
+                  sx={{
+                    position: "absolute",
+                    bottom: 16,
+                    right: 16,
+                    backgroundColor: "rgba(255, 255, 255, 0.9)",
+                    padding: 2,
+                    borderRadius: 1,
+                    boxShadow: 2,
+                    zIndex: 1000,
+                    minWidth: "500px",
+                  }}
+                >
+                  <YearSlider
+                    currentLayer={{ name: "lulcWaterrej" }}
+                    sliderId="map2"
+                  />
+                </Box>
+
+                {/* Zoom Controls */}
+                <Box
+                  sx={{
+                    position: "absolute",
+                    top: 80,
+                    right: 16,
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 1,
+                    zIndex: 1100,
+                  }}
+                >
+                  <button
+                    style={{
+                      backgroundColor: "#fff",
+                      border: "1px solid #ccc",
+                      borderRadius: "4px",
+                      width: "40px",
+                      height: "40px",
+                      fontSize: "20px",
+                      cursor: "pointer",
+                    }}
+                    onClick={() => {
+                      const view = mapRef2.current?.getView();
+                      view?.animate({
+                        zoom: view.getZoom() + 1,
+                        duration: 300,
+                      });
+                    }}
+                  >
+                    +
+                  </button>
+                  <button
+                    style={{
+                      backgroundColor: "#fff",
+                      border: "1px solid #ccc",
+                      borderRadius: "4px",
+                      width: "40px",
+                      height: "40px",
+                      fontSize: "20px",
+                      cursor: "pointer",
+                    }}
+                    onClick={() => {
+                      const view = mapRef2.current?.getView();
+                      view?.animate({
+                        zoom: view.getZoom() - 1,
+                        duration: 300,
+                      });
+                    }}
+                  >
+                    –
+                  </button>
+                </Box>
+              </Box>
+
+              {/* ZOI Chart */}
+              <Box
+                sx={{
+                  width: { xs: "100%", md: "45%" },
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                }}
+              >
+                <Box sx={{ width: "100%", maxWidth: "700px", height: "400px" }}>
+                  <CroppingIntensityStackChart zoiFeatures={zoiFeatures} />
+                </Box>
               </Box>
             </Box>
           </Box>
