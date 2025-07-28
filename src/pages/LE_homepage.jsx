@@ -80,7 +80,7 @@ export default function KYLHomePage() {
       >
         {/* Know Section */}
         <section
-          className="snap-start backdrop-brightness-90 backdrop-blur-sm bg-white/0 px-4 py-6 md:px-8 md:py-10 rounded-xl mx-2 md:mx-6 mt-10 mb-4 md:mb-6"
+          className="snap-start backdrop-brightness-90 backdrop-blur-sm bg-white/0 px-4 py-6 md:px-8 md:py-10 rounded-xl mx-2 md:mx-6 mb-4 md:mb-6"
           style={{ position: "relative", overflow: "visible", zIndex: 10 }}
         >
           <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-8">

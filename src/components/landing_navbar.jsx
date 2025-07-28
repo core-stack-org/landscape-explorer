@@ -1,7 +1,11 @@
 import React from "react";
 import newLogo from "../assets/newLogo.png";
+import { useLocation } from "react-router-dom";
 
 const LandingNavbar = () => {
+  const location = useLocation();
+  const isDownloadPage = location.pathname === "/download_layers";
+
   return (
     <nav className="bg-white shadow-2xl">
       <div className="w-full px-4 sm:px-6 md:px-10 bg-[#FCF5EA]">
@@ -21,14 +25,28 @@ const LandingNavbar = () => {
               CoRE Stack
             </span>
           </a>
-          <a
-            href="https://ee-corestackdev.projects.earthengine.app/view/core-stack-gee-app"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-purple-700 font-medium text-sm sm:text-base cursor-pointer hover:underline"
-          >
-            Explore GEE App
-          </a>
+
+          <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 items-center">
+            {isDownloadPage && (
+              <a
+                href="https://docs.google.com/document/d/1jet4EEBbbKgpNrPnuNJJDRuAJUiR2pIMFQp9JTlygAQ/edit?usp=sharing"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-purple-700 font-medium text-sm sm:text-base cursor-pointer hover:underline mr-16"
+              >
+                QGIS Documentation
+              </a>
+            )}
+
+            <a
+              href="https://ee-corestackdev.projects.earthengine.app/view/core-stack-gee-app"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-purple-700 font-medium text-sm sm:text-base cursor-pointer hover:underline"
+            >
+              Explore GEE App
+            </a>
+          </div>
         </div>
       </div>
     </nav>

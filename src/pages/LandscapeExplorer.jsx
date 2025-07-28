@@ -1,68 +1,77 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
-import logo from '../assets/logo.png';
+import React from "react";
+import { Link } from "react-router-dom";
+import logo from "../assets/logo.png";
 import { useState, useEffect, useRef, useCallback } from "react";
 import Map from "../components/landscape-explorer/map/Map.jsx";
 import LeftSidebar from "../components/landscape-explorer/sidebar/LeftSidebar.jsx";
 import RightSidebar from "../components/landscape-explorer/sidebar/RightSidebar.jsx";
-import { useRecoilState } from 'recoil';
-import { stateDataAtom, stateAtom, districtAtom, blockAtom, filterSelectionsAtom, yearAtom } from '../store/locationStore.jsx';
+import { useRecoilState } from "recoil";
+import {
+  stateDataAtom,
+  stateAtom,
+  districtAtom,
+  blockAtom,
+  filterSelectionsAtom,
+  yearAtom,
+} from "../store/locationStore.jsx";
 import getStates from "../actions/getStates.js";
 import * as downloadHelper from "../components/landscape-explorer/utils/downloadHelper";
+import LandingNavbar from "../components/landing_navbar.jsx";
 
 // Custom navbar specifically for Landscape Explorer page
-const LandscapeNavbar = () => {
-  return (
-    <nav className="bg-white shadow-sm">
-      <div className="max-w-7xl mx-auto px-4">
-        <div className="flex items-center justify-between h-16">
-          {/* left-hand logo / title */}
-          <Link to="/" className="flex items-center gap-2 cursor-pointer">
-            <img src={logo} alt="KYL Logo" className="h-8 w-8" />
-            <span className="text-xl font-semibold text-gray-800">
-              Download Layers
-            </span>
-          </Link>
+// const LandscapeNavbar = () => {
+//   return (
+//     <nav className="bg-white shadow-sm">
+//       <div className="max-w-7xl mx-auto px-4">
+//         <div className="flex items-center justify-between h-16">
+//           {/* left-hand logo / title */}
+//           <Link to="/" className="flex items-center gap-2 cursor-pointer">
+//             <img src={logo} alt="KYL Logo" className="h-8 w-8" />
+//             <span className="text-xl font-semibold text-gray-800">
+//               Download Layers
+//             </span>
+//           </Link>
 
-          {/* right-hand QGIS docs button */}
-          <a
-            href="https://docs.google.com/document/d/1jet4EEBbbKgpNrPnuNJJDRuAJUiR2pIMFQp9JTlygAQ/edit?usp=sharing"
-            target="_blank"
-            rel="noopener noreferrer"
-            className=" py-2 px-2 text-indigo-600 bg-indigo-50 rounded-lg text-sm font-medium text-left"
-          >
-            QGIS&nbsp;Documentation
-          </a>
-        </div>
-      </div>
-    </nav>
-  );
-};
+//           {/* right-hand QGIS docs button */}
+//           <a
+//             href="https://docs.google.com/document/d/1jet4EEBbbKgpNrPnuNJJDRuAJUiR2pIMFQp9JTlygAQ/edit?usp=sharing"
+//             target="_blank"
+//             rel="noopener noreferrer"
+//             className=" py-2 px-2 text-indigo-600 bg-indigo-50 rounded-lg text-sm font-medium text-left"
+//           >
+//             QGIS&nbsp;Documentation
+//           </a>
+//         </div>
+//       </div>
+//     </nav>
+//   );
+// };
 
 const LandscapeExplorer = () => {
   const [showLeftSidebar, setShowLeftSidebar] = useState(false);
   const [showRightSidebar, setShowRightSidebar] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
-  
+
   // Recoil state
   const [statesData, setStatesData] = useRecoilState(stateDataAtom);
   const [state, setState] = useRecoilState(stateAtom);
   const [district, setDistrict] = useRecoilState(districtAtom);
   const [block, setBlock] = useRecoilState(blockAtom);
-  const [filterSelections, setFilterSelections] = useRecoilState(filterSelectionsAtom);
+  const [filterSelections, setFilterSelections] =
+    useRecoilState(filterSelectionsAtom);
   const [lulcYear1, setLulcYear1] = useState(null);
   const [lulcYear2, setLulcYear2] = useState(null);
   const [lulcYear3, setLulcYear3] = useState(null);
-  
+
   // Map ref for accessing map instance from other components
   const mapRef = useRef(null);
-  
+
   // Add flag to prevent infinite recursion
   const isUpdatingFromMap = useRef(false);
-  
+
   // Track which resource category is active
   const [activeResourceCategory, setActiveResourceCategory] = useState(null);
-  
+
   // Set map ref with callback
   const setMapRef = useCallback((node) => {
     if (node !== null) {
@@ -87,13 +96,13 @@ const LandscapeExplorer = () => {
     terrain_vector: false,
     terrain_lulc_slope: false,
     terrain_lulc_plain: false,
-    afforestation : false,
-    deforestation : false,
-    degradation : false,
-    urbanization : false,
-    cropintensity : false,
-    soge : false,
-    aquifer : false
+    afforestation: false,
+    deforestation: false,
+    degradation: false,
+    urbanization: false,
+    cropintensity: false,
+    soge: false,
+    aquifer: false,
   });
 
   // State for map view settings
@@ -102,13 +111,12 @@ const LandscapeExplorer = () => {
 
   // Add plans state
   const [plans, setPlans] = useState([]);
-  
+
   // Add internal state flag for when layers are ready
   const [layersReady, setLayersReady] = useState(false);
-  
+
   // Flag to track if we need to enable the fetch button
   const [canFetchLayers, setCanFetchLayers] = useState(block !== null);
-
 
   // Handle item selection for dropdowns
   const handleItemSelect = (setter, value) => {
@@ -119,34 +127,31 @@ const LandscapeExplorer = () => {
       setBlock(null);
       resetAllStates();
       setState(value);
-    } 
-    else if (setter === setDistrict) {
+    } else if (setter === setDistrict) {
       // Reset block and filters when district changes
       setBlock(null);
       resetAllStates();
       setDistrict(value);
-    } 
-    else if (setter === setBlock) {
+    } else if (setter === setBlock) {
       resetAllStates();
       setBlock(value);
       // When block is selected, enable fetch button and prepare layers automatically
       setCanFetchLayers(true);
-      
+
       // Auto-prepare layers instead of requiring Fetch Layers button
       setTimeout(() => {
         if (mapRef.current && mapRef.current.prepareLayers) {
           setIsLoading(true);
           mapRef.current.prepareLayers();
           setLayersReady(true);
-          setToggledLayers(prev => ({
+          setToggledLayers((prev) => ({
             ...prev,
-            demographics: true
+            demographics: true,
           }));
           setIsLoading(false);
         }
       }, 100);
-    } 
-    else {
+    } else {
       // Standard case for other setters
       setter(value);
     }
@@ -156,9 +161,9 @@ const LandscapeExplorer = () => {
     // Reset filters
     setFilterSelections({
       selectedMWSValues: {},
-      selectedVillageValues: {}
+      selectedVillageValues: {},
     });
-    
+
     setToggledLayers({
       demographics: true, // Keep demographics on
       drainage: false,
@@ -180,15 +185,15 @@ const LandscapeExplorer = () => {
       agri_structure: false,
       livelihood_structure: false,
       recharge_structure: false,
-      afforestation : false,
-      deforestation : false,
-      degradation : false,
-      urbanization : false,
-      cropintensity : false,
-      soge : false,
-      aquifer : false
+      afforestation: false,
+      deforestation: false,
+      degradation: false,
+      urbanization: false,
+      cropintensity: false,
+      soge: false,
+      aquifer: false,
     });
-    
+
     setLayersReady(false);
     setCanFetchLayers(false);
   };
@@ -199,13 +204,13 @@ const LandscapeExplorer = () => {
     if (isUpdatingFromMap.current) {
       return;
     }
-    
+
     // Update local state immediately
-    setToggledLayers(prev => ({
+    setToggledLayers((prev) => ({
       ...prev,
-      [layerName]: isVisible
+      [layerName]: isVisible,
     }));
-    
+
     // Then update the map with a slight delay
     setTimeout(() => {
       if (mapRef.current && mapRef.current.toggleLayer) {
@@ -217,36 +222,44 @@ const LandscapeExplorer = () => {
   // Handle GeoJSON download
   const handleGeoJsonLayers = (layerName) => {
     if (!district || !block) {
-      alert('Please select a district and block first');
+      alert("Please select a district and block first");
       return;
     }
-    
+
     console.log(`Downloading GeoJSON for ${layerName}`);
-    
-    const districtFormatted = district.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_');
-    const blockFormatted = block.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_');
-    
+
+    const districtFormatted = district.label
+      .toLowerCase()
+      .replace(/\s*\(\s*/g, "_")
+      .replace(/\s*\)\s*/g, "")
+      .replace(/\s+/g, "_");
+    const blockFormatted = block.label
+      .toLowerCase()
+      .replace(/\s*\(\s*/g, "_")
+      .replace(/\s*\)\s*/g, "")
+      .replace(/\s+/g, "_");
+
     // Create download URL based on layer name (following the original implementation's URL format)
-    let downloadUrl = '';
-    
-    switch(layerName) {
-      case 'demographics':
+    let downloadUrl = "";
+
+    switch (layerName) {
+      case "demographics":
         downloadUrl = `https://geoserver.core-stack.org:8443/geoserver/panchayat_boundaries/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=panchayat_boundaries:${districtFormatted}_${blockFormatted}&outputFormat=application/json&screen=main`;
         break;
-      case 'drainage':
+      case "drainage":
         downloadUrl = `https://geoserver.core-stack.org:8443/geoserver/drainage/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=drainage:${districtFormatted}_${blockFormatted}&outputFormat=application/json&screen=main`;
         break;
-      case 'remote_sensed_waterbodies':
+      case "remote_sensed_waterbodies":
         downloadUrl = `https://geoserver.core-stack.org:8443/geoserver/swb/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=swb:surface_waterbodies_${districtFormatted}_${blockFormatted}&outputFormat=application/json&screen=main`;
         break;
-      case 'hydrological_boundaries':
+      case "hydrological_boundaries":
         downloadUrl = `https://geoserver.core-stack.org:8443/geoserver/mws_layers/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=mws_layers:deltaG_well_depth_${districtFormatted}_${blockFormatted}&outputFormat=application/json&screen=main`;
         break;
       // Add other cases as needed
       default:
         downloadUrl = `https://geoserver.core-stack.org:8443/geoserver/${layerName}/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=${layerName}:${districtFormatted}_${blockFormatted}&outputFormat=application/json&screen=main`;
     }
-    
+
     // Use the imported helper directly
     downloadHelper.downloadGeoJson(downloadUrl, layerName);
   };
@@ -254,50 +267,57 @@ const LandscapeExplorer = () => {
   // Handle KML download
   const handleKMLLayers = (layerName) => {
     if (!district || !block) {
-      alert('Please select a district and block first');
+      alert("Please select a district and block first");
       return;
     }
-    
+
     console.log(`Downloading KML for ${layerName}`);
-    
-    const districtFormatted = district.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_');
-    const blockFormatted = block.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_');
-    
+
+    const districtFormatted = district.label
+      .toLowerCase()
+      .replace(/\s*\(\s*/g, "_")
+      .replace(/\s*\)\s*/g, "")
+      .replace(/\s+/g, "_");
+    const blockFormatted = block.label
+      .toLowerCase()
+      .replace(/\s*\(\s*/g, "_")
+      .replace(/\s*\)\s*/g, "")
+      .replace(/\s+/g, "_");
+
     // Create download URL based on layer name (following original implementation)
-    let downloadUrl = '';
-    
-    switch(layerName) {
-      case 'demographics':
+    let downloadUrl = "";
+
+    switch (layerName) {
+      case "demographics":
         downloadUrl = `https://geoserver.core-stack.org:8443/geoserver/panchayat_boundaries/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=panchayat_boundaries:${districtFormatted}_${blockFormatted}&outputFormat=application/vnd.google-earth.kml+xml&screen=main`;
         break;
-      case 'drainage':
+      case "drainage":
         downloadUrl = `https://geoserver.core-stack.org:8443/geoserver/drainage/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=drainage:${districtFormatted}_${blockFormatted}&outputFormat=application/vnd.google-earth.kml+xml&screen=main`;
         break;
-      case 'remote_sensed_waterbodies':
+      case "remote_sensed_waterbodies":
         downloadUrl = `https://geoserver.core-stack.org:8443/geoserver/water_bodies/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=water_bodies:surface_waterbodies_${districtFormatted}_${blockFormatted}&outputFormat=application/vnd.google-earth.kml+xml&screen=main`;
         break;
-      case 'hydrological_boundaries':
+      case "hydrological_boundaries":
         downloadUrl = `https://geoserver.core-stack.org:8443/geoserver/mws_layers/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=mws_layers:deltaG_well_depth_${districtFormatted}_${blockFormatted}&outputFormat=application/vnd.google-earth.kml+xml&screen=main`;
         break;
       // Add other cases as needed
       default:
         downloadUrl = `https://geoserver.core-stack.org:8443/geoserver/${layerName}/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=${layerName}:${districtFormatted}_${blockFormatted}&outputFormat=application/vnd.google-earth.kml+xml&screen=main`;
     }
-    
+
     // Use the imported helper directly
     downloadHelper.downloadKml(downloadUrl, layerName);
   };
 
-
   // Handle Excel download
   const handleExcelDownload = () => {
     if (!district || !block) {
-      alert('Please select a district and block first');
+      alert("Please select a district and block first");
       return;
     }
-    
+
     setIsLoading(true);
-    
+
     // Using the exact URL format from the original implementation
     fetch(
       `https://geoserver.core-stack.org/api/v1/download_excel_layer?state=${state.label}&district=${district.label}&block=${block.label}`,
@@ -309,25 +329,25 @@ const LandscapeExplorer = () => {
         },
       }
     )
-    .then(response => response.arrayBuffer())
-    .then(arybuf => {
-      const url = window.URL.createObjectURL(new Blob([arybuf]));
-      const link = document.createElement("a");
-      
-      link.href = url;
-      link.setAttribute("download", `${block.label}_data.xlsx`);
-      document.body.appendChild(link);
-      link.click();
-      
-      link.remove();
-      URL.revokeObjectURL(url);
-      setIsLoading(false);
-    })
-    .catch(error => {
-      console.error("Error downloading Excel:", error);
-      setIsLoading(false);
-      alert("Failed to download Excel data. Please try again.");
-    });
+      .then((response) => response.arrayBuffer())
+      .then((arybuf) => {
+        const url = window.URL.createObjectURL(new Blob([arybuf]));
+        const link = document.createElement("a");
+
+        link.href = url;
+        link.setAttribute("download", `${block.label}_data.xlsx`);
+        document.body.appendChild(link);
+        link.click();
+
+        link.remove();
+        URL.revokeObjectURL(url);
+        setIsLoading(false);
+      })
+      .catch((error) => {
+        console.error("Error downloading Excel:", error);
+        setIsLoading(false);
+        alert("Failed to download Excel data. Please try again.");
+      });
   };
 
   // Track category selection for resource layers
@@ -338,7 +358,7 @@ const LandscapeExplorer = () => {
   // Fetch states data on component mount
   useEffect(() => {
     if (statesData === null) {
-      getStates().then(data => setStatesData(data));
+      getStates().then((data) => setStatesData(data));
     }
   }, [statesData, setStatesData]);
 
@@ -346,20 +366,20 @@ const LandscapeExplorer = () => {
   const handleMapToggle = (layerName, isVisible) => {
     // Set the recursion prevention flag
     isUpdatingFromMap.current = true;
-    
+
     try {
       // Special case for setState action - coming from map marker click
-      if (layerName === 'setState' && typeof isVisible === 'object') {
+      if (layerName === "setState" && typeof isVisible === "object") {
         if (isVisible && isVisible.label && isVisible.district) {
           setState(isVisible);
           return;
         }
       }
-    
+
       // Update the toggledLayers state
-      setToggledLayers(prev => ({
+      setToggledLayers((prev) => ({
         ...prev,
-        [layerName]: isVisible
+        [layerName]: isVisible,
       }));
     } finally {
       // Reset the flag
@@ -370,27 +390,36 @@ const LandscapeExplorer = () => {
   return (
     <div className="min-h-screen bg-white flex flex-col">
       <div className="sticky top-0 z-50 bg-white border-b border-gray-100">
-        <LandscapeNavbar />
+        <LandingNavbar />
       </div>
       <div className="flex h-[calc(100vh-48px)]">
         {showLeftSidebar && (
           <LeftSidebar onClose={() => setShowLeftSidebar(false)} />
         )}
-        
+
         <div className="flex-1 relative p-2">
           {!showLeftSidebar && (
-            <button 
+            <button
               onClick={() => setShowLeftSidebar(true)}
               className="absolute top-4 left-4 z-10 bg-[#EDE9FE] p-2 rounded-md shadow-md text-[#8B5CF6]
               hover:bg-[#8B5CF6] hover:text-white transition-colors"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 16 16">
-                <path fillRule="evenodd" d="M2.5 12a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5z"/>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="24"
+                height="24"
+                fill="currentColor"
+                viewBox="0 0 16 16"
+              >
+                <path
+                  fillRule="evenodd"
+                  d="M2.5 12a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5z"
+                />
               </svg>
             </button>
           )}
-          
-          <Map 
+
+          <Map
             ref={setMapRef}
             isLoading={isLoading}
             setIsLoading={setIsLoading}
@@ -409,9 +438,9 @@ const LandscapeExplorer = () => {
             lulcYear3={lulcYear3}
           />
         </div>
-        
+
         {showRightSidebar && (
-          <RightSidebar 
+          <RightSidebar
             state={state}
             district={district}
             block={block}
@@ -438,19 +467,28 @@ const LandscapeExplorer = () => {
             setLulcYear3={setLulcYear3}
           />
         )}
-        
+
         {!showRightSidebar && (
-          <div 
-            className="absolute top-20 right-0 z-10 bg-white p-2 px-3 rounded-l-md shadow-md hover:bg-gray-100 transition-colors flex items-center"
-          >
-            <button 
+          <div className="absolute top-20 right-0 z-10 bg-white p-2 px-3 rounded-l-md shadow-md hover:bg-gray-100 transition-colors flex items-center">
+            <button
               onClick={() => setShowRightSidebar(true)}
               className="flex items-center"
               aria-label="Open filters panel"
             >
-              <span className="font-medium text-gray-700 mr-2">Filters & Data</span>
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-                <path fillRule="evenodd" d="M11.354 1.646a.5.5 0 0 1 0 .708L5.707 8l5.647 5.646a.5.5 0 0 1-.708.708l-6-6a.5.5 0 0 1 0-.708l6-6a.5.5 0 0 1 .708 0z"/>
+              <span className="font-medium text-gray-700 mr-2">
+                Filters & Data
+              </span>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="16"
+                height="16"
+                fill="currentColor"
+                viewBox="0 0 16 16"
+              >
+                <path
+                  fillRule="evenodd"
+                  d="M11.354 1.646a.5.5 0 0 1 0 .708L5.707 8l5.647 5.646a.5.5 0 0 1-.708.708l-6-6a.5.5 0 0 1 0-.708l6-6a.5.5 0 0 1 .708 0z"
+                />
               </svg>
             </button>
           </div>
