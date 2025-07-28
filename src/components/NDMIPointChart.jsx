@@ -37,7 +37,7 @@ const NDMIPointChart = ({ zoiFeatures = [], waterbody }) => {
       )
       .map(([key, value]) => {
         const distance = parseInt(key.split("_")[0], 10); // e.g., "150_NDMI" -> 150
-        return { x: value, y: distance };
+        return { x: distance, y: value };
       })
       .sort((a, b) => a.y - b.y);
   }, [matchedFeature]);
@@ -74,14 +74,6 @@ const NDMIPointChart = ({ zoiFeatures = [], waterbody }) => {
       x: {
         title: {
           display: true,
-          text: "NDMI Value",
-        },
-        min: -1,
-        max: 1,
-      },
-      y: {
-        title: {
-          display: true,
           text: "Distance from Waterbody (meters)",
         },
         ticks: {
@@ -89,6 +81,14 @@ const NDMIPointChart = ({ zoiFeatures = [], waterbody }) => {
           callback: (value) => `${value}m`,
         },
         beginAtZero: true,
+      },
+      y: {
+        title: {
+          display: true,
+          text: "NDMI Value",
+        },
+        min: -1,
+        max: 1,
       },
     },
   };
