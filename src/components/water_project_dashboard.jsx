@@ -11,7 +11,9 @@ import { Style, Fill, Stroke } from "ol/style";
 import LocationOnIcon from "@mui/icons-material/LocationOn";
 import YearSlider from "./yearSlider";
 import PrecipitationStackChart from "./PrecipitationStackChart.jsx";
+import CroppingIntensityStackChart from "./CroppingIntensityStackChart.jsx";
 import { yearAtomFamily } from "../store/locationStore";
+import Overlay from "ol/Overlay";
 
 import {
   Box,
@@ -48,6 +50,8 @@ import MouseWheelZoom from "ol/interaction/MouseWheelZoom";
 import PinchZoom from "ol/interaction/PinchZoom";
 import DoubleClickZoom from "ol/interaction/DoubleClickZoom";
 import { useLocation } from "react-router-dom";
+import TileWMS from "ol/source/TileWMS";
+import NDMIPointChart from "./NDMIPointChart.jsx";
 
 const useWaterRejData = (projectName, projectId) => {
   const [geoData, setGeoData] = useState(null);
@@ -179,6 +183,7 @@ const WaterProjectDashboard = () => {
   const [filterType, setFilterType] = useState("");
 
   const [selectedWaterbody, setSelectedWaterbody] = useState(null);
+  const [mapClickedWaterbody, setMapClickedWaterbody] = useState(null);
   const [waterBodyLayer, setWaterBodyLayer] = useState(null);
   // const lulcYear = useRecoilValue(yearAtom);
   const [currentLayer, setCurrentLayer] = useState([]);
@@ -189,6 +194,9 @@ const WaterProjectDashboard = () => {
   const mapElement2 = useRef();
   const mapRef1 = useRef();
   const mapRef2 = useRef();
+  const mapElement3 = useRef();
+  const mapRef3 = useRef();
+
   const baseLayerRef = useRef();
   const location = useLocation();
   const lulcYear1 = useRecoilValue(yearAtomFamily("map1"));
@@ -225,7 +233,7 @@ const WaterProjectDashboard = () => {
     } else {
       setProject(null);
     }
-  }, [location.key]); // ✅ Triggers on actual route change
+  }, [location.key]);
 
   const projectName = project?.label;
   const projectId = project?.value;
@@ -235,7 +243,6 @@ const WaterProjectDashboard = () => {
     projectId
   );
 
-  // const geoData = useWaterRejData(project, projectId);
   const { rows, totalSiltRemoved } = useMemo(() => {
     if (!geoData?.features) return { rows: [], avgSiltRemoved: 0 };
 
@@ -326,86 +333,6 @@ const WaterProjectDashboard = () => {
         );
       }
 
-      // // KHARIF
-      // const kharifEntries = Object.entries(props).filter(([key]) =>
-      //   /^k_\d{2}-\d{2}$/i.test(key)
-      // );
-      // const kharifValues = kharifEntries
-      //   .map(([_, value]) => Number(value))
-      //   .filter((val) => !isNaN(val));
-      // // console.log(kharifValues);
-      // let nonZeroStartIndexK = kharifValues.findIndex((val) => val !== 0);
-
-      // const filteredKharifValues = kharifValues.slice(nonZeroStartIndexK);
-      // // console.log(filteredKharifValues);
-      // const sumFilteredKharif = filteredKharifValues.reduce(
-      //   (acc, val) => acc + val,
-      //   0
-      // );
-      // const meanFilteredKharif =
-      //   filteredKharifValues.length > 0
-      //     ? (sumFilteredKharif / filteredKharifValues.length).toFixed(2)
-      //     : "0.00";
-
-      // // console.log("Mean of filteredKharifValues:", meanFilteredKharif);
-
-      // const sumKharif = kharifValues.reduce((acc, val) => acc + val, 0);
-      // const avgKharif = (sumKharif / 7).toFixed(2);
-
-      // // RABI
-      // const rabiEntries = Object.entries(props).filter(([key]) =>
-      //   /^kr_\d{2}-\d{2}$/i.test(key)
-      // );
-      // const rabiValues = rabiEntries
-      //   .map(([_, value]) => Number(value))
-      //   .filter((val) => !isNaN(val));
-
-      // let nonZeroStartIndexR = rabiValues.findIndex((val) => val !== 0);
-
-      // const filteredRabiValues = rabiValues.slice(nonZeroStartIndexR);
-      // // console.log(filteredRabiValues);
-      // const sumFilteredRabi = filteredRabiValues.reduce(
-      //   (acc, val) => acc + val,
-      //   0
-      // );
-      // const meanFilteredRabi =
-      //   filteredRabiValues.length > 0
-      //     ? (sumFilteredRabi / filteredRabiValues.length).toFixed(2)
-      //     : "0.00";
-
-      // // console.log("Mean of filteredRabiValues:", meanFilteredRabi);
-
-      // const sumRabi = rabiValues.reduce((acc, val) => acc + val, 0);
-      // const avgRabi = (sumRabi / 7).toFixed(2);
-
-      // // ZAID
-      // const zaidEntries = Object.entries(props).filter(([key]) =>
-      //   /^krz_\d{2}-\d{2}$/i.test(key)
-      // );
-      // const zaidValues = zaidEntries
-      //   .map(([_, value]) => Number(value))
-      //   .filter((val) => !isNaN(val));
-
-      // let nonZeroStartIndexZ = zaidValues.findIndex((val) => val !== 0);
-
-      // const filteredZaidValues = zaidValues.slice(nonZeroStartIndexZ);
-      // // console.log(filteredZaidValues);
-      // const sumFilteredzaid = filteredZaidValues.reduce(
-      //   (acc, val) => acc + val,
-      //   0
-      // );
-      // const meanFilteredZaid =
-      //   filteredZaidValues.length > 0
-      //     ? (sumFilteredzaid / filteredZaidValues.length).toFixed(2)
-      //     : "0.00";
-
-      // // console.log("Mean of filteredZaidValues:", meanFilteredZaid);
-
-      // const sumZaid = zaidValues.reduce((acc, val) => acc + val, 0);
-      // const avgZaid = (sumZaid / 7).toFixed(2);
-
-      // Parse silt removed safely, default to 0 if missing or NaN
-
       const siltRemoved = Number(props.slit_excavated) || 0;
       totalSiltRemoved += siltRemoved;
 
@@ -424,6 +351,8 @@ const WaterProjectDashboard = () => {
         // avgWaterAvailabilityKharif: avgKharif,
         // avgWaterAvailabilityRabi: avgRabi,
         // avgWaterAvailabilityZaid: avgZaid,
+        maxCatchmentArea: props.max_catchment_area || 0,
+        maxStreamOrder: props.max_stream_order || 0,
 
         coordinates,
         featureIndex: index,
@@ -434,7 +363,10 @@ const WaterProjectDashboard = () => {
       ? totalSiltRemoved / mappedRows.length
       : 0;
 
-    return { rows: mappedRows, totalSiltRemoved };
+    return {
+      rows: mappedRows,
+      totalSiltRemoved,
+    };
   }, [geoData]);
 
   const totalRows = rows.length;
@@ -516,11 +448,54 @@ const WaterProjectDashboard = () => {
         "waterrej",
         layerName,
         true,
-        "lulc_water_pixels"
+        "lulc_all_pixels"
       );
 
       newLayer.setZIndex(0);
       newLayer.set("id", uniqueLayerId);
+
+      // ADD CLIPPING HERE - Get waterbody features and clip the LULC layer
+      if (waterBodyLayer) {
+        const waterBodySource = waterBodyLayer.getSource();
+        const waterBodyFeatures = waterBodySource.getFeatures();
+
+        if (waterBodyFeatures.length > 0) {
+          let combinedFeature;
+
+          if (waterBodyFeatures.length === 1) {
+            combinedFeature = waterBodyFeatures[0];
+          } else {
+            const geometries = waterBodyFeatures.map((f) => f.getGeometry());
+            const firstGeometry = geometries[0];
+            if (
+              firstGeometry.getType() === "Polygon" ||
+              firstGeometry.getType() === "MultiPolygon"
+            ) {
+              const allCoordinates = [];
+              geometries.forEach((geom) => {
+                if (geom.getType() === "Polygon") {
+                  allCoordinates.push(geom.getCoordinates());
+                } else if (geom.getType() === "MultiPolygon") {
+                  allCoordinates.push(...geom.getCoordinates());
+                }
+              });
+
+              const multiPolygon = new MultiPolygon(allCoordinates);
+              combinedFeature = new Feature(multiPolygon);
+            } else {
+              combinedFeature = waterBodyFeatures[0];
+            }
+          }
+
+          const crop = new Crop({
+            feature: combinedFeature,
+            wrapX: true,
+            inner: false,
+          });
+
+          newLayer.addFilter(crop);
+        }
+      }
 
       if (mapRef1.current) {
         mapRef1.current.addLayer(newLayer);
@@ -788,6 +763,24 @@ const WaterProjectDashboard = () => {
     map.addLayer(waterBodyLayerSecond);
     setWaterBodyLayer(waterBodyLayerSecond);
 
+    map.on("singleclick", (evt) => {
+      let found = false;
+      map.forEachFeatureAtPixel(evt.pixel, (feature) => {
+        const props = feature.getProperties();
+        if (props.waterbody_name) {
+          setMapClickedWaterbody({
+            name: props.waterbody_name,
+            Village: props.Village,
+            Taluka: props.Taluka,
+          });
+          found = true;
+        }
+      });
+      if (!found) {
+        setMapClickedWaterbody(null);
+      }
+    });
+
     const features = vectorLayerWater.getFeatures();
     if (!selectedWaterbody && features.length > 0) {
       const extent = vectorLayerWater.getExtent();
@@ -849,7 +842,6 @@ const WaterProjectDashboard = () => {
     const features = vectorSource.getFeatures();
 
     if (selectedWaterbody && selectedFeature) {
-      // Zoom to the selected waterbody's geometry (just like map 1)
       const feature = new GeoJSON().readFeature(selectedFeature, {
         dataProjection: "EPSG:4326",
         featureProjection: view.getProjection(),
@@ -864,8 +856,138 @@ const WaterProjectDashboard = () => {
         });
       }
     } else if (features.length > 0) {
-      // fallback: zoom to all features
       const extent = vectorSource.getExtent();
+      view.fit(extent, {
+        padding: [50, 50, 50, 50],
+        duration: 1000,
+        maxZoom: 18,
+      });
+    }
+  };
+
+  const initializeMap3 = async () => {
+    const baseLayer = new TileLayer({
+      source: new XYZ({
+        url: "https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}",
+        maxZoom: 30,
+      }),
+    });
+
+    const view = new View({
+      projection: "EPSG:4326",
+      constrainResolution: true,
+    });
+
+    const map = new Map({
+      target: mapElement3.current,
+      layers: [baseLayer],
+      view,
+      loadTilesWhileAnimating: true,
+      loadTilesWhileInteracting: true,
+    });
+
+    mapRef3.current = map;
+
+    // ✅ Add WMS layer
+    const wmsLayer = new TileLayer({
+      source: new TileWMS({
+        url: "https://geoserver.core-stack.org:8443/geoserver/waterrej/wms",
+        params: {
+          SERVICE: "WMS",
+          VERSION: "1.1.0",
+          REQUEST: "GetMap",
+          FORMAT: "image/png",
+          TRANSPARENT: true,
+          LAYERS: `waterrej:WaterRejapp_mws_${projectName}_${projectId}`,
+          STYLES: "",
+        },
+        serverType: "geoserver",
+        crossOrigin: "anonymous",
+      }),
+      opacity: 0.7,
+    });
+
+    map.addLayer(wmsLayer);
+    const drainageLayerName = `waterrej:WATER_REJ_drainage_line_ATCF_${projectName}_${projectId}`;
+
+    const drainageLineLayer = new TileLayer({
+      source: new TileWMS({
+        url: "https://geoserver.core-stack.org:8443/geoserver/waterrej/wms",
+        params: {
+          SERVICE: "WMS",
+          VERSION: "1.1.0",
+          REQUEST: "GetMap",
+          FORMAT: "image/png",
+          TRANSPARENT: true,
+          LAYERS: drainageLayerName,
+          STYLES: "",
+        },
+        serverType: "geoserver",
+        crossOrigin: "anonymous",
+      }),
+      opacity: 1,
+    });
+
+    drainageLineLayer.setZIndex(1.5);
+    map.addLayer(drainageLineLayer);
+
+    const typeName = `waterrej:WaterRejapp_mws_${projectName}_${projectId}`;
+    const wfsUrl =
+      "https://geoserver.core-stack.org:8443/geoserver/waterrej/ows?" +
+      new URLSearchParams({
+        service: "WFS",
+        version: "1.0.0",
+        request: "GetFeature",
+        typeName,
+        outputFormat: "application/json",
+      });
+
+    try {
+      const response = await fetch(wfsUrl);
+      const json = await response.json();
+
+      const boundarySource = new VectorSource({
+        features: new GeoJSON().readFeatures(json, {
+          dataProjection: "EPSG:4326",
+          featureProjection: "EPSG:4326",
+        }),
+      });
+
+      const boundaryLayer = new VectorLayer({
+        source: boundarySource,
+        style: new Style({
+          stroke: new Stroke({ color: "#4A90E2", width: 2 }),
+          fill: new Fill({ color: "rgba(74,144,226, 0.2)" }),
+        }),
+      });
+
+      boundaryLayer.setZIndex(2);
+      map.addLayer(boundaryLayer);
+    } catch (err) {
+      console.error("WFS boundary fetch error:", err);
+    }
+
+    // ✅ Add waterbody outlines from geoData (black border, no fill)
+    if (geoData?.features?.length) {
+      const waterSource = new VectorSource({
+        features: new GeoJSON().readFeatures(geoData, {
+          dataProjection: "EPSG:4326",
+          featureProjection: "EPSG:4326",
+        }),
+      });
+
+      const waterLayer = new VectorLayer({
+        source: waterSource,
+        style: new Style({
+          stroke: new Stroke({ color: "#000000", width: 2 }),
+          fill: null, // No fill
+        }),
+      });
+
+      waterLayer.setZIndex(3);
+      map.addLayer(waterLayer);
+
+      const extent = waterSource.getExtent();
       view.fit(extent, {
         padding: [50, 50, 50, 50],
         duration: 1000,
@@ -878,18 +1000,20 @@ const WaterProjectDashboard = () => {
     if (view === "map") {
       if (mapElement1.current) initializeMap1();
       if (mapElement2.current) initializeMap2();
+      if (mapElement3.current) initializeMap3();
     }
 
     return () => {
       if (mapRef1.current) mapRef1.current.setTarget(null);
       if (mapRef2.current) mapRef2.current.setTarget(null);
+      if (mapRef3.current) mapRef3.current.setTarget(null);
     };
   }, [view]);
 
   useEffect(() => {
     if (view === "map" && selectedWaterbody && selectedFeature) {
       zoomToWaterbody(selectedWaterbody, selectedFeature, mapRef1);
-      zoomToWaterbody(selectedWaterbody, selectedFeature, mapRef2);
+      zoomToZoiWaterbody(selectedWaterbody, selectedFeature, mapRef2);
     }
   }, [selectedWaterbody, selectedFeature, view]);
 
@@ -913,6 +1037,58 @@ const WaterProjectDashboard = () => {
       duration: 1000,
       padding: [50, 50, 50, 50],
       maxZoom: 18,
+    });
+
+    if (waterBodyLayer) {
+      const source = waterBodyLayer.getSource();
+      const features = source.getFeatures();
+
+      features.forEach((feature) => feature.setStyle(null));
+
+      if (
+        waterbody.featureIndex !== undefined &&
+        features[waterbody.featureIndex]
+      ) {
+        features[waterbody.featureIndex].setStyle(
+          new Style({
+            stroke: new Stroke({ color: "#FF0000", width: 5 }),
+            fill: new Fill({ color: "rgba(255, 0, 0, 0.5)" }),
+          })
+        );
+      }
+    }
+
+    targetMapRef.current.getInteractions().forEach((interaction) => {
+      if (
+        interaction instanceof MouseWheelZoom ||
+        interaction instanceof PinchZoom ||
+        interaction instanceof DoubleClickZoom
+      ) {
+        interaction.setActive(false);
+      }
+    });
+  };
+
+  const zoomToZoiWaterbody = (waterbody, tempFeature, targetMapRef) => {
+    if (!tempFeature || !targetMapRef?.current) return;
+
+    const view = targetMapRef.current.getView();
+    const feature = new GeoJSON().readFeature(tempFeature, {
+      dataProjection: "EPSG:4326",
+      featureProjection: view.getProjection(),
+    });
+
+    const geometry = feature.getGeometry();
+    if (!geometry) {
+      console.error("No geometry found.");
+      return;
+    }
+
+    const extent = geometry.getExtent();
+    view.fit(extent, {
+      duration: 1000,
+      padding: [50, 50, 50, 50],
+      maxZoom: 15,
     });
 
     if (waterBodyLayer) {
@@ -986,6 +1162,19 @@ const WaterProjectDashboard = () => {
       setView("map");
     } else {
       console.error("Feature not found.");
+    }
+  };
+
+  const handleMapBoxClick = () => {
+    const matchingRow = rows.find(
+      (row) => row.waterbody === mapClickedWaterbody.name
+    );
+
+    if (matchingRow) {
+      console.log("Passing to handleWaterbodyClick:", matchingRow);
+      handleWaterbodyClick(matchingRow);
+    } else {
+      console.warn("No matching row found.");
     }
   };
 
@@ -1387,7 +1576,6 @@ const WaterProjectDashboard = () => {
 
                 {Array.from(new Set(rows.map((row) => String(row[filterType]))))
                   .filter((option) => {
-                    // To make sure we are handling first letter case properly:
                     return option
                       .toLowerCase()
                       .startsWith(searchText.toLowerCase());
@@ -1445,124 +1633,128 @@ const WaterProjectDashboard = () => {
                 />
 
                 {/* Top-left Label */}
-                <Box
-                  sx={{
-                    position: "absolute",
-                    top: 16,
-                    left: 16,
-                    backgroundColor: "rgba(255, 255, 255, 0.9)",
-                    padding: "8px 12px",
-                    borderRadius: "6px",
-                    fontWeight: "bold",
-                    boxShadow: 1,
-                    display: "flex",
-                    flexDirection: "column",
-                    alignItems: "flex-start",
-                    gap: 1,
-                    zIndex: 1000,
-                    maxWidth: { xs: "90%", sm: "300px" },
-                  }}
-                >
-                  <Box display="flex" alignItems="center" gap={1}>
-                    <LocationOnIcon fontSize="small" color="primary" />
-                    <Typography variant="body1" fontWeight={600}>
-                      {selectedWaterbody?.waterbody || "Waterbody Name"}
+                {selectedWaterbody && (
+                  <Box
+                    sx={{
+                      position: "absolute",
+                      top: 16,
+                      left: 16,
+                      backgroundColor: "rgba(255, 255, 255, 0.9)",
+                      padding: "8px 12px",
+                      borderRadius: "6px",
+                      fontWeight: "bold",
+                      boxShadow: 1,
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "flex-start",
+                      gap: 1,
+                      zIndex: 1000,
+                      maxWidth: { xs: "90%", sm: "300px" },
+                    }}
+                  >
+                    <Box display="flex" alignItems="center" gap={1}>
+                      <LocationOnIcon fontSize="small" color="primary" />
+                      <Typography variant="body1" fontWeight={600}>
+                        {selectedWaterbody?.waterbody || "Waterbody Name"}
+                      </Typography>
+                    </Box>
+                    <Typography
+                      variant="body2"
+                      color="text.secondary"
+                      fontWeight={800}
+                    >
+                      Silt Removed: {selectedWaterbody?.siltRemoved || "silt"}{" "}
+                      cubic metre
+                    </Typography>
+                    <Typography
+                      variant="body2"
+                      color="text.secondary"
+                      fontWeight={800}
+                    >
+                      Area (in hectare):{" "}
+                      {(selectedWaterbody?.areaOred || 0).toFixed(2)} hectares
                     </Typography>
                   </Box>
-                  <Typography
-                    variant="body2"
-                    color="text.secondary"
-                    fontWeight={800}
-                  >
-                    Silt Removed: {selectedWaterbody?.siltRemoved || "silt"}{" "}
-                    cubic metre
-                  </Typography>
-                  <Typography
-                    variant="body2"
-                    color="text.secondary"
-                    fontWeight={800}
-                  >
-                    Area (in hectare):{" "}
-                    {(selectedWaterbody?.areaOred || 0).toFixed(2)} hectares
-                  </Typography>
-                </Box>
+                )}
 
                 {/* Legend + YearSlider wrapper for responsiveness */}
-                <Box
-                  sx={{
-                    position: "absolute",
-                    bottom: 16,
-                    left: 16,
-                    right: 16,
-                    display: "flex",
-                    flexDirection: { xs: "column", sm: "row" },
-                    justifyContent: "space-between",
-                    gap: 2,
-                    flexWrap: "wrap",
-                    zIndex: 1000,
-                  }}
-                >
-                  {/* Legend */}
+                {selectedWaterbody && (
                   <Box
                     sx={{
-                      backgroundColor: "rgba(255, 255, 255, 0.9)",
-                      padding: 2,
-                      borderRadius: 1,
-                      boxShadow: 2,
-                      flex: "1 1 180px",
-                      minWidth: "260px",
-                      maxWidth: "200px",
+                      position: "absolute",
+                      bottom: 16,
+                      left: 16,
+                      right: 16,
+                      display: "flex",
+                      flexDirection: { xs: "column", sm: "row" },
+                      justifyContent: "space-between",
+                      gap: 2,
+                      flexWrap: "wrap",
+                      zIndex: 1000,
                     }}
                   >
-                    <Typography variant="subtitle2">
-                      Water Layer Legend
-                    </Typography>
-                    {[
-                      { color: "#74CCF4", label: "Kharif Water" },
-                      { color: "#1ca3ec", label: "Kharif and Rabi Water" },
-                      {
-                        color: "#0f5e9c",
-                        label: "Kharif, Rabi and Zaid Water",
-                      },
-                    ].map((item, idx) => (
-                      <Box
-                        key={idx}
-                        display="flex"
-                        alignItems="center"
-                        gap={1}
-                        mt={1}
-                      >
+                    {/* Legend */}
+                    <Box
+                      sx={{
+                        backgroundColor: "rgba(255, 255, 255, 0.9)",
+                        padding: 2,
+                        borderRadius: 1,
+                        boxShadow: 2,
+                        flex: "1 1 180px",
+                        minWidth: "260px",
+                        maxWidth: "200px",
+                      }}
+                    >
+                      <Typography variant="subtitle2">
+                        Water Layer Legend
+                      </Typography>
+                      {[
+                        { color: "#74CCF4", label: "Kharif Water" },
+                        { color: "#1ca3ec", label: "Kharif and Rabi Water" },
+                        {
+                          color: "#0f5e9c",
+                          label: "Kharif, Rabi and Zaid Water",
+                        },
+                      ].map((item, idx) => (
                         <Box
-                          sx={{
-                            width: 20,
-                            height: 20,
-                            backgroundColor: item.color,
-                            opacity: 0.7,
-                            border: "1px solid #000",
-                          }}
-                        />
-                        <Typography variant="body2">{item.label}</Typography>
-                      </Box>
-                    ))}
-                  </Box>
+                          key={idx}
+                          display="flex"
+                          alignItems="center"
+                          gap={1}
+                          mt={1}
+                        >
+                          <Box
+                            sx={{
+                              width: 20,
+                              height: 20,
+                              backgroundColor: item.color,
+                              opacity: 0.7,
+                              border: "1px solid #000",
+                            }}
+                          />
+                          <Typography variant="body2">{item.label}</Typography>
+                        </Box>
+                      ))}
+                    </Box>
 
-                  {/* YearSlider */}
-                  <Box
-                    sx={{
-                      backgroundColor: "rgba(255, 255, 255, 0.9)",
-                      padding: 2,
-                      borderRadius: 1,
-                      boxShadow: 2,
-                      flex: "1 1 240px",
-                      minWidth: { xs: "220px", sm: "300px", md: "500px" },
-                    }}
-                  >
-                    <YearSlider
-                      currentLayer={{ name: "lulcWaterrej" }}
-                      sliderId="map1"
-                    />
+                    {/* YearSlider */}
+                    <Box
+                      sx={{
+                        backgroundColor: "rgba(255, 255, 255, 0.9)",
+                        padding: 2,
+                        borderRadius: 1,
+                        boxShadow: 2,
+                        flex: "1 1 240px",
+                        minWidth: { xs: "220px", sm: "300px", md: "500px" },
+                      }}
+                    >
+                      <YearSlider
+                        currentLayer={{ name: "lulcWaterrej" }}
+                        sliderId="map1"
+                      />
+                    </Box>
                   </Box>
-                </Box>
+                )}
 
                 {/* Zoom Controls */}
                 {!selectedWaterbody && (
@@ -1604,6 +1796,72 @@ const WaterProjectDashboard = () => {
                   </Box>
                 )}
               </Box>
+              {mapClickedWaterbody && !selectedWaterbody && (
+                <Box
+                  sx={{
+                    position: "absolute",
+                    right: 100,
+                    top: 100,
+                    width: 500,
+                    padding: 3,
+                    background: "#f9fafb",
+                    boxShadow: "0px 4px 12px rgba(0, 0, 0, 0.05)",
+                    borderRadius: 2,
+                    border: "1px solid #e0e0e0",
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 1.5,
+                    cursor: "pointer",
+                  }}
+                  onClick={handleMapBoxClick}
+                >
+                  <Typography
+                    variant="h6"
+                    fontWeight={700}
+                    sx={{
+                      color: "#333",
+                      borderBottom: "1px solid #ddd",
+                      pb: 1,
+                    }}
+                  >
+                    {mapClickedWaterbody.name}
+                  </Typography>
+
+                  <Box display="flex" justifyContent="space-between">
+                    <Typography
+                      variant="body2"
+                      fontWeight={600}
+                      color="text.secondary"
+                    >
+                      Village:
+                    </Typography>
+                    <Typography
+                      variant="body2"
+                      fontWeight={500}
+                      color="text.primary"
+                    >
+                      {mapClickedWaterbody.Village ?? "NA"}
+                    </Typography>
+                  </Box>
+
+                  <Box display="flex" justifyContent="space-between">
+                    <Typography
+                      variant="body2"
+                      fontWeight={600}
+                      color="text.secondary"
+                    >
+                      Taluka:
+                    </Typography>
+                    <Typography
+                      variant="body2"
+                      fontWeight={500}
+                      color="text.primary"
+                    >
+                      {mapClickedWaterbody.Taluka ?? "NA"}
+                    </Typography>
+                  </Box>
+                </Box>
+              )}
 
               {/* Charts Section */}
               <Box
@@ -1622,6 +1880,7 @@ const WaterProjectDashboard = () => {
                     <WaterAvailabilityChart
                       waterbody={selectedWaterbody}
                       water_rej_data={geoData}
+                      mwsFeature={selectedMWSFeature}
                     />
                     <Typography fontSize={14} color="#333" mt={1}>
                       <b>Black line</b> represents the year of intervention.
@@ -1643,17 +1902,219 @@ const WaterProjectDashboard = () => {
                 )}
               </Box>
             </Box>
+            {selectedWaterbody && (
+              <Box
+                sx={{
+                  width: "100%",
+                  display: "flex",
+                  flexDirection: { xs: "column", md: "row" },
+                  justifyContent: "space-between",
+                  gap: 3,
+                  mt: 4,
+                  px: { xs: 2, md: 0 },
+                }}
+              >
+                {[
+                  {
+                    label: "Max Catchment Area",
+                    value: `${selectedWaterbody?.maxCatchmentArea?.toFixed(
+                      2
+                    )} sq km`,
+                  },
+                  {
+                    label: "Max Stream Order",
+                    value: `${selectedWaterbody?.maxStreamOrder}th Order`,
+                  },
+                ].map((item, idx) => (
+                  <Box
+                    key={idx}
+                    sx={{
+                      flex: 1,
+                      background:
+                        "linear-gradient(135deg, #f9fafb 0%, #f1f3f5 100%)",
+                      padding: 3,
+                      borderRadius: 3,
+                      boxShadow: "0 4px 12px rgba(0, 0, 0, 0.05)",
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "center",
+                      textAlign: "center",
+                      minHeight: "120px",
+                      transition: "all 0.3s ease",
+                      "&:hover": {
+                        transform: "translateY(-2px)",
+                        boxShadow: "0 6px 16px rgba(0, 0, 0, 0.08)",
+                      },
+                      border: "1px solid #e0e0e0",
+                    }}
+                  >
+                    <Typography
+                      variant="h6"
+                      fontWeight={700}
+                      color="text.primary"
+                      sx={{
+                        textTransform: "uppercase",
+                        letterSpacing: 0.8,
+                        fontSize: "0.95rem",
+                        color: "#333",
+                      }}
+                    >
+                      {item.label}
+                    </Typography>
+                    <Typography
+                      variant="h5"
+                      fontWeight={600}
+                      color="primary"
+                      sx={{
+                        mt: 1,
+                        fontSize: "1.3rem",
+                      }}
+                    >
+                      {item.value}
+                    </Typography>
+                  </Box>
+                ))}
+              </Box>
+            )}
 
-            {/* Map 2 (ZOI Map) */}
-            {/* <Box
+            {/* ZOI Section with Map + Side Chart */}
+            <Box
+              sx={{
+                display: "flex",
+                flexDirection: { xs: "column", md: "row" },
+                alignItems: "flex-start",
+                gap: 4,
+                width: "100%",
+                mt: 6,
+              }}
+            >
+              {/* ZOI Map (same dimensions as first map) */}
+              <Box
+                sx={{
+                  position: "relative",
+                  width: { xs: "100%", md: "65%" },
+                }}
+              >
+                <div
+                  ref={mapElement2}
+                  style={{
+                    height: "850px",
+                    width: "100%",
+                    border: "1px solid #ccc",
+                    borderRadius: "5px",
+                  }}
+                />
+
+                {/* Year Slider (bottom right) */}
+                <Box
+                  sx={{
+                    position: "absolute",
+                    bottom: 16,
+                    right: 16,
+                    backgroundColor: "rgba(255, 255, 255, 0.9)",
+                    padding: 2,
+                    borderRadius: 1,
+                    boxShadow: 2,
+                    zIndex: 1000,
+                    minWidth: "500px",
+                  }}
+                >
+                  <YearSlider
+                    currentLayer={{ name: "lulcWaterrej" }}
+                    sliderId="map2"
+                  />
+                </Box>
+
+                {/* Zoom Controls */}
+                <Box
+                  sx={{
+                    position: "absolute",
+                    top: 80,
+                    right: 16,
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 1,
+                    zIndex: 1100,
+                  }}
+                >
+                  <button
+                    style={{
+                      backgroundColor: "#fff",
+                      border: "1px solid #ccc",
+                      borderRadius: "4px",
+                      width: "40px",
+                      height: "40px",
+                      fontSize: "20px",
+                      cursor: "pointer",
+                    }}
+                    onClick={() => {
+                      const view = mapRef2.current?.getView();
+                      view?.animate({
+                        zoom: view.getZoom() + 1,
+                        duration: 300,
+                      });
+                    }}
+                  >
+                    +
+                  </button>
+                  <button
+                    style={{
+                      backgroundColor: "#fff",
+                      border: "1px solid #ccc",
+                      borderRadius: "4px",
+                      width: "40px",
+                      height: "40px",
+                      fontSize: "20px",
+                      cursor: "pointer",
+                    }}
+                    onClick={() => {
+                      const view = mapRef2.current?.getView();
+                      view?.animate({
+                        zoom: view.getZoom() - 1,
+                        duration: 300,
+                      });
+                    }}
+                  >
+                    –
+                  </button>
+                </Box>
+              </Box>
+
+              {/* ZOI Chart */}
+              <Box
+                sx={{
+                  width: { xs: "100%", md: "45%" },
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                }}
+              >
+                <Box sx={{ width: "100%", maxWidth: "700px", height: "400px" }}>
+                  <CroppingIntensityStackChart
+                    zoiFeatures={zoiFeatures}
+                    waterbody={selectedWaterbody}
+                  />
+                </Box>
+
+                <Box sx={{ width: "100%", maxWidth: "700px", height: "400px" }}>
+                  <NDMIPointChart
+                    zoiFeatures={zoiFeatures}
+                    waterbody={selectedWaterbody}
+                  />
+                </Box>
+              </Box>
+            </Box>
+
+            {/*MWS map section */}
+            <Box
               sx={{
                 position: "relative",
                 width: "100%",
-                maxWidth: "100%",
+                mt: 6,
               }}
             >
               <div
-                ref={mapElement2}
+                ref={mapElement3}
                 style={{
                   height: "800px",
                   width: "100%",
@@ -1661,25 +2122,8 @@ const WaterProjectDashboard = () => {
                   borderRadius: "5px",
                 }}
               />
-              <Box
-                sx={{
-                  position: "absolute",
-                  bottom: 16,
-                  right: 16,
-                  backgroundColor: "rgba(255, 255, 255, 0.9)",
-                  padding: 2,
-                  borderRadius: 1,
-                  boxShadow: 2,
-                  zIndex: 1000,
-                  minWidth: "500px",
-                }}
-              >
-                <YearSlider
-                  currentLayer={{ name: "lulcWaterrej" }}
-                  sliderId="map2"
-                />
-              </Box>
 
+              {/* Optional Zoom Controls */}
               <Box
                 sx={{
                   position: "absolute",
@@ -1691,48 +2135,32 @@ const WaterProjectDashboard = () => {
                   zIndex: 1100,
                 }}
               >
-                <button
-                  style={{
-                    backgroundColor: "#fff",
-                    border: "1px solid #ccc",
-                    borderRadius: "4px",
-                    width: "40px",
-                    height: "40px",
-                    fontSize: "20px",
-                    cursor: "pointer",
-                  }}
-                  onClick={() => {
-                    const view = mapRef2.current?.getView();
-                    view?.animate({
-                      zoom: view.getZoom() + 1,
-                      duration: 300,
-                    });
-                  }}
-                >
-                  +
-                </button>
-                <button
-                  style={{
-                    backgroundColor: "#fff",
-                    border: "1px solid #ccc",
-                    borderRadius: "4px",
-                    width: "40px",
-                    height: "40px",
-                    fontSize: "20px",
-                    cursor: "pointer",
-                  }}
-                  onClick={() => {
-                    const view = mapRef2.current?.getView();
-                    view?.animate({
-                      zoom: view.getZoom() - 1,
-                      duration: 300,
-                    });
-                  }}
-                >
-                  –
-                </button>
+                {["+", "–"].map((sign) => (
+                  <button
+                    key={sign}
+                    style={{
+                      backgroundColor: "#fff",
+                      border: "1px solid #ccc",
+                      borderRadius: "4px",
+                      width: "40px",
+                      height: "40px",
+                      fontSize: "20px",
+                      cursor: "pointer",
+                    }}
+                    onClick={() => {
+                      const view = mapRef3.current?.getView();
+                      const delta = sign === "+" ? 1 : -1;
+                      view?.animate({
+                        zoom: view.getZoom() + delta,
+                        duration: 300,
+                      });
+                    }}
+                  >
+                    {sign}
+                  </button>
+                ))}
               </Box>
-            </Box> */}
+            </Box>
           </Box>
         ) : null}
       </Box>

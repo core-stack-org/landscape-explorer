@@ -29,13 +29,19 @@ const HeaderSelect = ({
   const [projects, setProjects] = useState([]);
   const [projectCount, setProjectCount] = useState(0);
   const [projectOptions, setProjectOptions] = useState([]);
-  const [dashboardLocked, setDashboardLocked] = useState(
-    location.pathname.includes("/dashboard")
-  );
+  const [dashboardLocked, setDashboardLocked] = useState(false);
 
   const navigate = useNavigate();
 
   const isOnDashboard = location.pathname.includes("/dashboard");
+
+  useEffect(() => {
+    if (location.pathname.includes("/dashboard") && project) {
+      setDashboardLocked(true);
+    } else {
+      setDashboardLocked(false);
+    }
+  }, [location.pathname, project]);
 
   const loginAndGetToken = async () => {
     try {
@@ -203,10 +209,15 @@ const HeaderSelect = ({
 
   const handleOrganizationChange = (selectedOption) => {
     setOrganization(selectedOption);
+    setProject(null);
+    setProjectOptions([]);
+
     sessionStorage.setItem(
       "selectedOrganization",
       JSON.stringify(selectedOption)
     );
+    sessionStorage.removeItem("selectedProject");
+
     if (setView) setView("table");
     setDashboardLocked(false);
   };
@@ -216,7 +227,7 @@ const HeaderSelect = ({
     sessionStorage.setItem("selectedProject", JSON.stringify(selectedOption));
 
     if (setView) setView("table");
-    setDashboardLocked(false);
+    setDashboardLocked(true);
 
     if (selectedOption?.value) {
       navigate(`/dashboard/${selectedOption.value}`);
@@ -238,7 +249,6 @@ const HeaderSelect = ({
 
   useEffect(() => {
     const handlePopState = (event) => {
-      // Check if the dashboard is currently locked
       if (dashboardLocked) {
         setDashboardLocked(false);
         if (setView) setView("table");
