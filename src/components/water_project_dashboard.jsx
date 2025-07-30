@@ -888,7 +888,6 @@ const WaterProjectDashboard = () => {
 
     mapRef3.current = map;
 
-    // ✅ Add WMS layer
     const wmsLayer = new TileLayer({
       source: new TileWMS({
         url: "https://geoserver.core-stack.org:8443/geoserver/waterrej/wms",
@@ -908,6 +907,7 @@ const WaterProjectDashboard = () => {
     });
 
     map.addLayer(wmsLayer);
+
     const drainageLayerName = `waterrej:WATER_REJ_drainage_line_ATCF_${projectName}_${projectId}`;
 
     const drainageLineLayer = new TileLayer({
@@ -967,7 +967,7 @@ const WaterProjectDashboard = () => {
       console.error("WFS boundary fetch error:", err);
     }
 
-    // ✅ Add waterbody outlines from geoData (black border, no fill)
+    // Waterbody outlines from geoData (black stroke, no fill)
     if (geoData?.features?.length) {
       const waterSource = new VectorSource({
         features: new GeoJSON().readFeatures(geoData, {
@@ -980,19 +980,36 @@ const WaterProjectDashboard = () => {
         source: waterSource,
         style: new Style({
           stroke: new Stroke({ color: "#000000", width: 2 }),
-          fill: null, // No fill
+          fill: null,
         }),
       });
 
       waterLayer.setZIndex(3);
       map.addLayer(waterLayer);
 
-      const extent = waterSource.getExtent();
-      view.fit(extent, {
-        padding: [50, 50, 50, 50],
-        duration: 1000,
-        maxZoom: 18,
-      });
+      // ✅ Zoom to selected waterbody if available
+      if (selectedWaterbody && selectedFeature) {
+        const feature = new GeoJSON().readFeature(selectedFeature, {
+          dataProjection: "EPSG:4326",
+          featureProjection: view.getProjection(),
+        });
+
+        const geometry = feature.getGeometry();
+        if (geometry) {
+          view.fit(geometry.getExtent(), {
+            padding: [50, 50, 50, 50],
+            duration: 1000,
+            maxZoom: 13,
+          });
+        }
+      } else {
+        const extent = waterSource.getExtent();
+        view.fit(extent, {
+          padding: [50, 50, 50, 50],
+          duration: 1000,
+          maxZoom: 18,
+        });
+      }
     }
   };
 
@@ -1014,6 +1031,7 @@ const WaterProjectDashboard = () => {
     if (view === "map" && selectedWaterbody && selectedFeature) {
       zoomToWaterbody(selectedWaterbody, selectedFeature, mapRef1);
       zoomToZoiWaterbody(selectedWaterbody, selectedFeature, mapRef2);
+      zoomToZoiWaterbody(selectedWaterbody, selectedFeature, mapRef3);
     }
   }, [selectedWaterbody, selectedFeature, view]);
 
@@ -2109,7 +2127,7 @@ const WaterProjectDashboard = () => {
             <Box
               sx={{
                 position: "relative",
-                width: "100%",
+                width: "58.5%",
                 mt: 6,
               }}
             >
