@@ -8,6 +8,7 @@ import {
   Legend,
   PointElement,
   LineElement,
+  LineController,
 } from "chart.js";
 import annotationPlugin from "chartjs-plugin-annotation";
 import { Bar } from "react-chartjs-2";
@@ -20,7 +21,8 @@ ChartJS.register(
   Legend,
   annotationPlugin,
   PointElement,
-  LineElement
+  LineElement,
+  LineController
 );
 
 const years = ["17-18", "18-19", "19-20", "20-21", "21-22", "22-23", "23-24"];
