@@ -11,34 +11,28 @@ const CroppingIntensityStackChart = ({ zoiFeatures, waterbody }) => {
     "2023-24",
   ];
 
-  const yearSuffix = [
-    "17-18",
-    "18-19",
-    "19-20",
-    "20-21",
-    "21-22",
-    "22-23",
-    "23-24",
-  ];
+  const yearSuffix = ["2017", "2018", "2019", "2020", "2021", "2022", "2023"];
 
-  // ✅ Match only one feature
   const matchedFeature = zoiFeatures.find(
     (feature) =>
       feature.get("waterbody_name")?.toLowerCase() ===
       waterbody?.waterbody?.toLowerCase()
   );
 
-  if (!matchedFeature) return null; // or show "No data found"
+  if (!matchedFeature) return null;
 
-  const zoi_area = matchedFeature.get("zoi_area") || 0;
-
-  const areaByType = yearSuffix.map((suffix) => ({
-    year: suffix,
-    triple: matchedFeature.get(`tripple_cropping_${suffix}`) || 0,
-    double: matchedFeature.get(`double_cropping_${suffix}`) || 0,
-    single_kharif: matchedFeature.get(`single_kharif_${suffix}`) || 0,
-    single_non_kharif: matchedFeature.get(`single_non_kharif_${suffix}`) || 0,
+  const areaByType = yearSuffix.map((year) => ({
+    year,
+    triple: (matchedFeature.get(`triply_cropped_area_${year}`) || 0) / 10000,
+    double: (matchedFeature.get(`doubly_cropped_area_${year}`) || 0) / 10000,
+    single_kharif:
+      (matchedFeature.get(`single_kharif_cropped_area_${year}`) || 0) / 10000,
+    single_non_kharif:
+      (matchedFeature.get(`single_non_kharif_cropped_area_${year}`) || 0) /
+      10000,
   }));
+
+  console.log(areaByType);
 
   const data = {
     labels: yearLabels,
@@ -64,7 +58,7 @@ const CroppingIntensityStackChart = ({ zoiFeatures, waterbody }) => {
       {
         label: "Single Kharif",
         data: areaByType.map((a) => a.single_kharif),
-        backgroundColor: "#74CCF4",
+        backgroundColor: "#BAD93E",
         stack: "stack1",
       },
     ],
