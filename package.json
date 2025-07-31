@@ -13,7 +13,10 @@
     "@vis.gl/react-google-maps": "^1.5.1",
     "aws-sdk": "^2.1569.0",
     "chart.js": "^4.4.9",
+    "chartjs-adapter-date-fns": "^3.0.0",
     "chartjs-plugin-annotation": "^3.1.0",
+    "chartjs-plugin-trendline": "^3.0.1",
+    "date-fns": "^4.1.0",
     "dotenv": "^16.4.7",
     "lucide-react": "^0.468.0",
     "ol": "^9.0.0",
@@ -29,6 +32,7 @@
     "react-select": "^5.10.1",
     "react-toastify": "^10.0.5",
     "recoil": "^0.7.7",
+    "regression": "^2.0.1",
     "web-vitals": "^2.1.4"
   },
   "scripts": {

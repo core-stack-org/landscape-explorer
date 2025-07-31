@@ -13,6 +13,7 @@ import YearSlider from "./yearSlider";
 import PrecipitationStackChart from "./PrecipitationStackChart.jsx";
 import CroppingIntensityStackChart from "./CroppingIntensityStackChart.jsx";
 import { yearAtomFamily } from "../store/locationStore";
+import NDVIChart from "./NDVIChart.jsx";
 import Overlay from "ol/Overlay";
 
 import {
@@ -189,6 +190,7 @@ const WaterProjectDashboard = () => {
   const [currentLayer, setCurrentLayer] = useState([]);
 
   const [selectedFeature, setSelectedFeature] = useState(null);
+  const [zoiArea, setZoiArea] = useState(null);
 
   const mapElement1 = useRef();
   const mapElement2 = useRef();
@@ -550,6 +552,15 @@ const WaterProjectDashboard = () => {
       if (!zoiFeatures?.length) return;
       if (!mapRef2.current) return;
 
+      if (selectedWaterbody) {
+        const match = zoiFeatures.find(
+          (f) => f.get("waterbody_name") === selectedWaterbody.waterbody
+        );
+        setZoiArea(match?.get("zoi_area") || null);
+      } else {
+        setZoiArea(null);
+      }
+
       const fullYear = lulcYear2
         .split("_")
         .map((part) => `20${part}`)
@@ -625,7 +636,7 @@ const WaterProjectDashboard = () => {
     };
 
     fetchUpdateLulcZOI().catch(console.error);
-  }, [lulcYear2, project, zoiFeatures, mapRef2.current]);
+  }, [lulcYear2, project, zoiFeatures, mapRef2.current, selectedWaterbody]);
 
   const handleViewChange = (event, newView) => {
     if (newView !== null) {
@@ -2023,6 +2034,43 @@ const WaterProjectDashboard = () => {
                   }}
                 />
 
+                {/* Top-left Label */}
+                {selectedWaterbody && (
+                  <Box
+                    sx={{
+                      position: "absolute",
+                      top: 16,
+                      left: 16,
+                      backgroundColor: "rgba(255, 255, 255, 0.9)",
+                      padding: "8px 12px",
+                      borderRadius: "6px",
+                      fontWeight: "bold",
+                      boxShadow: 1,
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "flex-start",
+                      gap: 1,
+                      zIndex: 1000,
+                      maxWidth: { xs: "90%", sm: "300px" },
+                    }}
+                  >
+                    <Box display="flex" alignItems="center" gap={1}>
+                      <LocationOnIcon fontSize="small" color="primary" />
+                      <Typography variant="body1" fontWeight={600}>
+                        {selectedWaterbody?.waterbody || "Waterbody Name"}
+                      </Typography>
+                    </Box>
+                    <Typography
+                      variant="body2"
+                      color="text.secondary"
+                      fontWeight={800}
+                    >
+                      ZOI Area:{" "}
+                      {zoiArea !== null ? `${zoiArea.toFixed(2)} ha` : "NA"}
+                    </Typography>
+                  </Box>
+                )}
+
                 {/* Year Slider (bottom right) */}
                 <Box
                   sx={{
@@ -2124,38 +2172,47 @@ const WaterProjectDashboard = () => {
             </Box>
 
             {/*MWS map section */}
+            {/* MWS Section */}
             <Box
               sx={{
-                position: "relative",
-                width: "58.5%",
+                display: "flex",
+                flexDirection: { xs: "column", md: "row" },
+                alignItems: "flex-start",
+                gap: 4,
+                width: "100%",
                 mt: 6,
               }}
             >
-              <div
-                ref={mapElement3}
-                style={{
-                  height: "800px",
-                  width: "100%",
-                  border: "1px solid #ccc",
-                  borderRadius: "5px",
-                }}
-              />
-
-              {/* Optional Zoom Controls */}
+              {/* Map 3 */}
               <Box
                 sx={{
-                  position: "absolute",
-                  top: 80,
-                  right: 16,
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: 1,
-                  zIndex: 1100,
+                  position: "relative",
+                  width: { xs: "100%", md: "65%" },
                 }}
               >
-                {["+", "–"].map((sign) => (
+                <div
+                  ref={mapElement3}
+                  style={{
+                    height: "850px",
+                    width: "100%",
+                    border: "1px solid #ccc",
+                    borderRadius: "5px",
+                  }}
+                />
+
+                {/* Zoom Controls */}
+                <Box
+                  sx={{
+                    position: "absolute",
+                    top: 80,
+                    right: 16,
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 1,
+                    zIndex: 1100,
+                  }}
+                >
                   <button
-                    key={sign}
                     style={{
                       backgroundColor: "#fff",
                       border: "1px solid #ccc",
@@ -2167,16 +2224,52 @@ const WaterProjectDashboard = () => {
                     }}
                     onClick={() => {
                       const view = mapRef3.current?.getView();
-                      const delta = sign === "+" ? 1 : -1;
                       view?.animate({
-                        zoom: view.getZoom() + delta,
+                        zoom: view.getZoom() + 1,
                         duration: 300,
                       });
                     }}
                   >
-                    {sign}
+                    +
                   </button>
-                ))}
+                  <button
+                    style={{
+                      backgroundColor: "#fff",
+                      border: "1px solid #ccc",
+                      borderRadius: "4px",
+                      width: "40px",
+                      height: "40px",
+                      fontSize: "20px",
+                      cursor: "pointer",
+                    }}
+                    onClick={() => {
+                      const view = mapRef3.current?.getView();
+                      view?.animate({
+                        zoom: view.getZoom() - 1,
+                        duration: 300,
+                      });
+                    }}
+                  >
+                    –
+                  </button>
+                </Box>
+              </Box>
+
+              {/* NDVI Chart beside Map 3 */}
+              <Box
+                sx={{
+                  width: { xs: "100%", md: "45%" },
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                }}
+              >
+                <Box sx={{ width: "100%", maxWidth: "700px", height: "400px" }}>
+                  <NDVIChart
+                    zoiFeatures={zoiFeatures}
+                    waterbody={selectedWaterbody}
+                  />
+                </Box>
               </Box>
             </Box>
           </Box>
