@@ -35,6 +35,7 @@ const NDVIChart = ({ zoiFeatures, waterbody }) => {
   );
 
   if (!matchedFeature) return null;
+  console.log(matchedFeature);
 
   const ndviDataPoints = [];
 
@@ -56,6 +57,7 @@ const NDVIChart = ({ zoiFeatures, waterbody }) => {
   if (!ndviDataPoints.length) return null;
 
   ndviDataPoints.sort((a, b) => new Date(a.date) - new Date(b.date));
+  console.log("NDVIIIIIIIIIIIIIIIII", ndviDataPoints);
 
   // Normalize x-values (days) to 0-1 range
   const startDate = new Date(ndviDataPoints[0].date);

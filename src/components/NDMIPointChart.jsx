@@ -194,7 +194,7 @@ const NDMIPointChart = ({ zoiFeatures, waterbody }) => {
           text: "NDMI Value",
         },
         min: 0,
-        max: 1,
+        max: 0.6,
       },
     },
   };
