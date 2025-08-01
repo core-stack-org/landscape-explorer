@@ -375,7 +375,7 @@
                 "layer_store" : ["change_detection","change_detection"],
                 "layer_name" : ["CropIntensity","Degradation"],
                 "vectorStyle" : [{}],
-                "rasterStyle" : ["cropping_intensity","KYL_Crop_Degradation"],
+                "rasterStyle" : ["cropping_intensity_kyl","KYL_Crop_Degradation"],
                 "styleIdx" : 0
             }
         ], 
