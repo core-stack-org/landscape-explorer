@@ -14,7 +14,7 @@
                 "layer_store" : ["terrain"],
                 "layer_name" : ["terrain_raster"],
                 "vectorStyle" : [{}],
-                "rasterStyle" : "Terrain_Style_11_Classes",
+                "rasterStyle" : ["Terrain_Style_11_Classes"],
                 "styleIdx" : 0
             }
         ],
@@ -392,7 +392,7 @@
                 "layer_store" : ["change_detection"],
                 "layer_name" : ["Deforestation"],
                 "vectorStyle" : [{}],
-                "rasterStyle" : "deforestation",
+                "rasterStyle" : ["deforestation"],
                 "styleIdx" : 0
             },   {
                 "name": "increase_in_tree_cover",
@@ -406,10 +406,10 @@
                 "layer_store" : ["change_detection"],
                 "layer_name" : ["Afforestation"],
                 "vectorStyle" : [{}],
-                "rasterStyle" : "afforestation",
+                "rasterStyle" : ["afforestation"],
                 "styleIdx" : 0
             },
-              {
+            {
                 "name": "area_wide_scale_restoration",
                 "label" : "Area with potential for wide-scale restoration",
                 "type" : 2,
@@ -421,7 +421,7 @@
                 "layer_store" : [],
                 "layer_name" : [],
                 "vectorStyle" : [{}],
-                "rasterStyle" : "",
+                "rasterStyle" : [""],
                 "styleIdx" : 0
             },   {
                 "name": "area_protection",
@@ -435,7 +435,7 @@
                 "layer_store" : [],
                 "layer_name" : [],
                 "vectorStyle" : [{}],
-                "rasterStyle" : "",
+                "rasterStyle" : [""],
                 "styleIdx" : 0
             }
            

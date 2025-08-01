@@ -1,7 +1,14 @@
 // src/components/kyl_mapContainer.jsx
-import React, { useState } from "react";
+import { useState } from "react";
 import KYLLocationSearchBar from "./kyl_location";
 import YearSlider from "./yearSlider";
+
+//? Icons Imports
+import settlementIcon from "../assets/settlement_icon.svg";
+import wellIcon from "../assets/well_proposed.svg";
+import waterbodyIcon from "../assets/waterbodies_proposed.svg";
+import RechargeIcon from "../assets/recharge_icon.svg"
+import IrrigationIcon from "../assets/irrigation_icon.svg"
 
 // Layer Controls component
 const LayerControls = ({
@@ -164,7 +171,7 @@ const MapZoomControls = ({ mapRef }) => {
 };
 
 // Updated MapLegend component
-const MapLegend = ({ showMWS, showVillages, currentLayer }) => {
+const MapLegend = ({ showMWS, showVillages, currentLayer, mappedAssets, mappedDemands }) => {
   // Add state for collapsed status
   const [isCollapsed, setIsCollapsed] = useState(false);
 
@@ -1007,6 +1014,65 @@ const MapLegend = ({ showMWS, showVillages, currentLayer }) => {
                   ))}
                 </div>
               )}
+
+              {/* Mapped Assets */}
+              {mappedAssets && (
+                <div className="space-y-2">
+                <h4 className="text-xs font-medium text-gray-600">Mapped Assets</h4>
+                <div className="flex items-center gap-2">
+                  <img
+                    src={settlementIcon}
+                    alt="Settlement"
+                    className="w-6 h-6"
+                    draggable={false}
+                  />
+                  <span className="text-sm text-gray-600">Settlement</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <img
+                    src={wellIcon}
+                    alt="Settlement"
+                    className="w-6 h-6"
+                    draggable={false}
+                  />
+                  <span className="text-sm text-gray-600">Well</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <img
+                    src={waterbodyIcon}
+                    alt="Settlement"
+                    className="w-6 h-6"
+                    draggable={false}
+                  />
+                  <span className="text-sm text-gray-600">Water Structure</span>
+                </div>
+              </div>
+              )}
+
+              {/* Proposed Works */}
+              {mappedDemands && (
+                <div className="space-y-2">
+                <h4 className="text-xs font-medium text-gray-600">Proposed Works</h4>
+                <div className="flex items-center gap-2">
+                  <img
+                    src={RechargeIcon}
+                    alt="Settlement"
+                    className="w-6 h-6"
+                    draggable={false}
+                  />
+                  <span className="text-sm text-gray-600">Recharge Structure</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <img
+                    src={IrrigationIcon}
+                    alt="Settlement"
+                    className="w-6 h-6"
+                    draggable={false}
+                  />
+                  <span className="text-sm text-gray-600">Irrigation Structure</span>
+                </div>
+              </div>
+              )}
             </div>
           </div>
         )}
@@ -1028,7 +1094,9 @@ const KYLMapContainer = ({
   mwsLayerRef,
   boundaryLayerRef,
   mapRef,
-  currentLayer, // Add this prop
+  currentLayer,
+  mappedAssets,
+  mappedDemands
 }) => {
   const areMWSLayersAvailable = mwsLayerRef?.current !== null;
   const areVillageLayersAvailable = boundaryLayerRef?.current !== null;
@@ -1056,6 +1124,8 @@ const KYLMapContainer = ({
         showMWS={showMWS && areMWSLayersAvailable}
         showVillages={showVillages && areVillageLayersAvailable}
         currentLayer={currentLayer}
+        mappedAssets={mappedAssets}
+        mappedDemands={mappedDemands}
       />
 
       {/* Search Bar */}
