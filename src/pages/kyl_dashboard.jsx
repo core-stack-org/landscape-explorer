@@ -620,7 +620,7 @@ const KYLDashboardPage = () => {
               .split(" ")
               .join("_")}_${filter.layer_name[i]}`,
             true,
-            filter.rasterStyle
+            filter.rasterStyle[i]
           );
           layerRef.push(tempLayer);
           mapRef.current.addLayer(tempLayer);
@@ -1569,6 +1569,8 @@ const KYLDashboardPage = () => {
           boundaryLayerRef={boundaryLayerRef}
           mapRef={mapRef}
           currentLayer={currentLayer}
+          mappedAssets={mappedAssets}
+          mappedDemands={mappedDemands}
         />
 
         {/* Right Sidebar */}
