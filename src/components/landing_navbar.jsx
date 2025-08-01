@@ -1,5 +1,5 @@
 import React from "react";
-import newLogo from "../assets/newLogo.png";
+import newLogo from "../assets/newlogoWhite.png";
 import { useLocation } from "react-router-dom";
 
 const LandingNavbar = () => {
@@ -7,8 +7,8 @@ const LandingNavbar = () => {
   const isDownloadPage = location.pathname === "/download_layers";
 
   return (
-    <nav className="bg-white shadow-2xl">
-      <div className="w-full px-4 sm:px-6 md:px-10 bg-[#FCF5EA]">
+    <nav className="bg-white shadow-2xl sticky top-0 z-50">
+      <div className="w-full px-4 sm:px-6 md:px-10 ">
         <div className="flex flex-col sm:flex-row items-center justify-between h-auto sm:h-20 py-4 sm:py-0 gap-4 sm:gap-0">
           <a
             href="https://core-stack.org"
