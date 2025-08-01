@@ -299,7 +299,7 @@ const MapLegend = ({ showMWS, showVillages, currentLayer }) => {
     { color: "#eaa4f0", label: "Farmland - Shrub" },
     { color: "#f7fcf5", label: "Double - Single" },
     { color: "#ff4500", label: "Triple - Single" },
-    { color: "#ff0000", label: "Triple - Double" },
+    { color: "#ffc300", label: "Triple - Double" },
   ];
 
   const CropDeforestationItems = [
