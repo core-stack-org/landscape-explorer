@@ -1648,22 +1648,22 @@ const WaterProjectDashboard = () => {
                       <TableCell>{row.siltRemoved}</TableCell>
                       <TableCell>2022-23</TableCell>
                       <TableCell>
-                        {row.avgWaterAvailabilityKharif ?? "NA"}→
-                        <span style={{ color: row.ImpactKharifColor }}>
+                        {row.avgWaterAvailabilityKharif ?? "NA"}
+                        {/* <span style={{ color: row.ImpactKharifColor }}>
                           {row.ImpactKharif}
-                        </span>
+                        </span> */}
                       </TableCell>
                       <TableCell>
-                        {row.avgWaterAvailabilityRabi ?? "NA"}→
-                        <span style={{ color: row.ImpactRabiColor }}>
+                        {row.avgWaterAvailabilityRabi ?? "NA"}
+                        {/* <span style={{ color: row.ImpactRabiColor }}>
                           {row.ImpactRabi}
-                        </span>
+                        </span> */}
                       </TableCell>
                       <TableCell>
-                        {row.avgWaterAvailabilityZaid ?? "NA"}→
-                        <span style={{ color: row.ImpactZaidColor }}>
+                        {row.avgWaterAvailabilityZaid ?? "NA"}
+                        {/* <span style={{ color: row.ImpactZaidColor }}>
                           {row.ImpactZaid}
-                        </span>{" "}
+                        </span>{" "} */}
                       </TableCell>
                     </TableRow>
                   ))}

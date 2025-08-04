@@ -340,6 +340,7 @@ import {
   Tooltip,
   Legend,
   TimeScale,
+  ScatterController,
 } from "chart.js";
 import "chartjs-adapter-date-fns";
 import { create, all } from "mathjs";
@@ -354,7 +355,8 @@ ChartJS.register(
   Title,
   Tooltip,
   Legend,
-  TimeScale
+  TimeScale,
+  ScatterController
 );
 
 // Convert date string to days since start
