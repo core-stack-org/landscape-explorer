@@ -361,15 +361,16 @@ const WaterProjectDashboard = () => {
 
       const zaidBefore = avgSeason(preYears, "krz_");
       const zaidAfter = avgSeason(postYears, "krz_");
+      const round2 = (val) => Math.round(val * 100) / 100;
 
-      const ImpactKharif = Math.max(kharifBefore, kharifAfter);
-      const ImpactKharifColor = kharifAfter > kharifBefore ? "green" : "red";
+      const ImpactKharif = round2(kharifAfter - kharifBefore);
+      const ImpactKharifColor = ImpactKharif >= 0 ? "green" : "red";
 
-      const ImpactRabi = Math.max(rabiBefore, rabiAfter);
-      const ImpactRabiColor = rabiAfter > rabiBefore ? "green" : "red";
+      const ImpactRabi = round2(rabiAfter - rabiBefore);
+      const ImpactRabiColor = ImpactRabi >= 0 ? "green" : "red";
 
-      const ImpactZaid = Math.max(zaidBefore, zaidAfter);
-      const ImpactZaidColor = zaidAfter > zaidBefore ? "green" : "red";
+      const ImpactZaid = round2(zaidAfter - zaidBefore);
+      const ImpactZaidColor = ImpactZaid >= 0 ? "green" : "red";
 
       console.log(`📍 Waterbody: ${props.waterbody_name || "NA"}`);
       console.log(`  Kharif Avg Before ${interventionYear}: ${kharifBefore}`);
@@ -1648,22 +1649,28 @@ const WaterProjectDashboard = () => {
                       <TableCell>{row.siltRemoved}</TableCell>
                       <TableCell>2022-23</TableCell>
                       <TableCell>
-                        {row.avgWaterAvailabilityKharif ?? "NA"}
-                        {/* <span style={{ color: row.ImpactKharifColor }}>
-                          {row.ImpactKharif}
-                        </span> */}
+                        {row.avgWaterAvailabilityKharif ?? "NA"}{" "}
+                        {row.ImpactKharif !== undefined && (
+                          <span style={{ color: row.ImpactKharifColor }}>
+                            ({row.ImpactKharif})
+                          </span>
+                        )}
                       </TableCell>
                       <TableCell>
-                        {row.avgWaterAvailabilityRabi ?? "NA"}
-                        {/* <span style={{ color: row.ImpactRabiColor }}>
-                          {row.ImpactRabi}
-                        </span> */}
+                        {row.avgWaterAvailabilityRabi ?? "NA"}{" "}
+                        {row.ImpactRabi !== undefined && (
+                          <span style={{ color: row.ImpactRabiColor }}>
+                            ({row.ImpactRabi})
+                          </span>
+                        )}
                       </TableCell>
                       <TableCell>
-                        {row.avgWaterAvailabilityZaid ?? "NA"}
-                        {/* <span style={{ color: row.ImpactZaidColor }}>
-                          {row.ImpactZaid}
-                        </span>{" "} */}
+                        {row.avgWaterAvailabilityZaid ?? "NA"}{" "}
+                        {row.ImpactZaid !== undefined && (
+                          <span style={{ color: row.ImpactZaidColor }}>
+                            ({row.ImpactZaid})
+                          </span>
+                        )}
                       </TableCell>
                     </TableRow>
                   ))}
@@ -2276,7 +2283,7 @@ const WaterProjectDashboard = () => {
                 />
               </Box>
 
-              <Box
+              {/* <Box
                 sx={{
                   width: "100%",
                   maxWidth: "800px",
@@ -2284,11 +2291,11 @@ const WaterProjectDashboard = () => {
                   marginTop: "2%",
                 }}
               >
-                {/* <DroughtChart
+                <DroughtChart
                   zoiFeatures={zoiFeatures}
                   waterbody={selectedWaterbody}
-                /> */}
-              </Box>
+                />
+              </Box> */}
             </Box>
 
             {/*MWS map section */}
