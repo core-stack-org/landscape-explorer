@@ -14,6 +14,7 @@ import PrecipitationStackChart from "./PrecipitationStackChart.jsx";
 import CroppingIntensityStackChart from "./CroppingIntensityStackChart.jsx";
 import { yearAtomFamily } from "../store/locationStore";
 import NDVIChart from "./NDVIChart.jsx";
+// import DroughtChart from "./droughtchart.jsx";
 import Overlay from "ol/Overlay";
 
 import {
@@ -178,7 +179,6 @@ const useWaterRejData = (projectName, projectId) => {
 };
 
 const WaterProjectDashboard = () => {
-  // const { projectId } = useParams();
   const [view, setView] = useState("table");
   const [anchorEl, setAnchorEl] = useState(null);
   const [filterType, setFilterType] = useState("");
@@ -186,7 +186,6 @@ const WaterProjectDashboard = () => {
   const [selectedWaterbody, setSelectedWaterbody] = useState(null);
   const [mapClickedWaterbody, setMapClickedWaterbody] = useState(null);
   const [waterBodyLayer, setWaterBodyLayer] = useState(null);
-  // const lulcYear = useRecoilValue(yearAtom);
   const [currentLayer, setCurrentLayer] = useState([]);
 
   const [selectedFeature, setSelectedFeature] = useState(null);
@@ -335,6 +334,61 @@ const WaterProjectDashboard = () => {
         );
       }
 
+      const interventionYear = "22-23";
+
+      const preYears = seasonYears.slice(
+        0,
+        seasonYears.indexOf(interventionYear)
+      );
+      const postYears = seasonYears.slice(
+        seasonYears.indexOf(interventionYear)
+      );
+
+      const avgSeason = (years, prefix) => {
+        const values = years
+          .map((year) => Number(props[`${prefix}${year}`]) || 0)
+          .filter((v) => !isNaN(v));
+        return values.length
+          ? (values.reduce((a, b) => a + b, 0) / values.length).toFixed(2)
+          : "0.00";
+      };
+
+      const kharifBefore = avgSeason(preYears, "k_");
+      const kharifAfter = avgSeason(postYears, "k_");
+
+      const rabiBefore = avgSeason(preYears, "kr_");
+      const rabiAfter = avgSeason(postYears, "kr_");
+
+      const zaidBefore = avgSeason(preYears, "krz_");
+      const zaidAfter = avgSeason(postYears, "krz_");
+
+      const ImpactKharif = Math.max(kharifBefore, kharifAfter);
+      const ImpactKharifColor = kharifAfter > kharifBefore ? "green" : "red";
+
+      const ImpactRabi = Math.max(rabiBefore, rabiAfter);
+      const ImpactRabiColor = rabiAfter > rabiBefore ? "green" : "red";
+
+      const ImpactZaid = Math.max(zaidBefore, zaidAfter);
+      const ImpactZaidColor = zaidAfter > zaidBefore ? "green" : "red";
+
+      console.log(`📍 Waterbody: ${props.waterbody_name || "NA"}`);
+      console.log(`  Kharif Avg Before ${interventionYear}: ${kharifBefore}`);
+      console.log(`  Kharif Avg After ${interventionYear}: ${kharifAfter}`);
+      console.log(`  Rabi Avg Before ${interventionYear}: ${rabiBefore}`);
+      console.log(`  Rabi Avg After ${interventionYear}: ${rabiAfter}`);
+      console.log(`  Zaid Avg Before ${interventionYear}: ${zaidBefore}`);
+      console.log(`  Zaid Avg After ${interventionYear}: ${zaidAfter}`);
+      console.log(`📍 Waterbody: ${props.waterbody_name || "NA"}`);
+      console.log(
+        `  Kharif Avg (Pre): ${kharifBefore}, (Post): ${kharifAfter}, ✅ Used: ${ImpactKharif}`
+      );
+      console.log(
+        `  Rabi Avg (Pre): ${rabiBefore}, (Post): ${rabiAfter}, ✅ Used: ${ImpactRabi}`
+      );
+      console.log(
+        `  Zaid Avg (Pre): ${zaidBefore}, (Post): ${zaidAfter}, ✅ Used: ${ImpactZaid}`
+      );
+
       const siltRemoved = Number(props.slit_excavated) || 0;
       totalSiltRemoved += siltRemoved;
 
@@ -347,8 +401,14 @@ const WaterProjectDashboard = () => {
         waterbody: props.waterbody_name || "NA",
         siltRemoved,
         avgWaterAvailabilityKharif: meanKharif,
+        ImpactKharif,
+        ImpactKharifColor,
         avgWaterAvailabilityRabi: meanRabi,
+        ImpactRabi,
+        ImpactRabiColor,
         avgWaterAvailabilityZaid: meanZaid,
+        ImpactZaid,
+        ImpactZaidColor,
         areaOred: props.area_ored || 0,
         // avgWaterAvailabilityKharif: avgKharif,
         // avgWaterAvailabilityRabi: avgRabi,
@@ -1486,6 +1546,19 @@ const WaterProjectDashboard = () => {
                       </div>
                     </TableCell>
 
+                    {/* Intervention year Column */}
+                    <TableCell sx={{ cursor: "pointer", userSelect: "none" }}>
+                      <div style={{ display: "flex", alignItems: "center" }}>
+                        Intervention Year
+                        <span
+                          style={{
+                            marginLeft: 4,
+                            fontWeight: "normal",
+                          }}
+                        ></span>
+                      </div>
+                    </TableCell>
+
                     {/* Water Availability Column */}
 
                     <TableCell
@@ -1573,14 +1646,24 @@ const WaterProjectDashboard = () => {
                       <TableCell>{row.village}</TableCell>{" "}
                       <TableCell>{row.waterbody}</TableCell>
                       <TableCell>{row.siltRemoved}</TableCell>
+                      <TableCell>2022-23</TableCell>
                       <TableCell>
-                        {row.avgWaterAvailabilityKharif ?? "NA"}
+                        {row.avgWaterAvailabilityKharif ?? "NA"}→
+                        <span style={{ color: row.ImpactKharifColor }}>
+                          {row.ImpactKharif}
+                        </span>
                       </TableCell>
                       <TableCell>
-                        {row.avgWaterAvailabilityRabi ?? "NA"}
+                        {row.avgWaterAvailabilityRabi ?? "NA"}→
+                        <span style={{ color: row.ImpactRabiColor }}>
+                          {row.ImpactRabi}
+                        </span>
                       </TableCell>
                       <TableCell>
-                        {row.avgWaterAvailabilityZaid ?? "NA"}
+                        {row.avgWaterAvailabilityZaid ?? "NA"}→
+                        <span style={{ color: row.ImpactZaidColor }}>
+                          {row.ImpactZaid}
+                        </span>{" "}
                       </TableCell>
                     </TableRow>
                   ))}
@@ -2170,9 +2253,45 @@ const WaterProjectDashboard = () => {
                 </Box>
               </Box>
             </Box>
+            <Box
+              sx={{
+                width: { xs: "100%", md: "45%" },
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+              }}
+            >
+              <Box
+                sx={{
+                  width: "100%",
+                  maxWidth: "800px",
+                  height: "350px",
+                  marginTop: "2%",
+                }}
+              >
+                <NDVIChart
+                  zoiFeatures={zoiFeatures}
+                  waterbody={selectedWaterbody}
+                  years={["2017", "2018", "2019", "2020"]}
+                />
+              </Box>
+
+              <Box
+                sx={{
+                  width: "100%",
+                  maxWidth: "800px",
+                  height: "350px",
+                  marginTop: "2%",
+                }}
+              >
+                {/* <DroughtChart
+                  zoiFeatures={zoiFeatures}
+                  waterbody={selectedWaterbody}
+                /> */}
+              </Box>
+            </Box>
 
             {/*MWS map section */}
-            {/* MWS Section */}
             <Box
               sx={{
                 display: "flex",
@@ -2180,7 +2299,6 @@ const WaterProjectDashboard = () => {
                 alignItems: "flex-start",
                 gap: 4,
                 width: "100%",
-                mt: 6,
               }}
             >
               {/* Map 3 */}
@@ -2252,23 +2370,6 @@ const WaterProjectDashboard = () => {
                   >
                     –
                   </button>
-                </Box>
-              </Box>
-
-              {/* NDVI Chart beside Map 3 */}
-              <Box
-                sx={{
-                  width: { xs: "100%", md: "45%" },
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "center",
-                }}
-              >
-                <Box sx={{ width: "100%", maxWidth: "700px", height: "400px" }}>
-                  <NDVIChart
-                    zoiFeatures={zoiFeatures}
-                    waterbody={selectedWaterbody}
-                  />
                 </Box>
               </Box>
             </Box>
