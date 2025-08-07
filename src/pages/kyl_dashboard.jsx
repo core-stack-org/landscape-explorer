@@ -759,6 +759,7 @@ const KYLDashboardPage = () => {
         }
       });
       mapRef.current.addLayer(mwsLayerRef.current);
+      mapRef.current.addLayer(boundaryLayerRef.current);
       let tempObj = {
         name: filter.name,
         layerRef: layerRef,
