@@ -2262,40 +2262,31 @@ const WaterProjectDashboard = () => {
             </Box>
             <Box
               sx={{
-                width: { xs: "100%", md: "45%" },
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
+                width: "100%", // full viewport width
+                marginTop: "2%",
               }}
             >
               <Box
                 sx={{
                   width: "100%",
-                  maxWidth: "800px",
-                  height: "350px",
-                  marginTop: "2%",
+                  height: { xs: "300px", sm: "400px", md: "500px" }, // responsive height
                 }}
               >
                 <NDVIChart
                   zoiFeatures={zoiFeatures}
                   waterbody={selectedWaterbody}
-                  years={["2017", "2018", "2019", "2020"]}
+                  years={[
+                    "2017",
+                    "2018",
+                    "2019",
+                    "2020",
+                    "2021",
+                    "2022",
+                    "2023",
+                    "2024",
+                  ]}
                 />
               </Box>
-
-              {/* <Box
-                sx={{
-                  width: "100%",
-                  maxWidth: "800px",
-                  height: "350px",
-                  marginTop: "2%",
-                }}
-              >
-                <DroughtChart
-                  zoiFeatures={zoiFeatures}
-                  waterbody={selectedWaterbody}
-                />
-              </Box> */}
             </Box>
 
             {/*MWS map section */}
