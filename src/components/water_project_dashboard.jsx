@@ -2262,14 +2262,15 @@ const WaterProjectDashboard = () => {
             </Box>
             <Box
               sx={{
-                width: "100%", // full viewport width
+                width: "100%",
+                maxWidth: "100%",
                 marginTop: "2%",
               }}
             >
               <Box
                 sx={{
                   width: "100%",
-                  height: { xs: "300px", sm: "400px", md: "500px" }, // responsive height
+                  height: { xs: "300px", sm: "400px", md: "500px" },
                 }}
               >
                 <NDVIChart
