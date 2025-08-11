@@ -178,46 +178,6 @@ const KYLLocationSearchBar = ({ statesData, onLocationSelect, setSearchLatLong }
     const matchedState = statesData.find(
       (s) => s.label.trim().toLowerCase() === stateName.toLowerCase()
     );
-
-    if (!matchedState) {
-      toast.custom(
-        (t) => (
-          <div className={`${
-            t.visible ? 'animate-enter' : 'animate-leave'
-          } max-w-md w-full bg-white shadow-lg rounded-lg pointer-events-auto flex`}>
-            <div className="flex-1 w-0 p-4">
-              <div className="flex items-start">
-                <div className="ml-3 flex-1">
-                  <p className="text-sm font-medium text-gray-900">
-                    Location Request
-                  </p>
-                  <p className="mt-1 text-sm text-gray-500">
-                  We have not generated maps for this location as yet. Would you like to submit a request?
-                  </p>
-                </div>
-              </div>
-            </div>
-            <div className="flex border-l border-gray-200">
-              <button
-                onClick={() => {
-                  window.open('https://forms.gle/qBkYmmU7AhyKnc4N9', '_blank');
-                  toast.dismiss(t.id);
-                }}
-                className="w-full border border-transparent rounded-none rounded-r-lg p-4 flex items-center justify-center text-sm font-medium text-blue-600 hover:text-blue-500 focus:outline-none"
-              >
-                Submit Request
-              </button>
-            </div>
-          </div>
-        ),
-        {
-          duration: 5000,
-          position: 'top-right',
-        }
-      );
-      return;
-    }
-
     // === Step 2: Get Districts and Blocks from the Matched State ===
     const districtNames = matchedState.district.map((d) =>
       d.label.trim().toLowerCase()
@@ -282,6 +242,7 @@ const KYLLocationSearchBar = ({ statesData, onLocationSelect, setSearchLatLong }
         }
       }
     }
+    
     // === Step 5: Final Assignment ===
     setState(matchedState);
     setDistrict(matchedDistrict);
