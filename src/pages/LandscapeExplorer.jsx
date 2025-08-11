@@ -1,6 +1,3 @@
-import React from "react";
-import { Link } from "react-router-dom";
-import logo from "../assets/logo.png";
 import { useState, useEffect, useRef, useCallback } from "react";
 import Map from "../components/landscape-explorer/map/Map.jsx";
 import LeftSidebar from "../components/landscape-explorer/sidebar/LeftSidebar.jsx";
@@ -16,36 +13,12 @@ import {
 } from "../store/locationStore.jsx";
 import getStates from "../actions/getStates.js";
 import * as downloadHelper from "../components/landscape-explorer/utils/downloadHelper";
+import {
+  trackPageView,
+  trackEvent,
+  initializeAnalytics,
+} from "../services/analytics";
 import LandingNavbar from "../components/landing_navbar.jsx";
-
-// Custom navbar specifically for Landscape Explorer page
-// const LandscapeNavbar = () => {
-//   return (
-//     <nav className="bg-white shadow-sm">
-//       <div className="max-w-7xl mx-auto px-4">
-//         <div className="flex items-center justify-between h-16">
-//           {/* left-hand logo / title */}
-//           <Link to="/" className="flex items-center gap-2 cursor-pointer">
-//             <img src={logo} alt="KYL Logo" className="h-8 w-8" />
-//             <span className="text-xl font-semibold text-gray-800">
-//               Download Layers
-//             </span>
-//           </Link>
-
-//           {/* right-hand QGIS docs button */}
-//           <a
-//             href="https://docs.google.com/document/d/1jet4EEBbbKgpNrPnuNJJDRuAJUiR2pIMFQp9JTlygAQ/edit?usp=sharing"
-//             target="_blank"
-//             rel="noopener noreferrer"
-//             className=" py-2 px-2 text-indigo-600 bg-indigo-50 rounded-lg text-sm font-medium text-left"
-//           >
-//             QGIS&nbsp;Documentation
-//           </a>
-//         </div>
-//       </div>
-//     </nav>
-//   );
-// };
 
 const LandscapeExplorer = () => {
   const [showLeftSidebar, setShowLeftSidebar] = useState(false);
@@ -123,12 +96,18 @@ const LandscapeExplorer = () => {
     // Handle the setState case specially if it affects parent component state
     if (setter === setState) {
       // Reset all dependent state values
+      if (value) {
+        trackEvent("Location", "select_state", value.label);
+      }
       setDistrict(null);
       setBlock(null);
       resetAllStates();
       setState(value);
     } else if (setter === setDistrict) {
       // Reset block and filters when district changes
+      if (value) {
+        trackEvent("Location", "select_district", value.label);
+      }
       setBlock(null);
       resetAllStates();
       setDistrict(value);
@@ -137,7 +116,7 @@ const LandscapeExplorer = () => {
       setBlock(value);
       // When block is selected, enable fetch button and prepare layers automatically
       setCanFetchLayers(true);
-
+      trackEvent("Location", "select_tehsil", value.label);
       // Auto-prepare layers instead of requiring Fetch Layers button
       setTimeout(() => {
         if (mapRef.current && mapRef.current.prepareLayers) {
@@ -357,6 +336,8 @@ const LandscapeExplorer = () => {
 
   // Fetch states data on component mount
   useEffect(() => {
+    initializeAnalytics();
+    trackPageView("/download_layers");
     if (statesData === null) {
       getStates().then((data) => setStatesData(data));
     }

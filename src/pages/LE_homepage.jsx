@@ -41,6 +41,7 @@ export default function KYLHomePage() {
     };
 
     fetchStates();
+    setBlock(null);
   }, []);
 
   const handleItemSelect = (setter, value) => {
@@ -58,7 +59,7 @@ export default function KYLHomePage() {
       setter(value);
       setBlock(null);
     } else if (setter === setBlock && value) {
-      trackEvent("Location", "select_block", value.label);
+      trackEvent("Location", "select_tehsil", value.label);
       setter(value);
     }
   };

@@ -39,6 +39,11 @@ import RechargeIcon from "../assets/recharge_icon.svg";
 import IrrigationIcon from "../assets/irrigation_icon.svg";
 
 import { toast, Toaster } from "react-hot-toast";
+import {
+  trackPageView,
+  trackEvent,
+  initializeAnalytics,
+} from "../services/analytics";
 
 const KYLDashboardPage = () => {
   const mapElement = useRef(null);
@@ -69,8 +74,7 @@ const KYLDashboardPage = () => {
   const [state, setState] = useRecoilState(stateAtom);
   const [district, setDistrict] = useRecoilState(districtAtom);
   const [block, setBlock] = useRecoilState(blockAtom);
-  const [filterSelections, setFilterSelections] =
-    useRecoilState(filterSelectionsAtom);
+  const [filterSelections, setFilterSelections] = useRecoilState(filterSelectionsAtom);
   const lulcYear = useRecoilValue(yearAtom);
 
   const [indicatorType, setIndicatorType] = useState(null);
@@ -80,6 +84,11 @@ const KYLDashboardPage = () => {
 
   const [toastId, setToastId] = useState(null);
   const [selectedMWSProfile, setSelectedMWSProfile] = useState(null);
+  const [searchLatLong, setSearchLatLong] = useState(null);
+
+  const addLayerSafe = (layer) => layer && mapRef.current && mapRef.current.addLayer(layer);
+  const removeLayerSafe = (layer) => layer && mapRef.current && mapRef.current.removeLayer(layer);
+
 
   const handleResetMWS = () => {
     if (!selectedMWSProfile) return; // If no MWS is selected, do nothing
@@ -402,8 +411,8 @@ const KYLDashboardPage = () => {
       }
 
       boundaryLayer.setOpacity(0);
-      mapRef.current.addLayer(mwsLayer);
-      mapRef.current.addLayer(boundaryLayer);
+      addLayerSafe(mwsLayer);
+      addLayerSafe(boundaryLayer);
       boundaryLayerRef.current = boundaryLayer;
       mwsLayerRef.current = mwsLayer;
 
@@ -459,7 +468,6 @@ const KYLDashboardPage = () => {
                 boundaryLayer.setOpacity(opacity);
                 if (opacity >= 1) {
                   clearInterval(interval);
-                  setIsLoading(false);
                 }
               }, 50);
             },
@@ -514,10 +522,14 @@ const KYLDashboardPage = () => {
 
       const result = await response.json();
       setDataJson(result);
+
+      setIsLoading(false);
     } catch (e) {
       console.log(e);
+      setIsLoading(false);
     }
   };
+
 
   const fetchVillageJson = async () => {
     try {
@@ -604,8 +616,8 @@ const KYLDashboardPage = () => {
       setFiltersEnabled(true);
     } else if (currentLayer.length === 0) {
       let layerRef = [];
-      mapRef.current.removeLayer(mwsLayerRef.current);
-      mapRef.current.removeLayer(boundaryLayerRef.current);
+      removeLayerSafe(mwsLayerRef.current);
+      removeLayerSafe(boundaryLayerRef.current);
       for (let i = 0; i < len; ++i) {
         let tempLayer;
         if (filter.layer_store[i] === "terrain") {
@@ -622,8 +634,10 @@ const KYLDashboardPage = () => {
             true,
             filter.rasterStyle[i]
           );
-          layerRef.push(tempLayer);
-          mapRef.current.addLayer(tempLayer);
+          if (tempLayer) {
+            layerRef.push(tempLayer);
+            addLayerSafe(tempLayer);
+          }
         } else if (
           filter.layer_store[i] === "LULC" &&
           filter.rasterStyle === "lulc_water_pixels"
@@ -638,8 +652,10 @@ const KYLDashboardPage = () => {
             true,
             filter.rasterStyle
           );
-          layerRef.push(tempLayer);
-          mapRef.current.addLayer(tempLayer);
+          if (tempLayer) {
+            layerRef.push(tempLayer);
+            addLayerSafe(tempLayer);
+          }
         } else if (filter.layer_store[i] === "change_detection") {
           tempLayer = await getImageLayer(
             `${filter.layer_store[i]}`,
@@ -654,8 +670,10 @@ const KYLDashboardPage = () => {
             true,
             filter.rasterStyle[i]
           );
-          layerRef.push(tempLayer);
-          mapRef.current.addLayer(tempLayer);
+          if (tempLayer) {
+            layerRef.push(tempLayer);
+            addLayerSafe(tempLayer);
+          }
         } else if (filter.layer_store[i] === "LULC") {
           tempLayer = await getImageLayer(
             `${filter.layer_store[i]}_${filter.layer_name[i]}`,
@@ -666,8 +684,10 @@ const KYLDashboardPage = () => {
             true,
             filter.rasterStyle
           );
-          layerRef.push(tempLayer);
-          mapRef.current.addLayer(tempLayer);
+          if (tempLayer) {
+            layerRef.push(tempLayer);
+            addLayerSafe(tempLayer);
+          }
         } else if (filter.layer_store[i] === "cropping_drought") {
           tempLayer = await getVectorLayers(
             filter.layer_store[i],
@@ -719,8 +739,10 @@ const KYLDashboardPage = () => {
               dataJson
             );
           });
-          layerRef.push(tempLayer);
-          mapRef.current.addLayer(tempLayer);
+          if (tempLayer) {
+            layerRef.push(tempLayer);
+            addLayerSafe(tempLayer);
+          }
         }
       }
       mwsLayerRef.current.setStyle((feature) => {
@@ -763,26 +785,18 @@ const KYLDashboardPage = () => {
 
     if (assetType) {
       if (isChecked) {
-        assetsLayerRefs.forEach((element) => {
-          mapRef.current.addLayer(element.current);
-        });
+        assetsLayerRefs.forEach(({ current }) => addLayerSafe(current));
         setMappedAssets(true);
       } else {
-        assetsLayerRefs.forEach((element) => {
-          mapRef.current.removeLayer(element.current);
-        });
+        assetsLayerRefs.forEach(({ current }) => removeLayerSafe(current));
         setMappedAssets(false);
       }
     } else {
       if (isChecked) {
-        demandLayerRefs.forEach((element) => {
-          mapRef.current.addLayer(element.current);
-        });
+        demandLayerRefs.forEach(({ current }) => addLayerSafe(current));
         setMappedDemands(true);
       } else {
-        demandLayerRefs.forEach((element) => {
-          mapRef.current.removeLayer(element.current);
-        });
+        demandLayerRefs.forEach(({ current }) => removeLayerSafe(current));
         setMappedDemands(false);
       }
     }
@@ -842,13 +856,20 @@ const KYLDashboardPage = () => {
     setter(value);
     // Reset everything when location changes
     if (setter === setState) {
+      if (value) {
+        trackEvent("Location", "select_state", value.label);
+      }
       setDistrict(null);
       setBlock(null);
       resetAllStates();
     } else if (setter === setDistrict) {
+      if (value) {
+        trackEvent("Location", "select_district", value.label);
+      }
       setBlock(null);
       resetAllStates();
     } else if (setter === setBlock) {
+      trackEvent("Location", "select_tehsil", value.label);
       resetAllStates();
     }
   };
@@ -874,10 +895,41 @@ const KYLDashboardPage = () => {
     setSelectedMWSProfile(null);
   };
 
+  const searchUserLatLong = async() => {
+    let response = await fetch(`${
+          process.env.REACT_APP_API_URL
+        }/get_mwsid_by_latlon/?latitude=${searchLatLong[0]}&longitude=${searchLatLong[1]}`, {
+            method: "GET",
+            headers: {
+                "Content-Type": "application/json",
+              }
+            }
+          )
+    response = await response.json()
+
+    const matchedState = statesData.find(
+      (s) => s.label.trim().toLowerCase() === response.State.toLowerCase()
+    );
+
+    const matchedDistrict = matchedState.district.find(
+      (s) => s.label.trim().toLowerCase() === response.District.toLowerCase()
+    )
+
+    const matchedTehsil = matchedDistrict.blocks.find(
+      (s) => s.label.trim().toLowerCase() === response.Tehsil.toLowerCase()
+    )
+
+    setState(matchedState)
+    setDistrict(matchedDistrict)
+    setBlock(matchedTehsil)
+    setSelectedMWS(response.Tehsil.uid)
+  }
+
   useEffect(() => {
     if (!mapRef.current) return;
 
     const handleMapClick = (event) => {
+
       const feature = mapRef.current.forEachFeatureAtPixel(
         event.pixel,
         (feature, layer) => {
@@ -946,10 +998,6 @@ const KYLDashboardPage = () => {
       }
     };
   }, [mapRef.current, selectedMWS]);
-
-  // useEffect(() => {
-
-  // },[selectedMWSProfile])
 
   useEffect(() => {
     if (mwsLayerRef.current) {
@@ -1273,11 +1321,7 @@ const KYLDashboardPage = () => {
   useEffect(() => {
     if (currentPlan !== null) {
       const fetchResourcesLayers = async () => {
-        if (assetsLayerRefs[0].current !== null) {
-          mapRef.current.removeLayer(assetsLayerRefs[0].current);
-          mapRef.current.removeLayer(assetsLayerRefs[1].current);
-          mapRef.current.removeLayer(assetsLayerRefs[2].current);
-        }
+        assetsLayerRefs.forEach(({ current }) => removeLayerSafe(current));
         assetsLayerRefs[0].current = await getVectorLayers(
           "resources",
           "settlement" +
@@ -1452,6 +1496,8 @@ const KYLDashboardPage = () => {
   }, [statesData, setStatesData]);
 
   useEffect(() => {
+    initializeAnalytics();
+    trackPageView('/kyl_dashboard')
     // Initialize map if not already initialized
     if (!mapRef.current) {
       initializeMap();
@@ -1489,7 +1535,7 @@ const KYLDashboardPage = () => {
         });
       }
     };
-  }, [district, block, mapRef.current]); // Add mapRef.current as a dependency
+  }, [district, block, mapRef.current]);
 
   useEffect(() => {
     const fetchUpdateLulc = async () => {
@@ -1529,6 +1575,13 @@ const KYLDashboardPage = () => {
     };
     fetchUpdateLulc().catch(console.error);
   }, [lulcYear]);
+
+  useEffect(() => {
+    if(searchLatLong !== null){
+      //searchUserLatLong()
+      console.log("Reached here !")
+    }
+  },[searchLatLong])
 
   return (
     <div className="min-h-screenbg-white flex flex-col">
@@ -1571,6 +1624,7 @@ const KYLDashboardPage = () => {
           currentLayer={currentLayer}
           mappedAssets={mappedAssets}
           mappedDemands={mappedDemands}
+          setSearchLatLong={setSearchLatLong}
         />
 
         {/* Right Sidebar */}
@@ -1610,7 +1664,6 @@ const KYLDashboardPage = () => {
           currentLayer={currentLayer}
           setCurrentLayer={setCurrentLayer}
           mapRef={mapRef}
-          //onAnalyzeClick={handleAnalyzeClick}
           onResetMWS={handleResetMWS}
           selectedMWSProfile={selectedMWSProfile}
         />

@@ -1,5 +1,5 @@
 import React from "react";
-import newLogo from "../assets/newlogoWhite.png";
+import newLogo from "../assets/newLogo.png";
 import { useLocation } from "react-router-dom";
 
 const LandingNavbar = () => {

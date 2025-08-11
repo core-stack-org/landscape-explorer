@@ -1,11 +1,11 @@
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { Search } from "lucide-react";
 import { useRecoilState } from "recoil";
 import { Map, useMap, useMapsLibrary } from "@vis.gl/react-google-maps";
 import { stateAtom, districtAtom, blockAtom } from "../store/locationStore";
 import { toast } from "react-hot-toast";
 
-const KYLLocationSearchBar = ({ statesData, onLocationSelect }) => {
+const KYLLocationSearchBar = ({ statesData, onLocationSelect, setSearchLatLong }) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [suggestions, setSuggestions] = useState([]);
   const [isOpen, setIsOpen] = useState(false);
@@ -289,9 +289,14 @@ const KYLLocationSearchBar = ({ statesData, onLocationSelect }) => {
 
     if (placesService) {
       placesService.getDetails(
-        { placeId: prediction.place_id },
+        { placeId: prediction.place_id , fields: ["geometry", "name", "address_component"], sessionToken},
         (place, status) => {
           if (status === "OK" && place) {
+            
+            const loc = place.geometry?.location;
+            const {lat , lng} = loc ? loc.toJSON() : {lat : null, lng : null}
+            setSearchLatLong([lat, lng])
+            
             if (onLocationSelect) {
               onLocationSelect({
                 state: matchedState,
