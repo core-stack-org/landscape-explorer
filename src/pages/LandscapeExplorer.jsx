@@ -1,5 +1,3 @@
-import { Link } from 'react-router-dom';
-import logo from '../assets/logo.png';
 import { useState, useEffect, useRef, useCallback } from "react";
 import Map from "../components/landscape-explorer/map/Map.jsx";
 import LeftSidebar from "../components/landscape-explorer/sidebar/LeftSidebar.jsx";
@@ -21,11 +19,6 @@ import {
   initializeAnalytics,
 } from "../services/analytics";
 import LandingNavbar from "../components/landing_navbar.jsx";
-import {
-  trackPageView,
-  trackEvent,
-  initializeAnalytics,
-} from "../services/analytics";
 
 const LandscapeExplorer = () => {
   const [showLeftSidebar, setShowLeftSidebar] = useState(false);

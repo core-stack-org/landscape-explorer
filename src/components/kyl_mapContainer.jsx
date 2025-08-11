@@ -1095,7 +1095,7 @@ const KYLMapContainer = ({
   boundaryLayerRef,
   mapRef,
   currentLayer,
-  setSearchLatLong
+  setSearchLatLong,
   mappedAssets,
   mappedDemands
 }) => {
