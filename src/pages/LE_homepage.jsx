@@ -41,6 +41,7 @@ export default function KYLHomePage() {
     };
 
     fetchStates();
+    setBlock(null);
   }, []);
 
   const handleItemSelect = (setter, value) => {
@@ -58,13 +59,12 @@ export default function KYLHomePage() {
       setter(value);
       setBlock(null);
     } else if (setter === setBlock && value) {
-      trackEvent("Location", "select_block", value.label);
+      trackEvent("Location", "select_tehsil", value.label);
       setter(value);
     }
   };
 
   const handleNavigate = (path, buttonName) => {
-    // Track navigation events
     trackEvent("Navigation", "button_click", buttonName);
     navigate(path);
   };
@@ -81,7 +81,7 @@ export default function KYLHomePage() {
       >
         {/* Know Section */}
         <section
-          className="snap-start backdrop-brightness-90 backdrop-blur-sm bg-white/0 px-4 py-6 md:px-8 md:py-10 rounded-xl mx-2 md:mx-6 mt-0 mb-4 md:mb-6"
+          className="snap-start backdrop-brightness-90 backdrop-blur-sm bg-white/0 px-4 py-6 md:px-8 md:py-10 rounded-xl mx-2 md:mx-6 mb-4 md:mb-6"
           style={{ position: "relative", overflow: "visible", zIndex: 10 }}
         >
           <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-8">
@@ -126,7 +126,7 @@ export default function KYLHomePage() {
               </div>
             </div>
             <div
-              className="w-full max-w-lg bg-white p-6 rounded shadow min-h-[350px] flex flex-col justify-between relative"
+              className="w-full max-w-lg bg-white p-6 rounded shadow min-h-[350px] flex flex-col justify-between relative rounded-xl"
               style={{ overflow: "visible", zIndex: 100 }}
             >
               <p className="mb-0 text-center font-semibold text-2xl md:text-2xl leading-none">
@@ -167,7 +167,7 @@ export default function KYLHomePage() {
 
               <div className="flex flex-col sm:flex-row justify-between gap-3 mt-4">
                 <button
-                  className="bg-purple-600 text-white px-4 py-2 rounded w-full sm:w-auto"
+                  className="bg-purple-600 text-white px-4 py-2 rounded-lg w-full sm:w-auto"
                   onClick={() =>
                     handleNavigate("/kyl_dashboard", "Know Your Landscape")
                   }
@@ -175,7 +175,7 @@ export default function KYLHomePage() {
                   Know Your Landscape
                 </button>
                 <button
-                  className="bg-gray-300 text-black px-4 py-2 rounded w-full sm:w-auto"
+                  className="bg-gray-300 text-black px-4 py-2 rounded-lg w-full sm:w-auto"
                   onClick={() =>
                     handleNavigate("/download_layers", "Download Layers")
                   }
@@ -220,96 +220,101 @@ export default function KYLHomePage() {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {/* Card 1 */}
-              <div>
-                <div className="w-full aspect-square overflow-hidden rounded shadow mb-4">
-                  <img
-                    src={participatoryImg}
-                    alt="Participatory Planning"
-                    className="w-full h-full object-cover"
-                  />
+              <a
+                href="https://www.youtube.com/watch?v=ln7wpoW7Eg4"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block hover:shadow-lg transition duration-200 ease-in-out"
+              >
+                <div className="flex flex-col items-center text-center cursor-pointer">
+                  <div className="w-full max-w-[420px] aspect-square mx-auto rounded overflow-hidden shadow mb-4 relative">
+                    <img
+                      src={participatoryImg}
+                      alt="Participatory Planning"
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+
+                  <div className="p-4">
+                    <h3 className="font-bold mb-2 text-sm">
+                      How to do Participatory Planning?
+                    </h3>
+                    <p className="text-xs text-gray-700 mb-2">
+                      View tutorial videos to conduct a rapid PRA and create
+                      DPRs using Commons Connect.
+                    </p>
+                    <span className="text-purple-700 text-sm font-semibold underline">
+                      Learn More →
+                    </span>
+                  </div>
                 </div>
-                <div className="p-4 text-left">
-                  <h3 className="font-bold mb-2 text-sm">
-                    How to do Participatory Planning?
-                  </h3>
-                  <p className="text-xs text-gray-700 mb-2">
-                    View tutorial videos to conduct a rapid PRA and create DPRs
-                    using Commons Connect.
-                  </p>
-                  <a
-                    href="https://www.youtube.com/playlist?list=PLZ0pcz8ccRmIU8wHzHv-CbDOs4JOqgNHC"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-purple-700 text-sm font-semibold"
-                  >
-                    Learn More →
-                  </a>
-                </div>
-              </div>
+              </a>
 
               {/* Card 2  */}
-              <div>
-                <div className="w-full aspect-square rounded overflow-hidden shadow mb-4 relative">
-                  <img
-                    src={newLogo}
-                    alt="Commons Connect App"
-                    className="absolute inset-0 w-full h-full object-cover object-center"
-                  />
+              <a
+                href="mailto:support@core-stack.org"
+                className="block hover:shadow-lg transition duration-200 ease-in-out"
+              >
+                <div className="flex flex-col items-center text-center cursor-pointer">
+                  <div className="w-full max-w-[420px] aspect-square mx-auto rounded overflow-hidden shadow mb-4 relative">
+                    <img
+                      src={newLogo}
+                      alt="Commons Connect App"
+                      className="w-full h-full object-cover object-center"
+                    />
+                  </div>
+
+                  <div className="p-4">
+                    <h3 className="font-bold mb-2 text-sm">
+                      Download Commons Connect App
+                    </h3>
+                    <p className="text-xs text-gray-700 mb-2">
+                      An Android app to guide you in a step-by-step manner to
+                      record community demands for NRM assets.
+                    </p>
+                    <span className="text-purple-700 text-sm font-semibold underline">
+                      support@core-stack.org →
+                    </span>
+                  </div>
                 </div>
-                <div className="p-4 text-left">
-                  <h3 className="font-bold mb-2 text-sm">
-                    Download Commons Connect App
-                  </h3>
-                  <p className="text-xs text-gray-700 mb-2">
-                    An Android app to guide you in a step-by-step manner to
-                    record community demands for NRM assets.
-                  </p>
-                  <p className="text-purple-700 text-sm font-semibold">
-                    Please mail us at{" "}
-                    <a
-                      href="mailto:support@core-stack.org"
-                      className="underline"
-                    >
-                      support@core-stack.org
-                    </a>{" "}
-                    to download the app →
-                  </p>
-                </div>
-              </div>
+              </a>
 
               {/*  Card 3 */}
-              <div>
-                <div className="w-full aspect-square rounded overflow-hidden shadow mb-4 relative">
-                  <img
-                    src={planAndView}
-                    alt="View and Support Plans"
-                    className="absolute inset-0 w-full h-full object-cover"
-                  />
-                  {showOverlay && (
-                    <div className="absolute inset-0 bg-gray-800 bg-opacity-75 flex items-center justify-center z-10">
-                      <p className="text-white text-lg font-semibold">
-                        Coming Soon...
-                      </p>
-                    </div>
-                  )}
-                </div>
-                <div className="p-4 text-left">
-                  <h3 className="font-bold mb-2 text-sm">
-                    View and Support Plans
-                  </h3>
-                  <p className="text-xs text-gray-700 mb-2">
-                    Explore existing community plans and find opportunities to
-                    support or collaborate with ongoing initiatives.
-                  </p>
-                  <button
-                    onClick={() => {
-                      setShowOverlay(true);
-                      setTimeout(() => setShowOverlay(false), 5000);
-                    }}
-                    className="text-purple-700 text-sm font-semibold"
-                  >
-                    Learn More →
-                  </button>
+              <div
+                onClick={() => {
+                  setShowOverlay(true);
+                  setTimeout(() => setShowOverlay(false), 5000);
+                }}
+                className="cursor-pointer hover:shadow-lg transition duration-200 ease-in-out"
+              >
+                <div className="flex flex-col items-center text-center">
+                  <div className="w-full max-w-[420px] aspect-square mx-auto rounded overflow-hidden shadow mb-4 relative">
+                    <img
+                      src={planAndView}
+                      alt="View and Support Plans"
+                      className="absolute inset-0 w-full h-full object-cover"
+                    />
+                    {showOverlay && (
+                      <div className="absolute inset-0 bg-gray-800 bg-opacity-75 flex items-center justify-center z-10">
+                        <p className="text-white text-lg font-semibold">
+                          Coming Soon...
+                        </p>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="p-4">
+                    <h3 className="font-bold mb-2 text-sm">
+                      View and Support Plans
+                    </h3>
+                    <p className="text-xs text-gray-700 mb-2">
+                      Explore existing community plans and find opportunities to
+                      support or collaborate with ongoing initiatives.
+                    </p>
+                    <span className="text-purple-700 text-sm font-semibold underline">
+                      Learn More →
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -317,35 +322,39 @@ export default function KYLHomePage() {
         </section>
 
         {/* Track Section */}
-        <section className="  snap-start backdrop-brightness-90 backdrop-blur-sm bg-white/0 px-4 py-6 md:px-16 md:py-10 rounded-xl mx-2 md:mx-6 mt-6">
+        <section className="snap-start backdrop-brightness-90 backdrop-blur-sm bg-white/0 px-4 py-6 md:px-16 md:py-10 rounded-xl mx-2 md:mx-6 mt-6">
           <div>
-            <h2 className="text-2xl md:text-4xl mb-4 text-purple-700">
-              <span className="font-bold">Track and Assess </span>
-              <span className="font-normal">NRM interventions</span>
-            </h2>
-            <ul className="list-disc list-inside text-black text-base md:text-xl font-medium space-y-3 mb-6">
-              <li>
-                A suite of dashboards enabling continuous monitoring of Natural
-                Resource Management (NRM) interventions undertaken in an area,
-                and ex-post assessment of their impact.
-              </li>
-              <li>
-                Use <b>Jaltol</b> to monitor changes in cropping patterns in
-                villages where extensive watershed development programmes have
-                been undertaken.
-              </li>
-              <li>
-                Agroforestry practitioners can assess the health of tree
-                plantations over time using the{" "}
-                <b>Plantation Health Assessment Dashboard</b>.
-              </li>
-              <li>
-                Track waterbody rejuvenation interventions and their impact on
-                cropping in nearby areas with the{" "}
-                <b>WaterBody Rejuvenation Assessment Dashboard</b>.
-              </li>
-            </ul>
+            {/* Narrow text container */}
+            <div className="w-full lg:w-2/3 mb-10">
+              <h2 className="text-2xl md:text-4xl mb-4 text-purple-700">
+                <span className="font-bold">Track and Assess </span>
+                <span className="font-normal">NRM interventions</span>
+              </h2>
+              <ul className="list-disc list-inside text-black text-base md:text-xl font-medium space-y-5 mb-6">
+                <li>
+                  A suite of dashboards enabling continuous monitoring of
+                  Natural Resource Management (NRM) interventions undertaken in
+                  an area, and ex-post assessment of their impact.
+                </li>
+                <li>
+                  Use <b>Jaltol</b> to monitor changes in cropping patterns in
+                  villages where extensive watershed development programmes have
+                  been undertaken.
+                </li>
+                <li>
+                  Agroforestry practitioners can assess the health of tree
+                  plantations over time using the{" "}
+                  <b>Plantation Health Assessment Dashboard</b>.
+                </li>
+                <li>
+                  Track waterbody rejuvenation interventions and their impact on
+                  cropping in nearby areas with the{" "}
+                  <b>WaterBody Rejuvenation Assessment Dashboard</b>.
+                </li>
+              </ul>
+            </div>
 
+            {/* Full-width cards container */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mt-8">
               {[
                 {

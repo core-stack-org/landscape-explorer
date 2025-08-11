@@ -3,6 +3,8 @@ import { stateAtom, districtAtom, blockAtom, dataJsonAtom } from '../store/locat
 import { useRecoilValue } from 'recoil';
 import { useEffect, useState } from 'react';
 
+import {trackEvent} from "../services/analytics.js"
+
 const KYLMWSProfilePanel = ({ mwsData, onBack }) => {
 
   const state = useRecoilValue(stateAtom);
@@ -13,18 +15,23 @@ const KYLMWSProfilePanel = ({ mwsData, onBack }) => {
   const [dataString, setDataString] = useState("")
 
   const handleReportDownload = (id) =>{
+    trackEvent("Generate MWS Report", "generate_report", JSON.stringify([state.label, district.label, block.label, id]));
     window.open(`${process.env.REACT_APP_API_URL}/generate_mws_report/?state=${state.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_')}&district=${district.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_')}&block=${block.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_')}&uid=${id}`, '_blank');
   }
 
   useEffect(()=>{
     if(dataJson !== null){
       const found = dataJson.find((item) => item.mws_id === mwsData?.uid)
+      try{
+        const terrainType = ["Broad Slopes and Hilly","Mostly Plains","Hills and Valleys","Broad Slopes and Plains"]
+        
+        let dataStr = `The Selected MWS has a Terrain of type ${terrainType[found.terrainCluster_ID]}, intersecting with ${found.mws_intersect_villages.length} villages also having ${found.total_nrega_assets} NREGA assets which lies in the selected MWS. The average cropping intensity across the MWS's is ${found.cropping_intensity_avg.toFixed(2)} with an ${Math.round(found.avg_precipitation)} mm average precipitation.`
 
-      const terrainType = ["Broad Slopes and Hilly","Mostly Plains","Hills and Valleys","Broad Slopes and Plains"]
-      
-      let dataStr = `The Selected MWS has a Terrain of type ${terrainType[found.terrainCluster_ID]}, intersecting with ${found.mws_intersect_villages.length} villages also having ${found.total_nrega_assets} NREGA assets which lies in the selected MWS. The average cropping intensity across the MWS's is ${found.cropping_intensity_avg.toFixed(2)} with an ${Math.round(found.avg_precipitation)} mm average precipitation.`
-
-      setDataString(dataStr)
+        setDataString(dataStr)
+      }catch(err){
+        console.log(err)
+        console.log(found)
+      }
     }
   }, [dataJson, mwsData])
 

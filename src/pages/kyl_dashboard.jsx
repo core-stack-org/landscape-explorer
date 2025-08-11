@@ -19,7 +19,7 @@ import { defaults as defaultControls } from "ol/control/defaults.js";
 import { Map, View } from "ol";
 import { Fill, Stroke, Style, Icon } from "ol/style.js";
 
-import Navbar from "../components/navbar.jsx";
+import LandingNavbar from "../components/landing_navbar.jsx";
 import getStates from "../actions/getStates.js";
 import getVectorLayers from "../actions/getVectorLayers.js";
 import getImageLayer from "../actions/getImageLayers.js";
@@ -35,10 +35,15 @@ import layerStyle from "../components/utils/layerStyle.jsx";
 import settlementIcon from "../assets/settlement_icon.svg";
 import wellIcon from "../assets/well_proposed.svg";
 import waterbodyIcon from "../assets/waterbodies_proposed.svg";
-import RechargeIcon from "../assets/recharge_icon.svg"
-import IrrigationIcon from "../assets/irrigation_icon.svg"
+import RechargeIcon from "../assets/recharge_icon.svg";
+import IrrigationIcon from "../assets/irrigation_icon.svg";
 
 import { toast, Toaster } from "react-hot-toast";
+import {
+  trackPageView,
+  trackEvent,
+  initializeAnalytics,
+} from "../services/analytics";
 
 const KYLDashboardPage = () => {
   const mapElement = useRef(null);
@@ -79,6 +84,11 @@ const KYLDashboardPage = () => {
 
   const [toastId, setToastId] = useState(null);
   const [selectedMWSProfile, setSelectedMWSProfile] = useState(null);
+  const [searchLatLong, setSearchLatLong] = useState(null);
+
+  const addLayerSafe = (layer) => layer && mapRef.current && mapRef.current.addLayer(layer);
+  const removeLayerSafe = (layer) => layer && mapRef.current && mapRef.current.removeLayer(layer);
+
 
   const handleResetMWS = () => {
     if (!selectedMWSProfile) return; // If no MWS is selected, do nothing
@@ -226,7 +236,11 @@ const KYLDashboardPage = () => {
           const layerName = `deltaG_well_depth_${district.label
             .toLowerCase()
             .split(" ")
-            .join("_")}_${block.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_')}`;
+            .join("_")}_${block.label
+            .toLowerCase()
+            .replace(/\s*\(\s*/g, "_")
+            .replace(/\s*\)\s*/g, "")
+            .replace(/\s+/g, "_")}`;
           const mwsLayer = await getVectorLayers(
             "mws_layers",
             layerName,
@@ -359,12 +373,28 @@ const KYLDashboardPage = () => {
     try {
       const boundaryLayer = await getVectorLayers(
         "panchayat_boundaries",
-        `${districtName.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_')}_${blockName.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_')}`,
+        `${districtName
+          .toLowerCase()
+          .replace(/\s*\(\s*/g, "_")
+          .replace(/\s*\)\s*/g, "")
+          .replace(/\s+/g, "_")}_${blockName
+          .toLowerCase()
+          .replace(/\s*\(\s*/g, "_")
+          .replace(/\s*\)\s*/g, "")
+          .replace(/\s+/g, "_")}`,
         true,
         true
       );
 
-      const layerName = `deltaG_well_depth_${district.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_')}_${block.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_')}`;
+      const layerName = `deltaG_well_depth_${district.label
+        .toLowerCase()
+        .replace(/\s*\(\s*/g, "_")
+        .replace(/\s*\)\s*/g, "")
+        .replace(/\s+/g, "_")}_${block.label
+        .toLowerCase()
+        .replace(/\s*\(\s*/g, "_")
+        .replace(/\s*\)\s*/g, "")
+        .replace(/\s+/g, "_")}`;
       const mwsLayer = await getVectorLayers(
         "mws_layers",
         layerName,
@@ -381,8 +411,8 @@ const KYLDashboardPage = () => {
       }
 
       boundaryLayer.setOpacity(0);
-      mapRef.current.addLayer(mwsLayer);
-      mapRef.current.addLayer(boundaryLayer);
+      addLayerSafe(mwsLayer);
+      addLayerSafe(boundaryLayer);
       boundaryLayerRef.current = boundaryLayer;
       mwsLayerRef.current = mwsLayer;
 
@@ -438,7 +468,6 @@ const KYLDashboardPage = () => {
                 boundaryLayer.setOpacity(opacity);
                 if (opacity >= 1) {
                   clearInterval(interval);
-                  setIsLoading(false);
                 }
               }, 50);
             },
@@ -471,8 +500,20 @@ const KYLDashboardPage = () => {
   const fetchDataJson = async () => {
     try {
       const response = await fetch(
-        `${process.env.REACT_APP_API_URL}/download_kyl_data?state=${state.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_')}
-        &district=${district.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_')}&block=${block.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_')}&file_type=json`
+        `${process.env.REACT_APP_API_URL}/download_kyl_data?state=${state.label
+          .toLowerCase()
+          .replace(/\s*\(\s*/g, "_")
+          .replace(/\s*\)\s*/g, "")
+          .replace(/\s+/g, "_")}
+        &district=${district.label
+          .toLowerCase()
+          .replace(/\s*\(\s*/g, "_")
+          .replace(/\s*\)\s*/g, "")
+          .replace(/\s+/g, "_")}&block=${block.label
+          .toLowerCase()
+          .replace(/\s*\(\s*/g, "_")
+          .replace(/\s*\)\s*/g, "")
+          .replace(/\s+/g, "_")}&file_type=json`
       );
 
       if (!response.ok) {
@@ -481,17 +522,33 @@ const KYLDashboardPage = () => {
 
       const result = await response.json();
       setDataJson(result);
+
+      setIsLoading(false);
     } catch (e) {
       console.log(e);
+      setIsLoading(false);
     }
   };
-  
+
+
   const fetchVillageJson = async () => {
     try {
       const response = await fetch(
         `${
           process.env.REACT_APP_API_URL
-        }/download_kyl_village_data?state=${state.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_')}&district=${district.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_')}&block=${block.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_')}&file_type=json`
+        }/download_kyl_village_data?state=${state.label
+          .toLowerCase()
+          .replace(/\s*\(\s*/g, "_")
+          .replace(/\s*\)\s*/g, "")
+          .replace(/\s+/g, "_")}&district=${district.label
+          .toLowerCase()
+          .replace(/\s*\(\s*/g, "_")
+          .replace(/\s*\)\s*/g, "")
+          .replace(/\s+/g, "_")}&block=${block.label
+          .toLowerCase()
+          .replace(/\s*\(\s*/g, "_")
+          .replace(/\s*\)\s*/g, "")
+          .replace(/\s+/g, "_")}&file_type=json`
       );
 
       if (!response.ok) {
@@ -557,56 +614,67 @@ const KYLDashboardPage = () => {
         [filter.name]: false,
       }));
       setFiltersEnabled(true);
-    } 
-    else if (currentLayer.length === 0) {
+    } else if (currentLayer.length === 0) {
       let layerRef = [];
-      mapRef.current.removeLayer(mwsLayerRef.current);
-      mapRef.current.removeLayer(boundaryLayerRef.current);
+      removeLayerSafe(mwsLayerRef.current);
+      removeLayerSafe(boundaryLayerRef.current);
       for (let i = 0; i < len; ++i) {
         let tempLayer;
         if (filter.layer_store[i] === "terrain") {
           tempLayer = await getImageLayer(
             filter.layer_store[i],
-            `${district.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_')}_${block.label
+            `${district.label
+              .toLowerCase()
+              .replace(/\s*\(\s*/g, "_")
+              .replace(/\s*\)\s*/g, "")
+              .replace(/\s+/g, "_")}_${block.label
               .toLowerCase()
               .split(" ")
               .join("_")}_${filter.layer_name[i]}`,
             true,
             filter.rasterStyle[i]
           );
-          layerRef.push(tempLayer);
-          mapRef.current.addLayer(tempLayer);
+          if (tempLayer) {
+            layerRef.push(tempLayer);
+            addLayerSafe(tempLayer);
+          }
         } else if (
           filter.layer_store[i] === "LULC" &&
           filter.rasterStyle === "lulc_water_pixels"
         ) {
           tempLayer = await getImageLayer(
             `${filter.layer_store[i]}_${filter.layer_name[i]}`,
-            `LULC_22_23_${block.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_')}_${
-              filter.layer_name[i]
-            }`,
+            `LULC_22_23_${block.label
+              .toLowerCase()
+              .replace(/\s*\(\s*/g, "_")
+              .replace(/\s*\)\s*/g, "")
+              .replace(/\s+/g, "_")}_${filter.layer_name[i]}`,
             true,
             filter.rasterStyle
           );
-          layerRef.push(tempLayer);
-          mapRef.current.addLayer(tempLayer);
-        }
-        else if (filter.layer_store[i] === "change_detection") {
+          if (tempLayer) {
+            layerRef.push(tempLayer);
+            addLayerSafe(tempLayer);
+          }
+        } else if (filter.layer_store[i] === "change_detection") {
           tempLayer = await getImageLayer(
             `${filter.layer_store[i]}`,
             `change_${district.label
               .toLowerCase()
               .split(" ")
-              .join("_")}_${block.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_')}_${
-              filter.layer_name[i]
-            }`,
+              .join("_")}_${block.label
+              .toLowerCase()
+              .replace(/\s*\(\s*/g, "_")
+              .replace(/\s*\)\s*/g, "")
+              .replace(/\s+/g, "_")}_${filter.layer_name[i]}`,
             true,
             filter.rasterStyle[i]
           );
-          layerRef.push(tempLayer);
-          mapRef.current.addLayer(tempLayer);
-        } 
-        else if (filter.layer_store[i] === "LULC") {
+          if (tempLayer) {
+            layerRef.push(tempLayer);
+            addLayerSafe(tempLayer);
+          }
+        } else if (filter.layer_store[i] === "LULC") {
           tempLayer = await getImageLayer(
             `${filter.layer_store[i]}_${filter.layer_name[i]}`,
             `LULC_${lulcYear}_${block.label
@@ -616,34 +684,45 @@ const KYLDashboardPage = () => {
             true,
             filter.rasterStyle
           );
-          layerRef.push(tempLayer);
-          mapRef.current.addLayer(tempLayer);
-        } 
-        else if (filter.layer_store[i] === "cropping_drought") {
+          if (tempLayer) {
+            layerRef.push(tempLayer);
+            addLayerSafe(tempLayer);
+          }
+        } else if (filter.layer_store[i] === "cropping_drought") {
           tempLayer = await getVectorLayers(
             filter.layer_store[i],
-            `${district.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_')}_${block.label
+            `${district.label
+              .toLowerCase()
+              .replace(/\s*\(\s*/g, "_")
+              .replace(/\s*\)\s*/g, "")
+              .replace(/\s+/g, "_")}_${block.label
               .toLowerCase()
               .split(" ")
               .join("_")}_${filter.layer_name[i]}`
           );
-        } 
-        else if (filter.layer_store[i] === "panchayat_boundaries") {
+        } else if (filter.layer_store[i] === "panchayat_boundaries") {
           tempLayer = await getVectorLayers(
             filter.layer_store[i],
-            `${district.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_')}_${block.label
+            `${district.label
+              .toLowerCase()
+              .replace(/\s*\(\s*/g, "_")
+              .replace(/\s*\)\s*/g, "")
+              .replace(/\s+/g, "_")}_${block.label
               .toLowerCase()
               .split(" ")
               .join("_")}`
           );
-        } 
-        else {
+        } else {
           tempLayer = await getVectorLayers(
             filter.layer_store[i],
             `${filter.layer_name[i]}_${district.label
               .toLowerCase()
               .split(" ")
-              .join("_")}_${block.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_')}`
+              .join("_")}_${block.label
+              .toLowerCase()
+              .replace(/\s*\(\s*/g, "_")
+              .replace(/\s*\)\s*/g, "")
+              .replace(/\s+/g, "_")}`
           );
         }
         if (
@@ -660,8 +739,10 @@ const KYLDashboardPage = () => {
               dataJson
             );
           });
-          layerRef.push(tempLayer);
-          mapRef.current.addLayer(tempLayer);
+          if (tempLayer) {
+            layerRef.push(tempLayer);
+            addLayerSafe(tempLayer);
+          }
         }
       }
       mwsLayerRef.current.setStyle((feature) => {
@@ -704,26 +785,18 @@ const KYLDashboardPage = () => {
 
     if (assetType) {
       if (isChecked) {
-        assetsLayerRefs.forEach((element) => {
-          mapRef.current.addLayer(element.current);
-        });
+        assetsLayerRefs.forEach(({ current }) => addLayerSafe(current));
         setMappedAssets(true);
       } else {
-        assetsLayerRefs.forEach((element) => {
-          mapRef.current.removeLayer(element.current);
-        });
+        assetsLayerRefs.forEach(({ current }) => removeLayerSafe(current));
         setMappedAssets(false);
       }
     } else {
       if (isChecked) {
-        demandLayerRefs.forEach((element) => {
-          mapRef.current.addLayer(element.current);
-        });
+        demandLayerRefs.forEach(({ current }) => addLayerSafe(current));
         setMappedDemands(true);
       } else {
-        demandLayerRefs.forEach((element) => {
-          mapRef.current.removeLayer(element.current);
-        });
+        demandLayerRefs.forEach(({ current }) => removeLayerSafe(current));
         setMappedDemands(false);
       }
     }
@@ -783,13 +856,20 @@ const KYLDashboardPage = () => {
     setter(value);
     // Reset everything when location changes
     if (setter === setState) {
+      if (value) {
+        trackEvent("Location", "select_state", value.label);
+      }
       setDistrict(null);
       setBlock(null);
       resetAllStates();
     } else if (setter === setDistrict) {
+      if (value) {
+        trackEvent("Location", "select_district", value.label);
+      }
       setBlock(null);
       resetAllStates();
     } else if (setter === setBlock) {
+      trackEvent("Location", "select_tehsil", value.label);
       resetAllStates();
     }
   };
@@ -815,10 +895,40 @@ const KYLDashboardPage = () => {
     setSelectedMWSProfile(null);
   };
 
+  const searchUserLatLong = async() => {
+    let response = await fetch(`${
+          process.env.REACT_APP_API_URL
+        }/get_mwsid_by_latlon/?latitude=${searchLatLong[0]}&longitude=${searchLatLong[1]}`, {
+            method: "GET",
+            headers: {
+                "Content-Type": "application/json",
+              }
+            }
+          )
+    response = await response.json()
+
+    const matchedState = statesData.find(
+      (s) => s.label.trim().toLowerCase() === response.State.toLowerCase()
+    );
+
+    const matchedDistrict = matchedState.district.find(
+      (s) => s.label.trim().toLowerCase() === response.District.toLowerCase()
+    )
+
+    const matchedTehsil = matchedDistrict.blocks.find(
+      (s) => s.label.trim().toLowerCase() === response.Tehsil.toLowerCase()
+    )
+
+    setState(matchedState)
+    setDistrict(matchedDistrict)
+    setBlock(matchedTehsil)
+    setSelectedMWS(response.Tehsil.uid)
+  }
+
   useEffect(() => {
     if (!mapRef.current) return;
 
-        const handleMapClick = (event) => {
+    const handleMapClick = (event) => {
 
       const feature = mapRef.current.forEachFeatureAtPixel(
         event.pixel,
@@ -831,68 +941,63 @@ const KYLDashboardPage = () => {
       if (feature) {
         const clickedMwsId = feature.get("uid");
 
-                if (selectedMWS !== null) {
+        if (selectedMWS !== null) {
+          setSelectedMWSProfile(feature.getProperties());
+          if (toastId) {
+            toast.dismiss(toastId);
+            setToastId(null);
+          }
 
-                    setSelectedMWSProfile(feature.getProperties());
-                    if (toastId) {
-                        toast.dismiss(toastId);
-                        setToastId(null);
-                    }
-
-                    mwsLayerRef.current.setStyle((feature) => {
-                        if (clickedMwsId === feature.values_.uid) {
-                            return new Style({
-                                stroke: new Stroke({
-                                    color: "#166534",
-                                    width: 2.0,
-                                }),
-                                fill: new Fill({
-                                    color: "rgba(34, 197, 94, 0.4)",
-                                })
-                            });
-                        }
-                        else if (selectedMWS.length > 0 && selectedMWS.includes(feature.values_.uid)) {
-                            return new Style({
-                                stroke: new Stroke({
-                                    color: "#661E1E",
-                                    width: 1.0,
-                                }),
-                                fill: new Fill({
-                                    color: "rgba(255, 75, 75, 0.8)",
-                                })
-                            });
-                        }
-                        else{
-                          return new Style({
-                            stroke: new Stroke({
-                              color: "#4a90e2",
-                              width: 1.0,
-                            }),
-                            fill: new Fill({
-                              color: "rgba(74, 144, 226, 0.2)",
-                            }),
-                          });
-                        }
-                    });
-                }
-                else {
-                    toast.error("Please Select a valid MWS !")
-                }
+          mwsLayerRef.current.setStyle((feature) => {
+            if (clickedMwsId === feature.values_.uid) {
+              return new Style({
+                stroke: new Stroke({
+                  color: "#166534",
+                  width: 2.0,
+                }),
+                fill: new Fill({
+                  color: "rgba(34, 197, 94, 0.4)",
+                }),
+              });
+            } else if (
+              selectedMWS.length > 0 &&
+              selectedMWS.includes(feature.values_.uid)
+            ) {
+              return new Style({
+                stroke: new Stroke({
+                  color: "#661E1E",
+                  width: 1.0,
+                }),
+                fill: new Fill({
+                  color: "rgba(255, 75, 75, 0.8)",
+                }),
+              });
+            } else {
+              return new Style({
+                stroke: new Stroke({
+                  color: "#4a90e2",
+                  width: 1.0,
+                }),
+                fill: new Fill({
+                  color: "rgba(74, 144, 226, 0.2)",
+                }),
+              });
             }
-        };
-        mapRef.current.on('click', handleMapClick);
+          });
+        } else {
+          toast.error("Please Select a valid MWS !");
+        }
+      }
+    };
+    mapRef.current.on("click", handleMapClick);
 
-        // Cleanup
-        return () => {
-            if (mapRef.current) {
-                mapRef.current.un('click', handleMapClick);
-            }
-        };
+    // Cleanup
+    return () => {
+      if (mapRef.current) {
+        mapRef.current.un("click", handleMapClick);
+      }
+    };
   }, [mapRef.current, selectedMWS]);
-
-  // useEffect(() => {
-
-  // },[selectedMWSProfile])
 
   useEffect(() => {
     if (mwsLayerRef.current) {
@@ -1215,22 +1320,25 @@ const KYLDashboardPage = () => {
 
   useEffect(() => {
     if (currentPlan !== null) {
-
       const fetchResourcesLayers = async () => {
-        if(assetsLayerRefs[0].current !== null){
-          mapRef.current.removeLayer(assetsLayerRefs[0].current);
-          mapRef.current.removeLayer(assetsLayerRefs[1].current);
-          mapRef.current.removeLayer(assetsLayerRefs[2].current);
-        }
+        assetsLayerRefs.forEach(({ current }) => removeLayerSafe(current));
         assetsLayerRefs[0].current = await getVectorLayers(
           "resources",
           "settlement" +
             "_" +
             currentPlan.value.plan_id +
             "_" +
-            district.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_') +
+            district.label
+              .toLowerCase()
+              .replace(/\s*\(\s*/g, "_")
+              .replace(/\s*\)\s*/g, "")
+              .replace(/\s+/g, "_") +
             "_" +
-            block.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_'),
+            block.label
+              .toLowerCase()
+              .replace(/\s*\(\s*/g, "_")
+              .replace(/\s*\)\s*/g, "")
+              .replace(/\s+/g, "_"),
           true,
           true
         );
@@ -1246,9 +1354,17 @@ const KYLDashboardPage = () => {
             "_" +
             currentPlan.value.plan_id +
             "_" +
-            district.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_') +
+            district.label
+              .toLowerCase()
+              .replace(/\s*\(\s*/g, "_")
+              .replace(/\s*\)\s*/g, "")
+              .replace(/\s+/g, "_") +
             "_" +
-            block.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_'),
+            block.label
+              .toLowerCase()
+              .replace(/\s*\(\s*/g, "_")
+              .replace(/\s*\)\s*/g, "")
+              .replace(/\s+/g, "_"),
           true,
           true
         );
@@ -1264,9 +1380,17 @@ const KYLDashboardPage = () => {
             "_" +
             currentPlan.value.plan_id +
             "_" +
-            district.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_') +
+            district.label
+              .toLowerCase()
+              .replace(/\s*\(\s*/g, "_")
+              .replace(/\s*\)\s*/g, "")
+              .replace(/\s+/g, "_") +
             "_" +
-            block.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_'),
+            block.label
+              .toLowerCase()
+              .replace(/\s*\(\s*/g, "_")
+              .replace(/\s*\)\s*/g, "")
+              .replace(/\s+/g, "_"),
           true,
           true
         );
@@ -1276,7 +1400,7 @@ const KYLDashboardPage = () => {
           })
         );
 
-        if(mappedAssets){
+        if (mappedAssets) {
           mapRef.current.addLayer(assetsLayerRefs[0].current);
           mapRef.current.addLayer(assetsLayerRefs[1].current);
           mapRef.current.addLayer(assetsLayerRefs[2].current);
@@ -1284,7 +1408,7 @@ const KYLDashboardPage = () => {
       };
 
       const fetchDemandLayers = async () => {
-        if(demandLayerRefs[0].current !== null){
+        if (demandLayerRefs[0].current !== null) {
           mapRef.current.removeLayer(demandLayerRefs[0].current);
           mapRef.current.removeLayer(demandLayerRefs[1].current);
         }
@@ -1294,9 +1418,17 @@ const KYLDashboardPage = () => {
             "_" +
             currentPlan.value.plan_id +
             "_" +
-            district.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_') +
+            district.label
+              .toLowerCase()
+              .replace(/\s*\(\s*/g, "_")
+              .replace(/\s*\)\s*/g, "")
+              .replace(/\s+/g, "_") +
             "_" +
-            block.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_'),
+            block.label
+              .toLowerCase()
+              .replace(/\s*\(\s*/g, "_")
+              .replace(/\s*\)\s*/g, "")
+              .replace(/\s+/g, "_"),
           true,
           true
         );
@@ -1312,9 +1444,17 @@ const KYLDashboardPage = () => {
             "_" +
             currentPlan.value.plan_id +
             "_" +
-            district.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_') +
+            district.label
+              .toLowerCase()
+              .replace(/\s*\(\s*/g, "_")
+              .replace(/\s*\)\s*/g, "")
+              .replace(/\s+/g, "_") +
             "_" +
-            block.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_'),
+            block.label
+              .toLowerCase()
+              .replace(/\s*\(\s*/g, "_")
+              .replace(/\s*\)\s*/g, "")
+              .replace(/\s+/g, "_"),
           true,
           true
         );
@@ -1325,7 +1465,7 @@ const KYLDashboardPage = () => {
           });
         });
 
-        if(mappedDemands){
+        if (mappedDemands) {
           mapRef.current.addLayer(demandLayerRefs[0].current);
           mapRef.current.addLayer(demandLayerRefs[1].current);
         }
@@ -1356,6 +1496,8 @@ const KYLDashboardPage = () => {
   }, [statesData, setStatesData]);
 
   useEffect(() => {
+    initializeAnalytics();
+    trackPageView('/kyl_dashboard')
     // Initialize map if not already initialized
     if (!mapRef.current) {
       initializeMap();
@@ -1393,7 +1535,7 @@ const KYLDashboardPage = () => {
         });
       }
     };
-  }, [district, block, mapRef.current]); // Add mapRef.current as a dependency
+  }, [district, block, mapRef.current]);
 
   useEffect(() => {
     const fetchUpdateLulc = async () => {
@@ -1434,11 +1576,18 @@ const KYLDashboardPage = () => {
     fetchUpdateLulc().catch(console.error);
   }, [lulcYear]);
 
+  useEffect(() => {
+    if(searchLatLong !== null){
+      //searchUserLatLong()
+      console.log("Reached here !")
+    }
+  },[searchLatLong])
+
   return (
     <div className="min-h-screenbg-white flex flex-col">
       <Toaster />
       <div className="sticky top-0 z-50 bg-white border-b border-gray-100">
-        <Navbar />
+        <LandingNavbar />
       </div>
       <div className="flex h-[calc(100vh-48px)] p-4 gap-4">
         {/* Left Sidebar */}
@@ -1475,6 +1624,7 @@ const KYLDashboardPage = () => {
           currentLayer={currentLayer}
           mappedAssets={mappedAssets}
           mappedDemands={mappedDemands}
+          setSearchLatLong={setSearchLatLong}
         />
 
         {/* Right Sidebar */}
@@ -1495,15 +1645,15 @@ const KYLDashboardPage = () => {
           currentPlan={currentPlan}
           setCurrentPlan={setCurrentPlan}
           onLocationSelect={(location) => {
-              if (location.type === 'block') {
-                  setTimeout(() => {
-                      fetchBoundaryAndZoom(
-                          location.data.district.label,
-                          location.data.block.label
-                      );
-                      resetAllStates();
-                  }, 0);
-              }
+            if (location.type === "block") {
+              setTimeout(() => {
+                fetchBoundaryAndZoom(
+                  location.data.district.label,
+                  location.data.block.label
+                );
+                resetAllStates();
+              }, 0);
+            }
           }}
           handleAssetSelection={handleAssetSelection}
           mappedAssets={mappedAssets}
@@ -1514,13 +1664,12 @@ const KYLDashboardPage = () => {
           currentLayer={currentLayer}
           setCurrentLayer={setCurrentLayer}
           mapRef={mapRef}
-          //onAnalyzeClick={handleAnalyzeClick}
           onResetMWS={handleResetMWS}
           selectedMWSProfile={selectedMWSProfile}
         />
-        </div>
+      </div>
     </div>
-    );
+  );
 };
 
 export default KYLDashboardPage;
