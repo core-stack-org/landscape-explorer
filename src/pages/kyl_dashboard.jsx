@@ -256,7 +256,19 @@ const KYLDashboardPage = () => {
         }
 
         mwsLayerRef.current.setStyle((feature) => {
-          if (tempMWS.length > 0 && tempMWS.includes(feature.values_.uid)) {
+          if(selectedMWS !== null && feature.values_.uid === selectedMWS){
+            setSelectedMWSProfile(feature.getProperties())
+            return new Style({
+                stroke: new Stroke({
+                  color: "#166534",
+                  width: 2.0,
+                }),
+                fill: new Fill({
+                  color: "rgba(34, 197, 94, 0.4)",
+                }),
+              });
+          }
+          else if (tempMWS.length > 0 && tempMWS.includes(feature.values_.uid)) {
             // Filtered areas - highlight in red
             return new Style({
               stroke: new Stroke({
@@ -529,7 +541,6 @@ const KYLDashboardPage = () => {
       setIsLoading(false);
     }
   };
-
 
   const fetchVillageJson = async () => {
     try {
@@ -896,33 +907,74 @@ const KYLDashboardPage = () => {
   };
 
   const searchUserLatLong = async() => {
-    let response = await fetch(`${
-          process.env.REACT_APP_API_URL
-        }/get_mwsid_by_latlon/?latitude=${searchLatLong[0]}&longitude=${searchLatLong[1]}`, {
-            method: "GET",
-            headers: {
-                "Content-Type": "application/json",
+   setIsLoading(true);
+    try{
+      let response = await fetch(`${
+            process.env.REACT_APP_API_URL
+          }/get_mwsid_by_latlon/?latitude=${searchLatLong[0]}&longitude=${searchLatLong[1]}`, {
+              method: "GET",
+              headers: {
+                  "Content-Type": "application/json",
+                }
               }
-            }
-          )
-    response = await response.json()
+            )
+      response = await response.json()
 
-    const matchedState = statesData.find(
-      (s) => s.label.trim().toLowerCase() === response.State.toLowerCase()
-    );
+      const matchedState = statesData.find(
+        (s) => s.label.trim().toLowerCase() === response.State.toLowerCase()
+      );
 
-    const matchedDistrict = matchedState.district.find(
-      (s) => s.label.trim().toLowerCase() === response.District.toLowerCase()
-    )
+      const matchedDistrict = matchedState.district.find(
+        (s) => s.label.trim().toLowerCase() === response.District.toLowerCase()
+      )
 
-    const matchedTehsil = matchedDistrict.blocks.find(
-      (s) => s.label.trim().toLowerCase() === response.Tehsil.toLowerCase()
-    )
+      const matchedTehsil = matchedDistrict.blocks.find(
+        (s) => s.label.trim().toLowerCase() === response.Tehsil.toLowerCase()
+      )
 
-    setState(matchedState)
-    setDistrict(matchedDistrict)
-    setBlock(matchedTehsil)
-    setSelectedMWS(response.Tehsil.uid)
+      setState(matchedState)
+      setDistrict(matchedDistrict)
+      setBlock(matchedTehsil)
+      setSelectedMWS(response.uid)
+    }catch(err){
+      console.log(err)
+      toast.custom(
+        (t) => (
+          <div className={`${
+            t.visible ? 'animate-enter' : 'animate-leave'
+          } max-w-md w-full bg-white shadow-lg rounded-lg pointer-events-auto flex`}>
+            <div className="flex-1 w-0 p-4">
+              <div className="flex items-start">
+                <div className="ml-3 flex-1">
+                  <p className="text-sm font-medium text-gray-900">
+                    Location Request
+                  </p>
+                  <p className="mt-1 text-sm text-gray-500">
+                  We have not generated maps for this location as yet. Would you like to submit a request?
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div className="flex border-l border-gray-200">
+              <button
+                onClick={() => {
+                  window.open('https://forms.gle/qBkYmmU7AhyKnc4N9', '_blank');
+                  toast.dismiss(t.id);
+                }}
+                className="w-full border border-transparent rounded-none rounded-r-lg p-4 flex items-center justify-center text-sm font-medium text-blue-600 hover:text-blue-500 focus:outline-none"
+              >
+                Submit Request
+              </button>
+            </div>
+          </div>
+        ),
+        {
+          duration: 5000,
+          position: 'top-right',
+        }
+      );
+      setIsLoading(false);
+    }
   }
 
   useEffect(() => {
@@ -1578,8 +1630,7 @@ const KYLDashboardPage = () => {
 
   useEffect(() => {
     if(searchLatLong !== null){
-      //searchUserLatLong()
-      console.log("Reached here !")
+      searchUserLatLong()
     }
   },[searchLatLong])
 
