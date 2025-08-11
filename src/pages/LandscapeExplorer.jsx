@@ -1,6 +1,5 @@
-import React from "react";
-import { Link } from "react-router-dom";
-import logo from "../assets/logo.png";
+import { Link } from 'react-router-dom';
+import logo from '../assets/logo.png';
 import { useState, useEffect, useRef, useCallback } from "react";
 import Map from "../components/landscape-explorer/map/Map.jsx";
 import LeftSidebar from "../components/landscape-explorer/sidebar/LeftSidebar.jsx";
@@ -16,6 +15,11 @@ import {
 } from "../store/locationStore.jsx";
 import getStates from "../actions/getStates.js";
 import * as downloadHelper from "../components/landscape-explorer/utils/downloadHelper";
+import {
+  trackPageView,
+  trackEvent,
+  initializeAnalytics,
+} from "../services/analytics";
 import LandingNavbar from "../components/landing_navbar.jsx";
 
 // Custom navbar specifically for Landscape Explorer page
@@ -123,12 +127,18 @@ const LandscapeExplorer = () => {
     // Handle the setState case specially if it affects parent component state
     if (setter === setState) {
       // Reset all dependent state values
+      if (value) {
+        trackEvent("Location", "select_state", value.label);
+      }
       setDistrict(null);
       setBlock(null);
       resetAllStates();
       setState(value);
     } else if (setter === setDistrict) {
       // Reset block and filters when district changes
+      if (value) {
+        trackEvent("Location", "select_district", value.label);
+      }
       setBlock(null);
       resetAllStates();
       setDistrict(value);
@@ -137,7 +147,7 @@ const LandscapeExplorer = () => {
       setBlock(value);
       // When block is selected, enable fetch button and prepare layers automatically
       setCanFetchLayers(true);
-
+      trackEvent("Location", "select_tehsil", value.label);
       // Auto-prepare layers instead of requiring Fetch Layers button
       setTimeout(() => {
         if (mapRef.current && mapRef.current.prepareLayers) {
@@ -357,6 +367,8 @@ const LandscapeExplorer = () => {
 
   // Fetch states data on component mount
   useEffect(() => {
+    initializeAnalytics();
+    trackPageView("/download_layers");
     if (statesData === null) {
       getStates().then((data) => setStatesData(data));
     }
