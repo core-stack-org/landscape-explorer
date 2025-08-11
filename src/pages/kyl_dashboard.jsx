@@ -923,6 +923,7 @@ const KYLDashboardPage = () => {
     if (!mapRef.current) return;
 
     const handleMapClick = (event) => {
+
       const feature = mapRef.current.forEachFeatureAtPixel(
         event.pixel,
         (feature, layer) => {

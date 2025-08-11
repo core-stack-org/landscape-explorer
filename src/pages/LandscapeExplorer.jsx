@@ -15,6 +15,11 @@ import {
 } from "../store/locationStore.jsx";
 import getStates from "../actions/getStates.js";
 import * as downloadHelper from "../components/landscape-explorer/utils/downloadHelper";
+import {
+  trackPageView,
+  trackEvent,
+  initializeAnalytics,
+} from "../services/analytics";
 import LandingNavbar from "../components/landing_navbar.jsx";
 import {
   trackPageView,
