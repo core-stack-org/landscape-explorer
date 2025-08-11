@@ -41,6 +41,7 @@ export default function KYLHomePage() {
     };
 
     fetchStates();
+    setBlock(null);
   }, []);
 
   const handleItemSelect = (setter, value) => {

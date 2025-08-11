@@ -26,36 +26,6 @@ import {
   trackEvent,
   initializeAnalytics,
 } from "../services/analytics";
-import LandingNavbar from "../components/landing_navbar.jsx";
-
-// Custom navbar specifically for Landscape Explorer page
-// const LandscapeNavbar = () => {
-//   return (
-//     <nav className="bg-white shadow-sm">
-//       <div className="max-w-7xl mx-auto px-4">
-//         <div className="flex items-center justify-between h-16">
-//           {/* left-hand logo / title */}
-//           <Link to="/" className="flex items-center gap-2 cursor-pointer">
-//             <img src={logo} alt="KYL Logo" className="h-8 w-8" />
-//             <span className="text-xl font-semibold text-gray-800">
-//               Download Layers
-//             </span>
-//           </Link>
-
-//           {/* right-hand QGIS docs button */}
-//           <a
-//             href="https://docs.google.com/document/d/1jet4EEBbbKgpNrPnuNJJDRuAJUiR2pIMFQp9JTlygAQ/edit?usp=sharing"
-//             target="_blank"
-//             rel="noopener noreferrer"
-//             className=" py-2 px-2 text-indigo-600 bg-indigo-50 rounded-lg text-sm font-medium text-left"
-//           >
-//             QGIS&nbsp;Documentation
-//           </a>
-//         </div>
-//       </div>
-//     </nav>
-//   );
-// };
 
 const LandscapeExplorer = () => {
   const [showLeftSidebar, setShowLeftSidebar] = useState(false);

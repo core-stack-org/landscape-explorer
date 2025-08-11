@@ -86,6 +86,10 @@ const KYLDashboardPage = () => {
   const [selectedMWSProfile, setSelectedMWSProfile] = useState(null);
   const [searchLatLong, setSearchLatLong] = useState(null);
 
+  const addLayerSafe = (layer) => layer && mapRef.current && mapRef.current.addLayer(layer);
+  const removeLayerSafe = (layer) => layer && mapRef.current && mapRef.current.removeLayer(layer);
+
+
   const handleResetMWS = () => {
     if (!selectedMWSProfile) return; // If no MWS is selected, do nothing
 
@@ -407,8 +411,8 @@ const KYLDashboardPage = () => {
       }
 
       boundaryLayer.setOpacity(0);
-      mapRef.current.addLayer(mwsLayer);
-      mapRef.current.addLayer(boundaryLayer);
+      addLayerSafe(mwsLayer);
+      addLayerSafe(boundaryLayer);
       boundaryLayerRef.current = boundaryLayer;
       mwsLayerRef.current = mwsLayer;
 
@@ -464,7 +468,6 @@ const KYLDashboardPage = () => {
                 boundaryLayer.setOpacity(opacity);
                 if (opacity >= 1) {
                   clearInterval(interval);
-                  setIsLoading(false);
                 }
               }, 50);
             },
@@ -519,8 +522,11 @@ const KYLDashboardPage = () => {
 
       const result = await response.json();
       setDataJson(result);
+
+      setIsLoading(false);
     } catch (e) {
       console.log(e);
+      setIsLoading(false);
     }
   };
 
@@ -610,8 +616,8 @@ const KYLDashboardPage = () => {
       setFiltersEnabled(true);
     } else if (currentLayer.length === 0) {
       let layerRef = [];
-      mapRef.current.removeLayer(mwsLayerRef.current);
-      mapRef.current.removeLayer(boundaryLayerRef.current);
+      removeLayerSafe(mwsLayerRef.current);
+      removeLayerSafe(boundaryLayerRef.current);
       for (let i = 0; i < len; ++i) {
         let tempLayer;
         if (filter.layer_store[i] === "terrain") {
@@ -628,8 +634,10 @@ const KYLDashboardPage = () => {
             true,
             filter.rasterStyle[i]
           );
-          layerRef.push(tempLayer);
-          mapRef.current.addLayer(tempLayer);
+          if (tempLayer) {
+            layerRef.push(tempLayer);
+            addLayerSafe(tempLayer);
+          }
         } else if (
           filter.layer_store[i] === "LULC" &&
           filter.rasterStyle === "lulc_water_pixels"
@@ -644,8 +652,10 @@ const KYLDashboardPage = () => {
             true,
             filter.rasterStyle
           );
-          layerRef.push(tempLayer);
-          mapRef.current.addLayer(tempLayer);
+          if (tempLayer) {
+            layerRef.push(tempLayer);
+            addLayerSafe(tempLayer);
+          }
         } else if (filter.layer_store[i] === "change_detection") {
           tempLayer = await getImageLayer(
             `${filter.layer_store[i]}`,
@@ -660,8 +670,10 @@ const KYLDashboardPage = () => {
             true,
             filter.rasterStyle[i]
           );
-          layerRef.push(tempLayer);
-          mapRef.current.addLayer(tempLayer);
+          if (tempLayer) {
+            layerRef.push(tempLayer);
+            addLayerSafe(tempLayer);
+          }
         } else if (filter.layer_store[i] === "LULC") {
           tempLayer = await getImageLayer(
             `${filter.layer_store[i]}_${filter.layer_name[i]}`,
@@ -672,8 +684,10 @@ const KYLDashboardPage = () => {
             true,
             filter.rasterStyle
           );
-          layerRef.push(tempLayer);
-          mapRef.current.addLayer(tempLayer);
+          if (tempLayer) {
+            layerRef.push(tempLayer);
+            addLayerSafe(tempLayer);
+          }
         } else if (filter.layer_store[i] === "cropping_drought") {
           tempLayer = await getVectorLayers(
             filter.layer_store[i],
@@ -725,8 +739,10 @@ const KYLDashboardPage = () => {
               dataJson
             );
           });
-          layerRef.push(tempLayer);
-          mapRef.current.addLayer(tempLayer);
+          if (tempLayer) {
+            layerRef.push(tempLayer);
+            addLayerSafe(tempLayer);
+          }
         }
       }
       mwsLayerRef.current.setStyle((feature) => {
@@ -769,26 +785,18 @@ const KYLDashboardPage = () => {
 
     if (assetType) {
       if (isChecked) {
-        assetsLayerRefs.forEach((element) => {
-          mapRef.current.addLayer(element.current);
-        });
+        assetsLayerRefs.forEach(({ current }) => addLayerSafe(current));
         setMappedAssets(true);
       } else {
-        assetsLayerRefs.forEach((element) => {
-          mapRef.current.removeLayer(element.current);
-        });
+        assetsLayerRefs.forEach(({ current }) => removeLayerSafe(current));
         setMappedAssets(false);
       }
     } else {
       if (isChecked) {
-        demandLayerRefs.forEach((element) => {
-          mapRef.current.addLayer(element.current);
-        });
+        demandLayerRefs.forEach(({ current }) => addLayerSafe(current));
         setMappedDemands(true);
       } else {
-        demandLayerRefs.forEach((element) => {
-          mapRef.current.removeLayer(element.current);
-        });
+        demandLayerRefs.forEach(({ current }) => removeLayerSafe(current));
         setMappedDemands(false);
       }
     }
@@ -894,7 +902,6 @@ const KYLDashboardPage = () => {
             method: "GET",
             headers: {
                 "Content-Type": "application/json",
-                // "x-api-key" : "utKqSp1v.COctmikYp3OUIPp9gqD9ASdSZ9PV2BKJ"
               }
             }
           )
@@ -1314,11 +1321,7 @@ const KYLDashboardPage = () => {
   useEffect(() => {
     if (currentPlan !== null) {
       const fetchResourcesLayers = async () => {
-        if (assetsLayerRefs[0].current !== null) {
-          mapRef.current.removeLayer(assetsLayerRefs[0].current);
-          mapRef.current.removeLayer(assetsLayerRefs[1].current);
-          mapRef.current.removeLayer(assetsLayerRefs[2].current);
-        }
+        assetsLayerRefs.forEach(({ current }) => removeLayerSafe(current));
         assetsLayerRefs[0].current = await getVectorLayers(
           "resources",
           "settlement" +
