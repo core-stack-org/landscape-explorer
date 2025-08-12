@@ -1051,7 +1051,7 @@ const WaterProjectDashboard = () => {
       const waterLayer = new VectorLayer({
         source: waterSource,
         style: new Style({
-          stroke: new Stroke({ color: "#000000", width: 2 }),
+          stroke: new Stroke({ color: "red", width: 3 }),
           fill: null,
         }),
       });
@@ -1071,7 +1071,7 @@ const WaterProjectDashboard = () => {
           view.fit(geometry.getExtent(), {
             padding: [50, 50, 50, 50],
             duration: 1000,
-            maxZoom: 13,
+            maxZoom: 14,
           });
         }
       } else {

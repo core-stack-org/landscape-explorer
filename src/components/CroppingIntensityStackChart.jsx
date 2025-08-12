@@ -20,7 +20,8 @@ const CroppingIntensityStackChart = ({ zoiFeatures, waterbody }) => {
   );
 
   if (!matchedFeature) return null;
-
+  console.log("Matched Feature:", matchedFeature);
+  const zoiArea = matchedFeature.get("zoi_area");
   const areaByType = yearSuffix.map((year) => ({
     year,
     triple: (matchedFeature.get(`triply_cropped_area_${year}`) || 0) / 10000,
@@ -80,6 +81,8 @@ const CroppingIntensityStackChart = ({ zoiFeatures, waterbody }) => {
       },
       y: {
         stacked: true,
+        min: 0,
+        max: zoiArea,
         title: { display: true, text: "Area (hectares)" },
         ticks: {
           callback: (value) => `${value.toFixed(1)} ha`,
