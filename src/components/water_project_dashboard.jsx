@@ -272,7 +272,6 @@ const WaterProjectDashboard = () => {
         coordinates = geometry.coordinates[middleIndex];
       }
 
-      const seasonKeys = ["k_", "kr_", "krz_"];
       const seasonYears = [
         "17-18",
         "18-19",
@@ -372,24 +371,6 @@ const WaterProjectDashboard = () => {
       const ImpactZaid = round2(zaidAfter - zaidBefore);
       const ImpactZaidColor = ImpactZaid >= 0 ? "green" : "red";
 
-      console.log(`📍 Waterbody: ${props.waterbody_name || "NA"}`);
-      console.log(`  Kharif Avg Before ${interventionYear}: ${kharifBefore}`);
-      console.log(`  Kharif Avg After ${interventionYear}: ${kharifAfter}`);
-      console.log(`  Rabi Avg Before ${interventionYear}: ${rabiBefore}`);
-      console.log(`  Rabi Avg After ${interventionYear}: ${rabiAfter}`);
-      console.log(`  Zaid Avg Before ${interventionYear}: ${zaidBefore}`);
-      console.log(`  Zaid Avg After ${interventionYear}: ${zaidAfter}`);
-      console.log(`📍 Waterbody: ${props.waterbody_name || "NA"}`);
-      console.log(
-        `  Kharif Avg (Pre): ${kharifBefore}, (Post): ${kharifAfter}, ✅ Used: ${ImpactKharif}`
-      );
-      console.log(
-        `  Rabi Avg (Pre): ${rabiBefore}, (Post): ${rabiAfter}, ✅ Used: ${ImpactRabi}`
-      );
-      console.log(
-        `  Zaid Avg (Pre): ${zaidBefore}, (Post): ${zaidAfter}, ✅ Used: ${ImpactZaid}`
-      );
-
       const siltRemoved = Number(props.slit_excavated) || 0;
       totalSiltRemoved += siltRemoved;
 
@@ -433,9 +414,6 @@ const WaterProjectDashboard = () => {
   }, [geoData]);
 
   const totalRows = rows.length;
-
-  const [year, setYear] = useState(2024);
-  const handleYearChange = (newYear) => setYear(newYear);
 
   const [filters, setFilters] = useState({
     state: [],
@@ -1103,7 +1081,7 @@ const WaterProjectDashboard = () => {
     if (view === "map" && selectedWaterbody && selectedFeature) {
       zoomToWaterbody(selectedWaterbody, selectedFeature, mapRef1);
       zoomToZoiWaterbody(selectedWaterbody, selectedFeature, mapRef2);
-      zoomToZoiWaterbody(selectedWaterbody, selectedFeature, mapRef3);
+      zoomToMwsWaterbody(selectedWaterbody, selectedFeature, mapRef3);
     }
   }, [selectedWaterbody, selectedFeature, view]);
 
@@ -1159,7 +1137,103 @@ const WaterProjectDashboard = () => {
     });
   };
 
+  const getZoomFromArea = (waterbody) => {
+    console.log("🔍 Incoming waterbody object:", waterbody);
+
+    if (!waterbody || !waterbody.waterbody) {
+      console.log("⚠️ No waterbody name found for zoom calculation");
+      return 16;
+    }
+
+    console.log("📌 Matching against waterbody name:", waterbody.waterbody);
+
+    // Find matching ZOI feature
+    const match = zoiFeatures.find(
+      (f) => f.get("waterbody_name") === waterbody.waterbody
+    );
+
+    console.log("✅ Matched feature:", match);
+    if (match) {
+      console.log("📂 Matched feature properties:", match.getProperties());
+      console.log("📍 Matched feature geometry:", match.getGeometry());
+    }
+
+    if (!match) {
+      console.log("❌ No matching ZOI feature found for", waterbody.waterbody);
+      return 16;
+    }
+
+    // Get ZOI area from properties
+    const area = match.get("zoi");
+    console.log("📏 ZOI area (from properties):", area);
+
+    if (!area) {
+      console.log("⚠️ ZOI area not found, defaulting zoom");
+      return 16;
+    }
+
+    // Map area to zoom
+    if (area === 400) return 16; // special case
+    if (area >= 1000) return 15; // very large ZOI → zoomed out
+    if (area > 700) return 10; // large ZOI
+    if (area > 400) return 15.5; // medium-large ZOI
+    if (area > 200) return 16; // medium ZOI
+    return 17;
+  };
+
   const zoomToZoiWaterbody = (waterbody, tempFeature, targetMapRef) => {
+    if (!tempFeature || !targetMapRef?.current) return;
+
+    const view = targetMapRef.current.getView();
+    const feature = new GeoJSON().readFeature(tempFeature, {
+      dataProjection: "EPSG:4326",
+      featureProjection: view.getProjection(),
+    });
+
+    const geometry = feature.getGeometry();
+    if (!geometry) {
+      console.error("No geometry found.");
+      return;
+    }
+    const zoomLevel = getZoomFromArea(waterbody);
+    const extent = geometry.getExtent();
+    view.fit(extent, {
+      duration: 1000,
+      padding: [50, 50, 50, 50],
+    });
+    view.setZoom(zoomLevel);
+
+    if (waterBodyLayer) {
+      const source = waterBodyLayer.getSource();
+      const features = source.getFeatures();
+
+      features.forEach((feature) => feature.setStyle(null));
+
+      if (
+        waterbody.featureIndex !== undefined &&
+        features[waterbody.featureIndex]
+      ) {
+        features[waterbody.featureIndex].setStyle(
+          new Style({
+            stroke: new Stroke({ color: "#FF0000", width: 5 }),
+            fill: new Fill({ color: "rgba(255, 0, 0, 0.5)" }),
+          })
+        );
+      }
+    }
+
+    targetMapRef.current.getInteractions().forEach((interaction) => {
+      if (
+        interaction instanceof MouseWheelZoom ||
+        interaction instanceof PinchZoom ||
+        interaction instanceof DoubleClickZoom
+      ) {
+        interaction.setActive(false);
+      }
+    });
+  };
+
+  const zoomToMwsWaterbody = (waterbody, tempFeature, targetMapRef) => {
     if (!tempFeature || !targetMapRef?.current) return;
 
     const view = targetMapRef.current.getView();

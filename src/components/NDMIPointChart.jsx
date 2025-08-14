@@ -55,6 +55,7 @@ const NDMIPointChart = ({ zoiFeatures, waterbody }) => {
         const distance = parseInt(key.split("_")[0], 10); // "150_NDMI" -> 150
         return { x: distance, y: value };
       })
+      .filter((point) => point.y >= 0)
       .sort((a, b) => a.x - b.x); // ✅ sort by distance
   }, [matchedFeature]);
 
