@@ -1802,6 +1802,67 @@ const WaterProjectDashboard = () => {
             <Box
               sx={{
                 display: "flex",
+                flexDirection: "column",
+                gap: 2,
+                width: "100%",
+                p: { xs: 2, sm: 3, md: 2 },
+                borderRadius: 2,
+                bgcolor: "background.paper",
+                boxShadow: 1,
+              }}
+            >
+              {/* Heading */}
+              <Typography
+                variant="h5"
+                sx={{
+                  fontWeight: 700,
+                  color: "primary.main",
+                  borderBottom: "2px solid",
+                  borderColor: "primary.main",
+                  pb: 1,
+                }}
+              >
+                Section 1: Water presence and land-use change in the waterbody
+              </Typography>
+
+              {/* Explanation */}
+              <Typography
+                variant="body1"
+                sx={{ color: "text.secondary", lineHeight: 1.7 }}
+              >
+                This section shows the selected waterbody, silt removal details,
+                and seasonal water availability before and after the
+                intervention, along with yearly trends of cropping patterns
+                within the waterbody boundary.
+              </Typography>
+
+              <Typography
+                variant="body1"
+                sx={{ color: "text.secondary", lineHeight: 1.7 }}
+              >
+                The boundary shown for the waterbody is the maximal coverage
+                ever gained by the waterbody over the last several years.
+                Depending on rainfall, water use, and other factors like changes
+                in the inlet and outlet channels of the waterbody, not all of
+                the waterbody area will see water in a given year and some of
+                the area may also get utilized for agriculture. This land use in
+                each year can be observed from the map and graphs.
+              </Typography>
+
+              <Typography
+                variant="body1"
+                sx={{ color: "text.secondary", lineHeight: 1.7 }}
+              >
+                Similarly, the duration of water presence can be seen in terms
+                of how much of the waterbody saw water throughout the year, or
+                during the monsoon and post-monsoon months, or only during the
+                monsoon months.
+              </Typography>
+            </Box>
+
+            <Box
+              sx={{
+                display: "flex",
                 flexDirection: { xs: "column", md: "row" },
                 alignItems: "flex-start",
                 gap: 4,
@@ -2055,7 +2116,6 @@ const WaterProjectDashboard = () => {
                   </Box>
                 </Box>
               )}
-
               {/* Charts Section */}
               <Box
                 sx={{
@@ -2095,6 +2155,56 @@ const WaterProjectDashboard = () => {
                 )}
               </Box>
             </Box>
+            <Box
+              sx={{
+                display: "flex",
+                flexDirection: "column",
+                gap: 2,
+                width: "100%",
+                p: { xs: 2, sm: 3, md: 2 },
+                borderRadius: 2,
+                bgcolor: "background.paper",
+                boxShadow: 1,
+              }}
+            >
+              {/* Heading */}
+              <Typography
+                variant="h5"
+                sx={{
+                  fontWeight: 700,
+                  color: "primary.main",
+                  borderBottom: "2px solid",
+                  borderColor: "primary.main",
+                  pb: 1,
+                }}
+              >
+                Section 2:Catchment area and stream position
+              </Typography>
+
+              {/* Explanation */}
+              <Typography
+                variant="body1"
+                sx={{ color: "text.secondary", lineHeight: 1.7 }}
+              >
+                This section gives the catchment area from which runoff may
+                drain into the waterbody. A larger catchment area would imply a
+                higher rainfall runoff draining into the waterbody, in turn
+                leading to more storage. This can however get impacted by
+                blocked inlet channels and other changes.
+              </Typography>
+
+              <Typography
+                variant="body1"
+                sx={{ color: "text.secondary", lineHeight: 1.7 }}
+              >
+                This section also gives the stream order in which the waterbody
+                lies. The stream order indicates the relative position of the
+                waterbody in the drainage network. Waterbodies present in higher
+                stream orders would typically see sub-surface flows from
+                upstream watersheds.
+              </Typography>
+            </Box>
+
             {selectedWaterbody && (
               <Box
                 sx={{
@@ -2169,8 +2279,65 @@ const WaterProjectDashboard = () => {
                 ))}
               </Box>
             )}
-
             {/* ZOI Section with Map + Side Chart */}
+            <Box
+              sx={{
+                display: "flex",
+                flexDirection: "column",
+                gap: 2,
+                width: "100%",
+                p: { xs: 2, sm: 3, md: 2 },
+                borderRadius: 2,
+                bgcolor: "background.paper",
+                boxShadow: 1,
+              }}
+            >
+              {/* Heading */}
+              <Typography
+                variant="h5"
+                sx={{
+                  fontWeight: 700,
+                  color: "primary.main",
+                  borderBottom: "2px solid",
+                  borderColor: "primary.main",
+                  pb: 1,
+                }}
+              >
+                Section 3: Cropping patterns in the Zone of Influence of the
+                waterbody
+              </Typography>
+
+              {/* Explanation */}
+              <Typography
+                variant="body1"
+                sx={{ color: "text.secondary", lineHeight: 1.7 }}
+              >
+                This section shows the waterbody’s zone of influence (ZoI) and
+                cropping intensities within this zone, along with the NDVI
+                values in the area.
+              </Typography>
+
+              <Typography
+                variant="body1"
+                sx={{ color: "text.secondary", lineHeight: 1.7 }}
+              >
+                The ZoI of the waterbody is the area impacted by the waterbody
+                through improved soil moisture or use of water for irrigation.
+                Changes before and after the intervention in cropping
+                intensities and NDVI (Normalized Difference Vegetation Index, is
+                a common remote sensed indicator of greenness) in the ZoI can be
+                seen through maps and graphs.
+              </Typography>
+
+              <Typography
+                variant="body1"
+                sx={{ color: "text.secondary", lineHeight: 1.7 }}
+              >
+                We also show NDMI values, a soil moisture index, at increasing
+                radial distances from the waterbody.
+              </Typography>
+            </Box>
+
             <Box
               sx={{
                 display: "flex",
@@ -2363,8 +2530,46 @@ const WaterProjectDashboard = () => {
                 />
               </Box>
             </Box>
-
             {/*MWS map section */}
+
+            <Box
+              sx={{
+                display: "flex",
+                flexDirection: "column",
+                gap: 2,
+                width: "100%",
+                p: { xs: 2, sm: 3, md: 2 },
+                borderRadius: 2,
+                bgcolor: "background.paper",
+                boxShadow: 1,
+              }}
+            >
+              {/* Heading */}
+              <Typography
+                variant="h5"
+                sx={{
+                  fontWeight: 700,
+                  color: "primary.main",
+                  borderBottom: "2px solid",
+                  borderColor: "primary.main",
+                  pb: 1,
+                }}
+              >
+                Section 4: Micro-watershed context of the waterbody
+              </Typography>
+
+              {/* Explanation */}
+              <Typography
+                variant="body1"
+                sx={{ color: "text.secondary", lineHeight: 1.7 }}
+              >
+                This map displays the micro-watershed boundary along with its
+                drainage network (blue lines), showing how water flows and is
+                distributed within the micro-watershed. The map also shows the
+                terrain in the micro-watershed.
+              </Typography>
+            </Box>
+
             <Box
               sx={{
                 display: "flex",
