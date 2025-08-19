@@ -54,6 +54,7 @@ import DoubleClickZoom from "ol/interaction/DoubleClickZoom";
 import { useLocation } from "react-router-dom";
 import TileWMS from "ol/source/TileWMS";
 import NDMIPointChart from "./NDMIPointChart.jsx";
+import DroughtChart from "./droughtchart.jsx";
 
 const useWaterRejData = (projectName, projectId) => {
   const [geoData, setGeoData] = useState(null);
@@ -2504,14 +2505,17 @@ const WaterProjectDashboard = () => {
             <Box
               sx={{
                 width: "100%",
-                maxWidth: "100%",
-                marginTop: "2%",
+                display: "flex",
+                flexDirection: { xs: "column", md: "row" }, // stack on small screens
+                gap: 2,
+                alignItems: "flex-end", // ensures bottom alignment (x-axis same level)
               }}
             >
+              {/* NDVI Chart */}
               <Box
                 sx={{
-                  width: "100%",
-                  height: { xs: "300px", sm: "400px", md: "500px" },
+                  flex: 0.65, // takes 65% width
+                  height: "400px",
                 }}
               >
                 <NDVIChart
@@ -2529,7 +2533,23 @@ const WaterProjectDashboard = () => {
                   ]}
                 />
               </Box>
+
+              {/* Drought Chart */}
+              {selectedMWSFeature && (
+                <Box
+                  sx={{
+                    flex: 0.35, // takes 35% width
+                    height: "450px",
+                  }}
+                >
+                  <DroughtChart
+                    feature={selectedMWSFeature}
+                    waterbody={selectedWaterbody}
+                  />
+                </Box>
+              )}
             </Box>
+
             {/*MWS map section */}
 
             <Box

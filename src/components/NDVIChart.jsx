@@ -810,9 +810,15 @@ const NDVIChart = ({
   };
 
   const options = {
+    maintainAspectRatio: false,
     responsive: true,
+    layout: {
+      padding: { bottom: -24 }, // same padding for both
+    },
+
     plugins: {
       legend: { display: true },
+      position: "top",
       tooltip: { mode: "index", intersect: false },
     },
     scales: {
