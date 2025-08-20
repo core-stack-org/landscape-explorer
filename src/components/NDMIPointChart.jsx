@@ -132,7 +132,7 @@ const NDMIPointChart = ({ zoiFeatures, waterbody }) => {
     plugins: {
       title: {
         display: true,
-        text: "NDMI Profile from Waterbody",
+        text: "NDMI Profile from Waterbody (Experimental)",
         font: {
           size: 18,
         },
@@ -142,26 +142,6 @@ const NDMIPointChart = ({ zoiFeatures, waterbody }) => {
           label: (context) =>
             `Distance: ${context.raw.x}m, NDMI: ${context.raw.y}`,
         },
-      },
-      annotation: {
-        annotations: zoiValue
-          ? {
-              zoiLine: {
-                type: "line",
-                xMin: zoiValue,
-                xMax: zoiValue,
-                borderColor: "black",
-                borderWidth: 2,
-                label: {
-                  display: true,
-                  content: `ZOI (${zoiValue}m)`,
-                  position: "start",
-                  backgroundColor: "rgba(0,0,0,0.7)",
-                  color: "white",
-                },
-              },
-            }
-          : {},
       },
     },
     scales: {

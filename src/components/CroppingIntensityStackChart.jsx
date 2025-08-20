@@ -35,6 +35,12 @@ const CroppingIntensityStackChart = ({ zoiFeatures, waterbody }) => {
 
   console.log(areaByType);
 
+  const maxValue = Math.max(
+    ...areaByType.map(
+      (a) => a.triple + a.double + a.single_kharif + a.single_non_kharif
+    )
+  );
+
   const data = {
     labels: yearLabels,
     datasets: [
@@ -82,7 +88,8 @@ const CroppingIntensityStackChart = ({ zoiFeatures, waterbody }) => {
       y: {
         stacked: true,
         min: 0,
-        max: zoiArea,
+        // max: zoiArea,
+        max: maxValue,
         title: { display: true, text: "Area (hectares)" },
         ticks: {
           callback: (value) => `${value.toFixed(1)} ha`,

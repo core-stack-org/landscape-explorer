@@ -1081,7 +1081,7 @@ const WaterProjectDashboard = () => {
   useEffect(() => {
     if (view === "map" && selectedWaterbody && selectedFeature) {
       zoomToWaterbody(selectedWaterbody, selectedFeature, mapRef1);
-      zoomToZoiWaterbody(selectedWaterbody, selectedFeature, mapRef2);
+      zoomToZoiWaterbody(selectedWaterbody, zoiFeatures, mapRef2);
       zoomToMwsWaterbody(selectedWaterbody, selectedFeature, mapRef3);
     }
   }, [selectedWaterbody, selectedFeature, view]);
@@ -1182,33 +1182,93 @@ const WaterProjectDashboard = () => {
     return 17;
   };
 
-  const zoomToZoiWaterbody = (waterbody, tempFeature, targetMapRef) => {
-    if (!tempFeature || !targetMapRef?.current) return;
+  // const zoomToZoiWaterbody = (waterbody, tempFeature, targetMapRef) => {
+  //   if (!tempFeature || !targetMapRef?.current) return;
+
+  //   const view = targetMapRef.current.getView();
+  //   const feature = new GeoJSON().readFeature(tempFeature, {
+  //     dataProjection: "EPSG:4326",
+  //     featureProjection: view.getProjection(),
+  //   });
+
+  //   const geometry = feature.getGeometry();
+  //   if (!geometry) {
+  //     console.error("No geometry found.");
+  //     return;
+  //   }
+  //   const zoomLevel = getZoomFromArea(waterbody);
+  //   const extent = geometry.getExtent();
+  //   view.fit(extent, {
+  //     duration: 1000,
+  //     padding: [50, 50, 50, 50],
+  //   });
+  //   view.setZoom(zoomLevel);
+
+  //   if (waterBodyLayer) {
+  //     const source = waterBodyLayer.getSource();
+  //     const features = source.getFeatures();
+
+  //     features.forEach((feature) => feature.setStyle(null));
+
+  //     if (
+  //       waterbody.featureIndex !== undefined &&
+  //       features[waterbody.featureIndex]
+  //     ) {
+  //       features[waterbody.featureIndex].setStyle(
+  //         new Style({
+  //           stroke: new Stroke({ color: "#FF0000", width: 5 }),
+  //           fill: new Fill({ color: "rgba(255, 0, 0, 0.5)" }),
+  //         })
+  //       );
+  //     }
+  //   }
+
+  //   targetMapRef.current.getInteractions().forEach((interaction) => {
+  //     if (
+  //       interaction instanceof MouseWheelZoom ||
+  //       interaction instanceof PinchZoom ||
+  //       interaction instanceof DoubleClickZoom
+  //     ) {
+  //       interaction.setActive(false);
+  //     }
+  //   });
+  // };
+
+  const zoomToZoiWaterbody = (waterbody, zoiFeatures, targetMapRef) => {
+    if (!waterbody || !zoiFeatures || !targetMapRef?.current) return;
 
     const view = targetMapRef.current.getView();
-    const feature = new GeoJSON().readFeature(tempFeature, {
-      dataProjection: "EPSG:4326",
-      featureProjection: view.getProjection(),
-    });
 
-    const geometry = feature.getGeometry();
-    if (!geometry) {
-      console.error("No geometry found.");
+    // ✅ Find ZOI feature for this waterbody
+    const matchedZoi = zoiFeatures.find(
+      (f) =>
+        f.get("waterbody_name")?.toLowerCase().trim() ===
+        waterbody?.waterbody?.toLowerCase().trim()
+    );
+
+    if (!matchedZoi) {
+      console.error("No matching ZOI found for", waterbody);
       return;
     }
-    const zoomLevel = getZoomFromArea(waterbody);
+
+    const geometry = matchedZoi.getGeometry();
+    if (!geometry) {
+      console.error("No geometry in ZOI feature");
+      return;
+    }
+
+    // ✅ Zoom to ZOI instead of waterbody
     const extent = geometry.getExtent();
     view.fit(extent, {
       duration: 1000,
       padding: [50, 50, 50, 50],
     });
-    view.setZoom(zoomLevel);
 
+    // (optional) Highlight the waterbody if needed
     if (waterBodyLayer) {
       const source = waterBodyLayer.getSource();
       const features = source.getFeatures();
-
-      features.forEach((feature) => feature.setStyle(null));
+      features.forEach((f) => f.setStyle(null));
 
       if (
         waterbody.featureIndex !== undefined &&
@@ -1223,6 +1283,7 @@ const WaterProjectDashboard = () => {
       }
     }
 
+    // Disable zoom interactions
     targetMapRef.current.getInteractions().forEach((interaction) => {
       if (
         interaction instanceof MouseWheelZoom ||
@@ -2179,7 +2240,7 @@ const WaterProjectDashboard = () => {
                   pb: 1,
                 }}
               >
-                Section 2:Catchment area and stream position
+                Section 2: Catchment area and stream position
               </Typography>
 
               {/* Explanation */}
@@ -2227,7 +2288,7 @@ const WaterProjectDashboard = () => {
                   },
                   {
                     label: "Max Stream Order",
-                    value: `${selectedWaterbody?.maxStreamOrder}th Order`,
+                    value: `Order ${selectedWaterbody?.maxStreamOrder}`,
                   },
                 ].map((item, idx) => (
                   <Box
