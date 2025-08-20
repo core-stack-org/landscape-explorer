@@ -40,24 +40,24 @@ const DroughtChart = ({ feature }) => {
     labels: years,
     datasets: [
       {
-        label: "Moderate Drought (w_mod)",
+        label: "Moderate Weeks",
         data: w_mod,
-        borderColor: "#ff8c00",
-        backgroundColor: "#ff8c00",
+        borderColor: "#EB984E",
+        backgroundColor: "#EB984E",
         tension: 0.3,
       },
       {
-        label: "Severe Drought (w_sev)",
+        label: "Severe Weeks",
         data: w_sev,
-        borderColor: "#cd5c5c",
-        backgroundColor: "#cd5c5c",
+        borderColor: "#E74C3C",
+        backgroundColor: "#E74C3C",
         tension: 0.3,
       },
       {
-        label: "Dry Spells (drysp)",
+        label: "Dry Spells Weeks",
         data: drysp,
-        borderColor: "#1e90ff",
-        backgroundColor: "#1e90ff",
+        borderColor: "#8884d8",
+        backgroundColor: "#8884d8",
         tension: 0.3,
       },
     ],
@@ -72,11 +72,11 @@ const DroughtChart = ({ feature }) => {
     interaction: { mode: "index", intersect: false },
     position: "top",
     plugins: {
-      title: { display: true, text: "Drought Indicators per Year" },
+      title: { display: true, text: "Drought Data over the years" },
     },
     scales: {
       y: {
-        title: { display: true, text: "Values" },
+        title: { display: true, text: "No. of weeks" },
       },
     },
   };
