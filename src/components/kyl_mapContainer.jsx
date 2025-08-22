@@ -310,18 +310,18 @@ const MapLegend = ({ showMWS, showVillages, currentLayer, mappedAssets, mappedDe
   ];
 
   const CropDeforestationItems = [
-    { color: "#73bb53", label: "Forest - Forest" },
-    { color: "#ff0000", label: "Forest - Built Up" },
-    { color: "#eee05d", label: "Forest -  Farm" },
-    { color: "#a9a9a9", label: "Forest -  Barren" },
-    { color: "#eaa4f0", label: "Forest -  Scrub land" },
+    { color: "#73bb53", label: "Tree Cover - Tree Cover" },
+    { color: "#ff0000", label: "Tree Cover - Built Up" },
+    { color: "#eee05d", label: "Tree Cover -  Farm" },
+    { color: "#a9a9a9", label: "Tree Cover -  Barren" },
+    { color: "#eaa4f0", label: "Tree Cover -  Scrub land" },
   ];
 
   const CropAfforestationtems = [
-    { color: "#ff0000", label: " Built Up - Forest " },
-    { color: "#eee05d", label: "Farm - Forest " },
-    { color: "#a9a9a9", label: "Barren - Forest " },
-    { color: "#eaa4f0", label: "Scrub land - Forest " },
+    { color: "#ff0000", label: "Built Up - Tree Cover" },
+    { color: "#eee05d", label: "Farm - Tree Cover" },
+    { color: "#a9a9a9", label: "Barren - Tree Cover" },
+    { color: "#eaa4f0", label: "Scrub land - Tree Cover" },
   ];
 
   const AquiferItems = [

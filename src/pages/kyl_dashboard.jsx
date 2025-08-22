@@ -56,6 +56,7 @@ const KYLDashboardPage = () => {
   let demandLayerRefs = [useRef(null), useRef(null)];
 
   const [isLoading, setIsLoading] = useState(false);
+  const [highlightMWS, setHighlightMWS] = useState(null)
   const [selectedMWS, setSelectedMWS] = useState(null);
   const [selectedVillages, setSelectedVillages] = useState([]);
 
@@ -97,7 +98,7 @@ const KYLDashboardPage = () => {
 
     // Only reset the style of the currently selected (green) MWS
     if (mwsLayerRef.current) {
-      fetchMWSLayer(selectedMWS);
+      resetMWSStyle([]);
     }
 
     if (toastId) {
@@ -226,6 +227,34 @@ const KYLDashboardPage = () => {
       }));
     }
   };
+ 
+  const resetMWSStyle = (tempMWS, hightlightMWS) => {
+    mwsLayerRef.current.setStyle((feature) => {
+          if (tempMWS.length > 0 && tempMWS.includes(feature.values_.uid)) {
+            // Filtered areas - highlight in red
+            return new Style({
+              stroke: new Stroke({
+                color: "#661E1E",
+                width: 1.0,
+              }),
+              fill: new Fill({
+                color: "rgba(255, 75, 75, 0.8)",
+              }),
+            });
+          } else {
+            // Default display - light yellow
+            return new Style({
+              stroke: new Stroke({
+                color: "#4a90e2",
+                width: 1.0,
+              }),
+              fill: new Fill({
+                color: "rgba(74, 144, 226, 0.2)",
+              }),
+            });
+          }
+        });
+  }
 
   const fetchMWSLayer = async (tempMWS) => {
     if (!district || !block) return;
@@ -254,9 +283,8 @@ const KYLDashboardPage = () => {
           }
           mwsLayerRef.current = mwsLayer;
         }
-
         mwsLayerRef.current.setStyle((feature) => {
-          if(selectedMWS !== null && feature.values_.uid === selectedMWS){
+          if(highlightMWS !== null && feature.values_.uid === highlightMWS){
             setSelectedMWSProfile(feature.getProperties())
             return new Style({
                 stroke: new Stroke({
@@ -298,7 +326,19 @@ const KYLDashboardPage = () => {
     } else {
       try {
         mwsLayerRef.current.setStyle((feature) => {
-          if (
+          if(highlightMWS !== null && feature.values_.uid === highlightMWS){
+            setSelectedMWSProfile(feature.getProperties())
+            return new Style({
+                stroke: new Stroke({
+                  color: "#166534",
+                  width: 2.0,
+                }),
+                fill: new Fill({
+                  color: "rgba(34, 197, 94, 0.4)",
+                }),
+              });
+          } 
+          else if (
             tempMWS.length > 0 &&
             tempMWS.includes(feature.values_.uid) &&
             currentLayer.length === 0
@@ -313,7 +353,8 @@ const KYLDashboardPage = () => {
                 color: "rgba(255, 75, 75, 0.8)",
               }),
             });
-          } else if (
+          }
+          else if (
             tempMWS.length > 0 &&
             tempMWS.includes(feature.values_.uid)
           ) {
@@ -449,7 +490,7 @@ const KYLDashboardPage = () => {
               } else {
                 reject(new Error("Features loading timeout"));
               }
-            }, 5000);
+            }, 3000);
           }
         };
 
@@ -536,6 +577,7 @@ const KYLDashboardPage = () => {
       setDataJson(result);
 
       setIsLoading(false);
+      setFiltersEnabled(true)
     } catch (e) {
       console.log(e);
       setIsLoading(false);
@@ -899,6 +941,7 @@ const KYLDashboardPage = () => {
     setMappedDemands(false);
 
     setSelectedMWS([]);
+    console.log("line 914")
     setSelectedVillages([]);
 
     setShowMWS(true);
@@ -935,7 +978,7 @@ const KYLDashboardPage = () => {
       setState(matchedState)
       setDistrict(matchedDistrict)
       setBlock(matchedTehsil)
-      setSelectedMWS(response.uid)
+      setHighlightMWS(response.uid)
     }catch(err){
       console.log(err)
       toast.custom(
@@ -993,13 +1036,12 @@ const KYLDashboardPage = () => {
       if (feature) {
         const clickedMwsId = feature.get("uid");
 
-        if (selectedMWS !== null) {
+        
           setSelectedMWSProfile(feature.getProperties());
           if (toastId) {
             toast.dismiss(toastId);
             setToastId(null);
           }
-
           mwsLayerRef.current.setStyle((feature) => {
             if (clickedMwsId === feature.values_.uid) {
               return new Style({
@@ -1012,6 +1054,7 @@ const KYLDashboardPage = () => {
                 }),
               });
             } else if (
+              selectedMWS !== null &&
               selectedMWS.length > 0 &&
               selectedMWS.includes(feature.values_.uid)
             ) {
@@ -1036,9 +1079,7 @@ const KYLDashboardPage = () => {
               });
             }
           });
-        } else {
-          toast.error("Please Select a valid MWS !");
-        }
+        
       }
     };
     mapRef.current.on("click", handleMapClick);
@@ -1167,8 +1208,9 @@ const KYLDashboardPage = () => {
           fetchMWSLayer([]);
         }
       } else {
-        setSelectedMWS([]);
-        fetchMWSLayer([]);
+        //setSelectedMWS([]);
+        //console.log("line 1186")
+        fetchMWSLayer([], "Line 1183");
       }
 
       if (villageKeys.length > 0) {
@@ -1568,7 +1610,6 @@ const KYLDashboardPage = () => {
       fetchVillageJson();
       fetchPlans();
 
-      setFiltersEnabled(true);
       setToggleStates({});
       setCurrentLayer([]);
     }
