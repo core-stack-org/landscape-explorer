@@ -290,9 +290,16 @@ const MapLegend = ({ showMWS, showVillages, currentLayer, mappedAssets, mappedDe
   ];
 
   const NregaLegendItems = [
-    { color: "#87CEEB", label: "Less than 100 NREGA works" },
-    { color: "#4169E1", label: "Between 100 - 300 NREGA works" },
-    { color: "#000080", label: "More than 300 NREGA works" },
+    { label: "Household Livelihood", color: "#C2678D" },
+    { label: "Others - HH, Community", color: "#355070" },
+    { label: "Agri Impact - HH, Community", color: "#FFA500" },
+    { label: "SWC - Landscape level impact", color: "#6495ED" },
+    { label: "Irrigation - Site level impact", color: "#1A759F" },
+    { label: "Plantation", color: "#52B69A" },
+    { label: "Un Identified", color: "#6D597A" },
+    // { color: "#87CEEB", label: "Less than 100 NREGA works" },
+    // { color: "#4169E1", label: "Between 100 - 300 NREGA works" },
+    // { color: "#000080", label: "More than 300 NREGA works" },
   ];
 
   const TrendLegendItems = [
@@ -310,18 +317,18 @@ const MapLegend = ({ showMWS, showVillages, currentLayer, mappedAssets, mappedDe
   ];
 
   const CropDeforestationItems = [
-    { color: "#73bb53", label: "Forest - Forest" },
-    { color: "#ff0000", label: "Forest - Built Up" },
-    { color: "#eee05d", label: "Forest -  Farm" },
-    { color: "#a9a9a9", label: "Forest -  Barren" },
-    { color: "#eaa4f0", label: "Forest -  Scrub land" },
+    { color: "#73bb53", label: "Tree Cover - Tree Cover" },
+    { color: "#ff0000", label: "Tree Cover - Built Up" },
+    { color: "#eee05d", label: "Tree Cover -  Farm" },
+    { color: "#a9a9a9", label: "Tree Cover -  Barren" },
+    { color: "#eaa4f0", label: "Tree Cover -  Scrub land" },
   ];
 
   const CropAfforestationtems = [
-    { color: "#ff0000", label: " Built Up - Forest " },
-    { color: "#eee05d", label: "Farm - Forest " },
-    { color: "#a9a9a9", label: "Barren - Forest " },
-    { color: "#eaa4f0", label: "Scrub land - Forest " },
+    { color: "#ff0000", label: "Built Up - Tree Cover" },
+    { color: "#eee05d", label: "Farm - Tree Cover" },
+    { color: "#a9a9a9", label: "Barren - Tree Cover" },
+    { color: "#eaa4f0", label: "Scrub land - Tree Cover" },
   ];
 
   const AquiferItems = [
@@ -338,7 +345,7 @@ const MapLegend = ({ showMWS, showVillages, currentLayer, mappedAssets, mappedDe
     { color: "#50c02b", label: "Khondalite" },
     { color: "#ffe1b5", label: "Banded Gneissic Complex" },
     { color: "#e4cff1", label: "Gneiss" },
-    { color: "#57d2ff", label: "Intrusive" }
+    { color: "#57d2ff", label: "Intrusive" },
   ];
 
   const SOGEItems = [

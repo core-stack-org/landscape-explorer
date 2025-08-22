@@ -70,16 +70,19 @@ const KYLLeftSidebar = ({
                         <button
                             key={category}
                             className={`px-3 py-1.5 rounded-md text-sm border transition-colors
-                                ${indicatorType === category
-                                    ? 'bg-indigo-50 text-indigo-600 border-indigo-200'
-                                    : 'text-gray-600 border-gray-200 hover:bg-gray-50'}
+                            ${indicatorType === category
+                                ? 'bg-indigo-50 text-indigo-600 border-indigo-200'
+                                : 'text-gray-600 border-gray-200 hover:bg-gray-50'}
+                            disabled:opacity-50 disabled:cursor-not-allowed
+                            disabled:bg-gray-100 disabled:text-gray-400 disabled:border-gray-200
+                            disabled:hover:bg-gray-100 disabled:pointer-events-none
                             `}
                             onClick={() => setIndicatorType(category)}
                             disabled={!filtersEnabled}
                         >
                             {category}
                         </button>
-                    ))}
+                        ))}
                 </div>
 
                 {indicatorType && (
