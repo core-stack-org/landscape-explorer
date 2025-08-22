@@ -58,7 +58,7 @@ const KYLDashboardPage = () => {
 
   const [isLoading, setIsLoading] = useState(false);
   const [highlightMWS, setHighlightMWS] = useState(null)
-  const [selectedMWS, setSelectedMWS] = useState(null);
+  const [selectedMWS, setSelectedMWS] = useState([]);
   const [selectedVillages, setSelectedVillages] = useState([]);
 
   const [dataJson, setDataJson] = useRecoilState(dataJsonAtom);
@@ -230,7 +230,7 @@ const KYLDashboardPage = () => {
     }
   };
  
-  const resetMWSStyle = (tempMWS, hightlightMWS) => {
+  const resetMWSStyle = (tempMWS) => {
     mwsLayerRef.current.setStyle((feature) => {
           if (tempMWS.length > 0 && tempMWS.includes(feature.values_.uid)) {
             // Filtered areas - highlight in red
@@ -324,6 +324,7 @@ const KYLDashboardPage = () => {
         });
       } catch (error) {
         console.error("Error fetching MWS layer:", error);
+        toast.error("Plese Refresh the ")
       }
     } else {
       try {
@@ -491,6 +492,42 @@ const KYLDashboardPage = () => {
                 resolve();
               } else {
                 reject(new Error("Features loading timeout"));
+                toast.custom(
+                  (t) => (
+                    <div className={`${
+                      t.visible ? 'animate-enter' : 'animate-leave'
+                    } max-w-md w-full bg-white shadow-lg rounded-lg pointer-events-auto flex`}>
+                      <div className="flex-1 w-0 p-4">
+                        <div className="flex items-start">
+                          <div className="ml-3 flex-1">
+                            <p className="text-sm font-medium text-gray-900">
+                              Network Error !                              
+                            </p>
+                            <p className="mt-1 text-sm text-gray-500">
+                            Please Refresh the page !
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex border-l border-gray-200">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            toast.dismiss(t.id);
+                            window.location.reload();
+                          }}
+                          className="w-full border border-transparent rounded-none rounded-r-lg p-4 flex items-center justify-center text-sm font-medium text-blue-600 hover:text-blue-500 focus:outline-none"
+                        >
+                          Submit Request
+                        </button>
+                      </div>
+                    </div>
+                  ),
+                  {
+                    duration: 5000,
+                    position: 'top-right',
+                  }
+                );
               }
             }, 3000);
           }
@@ -819,224 +856,6 @@ const KYLDashboardPage = () => {
     }
     setCurrentLayer(tempArr);
   };
-
-  // const handleLayerSelection = async (filter) => {
-  //   let checkIfPresent = currentLayer.find((f) => f.name === filter.name);
-  //   let checkIfInMap = mapRef.current.getLayers().getArray();
-  //   let existingLayer = checkIfInMap.find((layer) => {
-  //     return layer.ol_uid === boundaryLayerRef.current.ol_uid;
-  //   });
-  //   let tempArr = currentLayer;
-  //   let len = filter.layer_store.length;
-  //   if (checkIfPresent) {
-  //     checkIfPresent.layerRef.map((item) => {
-  //       mapRef.current.removeLayer(item);
-  //     });
-  //     if (!existingLayer) {
-  //       mapRef.current.addLayer(boundaryLayerRef.current);
-  //     }
-  //     mwsLayerRef.current.setStyle((feature) => {
-  //       if (
-  //         selectedMWS.length > 0 &&
-  //         selectedMWS.includes(feature.values_.uid)
-  //       ) {
-  //         return new Style({
-  //           stroke: new Stroke({
-  //             color: "#661E1E",
-  //             width: 1.0,
-  //           }),
-  //           fill: new Fill({
-  //             color: "rgba(255, 75, 75, 0.8)",
-  //           }),
-  //         });
-  //       } else {
-  //         return new Style({
-  //           stroke: new Stroke({
-  //             color: "#4a90e2",
-  //             width: 1.0,
-  //           }),
-  //           fill: new Fill({
-  //             color: "rgba(74, 144, 226, 0.2)",
-  //           }),
-  //         });
-  //       }
-  //     });
-  //     tempArr = currentLayer.filter((item) => item.name !== filter.name);
-  //     setToggleStates((prevStates) => ({
-  //       ...prevStates,
-  //       [filter.name]: false,
-  //     }));
-  //     setFiltersEnabled(true);
-  //   } else if (currentLayer.length === 0) {
-  //     let layerRef = [];
-  //     mapRef.current.removeLayer(mwsLayerRef.current);
-  //     mapRef.current.removeLayer(boundaryLayerRef.current);
-  //     for (let i = 0; i < len; ++i) {
-  //       let tempLayer;
-  //       if (filter.layer_store[i] === "terrain") {
-  //         tempLayer = await getImageLayer(
-  //           filter.layer_store[i],
-  //           `${district.label
-  //             .toLowerCase()
-  //             .replace(/\s*\(\s*/g, "_")
-  //             .replace(/\s*\)\s*/g, "")
-  //             .replace(/\s+/g, "_")}_${block.label
-  //             .toLowerCase()
-  //             .split(" ")
-  //             .join("_")}_${filter.layer_name[i]}`,
-  //           true,
-  //           filter.rasterStyle
-  //         );
-  //         layerRef.push(tempLayer);
-  //         mapRef.current.addLayer(tempLayer);
-  //       } else if (
-  //         filter.layer_store[i] === "LULC" &&
-  //         filter.rasterStyle === "lulc_water_pixels"
-  //       ) {
-  //         tempLayer = await getImageLayer(
-  //           `${filter.layer_store[i]}_${filter.layer_name[i]}`,
-  //           `LULC_22_23_${block.label
-  //             .toLowerCase()
-  //             .replace(/\s*\(\s*/g, "_")
-  //             .replace(/\s*\)\s*/g, "")
-  //             .replace(/\s+/g, "_")}_${filter.layer_name[i]}`,
-  //           true,
-  //           filter.rasterStyle
-  //         );
-  //         layerRef.push(tempLayer);
-  //         mapRef.current.addLayer(tempLayer);
-  //       } else if (filter.layer_store[i] === "change_detection") {
-  //         tempLayer = await getImageLayer(
-  //           `${filter.layer_store[i]}`,
-  //           `change_${district.label
-  //             .toLowerCase()
-  //             .split(" ")
-  //             .join("_")}_${block.label
-  //             .toLowerCase()
-  //             .replace(/\s*\(\s*/g, "_")
-  //             .replace(/\s*\)\s*/g, "")
-  //             .replace(/\s+/g, "_")}_${filter.layer_name[i]}`,
-  //           true,
-  //           filter.rasterStyle[i]
-  //         );
-  //         layerRef.push(tempLayer);
-  //         mapRef.current.addLayer(tempLayer);
-  //       } else if (filter.layer_store[i] === "nrega_assets") {
-  //         const nregaLayerName = `${district.label
-  //           .toLowerCase()
-  //           .replace(/\s/g, "_")}_${block.label
-  //           .toLowerCase()
-  //           .replace(/\s/g, "_")}`;
-  //         tempLayer = await getWebGlLayers(
-  //           filter.layer_store[i],
-  //           nregaLayerName,
-  //           true,
-  //           true,
-  //           null,
-  //           null,
-  //           district.label.toLowerCase().replace(/\s/g, "_"),
-  //           block.label.toLowerCase().replace(/\s/g, "_")
-  //         );
-  //         layerRef.push(tempLayer);
-  //         mapRef.current.addLayer(tempLayer);
-  //       } else if (filter.layer_store[i] === "LULC") {
-  //         tempLayer = await getImageLayer(
-  //           `${filter.layer_store[i]}_${filter.layer_name[i]}`,
-  //           `LULC_${lulcYear}_${block.label
-  //             .toLowerCase()
-  //             .split(" ")
-  //             .join("_")}_${filter.layer_name[i]}`,
-  //           true,
-  //           filter.rasterStyle
-  //         );
-  //         layerRef.push(tempLayer);
-  //         mapRef.current.addLayer(tempLayer);
-  //       } else if (filter.layer_store[i] === "cropping_drought") {
-  //         tempLayer = await getVectorLayers(
-  //           filter.layer_store[i],
-  //           `${district.label
-  //             .toLowerCase()
-  //             .replace(/\s*\(\s*/g, "_")
-  //             .replace(/\s*\)\s*/g, "")
-  //             .replace(/\s+/g, "_")}_${block.label
-  //             .toLowerCase()
-  //             .split(" ")
-  //             .join("_")}_${filter.layer_name[i]}`
-  //         );
-  //       } else if (filter.layer_store[i] === "panchayat_boundaries") {
-  //         tempLayer = await getVectorLayers(
-  //           filter.layer_store[i],
-  //           `${district.label
-  //             .toLowerCase()
-  //             .replace(/\s*\(\s*/g, "_")
-  //             .replace(/\s*\)\s*/g, "")
-  //             .replace(/\s+/g, "_")}_${block.label
-  //             .toLowerCase()
-  //             .split(" ")
-  //             .join("_")}`
-  //         );
-  //       } else {
-  //         tempLayer = await getVectorLayers(
-  //           filter.layer_store[i],
-  //           `${filter.layer_name[i]}_${district.label
-  //             .toLowerCase()
-  //             .split(" ")
-  //             .join("_")}_${block.label
-  //             .toLowerCase()
-  //             .replace(/\s*\(\s*/g, "_")
-  //             .replace(/\s*\)\s*/g, "")
-  //             .replace(/\s+/g, "_")}`
-  //         );
-  //       }
-  //       if (
-  //         filter.layer_store[i] !== "terrain" &&
-  //         filter.layer_store[i] !== "LULC" &&
-  //         filter.layer_store[i] !== "change_detection" &&
-  //         filter.layer_store[i] !== "nrega_assets"
-  //       ) {
-  //         tempLayer.setStyle((feature) => {
-  //           return layerStyle(
-  //             feature,
-  //             filter.vectorStyle,
-  //             filter.styleIdx,
-  //             villageJson,
-  //             dataJson
-  //           );
-  //         });
-  //         layerRef.push(tempLayer);
-  //         mapRef.current.addLayer(tempLayer);
-  //       }
-  //     }
-  //     mwsLayerRef.current.setStyle((feature) => {
-  //       if (
-  //         selectedMWS.length > 0 &&
-  //         selectedMWS.includes(feature.values_.uid)
-  //       ) {
-  //         return new Style({
-  //           stroke: new Stroke({
-  //             color: "#254871",
-  //             width: 2.0,
-  //           }),
-  //         });
-  //       }
-  //     });
-  //     mapRef.current.addLayer(mwsLayerRef.current);
-  //     let tempObj = {
-  //       name: filter.name,
-  //       layerRef: layerRef,
-  //     };
-  //     tempArr.push(tempObj);
-  //     setToggleStates((prevStates) => ({
-  //       ...prevStates,
-  //       [filter.name]: true,
-  //     }));
-  //     setFiltersEnabled(false);
-  //     setIndicatorType(null);
-  //   } else {
-  //     toast.error("Please Turn off previous layer before turning on new one !");
-  //   }
-  //   setCurrentLayer(tempArr);
-  // };
 
   //? Assets Selection Handler
   const handleAssetSelection = (assetType, isChecked) => {

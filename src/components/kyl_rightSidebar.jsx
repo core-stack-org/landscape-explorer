@@ -231,7 +231,7 @@ const KYLRightSidebar = ({
             </div>
             {getFormattedSelectedFilters().length > 0 && (
               <div className="mt-4 text-xs text-gray-600">
-                {selectedMWS.length === 0 && selectedVillages.length === 0
+                {selectedMWS !== null && selectedMWS.length === 0 && selectedVillages !== null && selectedVillages.length === 0
                   ? "There are no micro-watersheds and villages that matches your selected Filters."
                   : `The map on the left shows ${selectedMWS.length} micro-watersheds and ${selectedVillages.length} corresponding villages based on your selected filters.`}
               </div>
