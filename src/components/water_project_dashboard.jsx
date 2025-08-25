@@ -1696,9 +1696,22 @@ const WaterProjectDashboard = () => {
                       </div>
                     </TableCell>
 
+                    {/* Size of waterbody Column */}
+                    <TableCell sx={{ cursor: "pointer", userSelect: "none" }}>
+                      <div style={{ display: "flex", alignItems: "center" }}>
+                        Size of Waterbody (in hectares)
+                        <span
+                          style={{
+                            marginLeft: 4,
+                            fontWeight: "normal",
+                          }}
+                        ></span>
+                      </div>
+                    </TableCell>
+
                     {/* Water Availability Column */}
 
-                    <TableCell
+                    {/* <TableCell 
                       onClick={() => handleSort("avgWaterAvailabilityKharif")}
                       sx={{ cursor: "pointer", userSelect: "none" }}
                     >
@@ -1720,6 +1733,7 @@ const WaterProjectDashboard = () => {
                         </span>
                       </div>
                     </TableCell>
+                    */}
 
                     <TableCell
                       onClick={() => handleSort("avgWaterAvailabilityRabi")}
@@ -1784,14 +1798,15 @@ const WaterProjectDashboard = () => {
                       <TableCell>{row.waterbody}</TableCell>
                       <TableCell>{row.siltRemoved}</TableCell>
                       <TableCell>2022-23</TableCell>
-                      <TableCell>
+                      <TableCell>{row.areaOred?.toFixed(2)}</TableCell>
+                      {/* <TableCell>
                         {row.avgWaterAvailabilityKharif ?? "NA"}{" "}
                         {row.ImpactKharif !== undefined && (
                           <span style={{ color: row.ImpactKharifColor }}>
                             ({row.ImpactKharif})
                           </span>
                         )}
-                      </TableCell>
+                      </TableCell> */}
                       <TableCell>
                         {row.avgWaterAvailabilityRabi ?? "NA"}{" "}
                         {row.ImpactRabi !== undefined && (
