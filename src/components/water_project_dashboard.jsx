@@ -2679,7 +2679,7 @@ const WaterProjectDashboard = () => {
               <Box
                 sx={{
                   position: "relative",
-                  width: { xs: "100%", md: "65%" },
+                  width: { xs: "100%", md: "100%" },
                 }}
               >
                 <div
