@@ -171,7 +171,7 @@ const handleStyleDownload = (layerName) => {
       url = "https://drive.google.com/file/d/13cgF1Cg6YWZMCQXH7XV7cITxsg9v2SBu/view?usp=sharing"
       break;
     case "restoration":
-      url = "https://drive.google.com/file/d/1D_4MoPiraKZcXpsLsp2wRQ65B3Tf-d89/view?usp=sharing"
+      url = "https://drive.google.com/file/d/1JANwwxGDpy5vUkM2v8wqJDUKbVS8I72u/view?usp=sharing"
       break;
     case "clart":
       url = "https://drive.google.com/file/d/1B8ibmiv8dBNYZZ1gZWIp4AQPdu82t1yl/view?usp=drive_link"
