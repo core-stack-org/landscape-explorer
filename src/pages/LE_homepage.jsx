@@ -239,7 +239,7 @@ export default function KYLHomePage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {/* Card 1 */}
               <a
-                href="https://www.youtube.com/watch?v=ln7wpoW7Eg4"
+                href="https://www.youtube.com/watch?v=ln7wpoW7Eg4&list=PLZ0pcz8ccRmIU8wHzHv-CbDOs4JOqgNHC"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="block hover:shadow-lg transition duration-200 ease-in-out"
