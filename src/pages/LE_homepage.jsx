@@ -113,6 +113,83 @@ export default function KYLHomePage() {
 
               <div className="bg-purple-50 border-l-4 border-purple-500 text-purple-700 p-4 rounded-md mt-8">
                 <p className="text-sm">
+                  Check out the vision and demo{" "}
+                  <a
+                    href="https://www.youtube.com/playlist?list=PLZ0pcz8ccRmL3wTPRctaVFomGmgJFmM13"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="underline font-medium hover:text-purple-900"
+                  >
+                    here →
+                  </a>
+                </p>
+              </div>
+            </div>
+            <div className="flex flex-col items-end gap-0 ">
+              {/* First Card */}
+              <div
+                className="w-full max-w-md bg-white p-4 rounded shadow flex flex-col justify-between relative rounded-xl -mt-4"
+                style={{ overflow: "visible", zIndex: 100 }}
+              >
+                <p className="mb-0 text-center font-semibold text-2xl md:text-2xl leading-none">
+                  Select Location
+                </p>
+
+                <div className="space-y-3 mt-3 relative">
+                  {/* State */}
+                  <div className="relative z-[9999]">
+                    <SelectButton
+                      currVal={state || { label: "Select State" }}
+                      stateData={statesData}
+                      handleItemSelect={handleItemSelect}
+                      setState={setState}
+                    />
+                  </div>
+
+                  {/* District */}
+                  <div className="relative z-[9998]">
+                    <SelectButton
+                      currVal={district || { label: "Select District" }}
+                      stateData={state !== null ? state.district : null}
+                      handleItemSelect={handleItemSelect}
+                      setState={setDistrict}
+                    />
+                  </div>
+
+                  {/* Block */}
+                  <div className="relative z-[9997]">
+                    <SelectButton
+                      currVal={block || { label: "Select Tehsil" }}
+                      stateData={district !== null ? district.blocks : null}
+                      handleItemSelect={handleItemSelect}
+                      setState={setBlock}
+                    />
+                  </div>
+                </div>
+
+                <div className="flex flex-col sm:flex-row justify-between gap-2 mt-3">
+                  <button
+                    className="bg-purple-600 text-white px-4 py-2 rounded-lg w-full sm:w-auto"
+                    onClick={() =>
+                      handleNavigate("/kyl_dashboard", "Know Your Landscape")
+                    }
+                  >
+                    Know Your Landscape
+                  </button>
+                  <button
+                    className="bg-gray-300 text-black px-4 py-2 rounded-lg w-full sm:w-auto"
+                    onClick={() =>
+                      handleNavigate("/download_layers", "Download Layers")
+                    }
+                  >
+                    Download Layers
+                  </button>
+                </div>
+              </div>
+
+              {/* Second Card directly below first */}
+              <div className="bg-purple-50 border-l-4 border-purple-500 text-purple-700 p-4 rounded-md mt-4 max-w-md w-full">
+                <p className="text-sm">
                   Generate data for a specific location?{" "}
                   <a
                     href="https://forms.gle/HoyfwBbHU8c29TYb8"
@@ -123,65 +200,6 @@ export default function KYLHomePage() {
                     Let us know here →
                   </a>
                 </p>
-              </div>
-            </div>
-            <div
-              className="w-full max-w-lg bg-white p-6 rounded shadow min-h-[350px] flex flex-col justify-between relative rounded-xl"
-              style={{ overflow: "visible", zIndex: 100 }}
-            >
-              <p className="mb-0 text-center font-semibold text-2xl md:text-2xl leading-none">
-                Select Location
-              </p>
-
-              <div className="space-y-5 mt-4 relative">
-                {/* State */}
-                <div className="relative z-[9999]">
-                  <SelectButton
-                    currVal={state || { label: "Select State" }}
-                    stateData={statesData}
-                    handleItemSelect={handleItemSelect}
-                    setState={setState}
-                  />
-                </div>
-
-                {/* District */}
-                <div className="relative z-[9998]">
-                  <SelectButton
-                    currVal={district || { label: "Select District" }}
-                    stateData={state !== null ? state.district : null}
-                    handleItemSelect={handleItemSelect}
-                    setState={setDistrict}
-                  />
-                </div>
-
-                {/* Block */}
-                <div className="relative z-[9997]">
-                  <SelectButton
-                    currVal={block || { label: "Select Tehsil" }}
-                    stateData={district !== null ? district.blocks : null}
-                    handleItemSelect={handleItemSelect}
-                    setState={setBlock}
-                  />
-                </div>
-              </div>
-
-              <div className="flex flex-col sm:flex-row justify-between gap-3 mt-4">
-                <button
-                  className="bg-purple-600 text-white px-4 py-2 rounded-lg w-full sm:w-auto"
-                  onClick={() =>
-                    handleNavigate("/kyl_dashboard", "Know Your Landscape")
-                  }
-                >
-                  Know Your Landscape
-                </button>
-                <button
-                  className="bg-gray-300 text-black px-4 py-2 rounded-lg w-full sm:w-auto"
-                  onClick={() =>
-                    handleNavigate("/download_layers", "Download Layers")
-                  }
-                >
-                  Download Layers
-                </button>
               </div>
             </div>
           </div>
