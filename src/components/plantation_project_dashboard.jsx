@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef, useMemo } from "react";
 import { useRecoilState, useRecoilValue } from "recoil";
 // import { yearAtom } from "../store/locationStore.jsx";
 import HeaderSelect from "../pages/HeaderSelect.jsx";
-import { useParams } from "react-router-dom";
 import VectorLayer from "ol/layer/Vector";
 import VectorSource from "ol/source/Vector";
 import GeoJSON from "ol/format/GeoJSON";
@@ -11,6 +10,7 @@ import { Style, Fill, Stroke } from "ol/style";
 import LocationOnIcon from "@mui/icons-material/LocationOn";
 import YearSlider from "./yearSlider";
 import { yearAtomFamily } from "../store/locationStore.jsx";
+import { fromLonLat } from "ol/proj";
 
 import {
   Box,
@@ -53,11 +53,8 @@ const usePlantationData = (orgName, projectName, projectId) => {
     if (!orgName || !projectName || !projectId) return;
 
     const fetchGeoJSON = async () => {
-      // Replace spaces with underscores
       const safeOrgName = orgName.replace(/\s+/g, "_");
       const safeProjectName = projectName.replace(/\s+/g, "_");
-
-      // Build layer name dynamically
       const typeName = `plantation:${safeOrgName}_${safeProjectName}_site_suitability`;
 
       const url =
@@ -199,6 +196,23 @@ const PlantationProjectDashboard = () => {
       ];
 
       const interventionYear = "20-21";
+      let avgTreeCover = "NA";
+      if (props.LULC) {
+        console.log("proppssss", props.LULC);
+        try {
+          const lulcArray = JSON.parse(props.LULC);
+          console.log("lulccccccarrraaaayyyy", lulcArray);
+          const treeValues = lulcArray
+            .map((y) => y["6.0"])
+            .filter((v) => v !== undefined);
+          if (treeValues.length > 0) {
+            const sum = treeValues.reduce((a, b) => a + b, 0);
+            avgTreeCover = ((sum / treeValues.length) * 100).toFixed(2);
+          }
+        } catch (err) {
+          console.error("Error parsing LULC:", err);
+        }
+      }
 
       return {
         id: index + 1,
@@ -210,9 +224,9 @@ const PlantationProjectDashboard = () => {
         farmerId: descFields["farmer id"] || "NA",
         siteId: descFields["site id"] || "NA",
         waterbody: props.waterbody_name || "NA",
-        patchScore: props.patch_score || "NA",
+        patchScore: props.patch_score ?? "NA",
         patchSuitability: props.patch_suitability || "NA",
-
+        averageTreeCover: avgTreeCover,
         coordinates,
         featureIndex: index,
       };
@@ -465,7 +479,7 @@ const PlantationProjectDashboard = () => {
     handleFilterClose();
   };
 
-  const initializeMap1 = async () => {
+  const initializeMap = async () => {
     const baseLayer = new TileLayer({
       source: new XYZ({
         url: `https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}`,
@@ -475,9 +489,7 @@ const PlantationProjectDashboard = () => {
       }),
       preload: 4,
     });
-
     baseLayerRef.current = baseLayer;
-
     class GoogleLogoControl extends Control {
       constructor() {
         const element = document.createElement("div");
@@ -492,7 +504,6 @@ const PlantationProjectDashboard = () => {
         super({ element });
       }
     }
-
     const view = new View({
       projection: "EPSG:4326",
       constrainResolution: true,
@@ -502,80 +513,136 @@ const PlantationProjectDashboard = () => {
 
     const map = new Map({
       target: mapElement1.current,
-      layers: [baseLayer],
-      controls: defaultControls().extend([new GoogleLogoControl()]),
-      view: view,
-      loadTilesWhileAnimating: true,
-      loadTilesWhileInteracting: true,
-    });
-
-    mapRef1.current = map;
-
-    // Create water body layer
-    const vectorLayerWater = new VectorSource({
-      features: new GeoJSON({
-        dataProjection: "EPSG:4326",
-        featureProjection: "EPSG:4326",
-      }).readFeatures(geoData),
-    });
-
-    const waterBodyLayerSecond = new VectorLayer({
-      source: vectorLayerWater,
-      style: new Style({
-        stroke: new Stroke({ color: "#ff0000", width: 5 }),
-        // fill: new Fill({ color: "rgba(100, 149, 237, 0.5)" }),
+      layers: [
+        new TileLayer({
+          source: new XYZ({
+            url: "https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}",
+          }),
+        }),
+      ],
+      view: new View({
+        center: fromLonLat([78.9629, 20.5937]), // EPSG:3857 default
+        zoom: 5,
       }),
     });
-    waterBodyLayerSecond.setZIndex(2);
-
-    map.addLayer(waterBodyLayerSecond);
-    setWaterBodyLayer(waterBodyLayerSecond);
-
-    map.on("singleclick", (evt) => {
-      let found = false;
-      map.forEachFeatureAtPixel(evt.pixel, (feature) => {
-        const props = feature.getProperties();
-        if (props.waterbody_name) {
-          setMapClickedWaterbody({
-            name: props.waterbody_name,
-            Village: props.Village,
-            Taluka: props.Taluka,
-          });
-          found = true;
-        }
-      });
-      if (!found) {
-        setMapClickedWaterbody(null);
-      }
-    });
-
-    const features = vectorLayerWater.getFeatures();
-    if (!selectedWaterbody && features.length > 0) {
-      const extent = vectorLayerWater.getExtent();
-      view.fit(extent, {
-        padding: [50, 50, 50, 50],
-        duration: 1000,
-        maxZoom: 35,
-        zoom: 18,
-      });
-    }
-
-    map.once("rendercomplete", () => {
-      if (selectedWaterbody && selectedWaterbody.coordinates) {
-        zoomToWaterbody(selectedWaterbody, selectedFeature);
-      }
-    });
+    return map;
   };
 
   useEffect(() => {
-    if (view === "map") {
-      if (mapElement1.current) initializeMap1();
-    }
+    const map = initializeMap(); // call your function here
+  }, []);
 
-    return () => {
-      if (mapRef1.current) mapRef1.current.setTarget(null);
-    };
-  }, [view]);
+  // const initializeMap1 = async () => {
+  //   const baseLayer = new TileLayer({
+  //     source: new XYZ({
+  //       url: `https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}`,
+  //       maxZoom: 30,
+  //       transition: 500,
+  //       zoom: 18,
+  //     }),
+  //     preload: 4,
+  //   });
+
+  //   baseLayerRef.current = baseLayer;
+
+  //   class GoogleLogoControl extends Control {
+  //     constructor() {
+  //       const element = document.createElement("div");
+  //       element.style.pointerEvents = "none";
+  //       element.style.position = "absolute";
+  //       element.style.bottom = "5px";
+  //       element.style.left = "5px";
+  //       element.style.background = "#f2f2f27f";
+  //       element.style.fontSize = "10px";
+  //       element.style.padding = "5px";
+  //       element.innerHTML = "&copy; Google Satellite Hybrid contributors";
+  //       super({ element });
+  //     }
+  //   }
+
+  //   const view = new View({
+  //     projection: "EPSG:4326",
+  //     constrainResolution: true,
+  //     smoothExtentConstraint: true,
+  //     smoothResolutionConstraint: true,
+  //   });
+
+  //   const map = new Map({
+  //     target: mapElement1.current,
+  //     layers: [baseLayer],
+  //     controls: defaultControls().extend([new GoogleLogoControl()]),
+  //     view: view,
+  //     loadTilesWhileAnimating: true,
+  //     loadTilesWhileInteracting: true,
+  //   });
+
+  //   mapRef1.current = map;
+
+  //   // Create water body layer
+  //   const vectorLayerWater = new VectorSource({
+  //     features: new GeoJSON({
+  //       dataProjection: "EPSG:4326",
+  //       featureProjection: "EPSG:4326",
+  //     }).readFeatures(geoData),
+  //   });
+
+  //   const waterBodyLayerSecond = new VectorLayer({
+  //     source: vectorLayerWater,
+  //     style: new Style({
+  //       stroke: new Stroke({ color: "#ff0000", width: 5 }),
+  //       // fill: new Fill({ color: "rgba(100, 149, 237, 0.5)" }),
+  //     }),
+  //   });
+  //   waterBodyLayerSecond.setZIndex(2);
+
+  //   map.addLayer(waterBodyLayerSecond);
+  //   setWaterBodyLayer(waterBodyLayerSecond);
+
+  //   map.on("singleclick", (evt) => {
+  //     let found = false;
+  //     map.forEachFeatureAtPixel(evt.pixel, (feature) => {
+  //       const props = feature.getProperties();
+  //       if (props.waterbody_name) {
+  //         setMapClickedWaterbody({
+  //           name: props.waterbody_name,
+  //           Village: props.Village,
+  //           Taluka: props.Taluka,
+  //         });
+  //         found = true;
+  //       }
+  //     });
+  //     if (!found) {
+  //       setMapClickedWaterbody(null);
+  //     }
+  //   });
+
+  //   const features = vectorLayerWater.getFeatures();
+  //   if (!selectedWaterbody && features.length > 0) {
+  //     const extent = vectorLayerWater.getExtent();
+  //     view.fit(extent, {
+  //       padding: [50, 50, 50, 50],
+  //       duration: 1000,
+  //       maxZoom: 35,
+  //       zoom: 18,
+  //     });
+  //   }
+
+  //   map.once("rendercomplete", () => {
+  //     if (selectedWaterbody && selectedWaterbody.coordinates) {
+  //       zoomToWaterbody(selectedWaterbody, selectedFeature);
+  //     }
+  //   });
+  // };
+
+  // useEffect(() => {
+  //   if (view === "map") {
+  //     if (mapElement1.current) initializeMap1();
+  //   }
+
+  //   return () => {
+  //     if (mapRef1.current) mapRef1.current.setTarget(null);
+  //   };
+  // }, [view]);
 
   useEffect(() => {
     if (view === "map" && selectedWaterbody && selectedFeature) {
@@ -676,60 +743,30 @@ const PlantationProjectDashboard = () => {
     }
   };
 
-  const downloadCSV = () => {
-    if (!sortedRows || sortedRows.length === 0) {
-      return;
-    }
+  function getAverageTreeCover(lulcString) {
+    if (!lulcString) return 0;
 
-    const headers = [
-      "State",
-      "District",
-      "Taluka",
-      "GP/Village",
-      "Waterbody",
-      "Silt Removed (Cu.m.)",
-      "Mean Water Availability During Kharif (%)",
-      "Mean Water Availability During Rabi (%)",
-      "Mean Water Availability During Zaid (%)",
-    ];
-
-    const csvRows = [
-      headers.join(","),
-      ...sortedRows.map((row) =>
-        [
-          row.state,
-          row.district,
-          row.block,
-          row.village,
-          row.waterbody,
-          row.siltRemoved,
-          row.avgWaterAvailabilityKharif,
-          row.avgWaterAvailabilityRabi,
-          row.avgWaterAvailabilityZaid,
-        ]
-          .map((cell) => `"${cell}"`)
-          .join(",")
-      ),
-    ];
-    let parsedProject;
     try {
-      parsedProject = JSON.parse(project);
-    } catch (err) {
-      console.error("Failed to parse project string:", err);
-      return;
-    }
+      const lulcArray = JSON.parse(lulcString); // parse LULC JSON array
+      let sum = 0;
+      let count = 0;
 
-    const projectName = parsedProject.label;
-    const csvContent = "data:text/csv;charset=utf-8," + csvRows.join("\n");
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement("a");
-    const fileName = `${projectName}_waterbodies_report.csv`;
-    link.setAttribute("href", encodedUri);
-    link.setAttribute("download", fileName);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
+      lulcArray.forEach((yearObj) => {
+        if (yearObj["6"] !== undefined) {
+          sum += yearObj["6"];
+          count += 1;
+        }
+      });
+
+      if (count === 0) return 0;
+
+      // Convert to percentage and round to 2 decimals
+      return ((sum / count) * 100).toFixed(2) + "%";
+    } catch (err) {
+      console.error("Error parsing LULC:", err);
+      return 0;
+    }
+  }
 
   return (
     <Box sx={{ position: "relative" }}>
@@ -826,7 +863,6 @@ const PlantationProjectDashboard = () => {
               height: "88px",
               width: "48px",
             }}
-            onClick={downloadCSV}
           >
             <Download size={94} strokeWidth={1.2} color="black" />
           </Box>
@@ -859,11 +895,8 @@ const PlantationProjectDashboard = () => {
               }}
             >
               <Lightbulb size={94} color="black" />
-              Under the project {project?.label}, {totalRows} waterbodies have
-              been de-silted, spanning around{" "}
-              {/* On average, the surface
-            water availability during summer season has changed from 16% to
-            25%. */}
+              Under the project {project?.label}, {totalRows} sites are planted
+              under the ... hectare area.
             </Typography>
             <TableContainer component={Paper} sx={{ mt: 4, boxShadow: 0 }}>
               <Table>
@@ -944,19 +977,6 @@ const PlantationProjectDashboard = () => {
                       </div>
                     </TableCell>
 
-                    {/* Patch Score*/}
-                    <TableCell sx={{ cursor: "pointer", userSelect: "none" }}>
-                      <div style={{ display: "flex", alignItems: "center" }}>
-                        Suitability Score
-                        <span
-                          style={{
-                            marginLeft: 4,
-                            fontWeight: "normal",
-                          }}
-                        ></span>
-                      </div>
-                    </TableCell>
-
                     {/* Patch suitablity*/}
                     <TableCell sx={{ cursor: "pointer", userSelect: "none" }}>
                       <div style={{ display: "flex", alignItems: "center" }}>
@@ -970,49 +990,15 @@ const PlantationProjectDashboard = () => {
                       </div>
                     </TableCell>
 
-                    <TableCell
-                      onClick={() => handleSort("avgWaterAvailabilityRabi")}
-                      sx={{ cursor: "pointer", userSelect: "none" }}
-                    >
+                    <TableCell sx={{ cursor: "pointer", userSelect: "none" }}>
                       <div style={{ display: "flex", alignItems: "center" }}>
-                        Mean Water Availability During Rabi (%)
+                        Avergae tree cover
                         <span
                           style={{
                             marginLeft: 4,
-                            fontWeight:
-                              sortField === "avgWaterAvailabilityRabi"
-                                ? "bold"
-                                : "normal",
+                            fontWeight: "normal",
                           }}
-                        >
-                          {sortField === "avgWaterAvailabilityRabi" &&
-                          sortOrder === "asc"
-                            ? "🔼"
-                            : "🔽"}
-                        </span>
-                      </div>
-                    </TableCell>
-
-                    <TableCell
-                      onClick={() => handleSort("avgWaterAvailabilityZaid")}
-                      sx={{ cursor: "pointer", userSelect: "none" }}
-                    >
-                      <div style={{ display: "flex", alignItems: "center" }}>
-                        Mean Water Availability During Zaid (%)
-                        <span
-                          style={{
-                            marginLeft: 4,
-                            fontWeight:
-                              sortField === "avgWaterAvailabilityZaid"
-                                ? "bold"
-                                : "normal",
-                          }}
-                        >
-                          {sortField === "avgWaterAvailabilityZaid" &&
-                          sortOrder === "asc"
-                            ? "🔼"
-                            : "🔽"}
-                        </span>
+                        ></span>
                       </div>
                     </TableCell>
                   </TableRow>
@@ -1031,33 +1017,9 @@ const PlantationProjectDashboard = () => {
                       <TableCell>{row.block}</TableCell>
                       <TableCell>{row.village}</TableCell>{" "}
                       <TableCell>{row.farmerName}</TableCell>
-                      <TableCell>2022-23</TableCell>
-                      <TableCell>{row.patchScore}</TableCell>
+                      <TableCell>2020-21</TableCell>
                       <TableCell>{row.patchSuitability}</TableCell>
-                      {/* <TableCell>
-                      {row.avgWaterAvailabilityKharif ?? "NA"}{" "}
-                      {row.ImpactKharif !== undefined && (
-                        <span style={{ color: row.ImpactKharifColor }}>
-                          ({row.ImpactKharif})
-                        </span>
-                      )}
-                    </TableCell> */}
-                      <TableCell>
-                        {row.avgWaterAvailabilityRabi ?? "NA"}{" "}
-                        {row.ImpactRabi !== undefined && (
-                          <span style={{ color: row.ImpactRabiColor }}>
-                            ({row.ImpactRabi})
-                          </span>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        {row.avgWaterAvailabilityZaid ?? "NA"}{" "}
-                        {row.ImpactZaid !== undefined && (
-                          <span style={{ color: row.ImpactZaidColor }}>
-                            ({row.ImpactZaid})
-                          </span>
-                        )}
-                      </TableCell>
+                      <TableCell>{row.averageTreeCover}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -1111,67 +1073,6 @@ const PlantationProjectDashboard = () => {
               px: { xs: 2, sm: 4, md: 6 },
             }}
           >
-            <Box
-              sx={{
-                display: "flex",
-                flexDirection: "column",
-                gap: 2,
-                width: "100%",
-                p: { xs: 2, sm: 3, md: 2 },
-                borderRadius: 2,
-                bgcolor: "background.paper",
-                boxShadow: 1,
-              }}
-            >
-              {/* Heading */}
-              <Typography
-                variant="h5"
-                sx={{
-                  fontWeight: 700,
-                  color: "primary.main",
-                  borderBottom: "2px solid",
-                  borderColor: "primary.main",
-                  pb: 1,
-                }}
-              >
-                Section 1: Water presence and land-use change in the waterbody
-              </Typography>
-
-              {/* Explanation */}
-              <Typography
-                variant="body1"
-                sx={{ color: "text.secondary", lineHeight: 1.7 }}
-              >
-                This section shows the selected waterbody, silt removal details,
-                and seasonal water availability before and after the
-                intervention, along with yearly trends of cropping patterns
-                within the waterbody boundary.
-              </Typography>
-
-              <Typography
-                variant="body1"
-                sx={{ color: "text.secondary", lineHeight: 1.7 }}
-              >
-                The boundary shown for the waterbody is the maximal coverage
-                ever gained by the waterbody over the last several years.
-                Depending on rainfall, water use, and other factors like changes
-                in the inlet and outlet channels of the waterbody, not all of
-                the waterbody area will see water in a given year and some of
-                the area may also get utilized for agriculture. This land use in
-                each year can be observed from the map and graphs.
-              </Typography>
-
-              <Typography
-                variant="body1"
-                sx={{ color: "text.secondary", lineHeight: 1.7 }}
-              >
-                Similarly, the duration of water presence can be seen in terms
-                of how much of the waterbody saw water throughout the year, or
-                during the monsoon and post-monsoon months, or only during the
-                monsoon months.
-              </Typography>
-            </Box>
-
             <Box
               sx={{
                 display: "flex",
@@ -1314,10 +1215,10 @@ const PlantationProjectDashboard = () => {
                         minWidth: { xs: "220px", sm: "300px", md: "500px" },
                       }}
                     >
-                      <YearSlider
+                      {/* <YearSlider
                         currentLayer={{ name: "lulcWaterrej" }}
                         sliderId="map1"
-                      />
+                      /> */}
                     </Box>
                   </Box>
                 )}
@@ -1447,195 +1348,12 @@ const PlantationProjectDashboard = () => {
                       water_rej_data={geoData}
                       mwsFeature={selectedMWSFeature}
                     /> */}
-                    <Typography fontSize={14} color="#333" mt={1}>
-                      <b>Black line</b> represents the year of intervention.
-                    </Typography>
                   </Box>
                 )}
               </Box>
             </Box>
-            <Box
-              sx={{
-                display: "flex",
-                flexDirection: "column",
-                gap: 2,
-                width: "100%",
-                p: { xs: 2, sm: 3, md: 2 },
-                borderRadius: 2,
-                bgcolor: "background.paper",
-                boxShadow: 1,
-              }}
-            >
-              {/* Heading */}
-              <Typography
-                variant="h5"
-                sx={{
-                  fontWeight: 700,
-                  color: "primary.main",
-                  borderBottom: "2px solid",
-                  borderColor: "primary.main",
-                  pb: 1,
-                }}
-              >
-                Section 2: Catchment area and stream position
-              </Typography>
 
-              {/* Explanation */}
-              <Typography
-                variant="body1"
-                sx={{ color: "text.secondary", lineHeight: 1.7 }}
-              >
-                This section gives the catchment area from which runoff may
-                drain into the waterbody. A larger catchment area would imply a
-                higher rainfall runoff draining into the waterbody, in turn
-                leading to more storage. This can however get impacted by
-                blocked inlet channels and other changes.
-              </Typography>
-
-              <Typography
-                variant="body1"
-                sx={{ color: "text.secondary", lineHeight: 1.7 }}
-              >
-                This section also gives the stream order in which the waterbody
-                lies. The stream order indicates the relative position of the
-                waterbody in the drainage network. Waterbodies present in higher
-                stream orders would typically see sub-surface flows from
-                upstream watersheds.
-              </Typography>
-            </Box>
-
-            {selectedWaterbody && (
-              <Box
-                sx={{
-                  width: "100%",
-                  display: "flex",
-                  flexDirection: { xs: "column", md: "row" },
-                  justifyContent: "space-between",
-                  gap: 3,
-                  mt: 4,
-                  px: { xs: 2, md: 0 },
-                }}
-              >
-                {[
-                  {
-                    label: "Max Catchment Area",
-                    value: `${selectedWaterbody?.maxCatchmentArea?.toFixed(
-                      2
-                    )} sq km`,
-                  },
-                  {
-                    label: "Max Stream Order",
-                    value: `Order ${selectedWaterbody?.maxStreamOrder}`,
-                  },
-                ].map((item, idx) => (
-                  <Box
-                    key={idx}
-                    sx={{
-                      flex: 1,
-                      background:
-                        "linear-gradient(135deg, #f9fafb 0%, #f1f3f5 100%)",
-                      padding: 3,
-                      borderRadius: 3,
-                      boxShadow: "0 4px 12px rgba(0, 0, 0, 0.05)",
-                      display: "flex",
-                      flexDirection: "column",
-                      alignItems: "center",
-                      textAlign: "center",
-                      minHeight: "120px",
-                      transition: "all 0.3s ease",
-                      "&:hover": {
-                        transform: "translateY(-2px)",
-                        boxShadow: "0 6px 16px rgba(0, 0, 0, 0.08)",
-                      },
-                      border: "1px solid #e0e0e0",
-                    }}
-                  >
-                    <Typography
-                      variant="h6"
-                      fontWeight={700}
-                      color="text.primary"
-                      sx={{
-                        textTransform: "uppercase",
-                        letterSpacing: 0.8,
-                        fontSize: "0.95rem",
-                        color: "#333",
-                      }}
-                    >
-                      {item.label}
-                    </Typography>
-                    <Typography
-                      variant="h5"
-                      fontWeight={600}
-                      color="primary"
-                      sx={{
-                        mt: 1,
-                        fontSize: "1.3rem",
-                      }}
-                    >
-                      {item.value}
-                    </Typography>
-                  </Box>
-                ))}
-              </Box>
-            )}
             {/* ZOI Section with Map + Side Chart */}
-            <Box
-              sx={{
-                display: "flex",
-                flexDirection: "column",
-                gap: 2,
-                width: "100%",
-                p: { xs: 2, sm: 3, md: 2 },
-                borderRadius: 2,
-                bgcolor: "background.paper",
-                boxShadow: 1,
-              }}
-            >
-              {/* Heading */}
-              <Typography
-                variant="h5"
-                sx={{
-                  fontWeight: 700,
-                  color: "primary.main",
-                  borderBottom: "2px solid",
-                  borderColor: "primary.main",
-                  pb: 1,
-                }}
-              >
-                Section 3: Cropping patterns in the Zone of Influence of the
-                waterbody
-              </Typography>
-
-              {/* Explanation */}
-              <Typography
-                variant="body1"
-                sx={{ color: "text.secondary", lineHeight: 1.7 }}
-              >
-                This section shows the waterbody’s zone of influence (ZoI) and
-                cropping intensities within this zone, along with the NDVI
-                values in the area.
-              </Typography>
-
-              <Typography
-                variant="body1"
-                sx={{ color: "text.secondary", lineHeight: 1.7 }}
-              >
-                The ZoI of the waterbody is the area impacted by the waterbody
-                through improved soil moisture or use of water for irrigation.
-                Changes before and after the intervention in cropping
-                intensities and NDVI (Normalized Difference Vegetation Index, is
-                a common remote sensed indicator of greenness) in the ZoI can be
-                seen through maps and graphs.
-              </Typography>
-
-              <Typography
-                variant="body1"
-                sx={{ color: "text.secondary", lineHeight: 1.7 }}
-              >
-                We also show NDMI values, a soil moisture index, at increasing
-                radial distances from the waterbody.
-              </Typography>
-            </Box>
 
             <Box
               sx={{
