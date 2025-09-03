@@ -181,9 +181,9 @@ const MapLegend = ({toggledLayers, lulcYear1, lulcYear2, lulcYear3}) => {
   ]
 
   const restorationItem = [
-    { color: "#ffa500", label: "Protection" },
-    { color: "#007500", label: "Wide-scale Restoration" },
-    { color: "#000000", label: "Mosaic Restoration" },
+    { color: "#4fbc14", label: "Protection" },
+    { color: "#0f077c", label: "Wide-scale Restoration" },
+    { color: "#d79b0f", label: "Mosaic Restoration" },
     { color: "#ffff00", label: "Excluded Areas" },
   ]
 
