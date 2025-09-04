@@ -586,21 +586,293 @@ const WaterProjectDashboard = () => {
     });
   }, [lulcYear1, selectedWaterbody, waterBodyLayer, project]);
 
+  // useEffect(() => {
+  //   const fetchUpdateLulcZOI = async () => {
+  //     if (!lulcYear2 || !lulcYear2.includes("_")) return;
+  //     if (!zoiFeatures?.length) return;
+  //     if (!mapRef2.current) return;
+
+  //     if (selectedWaterbody) {
+  //       const match = zoiFeatures.find(
+  //         (f) => f.get("waterbody_name") === selectedWaterbody.waterbody
+  //       );
+  //       setZoiArea(match?.get("zoi_area") || null);
+  //     } else {
+  //       setZoiArea(null);
+  //     }
+
+  //     const fullYear = lulcYear2
+  //       .split("_")
+  //       .map((part) => `20${part}`)
+  //       .join("_")
+  //       .toLowerCase()
+  //       .replace(/\s/g, "_");
+
+  //     const projectName = project?.label;
+  //     const projectId = project?.value;
+  //     if (!projectName || !projectId) return;
+
+  //     const map = mapRef2.current;
+  //     const layerName = `clipped_lulc_filtered_mws_${projectName}_${projectId}_${fullYear}`;
+
+  //     const idsToRemove = [
+  //       "lulc_zoi_layer",
+  //       "zoi_border_layer",
+  //       "waterbody_layer",
+  //     ];
+  //     map
+  //       .getLayers()
+  //       .getArray()
+  //       .forEach((layer) => {
+  //         if (idsToRemove.includes(layer.get("id"))) {
+  //           map.removeLayer(layer);
+  //         }
+  //       });
+
+  //     const tempLayer = await getImageLayer(
+  //       "waterrej",
+  //       layerName,
+  //       true,
+  //       "waterrej_lulc"
+  //     );
+  //     tempLayer.setZIndex(0);
+  //     tempLayer.set("id", "lulc_zoi_layer");
+
+  //     const geometries = zoiFeatures.map((f) => f.getGeometry().clone());
+  //     const multiPolygon = new MultiPolygon(
+  //       geometries.map((g) => g.getCoordinates())
+  //     );
+  //     const combinedFeature = new Feature(multiPolygon);
+  //     const crop = new Crop({
+  //       feature: combinedFeature,
+  //       wrapX: true,
+  //       inner: false,
+  //     });
+  //     tempLayer.addFilter(crop);
+
+  //     map.addLayer(tempLayer);
+
+  //     const zoiLayer = new VectorLayer({
+  //       source: new VectorSource({ features: zoiFeatures }),
+  //       style: new Style({
+  //         stroke: new Stroke({ color: "yellow", width: 5 }),
+  //         // fill: new Fill({ color: "rgba(255, 255, 153, 0.3)" }),
+  //       }),
+  //     });
+  //     zoiLayer.setZIndex(1);
+  //     zoiLayer.set("id", "zoi_border_layer");
+  //     map.addLayer(zoiLayer);
+
+  //     if (waterBodyLayer) {
+  //       waterBodyLayer.setZIndex(2);
+  //       waterBodyLayer.set("id", "waterbody_layer");
+  //       map.addLayer(waterBodyLayer);
+  //     }
+
+  //     setCurrentLayer((prev) => {
+  //       const others = prev.filter((l) => l.name !== "lulcWaterrejZOI");
+  //       return [...others, { name: "lulcWaterrejZOI", layerRef: [tempLayer] }];
+  //     });
+  //   };
+
+  //   fetchUpdateLulcZOI().catch(console.error);
+  // }, [lulcYear2, project, zoiFeatures, mapRef2.current, selectedWaterbody]);
+
+  // useEffect(() => {
+  //   const fetchUpdateLulcZOI = async () => {
+  //     if (!lulcYear2 || !lulcYear2.includes("_")) return;
+  //     if (!zoiFeatures?.length) return;
+  //     if (!mapRef2.current) return;
+
+  //     if (selectedWaterbody) {
+  //       const match = zoiFeatures.find(
+  //         (f) =>
+  //           f.get("waterbody_name")?.toLowerCase().trim() ===
+  //           selectedWaterbody?.waterbody?.toLowerCase().trim()
+  //       );
+  //       setZoiArea(match?.get("zoi_area") || null);
+  //     } else {
+  //       setZoiArea(null);
+  //     }
+
+  //     const fullYear = lulcYear2
+  //       .split("_")
+  //       .map((part) => `20${part}`)
+  //       .join("_")
+  //       .toLowerCase()
+  //       .replace(/\s/g, "_");
+
+  //     const projectName = project?.label;
+  //     const projectId = project?.value;
+  //     if (!projectName || !projectId) return;
+
+  //     const map = mapRef2.current;
+  //     const layerName = `clipped_lulc_filtered_mws_${projectName}_${projectId}_${fullYear}`;
+
+  //     // 🔹 Remove old layers
+  //     const idsToRemove = [
+  //       "lulc_zoi_layer",
+  //       "zoi_border_layer",
+  //       "waterbody_layer",
+  //     ];
+  //     map
+  //       .getLayers()
+  //       .getArray()
+  //       .forEach((layer) => {
+  //         if (idsToRemove.includes(layer.get("id"))) {
+  //           map.removeLayer(layer);
+  //         }
+  //       });
+
+  //     // 🔹 Add LULC raster
+  //     const tempLayer = await getImageLayer(
+  //       "waterrej",
+  //       layerName,
+  //       true,
+  //       "waterrej_lulc"
+  //     );
+  //     tempLayer.setZIndex(0);
+  //     tempLayer.set("id", "lulc_zoi_layer");
+
+  //     // 🔹 Crop logic: single ZOI if selected, else all ZOIs
+  //     let cropFeature;
+  //     if (selectedWaterbody) {
+  //       const matchedZoi = zoiFeatures.find(
+  //         (f) =>
+  //           f.get("waterbody_name")?.toLowerCase().trim() ===
+  //           selectedWaterbody?.waterbody?.toLowerCase().trim()
+  //       );
+  //       if (matchedZoi) cropFeature = matchedZoi;
+  //     } else {
+  //       const geometries = zoiFeatures.map((f) => f.getGeometry().clone());
+  //       const multiPolygon = new MultiPolygon(
+  //         geometries.map((g) => g.getCoordinates())
+  //       );
+  //       cropFeature = new Feature(multiPolygon);
+  //     }
+
+  //     if (cropFeature) {
+  //       const crop = new Crop({
+  //         feature: cropFeature,
+  //         wrapX: true,
+  //         inner: false,
+  //       });
+  //       tempLayer.addFilter(crop);
+  //     }
+
+  //     map.addLayer(tempLayer);
+
+  //     // 🔹 ZOI border layer (always yellow)
+  //     let zoiLayer;
+  //     if (selectedWaterbody) {
+  //       const matchedZoi = zoiFeatures.find(
+  //         (f) =>
+  //           f.get("waterbody_name")?.toLowerCase().trim() ===
+  //           selectedWaterbody?.waterbody?.toLowerCase().trim()
+  //       );
+  //       if (matchedZoi) {
+  //         zoiLayer = new VectorLayer({
+  //           source: new VectorSource({ features: [matchedZoi] }),
+  //           style: new Style({
+  //             stroke: new Stroke({ color: "yellow", width: 3 }),
+  //             // fill: new Fill({ color: "rgba(255, 255, 0, 0.2)" }),
+  //           }),
+  //         });
+  //       }
+  //     } else {
+  //       zoiLayer = new VectorLayer({
+  //         source: new VectorSource({ features: zoiFeatures }),
+  //         style: new Style({
+  //           stroke: new Stroke({ color: "yellow", width: 3 }),
+  //           // fill: new Fill({ color: "rgba(255, 255, 0, 0.2)" }),
+  //         }),
+  //       });
+  //     }
+
+  //     if (zoiLayer) {
+  //       zoiLayer.setZIndex(1);
+  //       zoiLayer.set("id", "zoi_border_layer");
+  //       map.addLayer(zoiLayer);
+  //     }
+
+  //     // // 🔹 Waterbody outline layer
+  //     // if (waterBodyLayer) {
+  //     //   waterBodyLayer.setZIndex(2);
+  //     //   waterBodyLayer.set("id", "waterbody_layer");
+  //     //   map.addLayer(waterBodyLayer);
+  //     // }
+
+  //     let wbLayer;
+
+  //     if (selectedWaterbody && waterBodyLayer) {
+  //       // ✅ Show only the selected waterbody
+  //       const features = waterBodyLayer.getSource().getFeatures();
+
+  //       const matchedWb = features.find(
+  //         (f) =>
+  //           f.get("waterbody_name")?.toLowerCase().trim() ===
+  //           selectedWaterbody?.waterbody?.toLowerCase().trim()
+  //       );
+
+  //       if (matchedWb) {
+  //         wbLayer = new VectorLayer({
+  //           source: new VectorSource({ features: [matchedWb] }),
+  //           style: new Style({
+  //             stroke: new Stroke({ color: "red", width: 3 }),
+  //             // fill: new Fill({ color: "rgba(255,0,0,0.2)" }),
+  //           }),
+  //         });
+  //       }
+  //     } else if (waterBodyLayer) {
+  //       // ✅ No selection → show all waterbodies
+  //       wbLayer = waterBodyLayer;
+  //     }
+
+  //     if (wbLayer) {
+  //       wbLayer.setZIndex(2);
+  //       wbLayer.set("id", "waterbody_layer");
+
+  //       // 🔹 Remove old waterbody_layer if exists
+  //       const oldLayer = map
+  //         .getLayers()
+  //         .getArray()
+  //         .find((l) => l.get("id") === "waterbody_layer");
+  //       if (oldLayer) map.removeLayer(oldLayer);
+
+  //       map.addLayer(wbLayer);
+  //     }
+
+  //     // 🔹 Track current layer
+  //     setCurrentLayer((prev) => {
+  //       const others = prev.filter((l) => l.name !== "lulcWaterrejZOI");
+  //       return [...others, { name: "lulcWaterrejZOI", layerRef: [tempLayer] }];
+  //     });
+  //   };
+
+  //   fetchUpdateLulcZOI().catch(console.error);
+  // }, [lulcYear2, project, zoiFeatures, mapRef2.current, selectedWaterbody]);
+
   useEffect(() => {
     const fetchUpdateLulcZOI = async () => {
       if (!lulcYear2 || !lulcYear2.includes("_")) return;
       if (!zoiFeatures?.length) return;
       if (!mapRef2.current) return;
 
+      const map = mapRef2.current;
+
+      // 🔹 Set ZOI area for selected waterbody
       if (selectedWaterbody) {
-        const match = zoiFeatures.find(
-          (f) => f.get("waterbody_name") === selectedWaterbody.waterbody
+        const matchedZoi = zoiFeatures.find(
+          (f) =>
+            f.get("waterbody_name")?.toLowerCase().trim() ===
+            selectedWaterbody?.waterbody?.toLowerCase().trim()
         );
-        setZoiArea(match?.get("zoi_area") || null);
+        setZoiArea(matchedZoi?.get("zoi_area") || null);
       } else {
         setZoiArea(null);
       }
 
+      // 🔹 Construct LULC layer name
       const fullYear = lulcYear2
         .split("_")
         .map((part) => `20${part}`)
@@ -612,9 +884,9 @@ const WaterProjectDashboard = () => {
       const projectId = project?.value;
       if (!projectName || !projectId) return;
 
-      const map = mapRef2.current;
       const layerName = `clipped_lulc_filtered_mws_${projectName}_${projectId}_${fullYear}`;
 
+      // 🔹 Remove old layers
       const idsToRemove = [
         "lulc_zoi_layer",
         "zoi_border_layer",
@@ -629,6 +901,7 @@ const WaterProjectDashboard = () => {
           }
         });
 
+      // 🔹 Add LULC raster layer
       const tempLayer = await getImageLayer(
         "waterrej",
         layerName,
@@ -638,37 +911,94 @@ const WaterProjectDashboard = () => {
       tempLayer.setZIndex(0);
       tempLayer.set("id", "lulc_zoi_layer");
 
-      const geometries = zoiFeatures.map((f) => f.getGeometry().clone());
-      const multiPolygon = new MultiPolygon(
-        geometries.map((g) => g.getCoordinates())
-      );
-      const combinedFeature = new Feature(multiPolygon);
-      const crop = new Crop({
-        feature: combinedFeature,
-        wrapX: true,
-        inner: false,
-      });
-      tempLayer.addFilter(crop);
-
-      map.addLayer(tempLayer);
-
-      const zoiLayer = new VectorLayer({
-        source: new VectorSource({ features: zoiFeatures }),
-        style: new Style({
-          stroke: new Stroke({ color: "yellow", width: 5 }),
-          // fill: new Fill({ color: "rgba(255, 255, 153, 0.3)" }),
-        }),
-      });
-      zoiLayer.setZIndex(1);
-      zoiLayer.set("id", "zoi_border_layer");
-      map.addLayer(zoiLayer);
-
-      if (waterBodyLayer) {
-        waterBodyLayer.setZIndex(2);
-        waterBodyLayer.set("id", "waterbody_layer");
-        map.addLayer(waterBodyLayer);
+      // 🔹 Crop LULC: single ZOI or all ZOIs
+      let cropFeature;
+      if (selectedWaterbody) {
+        const matchedZoi = zoiFeatures.find(
+          (f) =>
+            f.get("waterbody_name")?.toLowerCase().trim() ===
+            selectedWaterbody?.waterbody?.toLowerCase().trim()
+        );
+        if (matchedZoi) cropFeature = matchedZoi;
+      } else {
+        const geometries = zoiFeatures.map((f) => f.getGeometry().clone());
+        const multiPolygon = new MultiPolygon(
+          geometries.map((g) => g.getCoordinates())
+        );
+        cropFeature = new Feature(multiPolygon);
       }
 
+      if (cropFeature) {
+        const crop = new Crop({
+          feature: cropFeature,
+          wrapX: true,
+          inner: false,
+        });
+        tempLayer.addFilter(crop);
+      }
+      map.addLayer(tempLayer);
+
+      // 🔹 Add ZOI border layer (yellow)
+      let zoiLayer;
+      if (selectedWaterbody) {
+        const matchedZoi = zoiFeatures.find(
+          (f) =>
+            f.get("waterbody_name")?.toLowerCase().trim() ===
+            selectedWaterbody?.waterbody?.toLowerCase().trim()
+        );
+        if (matchedZoi) {
+          zoiLayer = new VectorLayer({
+            source: new VectorSource({ features: [matchedZoi] }),
+            style: new Style({
+              stroke: new Stroke({ color: "yellow", width: 3 }),
+            }),
+          });
+        }
+      } else {
+        zoiLayer = new VectorLayer({
+          source: new VectorSource({ features: zoiFeatures }),
+          style: new Style({
+            stroke: new Stroke({ color: "yellow", width: 3 }),
+          }),
+        });
+      }
+
+      if (zoiLayer) {
+        zoiLayer.setZIndex(1);
+        zoiLayer.set("id", "zoi_border_layer");
+        map.addLayer(zoiLayer);
+      }
+
+      // 🔹 Add waterbody layer (only selected waterbody if any)
+      let wbLayer;
+      if (selectedWaterbody && waterBodyLayer) {
+        const allFeatures = waterBodyLayer.getSource().getFeatures();
+        const matchedWb = allFeatures.find(
+          (f) =>
+            f.get("waterbody_name")?.toLowerCase().trim() ===
+            selectedWaterbody?.waterbody?.toLowerCase().trim()
+        );
+
+        if (matchedWb) {
+          wbLayer = new VectorLayer({
+            source: new VectorSource({ features: [matchedWb] }),
+            style: new Style({
+              stroke: new Stroke({ color: "red", width: 3 }),
+            }),
+          });
+        }
+      } else if (waterBodyLayer) {
+        // ✅ No selection → show all waterbodies
+        wbLayer = waterBodyLayer;
+      }
+
+      if (wbLayer) {
+        wbLayer.setZIndex(2);
+        wbLayer.set("id", "waterbody_layer");
+        map.addLayer(wbLayer);
+      }
+
+      // 🔹 Track current LULC layer
       setCurrentLayer((prev) => {
         const others = prev.filter((l) => l.name !== "lulcWaterrejZOI");
         return [...others, { name: "lulcWaterrejZOI", layerRef: [tempLayer] }];
