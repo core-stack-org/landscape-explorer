@@ -352,7 +352,7 @@ const HeaderSelect = ({
                     },
                   }}
                 >
-                  Back
+                  Change Project
                 </Button>
               </Box>
             )}
