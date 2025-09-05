@@ -1286,7 +1286,7 @@ const WaterProjectDashboard = () => {
       }),
       opacity: 0.7,
     });
-
+    console.log("mwssssssssss layer", wmsLayer);
     map.addLayer(wmsLayer);
 
     const drainageLayerName = `waterrej:WATER_REJ_drainage_line_ATCF_${projectName}_${projectId}`;
@@ -1309,6 +1309,7 @@ const WaterProjectDashboard = () => {
       opacity: 1,
     });
 
+    console.log("drainagggegeggeggegeggege", drainageLayerName);
     drainageLineLayer.setZIndex(1.5);
     map.addLayer(drainageLineLayer);
 
@@ -1338,7 +1339,7 @@ const WaterProjectDashboard = () => {
         source: boundarySource,
         style: new Style({
           stroke: new Stroke({ color: "#4A90E2", width: 2 }),
-          fill: new Fill({ color: "rgba(74,144,226, 0.2)" }),
+          // fill: new Fill({ color: "rgba(74,144,226, 0.2)" }),
         }),
       });
 
@@ -2462,7 +2463,7 @@ const WaterProjectDashboard = () => {
                   sx={{
                     position: "absolute",
                     right: 100,
-                    top: 100,
+                    top: 500,
                     width: 500,
                     padding: 3,
                     background: "#f9fafb",
