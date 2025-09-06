@@ -324,7 +324,7 @@ const KYLDashboardPage = () => {
         });
       } catch (error) {
         console.error("Error fetching MWS layer:", error);
-        toast.error("Plese Refresh the ")
+        toast.error("Please Refresh the Page !")
       }
     } else {
       try {
