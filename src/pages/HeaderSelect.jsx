@@ -164,7 +164,7 @@ const HeaderSelect = ({
   const loadOrganization = async () => {
     try {
       const response = await fetch(
-        `${process.env.REACT_APP_BASEURL}api/v1/auth/register/available_organizations/`,
+        `${process.env.REACT_APP_BASEURL}api/v1/auth/register/available_organizations/?app_type=plantation`,
         {
           method: "GET",
           headers: {

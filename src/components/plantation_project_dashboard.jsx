@@ -529,8 +529,19 @@ const PlantationProjectDashboard = () => {
   };
 
   useEffect(() => {
-    const map = initializeMap(); // call your function here
-  }, []);
+    if (view === "map" && geoData) {
+      if (mapElement1.current) {
+        initializeMap(); // use your full map init with waterbody layer
+      }
+    }
+
+    return () => {
+      if (mapRef1.current) {
+        mapRef1.current.setTarget(null);
+        mapRef1.current = null;
+      }
+    };
+  }, [view, geoData]);
 
   // const initializeMap1 = async () => {
   //   const baseLayer = new TileLayer({
