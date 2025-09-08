@@ -103,6 +103,7 @@ const PlantationProjectDashboard = () => {
   const [currentLayer, setCurrentLayer] = useState([]);
 
   const [selectedFeature, setSelectedFeature] = useState(null);
+  const plantationLayerRef = useRef(null);
 
   const mapElement1 = useRef();
   const mapRef1 = useRef();
@@ -118,6 +119,45 @@ const PlantationProjectDashboard = () => {
 
   const [organization, setOrganization] = useState(null);
   const [project, setProject] = useState(null);
+
+  useEffect(() => {
+    if (!mapRef1.current || !geoData) return;
+
+    // remove old plantation layer if it exists
+    if (plantationLayerRef.current) {
+      mapRef1.current.removeLayer(plantationLayerRef.current);
+      plantationLayerRef.current = null;
+    }
+
+    const vectorSource = new VectorSource({
+      features: new GeoJSON({
+        dataProjection: "EPSG:4326", // WFS GeoJSON from GeoServer
+        featureProjection: "EPSG:3857", // match the map view
+      }).readFeatures(geoData),
+    });
+
+    const plantationLayer = new VectorLayer({
+      source: vectorSource,
+      style: new Style({
+        stroke: new Stroke({ color: "#228B22", width: 2 }),
+        fill: new Fill({ color: "rgba(34,139,34,0.25)" }),
+      }),
+    });
+
+    plantationLayer.setZIndex(2);
+    mapRef1.current.addLayer(plantationLayer);
+    plantationLayerRef.current = plantationLayer;
+
+    // fit view to plantation extent
+    const extent = vectorSource.getExtent();
+    if (extent && extent.every(Number.isFinite)) {
+      mapRef1.current.getView().fit(extent, {
+        padding: [40, 40, 40, 40],
+        duration: 800,
+        maxZoom: 18,
+      });
+    }
+  }, [geoData]);
 
   useEffect(() => {
     const storedOrg = sessionStorage.getItem("selectedOrganization");
@@ -505,7 +545,7 @@ const PlantationProjectDashboard = () => {
       }
     }
     const view = new View({
-      projection: "EPSG:4326",
+      projection: "EPSG:3857",
       constrainResolution: true,
       smoothExtentConstraint: true,
       smoothResolutionConstraint: true,
@@ -513,35 +553,23 @@ const PlantationProjectDashboard = () => {
 
     const map = new Map({
       target: mapElement1.current,
-      layers: [
-        new TileLayer({
-          source: new XYZ({
-            url: "https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}",
-          }),
-        }),
-      ],
-      view: new View({
-        center: fromLonLat([78.9629, 20.5937]), // EPSG:3857 default
-        zoom: 5,
-      }),
+      layers: [baseLayer],
+      controls: defaultControls().extend([new GoogleLogoControl()]),
+      view: view,
+      loadTilesWhileAnimating: true,
+      loadTilesWhileInteracting: true,
     });
-    return map;
+    mapRef1.current = map;
   };
 
   useEffect(() => {
-    if (view === "map" && geoData) {
-      if (mapElement1.current) {
-        initializeMap(); // use your full map init with waterbody layer
-      }
+    if (view !== "map") return;
+    if (!mapRef1.current && mapElement1.current) {
+      initializeMap(); // only once
     }
-
-    return () => {
-      if (mapRef1.current) {
-        mapRef1.current.setTarget(null);
-        mapRef1.current = null;
-      }
-    };
-  }, [view, geoData]);
+    // optional: keep the map alive when leaving the view; remove if you truly want to destroy it.
+    return () => {};
+  }, [view]);
 
   // const initializeMap1 = async () => {
   //   const baseLayer = new TileLayer({
