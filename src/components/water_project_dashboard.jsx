@@ -1398,16 +1398,27 @@ const WaterProjectDashboard = () => {
   useEffect(() => {
     if (view === "map") {
       if (mapElement1.current) initializeMap1();
-      if (mapElement2.current) initializeMap2();
-      if (mapElement3.current) initializeMap3();
+      // if (mapElement2.current) initializeMap2();
+      // if (mapElement3.current) initializeMap3();
     }
 
     return () => {
       if (mapRef1.current) mapRef1.current.setTarget(null);
-      if (mapRef2.current) mapRef2.current.setTarget(null);
-      if (mapRef3.current) mapRef3.current.setTarget(null);
+      // if (mapRef2.current) mapRef2.current.setTarget(null);
+      // if (mapRef3.current) mapRef3.current.setTarget(null);
     };
   }, [view]);
+
+  useEffect(() => {
+    if (selectedWaterbody) {
+      if (mapElement2.current && !mapRef2.current) {
+        initializeMap2();
+      }
+      if (mapElement3.current && !mapRef3.current) {
+        initializeMap3();
+      }
+    }
+  }, [selectedWaterbody]);
 
   useEffect(() => {
     if (view === "map" && selectedWaterbody && selectedFeature) {
@@ -2207,66 +2218,68 @@ const WaterProjectDashboard = () => {
               px: { xs: 2, sm: 4, md: 6 },
             }}
           >
-            <Box
-              sx={{
-                display: "flex",
-                flexDirection: "column",
-                gap: 2,
-                width: "100%",
-                p: { xs: 2, sm: 3, md: 2 },
-                borderRadius: 2,
-                bgcolor: "background.paper",
-                boxShadow: 1,
-              }}
-            >
-              {/* Heading */}
-              <Typography
-                variant="h5"
+            {selectedWaterbody && (
+              <Box
                 sx={{
-                  fontWeight: 700,
-                  color: "primary.main",
-                  borderBottom: "2px solid",
-                  borderColor: "primary.main",
-                  pb: 1,
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 2,
+                  width: "100%",
+                  p: { xs: 2, sm: 3, md: 2 },
+                  borderRadius: 2,
+                  bgcolor: "background.paper",
+                  boxShadow: 1,
                 }}
               >
-                Section 1: Water presence and land-use change in the waterbody
-              </Typography>
+                {/* Heading */}
+                <Typography
+                  variant="h5"
+                  sx={{
+                    fontWeight: 700,
+                    color: "primary.main",
+                    borderBottom: "2px solid",
+                    borderColor: "primary.main",
+                    pb: 1,
+                  }}
+                >
+                  Section 1: Water presence and land-use change in the waterbody
+                </Typography>
 
-              {/* Explanation */}
-              <Typography
-                variant="body1"
-                sx={{ color: "text.secondary", lineHeight: 1.7 }}
-              >
-                This section shows the selected waterbody, silt removal details,
-                and seasonal water availability before and after the
-                intervention, along with yearly trends of cropping patterns
-                within the waterbody boundary.
-              </Typography>
+                {/* Explanation */}
+                <Typography
+                  variant="body1"
+                  sx={{ color: "text.secondary", lineHeight: 1.7 }}
+                >
+                  This section shows the selected waterbody, silt removal
+                  details, and seasonal water availability before and after the
+                  intervention, along with yearly trends of cropping patterns
+                  within the waterbody boundary.
+                </Typography>
 
-              <Typography
-                variant="body1"
-                sx={{ color: "text.secondary", lineHeight: 1.7 }}
-              >
-                The boundary shown for the waterbody is the maximal coverage
-                ever gained by the waterbody over the last several years.
-                Depending on rainfall, water use, and other factors like changes
-                in the inlet and outlet channels of the waterbody, not all of
-                the waterbody area will see water in a given year and some of
-                the area may also get utilized for agriculture. This land use in
-                each year can be observed from the map and graphs.
-              </Typography>
+                <Typography
+                  variant="body1"
+                  sx={{ color: "text.secondary", lineHeight: 1.7 }}
+                >
+                  The boundary shown for the waterbody is the maximal coverage
+                  ever gained by the waterbody over the last several years.
+                  Depending on rainfall, water use, and other factors like
+                  changes in the inlet and outlet channels of the waterbody, not
+                  all of the waterbody area will see water in a given year and
+                  some of the area may also get utilized for agriculture. This
+                  land use in each year can be observed from the map and graphs.
+                </Typography>
 
-              <Typography
-                variant="body1"
-                sx={{ color: "text.secondary", lineHeight: 1.7 }}
-              >
-                Similarly, the duration of water presence can be seen in terms
-                of how much of the waterbody saw water throughout the year, or
-                during the monsoon and post-monsoon months, or only during the
-                monsoon months.
-              </Typography>
-            </Box>
+                <Typography
+                  variant="body1"
+                  sx={{ color: "text.secondary", lineHeight: 1.7 }}
+                >
+                  Similarly, the duration of water presence can be seen in terms
+                  of how much of the waterbody saw water throughout the year, or
+                  during the monsoon and post-monsoon months, or only during the
+                  monsoon months.
+                </Typography>
+              </Box>
+            )}
 
             <Box
               sx={{
@@ -2281,7 +2294,7 @@ const WaterProjectDashboard = () => {
               <Box
                 sx={{
                   position: "relative",
-                  width: { xs: "100%", md: "65%" },
+                  width: selectedWaterbody ? { xs: "100%", md: "65%" } : "100%",
                 }}
               >
                 <div
@@ -2525,16 +2538,16 @@ const WaterProjectDashboard = () => {
                 </Box>
               )}
               {/* Charts Section */}
-              <Box
-                sx={{
-                  width: { xs: "100%", md: "45%" },
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: 4,
-                  alignItems: "center",
-                }}
-              >
-                {selectedWaterbody && (
+              {selectedWaterbody && (
+                <Box
+                  sx={{
+                    width: { xs: "100%", md: "45%" },
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 4,
+                    alignItems: "center",
+                  }}
+                >
                   <Box
                     sx={{ width: "100%", maxWidth: "700px", height: "400px" }}
                   >
@@ -2547,71 +2560,73 @@ const WaterProjectDashboard = () => {
                       <b>Black line</b> represents the year of intervention.
                     </Typography>
                   </Box>
-                )}
 
-                {selectedMWSFeature && (
-                  <Box
-                    sx={{
-                      width: "100%",
-                      maxWidth: "700px",
-                      height: "400px",
-                      marginTop: "1%",
-                    }}
-                  >
-                    <PrecipitationStackChart feature={selectedMWSFeature} />
-                  </Box>
-                )}
-              </Box>
+                  {selectedMWSFeature && (
+                    <Box
+                      sx={{
+                        width: "100%",
+                        maxWidth: "700px",
+                        height: "400px",
+                        marginTop: "1%",
+                      }}
+                    >
+                      <PrecipitationStackChart feature={selectedMWSFeature} />
+                    </Box>
+                  )}
+                </Box>
+              )}
             </Box>
-            <Box
-              sx={{
-                display: "flex",
-                flexDirection: "column",
-                gap: 2,
-                width: "100%",
-                p: { xs: 2, sm: 3, md: 2 },
-                borderRadius: 2,
-                bgcolor: "background.paper",
-                boxShadow: 1,
-              }}
-            >
-              {/* Heading */}
-              <Typography
-                variant="h5"
+            {selectedWaterbody && (
+              <Box
                 sx={{
-                  fontWeight: 700,
-                  color: "primary.main",
-                  borderBottom: "2px solid",
-                  borderColor: "primary.main",
-                  pb: 1,
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 2,
+                  width: "100%",
+                  p: { xs: 2, sm: 3, md: 2 },
+                  borderRadius: 2,
+                  bgcolor: "background.paper",
+                  boxShadow: 1,
                 }}
               >
-                Section 2: Catchment area and stream position
-              </Typography>
+                {/* Heading */}
+                <Typography
+                  variant="h5"
+                  sx={{
+                    fontWeight: 700,
+                    color: "primary.main",
+                    borderBottom: "2px solid",
+                    borderColor: "primary.main",
+                    pb: 1,
+                  }}
+                >
+                  Section 2: Catchment area and stream position
+                </Typography>
 
-              {/* Explanation */}
-              <Typography
-                variant="body1"
-                sx={{ color: "text.secondary", lineHeight: 1.7 }}
-              >
-                This section gives the catchment area from which runoff may
-                drain into the waterbody. A larger catchment area would imply a
-                higher rainfall runoff draining into the waterbody, in turn
-                leading to more storage. This can however get impacted by
-                blocked inlet channels and other changes.
-              </Typography>
+                {/* Explanation */}
+                <Typography
+                  variant="body1"
+                  sx={{ color: "text.secondary", lineHeight: 1.7 }}
+                >
+                  This section gives the catchment area from which runoff may
+                  drain into the waterbody. A larger catchment area would imply
+                  a higher rainfall runoff draining into the waterbody, in turn
+                  leading to more storage. This can however get impacted by
+                  blocked inlet channels and other changes.
+                </Typography>
 
-              <Typography
-                variant="body1"
-                sx={{ color: "text.secondary", lineHeight: 1.7 }}
-              >
-                This section also gives the stream order in which the waterbody
-                lies. The stream order indicates the relative position of the
-                waterbody in the drainage network. Waterbodies present in higher
-                stream orders would typically see sub-surface flows from
-                upstream watersheds.
-              </Typography>
-            </Box>
+                <Typography
+                  variant="body1"
+                  sx={{ color: "text.secondary", lineHeight: 1.7 }}
+                >
+                  This section also gives the stream order in which the
+                  waterbody lies. The stream order indicates the relative
+                  position of the waterbody in the drainage network. Waterbodies
+                  present in higher stream orders would typically see
+                  sub-surface flows from upstream watersheds.
+                </Typography>
+              </Box>
+            )}
 
             {selectedWaterbody && (
               <Box
@@ -2688,314 +2703,318 @@ const WaterProjectDashboard = () => {
               </Box>
             )}
             {/* ZOI Section with Map + Side Chart */}
-            <Box
-              sx={{
-                display: "flex",
-                flexDirection: "column",
-                gap: 2,
-                width: "100%",
-                p: { xs: 2, sm: 3, md: 2 },
-                borderRadius: 2,
-                bgcolor: "background.paper",
-                boxShadow: 1,
-              }}
-            >
-              {/* Heading */}
-              <Typography
-                variant="h5"
-                sx={{
-                  fontWeight: 700,
-                  color: "primary.main",
-                  borderBottom: "2px solid",
-                  borderColor: "primary.main",
-                  pb: 1,
-                }}
-              >
-                Section 3: Cropping patterns in the Zone of Influence of the
-                waterbody
-              </Typography>
-
-              {/* Explanation */}
-              <Typography
-                variant="body1"
-                sx={{ color: "text.secondary", lineHeight: 1.7 }}
-              >
-                This section shows the waterbody’s zone of influence (ZoI) and
-                cropping intensities within this zone, along with the NDVI
-                values in the area.
-              </Typography>
-
-              <Typography
-                variant="body1"
-                sx={{ color: "text.secondary", lineHeight: 1.7 }}
-              >
-                The ZoI of the waterbody is the area impacted by the waterbody
-                through improved soil moisture or use of water for irrigation.
-                Changes before and after the intervention in cropping
-                intensities and NDVI (Normalized Difference Vegetation Index, is
-                a common remote sensed indicator of greenness) in the ZoI can be
-                seen through maps and graphs.
-              </Typography>
-
-              <Typography
-                variant="body1"
-                sx={{ color: "text.secondary", lineHeight: 1.7 }}
-              >
-                We also show NDMI values, a soil moisture index, at increasing
-                radial distances from the waterbody.
-              </Typography>
-            </Box>
-
-            <Box
-              sx={{
-                display: "flex",
-                flexDirection: { xs: "column", md: "row" },
-                alignItems: "flex-start",
-                gap: 4,
-                width: "100%",
-                mt: 6,
-              }}
-            >
-              {/* ZOI Map (same dimensions as first map) */}
+            {selectedWaterbody && (
               <Box
                 sx={{
-                  position: "relative",
-                  width: { xs: "100%", md: "65%" },
-                }}
-              >
-                <div
-                  ref={mapElement2}
-                  style={{
-                    height: "850px",
-                    width: "100%",
-                    border: "1px solid #ccc",
-                    borderRadius: "5px",
-                  }}
-                />
-
-                {/* Top-left Label */}
-                {selectedWaterbody && (
-                  <Box
-                    sx={{
-                      position: "absolute",
-                      top: 16,
-                      left: 16,
-                      backgroundColor: "rgba(255, 255, 255, 0.9)",
-                      padding: "8px 12px",
-                      borderRadius: "6px",
-                      fontWeight: "bold",
-                      boxShadow: 1,
-                      display: "flex",
-                      flexDirection: "column",
-                      alignItems: "flex-start",
-                      gap: 1,
-                      zIndex: 1000,
-                      maxWidth: { xs: "90%", sm: "300px" },
-                    }}
-                  >
-                    <Box display="flex" alignItems="center" gap={1}>
-                      <LocationOnIcon fontSize="small" color="primary" />
-                      <Typography variant="body1" fontWeight={600}>
-                        {selectedWaterbody?.waterbody || "Waterbody Name"}
-                      </Typography>
-                    </Box>
-                    <Typography
-                      variant="body2"
-                      color="text.secondary"
-                      fontWeight={800}
-                    >
-                      ZOI Area:{" "}
-                      {zoiArea !== null ? `${zoiArea.toFixed(2)} ha` : "NA"}
-                    </Typography>
-                  </Box>
-                )}
-
-                {/* Year Slider (bottom right) */}
-                <Box
-                  sx={{
-                    position: "absolute",
-                    bottom: 16,
-                    right: 16,
-                    backgroundColor: "rgba(255, 255, 255, 0.9)",
-                    padding: 2,
-                    borderRadius: 1,
-                    boxShadow: 2,
-                    zIndex: 1000,
-                    minWidth: "500px",
-                  }}
-                >
-                  <YearSlider
-                    currentLayer={{ name: "lulcWaterrej" }}
-                    sliderId="map2"
-                  />
-                </Box>
-
-                {/* Zoom Controls */}
-                <Box
-                  sx={{
-                    position: "absolute",
-                    top: 80,
-                    right: 16,
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: 1,
-                    zIndex: 1100,
-                  }}
-                >
-                  <button
-                    style={{
-                      backgroundColor: "#fff",
-                      border: "1px solid #ccc",
-                      borderRadius: "4px",
-                      width: "40px",
-                      height: "40px",
-                      fontSize: "20px",
-                      cursor: "pointer",
-                    }}
-                    onClick={() => {
-                      const view = mapRef2.current?.getView();
-                      view?.animate({
-                        zoom: view.getZoom() + 1,
-                        duration: 300,
-                      });
-                    }}
-                  >
-                    +
-                  </button>
-                  <button
-                    style={{
-                      backgroundColor: "#fff",
-                      border: "1px solid #ccc",
-                      borderRadius: "4px",
-                      width: "40px",
-                      height: "40px",
-                      fontSize: "20px",
-                      cursor: "pointer",
-                    }}
-                    onClick={() => {
-                      const view = mapRef2.current?.getView();
-                      view?.animate({
-                        zoom: view.getZoom() - 1,
-                        duration: 300,
-                      });
-                    }}
-                  >
-                    –
-                  </button>
-                </Box>
-              </Box>
-
-              {/* ZOI Chart */}
-              <Box
-                sx={{
-                  width: { xs: "100%", md: "45%" },
                   display: "flex",
                   flexDirection: "column",
-                  alignItems: "center",
+                  gap: 2,
+                  width: "100%",
+                  p: { xs: 2, sm: 3, md: 2 },
+                  borderRadius: 2,
+                  bgcolor: "background.paper",
+                  boxShadow: 1,
                 }}
               >
-                <Box sx={{ width: "100%", maxWidth: "700px", height: "400px" }}>
-                  <CroppingIntensityStackChart
-                    zoiFeatures={zoiFeatures}
-                    waterbody={selectedWaterbody}
-                  />
-                </Box>
-
-                <Box sx={{ width: "100%", maxWidth: "700px", height: "400px" }}>
-                  <NDMIPointChart
-                    zoiFeatures={zoiFeatures}
-                    waterbody={selectedWaterbody}
-                  />
-                </Box>
-              </Box>
-            </Box>
-            <Box
-              sx={{
-                width: "100%",
-                display: "flex",
-                flexDirection: { xs: "column", md: "row" }, // stack on small screens
-                gap: 2,
-                alignItems: "flex-end", // ensures bottom alignment (x-axis same level)
-              }}
-            >
-              {/* NDVI Chart */}
-              <Box
-                sx={{
-                  flex: 0.65, // takes 65% width
-                  height: "400px",
-                }}
-              >
-                <NDVIChart
-                  zoiFeatures={zoiFeatures}
-                  waterbody={selectedWaterbody}
-                  years={[
-                    "2017",
-                    "2018",
-                    "2019",
-                    "2020",
-                    "2021",
-                    "2022",
-                    "2023",
-                    "2024",
-                  ]}
-                />
-              </Box>
-
-              {/* Drought Chart */}
-              {selectedMWSFeature && (
-                <Box
+                {/* Heading */}
+                <Typography
+                  variant="h5"
                   sx={{
-                    flex: 0.35, // takes 35% width
-                    height: "450px",
+                    fontWeight: 700,
+                    color: "primary.main",
+                    borderBottom: "2px solid",
+                    borderColor: "primary.main",
+                    pb: 1,
                   }}
                 >
-                  <DroughtChart
-                    feature={selectedMWSFeature}
-                    waterbody={selectedWaterbody}
-                  />
-                </Box>
-              )}
-            </Box>
+                  Section 3: Cropping patterns in the Zone of Influence of the
+                  waterbody
+                </Typography>
 
+                {/* Explanation */}
+                <Typography
+                  variant="body1"
+                  sx={{ color: "text.secondary", lineHeight: 1.7 }}
+                >
+                  This section shows the waterbody’s zone of influence (ZoI) and
+                  cropping intensities within this zone, along with the NDVI
+                  values in the area.
+                </Typography>
+
+                <Typography
+                  variant="body1"
+                  sx={{ color: "text.secondary", lineHeight: 1.7 }}
+                >
+                  The ZoI of the waterbody is the area impacted by the waterbody
+                  through improved soil moisture or use of water for irrigation.
+                  Changes before and after the intervention in cropping
+                  intensities and NDVI (Normalized Difference Vegetation Index,
+                  is a common remote sensed indicator of greenness) in the ZoI
+                  can be seen through maps and graphs.
+                </Typography>
+
+                <Typography
+                  variant="body1"
+                  sx={{ color: "text.secondary", lineHeight: 1.7 }}
+                >
+                  We also show NDMI values, a soil moisture index, at increasing
+                  radial distances from the waterbody.
+                </Typography>
+              </Box>
+            )}
+            {selectedWaterbody && (
+              <>
+                <Box
+                  sx={{
+                    display: "flex",
+                    flexDirection: { xs: "column", md: "row" },
+                    alignItems: "flex-start",
+                    gap: 4,
+                    width: "100%",
+                    mt: 6,
+                  }}
+                >
+                  <Box
+                    sx={{
+                      position: "relative",
+                      width: { xs: "100%", md: "65%" },
+                    }}
+                  >
+                    <div
+                      ref={mapElement2}
+                      style={{
+                        height: "850px",
+                        width: "100%",
+                        border: "1px solid #ccc",
+                        borderRadius: "5px",
+                      }}
+                    />
+
+                    <Box
+                      sx={{
+                        position: "absolute",
+                        top: 16,
+                        left: 16,
+                        backgroundColor: "rgba(255, 255, 255, 0.9)",
+                        padding: "8px 12px",
+                        borderRadius: "6px",
+                        fontWeight: "bold",
+                        boxShadow: 1,
+                        display: "flex",
+                        flexDirection: "column",
+                        alignItems: "flex-start",
+                        gap: 1,
+                        zIndex: 1000,
+                        maxWidth: { xs: "90%", sm: "300px" },
+                      }}
+                    >
+                      <Box display="flex" alignItems="center" gap={1}>
+                        <LocationOnIcon fontSize="small" color="primary" />
+                        <Typography variant="body1" fontWeight={600}>
+                          {selectedWaterbody?.waterbody || "Waterbody Name"}
+                        </Typography>
+                      </Box>
+                      <Typography
+                        variant="body2"
+                        color="text.secondary"
+                        fontWeight={800}
+                      >
+                        ZOI Area:{" "}
+                        {zoiArea !== null ? `${zoiArea.toFixed(2)} ha` : "NA"}
+                      </Typography>
+                    </Box>
+
+                    {/* Year Slider (bottom right) */}
+                    <Box
+                      sx={{
+                        position: "absolute",
+                        bottom: 16,
+                        right: 16,
+                        backgroundColor: "rgba(255, 255, 255, 0.9)",
+                        padding: 2,
+                        borderRadius: 1,
+                        boxShadow: 2,
+                        zIndex: 1000,
+                        minWidth: "500px",
+                      }}
+                    >
+                      <YearSlider
+                        currentLayer={{ name: "lulcWaterrej" }}
+                        sliderId="map2"
+                      />
+                    </Box>
+
+                    {/* Zoom Controls */}
+                    <Box
+                      sx={{
+                        position: "absolute",
+                        top: 80,
+                        right: 16,
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: 1,
+                        zIndex: 1100,
+                      }}
+                    >
+                      <button
+                        style={{
+                          backgroundColor: "#fff",
+                          border: "1px solid #ccc",
+                          borderRadius: "4px",
+                          width: "40px",
+                          height: "40px",
+                          fontSize: "20px",
+                          cursor: "pointer",
+                        }}
+                        onClick={() => {
+                          const view = mapRef2.current?.getView();
+                          view?.animate({
+                            zoom: view.getZoom() + 1,
+                            duration: 300,
+                          });
+                        }}
+                      >
+                        +
+                      </button>
+                      <button
+                        style={{
+                          backgroundColor: "#fff",
+                          border: "1px solid #ccc",
+                          borderRadius: "4px",
+                          width: "40px",
+                          height: "40px",
+                          fontSize: "20px",
+                          cursor: "pointer",
+                        }}
+                        onClick={() => {
+                          const view = mapRef2.current?.getView();
+                          view?.animate({
+                            zoom: view.getZoom() - 1,
+                            duration: 300,
+                          });
+                        }}
+                      >
+                        –
+                      </button>
+                    </Box>
+                  </Box>
+
+                  <Box
+                    sx={{
+                      width: { xs: "100%", md: "45%" },
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "center",
+                    }}
+                  >
+                    <Box
+                      sx={{ width: "100%", maxWidth: "700px", height: "400px" }}
+                    >
+                      <CroppingIntensityStackChart
+                        zoiFeatures={zoiFeatures}
+                        waterbody={selectedWaterbody}
+                      />
+                    </Box>
+
+                    <Box
+                      sx={{ width: "100%", maxWidth: "700px", height: "400px" }}
+                    >
+                      <NDMIPointChart
+                        zoiFeatures={zoiFeatures}
+                        waterbody={selectedWaterbody}
+                      />
+                    </Box>
+                  </Box>
+                </Box>
+
+                <Box
+                  sx={{
+                    width: "100%",
+                    display: "flex",
+                    flexDirection: { xs: "column", md: "row" }, // stack on small screens
+                    gap: 2,
+                    alignItems: "flex-end", // ensures bottom alignment (x-axis same level)
+                  }}
+                >
+                  <Box
+                    sx={{
+                      flex: 0.65, // takes 65% width
+                      height: "400px",
+                    }}
+                  >
+                    <NDVIChart
+                      zoiFeatures={zoiFeatures}
+                      waterbody={selectedWaterbody}
+                      years={[
+                        "2017",
+                        "2018",
+                        "2019",
+                        "2020",
+                        "2021",
+                        "2022",
+                        "2023",
+                        "2024",
+                      ]}
+                    />
+                  </Box>
+
+                  {selectedMWSFeature && (
+                    <Box
+                      sx={{
+                        flex: 0.35, // takes 35% width
+                        height: "450px",
+                      }}
+                    >
+                      <DroughtChart
+                        feature={selectedMWSFeature}
+                        waterbody={selectedWaterbody}
+                      />
+                    </Box>
+                  )}
+                </Box>
+              </>
+            )}
             {/*MWS map section */}
 
-            <Box
-              sx={{
-                display: "flex",
-                flexDirection: "column",
-                gap: 2,
-                width: "100%",
-                p: { xs: 2, sm: 3, md: 2 },
-                borderRadius: 2,
-                bgcolor: "background.paper",
-                boxShadow: 1,
-              }}
-            >
-              {/* Heading */}
-              <Typography
-                variant="h5"
+            {selectedWaterbody && (
+              <Box
                 sx={{
-                  fontWeight: 700,
-                  color: "primary.main",
-                  borderBottom: "2px solid",
-                  borderColor: "primary.main",
-                  pb: 1,
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 2,
+                  width: "100%",
+                  p: { xs: 2, sm: 3, md: 2 },
+                  borderRadius: 2,
+                  bgcolor: "background.paper",
+                  boxShadow: 1,
                 }}
               >
-                Section 4: Micro-watershed context of the waterbody
-              </Typography>
+                {/* Heading */}
+                <Typography
+                  variant="h5"
+                  sx={{
+                    fontWeight: 700,
+                    color: "primary.main",
+                    borderBottom: "2px solid",
+                    borderColor: "primary.main",
+                    pb: 1,
+                  }}
+                >
+                  Section 4: Micro-watershed context of the waterbody
+                </Typography>
 
-              {/* Explanation */}
-              <Typography
-                variant="body1"
-                sx={{ color: "text.secondary", lineHeight: 1.7 }}
-              >
-                This map displays the micro-watershed boundary along with its
-                drainage network (blue lines), showing how water flows and is
-                distributed within the micro-watershed. The map also shows the
-                terrain in the micro-watershed.
-              </Typography>
-            </Box>
+                {/* Explanation */}
+                <Typography
+                  variant="body1"
+                  sx={{ color: "text.secondary", lineHeight: 1.7 }}
+                >
+                  This map displays the micro-watershed boundary along with its
+                  drainage network (blue lines), showing how water flows and is
+                  distributed within the micro-watershed. The map also shows the
+                  terrain in the micro-watershed.
+                </Typography>
+              </Box>
+            )}
 
             <Box
               sx={{
@@ -3007,76 +3026,78 @@ const WaterProjectDashboard = () => {
               }}
             >
               {/* Map 3 */}
-              <Box
-                sx={{
-                  position: "relative",
-                  width: { xs: "100%", md: "100%" },
-                }}
-              >
-                <div
-                  ref={mapElement3}
-                  style={{
-                    height: "850px",
-                    width: "100%",
-                    border: "1px solid #ccc",
-                    borderRadius: "5px",
-                  }}
-                />
-
-                {/* Zoom Controls */}
+              {selectedWaterbody && (
                 <Box
                   sx={{
-                    position: "absolute",
-                    top: 80,
-                    right: 16,
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: 1,
-                    zIndex: 1100,
+                    position: "relative",
+                    width: { xs: "100%", md: "100%" },
                   }}
                 >
-                  <button
+                  <div
+                    ref={mapElement3}
                     style={{
-                      backgroundColor: "#fff",
+                      height: "850px",
+                      width: "100%",
                       border: "1px solid #ccc",
-                      borderRadius: "4px",
-                      width: "40px",
-                      height: "40px",
-                      fontSize: "20px",
-                      cursor: "pointer",
+                      borderRadius: "5px",
                     }}
-                    onClick={() => {
-                      const view = mapRef3.current?.getView();
-                      view?.animate({
-                        zoom: view.getZoom() + 1,
-                        duration: 300,
-                      });
+                  />
+
+                  {/* Zoom Controls */}
+                  <Box
+                    sx={{
+                      position: "absolute",
+                      top: 80,
+                      right: 16,
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: 1,
+                      zIndex: 1100,
                     }}
                   >
-                    +
-                  </button>
-                  <button
-                    style={{
-                      backgroundColor: "#fff",
-                      border: "1px solid #ccc",
-                      borderRadius: "4px",
-                      width: "40px",
-                      height: "40px",
-                      fontSize: "20px",
-                      cursor: "pointer",
-                    }}
-                    onClick={() => {
-                      const view = mapRef3.current?.getView();
-                      view?.animate({
-                        zoom: view.getZoom() - 1,
-                        duration: 300,
-                      });
-                    }}
-                  >
-                    –
-                  </button>
+                    <button
+                      style={{
+                        backgroundColor: "#fff",
+                        border: "1px solid #ccc",
+                        borderRadius: "4px",
+                        width: "40px",
+                        height: "40px",
+                        fontSize: "20px",
+                        cursor: "pointer",
+                      }}
+                      onClick={() => {
+                        const view = mapRef3.current?.getView();
+                        view?.animate({
+                          zoom: view.getZoom() + 1,
+                          duration: 300,
+                        });
+                      }}
+                    >
+                      +
+                    </button>
+                    <button
+                      style={{
+                        backgroundColor: "#fff",
+                        border: "1px solid #ccc",
+                        borderRadius: "4px",
+                        width: "40px",
+                        height: "40px",
+                        fontSize: "20px",
+                        cursor: "pointer",
+                      }}
+                      onClick={() => {
+                        const view = mapRef3.current?.getView();
+                        view?.animate({
+                          zoom: view.getZoom() - 1,
+                          duration: 300,
+                        });
+                      }}
+                    >
+                      –
+                    </button>
+                  </Box>
                 </Box>
-              </Box>
+              )}
             </Box>
           </Box>
         ) : null}
