@@ -1025,10 +1025,7 @@ const WaterProjectDashboard = () => {
     });
     map.addLayer(wmsLayer);
 
-    const selectedOrganization = JSON.parse(
-      sessionStorage.getItem("selectedOrganization")
-    );
-    const organizationName = selectedOrganization?.label?.toUpperCase();
+    const organizationName = sessionStorage.getItem("organizationName");
 
     const drainageLayerName = `waterrej:WATER_REJ_drainage_line_${organizationName}_${projectName}_${projectId}`;
 
@@ -1068,19 +1065,17 @@ const WaterProjectDashboard = () => {
       });
     }
 
-    // Use the same helper as LULC
     const newTerrainLayer = await getImageLayer(
-      "waterrej", // workspace
-      terrainLayerName, // layer name
-      true, // transparent
-      "Terrain_Style_11_Classes" // style — empty for default, or "Terrain_Style_11_Classes"
+      "waterrej",
+      terrainLayerName,
+      true,
+      "Terrain_Style_11_Classes"
     );
 
-    // Configure the new terrain layer
     newTerrainLayer.setZIndex(0);
     newTerrainLayer.set("id", uniqueTerrainId);
+    newTerrainLayer.setOpacity(0.7);
 
-    // Add it to the map
     mapRef3.current.addLayer(newTerrainLayer);
 
     const typeName = `waterrej:WaterRejapp_mws_${projectName}_${projectId}`;

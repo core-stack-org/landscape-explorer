@@ -210,6 +210,11 @@ const HeaderSelect = ({
       "selectedOrganization",
       JSON.stringify(selectedOption)
     );
+    sessionStorage.setItem(
+      "organizationName",
+      selectedOption.label.toUpperCase()
+    ); // ✅ always save orgName separately
+
     sessionStorage.removeItem("selectedProject");
 
     if (setView) setView("table");
