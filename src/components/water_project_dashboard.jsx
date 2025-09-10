@@ -215,6 +215,10 @@ const WaterProjectDashboard = () => {
   useEffect(() => {
     const storedOrg = sessionStorage.getItem("selectedOrganization");
     const storedProject = sessionStorage.getItem("selectedProject");
+    const selectedOrganization = JSON.parse(
+      sessionStorage.getItem("selectedOrganization")
+    );
+    const organizationName = selectedOrganization?.label;
 
     // Only update if something changed
     if (storedOrg) {
@@ -584,272 +588,6 @@ const WaterProjectDashboard = () => {
       console.error("[LULC] Error during fetchUpdateLulc:", error);
     });
   }, [lulcYear1, selectedWaterbody, waterBodyLayer, project]);
-
-  // useEffect(() => {
-  //   const fetchUpdateLulcZOI = async () => {
-  //     if (!lulcYear2 || !lulcYear2.includes("_")) return;
-  //     if (!zoiFeatures?.length) return;
-  //     if (!mapRef2.current) return;
-
-  //     if (selectedWaterbody) {
-  //       const match = zoiFeatures.find(
-  //         (f) => f.get("waterbody_name") === selectedWaterbody.waterbody
-  //       );
-  //       setZoiArea(match?.get("zoi_area") || null);
-  //     } else {
-  //       setZoiArea(null);
-  //     }
-
-  //     const fullYear = lulcYear2
-  //       .split("_")
-  //       .map((part) => `20${part}`)
-  //       .join("_")
-  //       .toLowerCase()
-  //       .replace(/\s/g, "_");
-
-  //     const projectName = project?.label;
-  //     const projectId = project?.value;
-  //     if (!projectName || !projectId) return;
-
-  //     const map = mapRef2.current;
-  //     const layerName = `clipped_lulc_filtered_mws_${projectName}_${projectId}_${fullYear}`;
-
-  //     const idsToRemove = [
-  //       "lulc_zoi_layer",
-  //       "zoi_border_layer",
-  //       "waterbody_layer",
-  //     ];
-  //     map
-  //       .getLayers()
-  //       .getArray()
-  //       .forEach((layer) => {
-  //         if (idsToRemove.includes(layer.get("id"))) {
-  //           map.removeLayer(layer);
-  //         }
-  //       });
-
-  //     const tempLayer = await getImageLayer(
-  //       "waterrej",
-  //       layerName,
-  //       true,
-  //       "waterrej_lulc"
-  //     );
-  //     tempLayer.setZIndex(0);
-  //     tempLayer.set("id", "lulc_zoi_layer");
-
-  //     const geometries = zoiFeatures.map((f) => f.getGeometry().clone());
-  //     const multiPolygon = new MultiPolygon(
-  //       geometries.map((g) => g.getCoordinates())
-  //     );
-  //     const combinedFeature = new Feature(multiPolygon);
-  //     const crop = new Crop({
-  //       feature: combinedFeature,
-  //       wrapX: true,
-  //       inner: false,
-  //     });
-  //     tempLayer.addFilter(crop);
-
-  //     map.addLayer(tempLayer);
-
-  //     const zoiLayer = new VectorLayer({
-  //       source: new VectorSource({ features: zoiFeatures }),
-  //       style: new Style({
-  //         stroke: new Stroke({ color: "yellow", width: 5 }),
-  //         // fill: new Fill({ color: "rgba(255, 255, 153, 0.3)" }),
-  //       }),
-  //     });
-  //     zoiLayer.setZIndex(1);
-  //     zoiLayer.set("id", "zoi_border_layer");
-  //     map.addLayer(zoiLayer);
-
-  //     if (waterBodyLayer) {
-  //       waterBodyLayer.setZIndex(2);
-  //       waterBodyLayer.set("id", "waterbody_layer");
-  //       map.addLayer(waterBodyLayer);
-  //     }
-
-  //     setCurrentLayer((prev) => {
-  //       const others = prev.filter((l) => l.name !== "lulcWaterrejZOI");
-  //       return [...others, { name: "lulcWaterrejZOI", layerRef: [tempLayer] }];
-  //     });
-  //   };
-
-  //   fetchUpdateLulcZOI().catch(console.error);
-  // }, [lulcYear2, project, zoiFeatures, mapRef2.current, selectedWaterbody]);
-
-  // useEffect(() => {
-  //   const fetchUpdateLulcZOI = async () => {
-  //     if (!lulcYear2 || !lulcYear2.includes("_")) return;
-  //     if (!zoiFeatures?.length) return;
-  //     if (!mapRef2.current) return;
-
-  //     if (selectedWaterbody) {
-  //       const match = zoiFeatures.find(
-  //         (f) =>
-  //           f.get("waterbody_name")?.toLowerCase().trim() ===
-  //           selectedWaterbody?.waterbody?.toLowerCase().trim()
-  //       );
-  //       setZoiArea(match?.get("zoi_area") || null);
-  //     } else {
-  //       setZoiArea(null);
-  //     }
-
-  //     const fullYear = lulcYear2
-  //       .split("_")
-  //       .map((part) => `20${part}`)
-  //       .join("_")
-  //       .toLowerCase()
-  //       .replace(/\s/g, "_");
-
-  //     const projectName = project?.label;
-  //     const projectId = project?.value;
-  //     if (!projectName || !projectId) return;
-
-  //     const map = mapRef2.current;
-  //     const layerName = `clipped_lulc_filtered_mws_${projectName}_${projectId}_${fullYear}`;
-
-  //     // 🔹 Remove old layers
-  //     const idsToRemove = [
-  //       "lulc_zoi_layer",
-  //       "zoi_border_layer",
-  //       "waterbody_layer",
-  //     ];
-  //     map
-  //       .getLayers()
-  //       .getArray()
-  //       .forEach((layer) => {
-  //         if (idsToRemove.includes(layer.get("id"))) {
-  //           map.removeLayer(layer);
-  //         }
-  //       });
-
-  //     // 🔹 Add LULC raster
-  //     const tempLayer = await getImageLayer(
-  //       "waterrej",
-  //       layerName,
-  //       true,
-  //       "waterrej_lulc"
-  //     );
-  //     tempLayer.setZIndex(0);
-  //     tempLayer.set("id", "lulc_zoi_layer");
-
-  //     // 🔹 Crop logic: single ZOI if selected, else all ZOIs
-  //     let cropFeature;
-  //     if (selectedWaterbody) {
-  //       const matchedZoi = zoiFeatures.find(
-  //         (f) =>
-  //           f.get("waterbody_name")?.toLowerCase().trim() ===
-  //           selectedWaterbody?.waterbody?.toLowerCase().trim()
-  //       );
-  //       if (matchedZoi) cropFeature = matchedZoi;
-  //     } else {
-  //       const geometries = zoiFeatures.map((f) => f.getGeometry().clone());
-  //       const multiPolygon = new MultiPolygon(
-  //         geometries.map((g) => g.getCoordinates())
-  //       );
-  //       cropFeature = new Feature(multiPolygon);
-  //     }
-
-  //     if (cropFeature) {
-  //       const crop = new Crop({
-  //         feature: cropFeature,
-  //         wrapX: true,
-  //         inner: false,
-  //       });
-  //       tempLayer.addFilter(crop);
-  //     }
-
-  //     map.addLayer(tempLayer);
-
-  //     // 🔹 ZOI border layer (always yellow)
-  //     let zoiLayer;
-  //     if (selectedWaterbody) {
-  //       const matchedZoi = zoiFeatures.find(
-  //         (f) =>
-  //           f.get("waterbody_name")?.toLowerCase().trim() ===
-  //           selectedWaterbody?.waterbody?.toLowerCase().trim()
-  //       );
-  //       if (matchedZoi) {
-  //         zoiLayer = new VectorLayer({
-  //           source: new VectorSource({ features: [matchedZoi] }),
-  //           style: new Style({
-  //             stroke: new Stroke({ color: "yellow", width: 3 }),
-  //             // fill: new Fill({ color: "rgba(255, 255, 0, 0.2)" }),
-  //           }),
-  //         });
-  //       }
-  //     } else {
-  //       zoiLayer = new VectorLayer({
-  //         source: new VectorSource({ features: zoiFeatures }),
-  //         style: new Style({
-  //           stroke: new Stroke({ color: "yellow", width: 3 }),
-  //           // fill: new Fill({ color: "rgba(255, 255, 0, 0.2)" }),
-  //         }),
-  //       });
-  //     }
-
-  //     if (zoiLayer) {
-  //       zoiLayer.setZIndex(1);
-  //       zoiLayer.set("id", "zoi_border_layer");
-  //       map.addLayer(zoiLayer);
-  //     }
-
-  //     // // 🔹 Waterbody outline layer
-  //     // if (waterBodyLayer) {
-  //     //   waterBodyLayer.setZIndex(2);
-  //     //   waterBodyLayer.set("id", "waterbody_layer");
-  //     //   map.addLayer(waterBodyLayer);
-  //     // }
-
-  //     let wbLayer;
-
-  //     if (selectedWaterbody && waterBodyLayer) {
-  //       // ✅ Show only the selected waterbody
-  //       const features = waterBodyLayer.getSource().getFeatures();
-
-  //       const matchedWb = features.find(
-  //         (f) =>
-  //           f.get("waterbody_name")?.toLowerCase().trim() ===
-  //           selectedWaterbody?.waterbody?.toLowerCase().trim()
-  //       );
-
-  //       if (matchedWb) {
-  //         wbLayer = new VectorLayer({
-  //           source: new VectorSource({ features: [matchedWb] }),
-  //           style: new Style({
-  //             stroke: new Stroke({ color: "red", width: 3 }),
-  //             // fill: new Fill({ color: "rgba(255,0,0,0.2)" }),
-  //           }),
-  //         });
-  //       }
-  //     } else if (waterBodyLayer) {
-  //       // ✅ No selection → show all waterbodies
-  //       wbLayer = waterBodyLayer;
-  //     }
-
-  //     if (wbLayer) {
-  //       wbLayer.setZIndex(2);
-  //       wbLayer.set("id", "waterbody_layer");
-
-  //       // 🔹 Remove old waterbody_layer if exists
-  //       const oldLayer = map
-  //         .getLayers()
-  //         .getArray()
-  //         .find((l) => l.get("id") === "waterbody_layer");
-  //       if (oldLayer) map.removeLayer(oldLayer);
-
-  //       map.addLayer(wbLayer);
-  //     }
-
-  //     // 🔹 Track current layer
-  //     setCurrentLayer((prev) => {
-  //       const others = prev.filter((l) => l.name !== "lulcWaterrejZOI");
-  //       return [...others, { name: "lulcWaterrejZOI", layerRef: [tempLayer] }];
-  //     });
-  //   };
-
-  //   fetchUpdateLulcZOI().catch(console.error);
-  // }, [lulcYear2, project, zoiFeatures, mapRef2.current, selectedWaterbody]);
 
   useEffect(() => {
     const fetchUpdateLulcZOI = async () => {
@@ -1287,7 +1025,12 @@ const WaterProjectDashboard = () => {
     });
     map.addLayer(wmsLayer);
 
-    const drainageLayerName = `waterrej:WATER_REJ_drainage_line_ATCF_${projectName}_${projectId}`;
+    const selectedOrganization = JSON.parse(
+      sessionStorage.getItem("selectedOrganization")
+    );
+    const organizationName = selectedOrganization?.label?.toUpperCase();
+
+    const drainageLayerName = `waterrej:WATER_REJ_drainage_line_${organizationName}_${projectName}_${projectId}`;
 
     const drainageLineLayer = new TileLayer({
       source: new TileWMS({
@@ -1308,44 +1051,37 @@ const WaterProjectDashboard = () => {
     });
 
     console.log("drainagggegeggeggegeggege", drainageLayerName);
-    drainageLineLayer.setZIndex(1.5);
+    drainageLineLayer.setZIndex(1);
     map.addLayer(drainageLineLayer);
 
     // After adding drainageLineLayer
-    const terrainLayerName = `waterrej:WATER_REJ_terrain_${projectName}_${projectId}`;
+    const terrainLayerName = `WATER_REJ_terrain_${projectName}_${projectId}`;
+    const uniqueTerrainId = "terrainLayer1";
 
-    const terrainLayer = new TileLayer({
-      source: new TileWMS({
-        url: "https://geoserver.core-stack.org:8443/geoserver/waterrej/wms",
-        params: {
-          SERVICE: "WMS",
-          VERSION: "1.1.0",
-          REQUEST: "GetMap",
-          FORMAT: "image/png",
-          TRANSPARENT: true,
-          LAYERS: terrainLayerName,
-          STYLES: "",
-        },
-        serverType: "geoserver",
-        crossOrigin: "anonymous",
-      }),
-      opacity: 0.9,
-    });
+    // Remove old terrain layer if it exists
+    if (mapRef3.current) {
+      const layersBefore = mapRef3.current.getLayers().getArray();
+      layersBefore.forEach((layer) => {
+        if (layer.get("id") === uniqueTerrainId) {
+          mapRef3.current.removeLayer(layer);
+        }
+      });
+    }
 
-    console.log(terrainLayerName);
-    terrainLayer.setZIndex(1);
-    map.addLayer(terrainLayer);
+    // Use the same helper as LULC
+    const newTerrainLayer = await getImageLayer(
+      "waterrej", // workspace
+      terrainLayerName, // layer name
+      true, // transparent
+      "Terrain_Style_11_Classes" // style — empty for default, or "Terrain_Style_11_Classes"
+    );
 
-    const source = terrainLayer.getSource();
+    // Configure the new terrain layer
+    newTerrainLayer.setZIndex(0);
+    newTerrainLayer.set("id", uniqueTerrainId);
 
-    source.on("tileloadend", () => {
-      setShowTerrainLegend(true); //  show legend when tiles load
-    });
-
-    source.on("tileloaderror", () => {
-      console.warn("❌ Terrain layer not available, hiding legend");
-      setShowTerrainLegend(false); //  hide legend when load fails
-    });
+    // Add it to the map
+    mapRef3.current.addLayer(newTerrainLayer);
 
     const typeName = `waterrej:WaterRejapp_mws_${projectName}_${projectId}`;
     const wfsUrl =
@@ -1377,7 +1113,7 @@ const WaterProjectDashboard = () => {
         }),
       });
 
-      boundaryLayer.setZIndex(2);
+      boundaryLayer.setZIndex(3);
       map.addLayer(boundaryLayer);
     } catch (err) {
       console.error("WFS boundary fetch error:", err);
@@ -1400,7 +1136,7 @@ const WaterProjectDashboard = () => {
         }),
       });
 
-      waterLayer.setZIndex(3);
+      waterLayer.setZIndex(2);
       map.addLayer(waterLayer);
 
       // ✅ Zoom to selected waterbody if available
@@ -1539,58 +1275,6 @@ const WaterProjectDashboard = () => {
     if (area > 200) return 16; // medium ZOI
     return 17;
   };
-
-  // const zoomToZoiWaterbody = (waterbody, tempFeature, targetMapRef) => {
-  //   if (!tempFeature || !targetMapRef?.current) return;
-
-  //   const view = targetMapRef.current.getView();
-  //   const feature = new GeoJSON().readFeature(tempFeature, {
-  //     dataProjection: "EPSG:4326",
-  //     featureProjection: view.getProjection(),
-  //   });
-
-  //   const geometry = feature.getGeometry();
-  //   if (!geometry) {
-  //     console.error("No geometry found.");
-  //     return;
-  //   }
-  //   const zoomLevel = getZoomFromArea(waterbody);
-  //   const extent = geometry.getExtent();
-  //   view.fit(extent, {
-  //     duration: 1000,
-  //     padding: [50, 50, 50, 50],
-  //   });
-  //   view.setZoom(zoomLevel);
-
-  //   if (waterBodyLayer) {
-  //     const source = waterBodyLayer.getSource();
-  //     const features = source.getFeatures();
-
-  //     features.forEach((feature) => feature.setStyle(null));
-
-  //     if (
-  //       waterbody.featureIndex !== undefined &&
-  //       features[waterbody.featureIndex]
-  //     ) {
-  //       features[waterbody.featureIndex].setStyle(
-  //         new Style({
-  //           stroke: new Stroke({ color: "#FF0000", width: 5 }),
-  //           fill: new Fill({ color: "rgba(255, 0, 0, 0.5)" }),
-  //         })
-  //       );
-  //     }
-  //   }
-
-  //   targetMapRef.current.getInteractions().forEach((interaction) => {
-  //     if (
-  //       interaction instanceof MouseWheelZoom ||
-  //       interaction instanceof PinchZoom ||
-  //       interaction instanceof DoubleClickZoom
-  //     ) {
-  //       interaction.setActive(false);
-  //     }
-  //   });
-  // };
 
   const zoomToZoiWaterbody = (waterbody, zoiFeatures, targetMapRef) => {
     if (!waterbody || !zoiFeatures || !targetMapRef?.current) return;
@@ -1756,61 +1440,6 @@ const WaterProjectDashboard = () => {
     }
   };
 
-  const downloadCSV = () => {
-    if (!sortedRows || sortedRows.length === 0) {
-      return;
-    }
-
-    const headers = [
-      "State",
-      "District",
-      "Taluka",
-      "GP/Village",
-      "Waterbody",
-      "Silt Removed (Cu.m.)",
-      "Mean Water Availability During Kharif (%)",
-      "Mean Water Availability During Rabi (%)",
-      "Mean Water Availability During Zaid (%)",
-    ];
-
-    const csvRows = [
-      headers.join(","),
-      ...sortedRows.map((row) =>
-        [
-          row.state,
-          row.district,
-          row.block,
-          row.village,
-          row.waterbody,
-          row.siltRemoved,
-          row.avgWaterAvailabilityKharif,
-          row.avgWaterAvailabilityRabi,
-          row.avgWaterAvailabilityZaid,
-        ]
-          .map((cell) => `"${cell}"`)
-          .join(",")
-      ),
-    ];
-    let parsedProject;
-    try {
-      parsedProject = JSON.parse(project);
-    } catch (err) {
-      console.error("Failed to parse project string:", err);
-      return;
-    }
-
-    const projectName = parsedProject.label;
-    const csvContent = "data:text/csv;charset=utf-8," + csvRows.join("\n");
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement("a");
-    const fileName = `${projectName}_waterbodies_report.csv`;
-    link.setAttribute("href", encodedUri);
-    link.setAttribute("download", fileName);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
-
   return (
     <Box sx={{ position: "relative" }}>
       <HeaderSelect
@@ -1907,7 +1536,6 @@ const WaterProjectDashboard = () => {
               height: "88px",
               width: "48px",
             }}
-            onClick={downloadCSV}
           >
             <Download size={94} strokeWidth={1.2} color="black" />
           </Box>
@@ -3054,78 +2682,77 @@ const WaterProjectDashboard = () => {
                   />
 
                   {/* Legend */}
-                  {showTerrainLegend && (
-                    <Box
-                      sx={{
-                        position: "absolute",
-                        bottom: 16,
-                        left: 16,
-                        backgroundColor: "rgba(255, 255, 255, 0.9)",
-                        padding: 2,
-                        borderRadius: 1,
-                        boxShadow: 2,
-                        zIndex: 1000,
-                        minWidth: "220px",
-                        maxWidth: "260px",
-                      }}
-                    >
-                      <Typography variant="subtitle2">
-                        Terrain Layer Legend
-                      </Typography>
-                      {[
-                        {
-                          color: "#313695",
-                          label: "V-shape river valleys, Deep narrow canyons",
-                        },
-                        {
-                          color: "#4575b4",
-                          label:
-                            "Lateral midslope incised drainages, Local valleys in plains",
-                        },
-                        {
-                          color: "#91bfdb",
-                          label: "Local ridge/hilltops within broad valleys",
-                        },
-                        { color: "#e0f3f8", label: "U-shape valleys" },
-                        { color: "#fffc00", label: "Broad Flat Areas" },
-                        { color: "#feb24c", label: "Broad open slopes" },
-                        { color: "#f46d43", label: "Mesa tops" },
-                        { color: "#d73027", label: "Upper Slopes" },
-                        {
-                          color: "#a50026",
-                          label: "Upland incised drainages Stream headwaters",
-                        },
-                        {
-                          color: "#800000",
-                          label:
-                            "Lateral midslope drainage divides, Local ridges in plains",
-                        },
-                        {
-                          color: "#4d0000",
-                          label: "Mountain tops, high ridges",
-                        },
-                      ].map((item, idx) => (
+
+                  <Box
+                    sx={{
+                      position: "absolute",
+                      bottom: 16,
+                      left: 16,
+                      backgroundColor: "rgba(255, 255, 255, 0.9)",
+                      padding: 2,
+                      borderRadius: 1,
+                      boxShadow: 2,
+                      zIndex: 1000,
+                      minWidth: "220px",
+                      maxWidth: "260px",
+                    }}
+                  >
+                    <Typography variant="subtitle2">
+                      Terrain Layer Legend
+                    </Typography>
+                    {[
+                      {
+                        color: "#313695",
+                        label: "V-shape river valleys, Deep narrow canyons",
+                      },
+                      {
+                        color: "#4575b4",
+                        label:
+                          "Lateral midslope incised drainages, Local valleys in plains",
+                      },
+                      {
+                        color: "#91bfdb",
+                        label: "Local ridge/hilltops within broad valleys",
+                      },
+                      { color: "#e0f3f8", label: "U-shape valleys" },
+                      { color: "#fffc00", label: "Broad Flat Areas" },
+                      { color: "#feb24c", label: "Broad open slopes" },
+                      { color: "#f46d43", label: "Mesa tops" },
+                      { color: "#d73027", label: "Upper Slopes" },
+                      {
+                        color: "#a50026",
+                        label: "Upland incised drainages Stream headwaters",
+                      },
+                      {
+                        color: "#800000",
+                        label:
+                          "Lateral midslope drainage divides, Local ridges in plains",
+                      },
+                      {
+                        color: "#4d0000",
+                        label: "Mountain tops, high ridges",
+                      },
+                    ].map((item, idx) => (
+                      <Box
+                        key={idx}
+                        display="flex"
+                        alignItems="center"
+                        gap={1}
+                        mt={1}
+                      >
                         <Box
-                          key={idx}
-                          display="flex"
-                          alignItems="center"
-                          gap={1}
-                          mt={1}
-                        >
-                          <Box
-                            sx={{
-                              width: 20,
-                              height: 20,
-                              backgroundColor: item.color,
-                              opacity: 0.7,
-                              border: "1px solid #000",
-                            }}
-                          />
-                          <Typography variant="body2">{item.label}</Typography>
-                        </Box>
-                      ))}
-                    </Box>
-                  )}
+                          sx={{
+                            width: 20,
+                            height: 20,
+                            backgroundColor: item.color,
+                            opacity: 0.7,
+                            border: "1px solid #000",
+                          }}
+                        />
+                        <Typography variant="body2">{item.label}</Typography>
+                      </Box>
+                    ))}
+                  </Box>
 
                   {/* Zoom Controls */}
                   <Box
