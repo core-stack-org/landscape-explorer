@@ -1283,7 +1283,7 @@ const WaterProjectDashboard = () => {
         serverType: "geoserver",
         crossOrigin: "anonymous",
       }),
-      opacity: 0.7,
+      opacity: 0,
     });
     map.addLayer(wmsLayer);
 
@@ -1329,7 +1329,7 @@ const WaterProjectDashboard = () => {
         serverType: "geoserver",
         crossOrigin: "anonymous",
       }),
-      opacity: 0.6,
+      opacity: 0.9,
     });
 
     console.log(terrainLayerName);
@@ -1372,8 +1372,8 @@ const WaterProjectDashboard = () => {
       const boundaryLayer = new VectorLayer({
         source: boundarySource,
         style: new Style({
-          stroke: new Stroke({ color: "#4A90E2", width: 2 }),
-          // fill: new Fill({ color: "rgba(74,144,226, 0.2)" }),
+          stroke: new Stroke({ color: "black", width: 3 }),
+          // fill: new Fill({ color: "rgba(0,0,0, 0)" }),
         }),
       });
 
@@ -1688,7 +1688,7 @@ const WaterProjectDashboard = () => {
         features[waterbody.featureIndex].setStyle(
           new Style({
             stroke: new Stroke({ color: "#FF0000", width: 5 }),
-            fill: new Fill({ color: "rgba(255, 0, 0, 0.5)" }),
+            // fill: new Fill({ color: "rgba(255, 0, 0, 0.5)" }),
           })
         );
       }
