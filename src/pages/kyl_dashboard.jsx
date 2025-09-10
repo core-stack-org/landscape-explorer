@@ -1448,7 +1448,7 @@ const KYLDashboardPage = () => {
           "resources",
           "settlement" +
             "_" +
-            currentPlan.value.plan_id +
+            currentPlan.value.id +
             "_" +
             district.label
               .toLowerCase()
@@ -1474,7 +1474,7 @@ const KYLDashboardPage = () => {
           "resources",
           "well" +
             "_" +
-            currentPlan.value.plan_id +
+            currentPlan.value.id +
             "_" +
             district.label
               .toLowerCase()
@@ -1500,7 +1500,7 @@ const KYLDashboardPage = () => {
           "resources",
           "waterbody" +
             "_" +
-            currentPlan.value.plan_id +
+            currentPlan.value.id +
             "_" +
             district.label
               .toLowerCase()
@@ -1538,7 +1538,7 @@ const KYLDashboardPage = () => {
           "works",
           "plan_agri" +
             "_" +
-            currentPlan.value.plan_id +
+            currentPlan.value.id +
             "_" +
             district.label
               .toLowerCase()
@@ -1564,7 +1564,7 @@ const KYLDashboardPage = () => {
           "works",
           "plan_gw" +
             "_" +
-            currentPlan.value.plan_id +
+            currentPlan.value.id +
             "_" +
             district.label
               .toLowerCase()
