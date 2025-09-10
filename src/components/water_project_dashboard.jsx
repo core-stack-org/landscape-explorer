@@ -210,6 +210,7 @@ const WaterProjectDashboard = () => {
 
   const [organization, setOrganization] = useState(null);
   const [project, setProject] = useState(null);
+  const [showTerrainLegend, setShowTerrainLegend] = useState(false);
 
   useEffect(() => {
     const storedOrg = sessionStorage.getItem("selectedOrganization");
@@ -1323,7 +1324,7 @@ const WaterProjectDashboard = () => {
           FORMAT: "image/png",
           TRANSPARENT: true,
           LAYERS: terrainLayerName,
-          STYLES: "	Terrain_Style_11_Classes",
+          STYLES: "",
         },
         serverType: "geoserver",
         crossOrigin: "anonymous",
@@ -1334,6 +1335,17 @@ const WaterProjectDashboard = () => {
     console.log(terrainLayerName);
     terrainLayer.setZIndex(1);
     map.addLayer(terrainLayer);
+
+    const source = terrainLayer.getSource();
+
+    source.on("tileloadend", () => {
+      setShowTerrainLegend(true); //  show legend when tiles load
+    });
+
+    source.on("tileloaderror", () => {
+      console.warn("❌ Terrain layer not available, hiding legend");
+      setShowTerrainLegend(false); //  hide legend when load fails
+    });
 
     const typeName = `waterrej:WaterRejapp_mws_${projectName}_${projectId}`;
     const wfsUrl =
@@ -1420,16 +1432,16 @@ const WaterProjectDashboard = () => {
   useEffect(() => {
     if (view === "map") {
       if (mapElement1.current) initializeMap1();
-      // if (mapElement2.current) initializeMap2();
-      // if (mapElement3.current) initializeMap3();
+      if (mapElement2.current) initializeMap2();
+      if (mapElement3.current) initializeMap3();
     }
 
     return () => {
       if (mapRef1.current) mapRef1.current.setTarget(null);
-      // if (mapRef2.current) mapRef2.current.setTarget(null);
-      // if (mapRef3.current) mapRef3.current.setTarget(null);
+      if (mapRef2.current) mapRef2.current.setTarget(null);
+      if (mapRef3.current) mapRef3.current.setTarget(null);
     };
-  }, [view]);
+  }, [view, geoData, projectName, projectId]);
 
   useEffect(() => {
     if (selectedWaterbody) {
@@ -1721,7 +1733,7 @@ const WaterProjectDashboard = () => {
       if (matchingMWSFeature) {
         setSelectedMWSFeature(matchingMWSFeature);
       } else {
-        console.warn("❌ No matching MWS found for:", mwsId);
+        console.warn("No matching MWS found for:", mwsId);
       }
 
       setSelectedWaterbody(row);
@@ -3042,73 +3054,78 @@ const WaterProjectDashboard = () => {
                   />
 
                   {/* Legend */}
-                  <Box
-                    sx={{
-                      position: "absolute", // 👈 make it an overlay
-                      bottom: 16, // 👈 stick to bottom
-                      left: 16, // 👈 stick to left
-                      backgroundColor: "rgba(255, 255, 255, 0.9)",
-                      padding: 2,
-                      borderRadius: 1,
-                      boxShadow: 2,
-                      zIndex: 1000, // 👈 ensure it’s above map tiles
-                      minWidth: "220px",
-                      maxWidth: "260px",
-                    }}
-                  >
-                    <Typography variant="subtitle2">
-                      Terrain Layer Legend
-                    </Typography>
-                    {[
-                      {
-                        color: "#313695",
-                        label: "V-shape river valleys, Deep narrow canyons",
-                      },
-                      {
-                        color: "#4575b4",
-                        label:
-                          "Lateral midslope incised drainages, Local valleys in plains",
-                      },
-                      {
-                        color: "#91bfdb",
-                        label: "Local ridge/hilltops within broad valleys",
-                      },
-                      { color: "#e0f3f8", label: "U-shape valleys" },
-                      { color: "#fffc00", label: "Broad Flat Areas" },
-                      { color: "#feb24c", label: "Broad open slopes" },
-                      { color: "#f46d43", label: "Mesa tops" },
-                      { color: "#d73027", label: "Upper Slopes" },
-                      {
-                        color: "#a50026",
-                        label: "Upland incised drainages Stream headwaters",
-                      },
-                      {
-                        color: "#800000",
-                        label:
-                          "Lateral midslope drainage divides, Local ridges in plains",
-                      },
-                      { color: "#4d0000", label: "Mountain tops, high ridges" },
-                    ].map((item, idx) => (
-                      <Box
-                        key={idx}
-                        display="flex"
-                        alignItems="center"
-                        gap={1}
-                        mt={1}
-                      >
+                  {showTerrainLegend && (
+                    <Box
+                      sx={{
+                        position: "absolute",
+                        bottom: 16,
+                        left: 16,
+                        backgroundColor: "rgba(255, 255, 255, 0.9)",
+                        padding: 2,
+                        borderRadius: 1,
+                        boxShadow: 2,
+                        zIndex: 1000,
+                        minWidth: "220px",
+                        maxWidth: "260px",
+                      }}
+                    >
+                      <Typography variant="subtitle2">
+                        Terrain Layer Legend
+                      </Typography>
+                      {[
+                        {
+                          color: "#313695",
+                          label: "V-shape river valleys, Deep narrow canyons",
+                        },
+                        {
+                          color: "#4575b4",
+                          label:
+                            "Lateral midslope incised drainages, Local valleys in plains",
+                        },
+                        {
+                          color: "#91bfdb",
+                          label: "Local ridge/hilltops within broad valleys",
+                        },
+                        { color: "#e0f3f8", label: "U-shape valleys" },
+                        { color: "#fffc00", label: "Broad Flat Areas" },
+                        { color: "#feb24c", label: "Broad open slopes" },
+                        { color: "#f46d43", label: "Mesa tops" },
+                        { color: "#d73027", label: "Upper Slopes" },
+                        {
+                          color: "#a50026",
+                          label: "Upland incised drainages Stream headwaters",
+                        },
+                        {
+                          color: "#800000",
+                          label:
+                            "Lateral midslope drainage divides, Local ridges in plains",
+                        },
+                        {
+                          color: "#4d0000",
+                          label: "Mountain tops, high ridges",
+                        },
+                      ].map((item, idx) => (
                         <Box
-                          sx={{
-                            width: 20,
-                            height: 20,
-                            backgroundColor: item.color,
-                            opacity: 0.7,
-                            border: "1px solid #000",
-                          }}
-                        />
-                        <Typography variant="body2">{item.label}</Typography>
-                      </Box>
-                    ))}
-                  </Box>
+                          key={idx}
+                          display="flex"
+                          alignItems="center"
+                          gap={1}
+                          mt={1}
+                        >
+                          <Box
+                            sx={{
+                              width: 20,
+                              height: 20,
+                              backgroundColor: item.color,
+                              opacity: 0.7,
+                              border: "1px solid #000",
+                            }}
+                          />
+                          <Typography variant="body2">{item.label}</Typography>
+                        </Box>
+                      ))}
+                    </Box>
+                  )}
 
                   {/* Zoom Controls */}
                   <Box
