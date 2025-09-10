@@ -28,8 +28,6 @@ ChartJS.register(
 const years = ["17-18", "18-19", "19-20", "20-21", "21-22", "22-23", "23-24"];
 
 const WaterAvailabilityChart = ({ waterbody, water_rej_data, mwsFeature }) => {
-  console.log(mwsFeature);
-
   const yearMap = {
     "17-18": "2017-2018",
     "18-19": "2018-2019",
@@ -53,8 +51,6 @@ const WaterAvailabilityChart = ({ waterbody, water_rej_data, mwsFeature }) => {
     acc[`TR${year}`] = kharif + rabi + zaid;
     return acc;
   }, {});
-
-  console.log(totalRainfall);
 
   const categories = [
     { key: "zaid", label: "Kharif Rabi Zaid", color: "#0f5e9c" },

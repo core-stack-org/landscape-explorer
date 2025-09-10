@@ -75,7 +75,6 @@ const HeaderSelect = ({
       const start = performance.now();
       const options = await loadOrganization();
       const end = performance.now();
-      console.log("Time to load orgs:", end - start, "ms");
       setOrganizationOptions(options);
 
       if (!organization && isOnDashboard) {
@@ -98,11 +97,8 @@ const HeaderSelect = ({
   useEffect(() => {
     const fetchProjects = async () => {
       if (!organization) {
-        console.log("No organization selected yet.");
         return;
       }
-
-      console.log("Selected org for project fetch:", organization);
 
       let token = sessionStorage.getItem("accessToken");
       if (!token) {
@@ -175,7 +171,6 @@ const HeaderSelect = ({
         }
       );
       const data = await response.json();
-      console.log(data);
       return data.map((org) => ({
         value: org.id,
         label: org.name,

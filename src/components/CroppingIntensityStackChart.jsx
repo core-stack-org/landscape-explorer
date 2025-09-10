@@ -20,7 +20,6 @@ const CroppingIntensityStackChart = ({ zoiFeatures, waterbody }) => {
   );
 
   if (!matchedFeature) return null;
-  console.log("Matched Feature:", matchedFeature);
   const zoiArea = matchedFeature.get("zoi_area");
   const areaByType = yearSuffix.map((year) => ({
     year,
@@ -32,8 +31,6 @@ const CroppingIntensityStackChart = ({ zoiFeatures, waterbody }) => {
       (matchedFeature.get(`single_non_kharif_cropped_area_${year}`) || 0) /
       10000,
   }));
-
-  console.log(areaByType);
 
   const maxValue = Math.max(
     ...areaByType.map(

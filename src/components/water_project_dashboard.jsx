@@ -143,8 +143,6 @@ const useWaterRejData = (projectName, projectId) => {
         outputFormat: "application/json",
       });
 
-    console.log("[ZOI] Fetching from URL:", zoiUrl);
-
     const fetchZOI = async () => {
       try {
         const response = await fetch(zoiUrl);
@@ -1286,7 +1284,6 @@ const WaterProjectDashboard = () => {
       }),
       opacity: 0.7,
     });
-    console.log("mwssssssssss layer", wmsLayer);
     map.addLayer(wmsLayer);
 
     const drainageLayerName = `waterrej:WATER_REJ_drainage_line_ATCF_${projectName}_${projectId}`;
@@ -1312,6 +1309,31 @@ const WaterProjectDashboard = () => {
     console.log("drainagggegeggeggegeggege", drainageLayerName);
     drainageLineLayer.setZIndex(1.5);
     map.addLayer(drainageLineLayer);
+
+    // After adding drainageLineLayer
+    const terrainLayerName = `waterrej:WATER_REJ_terrain_${projectName}_${projectId}`;
+
+    const terrainLayer = new TileLayer({
+      source: new TileWMS({
+        url: "https://geoserver.core-stack.org:8443/geoserver/waterrej/wms",
+        params: {
+          SERVICE: "WMS",
+          VERSION: "1.1.0",
+          REQUEST: "GetMap",
+          FORMAT: "image/png",
+          TRANSPARENT: true,
+          LAYERS: terrainLayerName,
+          STYLES: "	Terrain_Style_11_Classes",
+        },
+        serverType: "geoserver",
+        crossOrigin: "anonymous",
+      }),
+      opacity: 0.6,
+    });
+
+    console.log(terrainLayerName);
+    terrainLayer.setZIndex(1);
+    map.addLayer(terrainLayer);
 
     const typeName = `waterrej:WaterRejapp_mws_${projectName}_${projectId}`;
     const wfsUrl =
@@ -1481,37 +1503,19 @@ const WaterProjectDashboard = () => {
   };
 
   const getZoomFromArea = (waterbody) => {
-    console.log("🔍 Incoming waterbody object:", waterbody);
-
     if (!waterbody || !waterbody.waterbody) {
-      console.log("⚠️ No waterbody name found for zoom calculation");
       return 16;
     }
-
-    console.log("📌 Matching against waterbody name:", waterbody.waterbody);
 
     // Find matching ZOI feature
     const match = zoiFeatures.find(
       (f) => f.get("waterbody_name") === waterbody.waterbody
     );
 
-    console.log("✅ Matched feature:", match);
-    if (match) {
-      console.log("📂 Matched feature properties:", match.getProperties());
-      console.log("📍 Matched feature geometry:", match.getGeometry());
-    }
-
-    if (!match) {
-      console.log("❌ No matching ZOI feature found for", waterbody.waterbody);
-      return 16;
-    }
-
     // Get ZOI area from properties
     const area = match.get("zoi");
-    console.log("📏 ZOI area (from properties):", area);
 
     if (!area) {
-      console.log("⚠️ ZOI area not found, defaulting zoom");
       return 16;
     }
 
@@ -1695,7 +1699,6 @@ const WaterProjectDashboard = () => {
     if (feature) {
       // First: extract MWS UID
       const mwsId = feature.properties?.MWS_UID;
-      console.log(mwsId);
 
       if (feature.geometry?.type === "MultiPolygon") {
         row.coordinates = null;
@@ -1716,10 +1719,6 @@ const WaterProjectDashboard = () => {
       );
 
       if (matchingMWSFeature) {
-        console.log(
-          "✅ Matching MWS Feature:qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqeeeeeeeeeeeeee",
-          matchingMWSFeature
-        );
         setSelectedMWSFeature(matchingMWSFeature);
       } else {
         console.warn("❌ No matching MWS found for:", mwsId);
@@ -1739,7 +1738,6 @@ const WaterProjectDashboard = () => {
     );
 
     if (matchingRow) {
-      console.log("Passing to handleWaterbodyClick:", matchingRow);
       handleWaterbodyClick(matchingRow);
     } else {
       console.warn("No matching row found.");
@@ -3042,6 +3040,75 @@ const WaterProjectDashboard = () => {
                       borderRadius: "5px",
                     }}
                   />
+
+                  {/* Legend */}
+                  <Box
+                    sx={{
+                      position: "absolute", // 👈 make it an overlay
+                      bottom: 16, // 👈 stick to bottom
+                      left: 16, // 👈 stick to left
+                      backgroundColor: "rgba(255, 255, 255, 0.9)",
+                      padding: 2,
+                      borderRadius: 1,
+                      boxShadow: 2,
+                      zIndex: 1000, // 👈 ensure it’s above map tiles
+                      minWidth: "220px",
+                      maxWidth: "260px",
+                    }}
+                  >
+                    <Typography variant="subtitle2">
+                      Terrain Layer Legend
+                    </Typography>
+                    {[
+                      {
+                        color: "#313695",
+                        label: "V-shape river valleys, Deep narrow canyons",
+                      },
+                      {
+                        color: "#4575b4",
+                        label:
+                          "Lateral midslope incised drainages, Local valleys in plains",
+                      },
+                      {
+                        color: "#91bfdb",
+                        label: "Local ridge/hilltops within broad valleys",
+                      },
+                      { color: "#e0f3f8", label: "U-shape valleys" },
+                      { color: "#fffc00", label: "Broad Flat Areas" },
+                      { color: "#feb24c", label: "Broad open slopes" },
+                      { color: "#f46d43", label: "Mesa tops" },
+                      { color: "#d73027", label: "Upper Slopes" },
+                      {
+                        color: "#a50026",
+                        label: "Upland incised drainages Stream headwaters",
+                      },
+                      {
+                        color: "#800000",
+                        label:
+                          "Lateral midslope drainage divides, Local ridges in plains",
+                      },
+                      { color: "#4d0000", label: "Mountain tops, high ridges" },
+                    ].map((item, idx) => (
+                      <Box
+                        key={idx}
+                        display="flex"
+                        alignItems="center"
+                        gap={1}
+                        mt={1}
+                      >
+                        <Box
+                          sx={{
+                            width: 20,
+                            height: 20,
+                            backgroundColor: item.color,
+                            opacity: 0.7,
+                            border: "1px solid #000",
+                          }}
+                        />
+                        <Typography variant="body2">{item.label}</Typography>
+                      </Box>
+                    ))}
+                  </Box>
 
                   {/* Zoom Controls */}
                   <Box
