@@ -187,6 +187,28 @@ const MapLegend = ({toggledLayers, lulcYear1, lulcYear2, lulcYear3}) => {
     { color: "#ffff00", label: "Excluded Areas" },
   ]
 
+  const NREGAItem = [
+    { color: "#C2678D", label: "Household Livelihood" },
+    { color: "#355070", label: "Others - HH, Community" },
+    { color: "#FFA500", label: "Agri Impact - HH, Community" },
+    { color: "#6495ED", label: "SWC - Landscape level impact" },
+    { color: "#1A759F", label: "Irrigation - Site level impact" },
+    { color: "#52B69A", label: "Plantation" },
+    { color: "#6D597A", label: "Un Identified" },
+  ]
+
+  const DrainageItem = [
+    { color: "#03045E", label: "1" },
+    { color: "#023E8A", label: "2" },
+    { color: "#0077B6", label: "2" },
+    { color: "#0096C7", label: "3" },
+    { color: "#00B4D8", label: "4" },
+    { color: "#48CAE4", label: "5" },
+    { color: "#90E0EF", label: "6" },
+    { color: "#ADE8F4", label: "7" },
+    { color: "#CAF0F8", label: "8" },
+  ]
+
   const isTerrainActive = toggledLayers["terrain"]
   const isCLARTActive = toggledLayers["clart"]
   const isCropIntensityActive = toggledLayers["cropIntensity"]
@@ -202,6 +224,8 @@ const MapLegend = ({toggledLayers, lulcYear1, lulcYear2, lulcYear3}) => {
   const wellDepthActive = toggledLayers["mws_layers"]
   const droughtActive = toggledLayers["drought"]
   const cropIntenActive = toggledLayers["cropping_intensity"]
+  const NREGAActive = toggledLayers["nrega"]
+  const DrainageActive = toggledLayers["drainage"]
 
   return (
     <div
@@ -523,11 +547,59 @@ const MapLegend = ({toggledLayers, lulcYear1, lulcYear2, lulcYear3}) => {
                 </div>
               )}
 
+              {/*  NREGA Section */}
+              {NREGAActive && (
+                <div className="space-y-2">
+                  <h4 className="text-xs font-medium text-gray-600">NREGA Works</h4>
+                  {NREGAItem.map((item, index) => (
+                    <div
+                      key={`trend-${index}`}
+                      className="flex items-center gap-2"
+                    >
+                      <div
+                        className="w-4 h-4 rounded"
+                        style={{
+                          backgroundColor: item.color,
+                          border: `1px solid rgba(0,0,0,0.2)`,
+                        }}
+                      />
+                      <span className="text-sm text-gray-600">
+                        {item.label}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
               {/* Well Depth Section */}
               {wellDepthActive && (
                 <div className="space-y-2">
                   <h4 className="text-xs font-medium text-gray-600">Well Depth</h4>
                   {wellDepthItem.map((item, index) => (
+                    <div
+                      key={`trend-${index}`}
+                      className="flex items-center gap-2"
+                    >
+                      <div
+                        className="w-4 h-4 rounded"
+                        style={{
+                          backgroundColor: item.color,
+                          border: `1px solid rgba(0,0,0,0.2)`,
+                        }}
+                      />
+                      <span className="text-sm text-gray-600">
+                        {item.label}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/*  Drainage Section */}
+              {DrainageActive && (
+                <div className="space-y-2">
+                  <h4 className="text-xs font-medium text-gray-600">Drainage Order</h4>
+                  {DrainageItem.map((item, index) => (
                     <div
                       key={`trend-${index}`}
                       className="flex items-center gap-2"
