@@ -64,7 +64,7 @@ const HeaderSelect = ({
       sessionStorage.setItem("accessToken", data.access);
       return data.access;
     } catch (err) {
-      console.error("❌ Auto-login failed:", err);
+      console.error("Auto-login failed:", err);
       return null;
     }
   };
@@ -74,7 +74,6 @@ const HeaderSelect = ({
       const start = performance.now();
       const options = await loadOrganization();
       const end = performance.now();
-      console.log("Time to load orgs:", end - start, "ms");
       setOrganizationOptions(options);
 
       if (!organization && isOnDashboard) {
@@ -96,13 +95,6 @@ const HeaderSelect = ({
   }, []);
   useEffect(() => {
     const fetchProjects = async () => {
-      if (!organization) {
-        console.log("No organization selected yet.");
-        return;
-      }
-
-      console.log("Selected org for project fetch:", organization);
-
       let token = sessionStorage.getItem("accessToken");
       if (!token) {
         token = await loginAndGetToken();
@@ -128,10 +120,12 @@ const HeaderSelect = ({
 
         const data = await response.json();
 
-        const filtered = data.filter(
-          (project) => project.organization === organization.value
-        );
-
+        let filtered = [];
+        if (organization) {
+          filtered = data.filter(
+            (project) => project.organization === organization.value
+          );
+        }
         const options = filtered.map((project) => ({
           label: project.name,
           value: String(project.id),
@@ -174,7 +168,7 @@ const HeaderSelect = ({
         }
       );
       const data = await response.json();
-      console.log(data);
+
       return data.map((org) => ({
         value: org.id,
         label: org.name,
