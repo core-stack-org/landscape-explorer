@@ -191,6 +191,9 @@ const WaterProjectDashboard = () => {
 
   const [selectedFeature, setSelectedFeature] = useState(null);
   const [zoiArea, setZoiArea] = useState(null);
+  const [waterbodyLegend, setWaterbodyLegend] = useState(false);
+  const [zoiLegend, setZoiLegend] = useState(false);
+  const [terrainLegend, setTerrainLegend] = useState(false);
 
   const mapElement1 = useRef();
   const mapElement2 = useRef();
@@ -2044,49 +2047,87 @@ const WaterProjectDashboard = () => {
                       zIndex: 1000,
                     }}
                   >
-                    {/* Legend */}
-                    <Box
-                      sx={{
-                        backgroundColor: "rgba(255, 255, 255, 0.9)",
-                        padding: 2,
-                        borderRadius: 1,
-                        boxShadow: 2,
-                        flex: "1 1 180px",
-                        minWidth: "260px",
-                        maxWidth: "200px",
-                      }}
-                    >
-                      <Typography variant="subtitle2">
-                        Water Layer Legend
-                      </Typography>
-                      {[
-                        { color: "#74CCF4", label: "Kharif Water" },
-                        { color: "#1ca3ec", label: "Kharif and Rabi Water" },
-                        {
-                          color: "#0f5e9c",
-                          label: "Kharif, Rabi and Zaid Water",
-                        },
-                      ].map((item, idx) => (
+                    {/* Collapsible Legend for Map 1 */}
+                    {!waterbodyLegend ? (
+                      // collapsed tab
+                      <Box
+                        onClick={() => setWaterbodyLegend(true)}
+                        sx={{
+                          backgroundColor: "rgba(255,255,255,0.9)",
+                          padding: "6px 4px",
+                          borderRadius: "0 6px 6px 0",
+                          boxShadow: 2,
+                          cursor: "pointer",
+                          writingMode: "vertical-rl",
+                          textOrientation: "mixed",
+                          fontWeight: "bold",
+                        }}
+                      >
+                        Water Layer Legend ▶
+                      </Box>
+                    ) : (
+                      // expanded legend
+                      <Box
+                        sx={{
+                          backgroundColor: "rgba(255, 255, 255, 0.9)",
+                          padding: 2,
+                          borderRadius: 1,
+                          boxShadow: 2,
+                          flex: "1 1 180px",
+                          minWidth: "260px",
+                          maxWidth: "200px",
+                        }}
+                      >
                         <Box
-                          key={idx}
                           display="flex"
+                          justifyContent="space-between"
                           alignItems="center"
-                          gap={1}
-                          mt={1}
                         >
-                          <Box
-                            sx={{
-                              width: 20,
-                              height: 20,
-                              backgroundColor: item.color,
-                              opacity: 0.7,
-                              border: "1px solid #000",
+                          <Typography variant="subtitle2">
+                            Water Layer Legend
+                          </Typography>
+                          <button
+                            onClick={() => setWaterbodyLegend(false)}
+                            style={{
+                              border: "none",
+                              background: "transparent",
+                              cursor: "pointer",
                             }}
-                          />
-                          <Typography variant="body2">{item.label}</Typography>
+                          >
+                            ◀
+                          </button>
                         </Box>
-                      ))}
-                    </Box>
+                        {[
+                          { color: "#74CCF4", label: "Kharif Water" },
+                          { color: "#1ca3ec", label: "Kharif and Rabi Water" },
+                          {
+                            color: "#0f5e9c",
+                            label: "Kharif, Rabi and Zaid Water",
+                          },
+                        ].map((item, idx) => (
+                          <Box
+                            key={idx}
+                            display="flex"
+                            alignItems="center"
+                            gap={1}
+                            mt={1}
+                          >
+                            <Box
+                              sx={{
+                                width: 20,
+                                height: 20,
+                                backgroundColor: item.color,
+                                opacity: 0.7,
+                                border: "1px solid #000",
+                              }}
+                            />
+                            <Typography variant="body2">
+                              {item.label}
+                            </Typography>
+                          </Box>
+                        ))}
+                      </Box>
+                    )}
 
                     {/* YearSlider */}
                     <Box
@@ -2095,7 +2136,8 @@ const WaterProjectDashboard = () => {
                         padding: 2,
                         borderRadius: 1,
                         boxShadow: 2,
-                        flex: "1 1 240px",
+                        flexShrink: 0, // prevent shrinking
+                        flexGrow: 0,
                         minWidth: { xs: "220px", sm: "300px", md: "500px" },
                       }}
                     >
@@ -2500,24 +2542,125 @@ const WaterProjectDashboard = () => {
                       </Typography>
                     </Box>
 
-                    {/* Year Slider (bottom right) */}
+                    {/* Legend + YearSlider wrapper */}
                     <Box
                       sx={{
                         position: "absolute",
                         bottom: 16,
+                        left: 16,
                         right: 16,
-                        backgroundColor: "rgba(255, 255, 255, 0.9)",
-                        padding: 2,
-                        borderRadius: 1,
-                        boxShadow: 2,
+                        display: "flex",
+                        flexDirection: { xs: "column", sm: "row" },
+                        justifyContent: "space-between",
+                        gap: 2,
+                        flexWrap: "wrap",
                         zIndex: 1000,
-                        minWidth: "500px",
                       }}
                     >
-                      <YearSlider
-                        currentLayer={{ name: "lulcWaterrej" }}
-                        sliderId="map2"
-                      />
+                      {/* Collapsible Legend (left side) */}
+                      {!zoiLegend ? (
+                        <Box
+                          onClick={() => setZoiLegend(true)}
+                          sx={{
+                            backgroundColor: "rgba(255,255,255,0.9)",
+                            padding: "6px 4px",
+                            borderRadius: "0 6px 6px 0",
+                            boxShadow: 2,
+                            cursor: "pointer",
+                            writingMode: "vertical-rl",
+                            textOrientation: "mixed",
+                            fontWeight: "bold",
+                          }}
+                        >
+                          Zoi Legend ▶
+                        </Box>
+                      ) : (
+                        <Box
+                          sx={{
+                            backgroundColor: "rgba(255, 255, 255, 0.9)",
+                            padding: 2,
+                            borderRadius: 1,
+                            boxShadow: 2,
+                            flex: "1 1 180px",
+                            minWidth: "260px",
+                            maxWidth: "200px",
+                          }}
+                        >
+                          <Box
+                            display="flex"
+                            justifyContent="space-between"
+                            alignItems="center"
+                          >
+                            <Typography variant="subtitle2">
+                              Zoi Legend
+                            </Typography>
+                            <button
+                              onClick={() => setZoiLegend(false)}
+                              style={{
+                                border: "none",
+                                background: "transparent",
+                                cursor: "pointer",
+                              }}
+                            >
+                              ◀
+                            </button>
+                          </Box>
+                          {[
+                            { color: "#b3561d", label: "Triple Crop" },
+                            {
+                              color: "#FF9371",
+                              label: "Double Crop",
+                            },
+                            {
+                              color: "#f59d22",
+                              label: "Single Non-Kharif",
+                            },
+                            {
+                              color: "#BAD93E",
+                              label: "Single Kharif",
+                            },
+                          ].map((item, idx) => (
+                            <Box
+                              key={idx}
+                              display="flex"
+                              alignItems="center"
+                              gap={1}
+                              mt={1}
+                            >
+                              <Box
+                                sx={{
+                                  width: 20,
+                                  height: 20,
+                                  backgroundColor: item.color,
+                                  opacity: 0.7,
+                                  border: "1px solid #000",
+                                }}
+                              />
+                              <Typography variant="body2">
+                                {item.label}
+                              </Typography>
+                            </Box>
+                          ))}
+                        </Box>
+                      )}
+
+                      {/* YearSlider (right side) */}
+                      <Box
+                        sx={{
+                          backgroundColor: "rgba(255, 255, 255, 0.9)",
+                          padding: 2,
+                          borderRadius: 1,
+                          boxShadow: 2,
+                          flexShrink: 0, // prevent shrinking
+                          flexGrow: 0,
+                          minWidth: { xs: "220px", sm: "300px", md: "500px" },
+                        }}
+                      >
+                        <YearSlider
+                          currentLayer={{ name: "lulcWaterrej" }}
+                          sliderId="map2"
+                        />
+                      </Box>
                     </Box>
 
                     {/* Zoom Controls */}
@@ -2721,76 +2864,118 @@ const WaterProjectDashboard = () => {
 
                   {/* Legend */}
 
-                  <Box
-                    sx={{
-                      position: "absolute",
-                      bottom: 16,
-                      left: 16,
-                      backgroundColor: "rgba(255, 255, 255, 0.9)",
-                      padding: 2,
-                      borderRadius: 1,
-                      boxShadow: 2,
-                      zIndex: 1000,
-                      minWidth: "220px",
-                      maxWidth: "260px",
-                    }}
-                  >
-                    <Typography variant="subtitle2">
-                      Terrain Layer Legend
-                    </Typography>
-                    {[
-                      {
-                        color: "#313695",
-                        label: "V-shape river valleys, Deep narrow canyons",
-                      },
-                      {
-                        color: "#4575b4",
-                        label:
-                          "Lateral midslope incised drainages, Local valleys in plains",
-                      },
-                      {
-                        color: "#91bfdb",
-                        label: "Local ridge/hilltops within broad valleys",
-                      },
-                      { color: "#e0f3f8", label: "U-shape valleys" },
-                      { color: "#fffc00", label: "Broad Flat Areas" },
-                      { color: "#feb24c", label: "Broad open slopes" },
-                      { color: "#f46d43", label: "Mesa tops" },
-                      { color: "#d73027", label: "Upper Slopes" },
-                      {
-                        color: "#a50026",
-                        label: "Upland incised drainages Stream headwaters",
-                      },
-                      {
-                        color: "#800000",
-                        label:
-                          "Lateral midslope drainage divides, Local ridges in plains",
-                      },
-                      {
-                        color: "#4d0000",
-                        label: "Mountain tops, high ridges",
-                      },
-                    ].map((item, idx) => (
+                  {/* Collapsible Terrain Legend */}
+                  {!terrainLegend ? (
+                    // collapsed tab
+                    <Box
+                      onClick={() => setTerrainLegend(true)}
+                      sx={{
+                        position: "absolute",
+                        bottom: 16,
+                        left: 16,
+                        backgroundColor: "rgba(255,255,255,0.9)",
+                        padding: "6px 4px",
+                        borderRadius: "0 6px 6px 0",
+                        boxShadow: 2,
+                        cursor: "pointer",
+                        writingMode: "vertical-rl",
+                        textOrientation: "mixed",
+                        fontWeight: "bold",
+                        zIndex: 1200,
+                      }}
+                    >
+                      Terrain Legend ▶
+                    </Box>
+                  ) : (
+                    // expanded legend
+                    <Box
+                      sx={{
+                        position: "absolute",
+                        bottom: 16,
+                        left: 16,
+                        backgroundColor: "rgba(255, 255, 255, 0.9)",
+                        padding: 2,
+                        borderRadius: 1,
+                        boxShadow: 2,
+                        zIndex: 1200,
+                        minWidth: "220px",
+                        maxWidth: "260px",
+                      }}
+                    >
                       <Box
-                        key={idx}
                         display="flex"
+                        justifyContent="space-between"
                         alignItems="center"
-                        gap={1}
-                        mt={1}
                       >
-                        <Box
-                          sx={{
-                            width: 20,
-                            height: 20,
-                            backgroundColor: item.color,
-                            opacity: 0.7,
-                            border: "1px solid #000",
+                        <Typography variant="subtitle2">
+                          Terrain Layer Legend
+                        </Typography>
+                        <button
+                          onClick={() => setTerrainLegend(false)}
+                          style={{
+                            border: "none",
+                            background: "transparent",
+                            cursor: "pointer",
                           }}
-                        />
-                        <Typography variant="body2">{item.label}</Typography>
+                        >
+                          ◀
+                        </button>
                       </Box>
-                    ))}
-                  </Box>
+
+                      {[
+                        {
+                          color: "#313695",
+                          label: "V-shape river valleys, Deep narrow canyons",
+                        },
+                        {
+                          color: "#4575b4",
+                          label:
+                            "Lateral midslope incised drainages, Local valleys in plains",
+                        },
+                        {
+                          color: "#91bfdb",
+                          label: "Local ridge/hilltops within broad valleys",
+                        },
+                        { color: "#e0f3f8", label: "U-shape valleys" },
+                        { color: "#fffc00", label: "Broad Flat Areas" },
+                        { color: "#feb24c", label: "Broad open slopes" },
+                        { color: "#f46d43", label: "Mesa tops" },
+                        { color: "#d73027", label: "Upper Slopes" },
+                        {
+                          color: "#a50026",
+                          label: "Upland incised drainages Stream headwaters",
+                        },
+                        {
+                          color: "#800000",
+                          label:
+                            "Lateral midslope drainage divides, Local ridges in plains",
+                        },
+                        {
+                          color: "#4d0000",
+                          label: "Mountain tops, high ridges",
+                        },
+                      ].map((item, idx) => (
+                        <Box
+                          key={idx}
+                          display="flex"
+                          alignItems="center"
+                          gap={1}
+                          mt={1}
+                        >
+                          <Box
+                            sx={{
+                              width: 20,
+                              height: 20,
+                              backgroundColor: item.color,
+                              opacity: 0.7,
+                              border: "1px solid #000",
+                            }}
+                          />
+                          <Typography variant="body2">{item.label}</Typography>
+                        </Box>
+                      ))}
+                    </Box>
+                  )}
 
                   {/* Zoom Controls */}
                   <Box
