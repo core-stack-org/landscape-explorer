@@ -7,7 +7,9 @@ import VectorLayer from "ol/layer/Vector";
 import VectorSource from "ol/source/Vector";
 import GeoJSON from "ol/format/GeoJSON";
 import Map from "ol/Map";
-import { Style, Fill, Stroke } from "ol/style";
+import { Style, Fill, Stroke, Icon } from "ol/style";
+import { Point } from "ol/geom";
+
 import LocationOnIcon from "@mui/icons-material/LocationOn";
 import YearSlider from "./yearSlider";
 import PrecipitationStackChart from "./PrecipitationStackChart.jsx";
@@ -869,12 +871,52 @@ const WaterProjectDashboard = () => {
       }).readFeatures(geoData),
     });
 
+    const waterBodyStyle = (feature) => {
+      const styles = [
+        new Style({
+          stroke: new Stroke({
+            color: "#ff0000",
+            width: 3,
+          }),
+        }),
+      ];
+
+      const geometry = feature.getGeometry();
+      if (geometry) {
+        let center;
+
+        if (geometry.getType() === "Polygon") {
+          center = geometry.getInteriorPoint().getCoordinates();
+        } else if (geometry.getType() === "MultiPolygon") {
+          center = geometry.getInteriorPoints().getFirstCoordinate();
+        } else {
+          // fallback: use extent center
+          const extent = geometry.getExtent();
+          center = [(extent[0] + extent[2]) / 2, (extent[1] + extent[3]) / 2];
+        }
+
+        styles.push(
+          new Style({
+            geometry: new Point(center),
+            image: new Icon({
+              anchor: [0.5, 1],
+              src: "https://cdn-icons-png.flaticon.com/512/684/684908.png", // marker icon
+              scale: 0.03,
+            }),
+          })
+        );
+      }
+
+      return styles;
+    };
+
     const waterBodyLayerSecond = new VectorLayer({
       source: vectorLayerWater,
-      style: new Style({
-        stroke: new Stroke({ color: "#ff0000", width: 5 }),
-        // fill: new Fill({ color: "rgba(100, 149, 237, 0.5)" }),
-      }),
+      style: waterBodyStyle,
+      // style: new Style({
+      //   stroke: new Stroke({ color: "#ff0000", width: 5 }),
+      //   // fill: new Fill({ color: "rgba(100, 149, 237, 0.5)" }),
+      // }),
     });
     waterBodyLayerSecond.setZIndex(2);
 
