@@ -207,7 +207,7 @@ const MapLegend = ({ showMWS, showVillages, currentLayer, mappedAssets, mappedDe
     { color: "#eee05d", label: "Single Non-Kharif" },
     { color: "#f9b249", label: "Double Cropping" },
     { color: "#fb5139", label: "Triple Cropping" },
-    { color: "#ff0000", label: "Shrubs and Scrubs" },
+    { color: "#4c4ef5", label: "Shrubs and Scrubs" },
   ];
 
   const terrainLegendItems = [
