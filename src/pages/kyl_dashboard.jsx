@@ -518,7 +518,7 @@ const KYLDashboardPage = () => {
                           }}
                           className="w-full border border-transparent rounded-none rounded-r-lg p-4 flex items-center justify-center text-sm font-medium text-blue-600 hover:text-blue-500 focus:outline-none"
                         >
-                          Submit Request
+                          Reload
                         </button>
                       </div>
                     </div>
