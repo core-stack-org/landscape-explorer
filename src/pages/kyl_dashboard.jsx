@@ -615,8 +615,6 @@ const KYLDashboardPage = () => {
       const result = await response.json();
       setDataJson(result);
 
-      console.log(result)
-
       setIsLoading(false);
       setFiltersEnabled(true)
     } catch (e) {
