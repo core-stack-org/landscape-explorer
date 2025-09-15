@@ -123,6 +123,7 @@ const MapLegend = ({toggledLayers, lulcYear1, lulcYear2, lulcYear3}) => {
     { color: "#e0f3f8", label: "Semi - Critical " },
     { color: "#4575b4", label: " Critical " },
     { color: "#313695", label: "Over - Exploited " },
+    { color: "#a9a9a9", label: "Not Assessed" },
   ];
 
   const terrainVector = [
@@ -1820,6 +1821,13 @@ const Map = forwardRef(({
             return new Style({
               fill: new Fill({
                 color: "#4575b4",
+              }),
+            });
+          }
+          else if(feature.values_.class === "Not Assessed"){
+            return new Style({
+              fill: new Fill({
+                color: "#a9a9a9",
               }),
             });
           }
