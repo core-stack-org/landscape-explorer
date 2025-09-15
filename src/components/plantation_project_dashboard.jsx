@@ -97,8 +97,8 @@ const PlantationProjectDashboard = () => {
   const [anchorEl, setAnchorEl] = useState(null);
   const [filterType, setFilterType] = useState("");
 
-  const [selectedWaterbody, setSelectedWaterbody] = useState(null);
-  const [mapClickedWaterbody, setMapClickedWaterbody] = useState(null);
+  const [selectedPlantation, setSelectedPlantation] = useState(null);
+  const [mapClickedPlantation, setMapClickedPlantation] = useState(null);
   const [plantLayer, setPlantLayer] = useState(null);
   const [currentLayer, setCurrentLayer] = useState([]);
 
@@ -125,45 +125,6 @@ const PlantationProjectDashboard = () => {
 
   const { geoData } = usePlantationData(orgName, projectName, projectId);
 
-  // useEffect(() => {
-  //   console.log("111111111111111");
-  //   if (!mapRef1.current || !geoData) return;
-
-  //   if (plantationLayerRef.current) {
-  //     mapRef1.current.removeLayer(plantationLayerRef.current);
-  //     plantationLayerRef.current = null;
-  //   }
-
-  //   const vectorSource = new VectorSource({
-  //     features: new GeoJSON().readFeatures(geoData, {
-  //       dataProjection: "EPSG:4326",
-  //       featureProjection: "EPSG:3857",
-  //     }),
-  //   });
-  //   console.log("11111111111111122");
-  //   const plantationLayer = new VectorLayer({
-  //     source: vectorSource,
-  //     style: new Style({
-  //       stroke: new Stroke({ color: "#228B22", width: 10 }),
-  //       fill: new Fill({ color: "rgba(34,139,34,0.25)" }),
-  //     }),
-  //   });
-  //   console.log("Vector features count:", vectorSource.getFeatures().length);
-  //   plantationLayer.setZIndex(100);
-  //   mapRef1.current.addLayer(plantationLayer);
-  //   plantationLayerRef.current = plantationLayer;
-
-  //   const extent = vectorSource.getExtent();
-  //   console.log("Plantation extent:", extent);
-  //   if (extent && extent.every(Number.isFinite)) {
-  //     mapRef1.current.getView().fit(extent, {
-  //       padding: [40, 40, 40, 40],
-  //       duration: 800,
-  //       maxZoom: 18,
-  //     });
-  //   }
-  // }, [geoData, mapRef1.current]);
-
   useEffect(() => {
     const storedOrg = sessionStorage.getItem("selectedOrganization");
     const storedProject = sessionStorage.getItem("selectedProject");
@@ -188,11 +149,50 @@ const PlantationProjectDashboard = () => {
     }
   }, [location.key]);
 
+  // function sanitizeGeoJSON(geojson) {
+  //   if (!geojson || !geojson.features) return geojson;
+
+  //   geojson.features = geojson.features.map((feature) => {
+  //     let geom = feature.geometry;
+
+  //     if (!geom || !geom.coordinates || !geom.coordinates.length) {
+  //       // leave geometry as-is (null or invalid)
+  //       return feature;
+  //     }
+
+  //     // Fix Polygon → MultiPolygon mismatch
+  //     if (geom.type === "Polygon") {
+  //       feature.geometry = {
+  //         type: "MultiPolygon",
+  //         coordinates: [geom.coordinates],
+  //       };
+  //     }
+
+  //     // Ensure MultiPolygon has proper nesting
+  //     if (geom.type === "MultiPolygon") {
+  //       feature.geometry.coordinates = geom.coordinates
+  //         .filter((poly) => Array.isArray(poly) && poly.length > 0)
+  //         .map((poly) => {
+  //           if (!Array.isArray(poly[0][0])) {
+  //             return [poly];
+  //           }
+  //           return poly;
+  //         });
+  //     }
+
+  //     return feature;
+  //   });
+
+  //   return geojson;
+  // }
+
   // const initializeMap = async () => {
-  //   console.log("333333333333333333");
+  //   console.log("Initializing map...");
+
+  //   // 🌍 Base layer (Google hybrid)
   //   const baseLayer = new TileLayer({
   //     source: new XYZ({
-  //       url: "https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}", // Google hybrid tiles
+  //       url: "https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}",
   //       maxZoom: 20,
   //       transition: 500,
   //     }),
@@ -200,6 +200,7 @@ const PlantationProjectDashboard = () => {
   //   });
   //   baseLayerRef.current = baseLayer;
 
+  //   // 🖼️ Custom attribution
   //   class GoogleLogoControl extends Control {
   //     constructor() {
   //       const element = document.createElement("div");
@@ -215,15 +216,17 @@ const PlantationProjectDashboard = () => {
   //     }
   //   }
 
+  //   // 👀 Map view
   //   const view = new View({
   //     projection: "EPSG:3857",
   //     center: fromLonLat([78.9629, 20.5937]), // Center on India
-  //     zoom: 5, // Initial zoom
+  //     zoom: 5,
   //     constrainResolution: true,
   //     smoothExtentConstraint: true,
   //     smoothResolutionConstraint: true,
   //   });
 
+  //   // 🗺️ Map init
   //   const map = new Map({
   //     target: mapElement1.current,
   //     layers: [baseLayer],
@@ -232,16 +235,15 @@ const PlantationProjectDashboard = () => {
   //     loadTilesWhileAnimating: true,
   //     loadTilesWhileInteracting: true,
   //   });
-
   //   mapRef1.current = map;
 
-  //   // 🔗 Your GeoServer URL for plantation GeoJSON
+  //   // 🔗 Plantation WFS
   //   const url =
   //     "https://geoserver.core-stack.org:8443/geoserver/plantation/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=plantation%3ASayTrees_MBRDI_Biodiversity_Conservation_-_Kolar_site_suitability&outputFormat=application%2Fjson";
 
   //   const plantationSource = new VectorSource({
   //     format: new GeoJSON(),
-  //     loader: function (extent, resolution, projection) {
+  //     loader: function () {
   //       fetch(url)
   //         .then((response) => {
   //           if (!response.ok) {
@@ -251,27 +253,28 @@ const PlantationProjectDashboard = () => {
   //           return response.json();
   //         })
   //         .then((json) => {
-  //           if (!json || !json.features) return;
+  //           if (!json || !json.features) {
+  //             console.error("No features in plantation GeoJSON");
+  //             return;
+  //           }
 
-  //           // ✅ sanitize geometries
-  //           json.features = json.features
-  //             .filter((f) => f.geometry && f.geometry.coordinates?.length)
-  //             .map((f) => {
-  //               if (f.geometry.type === "Polygon") {
-  //                 f.geometry = {
-  //                   type: "MultiPolygon",
-  //                   coordinates: [f.geometry.coordinates],
-  //                 };
-  //               }
-  //               return f;
-  //             });
+  //           const safeData = sanitizeGeoJSON(json);
 
   //           const features = new GeoJSON({
   //             dataProjection: "EPSG:4326",
   //             featureProjection: "EPSG:3857",
-  //           }).readFeatures(json);
+  //           }).readFeatures(safeData);
 
   //           plantationSource.addFeatures(features);
+  //           if (features.length > 0) {
+  //             const extent = plantationSource.getExtent();
+  //             if (extent && extent.every((v) => isFinite(v))) {
+  //               map.getView().fit(extent, {
+  //                 padding: [50, 50, 50, 50], // margin around features
+  //                 duration: 1500, // smooth animation
+  //               });
+  //             }
+  //           }
   //         })
   //         .catch((error) => {
   //           console.error(
@@ -290,10 +293,49 @@ const PlantationProjectDashboard = () => {
   //   });
 
   //   map.addLayer(plantationLayer);
+  //   plantationLayerRef.current = plantationLayer;
   //   setPlantLayer(plantationLayer);
   // };
 
-  // ✅ GeoJSON sanitizer
+  // useEffect(() => {
+  //   if (view === "map") {
+  //     if (mapElement1.current) initializeMap();
+  //   }
+
+  //   return () => {
+  //     if (mapRef1.current) mapRef1.current.setTarget(null);
+  //   };
+  // }, [view, geoData, projectName, projectId]);
+
+  // useEffect(() => {
+  //   if (view === "map" && selectedPlantation && selectedFeature) {
+  //     zoomToPlantationFeature(selectedPlantation, selectedFeature, mapRef1);
+  //   }
+  // }, [selectedPlantation, selectedFeature, view]);
+
+  // const zoomToPlantationFeature = (uid) => {
+  //   console.log("zooming", uid);
+  //   const source = plantationLayerRef.current?.getSource();
+  //   if (!source) return;
+
+  //   // find the feature by UID
+  //   const feature = source
+  //     .getFeatures()
+  //     .find((f) => f.get("uid") === uid || f.get("UID") === uid);
+  //   if (!feature) return;
+
+  //   const geometry = feature.getGeometry();
+  //   if (!geometry) return;
+
+  //   // zoom map
+  //   mapRef1.current.getView().fit(geometry.getExtent(), {
+  //     duration: 500,
+  //     padding: [50, 50, 50, 50],
+  //     maxZoom: 18,
+  //   });
+  // };
+
+  // Step 1: Add the missing sanitizeGeoJSON function (uncomment and place this before initializeMap)
   function sanitizeGeoJSON(geojson) {
     if (!geojson || !geojson.features) return geojson;
 
@@ -301,7 +343,6 @@ const PlantationProjectDashboard = () => {
       let geom = feature.geometry;
 
       if (!geom || !geom.coordinates || !geom.coordinates.length) {
-        // leave geometry as-is (null or invalid)
         return feature;
       }
 
@@ -331,10 +372,11 @@ const PlantationProjectDashboard = () => {
     return geojson;
   }
 
+  // Step 2: Complete the initializeMap function
   const initializeMap = async () => {
     console.log("Initializing map...");
 
-    // 🌍 Base layer (Google hybrid)
+    // Base layer (Google hybrid)
     const baseLayer = new TileLayer({
       source: new XYZ({
         url: "https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}",
@@ -345,7 +387,7 @@ const PlantationProjectDashboard = () => {
     });
     baseLayerRef.current = baseLayer;
 
-    // 🖼️ Custom attribution
+    // Custom attribution
     class GoogleLogoControl extends Control {
       constructor() {
         const element = document.createElement("div");
@@ -361,7 +403,7 @@ const PlantationProjectDashboard = () => {
       }
     }
 
-    // 👀 Map view
+    // Map view
     const view = new View({
       projection: "EPSG:3857",
       center: fromLonLat([78.9629, 20.5937]), // Center on India
@@ -371,7 +413,7 @@ const PlantationProjectDashboard = () => {
       smoothResolutionConstraint: true,
     });
 
-    // 🗺️ Map init
+    // Map initialization
     const map = new Map({
       target: mapElement1.current,
       layers: [baseLayer],
@@ -382,75 +424,245 @@ const PlantationProjectDashboard = () => {
     });
     mapRef1.current = map;
 
-    // 🔗 Plantation WFS
-    const url =
-      "https://geoserver.core-stack.org:8443/geoserver/plantation/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=plantation%3ASayTrees_MBRDI_Biodiversity_Conservation_-_Kolar_site_suitability&outputFormat=application%2Fjson";
-
-    const plantationSource = new VectorSource({
-      format: new GeoJSON(),
-      loader: function () {
-        fetch(url)
-          .then((response) => {
-            if (!response.ok) {
-              console.error("Network response was not ok for plantation layer");
-              return null;
-            }
-            return response.json();
-          })
-          .then((json) => {
-            if (!json || !json.features) {
-              console.error("No features in plantation GeoJSON");
-              return;
-            }
-
-            const safeData = sanitizeGeoJSON(json);
-
-            const features = new GeoJSON({
-              dataProjection: "EPSG:4326",
-              featureProjection: "EPSG:3857",
-            }).readFeatures(safeData);
-
-            plantationSource.addFeatures(features);
-          })
-          .catch((error) => {
-            console.error(
-              '❌ Failed to load the "plantation" layer. Please check your connection or the map layer details.',
-              error
-            );
-          });
-      },
-    });
-
-    const plantationLayer = new VectorLayer({
-      source: plantationSource,
-      style: new Style({
-        stroke: new Stroke({ color: "#ff0000", width: 5 }),
-      }),
-    });
-
-    map.addLayer(plantationLayer);
-    setPlantLayer(plantationLayer);
-  };
-
-  useEffect(() => {
-    if (view === "map") {
-      if (mapElement1.current) initializeMap();
+    // Add plantation layer if geoData is available
+    if (geoData && geoData.features) {
+      addPlantationLayer(map);
     }
 
+    console.log("Map initialized successfully");
+  };
+
+  // Step 3: Update the addPlantationLayer function with better error handling
+  const addPlantationLayer = (map) => {
+    try {
+      if (plantationLayerRef.current) {
+        map.removeLayer(plantationLayerRef.current);
+        plantationLayerRef.current = null;
+      }
+
+      if (!geoData || !geoData.features) {
+        console.warn("No geoData available for plantation layer");
+        return;
+      }
+
+      const safeData = sanitizeGeoJSON(geoData);
+      console.log(
+        "Adding plantation layer with features:",
+        safeData.features.length
+      );
+
+      const vectorSource = new VectorSource({
+        features: new GeoJSON({
+          dataProjection: "EPSG:4326",
+          featureProjection: "EPSG:3857",
+        }).readFeatures(safeData),
+      });
+
+      const plantationLayer = new VectorLayer({
+        source: vectorSource,
+        style: new Style({
+          stroke: new Stroke({ color: "red", width: 3 }),
+          fill: new Fill({ color: "rgba(34,139,34,0.25)" }),
+        }),
+      });
+
+      plantationLayer.setZIndex(100);
+      map.addLayer(plantationLayer);
+
+      plantationLayerRef.current = plantationLayer;
+
+      console.log("Plantation layer added successfully", selectedFeature);
+
+      // Fit to all features initially if no specific feature selected
+      if (!selectedFeature) {
+        const extent = vectorSource.getExtent();
+        console.log("Fitting to extent:", extent);
+        if (extent && extent.every(Number.isFinite)) {
+          map.getView().fit(extent, {
+            padding: [40, 40, 40, 40],
+            duration: 800,
+            maxZoom: 18,
+          });
+        }
+      }
+    } catch (error) {
+      console.error("Error adding plantation layer:", error);
+    }
+  };
+
+  // Step 4: Update the useEffect for selectedFeature with better error handling and logging
+  useEffect(() => {
+    console.log("selectedFeature effect triggered:", {
+      hasSelectedFeature: !!selectedFeature,
+      hasMap: !!mapRef1.current,
+      hasLayer: !!plantationLayerRef.current,
+      view: view,
+    });
+
+    if (
+      selectedFeature &&
+      mapRef1.current &&
+      plantationLayerRef.current &&
+      view === "map"
+    ) {
+      // Wait a bit for map to be ready
+      setTimeout(() => {
+        try {
+          console.log("Attempting to zoom to feature:", selectedFeature);
+
+          // Create a temporary feature to get the extent
+          const format = new GeoJSON({
+            dataProjection: "EPSG:4326",
+            featureProjection: "EPSG:3857",
+          });
+
+          const olFeature = format.readFeature(selectedFeature);
+          const geometry = olFeature.getGeometry();
+
+          if (geometry) {
+            const extent = geometry.getExtent();
+            console.log("Feature extent:", extent);
+
+            if (extent && extent.every(Number.isFinite)) {
+              console.log("Zooming to feature extent");
+              mapRef1.current.getView().fit(extent, {
+                padding: [50, 50, 50, 50],
+                duration: 1000,
+                maxZoom: 16,
+              });
+
+              // Highlight the selected feature
+              highlightSelectedFeature(selectedFeature);
+            } else {
+              console.warn("Invalid extent:", extent);
+            }
+          } else {
+            console.warn("No geometry found for feature");
+          }
+        } catch (error) {
+          console.error("Error zooming to feature:", error);
+        }
+      }, 1000); // Increased timeout to ensure map is ready
+    }
+  }, [selectedFeature, view]);
+
+  // Step 5: Update the highlightSelectedFeature function
+  const highlightSelectedFeature = (selectedGeoJsonFeature) => {
+    if (!plantationLayerRef.current || !selectedGeoJsonFeature) return;
+
+    const source = plantationLayerRef.current.getSource();
+    const features = source.getFeatures();
+
+    console.log("Highlighting feature, total features:", features.length);
+
+    features.forEach((olFeature, index) => {
+      try {
+        // Compare features by properties or geometry
+        const olFeatureProps = olFeature.getProperties();
+        const selectedProps = selectedGeoJsonFeature.properties;
+
+        // Try to match by properties (adjust based on your data structure)
+        let isMatch = false;
+        if (selectedProps && olFeatureProps) {
+          // You might need to adjust these property names based on your data
+          isMatch =
+            olFeatureProps.site_id === selectedProps.site_id ||
+            olFeatureProps.waterbody_name === selectedProps.waterbody_name; // fallback to index if available
+        }
+
+        if (isMatch) {
+          console.log("Found matching feature, highlighting");
+          // Highlight selected feature
+          olFeature.setStyle(
+            new Style({
+              stroke: new Stroke({ color: "red", width: 5 }),
+              fill: new Fill({ color: "rgba(255,0,0,0.3)" }),
+            })
+          );
+        } else {
+          // Reset other features to default style
+          olFeature.setStyle(null);
+        }
+      } catch (error) {
+        console.error("Error highlighting feature:", error);
+      }
+    });
+  };
+
+  // Step 7: Update the map initialization effect
+  useEffect(() => {
+    console.log("Map initialization effect:", {
+      view: view,
+      hasMapElement: !!mapElement1.current,
+      hasExistingMap: !!mapRef1.current,
+    });
+
+    if (view === "map" && mapElement1.current) {
+      if (!mapRef1.current) {
+        console.log("Initializing new map");
+        initializeMap();
+      }
+    }
+
+    // Cleanup function
     return () => {
-      if (mapRef1.current) mapRef1.current.setTarget(null);
+      // Only cleanup when component unmounts or view changes away from map
+      if (view !== "map" && mapRef1.current) {
+        console.log("Cleaning up map");
+        mapRef1.current.setTarget(null);
+        mapRef1.current = null;
+        plantationLayerRef.current = null;
+      }
     };
-  }, [view, geoData, projectName, projectId]);
-  // useEffect(() => {
-  //   console.log("22222222222222222222");
-  //   if (view !== "map") return;
-  //   if (!mapRef1.current && mapElement1.current) {
-  //     console.log("2222222222222222222211111111");
-  //     initializeMap(); // only once
-  //   }
-  //   // optional: keep the map alive when leaving the view; remove if you truly want to destroy it.
-  //   return () => {};
-  // }, [view]);
+  }, [view]);
+
+  // Step 8: Update the geoData effect
+  useEffect(() => {
+    console.log("GeoData effect:", {
+      hasMap: !!mapRef1.current,
+      hasGeoData: !!(geoData && geoData.features),
+      view: view,
+      featureCount: geoData?.features?.length || 0,
+    });
+
+    if (mapRef1.current && geoData && geoData.features && view === "map") {
+      console.log("Adding plantation layer from geoData effect");
+      addPlantationLayer(mapRef1.current);
+    }
+  }, [geoData, view]);
+
+  // Step 9: Add debugging for table clicks
+  const handlePlantationClick = (row) => {
+    console.log("=== PLANTATION CLICK DEBUG ===");
+    console.log("Clicked row:", row);
+    console.log("Row feature index:", row.featureIndex);
+    console.log("Total geoData features:", geoData?.features?.length || 0);
+    console.log("Current view:", view);
+    console.log("Has map:", !!mapRef1.current);
+
+    const feature = geoData.features.find(
+      (f) => f.properties.uid === row.uid || f.properties.UID === row.uid
+    );
+
+    if (feature) {
+      console.log("Found feature:", feature);
+      console.log("Feature geometry type:", feature.geometry?.type);
+      console.log("Feature properties:", feature.properties);
+
+      setSelectedPlantation(row);
+      setSelectedFeature(feature);
+      setView("map");
+
+      // Store for later use
+      window.selectedFeatureIndex = row.featureIndex;
+
+      console.log("State updated, switching to map view");
+    } else {
+      console.error("Feature not found for row index:", row.featureIndex);
+    }
+
+    console.log("=== END DEBUG ===");
+  };
 
   const { rows } = useMemo(() => {
     if (!geoData?.features) return { rows: [] };
@@ -529,6 +741,7 @@ const PlantationProjectDashboard = () => {
         averageTreeCover: avgTreeCover,
         coordinates,
         featureIndex: index,
+        uid: props.uid || props["UID"] || "NA",
       };
     });
 
@@ -644,40 +857,69 @@ const PlantationProjectDashboard = () => {
     handleFilterClose();
   };
 
-  const handlePlantationClick = (row) => {
-    const feature = geoData.features.find((f, idx) => idx === row.featureIndex);
+  // const handlePlantationClick = (row) => {
+  //   console.log("rowwww", row);
+  //   const feature = geoData.features.find((f, idx) => idx === row.featureIndex);
 
-    if (feature) {
-      if (feature.geometry?.type === "MultiPolygon") {
-        row.coordinates = null;
-      } else if (
-        feature.properties?.latitude &&
-        feature.properties?.longitude
-      ) {
-        const coordinates = [
-          feature.properties.longitude,
-          feature.properties.latitude,
-        ];
-        row.coordinates = coordinates;
-      }
+  //   if (!feature) {
+  //     console.error("Feature not found.");
+  //     return;
+  //   }
 
-      setSelectedWaterbody(row);
-      setView("map");
-    } else {
-      console.error("Feature not found.");
-    }
-  };
+  //   // 1️⃣ Convert GeoJSON feature to OL Feature
+  //   const olFeature = new GeoJSON().readFeature(feature, {
+  //     dataProjection: "EPSG:4326",
+  //     featureProjection: "EPSG:3857",
+  //   });
+
+  //   const geometry = olFeature.getGeometry();
+
+  //   if (!geometry) {
+  //     console.error("No geometry found for this plantation");
+  //     return;
+  //   }
+
+  //   // 2️⃣ Compute center (centroid) for zoom
+  //   let center;
+  //   if (geometry.getType() === "Point") {
+  //     center = geometry.getCoordinates();
+  //   } else {
+  //     center = geometry.getExtent();
+  //   }
+
+  //   setSelectedPlantation(row); // show details
+  //   setView("map"); // switch view
+
+  //   if (mapRef1.current) {
+  //     const view = mapRef1.current.getView();
+
+  //     if (geometry.getType() === "Point") {
+  //       view.animate({
+  //         center,
+  //         zoom: 16,
+  //         duration: 1000,
+  //       });
+  //     } else {
+  //       // For Polygon/MultiPolygon: fit extent
+  //       view.fit(geometry, {
+  //         duration: 1000,
+  //         padding: [50, 50, 50, 50],
+  //         maxZoom: 16,
+  //       });
+  //     }
+  //   }
+  // };
 
   const handleMapBoxClick = () => {
     const matchingRow = rows.find(
-      (row) => row.waterbody === mapClickedWaterbody.name
+      (row) => row.plantation === mapClickedPlantation.name // renamed
     );
 
     if (matchingRow) {
-      console.log("Passing to handleWaterbodyClick:", matchingRow);
+      console.log("Passing to handlePlantationClick:", matchingRow);
       handlePlantationClick(matchingRow);
     } else {
-      console.warn("No matching row found.");
+      console.warn("No matching plantation row found.");
     }
   };
 
@@ -948,7 +1190,7 @@ const PlantationProjectDashboard = () => {
                       key={row.id}
                       hover
                       sx={{ cursor: "pointer" }}
-                      onClick={() => handlePlantationClick(row)}
+                      onClick={() => handlePlantationClick(row.uid)}
                     >
                       <TableCell>{row.state}</TableCell>
                       <TableCell>{row.district}</TableCell>
@@ -1038,7 +1280,7 @@ const PlantationProjectDashboard = () => {
                 />
 
                 {/* Top-left Label */}
-                {selectedWaterbody && (
+                {selectedPlantation && (
                   <Box
                     sx={{
                       position: "absolute",
@@ -1060,7 +1302,7 @@ const PlantationProjectDashboard = () => {
                     <Box display="flex" alignItems="center" gap={1}>
                       <LocationOnIcon fontSize="small" color="primary" />
                       <Typography variant="body1" fontWeight={600}>
-                        {selectedWaterbody?.waterbody || "Waterbody Name"}
+                        {selectedPlantation?.waterbody || "Waterbody Name"}
                       </Typography>
                     </Box>
                     <Typography
@@ -1068,7 +1310,7 @@ const PlantationProjectDashboard = () => {
                       color="text.secondary"
                       fontWeight={800}
                     >
-                      Silt Removed: {selectedWaterbody?.siltRemoved || "silt"}{" "}
+                      Silt Removed: {selectedPlantation?.siltRemoved || "silt"}{" "}
                       cubic metre
                     </Typography>
                     <Typography
@@ -1077,13 +1319,13 @@ const PlantationProjectDashboard = () => {
                       fontWeight={800}
                     >
                       Area (in hectare):{" "}
-                      {(selectedWaterbody?.areaOred || 0).toFixed(2)} hectares
+                      {(selectedPlantation?.areaOred || 0).toFixed(2)} hectares
                     </Typography>
                   </Box>
                 )}
 
                 {/* Legend + YearSlider wrapper for responsiveness */}
-                {selectedWaterbody && (
+                {selectedPlantation && (
                   <Box
                     sx={{
                       position: "absolute",
@@ -1162,7 +1404,7 @@ const PlantationProjectDashboard = () => {
                 )}
 
                 {/* Zoom Controls */}
-                {!selectedWaterbody && (
+                {!selectedPlantation && (
                   <Box
                     sx={{
                       position: "absolute",
@@ -1201,7 +1443,7 @@ const PlantationProjectDashboard = () => {
                   </Box>
                 )}
               </Box>
-              {mapClickedWaterbody && !selectedWaterbody && (
+              {mapClickedPlantation && !selectedPlantation && (
                 <Box
                   sx={{
                     position: "absolute",
@@ -1229,7 +1471,7 @@ const PlantationProjectDashboard = () => {
                       pb: 1,
                     }}
                   >
-                    {mapClickedWaterbody.name}
+                    {mapClickedPlantation.name}
                   </Typography>
 
                   <Box display="flex" justifyContent="space-between">
@@ -1245,7 +1487,7 @@ const PlantationProjectDashboard = () => {
                       fontWeight={500}
                       color="text.primary"
                     >
-                      {mapClickedWaterbody.Village ?? "NA"}
+                      {mapClickedPlantation.Village ?? "NA"}
                     </Typography>
                   </Box>
 
@@ -1262,7 +1504,7 @@ const PlantationProjectDashboard = () => {
                       fontWeight={500}
                       color="text.primary"
                     >
-                      {mapClickedWaterbody.Taluka ?? "NA"}
+                      {mapClickedPlantation.Taluka ?? "NA"}
                     </Typography>
                   </Box>
                 </Box>
@@ -1277,12 +1519,12 @@ const PlantationProjectDashboard = () => {
                   alignItems: "center",
                 }}
               >
-                {selectedWaterbody && (
+                {selectedPlantation && (
                   <Box
                     sx={{ width: "100%", maxWidth: "700px", height: "400px" }}
                   >
                     {/* <WaterAvailabilityChart
-                      waterbody={selectedWaterbody}
+                      waterbody={selectedPlantation}
                       water_rej_data={geoData}
                       mwsFeature={selectedMWSFeature}
                     /> */}
@@ -1321,7 +1563,7 @@ const PlantationProjectDashboard = () => {
               >
                 {/* <NDVIChart
                   zoiFeatures={zoiFeatures}
-                  waterbody={selectedWaterbody}
+                  waterbody={selectedPlantation}
                   years={[
                     "2017",
                     "2018",
