@@ -1138,6 +1138,8 @@ const WaterProjectDashboard = () => {
           String(selectedFeature.properties.MWS_UID)
       );
 
+      console.log(selectedFeature.properties);
+
       if (matchedFeature) {
         console.log(
           "Matched Feature Properties:",
@@ -1165,6 +1167,12 @@ const WaterProjectDashboard = () => {
         return;
       }
 
+      // const boundarySource = new VectorSource({
+      //   features: new GeoJSON().readFeatures(json, {
+      //     dataProjection: "EPSG:4326",
+      //     featureProjection: "EPSG:4326",
+      //   }),
+      // });
       const boundarySource = new VectorSource({
         features: new GeoJSON().readFeatures(
           { type: "FeatureCollection", features: [matchedFeature] },
@@ -1624,9 +1632,14 @@ const WaterProjectDashboard = () => {
               }}
             >
               <Lightbulb size={94} color="black" />
-              Under the project {project?.label}, {totalRows} waterbodies have
-              been de-silted, spanning around{" "}
-              {(totalSiltRemoved || 0).toFixed(2)} Cu.m.
+              Under the project {project?.label},{" "}
+              {totalRows.toLocaleString("en-IN")} waterbodies have been
+              de-silted, spanning around{" "}
+              {(totalSiltRemoved || 0).toLocaleString("en-IN", {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+              })}{" "}
+              Cu.m.
               {/* On average, the surface
               water availability during summer season has changed from 16% to
               25%. */}
@@ -1763,7 +1776,7 @@ const WaterProjectDashboard = () => {
                               e.stopPropagation();
                               handleInfoClick(
                                 e.currentTarget,
-                                "Name of the waterbody (e.g., lake, pond, tank) being monitored."
+                                "Name of the waterbody being monitored."
                               );
                             }}
                           >
@@ -1901,7 +1914,7 @@ const WaterProjectDashboard = () => {
                             e.stopPropagation(); // prevent triggering sort
                             handleInfoClick(
                               e.currentTarget,
-                              "Average percentage of water available in the waterbody during the Rabi season."
+                              "Average percentage of water available in the waterbody during the Rabi season.Statistics within the brackets indicates the change after the intervention and before the intervention."
                             );
                           }}
                           sx={{ marginLeft: 0.5 }}
@@ -1938,7 +1951,7 @@ const WaterProjectDashboard = () => {
                             e.stopPropagation(); // avoid triggering sort
                             handleInfoClick(
                               e.currentTarget,
-                              "Average percentage of water available in the waterbody during the Zaid season (summer cropping period)."
+                              "Average percentage of water available in the waterbody during the Zaid season (summer cropping period).Statistics within the brackets indicates the change after the intervention and before the intervention."
                             );
                           }}
                           sx={{ marginLeft: 0.5 }}
@@ -2306,11 +2319,11 @@ const WaterProjectDashboard = () => {
                 )}
 
                 {/* Zoom Controls */}
-                {!selectedWaterbody && (
+                {selectedWaterbody && (
                   <Box
                     sx={{
                       position: "absolute",
-                      top: 80,
+                      top: 16,
                       right: 16,
                       display: "flex",
                       flexDirection: "column",
@@ -2823,7 +2836,7 @@ const WaterProjectDashboard = () => {
                     <Box
                       sx={{
                         position: "absolute",
-                        top: 80,
+                        top: 16,
                         right: 16,
                         display: "flex",
                         flexDirection: "column",
@@ -3137,7 +3150,7 @@ const WaterProjectDashboard = () => {
                   <Box
                     sx={{
                       position: "absolute",
-                      top: 80,
+                      top: 16,
                       right: 16,
                       display: "flex",
                       flexDirection: "column",
