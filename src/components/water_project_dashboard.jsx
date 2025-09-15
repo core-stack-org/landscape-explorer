@@ -37,7 +37,9 @@ import {
   IconButton,
   ListItemText,
   TextField,
+  Popover,
 } from "@mui/material";
+import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import { Download, Lightbulb } from "lucide-react";
 import View from "ol/View";
 import TileLayer from "ol/layer/Tile";
@@ -194,6 +196,8 @@ const WaterProjectDashboard = () => {
   const [waterbodyLegend, setWaterbodyLegend] = useState(false);
   const [zoiLegend, setZoiLegend] = useState(false);
   const [terrainLegend, setTerrainLegend] = useState(false);
+  const [infoText, setInfoText] = useState("");
+  const [infoAnchorEl, setInfoAnchorEl] = useState(null);
 
   const mapElement1 = useRef();
   const mapElement2 = useRef();
@@ -215,7 +219,17 @@ const WaterProjectDashboard = () => {
 
   const [organization, setOrganization] = useState(null);
   const [project, setProject] = useState(null);
-  const [showTerrainLegend, setShowTerrainLegend] = useState(false);
+  const handleInfoClick = (anchor, text) => {
+    setInfoAnchorEl(anchor); // anchor should be e.currentTarget (DOM element)
+    setInfoText(text);
+  };
+
+  const handleInfoClose = () => {
+    setInfoAnchorEl(null);
+    setInfoText("");
+  };
+
+  const infoOpen = Boolean(infoAnchorEl);
 
   useEffect(() => {
     const storedOrg = sessionStorage.getItem("selectedOrganization");
@@ -1624,11 +1638,28 @@ const WaterProjectDashboard = () => {
                     <TableCell>
                       <div style={{ display: "flex", alignItems: "center" }}>
                         State
+                        {/* Filter button — keep existing handler but stop propagation */}
                         <IconButton
-                          onClick={(e) => handleFilterClick(e, "state")}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleFilterClick(e, "state");
+                          }}
                           size="small"
                         >
                           <FilterListIcon fontSize="small" />
+                        </IconButton>
+                        {/* Info button — pass the button DOM node as anchor */}
+                        <IconButton
+                          size="small"
+                          onClick={(e) => {
+                            e.stopPropagation(); // important so other cell-level clicks don't fire
+                            handleInfoClick(
+                              e.currentTarget,
+                              "State where the waterbody is located."
+                            );
+                          }}
+                        >
+                          <InfoOutlinedIcon fontSize="small" />
                         </IconButton>
                       </div>
                     </TableCell>
@@ -1636,11 +1667,28 @@ const WaterProjectDashboard = () => {
                     <TableCell>
                       <div style={{ display: "flex", alignItems: "center" }}>
                         District
+                        {/* Filter button */}
                         <IconButton
-                          onClick={(e) => handleFilterClick(e, "district")}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleFilterClick(e, "district");
+                          }}
                           size="small"
                         >
                           <FilterListIcon fontSize="small" />
+                        </IconButton>
+                        {/* Info button */}
+                        <IconButton
+                          size="small"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleInfoClick(
+                              e.currentTarget,
+                              "District in which the waterbody falls."
+                            );
+                          }}
+                        >
+                          <InfoOutlinedIcon fontSize="small" />
                         </IconButton>
                       </div>
                     </TableCell>
@@ -1648,11 +1696,28 @@ const WaterProjectDashboard = () => {
                     <TableCell>
                       <div style={{ display: "flex", alignItems: "center" }}>
                         Taluka
+                        {/* Filter button */}
                         <IconButton
-                          onClick={(e) => handleFilterClick(e, "block")}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleFilterClick(e, "block");
+                          }}
                           size="small"
                         >
                           <FilterListIcon fontSize="small" />
+                        </IconButton>
+                        {/* Info button */}
+                        <IconButton
+                          size="small"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleInfoClick(
+                              e.currentTarget,
+                              "Taluka (administrative block) in which the waterbody is located."
+                            );
+                          }}
+                        >
+                          <InfoOutlinedIcon fontSize="small" />
                         </IconButton>
                       </div>
                     </TableCell>
@@ -1660,18 +1725,53 @@ const WaterProjectDashboard = () => {
                     <TableCell>
                       <div style={{ display: "flex", alignItems: "center" }}>
                         GP/Village
+                        {/* Filter button */}
                         <IconButton
-                          onClick={(e) => handleFilterClick(e, "village")}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleFilterClick(e, "village");
+                          }}
                           size="small"
                         >
                           <FilterListIcon fontSize="small" />
+                        </IconButton>
+                        {/* Info button */}
+                        <IconButton
+                          size="small"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleInfoClick(
+                              e.currentTarget,
+                              "Gram Panchayat or Village where the waterbody is located."
+                            );
+                          }}
+                        >
+                          <InfoOutlinedIcon fontSize="small" />
                         </IconButton>
                       </div>
                     </TableCell>
 
                     <TableCell>
                       <div style={{ display: "flex", flexDirection: "column" }}>
-                        <span>Waterbody</span>
+                        <div style={{ display: "flex", alignItems: "center" }}>
+                          <span>Waterbody</span>
+
+                          {/* Info button */}
+                          <IconButton
+                            size="small"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleInfoClick(
+                                e.currentTarget,
+                                "Name of the waterbody (e.g., lake, pond, tank) being monitored."
+                              );
+                            }}
+                          >
+                            <InfoOutlinedIcon fontSize="small" />
+                          </IconButton>
+                        </div>
+
+                        {/* Search input */}
                         <TextField
                           variant="standard"
                           placeholder="Search Waterbody"
@@ -1701,6 +1801,20 @@ const WaterProjectDashboard = () => {
                             ? "🔼"
                             : "🔽"}
                         </span>
+                        {/* Info button */}
+                        <IconButton
+                          size="small"
+                          onClick={(e) => {
+                            e.stopPropagation(); // prevent triggering sort when clicking info
+                            handleInfoClick(
+                              e.currentTarget,
+                              "Volume of silt removed from the waterbody, measured in cubic meters (Cu.m.)."
+                            );
+                          }}
+                          sx={{ marginLeft: 0.5 }}
+                        >
+                          <InfoOutlinedIcon fontSize="small" />
+                        </IconButton>
                       </div>
                     </TableCell>
 
@@ -1714,6 +1828,20 @@ const WaterProjectDashboard = () => {
                             fontWeight: "normal",
                           }}
                         ></span>
+                        {/* Info button */}
+                        <IconButton
+                          size="small"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleInfoClick(
+                              e.currentTarget,
+                              "The year in which desilting or related intervention was carried out for the waterbody."
+                            );
+                          }}
+                          sx={{ marginLeft: 0.5 }}
+                        >
+                          <InfoOutlinedIcon fontSize="small" />
+                        </IconButton>
                       </div>
                     </TableCell>
 
@@ -1727,34 +1855,24 @@ const WaterProjectDashboard = () => {
                             fontWeight: "normal",
                           }}
                         ></span>
+                        {/* Info button */}
+                        <IconButton
+                          size="small"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleInfoClick(
+                              e.currentTarget,
+                              "Total surface area of the waterbody measured in hectares."
+                            );
+                          }}
+                          sx={{ marginLeft: 0.5 }}
+                        >
+                          <InfoOutlinedIcon fontSize="small" />
+                        </IconButton>
                       </div>
                     </TableCell>
 
                     {/* Water Availability Column */}
-
-                    {/* <TableCell 
-                      onClick={() => handleSort("avgWaterAvailabilityKharif")}
-                      sx={{ cursor: "pointer", userSelect: "none" }}
-                    >
-                      <div style={{ display: "flex", alignItems: "center" }}>
-                        Mean Water Availability During Kharif (%)
-                        <span
-                          style={{
-                            marginLeft: 4,
-                            fontWeight:
-                              sortField === "avgWaterAvailabilityKharif"
-                                ? "bold"
-                                : "normal",
-                          }}
-                        >
-                          {sortField === "avgWaterAvailabilityKharif" &&
-                          sortOrder === "asc"
-                            ? "🔼"
-                            : "🔽"}
-                        </span>
-                      </div>
-                    </TableCell>
-                    */}
 
                     <TableCell
                       onClick={() => handleSort("avgWaterAvailabilityRabi")}
@@ -1776,6 +1894,20 @@ const WaterProjectDashboard = () => {
                             ? "🔼"
                             : "🔽"}
                         </span>
+                        {/* Info button */}
+                        <IconButton
+                          size="small"
+                          onClick={(e) => {
+                            e.stopPropagation(); // prevent triggering sort
+                            handleInfoClick(
+                              e.currentTarget,
+                              "Average percentage of water available in the waterbody during the Rabi season."
+                            );
+                          }}
+                          sx={{ marginLeft: 0.5 }}
+                        >
+                          <InfoOutlinedIcon fontSize="small" />
+                        </IconButton>
                       </div>
                     </TableCell>
 
@@ -1799,6 +1931,20 @@ const WaterProjectDashboard = () => {
                             ? "🔼"
                             : "🔽"}
                         </span>
+                        {/* Info button */}
+                        <IconButton
+                          size="small"
+                          onClick={(e) => {
+                            e.stopPropagation(); // avoid triggering sort
+                            handleInfoClick(
+                              e.currentTarget,
+                              "Average percentage of water available in the waterbody during the Zaid season (summer cropping period)."
+                            );
+                          }}
+                          sx={{ marginLeft: 0.5 }}
+                        >
+                          <InfoOutlinedIcon fontSize="small" />
+                        </IconButton>
                       </div>
                     </TableCell>
                   </TableRow>
@@ -1885,6 +2031,16 @@ const WaterProjectDashboard = () => {
                   ))}
               </Menu>
             </TableContainer>
+            <Popover
+              open={infoOpen}
+              anchorEl={infoAnchorEl}
+              onClose={handleInfoClose}
+              anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
+              transformOrigin={{ vertical: "top", horizontal: "left" }}
+              PaperProps={{ sx: { maxWidth: 320, p: 1 } }}
+            >
+              <Typography sx={{ fontSize: 13 }}>{infoText}</Typography>
+            </Popover>
           </>
         ) : view === "map" ? (
           <Box
