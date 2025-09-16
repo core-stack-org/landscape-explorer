@@ -338,7 +338,6 @@ const HeaderSelect = ({
                   variant="outlined"
                   startIcon={<ArrowBackIosNewIcon />}
                   onClick={() => {
-                    sessionStorage.removeItem("selectedOrganization");
                     sessionStorage.removeItem("selectedProject");
 
                     setDashboardLocked(false);
