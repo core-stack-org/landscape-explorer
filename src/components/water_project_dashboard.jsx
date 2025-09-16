@@ -233,6 +233,10 @@ const WaterProjectDashboard = () => {
   useEffect(() => {
     const storedOrg = sessionStorage.getItem("selectedOrganization");
     const storedProject = sessionStorage.getItem("selectedProject");
+    const selectedOrganization = JSON.parse(
+      sessionStorage.getItem("selectedOrganization")
+    );
+    const organizationName = selectedOrganization?.label;
 
     if (storedOrg) {
       const parsedOrg = JSON.parse(storedOrg);
@@ -1429,43 +1433,6 @@ const WaterProjectDashboard = () => {
       }
     });
   };
-
-  // const zoomToMwsWaterbody = (tempFeature, targetMapRef) => {
-  //   console.log(tempFeature);
-  //   console.log(targetMapRef);
-
-  //   if (!tempFeature || !targetMapRef?.current) return;
-
-  //   const view = targetMapRef.current.getView();
-  //   const feature = new GeoJSON().readFeature(tempFeature, {
-  //     dataProjection: "EPSG:4326",
-  //     featureProjection: view.getProjection(),
-  //   });
-
-  //   const geometry = feature.getGeometry();
-  //   if (!geometry) {
-  //     console.error("No geometry found.");
-  //     return;
-  //   }
-
-  //   // ✅ Only zoom, don’t restyle
-  //   view.fit(geometry.getExtent(), {
-  //     duration: 1000,
-  //     padding: [50, 50, 50, 50],
-  //     maxZoom: 25,
-  //   });
-
-  //   // Disable user zoom interactions if needed
-  //   targetMapRef.current.getInteractions().forEach((interaction) => {
-  //     if (
-  //       interaction instanceof MouseWheelZoom ||
-  //       interaction instanceof PinchZoom ||
-  //       interaction instanceof DoubleClickZoom
-  //     ) {
-  //       interaction.setActive(false);
-  //     }
-  //   });
-  // };
 
   const handleWaterbodyClick = (row) => {
     const feature = geoData.features.find((f, idx) => idx === row.featureIndex);
