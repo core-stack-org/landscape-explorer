@@ -7,7 +7,9 @@ import VectorLayer from "ol/layer/Vector";
 import VectorSource from "ol/source/Vector";
 import GeoJSON from "ol/format/GeoJSON";
 import Map from "ol/Map";
-import { Style, Fill, Stroke } from "ol/style";
+import { Style, Fill, Stroke, Icon } from "ol/style";
+import { Point } from "ol/geom";
+
 import LocationOnIcon from "@mui/icons-material/LocationOn";
 import YearSlider from "./yearSlider";
 import PrecipitationStackChart from "./PrecipitationStackChart.jsx";
@@ -35,7 +37,9 @@ import {
   IconButton,
   ListItemText,
   TextField,
+  Popover,
 } from "@mui/material";
+import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import { Download, Lightbulb } from "lucide-react";
 import View from "ol/View";
 import TileLayer from "ol/layer/Tile";
@@ -75,7 +79,6 @@ const useWaterRejData = (projectName, projectId) => {
           typeName,
           outputFormat: "application/json",
         });
-      console.log(url);
 
       try {
         const response = await fetch(url);
@@ -189,6 +192,11 @@ const WaterProjectDashboard = () => {
 
   const [selectedFeature, setSelectedFeature] = useState(null);
   const [zoiArea, setZoiArea] = useState(null);
+  const [waterbodyLegend, setWaterbodyLegend] = useState(false);
+  const [zoiLegend, setZoiLegend] = useState(false);
+  const [terrainLegend, setTerrainLegend] = useState(false);
+  const [infoText, setInfoText] = useState("");
+  const [infoAnchorEl, setInfoAnchorEl] = useState(null);
 
   const mapElement1 = useRef();
   const mapElement2 = useRef();
@@ -210,7 +218,17 @@ const WaterProjectDashboard = () => {
 
   const [organization, setOrganization] = useState(null);
   const [project, setProject] = useState(null);
-  const [showTerrainLegend, setShowTerrainLegend] = useState(false);
+  const handleInfoClick = (anchor, text) => {
+    setInfoAnchorEl(anchor); // anchor should be e.currentTarget (DOM element)
+    setInfoText(text);
+  };
+
+  const handleInfoClose = () => {
+    setInfoAnchorEl(null);
+    setInfoText("");
+  };
+
+  const infoOpen = Boolean(infoAnchorEl);
 
   useEffect(() => {
     const storedOrg = sessionStorage.getItem("selectedOrganization");
@@ -220,9 +238,9 @@ const WaterProjectDashboard = () => {
     );
     const organizationName = selectedOrganization?.label;
 
-    // Only update if something changed
     if (storedOrg) {
       const parsedOrg = JSON.parse(storedOrg);
+
       setOrganization((prev) =>
         prev?.value !== parsedOrg.value ? parsedOrg : prev
       );
@@ -242,6 +260,7 @@ const WaterProjectDashboard = () => {
 
   const projectName = project?.label;
   const projectId = project?.value;
+  console.log(organization?.label);
 
   const { geoData, mwsGeoData, zoiFeatures } = useWaterRejData(
     projectName,
@@ -869,12 +888,52 @@ const WaterProjectDashboard = () => {
       }).readFeatures(geoData),
     });
 
+    const waterBodyStyle = (feature) => {
+      const styles = [
+        new Style({
+          stroke: new Stroke({
+            color: "#ff0000",
+            width: 3,
+          }),
+        }),
+      ];
+
+      const geometry = feature.getGeometry();
+      if (geometry) {
+        let center;
+
+        if (geometry.getType() === "Polygon") {
+          center = geometry.getInteriorPoint().getCoordinates();
+        } else if (geometry.getType() === "MultiPolygon") {
+          center = geometry.getInteriorPoints().getFirstCoordinate();
+        } else {
+          // fallback: use extent center
+          const extent = geometry.getExtent();
+          center = [(extent[0] + extent[2]) / 2, (extent[1] + extent[3]) / 2];
+        }
+
+        styles.push(
+          new Style({
+            geometry: new Point(center),
+            image: new Icon({
+              anchor: [0.5, 1],
+              src: "https://cdn-icons-png.flaticon.com/512/684/684908.png", // marker icon
+              scale: 0.03,
+            }),
+          })
+        );
+      }
+
+      return styles;
+    };
+
     const waterBodyLayerSecond = new VectorLayer({
       source: vectorLayerWater,
-      style: new Style({
-        stroke: new Stroke({ color: "#ff0000", width: 5 }),
-        // fill: new Fill({ color: "rgba(100, 149, 237, 0.5)" }),
-      }),
+      style: waterBodyStyle,
+      // style: new Style({
+      //   stroke: new Stroke({ color: "#ff0000", width: 5 }),
+      //   // fill: new Fill({ color: "rgba(100, 149, 237, 0.5)" }),
+      // }),
     });
     waterBodyLayerSecond.setZIndex(2);
 
@@ -983,7 +1042,9 @@ const WaterProjectDashboard = () => {
     }
   };
 
-  const initializeMap3 = async () => {
+  const initializeMap3 = async (organizationLabel) => {
+    if (!organizationLabel || !projectName || !projectId) return;
+
     const baseLayer = new TileLayer({
       source: new XYZ({
         url: "https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}",
@@ -1006,29 +1067,59 @@ const WaterProjectDashboard = () => {
 
     mapRef3.current = map;
 
-    const wmsLayer = new TileLayer({
-      source: new TileWMS({
-        url: "https://geoserver.core-stack.org:8443/geoserver/waterrej/wms",
-        params: {
-          SERVICE: "WMS",
-          VERSION: "1.1.0",
-          REQUEST: "GetMap",
-          FORMAT: "image/png",
-          TRANSPARENT: true,
-          LAYERS: `waterrej:WaterRejapp_mws_${projectName}_${projectId}`,
-          STYLES: "",
-        },
-        serverType: "geoserver",
-        crossOrigin: "anonymous",
-      }),
-      opacity: 0,
-    });
-    map.addLayer(wmsLayer);
+    // --- Fetch MWS boundary from WFS ---
+    const typeName = `waterrej:WaterRejapp_mws_${projectName}_${projectId}`;
+    const wfsUrl =
+      "https://geoserver.core-stack.org:8443/geoserver/waterrej/ows?" +
+      new URLSearchParams({
+        service: "WFS",
+        version: "1.0.0",
+        request: "GetFeature",
+        typeName,
+        outputFormat: "application/json",
+      });
 
-    const organizationName = sessionStorage.getItem("organizationName");
+    let matchedFeatures = [];
+    try {
+      const response = await fetch(wfsUrl);
+      const json = await response.json();
 
-    const drainageLayerName = `waterrej:WATER_REJ_drainage_line_${organizationName}_${projectName}_${projectId}`;
+      // find matches for selected feature
+      matchedFeatures = json.features.filter(
+        (f) =>
+          String(f.properties.uid) ===
+          String(selectedFeature.properties.MWS_UID)
+      );
 
+      if (!matchedFeatures.length) {
+        console.warn("No match found for selected MWS UID");
+        return;
+      }
+
+      // --- Add MWS boundary layer ---
+      const boundarySource = new VectorSource({
+        features: new GeoJSON().readFeatures(
+          { type: "FeatureCollection", features: matchedFeatures },
+          { dataProjection: "EPSG:4326", featureProjection: "EPSG:4326" }
+        ),
+      });
+
+      const boundaryLayer = new VectorLayer({
+        source: boundarySource,
+        style: new Style({
+          stroke: new Stroke({ color: "black", width: 3 }),
+          fill: null,
+        }),
+      });
+      boundaryLayer.setZIndex(3);
+      map.addLayer(boundaryLayer);
+    } catch (err) {
+      console.error("WFS boundary fetch error:", err);
+      return;
+    }
+
+    // --- Drainage Layer (cropped to matchedFeatures) ---
+    const drainageLayerName = `waterrej:WATER_REJ_drainage_line_${organizationLabel}_${projectName}_${projectId}`;
     const drainageLineLayer = new TileLayer({
       source: new TileWMS({
         url: "https://geoserver.core-stack.org:8443/geoserver/waterrej/wms",
@@ -1046,24 +1137,48 @@ const WaterProjectDashboard = () => {
       }),
       opacity: 1,
     });
-
-    console.log("drainagggegeggeggegeggege", drainageLayerName);
     drainageLineLayer.setZIndex(1);
     map.addLayer(drainageLineLayer);
 
-    // After adding drainageLineLayer
+    // --- Crop Drainage Layer ---
+    if (matchedFeatures.length) {
+      const targetProj = map.getView().getProjection().getCode();
+      const featureObjs = new GeoJSON().readFeatures(
+        { type: "FeatureCollection", features: matchedFeatures },
+        { dataProjection: "EPSG:4326", featureProjection: targetProj }
+      );
+
+      const multiCoords = [];
+      featureObjs.forEach((f) => {
+        const g = f.getGeometry();
+        if (!g) return;
+        if (g.getType() === "Polygon") multiCoords.push(g.getCoordinates());
+        else if (g.getType() === "MultiPolygon")
+          g.getCoordinates().forEach((poly) => multiCoords.push(poly));
+      });
+
+      if (multiCoords.length) {
+        const multiPoly = new MultiPolygon(multiCoords);
+        const crop = new Crop({
+          feature: new Feature({ geometry: multiPoly }),
+          wrapX: false,
+          inner: false,
+        });
+
+        if (typeof drainageLineLayer.addFilter === "function") {
+          drainageLineLayer.addFilter(crop);
+        }
+      }
+    }
+
+    // --- Terrain Layer (cropped to matchedFeatures) ---
     const terrainLayerName = `WATER_REJ_terrain_${projectName}_${projectId}`;
     const uniqueTerrainId = "terrainLayer1";
 
-    // Remove old terrain layer if it exists
-    if (mapRef3.current) {
-      const layersBefore = mapRef3.current.getLayers().getArray();
-      layersBefore.forEach((layer) => {
-        if (layer.get("id") === uniqueTerrainId) {
-          mapRef3.current.removeLayer(layer);
-        }
-      });
-    }
+    // Remove old terrain if exists
+    map.getLayers().forEach((layer) => {
+      if (layer.get("id") === uniqueTerrainId) map.removeLayer(layer);
+    });
 
     const newTerrainLayer = await getImageLayer(
       "waterrej",
@@ -1071,50 +1186,40 @@ const WaterProjectDashboard = () => {
       true,
       "Terrain_Style_11_Classes"
     );
-
-    newTerrainLayer.setZIndex(0);
     newTerrainLayer.set("id", uniqueTerrainId);
     newTerrainLayer.setOpacity(0.7);
+    newTerrainLayer.setZIndex(0);
 
-    mapRef3.current.addLayer(newTerrainLayer);
+    // Crop terrain layer
+    const targetProj = map.getView().getProjection().getCode();
+    const featureObjs = new GeoJSON().readFeatures(
+      { type: "FeatureCollection", features: matchedFeatures },
+      { dataProjection: "EPSG:4326", featureProjection: targetProj }
+    );
 
-    const typeName = `waterrej:WaterRejapp_mws_${projectName}_${projectId}`;
-    const wfsUrl =
-      "https://geoserver.core-stack.org:8443/geoserver/waterrej/ows?" +
-      new URLSearchParams({
-        service: "WFS",
-        version: "1.0.0",
-        request: "GetFeature",
-        typeName,
-        outputFormat: "application/json",
+    const multiCoords = [];
+    featureObjs.forEach((f) => {
+      const g = f.getGeometry();
+      if (!g) return;
+      if (g.getType() === "Polygon") multiCoords.push(g.getCoordinates());
+      else if (g.getType() === "MultiPolygon")
+        g.getCoordinates().forEach((poly) => multiCoords.push(poly));
+    });
+
+    if (multiCoords.length) {
+      const multiPoly = new MultiPolygon(multiCoords);
+      const crop = new Crop({
+        feature: new Feature({ geometry: multiPoly }),
+        wrapX: false,
+        inner: false,
       });
-
-    try {
-      const response = await fetch(wfsUrl);
-      const json = await response.json();
-
-      const boundarySource = new VectorSource({
-        features: new GeoJSON().readFeatures(json, {
-          dataProjection: "EPSG:4326",
-          featureProjection: "EPSG:4326",
-        }),
-      });
-
-      const boundaryLayer = new VectorLayer({
-        source: boundarySource,
-        style: new Style({
-          stroke: new Stroke({ color: "black", width: 3 }),
-          // fill: new Fill({ color: "rgba(0,0,0, 0)" }),
-        }),
-      });
-
-      boundaryLayer.setZIndex(3);
-      map.addLayer(boundaryLayer);
-    } catch (err) {
-      console.error("WFS boundary fetch error:", err);
+      if (typeof newTerrainLayer.addFilter === "function")
+        newTerrainLayer.addFilter(crop);
     }
 
-    // Waterbody outlines from geoData (black stroke, no fill)
+    map.addLayer(newTerrainLayer);
+
+    // --- Waterbody outlines ---
     if (geoData?.features?.length) {
       const waterSource = new VectorSource({
         features: new GeoJSON().readFeatures(geoData, {
@@ -1130,25 +1235,22 @@ const WaterProjectDashboard = () => {
           fill: null,
         }),
       });
-
       waterLayer.setZIndex(2);
       map.addLayer(waterLayer);
 
-      // ✅ Zoom to selected waterbody if available
+      // Zoom
       if (selectedWaterbody && selectedFeature) {
         const feature = new GeoJSON().readFeature(selectedFeature, {
           dataProjection: "EPSG:4326",
           featureProjection: view.getProjection(),
         });
-
         const geometry = feature.getGeometry();
-        if (geometry) {
+        if (geometry)
           view.fit(geometry.getExtent(), {
             padding: [50, 50, 50, 50],
             duration: 1000,
             maxZoom: 14,
           });
-        }
       } else {
         const extent = waterSource.getExtent();
         view.fit(extent, {
@@ -1161,10 +1263,10 @@ const WaterProjectDashboard = () => {
   };
 
   useEffect(() => {
-    if (view === "map") {
+    if (view === "map" && organization) {
       if (mapElement1.current) initializeMap1();
       if (mapElement2.current) initializeMap2();
-      if (mapElement3.current) initializeMap3();
+      if (mapElement3.current) initializeMap3(organization.label);
     }
 
     return () => {
@@ -1172,15 +1274,15 @@ const WaterProjectDashboard = () => {
       if (mapRef2.current) mapRef2.current.setTarget(null);
       if (mapRef3.current) mapRef3.current.setTarget(null);
     };
-  }, [view, geoData, projectName, projectId]);
+  }, [view, geoData, projectName, projectId, organization]);
 
   useEffect(() => {
     if (selectedWaterbody) {
       if (mapElement2.current && !mapRef2.current) {
         initializeMap2();
       }
-      if (mapElement3.current && !mapRef3.current) {
-        initializeMap3();
+      if (mapElement3.current && !mapRef3.current && organization) {
+        initializeMap3(organization.label);
       }
     }
   }, [selectedWaterbody]);
@@ -1189,7 +1291,7 @@ const WaterProjectDashboard = () => {
     if (view === "map" && selectedWaterbody && selectedFeature) {
       zoomToWaterbody(selectedWaterbody, selectedFeature, mapRef1);
       zoomToZoiWaterbody(selectedWaterbody, zoiFeatures, mapRef2);
-      zoomToMwsWaterbody(selectedWaterbody, selectedFeature, mapRef3);
+      // zoomToMwsWaterbody(selectedWaterbody, selectedFeature, mapRef3);
     }
   }, [selectedWaterbody, selectedFeature, view]);
 
@@ -1321,58 +1423,6 @@ const WaterProjectDashboard = () => {
     }
 
     // Disable zoom interactions
-    targetMapRef.current.getInteractions().forEach((interaction) => {
-      if (
-        interaction instanceof MouseWheelZoom ||
-        interaction instanceof PinchZoom ||
-        interaction instanceof DoubleClickZoom
-      ) {
-        interaction.setActive(false);
-      }
-    });
-  };
-
-  const zoomToMwsWaterbody = (waterbody, tempFeature, targetMapRef) => {
-    if (!tempFeature || !targetMapRef?.current) return;
-
-    const view = targetMapRef.current.getView();
-    const feature = new GeoJSON().readFeature(tempFeature, {
-      dataProjection: "EPSG:4326",
-      featureProjection: view.getProjection(),
-    });
-
-    const geometry = feature.getGeometry();
-    if (!geometry) {
-      console.error("No geometry found.");
-      return;
-    }
-
-    const extent = geometry.getExtent();
-    view.fit(extent, {
-      duration: 1000,
-      padding: [50, 50, 50, 50],
-      maxZoom: 15,
-    });
-
-    if (waterBodyLayer) {
-      const source = waterBodyLayer.getSource();
-      const features = source.getFeatures();
-
-      features.forEach((feature) => feature.setStyle(null));
-
-      if (
-        waterbody.featureIndex !== undefined &&
-        features[waterbody.featureIndex]
-      ) {
-        features[waterbody.featureIndex].setStyle(
-          new Style({
-            stroke: new Stroke({ color: "#FF0000", width: 5 }),
-            // fill: new Fill({ color: "rgba(255, 0, 0, 0.5)" }),
-          })
-        );
-      }
-    }
-
     targetMapRef.current.getInteractions().forEach((interaction) => {
       if (
         interaction instanceof MouseWheelZoom ||
@@ -1564,9 +1614,14 @@ const WaterProjectDashboard = () => {
               }}
             >
               <Lightbulb size={94} color="black" />
-              Under the project {project?.label}, {totalRows} waterbodies have
-              been de-silted, spanning around{" "}
-              {(totalSiltRemoved || 0).toFixed(2)} Cu.m.
+              Under the project {project?.label},{" "}
+              {totalRows.toLocaleString("en-IN")} waterbodies have been
+              de-silted, spanning around{" "}
+              {(totalSiltRemoved || 0).toLocaleString("en-IN", {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+              })}{" "}
+              Cu.m.
               {/* On average, the surface
               water availability during summer season has changed from 16% to
               25%. */}
@@ -1578,11 +1633,28 @@ const WaterProjectDashboard = () => {
                     <TableCell>
                       <div style={{ display: "flex", alignItems: "center" }}>
                         State
+                        {/* Filter button — keep existing handler but stop propagation */}
                         <IconButton
-                          onClick={(e) => handleFilterClick(e, "state")}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleFilterClick(e, "state");
+                          }}
                           size="small"
                         >
                           <FilterListIcon fontSize="small" />
+                        </IconButton>
+                        {/* Info button — pass the button DOM node as anchor */}
+                        <IconButton
+                          size="small"
+                          onClick={(e) => {
+                            e.stopPropagation(); // important so other cell-level clicks don't fire
+                            handleInfoClick(
+                              e.currentTarget,
+                              "State where the waterbody is located."
+                            );
+                          }}
+                        >
+                          <InfoOutlinedIcon fontSize="small" />
                         </IconButton>
                       </div>
                     </TableCell>
@@ -1590,11 +1662,28 @@ const WaterProjectDashboard = () => {
                     <TableCell>
                       <div style={{ display: "flex", alignItems: "center" }}>
                         District
+                        {/* Filter button */}
                         <IconButton
-                          onClick={(e) => handleFilterClick(e, "district")}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleFilterClick(e, "district");
+                          }}
                           size="small"
                         >
                           <FilterListIcon fontSize="small" />
+                        </IconButton>
+                        {/* Info button */}
+                        <IconButton
+                          size="small"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleInfoClick(
+                              e.currentTarget,
+                              "District in which the waterbody falls."
+                            );
+                          }}
+                        >
+                          <InfoOutlinedIcon fontSize="small" />
                         </IconButton>
                       </div>
                     </TableCell>
@@ -1602,11 +1691,28 @@ const WaterProjectDashboard = () => {
                     <TableCell>
                       <div style={{ display: "flex", alignItems: "center" }}>
                         Taluka
+                        {/* Filter button */}
                         <IconButton
-                          onClick={(e) => handleFilterClick(e, "block")}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleFilterClick(e, "block");
+                          }}
                           size="small"
                         >
                           <FilterListIcon fontSize="small" />
+                        </IconButton>
+                        {/* Info button */}
+                        <IconButton
+                          size="small"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleInfoClick(
+                              e.currentTarget,
+                              "Taluka (administrative block) in which the waterbody is located."
+                            );
+                          }}
+                        >
+                          <InfoOutlinedIcon fontSize="small" />
                         </IconButton>
                       </div>
                     </TableCell>
@@ -1614,18 +1720,53 @@ const WaterProjectDashboard = () => {
                     <TableCell>
                       <div style={{ display: "flex", alignItems: "center" }}>
                         GP/Village
+                        {/* Filter button */}
                         <IconButton
-                          onClick={(e) => handleFilterClick(e, "village")}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleFilterClick(e, "village");
+                          }}
                           size="small"
                         >
                           <FilterListIcon fontSize="small" />
+                        </IconButton>
+                        {/* Info button */}
+                        <IconButton
+                          size="small"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleInfoClick(
+                              e.currentTarget,
+                              "Gram Panchayat or Village where the waterbody is located."
+                            );
+                          }}
+                        >
+                          <InfoOutlinedIcon fontSize="small" />
                         </IconButton>
                       </div>
                     </TableCell>
 
                     <TableCell>
                       <div style={{ display: "flex", flexDirection: "column" }}>
-                        <span>Waterbody</span>
+                        <div style={{ display: "flex", alignItems: "center" }}>
+                          <span>Waterbody</span>
+
+                          {/* Info button */}
+                          <IconButton
+                            size="small"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleInfoClick(
+                                e.currentTarget,
+                                "Name of the waterbody being monitored."
+                              );
+                            }}
+                          >
+                            <InfoOutlinedIcon fontSize="small" />
+                          </IconButton>
+                        </div>
+
+                        {/* Search input */}
                         <TextField
                           variant="standard"
                           placeholder="Search Waterbody"
@@ -1655,6 +1796,20 @@ const WaterProjectDashboard = () => {
                             ? "🔼"
                             : "🔽"}
                         </span>
+                        {/* Info button */}
+                        <IconButton
+                          size="small"
+                          onClick={(e) => {
+                            e.stopPropagation(); // prevent triggering sort when clicking info
+                            handleInfoClick(
+                              e.currentTarget,
+                              "Volume of silt removed from the waterbody, measured in cubic meters (Cu.m.)."
+                            );
+                          }}
+                          sx={{ marginLeft: 0.5 }}
+                        >
+                          <InfoOutlinedIcon fontSize="small" />
+                        </IconButton>
                       </div>
                     </TableCell>
 
@@ -1668,6 +1823,20 @@ const WaterProjectDashboard = () => {
                             fontWeight: "normal",
                           }}
                         ></span>
+                        {/* Info button */}
+                        <IconButton
+                          size="small"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleInfoClick(
+                              e.currentTarget,
+                              "The year in which desilting or related intervention was carried out for the waterbody."
+                            );
+                          }}
+                          sx={{ marginLeft: 0.5 }}
+                        >
+                          <InfoOutlinedIcon fontSize="small" />
+                        </IconButton>
                       </div>
                     </TableCell>
 
@@ -1681,34 +1850,24 @@ const WaterProjectDashboard = () => {
                             fontWeight: "normal",
                           }}
                         ></span>
+                        {/* Info button */}
+                        <IconButton
+                          size="small"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleInfoClick(
+                              e.currentTarget,
+                              "Total surface area of the waterbody measured in hectares."
+                            );
+                          }}
+                          sx={{ marginLeft: 0.5 }}
+                        >
+                          <InfoOutlinedIcon fontSize="small" />
+                        </IconButton>
                       </div>
                     </TableCell>
 
                     {/* Water Availability Column */}
-
-                    {/* <TableCell 
-                      onClick={() => handleSort("avgWaterAvailabilityKharif")}
-                      sx={{ cursor: "pointer", userSelect: "none" }}
-                    >
-                      <div style={{ display: "flex", alignItems: "center" }}>
-                        Mean Water Availability During Kharif (%)
-                        <span
-                          style={{
-                            marginLeft: 4,
-                            fontWeight:
-                              sortField === "avgWaterAvailabilityKharif"
-                                ? "bold"
-                                : "normal",
-                          }}
-                        >
-                          {sortField === "avgWaterAvailabilityKharif" &&
-                          sortOrder === "asc"
-                            ? "🔼"
-                            : "🔽"}
-                        </span>
-                      </div>
-                    </TableCell>
-                    */}
 
                     <TableCell
                       onClick={() => handleSort("avgWaterAvailabilityRabi")}
@@ -1730,6 +1889,20 @@ const WaterProjectDashboard = () => {
                             ? "🔼"
                             : "🔽"}
                         </span>
+                        {/* Info button */}
+                        <IconButton
+                          size="small"
+                          onClick={(e) => {
+                            e.stopPropagation(); // prevent triggering sort
+                            handleInfoClick(
+                              e.currentTarget,
+                              "Average percentage of water available in the waterbody during the Rabi season.Statistics within the brackets indicates the change after the intervention and before the intervention."
+                            );
+                          }}
+                          sx={{ marginLeft: 0.5 }}
+                        >
+                          <InfoOutlinedIcon fontSize="small" />
+                        </IconButton>
                       </div>
                     </TableCell>
 
@@ -1753,6 +1926,20 @@ const WaterProjectDashboard = () => {
                             ? "🔼"
                             : "🔽"}
                         </span>
+                        {/* Info button */}
+                        <IconButton
+                          size="small"
+                          onClick={(e) => {
+                            e.stopPropagation(); // avoid triggering sort
+                            handleInfoClick(
+                              e.currentTarget,
+                              "Average percentage of water available in the waterbody during the Zaid season (summer cropping period).Statistics within the brackets indicates the change after the intervention and before the intervention."
+                            );
+                          }}
+                          sx={{ marginLeft: 0.5 }}
+                        >
+                          <InfoOutlinedIcon fontSize="small" />
+                        </IconButton>
                       </div>
                     </TableCell>
                   </TableRow>
@@ -1839,6 +2026,16 @@ const WaterProjectDashboard = () => {
                   ))}
               </Menu>
             </TableContainer>
+            <Popover
+              open={infoOpen}
+              anchorEl={infoAnchorEl}
+              onClose={handleInfoClose}
+              anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
+              transformOrigin={{ vertical: "top", horizontal: "left" }}
+              PaperProps={{ sx: { maxWidth: 320, p: 1 } }}
+            >
+              <Typography sx={{ fontSize: 13 }}>{infoText}</Typography>
+            </Popover>
           </>
         ) : view === "map" ? (
           <Box
@@ -2001,49 +2198,87 @@ const WaterProjectDashboard = () => {
                       zIndex: 1000,
                     }}
                   >
-                    {/* Legend */}
-                    <Box
-                      sx={{
-                        backgroundColor: "rgba(255, 255, 255, 0.9)",
-                        padding: 2,
-                        borderRadius: 1,
-                        boxShadow: 2,
-                        flex: "1 1 180px",
-                        minWidth: "260px",
-                        maxWidth: "200px",
-                      }}
-                    >
-                      <Typography variant="subtitle2">
-                        Water Layer Legend
-                      </Typography>
-                      {[
-                        { color: "#74CCF4", label: "Kharif Water" },
-                        { color: "#1ca3ec", label: "Kharif and Rabi Water" },
-                        {
-                          color: "#0f5e9c",
-                          label: "Kharif, Rabi and Zaid Water",
-                        },
-                      ].map((item, idx) => (
+                    {/* Collapsible Legend for Map 1 */}
+                    {!waterbodyLegend ? (
+                      // collapsed tab
+                      <Box
+                        onClick={() => setWaterbodyLegend(true)}
+                        sx={{
+                          backgroundColor: "rgba(255,255,255,0.9)",
+                          padding: "6px 4px",
+                          borderRadius: "0 6px 6px 0",
+                          boxShadow: 2,
+                          cursor: "pointer",
+                          writingMode: "vertical-rl",
+                          textOrientation: "mixed",
+                          fontWeight: "bold",
+                        }}
+                      >
+                        Water Layer Legend ▶
+                      </Box>
+                    ) : (
+                      // expanded legend
+                      <Box
+                        sx={{
+                          backgroundColor: "rgba(255, 255, 255, 0.9)",
+                          padding: 2,
+                          borderRadius: 1,
+                          boxShadow: 2,
+                          flex: "1 1 180px",
+                          minWidth: "260px",
+                          maxWidth: "200px",
+                        }}
+                      >
                         <Box
-                          key={idx}
                           display="flex"
+                          justifyContent="space-between"
                           alignItems="center"
-                          gap={1}
-                          mt={1}
                         >
-                          <Box
-                            sx={{
-                              width: 20,
-                              height: 20,
-                              backgroundColor: item.color,
-                              opacity: 0.7,
-                              border: "1px solid #000",
+                          <Typography variant="subtitle2">
+                            Water Layer Legend
+                          </Typography>
+                          <button
+                            onClick={() => setWaterbodyLegend(false)}
+                            style={{
+                              border: "none",
+                              background: "transparent",
+                              cursor: "pointer",
                             }}
-                          />
-                          <Typography variant="body2">{item.label}</Typography>
+                          >
+                            ◀
+                          </button>
                         </Box>
-                      ))}
-                    </Box>
+                        {[
+                          { color: "#74CCF4", label: "Kharif Water" },
+                          { color: "#1ca3ec", label: "Kharif and Rabi Water" },
+                          {
+                            color: "#0f5e9c",
+                            label: "Kharif, Rabi and Zaid Water",
+                          },
+                        ].map((item, idx) => (
+                          <Box
+                            key={idx}
+                            display="flex"
+                            alignItems="center"
+                            gap={1}
+                            mt={1}
+                          >
+                            <Box
+                              sx={{
+                                width: 20,
+                                height: 20,
+                                backgroundColor: item.color,
+                                opacity: 0.7,
+                                border: "1px solid #000",
+                              }}
+                            />
+                            <Typography variant="body2">
+                              {item.label}
+                            </Typography>
+                          </Box>
+                        ))}
+                      </Box>
+                    )}
 
                     {/* YearSlider */}
                     <Box
@@ -2052,7 +2287,8 @@ const WaterProjectDashboard = () => {
                         padding: 2,
                         borderRadius: 1,
                         boxShadow: 2,
-                        flex: "1 1 240px",
+                        flexShrink: 0, // prevent shrinking
+                        flexGrow: 0,
                         minWidth: { xs: "220px", sm: "300px", md: "500px" },
                       }}
                     >
@@ -2065,11 +2301,11 @@ const WaterProjectDashboard = () => {
                 )}
 
                 {/* Zoom Controls */}
-                {!selectedWaterbody && (
+                {selectedWaterbody && (
                   <Box
                     sx={{
                       position: "absolute",
-                      top: 80,
+                      top: 16,
                       right: 16,
                       display: "flex",
                       flexDirection: "column",
@@ -2457,31 +2693,132 @@ const WaterProjectDashboard = () => {
                       </Typography>
                     </Box>
 
-                    {/* Year Slider (bottom right) */}
+                    {/* Legend + YearSlider wrapper */}
                     <Box
                       sx={{
                         position: "absolute",
                         bottom: 16,
+                        left: 16,
                         right: 16,
-                        backgroundColor: "rgba(255, 255, 255, 0.9)",
-                        padding: 2,
-                        borderRadius: 1,
-                        boxShadow: 2,
+                        display: "flex",
+                        flexDirection: { xs: "column", sm: "row" },
+                        justifyContent: "space-between",
+                        gap: 2,
+                        flexWrap: "wrap",
                         zIndex: 1000,
-                        minWidth: "500px",
                       }}
                     >
-                      <YearSlider
-                        currentLayer={{ name: "lulcWaterrej" }}
-                        sliderId="map2"
-                      />
+                      {/* Collapsible Legend (left side) */}
+                      {!zoiLegend ? (
+                        <Box
+                          onClick={() => setZoiLegend(true)}
+                          sx={{
+                            backgroundColor: "rgba(255,255,255,0.9)",
+                            padding: "6px 4px",
+                            borderRadius: "0 6px 6px 0",
+                            boxShadow: 2,
+                            cursor: "pointer",
+                            writingMode: "vertical-rl",
+                            textOrientation: "mixed",
+                            fontWeight: "bold",
+                          }}
+                        >
+                          Zoi Legend ▶
+                        </Box>
+                      ) : (
+                        <Box
+                          sx={{
+                            backgroundColor: "rgba(255, 255, 255, 0.9)",
+                            padding: 2,
+                            borderRadius: 1,
+                            boxShadow: 2,
+                            flex: "1 1 180px",
+                            minWidth: "260px",
+                            maxWidth: "200px",
+                          }}
+                        >
+                          <Box
+                            display="flex"
+                            justifyContent="space-between"
+                            alignItems="center"
+                          >
+                            <Typography variant="subtitle2">
+                              Zoi Legend
+                            </Typography>
+                            <button
+                              onClick={() => setZoiLegend(false)}
+                              style={{
+                                border: "none",
+                                background: "transparent",
+                                cursor: "pointer",
+                              }}
+                            >
+                              ◀
+                            </button>
+                          </Box>
+                          {[
+                            { color: "#b3561d", label: "Triple Crop" },
+                            {
+                              color: "#FF9371",
+                              label: "Double Crop",
+                            },
+                            {
+                              color: "#f59d22",
+                              label: "Single Non-Kharif",
+                            },
+                            {
+                              color: "#BAD93E",
+                              label: "Single Kharif",
+                            },
+                          ].map((item, idx) => (
+                            <Box
+                              key={idx}
+                              display="flex"
+                              alignItems="center"
+                              gap={1}
+                              mt={1}
+                            >
+                              <Box
+                                sx={{
+                                  width: 20,
+                                  height: 20,
+                                  backgroundColor: item.color,
+                                  opacity: 0.7,
+                                  border: "1px solid #000",
+                                }}
+                              />
+                              <Typography variant="body2">
+                                {item.label}
+                              </Typography>
+                            </Box>
+                          ))}
+                        </Box>
+                      )}
+
+                      {/* YearSlider (right side) */}
+                      <Box
+                        sx={{
+                          backgroundColor: "rgba(255, 255, 255, 0.9)",
+                          padding: 2,
+                          borderRadius: 1,
+                          boxShadow: 2,
+                          flexShrink: 0, // prevent shrinking
+                          flexGrow: 0,
+                          minWidth: { xs: "220px", sm: "300px", md: "500px" },
+                        }}
+                      >
+                        <YearSlider
+                          currentLayer={{ name: "lulcWaterrej" }}
+                          sliderId="map2"
+                        />
+                      </Box>
                     </Box>
 
                     {/* Zoom Controls */}
                     <Box
                       sx={{
                         position: "absolute",
-                        top: 80,
+                        top: 16,
                         right: 16,
                         display: "flex",
                         flexDirection: "column",
@@ -2678,82 +3015,124 @@ const WaterProjectDashboard = () => {
 
                   {/* Legend */}
 
-                  <Box
-                    sx={{
-                      position: "absolute",
-                      bottom: 16,
-                      left: 16,
-                      backgroundColor: "rgba(255, 255, 255, 0.9)",
-                      padding: 2,
-                      borderRadius: 1,
-                      boxShadow: 2,
-                      zIndex: 1000,
-                      minWidth: "220px",
-                      maxWidth: "260px",
-                    }}
-                  >
-                    <Typography variant="subtitle2">
-                      Terrain Layer Legend
-                    </Typography>
-                    {[
-                      {
-                        color: "#313695",
-                        label: "V-shape river valleys, Deep narrow canyons",
-                      },
-                      {
-                        color: "#4575b4",
-                        label:
-                          "Lateral midslope incised drainages, Local valleys in plains",
-                      },
-                      {
-                        color: "#91bfdb",
-                        label: "Local ridge/hilltops within broad valleys",
-                      },
-                      { color: "#e0f3f8", label: "U-shape valleys" },
-                      { color: "#fffc00", label: "Broad Flat Areas" },
-                      { color: "#feb24c", label: "Broad open slopes" },
-                      { color: "#f46d43", label: "Mesa tops" },
-                      { color: "#d73027", label: "Upper Slopes" },
-                      {
-                        color: "#a50026",
-                        label: "Upland incised drainages Stream headwaters",
-                      },
-                      {
-                        color: "#800000",
-                        label:
-                          "Lateral midslope drainage divides, Local ridges in plains",
-                      },
-                      {
-                        color: "#4d0000",
-                        label: "Mountain tops, high ridges",
-                      },
-                    ].map((item, idx) => (
+                  {/* Collapsible Terrain Legend */}
+                  {!terrainLegend ? (
+                    // collapsed tab
+                    <Box
+                      onClick={() => setTerrainLegend(true)}
+                      sx={{
+                        position: "absolute",
+                        bottom: 16,
+                        left: 16,
+                        backgroundColor: "rgba(255,255,255,0.9)",
+                        padding: "6px 4px",
+                        borderRadius: "0 6px 6px 0",
+                        boxShadow: 2,
+                        cursor: "pointer",
+                        writingMode: "vertical-rl",
+                        textOrientation: "mixed",
+                        fontWeight: "bold",
+                        zIndex: 1200,
+                      }}
+                    >
+                      Terrain Legend ▶
+                    </Box>
+                  ) : (
+                    // expanded legend
+                    <Box
+                      sx={{
+                        position: "absolute",
+                        bottom: 16,
+                        left: 16,
+                        backgroundColor: "rgba(255, 255, 255, 0.9)",
+                        padding: 2,
+                        borderRadius: 1,
+                        boxShadow: 2,
+                        zIndex: 1200,
+                        minWidth: "220px",
+                        maxWidth: "260px",
+                      }}
+                    >
                       <Box
-                        key={idx}
                         display="flex"
+                        justifyContent="space-between"
                         alignItems="center"
-                        gap={1}
-                        mt={1}
                       >
-                        <Box
-                          sx={{
-                            width: 20,
-                            height: 20,
-                            backgroundColor: item.color,
-                            opacity: 0.7,
-                            border: "1px solid #000",
+                        <Typography variant="subtitle2">
+                          Terrain Layer Legend
+                        </Typography>
+                        <button
+                          onClick={() => setTerrainLegend(false)}
+                          style={{
+                            border: "none",
+                            background: "transparent",
+                            cursor: "pointer",
                           }}
-                        />
-                        <Typography variant="body2">{item.label}</Typography>
+                        >
+                          ◀
+                        </button>
                       </Box>
-                    ))}
-                  </Box>
+
+                      {[
+                        {
+                          color: "#313695",
+                          label: "V-shape river valleys, Deep narrow canyons",
+                        },
+                        {
+                          color: "#4575b4",
+                          label:
+                            "Lateral midslope incised drainages, Local valleys in plains",
+                        },
+                        {
+                          color: "#91bfdb",
+                          label: "Local ridge/hilltops within broad valleys",
+                        },
+                        { color: "#e0f3f8", label: "U-shape valleys" },
+                        { color: "#fffc00", label: "Broad Flat Areas" },
+                        { color: "#feb24c", label: "Broad open slopes" },
+                        { color: "#f46d43", label: "Mesa tops" },
+                        { color: "#d73027", label: "Upper Slopes" },
+                        {
+                          color: "#a50026",
+                          label: "Upland incised drainages Stream headwaters",
+                        },
+                        {
+                          color: "#800000",
+                          label:
+                            "Lateral midslope drainage divides, Local ridges in plains",
+                        },
+                        {
+                          color: "#4d0000",
+                          label: "Mountain tops, high ridges",
+                        },
+                      ].map((item, idx) => (
+                        <Box
+                          key={idx}
+                          display="flex"
+                          alignItems="center"
+                          gap={1}
+                          mt={1}
+                        >
+                          <Box
+                            sx={{
+                              width: 20,
+                              height: 20,
+                              backgroundColor: item.color,
+                              opacity: 0.7,
+                              border: "1px solid #000",
+                            }}
+                          />
+                          <Typography variant="body2">{item.label}</Typography>
+                        </Box>
+                      ))}
+                    </Box>
+                  )}
 
                   {/* Zoom Controls */}
                   <Box
                     sx={{
                       position: "absolute",
-                      top: 80,
+                      top: 16,
                       right: 16,
                       display: "flex",
                       flexDirection: "column",

@@ -263,6 +263,15 @@ const HeaderSelect = ({
     };
   }, [dashboardLocked, setView]);
 
+  useEffect(() => {
+    if (organization) {
+      sessionStorage.setItem(
+        "selectedOrganization",
+        JSON.stringify(organization)
+      );
+    }
+  }, [organization]);
+
   return (
     <Box
       sx={{ height: "100vh", overflow: "hidden", backgroundColor: "#EAEAEA" }}
