@@ -99,8 +99,6 @@ const PlantationProjectDashboard = () => {
 
   const [selectedPlantation, setSelectedPlantation] = useState(null);
   const [mapClickedPlantation, setMapClickedPlantation] = useState(null);
-  const [plantLayer, setPlantLayer] = useState(null);
-  const [currentLayer, setCurrentLayer] = useState([]);
 
   const [selectedFeature, setSelectedFeature] = useState(null);
   const plantationLayerRef = useRef(null);
@@ -149,193 +147,6 @@ const PlantationProjectDashboard = () => {
     }
   }, [location.key]);
 
-  // function sanitizeGeoJSON(geojson) {
-  //   if (!geojson || !geojson.features) return geojson;
-
-  //   geojson.features = geojson.features.map((feature) => {
-  //     let geom = feature.geometry;
-
-  //     if (!geom || !geom.coordinates || !geom.coordinates.length) {
-  //       // leave geometry as-is (null or invalid)
-  //       return feature;
-  //     }
-
-  //     // Fix Polygon → MultiPolygon mismatch
-  //     if (geom.type === "Polygon") {
-  //       feature.geometry = {
-  //         type: "MultiPolygon",
-  //         coordinates: [geom.coordinates],
-  //       };
-  //     }
-
-  //     // Ensure MultiPolygon has proper nesting
-  //     if (geom.type === "MultiPolygon") {
-  //       feature.geometry.coordinates = geom.coordinates
-  //         .filter((poly) => Array.isArray(poly) && poly.length > 0)
-  //         .map((poly) => {
-  //           if (!Array.isArray(poly[0][0])) {
-  //             return [poly];
-  //           }
-  //           return poly;
-  //         });
-  //     }
-
-  //     return feature;
-  //   });
-
-  //   return geojson;
-  // }
-
-  // const initializeMap = async () => {
-  //   console.log("Initializing map...");
-
-  //   // 🌍 Base layer (Google hybrid)
-  //   const baseLayer = new TileLayer({
-  //     source: new XYZ({
-  //       url: "https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}",
-  //       maxZoom: 20,
-  //       transition: 500,
-  //     }),
-  //     preload: 4,
-  //   });
-  //   baseLayerRef.current = baseLayer;
-
-  //   // 🖼️ Custom attribution
-  //   class GoogleLogoControl extends Control {
-  //     constructor() {
-  //       const element = document.createElement("div");
-  //       element.style.pointerEvents = "none";
-  //       element.style.position = "absolute";
-  //       element.style.bottom = "5px";
-  //       element.style.left = "5px";
-  //       element.style.background = "#f2f2f27f";
-  //       element.style.fontSize = "10px";
-  //       element.style.padding = "5px";
-  //       element.innerHTML = "&copy; Google Satellite Hybrid contributors";
-  //       super({ element });
-  //     }
-  //   }
-
-  //   // 👀 Map view
-  //   const view = new View({
-  //     projection: "EPSG:3857",
-  //     center: fromLonLat([78.9629, 20.5937]), // Center on India
-  //     zoom: 5,
-  //     constrainResolution: true,
-  //     smoothExtentConstraint: true,
-  //     smoothResolutionConstraint: true,
-  //   });
-
-  //   // 🗺️ Map init
-  //   const map = new Map({
-  //     target: mapElement1.current,
-  //     layers: [baseLayer],
-  //     controls: defaultControls().extend([new GoogleLogoControl()]),
-  //     view,
-  //     loadTilesWhileAnimating: true,
-  //     loadTilesWhileInteracting: true,
-  //   });
-  //   mapRef1.current = map;
-
-  //   // 🔗 Plantation WFS
-  //   const url =
-  //     "https://geoserver.core-stack.org:8443/geoserver/plantation/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=plantation%3ASayTrees_MBRDI_Biodiversity_Conservation_-_Kolar_site_suitability&outputFormat=application%2Fjson";
-
-  //   const plantationSource = new VectorSource({
-  //     format: new GeoJSON(),
-  //     loader: function () {
-  //       fetch(url)
-  //         .then((response) => {
-  //           if (!response.ok) {
-  //             console.error("Network response was not ok for plantation layer");
-  //             return null;
-  //           }
-  //           return response.json();
-  //         })
-  //         .then((json) => {
-  //           if (!json || !json.features) {
-  //             console.error("No features in plantation GeoJSON");
-  //             return;
-  //           }
-
-  //           const safeData = sanitizeGeoJSON(json);
-
-  //           const features = new GeoJSON({
-  //             dataProjection: "EPSG:4326",
-  //             featureProjection: "EPSG:3857",
-  //           }).readFeatures(safeData);
-
-  //           plantationSource.addFeatures(features);
-  //           if (features.length > 0) {
-  //             const extent = plantationSource.getExtent();
-  //             if (extent && extent.every((v) => isFinite(v))) {
-  //               map.getView().fit(extent, {
-  //                 padding: [50, 50, 50, 50], // margin around features
-  //                 duration: 1500, // smooth animation
-  //               });
-  //             }
-  //           }
-  //         })
-  //         .catch((error) => {
-  //           console.error(
-  //             '❌ Failed to load the "plantation" layer. Please check your connection or the map layer details.',
-  //             error
-  //           );
-  //         });
-  //     },
-  //   });
-
-  //   const plantationLayer = new VectorLayer({
-  //     source: plantationSource,
-  //     style: new Style({
-  //       stroke: new Stroke({ color: "#ff0000", width: 5 }),
-  //     }),
-  //   });
-
-  //   map.addLayer(plantationLayer);
-  //   plantationLayerRef.current = plantationLayer;
-  //   setPlantLayer(plantationLayer);
-  // };
-
-  // useEffect(() => {
-  //   if (view === "map") {
-  //     if (mapElement1.current) initializeMap();
-  //   }
-
-  //   return () => {
-  //     if (mapRef1.current) mapRef1.current.setTarget(null);
-  //   };
-  // }, [view, geoData, projectName, projectId]);
-
-  // useEffect(() => {
-  //   if (view === "map" && selectedPlantation && selectedFeature) {
-  //     zoomToPlantationFeature(selectedPlantation, selectedFeature, mapRef1);
-  //   }
-  // }, [selectedPlantation, selectedFeature, view]);
-
-  // const zoomToPlantationFeature = (uid) => {
-  //   console.log("zooming", uid);
-  //   const source = plantationLayerRef.current?.getSource();
-  //   if (!source) return;
-
-  //   // find the feature by UID
-  //   const feature = source
-  //     .getFeatures()
-  //     .find((f) => f.get("uid") === uid || f.get("UID") === uid);
-  //   if (!feature) return;
-
-  //   const geometry = feature.getGeometry();
-  //   if (!geometry) return;
-
-  //   // zoom map
-  //   mapRef1.current.getView().fit(geometry.getExtent(), {
-  //     duration: 500,
-  //     padding: [50, 50, 50, 50],
-  //     maxZoom: 18,
-  //   });
-  // };
-
-  // Step 1: Add the missing sanitizeGeoJSON function (uncomment and place this before initializeMap)
   function sanitizeGeoJSON(geojson) {
     if (!geojson || !geojson.features) return geojson;
 
@@ -346,7 +157,6 @@ const PlantationProjectDashboard = () => {
         return feature;
       }
 
-      // Fix Polygon → MultiPolygon mismatch
       if (geom.type === "Polygon") {
         feature.geometry = {
           type: "MultiPolygon",
@@ -354,7 +164,6 @@ const PlantationProjectDashboard = () => {
         };
       }
 
-      // Ensure MultiPolygon has proper nesting
       if (geom.type === "MultiPolygon") {
         feature.geometry.coordinates = geom.coordinates
           .filter((poly) => Array.isArray(poly) && poly.length > 0)
@@ -372,22 +181,20 @@ const PlantationProjectDashboard = () => {
     return geojson;
   }
 
-  // Step 2: Complete the initializeMap function
   const initializeMap = async () => {
     console.log("Initializing map...");
 
-    // Base layer (Google hybrid)
     const baseLayer = new TileLayer({
       source: new XYZ({
         url: "https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}",
-        maxZoom: 20,
+        maxZoom: 40,
         transition: 500,
+        zoom: 18,
       }),
       preload: 4,
     });
     baseLayerRef.current = baseLayer;
 
-    // Custom attribution
     class GoogleLogoControl extends Control {
       constructor() {
         const element = document.createElement("div");
@@ -403,10 +210,9 @@ const PlantationProjectDashboard = () => {
       }
     }
 
-    // Map view
     const view = new View({
       projection: "EPSG:3857",
-      center: fromLonLat([78.9629, 20.5937]), // Center on India
+      center: fromLonLat([78.9629, 20.5937]),
       zoom: 5,
       constrainResolution: true,
       smoothExtentConstraint: true,
@@ -424,7 +230,6 @@ const PlantationProjectDashboard = () => {
     });
     mapRef1.current = map;
 
-    // Add plantation layer if geoData is available
     if (geoData && geoData.features) {
       addPlantationLayer(map);
     }
@@ -432,7 +237,6 @@ const PlantationProjectDashboard = () => {
     console.log("Map initialized successfully");
   };
 
-  // Step 3: Update the addPlantationLayer function with better error handling
   const addPlantationLayer = (map) => {
     try {
       if (plantationLayerRef.current) {
@@ -472,25 +276,11 @@ const PlantationProjectDashboard = () => {
       plantationLayerRef.current = plantationLayer;
 
       console.log("Plantation layer added successfully", selectedFeature);
-
-      // Fit to all features initially if no specific feature selected
-      if (!selectedFeature) {
-        const extent = vectorSource.getExtent();
-        console.log("Fitting to extent:", extent);
-        if (extent && extent.every(Number.isFinite)) {
-          map.getView().fit(extent, {
-            padding: [40, 40, 40, 40],
-            duration: 800,
-            maxZoom: 18,
-          });
-        }
-      }
     } catch (error) {
       console.error("Error adding plantation layer:", error);
     }
   };
 
-  // Step 4: Update the useEffect for selectedFeature with better error handling and logging
   useEffect(() => {
     console.log("selectedFeature effect triggered:", {
       hasSelectedFeature: !!selectedFeature,
@@ -505,12 +295,10 @@ const PlantationProjectDashboard = () => {
       plantationLayerRef.current &&
       view === "map"
     ) {
-      // Wait a bit for map to be ready
       setTimeout(() => {
         try {
           console.log("Attempting to zoom to feature:", selectedFeature);
 
-          // Create a temporary feature to get the extent
           const format = new GeoJSON({
             dataProjection: "EPSG:4326",
             featureProjection: "EPSG:3857",
@@ -528,10 +316,9 @@ const PlantationProjectDashboard = () => {
               mapRef1.current.getView().fit(extent, {
                 padding: [50, 50, 50, 50],
                 duration: 1000,
-                maxZoom: 16,
+                maxZoom: 22,
               });
 
-              // Highlight the selected feature
               highlightSelectedFeature(selectedFeature);
             } else {
               console.warn("Invalid extent:", extent);
@@ -542,11 +329,10 @@ const PlantationProjectDashboard = () => {
         } catch (error) {
           console.error("Error zooming to feature:", error);
         }
-      }, 1000); // Increased timeout to ensure map is ready
+      }, 1000);
     }
   }, [selectedFeature, view]);
 
-  // Step 5: Update the highlightSelectedFeature function
   const highlightSelectedFeature = (selectedGeoJsonFeature) => {
     if (!plantationLayerRef.current || !selectedGeoJsonFeature) return;
 
@@ -557,14 +343,11 @@ const PlantationProjectDashboard = () => {
 
     features.forEach((olFeature, index) => {
       try {
-        // Compare features by properties or geometry
         const olFeatureProps = olFeature.getProperties();
         const selectedProps = selectedGeoJsonFeature.properties;
 
-        // Try to match by properties (adjust based on your data structure)
         let isMatch = false;
         if (selectedProps && olFeatureProps) {
-          // You might need to adjust these property names based on your data
           isMatch =
             olFeatureProps.site_id === selectedProps.site_id ||
             olFeatureProps.waterbody_name === selectedProps.waterbody_name; // fallback to index if available
@@ -572,7 +355,6 @@ const PlantationProjectDashboard = () => {
 
         if (isMatch) {
           console.log("Found matching feature, highlighting");
-          // Highlight selected feature
           olFeature.setStyle(
             new Style({
               stroke: new Stroke({ color: "red", width: 5 }),
@@ -580,7 +362,6 @@ const PlantationProjectDashboard = () => {
             })
           );
         } else {
-          // Reset other features to default style
           olFeature.setStyle(null);
         }
       } catch (error) {
@@ -589,7 +370,6 @@ const PlantationProjectDashboard = () => {
     });
   };
 
-  // Step 7: Update the map initialization effect
   useEffect(() => {
     console.log("Map initialization effect:", {
       view: view,
@@ -604,9 +384,7 @@ const PlantationProjectDashboard = () => {
       }
     }
 
-    // Cleanup function
     return () => {
-      // Only cleanup when component unmounts or view changes away from map
       if (view !== "map" && mapRef1.current) {
         console.log("Cleaning up map");
         mapRef1.current.setTarget(null);
@@ -616,7 +394,6 @@ const PlantationProjectDashboard = () => {
     };
   }, [view]);
 
-  // Step 8: Update the geoData effect
   useEffect(() => {
     console.log("GeoData effect:", {
       hasMap: !!mapRef1.current,
@@ -631,37 +408,59 @@ const PlantationProjectDashboard = () => {
     }
   }, [geoData, view]);
 
-  // Step 9: Add debugging for table clicks
   const handlePlantationClick = (row) => {
     console.log("=== PLANTATION CLICK DEBUG ===");
     console.log("Clicked row:", row);
-    console.log("Row feature index:", row.featureIndex);
-    console.log("Total geoData features:", geoData?.features?.length || 0);
-    console.log("Current view:", view);
-    console.log("Has map:", !!mapRef1.current);
+
+    if (!geoData?.features) return;
 
     const feature = geoData.features.find(
       (f) => f.properties.uid === row.uid || f.properties.UID === row.uid
     );
-
-    if (feature) {
-      console.log("Found feature:", feature);
-      console.log("Feature geometry type:", feature.geometry?.type);
-      console.log("Feature properties:", feature.properties);
-
-      setSelectedPlantation(row);
-      setSelectedFeature(feature);
-      setView("map");
-
-      // Store for later use
-      window.selectedFeatureIndex = row.featureIndex;
-
-      console.log("State updated, switching to map view");
-    } else {
-      console.error("Feature not found for row index:", row.featureIndex);
+    if (!feature) {
+      console.error("Feature not found for row:", row);
+      return;
     }
 
-    console.log("=== END DEBUG ===");
+    console.log("Found feature:", feature);
+    console.log("Feature geometry type:", feature.geometry?.type);
+
+    // Convert to OL Feature
+    const olFeature = new GeoJSON({
+      dataProjection: "EPSG:4326",
+      featureProjection: "EPSG:3857",
+    }).readFeature(feature);
+
+    const geometry = olFeature.getGeometry();
+    if (!geometry) {
+      console.warn("No geometry for clicked feature");
+      return;
+    }
+
+    // Save state + switch view
+    setSelectedPlantation(row);
+    setSelectedFeature(feature);
+    setView("map");
+
+    // Zoom to that feature (when map is ready)
+    setTimeout(() => {
+      if (!mapRef1.current) return;
+      const view = mapRef1.current.getView();
+
+      if (geometry.getType() === "Point") {
+        view.animate({
+          center: geometry.getCoordinates(),
+          zoom: 16,
+          duration: 800,
+        });
+      } else {
+        view.fit(geometry.getExtent(), {
+          padding: [50, 50, 50, 50],
+          duration: 1000,
+          maxZoom: 16,
+        });
+      }
+    }, 500);
   };
 
   const { rows } = useMemo(() => {
@@ -856,59 +655,6 @@ const PlantationProjectDashboard = () => {
     }));
     handleFilterClose();
   };
-
-  // const handlePlantationClick = (row) => {
-  //   console.log("rowwww", row);
-  //   const feature = geoData.features.find((f, idx) => idx === row.featureIndex);
-
-  //   if (!feature) {
-  //     console.error("Feature not found.");
-  //     return;
-  //   }
-
-  //   // 1️⃣ Convert GeoJSON feature to OL Feature
-  //   const olFeature = new GeoJSON().readFeature(feature, {
-  //     dataProjection: "EPSG:4326",
-  //     featureProjection: "EPSG:3857",
-  //   });
-
-  //   const geometry = olFeature.getGeometry();
-
-  //   if (!geometry) {
-  //     console.error("No geometry found for this plantation");
-  //     return;
-  //   }
-
-  //   // 2️⃣ Compute center (centroid) for zoom
-  //   let center;
-  //   if (geometry.getType() === "Point") {
-  //     center = geometry.getCoordinates();
-  //   } else {
-  //     center = geometry.getExtent();
-  //   }
-
-  //   setSelectedPlantation(row); // show details
-  //   setView("map"); // switch view
-
-  //   if (mapRef1.current) {
-  //     const view = mapRef1.current.getView();
-
-  //     if (geometry.getType() === "Point") {
-  //       view.animate({
-  //         center,
-  //         zoom: 16,
-  //         duration: 1000,
-  //       });
-  //     } else {
-  //       // For Polygon/MultiPolygon: fit extent
-  //       view.fit(geometry, {
-  //         duration: 1000,
-  //         padding: [50, 50, 50, 50],
-  //         maxZoom: 16,
-  //       });
-  //     }
-  //   }
-  // };
 
   const handleMapBoxClick = () => {
     const matchingRow = rows.find(
@@ -1190,7 +936,7 @@ const PlantationProjectDashboard = () => {
                       key={row.id}
                       hover
                       sx={{ cursor: "pointer" }}
-                      onClick={() => handlePlantationClick(row.uid)}
+                      onClick={() => handlePlantationClick(row)}
                     >
                       <TableCell>{row.state}</TableCell>
                       <TableCell>{row.district}</TableCell>
