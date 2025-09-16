@@ -79,7 +79,6 @@ const useWaterRejData = (projectName, projectId) => {
           typeName,
           outputFormat: "application/json",
         });
-      console.log(url);
 
       try {
         const response = await fetch(url);
@@ -234,14 +233,10 @@ const WaterProjectDashboard = () => {
   useEffect(() => {
     const storedOrg = sessionStorage.getItem("selectedOrganization");
     const storedProject = sessionStorage.getItem("selectedProject");
-    const selectedOrganization = JSON.parse(
-      sessionStorage.getItem("selectedOrganization")
-    );
-    const organizationName = selectedOrganization?.label;
 
-    // Only update if something changed
     if (storedOrg) {
       const parsedOrg = JSON.parse(storedOrg);
+
       setOrganization((prev) =>
         prev?.value !== parsedOrg.value ? parsedOrg : prev
       );
@@ -261,6 +256,7 @@ const WaterProjectDashboard = () => {
 
   const projectName = project?.label;
   const projectId = project?.value;
+  console.log(organization?.label);
 
   const { geoData, mwsGeoData, zoiFeatures } = useWaterRejData(
     projectName,
@@ -1042,7 +1038,9 @@ const WaterProjectDashboard = () => {
     }
   };
 
-  const initializeMap3 = async () => {
+  const initializeMap3 = async (organizationLabel) => {
+    if (!organizationLabel || !projectName || !projectId) return;
+
     const baseLayer = new TileLayer({
       source: new XYZ({
         url: "https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}",
@@ -1065,10 +1063,59 @@ const WaterProjectDashboard = () => {
 
     mapRef3.current = map;
 
-    const organizationName = sessionStorage.getItem("organizationName");
+    // --- Fetch MWS boundary from WFS ---
+    const typeName = `waterrej:WaterRejapp_mws_${projectName}_${projectId}`;
+    const wfsUrl =
+      "https://geoserver.core-stack.org:8443/geoserver/waterrej/ows?" +
+      new URLSearchParams({
+        service: "WFS",
+        version: "1.0.0",
+        request: "GetFeature",
+        typeName,
+        outputFormat: "application/json",
+      });
 
-    const drainageLayerName = `waterrej:WATER_REJ_drainage_line_${organizationName}_${projectName}_${projectId}`;
+    let matchedFeatures = [];
+    try {
+      const response = await fetch(wfsUrl);
+      const json = await response.json();
 
+      // find matches for selected feature
+      matchedFeatures = json.features.filter(
+        (f) =>
+          String(f.properties.uid) ===
+          String(selectedFeature.properties.MWS_UID)
+      );
+
+      if (!matchedFeatures.length) {
+        console.warn("No match found for selected MWS UID");
+        return;
+      }
+
+      // --- Add MWS boundary layer ---
+      const boundarySource = new VectorSource({
+        features: new GeoJSON().readFeatures(
+          { type: "FeatureCollection", features: matchedFeatures },
+          { dataProjection: "EPSG:4326", featureProjection: "EPSG:4326" }
+        ),
+      });
+
+      const boundaryLayer = new VectorLayer({
+        source: boundarySource,
+        style: new Style({
+          stroke: new Stroke({ color: "black", width: 3 }),
+          fill: null,
+        }),
+      });
+      boundaryLayer.setZIndex(3);
+      map.addLayer(boundaryLayer);
+    } catch (err) {
+      console.error("WFS boundary fetch error:", err);
+      return;
+    }
+
+    // --- Drainage Layer (cropped to matchedFeatures) ---
+    const drainageLayerName = `waterrej:WATER_REJ_drainage_line_${organizationLabel}_${projectName}_${projectId}`;
     const drainageLineLayer = new TileLayer({
       source: new TileWMS({
         url: "https://geoserver.core-stack.org:8443/geoserver/waterrej/wms",
@@ -1086,23 +1133,48 @@ const WaterProjectDashboard = () => {
       }),
       opacity: 1,
     });
-
     drainageLineLayer.setZIndex(1);
     map.addLayer(drainageLineLayer);
 
-    // After adding drainageLineLayer
+    // --- Crop Drainage Layer ---
+    if (matchedFeatures.length) {
+      const targetProj = map.getView().getProjection().getCode();
+      const featureObjs = new GeoJSON().readFeatures(
+        { type: "FeatureCollection", features: matchedFeatures },
+        { dataProjection: "EPSG:4326", featureProjection: targetProj }
+      );
+
+      const multiCoords = [];
+      featureObjs.forEach((f) => {
+        const g = f.getGeometry();
+        if (!g) return;
+        if (g.getType() === "Polygon") multiCoords.push(g.getCoordinates());
+        else if (g.getType() === "MultiPolygon")
+          g.getCoordinates().forEach((poly) => multiCoords.push(poly));
+      });
+
+      if (multiCoords.length) {
+        const multiPoly = new MultiPolygon(multiCoords);
+        const crop = new Crop({
+          feature: new Feature({ geometry: multiPoly }),
+          wrapX: false,
+          inner: false,
+        });
+
+        if (typeof drainageLineLayer.addFilter === "function") {
+          drainageLineLayer.addFilter(crop);
+        }
+      }
+    }
+
+    // --- Terrain Layer (cropped to matchedFeatures) ---
     const terrainLayerName = `WATER_REJ_terrain_${projectName}_${projectId}`;
     const uniqueTerrainId = "terrainLayer1";
 
-    // Remove old terrain layer if it exists
-    if (mapRef3.current) {
-      const layersBefore = mapRef3.current.getLayers().getArray();
-      layersBefore.forEach((layer) => {
-        if (layer.get("id") === uniqueTerrainId) {
-          mapRef3.current.removeLayer(layer);
-        }
-      });
-    }
+    // Remove old terrain if exists
+    map.getLayers().forEach((layer) => {
+      if (layer.get("id") === uniqueTerrainId) map.removeLayer(layer);
+    });
 
     const newTerrainLayer = await getImageLayer(
       "waterrej",
@@ -1110,94 +1182,40 @@ const WaterProjectDashboard = () => {
       true,
       "Terrain_Style_11_Classes"
     );
-
-    newTerrainLayer.setZIndex(0);
     newTerrainLayer.set("id", uniqueTerrainId);
     newTerrainLayer.setOpacity(0.7);
+    newTerrainLayer.setZIndex(0);
 
-    mapRef3.current.addLayer(newTerrainLayer);
+    // Crop terrain layer
+    const targetProj = map.getView().getProjection().getCode();
+    const featureObjs = new GeoJSON().readFeatures(
+      { type: "FeatureCollection", features: matchedFeatures },
+      { dataProjection: "EPSG:4326", featureProjection: targetProj }
+    );
 
-    const typeName = `waterrej:WaterRejapp_mws_${projectName}_${projectId}`;
-    const wfsUrl =
-      "https://geoserver.core-stack.org:8443/geoserver/waterrej/ows?" +
-      new URLSearchParams({
-        service: "WFS",
-        version: "1.0.0",
-        request: "GetFeature",
-        typeName,
-        outputFormat: "application/json",
+    const multiCoords = [];
+    featureObjs.forEach((f) => {
+      const g = f.getGeometry();
+      if (!g) return;
+      if (g.getType() === "Polygon") multiCoords.push(g.getCoordinates());
+      else if (g.getType() === "MultiPolygon")
+        g.getCoordinates().forEach((poly) => multiCoords.push(poly));
+    });
+
+    if (multiCoords.length) {
+      const multiPoly = new MultiPolygon(multiCoords);
+      const crop = new Crop({
+        feature: new Feature({ geometry: multiPoly }),
+        wrapX: false,
+        inner: false,
       });
-
-    try {
-      const response = await fetch(wfsUrl);
-      const json = await response.json();
-      console.log(json);
-      const matchedFeature = json.features.find(
-        (f) =>
-          String(f.properties.uid) ===
-          String(selectedFeature.properties.MWS_UID)
-      );
-
-      console.log(selectedFeature.properties);
-
-      if (matchedFeature) {
-        console.log(
-          "Matched Feature Properties:",
-          matchedFeature.properties.uid
-        );
-      } else {
-        console.warn("No match found for MWS_UID:", selectedFeature.properties);
-      }
-
-      // const matchedFeature = json.features.find(
-      //   (f) =>
-      //     String(f.properties.uid) ===
-      //     String(selectedFeature.properties.MWS_UID)
-      // );
-      // console.log(matchedFeature);
-
-      console.log(typeof selectedFeature.properties.MWS_UID);
-      console.log(typeof matchedFeature.properties.uid);
-
-      if (!matchedFeature) {
-        console.warn(
-          "No exact MWS match found for selected feature",
-          selectedFeature
-        );
-        return;
-      }
-
-      // const boundarySource = new VectorSource({
-      //   features: new GeoJSON().readFeatures(json, {
-      //     dataProjection: "EPSG:4326",
-      //     featureProjection: "EPSG:4326",
-      //   }),
-      // });
-      const boundarySource = new VectorSource({
-        features: new GeoJSON().readFeatures(
-          { type: "FeatureCollection", features: [matchedFeature] },
-          {
-            dataProjection: "EPSG:4326",
-            featureProjection: "EPSG:4326",
-          }
-        ),
-      });
-
-      const boundaryLayer = new VectorLayer({
-        source: boundarySource,
-        style: new Style({
-          stroke: new Stroke({ color: "black", width: 3 }),
-          fill: null,
-        }),
-      });
-
-      boundaryLayer.setZIndex(3);
-      map.addLayer(boundaryLayer);
-    } catch (err) {
-      console.error("WFS boundary fetch error:", err);
+      if (typeof newTerrainLayer.addFilter === "function")
+        newTerrainLayer.addFilter(crop);
     }
 
-    // Waterbody outlines from geoData (black stroke, no fill)
+    map.addLayer(newTerrainLayer);
+
+    // --- Waterbody outlines ---
     if (geoData?.features?.length) {
       const waterSource = new VectorSource({
         features: new GeoJSON().readFeatures(geoData, {
@@ -1213,25 +1231,22 @@ const WaterProjectDashboard = () => {
           fill: null,
         }),
       });
-
       waterLayer.setZIndex(2);
       map.addLayer(waterLayer);
 
-      // ✅ Zoom to selected waterbody if available
+      // Zoom
       if (selectedWaterbody && selectedFeature) {
         const feature = new GeoJSON().readFeature(selectedFeature, {
           dataProjection: "EPSG:4326",
           featureProjection: view.getProjection(),
         });
-
         const geometry = feature.getGeometry();
-        if (geometry) {
+        if (geometry)
           view.fit(geometry.getExtent(), {
             padding: [50, 50, 50, 50],
             duration: 1000,
             maxZoom: 14,
           });
-        }
       } else {
         const extent = waterSource.getExtent();
         view.fit(extent, {
@@ -1244,10 +1259,10 @@ const WaterProjectDashboard = () => {
   };
 
   useEffect(() => {
-    if (view === "map") {
+    if (view === "map" && organization) {
       if (mapElement1.current) initializeMap1();
       if (mapElement2.current) initializeMap2();
-      if (mapElement3.current) initializeMap3();
+      if (mapElement3.current) initializeMap3(organization.label);
     }
 
     return () => {
@@ -1255,15 +1270,15 @@ const WaterProjectDashboard = () => {
       if (mapRef2.current) mapRef2.current.setTarget(null);
       if (mapRef3.current) mapRef3.current.setTarget(null);
     };
-  }, [view, geoData, projectName, projectId]);
+  }, [view, geoData, projectName, projectId, organization]);
 
   useEffect(() => {
     if (selectedWaterbody) {
       if (mapElement2.current && !mapRef2.current) {
         initializeMap2();
       }
-      if (mapElement3.current && !mapRef3.current) {
-        initializeMap3();
+      if (mapElement3.current && !mapRef3.current && organization) {
+        initializeMap3(organization.label);
       }
     }
   }, [selectedWaterbody]);

@@ -22,7 +22,6 @@ ChartJS.register(
 );
 
 const DroughtChart = ({ feature }) => {
-  console.log(feature);
   if (!feature) return null;
 
   // handle OL feature or plain GeoJSON

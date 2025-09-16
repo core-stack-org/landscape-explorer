@@ -20,7 +20,6 @@ ChartJS.register(
 );
 
 const NDMIPointChart = ({ zoiFeatures, waterbody }) => {
-  console.log(zoiFeatures);
   const waterbodyName = useMemo(() => {
     return waterbody?.waterbody?.toLowerCase().trim() || "";
   }, [waterbody]);
@@ -45,7 +44,6 @@ const NDMIPointChart = ({ zoiFeatures, waterbody }) => {
     if (!matchedFeature) return [];
 
     const props = matchedFeature.getProperties();
-    console.log(props);
 
     return Object.entries(props)
       .filter(
