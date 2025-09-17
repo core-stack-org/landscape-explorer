@@ -147,12 +147,12 @@ const MapLegend = ({toggledLayers, lulcYear1, lulcYear2, lulcYear3}) => {
   ]
 
   const LULCLvl3Item = [
-    { color: "#ff0000", label: "Barren Lands" },
+    { color: "#A9A9A9", label: "Barren Lands" },
     { color: "#c6e46d", label: "Single Kharif" },
     { color: "#eee05d", label: "Single Non-Kharif" },
     { color: "#f9b249", label: "Double Cropping" },
     { color: "#fb5139", label: "Triple Cropping" },
-    { color: "#ff0000", label: "Shrubs and Scrubs" },
+    { color: "#4c4ef5", label: "Shrubs and Scrubs" },
   ]
 
   const socioEconomicItem = [
