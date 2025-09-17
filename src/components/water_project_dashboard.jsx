@@ -38,6 +38,7 @@ import {
   ListItemText,
   TextField,
   Popover,
+  Tooltip,
 } from "@mui/material";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import { Download, Lightbulb } from "lucide-react";
@@ -262,18 +263,87 @@ const WaterProjectDashboard = () => {
   const projectId = project?.value;
   console.log(organization?.label);
 
+  useEffect(() => {
+    // Clear all maps when project changes
+    if (mapRef1.current) {
+      mapRef1.current.setTarget(null);
+      mapRef1.current = null;
+    }
+    if (mapRef2.current) {
+      mapRef2.current.setTarget(null);
+      mapRef2.current = null;
+    }
+    if (mapRef3.current) {
+      mapRef3.current.setTarget(null);
+      mapRef3.current = null;
+    }
+
+    // Reset waterbody selections too
+    setSelectedWaterbody(null);
+    setSelectedFeature(null);
+    setMapClickedWaterbody(null);
+  }, [projectId]);
+
   const { geoData, mwsGeoData, zoiFeatures } = useWaterRejData(
     projectName,
     projectId
   );
 
+  console.log(zoiFeatures);
+  const yearMap = {
+    "17-18": 2017,
+    "18-19": 2018,
+    "19-20": 2019,
+    "20-21": 2020,
+    "21-22": 2021,
+    "22-23": 2022,
+    "23-24": 2023,
+  };
+
   const { rows, totalSiltRemoved } = useMemo(() => {
+    console.log(zoiFeatures);
     if (!geoData?.features) return { rows: [], avgSiltRemoved: 0 };
 
     let totalSiltRemoved = 0;
 
     const mappedRows = geoData.features.map((feature, index) => {
       const props = feature.properties || {};
+      const waterbodyName = props.waterbody_name || "NA";
+      const matchedZoi = zoiFeatures.find(
+        (f) =>
+          f.get("waterbody_name")?.toLowerCase().trim() ===
+          waterbodyName?.toLowerCase().trim()
+      );
+
+      let avgDouble = "NA";
+      let avgTriple = "NA";
+
+      if (matchedZoi) {
+        const doubleVals = [];
+        const tripleVals = [];
+
+        for (let year = 2017; year <= 2023; year++) {
+          const d = matchedZoi.get(`doubly_cropped_area_${year}`);
+          const t = matchedZoi.get(`triply_cropped_area_${year}`);
+          if (d !== undefined && d !== null) doubleVals.push(Number(d));
+          if (t !== undefined && t !== null) tripleVals.push(Number(t));
+        }
+
+        if (doubleVals.length > 0) {
+          avgDouble = (
+            doubleVals.reduce((a, b) => a + b, 0) /
+            doubleVals.length /
+            10000
+          ).toFixed(2);
+        }
+        if (tripleVals.length > 0) {
+          avgTriple = (
+            tripleVals.reduce((a, b) => a + b, 0) /
+            tripleVals.length /
+            10000
+          ).toFixed(2);
+        }
+      }
 
       const geometry = feature.geometry || {};
 
@@ -304,6 +374,15 @@ const WaterProjectDashboard = () => {
         "22-23",
         "23-24",
       ];
+      const yearMap = {
+        "17-18": 2017,
+        "18-19": 2018,
+        "19-20": 2019,
+        "20-21": 2020,
+        "21-22": 2021,
+        "22-23": 2022,
+        "23-24": 2023,
+      };
 
       let startIndex = -1;
 
@@ -394,6 +473,31 @@ const WaterProjectDashboard = () => {
       const ImpactZaid = round2(zaidAfter - zaidBefore);
       const ImpactZaidColor = ImpactZaid >= 0 ? "green" : "red";
 
+      const avgArea = (years, prefix) => {
+        const values = years
+          .map((year) => {
+            const y = yearMap[year]; // map to numeric year
+            const val = matchedZoi?.get(`${prefix}${y}`);
+            return val !== undefined && val !== null ? Number(val) : 0;
+          })
+          .filter((v) => !isNaN(v));
+        return values.length
+          ? values.reduce((a, b) => a + b, 0) / values.length
+          : 0;
+      };
+
+      // Double cropped
+      const doublePre = avgArea(preYears, "doubly_cropped_area_") / 10000;
+      const doublePost = avgArea(postYears, "doubly_cropped_area_") / 10000;
+      const ImpactDouble = Math.round((doublePost - doublePre) * 100) / 100;
+      const ImpactDoubleColor = ImpactDouble >= 0 ? "green" : "red";
+
+      // Triple cropped
+      const triplePre = avgArea(preYears, "triply_cropped_area_") / 10000;
+      const triplePost = avgArea(postYears, "triply_cropped_area_") / 10000;
+      const ImpactTriple = Math.round((triplePost - triplePre) * 100) / 100;
+      const ImpactTripleColor = ImpactTriple >= 0 ? "green" : "red";
+
       const siltRemoved = Number(props.slit_excavated) || 0;
       totalSiltRemoved += siltRemoved;
 
@@ -414,7 +518,13 @@ const WaterProjectDashboard = () => {
         avgWaterAvailabilityZaid: meanZaid,
         ImpactZaid,
         ImpactZaidColor,
+        ImpactDouble,
+        ImpactDoubleColor,
+        ImpactTriple,
+        ImpactTripleColor,
         areaOred: props.area_ored || 0,
+        avgDoubleCropped: avgDouble,
+        avgTripleCropped: avgTriple,
         // avgWaterAvailabilityKharif: avgKharif,
         // avgWaterAvailabilityRabi: avgRabi,
         // avgWaterAvailabilityZaid: avgZaid,
@@ -434,9 +544,10 @@ const WaterProjectDashboard = () => {
       rows: mappedRows,
       totalSiltRemoved,
     };
-  }, [geoData]);
+  }, [geoData, zoiFeatures]);
 
   const totalRows = rows.length;
+  console.log(zoiFeatures);
 
   const [filters, setFilters] = useState({
     state: [],
@@ -1067,6 +1178,16 @@ const WaterProjectDashboard = () => {
 
     mapRef3.current = map;
 
+    map.getInteractions().forEach((interaction) => {
+      if (
+        interaction instanceof MouseWheelZoom ||
+        interaction instanceof PinchZoom ||
+        interaction instanceof DoubleClickZoom
+      ) {
+        interaction.setActive(false);
+      }
+    });
+
     // --- Fetch MWS boundary from WFS ---
     const typeName = `waterrej:WaterRejapp_mws_${projectName}_${projectId}`;
     const wfsUrl =
@@ -1630,7 +1751,7 @@ const WaterProjectDashboard = () => {
               <Table>
                 <TableHead sx={{ backgroundColor: "#f5f5f5" }}>
                   <TableRow>
-                    <TableCell>
+                    <TableCell sx={{ px: 1, py: 0.5 }}>
                       <div style={{ display: "flex", alignItems: "center" }}>
                         State
                         {/* Filter button — keep existing handler but stop propagation */}
@@ -1644,22 +1765,28 @@ const WaterProjectDashboard = () => {
                           <FilterListIcon fontSize="small" />
                         </IconButton>
                         {/* Info button — pass the button DOM node as anchor */}
-                        <IconButton
-                          size="small"
-                          onClick={(e) => {
-                            e.stopPropagation(); // important so other cell-level clicks don't fire
-                            handleInfoClick(
-                              e.currentTarget,
-                              "State where the waterbody is located."
-                            );
-                          }}
-                        >
-                          <InfoOutlinedIcon fontSize="small" />
-                        </IconButton>
+                        <Tooltip title="Click the info icon for details">
+                          <IconButton
+                            size="small"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleInfoClick(
+                                e.currentTarget,
+                                "State where the waterbody is located."
+                              );
+                            }}
+                            sx={{
+                              color: "primary.main",
+                              "&:hover": { transform: "scale(1.2)" },
+                            }}
+                          >
+                            <InfoOutlinedIcon fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
                       </div>
                     </TableCell>
 
-                    <TableCell>
+                    <TableCell sx={{ px: 1, py: 0.5 }}>
                       <div style={{ display: "flex", alignItems: "center" }}>
                         District
                         {/* Filter button */}
@@ -1673,22 +1800,28 @@ const WaterProjectDashboard = () => {
                           <FilterListIcon fontSize="small" />
                         </IconButton>
                         {/* Info button */}
-                        <IconButton
-                          size="small"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleInfoClick(
-                              e.currentTarget,
-                              "District in which the waterbody falls."
-                            );
-                          }}
-                        >
-                          <InfoOutlinedIcon fontSize="small" />
-                        </IconButton>
+                        <Tooltip title="Click the info icon for details">
+                          <IconButton
+                            size="small"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleInfoClick(
+                                e.currentTarget,
+                                "District in which the waterbody falls."
+                              );
+                            }}
+                            sx={{
+                              color: "primary.main",
+                              "&:hover": { transform: "scale(1.2)" },
+                            }}
+                          >
+                            <InfoOutlinedIcon fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
                       </div>
                     </TableCell>
 
-                    <TableCell>
+                    <TableCell sx={{ px: 1, py: 0.5 }}>
                       <div style={{ display: "flex", alignItems: "center" }}>
                         Taluka
                         {/* Filter button */}
@@ -1702,22 +1835,28 @@ const WaterProjectDashboard = () => {
                           <FilterListIcon fontSize="small" />
                         </IconButton>
                         {/* Info button */}
-                        <IconButton
-                          size="small"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleInfoClick(
-                              e.currentTarget,
-                              "Taluka (administrative block) in which the waterbody is located."
-                            );
-                          }}
-                        >
-                          <InfoOutlinedIcon fontSize="small" />
-                        </IconButton>
+                        <Tooltip title="Click the info icon for details">
+                          <IconButton
+                            size="small"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleInfoClick(
+                                e.currentTarget,
+                                "Taluka (administrative block) in which the waterbody is located."
+                              );
+                            }}
+                            sx={{
+                              color: "primary.main",
+                              "&:hover": { transform: "scale(1.2)" },
+                            }}
+                          >
+                            <InfoOutlinedIcon fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
                       </div>
                     </TableCell>
 
-                    <TableCell>
+                    <TableCell sx={{ px: 1, py: 0.5 }}>
                       <div style={{ display: "flex", alignItems: "center" }}>
                         GP/Village
                         {/* Filter button */}
@@ -1731,39 +1870,51 @@ const WaterProjectDashboard = () => {
                           <FilterListIcon fontSize="small" />
                         </IconButton>
                         {/* Info button */}
-                        <IconButton
-                          size="small"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleInfoClick(
-                              e.currentTarget,
-                              "Gram Panchayat or Village where the waterbody is located."
-                            );
-                          }}
-                        >
-                          <InfoOutlinedIcon fontSize="small" />
-                        </IconButton>
-                      </div>
-                    </TableCell>
-
-                    <TableCell>
-                      <div style={{ display: "flex", flexDirection: "column" }}>
-                        <div style={{ display: "flex", alignItems: "center" }}>
-                          <span>Waterbody</span>
-
-                          {/* Info button */}
+                        <Tooltip title="Click the info icon for details">
                           <IconButton
                             size="small"
                             onClick={(e) => {
                               e.stopPropagation();
                               handleInfoClick(
                                 e.currentTarget,
-                                "Name of the waterbody being monitored."
+                                "Gram Panchayat or Village where the waterbody is located."
                               );
+                            }}
+                            sx={{
+                              color: "primary.main",
+                              "&:hover": { transform: "scale(1.2)" },
                             }}
                           >
                             <InfoOutlinedIcon fontSize="small" />
                           </IconButton>
+                        </Tooltip>
+                      </div>
+                    </TableCell>
+
+                    <TableCell sx={{ px: 1, py: 0.5 }}>
+                      <div style={{ display: "flex", flexDirection: "column" }}>
+                        <div style={{ display: "flex", alignItems: "center" }}>
+                          <span>Waterbody</span>
+
+                          {/* Info button */}
+                          <Tooltip title="Click the info icon for details">
+                            <IconButton
+                              size="small"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleInfoClick(
+                                  e.currentTarget,
+                                  "Name of the waterbody being monitored."
+                                );
+                              }}
+                              sx={{
+                                color: "primary.main",
+                                "&:hover": { transform: "scale(1.2)" },
+                              }}
+                            >
+                              <InfoOutlinedIcon fontSize="small" />
+                            </IconButton>
+                          </Tooltip>
                         </div>
 
                         {/* Search input */}
@@ -1781,7 +1932,12 @@ const WaterProjectDashboard = () => {
                     {/* Silt Removed Column */}
                     <TableCell
                       onClick={() => handleSort("siltRemoved")}
-                      sx={{ cursor: "pointer", userSelect: "none" }}
+                      sx={{
+                        cursor: "pointer",
+                        userSelect: "none",
+                        px: 1,
+                        py: 0.5,
+                      }}
                     >
                       <div style={{ display: "flex", alignItems: "center" }}>
                         Silt Removed (Cu.m.)
@@ -1797,24 +1953,36 @@ const WaterProjectDashboard = () => {
                             : "🔽"}
                         </span>
                         {/* Info button */}
-                        <IconButton
-                          size="small"
-                          onClick={(e) => {
-                            e.stopPropagation(); // prevent triggering sort when clicking info
-                            handleInfoClick(
-                              e.currentTarget,
-                              "Volume of silt removed from the waterbody, measured in cubic meters (Cu.m.)."
-                            );
-                          }}
-                          sx={{ marginLeft: 0.5 }}
-                        >
-                          <InfoOutlinedIcon fontSize="small" />
-                        </IconButton>
+                        <Tooltip title="Click the info icon for details">
+                          <IconButton
+                            size="small"
+                            onClick={(e) => {
+                              e.stopPropagation(); // prevent triggering sort when clicking info
+                              handleInfoClick(
+                                e.currentTarget,
+                                "Volume of silt removed from the waterbody, measured in cubic meters (Cu.m.)."
+                              );
+                            }}
+                            sx={{
+                              color: "primary.main",
+                              "&:hover": { transform: "scale(1.2)" },
+                            }}
+                          >
+                            <InfoOutlinedIcon fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
                       </div>
                     </TableCell>
 
                     {/* Intervention year Column */}
-                    <TableCell sx={{ cursor: "pointer", userSelect: "none" }}>
+                    <TableCell
+                      sx={{
+                        cursor: "pointer",
+                        userSelect: "none",
+                        px: 1,
+                        py: 0.5,
+                      }}
+                    >
                       <div style={{ display: "flex", alignItems: "center" }}>
                         Intervention Year
                         <span
@@ -1824,24 +1992,36 @@ const WaterProjectDashboard = () => {
                           }}
                         ></span>
                         {/* Info button */}
-                        <IconButton
-                          size="small"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleInfoClick(
-                              e.currentTarget,
-                              "The year in which desilting or related intervention was carried out for the waterbody."
-                            );
-                          }}
-                          sx={{ marginLeft: 0.5 }}
-                        >
-                          <InfoOutlinedIcon fontSize="small" />
-                        </IconButton>
+                        <Tooltip title="Click the info icon for details">
+                          <IconButton
+                            size="small"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleInfoClick(
+                                e.currentTarget,
+                                "The year in which desilting or related intervention was carried out for the waterbody."
+                              );
+                            }}
+                            sx={{
+                              color: "primary.main",
+                              "&:hover": { transform: "scale(1.2)" },
+                            }}
+                          >
+                            <InfoOutlinedIcon fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
                       </div>
                     </TableCell>
 
                     {/* Size of waterbody Column */}
-                    <TableCell sx={{ cursor: "pointer", userSelect: "none" }}>
+                    <TableCell
+                      sx={{
+                        cursor: "pointer",
+                        userSelect: "none",
+                        px: 1,
+                        py: 0.5,
+                      }}
+                    >
                       <div style={{ display: "flex", alignItems: "center" }}>
                         Size of Waterbody (in hectares)
                         <span
@@ -1851,19 +2031,24 @@ const WaterProjectDashboard = () => {
                           }}
                         ></span>
                         {/* Info button */}
-                        <IconButton
-                          size="small"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleInfoClick(
-                              e.currentTarget,
-                              "Total surface area of the waterbody measured in hectares."
-                            );
-                          }}
-                          sx={{ marginLeft: 0.5 }}
-                        >
-                          <InfoOutlinedIcon fontSize="small" />
-                        </IconButton>
+                        <Tooltip title="Click the info icon for details">
+                          <IconButton
+                            size="small"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleInfoClick(
+                                e.currentTarget,
+                                "Total surface area of the waterbody measured in hectares."
+                              );
+                            }}
+                            sx={{
+                              color: "primary.main",
+                              "&:hover": { transform: "scale(1.2)" },
+                            }}
+                          >
+                            <InfoOutlinedIcon fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
                       </div>
                     </TableCell>
 
@@ -1871,7 +2056,12 @@ const WaterProjectDashboard = () => {
 
                     <TableCell
                       onClick={() => handleSort("avgWaterAvailabilityRabi")}
-                      sx={{ cursor: "pointer", userSelect: "none" }}
+                      sx={{
+                        cursor: "pointer",
+                        userSelect: "none",
+                        px: 1,
+                        py: 0.5,
+                      }}
                     >
                       <div style={{ display: "flex", alignItems: "center" }}>
                         Mean Water Availability During Rabi (%)
@@ -1890,25 +2080,35 @@ const WaterProjectDashboard = () => {
                             : "🔽"}
                         </span>
                         {/* Info button */}
-                        <IconButton
-                          size="small"
-                          onClick={(e) => {
-                            e.stopPropagation(); // prevent triggering sort
-                            handleInfoClick(
-                              e.currentTarget,
-                              "Average percentage of water available in the waterbody during the Rabi season.Statistics within the brackets indicates the change after the intervention and before the intervention."
-                            );
-                          }}
-                          sx={{ marginLeft: 0.5 }}
-                        >
-                          <InfoOutlinedIcon fontSize="small" />
-                        </IconButton>
+                        <Tooltip title="Click the info icon for details">
+                          <IconButton
+                            size="small"
+                            onClick={(e) => {
+                              e.stopPropagation(); // prevent triggering sort
+                              handleInfoClick(
+                                e.currentTarget,
+                                "Average percentage of water available in the waterbody during the Rabi season.Statistics within the brackets indicates the change after the intervention and before the intervention."
+                              );
+                            }}
+                            sx={{
+                              color: "primary.main",
+                              "&:hover": { transform: "scale(1.2)" },
+                            }}
+                          >
+                            <InfoOutlinedIcon fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
                       </div>
                     </TableCell>
 
                     <TableCell
                       onClick={() => handleSort("avgWaterAvailabilityZaid")}
-                      sx={{ cursor: "pointer", userSelect: "none" }}
+                      sx={{
+                        cursor: "pointer",
+                        userSelect: "none",
+                        px: 1,
+                        py: 0.5,
+                      }}
                     >
                       <div style={{ display: "flex", alignItems: "center" }}>
                         Mean Water Availability During Zaid (%)
@@ -1927,19 +2127,120 @@ const WaterProjectDashboard = () => {
                             : "🔽"}
                         </span>
                         {/* Info button */}
-                        <IconButton
-                          size="small"
-                          onClick={(e) => {
-                            e.stopPropagation(); // avoid triggering sort
-                            handleInfoClick(
-                              e.currentTarget,
-                              "Average percentage of water available in the waterbody during the Zaid season (summer cropping period).Statistics within the brackets indicates the change after the intervention and before the intervention."
-                            );
+                        <Tooltip title="Click the info icon for details">
+                          <IconButton
+                            size="small"
+                            onClick={(e) => {
+                              e.stopPropagation(); // avoid triggering sort
+                              handleInfoClick(
+                                e.currentTarget,
+                                "Average percentage of water available in the waterbody during the Zaid season (summer cropping period).Statistics within the brackets indicates the change after the intervention and before the intervention."
+                              );
+                            }}
+                            sx={{
+                              color: "primary.main",
+                              "&:hover": { transform: "scale(1.2)" },
+                            }}
+                          >
+                            <InfoOutlinedIcon fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                      </div>
+                    </TableCell>
+
+                    {/*Double cropped area */}
+                    <TableCell
+                      onClick={() => handleSort("avgWaterAvailabilityZaid")}
+                      sx={{
+                        cursor: "pointer",
+                        userSelect: "none",
+                        px: 1,
+                        py: 0.5,
+                      }}
+                    >
+                      <div style={{ display: "flex", alignItems: "center" }}>
+                        Mean Double Cropped Area (in hec.)
+                        <span
+                          style={{
+                            marginLeft: 4,
+                            fontWeight:
+                              sortField === "avgWaterAvailabilityZaid"
+                                ? "bold"
+                                : "normal",
                           }}
-                          sx={{ marginLeft: 0.5 }}
                         >
-                          <InfoOutlinedIcon fontSize="small" />
-                        </IconButton>
+                          {sortField === "avgWaterAvailabilityZaid" &&
+                          sortOrder === "asc"
+                            ? "🔼"
+                            : "🔽"}
+                        </span>
+                        {/* Info button */}
+                        <Tooltip title="Click the info icon for details">
+                          <IconButton
+                            size="small"
+                            onClick={(e) => {
+                              e.stopPropagation(); // avoid triggering sort
+                              handleInfoClick(
+                                e.currentTarget,
+                                "Average of double cropped area in the waterbody (summer cropping period).Statistics within the brackets indicates the change after the intervention and before the intervention."
+                              );
+                            }}
+                            sx={{
+                              color: "primary.main",
+                              "&:hover": { transform: "scale(1.2)" },
+                            }}
+                          >
+                            <InfoOutlinedIcon fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                      </div>
+                    </TableCell>
+
+                    {/*Tripple cropped area*/}
+                    <TableCell
+                      onClick={() => handleSort("avgWaterAvailabilityZaid")}
+                      sx={{
+                        cursor: "pointer",
+                        userSelect: "none",
+                        px: 1,
+                        py: 0.5,
+                      }}
+                    >
+                      <div style={{ display: "flex", alignItems: "center" }}>
+                        Mean Tripple Cropped Area (in hec.){" "}
+                        <span
+                          style={{
+                            marginLeft: 4,
+                            fontWeight:
+                              sortField === "avgWaterAvailabilityZaid"
+                                ? "bold"
+                                : "normal",
+                          }}
+                        >
+                          {sortField === "avgWaterAvailabilityZaid" &&
+                          sortOrder === "asc"
+                            ? "🔼"
+                            : "🔽"}
+                        </span>
+                        {/* Info button */}
+                        <Tooltip title="Click the info icon for details">
+                          <IconButton
+                            size="small"
+                            onClick={(e) => {
+                              e.stopPropagation(); // avoid triggering sort
+                              handleInfoClick(
+                                e.currentTarget,
+                                "Average of triple cropped area in the waterbody (summer cropping period).Statistics within the brackets indicates the change after the intervention and before the intervention."
+                              );
+                            }}
+                            sx={{
+                              color: "primary.main",
+                              "&:hover": { transform: "scale(1.2)" },
+                            }}
+                          >
+                            <InfoOutlinedIcon fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
                       </div>
                     </TableCell>
                   </TableRow>
@@ -1953,14 +2254,24 @@ const WaterProjectDashboard = () => {
                       sx={{ cursor: "pointer" }}
                       onClick={() => handleWaterbodyClick(row)}
                     >
-                      <TableCell>{row.state}</TableCell>
-                      <TableCell>{row.district}</TableCell>
-                      <TableCell>{row.block}</TableCell>
-                      <TableCell>{row.village}</TableCell>{" "}
-                      <TableCell>{row.waterbody}</TableCell>
-                      <TableCell>{row.siltRemoved}</TableCell>
-                      <TableCell>2022-23</TableCell>
-                      <TableCell>{row.areaOred?.toFixed(2)}</TableCell>
+                      <TableCell sx={{ px: 1, py: 0.5 }}>{row.state}</TableCell>
+                      <TableCell sx={{ px: 1, py: 0.5 }}>
+                        {row.district}
+                      </TableCell>
+                      <TableCell sx={{ px: 1, py: 0.5 }}>{row.block}</TableCell>
+                      <TableCell sx={{ px: 1, py: 0.5 }}>
+                        {row.village}
+                      </TableCell>{" "}
+                      <TableCell sx={{ px: 1, py: 0.5 }}>
+                        {row.waterbody}
+                      </TableCell>
+                      <TableCell sx={{ px: 1, py: 0.5 }}>
+                        {row.siltRemoved}
+                      </TableCell>
+                      <TableCell sx={{ px: 1, py: 0.5 }}>2022-23</TableCell>
+                      <TableCell sx={{ px: 1, py: 0.5 }}>
+                        {row.areaOred?.toFixed(2)}
+                      </TableCell>
                       {/* <TableCell>
                         {row.avgWaterAvailabilityKharif ?? "NA"}{" "}
                         {row.ImpactKharif !== undefined && (
@@ -1969,7 +2280,7 @@ const WaterProjectDashboard = () => {
                           </span>
                         )}
                       </TableCell> */}
-                      <TableCell>
+                      <TableCell sx={{ px: 1, py: 0.5 }}>
                         {row.avgWaterAvailabilityRabi ?? "NA"}{" "}
                         {row.ImpactRabi !== undefined && (
                           <span style={{ color: row.ImpactRabiColor }}>
@@ -1977,11 +2288,27 @@ const WaterProjectDashboard = () => {
                           </span>
                         )}
                       </TableCell>
-                      <TableCell>
+                      <TableCell sx={{ px: 1, py: 0.5 }}>
                         {row.avgWaterAvailabilityZaid ?? "NA"}{" "}
                         {row.ImpactZaid !== undefined && (
                           <span style={{ color: row.ImpactZaidColor }}>
                             ({row.ImpactZaid})
+                          </span>
+                        )}
+                      </TableCell>
+                      <TableCell sx={{ px: 1, py: 0.5 }}>
+                        {row.avgDoubleCropped ?? "NA"}{" "}
+                        {row.ImpactDouble !== undefined && (
+                          <span style={{ color: row.ImpactDoubleColor }}>
+                            ({row.ImpactDouble})
+                          </span>
+                        )}
+                      </TableCell>
+                      <TableCell sx={{ px: 1, py: 0.5 }}>
+                        {row.avgTripleCropped ?? "NA"}{" "}
+                        {row.ImpactTriple !== undefined && (
+                          <span style={{ color: row.ImpactTripleColor }}>
+                            ({row.ImpactTriple})
                           </span>
                         )}
                       </TableCell>
@@ -2127,6 +2454,36 @@ const WaterProjectDashboard = () => {
                   width: selectedWaterbody ? { xs: "100%", md: "65%" } : "100%",
                 }}
               >
+                {!selectedWaterbody && (
+                  <Box
+                    sx={{
+                      position: "absolute",
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      bgcolor: "rgba(255, 255, 255, 0.9)",
+                      textAlign: "center",
+                      py: 1,
+                      fontWeight: 600,
+                      fontSize: "16px",
+                      borderBottom: "1px solid #ccc",
+                      zIndex: 1200,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: 1,
+                    }}
+                  >
+                    To view the detailed dashboard of a waterbody, click on
+                    <img
+                      src="https://cdn-icons-png.flaticon.com/512/684/684908.png"
+                      alt="marker"
+                      style={{ width: 20, height: 20, margin: "0 6px" }}
+                    />
+                    its icon
+                  </Box>
+                )}
+
                 <div
                   ref={mapElement1}
                   style={{
