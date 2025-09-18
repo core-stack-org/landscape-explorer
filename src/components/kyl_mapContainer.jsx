@@ -309,26 +309,26 @@ const MapLegend = ({ showMWS, showVillages, currentLayer, mappedAssets, mappedDe
   ];
 
   const CropDegradationItems = [
-    { color: "#a9a9a9", label: "Farmland - Barren" },
-    { color: "#eaa4f0", label: "Farmland - Shrub" },
+    { color: "#a9a9a9", label: "Crops - Barren" },
+    { color: "#eaa4f0", label: "Crops - Shrubs and Scrubs" },
     { color: "#f7fcf5", label: "Double - Single" },
-    { color: "#ff4500", label: "Triple - Single" },
-    { color: "#ffc300", label: "Triple - Double" },
+    { color: "#ff4500", label: "Tripple/annual/perennial - Single" },
+    { color: "#ffc300", label: "Tripple/annual/perennial - Double" },
   ];
 
   const CropDeforestationItems = [
-    { color: "#73bb53", label: "Tree Cover - Tree Cover" },
-    { color: "#ff0000", label: "Tree Cover - Built Up" },
-    { color: "#eee05d", label: "Tree Cover -  Farm" },
-    { color: "#a9a9a9", label: "Tree Cover -  Barren" },
-    { color: "#eaa4f0", label: "Tree Cover -  Scrub land" },
+    { color: "#73bb53", label: "Trees - Trees" },
+    { color: "#ff0000", label: "Trees - Built Up" },
+    { color: "#eee05d", label: "Trees - Crops" },
+    { color: "#a9a9a9", label: "Trees - Barren" },
+    { color: "#eaa4f0", label: "Trees - Shrubs and Scrubs" },
   ];
 
   const CropAfforestationtems = [
-    { color: "#ff0000", label: "Built Up - Tree Cover" },
-    { color: "#eee05d", label: "Farm - Tree Cover" },
-    { color: "#a9a9a9", label: "Barren - Tree Cover" },
-    { color: "#eaa4f0", label: "Scrub land - Tree Cover" },
+    { color: "#ff0000", label: "Built Up - Trees" },
+    { color: "#eee05d", label: "Crops - Trees" },
+    { color: "#a9a9a9", label: "Barren - Trees" },
+    { color: "#eaa4f0", label: "Scrub land - Trees" },
   ];
 
   const AquiferItems = [
