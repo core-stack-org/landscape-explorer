@@ -63,42 +63,42 @@ const MapLegend = ({toggledLayers, lulcYear1, lulcYear2, lulcYear3}) => {
 
   const cropIntensityItems = [
     { color: "#f7fcf5", label: "Double - Single" },
-    { color: "#ff4500", label: "Triple - Single" },
-    { color: "#ff0000", label: "Triple - Double" },
+    { color: "#ff4500", label: "Tripple/annual/perennial - Single" },
+    { color: "#ff0000", label: "Tripple/annual/perennial - Double" },
     { color: "#00ff00", label: "Single - Double" },
-    { color: "#32cd32", label: "Single - Triple" },
-    { color: "#228b22", label: "Double - Triple" },
+    { color: "#32cd32", label: "Single - Tripple/annual/perennial" },
+    { color: "#228b22", label: "Double - Tripple/annual/perennial" },
     { color: "#712103", label: "As it is" },
   ]
 
   const deforestationItems = [
-    { color: "#73bb53", label: "Forest - Forest" },
-    { color: "#ff0000", label: "Forest - Built Up" },
-    { color: "#eee05d", label: "Forest - Farm" },
-    { color: "#a9a9a9", label: "Forest - Barren" },
-    { color: "#eaa4f0", label: "Forest - Scrub land" },
+    { color: "#73bb53", label: "Trees - Trees" },
+    { color: "#ff0000", label: "Trees - Built Up" },
+    { color: "#eee05d", label: "Trees - Crops" },
+    { color: "#a9a9a9", label: "Trees - Barren" },
+    { color: "#eaa4f0", label: "Trees - Shrubs and Scrubs" },
   ]
 
   const degradationItems = [
-    { color: "#eee05d", label: "Farm - Farm" },
-    { color: "#ff0000", label: "Farm - Built Up" },
-    { color: "#a9a9a9", label: "Farm - Barren" },
-    { color: "#eaa4f0", label: "Farm - Scrub Land" },
+    { color: "#eee05d", label: "Crops - Crops" },
+    { color: "#ff0000", label: "Crops - Built Up" },
+    { color: "#a9a9a9", label: "Crops - Barren" },
+    { color: "#eaa4f0", label: "Crops - Shrubs and Scrubs" },
   ]
 
   const urbanizationItems = [
     { color: "#ff0000", label: "Built Up - Built Up" },
     { color: "#1ca3ec", label: "Water - Built Up" },
-    { color: "#73bb53", label: "Tree/Farm - Built Up" },
-    { color: "#a9a9a9", label: "Barren/Shrub - Built Up" },
+    { color: "#73bb53", label: "Tree/Crops - Built Up" },
+    { color: "#a9a9a9", label: "Barren/Shrubs and Scrubs - Built Up" },
   ]
 
   const afforestationItems = [
-    { color: "#73bb53", label: "Forest - Forest" },
-    { color: "#ff0000", label: "Built Up - Forest" },
-    { color: "#eee05d", label: "Farm - Forest" },
-    { color: "#a9a9a9", label: "Barren - Forest" },
-    { color: "#eaa4f0", label: "Scrub Land - Forest" },
+    { color: "#73bb53", label: "Trees - Trees" },
+    { color: "#ff0000", label: "Built Up - Trees" },
+    { color: "#eee05d", label: "Crops - Trees" },
+    { color: "#a9a9a9", label: "Barren - Trees" },
+    { color: "#eaa4f0", label: "Shrubs and Scrubs - Trees" },
   ]
 
   const aquiferItems = [
@@ -119,7 +119,7 @@ const MapLegend = ({toggledLayers, lulcYear1, lulcYear2, lulcYear3}) => {
   ];
 
   const SOGEItems = [
-    { color: "#ffffff", label: " Safe " },
+    { color: "#ffffff", label: "Safe" },
     { color: "#e0f3f8", label: "Semi - Critical " },
     { color: "#4575b4", label: " Critical " },
     { color: "#313695", label: "Over - Exploited " },
