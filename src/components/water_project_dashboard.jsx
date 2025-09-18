@@ -1162,6 +1162,7 @@ const WaterProjectDashboard = () => {
   const initializeMap3 = async (organizationLabel) => {
     if (!organizationLabel || !projectName || !projectId) return;
 
+    // --- Initialize base map immediately ---
     const baseLayer = new TileLayer({
       source: new XYZ({
         url: "https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}",
@@ -1181,9 +1182,9 @@ const WaterProjectDashboard = () => {
       loadTilesWhileAnimating: true,
       loadTilesWhileInteracting: true,
     });
-
     mapRef3.current = map;
 
+    // Disable zoom interactions
     map.getInteractions().forEach((interaction) => {
       if (
         interaction instanceof MouseWheelZoom ||
@@ -1194,8 +1195,9 @@ const WaterProjectDashboard = () => {
       }
     });
 
-    // --- Fetch MWS boundary from WFS ---
+    // --- Fetch MWS boundary from WFS (server-side filtered) ---
     const typeName = `waterrej:WaterRejapp_mws_${projectName}_${projectId}`;
+    const uid = selectedFeature.properties.MWS_UID;
     const wfsUrl =
       "https://geoserver.core-stack.org:8443/geoserver/waterrej/ows?" +
       new URLSearchParams({
@@ -1204,49 +1206,66 @@ const WaterProjectDashboard = () => {
         request: "GetFeature",
         typeName,
         outputFormat: "application/json",
+        CQL_FILTER: `uid='${uid}'`, // only fetch required MWS
       });
 
     let matchedFeatures = [];
     try {
       const response = await fetch(wfsUrl);
       const json = await response.json();
-
-      // find matches for selected feature
-      matchedFeatures = json.features.filter(
-        (f) =>
-          String(f.properties.uid) ===
-          String(selectedFeature.properties.MWS_UID)
-      );
-
+      matchedFeatures = json.features;
       if (!matchedFeatures.length) {
         console.warn("No match found for selected MWS UID");
         return;
       }
-
-      // --- Add MWS boundary layer ---
-      const boundarySource = new VectorSource({
-        features: new GeoJSON().readFeatures(
-          { type: "FeatureCollection", features: matchedFeatures },
-          { dataProjection: "EPSG:4326", featureProjection: "EPSG:4326" }
-        ),
-      });
-
-      const boundaryLayer = new VectorLayer({
-        source: boundarySource,
-        style: new Style({
-          stroke: new Stroke({ color: "black", width: 3 }),
-          fill: null,
-        }),
-      });
-      boundaryLayer.setZIndex(3);
-      map.addLayer(boundaryLayer);
     } catch (err) {
       console.error("WFS boundary fetch error:", err);
       return;
     }
 
-    // --- Drainage Layer (cropped to matchedFeatures) ---
+    // --- Read features once ---
+    const featureObjs = new GeoJSON().readFeatures(
+      { type: "FeatureCollection", features: matchedFeatures },
+      { dataProjection: "EPSG:4326", featureProjection: view.getProjection() }
+    );
+
+    // --- Add MWS boundary layer ---
+    const boundarySource = new VectorSource({ features: featureObjs });
+    const boundaryLayer = new VectorLayer({
+      source: boundarySource,
+      style: new Style({
+        stroke: new Stroke({ color: "black", width: 3 }),
+        fill: null,
+      }),
+    });
+    boundaryLayer.setZIndex(3);
+    map.addLayer(boundaryLayer);
+
+    // --- Create MultiPolygon for cropping once ---
+    const multiCoords = [];
+    featureObjs.forEach((f) => {
+      const g = f.getGeometry();
+      if (!g) return;
+      if (g.getType() === "Polygon") multiCoords.push(g.getCoordinates());
+      else if (g.getType() === "MultiPolygon")
+        g.getCoordinates().forEach((poly) => multiCoords.push(poly));
+    });
+    const multiPoly = multiCoords.length ? new MultiPolygon(multiCoords) : null;
+
+    // --- Drainage & Terrain Layers in parallel ---
     const drainageLayerName = `waterrej:WATER_REJ_drainage_line_${organizationLabel}_${projectName}_${projectId}`;
+    const terrainLayerName = `WATER_REJ_terrain_${projectName}_${projectId}`;
+
+    const [terrainLayer] = await Promise.all([
+      getImageLayer(
+        "waterrej",
+        terrainLayerName,
+        true,
+        "Terrain_Style_11_Classes"
+      ),
+    ]);
+
+    // Drainage WMS
     const drainageLineLayer = new TileLayer({
       source: new TileWMS({
         url: "https://geoserver.core-stack.org:8443/geoserver/waterrej/wms",
@@ -1264,87 +1283,27 @@ const WaterProjectDashboard = () => {
       }),
       opacity: 1,
     });
+
     drainageLineLayer.setZIndex(1);
     map.addLayer(drainageLineLayer);
 
-    // --- Crop Drainage Layer ---
-    if (matchedFeatures.length) {
-      const targetProj = map.getView().getProjection().getCode();
-      const featureObjs = new GeoJSON().readFeatures(
-        { type: "FeatureCollection", features: matchedFeatures },
-        { dataProjection: "EPSG:4326", featureProjection: targetProj }
-      );
-
-      const multiCoords = [];
-      featureObjs.forEach((f) => {
-        const g = f.getGeometry();
-        if (!g) return;
-        if (g.getType() === "Polygon") multiCoords.push(g.getCoordinates());
-        else if (g.getType() === "MultiPolygon")
-          g.getCoordinates().forEach((poly) => multiCoords.push(poly));
-      });
-
-      if (multiCoords.length) {
-        const multiPoly = new MultiPolygon(multiCoords);
-        const crop = new Crop({
-          feature: new Feature({ geometry: multiPoly }),
-          wrapX: false,
-          inner: false,
-        });
-
-        if (typeof drainageLineLayer.addFilter === "function") {
-          drainageLineLayer.addFilter(crop);
-        }
-      }
-    }
-
-    // --- Terrain Layer (cropped to matchedFeatures) ---
-    const terrainLayerName = `WATER_REJ_terrain_${projectName}_${projectId}`;
-    const uniqueTerrainId = "terrainLayer1";
-
-    // Remove old terrain if exists
-    map.getLayers().forEach((layer) => {
-      if (layer.get("id") === uniqueTerrainId) map.removeLayer(layer);
-    });
-
-    const newTerrainLayer = await getImageLayer(
-      "waterrej",
-      terrainLayerName,
-      true,
-      "Terrain_Style_11_Classes"
-    );
-    newTerrainLayer.set("id", uniqueTerrainId);
-    newTerrainLayer.setOpacity(0.7);
-    newTerrainLayer.setZIndex(0);
-
-    // Crop terrain layer
-    const targetProj = map.getView().getProjection().getCode();
-    const featureObjs = new GeoJSON().readFeatures(
-      { type: "FeatureCollection", features: matchedFeatures },
-      { dataProjection: "EPSG:4326", featureProjection: targetProj }
-    );
-
-    const multiCoords = [];
-    featureObjs.forEach((f) => {
-      const g = f.getGeometry();
-      if (!g) return;
-      if (g.getType() === "Polygon") multiCoords.push(g.getCoordinates());
-      else if (g.getType() === "MultiPolygon")
-        g.getCoordinates().forEach((poly) => multiCoords.push(poly));
-    });
-
-    if (multiCoords.length) {
-      const multiPoly = new MultiPolygon(multiCoords);
-      const crop = new Crop({
+    // Crop drainage and terrain layers if MultiPolygon exists
+    if (multiPoly) {
+      const cropFilter = new Crop({
         feature: new Feature({ geometry: multiPoly }),
         wrapX: false,
         inner: false,
       });
-      if (typeof newTerrainLayer.addFilter === "function")
-        newTerrainLayer.addFilter(crop);
+      if (typeof drainageLineLayer.addFilter === "function")
+        drainageLineLayer.addFilter(cropFilter);
+      if (typeof terrainLayer.addFilter === "function")
+        terrainLayer.addFilter(cropFilter);
     }
 
-    map.addLayer(newTerrainLayer);
+    // Terrain layer
+    terrainLayer.setOpacity(0.7);
+    terrainLayer.setZIndex(0);
+    map.addLayer(terrainLayer);
 
     // --- Waterbody outlines ---
     if (geoData?.features?.length) {
@@ -1365,7 +1324,7 @@ const WaterProjectDashboard = () => {
       waterLayer.setZIndex(2);
       map.addLayer(waterLayer);
 
-      // Zoom
+      // Zoom to selected waterbody or all waterbodies
       if (selectedWaterbody && selectedFeature) {
         const feature = new GeoJSON().readFeature(selectedFeature, {
           dataProjection: "EPSG:4326",
