@@ -1029,7 +1029,7 @@ const WaterProjectDashboard = () => {
             image: new Icon({
               anchor: [0.5, 1],
               src: "https://cdn-icons-png.flaticon.com/512/684/684908.png", // marker icon
-              scale: 0.03,
+              scale: 0.05,
             }),
           })
         );
@@ -1051,6 +1051,11 @@ const WaterProjectDashboard = () => {
     map.addLayer(waterBodyLayerSecond);
     setWaterBodyLayer(waterBodyLayerSecond);
 
+    map.on("pointermove", function (evt) {
+      const hit = map.hasFeatureAtPixel(evt.pixel);
+      map.getTargetElement().style.cursor = hit ? "pointer" : "";
+    });
+
     map.on("singleclick", (evt) => {
       let found = false;
       map.forEachFeatureAtPixel(evt.pixel, (feature) => {
@@ -1060,6 +1065,7 @@ const WaterProjectDashboard = () => {
             name: props.waterbody_name,
             Village: props.Village,
             Taluka: props.Taluka,
+            pixel: evt.pixel, // 👈 save pixel position
           });
           found = true;
         }
@@ -1690,21 +1696,6 @@ const WaterProjectDashboard = () => {
               </svg>
             </ToggleButton>
           </ToggleButtonGroup>
-
-          {/* Download Icon */}
-          <Box
-            sx={{
-              p: 1.2,
-              cursor: "pointer",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              height: "88px",
-              width: "48px",
-            }}
-          >
-            <Download size={94} strokeWidth={1.2} color="black" />
-          </Box>
         </Box>
       </Box>
 
@@ -1751,7 +1742,7 @@ const WaterProjectDashboard = () => {
               <Table>
                 <TableHead sx={{ backgroundColor: "#f5f5f5" }}>
                   <TableRow>
-                    <TableCell sx={{ px: 1, py: 0.5 }}>
+                    <TableCell>
                       <div style={{ display: "flex", alignItems: "center" }}>
                         State
                         {/* Filter button — keep existing handler but stop propagation */}
@@ -1786,7 +1777,7 @@ const WaterProjectDashboard = () => {
                       </div>
                     </TableCell>
 
-                    <TableCell sx={{ px: 1, py: 0.5 }}>
+                    <TableCell>
                       <div style={{ display: "flex", alignItems: "center" }}>
                         District
                         {/* Filter button */}
@@ -1821,7 +1812,7 @@ const WaterProjectDashboard = () => {
                       </div>
                     </TableCell>
 
-                    <TableCell sx={{ px: 1, py: 0.5 }}>
+                    <TableCell>
                       <div style={{ display: "flex", alignItems: "center" }}>
                         Taluka
                         {/* Filter button */}
@@ -1856,7 +1847,7 @@ const WaterProjectDashboard = () => {
                       </div>
                     </TableCell>
 
-                    <TableCell sx={{ px: 1, py: 0.5 }}>
+                    <TableCell>
                       <div style={{ display: "flex", alignItems: "center" }}>
                         GP/Village
                         {/* Filter button */}
@@ -1891,7 +1882,7 @@ const WaterProjectDashboard = () => {
                       </div>
                     </TableCell>
 
-                    <TableCell sx={{ px: 1, py: 0.5 }}>
+                    <TableCell>
                       <div style={{ display: "flex", flexDirection: "column" }}>
                         <div style={{ display: "flex", alignItems: "center" }}>
                           <span>Waterbody</span>
@@ -1935,8 +1926,6 @@ const WaterProjectDashboard = () => {
                       sx={{
                         cursor: "pointer",
                         userSelect: "none",
-                        px: 1,
-                        py: 0.5,
                       }}
                     >
                       <div style={{ display: "flex", alignItems: "center" }}>
@@ -1979,8 +1968,6 @@ const WaterProjectDashboard = () => {
                       sx={{
                         cursor: "pointer",
                         userSelect: "none",
-                        px: 1,
-                        py: 0.5,
                       }}
                     >
                       <div style={{ display: "flex", alignItems: "center" }}>
@@ -2018,8 +2005,6 @@ const WaterProjectDashboard = () => {
                       sx={{
                         cursor: "pointer",
                         userSelect: "none",
-                        px: 1,
-                        py: 0.5,
                       }}
                     >
                       <div style={{ display: "flex", alignItems: "center" }}>
@@ -2059,8 +2044,6 @@ const WaterProjectDashboard = () => {
                       sx={{
                         cursor: "pointer",
                         userSelect: "none",
-                        px: 1,
-                        py: 0.5,
                       }}
                     >
                       <div style={{ display: "flex", alignItems: "center" }}>
@@ -2106,8 +2089,6 @@ const WaterProjectDashboard = () => {
                       sx={{
                         cursor: "pointer",
                         userSelect: "none",
-                        px: 1,
-                        py: 0.5,
                       }}
                     >
                       <div style={{ display: "flex", alignItems: "center" }}>
@@ -2149,7 +2130,7 @@ const WaterProjectDashboard = () => {
                     </TableCell>
 
                     {/*Double cropped area */}
-                    <TableCell
+                    {/* <TableCell
                       onClick={() => handleSort("avgWaterAvailabilityZaid")}
                       sx={{
                         cursor: "pointer",
@@ -2174,7 +2155,7 @@ const WaterProjectDashboard = () => {
                             ? "🔼"
                             : "🔽"}
                         </span>
-                        {/* Info button */}
+                        {/* Info button 
                         <Tooltip title="Click the info icon for details">
                           <IconButton
                             size="small"
@@ -2194,10 +2175,10 @@ const WaterProjectDashboard = () => {
                           </IconButton>
                         </Tooltip>
                       </div>
-                    </TableCell>
+                    </TableCell> */}
 
                     {/*Tripple cropped area*/}
-                    <TableCell
+                    {/* <TableCell
                       onClick={() => handleSort("avgWaterAvailabilityZaid")}
                       sx={{
                         cursor: "pointer",
@@ -2222,7 +2203,7 @@ const WaterProjectDashboard = () => {
                             ? "🔼"
                             : "🔽"}
                         </span>
-                        {/* Info button */}
+                        {/* Info button 
                         <Tooltip title="Click the info icon for details">
                           <IconButton
                             size="small"
@@ -2242,7 +2223,7 @@ const WaterProjectDashboard = () => {
                           </IconButton>
                         </Tooltip>
                       </div>
-                    </TableCell>
+                    </TableCell> */}
                   </TableRow>
                 </TableHead>
 
@@ -2254,24 +2235,14 @@ const WaterProjectDashboard = () => {
                       sx={{ cursor: "pointer" }}
                       onClick={() => handleWaterbodyClick(row)}
                     >
-                      <TableCell sx={{ px: 1, py: 0.5 }}>{row.state}</TableCell>
-                      <TableCell sx={{ px: 1, py: 0.5 }}>
-                        {row.district}
-                      </TableCell>
-                      <TableCell sx={{ px: 1, py: 0.5 }}>{row.block}</TableCell>
-                      <TableCell sx={{ px: 1, py: 0.5 }}>
-                        {row.village}
-                      </TableCell>{" "}
-                      <TableCell sx={{ px: 1, py: 0.5 }}>
-                        {row.waterbody}
-                      </TableCell>
-                      <TableCell sx={{ px: 1, py: 0.5 }}>
-                        {row.siltRemoved}
-                      </TableCell>
-                      <TableCell sx={{ px: 1, py: 0.5 }}>2022-23</TableCell>
-                      <TableCell sx={{ px: 1, py: 0.5 }}>
-                        {row.areaOred?.toFixed(2)}
-                      </TableCell>
+                      <TableCell>{row.state}</TableCell>
+                      <TableCell>{row.district}</TableCell>
+                      <TableCell>{row.block}</TableCell>
+                      <TableCell>{row.village}</TableCell>{" "}
+                      <TableCell>{row.waterbody}</TableCell>
+                      <TableCell>{row.siltRemoved}</TableCell>
+                      <TableCell>2022-23</TableCell>
+                      <TableCell>{row.areaOred?.toFixed(2)}</TableCell>
                       {/* <TableCell>
                         {row.avgWaterAvailabilityKharif ?? "NA"}{" "}
                         {row.ImpactKharif !== undefined && (
@@ -2280,7 +2251,7 @@ const WaterProjectDashboard = () => {
                           </span>
                         )}
                       </TableCell> */}
-                      <TableCell sx={{ px: 1, py: 0.5 }}>
+                      <TableCell sx={{ py: 0.5 }}>
                         {row.avgWaterAvailabilityRabi ?? "NA"}{" "}
                         {row.ImpactRabi !== undefined && (
                           <span style={{ color: row.ImpactRabiColor }}>
@@ -2288,7 +2259,7 @@ const WaterProjectDashboard = () => {
                           </span>
                         )}
                       </TableCell>
-                      <TableCell sx={{ px: 1, py: 0.5 }}>
+                      <TableCell sx={{ py: 0.5 }}>
                         {row.avgWaterAvailabilityZaid ?? "NA"}{" "}
                         {row.ImpactZaid !== undefined && (
                           <span style={{ color: row.ImpactZaidColor }}>
@@ -2296,7 +2267,7 @@ const WaterProjectDashboard = () => {
                           </span>
                         )}
                       </TableCell>
-                      <TableCell sx={{ px: 1, py: 0.5 }}>
+                      {/* <TableCell sx={{ px: 1, py: 0.5 }}>
                         {row.avgDoubleCropped ?? "NA"}{" "}
                         {row.ImpactDouble !== undefined && (
                           <span style={{ color: row.ImpactDoubleColor }}>
@@ -2311,7 +2282,7 @@ const WaterProjectDashboard = () => {
                             ({row.ImpactTriple})
                           </span>
                         )}
-                      </TableCell>
+                      </TableCell> */}
                     </TableRow>
                   ))}
                 </TableBody>
@@ -2701,26 +2672,34 @@ const WaterProjectDashboard = () => {
                 <Box
                   sx={{
                     position: "absolute",
-                    right: 100,
-                    top: 500,
-                    width: 500,
-                    padding: 3,
-                    background: "#f9fafb",
-                    boxShadow: "0px 4px 12px rgba(0, 0, 0, 0.05)",
+                    top: mapClickedWaterbody.pixel[1] - 0, // little above marker
+                    left: mapClickedWaterbody.pixel[0] + 15, // slight offset to right
+                    transform: "translate(-50%, -100%)",
+                    width: 250,
+                    padding: 2,
+                    background: "#ffffff",
+                    boxShadow: "0px 4px 16px rgba(0, 0, 0, 0.15)",
                     borderRadius: 2,
                     border: "1px solid #e0e0e0",
                     display: "flex",
                     flexDirection: "column",
-                    gap: 1.5,
+                    gap: 1,
                     cursor: "pointer",
+                    transition: "all 0.2s ease-in-out",
+                    "&:hover": {
+                      boxShadow: "0px 6px 20px rgba(0,0,0,0.25)",
+                      transform: "translate(-50%, -102%)",
+                      borderColor: "#1976d2",
+                    },
+                    zIndex: 9999,
                   }}
                   onClick={handleMapBoxClick}
                 >
                   <Typography
-                    variant="h6"
+                    variant="subtitle1"
                     fontWeight={700}
                     sx={{
-                      color: "#333",
+                      color: "#1976d2",
                       borderBottom: "1px solid #ddd",
                       pb: 1,
                     }}
@@ -2761,8 +2740,21 @@ const WaterProjectDashboard = () => {
                       {mapClickedWaterbody.Taluka ?? "NA"}
                     </Typography>
                   </Box>
+
+                  <Typography
+                    variant="body2"
+                    sx={{
+                      mt: 1,
+                      color: "#1976d2",
+                      fontWeight: 600,
+                      textAlign: "right",
+                    }}
+                  >
+                    View details →
+                  </Typography>
                 </Box>
               )}
+
               {/* Charts Section */}
               {selectedWaterbody && (
                 <Box
