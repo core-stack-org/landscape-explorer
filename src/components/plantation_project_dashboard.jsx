@@ -270,12 +270,24 @@ const PlantationProjectDashboard = () => {
         }),
       });
 
+      const extent = vectorSource.getExtent();
+      console.log("📏 Calculated extent:", extent);
+
+      if (extent && extent.every((v) => isFinite(v))) {
+        console.log("🎯 Fitting map to extent:", extent);
+        map.getView().fit(extent, {
+          padding: [50, 50, 50, 50],
+          maxZoom: 18,
+          duration: 1000,
+        });
+      } else {
+        console.warn("⚠️ Invalid extent, skipping fit:", extent);
+      }
+
       plantationLayer.setZIndex(100);
       map.addLayer(plantationLayer);
 
       plantationLayerRef.current = plantationLayer;
-
-      console.log("Plantation layer added successfully", selectedFeature);
     } catch (error) {
       console.error("Error adding plantation layer:", error);
     }
@@ -297,8 +309,6 @@ const PlantationProjectDashboard = () => {
     ) {
       setTimeout(() => {
         try {
-          console.log("Attempting to zoom to feature:", selectedFeature);
-
           const format = new GeoJSON({
             dataProjection: "EPSG:4326",
             featureProjection: "EPSG:3857",
@@ -309,10 +319,8 @@ const PlantationProjectDashboard = () => {
 
           if (geometry) {
             const extent = geometry.getExtent();
-            console.log("Feature extent:", extent);
 
             if (extent && extent.every(Number.isFinite)) {
-              console.log("Zooming to feature extent");
               mapRef1.current.getView().fit(extent, {
                 padding: [50, 50, 50, 50],
                 duration: 1000,
@@ -339,8 +347,6 @@ const PlantationProjectDashboard = () => {
     const source = plantationLayerRef.current.getSource();
     const features = source.getFeatures();
 
-    console.log("Highlighting feature, total features:", features.length);
-
     features.forEach((olFeature, index) => {
       try {
         const olFeatureProps = olFeature.getProperties();
@@ -354,7 +360,6 @@ const PlantationProjectDashboard = () => {
         }
 
         if (isMatch) {
-          console.log("Found matching feature, highlighting");
           olFeature.setStyle(
             new Style({
               stroke: new Stroke({ color: "red", width: 5 }),
@@ -379,14 +384,12 @@ const PlantationProjectDashboard = () => {
 
     if (view === "map" && mapElement1.current) {
       if (!mapRef1.current) {
-        console.log("Initializing new map");
         initializeMap();
       }
     }
 
     return () => {
       if (view !== "map" && mapRef1.current) {
-        console.log("Cleaning up map");
         mapRef1.current.setTarget(null);
         mapRef1.current = null;
         plantationLayerRef.current = null;
@@ -403,15 +406,11 @@ const PlantationProjectDashboard = () => {
     });
 
     if (mapRef1.current && geoData && geoData.features && view === "map") {
-      console.log("Adding plantation layer from geoData effect");
       addPlantationLayer(mapRef1.current);
     }
   }, [geoData, view]);
 
   const handlePlantationClick = (row) => {
-    console.log("=== PLANTATION CLICK DEBUG ===");
-    console.log("Clicked row:", row);
-
     if (!geoData?.features) return;
 
     const feature = geoData.features.find(
@@ -421,9 +420,6 @@ const PlantationProjectDashboard = () => {
       console.error("Feature not found for row:", row);
       return;
     }
-
-    console.log("Found feature:", feature);
-    console.log("Feature geometry type:", feature.geometry?.type);
 
     // Convert to OL Feature
     const olFeature = new GeoJSON({
@@ -534,7 +530,6 @@ const PlantationProjectDashboard = () => {
         farmerName: descFields["name"] || "NA",
         farmerId: descFields["farmer id"] || "NA",
         siteId: descFields["site id"] || "NA",
-        waterbody: props.waterbody_name || "NA",
         patchScore: props.patch_score ?? "NA",
         patchSuitability: props.patch_suitability || "NA",
         averageTreeCover: avgTreeCover,
@@ -618,7 +613,7 @@ const PlantationProjectDashboard = () => {
       return filters[key].includes(String(row[key]));
     });
 
-    const matchesWaterbodySearch = row.waterbody
+    const matchesWaterbodySearch = row.farmerName
       ?.toString()
       .toLowerCase()
       .includes(waterbodySearch.toLowerCase());
