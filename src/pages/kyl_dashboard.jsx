@@ -232,7 +232,7 @@ const KYLDashboardPage = () => {
  
   const resetMWSStyle = (tempMWS) => {
     mwsLayerRef.current.setStyle((feature) => {
-          if (tempMWS.length > 0 && tempMWS.includes(feature.values_.uid)) {
+          if (selectedMWS.length > 0 && selectedMWS.includes(feature.values_.uid)) {
             // Filtered areas - highlight in red
             return new Style({
               stroke: new Stroke({
