@@ -607,18 +607,20 @@ const WaterProjectDashboard = () => {
       const projectId = project.value;
 
       const layerName = `clipped_lulc_filtered_mws_${projectName}_${projectId}_${fullYear}`;
-      const uniqueLayerId = "lulcWaterrejLayer1";
+      const uniqueLayerId = "lulcWaterrejLayer1"; //  fixed unique ID
 
+      //  Remove old LULC layer before adding a new one
       if (mapRef1.current) {
-        const layersBefore = mapRef1.current.getLayers().getArray();
-
-        layersBefore.forEach((layer) => {
-          if (layer.get("id") === uniqueLayerId) {
+        mapRef1.current
+          .getLayers()
+          .getArray()
+          .filter((layer) => layer.get("id") === uniqueLayerId)
+          .forEach((layer) => {
             mapRef1.current.removeLayer(layer);
-          }
-        });
+          });
       }
 
+      // Create new LULC layer
       const newLayer = await getImageLayer(
         "waterrej",
         layerName,
@@ -629,7 +631,7 @@ const WaterProjectDashboard = () => {
       newLayer.setZIndex(0);
       newLayer.set("id", uniqueLayerId);
 
-      // ADD CLIPPING HERE - Get waterbody features and clip the LULC layer
+      //  Add clipping with selected waterbody
       if (waterBodyLayer) {
         const waterBodySource = waterBodyLayer.getSource();
         const waterBodyFeatures = waterBodySource.getFeatures();
@@ -672,10 +674,12 @@ const WaterProjectDashboard = () => {
         }
       }
 
+      // Add new LULC layer to map
       if (mapRef1.current) {
         mapRef1.current.addLayer(newLayer);
       }
 
+      // Update state with new layer reference
       setCurrentLayer((prev) => {
         const others = prev.filter((l) => l.name !== "lulcWaterrej");
         const updated = [
@@ -688,6 +692,7 @@ const WaterProjectDashboard = () => {
         return updated;
       });
 
+      // Zoom to selected waterbody
       if (selectedWaterbody?.geometry && mapRef1.current && waterBodyLayer) {
         const source = waterBodyLayer.getSource();
         const features = source.getFeatures();
