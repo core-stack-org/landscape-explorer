@@ -1166,6 +1166,7 @@ const WaterProjectDashboard = () => {
 
   const initializeMap3 = async (organizationLabel) => {
     if (!organizationLabel || !projectName || !projectId) return;
+    console.log(selectedFeature.properties.MWS_UID, "map 3 com please");
 
     // --- Initialize base map immediately ---
     const baseLayer = new TileLayer({
@@ -1221,11 +1222,9 @@ const WaterProjectDashboard = () => {
       matchedFeatures = json.features;
       if (!matchedFeatures.length) {
         console.warn("No match found for selected MWS UID");
-        return;
       }
     } catch (err) {
       console.error("WFS boundary fetch error:", err);
-      return;
     }
 
     // --- Read features once ---
