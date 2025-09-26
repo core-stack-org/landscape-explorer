@@ -1,65 +1,89 @@
-import React, { useEffect, useState } from "react";
-import {
-  Box,
-  Avatar,
-  Toolbar,
-  AppBar,
-  Container,
-  Select,
-  MenuItem,
-  Button,
-} from "@mui/material";
+import React, { useEffect } from "react";
+import { Box, Avatar, Toolbar, AppBar, Container, Button } from "@mui/material";
 import { useNavigate, useLocation } from "react-router-dom";
 import SelectReact from "react-select";
-import TuneIcon from "@mui/icons-material/Tune";
 import ArrowBackIosNewIcon from "@mui/icons-material/ArrowBackIosNew";
+import { useRecoilState } from "recoil";
+import {
+  organizationAtom,
+  projectAtom,
+  dashboardLockedAtom,
+  organizationOptionsAtom,
+  projectOptionsAtom,
+} from "../store/locationStore";
 
-const HeaderSelect = ({
-  showExtras = false,
-  organization: initialOrg,
-  project: initialProject,
-  setView,
-}) => {
-  const location = useLocation();
-  const [organization, setOrganization] = useState(initialOrg || null);
-  const [organizationOptions, setOrganizationOptions] = useState([]);
-  const [project, setProject] = useState(initialProject || null);
-  const [filter, setFilter] = useState("");
-  const [projects, setProjects] = useState([]);
-  const [projectCount, setProjectCount] = useState(0);
-  const [projectOptions, setProjectOptions] = useState([]);
-  const [dashboardLocked, setDashboardLocked] = useState(false);
-
+const HeaderSelect = ({ setView }) => {
   const navigate = useNavigate();
+  const location = useLocation();
+
+  const [organization, setOrganization] = useRecoilState(organizationAtom);
+  const [project, setProject] = useRecoilState(projectAtom);
+  const [dashboardLocked, setDashboardLocked] =
+    useRecoilState(dashboardLockedAtom);
+  const [organizationOptions, setOrganizationOptions] = useRecoilState(
+    organizationOptionsAtom
+  );
+  const [projectOptions, setProjectOptions] =
+    useRecoilState(projectOptionsAtom);
 
   const isOnDashboard = location.pathname.includes("/dashboard");
+  useEffect(() => {
+    if (isOnDashboard && project) setDashboardLocked(true);
+    else setDashboardLocked(false);
+
+    // Load saved org from session
+    const savedOrg = sessionStorage.getItem("selectedOrganization");
+    if (savedOrg) {
+      const parsed = JSON.parse(savedOrg);
+      const matched = organizationOptions.find((o) => o.value === parsed.value);
+      if (matched) setOrganization(matched);
+    }
+
+    // Load saved project from session
+    const savedProj = sessionStorage.getItem("selectedProject");
+    if (savedProj) {
+      const parsed = JSON.parse(savedProj);
+      setProject(parsed); // validation happens later in fetchProjects
+    }
+  }, [location.pathname, organizationOptions]);
+
+  const fetchOrganizations = async () => {
+    try {
+      const response = await fetch(
+        `${process.env.REACT_APP_BASEURL}api/v1/auth/register/available_organizations/?app_type=plantation`
+      );
+      const data = await response.json();
+      const options = data.map((org) => ({
+        value: org.id,
+        label: org.name,
+      }));
+      setOrganizationOptions(options);
+
+      // Default selection if none
+    } catch (error) {
+      console.error("Error fetching organizations:", error);
+    }
+  };
 
   useEffect(() => {
-    if (location.pathname.includes("/dashboard") && project) {
-      setDashboardLocked(true);
-    } else {
-      setDashboardLocked(false);
-    }
-  }, [location.pathname, project]);
+    fetchOrganizations();
+  }, []);
 
+  // ----------------- Fetch Projects -----------------
   const loginAndGetToken = async () => {
     try {
       const response = await fetch(
         `${process.env.REACT_APP_BASEURL}api/v1/auth/login/`,
         {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             username: process.env.REACT_APP_WATERBODYREJ_USERNAME,
             password: process.env.REACT_APP_WATERBODYREJ_PASSWORD,
           }),
         }
       );
-
       if (!response.ok) throw new Error("Login failed");
-
       const data = await response.json();
       sessionStorage.setItem("accessToken", data.access);
       return data.access;
@@ -69,179 +93,69 @@ const HeaderSelect = ({
     }
   };
 
-  useEffect(() => {
-    const fetchOrganizations = async () => {
-      const start = performance.now();
-      const options = await loadOrganization();
-      const end = performance.now();
-      setOrganizationOptions(options);
+  const fetchProjects = async (orgId) => {
+    let token = sessionStorage.getItem("accessToken");
+    if (!token) token = await loginAndGetToken();
+    if (!token) return;
 
-      if (!organization && isOnDashboard) {
-        const storedOrg = sessionStorage.getItem("selectedOrganization");
-        if (storedOrg) {
-          setOrganization(JSON.parse(storedOrg));
-        } else if (options.length > 0) {
-          setOrganization(options[0]);
-        }
-      }
-
-      const storedProject = sessionStorage.getItem("selectedProject");
-      if (storedProject) {
-        setProject(JSON.parse(storedProject)); // ✅ just set, match will happen after `fetchProjects`
-      }
-    };
-
-    fetchOrganizations();
-  }, []);
-  useEffect(() => {
-    const fetchProjects = async () => {
-      let token = sessionStorage.getItem("accessToken");
-      if (!token) {
-        token = await loginAndGetToken();
-        if (!token) return;
-      }
-
-      try {
-        const response = await fetch(
-          `${process.env.REACT_APP_BASEURL}/api/v1/projects/`,
-          {
-            method: "GET",
-            headers: {
-              "Content-Type": "application/json",
-              "ngrok-skip-browser-warning": "420",
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
-
-        if (!response.ok) {
-          throw new Error(`HTTP error! Status: ${response.status}`);
-        }
-
-        const data = await response.json();
-
-        let filtered = [];
-        if (organization) {
-          filtered = data.filter(
-            (project) => project.organization === organization.value
-          );
-        }
-        const options = filtered.map((project) => ({
-          label: project.name,
-          value: String(project.id),
-        }));
-
-        setProjectOptions(options);
-        setProjectCount(filtered.length);
-        setProjects(filtered);
-
-        // Handle session-matched project
-        const storedProject = sessionStorage.getItem("selectedProject");
-        if (storedProject) {
-          const parsed = JSON.parse(storedProject);
-          const matched = options.find((p) => p.value === parsed.value);
-          if (matched) {
-            setProject(matched);
-          } else {
-            setProject(null);
-            sessionStorage.removeItem("selectedProject");
-          }
-        }
-      } catch (error) {
-        console.error("Error fetching projects:", error);
-      }
-    };
-
-    fetchProjects();
-  }, [organization]);
-
-  const loadOrganization = async () => {
     try {
       const response = await fetch(
-        `${process.env.REACT_APP_BASEURL}api/v1/auth/register/available_organizations/?app_type=plantation`,
+        `${process.env.REACT_APP_BASEURL}/api/v1/projects/`,
         {
-          method: "GET",
           headers: {
+            Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
             "ngrok-skip-browser-warning": "420",
           },
         }
       );
       const data = await response.json();
-
-      return data.map((org) => ({
-        value: org.id,
-        label: org.name,
+      const filtered = data.filter((p) => p.organization === orgId);
+      const options = filtered.map((p) => ({
+        label: p.name,
+        value: String(p.id),
       }));
-    } catch (error) {
-      console.error("Error fetching organizations:", error);
-      return [];
+      setProjectOptions(options);
+
+      // Match saved project
+      const savedProj = sessionStorage.getItem("selectedProject");
+      if (savedProj) {
+        const parsed = JSON.parse(savedProj);
+        const matched = options.find((p) => p.value === parsed.value);
+        if (matched) setProject(matched);
+        else setProject(null);
+      }
+    } catch (err) {
+      console.error("Error fetching projects:", err);
     }
   };
 
-  const customStyles = {
-    control: (base) => ({
-      ...base,
-      height: 48,
-      minHeight: 48,
-      width: 264,
-      backgroundColor: "#fff",
-      borderRadius: 4,
-      paddingLeft: 4,
-      zIndex: 2,
-    }),
-    menu: (base) => ({
-      ...base,
-      zIndex: 9999,
-    }),
-    menuPortal: (base) => ({
-      ...base,
-      zIndex: 1300, // higher than MUI AppBar and Paper default
-    }),
-  };
+  useEffect(() => {
+    if (organization) fetchProjects(organization.value);
+  }, [organization]);
 
-  const handleOrganizationChange = (selectedOption) => {
-    setOrganization(selectedOption);
+  // ----------------- Handlers -----------------
+  const handleOrganizationChange = (option) => {
+    setOrganization(option);
     setProject(null);
     setProjectOptions([]);
-
-    sessionStorage.setItem(
-      "selectedOrganization",
-      JSON.stringify(selectedOption)
-    );
+    sessionStorage.setItem("selectedOrganization", JSON.stringify(option));
     sessionStorage.removeItem("selectedProject");
-
-    if (setView) setView("table");
     setDashboardLocked(false);
-  };
-
-  const handleProjectChange = (selectedOption) => {
-    setProject(selectedOption);
-    sessionStorage.setItem("selectedProject", JSON.stringify(selectedOption));
-
     if (setView) setView("table");
-    setDashboardLocked(true);
-
-    if (selectedOption?.value) {
-      navigate(`/dashboard/${selectedOption.value}`);
-    }
   };
 
+  const handleProjectChange = (option) => {
+    setProject(option);
+    sessionStorage.setItem("selectedProject", JSON.stringify(option));
+    setDashboardLocked(true);
+    if (setView) setView("table");
+    if (option?.value) navigate(`/dashboard/${option.value}`);
+  };
+
+  // ----------------- Popstate / Back button -----------------
   useEffect(() => {
-    const savedOrg = sessionStorage.getItem("selectedOrganization");
-    const savedProject = sessionStorage.getItem("selectedProject");
-
-    if (savedOrg) {
-      setOrganization(JSON.parse(savedOrg));
-    }
-
-    if (savedProject) {
-      setProject(JSON.parse(savedProject));
-    }
-  }, []);
-
-  useEffect(() => {
-    const handlePopState = (event) => {
+    const handlePopState = () => {
       if (dashboardLocked) {
         setDashboardLocked(false);
         if (setView) setView("table");
@@ -249,7 +163,6 @@ const HeaderSelect = ({
       }
     };
     window.addEventListener("popstate", handlePopState);
-
     window.history.pushState(null, "", window.location.pathname);
 
     return () => {
@@ -257,11 +170,17 @@ const HeaderSelect = ({
     };
   }, [dashboardLocked, setView]);
 
+  const customStyles = {
+    control: (base) => ({ ...base, height: 48, minHeight: 48, width: 264 }),
+    menu: (base) => ({ ...base, zIndex: 9999 }),
+    menuPortal: (base) => ({ ...base, zIndex: 1300 }),
+  };
+
+  // ----------------- Render -----------------
   return (
     <Box
       sx={{ height: "100vh", overflow: "hidden", backgroundColor: "#EAEAEA" }}
     >
-      {/* AppBar */}
       <AppBar
         position="static"
         sx={{
@@ -271,26 +190,13 @@ const HeaderSelect = ({
           boxShadow: "none",
           display: "flex",
           justifyContent: "center",
-          zIndex: 1, // Ensure the AppBar is above the background image
+          zIndex: 1,
         }}
       >
-        <Container
-          maxWidth={false}
-          sx={{ maxWidth: "2440px", width: "100%", px: 4 }}
-        >
-          <Toolbar
-            sx={{
-              display: "flex",
-              alignItems: "center",
-              height: "100%",
-              width: "100%",
-              px: 0,
-            }}
-          >
-            {/* Left: Avatar */}
+        <Container maxWidth={false} sx={{ px: 4 }}>
+          <Toolbar sx={{ display: "flex", alignItems: "center", px: 0 }}>
             <Avatar sx={{ bgcolor: "#d1d1d1", width: 40, height: 40 }} />
 
-            {/* Center: Org + Project Selects */}
             <Box sx={{ display: "flex", gap: 2, ml: 4 }}>
               <SelectReact
                 value={organization}
@@ -303,7 +209,6 @@ const HeaderSelect = ({
                 menuPortalTarget={document.body}
                 menuPosition="fixed"
               />
-
               <SelectReact
                 value={project}
                 onChange={handleProjectChange}
@@ -317,15 +222,13 @@ const HeaderSelect = ({
                 noOptionsMessage={() => "No projects available"}
               />
             </Box>
+
             {dashboardLocked && (
               <Box sx={{ ml: "auto" }}>
                 <Button
                   variant="outlined"
                   startIcon={<ArrowBackIosNewIcon />}
                   onClick={() => {
-                    sessionStorage.removeItem("selectedOrganization");
-                    sessionStorage.removeItem("selectedProject");
-
                     setDashboardLocked(false);
                     if (setView) setView("table");
                   }}
@@ -345,7 +248,7 @@ const HeaderSelect = ({
                     },
                   }}
                 >
-                  Back
+                  Change Project
                 </Button>
               </Box>
             )}
@@ -353,7 +256,6 @@ const HeaderSelect = ({
         </Container>
       </AppBar>
 
-      {/* Background Image */}
       <Box
         sx={{
           position: "relative",
@@ -361,7 +263,6 @@ const HeaderSelect = ({
           left: 0,
           width: "70%",
           height: "calc(100vh - 120px)",
-          // backgroundImage: `url(${water})`,
           backgroundSize: "cover",
           backgroundPosition: "center",
           opacity: 0.3,

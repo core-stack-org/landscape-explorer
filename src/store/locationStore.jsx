@@ -44,3 +44,28 @@ export const dataJsonAtom = atom({
   key: "dataJsonAtom",
   default: null,
 });
+
+export const organizationAtom = atom({
+  key: "organizationAtom",
+  default: null,
+});
+
+export const projectAtom = atom({
+  key: "projectAtom",
+  default: null,
+});
+
+export const dashboardLockedAtom = atom({
+  key: "dashboardLockedAtom",
+  default: false,
+});
+
+export const organizationOptionsAtom = atom({
+  key: "organizationOptionsAtom",
+  default: [],
+});
+
+export const projectOptionsAtom = atom({
+  key: "projectOptionsAtom",
+  default: [],
+});
