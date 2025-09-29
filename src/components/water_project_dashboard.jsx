@@ -1203,7 +1203,13 @@ const WaterProjectDashboard = () => {
 
     // --- Fetch MWS boundary from WFS (server-side filtered) ---
     const typeName = `waterrej:WaterRejapp_mws_${projectName}_${projectId}`;
-    const uid = selectedFeature.properties.MWS_UID;
+    const mwsId = selectedFeature.properties.MWS_UID;
+
+    // Always take first two parts of MWS_UID
+    const uidParts = mwsId?.split("_") || [];
+    const uidPrefix =
+      uidParts.length >= 2 ? `${uidParts[0]}_${uidParts[1]}` : mwsId;
+
     const wfsUrl =
       "https://geoserver.core-stack.org:8443/geoserver/waterrej/ows?" +
       new URLSearchParams({
@@ -1212,7 +1218,7 @@ const WaterProjectDashboard = () => {
         request: "GetFeature",
         typeName,
         outputFormat: "application/json",
-        CQL_FILTER: `uid='${uid}'`, // only fetch required MWS
+        CQL_FILTER: `uid LIKE '${uidPrefix}%'`, // ✅ match prefix
       });
 
     let matchedFeatures = [];
@@ -1545,8 +1551,8 @@ const WaterProjectDashboard = () => {
       }
 
       // Then: use mwsId to search MWS GeoData
-      const matchingMWSFeature = mwsGeoData?.features?.find(
-        (f) => f.properties?.uid === mwsId
+      const matchingMWSFeature = mwsGeoData?.features?.find((f) =>
+        mwsId?.includes(f.properties?.uid)
       );
 
       if (matchingMWSFeature) {
