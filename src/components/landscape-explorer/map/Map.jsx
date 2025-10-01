@@ -1757,7 +1757,7 @@ const Map = forwardRef(({
           "_" +
           block.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_') + "_CropIntensity",
         true,
-        "croppingintensity"
+        "cropintensity"
       );
 
       if (CropIntensityLayer) {
