@@ -150,7 +150,6 @@ const WaterAvailabilityChart = ({ waterbody, water_rej_data, mwsFeature }) => {
     borderColor: "#4F555F",
     backgroundColor: "#4F555F",
     yAxisID: "y1",
-    tension: 0.3,
     pointRadius: 4,
     pointBackgroundColor: "#4F555F",
     pointBorderWidth: 2,
