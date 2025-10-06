@@ -38,34 +38,47 @@ const WaterAvailabilityChart = ({ waterbody, water_rej_data, mwsFeature }) => {
     "23-24": "2023-2024",
   };
 
+  // --- Rainfall data
   const totalRainfall = years.reduce((acc, year) => {
     const longYear = yearMap[year];
-
     const kharif =
       mwsFeature?.properties?.[`precipitation_kharif_${longYear}`] ?? 0;
     const rabi =
       mwsFeature?.properties?.[`precipitation_rabi_${longYear}`] ?? 0;
     const zaid =
       mwsFeature?.properties?.[`precipitation_zaid_${longYear}`] ?? 0;
-
     acc[`TR${year}`] = kharif + rabi + zaid;
     return acc;
   }, {});
 
-  const categories = [
-    { key: "zaid", label: "Kharif Rabi Zaid", color: "#0f5e9c" },
-    { key: "rabi", label: " Kharif Rabi ", color: "#1ca3ec" },
-    { key: "kharif", label: "Kharif", color: "#74CCF4" },
-    { key: "shrubs", label: "Shrubs/Scrubs", color: "#eaa4f0" },
-    { key: "single_kharif", label: "Single Kharif", color: "#BAD93E" },
-    { key: "single_non_kharif", label: "Single Non-Kharif", color: "#f59d22" },
-    { key: "tree", label: "Tree/Forest", color: "#38761d" },
-    { key: "barren_land", label: "Barren Land", color: "#A9A9A9" },
-    { key: "double_cropping", label: "Double Cropping", color: "#FF9371" },
-    { key: "triple_cropping", label: "Triple Cropping", color: "#b3561d" },
-    { key: "builtup", label: "Built-up", color: "#ff0000" },
-  ];
+  // --- Define grouped structure
+  const groups = {
+    "Water Indicators": [
+      { key: "kharif", label: "Kharif Water", color: "#74CCF4" },
+      { key: "rabi", label: "Rabi Water", color: "#1ca3ec" },
+      { key: "zaid", label: "Zaid Water", color: "#0f5e9c" },
+    ],
+    "Crop Indicators": [
+      { key: "single_kharif", label: "Single Kharif", color: "#BAD93E" },
+      {
+        key: "single_non_kharif",
+        label: "Single Non-Kharif",
+        color: "#f59d22",
+      },
+      { key: "double_cropping", label: "Double Cropping", color: "#FF9371" },
+      { key: "triple_cropping", label: "Triple Cropping", color: "#b3561d" },
+    ],
+    "Other Vegetation": [
+      { key: "tree", label: "Tree/Forest", color: "#38761d" },
+      { key: "shrubs", label: "Shrubs/Scrubs", color: "#eaa4f0" },
+    ],
+    "Non-Vegetation": [
+      { key: "barren_land", label: "Barren Land", color: "#A9A9A9" },
+      { key: "builtup", label: "Built-up", color: "#ff0000" },
+    ],
+  };
 
+  // --- Raw Data
   const rawData = years.map(() => ({
     kharif: 0,
     rabi: 0,
@@ -107,7 +120,7 @@ const WaterAvailabilityChart = ({ waterbody, water_rej_data, mwsFeature }) => {
     }
   });
 
-  // Normalize totals to 100% if needed
+  // --- Normalize to 100%
   const normalizedData = rawData.map((yearData) => {
     const total = Object.values(yearData).reduce((sum, v) => sum + v, 0);
     const scale = total > 100 ? 100 / total : 1;
@@ -116,13 +129,20 @@ const WaterAvailabilityChart = ({ waterbody, water_rej_data, mwsFeature }) => {
     );
   });
 
-  const datasets = categories.map((cat) => ({
-    label: cat.label,
-    backgroundColor: cat.color,
-    data: normalizedData.map((yearData) => yearData[cat.key]),
-    order: 2,
-  }));
+  // --- Datasets
+  const datasets = [];
+  Object.entries(groups).forEach(([groupName, items]) => {
+    items.forEach((cat) => {
+      datasets.push({
+        label: `${groupName} | ${cat.label}`,
+        backgroundColor: cat.color,
+        data: normalizedData.map((d) => d[cat.key]),
+        order: 2,
+      });
+    });
+  });
 
+  // --- Rainfall line
   datasets.push({
     type: "line",
     label: "Total Rainfall (mm)",
@@ -130,26 +150,63 @@ const WaterAvailabilityChart = ({ waterbody, water_rej_data, mwsFeature }) => {
     borderColor: "#4F555F",
     backgroundColor: "#4F555F",
     yAxisID: "y1",
-    tension: 0,
+    tension: 0.3,
     pointRadius: 4,
     pointBackgroundColor: "#4F555F",
     pointBorderWidth: 2,
     order: 1,
   });
 
-  const data = {
-    labels: years,
-    datasets,
-  };
+  const data = { labels: years, datasets };
 
+  // --- Custom grouped legend
   const options = {
     maintainAspectRatio: false,
     responsive: true,
     plugins: {
-      legend: { position: "top" },
+      legend: {
+        position: "top",
+        labels: {
+          usePointStyle: true,
+          boxWidth: 14,
+          font: { size: 12 },
+          generateLabels: (chart) => {
+            const all = chart.data.datasets.filter((d) => !d.type);
+            const structured = [];
+
+            Object.entries(groups).forEach(([group, items]) => {
+              // Header
+              structured.push({
+                text: group,
+                fillStyle: "transparent",
+                strokeStyle: "transparent",
+                fontColor: "#000",
+                hidden: true,
+              });
+              // Sub-items
+              items.forEach((item) => {
+                structured.push({
+                  text: "   " + item.label,
+                  fillStyle: item.color,
+                  strokeStyle: "#ccc",
+                });
+              });
+            });
+
+            // Add rainfall line legend
+            structured.push({
+              text: "Total Rainfall (mm)",
+              fillStyle: "#4F555F",
+            });
+
+            return structured;
+          },
+        },
+      },
       title: {
         display: true,
-        text: "Land Use Categories Over Time (Max 100%)",
+        text: "Land Use Categories vs Rainfall (Grouped Legend)",
+        font: { size: 16, weight: "bold" },
       },
       annotation: {
         annotations: {
@@ -171,18 +228,13 @@ const WaterAvailabilityChart = ({ waterbody, water_rej_data, mwsFeature }) => {
       },
     },
     scales: {
-      x: {
-        stacked: true,
-        title: { display: true, text: "Year" },
-      },
+      x: { stacked: true, title: { display: true, text: "Year" } },
       y: {
         stacked: true,
         title: { display: true, text: "Land Use (%)" },
         min: 0,
         max: 100,
-        ticks: {
-          callback: (value) => `${value}%`,
-        },
+        ticks: { callback: (v) => `${v}%` },
       },
       y1: {
         position: "right",
@@ -193,8 +245,55 @@ const WaterAvailabilityChart = ({ waterbody, water_rej_data, mwsFeature }) => {
   };
 
   return (
-    <div style={{ width: "100%", height: "100%" }}>
-      <Bar options={options} data={data} />
+    <div style={{ width: "100%", height: "80%" }}>
+      <div
+        className="custom-legend"
+        style={{ display: "flex", fontSize: 12, gap: 10 }}
+      >
+        {Object.entries(groups).map(([group, items]) => (
+          <div key={group} style={{ marginBottom: 8 }}>
+            <strong>{group}</strong>
+            {items.map((item) => (
+              <div
+                key={item.key}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  marginLeft: 12,
+                }}
+              >
+                <span
+                  style={{
+                    display: "inline-block",
+                    width: 14,
+                    height: 14,
+                    backgroundColor: item.color,
+                    marginRight: 6,
+                  }}
+                ></span>
+                {item.label}
+              </div>
+            ))}
+          </div>
+        ))}
+        {/* Add Rainfall Line */}
+        <div style={{ display: "flex", alignItems: "center", marginTop: 8 }}>
+          <span
+            style={{
+              display: "inline-block",
+              width: 14,
+              height: 2,
+              backgroundColor: "#4F555F",
+              marginRight: 6,
+            }}
+          ></span>
+          Total Rainfall (mm)
+        </div>
+      </div>
+      <Bar
+        data={data}
+        options={{ ...options, plugins: { legend: { display: false } } }}
+      />
     </div>
   );
 };
