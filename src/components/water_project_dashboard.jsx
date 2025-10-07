@@ -65,120 +65,77 @@ const useWaterRejData = (projectName, projectId) => {
   const [geoData, setGeoData] = useState(null);
   const [mwsGeoData, setMwsGeoData] = useState(null);
   const [zoiFeatures, setZoiFeatures] = useState([]);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (!projectName || !projectId) return;
 
-    const fetchGeoJSON = async () => {
-      const typeName = `waterrej:WaterRejapp-${projectName}_${projectId}`;
-      const url =
-        `https://geoserver.core-stack.org:8443/geoserver/waterrej/ows?` +
-        new URLSearchParams({
-          service: "WFS",
-          version: "1.0.0",
-          request: "GetFeature",
-          typeName,
-          outputFormat: "application/json",
-        });
+    let cancelled = false;
+    setLoading(true);
 
-      try {
-        const response = await fetch(url);
-        if (!response.ok) {
-          const errorText = await response.text();
-          console.error("GeoServer error response:", errorText);
-          throw new Error(`GeoServer returned status ${response.status}`);
-        }
-
-        const data = await response.json();
-        setGeoData(data);
-      } catch (err) {
-        console.error("❌ Failed to fetch or parse GeoJSON:", err);
-        setGeoData(null);
-      }
-    };
-
-    fetchGeoJSON();
-  }, [projectName, projectId]);
-
-  useEffect(() => {
-    if (!projectName || !projectId) return;
-
-    const fetchMWSGeoJSON = async () => {
-      const typeName = `waterrej:WaterRejapp_mws_${projectName}_${projectId}`;
-      const url =
-        `https://geoserver.core-stack.org:8443/geoserver/waterrej/ows?` +
-        new URLSearchParams({
-          service: "WFS",
-          version: "1.0.0",
-          request: "GetFeature",
-          typeName,
-          outputFormat: "application/json",
-        });
-
-      try {
-        const response = await fetch(url);
-        if (!response.ok) {
-          const errorText = await response.text();
-          console.error("MWS GeoServer error response:", errorText);
-          throw new Error(`GeoServer returned status ${response.status}`);
-        }
-
-        const data = await response.json();
-        setMwsGeoData(data);
-      } catch (err) {
-        console.error("Failed to fetch or parse MWS GeoJSON:", err);
-      }
-    };
-
-    fetchMWSGeoJSON();
-  }, [projectName, projectId]);
-
-  useEffect(() => {
-    if (!projectName || !projectId) return;
-
-    const zoiTypeName = `waterrej:WaterRejapp_zoi_${projectName}_${projectId}`;
-    const zoiUrl =
-      `https://geoserver.core-stack.org:8443/geoserver/waterrej/ows?` +
-      new URLSearchParams({
+    const fetchWFS = async (typeName, retries = 2) => {
+      const base =
+        "https://geoserver.core-stack.org:8443/geoserver/waterrej/ows?";
+      const params = new URLSearchParams({
         service: "WFS",
         version: "1.0.0",
         request: "GetFeature",
-        typeName: zoiTypeName,
+        typeName,
         outputFormat: "application/json",
       });
+      const url = base + params.toString();
 
-    const fetchZOI = async () => {
-      try {
-        const response = await fetch(zoiUrl);
+      for (let i = 0; i <= retries; i++) {
+        try {
+          const res = await fetch(url);
+          if (res.ok) return await res.json();
+        } catch {}
+        await new Promise((r) => setTimeout(r, 500 * (i + 1)));
+      }
+      return null;
+    };
 
-        if (!response.ok) {
-          const errorText = await response.text();
-          console.error("ZOI GeoServer error response:", errorText);
-          throw new Error(`GeoServer returned status ${response.status}`);
-        }
+    const loadAll = async () => {
+      const geoPromise = fetchWFS(
+        `waterrej:WaterRejapp-${projectName}_${projectId}`
+      );
+      const mwsPromise = fetchWFS(
+        `waterrej:WaterRejapp_mws_${projectName}_${projectId}`
+      );
+      const zoiPromise = fetchWFS(
+        `waterrej:WaterRejapp_zoi_${projectName}_${projectId}`
+      );
 
-        const data = await response.json();
+      const [geo, mws, zoi] = await Promise.all([
+        geoPromise,
+        mwsPromise,
+        zoiPromise,
+      ]);
+      if (cancelled) return;
 
-        const features = new GeoJSON().readFeatures(data, {
+      setGeoData(geo);
+      setMwsGeoData(mws);
+
+      if (zoi?.features?.length) {
+        const features = new GeoJSON().readFeatures(zoi, {
           dataProjection: "EPSG:4326",
           featureProjection: "EPSG:4326",
         });
-
-        if (!features || features.length === 0) {
-          console.warn("No ZOI features found");
-          return;
-        }
-
         setZoiFeatures(features);
-      } catch (error) {
-        console.error("Error fetching ZOI:", error);
+      } else {
+        setZoiFeatures([]);
       }
+
+      setLoading(false);
     };
 
-    fetchZOI();
+    loadAll();
+    return () => {
+      cancelled = true;
+    };
   }, [projectName, projectId]);
 
-  return { geoData, mwsGeoData, zoiFeatures };
+  return { geoData, mwsGeoData, zoiFeatures, loading };
 };
 
 const WaterProjectDashboard = () => {
@@ -261,7 +218,6 @@ const WaterProjectDashboard = () => {
 
   const projectName = project?.label;
   const projectId = project?.value;
-  console.log(organization?.label);
 
   useEffect(() => {
     // Clear all maps when project changes
@@ -284,24 +240,16 @@ const WaterProjectDashboard = () => {
     setMapClickedWaterbody(null);
   }, [projectId]);
 
-  const { geoData, mwsGeoData, zoiFeatures } = useWaterRejData(
+  const { geoData, mwsGeoData, zoiFeatures, loading } = useWaterRejData(
     projectName,
     projectId
   );
 
-  console.log(zoiFeatures);
-  const yearMap = {
-    "17-18": 2017,
-    "18-19": 2018,
-    "19-20": 2019,
-    "20-21": 2020,
-    "21-22": 2021,
-    "22-23": 2022,
-    "23-24": 2023,
-  };
+  if (loading || !geoData || !mwsGeoData || zoiFeatures.length === 0) {
+    console.log("Waiting for GeoServer data...");
+  }
 
   const { rows, totalSiltRemoved } = useMemo(() => {
-    console.log(zoiFeatures);
     if (!geoData?.features) return { rows: [], avgSiltRemoved: 0 };
 
     let totalSiltRemoved = 0;
@@ -547,7 +495,6 @@ const WaterProjectDashboard = () => {
   }, [geoData, zoiFeatures]);
 
   const totalRows = rows.length;
-  console.log(zoiFeatures);
 
   const [filters, setFilters] = useState({
     state: [],
@@ -586,15 +533,15 @@ const WaterProjectDashboard = () => {
 
   useEffect(() => {
     const fetchUpdateLulc = async () => {
-      if (!lulcYear1 || !lulcYear1.includes("_")) {
-        console.warn("[LULC] Invalid lulcYear:", lulcYear1);
-        return;
-      }
+      // if (!lulcYear1 || !lulcYear1.includes("_")) {
+      //   console.warn("[LULC] Invalid lulcYear:", lulcYear1);
+      //   return;
+      // }
 
-      if (!project || typeof project !== "object") {
-        console.error("[LULC] Invalid project object:", project);
-        return;
-      }
+      // if (!project || typeof project !== "object") {
+      //   console.error("[LULC] Invalid project object:", project);
+      //   return;
+      // }
 
       const fullYear = lulcYear1
         .split("_")
@@ -896,7 +843,6 @@ const WaterProjectDashboard = () => {
   };
 
   const filteredRows = rows.filter((row) => {
-    // First: global searchText (any field)
     const matchesGlobalSearch = Object.keys(row).some((key) => {
       if (!row[key]) return false;
       if (typeof row[key] === "object") return false; // skip objects like coordinates
@@ -906,7 +852,6 @@ const WaterProjectDashboard = () => {
         .includes(searchText.toLowerCase());
     });
 
-    // Second: your existing filters object per field
     const matchesFilters = Object.keys(filters).every((key) => {
       if (filters[key].length === 0) return true;
       return filters[key].includes(String(row[key]));
@@ -954,9 +899,9 @@ const WaterProjectDashboard = () => {
     const baseLayer = new TileLayer({
       source: new XYZ({
         url: `https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}`,
-        maxZoom: 30,
+        maxZoom: 35,
         transition: 500,
-        zoom: 18,
+        zoom: 20,
       }),
       preload: 4,
     });
@@ -1008,7 +953,7 @@ const WaterProjectDashboard = () => {
       const styles = [
         new Style({
           stroke: new Stroke({
-            color: "#ff0000",
+            color: "blue",
             width: 3,
           }),
         }),
@@ -1070,7 +1015,7 @@ const WaterProjectDashboard = () => {
             name: props.waterbody_name,
             Village: props.Village,
             Taluka: props.Taluka,
-            pixel: evt.pixel, // 👈 save pixel position
+            pixel: evt.pixel,
           });
           found = true;
         }
@@ -1084,12 +1029,16 @@ const WaterProjectDashboard = () => {
     if (!selectedWaterbody && features.length > 0) {
       const extent = vectorLayerWater.getExtent();
       view.fit(extent, {
-        padding: [50, 50, 50, 50],
+        padding: [20, 20, 20, 20],
         duration: 1000,
         maxZoom: 35,
         zoom: 18,
       });
     }
+    view.animate({
+      zoom: view.getZoom() + 0.75,
+      duration: 500,
+    });
 
     map.once("rendercomplete", () => {
       if (selectedWaterbody && selectedWaterbody.coordinates) {
@@ -1166,7 +1115,6 @@ const WaterProjectDashboard = () => {
 
   const initializeMap3 = async (organizationLabel) => {
     if (!organizationLabel || !projectName || !projectId) return;
-    console.log(selectedFeature.properties.MWS_UID, "map 3 com please");
 
     // --- Initialize base map immediately ---
     const baseLayer = new TileLayer({
@@ -1218,7 +1166,7 @@ const WaterProjectDashboard = () => {
         request: "GetFeature",
         typeName,
         outputFormat: "application/json",
-        CQL_FILTER: `uid LIKE '${uidPrefix}%'`, // ✅ match prefix
+        CQL_FILTER: `uid LIKE '${uidPrefix}%'`, //  match prefix
       });
 
     let matchedFeatures = [];
@@ -1317,37 +1265,55 @@ const WaterProjectDashboard = () => {
 
     // --- Waterbody outlines ---
     if (geoData?.features?.length) {
-      const waterSource = new VectorSource({
-        features: new GeoJSON().readFeatures(geoData, {
-          dataProjection: "EPSG:4326",
-          featureProjection: "EPSG:4326",
-        }),
+      const allWaterFeatures = new GeoJSON().readFeatures(geoData, {
+        dataProjection: "EPSG:4326",
+        featureProjection: "EPSG:4326",
       });
 
+      // --- Blue layer for all waterbodies ---
+      const waterSource = new VectorSource({ features: allWaterFeatures });
       const waterLayer = new VectorLayer({
         source: waterSource,
         style: new Style({
-          stroke: new Stroke({ color: "red", width: 3 }),
+          stroke: new Stroke({ color: "blue", width: 2 }),
           fill: null,
         }),
       });
       waterLayer.setZIndex(2);
       map.addLayer(waterLayer);
 
-      // Zoom to selected waterbody or all waterbodies
+      // --- Red layer only for selected waterbody ---
       if (selectedWaterbody && selectedFeature) {
-        const feature = new GeoJSON().readFeature(selectedFeature, {
+        const selectedFeatureObj = new GeoJSON().readFeature(selectedFeature, {
           dataProjection: "EPSG:4326",
-          featureProjection: view.getProjection(),
+          featureProjection: "EPSG:4326",
         });
-        const geometry = feature.getGeometry();
-        if (geometry)
+
+        const selectedWaterSource = new VectorSource({
+          features: [selectedFeatureObj],
+        });
+
+        const selectedWaterLayer = new VectorLayer({
+          source: selectedWaterSource,
+          style: new Style({
+            stroke: new Stroke({ color: "red", width: 3 }),
+            fill: null,
+          }),
+        });
+        selectedWaterLayer.setZIndex(3); // Above blue ones
+        map.addLayer(selectedWaterLayer);
+
+        // --- Zoom to selected waterbody ---
+        const geometry = selectedFeatureObj.getGeometry();
+        if (geometry) {
           view.fit(geometry.getExtent(), {
             padding: [50, 50, 50, 50],
             duration: 1000,
             maxZoom: 14,
           });
+        }
       } else {
+        // Zoom to all waterbodies if none selected
         const extent = waterSource.getExtent();
         view.fit(extent, {
           padding: [50, 50, 50, 50],
@@ -1359,18 +1325,30 @@ const WaterProjectDashboard = () => {
   };
 
   useEffect(() => {
-    if (view === "map" && organization) {
+    if (
+      view === "map" &&
+      organization &&
+      geoData &&
+      zoiFeatures.length &&
+      mwsGeoData
+    ) {
+      if (mapRef1.current) mapRef1.current.setTarget(null);
+      if (mapRef2.current) mapRef2.current.setTarget(null);
+      if (mapRef3.current) mapRef3.current.setTarget(null);
+
       if (mapElement1.current) initializeMap1();
       if (mapElement2.current) initializeMap2();
       if (mapElement3.current) initializeMap3(organization.label);
     }
-
-    return () => {
-      if (mapRef1.current) mapRef1.current.setTarget(null);
-      if (mapRef2.current) mapRef2.current.setTarget(null);
-      if (mapRef3.current) mapRef3.current.setTarget(null);
-    };
-  }, [view, geoData, projectName, projectId, organization]);
+  }, [
+    view,
+    organization,
+    geoData,
+    zoiFeatures,
+    mwsGeoData,
+    selectedFeature,
+    selectedWaterbody,
+  ]);
 
   useEffect(() => {
     if (selectedWaterbody) {
@@ -1406,6 +1384,7 @@ const WaterProjectDashboard = () => {
       return;
     }
 
+    // --- Zoom to the selected waterbody
     const extent = geometry.getExtent();
     view.fit(extent, {
       duration: 1000,
@@ -1413,25 +1392,34 @@ const WaterProjectDashboard = () => {
       maxZoom: 18,
     });
 
+    // --- Reset all waterbodies to blue
     if (waterBodyLayer) {
       const source = waterBodyLayer.getSource();
       const features = source.getFeatures();
 
-      features.forEach((feature) => feature.setStyle(null));
+      features.forEach((f) => {
+        f.setStyle(
+          new Style({
+            stroke: new Stroke({ color: "blue", width: 3 }),
+          })
+        );
+      });
 
+      // --- Highlight only the selected waterbody in red
       if (
         waterbody.featureIndex !== undefined &&
         features[waterbody.featureIndex]
       ) {
         features[waterbody.featureIndex].setStyle(
           new Style({
-            stroke: new Stroke({ color: "#FF0000", width: 5 }),
-            fill: new Fill({ color: "rgba(255, 0, 0, 0.5)" }),
+            stroke: new Stroke({ color: "#FF0000", width: 4 }),
+            fill: new Fill({ color: "rgba(255, 0, 0, 0.2)" }),
           })
         );
       }
     }
 
+    // Disable zoom interactions if you want to lock map view
     targetMapRef.current.getInteractions().forEach((interaction) => {
       if (
         interaction instanceof MouseWheelZoom ||
@@ -2743,7 +2731,7 @@ const WaterProjectDashboard = () => {
                       water_rej_data={geoData}
                       mwsFeature={selectedMWSFeature}
                     />
-                    <Typography fontSize={14} color="#333" mt={1}>
+                    <Typography fontSize={14} color="#333" mt={18}>
                       <b>Black line</b> represents the year of intervention.
                     </Typography>
                   </Box>
@@ -2754,7 +2742,7 @@ const WaterProjectDashboard = () => {
                         width: "100%",
                         maxWidth: "700px",
                         height: "400px",
-                        marginTop: "1%",
+                        marginTop: "8%",
                       }}
                     >
                       <PrecipitationStackChart feature={selectedMWSFeature} />
@@ -2763,132 +2751,7 @@ const WaterProjectDashboard = () => {
                 </Box>
               )}
             </Box>
-            {selectedWaterbody && (
-              <Box
-                sx={{
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: 2,
-                  width: "100%",
-                  p: { xs: 2, sm: 3, md: 2 },
-                  borderRadius: 2,
-                  bgcolor: "background.paper",
-                  boxShadow: 1,
-                }}
-              >
-                {/* Heading */}
-                <Typography
-                  variant="h5"
-                  sx={{
-                    fontWeight: 700,
-                    color: "primary.main",
-                    borderBottom: "2px solid",
-                    borderColor: "primary.main",
-                    pb: 1,
-                  }}
-                >
-                  Section 2: Catchment area and stream position
-                </Typography>
 
-                {/* Explanation */}
-                <Typography
-                  variant="body1"
-                  sx={{ color: "text.secondary", lineHeight: 1.7 }}
-                >
-                  This section gives the catchment area from which runoff may
-                  drain into the waterbody. A larger catchment area would imply
-                  a higher rainfall runoff draining into the waterbody, in turn
-                  leading to more storage. This can however get impacted by
-                  blocked inlet channels and other changes.
-                </Typography>
-
-                <Typography
-                  variant="body1"
-                  sx={{ color: "text.secondary", lineHeight: 1.7 }}
-                >
-                  This section also gives the stream order in which the
-                  waterbody lies. The stream order indicates the relative
-                  position of the waterbody in the drainage network. Waterbodies
-                  present in higher stream orders would typically see
-                  sub-surface flows from upstream watersheds.
-                </Typography>
-              </Box>
-            )}
-
-            {selectedWaterbody && (
-              <Box
-                sx={{
-                  width: "100%",
-                  display: "flex",
-                  flexDirection: { xs: "column", md: "row" },
-                  justifyContent: "space-between",
-                  gap: 3,
-                  mt: 4,
-                  px: { xs: 2, md: 0 },
-                }}
-              >
-                {[
-                  {
-                    label: "Max Catchment Area",
-                    value: `${selectedWaterbody?.maxCatchmentArea?.toFixed(
-                      2
-                    )} sq km`,
-                  },
-                  {
-                    label: "Max Stream Order",
-                    value: `Order ${selectedWaterbody?.maxStreamOrder}`,
-                  },
-                ].map((item, idx) => (
-                  <Box
-                    key={idx}
-                    sx={{
-                      flex: 1,
-                      background:
-                        "linear-gradient(135deg, #f9fafb 0%, #f1f3f5 100%)",
-                      padding: 3,
-                      borderRadius: 3,
-                      boxShadow: "0 4px 12px rgba(0, 0, 0, 0.05)",
-                      display: "flex",
-                      flexDirection: "column",
-                      alignItems: "center",
-                      textAlign: "center",
-                      minHeight: "120px",
-                      transition: "all 0.3s ease",
-                      "&:hover": {
-                        transform: "translateY(-2px)",
-                        boxShadow: "0 6px 16px rgba(0, 0, 0, 0.08)",
-                      },
-                      border: "1px solid #e0e0e0",
-                    }}
-                  >
-                    <Typography
-                      variant="h6"
-                      fontWeight={700}
-                      color="text.primary"
-                      sx={{
-                        textTransform: "uppercase",
-                        letterSpacing: 0.8,
-                        fontSize: "0.95rem",
-                        color: "#333",
-                      }}
-                    >
-                      {item.label}
-                    </Typography>
-                    <Typography
-                      variant="h5"
-                      fontWeight={600}
-                      color="primary"
-                      sx={{
-                        mt: 1,
-                        fontSize: "1.3rem",
-                      }}
-                    >
-                      {item.value}
-                    </Typography>
-                  </Box>
-                ))}
-              </Box>
-            )}
             {/* ZOI Section with Map + Side Chart */}
             {selectedWaterbody && (
               <Box
@@ -2914,7 +2777,7 @@ const WaterProjectDashboard = () => {
                     pb: 1,
                   }}
                 >
-                  Section 3: Cropping patterns in the Zone of Influence of the
+                  Section 2: Cropping patterns in the Zone of Influence of the
                   waterbody
                 </Typography>
 
@@ -3288,10 +3151,32 @@ const WaterProjectDashboard = () => {
                     pb: 1,
                   }}
                 >
-                  Section 4: Micro-watershed context of the waterbody
+                  Section 3: Micro-watershed context of the waterbody and
+                  Catchment area and stream position
                 </Typography>
 
                 {/* Explanation */}
+                <Typography
+                  variant="body1"
+                  sx={{ color: "text.secondary", lineHeight: 1.7 }}
+                >
+                  This section gives the catchment area from which runoff may
+                  drain into the waterbody. A larger catchment area would imply
+                  a higher rainfall runoff draining into the waterbody, in turn
+                  leading to more storage. This can however get impacted by
+                  blocked inlet channels and other changes.
+                </Typography>
+
+                <Typography
+                  variant="body1"
+                  sx={{ color: "text.secondary", lineHeight: 1.7 }}
+                >
+                  This section also gives the stream order in which the
+                  waterbody lies. The stream order indicates the relative
+                  position of the waterbody in the drainage network. Waterbodies
+                  present in higher stream orders would typically see
+                  sub-surface flows from upstream watersheds.
+                </Typography>
                 <Typography
                   variant="body1"
                   sx={{ color: "text.secondary", lineHeight: 1.7 }}
@@ -3303,7 +3188,80 @@ const WaterProjectDashboard = () => {
                 </Typography>
               </Box>
             )}
-
+            {selectedWaterbody && (
+              <Box
+                sx={{
+                  width: "100%",
+                  display: "flex",
+                  flexDirection: { xs: "column", md: "row" },
+                  justifyContent: "space-between",
+                  gap: 3,
+                  mt: 4,
+                  px: { xs: 2, md: 0 },
+                }}
+              >
+                {[
+                  {
+                    label: "Max Catchment Area",
+                    value: `${selectedWaterbody?.maxCatchmentArea?.toFixed(
+                      2
+                    )} sq km`,
+                  },
+                  {
+                    label: "Max Stream Order",
+                    value: `Order ${selectedWaterbody?.maxStreamOrder}`,
+                  },
+                ].map((item, idx) => (
+                  <Box
+                    key={idx}
+                    sx={{
+                      flex: 1,
+                      background:
+                        "linear-gradient(135deg, #f9fafb 0%, #f1f3f5 100%)",
+                      padding: 3,
+                      borderRadius: 3,
+                      boxShadow: "0 4px 12px rgba(0, 0, 0, 0.05)",
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "center",
+                      textAlign: "center",
+                      minHeight: "120px",
+                      transition: "all 0.3s ease",
+                      "&:hover": {
+                        transform: "translateY(-2px)",
+                        boxShadow: "0 6px 16px rgba(0, 0, 0, 0.08)",
+                      },
+                      border: "1px solid #e0e0e0",
+                    }}
+                  >
+                    <Typography
+                      variant="h6"
+                      fontWeight={700}
+                      color="text.primary"
+                      sx={{
+                        textTransform: "uppercase",
+                        letterSpacing: 0.8,
+                        fontSize: "0.95rem",
+                        color: "#333",
+                      }}
+                    >
+                      {item.label}
+                    </Typography>
+                    <Typography
+                      variant="h5"
+                      fontWeight={600}
+                      color="primary"
+                      sx={{
+                        mt: 1,
+                        fontSize: "1.3rem",
+                      }}
+                    >
+                      {item.value}
+                    </Typography>
+                  </Box>
+                ))}
+              </Box>
+            )}
             <Box
               sx={{
                 display: "flex",
