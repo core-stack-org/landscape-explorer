@@ -54,9 +54,9 @@ const WaterAvailabilityChart = ({ waterbody, water_rej_data, mwsFeature }) => {
   // --- Define grouped structure
   const groups = {
     "Water Indicators": [
-      { key: "kharif", label: "Kharif Water", color: "#74CCF4" },
-      { key: "rabi", label: "Rabi Water", color: "#1ca3ec" },
-      { key: "zaid", label: "Zaid Water", color: "#0f5e9c" },
+      { key: "kharif", label: "Kharif ", color: "#74CCF4" },
+      { key: "rabi", label: "Kharif Rabi", color: "#1ca3ec" },
+      { key: "zaid", label: "Kharif Rabi Zaid", color: "#0f5e9c" },
     ],
     "Crop Indicators": [
       { key: "single_kharif", label: "Single Kharif", color: "#BAD93E" },
@@ -73,7 +73,7 @@ const WaterAvailabilityChart = ({ waterbody, water_rej_data, mwsFeature }) => {
       { key: "shrubs", label: "Shrubs/Scrubs", color: "#eaa4f0" },
     ],
     "Non-Vegetation": [
-      { key: "barren_land", label: "Barren Land", color: "#A9A9A9" },
+      { key: "barren_land", label: "Barren", color: "#A9A9A9" },
       { key: "builtup", label: "Built-up", color: "#ff0000" },
     ],
   };
@@ -247,7 +247,7 @@ const WaterAvailabilityChart = ({ waterbody, water_rej_data, mwsFeature }) => {
     <div style={{ width: "100%", height: "80%" }}>
       <div
         className="custom-legend"
-        style={{ display: "flex", fontSize: 12, gap: 10 }}
+        style={{ display: "flex", fontSize: 12, gap: 16, marginLeft: 25 }}
       >
         {Object.entries(groups).map(([group, items]) => (
           <div key={group} style={{ marginBottom: 8 }}>
@@ -258,7 +258,7 @@ const WaterAvailabilityChart = ({ waterbody, water_rej_data, mwsFeature }) => {
                 style={{
                   display: "flex",
                   alignItems: "center",
-                  marginLeft: 12,
+                  marginLeft: 8,
                 }}
               >
                 <span

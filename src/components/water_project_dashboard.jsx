@@ -65,120 +65,77 @@ const useWaterRejData = (projectName, projectId) => {
   const [geoData, setGeoData] = useState(null);
   const [mwsGeoData, setMwsGeoData] = useState(null);
   const [zoiFeatures, setZoiFeatures] = useState([]);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (!projectName || !projectId) return;
 
-    const fetchGeoJSON = async () => {
-      const typeName = `waterrej:WaterRejapp-${projectName}_${projectId}`;
-      const url =
-        `https://geoserver.core-stack.org:8443/geoserver/waterrej/ows?` +
-        new URLSearchParams({
-          service: "WFS",
-          version: "1.0.0",
-          request: "GetFeature",
-          typeName,
-          outputFormat: "application/json",
-        });
+    let cancelled = false;
+    setLoading(true);
 
-      try {
-        const response = await fetch(url);
-        if (!response.ok) {
-          const errorText = await response.text();
-          console.error("GeoServer error response:", errorText);
-          throw new Error(`GeoServer returned status ${response.status}`);
-        }
-
-        const data = await response.json();
-        setGeoData(data);
-      } catch (err) {
-        console.error("❌ Failed to fetch or parse GeoJSON:", err);
-        setGeoData(null);
-      }
-    };
-
-    fetchGeoJSON();
-  }, [projectName, projectId]);
-
-  useEffect(() => {
-    if (!projectName || !projectId) return;
-
-    const fetchMWSGeoJSON = async () => {
-      const typeName = `waterrej:WaterRejapp_mws_${projectName}_${projectId}`;
-      const url =
-        `https://geoserver.core-stack.org:8443/geoserver/waterrej/ows?` +
-        new URLSearchParams({
-          service: "WFS",
-          version: "1.0.0",
-          request: "GetFeature",
-          typeName,
-          outputFormat: "application/json",
-        });
-
-      try {
-        const response = await fetch(url);
-        if (!response.ok) {
-          const errorText = await response.text();
-          console.error("MWS GeoServer error response:", errorText);
-          throw new Error(`GeoServer returned status ${response.status}`);
-        }
-
-        const data = await response.json();
-        setMwsGeoData(data);
-      } catch (err) {
-        console.error("Failed to fetch or parse MWS GeoJSON:", err);
-      }
-    };
-
-    fetchMWSGeoJSON();
-  }, [projectName, projectId]);
-
-  useEffect(() => {
-    if (!projectName || !projectId) return;
-
-    const zoiTypeName = `waterrej:WaterRejapp_zoi_${projectName}_${projectId}`;
-    const zoiUrl =
-      `https://geoserver.core-stack.org:8443/geoserver/waterrej/ows?` +
-      new URLSearchParams({
+    const fetchWFS = async (typeName, retries = 2) => {
+      const base =
+        "https://geoserver.core-stack.org:8443/geoserver/waterrej/ows?";
+      const params = new URLSearchParams({
         service: "WFS",
         version: "1.0.0",
         request: "GetFeature",
-        typeName: zoiTypeName,
+        typeName,
         outputFormat: "application/json",
       });
+      const url = base + params.toString();
 
-    const fetchZOI = async () => {
-      try {
-        const response = await fetch(zoiUrl);
+      for (let i = 0; i <= retries; i++) {
+        try {
+          const res = await fetch(url);
+          if (res.ok) return await res.json();
+        } catch {}
+        await new Promise((r) => setTimeout(r, 500 * (i + 1)));
+      }
+      return null;
+    };
 
-        if (!response.ok) {
-          const errorText = await response.text();
-          console.error("ZOI GeoServer error response:", errorText);
-          throw new Error(`GeoServer returned status ${response.status}`);
-        }
+    const loadAll = async () => {
+      const geoPromise = fetchWFS(
+        `waterrej:WaterRejapp-${projectName}_${projectId}`
+      );
+      const mwsPromise = fetchWFS(
+        `waterrej:WaterRejapp_mws_${projectName}_${projectId}`
+      );
+      const zoiPromise = fetchWFS(
+        `waterrej:WaterRejapp_zoi_${projectName}_${projectId}`
+      );
 
-        const data = await response.json();
+      const [geo, mws, zoi] = await Promise.all([
+        geoPromise,
+        mwsPromise,
+        zoiPromise,
+      ]);
+      if (cancelled) return;
 
-        const features = new GeoJSON().readFeatures(data, {
+      setGeoData(geo);
+      setMwsGeoData(mws);
+
+      if (zoi?.features?.length) {
+        const features = new GeoJSON().readFeatures(zoi, {
           dataProjection: "EPSG:4326",
           featureProjection: "EPSG:4326",
         });
-
-        if (!features || features.length === 0) {
-          console.warn("No ZOI features found");
-          return;
-        }
-
         setZoiFeatures(features);
-      } catch (error) {
-        console.error("Error fetching ZOI:", error);
+      } else {
+        setZoiFeatures([]);
       }
+
+      setLoading(false);
     };
 
-    fetchZOI();
+    loadAll();
+    return () => {
+      cancelled = true;
+    };
   }, [projectName, projectId]);
 
-  return { geoData, mwsGeoData, zoiFeatures };
+  return { geoData, mwsGeoData, zoiFeatures, loading };
 };
 
 const WaterProjectDashboard = () => {
@@ -261,7 +218,6 @@ const WaterProjectDashboard = () => {
 
   const projectName = project?.label;
   const projectId = project?.value;
-  console.log(organization?.label);
 
   useEffect(() => {
     // Clear all maps when project changes
@@ -284,24 +240,16 @@ const WaterProjectDashboard = () => {
     setMapClickedWaterbody(null);
   }, [projectId]);
 
-  const { geoData, mwsGeoData, zoiFeatures } = useWaterRejData(
+  const { geoData, mwsGeoData, zoiFeatures, loading } = useWaterRejData(
     projectName,
     projectId
   );
 
-  console.log(zoiFeatures);
-  const yearMap = {
-    "17-18": 2017,
-    "18-19": 2018,
-    "19-20": 2019,
-    "20-21": 2020,
-    "21-22": 2021,
-    "22-23": 2022,
-    "23-24": 2023,
-  };
+  if (loading || !geoData || !mwsGeoData || zoiFeatures.length === 0) {
+    console.log("Waiting for GeoServer data...");
+  }
 
   const { rows, totalSiltRemoved } = useMemo(() => {
-    console.log(zoiFeatures);
     if (!geoData?.features) return { rows: [], avgSiltRemoved: 0 };
 
     let totalSiltRemoved = 0;
@@ -547,7 +495,6 @@ const WaterProjectDashboard = () => {
   }, [geoData, zoiFeatures]);
 
   const totalRows = rows.length;
-  console.log(zoiFeatures);
 
   const [filters, setFilters] = useState({
     state: [],
@@ -586,15 +533,15 @@ const WaterProjectDashboard = () => {
 
   useEffect(() => {
     const fetchUpdateLulc = async () => {
-      if (!lulcYear1 || !lulcYear1.includes("_")) {
-        console.warn("[LULC] Invalid lulcYear:", lulcYear1);
-        return;
-      }
+      // if (!lulcYear1 || !lulcYear1.includes("_")) {
+      //   console.warn("[LULC] Invalid lulcYear:", lulcYear1);
+      //   return;
+      // }
 
-      if (!project || typeof project !== "object") {
-        console.error("[LULC] Invalid project object:", project);
-        return;
-      }
+      // if (!project || typeof project !== "object") {
+      //   console.error("[LULC] Invalid project object:", project);
+      //   return;
+      // }
 
       const fullYear = lulcYear1
         .split("_")
@@ -1168,7 +1115,6 @@ const WaterProjectDashboard = () => {
 
   const initializeMap3 = async (organizationLabel) => {
     if (!organizationLabel || !projectName || !projectId) return;
-    console.log(selectedFeature.properties.MWS_UID, "map 3 com please");
 
     // --- Initialize base map immediately ---
     const baseLayer = new TileLayer({
@@ -1379,18 +1325,30 @@ const WaterProjectDashboard = () => {
   };
 
   useEffect(() => {
-    if (view === "map" && organization) {
+    if (
+      view === "map" &&
+      organization &&
+      geoData &&
+      zoiFeatures.length &&
+      mwsGeoData
+    ) {
+      if (mapRef1.current) mapRef1.current.setTarget(null);
+      if (mapRef2.current) mapRef2.current.setTarget(null);
+      if (mapRef3.current) mapRef3.current.setTarget(null);
+
       if (mapElement1.current) initializeMap1();
       if (mapElement2.current) initializeMap2();
       if (mapElement3.current) initializeMap3(organization.label);
     }
-
-    return () => {
-      if (mapRef1.current) mapRef1.current.setTarget(null);
-      if (mapRef2.current) mapRef2.current.setTarget(null);
-      if (mapRef3.current) mapRef3.current.setTarget(null);
-    };
-  }, [view, geoData, projectName, projectId, organization]);
+  }, [
+    view,
+    organization,
+    geoData,
+    zoiFeatures,
+    mwsGeoData,
+    selectedFeature,
+    selectedWaterbody,
+  ]);
 
   useEffect(() => {
     if (selectedWaterbody) {
@@ -1426,6 +1384,7 @@ const WaterProjectDashboard = () => {
       return;
     }
 
+    // --- Zoom to the selected waterbody
     const extent = geometry.getExtent();
     view.fit(extent, {
       duration: 1000,
@@ -1433,25 +1392,34 @@ const WaterProjectDashboard = () => {
       maxZoom: 18,
     });
 
+    // --- Reset all waterbodies to blue
     if (waterBodyLayer) {
       const source = waterBodyLayer.getSource();
       const features = source.getFeatures();
 
-      features.forEach((feature) => feature.setStyle(null));
+      features.forEach((f) => {
+        f.setStyle(
+          new Style({
+            stroke: new Stroke({ color: "blue", width: 3 }),
+          })
+        );
+      });
 
+      // --- Highlight only the selected waterbody in red
       if (
         waterbody.featureIndex !== undefined &&
         features[waterbody.featureIndex]
       ) {
         features[waterbody.featureIndex].setStyle(
           new Style({
-            stroke: new Stroke({ color: "#FF0000", width: 5 }),
-            fill: new Fill({ color: "rgba(255, 0, 0, 0.5)" }),
+            stroke: new Stroke({ color: "#FF0000", width: 4 }),
+            fill: new Fill({ color: "rgba(255, 0, 0, 0.2)" }),
           })
         );
       }
     }
 
+    // Disable zoom interactions if you want to lock map view
     targetMapRef.current.getInteractions().forEach((interaction) => {
       if (
         interaction instanceof MouseWheelZoom ||
@@ -2763,7 +2731,7 @@ const WaterProjectDashboard = () => {
                       water_rej_data={geoData}
                       mwsFeature={selectedMWSFeature}
                     />
-                    <Typography fontSize={14} color="#333" mt={14}>
+                    <Typography fontSize={14} color="#333" mt={18}>
                       <b>Black line</b> represents the year of intervention.
                     </Typography>
                   </Box>
@@ -2774,7 +2742,7 @@ const WaterProjectDashboard = () => {
                         width: "100%",
                         maxWidth: "700px",
                         height: "400px",
-                        marginTop: "5%",
+                        marginTop: "8%",
                       }}
                     >
                       <PrecipitationStackChart feature={selectedMWSFeature} />
