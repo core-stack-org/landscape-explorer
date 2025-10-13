@@ -48,6 +48,7 @@ import DoubleClickZoom from "ol/interaction/DoubleClickZoom";
 import { useLocation } from "react-router-dom";
 import PlantationStackBarGraph from "./plantationStackBarGraph.jsx";
 import PlantationNDVIChart from "./plantationNDVIChart.jsx";
+import SoilPropertiesSection from "./soilPropertiesSection.jsx";
 const usePlantationData = (orgName, projectName, projectId) => {
   const [geoData, setGeoData] = useState(null);
 
@@ -195,6 +196,7 @@ const PlantationProjectDashboard = () => {
         maxZoom: 40,
       }),
     });
+    baseLayerRef.current = baseLayer;
 
     const view = new View({
       projection: "EPSG:3857",
@@ -218,12 +220,10 @@ const PlantationProjectDashboard = () => {
       element: popupContainer.current,
       positioning: "top-center",
       stopEvent: false,
-      offset: [0, -10], // icon ke upar thoda gap
+      offset: [0, -10],
     });
-
     map.addOverlay(popupOverlay.current);
 
-    // Disable unwanted zoom interactions if needed
     map.getInteractions().forEach((interaction) => {
       if (
         interaction instanceof MouseWheelZoom ||
@@ -233,18 +233,14 @@ const PlantationProjectDashboard = () => {
         interaction.setActive(false);
       }
     });
-  };
 
-  const addPlantationLayer = (map, fitExtent = false) => {
     if (!geoData?.features) return;
 
-    // Remove old layer
     if (plantationLayerRef.current) {
       map.removeLayer(plantationLayerRef.current);
       plantationLayerRef.current = null;
     }
 
-    // Sanitize GeoJSON
     const safeData = sanitizeGeoJSON(geoData);
 
     const vectorSource = new VectorSource({
@@ -254,7 +250,6 @@ const PlantationProjectDashboard = () => {
       }),
     });
 
-    // Style function for polygon + marker
     const plantationStyle = (feature) => {
       const styles = [
         new Style({
@@ -266,13 +261,19 @@ const PlantationProjectDashboard = () => {
       const geometry = feature.getGeometry();
       if (geometry) {
         let center;
-        if (geometry.getType() === "Polygon") {
-          center = geometry.getInteriorPoint().getCoordinates();
-        } else if (geometry.getType() === "MultiPolygon") {
-          center = geometry.getInteriorPoints().getFirstCoordinate();
-        } else {
-          const extent = geometry.getExtent();
-          center = [(extent[0] + extent[2]) / 2, (extent[1] + extent[3]) / 2];
+        switch (geometry.getType()) {
+          case "Polygon":
+            center = geometry.getInteriorPoint().getCoordinates();
+            break;
+          case "MultiPolygon":
+            center = geometry.getInteriorPoints().getFirstCoordinate();
+            break;
+          case "Point":
+            center = geometry.getCoordinates();
+            break;
+          default:
+            const extent = geometry.getExtent();
+            center = [(extent[0] + extent[2]) / 2, (extent[1] + extent[3]) / 2];
         }
 
         styles.push(
@@ -289,25 +290,20 @@ const PlantationProjectDashboard = () => {
       return styles;
     };
 
-    // Layer
     const plantationLayer = new VectorLayer({
       source: vectorSource,
       style: plantationStyle,
     });
-
     plantationLayer.setZIndex(100);
     map.addLayer(plantationLayer);
     plantationLayerRef.current = plantationLayer;
 
-    // Fit extent first time
+    // Fit extent
     const extent = vectorSource.getExtent();
-    if (fitExtent && extent.every(Number.isFinite)) {
-      map.getView().fit(extent, { padding: [50, 50, 50, 50], maxZoom: 18 });
+    if (extent.every(Number.isFinite)) {
+      view.fit(extent, { padding: [50, 50, 50, 50], maxZoom: 18 });
     }
 
-    // -----------------------------
-    // Make markers clickable like waterBody
-    // -----------------------------
     map.on("pointermove", (evt) => {
       const hit = map.hasFeatureAtPixel(evt.pixel, {
         layerFilter: (layer) => layer === plantationLayer,
@@ -315,25 +311,66 @@ const PlantationProjectDashboard = () => {
       map.getTargetElement().style.cursor = hit ? "pointer" : "";
     });
 
+    const parseDescription = (desc) => {
+      if (!desc) return { Village: "NA", Taluka: "NA" };
+
+      const villageMatch = desc.match(/Village:\s*(.+)/);
+      const talukaMatch = desc.match(/Taluka:\s*(.+)/);
+
+      // Remove trailing parts if present
+      const Village = villageMatch
+        ? villageMatch[1].split("\n")[0].trim()
+        : "NA";
+      const Taluka = talukaMatch ? talukaMatch[1].split("\n")[0].trim() : "NA";
+
+      return { Village, Taluka };
+    };
+
     map.on("singleclick", (evt) => {
       let found = false;
+      map.forEachFeatureAtPixel(evt.pixel, (clickedFeature) => {
+        if (!clickedFeature) return;
+        console.log(clickedFeature);
+        const description = clickedFeature.get("description");
+        const { Village, Taluka } = parseDescription(description);
+        const geometry = clickedFeature.getGeometry();
+        let coordinates;
 
-      map.forEachFeatureAtPixel(evt.pixel, (feature) => {
-        const props = feature.getProperties();
-        if (props.farmerName) {
-          setMapClickedPlantation({
-            name: props.farmerName,
-            Village: props.Village || "NA",
-            Taluka: props.Taluka || "NA",
-            pixel: evt.pixel, // important: screen pixel for positioning
-          });
-          found = true;
+        switch (geometry.getType()) {
+          case "Polygon":
+            coordinates = geometry.getInteriorPoint().getCoordinates();
+            break;
+          case "MultiPolygon":
+            coordinates = geometry.getInteriorPoints().getFirstCoordinate();
+            break;
+          case "Point":
+            coordinates = geometry.getCoordinates();
+            break;
+          default:
+            const ext = geometry.getExtent();
+            coordinates = [(ext[0] + ext[2]) / 2, (ext[1] + ext[3]) / 2];
         }
+        const data = {
+          name: clickedFeature.get("Name") || "NA", // or farmerName if needed
+          Village: clickedFeature.get("Village") || "NA",
+          Taluka:
+            clickedFeature.get("Taluka") || clickedFeature.get("block") || "NA",
+          coordinates,
+        };
+
+        console.log("Clicked plantation data:", data);
+
+        setMapClickedPlantation({
+          name: clickedFeature.get("Name") || "NA",
+          Village,
+          Taluka,
+          coordinates: coordinates,
+          pixel: evt.pixel,
+        });
+        found = true;
       });
 
-      if (!found) {
-        setMapClickedPlantation(null);
-      }
+      if (!found) setMapClickedPlantation(null);
     });
   };
 
@@ -347,12 +384,12 @@ const PlantationProjectDashboard = () => {
     }
   }, [view]);
 
-  useEffect(() => {
-    if (mapRef1.current && geoData?.features && view === "map") {
-      addPlantationLayer(mapRef1.current, !hasZoomedRef.current);
-      hasZoomedRef.current = true;
-    }
-  }, [geoData, view]);
+  // useEffect(() => {
+  //   if (mapRef1.current && geoData?.features && view === "map") {
+  //     initializeMap(mapRef1.current, !hasZoomedRef.current);
+  //     hasZoomedRef.current = true;
+  //   }
+  // }, [geoData, view]);
 
   useEffect(() => {
     if (
@@ -363,74 +400,41 @@ const PlantationProjectDashboard = () => {
     )
       return;
 
-    const olFeature = new GeoJSON().readFeature(selectedFeature, {
+    const map = mapRef1.current;
+    const source = plantationLayerRef.current.getSource();
+
+    // Clear all other features
+    source.clear();
+
+    // Add only the selected feature
+    const singleFeature = new GeoJSON().readFeature(selectedFeature, {
       dataProjection: "EPSG:4326",
       featureProjection: "EPSG:3857",
     });
 
-    const geometry = olFeature.getGeometry();
+    source.addFeature(singleFeature);
+
+    // Style it prominently
+    singleFeature.setStyle(
+      new Style({
+        stroke: new Stroke({ color: "red", width: 3 }),
+        fill: new Fill({ color: "rgba(255,0,0,0.3)" }),
+      })
+    );
+
+    // Zoom to the selected feature
+    const geometry = singleFeature.getGeometry();
     if (geometry) {
       const extent = geometry.getExtent();
       if (extent.every(Number.isFinite)) {
-        mapRef1.current.getView().fit(extent, {
+        map.getView().fit(extent, {
           padding: [50, 50, 50, 50],
           maxZoom: 22,
           duration: 1000,
         });
-
-        // Highlight selected feature
-        const source = plantationLayerRef.current.getSource();
-        source.getFeatures().forEach((f) => {
-          const match =
-            f.get("site_id") === selectedFeature.properties.site_id ||
-            f.get("waterbody_name") ===
-              selectedFeature.properties.waterbody_name;
-          f.setStyle(
-            match
-              ? new Style({
-                  stroke: new Stroke({ color: "red", width: 4 }),
-                  fill: new Fill({ color: "rgba(255,0,0,0.3)" }),
-                })
-              : null
-          );
-        });
       }
     }
   }, [selectedFeature, view]);
-
-  const highlightSelectedFeature = (selectedGeoJsonFeature) => {
-    if (!plantationLayerRef.current || !selectedGeoJsonFeature) return;
-
-    const source = plantationLayerRef.current.getSource();
-    const features = source.getFeatures();
-
-    features.forEach((olFeature, index) => {
-      try {
-        const olFeatureProps = olFeature.getProperties();
-        const selectedProps = selectedGeoJsonFeature.properties;
-
-        let isMatch = false;
-        if (selectedProps && olFeatureProps) {
-          isMatch =
-            olFeatureProps.site_id === selectedProps.site_id ||
-            olFeatureProps.waterbody_name === selectedProps.waterbody_name; // fallback to index if available
-        }
-
-        if (isMatch) {
-          olFeature.setStyle(
-            new Style({
-              stroke: new Stroke({ color: "red", width: 5 }),
-              fill: new Fill({ color: "rgba(255,0,0,0.3)" }),
-            })
-          );
-        } else {
-          olFeature.setStyle(null);
-        }
-      } catch (error) {
-        console.error("Error highlighting feature:", error);
-      }
-    });
-  };
 
   const handlePlantationClick = (row) => {
     if (!geoData?.features) return;
@@ -469,7 +473,7 @@ const PlantationProjectDashboard = () => {
         view.animate({
           center: geometry.getCoordinates(),
           zoom: 35,
-          duration: 800,
+          duration: 0,
         });
       } else {
         view.fit(geometry.getExtent(), {
@@ -478,15 +482,19 @@ const PlantationProjectDashboard = () => {
           maxZoom: 35,
         });
       }
-    }, 500);
+    }, 5);
   };
 
-  const { rows } = useMemo(() => {
-    if (!geoData?.features) return { rows: [] };
+  const { rows, totalArea } = useMemo(() => {
+    if (!geoData?.features) return { rows: [], totalArea: 0 };
+    let totalArea = 0;
 
     const mappedRows = geoData.features.map((feature, index) => {
       const props = feature.properties || {};
       const geometry = feature.geometry || {};
+
+      const area = parseFloat(props.area_ha) || 0;
+      totalArea += area;
 
       let descFields = {};
       if (props.description) {
@@ -558,11 +566,13 @@ const PlantationProjectDashboard = () => {
         coordinates,
         featureIndex: index,
         uid: props.uid || props["UID"] || "NA",
+        area_ha: area,
       };
     });
 
     return {
       rows: mappedRows,
+      totalArea: totalArea.toFixed(2),
     };
   }, [geoData]);
 
@@ -673,15 +683,24 @@ const PlantationProjectDashboard = () => {
   };
 
   const handleMapBoxClick = () => {
-    const matchingRow = rows.find(
-      (row) => row.plantation === mapClickedPlantation.name // renamed
-    );
+    if (!mapClickedPlantation) return;
 
+    // Remove ID in parentheses
+    const cleanName = mapClickedPlantation.name
+      .replace(/\s*\(.*\)$/, "")
+      .trim();
+    console.log("All plantation rows:");
+    console.log("All rows:", rows);
+
+    rows.forEach((row) => console.log(row.farmerName));
+
+    const matchingRow = rows.find((row) => row.farmerName === cleanName);
+    console.log(matchingRow);
     if (matchingRow) {
       console.log("Passing to handlePlantationClick:", matchingRow);
       handlePlantationClick(matchingRow);
     } else {
-      console.warn("No matching plantation row found.");
+      console.warn("No matching plantation row found for:", cleanName);
     }
   };
 
@@ -709,6 +728,12 @@ const PlantationProjectDashboard = () => {
       return 0;
     }
   }
+  useEffect(() => {
+    if (view === "table" && plantationLayerRef.current) {
+      const source = plantationLayerRef.current.getSource();
+      source.getFeatures().forEach((f) => f.setStyle(null)); // reset all styles
+    }
+  }, [view]);
 
   return (
     <Box sx={{ position: "relative" }}>
@@ -823,7 +848,7 @@ const PlantationProjectDashboard = () => {
             >
               <Lightbulb size={94} color="black" />
               Under the project {project?.label}, {totalRows} sites are planted
-              under the ... hectare area.
+              under the {totalArea} hectare area.
             </Typography>
             <TableContainer component={Paper} sx={{ mt: 4, boxShadow: 0 }}>
               <Table>
@@ -905,27 +930,46 @@ const PlantationProjectDashboard = () => {
                     </TableCell>
 
                     {/* Patch suitablity*/}
-                    <TableCell sx={{ cursor: "pointer", userSelect: "none" }}>
-                      <div style={{ display: "flex", alignItems: "center" }}>
-                        Patch Suitability
-                        <span
-                          style={{
-                            marginLeft: 4,
-                            fontWeight: "normal",
-                          }}
-                        ></span>
-                      </div>
+                    <TableCell
+                      sx={{ cursor: "pointer", userSelect: "none" }}
+                      onClick={() => handleSort("patchSuitability")}
+                    >
+                      Patch Suitability
+                      <span
+                        style={{
+                          marginLeft: 4,
+                          fontWeight:
+                            sortField === "patchSuitability"
+                              ? "bold"
+                              : "normal",
+                        }}
+                      >
+                        {sortField === "patchSuitability" && sortOrder === "asc"
+                          ? "🔼"
+                          : "🔽"}
+                      </span>
                     </TableCell>
 
-                    <TableCell sx={{ cursor: "pointer", userSelect: "none" }}>
+                    <TableCell
+                      sx={{ cursor: "pointer", userSelect: "none" }}
+                      onClick={() => handleSort("averageTreeCover")}
+                    >
                       <div style={{ display: "flex", alignItems: "center" }}>
                         Avergae tree cover
                         <span
                           style={{
                             marginLeft: 4,
-                            fontWeight: "normal",
+                            fontWeight:
+                              sortField === "averageTreeCover"
+                                ? "bold"
+                                : "normal",
                           }}
-                        ></span>
+                        >
+                          {sortField === "averageTreeCover" &&
+                          sortOrder === "asc"
+                            ? "🔼"
+                            : "🔽"}
+                        </span>
                       </div>
                     </TableCell>
                   </TableRow>
@@ -1013,7 +1057,10 @@ const PlantationProjectDashboard = () => {
               <Box
                 sx={{
                   position: "relative",
-                  width: { xs: "100%", md: "65%" },
+                  width: {
+                    xs: "100%",
+                    md: selectedPlantation ? "65%" : "100%",
+                  },
                 }}
               >
                 <div
@@ -1023,6 +1070,7 @@ const PlantationProjectDashboard = () => {
                     width: "100%",
                     border: "1px solid #ccc",
                     borderRadius: "5px",
+                    position: "relative",
                   }}
                 />
 
@@ -1066,75 +1114,83 @@ const PlantationProjectDashboard = () => {
                       fontWeight={800}
                     >
                       Area (in hectare):{" "}
-                      {(selectedPlantation?.areaOred || 0).toFixed(2)} hectares
+                      {(selectedFeature.properties?.area_ha || 0).toFixed(2)}{" "}
+                      hectares
                     </Typography>
                   </Box>
                 )}
 
                 {/* Zoom Controls */}
-                {!selectedPlantation && (
-                  <Box
-                    sx={{
-                      position: "absolute",
-                      top: 80,
-                      right: 16,
-                      display: "flex",
-                      flexDirection: "column",
-                      gap: 1,
-                      zIndex: 1100,
-                    }}
-                  >
-                    {["+", "–"].map((sign) => (
-                      <button
-                        key={sign}
-                        style={{
-                          backgroundColor: "#fff",
-                          border: "1px solid #ccc",
-                          borderRadius: "4px",
-                          width: "40px",
-                          height: "40px",
-                          fontSize: "20px",
-                          cursor: "pointer",
-                        }}
-                        onClick={() => {
-                          const view = mapRef1.current?.getView();
-                          const delta = sign === "+" ? 1 : -1;
-                          view?.animate({
-                            zoom: view.getZoom() + delta,
-                            duration: 300,
-                          });
-                        }}
-                      >
-                        {sign}
-                      </button>
-                    ))}
-                  </Box>
-                )}
+
+                <Box
+                  sx={{
+                    position: "absolute",
+                    top: 16,
+                    right: 16,
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 1,
+                    zIndex: 1100,
+                  }}
+                >
+                  {["+", "–"].map((sign) => (
+                    <button
+                      key={sign}
+                      style={{
+                        backgroundColor: "#fff",
+                        border: "1px solid #ccc",
+                        borderRadius: "4px",
+                        width: "40px",
+                        height: "40px",
+                        fontSize: "20px",
+                        cursor: "pointer",
+                      }}
+                      onClick={() => {
+                        const view = mapRef1.current?.getView();
+                        const delta = sign === "+" ? 1 : -1;
+                        view?.animate({
+                          zoom: view.getZoom() + delta,
+                          duration: 300,
+                        });
+                      }}
+                    >
+                      {sign}
+                    </button>
+                  ))}
+                </Box>
               </Box>
               {mapClickedPlantation && !selectedPlantation && (
                 <Box
                   sx={{
                     position: "absolute",
-                    right: 100,
-                    top: 100,
-                    width: 500,
-                    padding: 3,
-                    background: "#f9fafb",
-                    boxShadow: "0px 4px 12px rgba(0, 0, 0, 0.05)",
+                    top: mapClickedPlantation.pixel[1] - 0, // little above marker
+                    left: mapClickedPlantation.pixel[0] + 15, // slight offset to right
+                    transform: "translate(-50%, -100%)",
+                    width: 250,
+                    padding: 2,
+                    background: "#ffffff",
+                    boxShadow: "0px 4px 16px rgba(0, 0, 0, 0.15)",
                     borderRadius: 2,
                     border: "1px solid #e0e0e0",
                     display: "flex",
                     flexDirection: "column",
-                    gap: 1.5,
+                    gap: 1,
                     cursor: "pointer",
+                    transition: "all 0.2s ease-in-out",
+                    "&:hover": {
+                      boxShadow: "0px 6px 20px rgba(0,0,0,0.25)",
+                      transform: "translate(-50%, -102%)",
+                      borderColor: "#1976d2",
+                    },
+                    zIndex: 9999,
                   }}
                   onClick={handleMapBoxClick}
                 >
                   <Typography
-                    variant="h6"
+                    variant="subtitle1"
                     fontWeight={700}
                     sx={{
-                      color: "#333",
+                      color: "#1976d2",
                       borderBottom: "1px solid #ddd",
                       pb: 1,
                     }}
@@ -1175,19 +1231,30 @@ const PlantationProjectDashboard = () => {
                       {mapClickedPlantation.Taluka ?? "NA"}
                     </Typography>
                   </Box>
+                  <Typography
+                    variant="body2"
+                    sx={{
+                      mt: 1,
+                      color: "#1976d2",
+                      fontWeight: 600,
+                      textAlign: "right",
+                    }}
+                  >
+                    View details →
+                  </Typography>
                 </Box>
               )}
               {/* Charts Section */}
-              <Box
-                sx={{
-                  width: { xs: "100%", md: "45%" },
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: 4,
-                  alignItems: "center",
-                }}
-              >
-                {selectedPlantation && (
+              {selectedPlantation && (
+                <Box
+                  sx={{
+                    width: { xs: "100%", md: "45%" },
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 6,
+                    alignItems: "center",
+                  }}
+                >
                   <Box
                     sx={{ width: "100%", maxWidth: "700px", height: "400px" }}
                   >
@@ -1195,6 +1262,11 @@ const PlantationProjectDashboard = () => {
                       plantation={selectedPlantation}
                       plantationData={geoData}
                     />
+                  </Box>
+
+                  <Box
+                    sx={{ width: "100%", maxWidth: "700px", height: "400px" }}
+                  >
                     <PlantationNDVIChart
                       plantation={selectedPlantation}
                       plantationData={geoData}
@@ -1210,9 +1282,10 @@ const PlantationProjectDashboard = () => {
                       ]}
                     />
                   </Box>
-                )}
-              </Box>
+                </Box>
+              )}
             </Box>
+            <SoilPropertiesSection feature={selectedFeature} />
           </Box>
         ) : null}
       </Box>

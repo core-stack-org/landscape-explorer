@@ -27,9 +27,11 @@ ChartJS.register(
   Title
 );
 
-const PlantationStackBarGraph = ({ plantation, plantationData }) => {
-  console.log(plantation);
-  console.log(plantationData);
+const PlantationStackBarGraph = ({
+  plantation,
+  plantationData,
+  selectedFeature,
+}) => {
   const features = plantationData?.features || [];
   const farmerId = plantation?.farmerId;
 
@@ -39,9 +41,6 @@ const PlantationStackBarGraph = ({ plantation, plantationData }) => {
     return desc.includes(`Farmer ID: ${farmerId}`);
   });
 
-  console.log("Selected plantation farmerId:", farmerId);
-  console.log("Matched feature:", matchedFeature);
-
   let lulcData = [];
   try {
     if (matchedFeature?.properties?.LULC) {
@@ -50,11 +49,34 @@ const PlantationStackBarGraph = ({ plantation, plantationData }) => {
   } catch (e) {
     console.error("Failed to parse LULC:", e);
   }
-  console.log("LULC data by year:");
-  lulcData.forEach((yearEntry) => {
-    console.log(`Year ${yearEntry.year}:`, yearEntry);
-  });
 
+  const groups = {
+    "Water Indicators": [
+      { key: "kharif", label: "Kharif ", color: "#74CCF4" },
+      { key: "rabi", label: "Kharif Rabi", color: "#1ca3ec" },
+      { key: "zaid", label: "Kharif Rabi Zaid", color: "#0f5e9c" },
+    ],
+    "Crop Indicators": [
+      { key: "single_kharif", label: "Single Kharif", color: "#BAD93E" },
+      {
+        key: "single_non_kharif",
+        label: "Single Non-Kharif",
+        color: "#f59d22",
+      },
+      { key: "double_cropping", label: "Double Cropping", color: "#FF9371" },
+      { key: "triple_cropping", label: "Triple Cropping", color: "#b3561d" },
+    ],
+    "Other Vegetation": [
+      { key: "tree", label: "Tree/Forest", color: "#38761d" },
+      { key: "shrubs", label: "Shrubs/Scrubs", color: "#eaa4f0" },
+    ],
+    "Non-Vegetation": [
+      { key: "barren_land", label: "Barren", color: "#A9A9A9" },
+      { key: "builtup", label: "Built-up", color: "#ff0000" },
+    ],
+  };
+
+  console.log(matchedFeature);
   const categories = {
     "1.0": { label: "Built-up", color: "#ff0000" },
     "2.0": { label: "Water in Kharif", color: "#74CCF4" },
@@ -75,12 +97,18 @@ const PlantationStackBarGraph = ({ plantation, plantationData }) => {
     ([key, { label, color }]) => ({
       label,
       backgroundColor: color,
-      data: lulcData.map((row) => (row[key] ? row[key] * 100 : 0)), // convert to %
+      data: lulcData.map((row) => row[key] || 0), // raw area (ha)
       stack: "landUse",
     })
   );
 
-  console.log(datasets);
+  const maxLulcSum = Math.max(
+    ...lulcData.map((row) =>
+      Object.keys(categories).reduce((sum, key) => sum + (row[key] || 0), 0)
+    )
+  );
+
+  const totalArea = Number(selectedFeature?.properties?.area_ha || 0);
 
   const data = { labels: years, datasets };
 
@@ -88,7 +116,7 @@ const PlantationStackBarGraph = ({ plantation, plantationData }) => {
     maintainAspectRatio: false,
     responsive: true,
     plugins: {
-      legend: { position: "top" },
+      legend: { display: false },
       title: {
         display: true,
         text: "Plantation Land Use Over Time",
@@ -98,16 +126,46 @@ const PlantationStackBarGraph = ({ plantation, plantationData }) => {
       x: { stacked: true, title: { display: true, text: "Year" } },
       y: {
         stacked: true,
-        title: { display: true, text: "Land Use (%)" },
+        title: { display: true, text: `Area (ha)` },
         min: 0,
-        max: 100,
-        ticks: { callback: (value) => `${value}%` },
+        max: maxLulcSum.toFixed(2),
+        ticks: {
+          callback: (value) => `${value} ha`,
+        },
       },
     },
   };
 
   return (
-    <div style={{ width: "100%", height: "100%" }}>
+    <div style={{ width: "100%", height: "80%" }}>
+      <div
+        className="custom-legend"
+        style={{ display: "flex", gap: 9, flexWrap: "wrap" }}
+      >
+        {Object.entries(groups).map(([groupName, items]) => (
+          <div key={groupName}>
+            <strong>{groupName}</strong>
+            {items.map((item) => (
+              <div
+                key={item.key}
+                style={{ display: "flex", alignItems: "center", marginLeft: 8 }}
+              >
+                <span
+                  style={{
+                    display: "inline-block",
+                    width: 14,
+                    height: 14,
+                    backgroundColor: item.color,
+                    marginRight: 6,
+                  }}
+                ></span>
+                {item.label}
+              </div>
+            ))}
+          </div>
+        ))}
+      </div>
+
       <Bar options={options} data={data} />
     </div>
   );
