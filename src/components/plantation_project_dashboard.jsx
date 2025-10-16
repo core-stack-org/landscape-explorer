@@ -1137,7 +1137,7 @@ const PlantationProjectDashboard = () => {
                 <div
                   ref={mapElement1}
                   style={{
-                    height: "1000px",
+                    height: "900px",
                     width: "100%",
                     border: "1px solid #ccc",
                     borderRadius: "5px",
@@ -1322,7 +1322,7 @@ const PlantationProjectDashboard = () => {
                     width: { xs: "100%", md: "45%" },
                     display: "flex",
                     flexDirection: "column",
-                    gap: 6,
+                    gap: { xs: 6, sm: 8, md: 10, lg: 12 },
                     alignItems: "center",
                   }}
                 >
@@ -1330,6 +1330,7 @@ const PlantationProjectDashboard = () => {
                     sx={{
                       width: "100%",
                       height: { xs: 300, sm: 350, md: 400 },
+                      marginTop: "1%",
                     }}
                   >
                     <PlantationStackBarGraph
@@ -1342,7 +1343,7 @@ const PlantationProjectDashboard = () => {
                     sx={{
                       width: "100%",
                       height: { xs: 300, sm: 350, md: 400 },
-                      marginTop: "25%",
+                      // marginTop: "25%",
                     }}
                   >
                     <PlantationNDVIChart
