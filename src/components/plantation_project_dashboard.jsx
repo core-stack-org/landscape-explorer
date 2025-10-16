@@ -991,7 +991,11 @@ const PlantationProjectDashboard = () => {
                     {/* Patch suitablity*/}
                     <TableCell
                       align="center"
-                      sx={{ cursor: "pointer", userSelect: "none" }}
+                      sx={{
+                        cursor: "pointer",
+                        userSelect: "none",
+                        fontWeight: "normal",
+                      }}
                       onClick={() => handleSort("patchSuitability")}
                     >
                       Patch Suitability
@@ -1176,7 +1180,7 @@ const PlantationProjectDashboard = () => {
                       color="text.secondary"
                       fontWeight={800}
                     >
-                      Patch Suitabilty:{" "}
+                      Patch Suitability:{" "}
                       {selectedPlantation?.patchSuitability || "NA"}
                     </Typography>
                     <Typography
