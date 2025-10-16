@@ -62,13 +62,13 @@ const PrecipitationStackChart = ({ feature }) => {
         stack: "precip",
       },
       {
-        label: "Rabi",
+        label: "Kharif Rabi",
         data: seasonData.rabi,
         backgroundColor: "#87CEFA",
         stack: "precip",
       },
       {
-        label: "Zaid",
+        label: "Kharif Rabi Zaid",
         data: seasonData.zaid,
         backgroundColor: "#B0E0E6",
         stack: "precip",
