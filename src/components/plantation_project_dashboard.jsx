@@ -536,9 +536,9 @@ const PlantationProjectDashboard = () => {
 
       const interventionYear = "20-21";
       let avgTreeCover = "NA";
-      if (props.LULC) {
+      if (props.IS_LULC) {
         try {
-          const lulcArray = JSON.parse(props.LULC);
+          const lulcArray = JSON.parse(props.IS_LULC);
           const treeValues = lulcArray
             .map((y) => y["6.0"])
             .filter((v) => v !== undefined);
@@ -560,6 +560,7 @@ const PlantationProjectDashboard = () => {
         farmerName: descFields["name"] || "NA",
         farmerId: descFields["farmer id"] || "NA",
         siteId: descFields["site id"] || "NA",
+        area: props.area_ha ? parseFloat(props.area_ha).toFixed(2) : "NA",
         patchScore: props.patch_score ?? "NA",
         patchSuitability: props.patch_suitability || "NA",
         averageTreeCover: avgTreeCover,
@@ -704,30 +705,6 @@ const PlantationProjectDashboard = () => {
     }
   };
 
-  function getAverageTreeCover(lulcString) {
-    if (!lulcString) return 0;
-
-    try {
-      const lulcArray = JSON.parse(lulcString); // parse LULC JSON array
-      let sum = 0;
-      let count = 0;
-
-      lulcArray.forEach((yearObj) => {
-        if (yearObj["6"] !== undefined) {
-          sum += yearObj["6"];
-          count += 1;
-        }
-      });
-
-      if (count === 0) return 0;
-
-      // Convert to percentage and round to 2 decimals
-      return ((sum / count) * 100).toFixed(2) + "%";
-    } catch (err) {
-      console.error("Error parsing LULC:", err);
-      return 0;
-    }
-  }
   useEffect(() => {
     if (view === "table" && plantationLayerRef.current) {
       const source = plantationLayerRef.current.getSource();
@@ -847,15 +824,21 @@ const PlantationProjectDashboard = () => {
               }}
             >
               <Lightbulb size={94} color="black" />
-              Under the project {project?.label}, {totalRows} sites are planted
-              under the {totalArea} hectare area.
+              Under the project {project?.label}, {totalRows} sites have had
+              plantations covering {totalArea} hectares.
             </Typography>
             <TableContainer component={Paper} sx={{ mt: 4, boxShadow: 0 }}>
               <Table>
                 <TableHead sx={{ backgroundColor: "#f5f5f5" }}>
                   <TableRow>
-                    <TableCell>
-                      <div style={{ display: "flex", alignItems: "center" }}>
+                    <TableCell align="center">
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                        }}
+                      >
                         State
                         <IconButton
                           onClick={(e) => handleFilterClick(e, "state")}
@@ -866,8 +849,14 @@ const PlantationProjectDashboard = () => {
                       </div>
                     </TableCell>
 
-                    <TableCell>
-                      <div style={{ display: "flex", alignItems: "center" }}>
+                    <TableCell align="center">
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                        }}
+                      >
                         District
                         <IconButton
                           onClick={(e) => handleFilterClick(e, "district")}
@@ -879,7 +868,13 @@ const PlantationProjectDashboard = () => {
                     </TableCell>
 
                     <TableCell>
-                      <div style={{ display: "flex", alignItems: "center" }}>
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                        }}
+                      >
                         Taluka
                         <IconButton
                           onClick={(e) => handleFilterClick(e, "block")}
@@ -891,7 +886,13 @@ const PlantationProjectDashboard = () => {
                     </TableCell>
 
                     <TableCell>
-                      <div style={{ display: "flex", alignItems: "center" }}>
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                        }}
+                      >
                         GP/Village
                         <IconButton
                           onClick={(e) => handleFilterClick(e, "village")}
@@ -903,7 +904,14 @@ const PlantationProjectDashboard = () => {
                     </TableCell>
 
                     <TableCell>
-                      <div style={{ display: "flex", flexDirection: "column" }}>
+                      <div
+                        style={{
+                          display: "flex",
+                          flexDirection: "column",
+                          justifyContent: "center",
+                          alignItems: "center",
+                        }}
+                      >
                         <span>Farmer's name</span>
                         <TextField
                           variant="standard"
@@ -918,8 +926,33 @@ const PlantationProjectDashboard = () => {
 
                     {/* Intervention year Column */}
                     <TableCell sx={{ cursor: "pointer", userSelect: "none" }}>
-                      <div style={{ display: "flex", alignItems: "center" }}>
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                        }}
+                      >
                         Intervention Year
+                        <span
+                          style={{
+                            marginLeft: 4,
+                            fontWeight: "normal",
+                          }}
+                        ></span>
+                      </div>
+                    </TableCell>
+
+                    {/* Area Column */}
+                    <TableCell sx={{ cursor: "pointer", userSelect: "none" }}>
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                        }}
+                      >
+                        Area (in hectare)
                         <span
                           style={{
                             marginLeft: 4,
@@ -931,6 +964,7 @@ const PlantationProjectDashboard = () => {
 
                     {/* Patch suitablity*/}
                     <TableCell
+                      align="center"
                       sx={{ cursor: "pointer", userSelect: "none" }}
                       onClick={() => handleSort("patchSuitability")}
                     >
@@ -954,7 +988,13 @@ const PlantationProjectDashboard = () => {
                       sx={{ cursor: "pointer", userSelect: "none" }}
                       onClick={() => handleSort("averageTreeCover")}
                     >
-                      <div style={{ display: "flex", alignItems: "center" }}>
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                        }}
+                      >
                         Avergae tree cover
                         <span
                           style={{
@@ -983,14 +1023,19 @@ const PlantationProjectDashboard = () => {
                       sx={{ cursor: "pointer" }}
                       onClick={() => handlePlantationClick(row)}
                     >
-                      <TableCell>{row.state}</TableCell>
-                      <TableCell>{row.district}</TableCell>
-                      <TableCell>{row.block}</TableCell>
-                      <TableCell>{row.village}</TableCell>{" "}
-                      <TableCell>{row.farmerName}</TableCell>
-                      <TableCell>2020-21</TableCell>
-                      <TableCell>{row.patchSuitability}</TableCell>
-                      <TableCell>{row.averageTreeCover}</TableCell>
+                      <TableCell align="center">{row.state}</TableCell>
+                      <TableCell align="center">{row.district}</TableCell>
+                      <TableCell align="center">{row.block}</TableCell>
+                      <TableCell align="center">{row.village}</TableCell>{" "}
+                      <TableCell align="center">{row.farmerName}</TableCell>
+                      <TableCell align="center">2020-21</TableCell>
+                      <TableCell align="center">{row.area}</TableCell>
+                      <TableCell align="center">
+                        {row.patchSuitability}
+                      </TableCell>
+                      <TableCell align="center">
+                        {row.averageTreeCover}
+                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>

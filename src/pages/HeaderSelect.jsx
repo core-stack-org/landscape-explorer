@@ -150,7 +150,12 @@ const HeaderSelect = ({ setView }) => {
     sessionStorage.setItem("selectedProject", JSON.stringify(option));
     setDashboardLocked(true);
     if (setView) setView("table");
-    if (option?.value) navigate(`/dashboard/${option.value}`);
+
+    if (option?.value) {
+      navigate(`/dashboard/${option.value}`);
+
+      window.location.reload();
+    }
   };
 
   // ----------------- Popstate / Back button -----------------

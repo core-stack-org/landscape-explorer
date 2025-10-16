@@ -11,37 +11,37 @@ import { GiGroundSprout } from "react-icons/gi";
 
 const propertyGroups = {
   Climate: [
-    "Annual Precipitation (mm)",
+    "Annual Precipitation (mm/yr)",
     "Aridity Index",
     "Mean Annual Temperature (°C)",
-    "Reference ET (mm/day)",
+    "Reference Evapotranspiration (mm/yr)",
   ],
   Soil: [
     "Topsoil Bulk Density (kg/dm3)",
-    "Topsoil CEC (cmol/kg)",
-    "Topsoil Organic Carbon (%)",
+    "Topsoil Cation Exchange Capacity (cmol/kg)",
+    "Topsoil Organic Carbon (% weight)",
     "Topsoil Texture",
     "Topsoil pH",
     "Subsoil Bulk Density (kg/dm3)",
-    "Subsoil CEC (cmol/kg)",
-    "Subsoil Organic Carbon (%)",
+    "Subsoil Cation Exchange Capacity (cmol/kg)",
+    "Subsoil Organic Carbon (% weight)",
     "Subsoil Texture",
     "Subsoil pH",
     "Available Water Capacity (mm/m)",
-    "Drainage Class",
+    "Soil Drainage",
   ],
   Topography: ["Elevation (m)", "Slope (°)", "Aspect (°)"],
   Socioeconomic: [
-    "Distance to Drainage (m)",
-    "Distance to Road (m)",
-    "Distance to Settlement (m)",
+    "Distance to Drainage Lines (m)",
+    "Distance to Roads (m)",
+    "Distance to Settlements (m)",
   ],
   Ecology: [],
 };
 
 const groupGradients = {
-  Climate: "linear-gradient(135deg, #81d4fa, #e1f5fe)", // blue
-  Soil: "linear-gradient(135deg, #d7ccc8, #efebe9)", // brown/earthy
+  Climate: "linear-gradient(135deg, #81d4fa, #e1f5fe)",
+  Soil: "linear-gradient(135deg, #d7ccc8, #efebe9)",
   Topography: "linear-gradient(135deg, #a5d6a7, #c8e6c9)", // green
   Ecology: "linear-gradient(135deg, #fff9c4, #fffde7)", // yellowish
   Socioeconomic: "linear-gradient(135deg, #ce93d8, #f3e5f5)", // purple
@@ -61,19 +61,19 @@ const SoilPropertiesSection = ({ feature }) => {
   const soilSubGroups = {
     Topsoil: [
       "Topsoil Bulk Density (kg/dm3)",
-      "Topsoil CEC (cmol/kg)",
-      "Topsoil Organic Carbon (%)",
+      "Topsoil Cation Exchange Capacity (cmol/kg)",
+      "Topsoil Organic Carbon (% weight)",
       "Topsoil Texture",
       "Topsoil pH",
     ],
     Subsoil: [
       "Subsoil Bulk Density (kg/dm3)",
-      "Subsoil CEC (cmol/kg)",
-      "Subsoil Organic Carbon (%)",
+      "Subsoil Cation Exchange Capacity (cmol/kg)",
+      "Subsoil Organic Carbon (% weight)",
       "Subsoil Texture",
       "Subsoil pH",
     ],
-    Others: ["Available Water Capacity (mm/m)", "Drainage Class"],
+    Others: ["Available Water Capacity (mm/m)", "Soil Drainage"],
   };
 
   return (

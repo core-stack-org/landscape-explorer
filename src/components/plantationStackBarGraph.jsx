@@ -43,8 +43,8 @@ const PlantationStackBarGraph = ({
 
   let lulcData = [];
   try {
-    if (matchedFeature?.properties?.LULC) {
-      lulcData = JSON.parse(matchedFeature.properties.LULC);
+    if (matchedFeature?.properties?.IS_LULC) {
+      lulcData = JSON.parse(matchedFeature.properties.IS_LULC);
     }
   } catch (e) {
     console.error("Failed to parse LULC:", e);
