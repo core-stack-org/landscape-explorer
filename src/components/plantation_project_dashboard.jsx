@@ -632,7 +632,7 @@ const PlantationProjectDashboard = () => {
   const filteredRows = rows.filter((row) => {
     const matchesGlobalSearch = Object.keys(row).some((key) => {
       if (!row[key]) return false;
-      if (typeof row[key] === "object") return false; // skip objects like coordinates
+      if (typeof row[key] === "object") return false;
       return row[key]
         .toString()
         .toLowerCase()
@@ -1111,7 +1111,7 @@ const PlantationProjectDashboard = () => {
                 <div
                   ref={mapElement1}
                   style={{
-                    height: "850px",
+                    height: "1000px",
                     width: "100%",
                     border: "1px solid #ccc",
                     borderRadius: "5px",
@@ -1316,6 +1316,7 @@ const PlantationProjectDashboard = () => {
                     sx={{
                       width: "100%",
                       height: { xs: 300, sm: 350, md: 400 },
+                      marginTop: "25%",
                     }}
                   >
                     <PlantationNDVIChart
