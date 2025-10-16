@@ -11,7 +11,7 @@ export default async function getStates() {
             },
         })
         response = await response.json()
-        console.log(response)
+        //console.log(response)
         return response
     } catch(err){
         console.log(err);
