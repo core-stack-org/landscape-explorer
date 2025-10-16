@@ -1313,8 +1313,8 @@ const PlantationProjectDashboard = () => {
                     sx={{
                       width: "100%",
                       maxWidth: "700px",
-                      height: "400px",
-                      marginTop: "3%",
+                      height: "350px",
+                      marginTop: "10%",
                     }}
                   >
                     <PlantationNDVIChart
