@@ -592,20 +592,7 @@ const KYLDashboardPage = () => {
   const fetchDataJson = async () => {
     try {
       const response = await fetch(
-        `${process.env.REACT_APP_API_URL}/download_kyl_data?state=${state.label
-          .toLowerCase()
-          .replace(/\s*\(\s*/g, "_")
-          .replace(/\s*\)\s*/g, "")
-          .replace(/\s+/g, "_")}
-        &district=${district.label
-          .toLowerCase()
-          .replace(/\s*\(\s*/g, "_")
-          .replace(/\s*\)\s*/g, "")
-          .replace(/\s+/g, "_")}&block=${block.label
-          .toLowerCase()
-          .replace(/\s*\(\s*/g, "_")
-          .replace(/\s*\)\s*/g, "")
-          .replace(/\s+/g, "_")}&file_type=json`
+        `${process.env.REACT_APP_API_URL}/download_kyl_data?state=${state.label.toLowerCase().replace(/\s*\(\s*/g, "_").replace(/\s*\)\s*/g, "").replace(/\s+/g, "_")}&district=${district.label.toLowerCase().replace(/\s*\(\s*/g, "_").replace(/\s*\)\s*/g, "").replace(/\s+/g, "_")}&block=${block.label.toLowerCase().replace(/\s*\(\s*/g, "_").replace(/\s*\)\s*/g, "").replace(/\s+/g, "_")}&file_type=json`
       );
 
       if (!response.ok) {
