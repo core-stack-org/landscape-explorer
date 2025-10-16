@@ -1152,11 +1152,12 @@ const WaterProjectDashboard = () => {
     // --- Fetch MWS boundary from WFS (server-side filtered) ---
     const typeName = `waterrej:WaterRejapp_mws_${projectName}_${projectId}`;
     const mwsId = selectedFeature.properties.MWS_UID;
-
+    console.log(mwsId);
     // Always take first two parts of MWS_UID
     const uidParts = mwsId?.split("_") || [];
     const uidPrefix =
       uidParts.length >= 2 ? `${uidParts[0]}_${uidParts[1]}` : mwsId;
+    console.log(uidParts);
 
     const wfsUrl =
       "https://geoserver.core-stack.org:8443/geoserver/waterrej/ows?" +
