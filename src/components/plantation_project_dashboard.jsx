@@ -254,7 +254,7 @@ const PlantationProjectDashboard = () => {
       const styles = [
         new Style({
           stroke: new Stroke({ color: "red", width: 2 }),
-          fill: new Fill({ color: "rgba(34,139,34,0.25)" }),
+          // fill: new Fill({ color: "rgba(34,139,34,0.25)" }),
         }),
       ];
 
@@ -417,8 +417,8 @@ const PlantationProjectDashboard = () => {
     // Style it prominently
     singleFeature.setStyle(
       new Style({
-        stroke: new Stroke({ color: "red", width: 3 }),
-        fill: new Fill({ color: "rgba(255,0,0,0.3)" }),
+        stroke: new Stroke({ color: "green", width: 3 }),
+        // fill: new Fill({ color: "rgba(255,0,0,0.3)" }),
       })
     );
 
