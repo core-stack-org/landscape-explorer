@@ -2442,14 +2442,14 @@ const WaterProjectDashboard = () => {
                       fontWeight={800}
                     >
                       Silt Removed: {selectedWaterbody?.siltRemoved || "silt"}{" "}
-                      cubic metre
+                      cubic metres
                     </Typography>
                     <Typography
                       variant="body2"
                       color="text.secondary"
                       fontWeight={800}
                     >
-                      Area (in hectare):{" "}
+                      Area (in hectares):{" "}
                       {(selectedWaterbody?.areaOred || 0).toFixed(2)} hectares
                     </Typography>
                   </Box>
