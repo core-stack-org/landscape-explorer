@@ -2858,7 +2858,9 @@ const WaterProjectDashboard = () => {
                         fontWeight={800}
                       >
                         ZOI Area:{" "}
-                        {zoiArea !== null ? `${zoiArea.toFixed(2)} ha` : "NA"}
+                        {zoiArea !== null
+                          ? `${zoiArea.toFixed(2)} hectares`
+                          : "NA"}
                       </Typography>
                     </Box>
 

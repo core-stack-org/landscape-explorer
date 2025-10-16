@@ -74,7 +74,7 @@ const CroppingIntensityStackChart = ({ zoiFeatures, waterbody }) => {
       legend: { position: "bottom" },
       title: {
         display: true,
-        text: `Cropping Intensity by Year (Area in ha)`,
+        text: `Cropping Intensity by Year (Area in hectares)`,
       },
     },
     scales: {
