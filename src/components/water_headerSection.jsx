@@ -332,37 +332,35 @@ const HeaderSelect = ({
                 noOptionsMessage={() => "No projects available"}
               />
             </Box>
-            {dashboardLocked && (
-              <Box sx={{ ml: "auto" }}>
-                <Button
-                  variant="outlined"
-                  startIcon={<ArrowBackIosNewIcon />}
-                  onClick={() => {
-                    sessionStorage.removeItem("selectedProject");
+            <Box sx={{ ml: "auto" }}>
+              <Button
+                variant="outlined"
+                startIcon={<ArrowBackIosNewIcon />}
+                onClick={() => {
+                  sessionStorage.removeItem("selectedProject");
 
-                    setDashboardLocked(false);
-                    if (setView) setView("table");
-                  }}
-                  sx={{
-                    color: "#333",
-                    borderColor: "#bbb",
-                    borderRadius: "8px",
-                    textTransform: "none",
-                    fontWeight: 500,
-                    px: 2.5,
-                    py: 1,
-                    ml: "auto",
-                    backgroundColor: "#fff",
-                    "&:hover": {
-                      backgroundColor: "#f0f0f0",
-                      borderColor: "#999",
-                    },
-                  }}
-                >
-                  Change Project
-                </Button>
-              </Box>
-            )}
+                  setDashboardLocked(false);
+                  if (setView) setView("table");
+                }}
+                sx={{
+                  color: "#333",
+                  borderColor: "#bbb",
+                  borderRadius: "8px",
+                  textTransform: "none",
+                  fontWeight: 500,
+                  px: 2.5,
+                  py: 1,
+                  ml: "auto",
+                  backgroundColor: "#fff",
+                  "&:hover": {
+                    backgroundColor: "#f0f0f0",
+                    borderColor: "#999",
+                  },
+                }}
+              >
+                Change Project
+              </Button>
+            </Box>
           </Toolbar>
         </Container>
       </AppBar>
