@@ -2741,8 +2741,8 @@ const WaterProjectDashboard = () => {
                       sx={{
                         width: "100%",
                         maxWidth: "700px",
-                        height: "400px",
-                        marginTop: "8%",
+                        height: "350px",
+                        marginTop: "15%",
                       }}
                     >
                       <PrecipitationStackChart feature={selectedMWSFeature} />
