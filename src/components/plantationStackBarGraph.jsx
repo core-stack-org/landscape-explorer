@@ -140,7 +140,7 @@ const PlantationStackBarGraph = ({
     <div style={{ width: "100%", height: "80%" }}>
       <div
         className="custom-legend"
-        style={{ display: "flex", gap: 8, flexWrap: "wrap" }}
+        style={{ display: "flex", fontSize: 12, gap: 16, marginLeft: 25 }}
       >
         {Object.entries(groups).map(([groupName, items]) => (
           <div key={groupName}>

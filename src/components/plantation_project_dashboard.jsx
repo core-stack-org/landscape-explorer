@@ -133,7 +133,6 @@ const PlantationProjectDashboard = () => {
     const storedOrg = sessionStorage.getItem("selectedOrganization");
     const storedProject = sessionStorage.getItem("selectedProject");
 
-    // Only update if something changed
     if (storedOrg) {
       const parsedOrg = JSON.parse(storedOrg);
       setOrganization((prev) =>
@@ -153,7 +152,7 @@ const PlantationProjectDashboard = () => {
     }
   }, [location.key]);
 
-  function sanitizeGeoJSON(geojson) {
+  function filteredGeoJSON(geojson) {
     if (!geojson || !geojson.features)
       return { type: "FeatureCollection", features: [] };
 
@@ -241,7 +240,7 @@ const PlantationProjectDashboard = () => {
       plantationLayerRef.current = null;
     }
 
-    const safeData = sanitizeGeoJSON(geoData);
+    const safeData = filteredGeoJSON(geoData);
 
     const vectorSource = new VectorSource({
       features: new GeoJSON().readFeatures(safeData, {
@@ -384,12 +383,46 @@ const PlantationProjectDashboard = () => {
     }
   }, [view]);
 
-  // useEffect(() => {
-  //   if (mapRef1.current && geoData?.features && view === "map") {
-  //     initializeMap(mapRef1.current, !hasZoomedRef.current);
-  //     hasZoomedRef.current = true;
-  //   }
-  // }, [geoData, view]);
+  useEffect(() => {
+    const map = mapRef1.current;
+    const plantationLayer = plantationLayerRef.current;
+
+    if (!map || !plantationLayer) return;
+
+    const source = plantationLayer.getSource();
+
+    if (view === "table") {
+      setSelectedPlantation(null);
+      setSelectedFeature(null);
+      setMapClickedPlantation(null);
+
+      if (source) source.clear();
+      map.getOverlays().clear();
+    }
+
+    if (view === "map" && geoData?.features?.length) {
+      const format = new GeoJSON();
+      const features = format.readFeatures(geoData, {
+        featureProjection: "EPSG:3857",
+      });
+
+      if (source) {
+        source.clear();
+        source.addFeatures(features);
+      }
+
+      if (!selectedFeature && features.length) {
+        const extent = source.getExtent();
+        if (extent.every(Number.isFinite)) {
+          map.getView().fit(extent, {
+            padding: [50, 50, 50, 50],
+            duration: 1000,
+            maxZoom: 18,
+          });
+        }
+      }
+    }
+  }, [view, geoData, selectedFeature]);
 
   useEffect(() => {
     if (
@@ -403,10 +436,8 @@ const PlantationProjectDashboard = () => {
     const map = mapRef1.current;
     const source = plantationLayerRef.current.getSource();
 
-    // Clear all other features
     source.clear();
 
-    // Add only the selected feature
     const singleFeature = new GeoJSON().readFeature(selectedFeature, {
       dataProjection: "EPSG:4326",
       featureProjection: "EPSG:3857",
@@ -414,7 +445,6 @@ const PlantationProjectDashboard = () => {
 
     source.addFeature(singleFeature);
 
-    // Style it prominently
     singleFeature.setStyle(
       new Style({
         stroke: new Stroke({ color: "green", width: 3 }),
@@ -447,7 +477,6 @@ const PlantationProjectDashboard = () => {
       return;
     }
 
-    // Convert to OL Feature
     const olFeature = new GeoJSON({
       dataProjection: "EPSG:4326",
       featureProjection: "EPSG:3857",
@@ -459,12 +488,10 @@ const PlantationProjectDashboard = () => {
       return;
     }
 
-    // Save state + switch view
     setSelectedPlantation(row);
     setSelectedFeature(feature);
     setView("map");
 
-    // Zoom to that feature (when map is ready)
     setTimeout(() => {
       if (!mapRef1.current) return;
       const view = mapRef1.current.getView();
@@ -639,7 +666,6 @@ const PlantationProjectDashboard = () => {
         .includes(searchText.toLowerCase());
     });
 
-    // Second: your existing filters object per field
     const matchesFilters = Object.keys(filters).every((key) => {
       if (filters[key].length === 0) return true;
       return filters[key].includes(String(row[key]));
@@ -974,7 +1000,7 @@ const PlantationProjectDashboard = () => {
                           marginLeft: 4,
                           fontWeight:
                             sortField === "patchSuitability"
-                              ? "bold"
+                              ? "normal"
                               : "normal",
                         }}
                       >

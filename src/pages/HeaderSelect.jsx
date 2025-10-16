@@ -31,7 +31,6 @@ const HeaderSelect = ({ setView }) => {
     if (isOnDashboard && project) setDashboardLocked(true);
     else setDashboardLocked(false);
 
-    // Load saved org from session
     const savedOrg = sessionStorage.getItem("selectedOrganization");
     if (savedOrg) {
       const parsed = JSON.parse(savedOrg);
@@ -39,11 +38,10 @@ const HeaderSelect = ({ setView }) => {
       if (matched) setOrganization(matched);
     }
 
-    // Load saved project from session
     const savedProj = sessionStorage.getItem("selectedProject");
     if (savedProj) {
       const parsed = JSON.parse(savedProj);
-      setProject(parsed); // validation happens later in fetchProjects
+      setProject(parsed);
     }
   }, [location.pathname, organizationOptions]);
 
@@ -58,8 +56,6 @@ const HeaderSelect = ({ setView }) => {
         label: org.name,
       }));
       setOrganizationOptions(options);
-
-      // Default selection if none
     } catch (error) {
       console.error("Error fetching organizations:", error);
     }
@@ -69,7 +65,6 @@ const HeaderSelect = ({ setView }) => {
     fetchOrganizations();
   }, []);
 
-  // ----------------- Fetch Projects -----------------
   const loginAndGetToken = async () => {
     try {
       const response = await fetch(
@@ -117,7 +112,6 @@ const HeaderSelect = ({ setView }) => {
       }));
       setProjectOptions(options);
 
-      // Match saved project
       const savedProj = sessionStorage.getItem("selectedProject");
       if (savedProj) {
         const parsed = JSON.parse(savedProj);
@@ -134,7 +128,6 @@ const HeaderSelect = ({ setView }) => {
     if (organization) fetchProjects(organization.value);
   }, [organization]);
 
-  // ----------------- Handlers -----------------
   const handleOrganizationChange = (option) => {
     setOrganization(option);
     setProject(null);
@@ -158,7 +151,6 @@ const HeaderSelect = ({ setView }) => {
     }
   };
 
-  // ----------------- Popstate / Back button -----------------
   useEffect(() => {
     const handlePopState = () => {
       if (dashboardLocked) {
@@ -181,7 +173,6 @@ const HeaderSelect = ({ setView }) => {
     menuPortal: (base) => ({ ...base, zIndex: 1300 }),
   };
 
-  // ----------------- Render -----------------
   return (
     <Box
       sx={{ height: "100vh", overflow: "hidden", backgroundColor: "#EAEAEA" }}
