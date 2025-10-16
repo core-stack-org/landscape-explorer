@@ -164,7 +164,13 @@ const SoilPropertiesSection = ({ feature }) => {
                                 fontWeight={700}
                                 sx={{ color: "#388e3c" }}
                               >
-                                {typeof value === "number"
+                                {value === null ||
+                                value === undefined ||
+                                value === "" ||
+                                value === "NA" ||
+                                value === "None"
+                                  ? "Data not available"
+                                  : typeof value === "number"
                                   ? value.toFixed(2)
                                   : String(value)}
                               </Typography>
@@ -227,7 +233,13 @@ const SoilPropertiesSection = ({ feature }) => {
                         fontWeight={700}
                         sx={{ color: "#388e3c" }}
                       >
-                        {typeof value === "number"
+                        {value === null ||
+                        value === undefined ||
+                        value === "" ||
+                        value === "NA" ||
+                        value === "None"
+                          ? "Data not available"
+                          : typeof value === "number"
                           ? value.toFixed(2)
                           : String(value)}
                       </Typography>
