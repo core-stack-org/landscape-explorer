@@ -952,7 +952,7 @@ const PlantationProjectDashboard = () => {
                           justifyContent: "center",
                         }}
                       >
-                        Area (in hectare)
+                        Area (in hectares)
                         <span
                           style={{
                             marginLeft: 4,
@@ -995,7 +995,7 @@ const PlantationProjectDashboard = () => {
                           justifyContent: "center",
                         }}
                       >
-                        Avergae tree cover
+                        Average tree cover (%)
                         <span
                           style={{
                             marginLeft: 4,
@@ -1158,7 +1158,7 @@ const PlantationProjectDashboard = () => {
                       color="text.secondary"
                       fontWeight={800}
                     >
-                      Area (in hectare):{" "}
+                      Area (in hectares):{" "}
                       {(selectedFeature.properties?.area_ha || 0).toFixed(2)}{" "}
                       hectares
                     </Typography>
