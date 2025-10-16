@@ -1310,7 +1310,12 @@ const PlantationProjectDashboard = () => {
                   </Box>
 
                   <Box
-                    sx={{ width: "100%", maxWidth: "700px", height: "400px" }}
+                    sx={{
+                      width: "100%",
+                      maxWidth: "700px",
+                      height: "400px",
+                      marginTop: "3%",
+                    }}
                   >
                     <PlantationNDVIChart
                       plantation={selectedPlantation}
