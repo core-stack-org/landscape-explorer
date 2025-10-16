@@ -154,14 +154,16 @@ const SoilPropertiesSection = ({ feature }) => {
                               <Typography
                                 variant="body2"
                                 color="textSecondary"
-                                fontWeight={500}
+                                fontWeight={700}
+                                fontSize={15}
                                 sx={{ mb: 1 }}
                               >
                                 {key}
                               </Typography>
                               <Typography
                                 variant="h6"
-                                fontWeight={700}
+                                fontWeight={500}
+                                fontSize={18}
                                 sx={{ color: "#388e3c" }}
                               >
                                 {value === null ||
@@ -223,14 +225,16 @@ const SoilPropertiesSection = ({ feature }) => {
                       <Typography
                         variant="body2"
                         color="textSecondary"
-                        fontWeight={500}
+                        fontWeight={700}
+                        fontSize={15}
                         sx={{ mb: 1 }}
                       >
                         {key}
                       </Typography>
                       <Typography
                         variant="h6"
-                        fontWeight={700}
+                        fontWeight={500}
+                        fontSize={18}
                         sx={{ color: "#388e3c" }}
                       >
                         {value === null ||
