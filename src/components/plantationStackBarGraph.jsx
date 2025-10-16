@@ -166,7 +166,9 @@ const PlantationStackBarGraph = ({
         ))}
       </div>
 
-      <Bar options={options} data={data} />
+      <div style={{ width: "100%", height: "100%" }}>
+        <Bar data={data} options={options} />
+      </div>
     </div>
   );
 };
