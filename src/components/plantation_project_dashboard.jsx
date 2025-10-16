@@ -1301,7 +1301,7 @@ const PlantationProjectDashboard = () => {
                   }}
                 >
                   <Box
-                    sx={{ width: "100%", maxWidth: "700px", height: "400px" }}
+                    sx={{ width: "100%", maxWidth: "700px", height: "350px" }}
                   >
                     <PlantationStackBarGraph
                       plantation={selectedPlantation}
