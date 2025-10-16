@@ -219,35 +219,33 @@ const HeaderSelect = ({ setView }) => {
               />
             </Box>
 
-            {dashboardLocked && (
-              <Box sx={{ ml: "auto" }}>
-                <Button
-                  variant="outlined"
-                  startIcon={<ArrowBackIosNewIcon />}
-                  onClick={() => {
-                    setDashboardLocked(false);
-                    if (setView) setView("table");
-                  }}
-                  sx={{
-                    color: "#333",
-                    borderColor: "#bbb",
-                    borderRadius: "8px",
-                    textTransform: "none",
-                    fontWeight: 500,
-                    px: 2.5,
-                    py: 1,
-                    ml: "auto",
-                    backgroundColor: "#fff",
-                    "&:hover": {
-                      backgroundColor: "#f0f0f0",
-                      borderColor: "#999",
-                    },
-                  }}
-                >
-                  Change Project
-                </Button>
-              </Box>
-            )}
+            <Box sx={{ ml: "auto" }}>
+              <Button
+                variant="outlined"
+                startIcon={<ArrowBackIosNewIcon />}
+                onClick={() => {
+                  setDashboardLocked(false);
+                  if (setView) setView("table");
+                }}
+                sx={{
+                  color: "#333",
+                  borderColor: "#bbb",
+                  borderRadius: "8px",
+                  textTransform: "none",
+                  fontWeight: 500,
+                  px: 2.5,
+                  py: 1,
+                  ml: "auto",
+                  backgroundColor: "#fff",
+                  "&:hover": {
+                    backgroundColor: "#f0f0f0",
+                    borderColor: "#999",
+                  },
+                }}
+              >
+                Change Project
+              </Button>
+            </Box>
           </Toolbar>
         </Container>
       </AppBar>
