@@ -247,7 +247,7 @@ const WaterAvailabilityChart = ({ waterbody, water_rej_data, mwsFeature }) => {
     <div style={{ width: "100%", height: "80%" }}>
       <div
         className="custom-legend"
-        style={{ display: "flex", fontSize: 12, gap: 16, marginLeft: 25 }}
+        style={{ display: "flex", fontSize: 10, gap: 16, marginLeft: 25 }}
       >
         {Object.entries(groups).map(([group, items]) => (
           <div key={group} style={{ marginBottom: 8 }}>
@@ -291,7 +291,13 @@ const WaterAvailabilityChart = ({ waterbody, water_rej_data, mwsFeature }) => {
       </div>
       <Bar
         data={data}
-        options={{ ...options, plugins: { legend: { display: false } } }}
+        options={{
+          ...options,
+          plugins: {
+            ...options.plugins, // keep existing plugins (including annotation)
+            legend: { display: false }, // override only legend
+          },
+        }}
       />
     </div>
   );

@@ -240,6 +240,29 @@ const WaterProjectDashboard = () => {
     setMapClickedWaterbody(null);
   }, [projectId]);
 
+  useEffect(() => {
+    if (view === "table") {
+      // detach maps
+      if (mapRef1.current) {
+        mapRef1.current.setTarget(null);
+        mapRef1.current = null;
+      }
+      if (mapRef2.current) {
+        mapRef2.current.setTarget(null);
+        mapRef2.current = null;
+      }
+      if (mapRef3.current) {
+        mapRef3.current.setTarget(null);
+        mapRef3.current = null;
+      }
+
+      // reset waterbody selections
+      setSelectedWaterbody(null);
+      setSelectedFeature(null);
+      setMapClickedWaterbody(null);
+    }
+  }, [view]);
+
   const { geoData, mwsGeoData, zoiFeatures, loading } = useWaterRejData(
     projectName,
     projectId
@@ -533,16 +556,6 @@ const WaterProjectDashboard = () => {
 
   useEffect(() => {
     const fetchUpdateLulc = async () => {
-      // if (!lulcYear1 || !lulcYear1.includes("_")) {
-      //   console.warn("[LULC] Invalid lulcYear:", lulcYear1);
-      //   return;
-      // }
-
-      // if (!project || typeof project !== "object") {
-      //   console.error("[LULC] Invalid project object:", project);
-      //   return;
-      // }
-
       const fullYear = lulcYear1
         .split("_")
         .map((part) => `20${part}`)
@@ -1152,11 +1165,12 @@ const WaterProjectDashboard = () => {
     // --- Fetch MWS boundary from WFS (server-side filtered) ---
     const typeName = `waterrej:WaterRejapp_mws_${projectName}_${projectId}`;
     const mwsId = selectedFeature.properties.MWS_UID;
-
+    console.log(mwsId);
     // Always take first two parts of MWS_UID
     const uidParts = mwsId?.split("_") || [];
     const uidPrefix =
       uidParts.length >= 2 ? `${uidParts[0]}_${uidParts[1]}` : mwsId;
+    console.log(uidParts);
 
     const wfsUrl =
       "https://geoserver.core-stack.org:8443/geoserver/waterrej/ows?" +
@@ -1429,32 +1443,6 @@ const WaterProjectDashboard = () => {
         interaction.setActive(false);
       }
     });
-  };
-
-  const getZoomFromArea = (waterbody) => {
-    if (!waterbody || !waterbody.waterbody) {
-      return 16;
-    }
-
-    // Find matching ZOI feature
-    const match = zoiFeatures.find(
-      (f) => f.get("waterbody_name") === waterbody.waterbody
-    );
-
-    // Get ZOI area from properties
-    const area = match.get("zoi");
-
-    if (!area) {
-      return 16;
-    }
-
-    // Map area to zoom
-    if (area === 400) return 16; // special case
-    if (area >= 1000) return 15; // very large ZOI → zoomed out
-    if (area > 700) return 10; // large ZOI
-    if (area > 400) return 15.5; // medium-large ZOI
-    if (area > 200) return 16; // medium ZOI
-    return 17;
   };
 
   const zoomToZoiWaterbody = (waterbody, zoiFeatures, targetMapRef) => {
@@ -2415,7 +2403,7 @@ const WaterProjectDashboard = () => {
                 <div
                   ref={mapElement1}
                   style={{
-                    height: "850px",
+                    height: "900px",
                     width: "100%",
                     border: "1px solid #ccc",
                     borderRadius: "5px",
@@ -2719,7 +2707,7 @@ const WaterProjectDashboard = () => {
                     width: { xs: "100%", md: "45%" },
                     display: "flex",
                     flexDirection: "column",
-                    gap: 4,
+                    gap: { xs: 6, sm: 8, md: 10, lg: 12 },
                     alignItems: "center",
                   }}
                 >
@@ -2731,7 +2719,7 @@ const WaterProjectDashboard = () => {
                       water_rej_data={geoData}
                       mwsFeature={selectedMWSFeature}
                     />
-                    <Typography fontSize={14} color="#333" mt={18}>
+                    <Typography fontSize={14} color="#333" mt={15}>
                       <b>Black line</b> represents the year of intervention.
                     </Typography>
                   </Box>
@@ -2741,8 +2729,8 @@ const WaterProjectDashboard = () => {
                       sx={{
                         width: "100%",
                         maxWidth: "700px",
-                        height: "400px",
-                        marginTop: "8%",
+                        height: "350px",
+                        marginTop: "10%",
                       }}
                     >
                       <PrecipitationStackChart feature={selectedMWSFeature} />
