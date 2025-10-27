@@ -31,7 +31,10 @@ import {
   IconButton,
   ListItemText,
   TextField,
+  Tooltip,
+  Popover,
 } from "@mui/material";
+import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import { Lightbulb } from "lucide-react";
 import View from "ol/View";
 import TileLayer from "ol/layer/Tile";
@@ -70,8 +73,6 @@ const usePlantationData = (orgName, projectName, projectId) => {
           outputFormat: "application/json",
         });
 
-      console.log("GeoServer WFS URL:", url);
-
       try {
         const response = await fetch(url);
         if (!response.ok) {
@@ -81,7 +82,6 @@ const usePlantationData = (orgName, projectName, projectId) => {
         }
 
         const data = await response.json();
-        console.log(" GeoJSON data:", data);
         setGeoData(data);
       } catch (err) {
         console.error(" Failed to fetch or parse GeoJSON:", err);
@@ -119,6 +119,8 @@ const PlantationProjectDashboard = () => {
   const [sortOrder, setSortOrder] = useState("asc");
   const [searchText, setSearchText] = useState("");
   const [plantationSearch, setplantationSearch] = useState("");
+  const [infoText, setInfoText] = useState("");
+  const [infoAnchorEl, setInfoAnchorEl] = useState(null);
 
   const [organization, setOrganization] = useState(null);
   const [project, setProject] = useState(null);
@@ -252,7 +254,7 @@ const PlantationProjectDashboard = () => {
     const plantationStyle = (feature) => {
       const styles = [
         new Style({
-          stroke: new Stroke({ color: "red", width: 2 }),
+          stroke: new Stroke({ color: "green", width: 3 }),
           // fill: new Fill({ color: "rgba(34,139,34,0.25)" }),
         }),
       ];
@@ -329,7 +331,6 @@ const PlantationProjectDashboard = () => {
       let found = false;
       map.forEachFeatureAtPixel(evt.pixel, (clickedFeature) => {
         if (!clickedFeature) return;
-        console.log(clickedFeature);
         const description = clickedFeature.get("description");
         const { Village, Taluka } = parseDescription(description);
         const geometry = clickedFeature.getGeometry();
@@ -356,8 +357,6 @@ const PlantationProjectDashboard = () => {
             clickedFeature.get("Taluka") || clickedFeature.get("block") || "NA",
           coordinates,
         };
-
-        console.log("Clicked plantation data:", data);
 
         setMapClickedPlantation({
           name: clickedFeature.get("Name") || "NA",
@@ -421,6 +420,7 @@ const PlantationProjectDashboard = () => {
           });
         }
       }
+      window.scrollTo({ top: 0, behavior: "smooth" });
     }
   }, [view, geoData, selectedFeature]);
 
@@ -561,8 +561,11 @@ const PlantationProjectDashboard = () => {
         "23-24",
       ];
 
-      const interventionYear = "20-21";
-      let avgTreeCover = "NA";
+      let avgTreeCover = 0;
+      let preTreeCover = 0;
+      let postTreeCover = 0;
+      let treeCoverChange = 0;
+
       if (props.IS_LULC) {
         try {
           const lulcArray = JSON.parse(props.IS_LULC);
@@ -573,9 +576,57 @@ const PlantationProjectDashboard = () => {
             const sum = treeValues.reduce((a, b) => a + b, 0);
             avgTreeCover = ((sum / treeValues.length) * 100).toFixed(2);
           }
+          const preInterventionValues = [];
+          const postInterventionValues = [];
+
+          lulcArray.forEach((entry) => {
+            const year = parseInt(entry.year);
+            const treeCover = entry["6.0"];
+
+            if (treeCover !== undefined) {
+              if (year < 2020) {
+                preInterventionValues.push(treeCover);
+              } else {
+                postInterventionValues.push(treeCover);
+              }
+            }
+          });
+
+          if (preInterventionValues.length > 0) {
+            const preInterventionSum = preInterventionValues.reduce(
+              (a, b) => a + b,
+              0
+            );
+            preTreeCover = (
+              (preInterventionSum / preInterventionValues.length) *
+              100
+            ).toFixed(2);
+          }
+
+          if (postInterventionValues.length > 0) {
+            const postInterventionSum = postInterventionValues.reduce(
+              (a, b) => a + b,
+              0
+            );
+            postTreeCover = (
+              (postInterventionSum / postInterventionValues.length) *
+              100
+            ).toFixed(2);
+          }
+
+          if (preTreeCover !== "NA" && postTreeCover !== "NA") {
+            treeCoverChange = (postTreeCover - preTreeCover).toFixed(2);
+          } else {
+            treeCoverChange = "NA";
+          }
         } catch (err) {
           console.error("Error parsing LULC:", err);
         }
+      }
+      let treeCoverChangeColor = "";
+      if (treeCoverChange !== "NA") {
+        treeCoverChangeColor =
+          treeCoverChange > 0 ? "green" : treeCoverChange < 0 ? "red" : "";
       }
 
       return {
@@ -590,7 +641,10 @@ const PlantationProjectDashboard = () => {
         area: props.area_ha ? parseFloat(props.area_ha).toFixed(2) : "NA",
         patchScore: props.patch_score ?? "NA",
         patchSuitability: props.patch_suitability || "NA",
+        suitabilityScore: props.patch_score || "NA",
         averageTreeCover: avgTreeCover,
+        treeCoverChange,
+        treeCoverChangeColor,
         coordinates,
         featureIndex: index,
         uid: props.uid || props["UID"] || "NA",
@@ -679,6 +733,18 @@ const PlantationProjectDashboard = () => {
     return matchesGlobalSearch && matchesFilters && matchesplantationSearch;
   });
 
+  const handleInfoClick = (anchor, text) => {
+    setInfoAnchorEl(anchor);
+    setInfoText(text);
+  };
+
+  const handleInfoClose = () => {
+    setInfoAnchorEl(null);
+    setInfoText("");
+  };
+
+  const infoOpen = Boolean(infoAnchorEl);
+
   const sortedRows = [...filteredRows].sort((a, b) => {
     if (!sortField) return 0;
     const aValue = a[sortField];
@@ -712,19 +778,12 @@ const PlantationProjectDashboard = () => {
   const handleMapBoxClick = () => {
     if (!mapClickedPlantation) return;
 
-    // Remove ID in parentheses
     const cleanName = mapClickedPlantation.name
       .replace(/\s*\(.*\)$/, "")
       .trim();
-    console.log("All plantation rows:");
-    console.log("All rows:", rows);
-
-    rows.forEach((row) => console.log(row.farmerName));
 
     const matchingRow = rows.find((row) => row.farmerName === cleanName);
-    console.log(matchingRow);
     if (matchingRow) {
-      console.log("Passing to handlePlantationClick:", matchingRow);
       handlePlantationClick(matchingRow);
     } else {
       console.warn("No matching plantation row found for:", cleanName);
@@ -867,11 +926,32 @@ const PlantationProjectDashboard = () => {
                       >
                         State
                         <IconButton
-                          onClick={(e) => handleFilterClick(e, "state")}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleFilterClick(e, "state");
+                          }}
                           size="small"
                         >
                           <FilterListIcon fontSize="small" />
                         </IconButton>
+                        <Tooltip title="Click the info icon for details">
+                          <IconButton
+                            size="small"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleInfoClick(
+                                e.currentTarget,
+                                "State where the plantation site is located."
+                              );
+                            }}
+                            sx={{
+                              color: "primary.main",
+                              "&:hover": { transform: "scale(1.2)" },
+                            }}
+                          >
+                            <InfoOutlinedIcon fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
                       </div>
                     </TableCell>
 
@@ -890,6 +970,24 @@ const PlantationProjectDashboard = () => {
                         >
                           <FilterListIcon fontSize="small" />
                         </IconButton>
+                        <Tooltip title="Click the info icon for details">
+                          <IconButton
+                            size="small"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleInfoClick(
+                                e.currentTarget,
+                                "District where the plantation site is located."
+                              );
+                            }}
+                            sx={{
+                              color: "primary.main",
+                              "&:hover": { transform: "scale(1.2)" },
+                            }}
+                          >
+                            <InfoOutlinedIcon fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
                       </div>
                     </TableCell>
 
@@ -908,6 +1006,24 @@ const PlantationProjectDashboard = () => {
                         >
                           <FilterListIcon fontSize="small" />
                         </IconButton>
+                        <Tooltip title="Click the info icon for details">
+                          <IconButton
+                            size="small"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleInfoClick(
+                                e.currentTarget,
+                                "Taluka where the plantation site is located."
+                              );
+                            }}
+                            sx={{
+                              color: "primary.main",
+                              "&:hover": { transform: "scale(1.2)" },
+                            }}
+                          >
+                            <InfoOutlinedIcon fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
                       </div>
                     </TableCell>
 
@@ -926,6 +1042,24 @@ const PlantationProjectDashboard = () => {
                         >
                           <FilterListIcon fontSize="small" />
                         </IconButton>
+                        <Tooltip title="Click the info icon for details">
+                          <IconButton
+                            size="small"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleInfoClick(
+                                e.currentTarget,
+                                "GP/Village where the plantation site is located."
+                              );
+                            }}
+                            sx={{
+                              color: "primary.main",
+                              "&:hover": { transform: "scale(1.2)" },
+                            }}
+                          >
+                            <InfoOutlinedIcon fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
                       </div>
                     </TableCell>
 
@@ -938,7 +1072,35 @@ const PlantationProjectDashboard = () => {
                           alignItems: "center",
                         }}
                       >
-                        <span>Farmer's name</span>
+                        <div
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 4,
+                          }}
+                        >
+                          <span>Farmer's name</span>
+                          <Tooltip title="Click the info icon for details">
+                            <IconButton
+                              size="small"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleInfoClick(
+                                  e.currentTarget,
+                                  "Name of the Farmer whose plantation site is being monitored."
+                                );
+                              }}
+                              sx={{
+                                color: "primary.main",
+                                "&:hover": { transform: "scale(1.2)" },
+                              }}
+                            >
+                              <InfoOutlinedIcon fontSize="small" />
+                            </IconButton>
+                          </Tooltip>
+                        </div>
+
+                        {/* TextField below */}
                         <TextField
                           variant="standard"
                           placeholder="Search Farmer's name"
@@ -946,6 +1108,7 @@ const PlantationProjectDashboard = () => {
                           onChange={(e) => setplantationSearch(e.target.value)}
                           size="small"
                           InputProps={{ style: { fontSize: 12 } }}
+                          sx={{ marginTop: 1 }}
                         />
                       </div>
                     </TableCell>
@@ -960,12 +1123,24 @@ const PlantationProjectDashboard = () => {
                         }}
                       >
                         Intervention Year
-                        <span
-                          style={{
-                            marginLeft: 4,
-                            fontWeight: "normal",
-                          }}
-                        ></span>
+                        <Tooltip title="Click the info icon for details">
+                          <IconButton
+                            size="small"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleInfoClick(
+                                e.currentTarget,
+                                "The year in which intervention was carried out for the particular plantation site."
+                              );
+                            }}
+                            sx={{
+                              color: "primary.main",
+                              "&:hover": { transform: "scale(1.2)" },
+                            }}
+                          >
+                            <InfoOutlinedIcon fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
                       </div>
                     </TableCell>
 
@@ -979,12 +1154,25 @@ const PlantationProjectDashboard = () => {
                         }}
                       >
                         Area (in hectares)
-                        <span
-                          style={{
-                            marginLeft: 4,
-                            fontWeight: "normal",
-                          }}
-                        ></span>
+                        <Tooltip title="Click the info icon for details">
+                          <IconButton
+                            size="small"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleInfoClick(
+                                e.currentTarget,
+                                "Total area of the plantation site measured in hectares."
+                              );
+                            }}
+                            sx={{
+                              color: "primary.main",
+                              padding: 0,
+                              "&:hover": { transform: "scale(1.2)" },
+                            }}
+                          >
+                            <InfoOutlinedIcon fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
                       </div>
                     </TableCell>
 
@@ -1012,6 +1200,25 @@ const PlantationProjectDashboard = () => {
                           ? "🔼"
                           : "🔽"}
                       </span>
+                      <Tooltip title="Click the info icon for details">
+                        <IconButton
+                          size="small"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleInfoClick(
+                              e.currentTarget,
+                              "It shows whether the plantation site is suitable or not."
+                            );
+                          }}
+                          sx={{
+                            color: "primary.main",
+                            padding: 0,
+                            "&:hover": { transform: "scale(1.2)" },
+                          }}
+                        >
+                          <InfoOutlinedIcon fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
                     </TableCell>
 
                     <TableCell
@@ -1040,6 +1247,25 @@ const PlantationProjectDashboard = () => {
                             ? "🔼"
                             : "🔽"}
                         </span>
+                        <Tooltip title="Click the info icon for details">
+                          <IconButton
+                            size="small"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleInfoClick(
+                                e.currentTarget,
+                                "It shows the average of the trees covered for that particular plantation site."
+                              );
+                            }}
+                            sx={{
+                              color: "primary.main",
+                              padding: 0,
+                              "&:hover": { transform: "scale(1.2)" },
+                            }}
+                          >
+                            <InfoOutlinedIcon fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
                       </div>
                     </TableCell>
                   </TableRow>
@@ -1065,6 +1291,17 @@ const PlantationProjectDashboard = () => {
                       </TableCell>
                       <TableCell align="center">
                         {row.averageTreeCover}
+                        {row.treeCoverChange !== "NA" && (
+                          <span
+                            style={{
+                              color: row.treeCoverChangeColor,
+                              marginLeft: 6,
+                            }}
+                          >
+                            ({row.treeCoverChange > 0 ? "+" : ""}
+                            {row.treeCoverChange})
+                          </span>
+                        )}
                       </TableCell>
                     </TableRow>
                   ))}
@@ -1107,6 +1344,16 @@ const PlantationProjectDashboard = () => {
                   ))}
               </Menu>
             </TableContainer>
+            <Popover
+              open={infoOpen}
+              anchorEl={infoAnchorEl}
+              onClose={handleInfoClose}
+              anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
+              transformOrigin={{ vertical: "top", horizontal: "left" }}
+              PaperProps={{ sx: { maxWidth: 320, p: 1 } }}
+            >
+              <Typography sx={{ fontSize: 13 }}>{infoText}</Typography>
+            </Popover>
           </>
         ) : view === "map" ? (
           <Box
@@ -1119,6 +1366,53 @@ const PlantationProjectDashboard = () => {
               px: { xs: 2, sm: 4, md: 6 },
             }}
           >
+            {selectedPlantation && (
+              <Box
+                sx={{
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 2,
+                  width: "100%",
+                  p: { xs: 2, sm: 3, md: 2 },
+                  borderRadius: 2,
+                  bgcolor: "background.paper",
+                  boxShadow: 1,
+                }}
+              >
+                {/* Heading */}
+                <Typography
+                  variant="h5"
+                  sx={{
+                    fontWeight: 700,
+                    color: "primary.main",
+                    borderBottom: "2px solid",
+                    borderColor: "primary.main",
+                    pb: 1,
+                  }}
+                >
+                  Section 1: Tree Cover and Land Use Change
+                </Typography>
+
+                {/* Explanation */}
+                <Typography
+                  variant="body1"
+                  sx={{ color: "text.secondary", lineHeight: 1.7 }}
+                >
+                  The map shows the plantation site and what it looks like
+                  currently. Alongside, the stacked bar chart shows the shifts
+                  in tree cover, cropland, and non-vegetated areas in the
+                  plantation site. We can expect plantations to mature over the
+                  years and gain perennial vegetation cover. Also shown is the
+                  NDVI values over time - an index that reflects the greenness
+                  of the site. Peaks show seasonality based on cropping patterns
+                  and phenology cycles of trees, and an overall increasing trend
+                  can be expected over the years. Together, these indicators can
+                  summarize vegetation recovery, cropping patterns, and the
+                  impact of plantation efforts.
+                </Typography>
+              </Box>
+            )}
+
             <Box
               sx={{
                 display: "flex",
@@ -1182,6 +1476,14 @@ const PlantationProjectDashboard = () => {
                     >
                       Patch Suitability:{" "}
                       {selectedPlantation?.patchSuitability || "NA"}
+                    </Typography>
+                    <Typography
+                      variant="body2"
+                      color="text.secondary"
+                      fontWeight={800}
+                    >
+                      Suitabilty Score:{" "}
+                      {selectedPlantation?.suitabilityScore || "NA"}
                     </Typography>
                     <Typography
                       variant="body2"
@@ -1341,6 +1643,9 @@ const PlantationProjectDashboard = () => {
                       plantation={selectedPlantation}
                       plantationData={geoData}
                     />
+                    <Typography fontSize={14} color="#333" mt={15}>
+                      <b>Black line</b> represents the year of intervention.
+                    </Typography>
                   </Box>
 
                   <Box

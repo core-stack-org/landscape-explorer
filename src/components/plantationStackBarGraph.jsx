@@ -76,7 +76,6 @@ const PlantationStackBarGraph = ({
     ],
   };
 
-  console.log(matchedFeature);
   const categories = {
     "1.0": { label: "Built-up", color: "#ff0000" },
     "2.0": { label: "Water in Kharif", color: "#74CCF4" },
@@ -92,12 +91,16 @@ const PlantationStackBarGraph = ({
     "12.0": { label: "Shrubs_scrubs", color: "#eaa4f0" },
   };
 
-  const years = lulcData.map((row) => row.year);
+  const years = lulcData.map((row) => {
+    const startYear = Number(row.year);
+    return `${startYear}-${(startYear + 1).toString().slice(-2)}`;
+  });
+
   const datasets = Object.entries(categories).map(
     ([key, { label, color }]) => ({
       label,
       backgroundColor: color,
-      data: lulcData.map((row) => row[key] || 0), // raw area (ha)
+      data: lulcData.map((row) => row[key] || 0),
       stack: "landUse",
     })
   );
@@ -121,7 +124,26 @@ const PlantationStackBarGraph = ({
         display: true,
         text: "Plantation Land Use Over Time",
       },
+      annotation: {
+        annotations: {
+          interventionLine: {
+            type: "line",
+            scaleID: "x",
+            value: "2020-21",
+            borderColor: "black",
+            borderWidth: 2,
+            label: {
+              content: "Intervention Year",
+              enabled: true,
+              position: "start",
+              color: "black",
+              font: { weight: "bold" },
+            },
+          },
+        },
+      },
     },
+
     scales: {
       x: { stacked: true, title: { display: true, text: "Year" } },
       y: {
@@ -167,7 +189,16 @@ const PlantationStackBarGraph = ({
       </div>
 
       <div style={{ width: "100%", height: "100%" }}>
-        <Bar data={data} options={options} />
+        <Bar
+          data={data}
+          options={{
+            ...options,
+            plugins: {
+              ...options.plugins, // keep existing plugins (including annotation)
+              legend: { display: false }, // override only legend
+            },
+          }}
+        />
       </div>
     </div>
   );

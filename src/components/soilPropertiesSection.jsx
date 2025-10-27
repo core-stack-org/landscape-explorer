@@ -79,7 +79,8 @@ const SoilPropertiesSection = ({ feature }) => {
   return (
     <Box sx={{ mt: 4 }}>
       {/* Heading */}
-      <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 3 }}>
+      {/* Heading Row */}
+      <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
         <GiGroundSprout size={28} color="#4caf50" />
         <Typography
           variant="h4"
@@ -103,6 +104,66 @@ const SoilPropertiesSection = ({ feature }) => {
           }}
         />
       </Box>
+
+      {/* Section 1 block — now below the heading */}
+      {feature && (
+        <Box
+          sx={{
+            display: "flex",
+            flexDirection: "column",
+            gap: 2,
+            width: "100%",
+            p: { xs: 2, sm: 3, md: 2 },
+            borderRadius: 2,
+            bgcolor: "background.paper",
+            boxShadow: 1,
+            mb: 4,
+          }}
+        >
+          <Typography
+            variant="h5"
+            sx={{
+              fontWeight: 700,
+              color: "primary.main",
+              borderBottom: "2px solid",
+              borderColor: "primary.main",
+              pb: 1,
+            }}
+          >
+            Section 2: Soil & Site Properties{" "}
+          </Typography>
+          <Typography
+            variant="body1"
+            sx={{ color: "text.secondary", lineHeight: 1.7 }}
+          >
+            This section highlights the climatic, soil, and topographical
+            characteristics of the plantation site, which influence plantation
+            success and species selection.
+            <br />
+            <br />
+            <strong>Climate:</strong> Indicators such as precipitation,
+            temperature, aridity, and evapotranspiration describe the prevailing
+            climatic conditions of the site and can help determine suitable tree
+            species.
+            <br />
+            <br />
+            <strong>Soil:</strong> Topsoil and subsoil properties, including
+            bulk density, cation exchange capacity, organic carbon, pH, and
+            texture, reveal the soil fertility, nutrient retention, and
+            water-holding capacity, all critical for healthy plant growth.
+            <br />
+            <br />
+            <strong>Topography & Accessibility:</strong> Elevation, slope,
+            aspect, and proximity to drainage, roads, and settlements provide
+            context for plantation planning and management.
+            <br />
+            <br />
+            Together, these factors offer a comprehensive understanding of the
+            site’s ecological potential, guiding sustainable plantation design
+            and management.
+          </Typography>
+        </Box>
+      )}
 
       {Object.entries(propertyGroups).map(([groupName, keys]) => {
         if (groupName === "Soil") {

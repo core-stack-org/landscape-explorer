@@ -57,17 +57,12 @@ const PlantationNDVIChart = ({
   plantation,
   years = ["2017", "2018", "2019", "2020", "2021", "2022", "2023", "2024"],
 }) => {
-  console.log(plantation);
-  console.log(plantationData);
   const features = plantationData?.features || [];
   const uid = plantation?.uid;
 
   const matchedFeature = features.find(
     (feature) => feature?.properties?.uid === uid
   );
-
-  console.log("Selected plantation uid:", uid);
-  console.log("Matched feature:", matchedFeature);
 
   if (!matchedFeature) return null;
 
@@ -88,17 +83,14 @@ const PlantationNDVIChart = ({
   });
 
   if (!ndviPoints.length) return null;
-  console.log(ndviPoints);
+
   ndviPoints.sort((a, b) => new Date(a.x) - new Date(b.x));
 
-  // Prepare Y values but replace negatives with nearest neighbor interpolation
   const yValues = ndviPoints.map((pt) => (pt.y >= 0 ? pt.y : null));
 
-  // Simple linear interpolation for missing (negative) values
   const interpolated = [...yValues];
   for (let i = 0; i < interpolated.length; i++) {
     if (interpolated[i] === null) {
-      // find previous and next non-null
       let prevIndex = i - 1;
       while (prevIndex >= 0 && interpolated[prevIndex] === null) prevIndex--;
       let nextIndex = i + 1;
