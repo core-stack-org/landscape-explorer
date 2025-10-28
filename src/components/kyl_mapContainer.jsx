@@ -349,10 +349,11 @@ const MapLegend = ({ showMWS, showVillages, currentLayer, mappedAssets, mappedDe
   ];
 
   const SOGEItems = [
-    { color: "#ffffff", label: " Safe " },
+    { color: "#ffffff", label: "Safe" },
     { color: "#e0f3f8", label: "Semi - Critical " },
     { color: "#4575b4", label: " Critical " },
     { color: "#313695", label: "Over - Exploited " },
+    { color: "#a9a9a9", label: "Not Assessed" },
   ];
 
   // Check if LULC layer is active
