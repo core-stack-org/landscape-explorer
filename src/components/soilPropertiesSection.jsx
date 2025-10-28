@@ -1,12 +1,4 @@
 import React from "react";
-import {
-  Box,
-  Card,
-  CardContent,
-  Typography,
-  Grid,
-  Tooltip,
-} from "@mui/material";
 import { GiGroundSprout } from "react-icons/gi";
 
 const propertyGroups = {
@@ -77,66 +69,29 @@ const SoilPropertiesSection = ({ feature }) => {
   };
 
   return (
-    <Box sx={{ mt: 4 }}>
+    <div className="mt-4">
       {/* Heading */}
       {/* Heading Row */}
-      <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
+      <div className="flex items-center gap-2 mb-1">
         <GiGroundSprout size={28} color="#4caf50" />
-        <Typography
-          variant="h4"
-          fontWeight={700}
-          sx={{
-            background: "linear-gradient(90deg, #4caf50, #81c784)",
-            WebkitBackgroundClip: "text",
-            WebkitTextFillColor: "transparent",
-            letterSpacing: 1,
-          }}
-        >
+        <h2 className="text-3xl font-bold bg-gradient-to-r from-[#4caf50] to-[#81c784] bg-clip-text text-transparent tracking-wide">
           Soil & Site Properties
-        </Typography>
-        <Box
-          sx={{
-            flexGrow: 1,
-            height: "2px",
-            bgcolor: "rgba(0,0,0,0.1)",
-            ml: 2,
-            borderRadius: 1,
-          }}
-        />
-      </Box>
+        </h2>
+        <div className="flex-grow h-[2px] bg-[rgba(0,0,0,0.1)] ml-2 rounded"></div>
+      </div>
 
       {/* Section 1 block — now below the heading */}
       {feature && (
-        <Box
-          sx={{
-            display: "flex",
-            flexDirection: "column",
-            gap: 2,
-            width: "100%",
-            p: { xs: 2, sm: 3, md: 2 },
-            borderRadius: 2,
-            bgcolor: "background.paper",
-            boxShadow: 1,
-            mb: 4,
-          }}
-        >
-          <Typography
-            variant="h5"
-            sx={{
-              fontWeight: 700,
-              color: "primary.main",
-              borderBottom: "2px solid",
-              borderColor: "primary.main",
-              pb: 1,
-            }}
-          >
-            Section 2: Soil & Site Properties{" "}
-          </Typography>
-          <Typography
-            variant="body1"
-            sx={{ color: "text.secondary", lineHeight: 1.7 }}
-          >
-            This section highlights the climatic, soil, and topographical
+        <div className="flex flex-col gap-2 w-full p-4 sm:p-6 md:p-4 rounded-lg bg-white shadow mb-4">
+          {/* Heading */}
+          <h2 className="text-2xl font-bold text-blue-600 border-b-2 border-blue-600 pb-1">
+            Section 2: Soil & Site Properties
+          </h2>
+
+          {/* Description */}
+          <p className="text-gray-700 leading-relaxed">
+            This section highlights the <strong>climatic</strong>,{" "}
+            <strong>soil</strong>, and <strong>topographical</strong>{" "}
             characteristics of the plantation site, which influence plantation
             success and species selection.
             <br />
@@ -150,7 +105,7 @@ const SoilPropertiesSection = ({ feature }) => {
             <strong>Soil:</strong> Topsoil and subsoil properties, including
             bulk density, cation exchange capacity, organic carbon, pH, and
             texture, reveal the soil fertility, nutrient retention, and
-            water-holding capacity, all critical for healthy plant growth.
+            water-holding capacity — all critical for healthy plant growth.
             <br />
             <br />
             <strong>Topography & Accessibility:</strong> Elevation, slope,
@@ -161,17 +116,15 @@ const SoilPropertiesSection = ({ feature }) => {
             Together, these factors offer a comprehensive understanding of the
             site’s ecological potential, guiding sustainable plantation design
             and management.
-          </Typography>
-        </Box>
+          </p>
+        </div>
       )}
 
       {Object.entries(propertyGroups).map(([groupName, keys]) => {
         if (groupName === "Soil") {
           return (
-            <Box key="Soil" sx={{ mb: 4 }}>
-              <Typography variant="h5" fontWeight={600} sx={{ mb: 2 }}>
-                Soil
-              </Typography>
+            <div key="Soil" className="mb-8">
+              <h3 className="text-2xl font-semibold mb-4">Soil</h3>
 
               {/* Subsections for Soil */}
               {Object.entries(soilSubGroups).map(([subGroup, subKeys]) => {
@@ -182,74 +135,51 @@ const SoilPropertiesSection = ({ feature }) => {
                 if (!subProps.length) return null;
 
                 return (
-                  <Box key={subGroup} sx={{ mb: 3, ml: 2 }}>
-                    <Typography
-                      variant="subtitle1"
-                      fontWeight={600}
-                      sx={{ mb: 1, color: "#5d4037" }}
-                    >
+                  <div key={subGroup} className="mb-6 ml-3">
+                    <h4 className="text-lg font-semibold mb-2 text-[#5d4037]">
                       {subGroup}
-                    </Typography>
-                    <Grid container spacing={3}>
+                    </h4>
+
+                    <div className="flex flex-wrap gap-4">
                       {subProps.map(({ key, value }) => (
-                        <Grid item xs={12} sm={6} md={4} key={key}>
-                          <Tooltip title={key}>
-                            <Box
-                              sx={{
-                                display: "flex",
-                                flexDirection: "column",
-                                justifyContent: "center",
-                                alignItems: "center",
-                                p: 3,
-                                borderRadius: 3,
-                                background: groupGradients["Soil"],
-                                boxShadow: "0 4px 12px rgba(0,0,0,0.05)",
-                                border: "1px solid rgba(0,0,0,0.05)",
-                                transition: "0.4s",
-                                "&:hover": {
-                                  transform: "scale(1.05)",
-                                  boxShadow: "0 8px 20px rgba(0,0,0,0.15)",
-                                },
-                              }}
-                            >
-                              <Typography
-                                variant="body2"
-                                color="textSecondary"
-                                fontWeight={700}
-                                fontSize={15}
-                                sx={{ mb: 1 }}
-                              >
-                                {key}
-                              </Typography>
-                              <Typography
-                                variant="h6"
-                                fontWeight={500}
-                                fontSize={18}
-                                sx={{ color: "#388e3c" }}
-                              >
-                                {value === null ||
-                                value === undefined ||
-                                value === "" ||
-                                value === "NA" ||
-                                value === "None"
-                                  ? "Data not available"
-                                  : typeof value === "number"
-                                  ? value.toFixed(2)
-                                  : String(value)}
-                              </Typography>
-                            </Box>
-                          </Tooltip>
-                        </Grid>
+                        <div
+                          key={key}
+                          title={key}
+                          className={`
+        flex flex-col justify-center items-center 
+        w-fit px-6 py-4 rounded-xl
+        shadow-sm border border-black/5
+        transition-transform duration-300 ease-in-out
+        hover:scale-105 hover:shadow-lg
+        min-h-[120px]
+      `}
+                          style={{ background: groupGradients["Soil"] }}
+                        >
+                          <p className="text-sm font-semibold text-gray-600 mb-1 whitespace-nowrap">
+                            {key}
+                          </p>
+                          <p className="text-lg font-medium text-green-700 whitespace-nowrap">
+                            {value === null ||
+                            value === undefined ||
+                            value === "" ||
+                            value === "NA" ||
+                            value === "None"
+                              ? "Data not available"
+                              : typeof value === "number"
+                              ? value.toFixed(2)
+                              : String(value)}
+                          </p>
+                        </div>
                       ))}
-                    </Grid>
-                  </Box>
+                    </div>
+                  </div>
                 );
               })}
-            </Box>
+            </div>
           );
         }
 
-        // other sections remain same
+        // Other sections remain the same
         const groupProps = keys
           .map((key) => ({ key, value: siteProps[key] }))
           .filter((item) => item.value !== undefined);
@@ -257,66 +187,45 @@ const SoilPropertiesSection = ({ feature }) => {
         if (!groupProps.length) return null;
 
         return (
-          <Box key={groupName} sx={{ mb: 4 }}>
-            <Typography variant="h5" fontWeight={600} sx={{ mb: 2 }}>
-              {groupName}
-            </Typography>
-            <Grid container spacing={3}>
+          <div key={groupName} className="mb-8">
+            <h3 className="text-2xl font-semibold mb-4">{groupName}</h3>
+
+            <div className="flex flex-wrap gap-4">
               {groupProps.map(({ key, value }) => (
-                <Grid item xs={12} sm={6} md={4} key={key}>
-                  <Tooltip title={key}>
-                    <Box
-                      sx={{
-                        display: "flex",
-                        flexDirection: "column",
-                        justifyContent: "center",
-                        alignItems: "center",
-                        p: 3,
-                        borderRadius: 3,
-                        background: groupGradients[groupName],
-                        boxShadow: "0 4px 12px rgba(0,0,0,0.05)",
-                        border: "1px solid rgba(0,0,0,0.05)",
-                        transition: "0.4s",
-                        "&:hover": {
-                          transform: "scale(1.05)",
-                          boxShadow: "0 8px 20px rgba(0,0,0,0.15)",
-                        },
-                      }}
-                    >
-                      <Typography
-                        variant="body2"
-                        color="textSecondary"
-                        fontWeight={700}
-                        fontSize={15}
-                        sx={{ mb: 1 }}
-                      >
-                        {key}
-                      </Typography>
-                      <Typography
-                        variant="h6"
-                        fontWeight={500}
-                        fontSize={18}
-                        sx={{ color: "#388e3c" }}
-                      >
-                        {value === null ||
-                        value === undefined ||
-                        value === "" ||
-                        value === "NA" ||
-                        value === "None"
-                          ? "Data not available"
-                          : typeof value === "number"
-                          ? value.toFixed(2)
-                          : String(value)}
-                      </Typography>
-                    </Box>
-                  </Tooltip>
-                </Grid>
+                <div
+                  key={key}
+                  title={key}
+                  className={`
+        flex flex-col justify-center items-center 
+        w-fit px-6 py-4 rounded-xl
+        shadow-sm border border-black/5
+        transition-transform duration-300 ease-in-out
+        hover:scale-105 hover:shadow-lg
+        min-h-[120px]
+      `}
+                  style={{ background: groupGradients[groupName] }}
+                >
+                  <p className="text-sm font-semibold text-gray-600 mb-1 whitespace-nowrap">
+                    {key}
+                  </p>
+                  <p className="text-lg font-medium text-green-700 whitespace-nowrap">
+                    {value === null ||
+                    value === undefined ||
+                    value === "" ||
+                    value === "NA" ||
+                    value === "None"
+                      ? "Data not available"
+                      : typeof value === "number"
+                      ? value.toFixed(2)
+                      : String(value)}
+                  </p>
+                </div>
               ))}
-            </Grid>
-          </Box>
+            </div>
+          </div>
         );
       })}
-    </Box>
+    </div>
   );
 };
 

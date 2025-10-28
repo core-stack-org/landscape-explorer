@@ -13,27 +13,7 @@ import { yearAtomFamily } from "../store/locationStore.jsx";
 import { fromLonLat } from "ol/proj";
 import Point from "ol/geom/Point";
 import Overlay from "ol/Overlay";
-import {
-  Box,
-  Typography,
-  ToggleButton,
-  ToggleButtonGroup,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Paper,
-  MenuItem,
-  Checkbox,
-  Menu,
-  IconButton,
-  ListItemText,
-  TextField,
-  Tooltip,
-  Popover,
-} from "@mui/material";
+
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import { Lightbulb } from "lucide-react";
 import View from "ol/View";
@@ -121,7 +101,7 @@ const PlantationProjectDashboard = () => {
   const [plantationSearch, setplantationSearch] = useState("");
   const [infoText, setInfoText] = useState("");
   const [infoAnchorEl, setInfoAnchorEl] = useState(null);
-
+  const [openInfoKey, setOpenInfoKey] = useState(null);
   const [organization, setOrganization] = useState(null);
   const [project, setProject] = useState(null);
   const projectName = project?.label;
@@ -733,10 +713,16 @@ const PlantationProjectDashboard = () => {
     return matchesGlobalSearch && matchesFilters && matchesplantationSearch;
   });
 
-  const handleInfoClick = (anchor, text) => {
-    setInfoAnchorEl(anchor);
-    setInfoText(text);
+  const handleInfoClick = (key) => {
+    setOpenInfoKey(openInfoKey === key ? null : key);
   };
+
+  // Close tooltip on outside click
+  useEffect(() => {
+    const close = () => setOpenInfoKey(null);
+    window.addEventListener("click", close);
+    return () => window.removeEventListener("click", close);
+  }, []);
 
   const handleInfoClose = () => {
     setInfoAnchorEl(null);
@@ -798,7 +784,7 @@ const PlantationProjectDashboard = () => {
   }, [view]);
 
   return (
-    <Box sx={{ position: "relative" }}>
+    <div sx={{ position: "relative" }}>
       <HeaderSelect
         showExtras
         organization={organization}
@@ -806,722 +792,593 @@ const PlantationProjectDashboard = () => {
         setView={setView}
       />
       {/* Project Dashboard Text */}
-      <Box
-        sx={{
-          position: "absolute",
-          top: "20%",
-          left: "12%",
-          transform: "translate(-50%, -50%)",
-          zIndex: 1,
-          color: "white",
-          fontSize: "2rem",
-          fontWeight: "bold",
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-        }}
+      <div
+        className="
+    absolute top-[20%] left-[12%] -translate-x-1/2 -translate-y-1/2 z-[1] text-white text-2xl font-bold flex flex-col items-center
+  "
       >
         {/* Toggle Button Group */}
-        <Box
-          sx={{
-            display: "flex",
-            alignItems: "center",
-            gap: 2,
-            marginTop: 2,
-          }}
-        >
-          <ToggleButtonGroup
-            value={view}
-            exclusive
-            onChange={handleViewChange}
-            sx={{
-              backgroundColor: "rgba(255, 255, 255, 0.3)",
-              borderRadius: "5px",
-              border: "2px solid black",
-              width: "280px",
-              px: 2,
-              py: 1,
-              justifyContent: "space-between",
-              display: "flex",
-            }}
+        <div className="flex items-center gap-2 mt-2">
+          <div
+            className="
+        flex justify-between items-center
+        w-[280px] px-2 py-1
+        rounded-md border-2 border-black
+        bg-white/30 backdrop-blur-sm
+      "
           >
-            <ToggleButton
-              value="table"
-              sx={{ color: "black", gap: 1, flex: 1, justifyContent: "center" }}
+            {/* Table Button */}
+            <button
+              type="button"
+              onClick={() => handleViewChange(null, "table")}
+              className={` flex items-center justify-center gap-2 flex-1
+          font-semibold text-black py-2.5 rounded
+          transition-all duration-150 ease-in-out
+          ${
+            view === "table"
+              ? "bg-white/70 shadow-inner scale-[0.99]"
+              : "hover:bg-white/40 active:scale-[0.98]"
+          }
+        `}
             >
-              Table
+              <span className="text-base">Table</span>
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 height="20"
                 viewBox="0 0 24 24"
-                fill="black"
+                fill="currentColor"
               >
                 <path d="M3 3h18v18H3V3zm2 2v4h4V5H5zm6 0v4h4V5h-4zm6 0v4h4V5h-4zM5 11v4h4v-4H5zm6 0v4h4v-4h-4zm6 0v4h4v-4h-4zM5 17v2h4v-2H5zm6 0v2h4v-2h-4zm6 0v2h4v-2h-4z" />
               </svg>
-            </ToggleButton>
+            </button>
 
-            <ToggleButton
-              value="map"
-              sx={{ color: "black", gap: 1, flex: 1, justifyContent: "center" }}
+            {/* Map Button */}
+            <button
+              type="button"
+              onClick={() => handleViewChange(null, "map")}
+              className={`
+          flex items-center justify-center gap-2 flex-1
+          font-semibold text-black py-1.5 rounded
+          transition-all duration-150 ease-in-out
+          ${
+            view === "map"
+              ? "bg-white/70 shadow-inner scale-[0.99]"
+              : "hover:bg-white/40 active:scale-[0.98]"
+          }
+        `}
             >
-              Map
+              <span className="text-base">Map</span>
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 height="20"
                 viewBox="0 0 512 512"
-                fill="black"
+                fill="currentColor"
               >
                 <path
                   d="M256 8C119 8 8 119 8 256s111 248 248 248 
-248-111 248-248S393 8 256 8zm82.4 368.2-17.6 17.6h-64l-32-32v-32h-32l-48-48 
-16-48 32-16v-32l32-32h32l16 16 32-32-16-48h-32l-48 16-16-16v-48l64-16 80 
-32v48l16 16 48-16 16 16v80l-32 48h-32v32l16 48-32 32z"
+              248-111 248-248S393 8 256 8zm82.4 368.2-17.6 17.6h-64l-32-32v-32h-32l-48-48 
+              16-48 32-16v-32l32-32h32l16 16 32-32-16-48h-32l-48 16-16-16v-48l64-16 80 
+              32v48l16 16 48-16 16 16v80l-32 48h-32v32l16 48-32 32z"
                 />
               </svg>
-            </ToggleButton>
-          </ToggleButtonGroup>
-        </Box>
-      </Box>
+            </button>
+          </div>
+        </div>
+      </div>
+
       {/* Conditional Rendering for Table or Map */}
-      <Box
-        sx={{
-          position: "absolute",
-          top: "calc(20% + 88px + 16px)",
-          left: "2.5%",
-          width: "92%",
-          height: "auto",
-          backgroundColor: "white",
-          padding: "20px",
-          borderRadius: "5px",
-          zIndex: 1,
-        }}
-      >
+      <div className="absolute top-[calc(20%+88px+16px)] left-[2.5%] w-[92%] h-auto bg-white p-5 rounded-md z-[1]">
         {view === "table" ? (
           <>
-            <Typography
-              variant="h6"
-              sx={{
-                textAlign: "center",
-                display: "flex",
-                alignItems: "center",
-                gap: 2,
-                border: "10px solid #11000080",
-              }}
-            >
+            <p className="text-center flex items-center gap-2 border-[10px] border-[#11000080] text-xl">
               <Lightbulb size={94} color="black" />
               Under the project {project?.label}, {totalRows} sites have had
               plantations covering {totalArea} hectares.
-            </Typography>
-            <TableContainer component={Paper} sx={{ mt: 4, boxShadow: 0 }}>
-              <Table>
-                <TableHead sx={{ backgroundColor: "#f5f5f5" }}>
-                  <TableRow>
-                    <TableCell align="center">
-                      <div
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                        }}
-                      >
-                        State
-                        <IconButton
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleFilterClick(e, "state");
-                          }}
-                          size="small"
-                        >
-                          <FilterListIcon fontSize="small" />
-                        </IconButton>
-                        <Tooltip title="Click the info icon for details">
-                          <IconButton
-                            size="small"
+            </p>
+
+            {/* Table Section */}
+            <div className="mt-4 bg-white shadow-none rounded-md overflow-hidden">
+              <div className="w-full overflow-x-auto">
+                <table className="min-w-full border border-gray-200 text-sm text-gray-800">
+                  <thead className="bg-gray-100 font-semibold">
+                    <tr className="border-b">
+                      {/* ---- State ---- */}
+                      <th className="relative px-4 py-3 text-center">
+                        <div className="flex items-center justify-center gap-1">
+                          State
+                          <button
                             onClick={(e) => {
                               e.stopPropagation();
-                              handleInfoClick(
-                                e.currentTarget,
-                                "State where the plantation site is located."
-                              );
+                              handleFilterClick(e, "state");
                             }}
-                            sx={{
-                              color: "primary.main",
-                              "&:hover": { transform: "scale(1.2)" },
-                            }}
+                            className="p-1 hover:scale-110 transition-transform"
                           >
-                            <InfoOutlinedIcon fontSize="small" />
-                          </IconButton>
-                        </Tooltip>
-                      </div>
-                    </TableCell>
-
-                    <TableCell align="center">
-                      <div
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                        }}
-                      >
-                        District
-                        <IconButton
-                          onClick={(e) => handleFilterClick(e, "district")}
-                          size="small"
-                        >
-                          <FilterListIcon fontSize="small" />
-                        </IconButton>
-                        <Tooltip title="Click the info icon for details">
-                          <IconButton
-                            size="small"
+                            <FilterListIcon
+                              fontSize="small"
+                              className="text-gray-600"
+                            />
+                          </button>
+                          <button
+                            title="Click the Info icon for details"
                             onClick={(e) => {
                               e.stopPropagation();
-                              handleInfoClick(
-                                e.currentTarget,
-                                "District where the plantation site is located."
-                              );
+                              handleInfoClick("state");
                             }}
-                            sx={{
-                              color: "primary.main",
-                              "&:hover": { transform: "scale(1.2)" },
-                            }}
+                            className="p-1 text-blue-600 hover:scale-110 transition-transform"
                           >
-                            <InfoOutlinedIcon fontSize="small" />
-                          </IconButton>
-                        </Tooltip>
-                      </div>
-                    </TableCell>
-
-                    <TableCell>
-                      <div
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                        }}
-                      >
-                        Taluka
-                        <IconButton
-                          onClick={(e) => handleFilterClick(e, "block")}
-                          size="small"
-                        >
-                          <FilterListIcon fontSize="small" />
-                        </IconButton>
-                        <Tooltip title="Click the info icon for details">
-                          <IconButton
-                            size="small"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleInfoClick(
-                                e.currentTarget,
-                                "Taluka where the plantation site is located."
-                              );
-                            }}
-                            sx={{
-                              color: "primary.main",
-                              "&:hover": { transform: "scale(1.2)" },
-                            }}
-                          >
-                            <InfoOutlinedIcon fontSize="small" />
-                          </IconButton>
-                        </Tooltip>
-                      </div>
-                    </TableCell>
-
-                    <TableCell>
-                      <div
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                        }}
-                      >
-                        GP/Village
-                        <IconButton
-                          onClick={(e) => handleFilterClick(e, "village")}
-                          size="small"
-                        >
-                          <FilterListIcon fontSize="small" />
-                        </IconButton>
-                        <Tooltip title="Click the info icon for details">
-                          <IconButton
-                            size="small"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleInfoClick(
-                                e.currentTarget,
-                                "GP/Village where the plantation site is located."
-                              );
-                            }}
-                            sx={{
-                              color: "primary.main",
-                              "&:hover": { transform: "scale(1.2)" },
-                            }}
-                          >
-                            <InfoOutlinedIcon fontSize="small" />
-                          </IconButton>
-                        </Tooltip>
-                      </div>
-                    </TableCell>
-
-                    <TableCell>
-                      <div
-                        style={{
-                          display: "flex",
-                          flexDirection: "column",
-                          justifyContent: "center",
-                          alignItems: "center",
-                        }}
-                      >
-                        <div
-                          style={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: 4,
-                          }}
-                        >
-                          <span>Farmer's name</span>
-                          <Tooltip title="Click the info icon for details">
-                            <IconButton
-                              size="small"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleInfoClick(
-                                  e.currentTarget,
-                                  "Name of the Farmer whose plantation site is being monitored."
-                                );
-                              }}
-                              sx={{
-                                color: "primary.main",
-                                "&:hover": { transform: "scale(1.2)" },
-                              }}
-                            >
-                              <InfoOutlinedIcon fontSize="small" />
-                            </IconButton>
-                          </Tooltip>
+                            <InfoOutlinedIcon
+                              fontSize="small"
+                              className="text-blue-600 transition-transform duration-150 hover:scale-125"
+                            />
+                          </button>
                         </div>
 
-                        {/* TextField below */}
-                        <TextField
-                          variant="standard"
-                          placeholder="Search Farmer's name"
-                          value={plantationSearch}
-                          onChange={(e) => setplantationSearch(e.target.value)}
-                          size="small"
-                          InputProps={{ style: { fontSize: 12 } }}
-                          sx={{ marginTop: 1 }}
-                        />
-                      </div>
-                    </TableCell>
-
-                    {/* Intervention year Column */}
-                    <TableCell sx={{ cursor: "pointer", userSelect: "none" }}>
-                      <div
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                        }}
-                      >
-                        Intervention Year
-                        <Tooltip title="Click the info icon for details">
-                          <IconButton
-                            size="small"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleInfoClick(
-                                e.currentTarget,
-                                "The year in which intervention was carried out for the particular plantation site."
-                              );
-                            }}
-                            sx={{
-                              color: "primary.main",
-                              "&:hover": { transform: "scale(1.2)" },
-                            }}
-                          >
-                            <InfoOutlinedIcon fontSize="small" />
-                          </IconButton>
-                        </Tooltip>
-                      </div>
-                    </TableCell>
-
-                    {/* Area Column */}
-                    <TableCell sx={{ cursor: "pointer", userSelect: "none" }}>
-                      <div
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                        }}
-                      >
-                        Area (in hectares)
-                        <Tooltip title="Click the info icon for details">
-                          <IconButton
-                            size="small"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleInfoClick(
-                                e.currentTarget,
-                                "Total area of the plantation site measured in hectares."
-                              );
-                            }}
-                            sx={{
-                              color: "primary.main",
-                              padding: 0,
-                              "&:hover": { transform: "scale(1.2)" },
-                            }}
-                          >
-                            <InfoOutlinedIcon fontSize="small" />
-                          </IconButton>
-                        </Tooltip>
-                      </div>
-                    </TableCell>
-
-                    {/* Patch suitablity*/}
-                    <TableCell
-                      align="center"
-                      sx={{
-                        cursor: "pointer",
-                        userSelect: "none",
-                        fontWeight: "normal",
-                      }}
-                      onClick={() => handleSort("patchSuitability")}
-                    >
-                      Patch Suitability
-                      <span
-                        style={{
-                          marginLeft: 4,
-                          fontWeight:
-                            sortField === "patchSuitability"
-                              ? "normal"
-                              : "normal",
-                        }}
-                      >
-                        {sortField === "patchSuitability" && sortOrder === "asc"
-                          ? "🔼"
-                          : "🔽"}
-                      </span>
-                      <Tooltip title="Click the info icon for details">
-                        <IconButton
-                          size="small"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleInfoClick(
-                              e.currentTarget,
-                              "It shows whether the plantation site is suitable or not."
-                            );
-                          }}
-                          sx={{
-                            color: "primary.main",
-                            padding: 0,
-                            "&:hover": { transform: "scale(1.2)" },
-                          }}
-                        >
-                          <InfoOutlinedIcon fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
-                    </TableCell>
-
-                    <TableCell
-                      sx={{ cursor: "pointer", userSelect: "none" }}
-                      onClick={() => handleSort("averageTreeCover")}
-                    >
-                      <div
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                        }}
-                      >
-                        Average tree cover (%)
-                        <span
-                          style={{
-                            marginLeft: 4,
-                            fontWeight:
-                              sortField === "averageTreeCover"
-                                ? "bold"
-                                : "normal",
-                          }}
-                        >
-                          {sortField === "averageTreeCover" &&
-                          sortOrder === "asc"
-                            ? "🔼"
-                            : "🔽"}
-                        </span>
-                        <Tooltip title="Click the info icon for details">
-                          <IconButton
-                            size="small"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleInfoClick(
-                                e.currentTarget,
-                                "It shows the average of the trees covered for that particular plantation site."
-                              );
-                            }}
-                            sx={{
-                              color: "primary.main",
-                              padding: 0,
-                              "&:hover": { transform: "scale(1.2)" },
-                            }}
-                          >
-                            <InfoOutlinedIcon fontSize="small" />
-                          </IconButton>
-                        </Tooltip>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                </TableHead>
-
-                <TableBody>
-                  {sortedRows.map((row) => (
-                    <TableRow
-                      key={row.id}
-                      hover
-                      sx={{ cursor: "pointer" }}
-                      onClick={() => handlePlantationClick(row)}
-                    >
-                      <TableCell align="center">{row.state}</TableCell>
-                      <TableCell align="center">{row.district}</TableCell>
-                      <TableCell align="center">{row.block}</TableCell>
-                      <TableCell align="center">{row.village}</TableCell>{" "}
-                      <TableCell align="center">{row.farmerName}</TableCell>
-                      <TableCell align="center">2020-21</TableCell>
-                      <TableCell align="center">{row.area}</TableCell>
-                      <TableCell align="center">
-                        {row.patchSuitability}
-                      </TableCell>
-                      <TableCell align="center">
-                        {row.averageTreeCover}
-                        {row.treeCoverChange !== "NA" && (
-                          <span
-                            style={{
-                              color: row.treeCoverChangeColor,
-                              marginLeft: 6,
-                            }}
-                          >
-                            ({row.treeCoverChange > 0 ? "+" : ""}
-                            {row.treeCoverChange})
-                          </span>
+                        {openInfoKey === "state" && (
+                          <div className="absolute left-1/2 -translate-x-1/2 top-full mt-2 bg-white border border-gray-300 rounded-md shadow-md p-2 text-xs text-gray-800 w-64 z-50">
+                            State where the plantation site is located.
+                          </div>
                         )}
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-              <Menu
-                anchorEl={anchorEl}
-                open={Boolean(anchorEl)}
-                onClose={handleFilterClose}
-              >
-                <TextField
-                  size="small"
-                  placeholder="Search..."
-                  value={searchText}
-                  onChange={(e) => setSearchText(e.target.value)}
-                  sx={{ marginBottom: "16px" }}
-                />
+                      </th>
 
-                <MenuItem onClick={() => handleClearSingleFilter(filterType)}>
-                  Clear {filterType} Filter
-                </MenuItem>
+                      {/* ---- District ---- */}
+                      <th className="relative px-4 py-3 text-center">
+                        <div className="flex items-center justify-center gap-1">
+                          District
+                          <button
+                            onClick={(e) => handleFilterClick(e, "district")}
+                            className="p-1 hover:scale-110 transition-transform"
+                          >
+                            <FilterListIcon
+                              fontSize="small"
+                              className="text-gray-600"
+                            />
+                          </button>
+                          <button
+                            title="Click the Info icon for details"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleInfoClick("district");
+                            }}
+                            className="p-1 text-blue-600 hover:scale-110 transition-transform"
+                          >
+                            <InfoOutlinedIcon
+                              fontSize="small"
+                              className="text-blue-600 transition-transform duration-150 hover:scale-125"
+                            />
+                          </button>
+                        </div>
 
-                {Array.from(new Set(rows.map((row) => String(row[filterType]))))
-                  .filter((option) => {
-                    return option
-                      .toLowerCase()
-                      .startsWith(searchText.toLowerCase());
-                  })
-                  .map((option) => (
-                    <MenuItem
-                      key={option}
-                      onClick={() => handleFilterChange(filterType, option)}
-                    >
-                      <Checkbox
-                        size="small"
-                        checked={filters[filterType]?.includes(option)}
-                      />
-                      <ListItemText primary={option} />
-                    </MenuItem>
-                  ))}
-              </Menu>
-            </TableContainer>
-            <Popover
-              open={infoOpen}
-              anchorEl={infoAnchorEl}
-              onClose={handleInfoClose}
-              anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
-              transformOrigin={{ vertical: "top", horizontal: "left" }}
-              PaperProps={{ sx: { maxWidth: 320, p: 1 } }}
-            >
-              <Typography sx={{ fontSize: 13 }}>{infoText}</Typography>
-            </Popover>
-          </>
-        ) : view === "map" ? (
-          <Box
-            sx={{
-              display: "flex",
-              flexDirection: "column",
-              gap: 4,
-              mt: 2,
-              width: "100%",
-              px: { xs: 2, sm: 4, md: 6 },
-            }}
-          >
-            {selectedPlantation && (
-              <Box
-                sx={{
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: 2,
-                  width: "100%",
-                  p: { xs: 2, sm: 3, md: 2 },
-                  borderRadius: 2,
-                  bgcolor: "background.paper",
-                  boxShadow: 1,
-                }}
-              >
-                {/* Heading */}
-                <Typography
-                  variant="h5"
-                  sx={{
-                    fontWeight: 700,
-                    color: "primary.main",
-                    borderBottom: "2px solid",
-                    borderColor: "primary.main",
-                    pb: 1,
+                        {openInfoKey === "district" && (
+                          <div className="absolute left-1/2 -translate-x-1/2 top-full mt-2 bg-white border border-gray-300 rounded-md shadow-md p-2 text-xs text-gray-800 w-64 z-50">
+                            District where the plantation site is located.
+                          </div>
+                        )}
+                      </th>
+
+                      {/* ---- Taluka ---- */}
+                      <th className="relative px-4 py-3 text-center">
+                        <div className="flex items-center justify-center gap-1">
+                          Taluka
+                          <button
+                            onClick={(e) => handleFilterClick(e, "block")}
+                            className="p-1 hover:scale-110 transition-transform"
+                          >
+                            <FilterListIcon
+                              fontSize="small"
+                              className="text-gray-600"
+                            />
+                          </button>
+                          <button
+                            title="Click the Info icon for details"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleInfoClick("taluka");
+                            }}
+                            className="p-1 text-blue-600 hover:scale-110 transition-transform"
+                          >
+                            <InfoOutlinedIcon
+                              fontSize="small"
+                              className="text-blue-600 transition-transform duration-150 hover:scale-125"
+                            />
+                          </button>
+                        </div>
+
+                        {openInfoKey === "taluka" && (
+                          <div className="absolute left-1/2 -translate-x-1/2 top-full mt-2 bg-white border border-gray-300 rounded-md shadow-md p-2 text-xs text-gray-800 w-64 z-50">
+                            Taluka where the plantation site is located.
+                          </div>
+                        )}
+                      </th>
+
+                      {/* ---- GP/Village ---- */}
+                      <th className="relative px-4 py-3 text-center">
+                        <div className="flex items-center justify-center gap-1">
+                          GP/Village
+                          <button
+                            onClick={(e) => handleFilterClick(e, "village")}
+                            className="p-1 hover:scale-110 transition-transform"
+                          >
+                            <FilterListIcon
+                              fontSize="small"
+                              className="text-gray-600"
+                            />
+                          </button>
+                          <button
+                            title="Click the Info icon for details"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleInfoClick("village");
+                            }}
+                            className="p-1 text-blue-600 hover:scale-110 transition-transform"
+                          >
+                            <InfoOutlinedIcon
+                              fontSize="small"
+                              className="text-blue-600 transition-transform duration-150 hover:scale-125"
+                            />
+                          </button>
+                        </div>
+
+                        {openInfoKey === "village" && (
+                          <div className="absolute left-1/2 -translate-x-1/2 top-full mt-2 bg-white border border-gray-300 rounded-md shadow-md p-2 text-xs text-gray-800 w-64 z-50">
+                            GP/Village where the plantation site is located.
+                          </div>
+                        )}
+                      </th>
+
+                      {/* ---- Farmer's Name ---- */}
+                      <th className="relative px-4 py-3 text-center">
+                        <div className="flex flex-col items-center justify-center">
+                          <div className="flex items-center gap-1 mb-1">
+                            <span>Farmer's Name</span>
+                            <button
+                              title="Click the Info icon for details"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleInfoClick("farmerName");
+                              }}
+                              className="p-1 text-blue-600 hover:scale-110 transition-transform"
+                            >
+                              <InfoOutlinedIcon
+                                fontSize="small"
+                                className="text-blue-600 transition-transform duration-150 hover:scale-125"
+                              />
+                            </button>
+                          </div>
+                          <input
+                            type="text"
+                            placeholder="Search Farmer's name"
+                            value={plantationSearch}
+                            onChange={(e) =>
+                              setplantationSearch(e.target.value)
+                            }
+                            className="border-b border-gray-700 bg-gray-100 text-xs text-gray-700 px-1 py-0.5 w-40 focus:outline-none focus:border-blue-500"
+                          />
+                        </div>
+
+                        {openInfoKey === "farmerName" && (
+                          <div className="absolute left-1/2 -translate-x-1/2 top-full mt-2 bg-white border border-gray-300 rounded-md shadow-md p-2 text-xs text-gray-800 w-64 z-50">
+                            Name of the Farmer whose plantation site is being
+                            monitored.
+                          </div>
+                        )}
+                      </th>
+
+                      {/* ---- Intervention Year ---- */}
+                      <th className="relative px-4 py-3 text-center cursor-pointer select-none">
+                        <div className="flex items-center justify-center gap-1">
+                          Intervention Year
+                          <button
+                            title="Click the Info icon for details"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleInfoClick("interventionYear");
+                            }}
+                            className="p-1 text-blue-600 hover:scale-110 transition-transform"
+                          >
+                            <InfoOutlinedIcon
+                              fontSize="small"
+                              className="text-blue-600 transition-transform duration-150 hover:scale-125"
+                            />
+                          </button>
+                        </div>
+
+                        {openInfoKey === "interventionYear" && (
+                          <div className="absolute left-1/2 -translate-x-1/2 top-full mt-2 bg-white border border-gray-300 rounded-md shadow-md p-2 text-xs text-gray-800 w-64 z-50">
+                            The year in which intervention was carried out for
+                            the plantation site.
+                          </div>
+                        )}
+                      </th>
+
+                      {/* ---- Area ---- */}
+                      <th className="relative px-4 py-3 text-center cursor-pointer select-none">
+                        <div className="flex items-center justify-center gap-1">
+                          Area (in hectares)
+                          <button
+                            title="Click the Info icon for details"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleInfoClick("area");
+                            }}
+                            className="p-1 text-blue-600 hover:scale-110 transition-transform"
+                          >
+                            <InfoOutlinedIcon
+                              fontSize="small"
+                              className="text-blue-600 transition-transform duration-150 hover:scale-125"
+                            />
+                          </button>
+                        </div>
+
+                        {openInfoKey === "area" && (
+                          <div className="absolute left-1/2 -translate-x-1/2 top-full mt-2 bg-white border border-gray-300 rounded-md shadow-md p-2 text-xs text-gray-800 w-64 z-50">
+                            Total area of the plantation site measured in
+                            hectares.
+                          </div>
+                        )}
+                      </th>
+
+                      {/* ---- Patch Suitability ---- */}
+                      <th
+                        className="relative px-4 py-3 text-center cursor-pointer select-none"
+                        onClick={() => handleSort("patchSuitability")}
+                      >
+                        <div className="flex items-center justify-center gap-1">
+                          Patch Suitability
+                          <span className="ml-1">
+                            {sortField === "patchSuitability" &&
+                            sortOrder === "asc"
+                              ? "🔼"
+                              : "🔽"}
+                          </span>
+                          <button
+                            title="Click the Info icon for details"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleInfoClick("patchSuitability");
+                            }}
+                            className="p-1 text-blue-600 hover:scale-110 transition-transform"
+                          >
+                            <InfoOutlinedIcon
+                              fontSize="small"
+                              className="text-blue-600 transition-transform duration-150 hover:scale-125"
+                            />
+                          </button>
+                        </div>
+
+                        {openInfoKey === "patchSuitability" && (
+                          <div className="absolute left-1/2 -translate-x-1/2 top-full mt-2 bg-white border border-gray-300 rounded-md shadow-md p-2 text-xs text-gray-800 w-64 z-50">
+                            It shows whether the plantation site is suitable or
+                            not.
+                          </div>
+                        )}
+                      </th>
+
+                      {/* ---- Average Tree Cover ---- */}
+                      <th
+                        className="relative px-4 py-3 text-center cursor-pointer select-none"
+                        onClick={() => handleSort("averageTreeCover")}
+                      >
+                        <div className="flex items-center justify-center gap-1">
+                          Average tree cover (%)
+                          <span className="ml-1">
+                            {sortField === "averageTreeCover" &&
+                            sortOrder === "asc"
+                              ? "🔼"
+                              : "🔽"}
+                          </span>
+                          <button
+                            title="Click the Info icon for details"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleInfoClick("averageTreeCover");
+                            }}
+                            className="p-1 text-blue-600 hover:scale-110 transition-transform"
+                          >
+                            <InfoOutlinedIcon
+                              fontSize="small"
+                              className="text-blue-600 transition-transform duration-150 hover:scale-125"
+                            />
+                          </button>
+                        </div>
+
+                        {openInfoKey === "averageTreeCover" && (
+                          <div className="absolute left-1/2 -translate-x-1/2 top-full mt-2 bg-white border border-gray-300 rounded-md shadow-md p-2 text-xs text-gray-800 w-64 z-50">
+                            It shows the average of trees covered for that
+                            plantation site.
+                          </div>
+                        )}
+                      </th>
+                    </tr>
+                  </thead>
+
+                  {/* ---- Table Body ---- */}
+                  <tbody className="text-sm text-gray-700">
+                    {sortedRows.map((row) => (
+                      <tr
+                        key={row.id}
+                        onClick={() => handlePlantationClick(row)}
+                        className="hover:bg-gray-50 cursor-pointer transition-colors border-b"
+                      >
+                        <td className="px-4 py-5 text-center">{row.state}</td>
+                        <td className="px-4 py-2 text-center">
+                          {row.district}
+                        </td>
+                        <td className="px-4 py-2 text-center">{row.block}</td>
+                        <td className="px-4 py-2 text-center">{row.village}</td>
+                        <td className="px-4 py-2 text-center">
+                          {row.farmerName}
+                        </td>
+                        <td className="px-4 py-2 text-center">2020-21</td>
+                        <td className="px-4 py-2 text-center">{row.area}</td>
+                        <td className="px-4 py-2 text-center">
+                          {row.patchSuitability}
+                        </td>
+                        <td className="px-4 py-2 text-center">
+                          {row.averageTreeCover}
+                          {row.treeCoverChange !== "NA" && (
+                            <span
+                              className={`ml-1 ${
+                                row.treeCoverChangeColor === "green"
+                                  ? "text-green-600"
+                                  : row.treeCoverChangeColor === "red"
+                                  ? "text-red-600"
+                                  : ""
+                              }`}
+                            >
+                              ({row.treeCoverChange > 0 ? "+" : ""}
+                              {row.treeCoverChange})
+                            </span>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* ---- Filter Menu ---- */}
+              {anchorEl && (
+                <div
+                  className="absolute z-50 bg-white border border-gray-300 rounded-md shadow-md p-3 mt-1"
+                  style={{
+                    top:
+                      anchorEl?.getBoundingClientRect()?.bottom +
+                      window.scrollY +
+                      8,
+                    left: anchorEl?.getBoundingClientRect()?.left,
                   }}
                 >
+                  {/* Search inside filter */}
+                  <input
+                    type="text"
+                    placeholder="Search..."
+                    value={searchText}
+                    onChange={(e) => setSearchText(e.target.value)}
+                    className="border border-gray-300 rounded-md px-2 py-1 text-sm w-full mb-2 focus:outline-none focus:border-blue-500"
+                  />
+
+                  <button
+                    onClick={() => handleClearSingleFilter(filterType)}
+                    className="text-left text-sm text-red-600 hover:text-red-700 mb-2"
+                  >
+                    Clear {filterType} Filter
+                  </button>
+
+                  <div className="max-h-40 overflow-y-auto space-y-1">
+                    {Array.from(new Set(rows.map((r) => String(r[filterType]))))
+                      .filter((option) =>
+                        option
+                          .toLowerCase()
+                          .startsWith(searchText.toLowerCase())
+                      )
+                      .map((option) => (
+                        <label
+                          key={option}
+                          className="flex items-center gap-2 cursor-pointer text-sm"
+                        >
+                          <input
+                            type="checkbox"
+                            checked={filters[filterType]?.includes(option)}
+                            onChange={() =>
+                              handleFilterChange(filterType, option)
+                            }
+                            className="accent-blue-600"
+                          />
+                          <span>{option}</span>
+                        </label>
+                      ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {infoOpen && infoAnchorEl && (
+              <div
+                className="absolute z-50 bg-white border border-gray-300 rounded-md shadow-md p-2 text-sm text-gray-800 max-w-xs"
+                style={{
+                  top:
+                    infoAnchorEl.getBoundingClientRect().bottom +
+                    window.scrollY +
+                    6,
+                  left: infoAnchorEl.getBoundingClientRect().left,
+                }}
+              >
+                {infoText}
+              </div>
+            )}
+          </>
+        ) : view === "map" ? (
+          <div className="flex flex-col gap-8 mt-2 w-full px-4 sm:px-8 md:px-12">
+            {selectedPlantation && (
+              <div className="flex flex-col gap-2 w-full p-4 sm:p-6 md:p-4 rounded-xl bg-white shadow">
+                {/* Heading */}
+                <h2 className="text-xl font-bold text-blue-600 border-b-2 border-blue-600 pb-1">
                   Section 1: Tree Cover and Land Use Change
-                </Typography>
+                </h2>
 
                 {/* Explanation */}
-                <Typography
-                  variant="body1"
-                  sx={{ color: "text.secondary", lineHeight: 1.7 }}
-                >
+                <p className="text-gray-600 leading-relaxed">
                   The map shows the plantation site and what it looks like
                   currently. Alongside, the stacked bar chart shows the shifts
                   in tree cover, cropland, and non-vegetated areas in the
                   plantation site. We can expect plantations to mature over the
                   years and gain perennial vegetation cover. Also shown is the
-                  NDVI values over time - an index that reflects the greenness
+                  NDVI values over time — an index that reflects the greenness
                   of the site. Peaks show seasonality based on cropping patterns
                   and phenology cycles of trees, and an overall increasing trend
                   can be expected over the years. Together, these indicators can
                   summarize vegetation recovery, cropping patterns, and the
                   impact of plantation efforts.
-                </Typography>
-              </Box>
+                </p>
+              </div>
             )}
 
-            <Box
-              sx={{
-                display: "flex",
-                flexDirection: { xs: "column", md: "row" },
-                alignItems: "flex-start",
-                gap: 4,
-                width: "100%",
-              }}
-            >
-              {/* Map 1 */}
-              <Box
-                sx={{
-                  position: "relative",
-                  width: {
-                    xs: "100%",
-                    md: selectedPlantation ? "65%" : "100%",
-                  },
-                }}
+            <div className="flex flex-col md:flex-row items-start gap-8 w-full">
+              {/* Map Section */}
+              <div
+                className={`relative w-full ${
+                  selectedPlantation ? "md:w-2/3" : "md:w-full"
+                }`}
               >
                 <div
                   ref={mapElement1}
-                  style={{
-                    height: "900px",
-                    width: "100%",
-                    border: "1px solid #ccc",
-                    borderRadius: "5px",
-                    position: "relative",
-                  }}
+                  className="h-[900px] w-full border border-gray-300 rounded-md relative"
                 />
 
                 {/* Top-left Label */}
                 {selectedPlantation && (
-                  <Box
-                    sx={{
-                      position: "absolute",
-                      top: 16,
-                      left: 16,
-                      backgroundColor: "rgba(255, 255, 255, 0.9)",
-                      padding: "8px 12px",
-                      borderRadius: "6px",
-                      fontWeight: "bold",
-                      boxShadow: 1,
-                      display: "flex",
-                      flexDirection: "column",
-                      alignItems: "flex-start",
-                      gap: 1,
-                      zIndex: 1000,
-                      maxWidth: { xs: "90%", sm: "300px" },
-                    }}
-                  >
-                    <Box display="flex" alignItems="center" gap={1}>
-                      <LocationOnIcon fontSize="small" color="primary" />
-                      <Typography variant="body1" fontWeight={600}>
+                  <div className="absolute top-4 left-4 bg-white/90 p-3 rounded-md font-semibold shadow flex flex-col items-start gap-1 z-50 max-w-[90%] sm:max-w-[300px]">
+                    <div className="flex items-center gap-1">
+                      <LocationOnIcon
+                        fontSize="small"
+                        className="text-blue-600"
+                      />
+                      <span className="font-semibold">
                         {selectedPlantation?.farmerName || "NA"}
-                      </Typography>
-                    </Box>
-                    <Typography
-                      variant="body2"
-                      color="text.secondary"
-                      fontWeight={800}
-                    >
+                      </span>
+                    </div>
+                    <p className="text-gray-600 font-bold text-sm">
                       Patch Suitability:{" "}
                       {selectedPlantation?.patchSuitability || "NA"}
-                    </Typography>
-                    <Typography
-                      variant="body2"
-                      color="text.secondary"
-                      fontWeight={800}
-                    >
-                      Suitabilty Score:{" "}
+                    </p>
+                    <p className="text-gray-600 font-bold text-sm">
+                      Suitability Score:{" "}
                       {selectedPlantation?.suitabilityScore || "NA"}
-                    </Typography>
-                    <Typography
-                      variant="body2"
-                      color="text.secondary"
-                      fontWeight={800}
-                    >
+                    </p>
+                    <p className="text-gray-600 font-bold text-sm">
                       Area (in hectares):{" "}
                       {(selectedFeature.properties?.area_ha || 0).toFixed(2)}{" "}
                       hectares
-                    </Typography>
-                  </Box>
+                    </p>
+                  </div>
                 )}
 
                 {/* Zoom Controls */}
-
-                <Box
-                  sx={{
-                    position: "absolute",
-                    top: 16,
-                    right: 16,
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: 1,
-                    zIndex: 1100,
-                  }}
-                >
+                <div className="absolute top-4 right-4 flex flex-col gap-2 z-[60]">
                   {["+", "–"].map((sign) => (
                     <button
                       key={sign}
-                      style={{
-                        backgroundColor: "#fff",
-                        border: "1px solid #ccc",
-                        borderRadius: "4px",
-                        width: "40px",
-                        height: "40px",
-                        fontSize: "20px",
-                        cursor: "pointer",
-                      }}
+                      className="bg-white border border-gray-300 rounded-md w-10 h-10 text-lg hover:scale-105 transition-transform"
                       onClick={() => {
                         const view = mapRef1.current?.getView();
                         const delta = sign === "+" ? 1 : -1;
@@ -1534,127 +1391,63 @@ const PlantationProjectDashboard = () => {
                       {sign}
                     </button>
                   ))}
-                </Box>
-              </Box>
-              {mapClickedPlantation && !selectedPlantation && (
-                <Box
-                  sx={{
-                    position: "absolute",
-                    top: mapClickedPlantation.pixel[1] - 0, // little above marker
-                    left: mapClickedPlantation.pixel[0] + 15, // slight offset to right
-                    transform: "translate(-50%, -100%)",
-                    width: 250,
-                    padding: 2,
-                    background: "#ffffff",
-                    boxShadow: "0px 4px 16px rgba(0, 0, 0, 0.15)",
-                    borderRadius: 2,
-                    border: "1px solid #e0e0e0",
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: 1,
-                    cursor: "pointer",
-                    transition: "all 0.2s ease-in-out",
-                    "&:hover": {
-                      boxShadow: "0px 6px 20px rgba(0,0,0,0.25)",
-                      transform: "translate(-50%, -102%)",
-                      borderColor: "#1976d2",
-                    },
-                    zIndex: 9999,
-                  }}
-                  onClick={handleMapBoxClick}
-                >
-                  <Typography
-                    variant="subtitle1"
-                    fontWeight={700}
-                    sx={{
-                      color: "#1976d2",
-                      borderBottom: "1px solid #ddd",
-                      pb: 1,
-                    }}
-                  >
-                    {mapClickedPlantation.name}
-                  </Typography>
+                </div>
 
-                  <Box display="flex" justifyContent="space-between">
-                    <Typography
-                      variant="body2"
-                      fontWeight={600}
-                      color="text.secondary"
-                    >
-                      Village:
-                    </Typography>
-                    <Typography
-                      variant="body2"
-                      fontWeight={500}
-                      color="text.primary"
-                    >
-                      {mapClickedPlantation.Village ?? "NA"}
-                    </Typography>
-                  </Box>
-
-                  <Box display="flex" justifyContent="space-between">
-                    <Typography
-                      variant="body2"
-                      fontWeight={600}
-                      color="text.secondary"
-                    >
-                      Taluka:
-                    </Typography>
-                    <Typography
-                      variant="body2"
-                      fontWeight={500}
-                      color="text.primary"
-                    >
-                      {mapClickedPlantation.Taluka ?? "NA"}
-                    </Typography>
-                  </Box>
-                  <Typography
-                    variant="body2"
-                    sx={{
-                      mt: 1,
-                      color: "#1976d2",
-                      fontWeight: 600,
-                      textAlign: "right",
+                {/* Map Click Popup */}
+                {mapClickedPlantation && !selectedPlantation && (
+                  <div
+                    className="absolute transform -translate-x-1/2 -translate-y-full bg-white border border-gray-200 rounded-lg shadow-lg p-3 w-[250px] flex flex-col gap-1 cursor-pointer transition-all duration-200 hover:shadow-xl hover:-translate-y-[102%] hover:border-blue-600 z-[9999]"
+                    style={{
+                      top: `${mapClickedPlantation.pixel[1]}px`,
+                      left: `${mapClickedPlantation.pixel[0] + 15}px`,
                     }}
+                    onClick={handleMapBoxClick}
                   >
-                    View details →
-                  </Typography>
-                </Box>
-              )}
+                    <h3 className="text-blue-600 font-bold border-b border-gray-200 pb-1">
+                      {mapClickedPlantation.name}
+                    </h3>
+
+                    <div className="flex justify-between text-sm">
+                      <span className="font-semibold text-gray-600">
+                        Village:
+                      </span>
+                      <span className="text-gray-800">
+                        {mapClickedPlantation.Village ?? "NA"}
+                      </span>
+                    </div>
+
+                    <div className="flex justify-between text-sm">
+                      <span className="font-semibold text-gray-600">
+                        Taluka:
+                      </span>
+                      <span className="text-gray-800">
+                        {mapClickedPlantation.Taluka ?? "NA"}
+                      </span>
+                    </div>
+
+                    <p className="text-blue-600 font-semibold text-right text-sm mt-1">
+                      View details →
+                    </p>
+                  </div>
+                )}
+              </div>
+
               {/* Charts Section */}
               {selectedPlantation && (
-                <Box
-                  sx={{
-                    width: { xs: "100%", md: "45%" },
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: { xs: 6, sm: 8, md: 10, lg: 12 },
-                    alignItems: "center",
-                  }}
-                >
-                  <Box
-                    sx={{
-                      width: "100%",
-                      height: { xs: 300, sm: 350, md: 400 },
-                      marginTop: "1%",
-                    }}
-                  >
+                <div className="w-full md:w-[45%] flex flex-col items-center gap-10 sm:gap-12 md:gap-14 lg:gap-16">
+                  {/* Stacked Bar Chart */}
+                  <div className="w-full h-[400px] mt-2 relative">
                     <PlantationStackBarGraph
                       plantation={selectedPlantation}
                       plantationData={geoData}
                     />
-                    <Typography fontSize={14} color="#333" mt={15}>
+                    <p className="text-[14px] text-gray-800 mt-24 text-center">
                       <b>Black line</b> represents the year of intervention.
-                    </Typography>
-                  </Box>
+                    </p>
+                  </div>
 
-                  <Box
-                    sx={{
-                      width: "100%",
-                      height: { xs: 300, sm: 350, md: 400 },
-                      // marginTop: "25%",
-                    }}
-                  >
+                  {/* NDVI Chart */}
+                  <div className="w-full h-[400px]">
                     <PlantationNDVIChart
                       plantation={selectedPlantation}
                       plantationData={geoData}
@@ -1669,15 +1462,16 @@ const PlantationProjectDashboard = () => {
                         "2024",
                       ]}
                     />
-                  </Box>
-                </Box>
+                  </div>
+                </div>
               )}
-            </Box>
+            </div>
+
             <SoilPropertiesSection feature={selectedFeature} />
-          </Box>
+          </div>
         ) : null}
-      </Box>
-    </Box>
+      </div>
+    </div>
   );
 };
 
