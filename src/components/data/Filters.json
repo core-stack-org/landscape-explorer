@@ -317,12 +317,12 @@
             },
             {
                 "name": "trend_g",
-                "label" : "Groundwater level trend over the years 2017 to 2023",
+                "label" : "Water balance trend over the years 2017 to 2023",
                 "type" : 1,
                 "values" : [
-                    {"label" : "Increase in levels of groundwater", "value" : "1"},
-                    {"label" : "Decrease in levels of groundwater", "value" : "-1"},
-                    {"label" : "Steady groundwater levels", "value" : "0"}   
+                    {"label" : "Positive Trend", "value" : "1"},
+                    {"label" : "Negative Trend", "value" : "-1"},
+                    {"label" : "No Trend", "value" : "0"}   
                 ],
                 "layer_store" : ["mws_layers"],
                 "layer_name" : ["deltaG_well_depth"],
