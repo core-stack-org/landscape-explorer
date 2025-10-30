@@ -481,60 +481,45 @@
             },
             {
                 "name": "soge_class",
-                "label": "Stage of groundwater extraction",
-                "type": 1,
-                "values": [
-                    {
-                        "label": "Safe",
-                        "value": 0
-                    },
-                    {
-                        "label": "Semi-Critical",
-                        "value": 1
-                    },
-                    {
-                        "label": "Critical",
-                        "value": 2
-                    },
-                    {
-                        "label": "Over-exploited",
-                        "value": 3
-                    }
-                ],
-                "layer_store": [
-                    "soge"
-                ],
-                "layer_name": [
-                    "soge_vector"
-                ],
-                "vectorStyle": [
-                    {
-                        "fill": "rgba(255, 255, 255, 0.5)",
-                        "stroke": "rgba(255, 255, 255, 1)",
-                        "lower": 0,
-                        "upper": 0
-                    },
-                    {
-                        "fill": "rgba(224, 243, 248, 0.5)",
-                        "stroke": "rgba(224, 243, 248, 1)",
-                        "lower": 1,
-                        "upper": 1
-                    },
-                    {
-                        "fill": "rgba(69, 117, 180, 0.5)",
-                        "stroke": "rgba(69, 117, 180, 1)",
-                        "lower": 2,
-                        "upper": 2
-                    },
-                    {
-                        "fill": "rgba(49, 54, 149, 0.5)",
-                        "stroke": "rgba(49, 54, 149, 1)",
-                        "lower": 3,
-                        "upper": 3
-                    }
-                ],
-                "rasterStyle": "",
-                "styleIdx": 12
+                "label" : "Stage of groundwater extraction",
+                "type" : 1,
+                "values" : [
+                    {"label" : "Safe", "value" : 0},
+                    {"label" : "Semi-Critical", "value" : 1},
+                    {"label" : "Critical", "value" : 2},
+                    {"label" : "Over-exploited", "value" : 3},
+                    {"label" : "Not Assessed", "value" : 4}                      
+                    ],
+                "layer_store" : ["soge"],
+                "layer_name" : ["soge_vector"],
+                "vectorStyle" : [{
+                    "fill" : "rgba(255, 255, 255, 0.5)",
+                    "stroke" : "rgba(255, 255, 255, 1)",
+                    "lower" : 0, "upper" : 0
+                },
+                {
+                    "fill" : "rgba(224, 243, 248, 0.5)",
+                    "stroke" : "rgba(224, 243, 248, 1)",
+                    "lower" : 1, "upper" : 1
+                },
+                {
+                    "fill" : "rgba(69, 117, 180, 0.5)",
+                    "stroke" : "rgba(69, 117, 180, 1)",
+                    "lower" : 2, "upper" : 2
+                },
+                {
+                    "fill" : "rgba(49, 54, 149, 0.5)",
+                    "stroke" : "rgba(49, 54, 149, 1)",
+                    "lower" : 3, "upper" : 3
+                },
+                {
+                    "fill" : "rgba(169, 169, 169, 0.5)",
+                    "stroke" : "rgba(169, 169, 169, 1)",
+                    "lower" : 4, "upper" : 4
+                }
+            ],
+                "rasterStyle" : "",
+                "styleIdx" : 12
             },
             {
                 "name": "trend_g",
