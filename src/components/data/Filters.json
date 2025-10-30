@@ -287,7 +287,8 @@
                     {"label" : "Safe", "value" : 0},
                     {"label" : "Semi-Critical", "value" : 1},
                     {"label" : "Critical", "value" : 2},
-                    {"label" : "Over-exploited", "value" : 3}                      
+                    {"label" : "Over-exploited", "value" : 3},
+                    {"label" : "Not Assessed", "value" : 4}                      
                     ],
                 "layer_store" : ["soge"],
                 "layer_name" : ["soge_vector"],
@@ -310,6 +311,11 @@
                     "fill" : "rgba(49, 54, 149, 0.5)",
                     "stroke" : "rgba(49, 54, 149, 1)",
                     "lower" : 3, "upper" : 3
+                },
+                {
+                    "fill" : "rgba(169, 169, 169, 0.5)",
+                    "stroke" : "rgba(169, 169, 169, 1)",
+                    "lower" : 4, "upper" : 4
                 }
             ],
                 "rasterStyle" : "",
