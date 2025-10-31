@@ -439,6 +439,22 @@
                 "styleIdx" : 0
             }
            
+        ],
+        "Resource conflicts" : [
+            {
+                "name": "lcw_conflict",
+                "label" : "Conflict Type",
+                "type" : 1,
+                "values" : [
+                    {"label" : "Areas with no conflicts", "value" : 0},
+                    {"label" : "Areas with conflicts", "value" : 1}
+                ],
+                "layer_store" : ["lcw"],
+                "layer_name" : ["lcw_conflict"],
+                "vectorStyle" : [{}],
+                "rasterStyle" : [""],
+                "styleIdx" : 0
+            }
         ]
     },
     "Village" : {
