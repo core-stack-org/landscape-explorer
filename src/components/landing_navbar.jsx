@@ -42,9 +42,18 @@ const LandingNavbar = () => {
               href="https://ee-corestackdev.projects.earthengine.app/view/core-stack-gee-app"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-purple-700 font-medium text-sm sm:text-base cursor-pointer hover:underline"
+              className="text-purple-700 font-medium text-sm sm:text-base cursor-pointer hover:underline mr-10"
             >
               Explore GEE App
+            </a>
+
+            <a
+              href="https://dashboard.core-stack.org"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-purple-700 font-medium text-sm sm:text-base cursor-pointer hover:underline "
+            >
+              Project Management Dashboard
             </a>
           </div>
         </div>
