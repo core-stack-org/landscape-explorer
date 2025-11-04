@@ -6,6 +6,7 @@ import {
   districtAtom,
   blockAtom,
   filterSelectionsAtom,
+  patternSelectionsAtom,
   yearAtom,
   dataJsonAtom,
 } from "../store/locationStore.jsx";
@@ -30,6 +31,8 @@ import KYLRightSidebar from "../components/kyl_rightSidebar.jsx";
 import KYLMapContainer from "../components/kyl_mapContainer.jsx";
 import getPlans from "../actions/getPlans.js";
 import layerStyle from "../components/utils/layerStyle.jsx";
+import { getAllPatternTypes, getSubcategoriesForCategory, getPatternsForSubcategory  } from '../components/utils/patternsHelper.js';
+import { handlePatternSelection as handlePatternSelectionLogic, isPatternSelected, getAllSelectedPatterns, getSelectedPatternCount, clearAllPatterns } from '../components/utils/patternSelectionLogic.js';
 
 //? Icons Imports
 import settlementIcon from "../assets/settlement_icon.svg";
@@ -76,8 +79,9 @@ const KYLDashboardPage = () => {
   const [state, setState] = useRecoilState(stateAtom);
   const [district, setDistrict] = useRecoilState(districtAtom);
   const [block, setBlock] = useRecoilState(blockAtom);
-  const [filterSelections, setFilterSelections] =
-    useRecoilState(filterSelectionsAtom);
+  const [filterSelections, setFilterSelections] =useRecoilState(filterSelectionsAtom);
+  const [patternSelections, setPatternSelections] = useState({selectedMWSPatterns: {},selectedVillagePatterns: {}});
+
   const lulcYear = useRecoilValue(yearAtom);
 
   const [indicatorType, setIndicatorType] = useState(null);
@@ -202,6 +206,9 @@ const KYLDashboardPage = () => {
 
   // Filter selection handlers
   const handleFilterSelection = (name, option, isChecked) => {
+    console.log(name)
+    console.log(option)
+    console.log(isChecked)
     const sourceType = determineFilterSource(name);
     option = {
       ...option,
@@ -229,6 +236,17 @@ const KYLDashboardPage = () => {
       }));
     }
   };
+
+  // Pattern selection handler
+  const handlePatternSelection = (pattern, isSelected) => {
+      handlePatternSelectionLogic(
+        pattern, 
+        isSelected, 
+        patternSelections, 
+        setPatternSelections
+    );
+  };
+
  
   const resetMWSStyle = (tempMWS) => {
     mwsLayerRef.current.setStyle((feature) => {
@@ -1154,11 +1172,7 @@ const KYLDashboardPage = () => {
               if (filter?.type === 2) {
                 dataJson.forEach((tempItem) => {
                   try {
-                    if (
-                      tempItem &&
-                      typeof tempItem[item] !== "undefined" &&
-                      tempItem.mws_id
-                    ) {
+                    if (tempItem && typeof tempItem[item] !== "undefined" && tempItem.mws_id) {
                       const itemValue = Number(tempItem[item]);
                       if (
                         !isNaN(itemValue) &&
@@ -1426,6 +1440,44 @@ const KYLDashboardPage = () => {
       fetchAdminLayer([]);
     }
   }, [villageIdList, villageJson, filterSelections.selectedVillageValues]);
+
+  useEffect(() => {
+    if (!patternSelections?.selectedMWSPatterns || !patternSelections?.selectedVillagePatterns) {
+      console.warn("Invalid patterns selections structure");
+      return;
+    }
+
+    let mwsKeys = Object.keys(patternSelections.selectedMWSPatterns)
+    let tempMWS = []
+
+    if(mwsKeys.length > 0){
+        try{
+          console.log(mwsKeys)
+          mwsKeys.forEach((item) => {
+            let patternValues = patternSelections.selectedMWSPatterns[item]
+            if (!patternValues) return
+
+            patternValues.conditions.forEach((tempItem) => {
+              let name = tempItem.key
+              let option = {
+                "label" : tempItem.label,
+                "value" : null,
+              }
+              if(tempItem.type === 1){
+                option["value"] = tempItem.value
+              }
+              if(tempItem.type === 2){
+                option["value"] = {"lower" : tempItem.value.lower, "upper" : tempItem.value.upper}
+              }
+              handleFilterSelection(name, option, true)
+            })
+          })
+        }catch(err){
+          console.log(err)
+        }
+    }
+
+  },[patternSelections])
 
   useEffect(() => {
     if (currentPlan !== null) {
@@ -1706,14 +1758,17 @@ const KYLDashboardPage = () => {
           getAllFilterTypes={getAllFilterTypes}
           getAllFilters={getAllFilters}
           handleFilterSelection={handleFilterSelection}
-          state={state} // Pass state
-          district={district} // Pass district
-          block={block} // Pass block
           setToggleStates={setToggleStates}
           currentLayer={currentLayer}
           setCurrentLayer={setCurrentLayer}
           mapRef={mapRef}
           filtersEnabled={filtersEnabled}
+          getAllPatternTypes={getAllPatternTypes}
+          getSubcategoriesForCategory={getSubcategoriesForCategory}
+          getPatternsForSubcategory={getPatternsForSubcategory}
+          patternSelections={patternSelections}
+          handlePatternSelection={handlePatternSelection}
+          isPatternSelected={isPatternSelected}
         />
 
         {/* Map Container */}
