@@ -672,7 +672,7 @@ const WaterProjectDashboard = () => {
             feature.setStyle(
               new Style({
                 stroke: new Stroke({ color: "#FF0000", width: 5 }),
-                fill: new Fill({ color: "rgba(255, 0, 0, 0.3)" }),
+                // fill: new Fill({ color: "rgba(255, 0, 0, 0.3)" }),
               })
             );
           }
@@ -1061,6 +1061,69 @@ const WaterProjectDashboard = () => {
     });
   };
 
+  // const initializeMap2 = async () => {
+  //   const baseLayer = new TileLayer({
+  //     source: new XYZ({
+  //       url: "https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}",
+  //       maxZoom: 30,
+  //     }),
+  //   });
+
+  //   const view = new View({
+  //     projection: "EPSG:4326",
+  //     constrainResolution: true,
+  //   });
+
+  //   const map = new Map({
+  //     target: mapElement2.current,
+  //     layers: [baseLayer],
+  //     view,
+  //     loadTilesWhileAnimating: true,
+  //     loadTilesWhileInteracting: true,
+  //   });
+
+  //   mapRef2.current = map;
+
+  //   // Only show selected waterbody (in blue)
+  //   let selectedFeatureOnly = null;
+
+  //   if (selectedWaterbody && geoData) {
+  //     const allFeatures = new GeoJSON({
+  //       dataProjection: "EPSG:4326",
+  //       featureProjection: "EPSG:4326",
+  //     }).readFeatures(geoData);
+
+  //     selectedFeatureOnly = allFeatures.find(
+  //       (f) =>
+  //         f.get("waterbody_name")?.toLowerCase().trim() ===
+  //         selectedWaterbody?.waterbody?.toLowerCase().trim()
+  //     );
+  //   }
+
+  //   const waterBodyLayer2 = new VectorLayer({
+  //     source: new VectorSource({
+  //       features: selectedFeatureOnly ? [selectedFeatureOnly] : [],
+  //     }),
+  //     style: new Style({
+  //       stroke: new Stroke({ color: "#0000FF", width: 4 }),
+  //     }),
+  //   });
+
+  //   map.addLayer(waterBodyLayer2);
+
+  //   // ✅ Zoom logic
+  //   if (selectedFeatureOnly) {
+  //     const geometry = selectedFeatureOnly.getGeometry();
+  //     if (geometry) {
+  //       view.fit(geometry.getExtent(), {
+  //         duration: 1000,
+  //         padding: [50, 50, 50, 50],
+  //         maxZoom: 18,
+  //       });
+  //     }
+  //   }
+  // };
+
   const initializeMap2 = async () => {
     const baseLayer = new TileLayer({
       source: new XYZ({
@@ -1084,32 +1147,50 @@ const WaterProjectDashboard = () => {
 
     mapRef2.current = map;
 
-    // Create the same waterBodyLayer using geoData
-    const vectorSource = new VectorSource({
-      features: new GeoJSON({
+    // ✅ Create ZOI Layer (all visible)
+    if (zoiFeatures && zoiFeatures.length > 0) {
+      const zoiLayer = new VectorLayer({
+        source: new VectorSource({
+          features: zoiFeatures,
+        }),
+        style: new Style({
+          stroke: new Stroke({ color: "#00aa00", width: 2 }), // green outline
+        }),
+      });
+      map.addLayer(zoiLayer);
+    }
+
+    // ✅ Only show selected waterbody
+    let selectedFeatureOnly = null;
+
+    if (selectedWaterbody && geoData) {
+      const allFeatures = new GeoJSON({
         dataProjection: "EPSG:4326",
         featureProjection: "EPSG:4326",
-      }).readFeatures(geoData),
-    });
+      }).readFeatures(geoData);
 
-    const waterBodyLayer2 = new VectorLayer({
-      source: vectorSource,
-      style: new Style({
-        stroke: new Stroke({ color: "#ff0000", width: 5 }),
-      }),
-    });
+      selectedFeatureOnly = allFeatures.find(
+        (f) =>
+          f.get("waterbody_name")?.toLowerCase().trim() ===
+          selectedWaterbody?.waterbody?.toLowerCase().trim()
+      );
+    }
 
-    map.addLayer(waterBodyLayer2);
-
-    const features = vectorSource.getFeatures();
-
-    if (selectedWaterbody && selectedFeature) {
-      const feature = new GeoJSON().readFeature(selectedFeature, {
-        dataProjection: "EPSG:4326",
-        featureProjection: view.getProjection(),
+    // ✅ Blue waterbody layer
+    if (selectedFeatureOnly) {
+      const waterBodyLayer2 = new VectorLayer({
+        source: new VectorSource({
+          features: [selectedFeatureOnly],
+        }),
+        style: new Style({
+          stroke: new Stroke({ color: "#0000FF", width: 4 }), // blue border
+          // fill: new Fill({ color: "rgba(0, 0, 255, 0.3)" }), // light blue fill
+        }),
       });
+      map.addLayer(waterBodyLayer2);
 
-      const geometry = feature.getGeometry();
+      // Zoom to selected feature
+      const geometry = selectedFeatureOnly.getGeometry();
       if (geometry) {
         view.fit(geometry.getExtent(), {
           duration: 1000,
@@ -1117,12 +1198,13 @@ const WaterProjectDashboard = () => {
           maxZoom: 18,
         });
       }
-    } else if (features.length > 0) {
-      const extent = vectorSource.getExtent();
-      view.fit(extent, {
-        padding: [50, 50, 50, 50],
+    } else if (zoiFeatures && zoiFeatures.length > 0) {
+      // fallback zoom to zoi extent if no waterbody selected
+      const zoiExtent = new VectorSource({ features: zoiFeatures }).getExtent();
+      view.fit(zoiExtent, {
         duration: 1000,
-        maxZoom: 18,
+        padding: [50, 50, 50, 50],
+        maxZoom: 16,
       });
     }
   };
@@ -1403,8 +1485,8 @@ const WaterProjectDashboard = () => {
     const extent = geometry.getExtent();
     view.fit(extent, {
       duration: 1000,
-      padding: [50, 50, 50, 50],
-      maxZoom: 18,
+      padding: [30, 30, 30, 30],
+      maxZoom: 20,
     });
 
     // --- Reset all waterbodies to blue
@@ -1428,7 +1510,7 @@ const WaterProjectDashboard = () => {
         features[waterbody.featureIndex].setStyle(
           new Style({
             stroke: new Stroke({ color: "#FF0000", width: 4 }),
-            fill: new Fill({ color: "rgba(255, 0, 0, 0.2)" }),
+            // fill: new Fill({ color: "rgba(255, 0, 0, 0.2)" }),
           })
         );
       }
@@ -1451,13 +1533,13 @@ const WaterProjectDashboard = () => {
 
     const view = targetMapRef.current.getView();
 
-    // ✅ Find ZOI feature for this waterbody
+    // Find ZOI feature for this waterbody
     const matchedZoi = zoiFeatures.find(
       (f) =>
         f.get("waterbody_name")?.toLowerCase().trim() ===
         waterbody?.waterbody?.toLowerCase().trim()
     );
-
+    console.log(matchedZoi);
     if (!matchedZoi) {
       console.error("No matching ZOI found for", waterbody);
       return;
@@ -1469,7 +1551,7 @@ const WaterProjectDashboard = () => {
       return;
     }
 
-    // ✅ Zoom to ZOI instead of waterbody
+    //  Zoom to ZOI instead of waterbody
     const extent = geometry.getExtent();
     view.fit(extent, {
       duration: 1000,
@@ -1489,7 +1571,6 @@ const WaterProjectDashboard = () => {
         features[waterbody.featureIndex].setStyle(
           new Style({
             stroke: new Stroke({ color: "#FF0000", width: 5 }),
-            fill: new Fill({ color: "rgba(255, 0, 0, 0.5)" }),
           })
         );
       }
@@ -2302,10 +2383,10 @@ const WaterProjectDashboard = () => {
                   can be seen through maps and graphs.
                 </p>
 
-                <p className="text-gray-600 leading-relaxed">
+                {/* <p className="text-gray-600 leading-relaxed">
                   We also show NDMI values, a soil moisture index, at increasing
                   radial distances from the waterbody.
-                </p>
+                </p> */}
               </div>
             )}
             {selectedWaterbody && (
@@ -2434,17 +2515,21 @@ const WaterProjectDashboard = () => {
                     </div>
 
                     <div className="w-full max-w-[700px] h-[300px] sm:h-[350px] md:h-[400px]">
-                      <NDMIPointChart
-                        zoiFeatures={zoiFeatures}
+                      <DroughtChart
+                        feature={selectedMWSFeature}
                         waterbody={selectedWaterbody}
                       />
+                      {/* <NDMIPointChart
+                        zoiFeatures={zoiFeatures}
+                        waterbody={selectedWaterbody}
+                      /> */}
                     </div>
                   </div>
                 </div>
 
                 <div className="w-full flex flex-col md:flex-row gap-4 md:gap-6 items-stretch md:items-end">
                   {/* NDVI Chart (Left Side) */}
-                  <div className="w-full md:w-[65%] h-[300px] sm:h-[350px] md:h-[400px]">
+                  <div className="w-full h-[300px] sm:h-[350px] md:h-[400px]">
                     <NDVIChart
                       zoiFeatures={zoiFeatures}
                       waterbody={selectedWaterbody}
@@ -2462,14 +2547,14 @@ const WaterProjectDashboard = () => {
                   </div>
 
                   {/* Drought Chart (Right Side) */}
-                  {selectedMWSFeature && (
+                  {/* {selectedMWSFeature && (
                     <div className="w-full md:w-[35%] h-[300px] sm:h-[400px] md:h-[450px]">
                       <DroughtChart
                         feature={selectedMWSFeature}
                         waterbody={selectedWaterbody}
                       />
                     </div>
-                  )}
+                  )} */}
                 </div>
               </>
             )}

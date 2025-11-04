@@ -1,14 +1,39 @@
+import React from "react";
 import { Bar } from "react-chartjs-2";
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Tooltip,
+  Legend,
+  PointElement,
+  LineElement,
+  LineController,
+} from "chart.js";
+import annotationPlugin from "chartjs-plugin-annotation";
+
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Tooltip,
+  Legend,
+  annotationPlugin,
+  PointElement,
+  LineElement,
+  LineController
+);
 
 const CroppingIntensityStackChart = ({ zoiFeatures, waterbody }) => {
   const yearLabels = [
-    "2017-18",
-    "2018-19",
-    "2019-20",
-    "2020-21",
-    "2021-22",
-    "2022-23",
-    "2023-24",
+    "17-18",
+    "18-19",
+    "19-20",
+    "20-21",
+    "21-22",
+    "22-23",
+    "23-24",
   ];
 
   const yearSuffix = ["2017", "2018", "2019", "2020", "2021", "2022", "2023"];
@@ -76,7 +101,26 @@ const CroppingIntensityStackChart = ({ zoiFeatures, waterbody }) => {
         display: true,
         text: `Cropping Intensity by Year (Area in hectares)`,
       },
+      annotation: {
+        annotations: {
+          interventionLine: {
+            type: "line",
+            scaleID: "x",
+            value: "22-23",
+            borderColor: "black",
+            borderWidth: 2,
+            label: {
+              content: "Intervention Year",
+              enabled: true,
+              position: "start",
+              color: "black",
+              font: { weight: "bold" },
+            },
+          },
+        },
+      },
     },
+
     scales: {
       x: {
         stacked: true,
