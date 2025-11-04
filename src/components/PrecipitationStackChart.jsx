@@ -96,7 +96,7 @@ const PrecipitationStackChart = ({ feature }) => {
         stacked: true,
         title: {
           display: true,
-          text: "Precipitation (mm)",
+          text: "Rainfall (mm)",
         },
       },
     },

@@ -204,7 +204,7 @@ const WaterAvailabilityChart = ({ waterbody, water_rej_data, mwsFeature }) => {
       },
       title: {
         display: true,
-        text: "Land Use Categories vs Rainfall (Grouped Legend)",
+        text: "Land Use Categories vs Rainfall (Black line represents the intervention year)",
         font: { size: 16, weight: "bold" },
       },
       annotation: {
@@ -247,27 +247,51 @@ const WaterAvailabilityChart = ({ waterbody, water_rej_data, mwsFeature }) => {
     <div style={{ width: "100%", height: "80%" }}>
       <div
         className="custom-legend"
-        style={{ display: "flex", fontSize: 10, gap: 16, marginLeft: 25 }}
+        style={{
+          display: "flex",
+          flexWrap: "wrap",
+          justifyContent: "center",
+          alignItems: "flex-start",
+          fontSize: "clamp(8px, 1.5vw, 12px)", // smoother scaling
+          gap: "12px",
+          margin: "8px auto",
+          padding: "4px 12px",
+          width: "100%",
+          maxWidth: "1000px", // prevents over-stretch
+          boxSizing: "border-box",
+        }}
       >
         {Object.entries(groups).map(([group, items]) => (
-          <div key={group} style={{ marginBottom: 8 }}>
-            <strong>{group}</strong>
+          <div
+            key={group}
+            style={{
+              marginBottom: 6,
+              minWidth: "120px",
+              flex: "1 1 180px", // allows wrapping gracefully
+            }}
+          >
+            <strong style={{ display: "block", marginBottom: 2 }}>
+              {group}
+            </strong>
             {items.map((item) => (
               <div
                 key={item.key}
                 style={{
                   display: "flex",
                   alignItems: "center",
-                  marginLeft: 8,
+                  marginLeft: 6,
+                  marginTop: 2,
+                  whiteSpace: "nowrap",
                 }}
               >
                 <span
                   style={{
                     display: "inline-block",
-                    width: 14,
-                    height: 14,
+                    width: "clamp(10px, 1.5vw, 14px)",
+                    height: "clamp(10px, 1.5vw, 14px)",
                     backgroundColor: item.color,
                     marginRight: 6,
+                    borderRadius: 2,
                   }}
                 ></span>
                 {item.label}
@@ -275,12 +299,22 @@ const WaterAvailabilityChart = ({ waterbody, water_rej_data, mwsFeature }) => {
             ))}
           </div>
         ))}
-        {/* Add Rainfall Line */}
-        <div style={{ display: "flex", alignItems: "center", marginTop: 8 }}>
+
+        {/* Rainfall Line */}
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            flex: "1 1 180px",
+            marginTop: 6,
+            whiteSpace: "nowrap",
+          }}
+        >
           <span
             style={{
               display: "inline-block",
-              width: 14,
+              width: "clamp(20px, 3vw, 30px)",
               height: 2,
               backgroundColor: "#4F555F",
               marginRight: 6,
@@ -289,13 +323,14 @@ const WaterAvailabilityChart = ({ waterbody, water_rej_data, mwsFeature }) => {
           Total Rainfall (mm)
         </div>
       </div>
+
       <Bar
         data={data}
         options={{
           ...options,
           plugins: {
-            ...options.plugins, // keep existing plugins (including annotation)
-            legend: { display: false }, // override only legend
+            ...options.plugins,
+            legend: { display: false },
           },
         }}
       />
