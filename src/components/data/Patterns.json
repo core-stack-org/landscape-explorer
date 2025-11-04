@@ -1,0 +1,98 @@
+{
+    "Agriculture" : [
+        {
+            "Water" : [
+                {
+                    "Name" : "low_rainfed_agri_resilience",
+                    "Category" : "low rainfed agriculture resilience",
+                    "Characteristics" : "erratic rainfall, rainfed agriculture dependency, over-dependence on rainfed farming, rain-fed risk, rain-fed dependence, poor bund construction",
+                    "level" : 0,
+                    "Values" : [
+                        {
+                            "label" : "Double cropping < 30%",
+                            "Key" : "avg_double_cropped",
+                            "type" : 2,
+                            "value" : {"lower" : 0, "upper" : 30}
+                        }
+                    ]
+                },
+                {
+                    "Name" : "groundwater_stress",
+                    "Category" : "groundwater stress",
+                    "Characteristics" : "water erosion, groundwater decline, groundwater depletion, groundwater stress, water stress, low groundwater, groundwater depletion, GW depletion, saline GW, rapid runoff, high cost for marginal farmers",
+                    "level" : 0,
+                    "Values" : [
+                        {
+                            "label" : "SOGE is not equals safe",
+                            "Key" : "soge_class",
+                            "type" : 3,
+                            "value" : 0
+                        },
+                        {
+                            "label" : "trend(G) is -ve",
+                            "Key" : "trend_g",
+                            "type" : 1,
+                            "value" : -1
+                        }
+                    ]
+                }
+            ]
+        }
+    ],
+    "Livelihood" : [
+        {
+            "Livestock" : [
+                {
+                    "Name" : "water_scarcity",
+                    "Category" : "water scarcity",
+                    "Characteristics" : "livestock water shortage",
+                    "level" : 0,
+                    "Values" : [
+                        {
+                            "label" : "Rabi water availability < 30%",
+                            "Key" : "avg_rabi_surface_water_mws",
+                            "type" : 2,
+                            "value" : {"lower" : 0, "upper" : 30}
+                        },
+                        {
+                            "label" : "trend(surface water availability) is -ve",
+                            "Key" : "trend_swb",
+                            "type" : 1,
+                            "value" : -1
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "Fishery" : [
+                {
+                    "Name" : "water_potential",
+                    "Category" : "water potential",
+                    "Characteristics" : "under-utilized tanks",
+                    "level" : 0,
+                    "Values" : [
+                        {
+                            "label" : "Rabi water availability > 70%",
+                            "Key" : "avg_rabi_surface_water_mws",
+                            "type" : 2,
+                            "value" : {"lower" : 70, "upper" : 999999}
+                        },
+                        {
+                            "label" : "Zaid water availability > 50%",
+                            "Key" : "avg_zaid_surface_water_mws",
+                            "type" : 2,
+                            "value" : {"lower" : 50, "upper" : 999999}
+                        },
+                        {
+                            "label" : "trend(surface water availability) is not -ve",
+                            "Key" : "trend_swb",
+                            "type" : 3,
+                            "value" : -1
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}
