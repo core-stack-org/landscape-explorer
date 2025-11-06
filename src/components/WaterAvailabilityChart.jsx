@@ -51,34 +51,47 @@ const WaterAvailabilityChart = ({ waterbody, water_rej_data, mwsFeature }) => {
     return acc;
   }, {});
 
-  // --- Define grouped structure
+  // const groups = {
+  //   "Water Indicators": [
+  //     { key: "kharif", label: "Kharif ", color: "#74CCF4" },
+  //     { key: "rabi", label: "Kharif Rabi", color: "#1ca3ec" },
+  //     { key: "zaid", label: "Kharif Rabi Zaid", color: "#0f5e9c" },
+  //   ],
+  //   "Crop Indicators": [
+  //     { key: "single_kharif", label: "Single Kharif", color: "#BAD93E" },
+  //     {
+  //       key: "single_non_kharif",
+  //       label: "Single Non-Kharif",
+  //       color: "#f59d22",
+  //     },
+  //     { key: "double_cropping", label: "Double Cropping", color: "#FF9371" },
+  //     { key: "triple_cropping", label: "Triple Cropping", color: "#b3561d" },
+  //   ],
+  //   "Other Vegetation": [
+  //     { key: "tree", label: "Tree/Forest", color: "#38761d" },
+  //     { key: "shrubs", label: "Shrubs/Scrubs", color: "#eaa4f0" },
+  //   ],
+  //   "Non-Vegetation": [
+  //     { key: "barren_land", label: "Barren", color: "#A9A9A9" },
+  //     { key: "builtup", label: "Built-up", color: "#ff0000" },
+  //   ],
+  // };
+
   const groups = {
     "Water Indicators": [
       { key: "kharif", label: "Kharif ", color: "#74CCF4" },
       { key: "rabi", label: "Kharif Rabi", color: "#1ca3ec" },
       { key: "zaid", label: "Kharif Rabi Zaid", color: "#0f5e9c" },
     ],
-    "Crop Indicators": [
-      { key: "single_kharif", label: "Single Kharif", color: "#BAD93E" },
-      {
-        key: "single_non_kharif",
-        label: "Single Non-Kharif",
-        color: "#f59d22",
-      },
-      { key: "double_cropping", label: "Double Cropping", color: "#FF9371" },
-      { key: "triple_cropping", label: "Triple Cropping", color: "#b3561d" },
-    ],
-    "Other Vegetation": [
+    "Non-water Indicators": [
+      { key: "crops", label: "Crops", color: "#BAD93E" },
       { key: "tree", label: "Tree/Forest", color: "#38761d" },
       { key: "shrubs", label: "Shrubs/Scrubs", color: "#eaa4f0" },
-    ],
-    "Non-Vegetation": [
       { key: "barren_land", label: "Barren", color: "#A9A9A9" },
       { key: "builtup", label: "Built-up", color: "#ff0000" },
     ],
   };
 
-  // --- Raw Data
   const rawData = years.map(() => ({
     kharif: 0,
     rabi: 0,
@@ -124,9 +137,18 @@ const WaterAvailabilityChart = ({ waterbody, water_rej_data, mwsFeature }) => {
   const normalizedData = rawData.map((yearData) => {
     const total = Object.values(yearData).reduce((sum, v) => sum + v, 0);
     const scale = total > 100 ? 100 / total : 1;
-    return Object.fromEntries(
+    const scaled = Object.fromEntries(
       Object.entries(yearData).map(([key, value]) => [key, value * scale])
     );
+
+    // Combine crop indicators into one
+    scaled.crops =
+      (scaled.single_kharif ?? 0) +
+      (scaled.single_non_kharif ?? 0) +
+      (scaled.double_cropping ?? 0) +
+      (scaled.triple_cropping ?? 0);
+
+    return scaled;
   });
 
   // --- Datasets
