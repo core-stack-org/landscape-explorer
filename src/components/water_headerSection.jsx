@@ -45,7 +45,7 @@ const HeaderSelect = ({
   const loginAndGetToken = async () => {
     try {
       const response = await fetch(
-        `${process.env.REACT_APP_BASEURL}api/v1/auth/login/`,
+        `${process.env.REACT_APP_API_URL}/auth/login/`,
         {
           method: "POST",
           headers: {
@@ -64,7 +64,7 @@ const HeaderSelect = ({
       sessionStorage.setItem("accessToken", data.access);
       return data.access;
     } catch (err) {
-      console.error("❌ Auto-login failed:", err);
+      console.error(" Auto-login failed:", err);
       return null;
     }
   };
@@ -87,7 +87,7 @@ const HeaderSelect = ({
 
       const storedProject = sessionStorage.getItem("selectedProject");
       if (storedProject) {
-        setProject(JSON.parse(storedProject)); // ✅ just set, match will happen after `fetchProjects`
+        setProject(JSON.parse(storedProject)); // just set, match will happen after `fetchProjects`
       }
     };
 
@@ -107,7 +107,7 @@ const HeaderSelect = ({
 
       try {
         const response = await fetch(
-          `${process.env.REACT_APP_BASEURL}/api/v1/projects/`,
+          `${process.env.REACT_APP_API_URL}/projects/`,
           {
             method: "GET",
             headers: {
@@ -160,7 +160,7 @@ const HeaderSelect = ({
   const loadOrganization = async () => {
     try {
       const response = await fetch(
-        `${process.env.REACT_APP_BASEURL}api/v1/auth/register/available_organizations/?app_type=waterbody`,
+        `${process.env.REACT_APP_API_URL}/auth/register/available_organizations/?app_type=waterbody`,
         {
           method: "GET",
           headers: {
@@ -197,7 +197,7 @@ const HeaderSelect = ({
     }),
     menuPortal: (base) => ({
       ...base,
-      zIndex: 1300, // higher than MUI AppBar and Paper default
+      zIndex: 1300,
     }),
   };
 
@@ -206,14 +206,19 @@ const HeaderSelect = ({
     setProject(null);
     setProjectOptions([]);
 
-    sessionStorage.setItem(
-      "selectedOrganization",
-      JSON.stringify(selectedOption)
-    );
-    sessionStorage.setItem(
-      "organizationName",
-      selectedOption.label.toUpperCase()
-    ); // ✅ always save orgName separately
+    if (selectedOption) {
+      sessionStorage.setItem(
+        "selectedOrganization",
+        JSON.stringify(selectedOption)
+      );
+      sessionStorage.setItem(
+        "organizationName",
+        selectedOption.label.toUpperCase()
+      );
+    } else {
+      sessionStorage.removeItem("selectedOrganization");
+      sessionStorage.removeItem("organizationName");
+    }
 
     sessionStorage.removeItem("selectedProject");
 
@@ -273,40 +278,16 @@ const HeaderSelect = ({
   }, [organization]);
 
   return (
-    <Box
-      sx={{ height: "100vh", overflow: "hidden", backgroundColor: "#EAEAEA" }}
-    >
+    <div class="h-screen overflow-hidden bg-[#EAEAEA]">
       {/* AppBar */}
-      <AppBar
-        position="static"
-        sx={{
-          background: "#11000080",
-          backdropFilter: "blur(8px)",
-          height: "120px",
-          boxShadow: "none",
-          display: "flex",
-          justifyContent: "center",
-          zIndex: 1, // Ensure the AppBar is above the background image
-        }}
-      >
-        <Container
-          maxWidth={false}
-          sx={{ maxWidth: "2440px", width: "100%", px: 4 }}
-        >
-          <Toolbar
-            sx={{
-              display: "flex",
-              alignItems: "center",
-              height: "100%",
-              width: "100%",
-              px: 0,
-            }}
-          >
+      <div class="relative z-[1] bg-[#11000080] backdrop-blur-md h-[120px] shadow-none flex justify-center">
+        <div class="max-w-[2440px] w-full px-4 mx-auto">
+          <div class="flex items-center h-full w-full px-0">
             {/* Left: Avatar */}
             <Avatar sx={{ bgcolor: "#d1d1d1", width: 40, height: 40 }} />
 
             {/* Center: Org + Project Selects */}
-            <Box sx={{ display: "flex", gap: 2, ml: 4 }}>
+            <div class="flex gap-2 ml-4">
               <SelectReact
                 value={organization}
                 onChange={handleOrganizationChange}
@@ -331,56 +312,33 @@ const HeaderSelect = ({
                 menuPosition="fixed"
                 noOptionsMessage={() => "No projects available"}
               />
-            </Box>
-            <Box sx={{ ml: "auto" }}>
-              <Button
-                variant="outlined"
-                startIcon={<ArrowBackIosNewIcon />}
+            </div>
+            <div class="ml-auto">
+              <button
                 onClick={() => {
                   sessionStorage.removeItem("selectedProject");
-
                   setDashboardLocked(false);
                   if (setView) setView("table");
                 }}
-                sx={{
-                  color: "#333",
-                  borderColor: "#bbb",
-                  borderRadius: "8px",
-                  textTransform: "none",
-                  fontWeight: 500,
-                  px: 2.5,
-                  py: 1,
-                  ml: "auto",
-                  backgroundColor: "#fff",
-                  "&:hover": {
-                    backgroundColor: "#f0f0f0",
-                    borderColor: "#999",
-                  },
-                }}
+                class="flex items-center gap-2 ml-auto border border-[#bbb] text-[#333] bg-white rounded-lg font-medium px-3 py-1.5 hover:bg-[#f0f0f0] hover:border-[#999] transition-colors"
               >
+                <ArrowBackIosNewIcon class="w-4 h-4" />
                 Change Project
-              </Button>
-            </Box>
-          </Toolbar>
-        </Container>
-      </AppBar>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
 
       {/* Background Image */}
-      <Box
-        sx={{
-          position: "relative",
-          top: 0,
-          left: 0,
-          width: "70%",
-          height: "calc(100vh - 120px)",
+      <div
+        className="relative top-0 left-0 w-[70%] h-[calc(100vh-120px)] bg-cover bg-center z-0"
+        style={{
           backgroundImage: `url(${water})`,
-          backgroundSize: "cover",
-          backgroundPosition: "center",
           opacity: 0.3,
-          zIndex: 0,
         }}
-      />
-    </Box>
+      ></div>
+    </div>
   );
 };
 
