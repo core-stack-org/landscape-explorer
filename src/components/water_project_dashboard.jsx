@@ -1372,7 +1372,7 @@ const WaterProjectDashboard = () => {
       const waterLayer = new VectorLayer({
         source: waterSource,
         style: new Style({
-          stroke: new Stroke({ color: "blue", width: 2 }),
+          stroke: new Stroke({ color: "red", width: 2 }),
           fill: null,
         }),
       });
@@ -1393,7 +1393,7 @@ const WaterProjectDashboard = () => {
         const selectedWaterLayer = new VectorLayer({
           source: selectedWaterSource,
           style: new Style({
-            stroke: new Stroke({ color: "red", width: 3 }),
+            stroke: new Stroke({ color: "blue", width: 3 }),
             fill: null,
           }),
         });
