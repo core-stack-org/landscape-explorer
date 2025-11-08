@@ -19,27 +19,6 @@ import NDVIChart from "./NDVIChart.jsx";
 // import DroughtChart from "./droughtchart.jsx";
 import Overlay from "ol/Overlay";
 
-import {
-  Box,
-  Typography,
-  ToggleButton,
-  ToggleButtonGroup,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Paper,
-  MenuItem,
-  Checkbox,
-  Menu,
-  IconButton,
-  ListItemText,
-  TextField,
-  Popover,
-  Tooltip,
-} from "@mui/material";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import { Download, Lightbulb } from "lucide-react";
 import View from "ol/View";
@@ -154,7 +133,9 @@ const WaterProjectDashboard = () => {
   const [zoiLegend, setZoiLegend] = useState(false);
   const [terrainLegend, setTerrainLegend] = useState(false);
   const [infoText, setInfoText] = useState("");
-  const [infoAnchorEl, setInfoAnchorEl] = useState(null);
+  const [infoAnchor, setInfoAnchor] = useState(null);
+  const [infoOpen, setInfoOpen] = useState(false);
+  const [openInfoKey, setOpenInfoKey] = useState(null);
 
   const mapElement1 = useRef();
   const mapElement2 = useRef();
@@ -176,17 +157,37 @@ const WaterProjectDashboard = () => {
 
   const [organization, setOrganization] = useState(null);
   const [project, setProject] = useState(null);
-  const handleInfoClick = (anchor, text) => {
-    setInfoAnchorEl(anchor); // anchor should be e.currentTarget (DOM element)
+
+  const handleInfoClick = (anchor, text, key = null) => {
+    // anchor must be e.currentTarget (DOM element)
+    setInfoAnchor(anchor);
     setInfoText(text);
+    setInfoOpen(true);
+    setOpenInfoKey(key);
   };
 
-  const handleInfoClose = () => {
-    setInfoAnchorEl(null);
+  const handleCloseInfo = () => {
+    setInfoAnchor(null);
     setInfoText("");
+    setInfoOpen(false);
+    setOpenInfoKey(null);
   };
 
-  const infoOpen = Boolean(infoAnchorEl);
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      // if tooltip open and click is outside the anchor, close it
+      if (infoAnchor instanceof HTMLElement && !infoAnchor.contains(e.target)) {
+        handleCloseInfo();
+      }
+    };
+
+    window.addEventListener("click", handleClickOutside);
+    window.addEventListener("scroll", handleCloseInfo);
+    return () => {
+      window.removeEventListener("click", handleClickOutside);
+      window.removeEventListener("scroll", handleCloseInfo);
+    };
+  }, [infoAnchor]);
 
   useEffect(() => {
     const storedOrg = sessionStorage.getItem("selectedOrganization");
@@ -585,7 +586,7 @@ const WaterProjectDashboard = () => {
         "waterrej",
         layerName,
         true,
-        "lulc_all_pixels"
+        "lulc_RWB"
       );
 
       newLayer.setZIndex(0);
@@ -671,7 +672,7 @@ const WaterProjectDashboard = () => {
             feature.setStyle(
               new Style({
                 stroke: new Stroke({ color: "#FF0000", width: 5 }),
-                fill: new Fill({ color: "rgba(255, 0, 0, 0.3)" }),
+                // fill: new Fill({ color: "rgba(255, 0, 0, 0.3)" }),
               })
             );
           }
@@ -1083,32 +1084,36 @@ const WaterProjectDashboard = () => {
 
     mapRef2.current = map;
 
-    // Create the same waterBodyLayer using geoData
-    const vectorSource = new VectorSource({
-      features: new GeoJSON({
+    // Only show selected waterbody (in blue)
+    let selectedFeatureOnly = null;
+
+    if (selectedWaterbody && geoData) {
+      const allFeatures = new GeoJSON({
         dataProjection: "EPSG:4326",
         featureProjection: "EPSG:4326",
-      }).readFeatures(geoData),
-    });
+      }).readFeatures(geoData);
+
+      selectedFeatureOnly = allFeatures.find(
+        (f) =>
+          f.get("waterbody_name")?.toLowerCase().trim() ===
+          selectedWaterbody?.waterbody?.toLowerCase().trim()
+      );
+    }
 
     const waterBodyLayer2 = new VectorLayer({
-      source: vectorSource,
+      source: new VectorSource({
+        features: selectedFeatureOnly ? [selectedFeatureOnly] : [],
+      }),
       style: new Style({
-        stroke: new Stroke({ color: "#ff0000", width: 5 }),
+        stroke: new Stroke({ color: "#0000FF", width: 4 }),
       }),
     });
 
     map.addLayer(waterBodyLayer2);
 
-    const features = vectorSource.getFeatures();
-
-    if (selectedWaterbody && selectedFeature) {
-      const feature = new GeoJSON().readFeature(selectedFeature, {
-        dataProjection: "EPSG:4326",
-        featureProjection: view.getProjection(),
-      });
-
-      const geometry = feature.getGeometry();
+    // ✅ Zoom logic
+    if (selectedFeatureOnly) {
+      const geometry = selectedFeatureOnly.getGeometry();
       if (geometry) {
         view.fit(geometry.getExtent(), {
           duration: 1000,
@@ -1116,15 +1121,93 @@ const WaterProjectDashboard = () => {
           maxZoom: 18,
         });
       }
-    } else if (features.length > 0) {
-      const extent = vectorSource.getExtent();
-      view.fit(extent, {
-        padding: [50, 50, 50, 50],
-        duration: 1000,
-        maxZoom: 18,
-      });
     }
   };
+
+  // const initializeMap2 = async () => {
+  //   const baseLayer = new TileLayer({
+  //     source: new XYZ({
+  //       url: "https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}",
+  //       maxZoom: 30,
+  //     }),
+  //   });
+
+  //   const view = new View({
+  //     projection: "EPSG:4326",
+  //     constrainResolution: true,
+  //   });
+
+  //   const map = new Map({
+  //     target: mapElement2.current,
+  //     layers: [baseLayer],
+  //     view,
+  //     loadTilesWhileAnimating: true,
+  //     loadTilesWhileInteracting: true,
+  //   });
+
+  //   mapRef2.current = map;
+
+  //   // ✅ Create ZOI Layer (all visible)
+  //   if (zoiFeatures && zoiFeatures.length > 0) {
+  //     const zoiLayer = new VectorLayer({
+  //       source: new VectorSource({
+  //         features: zoiFeatures,
+  //       }),
+  //       style: new Style({
+  //         stroke: new Stroke({ color: "#00aa00", width: 2 }), // green outline
+  //       }),
+  //     });
+  //     map.addLayer(zoiLayer);
+  //   }
+
+  //   // ✅ Only show selected waterbody
+  //   let selectedFeatureOnly = null;
+
+  //   if (selectedWaterbody && geoData) {
+  //     const allFeatures = new GeoJSON({
+  //       dataProjection: "EPSG:4326",
+  //       featureProjection: "EPSG:4326",
+  //     }).readFeatures(geoData);
+
+  //     selectedFeatureOnly = allFeatures.find(
+  //       (f) =>
+  //         f.get("waterbody_name")?.toLowerCase().trim() ===
+  //         selectedWaterbody?.waterbody?.toLowerCase().trim()
+  //     );
+  //   }
+
+  //   // ✅ Blue waterbody layer
+  //   if (selectedFeatureOnly) {
+  //     const waterBodyLayer2 = new VectorLayer({
+  //       source: new VectorSource({
+  //         features: [selectedFeatureOnly],
+  //       }),
+  //       style: new Style({
+  //         stroke: new Stroke({ color: "#0000FF", width: 4 }), // blue border
+  //         // fill: new Fill({ color: "rgba(0, 0, 255, 0.3)" }), // light blue fill
+  //       }),
+  //     });
+  //     map.addLayer(waterBodyLayer2);
+
+  //     // Zoom to selected feature
+  //     const geometry = selectedFeatureOnly.getGeometry();
+  //     if (geometry) {
+  //       view.fit(geometry.getExtent(), {
+  //         duration: 1000,
+  //         padding: [50, 50, 50, 50],
+  //         maxZoom: 18,
+  //       });
+  //     }
+  //   } else if (zoiFeatures && zoiFeatures.length > 0) {
+  //     // fallback zoom to zoi extent if no waterbody selected
+  //     const zoiExtent = new VectorSource({ features: zoiFeatures }).getExtent();
+  //     view.fit(zoiExtent, {
+  //       duration: 1000,
+  //       padding: [50, 50, 50, 50],
+  //       maxZoom: 16,
+  //     });
+  //   }
+  // };
 
   const initializeMap3 = async (organizationLabel) => {
     if (!organizationLabel || !projectName || !projectId) return;
@@ -1289,7 +1372,7 @@ const WaterProjectDashboard = () => {
       const waterLayer = new VectorLayer({
         source: waterSource,
         style: new Style({
-          stroke: new Stroke({ color: "blue", width: 2 }),
+          stroke: new Stroke({ color: "red", width: 2 }),
           fill: null,
         }),
       });
@@ -1310,7 +1393,7 @@ const WaterProjectDashboard = () => {
         const selectedWaterLayer = new VectorLayer({
           source: selectedWaterSource,
           style: new Style({
-            stroke: new Stroke({ color: "red", width: 3 }),
+            stroke: new Stroke({ color: "blue", width: 3 }),
             fill: null,
           }),
         });
@@ -1402,8 +1485,8 @@ const WaterProjectDashboard = () => {
     const extent = geometry.getExtent();
     view.fit(extent, {
       duration: 1000,
-      padding: [50, 50, 50, 50],
-      maxZoom: 18,
+      padding: [30, 30, 30, 30],
+      maxZoom: 20,
     });
 
     // --- Reset all waterbodies to blue
@@ -1427,7 +1510,7 @@ const WaterProjectDashboard = () => {
         features[waterbody.featureIndex].setStyle(
           new Style({
             stroke: new Stroke({ color: "#FF0000", width: 4 }),
-            fill: new Fill({ color: "rgba(255, 0, 0, 0.2)" }),
+            // fill: new Fill({ color: "rgba(255, 0, 0, 0.2)" }),
           })
         );
       }
@@ -1450,13 +1533,13 @@ const WaterProjectDashboard = () => {
 
     const view = targetMapRef.current.getView();
 
-    // ✅ Find ZOI feature for this waterbody
+    // Find ZOI feature for this waterbody
     const matchedZoi = zoiFeatures.find(
       (f) =>
         f.get("waterbody_name")?.toLowerCase().trim() ===
         waterbody?.waterbody?.toLowerCase().trim()
     );
-
+    console.log(matchedZoi);
     if (!matchedZoi) {
       console.error("No matching ZOI found for", waterbody);
       return;
@@ -1468,7 +1551,7 @@ const WaterProjectDashboard = () => {
       return;
     }
 
-    // ✅ Zoom to ZOI instead of waterbody
+    //  Zoom to ZOI instead of waterbody
     const extent = geometry.getExtent();
     view.fit(extent, {
       duration: 1000,
@@ -1488,7 +1571,6 @@ const WaterProjectDashboard = () => {
         features[waterbody.featureIndex].setStyle(
           new Style({
             stroke: new Stroke({ color: "#FF0000", width: 5 }),
-            fill: new Fill({ color: "rgba(255, 0, 0, 0.5)" }),
           })
         );
       }
@@ -1558,7 +1640,7 @@ const WaterProjectDashboard = () => {
   };
 
   return (
-    <Box sx={{ position: "relative" }}>
+    <div className="relative w-full">
       <HeaderSelect
         showExtras
         organization={organization}
@@ -1567,111 +1649,106 @@ const WaterProjectDashboard = () => {
       />
 
       {/* Project Dashboard Text */}
-      <Box
-        sx={{
-          position: "absolute",
-          top: "20%",
-          left: "12%",
-          transform: "translate(-50%, -50%)",
-          zIndex: 1,
-          color: "white",
-          fontSize: "2rem",
-          fontWeight: "bold",
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-        }}
+      <div
+        className="
+  absolute top-32 left-6 z-50
+    flex flex-col items-start
+    text-white font-bold
+    sm:top-28 md:top-32
+  "
       >
         {/* Toggle Button Group */}
-        <Box
-          sx={{
-            display: "flex",
-            alignItems: "center",
-            gap: 2,
-            marginTop: 2,
-          }}
+        <div
+          className="
+      flex items-center justify-between gap-2
+      w-[240px] sm:w-[260px] md:w-[280px]
+      px-2 py-1
+      rounded-md border-2 border-black
+      bg-white/40 backdrop-blur-md
+      shadow-md
+    "
         >
-          <ToggleButtonGroup
-            value={view}
-            exclusive
-            onChange={handleViewChange}
-            sx={{
-              backgroundColor: "rgba(255, 255, 255, 0.3)",
-              borderRadius: "5px",
-              border: "2px solid black",
-              width: "280px",
-              px: 2,
-              py: 1,
-              justifyContent: "space-between",
-              display: "flex",
-            }}
+          {/* Table Button */}
+          <button
+            type="button"
+            onClick={() => handleViewChange(null, "table")}
+            className={`
+        flex items-center justify-center gap-2 flex-1
+        font-semibold text-black py-2 rounded
+        transition-all duration-150 ease-in-out
+        ${
+          view === "table"
+            ? "bg-white/70 shadow-inner scale-[0.99]"
+            : "hover:bg-white/50 active:scale-[0.98]"
+        }
+      `}
           >
-            <ToggleButton
-              value="table"
-              sx={{ color: "black", gap: 1, flex: 1, justifyContent: "center" }}
+            <span className="text-sm sm:text-base">Table</span>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="currentColor"
             >
-              Table
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                height="20"
-                viewBox="0 0 24 24"
-                fill="black"
-              >
-                <path d="M3 3h18v18H3V3zm2 2v4h4V5H5zm6 0v4h4V5h-4zm6 0v4h4V5h-4zM5 11v4h4v-4H5zm6 0v4h4v-4h-4zm6 0v4h4v-4h-4zM5 17v2h4v-2H5zm6 0v2h4v-2h-4zm6 0v2h4v-2h-4z" />
-              </svg>
-            </ToggleButton>
+              <path d="M3 3h18v18H3V3zm2 2v4h4V5H5zm6 0v4h4V5h-4zm6 0v4h4V5h-4zM5 11v4h4v-4H5zm6 0v4h4v-4h-4zm6 0v4h4v-4h-4zM5 17v2h4v-2H5zm6 0v2h4v-2h-4zm6 0v2h4v-2h-4z" />
+            </svg>
+          </button>
 
-            <ToggleButton
-              value="map"
-              sx={{ color: "black", gap: 1, flex: 1, justifyContent: "center" }}
+          {/* Map Button */}
+          <button
+            type="button"
+            onClick={() => handleViewChange(null, "map")}
+            className={`
+        flex items-center justify-center gap-2 flex-1
+        font-semibold text-black py-2 rounded
+        transition-all duration-150 ease-in-out
+        ${
+          view === "map"
+            ? "bg-white/70 shadow-inner scale-[0.99]"
+            : "hover:bg-white/50 active:scale-[0.98]"
+        }
+      `}
+          >
+            <span className="text-sm sm:text-base">Map</span>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              height="20"
+              viewBox="0 0 512 512"
+              fill="currentColor"
             >
-              Map
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                height="20"
-                viewBox="0 0 512 512"
-                fill="black"
-              >
-                <path
-                  d="M256 8C119 8 8 119 8 256s111 248 248 248 
- 248-111 248-248S393 8 256 8zm82.4 368.2-17.6 17.6h-64l-32-32v-32h-32l-48-48 
- 16-48 32-16v-32l32-32h32l16 16 32-32-16-48h-32l-48 16-16-16v-48l64-16 80 
- 32v48l16 16 48-16 16 16v80l-32 48h-32v32l16 48-32 32z"
-                />
-              </svg>
-            </ToggleButton>
-          </ToggleButtonGroup>
-        </Box>
-      </Box>
+              <path
+                d="M256 8C119 8 8 119 8 256s111 248 248 248 
+        248-111 248-248S393 8 256 8zm82.4 368.2-17.6 17.6h-64l-32-32v-32h-32l-48-48 
+        16-48 32-16v-32l32-32h32l16 16 32-32-16-48h-32l-48 16-16-16v-48l64-16 80 
+        32v48l16 16 48-16 16 16v80l-32 48h-32v32l16 48-32 32z"
+              />
+            </svg>
+          </button>
+        </div>
+      </div>
 
       {/* Conditional Rendering for Table or Map */}
-      <Box
-        sx={{
-          position: "absolute",
-          top: "calc(20% + 88px + 16px)",
-          left: "2.5%",
-          width: "92%",
-          height: "auto",
-          backgroundColor: "white",
-          padding: "20px",
-          borderRadius: "5px",
-          zIndex: 1,
-        }}
+      <div
+        className="
+    absolute
+    top-[calc(20%+72px)]
+    md:top-[calc(18%+64px)]
+    sm:top-[calc(16%+48px)]
+    left-[2.5%]
+    w-[92%]
+    h-auto
+    bg-white
+    p-5
+    rounded-md
+    z-[1]
+  "
       >
         {view === "table" ? (
           <>
-            <Typography
-              variant="h6"
-              sx={{
-                textAlign: "center",
-                display: "flex",
-                alignItems: "center",
-                gap: 2,
-                border: "10px solid #11000080",
-              }}
-            >
-              <Lightbulb size={94} color="black" />
-              Under the project {project?.label},{" "}
+            <p className="text-center flex items-center justify-center gap-2 border-[10px] border-[#11000080] text-lg md:text-xl font-medium p-4 bg-gray-50 rounded-lg">
+              <Lightbulb size={50} color="black" />
+              Under the project{" "}
+              <span className="font-semibold">{project?.label}</span>,{" "}
               {totalRows.toLocaleString("en-IN")} waterbodies have been
               de-silted, spanning around{" "}
               {(totalSiltRemoved || 0).toLocaleString("en-IN", {
@@ -1679,660 +1756,361 @@ const WaterProjectDashboard = () => {
                 maximumFractionDigits: 2,
               })}{" "}
               Cu.m.
-              {/* On average, the surface
-              water availability during summer season has changed from 16% to
-              25%. */}
-            </Typography>
-            <TableContainer component={Paper} sx={{ mt: 4, boxShadow: 0 }}>
-              <Table>
-                <TableHead sx={{ backgroundColor: "#f5f5f5" }}>
-                  <TableRow>
-                    <TableCell>
-                      <div style={{ display: "flex", alignItems: "center" }}>
+            </p>
+
+            <div className="mt-4 bg-white rounded-md shadow-sm overflow-x-auto">
+              <table className="w-full border border-gray-200 text-sm md:text-base text-gray-800">
+                <thead className="bg-gray-100 font-semibold">
+                  <tr className="border-b">
+                    {/* State */}
+                    <th className="relative px-4 py-3 text-center">
+                      <div className="flex items-center justify-center gap-1">
                         State
-                        {/* Filter button — keep existing handler but stop propagation */}
-                        <IconButton
+                        <button
                           onClick={(e) => {
                             e.stopPropagation();
                             handleFilterClick(e, "state");
                           }}
-                          size="small"
+                          className="p-1 hover:scale-110 transition-transform"
                         >
                           <FilterListIcon fontSize="small" />
-                        </IconButton>
-                        {/* Info button — pass the button DOM node as anchor */}
-                        <Tooltip title="Click the info icon for details">
-                          <IconButton
-                            size="small"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleInfoClick(
-                                e.currentTarget,
-                                "State where the waterbody is located."
-                              );
-                            }}
-                            sx={{
-                              color: "primary.main",
-                              "&:hover": { transform: "scale(1.2)" },
-                            }}
-                          >
-                            <InfoOutlinedIcon fontSize="small" />
-                          </IconButton>
-                        </Tooltip>
+                        </button>
+                        <button
+                          title="Click the Info icon for details"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleInfoClick(
+                              e.currentTarget,
+                              "State where the waterbody is located."
+                            );
+                          }}
+                          className="p-1 text-blue-600 hover:scale-110 transition-transform"
+                        >
+                          <InfoOutlinedIcon fontSize="small" />
+                        </button>
                       </div>
-                    </TableCell>
+                      {openInfoKey === "state" && (
+                        <div className="absolute left-1/2 -translate-x-1/2 top-full mt-2 bg-white border border-gray-300 rounded-md shadow-md p-2 text-xs text-gray-800 w-64 z-50">
+                          State where the waterbody is located.
+                        </div>
+                      )}
+                    </th>
 
-                    <TableCell>
-                      <div style={{ display: "flex", alignItems: "center" }}>
+                    {/* District */}
+                    <th className="px-4 py-3 text-center">
+                      <div className="flex items-center justify-center gap-1">
                         District
-                        {/* Filter button */}
-                        <IconButton
+                        <button
                           onClick={(e) => {
                             e.stopPropagation();
                             handleFilterClick(e, "district");
                           }}
-                          size="small"
+                          className="p-1 hover:scale-110 transition-transform"
                         >
                           <FilterListIcon fontSize="small" />
-                        </IconButton>
-                        {/* Info button */}
-                        <Tooltip title="Click the info icon for details">
-                          <IconButton
-                            size="small"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleInfoClick(
-                                e.currentTarget,
-                                "District in which the waterbody falls."
-                              );
-                            }}
-                            sx={{
-                              color: "primary.main",
-                              "&:hover": { transform: "scale(1.2)" },
-                            }}
-                          >
-                            <InfoOutlinedIcon fontSize="small" />
-                          </IconButton>
-                        </Tooltip>
+                        </button>
+                        <button
+                          title="Click the Info icon for details"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleInfoClick(
+                              e.currentTarget,
+                              "District in which the waterbody falls."
+                            );
+                          }}
+                          className="p-1 text-blue-600 hover:scale-110 transition-transform"
+                        >
+                          <InfoOutlinedIcon fontSize="small" />
+                        </button>
                       </div>
-                    </TableCell>
+                    </th>
 
-                    <TableCell>
-                      <div style={{ display: "flex", alignItems: "center" }}>
+                    {/* Taluka */}
+                    <th className="px-4 py-3 text-center">
+                      <div className="flex items-center justify-center gap-1">
                         Taluka
-                        {/* Filter button */}
-                        <IconButton
+                        <button
                           onClick={(e) => {
                             e.stopPropagation();
                             handleFilterClick(e, "block");
                           }}
-                          size="small"
+                          className="p-1 hover:scale-110 transition-transform"
                         >
                           <FilterListIcon fontSize="small" />
-                        </IconButton>
-                        {/* Info button */}
-                        <Tooltip title="Click the info icon for details">
-                          <IconButton
-                            size="small"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleInfoClick(
-                                e.currentTarget,
-                                "Taluka (administrative block) in which the waterbody is located."
-                              );
-                            }}
-                            sx={{
-                              color: "primary.main",
-                              "&:hover": { transform: "scale(1.2)" },
-                            }}
-                          >
-                            <InfoOutlinedIcon fontSize="small" />
-                          </IconButton>
-                        </Tooltip>
+                        </button>
+                        <button
+                          title="Click the Info icon for details"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleInfoClick(
+                              e.currentTarget,
+                              "Taluka (administrative block) in which the waterbody is located."
+                            );
+                          }}
+                          className="p-1 text-blue-600 hover:scale-110 transition-transform"
+                        >
+                          <InfoOutlinedIcon fontSize="small" />
+                        </button>
                       </div>
-                    </TableCell>
+                    </th>
 
-                    <TableCell>
-                      <div style={{ display: "flex", alignItems: "center" }}>
+                    {/* GP/Village */}
+                    <th className="px-4 py-3 text-center">
+                      <div className="flex items-center justify-center gap-1">
                         GP/Village
-                        {/* Filter button */}
-                        <IconButton
+                        <button
                           onClick={(e) => {
                             e.stopPropagation();
                             handleFilterClick(e, "village");
                           }}
-                          size="small"
+                          className="p-1 hover:scale-110 transition-transform"
                         >
                           <FilterListIcon fontSize="small" />
-                        </IconButton>
-                        {/* Info button */}
-                        <Tooltip title="Click the info icon for details">
-                          <IconButton
-                            size="small"
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleInfoClick(
+                              e.currentTarget,
+                              "Gram Panchayat or Village where the waterbody is located."
+                            );
+                          }}
+                          className="p-1 text-blue-600 hover:scale-110 transition-transform"
+                        >
+                          <InfoOutlinedIcon fontSize="small" />
+                        </button>
+                      </div>
+                    </th>
+
+                    {/* Waterbody + Search */}
+                    <th className="px-4 py-3 text-center">
+                      <div className="flex flex-col items-center gap-2">
+                        <div className="flex items-center gap-1">
+                          Waterbody
+                          <button
+                            title="Click the Info icon for details"
                             onClick={(e) => {
                               e.stopPropagation();
                               handleInfoClick(
                                 e.currentTarget,
-                                "Gram Panchayat or Village where the waterbody is located."
+                                "Name of the waterbody being monitored."
                               );
                             }}
-                            sx={{
-                              color: "primary.main",
-                              "&:hover": { transform: "scale(1.2)" },
-                            }}
+                            className="p-1 text-blue-600 hover:scale-110 transition-transform"
                           >
                             <InfoOutlinedIcon fontSize="small" />
-                          </IconButton>
-                        </Tooltip>
-                      </div>
-                    </TableCell>
-
-                    <TableCell>
-                      <div style={{ display: "flex", flexDirection: "column" }}>
-                        <div style={{ display: "flex", alignItems: "center" }}>
-                          <span>Waterbody</span>
-
-                          {/* Info button */}
-                          <Tooltip title="Click the info icon for details">
-                            <IconButton
-                              size="small"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleInfoClick(
-                                  e.currentTarget,
-                                  "Name of the waterbody being monitored."
-                                );
-                              }}
-                              sx={{
-                                color: "primary.main",
-                                "&:hover": { transform: "scale(1.2)" },
-                              }}
-                            >
-                              <InfoOutlinedIcon fontSize="small" />
-                            </IconButton>
-                          </Tooltip>
+                          </button>
                         </div>
-
-                        {/* Search input */}
-                        <TextField
-                          variant="standard"
+                        <input
+                          type="text"
                           placeholder="Search Waterbody"
                           value={waterbodySearch}
                           onChange={(e) => setWaterbodySearch(e.target.value)}
-                          size="small"
-                          InputProps={{ style: { fontSize: 12 } }}
+                          className="border-b border-gray-700 bg-gray-100 text-xs text-gray-700 px-1 py-0.5 w-40 focus:outline-none focus:border-blue-500"
                         />
                       </div>
-                    </TableCell>
+                    </th>
 
-                    {/* Silt Removed Column */}
-                    <TableCell
+                    {/* Silt Removed */}
+                    <th
+                      className="px-4 py-3 text-center cursor-pointer select-none"
                       onClick={() => handleSort("siltRemoved")}
-                      sx={{
-                        cursor: "pointer",
-                        userSelect: "none",
-                      }}
                     >
-                      <div style={{ display: "flex", alignItems: "center" }}>
+                      <div className="flex items-center justify-center gap-1">
                         Silt Removed (Cu.m.)
-                        <span
-                          style={{
-                            marginLeft: 4,
-                            fontWeight:
-                              sortField === "siltRemoved" ? "bold" : "normal",
+                        <button
+                          title="Click the Info icon for details"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleInfoClick(
+                              e.currentTarget,
+                              "Total amount of silt removed from the waterbody, measured in cubic meters."
+                            );
                           }}
+                          className="p-1 text-blue-600 hover:scale-110 transition-transform"
                         >
+                          <InfoOutlinedIcon fontSize="small" />
+                        </button>
+                        <span>
                           {sortField === "siltRemoved" && sortOrder === "asc"
                             ? "🔼"
                             : "🔽"}
                         </span>
-                        {/* Info button */}
-                        <Tooltip title="Click the info icon for details">
-                          <IconButton
-                            size="small"
-                            onClick={(e) => {
-                              e.stopPropagation(); // prevent triggering sort when clicking info
-                              handleInfoClick(
-                                e.currentTarget,
-                                "Volume of silt removed from the waterbody, measured in cubic meters (Cu.m.)."
-                              );
-                            }}
-                            sx={{
-                              color: "primary.main",
-                              "&:hover": { transform: "scale(1.2)" },
-                            }}
-                          >
-                            <InfoOutlinedIcon fontSize="small" />
-                          </IconButton>
-                        </Tooltip>
                       </div>
-                    </TableCell>
+                    </th>
 
-                    {/* Intervention year Column */}
-                    <TableCell
-                      sx={{
-                        cursor: "pointer",
-                        userSelect: "none",
-                      }}
-                    >
-                      <div style={{ display: "flex", alignItems: "center" }}>
+                    {/* Intervention Year */}
+                    <th className="px-4 py-3 text-center">
+                      <div className="flex items-center justify-center gap-1">
                         Intervention Year
-                        <span
-                          style={{
-                            marginLeft: 4,
-                            fontWeight: "normal",
+                        <button
+                          title="Click the Info icon for details"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleInfoClick(
+                              e.currentTarget,
+                              "The year in which rejuvenation or desilting work was carried out on the waterbody."
+                            );
                           }}
-                        ></span>
-                        {/* Info button */}
-                        <Tooltip title="Click the info icon for details">
-                          <IconButton
-                            size="small"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleInfoClick(
-                                e.currentTarget,
-                                "The year in which desilting or related intervention was carried out for the waterbody."
-                              );
-                            }}
-                            sx={{
-                              color: "primary.main",
-                              "&:hover": { transform: "scale(1.2)" },
-                            }}
-                          >
-                            <InfoOutlinedIcon fontSize="small" />
-                          </IconButton>
-                        </Tooltip>
-                      </div>
-                    </TableCell>
-
-                    {/* Size of waterbody Column */}
-                    <TableCell
-                      sx={{
-                        cursor: "pointer",
-                        userSelect: "none",
-                      }}
-                    >
-                      <div style={{ display: "flex", alignItems: "center" }}>
-                        Size of Waterbody (in hectares)
-                        <span
-                          style={{
-                            marginLeft: 4,
-                            fontWeight: "normal",
-                          }}
-                        ></span>
-                        {/* Info button */}
-                        <Tooltip title="Click the info icon for details">
-                          <IconButton
-                            size="small"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleInfoClick(
-                                e.currentTarget,
-                                "Total surface area of the waterbody measured in hectares."
-                              );
-                            }}
-                            sx={{
-                              color: "primary.main",
-                              "&:hover": { transform: "scale(1.2)" },
-                            }}
-                          >
-                            <InfoOutlinedIcon fontSize="small" />
-                          </IconButton>
-                        </Tooltip>
-                      </div>
-                    </TableCell>
-
-                    {/* Water Availability Column */}
-
-                    <TableCell
-                      onClick={() => handleSort("avgWaterAvailabilityRabi")}
-                      sx={{
-                        cursor: "pointer",
-                        userSelect: "none",
-                      }}
-                    >
-                      <div style={{ display: "flex", alignItems: "center" }}>
-                        Mean Water Availability During Rabi (%)
-                        <span
-                          style={{
-                            marginLeft: 4,
-                            fontWeight:
-                              sortField === "avgWaterAvailabilityRabi"
-                                ? "bold"
-                                : "normal",
-                          }}
+                          className="p-1 text-blue-600 hover:scale-110 transition-transform"
                         >
+                          <InfoOutlinedIcon fontSize="small" />
+                        </button>
+                      </div>
+                    </th>
+
+                    {/* Size */}
+                    <th className="px-4 py-3 text-center">
+                      <div className="flex items-center justify-center gap-1">
+                        Size of Waterbody (in hectares)
+                        <button
+                          title="Click the Info icon for details"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleInfoClick(
+                              e.currentTarget,
+                              "Total geographical area covered by the waterbody boundary, measured in hectares."
+                            );
+                          }}
+                          className="p-1 text-blue-600 hover:scale-110 transition-transform"
+                        >
+                          <InfoOutlinedIcon fontSize="small" />
+                        </button>
+                      </div>
+                    </th>
+
+                    {/* Mean Water Availability Rabi */}
+                    <th
+                      className="px-4 py-3 text-center cursor-pointer select-none"
+                      onClick={() => handleSort("avgWaterAvailabilityRabi")}
+                    >
+                      <div className="flex items-center justify-center gap-1">
+                        Mean Water Availability during Rabi (%)
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleInfoClick(
+                              e.currentTarget,
+                              "Average percentage of water presence in the waterbody area during the Rabi season."
+                            );
+                          }}
+                          className="p-1 text-blue-600 hover:scale-110 transition-transform"
+                        >
+                          <InfoOutlinedIcon fontSize="small" />
+                        </button>
+                        <span>
                           {sortField === "avgWaterAvailabilityRabi" &&
                           sortOrder === "asc"
                             ? "🔼"
                             : "🔽"}
                         </span>
-                        {/* Info button */}
-                        <Tooltip title="Click the info icon for details">
-                          <IconButton
-                            size="small"
-                            onClick={(e) => {
-                              e.stopPropagation(); // prevent triggering sort
-                              handleInfoClick(
-                                e.currentTarget,
-                                "Average percentage of water available in the waterbody during the Rabi season.Statistics within the brackets indicates the change after the intervention and before the intervention."
-                              );
-                            }}
-                            sx={{
-                              color: "primary.main",
-                              "&:hover": { transform: "scale(1.2)" },
-                            }}
-                          >
-                            <InfoOutlinedIcon fontSize="small" />
-                          </IconButton>
-                        </Tooltip>
                       </div>
-                    </TableCell>
+                    </th>
 
-                    <TableCell
+                    {/* Mean Water Availability Zaid */}
+                    <th
+                      className="px-4 py-3 text-center cursor-pointer select-none"
                       onClick={() => handleSort("avgWaterAvailabilityZaid")}
-                      sx={{
-                        cursor: "pointer",
-                        userSelect: "none",
-                      }}
                     >
-                      <div style={{ display: "flex", alignItems: "center" }}>
-                        Mean Water Availability During Zaid (%)
-                        <span
-                          style={{
-                            marginLeft: 4,
-                            fontWeight:
-                              sortField === "avgWaterAvailabilityZaid"
-                                ? "bold"
-                                : "normal",
+                      <div className="flex items-center justify-center gap-1">
+                        Mean Water Availability during Zaid (%)
+                        <button
+                          title="Click the Info icon for details"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleInfoClick(
+                              e.currentTarget,
+                              "Average percentage of water presence in the waterbody area during the Zaid (summer) season."
+                            );
                           }}
+                          className="p-1 text-blue-600 hover:scale-110 transition-transform"
                         >
+                          <InfoOutlinedIcon fontSize="small" />
+                        </button>
+                        <span>
                           {sortField === "avgWaterAvailabilityZaid" &&
                           sortOrder === "asc"
                             ? "🔼"
                             : "🔽"}
                         </span>
-                        {/* Info button */}
-                        <Tooltip title="Click the info icon for details">
-                          <IconButton
-                            size="small"
-                            onClick={(e) => {
-                              e.stopPropagation(); // avoid triggering sort
-                              handleInfoClick(
-                                e.currentTarget,
-                                "Average percentage of water available in the waterbody during the Zaid season (summer cropping period).Statistics within the brackets indicates the change after the intervention and before the intervention."
-                              );
-                            }}
-                            sx={{
-                              color: "primary.main",
-                              "&:hover": { transform: "scale(1.2)" },
-                            }}
-                          >
-                            <InfoOutlinedIcon fontSize="small" />
-                          </IconButton>
-                        </Tooltip>
                       </div>
-                    </TableCell>
+                    </th>
+                  </tr>
+                </thead>
 
-                    {/*Double cropped area */}
-                    {/* <TableCell
-                      onClick={() => handleSort("avgWaterAvailabilityZaid")}
-                      sx={{
-                        cursor: "pointer",
-                        userSelect: "none",
-                        px: 1,
-                        py: 0.5,
-                      }}
-                    >
-                      <div style={{ display: "flex", alignItems: "center" }}>
-                        Mean Double Cropped Area (in hec.)
-                        <span
-                          style={{
-                            marginLeft: 4,
-                            fontWeight:
-                              sortField === "avgWaterAvailabilityZaid"
-                                ? "bold"
-                                : "normal",
-                          }}
-                        >
-                          {sortField === "avgWaterAvailabilityZaid" &&
-                          sortOrder === "asc"
-                            ? "🔼"
-                            : "🔽"}
-                        </span>
-                        {/* Info button 
-                        <Tooltip title="Click the info icon for details">
-                          <IconButton
-                            size="small"
-                            onClick={(e) => {
-                              e.stopPropagation(); // avoid triggering sort
-                              handleInfoClick(
-                                e.currentTarget,
-                                "Average of double cropped area in the waterbody (summer cropping period).Statistics within the brackets indicates the change after the intervention and before the intervention."
-                              );
-                            }}
-                            sx={{
-                              color: "primary.main",
-                              "&:hover": { transform: "scale(1.2)" },
-                            }}
-                          >
-                            <InfoOutlinedIcon fontSize="small" />
-                          </IconButton>
-                        </Tooltip>
-                      </div>
-                    </TableCell> */}
-
-                    {/*Tripple cropped area*/}
-                    {/* <TableCell
-                      onClick={() => handleSort("avgWaterAvailabilityZaid")}
-                      sx={{
-                        cursor: "pointer",
-                        userSelect: "none",
-                        px: 1,
-                        py: 0.5,
-                      }}
-                    >
-                      <div style={{ display: "flex", alignItems: "center" }}>
-                        Mean Tripple Cropped Area (in hec.){" "}
-                        <span
-                          style={{
-                            marginLeft: 4,
-                            fontWeight:
-                              sortField === "avgWaterAvailabilityZaid"
-                                ? "bold"
-                                : "normal",
-                          }}
-                        >
-                          {sortField === "avgWaterAvailabilityZaid" &&
-                          sortOrder === "asc"
-                            ? "🔼"
-                            : "🔽"}
-                        </span>
-                        {/* Info button 
-                        <Tooltip title="Click the info icon for details">
-                          <IconButton
-                            size="small"
-                            onClick={(e) => {
-                              e.stopPropagation(); // avoid triggering sort
-                              handleInfoClick(
-                                e.currentTarget,
-                                "Average of triple cropped area in the waterbody (summer cropping period).Statistics within the brackets indicates the change after the intervention and before the intervention."
-                              );
-                            }}
-                            sx={{
-                              color: "primary.main",
-                              "&:hover": { transform: "scale(1.2)" },
-                            }}
-                          >
-                            <InfoOutlinedIcon fontSize="small" />
-                          </IconButton>
-                        </Tooltip>
-                      </div>
-                    </TableCell> */}
-                  </TableRow>
-                </TableHead>
-
-                <TableBody>
+                <tbody className="text-sm text-gray-700">
                   {sortedRows.map((row) => (
-                    <TableRow
+                    <tr
                       key={row.id}
-                      hover
-                      sx={{ cursor: "pointer" }}
                       onClick={() => handleWaterbodyClick(row)}
+                      className="hover:bg-gray-50 cursor-pointer transition-colors border-b"
                     >
-                      <TableCell>{row.state}</TableCell>
-                      <TableCell>{row.district}</TableCell>
-                      <TableCell>{row.block}</TableCell>
-                      <TableCell>{row.village}</TableCell>{" "}
-                      <TableCell>{row.waterbody}</TableCell>
-                      <TableCell>{row.siltRemoved}</TableCell>
-                      <TableCell>2022-23</TableCell>
-                      <TableCell>{row.areaOred?.toFixed(2)}</TableCell>
-                      {/* <TableCell>
-                        {row.avgWaterAvailabilityKharif ?? "NA"}{" "}
-                        {row.ImpactKharif !== undefined && (
-                          <span style={{ color: row.ImpactKharifColor }}>
-                            ({row.ImpactKharif})
-                          </span>
-                        )}
-                      </TableCell> */}
-                      <TableCell sx={{ py: 0.5 }}>
+                      <td className="px-4 py-5 text-center">{row.state}</td>
+                      <td className="px-4 py-2 text-center">{row.district}</td>
+                      <td className="px-4 py-2 text-center">{row.block}</td>
+                      <td className="px-4 py-2 text-center">{row.village}</td>
+                      <td className="px-4 py-2 text-center">{row.waterbody}</td>
+                      <td className="px-4 py-2 text-center">
+                        {row.siltRemoved}
+                      </td>
+                      <td className="px-4 py-2 text-center">2022-23</td>
+                      <td className="px-4 py-2 text-center">
+                        {row.areaOred?.toFixed(2)}
+                      </td>
+                      <td className="px-4 py-2 text-center">
                         {row.avgWaterAvailabilityRabi ?? "NA"}{" "}
-                        {row.ImpactRabi !== undefined && (
+                        {row.ImpactRabi && (
                           <span style={{ color: row.ImpactRabiColor }}>
                             ({row.ImpactRabi})
                           </span>
                         )}
-                      </TableCell>
-                      <TableCell sx={{ py: 0.5 }}>
+                      </td>
+                      <td className="px-4 py-2 text-center">
                         {row.avgWaterAvailabilityZaid ?? "NA"}{" "}
-                        {row.ImpactZaid !== undefined && (
+                        {row.ImpactZaid && (
                           <span style={{ color: row.ImpactZaidColor }}>
                             ({row.ImpactZaid})
                           </span>
                         )}
-                      </TableCell>
-                      {/* <TableCell sx={{ px: 1, py: 0.5 }}>
-                        {row.avgDoubleCropped ?? "NA"}{" "}
-                        {row.ImpactDouble !== undefined && (
-                          <span style={{ color: row.ImpactDoubleColor }}>
-                            ({row.ImpactDouble})
-                          </span>
-                        )}
-                      </TableCell>
-                      <TableCell sx={{ px: 1, py: 0.5 }}>
-                        {row.avgTripleCropped ?? "NA"}{" "}
-                        {row.ImpactTriple !== undefined && (
-                          <span style={{ color: row.ImpactTripleColor }}>
-                            ({row.ImpactTriple})
-                          </span>
-                        )}
-                      </TableCell> */}
-                    </TableRow>
+                      </td>
+                    </tr>
                   ))}
-                </TableBody>
-              </Table>
-              <Menu
-                anchorEl={anchorEl}
-                open={Boolean(anchorEl)}
-                onClose={handleFilterClose}
-              >
-                <TextField
-                  size="small"
-                  placeholder="Search..."
-                  value={searchText}
-                  onChange={(e) => setSearchText(e.target.value)}
-                  sx={{ marginBottom: "16px" }}
-                />
-
-                <MenuItem onClick={() => handleClearSingleFilter(filterType)}>
-                  Clear {filterType} Filter
-                </MenuItem>
-
-                {Array.from(new Set(rows.map((row) => String(row[filterType]))))
-                  .filter((option) => {
-                    return option
-                      .toLowerCase()
-                      .startsWith(searchText.toLowerCase());
-                  })
-                  .map((option) => (
-                    <MenuItem
-                      key={option}
-                      onClick={() => handleFilterChange(filterType, option)}
-                    >
-                      <Checkbox
-                        size="small"
-                        checked={filters[filterType]?.includes(option)}
-                      />
-                      <ListItemText primary={option} />
-                    </MenuItem>
-                  ))}
-              </Menu>
-            </TableContainer>
-            <Popover
-              open={infoOpen}
-              anchorEl={infoAnchorEl}
-              onClose={handleInfoClose}
-              anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
-              transformOrigin={{ vertical: "top", horizontal: "left" }}
-              PaperProps={{ sx: { maxWidth: 320, p: 1 } }}
-            >
-              <Typography sx={{ fontSize: 13 }}>{infoText}</Typography>
-            </Popover>
-          </>
-        ) : view === "map" ? (
-          <Box
-            sx={{
-              display: "flex",
-              flexDirection: "column",
-              gap: 4,
-              mt: 2,
-              width: "100%",
-              px: { xs: 2, sm: 4, md: 6 },
-            }}
-          >
-            {selectedWaterbody && (
-              <Box
-                sx={{
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: 2,
-                  width: "100%",
-                  p: { xs: 2, sm: 3, md: 2 },
-                  borderRadius: 2,
-                  bgcolor: "background.paper",
-                  boxShadow: 1,
+                </tbody>
+              </table>
+            </div>
+            {infoOpen && infoAnchor instanceof HTMLElement && (
+              <div
+                className="fixed z-[9999] bg-white border border-gray-300 rounded-md shadow-md p-2 text-sm text-gray-800 max-w-xs"
+                style={{
+                  top:
+                    infoAnchor.getBoundingClientRect().bottom +
+                    window.scrollY +
+                    6,
+                  left: infoAnchor.getBoundingClientRect().left,
                 }}
               >
+                {infoText}
+              </div>
+            )}
+          </>
+        ) : view === "map" ? (
+          <div className="flex flex-col gap-4 mt-2 w-full px-2 sm:px-4 md:px-6">
+            {selectedWaterbody && (
+              <div className="flex flex-col gap-2 w-full p-4 sm:p-6 md:p-4 rounded-xl bg-white shadow-md">
                 {/* Heading */}
-                <Typography
-                  variant="h5"
-                  sx={{
-                    fontWeight: 700,
-                    color: "primary.main",
-                    borderBottom: "2px solid",
-                    borderColor: "primary.main",
-                    pb: 1,
-                  }}
-                >
+                <h2 className="text-xl font-bold text-blue-600 border-b-2 border-blue-600 pb-1">
                   Section 1: Water presence and land-use change in the waterbody
-                </Typography>
+                </h2>
 
-                {/* Explanation */}
-                <Typography
-                  variant="body1"
-                  sx={{ color: "text.secondary", lineHeight: 1.7 }}
-                >
+                {/* Paragraphs */}
+                <p className="text-gray-600 leading-relaxed">
                   This section shows the selected waterbody, silt removal
                   details, and seasonal water availability before and after the
                   intervention, along with yearly trends of cropping patterns
                   within the waterbody boundary.
-                </Typography>
+                </p>
 
-                <Typography
-                  variant="body1"
-                  sx={{ color: "text.secondary", lineHeight: 1.7 }}
-                >
+                <p className="text-gray-600 leading-relaxed">
                   The boundary shown for the waterbody is the maximal coverage
                   ever gained by the waterbody over the last several years.
                   Depending on rainfall, water use, and other factors like
@@ -2340,64 +2118,41 @@ const WaterProjectDashboard = () => {
                   all of the waterbody area will see water in a given year and
                   some of the area may also get utilized for agriculture. This
                   land use in each year can be observed from the map and graphs.
-                </Typography>
+                </p>
 
-                <Typography
-                  variant="body1"
-                  sx={{ color: "text.secondary", lineHeight: 1.7 }}
-                >
+                <p className="text-gray-600 leading-relaxed">
                   Similarly, the duration of water presence can be seen in terms
                   of how much of the waterbody saw water throughout the year, or
                   during the monsoon and post-monsoon months, or only during the
                   monsoon months.
-                </Typography>
-              </Box>
+                </p>
+              </div>
             )}
 
-            <Box
-              sx={{
-                display: "flex",
-                flexDirection: { xs: "column", md: "row" },
-                alignItems: "flex-start",
-                gap: 4,
-                width: "100%",
-              }}
-            >
+            <div className="flex flex-col md:flex-row items-start gap-4 w-full">
               {/* Map 1 */}
-              <Box
-                sx={{
-                  position: "relative",
-                  width: selectedWaterbody ? { xs: "100%", md: "65%" } : "100%",
-                }}
+              <div
+                className={`relative ${
+                  selectedWaterbody ? "w-full md:w-[65%]" : "w-full"
+                }`}
               >
                 {!selectedWaterbody && (
-                  <Box
-                    sx={{
-                      position: "absolute",
-                      top: 0,
-                      left: 0,
-                      right: 0,
-                      bgcolor: "rgba(255, 255, 255, 0.9)",
-                      textAlign: "center",
-                      py: 1,
-                      fontWeight: 600,
-                      fontSize: "16px",
-                      borderBottom: "1px solid #ccc",
-                      zIndex: 1200,
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      gap: 1,
-                    }}
+                  <div
+                    className="absolute top-0 left-0 right-0 
+                           bg-white/90 text-center 
+                           py-1 border-b border-gray-300 
+                           font-semibold text-[16px] 
+                           z-[1200] 
+                           flex items-center justify-center gap-2"
                   >
                     To view the detailed dashboard of a waterbody, click on
                     <img
                       src="https://cdn-icons-png.flaticon.com/512/684/684908.png"
                       alt="marker"
-                      style={{ width: 20, height: 20, margin: "0 6px" }}
+                      className="w-5 h-5 mx-1"
                     />
                     its icon
-                  </Box>
+                  </div>
                 )}
 
                 <div
@@ -2412,115 +2167,79 @@ const WaterProjectDashboard = () => {
 
                 {/* Top-left Label */}
                 {selectedWaterbody && (
-                  <Box
-                    sx={{
-                      position: "absolute",
-                      top: 16,
-                      left: 16,
-                      backgroundColor: "rgba(255, 255, 255, 0.9)",
-                      padding: "8px 12px",
-                      borderRadius: "6px",
-                      fontWeight: "bold",
-                      boxShadow: 1,
-                      display: "flex",
-                      flexDirection: "column",
-                      alignItems: "flex-start",
-                      gap: 1,
-                      zIndex: 1000,
-                      maxWidth: { xs: "90%", sm: "300px" },
-                    }}
+                  <div
+                    className="absolute top-4 left-4 
+                       bg-white/90 p-2 sm:p-3 rounded-md 
+                       font-bold shadow 
+                       flex flex-col items-start gap-1 
+                       z-[1000] max-w-[90%] sm:max-w-[300px]"
                   >
-                    <Box display="flex" alignItems="center" gap={1}>
-                      <LocationOnIcon fontSize="small" color="primary" />
-                      <Typography variant="body1" fontWeight={600}>
+                    <div className="flex items-center gap-1">
+                      <LocationOnIcon
+                        className="text-blue-600"
+                        fontSize="small"
+                      />
+                      <p className="font-semibold text-gray-900">
                         {selectedWaterbody?.waterbody || "Waterbody Name"}
-                      </Typography>
-                    </Box>
-                    <Typography
-                      variant="body2"
-                      color="text.secondary"
-                      fontWeight={800}
-                    >
+                      </p>
+                    </div>
+
+                    <p className="text-gray-700 text-sm font-semibold">
                       Silt Removed: {selectedWaterbody?.siltRemoved || "silt"}{" "}
                       cubic metres
-                    </Typography>
-                    <Typography
-                      variant="body2"
-                      color="text.secondary"
-                      fontWeight={800}
-                    >
+                    </p>
+
+                    <p className="text-gray-700 text-sm font-semibold">
                       Area (in hectares):{" "}
                       {(selectedWaterbody?.areaOred || 0).toFixed(2)} hectares
-                    </Typography>
-                  </Box>
+                    </p>
+                  </div>
                 )}
 
                 {/* Legend + YearSlider wrapper for responsiveness */}
                 {selectedWaterbody && (
-                  <Box
-                    sx={{
-                      position: "absolute",
-                      bottom: 16,
-                      left: 16,
-                      right: 16,
-                      display: "flex",
-                      flexDirection: { xs: "column", sm: "row" },
-                      justifyContent: "space-between",
-                      gap: 2,
-                      flexWrap: "wrap",
-                      zIndex: 1000,
-                    }}
+                  <div
+                    className="absolute bottom-4 left-4 right-4 
+                           flex flex-col sm:flex-row justify-between 
+                           gap-2 flex-wrap z-[1000]"
                   >
                     {/* Collapsible Legend for Map 1 */}
                     {!waterbodyLegend ? (
                       // collapsed tab
-                      <Box
+                      <div
                         onClick={() => setWaterbodyLegend(true)}
-                        sx={{
-                          backgroundColor: "rgba(255,255,255,0.9)",
-                          padding: "6px 4px",
-                          borderRadius: "0 6px 6px 0",
-                          boxShadow: 2,
-                          cursor: "pointer",
+                        className="bg-white/90 px-1.5 py-1.5 rounded-r-md shadow-md 
+                                 cursor-pointer font-bold text-[13px] select-none 
+                                 hover:bg-white transition"
+                        style={{
                           writingMode: "vertical-rl",
                           textOrientation: "mixed",
-                          fontWeight: "bold",
+                          borderTopLeftRadius: 0,
+                          borderBottomLeftRadius: 0,
                         }}
                       >
                         Water Layer Legend ▶
-                      </Box>
+                      </div>
                     ) : (
                       // expanded legend
-                      <Box
-                        sx={{
-                          backgroundColor: "rgba(255, 255, 255, 0.9)",
-                          padding: 2,
-                          borderRadius: 1,
-                          boxShadow: 2,
-                          flex: "1 1 180px",
-                          minWidth: "260px",
-                          maxWidth: "200px",
-                        }}
+                      <div
+                        className="bg-white/90 p-4 rounded-md shadow-md flex-[1_1_180px] 
+                                 min-w-[260px] max-w-[200px]"
                       >
-                        <Box
-                          display="flex"
-                          justifyContent="space-between"
-                          alignItems="center"
-                        >
-                          <Typography variant="subtitle2">
+                        {/* Header row */}
+                        <div className="flex justify-between items-center">
+                          <p className="text-sm font-semibold">
                             Water Layer Legend
-                          </Typography>
+                          </p>
                           <button
                             onClick={() => setWaterbodyLegend(false)}
-                            style={{
-                              border: "none",
-                              background: "transparent",
-                              cursor: "pointer",
-                            }}
+                            className="border-none bg-transparent cursor-pointer text-lg hover:opacity-75"
                           >
                             ◀
                           </button>
-                        </Box>
+                        </div>
+
+                        {/* Legend items */}
                         {[
                           { color: "#74CCF4", label: "Kharif Water" },
                           { color: "#1ca3ec", label: "Kharif and Rabi Water" },
@@ -2529,75 +2248,41 @@ const WaterProjectDashboard = () => {
                             label: "Kharif, Rabi and Zaid Water",
                           },
                         ].map((item, idx) => (
-                          <Box
+                          <div
                             key={idx}
-                            display="flex"
-                            alignItems="center"
-                            gap={1}
-                            mt={1}
+                            className="flex items-center gap-2 mt-2"
                           >
-                            <Box
-                              sx={{
-                                width: 20,
-                                height: 20,
-                                backgroundColor: item.color,
-                                opacity: 0.7,
-                                border: "1px solid #000",
-                              }}
-                            />
-                            <Typography variant="body2">
-                              {item.label}
-                            </Typography>
-                          </Box>
+                            <div
+                              className="w-5 h-5 border border-black opacity-70"
+                              style={{ backgroundColor: item.color }}
+                            ></div>
+                            <p className="text-sm">{item.label}</p>
+                          </div>
                         ))}
-                      </Box>
+                      </div>
                     )}
 
                     {/* YearSlider */}
-                    <Box
-                      sx={{
-                        backgroundColor: "rgba(255, 255, 255, 0.9)",
-                        padding: 2,
-                        borderRadius: 1,
-                        boxShadow: 2,
-                        flexShrink: 0, // prevent shrinking
-                        flexGrow: 0,
-                        minWidth: { xs: "220px", sm: "300px", md: "500px" },
-                      }}
+                    <div
+                      className="bg-white/90 p-4 rounded-md shadow-md flex-shrink-0 flex-grow-0 
+             min-w-[220px] sm:min-w-[300px] md:min-w-[500px]"
                     >
                       <YearSlider
                         currentLayer={{ name: "lulcWaterrej" }}
                         sliderId="map1"
                       />
-                    </Box>
-                  </Box>
+                    </div>
+                  </div>
                 )}
 
                 {/* Zoom Controls */}
                 {selectedWaterbody && (
-                  <Box
-                    sx={{
-                      position: "absolute",
-                      top: 16,
-                      right: 16,
-                      display: "flex",
-                      flexDirection: "column",
-                      gap: 1,
-                      zIndex: 1100,
-                    }}
-                  >
+                  <div className="absolute top-4 right-4 flex flex-col gap-1 z-[1100]">
                     {["+", "–"].map((sign) => (
                       <button
                         key={sign}
-                        style={{
-                          backgroundColor: "#fff",
-                          border: "1px solid #ccc",
-                          borderRadius: "4px",
-                          width: "40px",
-                          height: "40px",
-                          fontSize: "20px",
-                          cursor: "pointer",
-                        }}
+                        className="bg-white border border-gray-300 rounded-md w-10 h-10 text-xl 
+                             cursor-pointer hover:bg-gray-100 active:scale-95 transition"
                         onClick={() => {
                           const view = mapRef1.current?.getView();
                           const delta = sign === "+" ? 1 : -1;
@@ -2610,214 +2295,104 @@ const WaterProjectDashboard = () => {
                         {sign}
                       </button>
                     ))}
-                  </Box>
+                  </div>
                 )}
-              </Box>
+              </div>
               {mapClickedWaterbody && !selectedWaterbody && (
-                <Box
-                  sx={{
-                    position: "absolute",
-                    top: mapClickedWaterbody.pixel[1] - 0, // little above marker
-                    left: mapClickedWaterbody.pixel[0] + 15, // slight offset to right
-                    transform: "translate(-50%, -100%)",
-                    width: 250,
-                    padding: 2,
-                    background: "#ffffff",
-                    boxShadow: "0px 4px 16px rgba(0, 0, 0, 0.15)",
-                    borderRadius: 2,
-                    border: "1px solid #e0e0e0",
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: 1,
-                    cursor: "pointer",
-                    transition: "all 0.2s ease-in-out",
-                    "&:hover": {
-                      boxShadow: "0px 6px 20px rgba(0,0,0,0.25)",
-                      transform: "translate(-50%, -102%)",
-                      borderColor: "#1976d2",
-                    },
-                    zIndex: 9999,
-                  }}
+                <div
                   onClick={handleMapBoxClick}
+                  className="absolute z-[9999] w-[250px] p-2 bg-white rounded-md border border-gray-300 
+                    flex flex-col gap-1 cursor-pointer shadow-md transition-all duration-200 
+                    hover:shadow-xl hover:-translate-y-0.5 hover:border-[#1976d2]"
+                  style={{
+                    top: `${mapClickedWaterbody.pixel[1]}px`,
+                    left: `${mapClickedWaterbody.pixel[0] + 15}px`,
+                    transform: "translate(-50%, -100%)",
+                  }}
                 >
-                  <Typography
-                    variant="subtitle1"
-                    fontWeight={700}
-                    sx={{
-                      color: "#1976d2",
-                      borderBottom: "1px solid #ddd",
-                      pb: 1,
-                    }}
-                  >
+                  <p className="text-[#1976d2] font-bold border-b border-gray-200 pb-1 text-base">
                     {mapClickedWaterbody.name}
-                  </Typography>
+                  </p>
 
-                  <Box display="flex" justifyContent="space-between">
-                    <Typography
-                      variant="body2"
-                      fontWeight={600}
-                      color="text.secondary"
-                    >
-                      Village:
-                    </Typography>
-                    <Typography
-                      variant="body2"
-                      fontWeight={500}
-                      color="text.primary"
-                    >
+                  <div className="flex justify-between text-sm">
+                    <p className="font-semibold text-gray-600">Village:</p>
+                    <p className="font-medium text-gray-900">
                       {mapClickedWaterbody.Village ?? "NA"}
-                    </Typography>
-                  </Box>
+                    </p>
+                  </div>
 
-                  <Box display="flex" justifyContent="space-between">
-                    <Typography
-                      variant="body2"
-                      fontWeight={600}
-                      color="text.secondary"
-                    >
-                      Taluka:
-                    </Typography>
-                    <Typography
-                      variant="body2"
-                      fontWeight={500}
-                      color="text.primary"
-                    >
+                  <div className="flex justify-between text-sm">
+                    <p className="font-semibold text-gray-600">Taluka:</p>
+                    <p className="font-medium text-gray-900">
                       {mapClickedWaterbody.Taluka ?? "NA"}
-                    </Typography>
-                  </Box>
+                    </p>
+                  </div>
 
-                  <Typography
-                    variant="body2"
-                    sx={{
-                      mt: 1,
-                      color: "#1976d2",
-                      fontWeight: 600,
-                      textAlign: "right",
-                    }}
-                  >
+                  <p className="mt-1 text-[#1976d2] font-semibold text-right text-sm cursor-pointer hover:underline">
                     View details →
-                  </Typography>
-                </Box>
+                  </p>
+                </div>
               )}
 
               {/* Charts Section */}
               {selectedWaterbody && (
-                <Box
-                  sx={{
-                    width: { xs: "100%", md: "45%" },
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: { xs: 6, sm: 8, md: 10, lg: 12 },
-                    alignItems: "center",
-                  }}
-                >
-                  <Box
-                    sx={{ width: "100%", maxWidth: "700px", height: "400px" }}
-                  >
+                <div className="w-full md:w-[45%] flex flex-col items-center gap-6 sm:gap-8 md:gap-10 lg:gap-12">
+                  <div className="w-full max-w-[700px] h-[300px] sm:h-[350px] md:h-[400px] mx-auto">
                     <WaterAvailabilityChart
                       waterbody={selectedWaterbody}
                       water_rej_data={geoData}
                       mwsFeature={selectedMWSFeature}
                     />
-                    <Typography fontSize={14} color="#333" mt={15}>
+
+                    {/* <p className="text-sm text-gray-800 mt-6 text-center">
                       <b>Black line</b> represents the year of intervention.
-                    </Typography>
-                  </Box>
+                    </p> */}
+                  </div>
 
                   {selectedMWSFeature && (
-                    <Box
-                      sx={{
-                        width: "100%",
-                        maxWidth: "700px",
-                        height: "350px",
-                        marginTop: "10%",
-                      }}
-                    >
+                    <div className="w-full max-w-[700px] h-[300px] sm:h-[350px] md:h-[350px] mt-24 mx-auto">
                       <PrecipitationStackChart feature={selectedMWSFeature} />
-                    </Box>
+                    </div>
                   )}
-                </Box>
+                </div>
               )}
-            </Box>
+            </div>
 
             {/* ZOI Section with Map + Side Chart */}
             {selectedWaterbody && (
-              <Box
-                sx={{
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: 2,
-                  width: "100%",
-                  p: { xs: 2, sm: 3, md: 2 },
-                  borderRadius: 2,
-                  bgcolor: "background.paper",
-                  boxShadow: 1,
-                }}
-              >
+              <div className="flex flex-col gap-2 w-full p-2 sm:p-3 md:p-2 rounded-xl bg-white shadow-sm">
                 {/* Heading */}
-                <Typography
-                  variant="h5"
-                  sx={{
-                    fontWeight: 700,
-                    color: "primary.main",
-                    borderBottom: "2px solid",
-                    borderColor: "primary.main",
-                    pb: 1,
-                  }}
-                >
+                <h2 className="text-xl font-bold text-blue-600 border-b-2 border-blue-600 pb-1">
                   Section 2: Cropping patterns in the Zone of Influence of the
                   waterbody
-                </Typography>
+                </h2>
 
                 {/* Explanation */}
-                <Typography
-                  variant="body1"
-                  sx={{ color: "text.secondary", lineHeight: 1.7 }}
-                >
+                <p className="text-gray-600 leading-relaxed">
                   This section shows the waterbody’s zone of influence (ZoI) and
                   cropping intensities within this zone, along with the NDVI
                   values in the area.
-                </Typography>
+                </p>
 
-                <Typography
-                  variant="body1"
-                  sx={{ color: "text.secondary", lineHeight: 1.7 }}
-                >
+                <p className="text-gray-600 leading-relaxed">
                   The ZoI of the waterbody is the area impacted by the waterbody
                   through improved soil moisture or use of water for irrigation.
                   Changes before and after the intervention in cropping
                   intensities and NDVI (Normalized Difference Vegetation Index,
-                  is a common remote sensed indicator of greenness) in the ZoI
+                  a common remotely sensed indicator of greenness) in the ZoI
                   can be seen through maps and graphs.
-                </Typography>
+                </p>
 
-                <Typography
-                  variant="body1"
-                  sx={{ color: "text.secondary", lineHeight: 1.7 }}
-                >
+                {/* <p className="text-gray-600 leading-relaxed">
                   We also show NDMI values, a soil moisture index, at increasing
                   radial distances from the waterbody.
-                </Typography>
-              </Box>
+                </p> */}
+              </div>
             )}
             {selectedWaterbody && (
               <>
-                <Box
-                  sx={{
-                    display: "flex",
-                    flexDirection: { xs: "column", md: "row" },
-                    alignItems: "flex-start",
-                    gap: 4,
-                    width: "100%",
-                    mt: 6,
-                  }}
-                >
-                  <Box
-                    sx={{
-                      position: "relative",
-                      width: { xs: "100%", md: "65%" },
-                    }}
-                  >
+                <div className="flex flex-col md:flex-row items-start gap-4 w-full mt-6">
+                  <div className="relative w-full md:w-[65%]">
                     <div
                       ref={mapElement2}
                       style={{
@@ -2828,185 +2403,83 @@ const WaterProjectDashboard = () => {
                       }}
                     />
 
-                    <Box
-                      sx={{
-                        position: "absolute",
-                        top: 16,
-                        left: 16,
-                        backgroundColor: "rgba(255, 255, 255, 0.9)",
-                        padding: "8px 12px",
-                        borderRadius: "6px",
-                        fontWeight: "bold",
-                        boxShadow: 1,
-                        display: "flex",
-                        flexDirection: "column",
-                        alignItems: "flex-start",
-                        gap: 1,
-                        zIndex: 1000,
-                        maxWidth: { xs: "90%", sm: "300px" },
-                      }}
-                    >
-                      <Box display="flex" alignItems="center" gap={1}>
-                        <LocationOnIcon fontSize="small" color="primary" />
-                        <Typography variant="body1" fontWeight={600}>
+                    <div className="absolute top-4 left-4 bg-white/90 px-3 py-2 rounded-md font-bold shadow-sm flex flex-col items-start gap-1 z-[1000] max-w-[90%] sm:max-w-[300px]">
+                      <div className="flex items-center gap-1">
+                        <LocationOnIcon className="text-blue-600 w-4 h-4" />
+                        <p className="text-base font-semibold">
                           {selectedWaterbody?.waterbody || "Waterbody Name"}
-                        </Typography>
-                      </Box>
-                      <Typography
-                        variant="body2"
-                        color="text.secondary"
-                        fontWeight={800}
-                      >
+                        </p>
+                      </div>
+
+                      <p className="text-sm text-gray-700 font-extrabold">
                         ZOI Area:{" "}
                         {zoiArea !== null
                           ? `${zoiArea.toFixed(2)} hectares`
                           : "NA"}
-                      </Typography>
-                    </Box>
+                      </p>
+                    </div>
 
                     {/* Legend + YearSlider wrapper */}
-                    <Box
-                      sx={{
-                        position: "absolute",
-                        bottom: 16,
-                        left: 16,
-                        right: 16,
-                        display: "flex",
-                        flexDirection: { xs: "column", sm: "row" },
-                        justifyContent: "space-between",
-                        gap: 2,
-                        flexWrap: "wrap",
-                        zIndex: 1000,
-                      }}
-                    >
+                    <div className="absolute bottom-4 left-4 right-4 flex flex-col sm:flex-row justify-between gap-2 flex-wrap z-[1000]">
                       {/* Collapsible Legend (left side) */}
                       {!zoiLegend ? (
-                        <Box
+                        <div
                           onClick={() => setZoiLegend(true)}
-                          sx={{
-                            backgroundColor: "rgba(255,255,255,0.9)",
-                            padding: "6px 4px",
-                            borderRadius: "0 6px 6px 0",
-                            boxShadow: 2,
-                            cursor: "pointer",
+                          className="bg-white/90 px-1.5 py-1.5 rounded-r-md shadow-md cursor-pointer font-bold text-[13px] select-none hover:bg-white transition"
+                          style={{
                             writingMode: "vertical-rl",
                             textOrientation: "mixed",
-                            fontWeight: "bold",
+                            borderTopLeftRadius: 0,
+                            borderBottomLeftRadius: 0,
                           }}
                         >
                           Zoi Legend ▶
-                        </Box>
+                        </div>
                       ) : (
-                        <Box
-                          sx={{
-                            backgroundColor: "rgba(255, 255, 255, 0.9)",
-                            padding: 2,
-                            borderRadius: 1,
-                            boxShadow: 2,
-                            flex: "1 1 180px",
-                            minWidth: "260px",
-                            maxWidth: "200px",
-                          }}
-                        >
-                          <Box
-                            display="flex"
-                            justifyContent="space-between"
-                            alignItems="center"
-                          >
-                            <Typography variant="subtitle2">
-                              Zoi Legend
-                            </Typography>
+                        <div className="bg-white/90 p-4 rounded-md shadow-md flex-[1_1_180px] min-w-[260px] max-w-[200px]">
+                          <div className="flex justify-between items-center">
+                            <p className="text-sm font-semibold">Zoi Legend</p>
                             <button
                               onClick={() => setZoiLegend(false)}
-                              style={{
-                                border: "none",
-                                background: "transparent",
-                                cursor: "pointer",
-                              }}
+                              className="border-none bg-transparent cursor-pointer text-lg hover:opacity-75"
                             >
                               ◀
                             </button>
-                          </Box>
+                          </div>
+
                           {[
                             { color: "#b3561d", label: "Triple Crop" },
-                            {
-                              color: "#FF9371",
-                              label: "Double Crop",
-                            },
-                            {
-                              color: "#f59d22",
-                              label: "Single Non-Kharif",
-                            },
-                            {
-                              color: "#BAD93E",
-                              label: "Single Kharif",
-                            },
+                            { color: "#FF9371", label: "Double Crop" },
+                            { color: "#f59d22", label: "Single Non-Kharif" },
+                            { color: "#BAD93E", label: "Single Kharif" },
                           ].map((item, idx) => (
-                            <Box
+                            <div
                               key={idx}
-                              display="flex"
-                              alignItems="center"
-                              gap={1}
-                              mt={1}
+                              className="flex items-center gap-2 mt-2"
                             >
-                              <Box
-                                sx={{
-                                  width: 20,
-                                  height: 20,
-                                  backgroundColor: item.color,
-                                  opacity: 0.7,
-                                  border: "1px solid #000",
-                                }}
-                              />
-                              <Typography variant="body2">
-                                {item.label}
-                              </Typography>
-                            </Box>
+                              <div
+                                className="w-5 h-5 border border-black opacity-70"
+                                style={{ backgroundColor: item.color }}
+                              ></div>
+                              <p className="text-sm">{item.label}</p>
+                            </div>
                           ))}
-                        </Box>
+                        </div>
                       )}
 
                       {/* YearSlider (right side) */}
-                      <Box
-                        sx={{
-                          backgroundColor: "rgba(255, 255, 255, 0.9)",
-                          padding: 2,
-                          borderRadius: 1,
-                          boxShadow: 2,
-                          flexShrink: 0, // prevent shrinking
-                          flexGrow: 0,
-                          minWidth: { xs: "220px", sm: "300px", md: "500px" },
-                        }}
-                      >
+                      <div className="bg-white/90 p-4 rounded-md shadow-md flex-shrink-0 flex-grow-0 min-w-[220px] sm:min-w-[300px] md:min-w-[500px]">
                         <YearSlider
                           currentLayer={{ name: "lulcWaterrej" }}
                           sliderId="map2"
                         />
-                      </Box>
-                    </Box>
+                      </div>
+                    </div>
 
                     {/* Zoom Controls */}
-                    <Box
-                      sx={{
-                        position: "absolute",
-                        top: 16,
-                        right: 16,
-                        display: "flex",
-                        flexDirection: "column",
-                        gap: 1,
-                        zIndex: 1100,
-                      }}
-                    >
+                    <div className="absolute top-4 right-4 flex flex-col gap-1 z-[1100]">
                       <button
-                        style={{
-                          backgroundColor: "#fff",
-                          border: "1px solid #ccc",
-                          borderRadius: "4px",
-                          width: "40px",
-                          height: "40px",
-                          fontSize: "20px",
-                          cursor: "pointer",
-                        }}
+                        className="bg-white border border-gray-300 rounded-md w-10 h-10 text-xl cursor-pointer hover:bg-gray-100 active:scale-95 transition"
                         onClick={() => {
                           const view = mapRef2.current?.getView();
                           view?.animate({
@@ -3017,16 +2490,9 @@ const WaterProjectDashboard = () => {
                       >
                         +
                       </button>
+
                       <button
-                        style={{
-                          backgroundColor: "#fff",
-                          border: "1px solid #ccc",
-                          borderRadius: "4px",
-                          width: "40px",
-                          height: "40px",
-                          fontSize: "20px",
-                          cursor: "pointer",
-                        }}
+                        className="bg-white border border-gray-300 rounded-md w-10 h-10 text-xl cursor-pointer hover:bg-gray-100 active:scale-95 transition"
                         onClick={() => {
                           const view = mapRef2.current?.getView();
                           view?.animate({
@@ -3037,52 +2503,33 @@ const WaterProjectDashboard = () => {
                       >
                         –
                       </button>
-                    </Box>
-                  </Box>
+                    </div>
+                  </div>
 
-                  <Box
-                    sx={{
-                      width: { xs: "100%", md: "45%" },
-                      display: "flex",
-                      flexDirection: "column",
-                      alignItems: "center",
-                    }}
-                  >
-                    <Box
-                      sx={{ width: "100%", maxWidth: "700px", height: "400px" }}
-                    >
+                  <div className="w-full md:w-[45%] flex flex-col items-center">
+                    <div className="w-full max-w-[700px] h-[300px] sm:h-[350px] md:h-[400px]">
                       <CroppingIntensityStackChart
                         zoiFeatures={zoiFeatures}
                         waterbody={selectedWaterbody}
                       />
-                    </Box>
+                    </div>
 
-                    <Box
-                      sx={{ width: "100%", maxWidth: "700px", height: "400px" }}
-                    >
-                      <NDMIPointChart
-                        zoiFeatures={zoiFeatures}
+                    <div className="w-full max-w-[700px] h-[300px] sm:h-[350px] md:h-[400px]">
+                      <DroughtChart
+                        feature={selectedMWSFeature}
                         waterbody={selectedWaterbody}
                       />
-                    </Box>
-                  </Box>
-                </Box>
+                      {/* <NDMIPointChart
+                        zoiFeatures={zoiFeatures}
+                        waterbody={selectedWaterbody}
+                      /> */}
+                    </div>
+                  </div>
+                </div>
 
-                <Box
-                  sx={{
-                    width: "100%",
-                    display: "flex",
-                    flexDirection: { xs: "column", md: "row" }, // stack on small screens
-                    gap: 2,
-                    alignItems: "flex-end", // ensures bottom alignment (x-axis same level)
-                  }}
-                >
-                  <Box
-                    sx={{
-                      flex: 0.65, // takes 65% width
-                      height: "400px",
-                    }}
-                  >
+                <div className="w-full flex flex-col md:flex-row gap-4 md:gap-6 items-stretch md:items-end">
+                  {/* NDVI Chart (Left Side) */}
+                  <div className="w-full h-[300px] sm:h-[350px] md:h-[400px]">
                     <NDVIChart
                       zoiFeatures={zoiFeatures}
                       waterbody={selectedWaterbody}
@@ -3097,99 +2544,57 @@ const WaterProjectDashboard = () => {
                         "2024",
                       ]}
                     />
-                  </Box>
+                  </div>
 
-                  {selectedMWSFeature && (
-                    <Box
-                      sx={{
-                        flex: 0.35, // takes 35% width
-                        height: "450px",
-                      }}
-                    >
+                  {/* Drought Chart (Right Side) */}
+                  {/* {selectedMWSFeature && (
+                    <div className="w-full md:w-[35%] h-[300px] sm:h-[400px] md:h-[450px]">
                       <DroughtChart
                         feature={selectedMWSFeature}
                         waterbody={selectedWaterbody}
                       />
-                    </Box>
-                  )}
-                </Box>
+                    </div>
+                  )} */}
+                </div>
               </>
             )}
             {/*MWS map section */}
-
             {selectedWaterbody && (
-              <Box
-                sx={{
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: 2,
-                  width: "100%",
-                  p: { xs: 2, sm: 3, md: 2 },
-                  borderRadius: 2,
-                  bgcolor: "background.paper",
-                  boxShadow: 1,
-                }}
-              >
+              <div className="flex flex-col gap-2 w-full p-2 sm:p-3 md:p-4 rounded-lg bg-white shadow-sm">
                 {/* Heading */}
-                <Typography
-                  variant="h5"
-                  sx={{
-                    fontWeight: 700,
-                    color: "primary.main",
-                    borderBottom: "2px solid",
-                    borderColor: "primary.main",
-                    pb: 1,
-                  }}
-                >
+                <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-blue-600 border-b-2 border-blue-600 pb-1">
                   Section 3: Micro-watershed context of the waterbody and
                   Catchment area and stream position
-                </Typography>
+                </h2>
 
-                {/* Explanation */}
-                <Typography
-                  variant="body1"
-                  sx={{ color: "text.secondary", lineHeight: 1.7 }}
-                >
+                {/* Explanation Paragraphs */}
+                <p className="text-gray-600 leading-relaxed">
                   This section gives the catchment area from which runoff may
                   drain into the waterbody. A larger catchment area would imply
                   a higher rainfall runoff draining into the waterbody, in turn
                   leading to more storage. This can however get impacted by
                   blocked inlet channels and other changes.
-                </Typography>
+                </p>
 
-                <Typography
-                  variant="body1"
-                  sx={{ color: "text.secondary", lineHeight: 1.7 }}
-                >
+                <p className="text-gray-600 leading-relaxed">
                   This section also gives the stream order in which the
                   waterbody lies. The stream order indicates the relative
                   position of the waterbody in the drainage network. Waterbodies
                   present in higher stream orders would typically see
                   sub-surface flows from upstream watersheds.
-                </Typography>
-                <Typography
-                  variant="body1"
-                  sx={{ color: "text.secondary", lineHeight: 1.7 }}
-                >
+                </p>
+
+                <p className="text-gray-600 leading-relaxed">
                   This map displays the micro-watershed boundary along with its
                   drainage network (blue lines), showing how water flows and is
                   distributed within the micro-watershed. The map also shows the
                   terrain in the micro-watershed.
-                </Typography>
-              </Box>
+                </p>
+              </div>
             )}
+
             {selectedWaterbody && (
-              <Box
-                sx={{
-                  width: "100%",
-                  display: "flex",
-                  flexDirection: { xs: "column", md: "row" },
-                  justifyContent: "space-between",
-                  gap: 3,
-                  mt: 4,
-                  px: { xs: 2, md: 0 },
-                }}
-              >
+              <div className="w-full flex flex-col md:flex-row justify-between gap-3 mt-4 px-2 md:px-0">
                 {[
                   {
                     label: "Max Catchment Area",
@@ -3202,258 +2607,160 @@ const WaterProjectDashboard = () => {
                     value: `Order ${selectedWaterbody?.maxStreamOrder}`,
                   },
                 ].map((item, idx) => (
-                  <Box
+                  <div
                     key={idx}
-                    sx={{
-                      flex: 1,
-                      background:
-                        "linear-gradient(135deg, #f9fafb 0%, #f1f3f5 100%)",
-                      padding: 3,
-                      borderRadius: 3,
-                      boxShadow: "0 4px 12px rgba(0, 0, 0, 0.05)",
-                      display: "flex",
-                      flexDirection: "column",
-                      alignItems: "center",
-                      textAlign: "center",
-                      minHeight: "120px",
-                      transition: "all 0.3s ease",
-                      "&:hover": {
-                        transform: "translateY(-2px)",
-                        boxShadow: "0 6px 16px rgba(0, 0, 0, 0.08)",
-                      },
-                      border: "1px solid #e0e0e0",
-                    }}
+                    className="
+          flex-1 
+          bg-gradient-to-br from-gray-50 to-gray-100 
+          p-4 md:p-6 
+          rounded-xl 
+          border border-gray-200 
+          shadow-sm 
+          flex flex-col items-center text-center 
+          min-h-[120px]
+          transition-all duration-300 
+          hover:-translate-y-0.5 hover:shadow-md
+        "
                   >
-                    <Typography
-                      variant="h6"
-                      fontWeight={700}
-                      color="text.primary"
-                      sx={{
-                        textTransform: "uppercase",
-                        letterSpacing: 0.8,
-                        fontSize: "0.95rem",
-                        color: "#333",
-                      }}
-                    >
+                    <p className="uppercase tracking-wide font-bold text-sm text-gray-800">
                       {item.label}
-                    </Typography>
-                    <Typography
-                      variant="h5"
-                      fontWeight={600}
-                      color="primary"
-                      sx={{
-                        mt: 1,
-                        fontSize: "1.3rem",
-                      }}
-                    >
+                    </p>
+                    <p className="mt-1 text-xl md:text-2xl font-semibold text-blue-600">
                       {item.value}
-                    </Typography>
-                  </Box>
+                    </p>
+                  </div>
                 ))}
-              </Box>
+              </div>
             )}
-            <Box
-              sx={{
-                display: "flex",
-                flexDirection: { xs: "column", md: "row" },
-                alignItems: "flex-start",
-                gap: 4,
-                width: "100%",
-              }}
-            >
+
+            <div className="flex flex-col md:flex-row items-start gap-4 w-full">
               {/* Map 3 */}
               {selectedWaterbody && (
-                <Box
-                  sx={{
-                    position: "relative",
-                    width: { xs: "100%", md: "100%" },
-                  }}
+                <div
+                  className="relative w-full h-[85vh] grid"
+                  style={{ gridTemplateAreas: "'map'" }}
                 >
+                  {/* MAP */}
                   <div
                     ref={mapElement3}
+                    className="w-full h-full border border-gray-300 rounded-md"
                     style={{
-                      height: "850px",
-                      width: "100%",
-                      border: "1px solid #ccc",
-                      borderRadius: "5px",
+                      gridArea: "map",
+                      zIndex: 0,
                     }}
                   />
 
-                  {/* Legend */}
-
-                  {/* Collapsible Terrain Legend */}
-                  {!terrainLegend ? (
-                    // collapsed tab
-                    <Box
-                      onClick={() => setTerrainLegend(true)}
-                      sx={{
-                        position: "absolute",
-                        bottom: 16,
-                        left: 16,
-                        backgroundColor: "rgba(255,255,255,0.9)",
-                        padding: "6px 4px",
-                        borderRadius: "0 6px 6px 0",
-                        boxShadow: 2,
-                        cursor: "pointer",
-                        writingMode: "vertical-rl",
-                        textOrientation: "mixed",
-                        fontWeight: "bold",
-                        zIndex: 1200,
-                      }}
-                    >
-                      Terrain Legend ▶
-                    </Box>
-                  ) : (
-                    // expanded legend
-                    <Box
-                      sx={{
-                        position: "absolute",
-                        bottom: 16,
-                        left: 16,
-                        backgroundColor: "rgba(255, 255, 255, 0.9)",
-                        padding: 2,
-                        borderRadius: 1,
-                        boxShadow: 2,
-                        zIndex: 1200,
-                        minWidth: "220px",
-                        maxWidth: "260px",
-                      }}
-                    >
-                      <Box
-                        display="flex"
-                        justifyContent="space-between"
-                        alignItems="center"
-                      >
-                        <Typography variant="subtitle2">
-                          Terrain Layer Legend
-                        </Typography>
-                        <button
-                          onClick={() => setTerrainLegend(false)}
-                          style={{
-                            border: "none",
-                            background: "transparent",
-                            cursor: "pointer",
-                          }}
-                        >
-                          ◀
-                        </button>
-                      </Box>
-
-                      {[
-                        {
-                          color: "#313695",
-                          label: "V-shape river valleys, Deep narrow canyons",
-                        },
-                        {
-                          color: "#4575b4",
-                          label:
-                            "Lateral midslope incised drainages, Local valleys in plains",
-                        },
-                        {
-                          color: "#91bfdb",
-                          label: "Local ridge/hilltops within broad valleys",
-                        },
-                        { color: "#e0f3f8", label: "U-shape valleys" },
-                        { color: "#fffc00", label: "Broad Flat Areas" },
-                        { color: "#feb24c", label: "Broad open slopes" },
-                        { color: "#f46d43", label: "Mesa tops" },
-                        { color: "#d73027", label: "Upper Slopes" },
-                        {
-                          color: "#a50026",
-                          label: "Upland incised drainages Stream headwaters",
-                        },
-                        {
-                          color: "#800000",
-                          label:
-                            "Lateral midslope drainage divides, Local ridges in plains",
-                        },
-                        {
-                          color: "#4d0000",
-                          label: "Mountain tops, high ridges",
-                        },
-                      ].map((item, idx) => (
-                        <Box
-                          key={idx}
-                          display="flex"
-                          alignItems="center"
-                          gap={1}
-                          mt={1}
-                        >
-                          <Box
-                            sx={{
-                              width: 20,
-                              height: 20,
-                              backgroundColor: item.color,
-                              opacity: 0.7,
-                              border: "1px solid #000",
-                            }}
-                          />
-                          <Typography variant="body2">{item.label}</Typography>
-                        </Box>
-                      ))}
-                    </Box>
-                  )}
-
-                  {/* Zoom Controls */}
-                  <Box
-                    sx={{
-                      position: "absolute",
-                      top: 16,
-                      right: 16,
-                      display: "flex",
-                      flexDirection: "column",
-                      gap: 1,
-                      zIndex: 1100,
+                  <div
+                    className="grid w-full h-full"
+                    style={{
+                      gridArea: "map",
+                      gridTemplateRows: "1fr auto",
+                      gridTemplateColumns: "auto 1fr auto",
+                      zIndex: 1200,
+                      pointerEvents: "none",
                     }}
                   >
-                    <button
-                      style={{
-                        backgroundColor: "#fff",
-                        border: "1px solid #ccc",
-                        borderRadius: "4px",
-                        width: "40px",
-                        height: "40px",
-                        fontSize: "20px",
-                        cursor: "pointer",
-                      }}
-                      onClick={() => {
-                        const view = mapRef3.current?.getView();
-                        view?.animate({
-                          zoom: view.getZoom() + 1,
-                          duration: 300,
-                        });
-                      }}
-                    >
-                      +
-                    </button>
-                    <button
-                      style={{
-                        backgroundColor: "#fff",
-                        border: "1px solid #ccc",
-                        borderRadius: "4px",
-                        width: "40px",
-                        height: "40px",
-                        fontSize: "20px",
-                        cursor: "pointer",
-                      }}
-                      onClick={() => {
-                        const view = mapRef3.current?.getView();
-                        view?.animate({
-                          zoom: view.getZoom() - 1,
-                          duration: 300,
-                        });
-                      }}
-                    >
-                      –
-                    </button>
-                  </Box>
-                </Box>
+                    {/* Terrain Legend — Bottom Left */}
+                    <div className="flex justify-start items-end p-4 pointer-events-auto">
+                      {!terrainLegend ? (
+                        <div
+                          onClick={() => setTerrainLegend(true)}
+                          className="bg-white/90 px-2 py-1 rounded-r-md shadow-md cursor-pointer font-bold text-gray-800 hover:bg-white transition-colors duration-150"
+                          style={{
+                            writingMode: "vertical-rl",
+                            textOrientation: "mixed",
+                          }}
+                        >
+                          Terrain Legend ▶
+                        </div>
+                      ) : (
+                        <div className="bg-white/90 p-4 rounded-md shadow-md w-full max-w-xs min-w-[220px]">
+                          <div className="flex justify-between items-center mb-2">
+                            <p className="text-sm font-semibold">
+                              Terrain Layer Legend
+                            </p>
+                            <button
+                              onClick={() => setTerrainLegend(false)}
+                              className="text-gray-700 hover:text-black transition-colors duration-150 cursor-pointer"
+                            >
+                              ◀
+                            </button>
+                          </div>
+
+                          {[
+                            {
+                              color: "#313695",
+                              label: "V-shape river valleys",
+                            },
+                            {
+                              color: "#4575b4",
+                              label: "Midslope incised drainages",
+                            },
+                            { color: "#91bfdb", label: "Local ridge/hilltops" },
+                            { color: "#e0f3f8", label: "U-shape valleys" },
+                            { color: "#fffc00", label: "Broad Flat Areas" },
+                            { color: "#feb24c", label: "Broad open slopes" },
+                            { color: "#f46d43", label: "Mesa tops" },
+                            { color: "#d73027", label: "Upper Slopes" },
+                            {
+                              color: "#a50026",
+                              label: "Upland incised drainages",
+                            },
+                            { color: "#800000", label: "Drainage divides" },
+                            { color: "#4d0000", label: "Mountain tops" },
+                          ].map((item, idx) => (
+                            <div
+                              key={idx}
+                              className="flex items-center gap-2 mt-1"
+                            >
+                              <div
+                                className="w-5 h-5 opacity-70 border border-black"
+                                style={{ backgroundColor: item.color }}
+                              ></div>
+                              <p className="text-xs sm:text-sm">{item.label}</p>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Zoom Controls — Top Right */}
+                    <div className="flex justify-end items-start p-4 pointer-events-auto">
+                      <div className="flex flex-col gap-2">
+                        <button
+                          className="bg-white border border-gray-300 rounded-md w-10 h-10 text-xl cursor-pointer shadow-sm hover:bg-gray-50 active:scale-95 transition-transform duration-150"
+                          onClick={() => {
+                            const view = mapRef3.current?.getView();
+                            view?.animate({
+                              zoom: view.getZoom() + 1,
+                              duration: 300,
+                            });
+                          }}
+                        >
+                          +
+                        </button>
+                        <button
+                          className="bg-white border border-gray-300 rounded-md w-10 h-10 text-xl cursor-pointer shadow-sm hover:bg-gray-50 active:scale-95 transition-transform duration-150"
+                          onClick={() => {
+                            const view = mapRef3.current?.getView();
+                            view?.animate({
+                              zoom: view.getZoom() - 1,
+                              duration: 300,
+                            });
+                          }}
+                        >
+                          –
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               )}
-            </Box>
-          </Box>
+            </div>
+          </div>
         ) : null}
-      </Box>
-    </Box>
+      </div>
+    </div>
   );
 };
 

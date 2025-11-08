@@ -51,34 +51,47 @@ const WaterAvailabilityChart = ({ waterbody, water_rej_data, mwsFeature }) => {
     return acc;
   }, {});
 
-  // --- Define grouped structure
+  // const groups = {
+  //   "Water Indicators": [
+  //     { key: "kharif", label: "Kharif ", color: "#74CCF4" },
+  //     { key: "rabi", label: "Kharif Rabi", color: "#1ca3ec" },
+  //     { key: "zaid", label: "Kharif Rabi Zaid", color: "#0f5e9c" },
+  //   ],
+  //   "Crop Indicators": [
+  //     { key: "single_kharif", label: "Single Kharif", color: "#BAD93E" },
+  //     {
+  //       key: "single_non_kharif",
+  //       label: "Single Non-Kharif",
+  //       color: "#f59d22",
+  //     },
+  //     { key: "double_cropping", label: "Double Cropping", color: "#FF9371" },
+  //     { key: "triple_cropping", label: "Triple Cropping", color: "#b3561d" },
+  //   ],
+  //   "Other Vegetation": [
+  //     { key: "tree", label: "Tree/Forest", color: "#38761d" },
+  //     { key: "shrubs", label: "Shrubs/Scrubs", color: "#eaa4f0" },
+  //   ],
+  //   "Non-Vegetation": [
+  //     { key: "barren_land", label: "Barren", color: "#A9A9A9" },
+  //     { key: "builtup", label: "Built-up", color: "#ff0000" },
+  //   ],
+  // };
+
   const groups = {
     "Water Indicators": [
       { key: "kharif", label: "Kharif ", color: "#74CCF4" },
       { key: "rabi", label: "Kharif Rabi", color: "#1ca3ec" },
       { key: "zaid", label: "Kharif Rabi Zaid", color: "#0f5e9c" },
     ],
-    "Crop Indicators": [
-      { key: "single_kharif", label: "Single Kharif", color: "#BAD93E" },
-      {
-        key: "single_non_kharif",
-        label: "Single Non-Kharif",
-        color: "#f59d22",
-      },
-      { key: "double_cropping", label: "Double Cropping", color: "#FF9371" },
-      { key: "triple_cropping", label: "Triple Cropping", color: "#b3561d" },
-    ],
-    "Other Vegetation": [
+    "Non-water Indicators": [
+      { key: "crops", label: "Crops", color: "#BAD93E" },
       { key: "tree", label: "Tree/Forest", color: "#38761d" },
       { key: "shrubs", label: "Shrubs/Scrubs", color: "#eaa4f0" },
-    ],
-    "Non-Vegetation": [
       { key: "barren_land", label: "Barren", color: "#A9A9A9" },
       { key: "builtup", label: "Built-up", color: "#ff0000" },
     ],
   };
 
-  // --- Raw Data
   const rawData = years.map(() => ({
     kharif: 0,
     rabi: 0,
@@ -124,9 +137,18 @@ const WaterAvailabilityChart = ({ waterbody, water_rej_data, mwsFeature }) => {
   const normalizedData = rawData.map((yearData) => {
     const total = Object.values(yearData).reduce((sum, v) => sum + v, 0);
     const scale = total > 100 ? 100 / total : 1;
-    return Object.fromEntries(
+    const scaled = Object.fromEntries(
       Object.entries(yearData).map(([key, value]) => [key, value * scale])
     );
+
+    // Combine crop indicators into one
+    scaled.crops =
+      (scaled.single_kharif ?? 0) +
+      (scaled.single_non_kharif ?? 0) +
+      (scaled.double_cropping ?? 0) +
+      (scaled.triple_cropping ?? 0);
+
+    return scaled;
   });
 
   // --- Datasets
@@ -204,7 +226,7 @@ const WaterAvailabilityChart = ({ waterbody, water_rej_data, mwsFeature }) => {
       },
       title: {
         display: true,
-        text: "Land Use Categories vs Rainfall (Grouped Legend)",
+        text: "Land Use Categories vs Rainfall (Black line represents the intervention year)",
         font: { size: 16, weight: "bold" },
       },
       annotation: {
@@ -247,27 +269,51 @@ const WaterAvailabilityChart = ({ waterbody, water_rej_data, mwsFeature }) => {
     <div style={{ width: "100%", height: "80%" }}>
       <div
         className="custom-legend"
-        style={{ display: "flex", fontSize: 10, gap: 16, marginLeft: 25 }}
+        style={{
+          display: "flex",
+          flexWrap: "wrap",
+          justifyContent: "center",
+          alignItems: "flex-start",
+          fontSize: "clamp(8px, 1.5vw, 12px)", // smoother scaling
+          gap: "12px",
+          margin: "8px auto",
+          padding: "4px 12px",
+          width: "100%",
+          maxWidth: "1000px", // prevents over-stretch
+          boxSizing: "border-box",
+        }}
       >
         {Object.entries(groups).map(([group, items]) => (
-          <div key={group} style={{ marginBottom: 8 }}>
-            <strong>{group}</strong>
+          <div
+            key={group}
+            style={{
+              marginBottom: 6,
+              minWidth: "120px",
+              flex: "1 1 180px", // allows wrapping gracefully
+            }}
+          >
+            <strong style={{ display: "block", marginBottom: 2 }}>
+              {group}
+            </strong>
             {items.map((item) => (
               <div
                 key={item.key}
                 style={{
                   display: "flex",
                   alignItems: "center",
-                  marginLeft: 8,
+                  marginLeft: 6,
+                  marginTop: 2,
+                  whiteSpace: "nowrap",
                 }}
               >
                 <span
                   style={{
                     display: "inline-block",
-                    width: 14,
-                    height: 14,
+                    width: "clamp(10px, 1.5vw, 14px)",
+                    height: "clamp(10px, 1.5vw, 14px)",
                     backgroundColor: item.color,
                     marginRight: 6,
+                    borderRadius: 2,
                   }}
                 ></span>
                 {item.label}
@@ -275,12 +321,22 @@ const WaterAvailabilityChart = ({ waterbody, water_rej_data, mwsFeature }) => {
             ))}
           </div>
         ))}
-        {/* Add Rainfall Line */}
-        <div style={{ display: "flex", alignItems: "center", marginTop: 8 }}>
+
+        {/* Rainfall Line */}
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            flex: "1 1 180px",
+            marginTop: 6,
+            whiteSpace: "nowrap",
+          }}
+        >
           <span
             style={{
               display: "inline-block",
-              width: 14,
+              width: "clamp(20px, 3vw, 30px)",
               height: 2,
               backgroundColor: "#4F555F",
               marginRight: 6,
@@ -289,13 +345,14 @@ const WaterAvailabilityChart = ({ waterbody, water_rej_data, mwsFeature }) => {
           Total Rainfall (mm)
         </div>
       </div>
+
       <Bar
         data={data}
         options={{
           ...options,
           plugins: {
-            ...options.plugins, // keep existing plugins (including annotation)
-            legend: { display: false }, // override only legend
+            ...options.plugins,
+            legend: { display: false },
           },
         }}
       />
