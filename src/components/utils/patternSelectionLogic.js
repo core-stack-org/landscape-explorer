@@ -80,15 +80,3 @@ export const clearPatternsByLevel = (level, patternSelections, setPatternSelecti
         [levelKey]: {}
     });
 };
-
-
-export const getSelectedPatternCount = (patternSelections) => {
-    const mwsCount = Object.keys(patternSelections.selectedMWSPatterns || {}).length;
-    const villageCount = Object.keys(patternSelections.selectedVillagePatterns || {}).length;
-    
-    return {
-        mws: mwsCount,
-        village: villageCount,
-        total: mwsCount + villageCount
-    };
-};

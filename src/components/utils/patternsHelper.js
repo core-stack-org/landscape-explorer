@@ -66,11 +66,11 @@ export const getAllPatterns = () => {
     return patterns;
 };
 
+
 export const getPatternsByCategory = (category) => {
     const allPatterns = getAllPatterns();
     return allPatterns.filter(pattern => pattern.category === category);
 };
-
 
 export const getPatternsByLevel = () => {
     const allPatterns = getAllPatterns();

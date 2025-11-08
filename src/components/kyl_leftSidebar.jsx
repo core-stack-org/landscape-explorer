@@ -71,19 +71,13 @@ const KYLLeftSidebar = ({
         setSelectedSubcategory(null);
     };
 
-    // Get count of selected patterns
-    const getSelectedPatternCount = () => {
-        const mwsCount = Object.keys(patternSelections?.selectedMWSPatterns || {}).length;
-        const villageCount = Object.keys(patternSelections?.selectedVillagePatterns || {}).length;
-        return mwsCount + villageCount;
-    };
 
     return (
         <div className="w-[320px] bg-white rounded-lg border border-gray-100 p-4">
             <div className="space-y-2">
                 {/* Tab Buttons */}
                 <div className="flex gap-2 mb-4">
-                    <button
+                    {/* <button
                         className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-colors
                             ${activeTab === 'Patterns'
                                 ? 'bg-indigo-600 text-white'
@@ -92,12 +86,7 @@ const KYLLeftSidebar = ({
                         onClick={() => handleTabChange('Patterns')}
                     >
                         Patterns
-                        {getSelectedPatternCount() > 0 && (
-                            <span className="ml-2 px-2 py-0.5 bg-white text-indigo-600 rounded-full text-xs font-semibold">
-                                {getSelectedPatternCount()}
-                            </span>
-                        )}
-                    </button>
+                    </button> */}
                     <button
                         className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-colors
                             ${activeTab === 'Filters'
@@ -113,17 +102,11 @@ const KYLLeftSidebar = ({
                 {/* Filters Tab Content */}
                 {activeTab === 'Filters' && (
                     <>
-                        <button
-                            className="w-full py-2 px-2 text-indigo-600 bg-indigo-100 rounded-lg text-sm font-medium text-left"
-                            onClick={() => window.open("https://docs.google.com/document/d/13wht82tXmw0x-ORfVLYBnfUDkkabzqOxvqwmIXGRmpk/edit?usp=sharing", '_blank', 'noopener,noreferrer')}
-                        >
-                            Click to Know More About Indicators
-                        </button>
                         {(Object.keys(filterSelections.selectedMWSValues).length === 0 && Object.keys(filterSelections.selectedVillageValues).length === 0) &&
                             <button
                                 className="w-full py-2 px-2 text-indigo-600 bg-indigo-100 rounded-lg text-xs font-medium text-left mb-1"
                             >
-                                Click on a micro-watershed (blue outline) to view its report or select filters from amongst the different indicators shown below
+                                Select filters from amongst the different indicators shown below
                             </button>
                         }
                         <div className="flex flex-wrap gap-2 pt-2">
@@ -208,15 +191,6 @@ const KYLLeftSidebar = ({
                         >
                             Click to Know More About Patterns
                         </button>
-                        
-                        {/* Show selected patterns count */}
-                        {getSelectedPatternCount() > 0 && (
-                            <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-2 text-xs">
-                                <span className="font-medium text-indigo-700">
-                                    {getSelectedPatternCount()} pattern{getSelectedPatternCount() > 1 ? 's' : ''} selected
-                                </span>
-                            </div>
-                        )}
 
                         {/* Main Category Buttons (Agriculture, Livelihood) */}
                         <div className="flex flex-wrap gap-2 pt-2">

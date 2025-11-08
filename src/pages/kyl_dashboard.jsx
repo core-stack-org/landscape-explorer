@@ -6,7 +6,6 @@ import {
   districtAtom,
   blockAtom,
   filterSelectionsAtom,
-  patternSelectionsAtom,
   yearAtom,
   dataJsonAtom,
 } from "../store/locationStore.jsx";
@@ -32,7 +31,7 @@ import KYLMapContainer from "../components/kyl_mapContainer.jsx";
 import getPlans from "../actions/getPlans.js";
 import layerStyle from "../components/utils/layerStyle.jsx";
 import { getAllPatternTypes, getSubcategoriesForCategory, getPatternsForSubcategory  } from '../components/utils/patternsHelper.js';
-import { handlePatternSelection as handlePatternSelectionLogic, isPatternSelected, getAllSelectedPatterns, getSelectedPatternCount, clearAllPatterns } from '../components/utils/patternSelectionLogic.js';
+import { handlePatternSelection as handlePatternSelectionLogic, isPatternSelected, getAllSelectedPatterns, clearAllPatterns } from '../components/utils/patternSelectionLogic.js';
 
 //? Icons Imports
 import settlementIcon from "../assets/settlement_icon.svg";
@@ -206,9 +205,6 @@ const KYLDashboardPage = () => {
 
   // Filter selection handlers
   const handleFilterSelection = (name, option, isChecked) => {
-    console.log(name)
-    console.log(option)
-    console.log(isChecked)
     const sourceType = determineFilterSource(name);
     option = {
       ...option,

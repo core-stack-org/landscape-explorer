@@ -10,11 +10,7 @@ const KYLPatternDisplay = ({ pattern, isDisabled, isSelected, onPatternSelect })
     };
 
     return (
-        <div className={`rounded-lg border p-4 transition-all ${
-            isSelected 
-                ? 'bg-indigo-50 border-indigo-300' 
-                : 'bg-white border-gray-200'
-        }`}>
+        <div className="bg-white rounded-lg border border-gray-200 p-4">
             {/* Pattern Header - Always Visible */}
             <div className="space-y-2">
                 <div className="flex items-start justify-between">
@@ -23,13 +19,6 @@ const KYLPatternDisplay = ({ pattern, isDisabled, isSelected, onPatternSelect })
                             <h3 className="text-sm font-semibold text-gray-800">
                                 {pattern.patternCategory}
                             </h3>
-                            {isSelected && (
-                                <span className="flex items-center text-indigo-600">
-                                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                                    </svg>
-                                </span>
-                            )}
                         </div>
                         <div className="flex items-center gap-2 mt-1">
                             <div className="text-xs text-indigo-600 font-medium">
@@ -89,15 +78,13 @@ const KYLPatternDisplay = ({ pattern, isDisabled, isSelected, onPatternSelect })
                 <button
                     onClick={handleApplyClick}
                     className={`w-full py-2 px-3 rounded-md text-sm font-medium transition-colors
-                        ${isDisabled
-                            ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                            : isSelected
-                                ? 'bg-red-600 text-white hover:bg-red-700'
-                                : 'bg-indigo-600 text-white hover:bg-indigo-700'
-                        }`}
+                    ${isDisabled
+                        ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                        : 'bg-indigo-600 text-white hover:bg-indigo-700'
+                    }`}
                     disabled={isDisabled}
                 >
-                    {isSelected ? 'Remove Pattern' : 'Apply Pattern'}
+                    {'Apply Pattern'}
                 </button>
             </div>
         </div>
