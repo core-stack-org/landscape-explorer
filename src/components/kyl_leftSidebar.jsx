@@ -77,7 +77,7 @@ const KYLLeftSidebar = ({
             <div className="space-y-2">
                 {/* Tab Buttons */}
                 <div className="flex gap-2 mb-4">
-                    <button
+                    {/* <button
                         className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-colors
                             ${activeTab === 'Patterns'
                                 ? 'bg-indigo-600 text-white'
@@ -86,7 +86,7 @@ const KYLLeftSidebar = ({
                         onClick={() => handleTabChange('Patterns')}
                     >
                         Patterns
-                    </button>
+                    </button> */}
                     <button
                         className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-colors
                             ${activeTab === 'Filters'
@@ -106,7 +106,7 @@ const KYLLeftSidebar = ({
                             <button
                                 className="w-full py-2 px-2 text-indigo-600 bg-indigo-100 rounded-lg text-xs font-medium text-left mb-1"
                             >
-                                Click on a micro-watershed (blue outline) to view its report or select filters from amongst the different indicators shown below
+                                Select filters from amongst the different indicators shown below
                             </button>
                         }
                         <div className="flex flex-wrap gap-2 pt-2">
