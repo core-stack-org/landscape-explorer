@@ -455,6 +455,7 @@ const WaterProjectDashboard = () => {
           village: props.village || "NA",
           waterbody: props.waterbody_name || "NA",
           UID: props.UID || "NA",
+          areaOred: props.area_ored || "NA",
           siltRemoved,
           avgWaterAvailabilityKharif: meanKharif,
           avgWaterAvailabilityRabi: meanRabi,
