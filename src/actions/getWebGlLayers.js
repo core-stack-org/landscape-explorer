@@ -22,7 +22,19 @@ const colorMappings = {
     mapping: {
       "Default": 1,
     }
-  }
+  },
+  factory_csr: {
+    field: "uid",
+    mapping: {
+      "Default": 1,
+    }
+  },
+  mining: {
+    field: "uid",
+    mapping: {
+      "Default": 1,
+    }
+  },
 };
 
 // Style configurations for different stores
@@ -47,19 +59,37 @@ const styleConfigs = {
     "shape-points": 20,
     "shape-radius": 10,
     "shape-fill-color": "#FF0000", // Red color for all LCW conflicts
-  }
+  },
+  factory_csr: {
+    "shape-points": 20,
+    "shape-radius": 10,
+    "shape-fill-color": "#FF0000", // Red color for all LCW conflicts
+  },
+  mining: {
+    "shape-points": 20,
+    "shape-radius": 10,
+    "shape-fill-color": "#FF0000", // Red color for all LCW conflicts
+  },
 };
 
 export default async function getWebGlLayers(layer_store, layer_name) {
   let url;
   if (layer_store === 'lcw') {
-    url = `${process.env.REACT_APP_GEOSERVER_URL}` + layer_store + 
-      '/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=' + 
+    url = `${process.env.REACT_APP_GEOSERVER_URL}` + layer_store +
+      '/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=' +
       layer_store + ':' + layer_name + "_lcw_conflict&outputFormat=application/json&screen=main";
+  } else if (layer_store === 'factory_csr') {
+    url = `${process.env.REACT_APP_GEOSERVER_URL}${layer_store}` +
+      '/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=' +
+      layer_store + ':' + layer_name + '_factory_csr&outputFormat=application/json&screen=main';
+  } else if (layer_store === 'mining') {
+    url = `${process.env.REACT_APP_GEOSERVER_URL}${layer_store}` +
+      '/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=' +
+      layer_store + ':' + layer_name + '_mining&outputFormat=application/json&screen=main';
   } else {
     // For nrega_assets and other stores, use layer_name as-is
-    url = `${process.env.REACT_APP_GEOSERVER_URL}` + layer_store + 
-      '/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=' + 
+    url = `${process.env.REACT_APP_GEOSERVER_URL}` + layer_store +
+      '/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=' +
       layer_store + ':' + layer_name + "&outputFormat=application/json&screen=main";
   }
 
@@ -86,7 +116,7 @@ export default async function getWebGlLayers(layer_store, layer_name) {
           return response.json();
         })
         .then(json => {
-          
+
           const features = vectorSource.getFormat().readFeatures(json).map((item) => {
             // Apply color mapping based on store type
             if (layer_store === 'nrega_assets') {
@@ -95,11 +125,11 @@ export default async function getWebGlLayers(layer_store, layer_name) {
                 ? colorConfig.mapping[fieldValue]
                 : colorConfig.mapping["Default"];
 
-            } else if (layer_store === 'lcw') {
+            } else if (['lcw', 'factory_csr', 'mining'].includes(layer_store)) {
               // For LCW, all points use the same color
               item.values_.itemColor = 1;
             }
-            
+
             return item;
           });
           vectorSource.addFeatures(features);
