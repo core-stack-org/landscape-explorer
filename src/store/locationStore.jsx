@@ -29,6 +29,15 @@ export const filterSelectionsAtom = atom({
   },
 });
 
+export const patternSelectionsAtom = atom({
+  key: 'patternSelectionsAtom',
+  default: {
+    selectedMWSPatterns: {},      // { filterName: [selectedOptions] }
+    selectedVillagePatterns: {},  // { filterName: [selectedOptions] }
+  },
+});
+
+
 export const yearAtom = atom({
   key: 'yearAtom', 
   default: null,

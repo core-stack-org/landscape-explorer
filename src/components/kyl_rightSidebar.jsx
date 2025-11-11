@@ -140,6 +140,11 @@ const KYLRightSidebar = ({
         <KYLMWSProfilePanel mwsData={selectedMWSProfile} onBack={onResetMWS} />
       ) : (
         <div className="bg-white rounded-lg border border-gray-100 p-3">
+          <button
+              className="w-full py-2 px-2 text-indigo-600 bg-indigo-100 rounded-lg text-xs font-medium text-left mb-1"
+            >
+            Click on a micro-watershed (blue outline) to view its report.
+            </button>
           <div className="bg-white rounded-lg border border-gray-100 p-3">
             <div className="space-y-4">
               <div className="flex items-center gap-3">
