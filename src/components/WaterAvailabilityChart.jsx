@@ -229,28 +229,26 @@ const WaterAvailabilityChart = ({
         display: true,
         text: !showImpact
           ? "Land Use Categories vs Rainfall (Black line = intervention year)"
-          : "Impact Analysis Graph",
+          : "Impact Analysis Graph (Black line = intervention year)",
         font: { size: 16, weight: "bold" },
       },
       annotation: {
-        annotations: !showImpact
-          ? {
-              interventionLine: {
-                type: "line",
-                scaleID: "x",
-                value: "22-23",
-                borderColor: "black",
-                borderWidth: 2,
-                label: {
-                  content: "Intervention Year",
-                  enabled: true,
-                  position: "start",
-                  color: "black",
-                  font: { weight: "bold" },
-                },
-              },
-            }
-          : {},
+        annotations: {
+          interventionLine: {
+            type: "line",
+            scaleID: "x",
+            value: "22-23",
+            borderColor: "black",
+            borderWidth: 2,
+            label: {
+              content: "Intervention Year",
+              enabled: true,
+              position: "start",
+              color: "black",
+              font: { weight: "bold" },
+            },
+          },
+        },
       },
     },
     scales: {
@@ -328,17 +326,12 @@ const WaterAvailabilityChart = ({
 
           {/* Toggle always rendered once */}
           <div className="flex items-center ml-auto mt-2 sm:mt-0 absolute right-0 top-0 text-right">
-            <span className="text-[0.8rem] text-gray-700 font-medium mr-2 leading-tight w-[130px] sm:w-[150px]">
-              {showImpact ? (
-                <>
-                  Toggle to see <br /> Water availability Graph
-                </>
-              ) : (
-                <>
-                  Toggle to see <br /> Impact Analysis Graph
-                </>
-              )}
+            <span className="text-[0.7rem] text-gray-700 font-medium mr-2 leading-tight w-auto whitespace-nowrap">
+              {showImpact
+                ? "Toggle to see Water availability Graph"
+                : "Toggle to see Impact Analysis Graph"}
             </span>
+
             <label className="relative inline-flex items-center cursor-pointer">
               <input
                 type="checkbox"
@@ -361,7 +354,7 @@ const WaterAvailabilityChart = ({
                 style={{ backgroundColor: "#74CCF4" }}
               ></span>
               <span className="text-sm text-gray-700 font-medium">
-                Kharif (k) : Water available in Kharif
+                Kharif : Water available in Kharif
               </span>
             </div>
             <div className="flex items-center">
@@ -370,7 +363,7 @@ const WaterAvailabilityChart = ({
                 style={{ backgroundColor: "#1ca3ec" }}
               ></span>
               <span className="text-sm text-gray-700 font-medium">
-                Kharif Rabi (kr) : Water available in Kharif, Rabi
+                Kharif Rabi : Water available in Kharif, Rabi
               </span>
             </div>
             <div className="flex items-center">
@@ -379,8 +372,7 @@ const WaterAvailabilityChart = ({
                 style={{ backgroundColor: "#0f5e9c" }}
               ></span>
               <span className="text-sm text-gray-700 font-medium">
-                Kharif Rabi Zaid (krz) : Water available in Kharif, Rabi And
-                Zaid
+                Kharif Rabi Zaid : Water available in Kharif, Rabi And Zaid
               </span>
             </div>
           </div>
@@ -395,20 +387,6 @@ const WaterAvailabilityChart = ({
             Pre and post intervention years selected with minimum difference in
             rainfall:
           </p>
-          <div className="mt-1">
-            <p>
-              <span className="font-semibold">Year of Intervention:</span>{" "}
-              <span className=" text-blue-700">{interventionYear}</span>.
-            </p>
-            <p>
-              <span className="font-semibold">Pre-intervention year:</span>{" "}
-              <span className="text-blue-700">{impactYear.pre}</span>
-            </p>
-            <p>
-              <span className="font-semibold">Post-intervention year:</span>{" "}
-              <span className="text-green-700">{impactYear.post}</span>
-            </p>
-          </div>
         </div>
       )}
     </div>

@@ -340,7 +340,7 @@ const CroppingIntensityStackChart = ({
     <div>
       {/* Toggle above chart */}
       <div className="flex items-center justify-end mb-4">
-        <span className="text-sm text-gray-700 font-medium mr-2 whitespace-nowrap">
+        <span className="text-[0.7rem] sm:text-[0.75rem] text-gray-700 font-medium mr-2 leading-tight w-auto whitespace-nowrap">
           {showImpact
             ? "Toggle to see Croppping Intensity Graph"
             : "Toggle to see Impact Analysis Graph"}
