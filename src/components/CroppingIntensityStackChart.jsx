@@ -1,3 +1,202 @@
+// import React, { useState } from "react";
+// import { Bar } from "react-chartjs-2";
+// import {
+//   Chart as ChartJS,
+//   CategoryScale,
+//   LinearScale,
+//   BarElement,
+//   Tooltip,
+//   Legend,
+//   PointElement,
+//   LineElement,
+//   LineController,
+// } from "chart.js";
+
+// ChartJS.register(
+//   CategoryScale,
+//   LinearScale,
+//   BarElement,
+//   Tooltip,
+//   Legend,
+//   PointElement,
+//   LineElement,
+//   LineController
+// );
+
+// const CroppingIntensityStackChart = ({
+//   zoiFeatures,
+//   waterbody,
+//   impactYear,
+// }) => {
+//   const [showImpact, setShowImpact] = useState(false);
+
+//   const matchedFeature = zoiFeatures.find(
+//     (feature) =>
+//       feature.get("UID")?.toString().trim() ===
+//       waterbody?.UID?.toString().trim()
+//   );
+//   if (!matchedFeature) return null;
+
+//   const getAreaData = (years) =>
+//     years.map((year) => ({
+//       year,
+//       triple: (matchedFeature.get(`triply_cropped_area_${year}`) || 0) / 10000,
+//       double: (matchedFeature.get(`doubly_cropped_area_${year}`) || 0) / 10000,
+//       single_kharif:
+//         (matchedFeature.get(`single_kharif_cropped_area_${year}`) || 0) / 10000,
+//       single_non_kharif:
+//         (matchedFeature.get(`single_non_kharif_cropped_area_${year}`) || 0) /
+//         10000,
+//     }));
+
+//   const fullYearLabels = [
+//     "17-18",
+//     "18-19",
+//     "19-20",
+//     "20-21",
+//     "21-22",
+//     "22-23",
+//     "23-24",
+//   ];
+//   const yearSuffix = ["2017", "2018", "2019", "2020", "2021", "2022", "2023"];
+//   const fullYearData = getAreaData(yearSuffix);
+//   const maxFullValue = Math.max(
+//     ...fullYearData.map(
+//       (a) => a.triple + a.double + a.single_kharif + a.single_non_kharif
+//     )
+//   );
+
+//   const fullData = {
+//     labels: fullYearLabels,
+//     datasets: [
+//       {
+//         label: "Triple Crop",
+//         data: fullYearData.map((a) => a.triple),
+//         backgroundColor: "#b3561d",
+//         stack: "stack1",
+//       },
+//       {
+//         label: "Double Crop",
+//         data: fullYearData.map((a) => a.double),
+//         backgroundColor: "#FF9371",
+//         stack: "stack1",
+//       },
+//       {
+//         label: "Single Non-Kharif",
+//         data: fullYearData.map((a) => a.single_non_kharif),
+//         backgroundColor: "#f59d22",
+//         stack: "stack1",
+//       },
+//       {
+//         label: "Single Kharif",
+//         data: fullYearData.map((a) => a.single_kharif),
+//         backgroundColor: "#BAD93E",
+//         stack: "stack1",
+//       },
+//     ],
+//   };
+
+//   const impactTypes = [
+//     "single_non_kharif_cropped_area_", // Non-Single
+//     "single_kharif_cropped_area_", // Single
+//     "doubly_cropped_area_", // Double
+//     "triply_cropped_area_", // Triple
+//   ];
+
+//   const impactLabels = ["Non-Single", "Single", "Double", "Triple"];
+//   const yearMap = {
+//     "17-18": "2017",
+//     "18-19": "2018",
+//     "19-20": "2019",
+//     "20-21": "2020",
+//     "21-22": "2021",
+//     "22-23": "2022",
+//     "23-24": "2023",
+//   };
+
+//   const preYear = yearMap[impactYear.pre];
+//   const postYear = yearMap[impactYear.post];
+
+//   const impactData = {
+//     labels: impactLabels,
+//     datasets: [
+//       {
+//         label: `Pre-Intervention (${impactYear.pre})`,
+//         data: impactTypes.map(
+//           (t) => (matchedFeature.get(`${t}${preYear}`) || 0) / 10000
+//         ),
+//         backgroundColor: "#FFA500", // pre year color
+//       },
+//       {
+//         label: `Post-Intervention (${impactYear.post})`,
+//         data: impactTypes.map(
+//           (t) => (matchedFeature.get(`${t}${postYear}`) || 0) / 10000
+//         ),
+//         backgroundColor: "#8A2BE2", // post year color
+//       },
+//     ],
+//   };
+
+//   const maxImpactValue = Math.max(
+//     ...impactTypes.flatMap((t) => [
+//       (matchedFeature.get(`${t}${preYear}`) || 0) / 10000,
+//       (matchedFeature.get(`${t}${postYear}`) || 0) / 10000,
+//     ])
+//   );
+
+//   const options = (maxValue) => ({
+//     responsive: true,
+//     plugins: {
+//       legend: { position: "bottom" },
+//       title: {
+//         display: true,
+//         text: showImpact
+//           ? "Impact Analysis: Pre vs Post"
+//           : "Cropping Intensity by Year (Area in hectares)",
+//       },
+//     },
+//     scales: {
+//       x: {
+//         title: { display: true, text: showImpact ? "Cropping Type" : "Year" },
+//       },
+//       y: {
+//         min: 0,
+//         max: maxValue,
+//         title: { display: true, text: "Area (hectares)" },
+//         ticks: { callback: (v) => `${v.toFixed(1)} ha` },
+//       },
+//     },
+//   });
+
+//   return (
+//     <div>
+//       {/* Toggle above chart */}
+//       <div className="flex items-center justify-end mb-4">
+//         <span className="text-sm text-gray-700 font-medium mr-2 whitespace-nowrap">
+//           {showImpact ? "Impact Analysis Graph" : "Water Availability Graph"}
+//         </span>
+//         <label className="relative inline-flex items-center cursor-pointer">
+//           <input
+//             type="checkbox"
+//             checked={showImpact}
+//             onChange={() => setShowImpact(!showImpact)}
+//             className="sr-only peer"
+//           />
+//           <div className="w-11 h-6 bg-gray-300 rounded-full peer peer-checked:bg-blue-600 transition-all"></div>
+//           <div className="absolute left-0.5 top-0.5 bg-white w-5 h-5 rounded-full peer-checked:translate-x-5 transition-all"></div>
+//         </label>
+//       </div>
+
+//       <Bar
+//         data={showImpact ? impactData : fullData} // full chart untouched
+//         options={showImpact ? options(maxImpactValue) : options(maxFullValue)}
+//       />
+//     </div>
+//   );
+// };
+
+// export default CroppingIntensityStackChart;
+
 import React, { useState } from "react";
 import { Bar } from "react-chartjs-2";
 import {
@@ -66,114 +265,85 @@ const CroppingIntensityStackChart = ({
     )
   );
 
-  const fullData = {
+  // Get impact years
+  const preLabel = impactYear.pre;
+  const postLabel = impactYear.post;
+
+  // When in impact mode, zero out non-impact years
+  const visibleIndices = fullYearLabels.map((label, i) =>
+    label === preLabel || label === postLabel ? i : -1
+  );
+
+  const maskedData = {
     labels: fullYearLabels,
     datasets: [
       {
         label: "Triple Crop",
-        data: fullYearData.map((a) => a.triple),
+        data: fullYearData.map((a, i) =>
+          showImpact && visibleIndices[i] === -1 ? 0 : a.triple
+        ),
         backgroundColor: "#b3561d",
         stack: "stack1",
       },
       {
         label: "Double Crop",
-        data: fullYearData.map((a) => a.double),
+        data: fullYearData.map((a, i) =>
+          showImpact && visibleIndices[i] === -1 ? 0 : a.double
+        ),
         backgroundColor: "#FF9371",
         stack: "stack1",
       },
       {
         label: "Single Non-Kharif",
-        data: fullYearData.map((a) => a.single_non_kharif),
+        data: fullYearData.map((a, i) =>
+          showImpact && visibleIndices[i] === -1 ? 0 : a.single_non_kharif
+        ),
         backgroundColor: "#f59d22",
         stack: "stack1",
       },
       {
         label: "Single Kharif",
-        data: fullYearData.map((a) => a.single_kharif),
+        data: fullYearData.map((a, i) =>
+          showImpact && visibleIndices[i] === -1 ? 0 : a.single_kharif
+        ),
         backgroundColor: "#BAD93E",
         stack: "stack1",
       },
     ],
   };
 
-  const impactTypes = [
-    "single_non_kharif_cropped_area_", // Non-Single
-    "single_kharif_cropped_area_", // Single
-    "doubly_cropped_area_", // Double
-    "triply_cropped_area_", // Triple
-  ];
-
-  const impactLabels = ["Non-Single", "Single", "Double", "Triple"];
-  const yearMap = {
-    "17-18": "2017",
-    "18-19": "2018",
-    "19-20": "2019",
-    "20-21": "2020",
-    "21-22": "2021",
-    "22-23": "2022",
-    "23-24": "2023",
-  };
-
-  const preYear = yearMap[impactYear.pre];
-  const postYear = yearMap[impactYear.post];
-
-  const impactData = {
-    labels: impactLabels,
-    datasets: [
-      {
-        label: `Pre-Intervention (${impactYear.pre})`,
-        data: impactTypes.map(
-          (t) => (matchedFeature.get(`${t}${preYear}`) || 0) / 10000
-        ),
-        backgroundColor: "#FFA500", // pre year color
-      },
-      {
-        label: `Post-Intervention (${impactYear.post})`,
-        data: impactTypes.map(
-          (t) => (matchedFeature.get(`${t}${postYear}`) || 0) / 10000
-        ),
-        backgroundColor: "#8A2BE2", // post year color
-      },
-    ],
-  };
-
-  const maxImpactValue = Math.max(
-    ...impactTypes.flatMap((t) => [
-      (matchedFeature.get(`${t}${preYear}`) || 0) / 10000,
-      (matchedFeature.get(`${t}${postYear}`) || 0) / 10000,
-    ])
-  );
-
-  const options = (maxValue) => ({
+  const options = {
     responsive: true,
     plugins: {
       legend: { position: "bottom" },
       title: {
         display: true,
         text: showImpact
-          ? "Impact Analysis: Pre vs Post"
+          ? `Impact Analysis: Showing Only Pre (${impactYear.pre}) and Post (${impactYear.post}) Years`
           : "Cropping Intensity by Year (Area in hectares)",
       },
     },
     scales: {
       x: {
-        title: { display: true, text: showImpact ? "Cropping Type" : "Year" },
+        title: { display: true, text: "Year" },
       },
       y: {
         min: 0,
-        max: maxValue,
+        max: maxFullValue,
         title: { display: true, text: "Area (hectares)" },
         ticks: { callback: (v) => `${v.toFixed(1)} ha` },
       },
     },
-  });
+  };
 
   return (
     <div>
       {/* Toggle above chart */}
       <div className="flex items-center justify-end mb-4">
         <span className="text-sm text-gray-700 font-medium mr-2 whitespace-nowrap">
-          {showImpact ? "Impact Analysis Graph" : "Water Availability Graph"}
+          {showImpact
+            ? "Toggle to see Croppping Intensity Graph"
+            : "Toggle to see Impact Analysis Graph"}
         </span>
         <label className="relative inline-flex items-center cursor-pointer">
           <input
@@ -187,10 +357,7 @@ const CroppingIntensityStackChart = ({
         </label>
       </div>
 
-      <Bar
-        data={showImpact ? impactData : fullData} // full chart untouched
-        options={showImpact ? options(maxImpactValue) : options(maxFullValue)}
-      />
+      <Bar data={maskedData} options={options} />
     </div>
   );
 };

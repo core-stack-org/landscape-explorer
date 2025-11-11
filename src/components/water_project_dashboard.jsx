@@ -2545,7 +2545,7 @@ const WaterProjectDashboard = () => {
                   </div>
 
                   {selectedMWSFeature && (
-                    <div className="w-full max-w-[700px] h-[300px] sm:h-[350px] md:h-[350px] mt-24 mx-auto">
+                    <div className="w-full max-w-[700px] h-[300px] sm:h-[350px] md:h-[350px] mt-28 mx-auto">
                       <PrecipitationStackChart feature={selectedMWSFeature} />
                     </div>
                   )}

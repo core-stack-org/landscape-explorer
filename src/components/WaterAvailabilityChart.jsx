@@ -95,13 +95,13 @@ const WaterAvailabilityChart = ({
         const kr = p[`kr_${year}`] ?? 0;
         const krz = p[`krz_${year}`] ?? 0;
 
-        const zaid = krz;
-        const rabi = Math.max(0, kr - krz);
         const kharif = Math.max(0, k - kr);
+        const rabi = Math.max(0, kr - krz);
+        const zaid = krz;
 
-        rawData[i].kharif += kharif;
         rawData[i].rabi += rabi;
         rawData[i].zaid += zaid;
+        rawData[i].kharif += kharif;
         rawData[i].shrubs += p[`shrubs_${year}`] ?? 0;
         rawData[i].single_kharif += p[`single_kharif_${year}`] ?? 0;
         rawData[i].single_non_kharif += p[`single_kharif_no_${year}`] ?? 0;
@@ -158,19 +158,30 @@ const WaterAvailabilityChart = ({
     }
   }, [impactYear, onImpactYearChange]);
 
-  const data = { labels: years, datasets: [] };
-  if (!showImpact) {
-    Object.entries(groups).forEach(([groupName, items]) => {
-      items.forEach((cat) => {
-        data.datasets.push({
-          label: `${groupName} | ${cat.label}`,
-          backgroundColor: cat.color,
-          data: normalizedData.map((d) => d[cat.key]),
-          order: 2,
-        });
+  let data;
+
+  const baseData = {
+    labels: years,
+    datasets: [],
+  };
+
+  Object.entries(groups).forEach(([groupName, items]) => {
+    const orderedItems =
+      groupName === "Water Indicators" ? [...items].reverse() : items;
+
+    orderedItems.forEach((cat) => {
+      baseData.datasets.push({
+        label: `${groupName} | ${cat.label}`,
+        backgroundColor: cat.color,
+        data: normalizedData.map((d) => d[cat.key]),
+        order: 2,
+        stack: "Stack 0",
       });
     });
-    data.datasets.push({
+  });
+
+  if (!showImpact) {
+    baseData.datasets.push({
       type: "line",
       label: "Total Rainfall (mm)",
       data: years.map((year) => totalRainfall[`TR${year}`] ?? 0),
@@ -181,33 +192,32 @@ const WaterAvailabilityChart = ({
       pointBackgroundColor: "#4F555F",
       order: 1,
     });
+  }
+
+  if (!showImpact) {
+    data = baseData;
   } else if (impactYear) {
-    const ImpactGraphData = years.map((year) => {
-      const p = water_rej_data.features.find(
-        (f) => f.properties.UID === waterbody.UID
-      )?.properties;
-      return {
-        year,
-        k: p?.[`k_${year}`] ?? 0,
-        kr: p?.[`kr_${year}`] ?? 0,
-        krz: p?.[`krz_${year}`] ?? 0,
-      };
-    });
-    const preData = ImpactGraphData.find((d) => d.year === impactYear.pre);
-    const postData = ImpactGraphData.find((d) => d.year === impactYear.post);
-    data.labels = ["Kharif (K)", "Kharif Rabi (KR)", "Kharif Rabi Zaid (KRZ)"];
-    data.datasets.push(
-      {
-        label: `Pre-Intervention (${impactYear.pre})`,
-        backgroundColor: "#FFA500",
-        data: [preData.k, preData.kr, preData.krz],
-      },
-      {
-        label: `Post-Intervention (${impactYear.post})`,
-        backgroundColor: "#8A2BE2",
-        data: [postData.k, postData.kr, postData.krz],
-      }
-    );
+    const waterIndicators = ["kharif", "rabi", "zaid"];
+
+    data = {
+      labels: years, // ✅ keep all years visible
+      datasets: [...waterIndicators].reverse().map((key) => {
+        const cat = groups["Water Indicators"].find((c) => c.key === key);
+        return {
+          label: `Water Indicators | ${cat.label}`,
+          backgroundColor: cat.color,
+          stack: "Stack 0",
+          order: 2,
+          // ✅ only show bars for impact years, set others to 0
+          data: years.map((year, i) => {
+            const isImpactYear =
+              year === impactYear.pre || year === impactYear.post;
+            return isImpactYear ? normalizedData[i][key] ?? 0 : 0;
+          }),
+          position: "center",
+        };
+      }),
+    };
   }
 
   const options = {
@@ -244,15 +254,25 @@ const WaterAvailabilityChart = ({
       },
     },
     scales: {
-      x: { stacked: !showImpact },
-      y: {
-        stacked: !showImpact,
+      x: {
+        stacked: true,
         title: {
           display: true,
-          text: showImpact ? "Water Availability (%)" : "Land Use (%)",
+          text: showImpact
+            ? "Year (All years shown, only pre & post visible)"
+            : "Year",
+        },
+      },
+      y: {
+        stacked: true,
+        title: {
+          display: true,
+          text: showImpact
+            ? "Water Availability (%) in Waterbody area"
+            : "Land Use (%) in Waterbody area ",
         },
         min: 0,
-        max: showImpact ? undefined : 100,
+        max: 100,
       },
       y1: !showImpact
         ? {
@@ -267,7 +287,7 @@ const WaterAvailabilityChart = ({
   return (
     <div style={{ width: "100%", height: "80%" }}>
       <div className="flex flex-col mb-2 px-4">
-        <div className="flex flex-wrap items-start text-xs sm:text-sm w-full relative gap-x-6 gap-y-1">
+        <div className="flex flex-wrap items-start text-xs sm:text-sm w-full relative gap-x-3 gap-y-1">
           {!showImpact &&
             Object.entries(groups).map(([group, items]) => (
               <div key={group} className="min-w-[130px] mb-1">
@@ -307,11 +327,17 @@ const WaterAvailabilityChart = ({
             ))}
 
           {/* Toggle always rendered once */}
-          <div className="flex items-center ml-auto mt-2 sm:mt-0 absolute right-0 top-0">
-            <span className="text-sm text-gray-700 font-medium mr-2 whitespace-nowrap">
-              {showImpact
-                ? "Impact Analysis Graph"
-                : "Water Availability Graph"}
+          <div className="flex items-center ml-auto mt-2 sm:mt-0 absolute right-0 top-0 text-right">
+            <span className="text-[0.8rem] text-gray-700 font-medium mr-2 leading-tight w-[130px] sm:w-[150px]">
+              {showImpact ? (
+                <>
+                  Toggle to see <br /> Water availability Graph
+                </>
+              ) : (
+                <>
+                  Toggle to see <br /> Impact Analysis Graph
+                </>
+              )}
             </span>
             <label className="relative inline-flex items-center cursor-pointer">
               <input
@@ -332,19 +358,29 @@ const WaterAvailabilityChart = ({
             <div className="flex items-center">
               <span
                 className="inline-block w-4 h-4 rounded-sm mr-2"
-                style={{ backgroundColor: "#FFA500" }}
+                style={{ backgroundColor: "#74CCF4" }}
               ></span>
               <span className="text-sm text-gray-700 font-medium">
-                Pre-Intervention year ({impactYear.pre})
+                Kharif (k) : Water available in Kharif
               </span>
             </div>
             <div className="flex items-center">
               <span
                 className="inline-block w-4 h-4 rounded-sm mr-2"
-                style={{ backgroundColor: "#8A2BE2" }}
+                style={{ backgroundColor: "#1ca3ec" }}
               ></span>
               <span className="text-sm text-gray-700 font-medium">
-                Post-Intervention year ({impactYear.post})
+                Kharif Rabi (kr) : Water available in Kharif, Rabi
+              </span>
+            </div>
+            <div className="flex items-center">
+              <span
+                className="inline-block w-4 h-4 rounded-sm mr-2"
+                style={{ backgroundColor: "#0f5e9c" }}
+              ></span>
+              <span className="text-sm text-gray-700 font-medium">
+                Kharif Rabi Zaid (krz) : Water available in Kharif, Rabi And
+                Zaid
               </span>
             </div>
           </div>
@@ -352,6 +388,29 @@ const WaterAvailabilityChart = ({
       </div>
 
       <Bar data={data} options={options} />
+
+      {showImpact && impactYear && (
+        <div className="mt-4 mx-auto w-fit text-xs sm:text-sm text-gray-700 border border-gray-300 rounded-md px-3 py-2 bg-gray-50 text-center shadow-sm">
+          <p className="mt-1">
+            Pre and post intervention years selected with minimum difference in
+            rainfall:
+          </p>
+          <div className="mt-1">
+            <p>
+              <span className="font-semibold">Year of Intervention:</span>{" "}
+              <span className=" text-blue-700">{interventionYear}</span>.
+            </p>
+            <p>
+              <span className="font-semibold">Pre-intervention year:</span>{" "}
+              <span className="text-blue-700">{impactYear.pre}</span>
+            </p>
+            <p>
+              <span className="font-semibold">Post-intervention year:</span>{" "}
+              <span className="text-green-700">{impactYear.post}</span>
+            </p>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
