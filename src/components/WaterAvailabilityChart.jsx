@@ -384,8 +384,8 @@ const WaterAvailabilityChart = ({
       {showImpact && impactYear && (
         <div className="mt-4 mx-auto w-fit text-xs sm:text-sm text-gray-700 border border-gray-300 rounded-md px-3 py-2 bg-gray-50 text-center shadow-sm">
           <p className="mt-1">
-            Pre and post intervention years selected with minimum difference in
-            rainfall:
+            Criterai for selecting the pre and post intervention years selected
+            with minimum difference in rainfall.
           </p>
         </div>
       )}
