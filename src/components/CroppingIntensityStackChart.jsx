@@ -320,7 +320,8 @@ const CroppingIntensityStackChart = ({
         display: true,
         text: showImpact
           ? `Impact Analysis: Showing Only Pre (${impactYear.pre}) and Post (${impactYear.post}) Years`
-          : "Cropping Intensity by Year (Area in hectares)",
+          : "Cropping Intensity (Area in hectares) (Black line = intervention year)",
+        font: { size: 16, weight: "bold" },
       },
       annotation: {
         annotations: {

@@ -398,7 +398,7 @@ const WaterAvailabilityChart = ({
               <div className=" mx-auto w-fit text-xs sm:text-sm text-gray-700 rounded-md px-3 py-2  text-center shadow-sm">
                 <p>
                   Criteria for selecting the pre and post intervention years
-                  selected are with minimum difference in rainfall.
+                  selected are <br /> with minimum difference in rainfall.
                 </p>
               </div>
             )}

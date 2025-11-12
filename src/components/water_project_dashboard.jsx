@@ -10,7 +10,7 @@ import Map from "ol/Map";
 import { Style, Fill, Stroke, Icon } from "ol/style";
 import { Point } from "ol/geom";
 import { defaults as defaultInteractions, DragPan } from "ol/interaction";
-
+import getVectorLayers from "../actions/getVectorLayers.js";
 import LocationOnIcon from "@mui/icons-material/LocationOn";
 import YearSlider from "./yearSlider";
 import PrecipitationStackChart from "./PrecipitationStackChart.jsx";
@@ -1453,10 +1453,225 @@ const WaterProjectDashboard = () => {
     }
   };
 
+  const initializeMap3 = async (organizationLabel) => {
+    if (!organizationLabel || !projectName || !projectId) return;
+
+    const baseLayer = new TileLayer({
+      source: new XYZ({
+        url: "https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}",
+        maxZoom: 30,
+      }),
+    });
+
+    const view = new View({
+      projection: "EPSG:4326",
+      constrainResolution: true,
+    });
+
+    const map = new Map({
+      target: mapElement3.current,
+      layers: [baseLayer],
+      view,
+      loadTilesWhileAnimating: true,
+      loadTilesWhileInteracting: true,
+    });
+    mapRef3.current = map;
+
+    // Disable zoom interactions
+    map.getInteractions().forEach((interaction) => {
+      if (
+        interaction instanceof MouseWheelZoom ||
+        interaction instanceof PinchZoom ||
+        interaction instanceof DoubleClickZoom
+      ) {
+        interaction.setActive(false);
+      }
+    });
+
+    // --- Fetch MWS boundary from WFS (server-side filtered) ---
+    const typeName = `waterrej:WaterRejapp_mws_${projectName}_${projectId}`;
+    const mwsId = selectedFeature.properties.MWS_UID;
+    const uidParts = mwsId?.split("_") || [];
+    const uidPrefix =
+      uidParts.length >= 2 ? `${uidParts[0]}_${uidParts[1]}` : mwsId;
+
+    const wfsUrl =
+      "https://geoserver.core-stack.org:8443/geoserver/waterrej/ows?" +
+      new URLSearchParams({
+        service: "WFS",
+        version: "1.0.0",
+        request: "GetFeature",
+        typeName,
+        outputFormat: "application/json",
+        CQL_FILTER: `uid LIKE '${uidPrefix}%'`,
+      });
+
+    let matchedFeatures = [];
+    try {
+      const response = await fetch(wfsUrl);
+      const json = await response.json();
+      matchedFeatures = json.features;
+      if (!matchedFeatures.length) {
+        console.warn("No match found for selected MWS UID");
+      }
+    } catch (err) {
+      console.error("WFS boundary fetch error:", err);
+    }
+
+    const featureObjs = new GeoJSON().readFeatures(
+      { type: "FeatureCollection", features: matchedFeatures },
+      { dataProjection: "EPSG:4326", featureProjection: view.getProjection() }
+    );
+
+    // --- Add MWS boundary layer ---
+    const boundarySource = new VectorSource({ features: featureObjs });
+    const boundaryLayer = new VectorLayer({
+      source: boundarySource,
+      style: new Style({
+        stroke: new Stroke({ color: "black", width: 3 }),
+        fill: null,
+      }),
+    });
+    boundaryLayer.setZIndex(3);
+    map.addLayer(boundaryLayer);
+
+    // --- Create MultiPolygon for cropping once ---
+    const multiCoords = [];
+    featureObjs.forEach((f) => {
+      const g = f.getGeometry();
+      if (!g) return;
+      if (g.getType() === "Polygon") multiCoords.push(g.getCoordinates());
+      else if (g.getType() === "MultiPolygon")
+        g.getCoordinates().forEach((poly) => multiCoords.push(poly));
+    });
+    const multiPoly = multiCoords.length ? new MultiPolygon(multiCoords) : null;
+
+    // --- Drainage & Terrain Layers in parallel ---
+    const drainageLayerName = `waterrej:WATER_REJ_drainage_line_${organizationLabel}_${projectName}_${projectId}`;
+    const terrainLayerName = `WATER_REJ_terrain_${projectName}_${projectId}`;
+
+    const [terrainLayer] = await Promise.all([
+      getImageLayer(
+        "waterrej",
+        terrainLayerName,
+        true,
+        "Terrain_Style_11_Classes"
+      ),
+    ]);
+
+    // --- Drainage Vector Layer ---
+    const drainageColors = [
+      "#03045E",
+      "#023E8A",
+      "#0077B6",
+      "#0096C7",
+      "#00B4D8",
+      "#48CAE4",
+      "#90E0EF",
+      "#ADE8F4",
+      "#CAF0F8",
+    ];
+
+    const drainageLayer = await getVectorLayers(
+      "waterrej",
+      `WATER_REJ_drainage_line_${organizationLabel}_${projectName}_${projectId}`,
+      true,
+      true,
+      "drainage"
+    );
+
+    if (drainageLayer) {
+      drainageLayer.setStyle((feature) => {
+        const order = feature.get("ORDER") || 1;
+        const color = drainageColors[order - 1] || drainageColors[0];
+        return new Style({
+          stroke: new Stroke({
+            color,
+            width: 2,
+          }),
+        });
+      });
+
+      drainageLayer.setZIndex(1);
+      map.addLayer(drainageLayer);
+
+      // Crop if MultiPolygon exists
+      if (multiPoly) {
+        const cropFilter = new Crop({
+          feature: new Feature({ geometry: multiPoly }),
+          wrapX: false,
+          inner: false,
+        });
+        if (typeof drainageLayer.addFilter === "function")
+          drainageLayer.addFilter(cropFilter);
+      }
+    }
+
+    // --- Terrain layer ---
+    terrainLayer.setOpacity(0.7);
+    terrainLayer.setZIndex(0);
+    map.addLayer(terrainLayer);
+
+    if (multiPoly && typeof terrainLayer.addFilter === "function") {
+      const cropFilter = new Crop({
+        feature: new Feature({ geometry: multiPoly }),
+        wrapX: false,
+        inner: false,
+      });
+      terrainLayer.addFilter(cropFilter);
+    }
+
+    // --- Waterbody outlines ---
+    if (geoData?.features?.length) {
+      const allWaterFeatures = new GeoJSON().readFeatures(geoData, {
+        dataProjection: "EPSG:4326",
+        featureProjection: "EPSG:4326",
+      });
+
+      const waterSource = new VectorSource({ features: allWaterFeatures });
+
+      if (selectedWaterbody && selectedFeature) {
+        const selectedFeatureObj = new GeoJSON().readFeature(selectedFeature, {
+          dataProjection: "EPSG:4326",
+          featureProjection: "EPSG:4326",
+        });
+
+        const selectedWaterSource = new VectorSource({
+          features: [selectedFeatureObj],
+        });
+
+        const selectedWaterLayer = new VectorLayer({
+          source: selectedWaterSource,
+          style: new Style({
+            stroke: new Stroke({ color: "blue", width: 3 }),
+            fill: null,
+          }),
+        });
+        selectedWaterLayer.setZIndex(3);
+        map.addLayer(selectedWaterLayer);
+
+        const geometry = selectedFeatureObj.getGeometry();
+        if (geometry) {
+          view.fit(geometry.getExtent(), {
+            padding: [50, 50, 50, 50],
+            duration: 1000,
+            maxZoom: 14,
+          });
+        }
+      } else {
+        const extent = waterSource.getExtent();
+        view.fit(extent, {
+          padding: [50, 50, 50, 50],
+          duration: 1000,
+          maxZoom: 18,
+        });
+      }
+    }
+  };
+
   // const initializeMap3 = async (organizationLabel) => {
   //   if (!organizationLabel || !projectName || !projectId) return;
 
-  //   // --- Initialize base map immediately ---
   //   const baseLayer = new TileLayer({
   //     source: new XYZ({
   //       url: "https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}",
@@ -1505,7 +1720,7 @@ const WaterProjectDashboard = () => {
   //       request: "GetFeature",
   //       typeName,
   //       outputFormat: "application/json",
-  //       CQL_FILTER: `uid LIKE '${uidPrefix}%'`, //  match prefix
+  //       CQL_FILTER: `uid LIKE '${uidPrefix}%'`,
   //     });
 
   //   let matchedFeatures = [];
@@ -1520,7 +1735,6 @@ const WaterProjectDashboard = () => {
   //     console.error("WFS boundary fetch error:", err);
   //   }
 
-  //   // --- Read features once ---
   //   const featureObjs = new GeoJSON().readFeatures(
   //     { type: "FeatureCollection", features: matchedFeatures },
   //     { dataProjection: "EPSG:4326", featureProjection: view.getProjection() }
@@ -1662,311 +1876,6 @@ const WaterProjectDashboard = () => {
   //     }
   //   }
   // };
-
-  // make sure these imports exist at top of file:
-  // import { defaults as defaultInteractions, DragPan } from "ol/interaction";
-
-  const initializeMap3 = async (organizationLabel) => {
-    if (!organizationLabel || !projectName || !projectId) return;
-    if (!mapElement3?.current) {
-      console.error("mapElement3 not mounted yet");
-      return;
-    }
-
-    // --- ensure target div is visible & has size (important) ---
-    const targetEl = mapElement3.current;
-    console.log(
-      "Map3 target offset:",
-      targetEl,
-      targetEl?.offsetWidth,
-      targetEl?.offsetHeight
-    );
-    if (!targetEl.offsetWidth || !targetEl.offsetHeight) {
-      // give the browser a tick to layout; if your container is hidden at init this will help
-      await new Promise((res) => setTimeout(res, 200));
-      console.log(
-        "After wait -> size:",
-        targetEl.offsetWidth,
-        targetEl.offsetHeight
-      );
-      if (!targetEl.offsetWidth || !targetEl.offsetHeight) {
-        console.warn(
-          "initializeMap3: target element still has zero size — map interactions may not attach correctly"
-        );
-      }
-    }
-
-    // --- Base layer & view ---
-    const baseLayer = new TileLayer({
-      source: new XYZ({
-        url: "https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}",
-        maxZoom: 30,
-      }),
-    });
-
-    const view = new View({
-      projection: "EPSG:4326",
-      constrainResolution: true,
-    });
-
-    // --- Create map with a controlled set of interactions.
-    // keep DragPan and DoubleClickZoom; disable MouseWheelZoom & PinchZoom (you can tweak)
-    const interactions = defaultInteractions({
-      altShiftDragRotate: false,
-      pinchRotate: false,
-      pinchZoom: false, // disable pinch zoom
-      doubleClickZoom: true, // keep double-click zoom enabled — won't break pan
-      mouseWheelZoom: false, // disable wheel zoom
-    });
-
-    const map = new Map({
-      target: targetEl,
-      layers: [baseLayer],
-      view,
-      interactions,
-      loadTilesWhileAnimating: true,
-      loadTilesWhileInteracting: true,
-    });
-
-    mapRef3.current = map;
-    console.log(
-      "Map3 created. interactions:",
-      map
-        .getInteractions()
-        .getArray()
-        .map((i) => i.constructor.name)
-    );
-
-    // helper to ensure DragPan present
-    const ensureDragPan = () => {
-      const hasDragPan = map
-        .getInteractions()
-        .getArray()
-        .some((i) => i.constructor.name === "DragPan");
-      if (!hasDragPan) {
-        console.warn("DragPan missing — adding manually");
-        map.addInteraction(new DragPan());
-      } else {
-        console.log("DragPan present");
-      }
-    };
-
-    ensureDragPan();
-
-    // --- Fetch WFS boundary (same as before) ---
-    const typeName = `waterrej:WaterRejapp_mws_${projectName}_${projectId}`;
-    const mwsId = selectedFeature?.properties?.MWS_UID;
-    const uidParts = mwsId?.split("_") || [];
-    const uidPrefix =
-      uidParts.length >= 2 ? `${uidParts[0]}_${uidParts[1]}` : mwsId;
-
-    const wfsUrl =
-      "https://geoserver.core-stack.org:8443/geoserver/waterrej/ows?" +
-      new URLSearchParams({
-        service: "WFS",
-        version: "1.0.0",
-        request: "GetFeature",
-        typeName,
-        outputFormat: "application/json",
-        CQL_FILTER: `uid LIKE '${uidPrefix}%'`,
-      });
-
-    let matchedFeatures = [];
-    try {
-      const response = await fetch(wfsUrl);
-      const json = await response.json();
-      matchedFeatures = json.features;
-      if (!matchedFeatures.length) {
-        console.warn("No match found for selected MWS UID");
-      }
-    } catch (err) {
-      console.error("WFS boundary fetch error:", err);
-    }
-
-    // --- Read features with view projection (same as before) ---
-    const featureObjs = new GeoJSON().readFeatures(
-      { type: "FeatureCollection", features: matchedFeatures },
-      { dataProjection: "EPSG:4326", featureProjection: view.getProjection() }
-    );
-
-    // --- Add boundary layer ---
-    const boundarySource = new VectorSource({ features: featureObjs });
-    const boundaryLayer = new VectorLayer({
-      source: boundarySource,
-      style: new Style({
-        stroke: new Stroke({ color: "black", width: 3 }),
-        fill: null,
-      }),
-    });
-    boundaryLayer.setZIndex(3);
-    map.addLayer(boundaryLayer);
-
-    // --- Build multipolygon coords if any (same logic) ---
-    const multiCoords = [];
-    featureObjs.forEach((f) => {
-      const g = f.getGeometry();
-      if (!g) return;
-      if (g.getType() === "Polygon") multiCoords.push(g.getCoordinates());
-      else if (g.getType() === "MultiPolygon")
-        g.getCoordinates().forEach((poly) => multiCoords.push(poly));
-    });
-    const multiPoly = multiCoords.length ? new MultiPolygon(multiCoords) : null;
-
-    // --- Drainage & Terrain (same) ---
-    const drainageLayerName = `waterrej:WATER_REJ_drainage_line_${organizationLabel}_${projectName}_${projectId}`;
-    const terrainLayerName = `WATER_REJ_terrain_${projectName}_${projectId}`;
-
-    const [terrainLayer] = await Promise.all([
-      getImageLayer(
-        "waterrej",
-        terrainLayerName,
-        true,
-        "Terrain_Style_11_Classes"
-      ),
-    ]);
-
-    const drainageLineLayer = new TileLayer({
-      source: new TileWMS({
-        url: "https://geoserver.core-stack.org:8443/geoserver/waterrej/wms",
-        params: {
-          SERVICE: "WMS",
-          VERSION: "1.1.0",
-          REQUEST: "GetMap",
-          FORMAT: "image/png",
-          TRANSPARENT: true,
-          LAYERS: drainageLayerName,
-          STYLES: "",
-        },
-        serverType: "geoserver",
-        crossOrigin: "anonymous",
-      }),
-      opacity: 1,
-    });
-
-    drainageLineLayer.setZIndex(1);
-    map.addLayer(drainageLineLayer);
-
-    // --- Apply crop filter if needed, but don't let it capture pointer events ---
-    if (multiPoly) {
-      try {
-        const cropFilter = new Crop({
-          feature: new Feature({ geometry: multiPoly }),
-          wrapX: false,
-          inner: false,
-        });
-        if (typeof drainageLineLayer.addFilter === "function")
-          drainageLineLayer.addFilter(cropFilter);
-        if (typeof terrainLayer.addFilter === "function")
-          terrainLayer.addFilter(cropFilter);
-      } catch (e) {
-        console.warn("crop filter failed to attach:", e);
-      }
-    }
-
-    // terrain
-    terrainLayer.setOpacity(0.7);
-    terrainLayer.setZIndex(0);
-    map.addLayer(terrainLayer);
-
-    // --- waterbodies outlines logic (same as before) ---
-    if (geoData?.features?.length) {
-      const allWaterFeatures = new GeoJSON().readFeatures(geoData, {
-        dataProjection: "EPSG:4326",
-        featureProjection: "EPSG:4326",
-      });
-
-      const waterSource = new VectorSource({ features: allWaterFeatures });
-
-      if (selectedWaterbody && selectedFeature) {
-        const selectedFeatureObj = new GeoJSON().readFeature(selectedFeature, {
-          dataProjection: "EPSG:4326",
-          featureProjection: "EPSG:4326",
-        });
-
-        const selectedWaterSource = new VectorSource({
-          features: [selectedFeatureObj],
-        });
-
-        const selectedWaterLayer = new VectorLayer({
-          source: selectedWaterSource,
-          style: new Style({
-            stroke: new Stroke({ color: "blue", width: 3 }),
-            fill: null,
-          }),
-        });
-        selectedWaterLayer.setZIndex(3);
-        map.addLayer(selectedWaterLayer);
-
-        const geometry = selectedFeatureObj.getGeometry();
-        if (geometry) {
-          view.fit(geometry.getExtent(), {
-            padding: [50, 50, 50, 50],
-            duration: 1000,
-            maxZoom: 14,
-          });
-        }
-      } else {
-        const extent = waterSource.getExtent();
-        view.fit(extent, {
-          padding: [50, 50, 50, 50],
-          duration: 1000,
-          maxZoom: 18,
-        });
-      }
-    }
-
-    // ---------------------- Robust post-init fixes ----------------------
-
-    // 1) ensure map viewport has expected CSS so pointer events work
-    const viewport = map.getViewport();
-    if (viewport) {
-      viewport.style.touchAction = "pan-x pan-y";
-      viewport.style.pointerEvents = "auto";
-    }
-
-    // 2) Make any overlay canvas ignore pointer events so they don't block panning
-    // (ol-ext crop / WMS layers may inject canvases above map - make them transparent to events)
-    setTimeout(() => {
-      try {
-        // all canvases under map container except the main viewport canvas
-        const canvases = targetEl.querySelectorAll("canvas");
-        canvases.forEach((c) => {
-          // keep OL viewport canvas interactive, but other overlay canvases -> ignore
-          if (
-            !c.classList.contains("ol-viewport") &&
-            !c.classList.contains("ol-layer")
-          ) {
-            c.style.pointerEvents = "none";
-          }
-        });
-        console.log("Applied pointerEvents:none to overlay canvases if any");
-      } catch (e) {
-        console.warn("Error applying canvas pointer-events fix:", e);
-      }
-    }, 300);
-
-    // 3) Ensure DragPan exists and force updateSize + render
-    ensureDragPan();
-    map.updateSize();
-    map.render();
-    console.log(
-      "Map3 final interactions:",
-      map
-        .getInteractions()
-        .getArray()
-        .map((i) => i.constructor.name)
-    );
-
-    // debug: print whether pointer events are reaching the viewport
-    map.on("pointerdown", () => console.log("map pointerdown"));
-    map.on("pointerdrag", () => console.log("map pointerdrag"));
-    map.on("pointerup", () => console.log("map pointerup"));
-
-    // final console hint for you while testing
-    console.log(
-      "initializeMap3 complete - test panning now. If still not working, check DevTools Elements to see any overlaying element above map container."
-    );
-  };
 
   useEffect(() => {
     if (
