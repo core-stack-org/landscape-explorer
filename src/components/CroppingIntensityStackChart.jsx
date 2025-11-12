@@ -322,6 +322,24 @@ const CroppingIntensityStackChart = ({
           ? `Impact Analysis: Showing Only Pre (${impactYear.pre}) and Post (${impactYear.post}) Years`
           : "Cropping Intensity by Year (Area in hectares)",
       },
+      annotation: {
+        annotations: {
+          interventionLine: {
+            type: "line",
+            scaleID: "x",
+            value: "22-23",
+            borderColor: "black",
+            borderWidth: 2,
+            label: {
+              content: "Intervention Year",
+              enabled: true,
+              position: "start",
+              color: "black",
+              font: { weight: "bold" },
+            },
+          },
+        },
+      },
     },
     scales: {
       x: {
@@ -341,9 +359,7 @@ const CroppingIntensityStackChart = ({
       {/* Toggle above chart */}
       <div className="flex items-center justify-end mb-4">
         <span className="text-[0.7rem] sm:text-[0.75rem] text-gray-700 font-medium mr-2 leading-tight w-auto whitespace-nowrap">
-          {showImpact
-            ? "Toggle to see Croppping Intensity Graph"
-            : "Toggle to see Impact Analysis Graph"}
+          {showImpact ? "Comparison years" : "Comparison years"}
         </span>
         <label className="relative inline-flex items-center cursor-pointer">
           <input

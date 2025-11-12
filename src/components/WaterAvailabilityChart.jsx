@@ -223,6 +223,9 @@ const WaterAvailabilityChart = ({
   const options = {
     maintainAspectRatio: false,
     responsive: true,
+    layout: {
+      padding: { top: 10, bottom: 10, left: 10, right: 10 },
+    },
     plugins: {
       legend: { display: false },
       title: {
@@ -254,36 +257,53 @@ const WaterAvailabilityChart = ({
     scales: {
       x: {
         stacked: true,
-        title: {
-          display: true,
-          text: showImpact ? "Year" : "Year",
-        },
+        title: { display: true, text: "Year" },
       },
       y: {
         stacked: true,
-        title: {
-          display: true,
-          text: showImpact
-            ? "Water Availability (%) in Waterbody area"
-            : "Land Use (%) in Waterbody area ",
-        },
         min: 0,
         max: 100,
+        title: {
+          display: true,
+          text: "Water Availability (%) in Waterbody area",
+        },
       },
-      y1: !showImpact
-        ? {
-            position: "right",
-            title: { display: true, text: "Rainfall (mm)" },
-            grid: { drawOnChartArea: false },
-          }
-        : undefined,
+      // ✅ always reserve y1 scale space even if not visible
+      y1: {
+        position: "right",
+        display: true,
+        title: { display: true, text: "Rainfall (mm)" },
+        grid: { drawOnChartArea: false },
+        // Trick: keep same pixel width so chart doesn’t expand/shrink
+        afterFit: (axis) => {
+          axis.width = 60; // force same width always
+        },
+        ticks: {
+          display: !showImpact, // hide ticks visually in impact view
+        },
+        title: {
+          display: !showImpact,
+          text: "Rainfall (mm)",
+        },
+      },
     },
   };
 
   return (
-    <div style={{ width: "100%", height: "80%" }}>
-      <div className="flex flex-col mb-2 px-4">
-        <div className="flex flex-wrap items-start text-xs sm:text-sm w-full relative gap-x-3 gap-y-1">
+    <div className="w-full">
+      {/* Outer wrapper - lets chart area be sized separately */}
+      <div
+        className="flex flex-col mb-2 px-4"
+        style={{
+          minHeight: "150px", // fix height so it doesn't jump
+          maxHeight: "150px",
+          overflow: "hidden",
+          fontSize: "clamp(0.55rem, 0.8vw, 0.8rem)",
+          transition: "all 0.3s ease-in-out",
+        }}
+      >
+        <div className="flex flex-wrap items-start w-full relative gap-x-3 gap-y-1">
+          {/* Keep your original legend rendering exactly as before */}
           {!showImpact &&
             Object.entries(groups).map(([group, items]) => (
               <div key={group} className="min-w-[130px] mb-1">
@@ -301,7 +321,7 @@ const WaterAvailabilityChart = ({
                         backgroundColor: item.color,
                       }}
                     ></span>
-                    {item.label}
+                    <span className="legend-label">{item.label}</span>
                   </div>
                 ))}
                 {group === "Water Indicators" && (
@@ -314,7 +334,7 @@ const WaterAvailabilityChart = ({
                         backgroundColor: "#4F555F",
                       }}
                     ></span>
-                    <span className="text-sm font-medium text-gray-700">
+                    <span className="font-medium text-gray-700">
                       Total Rainfall (mm)
                     </span>
                   </div>
@@ -322,12 +342,13 @@ const WaterAvailabilityChart = ({
               </div>
             ))}
 
-          {/* Toggle always rendered once */}
+          {/* Toggle always rendered once (unchanged) */}
           <div className="flex items-center ml-auto mt-2 sm:mt-0 absolute right-0 top-0 text-right">
-            <span className="text-[0.7rem] text-gray-700 font-medium mr-2 leading-tight w-auto whitespace-nowrap">
-              {showImpact
-                ? "Toggle to see Water availability Graph"
-                : "Toggle to see Impact Analysis Graph"}
+            <span
+              className="font-medium mr-2 leading-tight w-auto whitespace-nowrap text-gray-700"
+              style={{ fontSize: "clamp(0.55rem, 0.8vw, 0.75rem)" }}
+            >
+              {showImpact ? "Comparison years" : "Comparison years"}
             </span>
 
             <label className="relative inline-flex items-center cursor-pointer">
@@ -343,7 +364,7 @@ const WaterAvailabilityChart = ({
           </div>
         </div>
 
-        {/* Impact-only legends */}
+        {/* Impact-only legends (keeps same place, doesn't change layout since minHeight above is set) */}
         {showImpact && (
           <div className="flex flex-col items-start justify-start gap-2 mt-4 whitespace-nowrap">
             <div className="flex items-center">
@@ -373,20 +394,22 @@ const WaterAvailabilityChart = ({
                 Kharif Rabi Zaid : Water available in Kharif, Rabi And Zaid
               </span>
             </div>
+            {showImpact && impactYear && (
+              <div className=" mx-auto w-fit text-xs sm:text-sm text-gray-700 rounded-md px-3 py-2  text-center shadow-sm">
+                <p>
+                  Criteria for selecting the pre and post intervention years
+                  selected are with minimum difference in rainfall.
+                </p>
+              </div>
+            )}
           </div>
         )}
       </div>
 
-      <Bar data={data} options={options} />
-
-      {showImpact && impactYear && (
-        <div className="mt-4 mx-auto w-fit text-xs sm:text-sm text-gray-700 border border-gray-300 rounded-md px-3 py-2 bg-gray-50 text-center shadow-sm">
-          <p className="mt-1">
-            Criteria for selecting the pre and post intervention years selected
-            are with minimum difference in rainfall.
-          </p>
-        </div>
-      )}
+      {/* Chart wrapper: fix the chart area height so it doesn't reflow */}
+      <div className="w-full" style={{ minHeight: "360px" }}>
+        <Bar data={data} options={options} />
+      </div>
     </div>
   );
 };
