@@ -327,6 +327,17 @@ const KYLDashboardPage = () => {
     }
   };
 
+  // Pattern selection handler
+  const handlePatternSelection = (pattern, isSelected) => {
+    handlePatternSelectionLogic(
+      pattern,
+      isSelected,
+      patternSelections,
+      setPatternSelections
+    );
+  };
+
+
   const resetMWSStyle = (tempMWS) => {
     mwsLayerRef.current.setStyle((feature) => {
       if (selectedMWS.length > 0 && selectedMWS.includes(feature.values_.uid)) {
@@ -845,7 +856,7 @@ const KYLDashboardPage = () => {
           layerRef.push(tempLayer);
           mapRef.current.addLayer(tempLayer);
         }
-        else if (["lcw", "factory_csr", "mining"].includes(filter.layer_store[i])) {
+        else if (["lcw", "factory_csr", "mining", "green_credit"].includes(filter.layer_store[i])) {
           const industryLayerName = `${district.label
             .toLowerCase()
             .split(" ")
@@ -910,7 +921,8 @@ const KYLDashboardPage = () => {
           filter.layer_store[i] !== "nrega_assets" &&
           filter.layer_store[i] !== "lcw" &&
           filter.layer_store[i] !== "factory_csr" &&
-          filter.layer_store[i] !== "mining"
+          filter.layer_store[i] !== "mining" &&
+          filter.layer_store[i] !== "green_credit"
         ) {
           tempLayer.setStyle((feature) => {
             return layerStyle(
