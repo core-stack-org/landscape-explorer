@@ -20,6 +20,7 @@ import {
 } from "../services/analytics";
 import Footer from "../components/footer.jsx";
 import LandingNavbar from "../components/landing_navbar.jsx";
+import PlansPage from "../components/plansPage.jsx";
 
 export default function KYLHomePage() {
   const navigate = useNavigate();
