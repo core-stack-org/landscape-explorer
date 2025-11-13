@@ -834,11 +834,11 @@
                 "type": 1,
                 "values": [
                     {
-                        "label": "Areas with no conflicts",
+                        "label": "Areas with no known conflicts",
                         "value": 0
                     },
                     {
-                        "label": "Areas with conflicts",
+                        "label": "Areas with one or more conflicts",
                         "value": 1
                     }
                 ],
@@ -858,15 +858,15 @@
             },
             {
                 "name": "factory_csr",
-                "label": "Factory",
+                "label": "Industry",
                 "type": 1,
                 "values": [
                     {
-                        "label": "Areas with no factory",
+                        "label": "Areas with no known factory sites",
                         "value": 0
                     },
                     {
-                        "label": "Areas with factories",
+                        "label": "Areas with factory sites",
                         "value": 1
                     }
                 ],
@@ -890,47 +890,19 @@
                 "type": 1,
                 "values": [
                     {
-                        "label": "Areas with no mining",
+                        "label": "Areas with no known mining sites",
                         "value": 0
                     },
                     {
-                        "label": "Areas with minings",
+                        "label": "Areas with mining sites",
                         "value": 1
                     }
                 ],
                 "layer_store": [
-                    "factory_csr"
+                    "mining"
                 ],
                 "layer_name": [
-                    "factory_csr"
-                ],
-                "vectorStyle": [
-                    {}
-                ],
-                "rasterStyle": [
-                    ""
-                ],
-                "styleIdx": 0
-            },
-            {
-                "name": "green_credit",
-                "label": "Green Credit",
-                "type": 1,
-                "values": [
-                    {
-                        "label": "Areas with no green credit",
-                        "value": 0
-                    },
-                    {
-                        "label": "Areas with green credit",
-                        "value": 1
-                    }
-                ],
-                "layer_store": [
-                    "green_credit"
-                ],
-                "layer_name": [
-                    "green_credit"
+                    "mining"
                 ],
                 "vectorStyle": [
                     {}

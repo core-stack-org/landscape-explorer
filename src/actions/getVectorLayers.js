@@ -32,32 +32,13 @@ const PanchayatBoundariesStyle = (feature, resolution) => {
   return nameStyle;
 }
 
-const GreenCreditStyle = (feature, resolution) => {
-  return new Style({
-    stroke: new Stroke({
-      color: "#145A32", // dark green border
-      width: 1.5,
-    }),
-    fill: new Fill({
-      color: "rgba(46, 204, 113, 0.5)", // semi-transparent green fill
-    }),
-  });
-};
-
 export default async function getVectorLayers(layer_store, layer_name, setVisible = true, setActive = true, resource_type = null, plan_id = null, district, block) {
 
-  let typeName;
-  if (layer_store === "green_credit") {
-    typeName = `${layer_store}:${layer_name}_green_credit`;
-  } else {
-    typeName =
-      plan_id === null
-        ? `${layer_store}:${layer_name}`
-        : `${layer_store}:${resource_type}_${plan_id}_${district}_${block}`;
-  }
-
-  // 🧠 Build WFS URL
-  const url = `${process.env.REACT_APP_GEOSERVER_URL}${layer_store}/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=${typeName}&outputFormat=application/json&screen=main`;
+  let url =
+    (plan_id === null ?
+      `${process.env.REACT_APP_GEOSERVER_URL}` + layer_store + '/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=' + layer_store + ':' + layer_name + "&outputFormat=application/json&screen=main"
+      :
+      `${process.env.REACT_APP_GEOSERVER_URL}` + layer_store + '/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=' + layer_store + ':' + resource_type + "_" + plan_id + "_" + district + "_" + block + "&outputFormat=application/json&screen=main")
 
   const vectorSource = new Vector({
     url: url,
@@ -86,8 +67,6 @@ export default async function getVectorLayers(layer_store, layer_name, setVisibl
 
   if (layer_store === "panchayat_boundaries") {
     wmsLayer.setStyle(PanchayatBoundariesStyle);
-  } else if (layer_store === "green_credit") {
-    wmsLayer.setStyle(GreenCreditStyle);
   }
 
   return wmsLayer;
