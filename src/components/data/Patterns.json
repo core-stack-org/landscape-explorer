@@ -5,7 +5,7 @@
                 {
                     "Name" : "low_rainfed_agri_resilience",
                     "Category" : "Low rainfed agriculture resilience",
-                    "Characteristics" : "erratic rainfall, rainfed agriculture dependency, over-dependence on rainfed farming, rain-fed risk, rain-fed dependence, poor bund construction",
+                    "Characteristics" : "erratic rainfall, rainfed agriculture dependency, poor bund construction",
                     "level" : 0,
                     "Values" : [
                         {
@@ -19,11 +19,11 @@
                 {
                     "Name" : "groundwater_stress",
                     "Category" : "Groundwater stress",
-                    "Characteristics" : "water erosion, groundwater decline, groundwater depletion, groundwater stress, water stress, low groundwater, groundwater depletion, GW depletion, saline GW, rapid runoff, high cost for marginal farmers",
+                    "Characteristics" : "water erosion, groundwater decline, groundwater stress, saline groundwater, rapid runoff, high cost for marginal farmers",
                     "level" : 0,
                     "Values" : [
                         {
-                            "label" : "SOGE is not equals safe",
+                            "label" : "SOGE is not safe",
                             "Key" : "soge_class",
                             "type" : 3,
                             "value" : 0
@@ -45,7 +45,7 @@
                 {
                     "Name" : "water_scarcity",
                     "Category" : "Water scarcity",
-                    "Characteristics" : "livestock water shortage",
+                    "Characteristics" : "Livestock water shortage",
                     "level" : 0,
                     "Values" : [
                         {
@@ -59,6 +59,20 @@
                             "Key" : "trend_swb",
                             "type" : 1,
                             "value" : -1
+                        }
+                    ]
+                },
+                {
+                    "Name" : "overgrazing",
+                    "Category" : "Overgrazing",
+                    "Characteristics" : "Stray cattle, Overgrazing",
+                    "level" : 0,
+                    "Values" : [
+                        {
+                            "label" : "Reduction in tree cover > 50 ha",
+                            "Key" : "decrease_in_tree_cover",
+                            "type" : 2,
+                            "value" : {"lower" : 50, "upper" : 999999999}
                         }
                     ]
                 }
