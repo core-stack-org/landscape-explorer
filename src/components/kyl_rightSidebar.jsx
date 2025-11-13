@@ -25,6 +25,7 @@ const KYLRightSidebar = ({
   setPatternSelections,
   getFormattedSelectedFilters,
   getFormattedSelectedPatterns,
+  handlePatternRemoval,
   selectedMWS,
   selectedVillages,
   handleLayerSelection,
@@ -129,29 +130,6 @@ const KYLRightSidebar = ({
       }));
     }
   };
-
-  const handlePatternRemoval = (pattern) => {
-    if(pattern.level){
-       //* Village Level
-      setPatternSelections((prev) => ({
-        ...prev,
-        selectedVillagePatterns : {
-          ...prev.selectedVillagePatterns,
-          [pattern.patternName] : null,
-        }
-       }))
-    }
-    else{
-      //* MWS Level
-       setPatternSelections((prev) => ({
-        ...prev,
-        selectedMWSPatterns : {
-          ...prev.selectedMWSPatterns,
-          [pattern.patternName] : null,
-        }
-       }))
-    }
-  }
 
   return (
     <div className="w-[320px] flex flex-col gap-2">
