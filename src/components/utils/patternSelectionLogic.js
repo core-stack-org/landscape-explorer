@@ -37,9 +37,6 @@ export const handlePatternSelection = (pattern, isSelected, patternSelections, s
     // Update the state
     setPatternSelections(updatedSelections);
     
-    // Log for debugging (you can remove this later)
-    console.log('Pattern selections updated:', updatedSelections);
-    
     return updatedSelections;
 };
 
