@@ -6,7 +6,6 @@ import {
   districtAtom,
   blockAtom,
   filterSelectionsAtom,
-  patternSelectionsAtom,
   yearAtom,
   dataJsonAtom,
 } from "../store/locationStore.jsx";
@@ -32,7 +31,7 @@ import KYLMapContainer from "../components/kyl_mapContainer.jsx";
 import getPlans from "../actions/getPlans.js";
 import layerStyle from "../components/utils/layerStyle.jsx";
 import { getAllPatternTypes, getSubcategoriesForCategory, getPatternsForSubcategory  } from '../components/utils/patternsHelper.js';
-import { handlePatternSelection as handlePatternSelectionLogic, isPatternSelected, getAllSelectedPatterns, getSelectedPatternCount, clearAllPatterns } from '../components/utils/patternSelectionLogic.js';
+import { handlePatternSelection as handlePatternSelectionLogic, isPatternSelected, getAllSelectedPatterns, clearAllPatterns } from '../components/utils/patternSelectionLogic.js';
 
 //? Icons Imports
 import settlementIcon from "../assets/settlement_icon.svg";
@@ -206,9 +205,6 @@ const KYLDashboardPage = () => {
 
   // Filter selection handlers
   const handleFilterSelection = (name, option, isChecked) => {
-    console.log(name)
-    console.log(option)
-    console.log(isChecked)
     const sourceType = determineFilterSource(name);
     option = {
       ...option,
@@ -610,7 +606,7 @@ const KYLDashboardPage = () => {
   const fetchDataJson = async () => {
     try {
       const response = await fetch(
-        `${process.env.REACT_APP_API_URL}/download_kyl_data?state=${state.label.toLowerCase().replace(/\s*\(\s*/g, "_").replace(/\s*\)\s*/g, "").replace(/\s+/g, "_")}&district=${district.label.toLowerCase().replace(/\s*\(\s*/g, "_").replace(/\s*\)\s*/g, "").replace(/\s+/g, "_")}&block=${block.label.toLowerCase().replace(/\s*\(\s*/g, "_").replace(/\s*\)\s*/g, "").replace(/\s+/g, "_")}&file_type=json`
+        `${process.env.REACT_APP_API_URL}/download_kyl_data/?state=${state.label.toLowerCase().replace(/\s*\(\s*/g, "_").replace(/\s*\)\s*/g, "").replace(/\s+/g, "_")}&district=${district.label.toLowerCase().replace(/\s*\(\s*/g, "_").replace(/\s*\)\s*/g, "").replace(/\s+/g, "_")}&block=${block.label.toLowerCase().replace(/\s*\(\s*/g, "_").replace(/\s*\)\s*/g, "").replace(/\s+/g, "_")}&file_type=json`
       );
 
       if (!response.ok) {
@@ -774,7 +770,26 @@ const KYLDashboardPage = () => {
           );
           layerRef.push(tempLayer);
           mapRef.current.addLayer(tempLayer);
-        } else if (filter.layer_store[i] === "LULC") {
+        } 
+        else if (filter.layer_store[i] === "lcw") {
+          const nregaLayerName = `${district.label
+            .toLowerCase()
+            .split(" ")
+            .join("_")}_${block.label.toLowerCase().split(" ").join("_")}`;
+          tempLayer = await getWebGlLayers(
+            filter.layer_store[i],
+            nregaLayerName,
+            true,
+            true,
+            null,
+            null,
+            district.label.toLowerCase().split(" ").join("_"),
+            block.label.toLowerCase().split(" ").join("_")
+          );
+          layerRef.push(tempLayer);
+          mapRef.current.addLayer(tempLayer);
+        } 
+        else if (filter.layer_store[i] === "LULC") {
           tempLayer = await getImageLayer(
             `${filter.layer_store[i]}_${filter.layer_name[i]}`,
             `LULC_${lulcYear}_${block.label
@@ -815,7 +830,8 @@ const KYLDashboardPage = () => {
           filter.layer_store[i] !== "terrain" &&
           filter.layer_store[i] !== "LULC" &&
           filter.layer_store[i] !== "change_detection" &&
-          filter.layer_store[i] !== "nrega_assets"
+          filter.layer_store[i] !== "nrega_assets" &&
+          filter.layer_store[i] !== "lcw"
         ) {
           tempLayer.setStyle((feature) => {
             return layerStyle(
