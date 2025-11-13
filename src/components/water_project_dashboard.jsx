@@ -3112,32 +3112,17 @@ const WaterProjectDashboard = () => {
             <div className="flex flex-col md:flex-row items-start gap-4 w-full">
               {/* Map 3 */}
               {selectedWaterbody && (
-                <div
-                  className="relative w-full h-[85vh] grid"
-                  style={{ gridTemplateAreas: "'map'" }}
-                >
+                <div className="relative w-full h-[85vh]">
                   {/* MAP */}
                   <div
                     ref={mapElement3}
                     className="w-full h-full border border-gray-300 rounded-md"
-                    style={{
-                      gridArea: "map",
-                      zIndex: 0,
-                    }}
                   />
 
-                  <div
-                    className="grid w-full h-full"
-                    style={{
-                      gridArea: "map",
-                      gridTemplateRows: "1fr auto",
-                      gridTemplateColumns: "auto 1fr auto",
-                      zIndex: 1200,
-                      pointerEvents: "none",
-                    }}
-                  >
+                  {/* Overlay container */}
+                  <div className="absolute inset-0 z-20 pointer-events-none">
                     {/* Terrain Legend — Bottom Left */}
-                    <div className="flex justify-start items-end p-4">
+                    <div className="absolute left-0 bottom-0 p-4 pointer-events-auto">
                       {!terrainLegend ? (
                         <div
                           onClick={() => setTerrainLegend(true)}
@@ -3150,7 +3135,7 @@ const WaterProjectDashboard = () => {
                           Terrain Legend ▶
                         </div>
                       ) : (
-                        <div className="bg-white/90 p-4 rounded-md shadow-md w-full max-w-xs min-w-[220px]">
+                        <div className="bg-white/90 p-4 rounded-md shadow-md w-full max-w-xs min-w-[220px] pointer-events-auto">
                           <div className="flex justify-between items-center mb-2">
                             <p className="text-sm font-semibold">
                               Terrain Layer Legend
@@ -3201,33 +3186,31 @@ const WaterProjectDashboard = () => {
                     </div>
 
                     {/* Zoom Controls — Top Right */}
-                    <div className="flex justify-end items-start p-4">
-                      <div className="flex flex-col gap-2">
-                        <button
-                          className="bg-white border border-gray-300 rounded-md w-10 h-10 text-xl cursor-pointer shadow-sm hover:bg-gray-50 active:scale-95 transition-transform duration-150"
-                          onClick={() => {
-                            const view = mapRef3.current?.getView();
-                            view?.animate({
-                              zoom: view.getZoom() + 1,
-                              duration: 300,
-                            });
-                          }}
-                        >
-                          +
-                        </button>
-                        <button
-                          className="bg-white border border-gray-300 rounded-md w-10 h-10 text-xl cursor-pointer shadow-sm hover:bg-gray-50 active:scale-95 transition-transform duration-150"
-                          onClick={() => {
-                            const view = mapRef3.current?.getView();
-                            view?.animate({
-                              zoom: view.getZoom() - 1,
-                              duration: 300,
-                            });
-                          }}
-                        >
-                          –
-                        </button>
-                      </div>
+                    <div className="absolute right-0 top-0 p-4 flex flex-col gap-2 pointer-events-auto">
+                      <button
+                        className="bg-white border border-gray-300 rounded-md w-10 h-10 text-xl cursor-pointer shadow-sm hover:bg-gray-50 active:scale-95 transition-transform duration-150"
+                        onClick={() => {
+                          const view = mapRef3.current?.getView();
+                          view?.animate({
+                            zoom: view.getZoom() + 1,
+                            duration: 300,
+                          });
+                        }}
+                      >
+                        +
+                      </button>
+                      <button
+                        className="bg-white border border-gray-300 rounded-md w-10 h-10 text-xl cursor-pointer shadow-sm hover:bg-gray-50 active:scale-95 transition-transform duration-150"
+                        onClick={() => {
+                          const view = mapRef3.current?.getView();
+                          view?.animate({
+                            zoom: view.getZoom() - 1,
+                            duration: 300,
+                          });
+                        }}
+                      >
+                        –
+                      </button>
                     </div>
                   </div>
                 </div>
