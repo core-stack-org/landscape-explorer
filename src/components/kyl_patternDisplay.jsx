@@ -1,11 +1,14 @@
 import React, { useState } from 'react';
 
-const KYLPatternDisplay = ({ pattern, isDisabled, isSelected, onPatternSelect }) => {
+const KYLPatternDisplay = ({ pattern, isDisabled, isSelected, onPatternSelect, handlePatternRemoval }) => {
     const [isExpanded, setIsExpanded] = useState(false);
 
     const handleApplyClick = () => {
-        if (!isDisabled) {
+        if (!isDisabled && !isSelected) {
             onPatternSelect(pattern, !isSelected);
+        }
+        else{
+            handlePatternRemoval(pattern)
         }
     };
 

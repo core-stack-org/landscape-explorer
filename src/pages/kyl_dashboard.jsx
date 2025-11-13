@@ -56,9 +56,6 @@ const KYLDashboardPage = () => {
   const boundaryLayerRef = useRef(null);
   const mwsLayerRef = useRef(null);
 
-  let assetsLayerRefs = [useRef(null), useRef(null), useRef(null)];
-  let demandLayerRefs = [useRef(null), useRef(null)];
-
   const [isLoading, setIsLoading] = useState(false);
   const [highlightMWS, setHighlightMWS] = useState(null)
   const [selectedMWS, setSelectedMWS] = useState([]);
@@ -67,7 +64,6 @@ const KYLDashboardPage = () => {
   const [dataJson, setDataJson] = useRecoilState(dataJsonAtom);
   const [villageJson, setVillageJson] = useState(null);
 
-  const [currentPlan, setCurrentPlan] = useState(null);
   const [mappedAssets, setMappedAssets] = useState(false);
   const [mappedDemands, setMappedDemands] = useState(false);
   const [currentLayer, setCurrentLayer] = useState([]);
@@ -97,8 +93,6 @@ const KYLDashboardPage = () => {
   const [patternTrigger, setPatternTrigger] = useState(0)
 
   const addLayerSafe = (layer) => layer && mapRef.current && mapRef.current.addLayer(layer);
-  const removeLayerSafe = (layer) => layer && mapRef.current && mapRef.current.removeLayer(layer);
-
 
   const handleResetMWS = () => {
     if (!selectedMWSProfile) return; // If no MWS is selected, do nothing
@@ -1045,6 +1039,31 @@ const KYLDashboardPage = () => {
     }
   };
 
+  const handlePatternRemoval = (pattern) => {
+    const key = pattern.patternName || pattern.name;
+
+    if(pattern.level){
+      //* Village Level
+      setPatternSelections((prev) => ({
+        ...prev,
+        selectedVillagePatterns : {
+          ...prev.selectedVillagePatterns,
+          [key] : null,
+        }
+      }))
+    }
+    else{
+      //* MWS Level
+      setPatternSelections((prev) => ({
+        ...prev,
+        selectedMWSPatterns : {
+          ...prev.selectedMWSPatterns,
+          [key] : null,
+        }
+      }))
+    }
+  }
+
   const resetAllStates = () => {
     // Reset filters
     setFilterSelections({
@@ -1054,7 +1073,6 @@ const KYLDashboardPage = () => {
 
     setIndicatorType(null);
 
-    setCurrentPlan(null);
     setMappedAssets(false);
     setMappedDemands(false);
 
@@ -1582,7 +1600,6 @@ const KYLDashboardPage = () => {
               setFilterTrigger(!filterTrigger)
             }
             else{
-              console.log("Came here !")
               intersectionArray = [...tempMWS]
               setSelectedMWS(intersectionArray)
               fetchMWSLayer(intersectionArray)
@@ -1596,177 +1613,6 @@ const KYLDashboardPage = () => {
     }
 
   },[patternSelections.selectedMWSPatterns, patternSelections.selectedVillagePatterns, patternTrigger])
-
-  useEffect(() => {
-    if (currentPlan !== null) {
-      const fetchResourcesLayers = async () => {
-        assetsLayerRefs.forEach(({ current }) => removeLayerSafe(current));
-        assetsLayerRefs[0].current = await getVectorLayers(
-          "resources",
-          "settlement" +
-            "_" +
-            currentPlan.value.id +
-            "_" +
-            district.label
-              .toLowerCase()
-              .replace(/\s*\(\s*/g, "_")
-              .replace(/\s*\)\s*/g, "")
-              .replace(/\s+/g, "_") +
-            "_" +
-            block.label
-              .toLowerCase()
-              .replace(/\s*\(\s*/g, "_")
-              .replace(/\s*\)\s*/g, "")
-              .replace(/\s+/g, "_"),
-          true,
-          true
-        );
-        assetsLayerRefs[0].current.setStyle(
-          new Style({
-            image: new Icon({ src: settlementIcon }),
-          })
-        );
-
-        assetsLayerRefs[1].current = await getVectorLayers(
-          "resources",
-          "well" +
-            "_" +
-            currentPlan.value.id +
-            "_" +
-            district.label
-              .toLowerCase()
-              .replace(/\s*\(\s*/g, "_")
-              .replace(/\s*\)\s*/g, "")
-              .replace(/\s+/g, "_") +
-            "_" +
-            block.label
-              .toLowerCase()
-              .replace(/\s*\(\s*/g, "_")
-              .replace(/\s*\)\s*/g, "")
-              .replace(/\s+/g, "_"),
-          true,
-          true
-        );
-        assetsLayerRefs[1].current.setStyle(
-          new Style({
-            image: new Icon({ src: wellIcon }),
-          })
-        );
-
-        assetsLayerRefs[2].current = await getVectorLayers(
-          "resources",
-          "waterbody" +
-            "_" +
-            currentPlan.value.id +
-            "_" +
-            district.label
-              .toLowerCase()
-              .replace(/\s*\(\s*/g, "_")
-              .replace(/\s*\)\s*/g, "")
-              .replace(/\s+/g, "_") +
-            "_" +
-            block.label
-              .toLowerCase()
-              .replace(/\s*\(\s*/g, "_")
-              .replace(/\s*\)\s*/g, "")
-              .replace(/\s+/g, "_"),
-          true,
-          true
-        );
-        assetsLayerRefs[2].current.setStyle(
-          new Style({
-            image: new Icon({ src: waterbodyIcon }),
-          })
-        );
-
-        if (mappedAssets) {
-          mapRef.current.addLayer(assetsLayerRefs[0].current);
-          mapRef.current.addLayer(assetsLayerRefs[1].current);
-          mapRef.current.addLayer(assetsLayerRefs[2].current);
-        }
-      };
-
-      const fetchDemandLayers = async () => {
-        if (demandLayerRefs[0].current !== null) {
-          mapRef.current.removeLayer(demandLayerRefs[0].current);
-          mapRef.current.removeLayer(demandLayerRefs[1].current);
-        }
-        demandLayerRefs[0].current = await getVectorLayers(
-          "works",
-          "plan_agri" +
-            "_" +
-            currentPlan.value.id +
-            "_" +
-            district.label
-              .toLowerCase()
-              .replace(/\s*\(\s*/g, "_")
-              .replace(/\s*\)\s*/g, "")
-              .replace(/\s+/g, "_") +
-            "_" +
-            block.label
-              .toLowerCase()
-              .replace(/\s*\(\s*/g, "_")
-              .replace(/\s*\)\s*/g, "")
-              .replace(/\s+/g, "_"),
-          true,
-          true
-        );
-        demandLayerRefs[0].current.setStyle((feature) => {
-          return new Style({
-            image: new Icon({ src: IrrigationIcon }),
-          });
-        });
-
-        demandLayerRefs[1].current = await getVectorLayers(
-          "works",
-          "plan_gw" +
-            "_" +
-            currentPlan.value.id +
-            "_" +
-            district.label
-              .toLowerCase()
-              .replace(/\s*\(\s*/g, "_")
-              .replace(/\s*\)\s*/g, "")
-              .replace(/\s+/g, "_") +
-            "_" +
-            block.label
-              .toLowerCase()
-              .replace(/\s*\(\s*/g, "_")
-              .replace(/\s*\)\s*/g, "")
-              .replace(/\s+/g, "_"),
-          true,
-          true
-        );
-
-        demandLayerRefs[1].current.setStyle((feature) => {
-          return new Style({
-            image: new Icon({ src: RechargeIcon }),
-          });
-        });
-
-        if (mappedDemands) {
-          mapRef.current.addLayer(demandLayerRefs[0].current);
-          mapRef.current.addLayer(demandLayerRefs[1].current);
-        }
-      };
-
-      fetchResourcesLayers().catch(console.error);
-      fetchDemandLayers().catch(console.error);
-    } else {
-      if (mappedAssets) {
-        assetsLayerRefs.forEach((element) => {
-          mapRef.current.removeLayer(element.current);
-        });
-        setMappedAssets(false);
-      }
-      if (mappedDemands) {
-        demandLayerRefs.forEach((element) => {
-          mapRef.current.removeLayer(element.current);
-        });
-        setMappedDemands(false);
-      }
-    }
-  }, [currentPlan]);
 
   useEffect(() => {
     if (statesData === null) {
@@ -1790,7 +1636,6 @@ const KYLDashboardPage = () => {
       view.cancelAnimations();
 
       fetchBoundaryAndZoom(district.label, block.label);
-      setCurrentPlan(null);
       fetchDataJson();
       fetchVillageJson();
 
@@ -1803,13 +1648,6 @@ const KYLDashboardPage = () => {
       if (mapRef.current) {
         const view = mapRef.current.getView();
         view.cancelAnimations();
-
-        // Clear layers
-        assetsLayerRefs.forEach((ref) => {
-          if (ref.current) {
-            mapRef.current.removeLayer(ref.current);
-          }
-        });
       }
     };
   }, [district, block, mapRef.current]);
@@ -1882,6 +1720,7 @@ const KYLDashboardPage = () => {
           filtersEnabled={filtersEnabled}
           getFormattedSelectedFilters={getFormattedSelectedFilters}
           getAllPatternTypes={getAllPatternTypes}
+          handlePatternRemoval={handlePatternRemoval}
           getSubcategoriesForCategory={getSubcategoriesForCategory}
           getPatternsForSubcategory={getPatternsForSubcategory}
           patternSelections={patternSelections}
@@ -1921,6 +1760,7 @@ const KYLDashboardPage = () => {
           setPatternSelections={setPatternSelections}
           getFormattedSelectedFilters={getFormattedSelectedFilters}
           getFormattedSelectedPatterns={getFormattedSelectedPatterns}
+          handlePatternRemoval={handlePatternRemoval}
           selectedMWS={selectedMWS}
           selectedVillages={selectedVillages}
           handleLayerSelection={handleLayerSelection}

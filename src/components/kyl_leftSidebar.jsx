@@ -18,6 +18,7 @@ const KYLLeftSidebar = ({
     getFormattedSelectedFilters,
     // Pattern props
     getAllPatternTypes,
+    handlePatternRemoval,
     getSubcategoriesForCategory,
     getPatternsForSubcategory,
     patternSelections,
@@ -291,6 +292,7 @@ const KYLLeftSidebar = ({
                                                 isDisabled={!filtersEnabled}
                                                 isSelected={isPatternSelected && isPatternSelected(pattern.name, patternSelections)}
                                                 onPatternSelect={handlePatternSelection}
+                                                handlePatternRemoval={handlePatternRemoval}
                                             />
                                         ))}
                                     </div>
