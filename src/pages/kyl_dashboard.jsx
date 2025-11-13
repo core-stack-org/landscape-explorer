@@ -24,6 +24,7 @@ import getStates from "../actions/getStates.js";
 import getVectorLayers from "../actions/getVectorLayers.js";
 import getImageLayer from "../actions/getImageLayers.js";
 import filtersDetails from "../components/data/Filters.json";
+import PatternsData from '../components/data/Patterns.json';
 
 import KYLLeftSidebar from "../components/kyl_leftSidebar";
 import KYLRightSidebar from "../components/kyl_rightSidebar.jsx";
@@ -66,7 +67,6 @@ const KYLDashboardPage = () => {
   const [dataJson, setDataJson] = useRecoilState(dataJsonAtom);
   const [villageJson, setVillageJson] = useState(null);
 
-  const [plans, setPlans] = useState(null);
   const [currentPlan, setCurrentPlan] = useState(null);
   const [mappedAssets, setMappedAssets] = useState(false);
   const [mappedDemands, setMappedDemands] = useState(false);
@@ -91,6 +91,10 @@ const KYLDashboardPage = () => {
   const [toastId, setToastId] = useState(null);
   const [selectedMWSProfile, setSelectedMWSProfile] = useState(null);
   const [searchLatLong, setSearchLatLong] = useState(null);
+
+  // * Triggers
+  const [filterTrigger, setFilterTrigger] = useState(0)
+  const [patternTrigger, setPatternTrigger] = useState(0)
 
   const addLayerSafe = (layer) => layer && mapRef.current && mapRef.current.addLayer(layer);
   const removeLayerSafe = (layer) => layer && mapRef.current && mapRef.current.removeLayer(layer);
@@ -144,6 +148,7 @@ const KYLDashboardPage = () => {
 
   const getFormattedSelectedFilters = () => {
     const allSelections = [];
+    const groupedSelections = {}; // To group by filter name
 
     const processSelections = (selections, dataSource) => {
       if (!selections) return;
@@ -165,17 +170,23 @@ const KYLDashboardPage = () => {
         }
 
         if (filterGroup) {
-          values.forEach((selectedOption) => {
-            allSelections.push({
+          // If this filter name hasn't been added yet, initialize it
+          if (!groupedSelections[name]) {
+            groupedSelections[name] = {
               filterName: filterGroup.label,
-              value: selectedOption.label,
+              values: [],
               name: filterGroup.name,
-              layer_store: selectedOption.layer_store,
-              layer_name: selectedOption.layer_name,
-              rasterStyle: selectedOption.rasterStyle,
-              vectorStyle: selectedOption.vectorStyle,
-              styleIdx: selectedOption.styleIdx,
-            });
+              layer_store: values[0].layer_store,
+              layer_name: values[0].layer_name,
+              rasterStyle: values[0].rasterStyle,
+              vectorStyle: values[0].vectorStyle,
+              styleIdx: values[0].styleIdx,
+            };
+          }
+          
+          // Add all selected values to the values array
+          values.forEach((selectedOption) => {
+            groupedSelections[name].values.push(selectedOption.label);
           });
         }
       });
@@ -184,8 +195,54 @@ const KYLDashboardPage = () => {
     processSelections(filterSelections.selectedMWSValues, "MWS");
     processSelections(filterSelections.selectedVillageValues, "Village");
 
+    // Convert grouped object back to array
+    Object.values(groupedSelections).forEach(group => {
+      allSelections.push(group);
+    });
+
     return allSelections;
   };
+
+  const getFormattedSelectedPatterns = () => {
+    const allSelections = [];
+
+    const processSelections = (selections) => {
+      if(!selections) return
+      Object.entries(selections).forEach(([name, values]) => {
+        if (!values) return;
+
+        let filterGroup = null;
+
+        outerLoop: for (const ind of Object.keys(PatternsData)) {
+          for (const x of Object.keys(PatternsData[ind])) {
+            for(const y of Object.keys(PatternsData[ind][x])){
+              const found = PatternsData[ind][x][y].find((group) => group.Name === name);
+              if (found) {
+                filterGroup = found;
+                break outerLoop;
+              }
+            }
+          }
+        }
+
+        if (filterGroup) {
+          allSelections.push({
+            patternName : filterGroup.Name,
+            category : filterGroup.Category,
+            level : filterGroup.level,
+            values : filterGroup.Values,
+            characterstics : filterGroup.Characteristics
+          })
+        }
+
+      })
+    }
+
+    processSelections(patternSelections.selectedMWSPatterns);
+    processSelections(patternSelections.selectedVillagePatterns);
+
+    return allSelections;
+  }
 
   const determineFilterSource = (filterName) => {
     for (const topLevelKey of Object.keys(filtersDetails)) {
@@ -214,22 +271,65 @@ const KYLDashboardPage = () => {
       vectorStyle: sourceType["vectorStyle"],
       styleIdx: sourceType["styleIdx"],
     };
+    
     if (sourceType.name === "MWS") {
-      setFilterSelections((prev) => ({
-        ...prev,
-        selectedMWSValues: {
-          ...prev.selectedMWSValues,
-          [name]: isChecked ? [option] : null,
-        },
-      }));
+      setFilterSelections((prev) => {
+        // Get current array for this key, or empty array if doesn't exist
+        const currentArray = prev.selectedMWSValues[name] || [];
+        
+        let newArray;
+        if (isChecked) {
+          // Check if option with same label already exists
+          const exists = currentArray.some(item => item.label === option.label);
+          if (!exists) {
+            // Add to array if it doesn't exist
+            newArray = [...currentArray, option];
+          } else {
+            // Already exists, keep current array unchanged
+            newArray = currentArray;
+          }
+        } else {
+          // Remove from array by filtering out the matching label
+          newArray = currentArray.filter(item => item.label !== option.label);
+        }
+        
+        return {
+          ...prev,
+          selectedMWSValues: {
+            ...prev.selectedMWSValues,
+            [name]: newArray.length > 0 ? newArray : null,
+          },
+        };
+      });
     } else if (sourceType.name === "Village") {
-      setFilterSelections((prev) => ({
-        ...prev,
-        selectedVillageValues: {
-          ...prev.selectedVillageValues,
-          [name]: isChecked ? [option] : null,
-        },
-      }));
+      setFilterSelections((prev) => {
+        // Get current array for this key, or empty array if doesn't exist
+        const currentArray = prev.selectedVillageValues[name] || [];
+        
+        let newArray;
+        if (isChecked) {
+          // Check if option with same label already exists
+          const exists = currentArray.some(item => item.label === option.label);
+          if (!exists) {
+            // Add to array if it doesn't exist
+            newArray = [...currentArray, option];
+          } else {
+            // Already exists, keep current array unchanged
+            newArray = currentArray;
+          }
+        } else {
+          // Remove from array by filtering out the matching label
+          newArray = currentArray.filter(item => item.label !== option.label);
+        }
+        
+        return {
+          ...prev,
+          selectedVillageValues: {
+            ...prev.selectedVillageValues,
+            [name]: newArray.length > 0 ? newArray : null,
+          },
+        };
+      });
     }
   };
 
@@ -655,11 +755,6 @@ const KYLDashboardPage = () => {
     }
   };
 
-  const fetchPlans = async () => {
-    let tempPlans = await getPlans(block.block_id);
-    setPlans(tempPlans);
-  };
-
   const handleLayerSelection = async (filter) => {
     let checkIfPresent = currentLayer.find((f) => f.name === filter.name);
     let checkIfInMap = mapRef.current.getLayers().getArray();
@@ -878,32 +973,6 @@ const KYLDashboardPage = () => {
     setCurrentLayer(tempArr);
   };
 
-  //? Assets Selection Handler
-  const handleAssetSelection = (assetType, isChecked) => {
-    if (currentPlan === null) {
-      toast.error("Plan not selected  !");
-      return;
-    }
-
-    if (assetType) {
-      if (isChecked) {
-        assetsLayerRefs.forEach(({ current }) => addLayerSafe(current));
-        setMappedAssets(true);
-      } else {
-        assetsLayerRefs.forEach(({ current }) => removeLayerSafe(current));
-        setMappedAssets(false);
-      }
-    } else {
-      if (isChecked) {
-        demandLayerRefs.forEach(({ current }) => addLayerSafe(current));
-        setMappedDemands(true);
-      } else {
-        demandLayerRefs.forEach(({ current }) => removeLayerSafe(current));
-        setMappedDemands(false);
-      }
-    }
-  };
-
   const initializeMap = async () => {
     const baseLayer = new TileLayer({
       source: new XYZ({
@@ -990,7 +1059,6 @@ const KYLDashboardPage = () => {
     setMappedDemands(false);
 
     setSelectedMWS([]);
-    console.log("line 914")
     setSelectedVillages([]);
 
     setShowMWS(true);
@@ -1180,9 +1248,10 @@ const KYLDashboardPage = () => {
             if (!mwsValues) return;
 
             filterHasMatches[item] = false;
+            let tempArr = [];
 
             mwsValues.forEach((selectedOption) => {
-              let tempArr = [];
+              
               const filter = getAllFilters().find((f) => f.name === item);
 
               if (filter?.type === 2) {
@@ -1190,11 +1259,7 @@ const KYLDashboardPage = () => {
                   try {
                     if (tempItem && typeof tempItem[item] !== "undefined" && tempItem.mws_id) {
                       const itemValue = Number(tempItem[item]);
-                      if (
-                        !isNaN(itemValue) &&
-                        itemValue >= selectedOption.value.lower &&
-                        itemValue <= selectedOption.value.upper
-                      ) {
+                      if (!isNaN(itemValue) && itemValue >= selectedOption.value.lower && itemValue <= selectedOption.value.upper) {
                         tempArr.push(tempItem.mws_id);
                         tempItem.mws_intersect_villages.forEach((ids) =>
                           mwsVillageList.add(ids)
@@ -1208,11 +1273,7 @@ const KYLDashboardPage = () => {
               } else {
                 dataJson.forEach((tempItem) => {
                   try {
-                    if (
-                      tempItem &&
-                      tempItem[item] === selectedOption.value &&
-                      tempItem.mws_id
-                    ) {
+                    if (tempItem && tempItem[item] === selectedOption.value && tempItem.mws_id) {
                       tempArr.push(tempItem.mws_id);
                       tempItem.mws_intersect_villages.forEach((ids) =>
                         mwsVillageList.add(ids)
@@ -1228,34 +1289,44 @@ const KYLDashboardPage = () => {
                 filterHasMatches[item] = true;
               }
 
-              if (tempMWS.length > 0) {
+              
+            });
+            if (tempMWS.length > 0) {
                 tempMWS = tempMWS.filter((id) => tempArr.includes(id));
               } else {
                 tempMWS = tempArr;
               }
-            });
           });
 
-          if (
-            Object.keys(filterHasMatches).length > 0 &&
-            Object.values(filterHasMatches).includes(false)
-          ) {
-            tempMWS = [];
-            mwsVillageList = new Set([]);
+          if(getFormattedSelectedFilters().length > 0 && getFormattedSelectedPatterns().length === 0){
+            setSelectedMWS(tempMWS);
+            fetchMWSLayer(tempMWS);
+            setVillageIdList(mwsVillageList);
           }
-
-          setSelectedMWS(tempMWS);
-          fetchMWSLayer(tempMWS);
-          setVillageIdList(mwsVillageList);
+          else if(getFormattedSelectedFilters().length > 0 && getFormattedSelectedPatterns().length > 0){
+            let intersection = tempMWS.filter(x => selectedMWS.includes(x));
+            setSelectedMWS(intersection);
+            fetchMWSLayer(intersection);
+            setVillageIdList(mwsVillageList);
+          }
+          else if(getFormattedSelectedFilters().length === 0 && getFormattedSelectedPatterns().length > 0){
+            setPatternTrigger(!patternTrigger)
+          }
+          else{
+            setSelectedMWS([]);
+            fetchMWSLayer([]);
+            setVillageIdList(new Set([]));
+          }
+          
         } catch (error) {
           console.error("Error processing MWS data:", error);
           setSelectedMWS([]);
           fetchMWSLayer([]);
         }
-      } else {
+      } 
+      else {
         //setSelectedMWS([]);
-        //console.log("line 1186")
-        fetchMWSLayer([], "Line 1183");
+        fetchMWSLayer([]);
       }
 
       if (villageKeys.length > 0) {
@@ -1363,7 +1434,7 @@ const KYLDashboardPage = () => {
       fetchMWSLayer([]);
       fetchAdminLayer([]);
     }
-  }, [filterSelections, dataJson, villageJson]);
+  }, [filterSelections, dataJson, villageJson, filterTrigger]);
 
   useEffect(() => {
     // Skip if no village filters or no data
@@ -1458,42 +1529,73 @@ const KYLDashboardPage = () => {
   }, [villageIdList, villageJson, filterSelections.selectedVillageValues]);
 
   useEffect(() => {
-    if (!patternSelections?.selectedMWSPatterns || !patternSelections?.selectedVillagePatterns) {
-      console.warn("Invalid patterns selections structure");
-      return;
-    }
+    try{
+      if (!dataJson || !Array.isArray(dataJson)) {
+          console.warn("DataJson not loaded or invalid format");
+          return;
+      }
+      if (!patternSelections?.selectedMWSPatterns || !patternSelections?.selectedVillagePatterns) {
+        console.warn("Invalid patterns selections structure");
+        return;
+      }
+      let mwsKeys = Object.keys(patternSelections.selectedMWSPatterns)
+      let tempMWS = new Set([]);
 
-    let mwsKeys = Object.keys(patternSelections.selectedMWSPatterns)
-    let tempMWS = []
+      if(mwsKeys.length > 0){
+          try{
+            mwsKeys.forEach((item) => {
+              let patternValues = patternSelections.selectedMWSPatterns[item]
+              if (!patternValues) return
 
-    if(mwsKeys.length > 0){
-        try{
-          console.log(mwsKeys)
-          mwsKeys.forEach((item) => {
-            let patternValues = patternSelections.selectedMWSPatterns[item]
-            if (!patternValues) return
-
-            patternValues.conditions.forEach((tempItem) => {
-              let name = tempItem.key
-              let option = {
-                "label" : tempItem.label,
-                "value" : null,
+              let tempIntersection = new Set([])
+              patternValues.conditions.forEach((tempItem) => {
+                dataJson.forEach((mwsItem) => {
+                  if(tempItem.type === 1 && mwsItem[tempItem.key] === tempItem.value){
+                    tempIntersection.add(mwsItem["mws_id"])
+                  }
+                  else if(tempItem.type === 2 && mwsItem[tempItem.key] >= tempItem.value.lower && mwsItem[tempItem.key] <= tempItem.value.upper){
+                    tempIntersection.add(mwsItem["mws_id"])
+                  }
+                  else{
+                    if(tempItem.type === 3 && mwsItem[tempItem.key] != tempItem.value){
+                      tempIntersection.add(mwsItem["mws_id"])
+                    }                 
+                  }
+                })
+              })
+              if(tempMWS.size > 0){
+                tempMWS = new Set([...tempMWS].filter(x => tempIntersection.has(x)));
               }
-              if(tempItem.type === 1){
-                option["value"] = tempItem.value
+              else{
+                tempMWS = tempIntersection
               }
-              if(tempItem.type === 2){
-                option["value"] = {"lower" : tempItem.value.lower, "upper" : tempItem.value.upper}
-              }
-              handleFilterSelection(name, option, true)
             })
-          })
-        }catch(err){
-          console.log(err)
-        }
+
+            let intersectionArray = []
+            if(getFormattedSelectedPatterns().length >= 1 && getFormattedSelectedFilters().length > 0){
+              let mwsSet = new Set(selectedMWS)
+              intersectionArray = [...tempMWS].filter(x => mwsSet.has(x));
+              setSelectedMWS(intersectionArray)
+              fetchMWSLayer(intersectionArray)
+            }
+            else if(getFormattedSelectedPatterns().length === 0 && getFormattedSelectedFilters().length > 0){
+              setFilterTrigger(!filterTrigger)
+            }
+            else{
+              console.log("Came here !")
+              intersectionArray = [...tempMWS]
+              setSelectedMWS(intersectionArray)
+              fetchMWSLayer(intersectionArray)
+            }
+          }catch(err){
+            console.log(err)
+          }
+      }
+    }catch(err){
+      console.log(err)
     }
 
-  },[patternSelections])
+  },[patternSelections.selectedMWSPatterns, patternSelections.selectedVillagePatterns, patternTrigger])
 
   useEffect(() => {
     if (currentPlan !== null) {
@@ -1691,7 +1793,6 @@ const KYLDashboardPage = () => {
       setCurrentPlan(null);
       fetchDataJson();
       fetchVillageJson();
-      fetchPlans();
 
       setToggleStates({});
       setCurrentLayer([]);
@@ -1779,6 +1880,7 @@ const KYLDashboardPage = () => {
           setCurrentLayer={setCurrentLayer}
           mapRef={mapRef}
           filtersEnabled={filtersEnabled}
+          getFormattedSelectedFilters={getFormattedSelectedFilters}
           getAllPatternTypes={getAllPatternTypes}
           getSubcategoriesForCategory={getSubcategoriesForCategory}
           getPatternsForSubcategory={getPatternsForSubcategory}
@@ -1816,26 +1918,11 @@ const KYLDashboardPage = () => {
           statesData={statesData}
           handleItemSelect={handleItemSelect}
           setFilterSelections={setFilterSelections}
+          setPatternSelections={setPatternSelections}
           getFormattedSelectedFilters={getFormattedSelectedFilters}
+          getFormattedSelectedPatterns={getFormattedSelectedPatterns}
           selectedMWS={selectedMWS}
           selectedVillages={selectedVillages}
-          plansState={plans}
-          currentPlan={currentPlan}
-          setCurrentPlan={setCurrentPlan}
-          onLocationSelect={(location) => {
-            if (location.type === "block") {
-              setTimeout(() => {
-                fetchBoundaryAndZoom(
-                  location.data.district.label,
-                  location.data.block.label
-                );
-                resetAllStates();
-              }, 0);
-            }
-          }}
-          handleAssetSelection={handleAssetSelection}
-          mappedAssets={mappedAssets}
-          mappedDemands={mappedDemands}
           handleLayerSelection={handleLayerSelection}
           toggleStates={toggleStates}
           setToggleStates={setToggleStates}
