@@ -4,7 +4,7 @@
             "Water" : [
                 {
                     "Name" : "low_rainfed_agri_resilience",
-                    "Category" : "low rainfed agriculture resilience",
+                    "Category" : "Low rainfed agriculture resilience",
                     "Characteristics" : "erratic rainfall, rainfed agriculture dependency, over-dependence on rainfed farming, rain-fed risk, rain-fed dependence, poor bund construction",
                     "level" : 0,
                     "Values" : [
@@ -18,7 +18,7 @@
                 },
                 {
                     "Name" : "groundwater_stress",
-                    "Category" : "groundwater stress",
+                    "Category" : "Groundwater stress",
                     "Characteristics" : "water erosion, groundwater decline, groundwater depletion, groundwater stress, water stress, low groundwater, groundwater depletion, GW depletion, saline GW, rapid runoff, high cost for marginal farmers",
                     "level" : 0,
                     "Values" : [
@@ -44,7 +44,7 @@
             "Livestock" : [
                 {
                     "Name" : "water_scarcity",
-                    "Category" : "water scarcity",
+                    "Category" : "Water scarcity",
                     "Characteristics" : "livestock water shortage",
                     "level" : 0,
                     "Values" : [
@@ -68,7 +68,7 @@
             "Fishery" : [
                 {
                     "Name" : "water_potential",
-                    "Category" : "water potential",
+                    "Category" : "Water potential",
                     "Characteristics" : "under-utilized tanks",
                     "level" : 0,
                     "Values" : [

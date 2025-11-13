@@ -78,13 +78,15 @@ const KYLPatternDisplay = ({ pattern, isDisabled, isSelected, onPatternSelect })
                 <button
                     onClick={handleApplyClick}
                     className={`w-full py-2 px-3 rounded-md text-sm font-medium transition-colors
-                    ${isDisabled
-                        ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                        : 'bg-indigo-600 text-white hover:bg-indigo-700'
-                    }`}
+                        ${isDisabled
+                            ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                            : isSelected
+                                ? 'bg-red-600 text-white hover:bg-red-700'
+                                : 'bg-indigo-600 text-white hover:bg-indigo-700'
+                        }`}
                     disabled={isDisabled}
                 >
-                    {'Apply Pattern'}
+                    {isSelected ? 'Remove Pattern' : 'Apply Pattern'}
                 </button>
             </div>
         </div>
