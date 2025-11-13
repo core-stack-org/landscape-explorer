@@ -133,6 +133,7 @@ const WaterProjectDashboard = () => {
   const [waterbodyLegend, setWaterbodyLegend] = useState(false);
   const [zoiLegend, setZoiLegend] = useState(false);
   const [terrainLegend, setTerrainLegend] = useState(false);
+  const [drainageLegend, setDrainageLegend] = useState(false);
   const [infoText, setInfoText] = useState("");
   const [infoAnchor, setInfoAnchor] = useState(null);
   const [infoOpen, setInfoOpen] = useState(false);
@@ -3211,6 +3212,68 @@ const WaterProjectDashboard = () => {
                       >
                         –
                       </button>
+                    </div>
+
+                    {/*Drainage Legends */}
+                    <div className="absolute right-0 bottom-0 p-4 pointer-events-auto">
+                      {!drainageLegend ? (
+                        <div
+                          onClick={() => setDrainageLegend(true)}
+                          className="bg-white/90 px-2 py-1 rounded-r-md shadow-md cursor-pointer font-bold text-gray-800 hover:bg-white transition-colors duration-150"
+                          style={{
+                            writingMode: "vertical-rl",
+                            textOrientation: "mixed",
+                          }}
+                        >
+                          Drainage Legend ▶
+                        </div>
+                      ) : (
+                        <div className="bg-white/90 p-4 rounded-md shadow-md w-full max-w-xs min-w-[220px] pointer-events-auto">
+                          <div className="flex justify-between items-center mb-2">
+                            <p className="text-sm font-semibold">
+                              Drainage Layer Legend
+                            </p>
+                            <button
+                              onClick={() => setDrainageLegend(false)}
+                              className="text-gray-700 hover:text-black transition-colors duration-150 cursor-pointer"
+                            >
+                              ◀
+                            </button>
+                          </div>
+
+                          {[
+                            {
+                              color: "#03045E",
+                              label: "1",
+                            },
+                            {
+                              color: "#023E8A",
+                              label: "2",
+                            },
+                            { color: "#0077B6", label: "3" },
+                            { color: "#0096C7", label: "4" },
+                            { color: "#00B4D8", label: "5" },
+                            { color: "#48CAE4", label: "6" },
+                            { color: "#90E0EF", label: "7" },
+                            { color: "#ADE8F4", label: "8" },
+                            {
+                              color: "#CAF0F8",
+                              label: "9",
+                            },
+                          ].map((item, idx) => (
+                            <div
+                              key={idx}
+                              className="flex items-center gap-2 mt-1"
+                            >
+                              <div
+                                className="w-5 h-5 opacity-70 border border-black"
+                                style={{ backgroundColor: item.color }}
+                              ></div>
+                              <p className="text-xs sm:text-sm">{item.label}</p>
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
