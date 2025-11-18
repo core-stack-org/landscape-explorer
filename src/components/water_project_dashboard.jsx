@@ -160,6 +160,7 @@ const WaterProjectDashboard = () => {
 
   const [organization, setOrganization] = useState(null);
   const [project, setProject] = useState(null);
+  const interventionYear = "22-23"; //Later fetched from geojson
 
   const handleInfoClick = (anchor, text, key = null) => {
     // anchor must be e.currentTarget (DOM element)
@@ -274,295 +275,344 @@ const WaterProjectDashboard = () => {
   if (loading || !geoData || !mwsGeoData || zoiFeatures.length === 0) {
   }
 
-  const { rows, totalSiltRemoved, finalImpactRabi, finalImpactZaid } =
-    useMemo(() => {
-      if (!geoData?.features)
-        return {
-          rows: [],
-          totalSiltRemoved: 0,
-          finalImpactRabi: 0,
-          finalImpactZaid: 0,
-        };
+  const extractSeasonYears = (props) => {
+    const years = new Set();
 
-      let totalSiltRemoved = 0;
-      const rabiImpacts = [];
-      const zaidImpacts = [];
+    Object.keys(props).forEach((key) => {
+      const match = key.match(/^(k_|kr_|krz_)(\d{2}[-_]\d{2})$/);
+      if (match) {
+        let yr = match[2];
+        // normalize 17_18 → 17-18
+        yr = yr.replace("_", "-");
+        years.add(yr);
+      }
+    });
 
-      const mappedRows = geoData.features.map((feature, index) => {
-        const props = feature.properties || {};
-        const matchedZoi = zoiFeatures.find(
+    return Array.from(years).sort(); // sorted list: ["17-18", "18-19", ...]
+  };
+
+  const getFirstNonZeroYearIndex = (props) => {
+    const years = extractSeasonYears(props); // dynamic years like ["17-18","18-19",...]
+
+    for (let i = 0; i < years.length; i++) {
+      const y = years[i];
+
+      if (
+        Number(props[`k_${y}`]) > 0 ||
+        Number(props[`kr_${y}`]) > 0 ||
+        Number(props[`krz_${y}`]) > 0
+      ) {
+        return i; // return index of FIRST year that has any non-zero season value
+      }
+    }
+
+    return -1; // no non-zero data found
+  };
+
+  const getPrePostYears = (props, interventionYear) => {
+    const years = extractSeasonYears(props);
+    if (!years.length) {
+      return {
+        preYears: [],
+        postYears: [],
+        startIndex: -1,
+        interventionIndex: -1,
+      };
+    }
+
+    const startIndex = getFirstNonZeroYearIndex(props);
+    if (startIndex === -1) {
+      return {
+        preYears: [],
+        postYears: [],
+        startIndex: -1,
+        interventionIndex: -1,
+      };
+    }
+
+    // usable years from first non-zero
+    const effectiveYears = years.slice(startIndex);
+
+    const interventionIndex = effectiveYears.indexOf(interventionYear);
+
+    // If intervention year missing → all pre
+    if (interventionIndex === -1) {
+      return {
+        preYears: effectiveYears,
+        postYears: [],
+        startIndex,
+        interventionIndex: -1,
+      };
+    }
+
+    // ⭐ FIX: Do not include intervention year in either group
+    const preYears = effectiveYears.slice(0, interventionIndex);
+    const postYears = effectiveYears.slice(interventionIndex + 1);
+
+    return {
+      preYears,
+      postYears,
+      startIndex,
+      interventionIndex,
+      allYears: years,
+    };
+  };
+
+  const computeTotalSeasonAverages = (props) => {
+    const years = extractSeasonYears(props); // all seasonal years
+
+    if (!years.length) {
+      return {
+        avgKharif: "0.00",
+        avgRabi: "0.00",
+        avgZaid: "0.00",
+        totalYears: 0,
+        usedYears: [],
+      };
+    }
+
+    // Use your existing function
+    const startIndex = getFirstNonZeroYearIndex(props);
+
+    // If everything is zero
+    if (startIndex === -1) {
+      return {
+        avgKharif: "0.00",
+        avgRabi: "0.00",
+        avgZaid: "0.00",
+        totalYears: 0,
+        usedYears: [],
+      };
+    }
+
+    // Years to use for total season average
+    const usedYears = years.slice(startIndex);
+
+    const getAvg = (prefix) => {
+      const vals = usedYears.map((y) => Number(props[`${prefix}${y}`]) || 0);
+      const sum = vals.reduce((a, b) => a + b, 0);
+      const avg = vals.length ? sum / vals.length : 0;
+      return avg.toFixed(2);
+    };
+
+    return {
+      avgKharif: getAvg("k_"),
+      avgRabi: getAvg("kr_"),
+      avgZaid: getAvg("krz_"),
+    };
+  };
+
+  const computeAvgSeason = (props, preYears, postYears, prefix) => {
+    const avg = (arr) =>
+      arr.length
+        ? (arr.reduce((a, b) => a + b, 0) / arr.length).toFixed(2)
+        : "0.00";
+
+    const beforeValues = preYears.map(
+      (y) => Number(props[`${prefix}${y}`]) || 0
+    );
+    const afterValues = postYears.map(
+      (y) => Number(props[`${prefix}${y}`]) || 0
+    );
+
+    return {
+      before: avg(beforeValues),
+      after: avg(afterValues),
+    };
+  };
+
+  const computeImpact = (before, after) => {
+    const b = Number(before);
+    const a = Number(after);
+    if (isNaN(b) || isNaN(a)) return 0;
+    return Number((a - b).toFixed(2));
+  };
+
+  const getImpactColor = (impact) => (impact >= 0 ? "green" : "red");
+
+  // Impacted Area for ONE waterbody — Rabi
+  const computeImpactedAreaRabi = (areaOred, impactRabi) => {
+    const area = Number(areaOred) || 0;
+    const impact = Number(impactRabi) || 0;
+    return Number((area * impact).toFixed(2));
+  };
+
+  // Impacted Area for ONE waterbody — Zaid
+  const computeImpactedAreaZaid = (areaOred, impactZaid) => {
+    const area = Number(areaOred) || 0;
+    const impact = Number(impactZaid) || 0;
+    return Number((area * impact).toFixed(2));
+  };
+
+  // Sum Area-ored of all rows
+  const computeTotalAreaOred = (rows) => {
+    return rows.reduce((sum, r) => sum + (Number(r.areaOred) || 0), 0);
+  };
+
+  // Sum of all impacted areas for rabi
+  const computeTotalRabiImpactedArea = (rows) => {
+    return rows.reduce((sum, r) => sum + (Number(r.rabiImpactedArea) || 0), 0);
+  };
+
+  // Sum of all impacted areas for zaid
+  const computeTotalZaidImpactedArea = (rows) => {
+    return rows.reduce((sum, r) => sum + (Number(r.zaidImpactedArea) || 0), 0);
+  };
+
+  const computeDoubleTripleAvg = (matchedZoi) => {
+    if (!matchedZoi) return { avgDouble: "0.00", avgTriple: "0.00" };
+
+    const doubleVals = [];
+    const tripleVals = [];
+
+    matchedZoi.getKeys().forEach((key) => {
+      const match = key.match(
+        /(doubly_cropped_area_|triply_cropped_area_)(\d{4})/
+      );
+      if (match) {
+        const year = match[2];
+        const value = Number(matchedZoi.get(key)) || 0;
+
+        if (match[1] === "doubly_cropped_area_") doubleVals.push(value);
+        if (match[1] === "triply_cropped_area_") tripleVals.push(value);
+      }
+    });
+
+    const avg = (arr) =>
+      arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length / 10000 : 0;
+
+    return {
+      avgDouble: avg(doubleVals).toFixed(2),
+      avgTriple: avg(tripleVals).toFixed(2),
+    };
+  };
+
+  const getCoordinatesFromGeometry = (geometry) => {
+    if (!geometry) return null;
+
+    const { type, coordinates } = geometry;
+
+    switch (type) {
+      case "Point":
+        return coordinates;
+
+      case "Polygon":
+        if (!coordinates?.[0]?.length) return null;
+        const ring = coordinates[0];
+        const sumX = ring.reduce((acc, coord) => acc + coord[0], 0);
+        const sumY = ring.reduce((acc, coord) => acc + coord[1], 0);
+        return [sumX / ring.length, sumY / ring.length];
+
+      case "LineString":
+        if (!coordinates?.length) return null;
+        const middleIndex = Math.floor(coordinates.length / 2);
+        return coordinates[middleIndex];
+
+      default:
+        return null;
+    }
+  };
+
+  const {
+    rows,
+    totalSiltRemoved,
+    projectLevelRabiImpact,
+    projectLevelZaidImpact,
+  } = useMemo(() => {
+    if (!geoData?.features) {
+      return {
+        rows: [],
+        totalSiltRemoved: 0,
+        totalRabiImpactedArea: 0,
+        totalZaidImpactedArea: 0,
+        projectLevelRabiImpact: 0,
+        projectLevelZaidImpact: 0,
+      };
+    }
+    let totalSiltRemoved = 0;
+    const mappedRows = geoData.features.map((feature, index) => {
+      const props = feature.properties ?? {};
+
+      const { preYears, postYears } = getPrePostYears(props, interventionYear);
+      const { avgRabi, avgZaid } = computeTotalSeasonAverages(props);
+
+      const rabi = computeAvgSeason(props, preYears, postYears, "kr_");
+      const zaid = computeAvgSeason(props, preYears, postYears, "krz_");
+
+      const ImpactRabi = computeImpact(rabi.before, rabi.after);
+      const ImpactZaid = computeImpact(zaid.before, zaid.after);
+
+      const rabiImpactedArea = computeImpactedAreaRabi(
+        props.area_ored,
+        ImpactRabi
+      );
+      const zaidImpactedArea = computeImpactedAreaZaid(
+        props.area_ored,
+        ImpactZaid
+      );
+
+      const { avgDouble, avgTriple } = computeDoubleTripleAvg(
+        zoiFeatures.find(
           (f) =>
             f.get("UID")?.toString().trim() === props?.UID?.toString().trim()
-        );
+        )
+      );
 
-        let avgDouble = "NA";
-        let avgTriple = "NA";
-
-        if (matchedZoi) {
-          const doubleVals = [];
-          const tripleVals = [];
-
-          for (let year = 2017; year <= 2023; year++) {
-            const d = matchedZoi.get(`doubly_cropped_area_${year}`);
-            const t = matchedZoi.get(`triply_cropped_area_${year}`);
-            if (d !== undefined && d !== null) doubleVals.push(Number(d));
-            if (t !== undefined && t !== null) tripleVals.push(Number(t));
-          }
-
-          if (doubleVals.length > 0) {
-            avgDouble = (
-              doubleVals.reduce((a, b) => a + b, 0) /
-              doubleVals.length /
-              10000
-            ).toFixed(2);
-          }
-          if (tripleVals.length > 0) {
-            avgTriple = (
-              tripleVals.reduce((a, b) => a + b, 0) /
-              tripleVals.length /
-              10000
-            ).toFixed(2);
-          }
-        }
-
-        const geometry = feature.geometry || {};
-        let coordinates = null;
-
-        if (geometry.type === "Point") {
-          coordinates = geometry.coordinates;
-        } else if (geometry.type === "Polygon") {
-          const coords = geometry.coordinates[0];
-          if (coords?.length > 0) {
-            const sumX = coords.reduce((acc, coord) => acc + coord[0], 0);
-            const sumY = coords.reduce((acc, coord) => acc + coord[1], 0);
-            coordinates = [sumX / coords.length, sumY / coords.length];
-          }
-        } else if (
-          geometry.type === "LineString" &&
-          geometry.coordinates?.length > 0
-        ) {
-          const middleIndex = Math.floor(geometry.coordinates.length / 2);
-          coordinates = geometry.coordinates[middleIndex];
-        }
-
-        const seasonYears = [
-          "17-18",
-          "18-19",
-          "19-20",
-          "20-21",
-          "21-22",
-          "22-23",
-          "23-24",
-        ];
-        const yearMap = {
-          "17-18": 2017,
-          "18-19": 2018,
-          "19-20": 2019,
-          "20-21": 2020,
-          "21-22": 2021,
-          "22-23": 2022,
-          "23-24": 2023,
-        };
-
-        let startIndex = -1;
-        for (let i = 0; i < seasonYears.length; i++) {
-          const year = seasonYears[i];
-          const k = Number(props[`k_${year}`]) || 0;
-          const kr = Number(props[`kr_${year}`]) || 0;
-          const krz = Number(props[`krz_${year}`]) || 0;
-          if (k !== 0 || kr !== 0 || krz !== 0) {
-            startIndex = i;
-            break;
-          }
-        }
-
-        let kharifValues = [];
-        let rabiValues = [];
-        let zaidValues = [];
-        let meanKharif = "0.00";
-        let meanRabi = "0.00";
-        let meanZaid = "0.00";
-
-        if (startIndex !== -1) {
-          for (let i = startIndex; i < seasonYears.length; i++) {
-            const year = seasonYears[i];
-            const k = Number(props[`k_${year}`]);
-            const kr = Number(props[`kr_${year}`]);
-            const krz = Number(props[`krz_${year}`]);
-            kharifValues.push(!isNaN(k) ? k : 0);
-            rabiValues.push(!isNaN(kr) ? kr : 0);
-            zaidValues.push(!isNaN(krz) ? krz : 0);
-          }
-          const numYears = seasonYears.length - startIndex;
-          meanKharif = (
-            kharifValues.reduce((a, b) => a + b, 0) / numYears
-          ).toFixed(2);
-          meanRabi = (rabiValues.reduce((a, b) => a + b, 0) / numYears).toFixed(
-            2
-          );
-          meanZaid = (zaidValues.reduce((a, b) => a + b, 0) / numYears).toFixed(
-            2
-          );
-        }
-
-        const interventionYear = "22-23";
-        const preYears = seasonYears.slice(
-          0,
-          seasonYears.indexOf(interventionYear)
-        );
-        const postYears = seasonYears.slice(
-          seasonYears.indexOf(interventionYear)
-        );
-
-        // ---------------- FORMULA CALCULATION ----------------
-        const preRabi = preYears
-          .map((year) => Number(props[`kr_${year}`]) || 0)
-          .filter((v) => v > 0);
-        const postRabi = postYears
-          .map((year) => Number(props[`kr_${year}`]) || 0)
-          .filter((v) => v > 0);
-
-        const preZaid = preYears
-          .map((year) => Number(props[`krz_${year}`]) || 0)
-          .filter((v) => v > 0);
-        const postZaid = postYears
-          .map((year) => Number(props[`krz_${year}`]) || 0)
-          .filter((v) => v > 0);
-
-        if (preRabi.length > 0 && postRabi.length > 0) {
-          const meanPre = preRabi.reduce((a, b) => a + b, 0) / preRabi.length;
-          const meanPost =
-            postRabi.reduce((a, b) => a + b, 0) / postRabi.length;
-          const meanChangeRatio = 1 - meanPost / meanPre;
-          rabiImpacts.push(meanChangeRatio);
-        }
-
-        if (preZaid.length > 0 && postZaid.length > 0) {
-          const meanPre = preZaid.reduce((a, b) => a + b, 0) / preZaid.length;
-          const meanPost =
-            postZaid.reduce((a, b) => a + b, 0) / postZaid.length;
-          const meanChangeRatio = 1 - meanPost / meanPre;
-          zaidImpacts.push(meanChangeRatio);
-        }
-        // -----------------------------------------------------
-
-        const avgSeason = (years, prefix) => {
-          const values = years
-            .map((year) => Number(props[`${prefix}${year}`]) || 0)
-            .filter((v) => !isNaN(v));
-          return values.length
-            ? (values.reduce((a, b) => a + b, 0) / values.length).toFixed(2)
-            : "0.00";
-        };
-
-        const kharifBefore = avgSeason(preYears, "k_");
-        const kharifAfter = avgSeason(postYears, "k_");
-
-        const rabiBefore = avgSeason(preYears, "kr_");
-        const rabiAfter = avgSeason(postYears, "kr_");
-
-        const zaidBefore = avgSeason(preYears, "krz_");
-        const zaidAfter = avgSeason(postYears, "krz_");
-        const round2 = (val) => Math.round(val * 100) / 100;
-
-        const ImpactKharif = round2(kharifAfter - kharifBefore);
-        const ImpactKharifColor = ImpactKharif >= 0 ? "green" : "red";
-
-        const ImpactRabi = round2(rabiAfter - rabiBefore);
-        const ImpactRabiColor = ImpactRabi >= 0 ? "green" : "red";
-
-        const ImpactZaid = round2(zaidAfter - zaidBefore);
-        const ImpactZaidColor = ImpactZaid >= 0 ? "green" : "red";
-
-        const avgArea = (years, prefix) => {
-          const values = years
-            .map((year) => {
-              const y = yearMap[year]; // map to numeric year
-              const val = matchedZoi?.get(`${prefix}${y}`);
-              return val !== undefined && val !== null ? Number(val) : 0;
-            })
-            .filter((v) => !isNaN(v));
-          return values.length
-            ? values.reduce((a, b) => a + b, 0) / values.length
-            : 0;
-        };
-
-        // Double cropped
-        const doublePre = avgArea(preYears, "doubly_cropped_area_") / 10000;
-        const doublePost = avgArea(postYears, "doubly_cropped_area_") / 10000;
-        const ImpactDouble = Math.round((doublePost - doublePre) * 100) / 100;
-        const ImpactDoubleColor = ImpactDouble >= 0 ? "green" : "red";
-
-        // Triple cropped
-        const triplePre = avgArea(preYears, "triply_cropped_area_") / 10000;
-        const triplePost = avgArea(postYears, "triply_cropped_area_") / 10000;
-        const ImpactTriple = Math.round((triplePost - triplePre) * 100) / 100;
-        const ImpactTripleColor = ImpactTriple >= 0 ? "green" : "red";
-
-        const siltRemoved = Number(props.slit_excavated) || 0;
-        totalSiltRemoved += siltRemoved;
-
-        return {
-          id: index + 1,
-          state: props.State || "NA",
-          district: props.District || "NA",
-          block: props.Taluka || "NA",
-          village: props.village || "NA",
-          waterbody: props.waterbody_name || "NA",
-          UID: props.UID || "NA",
-          areaOred: props.area_ored || "NA",
-          siltRemoved,
-          avgWaterAvailabilityKharif: meanKharif,
-          avgWaterAvailabilityRabi: meanRabi,
-          avgWaterAvailabilityZaid: meanZaid,
-          avgDoubleCropped: avgDouble,
-          avgTripleCropped: avgTriple,
-          avgWaterAvailabilityKharif: meanKharif,
-          ImpactKharif,
-          ImpactKharifColor,
-          avgWaterAvailabilityRabi: meanRabi,
-          ImpactRabi,
-          ImpactRabiColor,
-          avgWaterAvailabilityZaid: meanZaid,
-          ImpactZaid,
-          ImpactZaidColor,
-          ImpactDouble,
-          ImpactDoubleColor,
-          ImpactTriple,
-          ImpactTripleColor,
-          maxCatchmentArea: props.max_catchment_area || 0,
-          maxStreamOrder: props.max_stream_order || 0,
-          coordinates,
-          featureIndex: index,
-        };
-      });
-
-      // ---------- FINAL IMPACTS ----------
-      const validRabiImpacts = rabiImpacts.filter((v) => !isNaN(v));
-      const validZaidImpacts = zaidImpacts.filter((v) => !isNaN(v));
-
-      const meanRabiImpact = validRabiImpacts.length
-        ? validRabiImpacts.reduce((a, b) => a + b, 0) / validRabiImpacts.length
-        : 0;
-
-      const meanZaidImpact = validZaidImpacts.length
-        ? validZaidImpacts.reduce((a, b) => a + b, 0) / validZaidImpacts.length
-        : 0;
-
-      const finalImpactRabi = meanRabiImpact - 1;
-      const finalImpactZaid = meanZaidImpact - 1;
-
-      const avgSiltRemoved = mappedRows.length
-        ? totalSiltRemoved / mappedRows.length
-        : 0;
+      const coordinates = getCoordinatesFromGeometry(feature.geometry);
+      totalSiltRemoved += Number(props.slit_excavated) || 0;
 
       return {
-        rows: mappedRows,
-        totalSiltRemoved,
-        finalImpactRabi,
-        finalImpactZaid,
+        id: index + 1,
+        state: props.State || "NA",
+        district: props.District || "NA",
+        block: props.Taluka || "NA",
+        village: props.village || "NA",
+        waterbody: props.waterbody_name || "NA",
+        UID: props.UID || "NA",
+        areaOred: props.area_ored || 0,
+
+        siltRemoved: Number(props.slit_excavated) || 0,
+
+        avgWaterAvailabilityRabi: avgRabi,
+        avgWaterAvailabilityZaid: avgZaid,
+
+        ImpactRabi,
+        ImpactRabiColor: getImpactColor(ImpactRabi),
+        ImpactZaid,
+        ImpactZaidColor: getImpactColor(ImpactZaid),
+
+        rabiImpactedArea,
+        zaidImpactedArea,
+
+        avgDoubleCropped: avgDouble,
+        avgTripleCropped: avgTriple,
+
+        coordinates,
+        featureIndex: index,
       };
-    }, [geoData, zoiFeatures]);
+    });
+
+    // TOTALS
+    const totalAreaOred = computeTotalAreaOred(mappedRows);
+    const totalRabiImpactedArea = computeTotalRabiImpactedArea(mappedRows);
+    const totalZaidImpactedArea = computeTotalZaidImpactedArea(mappedRows);
+
+    return {
+      rows: mappedRows,
+      totalSiltRemoved,
+      totalAreaOred,
+      totalRabiImpactedArea,
+      totalZaidImpactedArea,
+
+      projectLevelRabiImpact: totalAreaOred
+        ? totalRabiImpactedArea / totalAreaOred
+        : 0,
+
+      projectLevelZaidImpact: totalAreaOred
+        ? totalZaidImpactedArea / totalAreaOred
+        : 0,
+    };
+  }, [geoData, zoiFeatures]);
 
   const totalRows = rows.length;
 
@@ -572,23 +622,6 @@ const WaterProjectDashboard = () => {
     block: [],
     village: [],
   });
-
-  const handleFilterChange = (type, option) => {
-    setFilters((prev) => {
-      const prevOptions = prev[type] || [];
-      const isSelected = prevOptions.includes(option);
-      let updatedOptions;
-      if (isSelected) {
-        updatedOptions = prevOptions.filter((o) => o !== option);
-      } else {
-        updatedOptions = [...prevOptions, option];
-      }
-      return {
-        ...prev,
-        [type]: updatedOptions,
-      };
-    });
-  };
 
   const handleFilterClick = (event, type) => {
     setAnchorEl(event.currentTarget);
@@ -2213,11 +2246,11 @@ const WaterProjectDashboard = () => {
               })}{" "}
               Cu.m. After desilting, during the intervention year 2022-23, there
               was a noticeable change in the water spread area across
-              agricultural seasons. The percentage change in the Rabi season is{" "}
-              {(finalImpactRabi * 100).toFixed(2)}% and the percentage change in
-              the Zaid season is {(finalImpactZaid * 100).toFixed(2)}%. This
-              represents the variation in surface water extent following
-              desilting interventions across different crop seasons.
+              agricultural seasons. The impacted area in the Rabi season is{" "}
+              {projectLevelRabiImpact.toFixed(2)} hectares and the impacted area
+              in the Zaid season is {projectLevelZaidImpact.toFixed(2)}{" "}
+              hectares. This represents the variation in surface water extent
+              following desilting interventions across different crop seasons.
             </p>
 
             {/* <p className="text-center flex items-center justify-center gap-2 border-[10px] border-[#11000080] text-lg md:text-xl font-medium p-4 bg-gray-50 rounded-lg">
