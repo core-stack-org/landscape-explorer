@@ -570,6 +570,8 @@ const WaterProjectDashboard = () => {
         waterbody: props.waterbody_name || "NA",
         UID: props.UID || "NA",
         areaOred: props.area_ored || 0,
+        maxCatchmentArea: props.max_catchment_area || 0,
+        maxStreamOrder: props.max_stream_order || 0,
 
         siltRemoved: Number(props.slit_excavated) || 0,
 
