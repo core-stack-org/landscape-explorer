@@ -847,7 +847,10 @@
                     "green_credit"
                 ],
                 "vectorStyle": [
-                    {}
+                    {
+                        "fill": "rgba(20, 209, 29, 0.6)",
+                        "stroke": "rgbargba(20, 209, 29, 1)"
+                    }
                 ],
                 "rasterStyle": [
                     ""

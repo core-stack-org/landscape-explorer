@@ -293,9 +293,6 @@ const MapLegend = ({ showMWS, showVillages, currentLayer, mappedAssets, mappedDe
     { label: "Irrigation - Site level impact", color: "#1A759F" },
     { label: "Plantation", color: "#52B69A" },
     { label: "Un Identified", color: "#6D597A" },
-    // { color: "#87CEEB", label: "Less than 100 NREGA works" },
-    // { color: "#4169E1", label: "Between 100 - 300 NREGA works" },
-    // { color: "#000080", label: "More than 300 NREGA works" },
   ];
 
   const TrendLegendItems = [

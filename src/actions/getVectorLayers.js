@@ -39,7 +39,6 @@ export default async function getVectorLayers(layer_store, layer_name, setVisibl
       `${process.env.REACT_APP_GEOSERVER_URL}` + layer_store + '/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=' + layer_store + ':' + layer_name + "&outputFormat=application/json&screen=main"
       :
       `${process.env.REACT_APP_GEOSERVER_URL}` + layer_store + '/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=' + layer_store + ':' + resource_type + "_" + plan_id + "_" + district + "_" + block + "&outputFormat=application/json&screen=main")
-
   const vectorSource = new Vector({
     url: url,
     format: new GeoJSON(),
@@ -68,6 +67,8 @@ export default async function getVectorLayers(layer_store, layer_name, setVisibl
   if (layer_store === "panchayat_boundaries") {
     wmsLayer.setStyle(PanchayatBoundariesStyle);
   }
+
+  console.log(wmsLayer)
 
   return wmsLayer;
 }
