@@ -15,8 +15,10 @@ const KYLLeftSidebar = ({
     setCurrentLayer,
     mapRef,
     filtersEnabled,
+    getFormattedSelectedFilters,
     // Pattern props
     getAllPatternTypes,
+    handlePatternRemoval,
     getSubcategoriesForCategory,
     getPatternsForSubcategory,
     patternSelections,
@@ -77,7 +79,7 @@ const KYLLeftSidebar = ({
             <div className="space-y-2">
                 {/* Tab Buttons */}
                 <div className="flex gap-2 mb-4">
-                    {/* <button
+                    <button
                         className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-colors
                             ${activeTab === 'Patterns'
                                 ? 'bg-indigo-600 text-white'
@@ -85,8 +87,8 @@ const KYLLeftSidebar = ({
                         `}
                         onClick={() => handleTabChange('Patterns')}
                     >
-                        Patterns
-                    </button> */}
+                        Patterns (Experimental)
+                    </button>
                     <button
                         className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-colors
                             ${activeTab === 'Filters'
@@ -173,6 +175,7 @@ const KYLLeftSidebar = ({
                                                         }}
                                                         onFilterChange={handleFilterSelection}
                                                         isDisabled={!filtersEnabled}
+                                                        getFormattedSelectedFilters={getFormattedSelectedFilters}
                                                     />
                                                 </div>
                                             ))}
@@ -289,6 +292,7 @@ const KYLLeftSidebar = ({
                                                 isDisabled={!filtersEnabled}
                                                 isSelected={isPatternSelected && isPatternSelected(pattern.name, patternSelections)}
                                                 onPatternSelect={handlePatternSelection}
+                                                handlePatternRemoval={handlePatternRemoval}
                                             />
                                         ))}
                                     </div>

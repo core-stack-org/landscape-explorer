@@ -1,639 +1,1262 @@
 {
-    "MWS" : {
-        "Land" : [
+    "MWS": {
+        "Land": [
             {
                 "name": "terrainCluster_ID",
-                "label" : "Terrain Type",
-                "type" : 1,
-                "values" : [
-                    {"label" : "Hills and Valleys", "value" : 2},
-                    {"label" : "Broad Slopes and Hilly", "value" : 0},
-                    {"label" : "Broad Slopes and Plains", "value" : 3},
-                    {"label" : "Mostly Plains", "value" : 1}
-                ],
-                "layer_store" : ["terrain"],
-                "layer_name" : ["terrain_raster"],
-                "vectorStyle" : [{}],
-                "rasterStyle" : ["Terrain_Style_11_Classes"],
-                "styleIdx" : 0
-            }
-        ],
-        "Climate" : [
-            {
-                "name": "avg_precipitation",
-                "label" : "Average rainfall over the years 2017 to 2023",
-                "type" : 2,
-                "values" : [
-                    {"label" : "Arid: <740 mm", "value" : {"lower" : 0, "upper" : 740}},
-                    {"label" : "Semi-arid: 740mm-960 mm", "value" : {"lower" : 740, "upper" : 960}},
-                    {"label" : "Moderate: 960mm-1200 mm", "value" : {"lower" : 960, "upper" : 1200}},
-                    {"label" : "High: 1200mm-1620 mm", "value" : {"lower" : 1200, "upper" : 1620}},
-                    {"label" : "Very high: >1620 mm", "value" : {"lower" : 1620, "upper" : 9999999999}}
-                ],
-                "layer_store" : ["mws_layers"],
-                "layer_name" : ["deltaG_well_depth"],
-                "vectorStyle" : [
+                "label": "Terrain Type",
+                "type": 1,
+                "values": [
                     {
-                        "fill" : "rgba(176, 224, 230, 0.5)",
-                        "stroke" : "rgba(176, 224, 230, 1)",
-                        "lower" : 0, "upper" : 740
+                        "label": "Hills and Valleys",
+                        "value": 2
                     },
                     {
-                        "fill" : "rgba(135, 206, 250, 0.5)",
-                        "stroke" : "rgba(135, 206, 250, 1)",
-                        "lower" : 740, "upper" : 960
+                        "label": "Broad Slopes and Hilly",
+                        "value": 0
                     },
                     {
-                        "fill" : "rgba(30, 144, 255, 0.5)",
-                        "stroke" : "rgba(30, 144, 255, 1)",
-                        "lower" : 960, "upper" : 1200
+                        "label": "Broad Slopes and Plains",
+                        "value": 3
                     },
                     {
-                        "fill" : "rgba(0, 115, 230, 0.5)",
-                        "stroke" : "rgba(0, 115, 230, 1)",
-                        "lower" : 1200, "upper" : 1620
-                    },
-                    {
-                        "fill" : "rgba(0, 64, 128, 0.5)",
-                        "stroke" : "rgba(0, 64, 128, 1)",
-                        "lower" : 1620, "upper" : 9999999999
+                        "label": "Mostly Plains",
+                        "value": 1
                     }
                 ],
-                "rasterStyle" : "",
-                "styleIdx" : 1
+                "layer_store": [
+                    "terrain"
+                ],
+                "layer_name": [
+                    "terrain_raster"
+                ],
+                "vectorStyle": [
+                    {}
+                ],
+                "rasterStyle": [
+                    "Terrain_Style_11_Classes"
+                ],
+                "styleIdx": 0
+            }
+        ],
+        "Climate": [
+            {
+                "name": "avg_precipitation",
+                "label": "Average rainfall over the years 2017 to 2023",
+                "type": 2,
+                "values": [
+                    {
+                        "label": "Arid: <740 mm",
+                        "value": {
+                            "lower": 0,
+                            "upper": 740
+                        }
+                    },
+                    {
+                        "label": "Semi-arid: 740mm-960 mm",
+                        "value": {
+                            "lower": 740,
+                            "upper": 960
+                        }
+                    },
+                    {
+                        "label": "Moderate: 960mm-1200 mm",
+                        "value": {
+                            "lower": 960,
+                            "upper": 1200
+                        }
+                    },
+                    {
+                        "label": "High: 1200mm-1620 mm",
+                        "value": {
+                            "lower": 1200,
+                            "upper": 1620
+                        }
+                    },
+                    {
+                        "label": "Very high: >1620 mm",
+                        "value": {
+                            "lower": 1620,
+                            "upper": 9999999999
+                        }
+                    }
+                ],
+                "layer_store": [
+                    "mws_layers"
+                ],
+                "layer_name": [
+                    "deltaG_well_depth"
+                ],
+                "vectorStyle": [
+                    {
+                        "fill": "rgba(176, 224, 230, 0.5)",
+                        "stroke": "rgba(176, 224, 230, 1)",
+                        "lower": 0,
+                        "upper": 740
+                    },
+                    {
+                        "fill": "rgba(135, 206, 250, 0.5)",
+                        "stroke": "rgba(135, 206, 250, 1)",
+                        "lower": 740,
+                        "upper": 960
+                    },
+                    {
+                        "fill": "rgba(30, 144, 255, 0.5)",
+                        "stroke": "rgba(30, 144, 255, 1)",
+                        "lower": 960,
+                        "upper": 1200
+                    },
+                    {
+                        "fill": "rgba(0, 115, 230, 0.5)",
+                        "stroke": "rgba(0, 115, 230, 1)",
+                        "lower": 1200,
+                        "upper": 1620
+                    },
+                    {
+                        "fill": "rgba(0, 64, 128, 0.5)",
+                        "stroke": "rgba(0, 64, 128, 1)",
+                        "lower": 1620,
+                        "upper": 9999999999
+                    }
+                ],
+                "rasterStyle": "",
+                "styleIdx": 1
             },
             {
                 "name": "avg_runoff",
-                "label" : "Average runoff over the years 2017 to 2023",
-                "type" : 2,
-                "values" : [
-                    {"label" : "Less than 100mm", "value" : {"lower" : 0, "upper" : 100}},
-                    {"label" : "Between 100mm to 300mm", "value" : {"lower" : 100, "upper" : 300}},
-                    {"label" : "More than 300mm", "value" : {"lower" : 300, "upper" : 9999999999}}
-                ],
-                "layer_store" : ["mws_layers"],
-                "layer_name" : ["deltaG_well_depth"],
-                "vectorStyle" : [
+                "label": "Average runoff over the years 2017 to 2023",
+                "type": 2,
+                "values": [
                     {
-                        "fill" : "rgba(128, 229, 230, 0.5)",
-                        "stroke" : "rgba(128, 229, 230, 1)",
-                        "lower" : 0, "upper" : 100
+                        "label": "Less than 100mm",
+                        "value": {
+                            "lower": 0,
+                            "upper": 100
+                        }
                     },
                     {
-                        "fill" : "rgba(0, 206, 209, 0.5)",
-                        "stroke" : "rgba(0, 206, 209, 1)",
-                        "lower" : 100, "upper" : 300
+                        "label": "Between 100mm to 300mm",
+                        "value": {
+                            "lower": 100,
+                            "upper": 300
+                        }
                     },
                     {
-                        "fill" : "rgba(0, 138, 140, 0.5)",
-                        "stroke" : "rgba(0, 138, 140, 1)",
-                        "lower" : 300, "upper" : 9999999999
+                        "label": "More than 300mm",
+                        "value": {
+                            "lower": 300,
+                            "upper": 9999999999
+                        }
                     }
                 ],
-                "rasterStyle" : "",
-                "styleIdx" : 3
+                "layer_store": [
+                    "mws_layers"
+                ],
+                "layer_name": [
+                    "deltaG_well_depth"
+                ],
+                "vectorStyle": [
+                    {
+                        "fill": "rgba(128, 229, 230, 0.5)",
+                        "stroke": "rgba(128, 229, 230, 1)",
+                        "lower": 0,
+                        "upper": 100
+                    },
+                    {
+                        "fill": "rgba(0, 206, 209, 0.5)",
+                        "stroke": "rgba(0, 206, 209, 1)",
+                        "lower": 100,
+                        "upper": 300
+                    },
+                    {
+                        "fill": "rgba(0, 138, 140, 0.5)",
+                        "stroke": "rgba(0, 138, 140, 1)",
+                        "lower": 300,
+                        "upper": 9999999999
+                    }
+                ],
+                "rasterStyle": "",
+                "styleIdx": 3
             },
             {
                 "name": "drought_category",
-                "label" : "Number of drought years since 2017",
-                "type" : 1,
-                "values" : [
-                    {"label" : "No Drought", "value" : 0},
-                    {"label" : "At least one drought year", "value" : 1},
-                    {"label" : "At least two drought years", "value" : 2}
-                ],
-                "layer_store" : ["cropping_drought"],
-                "layer_name" : ["drought"],
-                "vectorStyle" : [
+                "label": "Number of drought years since 2017",
+                "type": 1,
+                "values": [
                     {
-                        "fill" : "rgba(244, 208, 63, 0.5)",
-                        "stroke" : "rgba(244, 208, 63, 1)",
-                        "lower" : 0, "upper" : 0
+                        "label": "No Drought",
+                        "value": 0
                     },
                     {
-                        "fill" : "rgba(231, 76, 60, 0.5)",
-                        "stroke" : "rgba(231, 76, 60, 1)",
-                        "lower" : 2, "upper" : 99999
+                        "label": "At least one drought year",
+                        "value": 1
                     },
                     {
-                        "fill" : "rgba(235, 152, 78, 0.5)",
-                        "stroke" : "rgba(235, 152, 78, 1)",
-                        "lower" : 1, "upper" : 99999 
+                        "label": "At least two drought years",
+                        "value": 2
                     }
                 ],
-                "rasterStyle" : "",
-                "styleIdx" : 4
+                "layer_store": [
+                    "cropping_drought"
+                ],
+                "layer_name": [
+                    "drought"
+                ],
+                "vectorStyle": [
+                    {
+                        "fill": "rgba(244, 208, 63, 0.5)",
+                        "stroke": "rgba(244, 208, 63, 1)",
+                        "lower": 0,
+                        "upper": 0
+                    },
+                    {
+                        "fill": "rgba(231, 76, 60, 0.5)",
+                        "stroke": "rgba(231, 76, 60, 1)",
+                        "lower": 2,
+                        "upper": 99999
+                    },
+                    {
+                        "fill": "rgba(235, 152, 78, 0.5)",
+                        "stroke": "rgba(235, 152, 78, 1)",
+                        "lower": 1,
+                        "upper": 99999
+                    }
+                ],
+                "rasterStyle": "",
+                "styleIdx": 4
             },
             {
                 "name": "avg_number_dry_spell",
-                "label" : "Average number of weeks of dry spells over the years 2017 to 2023",
-                "type" : 2,
-                "values" : [
-                    {"label" : "No weeks of dry spells", "value" : {"lower" : 0, "upper" : 1}},
-                    {"label" : "Minimum one week of dry spell", "value" : {"lower" : 1, "upper" : 999999999}},
-                    {"label" : "Minimum two weeks of dry spells", "value" : {"lower" : 2, "upper" : 9999999999}}
-                ],
-                "layer_store" : ["cropping_drought"],
-                "layer_name" : ["drought"],
-                "vectorStyle" : [
+                "label": "Average number of weeks of dry spells over the years 2017 to 2023",
+                "type": 2,
+                "values": [
                     {
-                        "fill" : "rgba(210, 180, 140, 0.5)",
-                        "stroke" : "rgba(210, 180, 140, 1)",
-                        "lower" : 0, "upper" : 1
+                        "label": "No weeks of dry spells",
+                        "value": {
+                            "lower": 0,
+                            "upper": 1
+                        }
                     },
                     {
-                        "fill" : "rgba(139, 69, 19, 0.5)",
-                        "stroke" : "rgba(139, 69, 19, 1)",
-                        "lower" : 1, "upper" : 999999999
+                        "label": "Minimum one week of dry spell",
+                        "value": {
+                            "lower": 1,
+                            "upper": 999999999
+                        }
                     },
                     {
-                        "fill" : "rgba(90, 46, 15, 0.5)",
-                        "stroke" : "rgba(90, 46, 15, 1)",
-                        "lower" : 2, "upper" : 999999999
+                        "label": "Minimum two weeks of dry spells",
+                        "value": {
+                            "lower": 2,
+                            "upper": 9999999999
+                        }
                     }
                 ],
-                "rasterStyle" : "",
-                "styleIdx" : 2
+                "layer_store": [
+                    "cropping_drought"
+                ],
+                "layer_name": [
+                    "drought"
+                ],
+                "vectorStyle": [
+                    {
+                        "fill": "rgba(210, 180, 140, 0.5)",
+                        "stroke": "rgba(210, 180, 140, 1)",
+                        "lower": 0,
+                        "upper": 1
+                    },
+                    {
+                        "fill": "rgba(139, 69, 19, 0.5)",
+                        "stroke": "rgba(139, 69, 19, 1)",
+                        "lower": 1,
+                        "upper": 999999999
+                    },
+                    {
+                        "fill": "rgba(90, 46, 15, 0.5)",
+                        "stroke": "rgba(90, 46, 15, 1)",
+                        "lower": 2,
+                        "upper": 999999999
+                    }
+                ],
+                "rasterStyle": "",
+                "styleIdx": 2
             }
-           
-           
         ],
-        "Hydrology" : [
+        "Hydrology": [
             {
                 "name": "avg_rabi_surface_water_mws",
-                "label" : "Percentage of average surface water availability during Rabi in micro-watershed",
-                "type" : 2,
-                "values" : [
-                    {"label" : "Less than 30%", "value" : {"lower" : 0, "upper" : 30}},
-                    {"label" : "Between 30% to 70%", "value" : {"lower" : 30, "upper" : 70}},
-                    {"label" : "More than 70%", "value" : {"lower" : 70, "upper" : 999999}}
+                "label": "Percentage of average surface water availability during Rabi in micro-watershed",
+                "type": 2,
+                "values": [
+                    {
+                        "label": "Less than 30%",
+                        "value": {
+                            "lower": 0,
+                            "upper": 30
+                        }
+                    },
+                    {
+                        "label": "Between 30% to 70%",
+                        "value": {
+                            "lower": 30,
+                            "upper": 70
+                        }
+                    },
+                    {
+                        "label": "More than 70%",
+                        "value": {
+                            "lower": 70,
+                            "upper": 999999
+                        }
+                    }
                 ],
-                "layer_store" : ["swb","LULC"],
-                "layer_name" : ["surface_waterbodies","level_3"],
-                "vectorStyle" : [{
-                    "fill" : "rgba(100, 149, 237, 0.5)",
-                    "stroke" : "rgba(100, 149, 237, 1)"
-                }],
-                "rasterStyle" : "lulc_water_pixels",
-                "styleIdx" : 0
+                "layer_store": [
+                    "swb",
+                    "LULC"
+                ],
+                "layer_name": [
+                    "surface_waterbodies",
+                    "level_3"
+                ],
+                "vectorStyle": [
+                    {
+                        "fill": "rgba(100, 149, 237, 0.5)",
+                        "stroke": "rgba(100, 149, 237, 1)"
+                    }
+                ],
+                "rasterStyle": "lulc_water_pixels",
+                "styleIdx": 0
             },
             {
                 "name": "avg_zaid_surface_water_mws",
-                "label" : "Percentage of average surface water availability during Zaid in micro-watershed",
-                "type" : 2,
-                "values" : [
-                    {"label" : "Less than 25%", "value" : {"lower" : 0, "upper" : 25}},
-                    {"label" : "Between 25%-50%", "value" : {"lower" : 25, "upper" : 50}},
-                    {"label" : "More than 50%", "value" : {"lower" : 50, "upper" : 99999}}
+                "label": "Percentage of average surface water availability during Zaid in micro-watershed",
+                "type": 2,
+                "values": [
+                    {
+                        "label": "Less than 25%",
+                        "value": {
+                            "lower": 0,
+                            "upper": 25
+                        }
+                    },
+                    {
+                        "label": "Between 25%-50%",
+                        "value": {
+                            "lower": 25,
+                            "upper": 50
+                        }
+                    },
+                    {
+                        "label": "More than 50%",
+                        "value": {
+                            "lower": 50,
+                            "upper": 99999
+                        }
+                    }
                 ],
-                "layer_store" : ["swb","LULC"],
-                "layer_name" : ["surface_waterbodies","level_3"],
-                "vectorStyle" : [{
-                    "fill" : "rgba(100, 149, 237, 0.5)",
-                    "stroke" : "rgba(100, 149, 237, 1)"
-                }],
-                "rasterStyle" : "lulc_water_pixels",
-                "styleIdx" : 0
+                "layer_store": [
+                    "swb",
+                    "LULC"
+                ],
+                "layer_name": [
+                    "surface_waterbodies",
+                    "level_3"
+                ],
+                "vectorStyle": [
+                    {
+                        "fill": "rgba(100, 149, 237, 0.5)",
+                        "stroke": "rgba(100, 149, 237, 1)"
+                    }
+                ],
+                "rasterStyle": "lulc_water_pixels",
+                "styleIdx": 0
             },
             {
                 "name": "aquifer_class",
-                "label" : "Aquifer type",
-                "type" : 1,
-                "values" : [
-                    {"label" : "Hard rock", "value" : 0},
-                    {"label" : "Alluvial", "value" : 1}                
-                ],
-                "layer_store" : ["aquifer"],
-                "layer_name" : ["aquifer_vector"],
-                "vectorStyle" : [{
-                        "fill" : "rgba(255, 253, 181, 0.5)",
-                        "stroke" : "rgba(255, 253, 181, 1)",
-                        "lower" : 0, "upper" : 0
+                "label": "Aquifer type",
+                "type": 1,
+                "values": [
+                    {
+                        "label": "Hard rock",
+                        "value": 0
                     },
                     {
-                        "fill" : "rgba(243, 164, 37, 0.5)",
-                        "stroke" : "rgba(243, 164, 37, 1)",
-                        "lower" : 1, "upper" : 1
-                    },
-                    {
-                        "fill" : "rgba(153, 236, 241, 0.5)",
-                        "stroke" : "rgba(153, 236, 241, 1)",
-                        "lower" : 2, "upper" : 2
-                    },
-                    {
-                        "fill" : "rgba(165, 248, 197, 0.5)",
-                        "stroke" : "rgba(165, 248, 197, 1)",
-                        "lower" : 3, "upper" : 3
-                    },
-                    {
-                        "fill" : "rgba(245, 124, 153, 0.5)",
-                        "stroke" : "rgba(245, 124, 153, 1)",
-                        "lower" : 4, "upper" : 4
-                    },
-                    {
-                        "fill" : "rgba(232, 213, 46, 0.5)",
-                        "stroke" : "rgba(232, 213, 46, 1)",
-                        "lower" : 5, "upper" : 5
-                    },
-                    {
-                        "fill" : "rgba(60, 146, 242, 0.5)",
-                        "stroke" : "rgba(60, 146, 242, 1)",
-                        "lower" : 6, "upper" : 6
-                    },
-                    {
-                        "fill" : "rgba(213, 219, 33, 0.5)",
-                        "stroke" : "rgba(213, 219, 33, 1)",
-                        "lower" : 7, "upper" : 7
-                    },
-                    {
-                        "fill" : "rgba(207, 127, 244, 0.5)",
-                        "stroke" : "rgba(207, 127, 244, 1)",
-                        "lower" : 8, "upper" : 8
-                    },
-                    {
-                        "fill" : "rgba(244, 219, 255, 0.5)",
-                        "stroke" : "rgba(244, 219, 255, 1)",
-                        "lower" : 9, "upper" : 9
-                    },
-                    {
-                        "fill" : "rgba(80, 192, 43, 0.5)",
-                        "stroke" : "rgba(80, 192, 43, 1)",
-                        "lower" : 10, "upper" : 10
-                    },
-                    {
-                        "fill" : "rgba(255, 225, 181, 0.5)",
-                        "stroke" : "rgba(255, 225, 181, 1)",
-                        "lower" : 11, "upper" : 11
-                    },
-                    {
-                        "fill" : "rgba(228, 207, 241, 0.5)",
-                        "stroke" : "rgba(228, 207, 241, 1)",
-                        "lower" : 12, "upper" : 12
-                    },
-                    {
-                        "fill" : "rgba(87, 210, 255, 0.5)",
-                        "stroke" : "rgba(87, 210, 255, 1)",
-                        "lower" : 13, "upper" : 13
+                        "label": "Alluvial",
+                        "value": 1
                     }
                 ],
-                "rasterStyle" : "",
-                "styleIdx" : 11
+                "layer_store": [
+                    "aquifer"
+                ],
+                "layer_name": [
+                    "aquifer_vector"
+                ],
+                "vectorStyle": [
+                    {
+                        "fill": "rgba(255, 253, 181, 0.5)",
+                        "stroke": "rgba(255, 253, 181, 1)",
+                        "lower": 0,
+                        "upper": 0
+                    },
+                    {
+                        "fill": "rgba(243, 164, 37, 0.5)",
+                        "stroke": "rgba(243, 164, 37, 1)",
+                        "lower": 1,
+                        "upper": 1
+                    },
+                    {
+                        "fill": "rgba(153, 236, 241, 0.5)",
+                        "stroke": "rgba(153, 236, 241, 1)",
+                        "lower": 2,
+                        "upper": 2
+                    },
+                    {
+                        "fill": "rgba(165, 248, 197, 0.5)",
+                        "stroke": "rgba(165, 248, 197, 1)",
+                        "lower": 3,
+                        "upper": 3
+                    },
+                    {
+                        "fill": "rgba(245, 124, 153, 0.5)",
+                        "stroke": "rgba(245, 124, 153, 1)",
+                        "lower": 4,
+                        "upper": 4
+                    },
+                    {
+                        "fill": "rgba(232, 213, 46, 0.5)",
+                        "stroke": "rgba(232, 213, 46, 1)",
+                        "lower": 5,
+                        "upper": 5
+                    },
+                    {
+                        "fill": "rgba(60, 146, 242, 0.5)",
+                        "stroke": "rgba(60, 146, 242, 1)",
+                        "lower": 6,
+                        "upper": 6
+                    },
+                    {
+                        "fill": "rgba(213, 219, 33, 0.5)",
+                        "stroke": "rgba(213, 219, 33, 1)",
+                        "lower": 7,
+                        "upper": 7
+                    },
+                    {
+                        "fill": "rgba(207, 127, 244, 0.5)",
+                        "stroke": "rgba(207, 127, 244, 1)",
+                        "lower": 8,
+                        "upper": 8
+                    },
+                    {
+                        "fill": "rgba(244, 219, 255, 0.5)",
+                        "stroke": "rgba(244, 219, 255, 1)",
+                        "lower": 9,
+                        "upper": 9
+                    },
+                    {
+                        "fill": "rgba(80, 192, 43, 0.5)",
+                        "stroke": "rgba(80, 192, 43, 1)",
+                        "lower": 10,
+                        "upper": 10
+                    },
+                    {
+                        "fill": "rgba(255, 225, 181, 0.5)",
+                        "stroke": "rgba(255, 225, 181, 1)",
+                        "lower": 11,
+                        "upper": 11
+                    },
+                    {
+                        "fill": "rgba(228, 207, 241, 0.5)",
+                        "stroke": "rgba(228, 207, 241, 1)",
+                        "lower": 12,
+                        "upper": 12
+                    },
+                    {
+                        "fill": "rgba(87, 210, 255, 0.5)",
+                        "stroke": "rgba(87, 210, 255, 1)",
+                        "lower": 13,
+                        "upper": 13
+                    }
+                ],
+                "rasterStyle": "",
+                "styleIdx": 11
             },
             {
                 "name": "soge_class",
-                "label" : "Stage of groundwater extraction",
-                "type" : 1,
-                "values" : [
-                    {"label" : "Safe", "value" : 0},
-                    {"label" : "Semi-Critical", "value" : 1},
-                    {"label" : "Critical", "value" : 2},
-                    {"label" : "Over-exploited", "value" : 3}                      
-                    ],
-                "layer_store" : ["soge"],
-                "layer_name" : ["soge_vector"],
-                "vectorStyle" : [{
-                    "fill" : "rgba(255, 255, 255, 0.5)",
-                    "stroke" : "rgba(255, 255, 255, 1)",
-                    "lower" : 0, "upper" : 0
-                },
-                {
-                    "fill" : "rgba(224, 243, 248, 0.5)",
-                    "stroke" : "rgba(224, 243, 248, 1)",
-                    "lower" : 1, "upper" : 1
-                },
-                {
-                    "fill" : "rgba(69, 117, 180, 0.5)",
-                    "stroke" : "rgba(69, 117, 180, 1)",
-                    "lower" : 2, "upper" : 2
-                },
-                {
-                    "fill" : "rgba(49, 54, 149, 0.5)",
-                    "stroke" : "rgba(49, 54, 149, 1)",
-                    "lower" : 3, "upper" : 3
-                }
-            ],
-                "rasterStyle" : "",
-                "styleIdx" : 12
+                "label": "Stage of groundwater extraction",
+                "type": 1,
+                "values": [
+                    {
+                        "label": "Safe",
+                        "value": 0
+                    },
+                    {
+                        "label": "Semi-Critical",
+                        "value": 1
+                    },
+                    {
+                        "label": "Critical",
+                        "value": 2
+                    },
+                    {
+                        "label": "Over-exploited",
+                        "value": 3
+                    }
+                ],
+                "layer_store": [
+                    "soge"
+                ],
+                "layer_name": [
+                    "soge_vector"
+                ],
+                "vectorStyle": [
+                    {
+                        "fill": "rgba(255, 255, 255, 0.5)",
+                        "stroke": "rgba(255, 255, 255, 1)",
+                        "lower": 0,
+                        "upper": 0
+                    },
+                    {
+                        "fill": "rgba(224, 243, 248, 0.5)",
+                        "stroke": "rgba(224, 243, 248, 1)",
+                        "lower": 1,
+                        "upper": 1
+                    },
+                    {
+                        "fill": "rgba(69, 117, 180, 0.5)",
+                        "stroke": "rgba(69, 117, 180, 1)",
+                        "lower": 2,
+                        "upper": 2
+                    },
+                    {
+                        "fill": "rgba(49, 54, 149, 0.5)",
+                        "stroke": "rgba(49, 54, 149, 1)",
+                        "lower": 3,
+                        "upper": 3
+                    }
+                ],
+                "rasterStyle": "",
+                "styleIdx": 12
             },
             {
                 "name": "trend_g",
-                "label" : "Water balance trend over the years 2017 to 2023",
-                "type" : 1,
-                "values" : [
-                    {"label" : "Positive Trend", "value" : "1"},
-                    {"label" : "Negative Trend", "value" : "-1"},
-                    {"label" : "No Trend", "value" : "0"}   
-                ],
-                "layer_store" : ["mws_layers"],
-                "layer_name" : ["deltaG_well_depth"],
-                "vectorStyle" : [
+                "label": "Water balance trend over the years 2017 to 2023",
+                "type": 1,
+                "values": [
                     {
-                        "fill" : "rgba(184, 134, 11, 0.5)",
-                        "stroke" : "rgba(184, 134, 11, 1)",
-                        "lower" : 0, "upper" : 0
+                        "label": "Positive Trend",
+                        "value": "1"
                     },
                     {
-                        "fill" : "rgba(255, 236, 179, 0.5)",
-                        "stroke" : "rgba(255, 236, 179, 1)",
-                        "lower" : 1, "upper" : 1
+                        "label": "Negative Trend",
+                        "value": "-1"
                     },
                     {
-                        "fill" : "rgba(255, 215, 0, 0.5)",
-                        "stroke" : "rgba(255, 215, 0, 1)",
-                        "lower" : -1, "upper" : -1
+                        "label": "No Trend",
+                        "value": "0"
                     }
                 ],
-                "rasterStyle" : "",
-                "styleIdx" : 10
+                "layer_store": [
+                    "mws_layers"
+                ],
+                "layer_name": [
+                    "deltaG_well_depth"
+                ],
+                "vectorStyle": [
+                    {
+                        "fill": "rgba(184, 134, 11, 0.5)",
+                        "stroke": "rgba(184, 134, 11, 1)",
+                        "lower": 0,
+                        "upper": 0
+                    },
+                    {
+                        "fill": "rgba(255, 236, 179, 0.5)",
+                        "stroke": "rgba(255, 236, 179, 1)",
+                        "lower": 1,
+                        "upper": 1
+                    },
+                    {
+                        "fill": "rgba(255, 215, 0, 0.5)",
+                        "stroke": "rgba(255, 215, 0, 1)",
+                        "lower": -1,
+                        "upper": -1
+                    }
+                ],
+                "rasterStyle": "",
+                "styleIdx": 10
             }
-        ],     
-        "Agriculture" : [
+        ],
+        "Agriculture": [
             {
                 "name": "avg_double_cropped",
-                "label" : "Average percentage of double cropped area over the years 2017 to 2023",
-                "type" : 2,
-                "values" : [
-                    {"label" : "Less than 30%", "value" : {"lower" : 0, "upper" : 30}},
-                    {"label" : "Between 30% to 60%", "value" : {"lower" : 30, "upper" : 60}},
-                    {"label" : "More than 60%", "value" : {"lower" : 60, "upper" : 999999}}
+                "label": "Average percentage of double cropped area over the years 2017 to 2023",
+                "type": 2,
+                "values": [
+                    {
+                        "label": "Less than 30%",
+                        "value": {
+                            "lower": 0,
+                            "upper": 30
+                        }
+                    },
+                    {
+                        "label": "Between 30% to 60%",
+                        "value": {
+                            "lower": 30,
+                            "upper": 60
+                        }
+                    },
+                    {
+                        "label": "More than 60%",
+                        "value": {
+                            "lower": 60,
+                            "upper": 999999
+                        }
+                    }
                 ],
-                "layer_store" : ["LULC"],
-                "layer_name" : ["level_3"],
-                "vectorStyle" : [{}],
-                "rasterStyle" : "",
-                "styleIdx" : 0
+                "layer_store": [
+                    "LULC"
+                ],
+                "layer_name": [
+                    "level_3"
+                ],
+                "vectorStyle": [
+                    {}
+                ],
+                "rasterStyle": "",
+                "styleIdx": 0
             },
             {
                 "name": "degradation_land_area",
-                "label" : "Cropping degradation",
-                "type" : 2,
-                "values" : [
-                    {"label" : "Less than 30 hectares", "value" : {"lower" : 0, "upper" : 30}},
-                    {"label" : "Between 30 hectares to 90 hectares", "value" : {"lower" : 30, "upper" : 90}},
-                    {"label" : "More than 90 hectares", "value" : {"lower" : 90, "upper" : 999999}}
+                "label": "Cropping degradation",
+                "type": 2,
+                "values": [
+                    {
+                        "label": "Less than 30 hectares",
+                        "value": {
+                            "lower": 0,
+                            "upper": 30
+                        }
+                    },
+                    {
+                        "label": "Between 30 hectares to 90 hectares",
+                        "value": {
+                            "lower": 30,
+                            "upper": 90
+                        }
+                    },
+                    {
+                        "label": "More than 90 hectares",
+                        "value": {
+                            "lower": 90,
+                            "upper": 999999
+                        }
+                    }
                 ],
-                "layer_store" : ["change_detection","change_detection"],
-                "layer_name" : ["CropIntensity","Degradation"],
-                "vectorStyle" : [{}],
-                "rasterStyle" : ["cropping_intensity_kyl","KYL_Crop_Degradation"],
-                "styleIdx" : 0
+                "layer_store": [
+                    "change_detection",
+                    "change_detection"
+                ],
+                "layer_name": [
+                    "CropIntensity",
+                    "Degradation"
+                ],
+                "vectorStyle": [
+                    {}
+                ],
+                "rasterStyle": [
+                    "cropping_intensity_kyl",
+                    "KYL_Crop_Degradation"
+                ],
+                "styleIdx": 0
             }
-        ], 
-        "Restoration" : [
+        ],
+        "Restoration": [
             {
                 "name": "decrease_in_tree_cover",
-                "label" : "Reduction in tree cover",
-                "type" : 2,
-                "values" : [
-                    {"label" : "Less than 50 hectares", "value" : {"lower" : 0, "upper" : 50}},
-                    {"label" : "Between 50 to 100 hectares", "value" : {"lower" : 50, "upper" : 100}},
-                    {"label" : "More than 100 hectares", "value" : {"lower" : 100, "upper" : 999999}}
+                "label": "Reduction in tree cover",
+                "type": 2,
+                "values": [
+                    {
+                        "label": "Less than 50 hectares",
+                        "value": {
+                            "lower": 0,
+                            "upper": 50
+                        }
+                    },
+                    {
+                        "label": "Between 50 to 100 hectares",
+                        "value": {
+                            "lower": 50,
+                            "upper": 100
+                        }
+                    },
+                    {
+                        "label": "More than 100 hectares",
+                        "value": {
+                            "lower": 100,
+                            "upper": 999999
+                        }
+                    }
                 ],
-                "layer_store" : ["change_detection"],
-                "layer_name" : ["Deforestation"],
-                "vectorStyle" : [{}],
-                "rasterStyle" : ["deforestation"],
-                "styleIdx" : 0
-            },   {
+                "layer_store": [
+                    "change_detection"
+                ],
+                "layer_name": [
+                    "Deforestation"
+                ],
+                "vectorStyle": [
+                    {}
+                ],
+                "rasterStyle": [
+                    "deforestation"
+                ],
+                "styleIdx": 0
+            },
+            {
                 "name": "increase_in_tree_cover",
-                "label" : "Increase in tree cover",
-                "type" : 2,
-                "values" : [
-                    {"label" : "Less than 50 hectares", "value" : {"lower" : 0, "upper" : 50}},
-                    {"label" : "Between 50 to 100 hectares", "value" : {"lower" : 50, "upper" : 100}},
-                    {"label" : "More than 100 hectares", "value" : {"lower" : 100, "upper" : 999999}}
+                "label": "Increase in tree cover",
+                "type": 2,
+                "values": [
+                    {
+                        "label": "Less than 50 hectares",
+                        "value": {
+                            "lower": 0,
+                            "upper": 50
+                        }
+                    },
+                    {
+                        "label": "Between 50 to 100 hectares",
+                        "value": {
+                            "lower": 50,
+                            "upper": 100
+                        }
+                    },
+                    {
+                        "label": "More than 100 hectares",
+                        "value": {
+                            "lower": 100,
+                            "upper": 999999
+                        }
+                    }
                 ],
-                "layer_store" : ["change_detection"],
-                "layer_name" : ["Afforestation"],
-                "vectorStyle" : [{}],
-                "rasterStyle" : ["afforestation"],
-                "styleIdx" : 0
+                "layer_store": [
+                    "change_detection"
+                ],
+                "layer_name": [
+                    "Afforestation"
+                ],
+                "vectorStyle": [
+                    {}
+                ],
+                "rasterStyle": [
+                    "afforestation"
+                ],
+                "styleIdx": 0
             },
             {
                 "name": "area_wide_scale_restoration",
-                "label" : "Area with potential for wide-scale restoration",
-                "type" : 2,
-                "values" : [
-                    {"label" : "Less than 200 hectares", "value" : {"lower" : 0, "upper" : 200}},
-                    {"label" : "Between 200 to 600 hectares", "value" : {"lower" : 200, "upper" : 600}},
-                    {"label" : "More than 600 hectares", "value" : {"lower" : 600, "upper" : 999999}}
+                "label": "Area with potential for wide-scale restoration",
+                "type": 2,
+                "values": [
+                    {
+                        "label": "Less than 200 hectares",
+                        "value": {
+                            "lower": 0,
+                            "upper": 200
+                        }
+                    },
+                    {
+                        "label": "Between 200 to 600 hectares",
+                        "value": {
+                            "lower": 200,
+                            "upper": 600
+                        }
+                    },
+                    {
+                        "label": "More than 600 hectares",
+                        "value": {
+                            "lower": 600,
+                            "upper": 999999
+                        }
+                    }
                 ],
-                "layer_store" : [],
-                "layer_name" : [],
-                "vectorStyle" : [{}],
-                "rasterStyle" : [""],
-                "styleIdx" : 0
-            },   {
+                "layer_store": [],
+                "layer_name": [],
+                "vectorStyle": [
+                    {}
+                ],
+                "rasterStyle": [
+                    ""
+                ],
+                "styleIdx": 0
+            },
+            {
                 "name": "area_protection",
-                "label" : "Area with potential for protection",
-                "type" : 2,
-                "values" : [
-                    {"label" : "Less than 400 hectares", "value" : {"lower" : 0, "upper" : 400}},
-                    {"label" : "Between 400 to 800 hectares", "value" : {"lower" : 400, "upper" : 800}},
-                    {"label" : "More than 800 hectares", "value" : {"lower" : 800, "upper" : 999999}}
+                "label": "Area with potential for protection",
+                "type": 2,
+                "values": [
+                    {
+                        "label": "Less than 400 hectares",
+                        "value": {
+                            "lower": 0,
+                            "upper": 400
+                        }
+                    },
+                    {
+                        "label": "Between 400 to 800 hectares",
+                        "value": {
+                            "lower": 400,
+                            "upper": 800
+                        }
+                    },
+                    {
+                        "label": "More than 800 hectares",
+                        "value": {
+                            "lower": 800,
+                            "upper": 999999
+                        }
+                    }
                 ],
-                "layer_store" : [],
-                "layer_name" : [],
-                "vectorStyle" : [{}],
-                "rasterStyle" : [""],
-                "styleIdx" : 0
+                "layer_store": [],
+                "layer_name": [],
+                "vectorStyle": [
+                    {}
+                ],
+                "rasterStyle": [
+                    ""
+                ],
+                "styleIdx": 0
+            },
+            {
+                "name": "green_credit",
+                "label": "Green Credit",
+                "type": 1,
+                "values": [
+                    {
+                        "label": "Areas with green credit sites",
+                        "value": 1
+                    },
+                    {
+                        "label": "Areas with no known green credit sites",
+                        "value": 0
+                    }
+                ],
+                "layer_store": [
+                    "green_credit"
+                ],
+                "layer_name": [
+                    "green_credit"
+                ],
+                "vectorStyle": [
+                    {
+                        "fill": "rgba(20, 209, 29, 0.6)",
+                        "stroke": "rgbargba(20, 209, 29, 1)"
+                    }
+                ],
+                "rasterStyle": [
+                    ""
+                ],
+                "styleIdx": 0
             }
-           
         ],
-        "Resource conflicts" : [
+        "Industry": [
             {
                 "name": "lcw_conflict",
-                "label" : "Conflict Type",
-                "type" : 1,
-                "values" : [
-                    {"label" : "Areas with no conflicts", "value" : 0},
-                    {"label" : "Areas with conflicts", "value" : 1}
+                "label": "LCW Conflict",
+                "type": 1,
+                "values": [
+                    {
+                        "label": "Areas with one or more conflicts",
+                        "value": 1
+                    },
+                    {
+                        "label": "Areas with no known conflicts",
+                        "value": 0
+                    }
                 ],
-                "layer_store" : ["lcw"],
-                "layer_name" : ["lcw_conflict"],
-                "vectorStyle" : [{}],
-                "rasterStyle" : [""],
-                "styleIdx" : 0
+                "layer_store": [
+                    "lcw"
+                ],
+                "layer_name": [
+                    "lcw_conflict"
+                ],
+                "vectorStyle": [
+                    {}
+                ],
+                "rasterStyle": [
+                    ""
+                ],
+                "styleIdx": 0
+            },
+            {
+                "name": "factory_csr",
+                "label": "Industry",
+                "type": 1,
+                "values": [
+                    {
+                        "label": "Areas with industries",
+                        "value": 1
+                    },
+                    {
+                        "label": "Areas with no known industries",
+                        "value": 0
+                    }
+                ],
+                "layer_store": [
+                    "factory_csr"
+                ],
+                "layer_name": [
+                    "factory_csr"
+                ],
+                "vectorStyle": [
+                    {}
+                ],
+                "rasterStyle": [
+                    ""
+                ],
+                "styleIdx": 0
+            },
+            {
+                "name": "mining",
+                "label": "Mining",
+                "type": 1,
+                "values": [
+                    {
+                        "label": "Areas with mining sites",
+                        "value": 1
+                    },
+                    {
+                        "label": "Areas with no known mining sites",
+                        "value": 0
+                    }
+                ],
+                "layer_store": [
+                    "mining"
+                ],
+                "layer_name": [
+                    "mining"
+                ],
+                "vectorStyle": [
+                    {}
+                ],
+                "rasterStyle": [
+                    ""
+                ],
+                "styleIdx": 0
             }
         ]
     },
-    "Village" : {
-        "NREGA" : [
+    "Village": {
+        "NREGA": [
             {
                 "name": "total_assets",
-                "label" : "Total number of NREGA works",
-                "type" : 2,
-                "values" : [
-                    {"label" : "Less than 100", "value" : {"lower" : 0, "upper" : 100}},
-                    {"label" : "Between 100 to 300", "value" : {"lower" : 100, "upper" : 300}},
-                    {"label" : "More than 300", "value" : {"lower" : 300, "upper" : 999999999}}
-                ],
-                "layer_store" : ["nrega_assets"],
-                "layer_name" : [],
-                "vectorStyle" : [
+                "label": "Total number of NREGA works",
+                "type": 2,
+                "values": [
                     {
-                        "fill" : "rgba(135, 206, 235, 0.5)",
-                        "stroke" : "rgba(135, 206, 235, 1)",
-                        "lower" : 0, "upper" : 100
+                        "label": "Less than 100",
+                        "value": {
+                            "lower": 0,
+                            "upper": 100
+                        }
                     },
                     {
-                        "fill" : "rgba(65, 105, 225, 0.5)",
-                        "stroke" : "rgba(65, 105, 225, 1)",
-                        "lower" : 100, "upper" : 300
+                        "label": "Between 100 to 300",
+                        "value": {
+                            "lower": 100,
+                            "upper": 300
+                        }
                     },
                     {
-                        "fill" : "rgba(0, 0, 128, 0.5)",
-                        "stroke" : "rgba(0, 0, 128, 1)",
-                        "lower" : 300, "upper" : 999999999
+                        "label": "More than 300",
+                        "value": {
+                            "lower": 300,
+                            "upper": 999999999
+                        }
                     }
                 ],
-                "rasterStyle" : "",
-                "styleIdx" : 9
+                "layer_store": [
+                    "nrega_assets"
+                ],
+                "layer_name": [],
+                "vectorStyle": [
+                    {
+                        "fill": "rgba(135, 206, 235, 0.5)",
+                        "stroke": "rgba(135, 206, 235, 1)",
+                        "lower": 0,
+                        "upper": 100
+                    },
+                    {
+                        "fill": "rgba(65, 105, 225, 0.5)",
+                        "stroke": "rgba(65, 105, 225, 1)",
+                        "lower": 100,
+                        "upper": 300
+                    },
+                    {
+                        "fill": "rgba(0, 0, 128, 0.5)",
+                        "stroke": "rgba(0, 0, 128, 1)",
+                        "lower": 300,
+                        "upper": 999999999
+                    }
+                ],
+                "rasterStyle": "",
+                "styleIdx": 9
             }
         ],
-        "Demographic" : [
+        "Demographic": [
             {
                 "name": "total_population",
-                "label" : "Total Population",
-                "type" : 2,
-                "values" : [
-                    {"label" : "Less than 800", "value" : {"lower" : 0, "upper" : 800}},
-                    {"label" : "Between 800 to 2400", "value" : {"lower" : 100, "upper" : 2400}},
-                    {"label" : "Between 2400 - 8900", "value" : {"lower" : 2400, "upper" : 8900}},
-                    {"label" : "More than 8900", "value" : {"lower" : 8900, "upper" : 9999999999}}
-
-                ],
-                "layer_store" : ["panchayat_boundaries"],
-                "layer_name" : [],
-                "vectorStyle" : [
+                "label": "Total Population",
+                "type": 2,
+                "values": [
                     {
-                        "fill" : "rgba(192, 128, 129, 0.5)",
-                        "stroke" : "rgba(192, 128, 129, 1)",
-                        "lower" : 0, "upper" : 800
+                        "label": "Less than 800",
+                        "value": {
+                            "lower": 0,
+                            "upper": 800
+                        }
                     },
                     {
-                        "fill" : "rgba(128, 0, 32, 0.5)",
-                        "stroke" : "rgba(128, 0, 32, 1)",
-                        "lower" : 100, "upper" : 2400
+                        "label": "Between 800 to 2400",
+                        "value": {
+                            "lower": 100,
+                            "upper": 2400
+                        }
                     },
                     {
-                        "fill" : "rgba(91, 14, 45, 0.5)",
-                        "stroke" : "rgba(91, 14, 45, 1)",
-                        "lower" : 2400, "upper" : 8900
+                        "label": "Between 2400 - 8900",
+                        "value": {
+                            "lower": 2400,
+                            "upper": 8900
+                        }
                     },
                     {
-                        "fill" : "rgba(61, 0, 15, 0.5)",
-                        "stroke" : "rgba(61, 0, 15, 1)",
-                        "lower" : 8900, "upper" : 9999999999
+                        "label": "More than 8900",
+                        "value": {
+                            "lower": 8900,
+                            "upper": 9999999999
+                        }
                     }
                 ],
-                "rasterStyle" : "",
-                "styleIdx" : 5
+                "layer_store": [
+                    "panchayat_boundaries"
+                ],
+                "layer_name": [],
+                "vectorStyle": [
+                    {
+                        "fill": "rgba(192, 128, 129, 0.5)",
+                        "stroke": "rgba(192, 128, 129, 1)",
+                        "lower": 0,
+                        "upper": 800
+                    },
+                    {
+                        "fill": "rgba(128, 0, 32, 0.5)",
+                        "stroke": "rgba(128, 0, 32, 1)",
+                        "lower": 100,
+                        "upper": 2400
+                    },
+                    {
+                        "fill": "rgba(91, 14, 45, 0.5)",
+                        "stroke": "rgba(91, 14, 45, 1)",
+                        "lower": 2400,
+                        "upper": 8900
+                    },
+                    {
+                        "fill": "rgba(61, 0, 15, 0.5)",
+                        "stroke": "rgba(61, 0, 15, 1)",
+                        "lower": 8900,
+                        "upper": 9999999999
+                    }
+                ],
+                "rasterStyle": "",
+                "styleIdx": 5
             },
             {
                 "name": "percent_st_population",
-                "label" : "Percentage ST population",
-                "type" : 2,
-                "values" : [
-                    {"label" : "Less than 18%", "value" : {"lower" : 0, "upper" : 18}},
-                    {"label" : "Between 18% to 33%", "value" : {"lower" : 18, "upper" : 33}},
-                    {"label" : "More than 33%", "value" : {"lower" : 33, "upper" : 999999999}}
-                ],
-                "layer_store" : ["panchayat_boundaries"],
-                "layer_name" : [],
-                "vectorStyle" : [
+                "label": "Percentage ST population",
+                "type": 2,
+                "values": [
                     {
-                        "fill" : "rgba(238, 234, 197, 0.5)",
-                        "stroke" : "rgba(238, 234, 197, 1)",
-                        "lower" : 0, "upper" : 18
+                        "label": "Less than 18%",
+                        "value": {
+                            "lower": 0,
+                            "upper": 18
+                        }
                     },
                     {
-                        "fill" : "rgba(247, 219, 165, 0.5)",
-                        "stroke" : "rgba(247, 219, 165, 1)",
-                        "lower" : 18, "upper" : 33
+                        "label": "Between 18% to 33%",
+                        "value": {
+                            "lower": 18,
+                            "upper": 33
+                        }
                     },
                     {
-                        "fill" : "rgba(236, 181, 115, 0.5)",
-                        "stroke" : "rgba(236, 181, 115, 1)",
-                        "lower" : 33, "upper" : 999999999
+                        "label": "More than 33%",
+                        "value": {
+                            "lower": 33,
+                            "upper": 999999999
+                        }
                     }
                 ],
-                "rasterStyle" : "",
-                "styleIdx" : 6
+                "layer_store": [
+                    "panchayat_boundaries"
+                ],
+                "layer_name": [],
+                "vectorStyle": [
+                    {
+                        "fill": "rgba(238, 234, 197, 0.5)",
+                        "stroke": "rgba(238, 234, 197, 1)",
+                        "lower": 0,
+                        "upper": 18
+                    },
+                    {
+                        "fill": "rgba(247, 219, 165, 0.5)",
+                        "stroke": "rgba(247, 219, 165, 1)",
+                        "lower": 18,
+                        "upper": 33
+                    },
+                    {
+                        "fill": "rgba(236, 181, 115, 0.5)",
+                        "stroke": "rgba(236, 181, 115, 1)",
+                        "lower": 33,
+                        "upper": 999999999
+                    }
+                ],
+                "rasterStyle": "",
+                "styleIdx": 6
             },
             {
                 "name": "percent_sc_population",
-                "label" : "Percentage SC population",
-                "type" : 2,
-                "values" : [
-                    {"label" : "Less than 5%", "value" : {"lower" : 0, "upper" : 5}},
-                    {"label" : "Between 5% to 17%", "value" : {"lower" : 5, "upper" : 17}},
-                    {"label" : "Between 17% to 37%", "value" : {"lower" : 17, "upper" : 37}},
-                    {"label" : "More than 37%", "value" : {"lower" : 37, "upper" : 100}}
-                ],
-                "layer_store" : ["panchayat_boundaries"],
-                "layer_name" : [],
-                "vectorStyle" : [
+                "label": "Percentage SC population",
+                "type": 2,
+                "values": [
                     {
-                        "fill" : "rgba(230, 230, 250, 0.5)",
-                        "stroke" : "rgba(230, 230, 250, 1)",
-                        "lower" : 0, "upper" : 5
+                        "label": "Less than 5%",
+                        "value": {
+                            "lower": 0,
+                            "upper": 5
+                        }
                     },
                     {
-                        "fill" : "rgba((218, 112, 214, 0.5)",
-                        "stroke" : "rgba(218, 112, 214, 1)",
-                        "lower" : 5, "upper" : 17
+                        "label": "Between 5% to 17%",
+                        "value": {
+                            "lower": 5,
+                            "upper": 17
+                        }
                     },
                     {
-                        "fill" : "rgba(120, 81, 169, 0.5)",
-                        "stroke" : "rgba(120, 81, 169, 1)",
-                        "lower" : 17, "upper" : 37
+                        "label": "Between 17% to 37%",
+                        "value": {
+                            "lower": 17,
+                            "upper": 37
+                        }
                     },
                     {
-                        "fill" : "rgba(75, 0, 130, 0.5)",
-                        "stroke" : "rgba(75, 0, 130, 1)",
-                        "lower" : 37, "upper" : 100
+                        "label": "More than 37%",
+                        "value": {
+                            "lower": 37,
+                            "upper": 100
+                        }
                     }
                 ],
-                "rasterStyle" : "",
-                "styleIdx" : 7
+                "layer_store": [
+                    "panchayat_boundaries"
+                ],
+                "layer_name": [],
+                "vectorStyle": [
+                    {
+                        "fill": "rgba(230, 230, 250, 0.5)",
+                        "stroke": "rgba(230, 230, 250, 1)",
+                        "lower": 0,
+                        "upper": 5
+                    },
+                    {
+                        "fill": "rgba((218, 112, 214, 0.5)",
+                        "stroke": "rgba(218, 112, 214, 1)",
+                        "lower": 5,
+                        "upper": 17
+                    },
+                    {
+                        "fill": "rgba(120, 81, 169, 0.5)",
+                        "stroke": "rgba(120, 81, 169, 1)",
+                        "lower": 17,
+                        "upper": 37
+                    },
+                    {
+                        "fill": "rgba(75, 0, 130, 0.5)",
+                        "stroke": "rgba(75, 0, 130, 1)",
+                        "lower": 37,
+                        "upper": 100
+                    }
+                ],
+                "rasterStyle": "",
+                "styleIdx": 7
             },
             {
                 "name": "literacy_level",
-                "label" : "Percentage literacy levels",
-                "type" : 2,
-                "values" : [
-                    {"label" : "Less than 46%", "value" : {"lower" : 0, "upper" : 46}},
-                    {"label" : "Between 46% to 59%", "value" : {"lower" : 46, "upper" : 59}},
-                    {"label" : "Between 59% to 70%", "value" : {"lower" : 59, "upper" : 70}},
-                    {"label" : "More than 70%", "value" : {"lower" : 70, "upper" : 999999999}}
-                ],
-                "layer_store" : ["panchayat_boundaries"],
-                "layer_name" : [],
-                "vectorStyle" : [
+                "label": "Percentage literacy levels",
+                "type": 2,
+                "values": [
                     {
-                        "fill" : "rgba(152, 251, 152, 0.5)",
-                        "stroke" : "rgba(152, 251, 152, 1)",
-                        "lower" : 0, "upper" : 46
+                        "label": "Less than 46%",
+                        "value": {
+                            "lower": 0,
+                            "upper": 46
+                        }
                     },
                     {
-                        "fill" : "rgba(50, 205, 50, 0.5)",
-                        "stroke" : "rgba((50, 205, 50, 1)",
-                        "lower" : 46, "upper" : 59
+                        "label": "Between 46% to 59%",
+                        "value": {
+                            "lower": 46,
+                            "upper": 59
+                        }
                     },
                     {
-                        "fill" : "rgba(34, 139, 34, 0.5)",
-                        "stroke" : "rgba(34, 139, 34, 1)",
-                        "lower" : 59, "upper" : 70
+                        "label": "Between 59% to 70%",
+                        "value": {
+                            "lower": 59,
+                            "upper": 70
+                        }
                     },
                     {
-                        "fill" : "rgba(0, 100, 0, 0.5)",
-                        "stroke" : "rgba(0, 100, 0, 1)",
-                        "lower" : 70, "upper" : 999999999
+                        "label": "More than 70%",
+                        "value": {
+                            "lower": 70,
+                            "upper": 999999999
+                        }
                     }
                 ],
-                "rasterStyle" : "",
-                "styleIdx" : 8
+                "layer_store": [
+                    "panchayat_boundaries"
+                ],
+                "layer_name": [],
+                "vectorStyle": [
+                    {
+                        "fill": "rgba(152, 251, 152, 0.5)",
+                        "stroke": "rgba(152, 251, 152, 1)",
+                        "lower": 0,
+                        "upper": 46
+                    },
+                    {
+                        "fill": "rgba(50, 205, 50, 0.5)",
+                        "stroke": "rgba((50, 205, 50, 1)",
+                        "lower": 46,
+                        "upper": 59
+                    },
+                    {
+                        "fill": "rgba(34, 139, 34, 0.5)",
+                        "stroke": "rgba(34, 139, 34, 1)",
+                        "lower": 59,
+                        "upper": 70
+                    },
+                    {
+                        "fill": "rgba(0, 100, 0, 0.5)",
+                        "stroke": "rgba(0, 100, 0, 1)",
+                        "lower": 70,
+                        "upper": 999999999
+                    }
+                ],
+                "rasterStyle": "",
+                "styleIdx": 8
             }
         ]
     }
