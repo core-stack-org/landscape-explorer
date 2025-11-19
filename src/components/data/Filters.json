@@ -862,11 +862,11 @@
                 "type": 1,
                 "values": [
                      {
-                        "label": "Areas with factory sites",
+                        "label": "Areas with industries",
                         "value": 1
                     },
                     {
-                        "label": "Areas with no known factory sites",
+                        "label": "Areas with no known industries",
                         "value": 0
                     }
                    
