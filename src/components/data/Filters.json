@@ -817,11 +817,11 @@
                 "type": 1,
                 "values": [
                     {
-                        "label": "Areas with green credit sites",
+                        "label": "Has green credits projects",
                         "value": 1
                     },
                     {
-                        "label": "Areas with no known green credit sites",
+                        "label": "No known green credits projects",
                         "value": 0
                     }
                 ],
