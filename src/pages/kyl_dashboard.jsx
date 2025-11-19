@@ -915,14 +915,13 @@ const KYLDashboardPage = () => {
           );
         }
         if (
-          filter.layer_store[i] !== "terrain" ||
-          filter.layer_store[i] !== "LULC" ||
-          filter.layer_store[i] !== "change_detection" ||
-          filter.layer_store[i] !== "nrega_assets" ||
-          filter.layer_store[i] !== "lcw" ||
-          filter.layer_store[i] !== "factory_csr" ||
-          filter.layer_store[i] !== "mining" ||
-          filter.layer_store[i] !== "green_credit"
+          filter.layer_store[i] !== "terrain" &&
+          filter.layer_store[i] !== "LULC" &&
+          filter.layer_store[i] !== "change_detection" &&
+          filter.layer_store[i] !== "nrega_assets" &&
+          filter.layer_store[i] !== "lcw" &&
+          filter.layer_store[i] !== "factory_csr" &&
+          filter.layer_store[i] !== "mining"
         ) {
           tempLayer.setStyle((feature) => {
             return layerStyle(
