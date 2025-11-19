@@ -889,7 +889,7 @@ const KYLDashboardPage = () => {
           );
           layerRef.push(tempLayer);
           mapRef.current.addLayer(tempLayer);
-        } else if (filter.layer_store[i] === "cropping_drought") {
+        } else if (filter.layer_store[i] === "cropping_drought" || filter.layer_store[i] === "green_credit") {
           tempLayer = await getVectorLayers(
             filter.layer_store[i],
             `${district.label.toLowerCase().split(" ").join("_")}_${block.label
@@ -915,13 +915,14 @@ const KYLDashboardPage = () => {
           );
         }
         if (
-          filter.layer_store[i] !== "terrain" &&
-          filter.layer_store[i] !== "LULC" &&
-          filter.layer_store[i] !== "change_detection" &&
-          filter.layer_store[i] !== "nrega_assets" &&
-          filter.layer_store[i] !== "lcw" &&
-          filter.layer_store[i] !== "factory_csr" &&
-          filter.layer_store[i] !== "mining"
+          filter.layer_store[i] !== "terrain" ||
+          filter.layer_store[i] !== "LULC" ||
+          filter.layer_store[i] !== "change_detection" ||
+          filter.layer_store[i] !== "nrega_assets" ||
+          filter.layer_store[i] !== "lcw" ||
+          filter.layer_store[i] !== "factory_csr" ||
+          filter.layer_store[i] !== "mining" ||
+          filter.layer_store[i] !== "green_credit"
         ) {
           tempLayer.setStyle((feature) => {
             return layerStyle(
