@@ -834,12 +834,12 @@
                 "type": 1,
                 "values": [
                     {
-                        "label": "Areas with no known conflicts",
-                        "value": 0
-                    },
-                    {
                         "label": "Areas with one or more conflicts",
                         "value": 1
+                    },
+                    {
+                        "label": "Areas with no known conflicts",
+                        "value": 0
                     }
                 ],
                 "layer_store": [
@@ -861,14 +861,15 @@
                 "label": "Industry",
                 "type": 1,
                 "values": [
-                    {
-                        "label": "Areas with no known factory sites",
-                        "value": 0
+                     {
+                        "label": "Areas with industries",
+                        "value": 1
                     },
                     {
-                        "label": "Areas with factory sites",
-                        "value": 1
+                        "label": "Areas with no known industries",
+                        "value": 0
                     }
+                   
                 ],
                 "layer_store": [
                     "factory_csr"
@@ -890,13 +891,13 @@
                 "type": 1,
                 "values": [
                     {
-                        "label": "Areas with no known mining sites",
-                        "value": 0
-                    },
-                    {
                         "label": "Areas with mining sites",
                         "value": 1
-                    }
+                    },
+                    {
+                        "label": "Areas with no known mining sites",
+                        "value": 0
+                    }  
                 ],
                 "layer_store": [
                     "mining"
