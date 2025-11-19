@@ -46,9 +46,8 @@ const LayerControls = ({
       {isMenuOpen && (
         <div className="absolute top-12 left-0 bg-white p-3 rounded-lg shadow-md space-y-3 min-w-[200px]">
           <div
-            className={`flex items-center gap-2 ${
-              !areMWSLayersAvailable ? "opacity-50 cursor-not-allowed" : ""
-            }`}
+            className={`flex items-center gap-2 ${!areMWSLayersAvailable ? "opacity-50 cursor-not-allowed" : ""
+              }`}
           >
             <input
               type="checkbox"
@@ -60,18 +59,16 @@ const LayerControls = ({
             />
             <label
               htmlFor="show-mws"
-              className={`text-sm ${
-                areMWSLayersAvailable ? "text-gray-700" : "text-gray-400"
-              }`}
+              className={`text-sm ${areMWSLayersAvailable ? "text-gray-700" : "text-gray-400"
+                }`}
             >
               Show MWS Layers
             </label>
           </div>
 
           <div
-            className={`flex items-center gap-2 ${
-              !areVillageLayersAvailable ? "opacity-50 cursor-not-allowed" : ""
-            }`}
+            className={`flex items-center gap-2 ${!areVillageLayersAvailable ? "opacity-50 cursor-not-allowed" : ""
+              }`}
           >
             <input
               type="checkbox"
@@ -83,9 +80,8 @@ const LayerControls = ({
             />
             <label
               htmlFor="show-villages"
-              className={`text-sm ${
-                areVillageLayersAvailable ? "text-gray-700" : "text-gray-400"
-              }`}
+              className={`text-sm ${areVillageLayersAvailable ? "text-gray-700" : "text-gray-400"
+                }`}
             >
               Show Village Boundaries
             </label>
@@ -356,6 +352,11 @@ const MapLegend = ({ showMWS, showVillages, currentLayer, mappedAssets, mappedDe
     { color: "#a9a9a9", label: "Not Assessed" },
   ];
 
+  const GreenCreditItems = [
+    { color: "#ffffff", label: "Areas with no known green credit sites" },
+    { color: "#14d11dff", label: "Areas with green credit sites " },
+  ];
+
   // Check if LULC layer is active
   const isLulcLayerActive = currentLayer?.some(
     (layer) =>
@@ -456,11 +457,14 @@ const MapLegend = ({ showMWS, showVillages, currentLayer, mappedAssets, mappedDe
   const isSOGEActive = currentLayer?.some(
     (layer) => layer.name === "soge_class" || layer.name.includes("soge")
   );
+
+  const isGreenCreditActive = currentLayer?.some(
+    (layer) => layer.name === "green_credit" || layer.name.includes("green_credit")
+  );
   return (
     <div
-      className={`absolute bottom-24 left-0 z-10 transition-all duration-300 ${
-        isCollapsed ? "translate-x-2" : "translate-x-6"
-      }`}
+      className={`absolute bottom-24 left-0 z-10 transition-all duration-300 ${isCollapsed ? "translate-x-2" : "translate-x-6"
+        }`}
     >
       {/* Collapse toggle button */}
       <button
@@ -491,11 +495,10 @@ const MapLegend = ({ showMWS, showVillages, currentLayer, mappedAssets, mappedDe
 
       {/* Main legend container */}
       <div
-        className={`bg-white rounded-lg shadow-md overflow-hidden transition-all duration-300 ${
-          isCollapsed
-            ? "w-10 h-48 opacity-80 hover:opacity-100"
-            : "w-72 max-h-[60vh] opacity-100"
-        }`}
+        className={`bg-white rounded-lg shadow-md overflow-hidden transition-all duration-300 ${isCollapsed
+          ? "w-10 h-48 opacity-80 hover:opacity-100"
+          : "w-72 max-h-[60vh] opacity-100"
+          }`}
       >
         {/* Collapsed state - vertical "Legend" text */}
         {isCollapsed && (
@@ -1023,63 +1026,87 @@ const MapLegend = ({ showMWS, showVillages, currentLayer, mappedAssets, mappedDe
                 </div>
               )}
 
+              {/* Green Credit Section */}
+              {isGreenCreditActive && (
+                <div className="space-y-2">
+                  <h4 className="text-xs font-medium text-gray-600">Green Credit</h4>
+                  {GreenCreditItems.map((item, index) => (
+                    <div
+                      key={`trend-${index}`}
+                      className="flex items-center gap-2"
+                    >
+                      <div
+                        className="w-4 h-4 rounded"
+                        style={{
+                          backgroundColor: item.color,
+                          border: `1px solid rgba(0,0,0,0.2)`,
+                        }}
+                      />
+                      <span className="text-sm text-gray-600">
+                        {item.label}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
               {/* Mapped Assets */}
               {mappedAssets && (
                 <div className="space-y-2">
-                <h4 className="text-xs font-medium text-gray-600">Mapped Assets</h4>
-                <div className="flex items-center gap-2">
-                  <img
-                    src={settlementIcon}
-                    alt="Settlement"
-                    className="w-6 h-6"
-                    draggable={false}
-                  />
-                  <span className="text-sm text-gray-600">Settlement</span>
+                  <h4 className="text-xs font-medium text-gray-600">Mapped Assets</h4>
+                  <div className="flex items-center gap-2">
+                    <img
+                      src={settlementIcon}
+                      alt="Settlement"
+                      className="w-6 h-6"
+                      draggable={false}
+                    />
+                    <span className="text-sm text-gray-600">Settlement</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <img
+                      src={wellIcon}
+                      alt="Settlement"
+                      className="w-6 h-6"
+                      draggable={false}
+                    />
+                    <span className="text-sm text-gray-600">Well</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <img
+                      src={waterbodyIcon}
+                      alt="Settlement"
+                      className="w-6 h-6"
+                      draggable={false}
+                    />
+                    <span className="text-sm text-gray-600">Water Structure</span>
+                  </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <img
-                    src={wellIcon}
-                    alt="Settlement"
-                    className="w-6 h-6"
-                    draggable={false}
-                  />
-                  <span className="text-sm text-gray-600">Well</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <img
-                    src={waterbodyIcon}
-                    alt="Settlement"
-                    className="w-6 h-6"
-                    draggable={false}
-                  />
-                  <span className="text-sm text-gray-600">Water Structure</span>
-                </div>
-              </div>
               )}
 
               {/* Proposed Works */}
               {mappedDemands && (
                 <div className="space-y-2">
-                <h4 className="text-xs font-medium text-gray-600">Proposed Works</h4>
-                <div className="flex items-center gap-2">
-                  <img
-                    src={RechargeIcon}
-                    alt="Settlement"
-                    className="w-6 h-6"
-                    draggable={false}
-                  />
-                  <span className="text-sm text-gray-600">Recharge Structure</span>
+                  <h4 className="text-xs font-medium text-gray-600">Proposed Works</h4>
+                  <div className="flex items-center gap-2">
+                    <img
+                      src={RechargeIcon}
+                      alt="Settlement"
+                      className="w-6 h-6"
+                      draggable={false}
+                    />
+                    <span className="text-sm text-gray-600">Recharge Structure</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <img
+                      src={IrrigationIcon}
+                      alt="Settlement"
+                      className="w-6 h-6"
+                      draggable={false}
+                    />
+                    <span className="text-sm text-gray-600">Irrigation Structure</span>
+                  </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <img
-                    src={IrrigationIcon}
-                    alt="Settlement"
-                    className="w-6 h-6"
-                    draggable={false}
-                  />
-                  <span className="text-sm text-gray-600">Irrigation Structure</span>
-                </div>
-              </div>
               )}
             </div>
           </div>

@@ -825,6 +825,34 @@
                     ""
                 ],
                 "styleIdx": 0
+            },
+            {
+                "name": "green_credit",
+                "label": "Green Credit",
+                "type": 1,
+                "values": [
+                    {
+                        "label": "Areas with green credit sites",
+                        "value": 1
+                    },
+                    {
+                        "label": "Areas with no known green credit sites",
+                        "value": 0
+                    }
+                ],
+                "layer_store": [
+                    "green_credit"
+                ],
+                "layer_name": [
+                    "green_credit"
+                ],
+                "vectorStyle": [
+                    {}
+                ],
+                "rasterStyle": [
+                    ""
+                ],
+                "styleIdx": 0
             }
         ],
         "Industry": [
@@ -861,7 +889,7 @@
                 "label": "Industry",
                 "type": 1,
                 "values": [
-                     {
+                    {
                         "label": "Areas with industries",
                         "value": 1
                     },
@@ -869,7 +897,6 @@
                         "label": "Areas with no known industries",
                         "value": 0
                     }
-                   
                 ],
                 "layer_store": [
                     "factory_csr"
@@ -897,7 +924,7 @@
                     {
                         "label": "Areas with no known mining sites",
                         "value": 0
-                    }  
+                    }
                 ],
                 "layer_store": [
                     "mining"
