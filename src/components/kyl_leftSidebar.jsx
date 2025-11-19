@@ -87,7 +87,7 @@ const KYLLeftSidebar = ({
                         `}
                         onClick={() => handleTabChange('Patterns')}
                     >
-                        Patterns
+                        Patterns (Experimental)
                     </button>
                     <button
                         className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-colors
