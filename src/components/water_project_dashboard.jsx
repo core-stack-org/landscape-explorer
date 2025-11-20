@@ -1,15 +1,12 @@
 import React, { useState, useEffect, useRef, useMemo } from "react";
 import { useRecoilState, useRecoilValue } from "recoil";
-// import { yearAtom } from "../store/locationStore.jsx";
 import HeaderSelect from "../components/water_headerSection";
-import { useParams } from "react-router-dom";
 import VectorLayer from "ol/layer/Vector";
 import VectorSource from "ol/source/Vector";
 import GeoJSON from "ol/format/GeoJSON";
 import Map from "ol/Map";
 import { Style, Fill, Stroke, Icon } from "ol/style";
 import { Point } from "ol/geom";
-import { defaults as defaultInteractions, DragPan } from "ol/interaction";
 import getVectorLayers from "../actions/getVectorLayers.js";
 import LocationOnIcon from "@mui/icons-material/LocationOn";
 import YearSlider from "./yearSlider";
@@ -18,16 +15,14 @@ import CroppingIntensityStackChart from "./CroppingIntensityStackChart.jsx";
 import { yearAtomFamily } from "../store/locationStore";
 import NDVIChart from "./NDVIChart.jsx";
 // import DroughtChart from "./droughtchart.jsx";
-import Overlay from "ol/Overlay";
 
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
-import { Download, Lightbulb } from "lucide-react";
+import { Lightbulb } from "lucide-react";
 import View from "ol/View";
 import TileLayer from "ol/layer/Tile";
 import XYZ from "ol/source/XYZ";
 import { Control, defaults as defaultControls } from "ol/control";
 import FilterListIcon from "@mui/icons-material/FilterList";
-import SurfaceWaterChart from "./waterChart";
 import getImageLayer from "../actions/getImageLayers";
 import WaterAvailabilityChart from "./WaterAvailabilityChart";
 import Crop from "ol-ext/filter/Crop";
@@ -37,7 +32,6 @@ import MouseWheelZoom from "ol/interaction/MouseWheelZoom";
 import PinchZoom from "ol/interaction/PinchZoom";
 import DoubleClickZoom from "ol/interaction/DoubleClickZoom";
 import { useLocation } from "react-router-dom";
-import TileWMS from "ol/source/TileWMS";
 import NDMIPointChart from "./NDMIPointChart.jsx";
 import DroughtChart from "./droughtchart.jsx";
 
@@ -162,6 +156,8 @@ const WaterProjectDashboard = () => {
   const [project, setProject] = useState(null);
   const interventionYear = "22-23"; //Later fetched from geojson
 
+  const [loadingData, setLoadingData] = useState(true);
+
   const handleInfoClick = (anchor, text, key = null) => {
     // anchor must be e.currentTarget (DOM element)
     setInfoAnchor(anchor);
@@ -274,6 +270,14 @@ const WaterProjectDashboard = () => {
 
   if (loading || !geoData || !mwsGeoData || zoiFeatures.length === 0) {
   }
+
+  useEffect(() => {
+    if (geoData?.features) {
+      setLoadingData(false);
+    } else {
+      setLoadingData(true);
+    }
+  }, [geoData]);
 
   const extractSeasonYears = (props) => {
     const years = new Set();
@@ -765,193 +769,6 @@ const WaterProjectDashboard = () => {
       console.error("[LULC] Error during fetchUpdateLulc:", error);
     });
   }, [lulcYear1, selectedWaterbody, waterBodyLayer, project]);
-
-  // useEffect(() => {
-  //   const fetchUpdateLulcZOI = async () => {
-  //     if (!lulcYear2 || !lulcYear2.includes("_")) return;
-  //     if (!zoiFeatures?.length) return;
-  //     if (!mapRef2.current) return;
-
-  //     const map = mapRef2.current;
-
-  //     // 🔹 Set ZOI area for selected waterbody
-  //     if (selectedWaterbody) {
-  //       const matchedZoi = zoiFeatures.find(
-  //         (f) =>
-  //           f.get("UID")?.toLowerCase().trim() ===
-  //           selectedWaterbody?.UID?.toLowerCase().trim()
-  //       );
-  //       setZoiArea(matchedZoi?.get("zoi_area") || null);
-  //     } else {
-  //       setZoiArea(null);
-  //     }
-
-  //     // 🔹 Construct LULC layer name
-  //     const fullYear = lulcYear2
-  //       .split("_")
-  //       .map((part) => `20${part}`)
-  //       .join("_")
-  //       .toLowerCase()
-  //       .replace(/\s/g, "_");
-
-  //     const projectName = project?.label;
-  //     const projectId = project?.value;
-  //     if (!projectName || !projectId) return;
-
-  //     const layerName = `clipped_lulc_filtered_mws_${projectName}_${projectId}_${fullYear}`;
-
-  //     // 🔹 Remove old layers
-  //     const idsToRemove = [
-  //       "lulc_zoi_layer",
-  //       "zoi_border_layer",
-  //       "waterbody_layer",
-  //     ];
-  //     map
-  //       .getLayers()
-  //       .getArray()
-  //       .forEach((layer) => {
-  //         if (idsToRemove.includes(layer.get("id"))) {
-  //           map.removeLayer(layer);
-  //         }
-  //       });
-
-  //     // 🔹 Add LULC raster layer
-  //     const tempLayer = await getImageLayer(
-  //       "waterrej",
-  //       layerName,
-  //       true,
-  //       "waterrej_lulc"
-  //     );
-  //     tempLayer.setZIndex(0);
-  //     tempLayer.set("id", "lulc_zoi_layer");
-
-  //     // 🔹 Crop LULC: single ZOI or all ZOIs (INCLUDE pixels inside ZOI)
-  //     let cropFeature;
-  //     if (selectedWaterbody) {
-  //       const matchedZoi = zoiFeatures.find(
-  //         (f) =>
-  //           f.get("UID")?.toLowerCase().trim() ===
-  //           selectedWaterbody?.UID?.toLowerCase().trim()
-  //       );
-  //       if (matchedZoi) cropFeature = matchedZoi;
-  //     } else {
-  //       const geometries = zoiFeatures.map((f) => f.getGeometry().clone());
-  //       const multiPolygon = new MultiPolygon(
-  //         geometries.map((g) => g.getCoordinates())
-  //       );
-  //       cropFeature = new Feature(multiPolygon);
-  //     }
-
-  //     // Apply ZOI crop filter (keep pixels INSIDE ZOI)
-  //     if (cropFeature) {
-  //       const crop = new Crop({
-  //         feature: cropFeature,
-  //         wrapX: true,
-  //         inner: false, // Show pixels inside the ZOI boundary
-  //       });
-  //       tempLayer.addFilter(crop);
-  //     }
-
-  //     // 🔹 EXCLUDE LULC pixels from inside waterbody (new addition)
-  //     if (waterBodyLayer) {
-  //       const allWbFeatures = waterBodyLayer.getSource().getFeatures();
-
-  //       let waterbodyFeaturesToExclude;
-  //       if (selectedWaterbody) {
-  //         // If a waterbody is selected, only exclude that one
-  //         const matchedWb = allWbFeatures.find(
-  //           (f) =>
-  //             f.get("UID")?.toLowerCase().trim() ===
-  //             selectedWaterbody?.UID?.toLowerCase().trim()
-  //         );
-  //         waterbodyFeaturesToExclude = matchedWb ? [matchedWb] : [];
-  //       } else {
-  //         // No selection → exclude all waterbodies
-  //         waterbodyFeaturesToExclude = allWbFeatures;
-  //       }
-
-  //       // Apply exclusion crop for each waterbody
-  //       waterbodyFeaturesToExclude.forEach((wbFeature) => {
-  //         const excludeCrop = new Crop({
-  //           feature: wbFeature,
-  //           wrapX: true,
-  //           inner: true, // Hide pixels INSIDE the waterbody boundary
-  //         });
-  //         tempLayer.addFilter(excludeCrop);
-  //       });
-  //     }
-
-  //     map.addLayer(tempLayer);
-
-  //     // 🔹 Add ZOI border layer (yellow)
-  //     let zoiLayer;
-  //     if (selectedWaterbody) {
-  //       const matchedZoi = zoiFeatures.find(
-  //         (f) =>
-  //           f.get("UID")?.toLowerCase().trim() ===
-  //           selectedWaterbody?.UID?.toLowerCase().trim()
-  //       );
-  //       if (matchedZoi) {
-  //         zoiLayer = new VectorLayer({
-  //           source: new VectorSource({ features: [matchedZoi] }),
-  //           style: new Style({
-  //             stroke: new Stroke({ color: "yellow", width: 3 }),
-  //           }),
-  //         });
-  //       }
-  //     } else {
-  //       zoiLayer = new VectorLayer({
-  //         source: new VectorSource({ features: zoiFeatures }),
-  //         style: new Style({
-  //           stroke: new Stroke({ color: "yellow", width: 3 }),
-  //         }),
-  //       });
-  //     }
-
-  //     if (zoiLayer) {
-  //       zoiLayer.setZIndex(1);
-  //       zoiLayer.set("id", "zoi_border_layer");
-  //       map.addLayer(zoiLayer);
-  //     }
-
-  //     // 🔹 Add waterbody layer (only selected waterbody if any)
-  //     let wbLayer;
-  //     if (selectedWaterbody && waterBodyLayer) {
-  //       const allFeatures = waterBodyLayer.getSource().getFeatures();
-  //       const matchedWb = allFeatures.find(
-  //         (f) =>
-  //           f.get("UID")?.toLowerCase().trim() ===
-  //           selectedWaterbody?.UID?.toLowerCase().trim()
-  //       );
-
-  //       if (matchedWb) {
-  //         wbLayer = new VectorLayer({
-  //           source: new VectorSource({ features: [matchedWb] }),
-  //           style: new Style({
-  //             stroke: new Stroke({ color: "blue", width: 3 }),
-  //           }),
-  //         });
-  //       }
-  //     } else if (waterBodyLayer) {
-  //       // No selection → show all waterbodies
-  //       wbLayer = waterBodyLayer;
-  //     }
-
-  //     if (wbLayer) {
-  //       wbLayer.setZIndex(2);
-  //       wbLayer.set("id", "waterbody_layer");
-  //       map.addLayer(wbLayer);
-  //     }
-
-  //     // 🔹 Track current LULC layer
-  //     setCurrentLayer((prev) => {
-  //       const others = prev.filter((l) => l.name !== "lulcWaterrejZOI");
-  //       return [...others, { name: "lulcWaterrejZOI", layerRef: [tempLayer] }];
-  //     });
-  //   };
-
-  //   fetchUpdateLulcZOI().catch(console.error);
-  // }, [lulcYear2, project, zoiFeatures, mapRef2.current, selectedWaterbody]);
 
   useEffect(() => {
     let isCancelled = false;
@@ -2236,26 +2053,31 @@ const WaterProjectDashboard = () => {
   "
       >
         {view === "table" ? (
-          <>
-            <p className="text-center flex items-center justify-center gap-2 border-[10px] border-[#11000080] text-lg md:text-xl font-medium p-4 bg-gray-50 rounded-lg">
-              <Lightbulb size={50} color="black" />
-              Under the project {project?.label}, a total of{" "}
-              {totalRows.toLocaleString("en-IN")} waterbodies have been
-              de-silted, spanning around{" "}
-              {(totalSiltRemoved || 0).toLocaleString("en-IN", {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2,
-              })}{" "}
-              Cu.m. After desilting, during the intervention year 2022-23, there
-              was a noticeable change in the water spread area across
-              agricultural seasons. The impacted area in the Rabi season is{" "}
-              {projectLevelRabiImpact.toFixed(2)} hectares and the impacted area
-              in the Zaid season is {projectLevelZaidImpact.toFixed(2)}{" "}
-              hectares. This represents the variation in surface water extent
-              following desilting interventions across different crop seasons.
-            </p>
+          loadingData ? (
+            <div className="flex justify-center items-center h-40">
+              <div className="animate-spin rounded-full h-12 w-12 border-4 border-gray-300 border-t-blue-600"></div>
+            </div>
+          ) : (
+            <>
+              <p className="text-center flex items-center justify-center gap-2 border-[10px] border-[#11000080] text-lg md:text-xl font-medium p-4 bg-gray-50 rounded-lg">
+                <Lightbulb size={50} color="black" />
+                Under the project {project?.label}, a total of{" "}
+                {totalRows.toLocaleString("en-IN")} waterbodies have been
+                de-silted, spanning around{" "}
+                {(totalSiltRemoved || 0).toLocaleString("en-IN", {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })}{" "}
+                Cu.m. After desilting, during the intervention year 2022-23,
+                there was a noticeable change in the water spread area across
+                agricultural seasons. The impacted area in the Rabi season is{" "}
+                {projectLevelRabiImpact.toFixed(2)} hectares and the impacted
+                area in the Zaid season is {projectLevelZaidImpact.toFixed(2)}{" "}
+                hectares. This represents the variation in surface water extent
+                following desilting interventions across different crop seasons.
+              </p>
 
-            {/* <p className="text-center flex items-center justify-center gap-2 border-[10px] border-[#11000080] text-lg md:text-xl font-medium p-4 bg-gray-50 rounded-lg">
+              {/* <p className="text-center flex items-center justify-center gap-2 border-[10px] border-[#11000080] text-lg md:text-xl font-medium p-4 bg-gray-50 rounded-lg">
               <Lightbulb size={50} color="black" />
               Under the project{" "}
               <span className="font-semibold">{project?.label}</span>,{" "}
@@ -2268,142 +2090,30 @@ const WaterProjectDashboard = () => {
               Cu.m.
             </p> */}
 
-            <div className="mt-4 bg-white rounded-md shadow-sm overflow-x-auto">
-              <table className="w-full border border-gray-200 text-sm md:text-base text-gray-800">
-                <thead className="bg-gray-100 font-semibold">
-                  <tr className="border-b">
-                    {/* State */}
-                    <th className="relative px-4 py-3 text-center">
-                      <div className="flex items-center justify-center gap-1">
-                        State
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleFilterClick(e, "state");
-                          }}
-                          className="p-1 hover:scale-110 transition-transform"
-                        >
-                          <FilterListIcon fontSize="small" />
-                        </button>
-                        <button
-                          title="Click the Info icon for details"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleInfoClick(
-                              e.currentTarget,
-                              "State where the waterbody is located."
-                            );
-                          }}
-                          className="p-1 text-blue-600 hover:scale-110 transition-transform"
-                        >
-                          <InfoOutlinedIcon fontSize="small" />
-                        </button>
-                      </div>
-                      {openInfoKey === "state" && (
-                        <div className="absolute left-1/2 -translate-x-1/2 top-full mt-2 bg-white border border-gray-300 rounded-md shadow-md p-2 text-xs text-gray-800 w-64 z-50">
-                          State where the waterbody is located.
-                        </div>
-                      )}
-                    </th>
-
-                    {/* District */}
-                    <th className="px-4 py-3 text-center">
-                      <div className="flex items-center justify-center gap-1">
-                        District
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleFilterClick(e, "district");
-                          }}
-                          className="p-1 hover:scale-110 transition-transform"
-                        >
-                          <FilterListIcon fontSize="small" />
-                        </button>
-                        <button
-                          title="Click the Info icon for details"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleInfoClick(
-                              e.currentTarget,
-                              "District in which the waterbody falls."
-                            );
-                          }}
-                          className="p-1 text-blue-600 hover:scale-110 transition-transform"
-                        >
-                          <InfoOutlinedIcon fontSize="small" />
-                        </button>
-                      </div>
-                    </th>
-
-                    {/* Taluka */}
-                    <th className="px-4 py-3 text-center">
-                      <div className="flex items-center justify-center gap-1">
-                        Taluka
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleFilterClick(e, "block");
-                          }}
-                          className="p-1 hover:scale-110 transition-transform"
-                        >
-                          <FilterListIcon fontSize="small" />
-                        </button>
-                        <button
-                          title="Click the Info icon for details"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleInfoClick(
-                              e.currentTarget,
-                              "Taluka (administrative block) in which the waterbody is located."
-                            );
-                          }}
-                          className="p-1 text-blue-600 hover:scale-110 transition-transform"
-                        >
-                          <InfoOutlinedIcon fontSize="small" />
-                        </button>
-                      </div>
-                    </th>
-
-                    {/* GP/Village */}
-                    <th className="px-4 py-3 text-center">
-                      <div className="flex items-center justify-center gap-1">
-                        GP/Village
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleFilterClick(e, "village");
-                          }}
-                          className="p-1 hover:scale-110 transition-transform"
-                        >
-                          <FilterListIcon fontSize="small" />
-                        </button>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleInfoClick(
-                              e.currentTarget,
-                              "Gram Panchayat or Village where the waterbody is located."
-                            );
-                          }}
-                          className="p-1 text-blue-600 hover:scale-110 transition-transform"
-                        >
-                          <InfoOutlinedIcon fontSize="small" />
-                        </button>
-                      </div>
-                    </th>
-
-                    {/* Waterbody + Search */}
-                    <th className="px-4 py-3 text-center">
-                      <div className="flex flex-col items-center gap-2">
-                        <div className="flex items-center gap-1">
-                          Waterbody
+              <div className="mt-4 bg-white rounded-md shadow-sm overflow-x-auto">
+                <table className="w-full border border-gray-200 text-sm md:text-base text-gray-800">
+                  <thead className="bg-gray-100 font-semibold">
+                    <tr className="border-b">
+                      {/* State */}
+                      <th className="relative px-4 py-3 text-center">
+                        <div className="flex items-center justify-center gap-1">
+                          State
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleFilterClick(e, "state");
+                            }}
+                            className="p-1 hover:scale-110 transition-transform"
+                          >
+                            <FilterListIcon fontSize="small" />
+                          </button>
                           <button
                             title="Click the Info icon for details"
                             onClick={(e) => {
                               e.stopPropagation();
                               handleInfoClick(
                                 e.currentTarget,
-                                "Name of the waterbody being monitored."
+                                "State where the waterbody is located."
                               );
                             }}
                             className="p-1 text-blue-600 hover:scale-110 transition-transform"
@@ -2411,198 +2121,315 @@ const WaterProjectDashboard = () => {
                             <InfoOutlinedIcon fontSize="small" />
                           </button>
                         </div>
-                        <input
-                          type="text"
-                          placeholder="Search Waterbody"
-                          value={waterbodySearch}
-                          onChange={(e) => setWaterbodySearch(e.target.value)}
-                          className="border-b border-gray-700 bg-gray-100 text-xs text-gray-700 px-1 py-0.5 w-40 focus:outline-none focus:border-blue-500"
-                        />
-                      </div>
-                    </th>
-
-                    {/* Silt Removed */}
-                    <th
-                      className="px-4 py-3 text-center cursor-pointer select-none"
-                      onClick={() => handleSort("siltRemoved")}
-                    >
-                      <div className="flex items-center justify-center gap-1">
-                        Silt Removed (Cu.m.)
-                        <button
-                          title="Click the Info icon for details"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleInfoClick(
-                              e.currentTarget,
-                              "Total amount of silt removed from the waterbody, measured in cubic meters."
-                            );
-                          }}
-                          className="p-1 text-blue-600 hover:scale-110 transition-transform"
-                        >
-                          <InfoOutlinedIcon fontSize="small" />
-                        </button>
-                        <span>
-                          {sortField === "siltRemoved" && sortOrder === "asc"
-                            ? "🔼"
-                            : "🔽"}
-                        </span>
-                      </div>
-                    </th>
-
-                    {/* Intervention Year */}
-                    <th className="px-4 py-3 text-center">
-                      <div className="flex items-center justify-center gap-1">
-                        Intervention Year
-                        <button
-                          title="Click the Info icon for details"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleInfoClick(
-                              e.currentTarget,
-                              "The year in which rejuvenation or desilting work was carried out on the waterbody."
-                            );
-                          }}
-                          className="p-1 text-blue-600 hover:scale-110 transition-transform"
-                        >
-                          <InfoOutlinedIcon fontSize="small" />
-                        </button>
-                      </div>
-                    </th>
-
-                    {/* Size */}
-                    <th className="px-4 py-3 text-center">
-                      <div className="flex items-center justify-center gap-1">
-                        Size of Waterbody (in hectares)
-                        <button
-                          title="Click the Info icon for details"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleInfoClick(
-                              e.currentTarget,
-                              "Total geographical area covered by the waterbody boundary, measured in hectares."
-                            );
-                          }}
-                          className="p-1 text-blue-600 hover:scale-110 transition-transform"
-                        >
-                          <InfoOutlinedIcon fontSize="small" />
-                        </button>
-                      </div>
-                    </th>
-
-                    {/* Mean Water Availability Rabi */}
-                    <th
-                      className="px-4 py-3 text-center cursor-pointer select-none"
-                      onClick={() => handleSort("avgWaterAvailabilityRabi")}
-                    >
-                      <div className="flex items-center justify-center gap-1">
-                        Mean Water Availability during Rabi (%)
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleInfoClick(
-                              e.currentTarget,
-                              "Average percentage of water presence in the waterbody area during the Rabi season."
-                            );
-                          }}
-                          className="p-1 text-blue-600 hover:scale-110 transition-transform"
-                        >
-                          <InfoOutlinedIcon fontSize="small" />
-                        </button>
-                        <span>
-                          {sortField === "avgWaterAvailabilityRabi" &&
-                          sortOrder === "asc"
-                            ? "🔼"
-                            : "🔽"}
-                        </span>
-                      </div>
-                    </th>
-
-                    {/* Mean Water Availability Zaid */}
-                    <th
-                      className="px-4 py-3 text-center cursor-pointer select-none"
-                      onClick={() => handleSort("avgWaterAvailabilityZaid")}
-                    >
-                      <div className="flex items-center justify-center gap-1">
-                        Mean Water Availability during Zaid (%)
-                        <button
-                          title="Click the Info icon for details"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleInfoClick(
-                              e.currentTarget,
-                              "Average percentage of water presence in the waterbody area during the Zaid (summer) season."
-                            );
-                          }}
-                          className="p-1 text-blue-600 hover:scale-110 transition-transform"
-                        >
-                          <InfoOutlinedIcon fontSize="small" />
-                        </button>
-                        <span>
-                          {sortField === "avgWaterAvailabilityZaid" &&
-                          sortOrder === "asc"
-                            ? "🔼"
-                            : "🔽"}
-                        </span>
-                      </div>
-                    </th>
-                  </tr>
-                </thead>
-
-                <tbody className="text-sm text-gray-700">
-                  {sortedRows.map((row) => (
-                    <tr
-                      key={row.id}
-                      onClick={() => handleWaterbodyClick(row)}
-                      className="hover:bg-gray-50 cursor-pointer transition-colors border-b"
-                    >
-                      <td className="px-4 py-5 text-center">{row.state}</td>
-                      <td className="px-4 py-2 text-center">{row.district}</td>
-                      <td className="px-4 py-2 text-center">{row.block}</td>
-                      <td className="px-4 py-2 text-center">{row.village}</td>
-                      <td className="px-4 py-2 text-center">{row.waterbody}</td>
-                      <td className="px-4 py-2 text-center">
-                        {row.siltRemoved}
-                      </td>
-                      <td className="px-4 py-2 text-center">2022-23</td>
-                      <td className="px-4 py-2 text-center">
-                        {row.areaOred?.toFixed(2)}
-                      </td>
-                      <td className="px-4 py-2 text-center">
-                        {row.avgWaterAvailabilityRabi ?? "NA"}{" "}
-                        {row.ImpactRabi && (
-                          <span style={{ color: row.ImpactRabiColor }}>
-                            ({row.ImpactRabi})
-                          </span>
+                        {openInfoKey === "state" && (
+                          <div className="absolute left-1/2 -translate-x-1/2 top-full mt-2 bg-white border border-gray-300 rounded-md shadow-md p-2 text-xs text-gray-800 w-64 z-50">
+                            State where the waterbody is located.
+                          </div>
                         )}
-                      </td>
-                      <td className="px-4 py-2 text-center">
-                        {row.avgWaterAvailabilityZaid ?? "NA"}{" "}
-                        {row.ImpactZaid && (
-                          <span style={{ color: row.ImpactZaidColor }}>
-                            ({row.ImpactZaid})
+                      </th>
+
+                      {/* District */}
+                      <th className="px-4 py-3 text-center">
+                        <div className="flex items-center justify-center gap-1">
+                          District
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleFilterClick(e, "district");
+                            }}
+                            className="p-1 hover:scale-110 transition-transform"
+                          >
+                            <FilterListIcon fontSize="small" />
+                          </button>
+                          <button
+                            title="Click the Info icon for details"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleInfoClick(
+                                e.currentTarget,
+                                "District in which the waterbody falls."
+                              );
+                            }}
+                            className="p-1 text-blue-600 hover:scale-110 transition-transform"
+                          >
+                            <InfoOutlinedIcon fontSize="small" />
+                          </button>
+                        </div>
+                      </th>
+
+                      {/* Taluka */}
+                      <th className="px-4 py-3 text-center">
+                        <div className="flex items-center justify-center gap-1">
+                          Taluka
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleFilterClick(e, "block");
+                            }}
+                            className="p-1 hover:scale-110 transition-transform"
+                          >
+                            <FilterListIcon fontSize="small" />
+                          </button>
+                          <button
+                            title="Click the Info icon for details"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleInfoClick(
+                                e.currentTarget,
+                                "Taluka (administrative block) in which the waterbody is located."
+                              );
+                            }}
+                            className="p-1 text-blue-600 hover:scale-110 transition-transform"
+                          >
+                            <InfoOutlinedIcon fontSize="small" />
+                          </button>
+                        </div>
+                      </th>
+
+                      {/* GP/Village */}
+                      <th className="px-4 py-3 text-center">
+                        <div className="flex items-center justify-center gap-1">
+                          GP/Village
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleFilterClick(e, "village");
+                            }}
+                            className="p-1 hover:scale-110 transition-transform"
+                          >
+                            <FilterListIcon fontSize="small" />
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleInfoClick(
+                                e.currentTarget,
+                                "Gram Panchayat or Village where the waterbody is located."
+                              );
+                            }}
+                            className="p-1 text-blue-600 hover:scale-110 transition-transform"
+                          >
+                            <InfoOutlinedIcon fontSize="small" />
+                          </button>
+                        </div>
+                      </th>
+
+                      {/* Waterbody + Search */}
+                      <th className="px-4 py-3 text-center">
+                        <div className="flex flex-col items-center gap-2">
+                          <div className="flex items-center gap-1">
+                            Waterbody
+                            <button
+                              title="Click the Info icon for details"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleInfoClick(
+                                  e.currentTarget,
+                                  "Name of the waterbody being monitored."
+                                );
+                              }}
+                              className="p-1 text-blue-600 hover:scale-110 transition-transform"
+                            >
+                              <InfoOutlinedIcon fontSize="small" />
+                            </button>
+                          </div>
+                          <input
+                            type="text"
+                            placeholder="Search Waterbody"
+                            value={waterbodySearch}
+                            onChange={(e) => setWaterbodySearch(e.target.value)}
+                            className="border-b border-gray-700 bg-gray-100 text-xs text-gray-700 px-1 py-0.5 w-40 focus:outline-none focus:border-blue-500"
+                          />
+                        </div>
+                      </th>
+
+                      {/* Silt Removed */}
+                      <th
+                        className="px-4 py-3 text-center cursor-pointer select-none"
+                        onClick={() => handleSort("siltRemoved")}
+                      >
+                        <div className="flex items-center justify-center gap-1">
+                          Silt Removed (Cu.m.)
+                          <button
+                            title="Click the Info icon for details"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleInfoClick(
+                                e.currentTarget,
+                                "Total amount of silt removed from the waterbody, measured in cubic meters."
+                              );
+                            }}
+                            className="p-1 text-blue-600 hover:scale-110 transition-transform"
+                          >
+                            <InfoOutlinedIcon fontSize="small" />
+                          </button>
+                          <span>
+                            {sortField === "siltRemoved" && sortOrder === "asc"
+                              ? "🔼"
+                              : "🔽"}
                           </span>
-                        )}
-                      </td>
+                        </div>
+                      </th>
+
+                      {/* Intervention Year */}
+                      <th className="px-4 py-3 text-center">
+                        <div className="flex items-center justify-center gap-1">
+                          Intervention Year
+                          <button
+                            title="Click the Info icon for details"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleInfoClick(
+                                e.currentTarget,
+                                "The year in which rejuvenation or desilting work was carried out on the waterbody."
+                              );
+                            }}
+                            className="p-1 text-blue-600 hover:scale-110 transition-transform"
+                          >
+                            <InfoOutlinedIcon fontSize="small" />
+                          </button>
+                        </div>
+                      </th>
+
+                      {/* Size */}
+                      <th className="px-4 py-3 text-center">
+                        <div className="flex items-center justify-center gap-1">
+                          Size of Waterbody (in hectares)
+                          <button
+                            title="Click the Info icon for details"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleInfoClick(
+                                e.currentTarget,
+                                "Total geographical area covered by the waterbody boundary, measured in hectares."
+                              );
+                            }}
+                            className="p-1 text-blue-600 hover:scale-110 transition-transform"
+                          >
+                            <InfoOutlinedIcon fontSize="small" />
+                          </button>
+                        </div>
+                      </th>
+
+                      {/* Mean Water Availability Rabi */}
+                      <th
+                        className="px-4 py-3 text-center cursor-pointer select-none"
+                        onClick={() => handleSort("avgWaterAvailabilityRabi")}
+                      >
+                        <div className="flex items-center justify-center gap-1">
+                          Mean Water Availability during Rabi (%)
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleInfoClick(
+                                e.currentTarget,
+                                "Average percentage of water presence in the waterbody area during the Rabi season."
+                              );
+                            }}
+                            className="p-1 text-blue-600 hover:scale-110 transition-transform"
+                          >
+                            <InfoOutlinedIcon fontSize="small" />
+                          </button>
+                          <span>
+                            {sortField === "avgWaterAvailabilityRabi" &&
+                            sortOrder === "asc"
+                              ? "🔼"
+                              : "🔽"}
+                          </span>
+                        </div>
+                      </th>
+
+                      {/* Mean Water Availability Zaid */}
+                      <th
+                        className="px-4 py-3 text-center cursor-pointer select-none"
+                        onClick={() => handleSort("avgWaterAvailabilityZaid")}
+                      >
+                        <div className="flex items-center justify-center gap-1">
+                          Mean Water Availability during Zaid (%)
+                          <button
+                            title="Click the Info icon for details"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleInfoClick(
+                                e.currentTarget,
+                                "Average percentage of water presence in the waterbody area during the Zaid (summer) season."
+                              );
+                            }}
+                            className="p-1 text-blue-600 hover:scale-110 transition-transform"
+                          >
+                            <InfoOutlinedIcon fontSize="small" />
+                          </button>
+                          <span>
+                            {sortField === "avgWaterAvailabilityZaid" &&
+                            sortOrder === "asc"
+                              ? "🔼"
+                              : "🔽"}
+                          </span>
+                        </div>
+                      </th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-            {infoOpen && infoAnchor instanceof HTMLElement && (
-              <div
-                className="fixed z-[9999] bg-white border border-gray-300 rounded-md shadow-md p-2 text-sm text-gray-800 max-w-xs"
-                style={{
-                  top:
-                    infoAnchor.getBoundingClientRect().bottom +
-                    window.scrollY +
-                    6,
-                  left: infoAnchor.getBoundingClientRect().left,
-                }}
-              >
-                {infoText}
+                  </thead>
+
+                  <tbody className="text-sm text-gray-700">
+                    {sortedRows.map((row) => (
+                      <tr
+                        key={row.id}
+                        onClick={() => handleWaterbodyClick(row)}
+                        className="hover:bg-gray-50 cursor-pointer transition-colors border-b"
+                      >
+                        <td className="px-4 py-5 text-center">{row.state}</td>
+                        <td className="px-4 py-2 text-center">
+                          {row.district}
+                        </td>
+                        <td className="px-4 py-2 text-center">{row.block}</td>
+                        <td className="px-4 py-2 text-center">{row.village}</td>
+                        <td className="px-4 py-2 text-center">
+                          {row.waterbody}
+                        </td>
+                        <td className="px-4 py-2 text-center">
+                          {row.siltRemoved}
+                        </td>
+                        <td className="px-4 py-2 text-center">2022-23</td>
+                        <td className="px-4 py-2 text-center">
+                          {row.areaOred?.toFixed(2)}
+                        </td>
+                        <td className="px-4 py-2 text-center">
+                          {row.avgWaterAvailabilityRabi ?? "NA"}{" "}
+                          {row.ImpactRabi && (
+                            <span style={{ color: row.ImpactRabiColor }}>
+                              ({row.ImpactRabi})
+                            </span>
+                          )}
+                        </td>
+                        <td className="px-4 py-2 text-center">
+                          {row.avgWaterAvailabilityZaid ?? "NA"}{" "}
+                          {row.ImpactZaid && (
+                            <span style={{ color: row.ImpactZaidColor }}>
+                              ({row.ImpactZaid})
+                            </span>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
-            )}
-          </>
+              {infoOpen && infoAnchor instanceof HTMLElement && (
+                <div
+                  className="fixed z-[9999] bg-white border border-gray-300 rounded-md shadow-md p-2 text-sm text-gray-800 max-w-xs"
+                  style={{
+                    top:
+                      infoAnchor.getBoundingClientRect().bottom +
+                      window.scrollY +
+                      6,
+                    left: infoAnchor.getBoundingClientRect().left,
+                  }}
+                >
+                  {infoText}
+                </div>
+              )}
+            </>
+          )
         ) : view === "map" ? (
           <div className="flex flex-col gap-4 mt-2 w-full px-2 sm:px-4 md:px-6">
             {selectedWaterbody && (
