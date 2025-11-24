@@ -1,7 +1,14 @@
 // src/components/kyl_mapContainer.jsx
-import React, { useState } from "react";
+import { useState } from "react";
 import KYLLocationSearchBar from "./kyl_location";
 import YearSlider from "./yearSlider";
+
+//? Icons Imports
+import settlementIcon from "../assets/settlement_icon.svg";
+import wellIcon from "../assets/well_proposed.svg";
+import waterbodyIcon from "../assets/waterbodies_proposed.svg";
+import RechargeIcon from "../assets/recharge_icon.svg"
+import IrrigationIcon from "../assets/irrigation_icon.svg"
 
 // Layer Controls component
 const LayerControls = ({
@@ -39,9 +46,8 @@ const LayerControls = ({
       {isMenuOpen && (
         <div className="absolute top-12 left-0 bg-white p-3 rounded-lg shadow-md space-y-3 min-w-[200px]">
           <div
-            className={`flex items-center gap-2 ${
-              !areMWSLayersAvailable ? "opacity-50 cursor-not-allowed" : ""
-            }`}
+            className={`flex items-center gap-2 ${!areMWSLayersAvailable ? "opacity-50 cursor-not-allowed" : ""
+              }`}
           >
             <input
               type="checkbox"
@@ -53,18 +59,16 @@ const LayerControls = ({
             />
             <label
               htmlFor="show-mws"
-              className={`text-sm ${
-                areMWSLayersAvailable ? "text-gray-700" : "text-gray-400"
-              }`}
+              className={`text-sm ${areMWSLayersAvailable ? "text-gray-700" : "text-gray-400"
+                }`}
             >
               Show MWS Layers
             </label>
           </div>
 
           <div
-            className={`flex items-center gap-2 ${
-              !areVillageLayersAvailable ? "opacity-50 cursor-not-allowed" : ""
-            }`}
+            className={`flex items-center gap-2 ${!areVillageLayersAvailable ? "opacity-50 cursor-not-allowed" : ""
+              }`}
           >
             <input
               type="checkbox"
@@ -76,9 +80,8 @@ const LayerControls = ({
             />
             <label
               htmlFor="show-villages"
-              className={`text-sm ${
-                areVillageLayersAvailable ? "text-gray-700" : "text-gray-400"
-              }`}
+              className={`text-sm ${areVillageLayersAvailable ? "text-gray-700" : "text-gray-400"
+                }`}
             >
               Show Village Boundaries
             </label>
@@ -164,7 +167,7 @@ const MapZoomControls = ({ mapRef }) => {
 };
 
 // Updated MapLegend component
-const MapLegend = ({ showMWS, showVillages, currentLayer }) => {
+const MapLegend = ({ showMWS, showVillages, currentLayer, mappedAssets, mappedDemands }) => {
   // Add state for collapsed status
   const [isCollapsed, setIsCollapsed] = useState(false);
 
@@ -200,7 +203,7 @@ const MapLegend = ({ showMWS, showVillages, currentLayer }) => {
     { color: "#eee05d", label: "Single Non-Kharif" },
     { color: "#f9b249", label: "Double Cropping" },
     { color: "#fb5139", label: "Triple Cropping" },
-    { color: "#ff0000", label: "Shrubs and Scrubs" },
+    { color: "#4c4ef5", label: "Shrubs and Scrubs" },
   ];
 
   const terrainLegendItems = [
@@ -270,10 +273,10 @@ const MapLegend = ({ showMWS, showVillages, currentLayer }) => {
   ];
 
   const LiteracyLengendItems = [
-    { color: "#E6E6FA", label: "%age SC population < 5" },
-    { color: "#DA70D6", label: "%age SC population (5 - 17)" },
-    { color: "#7851A9", label: "%age SC population (17 - 37)" },
-    { color: "#4B0082", label: "%age SC population > 37" },
+    { color: "#98FB98", label: "%age literacy level <46" },
+    { color: "#32CD32", label: "%age literacy level (46-59)" },
+    { color: "#228B22", label: "%age literacy level (59-70)" },
+    { color: "#006400", label: "%age literacy level >70" },
   ];
 
   const WaterLengendItems = [
@@ -283,9 +286,13 @@ const MapLegend = ({ showMWS, showVillages, currentLayer }) => {
   ];
 
   const NregaLegendItems = [
-    { color: "#87CEEB", label: "Less than 100 NREGA works" },
-    { color: "#4169E1", label: "Between 100 - 300 NREGA works" },
-    { color: "#000080", label: "More than 300 NREGA works" },
+    { label: "Household Livelihood", color: "#C2678D" },
+    { label: "Others - HH, Community", color: "#355070" },
+    { label: "Agri Impact - HH, Community", color: "#FFA500" },
+    { label: "SWC - Landscape level impact", color: "#6495ED" },
+    { label: "Irrigation - Site level impact", color: "#1A759F" },
+    { label: "Plantation", color: "#52B69A" },
+    { label: "Un Identified", color: "#6D597A" },
   ];
 
   const TrendLegendItems = [
@@ -294,10 +301,64 @@ const MapLegend = ({ showMWS, showVillages, currentLayer }) => {
     { color: "#FFD700", label: "No trend of G" },
   ];
 
+  const CropDegradationItems = [
+    { color: "#a9a9a9", label: "Crops - Barren" },
+    { color: "#eaa4f0", label: "Crops - Shrubs and Scrubs" },
+    { color: "#f7fcf5", label: "Double - Single" },
+    { color: "#ff4500", label: "Tripple/annual/perennial - Single" },
+    { color: "#ffc300", label: "Tripple/annual/perennial - Double" },
+  ];
+
+  const CropDeforestationItems = [
+    { color: "#73bb53", label: "Trees - Trees" },
+    { color: "#ff0000", label: "Trees - Built Up" },
+    { color: "#eee05d", label: "Trees - Crops" },
+    { color: "#a9a9a9", label: "Trees - Barren" },
+    { color: "#eaa4f0", label: "Trees - Shrubs and Scrubs" },
+  ];
+
+  const CropAfforestationtems = [
+    { color: "#ff0000", label: "Built Up - Trees" },
+    { color: "#eee05d", label: "Crops - Trees" },
+    { color: "#a9a9a9", label: "Barren - Trees" },
+    { color: "#eaa4f0", label: "Scrub land - Trees" },
+  ];
+
+  const AquiferItems = [
+    { color: "#fffdb5", label: "Alluvium" },
+    { color: "#f3a425", label: "Laterite" },
+    { color: "#99ecf1", label: "Basalt" },
+    { color: "#a5f8c5", label: "Sandstone" },
+    { color: "#f57c99", label: "Shale" },
+    { color: "#e8d52e", label: "Limestone" },
+    { color: "#3c92f2", label: "Granite" },
+    { color: "#d5db21", label: "Schist" },
+    { color: "#cf7ff4", label: "Quartzite" },
+    { color: "#f4dbff", label: "Charnockite" },
+    { color: "#50c02b", label: "Khondalite" },
+    { color: "#ffe1b5", label: "Banded Gneissic Complex" },
+    { color: "#e4cff1", label: "Gneiss" },
+    { color: "#57d2ff", label: "Intrusive" },
+  ];
+
+  const SOGEItems = [
+    { color: "#ffffff", label: "Safe" },
+    { color: "#e0f3f8", label: "Semi - Critical " },
+    { color: "#4575b4", label: " Critical " },
+    { color: "#313695", label: "Over - Exploited " },
+    { color: "#a9a9a9", label: "Not Assessed" },
+  ];
+
+  const GreenCreditItems = [
+    { color: "#ffffff", label: "Areas with no known green credit sites" },
+    { color: "#14d11dff", label: "Areas with green credit sites " },
+  ];
+
   // Check if LULC layer is active
   const isLulcLayerActive = currentLayer?.some(
     (layer) =>
       layer.name === "avg_double_cropped" ||
+      layer.name === "built_up_area" ||
       layer.name.includes("LULC") ||
       layer.name.includes("lulc")
   );
@@ -370,11 +431,37 @@ const MapLegend = ({ showMWS, showVillages, currentLayer }) => {
     (layer) => layer.name === "trend_g" || layer.name.includes("mws_layers")
   );
 
+  const isCropDegradationActive = currentLayer?.some(
+    (layer) =>
+      layer.name === "degradation_land_area" ||
+      layer.name.includes("degradation")
+  );
+
+  const isCropDeforestationActive = currentLayer?.some(
+    (layer) =>
+      layer.name === "decrease_in_tree_cover" || layer.name.includes("decrease")
+  );
+
+  const isCropAfforestationActive = currentLayer?.some(
+    (layer) =>
+      layer.name === "increase_in_tree_cover" || layer.name.includes("increase")
+  );
+
+  const isAquiferActive = currentLayer?.some(
+    (layer) => layer.name === "aquifer_class" || layer.name.includes("aquifer")
+  );
+
+  const isSOGEActive = currentLayer?.some(
+    (layer) => layer.name === "soge_class" || layer.name.includes("soge")
+  );
+
+  const isGreenCreditActive = currentLayer?.some(
+    (layer) => layer.name === "green_credit" || layer.name.includes("green_credit")
+  );
   return (
     <div
-      className={`absolute bottom-24 left-0 z-10 transition-all duration-300 ${
-        isCollapsed ? "translate-x-2" : "translate-x-6"
-      }`}
+      className={`absolute bottom-24 left-0 z-10 transition-all duration-300 ${isCollapsed ? "translate-x-2" : "translate-x-6"
+        }`}
     >
       {/* Collapse toggle button */}
       <button
@@ -405,11 +492,10 @@ const MapLegend = ({ showMWS, showVillages, currentLayer }) => {
 
       {/* Main legend container */}
       <div
-        className={`bg-white rounded-lg shadow-md overflow-hidden transition-all duration-300 ${
-          isCollapsed
-            ? "w-10 h-48 opacity-80 hover:opacity-100"
-            : "w-72 max-h-[60vh] opacity-100"
-        }`}
+        className={`bg-white rounded-lg shadow-md overflow-hidden transition-all duration-300 ${isCollapsed
+          ? "w-10 h-48 opacity-80 hover:opacity-100"
+          : "w-72 max-h-[60vh] opacity-100"
+          }`}
       >
         {/* Collapsed state - vertical "Legend" text */}
         {isCollapsed && (
@@ -808,6 +894,215 @@ const MapLegend = ({ showMWS, showVillages, currentLayer }) => {
                       </span>
                     </div>
                   ))}
+                </div>
+              )}
+
+              {/* Cropping Degradation Section */}
+              {isCropDegradationActive && (
+                <div className="space-y-2">
+                  <h4 className="text-xs font-medium text-gray-600">
+                    Cropping Degradation
+                  </h4>
+                  {CropDegradationItems.map((item, index) => (
+                    <div
+                      key={`trend-${index}`}
+                      className="flex items-center gap-2"
+                    >
+                      <div
+                        className="w-4 h-4 rounded"
+                        style={{
+                          backgroundColor: item.color,
+                          border: `1px solid rgba(0,0,0,0.2)`,
+                        }}
+                      />
+                      <span className="text-sm text-gray-600">
+                        {item.label}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Crop Deforstation Section */}
+              {isCropDeforestationActive && (
+                <div className="space-y-2">
+                  <h4 className="text-xs font-medium text-gray-600">
+                    Deforestation
+                  </h4>
+                  {CropDeforestationItems.map((item, index) => (
+                    <div
+                      key={`trend-${index}`}
+                      className="flex items-center gap-2"
+                    >
+                      <div
+                        className="w-4 h-4 rounded"
+                        style={{
+                          backgroundColor: item.color,
+                          border: `1px solid rgba(0,0,0,0.2)`,
+                        }}
+                      />
+                      <span className="text-sm text-gray-600">
+                        {item.label}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Cropping Degradation Section */}
+              {isCropAfforestationActive && (
+                <div className="space-y-2">
+                  <h4 className="text-xs font-medium text-gray-600">
+                    Afforestation
+                  </h4>
+                  {CropAfforestationtems.map((item, index) => (
+                    <div
+                      key={`trend-${index}`}
+                      className="flex items-center gap-2"
+                    >
+                      <div
+                        className="w-4 h-4 rounded"
+                        style={{
+                          backgroundColor: item.color,
+                          border: `1px solid rgba(0,0,0,0.2)`,
+                        }}
+                      />
+                      <span className="text-sm text-gray-600">
+                        {item.label}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Aquifer Section */}
+              {isAquiferActive && (
+                <div className="space-y-2">
+                  <h4 className="text-xs font-medium text-gray-600">Aquifer</h4>
+                  {AquiferItems.map((item, index) => (
+                    <div
+                      key={`trend-${index}`}
+                      className="flex items-center gap-2"
+                    >
+                      <div
+                        className="w-4 h-4 rounded"
+                        style={{
+                          backgroundColor: item.color,
+                          border: `1px solid rgba(0,0,0,0.2)`,
+                        }}
+                      />
+                      <span className="text-sm text-gray-600">
+                        {item.label}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* SOGE Section */}
+              {isSOGEActive && (
+                <div className="space-y-2">
+                  <h4 className="text-xs font-medium text-gray-600">SOGE</h4>
+                  {SOGEItems.map((item, index) => (
+                    <div
+                      key={`trend-${index}`}
+                      className="flex items-center gap-2"
+                    >
+                      <div
+                        className="w-4 h-4 rounded"
+                        style={{
+                          backgroundColor: item.color,
+                          border: `1px solid rgba(0,0,0,0.2)`,
+                        }}
+                      />
+                      <span className="text-sm text-gray-600">
+                        {item.label}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Green Credit Section */}
+              {isGreenCreditActive && (
+                <div className="space-y-2">
+                  <h4 className="text-xs font-medium text-gray-600">Green Credit</h4>
+                  {GreenCreditItems.map((item, index) => (
+                    <div
+                      key={`trend-${index}`}
+                      className="flex items-center gap-2"
+                    >
+                      <div
+                        className="w-4 h-4 rounded"
+                        style={{
+                          backgroundColor: item.color,
+                          border: `1px solid rgba(0,0,0,0.2)`,
+                        }}
+                      />
+                      <span className="text-sm text-gray-600">
+                        {item.label}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Mapped Assets */}
+              {mappedAssets && (
+                <div className="space-y-2">
+                  <h4 className="text-xs font-medium text-gray-600">Mapped Assets</h4>
+                  <div className="flex items-center gap-2">
+                    <img
+                      src={settlementIcon}
+                      alt="Settlement"
+                      className="w-6 h-6"
+                      draggable={false}
+                    />
+                    <span className="text-sm text-gray-600">Settlement</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <img
+                      src={wellIcon}
+                      alt="Settlement"
+                      className="w-6 h-6"
+                      draggable={false}
+                    />
+                    <span className="text-sm text-gray-600">Well</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <img
+                      src={waterbodyIcon}
+                      alt="Settlement"
+                      className="w-6 h-6"
+                      draggable={false}
+                    />
+                    <span className="text-sm text-gray-600">Water Structure</span>
+                  </div>
+                </div>
+              )}
+
+              {/* Proposed Works */}
+              {mappedDemands && (
+                <div className="space-y-2">
+                  <h4 className="text-xs font-medium text-gray-600">Proposed Works</h4>
+                  <div className="flex items-center gap-2">
+                    <img
+                      src={RechargeIcon}
+                      alt="Settlement"
+                      className="w-6 h-6"
+                      draggable={false}
+                    />
+                    <span className="text-sm text-gray-600">Recharge Structure</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <img
+                      src={IrrigationIcon}
+                      alt="Settlement"
+                      className="w-6 h-6"
+                      draggable={false}
+                    />
+                    <span className="text-sm text-gray-600">Irrigation Structure</span>
+                  </div>
                 </div>
               )}
             </div>

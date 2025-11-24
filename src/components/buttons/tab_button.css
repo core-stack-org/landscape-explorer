@@ -9,9 +9,10 @@
   box-sizing: border-box;
   color: #fff;
   cursor: pointer;
-  display: inline-block;
+  display: block;
+  width: 100%;
   font-family: Inter,-apple-system,system-ui,"Segoe UI",Helvetica,Arial,sans-serif;
-  font-size: 0.6em;
+  font-size: 0.9rem;
   font-weight: 600;
   letter-spacing: normal;
   line-height: 1.5;
@@ -26,10 +27,8 @@
   user-select: none;
   -webkit-user-select: none;
   touch-action: manipulation;
-  vertical-align: top;
   white-space: nowrap;
-  margin-top: 5px;
-  margin-left: 4px;
+  margin-bottom: 8px;
 }
 
 .button-68:hover {
@@ -42,6 +41,12 @@
 .button-68:active {
   transform: translateY(2px);
   transition-duration: .35s;
+}
+
+.button-68-active {
+  background-color: #1e8449;
+  box-shadow: rgba(30, 132, 73, .5) 0 2px 4px inset, rgba(39, 174, 96, .25) 0 4px 9px;
+  transform: translateY(0);
 }
 
 .button-68:hover {

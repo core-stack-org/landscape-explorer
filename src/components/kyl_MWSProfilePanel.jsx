@@ -3,6 +3,8 @@ import { stateAtom, districtAtom, blockAtom, dataJsonAtom } from '../store/locat
 import { useRecoilValue } from 'recoil';
 import { useEffect, useState } from 'react';
 
+import {trackEvent} from "../services/analytics.js"
+
 const KYLMWSProfilePanel = ({ mwsData, onBack }) => {
 
   const state = useRecoilValue(stateAtom);
@@ -13,20 +15,25 @@ const KYLMWSProfilePanel = ({ mwsData, onBack }) => {
   const [dataString, setDataString] = useState("")
 
   const handleReportDownload = (id) =>{
-    window.open(`${process.env.REACT_APP_API_URL}/generate_mws_report/?state=${state.label.toLowerCase().split(" ").join("_")}&district=${district.label.toLowerCase().split(" ").join("_")}&block=${block.label.toLowerCase().split(" ").join("_")}&uid=${id}`, '_blank');
+    trackEvent("Generate MWS Report", "generate_report", JSON.stringify([state.label, district.label, block.label, id]));
+    window.open(`${process.env.REACT_APP_API_URL}/generate_mws_report/?state=${state.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_')}&district=${district.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_')}&block=${block.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_')}&uid=${id}`, '_blank');
   }
 
   useEffect(()=>{
     if(dataJson !== null){
       const found = dataJson.find((item) => item.mws_id === mwsData?.uid)
+      try{
+        const terrainType = ["Broad Slopes and Hilly","Mostly Plains","Hills and Valleys","Broad Slopes and Plains"]
+        
+        let dataStr = `The Selected MWS has a Terrain of type ${terrainType[found.terrainCluster_ID]}, intersecting with ${found.mws_intersect_villages.length} villages also having ${found.total_nrega_assets} NREGA assets which lies in the selected MWS. The average cropping intensity across the MWS's is ${found.cropping_intensity_avg.toFixed(2)} with an ${Math.round(found.avg_precipitation)} mm average precipitation.`
 
-      const terrainType = ["Broad Slopes and Hilly","Mostly Plains","Hills and Valleys","Broad Slopes and Plains"]
-      
-      let dataStr = `The Selected MWS has a Terrain of type ${terrainType[found.terrainCluster_ID]}, intersecting with ${found.mws_intersect_villages.length} villages also having ${found.total_nrega_assets} nrega assets which lies in the selected MWS. The average cropping intensity across the MWS's is ${found.cropping_intensity_avg} with an ${found.avg_precipitation}ppm average precipitation.`
-
-      setDataString(dataStr)
+        setDataString(dataStr)
+      }catch(err){
+        console.log(err)
+        console.log(found)
+      }
     }
-  }, [dataJson])
+  }, [dataJson, mwsData])
 
   return (
     <div className="bg-white rounded-lg border border-gray-100 p-3">
@@ -61,7 +68,7 @@ const KYLMWSProfilePanel = ({ mwsData, onBack }) => {
         <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
         </svg>
-        <span className="text-sm">Download Report</span>
+        <span className="text-sm">View Micro-Watershed Profile </span>
       </button>
     </div>
   );

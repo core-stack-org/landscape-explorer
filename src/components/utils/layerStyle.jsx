@@ -49,7 +49,7 @@ const layerStyles = (feature, vectorStyle, idx = 0, villageJson, dataJson) => {
             // DROUGHT YEARS
             years.map((item) => {
                 let tempDro = (feature.values_["drlb_"+item].match(/2/g) || []).length + (feature.values_["drlb_"+item].match(/3/g)||[]).length;
-                if(tempDro > 5){avg_Res++;}
+                if(tempDro >= 5){avg_Res++;}
             })
             break;
 
@@ -71,7 +71,7 @@ const layerStyles = (feature, vectorStyle, idx = 0, villageJson, dataJson) => {
             break;
 
         case 8:
-            // PERCENT SC POPULATION
+            // PERCENT LITERACY POPULATION
             if(feature.values_.P_LIT !== 0)
                 avg_Res = (feature.values_.P_LIT / feature.values_.TOT_P) * 100;
             break;
@@ -91,6 +91,64 @@ const layerStyles = (feature, vectorStyle, idx = 0, villageJson, dataJson) => {
                     avg_Res = dataJson[i].trend_g;
                     break;
                 }
+            }
+            break;
+        
+        case 11:
+            // For Aquifer Types
+            if(feature.values_.Principal_ === "Alluvium"){
+                avg_Res = 0
+            }
+            else if (feature.values_.Principal_ === "Laterite"){
+                avg_Res = 1
+            }
+            else if (feature.values_.Principal_ === "Basalt"){
+                avg_Res = 2
+            }
+            else if (feature.values_.Principal_ === "Sandstone"){
+                avg_Res = 3
+            }
+            else if (feature.values_.Principal_ === "Shale"){
+                avg_Res = 4
+            }
+            else if (feature.values_.Principal_ === "Limestone"){
+                avg_Res = 5
+            }
+            else if (feature.values_.Principal_ === "Granite"){
+                avg_Res = 6
+            }
+            else if (feature.values_.Principal_ === "Schist"){
+                avg_Res = 7
+            }
+            else if (feature.values_.Principal_ === "Quartzite"){
+                avg_Res = 8
+            }
+            else if (feature.values_.Principal_ === "Charnockite"){
+                avg_Res = 9
+            }
+            else if (feature.values_.Principal_ === "Khondalite"){
+                avg_Res = 10
+            }
+            else if (feature.values_.Principal_ === "Banded Gneissic Complex"){
+                avg_Res = 11
+            }
+            else if (feature.values_.Principal_ === "Gneiss"){
+                avg_Res = 12
+            }
+            else {
+                avg_Res = 13
+            }
+            break;
+        
+        case 12:
+            // For SOGE Types
+            if(feature.values_.class === "Safe"){
+                avg_Res = 0
+            }
+            else if(feature.values_.class === "Semi-Critical"){avg_Res = 1}
+            else if(feature.values_.class === "Critical"){avg_Res = 2}
+            else{
+                avg_Res = 3
             }
             break;
     }
