@@ -176,7 +176,7 @@
             "Agroforestry" : [
                 {
                     "Name" : "transition_from_crops_to_agroforestry",
-                    "Category" : "transition from crops to agroforestry",
+                    "Category" : "Transition from Crops to Agroforestry",
                     "Characteristics" : "Reduction in cropping area over the years is more than 30ha",
                     "level" : 0,
                     "Values" : [
@@ -236,7 +236,7 @@
                 },
                 {   
                     "Name" : "nrega",
-                    "Category" : "Nrega",
+                    "Category" : "NREGA",
                     "Characteristics" : "Number of NREGA works done is low",
                     "level" : 1,
                     "Values" : [
