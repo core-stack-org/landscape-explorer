@@ -49,6 +49,7 @@ const KYLDashboardPage = () => {
   const mwsLayerRef = useRef(null);
 
   const [isLoading, setIsLoading] = useState(false);
+  const [islayerLoaded, setIsLayerLoaded] = useState(false);
   const [highlightMWS, setHighlightMWS] = useState(null)
   const [selectedMWS, setSelectedMWS] = useState([]);
   const [selectedVillages, setSelectedVillages] = useState([]);
@@ -524,8 +525,7 @@ const KYLDashboardPage = () => {
   };
 
   const fetchBoundaryAndZoom = async (districtName, blockName) => {
-    setIsLoading(true);
-
+    setIsLayerLoaded(true);
     try {
       const boundaryLayer = await getVectorLayers(
         "panchayat_boundaries",
@@ -642,7 +642,7 @@ const KYLDashboardPage = () => {
       view.animate(
         {
           zoom: Math.max(view.getZoom() - 0.5, 5),
-          duration: 750,
+          duration: 200,
         },
         () => {
           view.fit(extent, {
@@ -678,10 +678,10 @@ const KYLDashboardPage = () => {
       if (selectedMWS.length > 0) {
         await fetchMWSLayer(selectedMWS);
       }
+      setIsLayerLoaded(false)
     } catch (error) {
       console.error("Error loading boundary:", error);
-      setIsLoading(false);
-
+      setIsLayerLoaded(false);
       const view = mapRef.current.getView();
       view.setCenter([78.9, 23.6]);
       view.setZoom(5);
@@ -690,6 +690,7 @@ const KYLDashboardPage = () => {
 
   const fetchDataJson = async () => {
     try {
+      setIsLoading(true);
       const response = await fetch(
         `${process.env.REACT_APP_API_URL}/download_kyl_data/?state=${state.label.toLowerCase().replace(/\s*\(\s*/g, "_").replace(/\s*\)\s*/g, "").replace(/\s+/g, "_")}&district=${district.label.toLowerCase().replace(/\s*\(\s*/g, "_").replace(/\s*\)\s*/g, "").replace(/\s+/g, "_")}&block=${block.label.toLowerCase().replace(/\s*\(\s*/g, "_").replace(/\s*\)\s*/g, "").replace(/\s+/g, "_")}&file_type=json`
       );
@@ -1780,7 +1781,7 @@ const KYLDashboardPage = () => {
 
         {/* Map Container */}
         <KYLMapContainer
-          isLoading={isLoading}
+          isLoading={islayerLoaded || isLoading}
           statesData={statesData}
           mapElement={mapElement}
           showMWS={showMWS}
