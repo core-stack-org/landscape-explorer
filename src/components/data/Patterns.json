@@ -1,0 +1,112 @@
+{
+    "Agriculture" : [
+        {
+            "Water" : [
+                {
+                    "Name" : "low_rainfed_agri_resilience",
+                    "Category" : "Low rainfed agriculture resilience",
+                    "Characteristics" : "erratic rainfall, rainfed agriculture dependency, poor bund construction",
+                    "level" : 0,
+                    "Values" : [
+                        {
+                            "label" : "Double cropping < 30%",
+                            "Key" : "avg_double_cropped",
+                            "type" : 2,
+                            "value" : {"lower" : 0, "upper" : 30}
+                        }
+                    ]
+                },
+                {
+                    "Name" : "groundwater_stress",
+                    "Category" : "Groundwater stress",
+                    "Characteristics" : "water erosion, groundwater decline, groundwater stress, saline groundwater, rapid runoff, high cost for marginal farmers",
+                    "level" : 0,
+                    "Values" : [
+                        {
+                            "label" : "SOGE is not safe",
+                            "Key" : "soge_class",
+                            "type" : 3,
+                            "value" : 0
+                        },
+                        {
+                            "label" : "trend(G) is -ve",
+                            "Key" : "trend_g",
+                            "type" : 1,
+                            "value" : -1
+                        }
+                    ]
+                }
+            ]
+        }
+    ],
+    "Livelihood" : [
+        {
+            "Livestock" : [
+                {
+                    "Name" : "water_scarcity",
+                    "Category" : "Water scarcity",
+                    "Characteristics" : "Livestock water shortage",
+                    "level" : 0,
+                    "Values" : [
+                        {
+                            "label" : "Rabi water availability < 30%",
+                            "Key" : "avg_rabi_surface_water_mws",
+                            "type" : 2,
+                            "value" : {"lower" : 0, "upper" : 30}
+                        },
+                        {
+                            "label" : "trend(surface water availability) is -ve",
+                            "Key" : "trend_swb",
+                            "type" : 1,
+                            "value" : -1
+                        }
+                    ]
+                },
+                {
+                    "Name" : "overgrazing",
+                    "Category" : "Overgrazing",
+                    "Characteristics" : "Stray cattle, Overgrazing",
+                    "level" : 0,
+                    "Values" : [
+                        {
+                            "label" : "Reduction in tree cover > 50 ha",
+                            "Key" : "decrease_in_tree_cover",
+                            "type" : 2,
+                            "value" : {"lower" : 50, "upper" : 999999999}
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "Fishery" : [
+                {
+                    "Name" : "water_potential",
+                    "Category" : "Water potential",
+                    "Characteristics" : "under-utilized tanks",
+                    "level" : 0,
+                    "Values" : [
+                        {
+                            "label" : "Rabi water availability > 70%",
+                            "Key" : "avg_rabi_surface_water_mws",
+                            "type" : 2,
+                            "value" : {"lower" : 70, "upper" : 999999}
+                        },
+                        {
+                            "label" : "Zaid water availability > 50%",
+                            "Key" : "avg_zaid_surface_water_mws",
+                            "type" : 2,
+                            "value" : {"lower" : 50, "upper" : 999999}
+                        },
+                        {
+                            "label" : "trend(surface water availability) is not -ve",
+                            "Key" : "trend_swb",
+                            "type" : 3,
+                            "value" : -1
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}
