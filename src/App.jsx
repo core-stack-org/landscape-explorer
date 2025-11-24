@@ -14,10 +14,7 @@ function App() {
           <Route path="/kyl_dashboard" element={<KYLDashboardPage />} />
           <Route path="/landscape_explorer" element={<LE_page />} />
           <Route path="/water_dashboard" element={<WaterDashboard />} />
-          <Route
-            path="/dashboard/:projectId"
-            element={<WaterProjectDashboard />}
-          />
+          <Route path="/dashboard" element={<WaterProjectDashboard />} />
         </Routes>
       </BrowserRouter>
     </>
