@@ -1,15 +1,12 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-<<<<<<< HEAD
 import KYLDashboardPage from "./pages/kyl_dashboard";
 import LandscapeExplorer from "./pages/LandscapeExplorer";
 import LEHomepage from "./pages/LE_homepage";
-=======
 import LE_page from "./pages/LE_page";
 import LandingPage from "./pages/landingPage";
 import KYLDashboardPage from "./pages/kyl_dashboard";
 import WaterDashboard from "./pages/water_dashboard";
 import WaterProjectDashboard from "./components/water_project_dashboard";
->>>>>>> 6761200 (water body rej dashboard added)
 
 function App() {
   return (
