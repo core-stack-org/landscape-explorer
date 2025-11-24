@@ -68,7 +68,5 @@ export default async function getVectorLayers(layer_store, layer_name, setVisibl
     wmsLayer.setStyle(PanchayatBoundariesStyle);
   }
 
-  console.log(wmsLayer)
-
   return wmsLayer;
 }
