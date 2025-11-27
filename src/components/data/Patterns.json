@@ -244,7 +244,7 @@
                             "label" : "NREGA works < 100",
                             "Key" : "total_assets",
                             "type" : 2,
-                            "value" : {"lower" : 100, "upper" : 9999999}
+                            "value" : {"lower" : 0, "upper" : 100}
                         }
                     ]
                 }

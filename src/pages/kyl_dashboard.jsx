@@ -94,7 +94,7 @@ const KYLDashboardPage = () => {
 
     // Only reset the style of the currently selected (green) MWS
     if (mwsLayerRef.current) {
-      resetMWSStyle([]);
+      resetMWSStyle();
     }
 
     if (toastId) {
@@ -331,7 +331,7 @@ const KYLDashboardPage = () => {
   };
 
 
-  const resetMWSStyle = (tempMWS) => {
+  const resetMWSStyle = () => {
     mwsLayerRef.current.setStyle((feature) => {
       if (selectedMWS.length > 0 && selectedMWS.includes(feature.values_.uid)) {
         // Filtered areas - highlight in red
