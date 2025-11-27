@@ -207,6 +207,9 @@ const handleStyleDownload = (layerName) => {
     case "mws_layers":
       url = "https://github.com/core-stack-org/QGIS-Styles/tree/main/Climate"
       break;
+    case "cropIntensity":
+      url = "https://drive.google.com/file/d/1OkjCjs2RF0kLCMpgnM3REE4of1GpDisn/view?usp=sharing"
+      break;
   }
 
   window.open(url, "_blank");

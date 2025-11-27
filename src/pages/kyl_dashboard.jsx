@@ -29,17 +29,9 @@ import PatternsData from '../components/data/Patterns.json';
 import KYLLeftSidebar from "../components/kyl_leftSidebar";
 import KYLRightSidebar from "../components/kyl_rightSidebar.jsx";
 import KYLMapContainer from "../components/kyl_mapContainer.jsx";
-import getPlans from "../actions/getPlans.js";
 import layerStyle from "../components/utils/layerStyle.jsx";
 import { getAllPatternTypes, getSubcategoriesForCategory, getPatternsForSubcategory } from '../components/utils/patternsHelper.js';
-import { handlePatternSelection as handlePatternSelectionLogic, isPatternSelected, getAllSelectedPatterns, clearAllPatterns } from '../components/utils/patternSelectionLogic.js';
-
-//? Icons Imports
-import settlementIcon from "../assets/settlement_icon.svg";
-import wellIcon from "../assets/well_proposed.svg";
-import waterbodyIcon from "../assets/waterbodies_proposed.svg";
-import RechargeIcon from "../assets/recharge_icon.svg";
-import IrrigationIcon from "../assets/irrigation_icon.svg";
+import { handlePatternSelection as handlePatternSelectionLogic, isPatternSelected } from '../components/utils/patternSelectionLogic.js';
 
 import { toast, Toaster } from "react-hot-toast";
 import {
@@ -57,6 +49,7 @@ const KYLDashboardPage = () => {
   const mwsLayerRef = useRef(null);
 
   const [isLoading, setIsLoading] = useState(false);
+  const [islayerLoaded, setIsLayerLoaded] = useState(false);
   const [highlightMWS, setHighlightMWS] = useState(null)
   const [selectedMWS, setSelectedMWS] = useState([]);
   const [selectedVillages, setSelectedVillages] = useState([]);
@@ -532,8 +525,7 @@ const KYLDashboardPage = () => {
   };
 
   const fetchBoundaryAndZoom = async (districtName, blockName) => {
-    setIsLoading(true);
-
+    setIsLayerLoaded(true);
     try {
       const boundaryLayer = await getVectorLayers(
         "panchayat_boundaries",
@@ -650,7 +642,7 @@ const KYLDashboardPage = () => {
       view.animate(
         {
           zoom: Math.max(view.getZoom() - 0.5, 5),
-          duration: 750,
+          duration: 200,
         },
         () => {
           view.fit(extent, {
@@ -686,10 +678,10 @@ const KYLDashboardPage = () => {
       if (selectedMWS.length > 0) {
         await fetchMWSLayer(selectedMWS);
       }
+      setIsLayerLoaded(false)
     } catch (error) {
       console.error("Error loading boundary:", error);
-      setIsLoading(false);
-
+      setIsLayerLoaded(false);
       const view = mapRef.current.getView();
       view.setCenter([78.9, 23.6]);
       view.setZoom(5);
@@ -698,6 +690,7 @@ const KYLDashboardPage = () => {
 
   const fetchDataJson = async () => {
     try {
+      setIsLoading(true);
       const response = await fetch(
         `${process.env.REACT_APP_API_URL}/download_kyl_data/?state=${state.label.toLowerCase().replace(/\s*\(\s*/g, "_").replace(/\s*\)\s*/g, "").replace(/\s+/g, "_")}&district=${district.label.toLowerCase().replace(/\s*\(\s*/g, "_").replace(/\s*\)\s*/g, "").replace(/\s+/g, "_")}&block=${block.label.toLowerCase().replace(/\s*\(\s*/g, "_").replace(/\s*\)\s*/g, "").replace(/\s+/g, "_")}&file_type=json`
       );
@@ -1551,11 +1544,12 @@ const KYLDashboardPage = () => {
         console.warn("DataJson not loaded or invalid format");
         return;
       }
-      if (!patternSelections?.selectedMWSPatterns || !patternSelections?.selectedVillagePatterns) {
+      if (!patternSelections?.selectedMWSPatterns) {
         console.warn("Invalid patterns selections structure");
         return;
       }
       let mwsKeys = Object.keys(patternSelections.selectedMWSPatterns)
+      
       let tempMWS = new Set([]);
 
       if (mwsKeys.length > 0) {
@@ -1611,7 +1605,65 @@ const KYLDashboardPage = () => {
       console.log(err)
     }
 
-  }, [patternSelections.selectedMWSPatterns, patternSelections.selectedVillagePatterns, patternTrigger])
+  }, [patternSelections.selectedMWSPatterns, patternTrigger])
+
+  useEffect(() =>{
+    try{
+      if (!villageJson || !Array.isArray(villageJson)) {
+        console.warn("Village not loaded or invalid format");
+        return;
+      }
+
+      if (!patternSelections?.selectedVillagePatterns) {
+        console.warn("Invalid patterns selections structure");
+        return;
+      }
+
+      let villageKeys = Object.keys(patternSelections.selectedVillagePatterns)
+
+      let tempVillage = new Set([]);
+
+      if(villageKeys.length > 0){
+        try{
+          villageKeys.map((item) => {
+            let patternValues = patternSelections.selectedVillagePatterns[item]
+            if (!patternValues) return
+
+            let tempIntersection = new Set([])
+            patternValues.conditions.forEach((tempItem) => {
+              villageJson.map((villageItem) => {
+                if(tempItem.type === 1 && villageItem[tempItem.key] === tempItem.value){
+                  tempIntersection.add(villageItem["village_id"])
+                }
+                else if(tempItem.type === 2 && villageItem[tempItem.key] >= tempItem.value.lower && villageItem[tempItem.key] <= tempItem.value.upper){
+                  tempIntersection.add(villageItem["village_id"])
+                }
+                else {
+                  if (tempItem.type === 3 && villageItem[tempItem.key] != tempItem.value) {
+                    tempIntersection.add(villageItem["village_id"])
+                  }
+                }
+              })
+            })
+            if (tempVillage.size > 0) {
+              tempVillage = new Set([...tempVillage].filter(x => tempIntersection.has(x)));
+            }
+            else {
+              tempVillage = tempIntersection
+            }
+          })
+          setVillageIdList(tempVillage)
+          setSelectedVillages([...tempVillage])
+          fetchAdminLayer([...tempVillage])
+        }catch(err){
+          console.log(err)
+        }
+      }
+
+    }catch(err){
+      console.log(err)
+    }
+  },[patternSelections.selectedVillagePatterns])
 
   useEffect(() => {
     if (statesData === null) {
@@ -1729,7 +1781,7 @@ const KYLDashboardPage = () => {
 
         {/* Map Container */}
         <KYLMapContainer
-          isLoading={isLoading}
+          isLoading={islayerLoaded || isLoading}
           statesData={statesData}
           mapElement={mapElement}
           showMWS={showMWS}
