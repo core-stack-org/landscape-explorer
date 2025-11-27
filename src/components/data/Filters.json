@@ -846,7 +846,7 @@
         "Industry": [
             {
                 "name": "lcw_conflict",
-                "label": "LCW Conflict",
+                "label": "Land Conflicts",
                 "type": 1,
                 "values": [
                     {
