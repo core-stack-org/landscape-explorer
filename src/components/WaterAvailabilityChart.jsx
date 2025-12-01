@@ -25,9 +25,10 @@ ChartJS.register(
   LineController
 );
 
-const years = ["17-18", "18-19", "19-20", "20-21", "21-22", "22-23", "23-24"];
+const years = ["17-18", "18-19", "19-20", "20-21", "21-22", "22-23", "23-24","24-25"];
 
 const WaterAvailabilityChart = ({
+  isTehsil,
   waterbody,
   water_rej_data,
   mwsFeature,

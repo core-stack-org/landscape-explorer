@@ -414,8 +414,8 @@ const MapArea = () => {
         true,
         "settlement",
         selectedPlan.value.plan_id,
-        district.label.toLowerCase().split(" ").join("_"),
-        block.label.toLowerCase().split(" ").join("_")
+        district.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_'),
+        block.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_')
       );
 
       if (ResourceLayersArray[0].LayerRef.current != null) {
@@ -438,8 +438,8 @@ const MapArea = () => {
         false,
         "plan_gw",
         selectedPlan.value.plan_id,
-        district.label.toLowerCase().split(" ").join("_"),
-        block.label.toLowerCase().split(" ").join("_")
+        district.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_'),
+        block.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_')
       );
 
       if (ResourceLayersArray[1].LayerRef.current != null) {
@@ -478,8 +478,8 @@ const MapArea = () => {
         true,
         "well",
         selectedPlan.value.plan_id,
-        district.label.toLowerCase().split(" ").join("_"),
-        block.label.toLowerCase().split(" ").join("_")
+        district.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_'),
+        block.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_')
       );
 
       if (ResourceLayersArray[2].LayerRef.current != null) {
@@ -624,9 +624,9 @@ const MapArea = () => {
 
       let adminLayer = await getVectorLayers(
         "panchayat_boundaries",
-        district.label.toLowerCase().split(" ").join("_") +
+        district.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_') +
           "_" +
-          block.label.toLowerCase().split(" ").join("_"),
+          block.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_'),
         true,
         true
       );
@@ -659,9 +659,9 @@ const MapArea = () => {
       //? Code For Drainage Layer
       let DrainageLayer = await getVectorLayers(
         "drainage",
-        district.label.toLowerCase().split(" ").join("_") +
+        district.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_') +
           "_" +
-          block.label.toLowerCase().split(" ").join("_"),
+          block.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_'),
         true,
         true,
         "drainage",
@@ -691,9 +691,9 @@ const MapArea = () => {
 
       let RemoteSensedWaterbodiesLayer = await getVectorLayers(
         "water_bodies",
-        "surface_waterbodies_" + district.label.toLowerCase().split(" ").join("_") +
+        "surface_waterbodies_" + district.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_') +
         "_" +
-        block.label.toLowerCase().split(" ").join("_"),
+        block.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_'),
         true,
         true,
         "Water_bodies",
@@ -720,9 +720,9 @@ const MapArea = () => {
 
       let MicroWaterShedLayer = await getVectorLayers(
         "mws_layers",
-        "deltaG_well_depth_" +  district.label.toLowerCase().split(" ").join("_") +
+        "deltaG_well_depth_" +  district.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_') +
         "_" +
-        block.label.toLowerCase().split(" ").join("_"),
+        block.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_'),
         true,
         true,
         "Watershed",
@@ -755,7 +755,7 @@ const MapArea = () => {
       //? Code For Clart Layer
       let clartLayer = await getImageLayer(
         "clart",
-        district.label.toLowerCase().split(" ").join("_")+ "_" + block.label.toLowerCase().split(" ").join("_") + "_clart",
+        district.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_')+ "_" + block.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_') + "_clart",
         true
       );
 
@@ -778,9 +778,9 @@ const MapArea = () => {
 
       let NregaLayer = await getWebGlLayers(
         "nrega_assets",
-        district.label.toLowerCase().split(" ").join("_") +
+        district.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_') +
           "_" +
-          block.label.toLowerCase().split(" ").join("_")
+          block.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_')
       );
 
       if (
@@ -797,9 +797,9 @@ const MapArea = () => {
       //? Code for Drought Layer
       let DroughtLayer = await getVectorLayers(
         "cropping_drought",
-        district.label.toLowerCase().split(" ").join("_") +
+        district.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_') +
           "_" +
-          block.label.toLowerCase().split(" ").join("_") +
+          block.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_') +
           "_drought",
         true,
         true
@@ -818,9 +818,9 @@ const MapArea = () => {
       //? Code for Terrain Layer
       let TerrainLayer = await getImageLayer(
         "terrain",
-        district.label.toLowerCase().split(" ").join("_") +
+        district.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_') +
           "_" +
-          block.label.toLowerCase().split(" ").join("_") + "_terrain_raster",
+          block.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_') + "_terrain_raster",
         true
       );
 
@@ -837,9 +837,9 @@ const MapArea = () => {
       //? Code for Admin Without Metadata Layer
       let AdminBoundaryLayer = await getVectorLayers(
         "admin_boundaries",
-        district.label.toLowerCase().split(" ").join("_") +
+        district.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_') +
           "_" +
-          block.label.toLowerCase().split(" ").join("_") +
+          block.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_') +
           "_boundaries",
         true,
         true
@@ -858,9 +858,9 @@ const MapArea = () => {
       //? Code for Cropping Intensity Layer
       let CroppingIntensityLayer = await getVectorLayers(
         "cropping_intensity",
-        district.label.toLowerCase().split(" ").join("_") +
+        district.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_') +
         "_" +
-        block.label.toLowerCase().split(" ").join("_") + "_intensity",
+        block.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_') + "_intensity",
         true,
         true
       );
@@ -878,9 +878,9 @@ const MapArea = () => {
       //? Code for Terrain Vector Layer
       let TerrainVectorLayer = await getVectorLayers(
         "terrain",
-        district.label.toLowerCase().split(" ").join("_") +
+        district.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_') +
           "_" +
-          block.label.toLowerCase().split(" ").join("_") +
+          block.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_') +
           "_cluster",
         true,
         true
@@ -907,9 +907,9 @@ const MapArea = () => {
       //? Code for Terrain Lulc Slope Layer
       let TerrainLulcSlopeLayer = await getVectorLayers(
         "terrain_lulc",
-        district.label.toLowerCase().split(" ").join("_") +
+        district.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_') +
           "_" +
-          block.label.toLowerCase().split(" ").join("_") +
+          block.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_') +
           "_lulc_slope",
         true,
         true
@@ -928,9 +928,9 @@ const MapArea = () => {
       //? Code for Terrain Lulc Plain Layer
       let TerrainLulcPlainLayer = await getVectorLayers(
         "terrain_lulc",
-        district.label.toLowerCase().split(" ").join("_") +
+        district.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_') +
           "_" +
-          block.label.toLowerCase().split(" ").join("_") +
+          block.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_') +
           "_lulc_plain",
         true,
         true
@@ -1031,10 +1031,10 @@ const MapArea = () => {
 
   const handleImageLayers = (name) => {
     if (name === "CLART") {
-      const downloadurl = `https://geoserver.core-stack.org:8443/geoserver/clart/wcs?service=WCS&version=2.0.1&request=GetCoverage&CoverageId=clart:${district.label.toLowerCase().split(" ").join("_")}_${block.label.toLowerCase().split(" ").join("_")}_clart&format=geotiff&compression=LZW&tiling=false;`;
+      const downloadurl = `https://geoserver.core-stack.org:8443/geoserver/clart/wcs?service=WCS&version=2.0.1&request=GetCoverage&CoverageId=clart:${district.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_')}_${block.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_')}_clart&format=geotiff&compression=LZW&tiling=false;`;
       window.open(downloadurl);
     } else if (bbox !== null && name === "Terrain") {
-      const downloadurl = `https://geoserver.core-stack.org:8443/geoserver/terrain/wcs?service=WCS&version=2.0.1&request=GetCoverage&CoverageId=terrain:${district.label.toLowerCase().split(" ").join("_")}_${block.label.toLowerCase().split(" ").join("_")}_terrain_raster&format=geotiff&compression=LZW&tiling=true&tileheight=256&tilewidth=256`;
+      const downloadurl = `https://geoserver.core-stack.org:8443/geoserver/terrain/wcs?service=WCS&version=2.0.1&request=GetCoverage&CoverageId=terrain:${district.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_')}_${block.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_')}_terrain_raster&format=geotiff&compression=LZW&tiling=true&tileheight=256&tilewidth=256`;
       window.open(downloadurl);
     } else {
       toast.info("Wait !");
@@ -1043,14 +1043,14 @@ const MapArea = () => {
 
   const handleImageLulcLayers = (type) => {
     if (bbox !== null && lulcYear1 !== null && type === "type1") {
-      const downloadurl = `https://geoserver.core-stack.org:8443/geoserver/LULC_level_1/wcs?service=WCS&version=2.0.1&request=GetCoverage&CoverageId=LULC_level_1:LULC_${lulcYear1.value}_${block.label.toLowerCase().split(" ").join("_")}_level_1&format=geotiff&compression=LZW&tiling=false`;
+      const downloadurl = `https://geoserver.core-stack.org:8443/geoserver/LULC_level_1/wcs?service=WCS&version=2.0.1&request=GetCoverage&CoverageId=LULC_level_1:LULC_${lulcYear1.value}_${block.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_')}_level_1&format=geotiff&compression=LZW&tiling=false`;
       console.log(downloadurl)  
       window.open(downloadurl);
     } else if (bbox !== null && lulcYear2 !== null && type === "type2") {
-      const downloadurl = `https://geoserver.core-stack.org:8443/geoserver/LULC_level_2/wcs?service=WCS&version=2.0.1&request=GetCoverage&CoverageId=LULC_level_2:LULC_${lulcYear2.value}_${block.label.toLowerCase().split(" ").join("_")}_level_2&format=geotiff&compression=LZW&tiling=false`;
+      const downloadurl = `https://geoserver.core-stack.org:8443/geoserver/LULC_level_2/wcs?service=WCS&version=2.0.1&request=GetCoverage&CoverageId=LULC_level_2:LULC_${lulcYear2.value}_${block.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_')}_level_2&format=geotiff&compression=LZW&tiling=false`;
       window.open(downloadurl);
     } else if (bbox !== null && lulcYear3 !== null && type === "type3") {
-      const downloadurl = `https://geoserver.core-stack.org:8443/geoserver/LULC_level_3/wcs?service=WCS&version=2.0.1&request=GetCoverage&CoverageId=LULC_level_3:LULC_${lulcYear3.value}_${block.label.toLowerCase().split(" ").join("_")}_level_3&format=geotiff&compression=LZW&tiling=false`;
+      const downloadurl = `https://geoserver.core-stack.org:8443/geoserver/LULC_level_3/wcs?service=WCS&version=2.0.1&request=GetCoverage&CoverageId=LULC_level_3:LULC_${lulcYear3.value}_${block.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_')}_level_3&format=geotiff&compression=LZW&tiling=false`;
       window.open(downloadurl);
     } else {
       toast.info("Wait !");
