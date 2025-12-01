@@ -261,13 +261,13 @@ const HeaderSelect = ({
   }, [organization]);
 
   return (
-    <div class="h-screen overflow-hidden bg-[#EAEAEA]">
-      <div class="relative z-[1] bg-[#11000080] backdrop-blur-md h-[120px] shadow-none flex justify-center">
-        <div class="max-w-[2440px] w-full px-4 mx-auto">
-          <div class="flex items-center h-full w-full px-0">
+    <div className="h-screen overflow-hidden bg-[#EAEAEA]">
+      <div className="relative z-[1] bg-[#11000080] backdrop-blur-md h-[120px] shadow-none flex justify-center">
+        <div className="max-w-[2440px] w-full px-4 mx-auto">
+          <div className="flex items-center h-full w-full px-0">
             <Avatar sx={{ bgcolor: "#d1d1d1", width: 40, height: 40 }} />
 
-            <div class="flex gap-2 ml-4">
+            <div className="flex gap-2 ml-4">
               <SelectReact
                 value={organization}
                 onChange={handleOrganizationChange}
@@ -294,16 +294,16 @@ const HeaderSelect = ({
               />
             </div>
 
-            <div class="ml-auto">
+            <div className="ml-auto">
               <button
                 onClick={() => {
                   localStorage.removeItem("selectedProject");
                   setDashboardLocked(false);
                   if (setView) setView("table");
                 }}
-                class="flex items-center gap-2 ml-auto border border-[#bbb] text-[#333] bg-white rounded-lg font-medium px-3 py-1.5 hover:bg-[#f0f0f0] hover:border-[#999] transition-colors"
+                className="flex items-center gap-2 ml-auto border border-[#bbb] text-[#333] bg-white rounded-lg font-medium px-3 py-1.5 hover:bg-[#f0f0f0] hover:border-[#999] transition-colors"
               >
-                <ArrowBackIosNewIcon class="w-4 h-4" />
+                <ArrowBackIosNewIcon className="w-4 h-4" />
                 Change Project
               </button>
             </div>

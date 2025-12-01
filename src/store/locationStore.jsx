@@ -53,3 +53,43 @@ export const dataJsonAtom = atom({
   key: "dataJsonAtom",
   default: null,
 });
+
+export const waterGeoDataAtom = atom({
+  key: "waterGeoDataAtom",
+  default: null,
+});
+
+export const waterMwsDataAtom = atom({
+  key: "waterMwsDataAtom",
+  default: null,
+});
+
+export const zoiFeaturesAtom = atom({
+  key: "zoiFeaturesAtom",
+  default: null,
+});
+
+export const selectedWaterbodyAtom = atom({
+  key: "selectedWaterbodyAtom",
+  default: null,
+});
+
+export const selectedMwsAtom = atom({
+  key: "selectedMwsAtom",
+  default: null,
+});
+
+export const selectedZoiAtom = atom({
+  key: "selectedZoiAtom",
+  default: null,
+});
+
+export const selectedWaterbodyForTehsilAtom = atom({
+  key: "selectedWaterbodyForTehsil",
+  default: null,
+});
+
+
+
+
+

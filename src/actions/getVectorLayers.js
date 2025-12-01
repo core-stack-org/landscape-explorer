@@ -68,6 +68,20 @@ export default async function getVectorLayers(layer_store, layer_name, setVisibl
     wmsLayer.setStyle(PanchayatBoundariesStyle);
   }
 
+  wmsLayer.setStyle((feature) => {
+    return new Style({
+      stroke: new Stroke({
+        color: "black",
+        width: 1.2,
+      }),
+      fill: new Fill({
+        color: "rgba(0, 0, 255, 0.25)", // Semi-transparent for click detection
+      }),
+    });
+  });
+  
+  
+
   console.log(wmsLayer)
 
   return wmsLayer;

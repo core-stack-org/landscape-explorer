@@ -8,6 +8,8 @@ import {
   filterSelectionsAtom,
   yearAtom,
   dataJsonAtom,
+  selectedWaterbodyForTehsilAtom,
+  waterGeoDataAtom,waterMwsDataAtom,zoiFeaturesAtom
 } from "../store/locationStore.jsx";
 
 //* OpenLayers imports
@@ -18,6 +20,10 @@ import Control from "ol/control/Control.js";
 import { defaults as defaultControls } from "ol/control/defaults.js";
 import { Map, View } from "ol";
 import { Fill, Stroke, Style, Icon } from "ol/style.js";
+import Overlay from "ol/Overlay";
+import GeoJSON from "ol/format/GeoJSON";
+
+
 
 import LandingNavbar from "../components/landing_navbar.jsx";
 import getStates from "../actions/getStates.js";
@@ -48,6 +54,7 @@ import {
   initializeAnalytics,
 } from "../services/analytics";
 import getWebGlLayers from "../actions/getWebGlLayers.js";
+import { useGlobalWaterData } from "../store/useGlobalWaterData.jsx";
 
 const KYLDashboardPage = () => {
   const mapElement = useRef(null);
@@ -55,6 +62,10 @@ const KYLDashboardPage = () => {
   const baseLayerRef = useRef(null);
   const boundaryLayerRef = useRef(null);
   const mwsLayerRef = useRef(null);
+  const waterbodiesLayerRef = useRef(null);
+  const popupRef = useRef(null);
+
+
 
   const [isLoading, setIsLoading] = useState(false);
   const [highlightMWS, setHighlightMWS] = useState(null)
@@ -92,6 +103,18 @@ const KYLDashboardPage = () => {
   const [filterTrigger, setFilterTrigger] = useState(0)
   const [patternTrigger, setPatternTrigger] = useState(0)
 
+  
+  const { geoData, mwsData, zoiData } = useGlobalWaterData({
+    type: "tehsil",
+    state: state?.label,
+    district: district?.label,
+    block: block?.label,
+  });
+
+  const [selectedWaterbodyForTehsil, setSelectedWaterbodyForTehsil] =
+  useRecoilState(selectedWaterbodyForTehsilAtom);
+
+  
   const addLayerSafe = (layer) => layer && mapRef.current && mapRef.current.addLayer(layer);
 
   const handleResetMWS = () => {
@@ -482,6 +505,53 @@ const KYLDashboardPage = () => {
       }
     }
   };
+
+  const fetchWaterBodiesLayer = async() => {
+    if (!district || !block || !mapRef.current) return;
+
+  const dist = district.label
+    .toLowerCase()
+    .replace(/\s*\(\s*/g, "_")
+    .replace(/\s*\)\s*/g, "")
+    .replace(/\s+/g, "_");
+
+  const blk = block.label
+    .toLowerCase()
+    .replace(/\s*\(\s*/g, "_")
+    .replace(/\s*\)\s*/g, "")
+    .replace(/\s+/g, "_");
+
+  const layerName = `surface_waterbodies_${dist}_${blk}`;
+
+  console.log("Loading WB:", layerName);
+
+  // If already loaded → just show
+  if (waterbodiesLayerRef.current) {
+    waterbodiesLayerRef.current.setVisible(true);
+    return;
+  }
+
+  // 1) Create vector layer via getVectorLayers
+  const wbLayer = await getVectorLayers(
+    "water_bodies",
+    layerName,
+    true,  
+    true 
+  );
+
+  if (!wbLayer) {
+    console.warn("Failed loading waterbodies");
+    return;
+  }
+  const map = mapRef.current;
+
+  map.removeLayer(boundaryLayerRef.current);
+  map.addLayer(wbLayer);
+  map.addLayer(boundaryLayerRef.current);
+
+  waterbodiesLayerRef.current = wbLayer;
+
+  }
 
   const fetchAdminLayer = async (tempVillages) => {
     if (!district || !block) return;
@@ -1016,6 +1086,14 @@ const KYLDashboardPage = () => {
     });
 
     mapRef.current = map;
+
+    const popup = new Overlay({
+      element: document.getElementById("waterbody-popup"),
+      positioning: "bottom-center",
+      stopEvent: true,
+    });
+    map.addOverlay(popup);
+    popupRef.current = popup;
   };
 
   const handleItemSelect = (setter, value) => {
@@ -1696,6 +1774,65 @@ const KYLDashboardPage = () => {
     }
   }, [searchLatLong])
 
+  useEffect(() => {
+    if (!mapRef.current) return;
+  
+    const map = mapRef.current;
+  
+    const handleWaterbodyClick = (event) => {
+      if (!waterbodiesLayerRef.current) return;
+  
+      const wbLayer = waterbodiesLayerRef.current;
+  
+      // Detect only waterbody layer clicks
+      const feature = map.forEachFeatureAtPixel(event.pixel, (feature, layer) => {
+        if (layer === wbLayer) return feature;
+      });
+  
+      if (feature) {
+        const props = feature.getProperties();
+        const fullFeature = {
+          type: "Feature",
+          properties: props,
+          geometry: new GeoJSON().writeGeometryObject(
+            feature.getGeometry()
+          )
+        };
+        setSelectedWaterbodyForTehsil(fullFeature);
+        localStorage.setItem("selectedWaterbody", JSON.stringify(fullFeature));
+        localStorage.setItem("selectedMWS", JSON.stringify(selectedMWS));
+           if (mwsLayerRef.current) {
+             const source = mwsLayerRef.current.getSource();
+             const features = source.getFeatures();
+             const mwsGeoJson = new GeoJSON().writeFeaturesObject(features);
+             localStorage.setItem("mwsGeojson", JSON.stringify(mwsGeoJson));
+             console.log("📌 Saved MWS to localStorage:", mwsGeoJson);
+           }
+
+  
+        const wb_id = props.UID 
+  
+        if (!wb_id) {
+          console.warn("No valid waterbody ID found");
+          return;
+        }
+  
+        // Build URL for water dashboard
+        const url = `/dashboard?type=tehsil&state=${state.label}&district=${district.label}&block=${block.label}&waterbody=${wb_id}`;
+  
+        // Open in new tab
+        window.open(url, "_blank");
+      }
+    };
+  
+    map.on("click", handleWaterbodyClick);
+  
+    return () => {
+      map.un("click", handleWaterbodyClick);
+    };
+  }, [mapRef.current, state, district, block]);
+  
+  
   return (
     <div className="min-h-screenbg-white flex flex-col">
       <Toaster />
@@ -1770,6 +1907,8 @@ const KYLDashboardPage = () => {
           mapRef={mapRef}
           onResetMWS={handleResetMWS}
           selectedMWSProfile={selectedMWSProfile}
+          fetchWaterbodiesLayer={fetchWaterBodiesLayer}
+
         />
       </div>
     </div>

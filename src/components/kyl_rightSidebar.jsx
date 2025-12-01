@@ -11,6 +11,7 @@ import {
   filterSelectionsAtom,
 } from "../store/locationStore.jsx";
 import KYLMWSProfilePanel from "./kyl_MWSProfilePanel.jsx";
+import { useRecoilState } from "recoil";
 
 const KYLRightSidebar = ({
   state,
@@ -37,7 +38,12 @@ const KYLRightSidebar = ({
   //onAnalyzeClick,
   onResetMWS,
   selectedMWSProfile,
+  fetchWaterbodiesLayer
 }) => {
+  const [globalState, setGlobalState] = useRecoilState(stateAtom);
+  const [globalDistrict, setGlobalDistrict] = useRecoilState(districtAtom);
+  const [globalBlock, setGlobalBlock] = useRecoilState(blockAtom);
+
 
   const handleMultiReport = () => {
         const filtersList = getFormattedSelectedFilters()
@@ -131,6 +137,7 @@ const KYLRightSidebar = ({
     }
   };
 
+
   return (
     <div className="w-[320px] flex flex-col gap-2">
       {selectedMWSProfile ? (
@@ -152,7 +159,11 @@ const KYLRightSidebar = ({
                   currVal={state || { label: "Select State" }}
                   stateData={statesData}
                   handleItemSelect={handleItemSelect}
-                  setState={setState}
+                  setState={(val) => {
+                    setState(val);        // existing behaviour
+                    setGlobalState(val);  // NEW → sync to recoil
+                  }}
+                  // setState={setState}
                   className="w-full border border-gray-200 rounded-md py-1.5 px-3"
                 />
               </div>
@@ -164,7 +175,12 @@ const KYLRightSidebar = ({
                   currVal={district || { label: "Select District" }}
                   stateData={state !== null ? state.district : null}
                   handleItemSelect={handleItemSelect}
-                  setState={setDistrict}
+                  setState={(val) => {
+                    setDistrict(val);
+                    setGlobalDistrict(val);
+                  }}
+                  
+                  // setState={setDistrict}
                   className="w-full border border-gray-200 rounded-md py-1.5 px-3"
                 />
               </div>
@@ -176,7 +192,12 @@ const KYLRightSidebar = ({
                   currVal={block || { label: "Select Tehsil" }}
                   stateData={district !== null ? district.blocks : null}
                   handleItemSelect={handleItemSelect}
-                  setState={setBlock}
+                  setState={(val) => {
+                    setBlock(val);
+                    setGlobalBlock(val);
+                  }}
+                  
+                  // setState={setBlock}
                   className="w-full border border-gray-200 rounded-md py-1.5 px-3"
                 />
               </div>
@@ -247,6 +268,8 @@ const KYLRightSidebar = ({
             <span className="text-sm font-medium">
               Selected Patterns ({getFormattedSelectedPatterns().length})
             </span>
+   
+
             <div className="mt-2 max-h-[150px] overflow-y-auto pr-2">
               <div className="space-y-2">
                 {getFormattedSelectedPatterns().map((pattern, index) => (
@@ -281,11 +304,21 @@ const KYLRightSidebar = ({
                         </svg>
                       </button>
                     </div>
+                    
                   </div>
+                  
                 ))}
+                
               </div>
+              
             </div>
+            
           </div>
+          <button onClick={fetchWaterbodiesLayer}  className="w-full py-2 px-3 mt-3 bg-blue-600 text-white rounded">
+            Show Waterbodies
+          </button>
+
+
         </div>
       )}
       {/* <div className="bg-white rounded-lg border border-gray-100 p-3">
