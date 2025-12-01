@@ -50,27 +50,24 @@ const DashboardBasemap = ({
   const geojsonReaderRef = useRef(new GeoJSON());
   const lulcLoadedRef = useRef(false);
 
-  const read4326 = (data) =>
-    geojsonReaderRef.current.readFeatures(data, {
-      dataProjection: "EPSG:4326",
+  const read4326 = (data) => geojsonReaderRef.current.readFeatures(data, {
+      dataPselectedFeaturerojection: "EPSG:4326",
       featureProjection: "EPSG:4326",
-    });
+  });
 
-    const ensureOLFeature = (obj) => {
-      if (obj instanceof Feature) return obj;
+  const ensureOLFeature = (obj) => {
+    if (obj instanceof Feature) return obj;
+  
+    const geom = obj.geometry
+      ? new GeoJSON().readGeometry(obj.geometry, {
+          dataProjection: "EPSG:4326",
+          featureProjection: "EPSG:4326",
+        })
+      : null;
+  
+    return new Feature(geom);
+  };
     
-      const geom = obj.geometry
-        ? new GeoJSON().readGeometry(obj.geometry, {
-            dataProjection: "EPSG:4326",
-            featureProjection: "EPSG:4326",
-          })
-        : null;
-    
-      return new Feature(geom);
-    };
-    
-    
-
   const getZoiOlFeatures = () => {
     if (!zoiFeatures) return [];
     if (
@@ -218,7 +215,6 @@ const DashboardBasemap = ({
   }, []);
 
   
-
   // Combined Mode + LULC effect
   useEffect(() => {
     const map = mapRef.current;
@@ -228,6 +224,9 @@ const DashboardBasemap = ({
       if (!selectedWaterbody || !selectedFeature) {
         console.log("⏳ Waiting for tehsil selectedWaterbody + selectedFeature...");
         return;
+      }
+      else{
+        console.log("Reached here in the dashboard Basemap !")
       }
     }
     // Reset LULC loaded flag
@@ -313,6 +312,7 @@ const DashboardBasemap = ({
     
 
     const addWaterbody = async () => {
+      console.log("Reached Here in the Waterbody")
       if (!geoData) return;
       const allWB = read4326(geoData);
 
@@ -498,10 +498,11 @@ if (geom) {
     };
     
     
-
     const addMws = async () => {
       if (!selectedWaterbody || !selectedFeature) return;
       if (!mwsData) return;
+
+      console.log(mwsData)
     
       const map = mapRef.current;
       const view = map.getView();
@@ -627,67 +628,67 @@ if (geom) {
       }
       
     
- // 9) DRAINAGE LAYER
-try {
-  let drainageLayerName = null;
+  // 9) DRAINAGE LAYER
+    try {
+      let drainageLayerName = null;
 
-  // PROJECT TYPE
-  if (projectName && projectId) {
-    drainageLayerName = `${projectName.toLowerCase()}_${projectId}`;
-  }
+      // PROJECT TYPE
+      if (projectName && projectId) {
+        drainageLayerName = `${projectName.toLowerCase()}_${projectId}`;
+      }
 
-  // TEHSIL TYPE
-  if (!projectName && !projectId && district && block) {
-    drainageLayerName = `${district.toLowerCase()}_${block.toLowerCase()}`;
-  }
+      // TEHSIL TYPE
+      if (!projectName && !projectId && district && block) {
+        drainageLayerName = `${district.toLowerCase()}_${block.toLowerCase()}`;
+      }
 
-  const drainageLayer = await getVectorLayers(
-    "drainage",
-    drainageLayerName,
-    true,
-    "drainage"
-  );
-
-  if (drainageLayer) {
-    const drainageColors = [
-      "#03045E",
-      "#023E8A",
-      "#0077B6",
-      "#0096C7",
-      "#00B4D8",
-      "#48CAE4",
-      "#90E0EF",
-      "#ADE8F4",
-      "#CAF0F8",
-    ];
-
-    drainageLayer.setStyle((feature) => {
-      const order = feature.get("ORDER") || 1;
-      const color = drainageColors[order - 1] || drainageColors[0];
-      return new Style({
-        stroke: new Stroke({ color, width: 2 }),
-      });
-    });
-
-    drainageLayer.set("id", "drainage_layer");
-    drainageLayer.setZIndex(2);
-    map.addLayer(drainageLayer);
-
-    if (multiPoly && typeof drainageLayer.addFilter === "function") {
-      drainageLayer.addFilter(
-        new Crop({
-          feature: new Feature(multiPoly),
-          wrapX: false,
-          inner: false,
-        })
+      const drainageLayer = await getVectorLayers(
+        "drainage",
+        drainageLayerName,
+        true,
+        "drainage"
       );
+
+      if (drainageLayer) {
+        const drainageColors = [
+          "#03045E",
+          "#023E8A",
+          "#0077B6",
+          "#0096C7",
+          "#00B4D8",
+          "#48CAE4",
+          "#90E0EF",
+          "#ADE8F4",
+          "#CAF0F8",
+        ];
+
+        drainageLayer.setStyle((feature) => {
+          const order = feature.get("ORDER") || 1;
+          const color = drainageColors[order - 1] || drainageColors[0];
+          return new Style({
+            stroke: new Stroke({ color, width: 2 }),
+          });
+        });
+
+        drainageLayer.set("id", "drainage_layer");
+        drainageLayer.setZIndex(2);
+        map.addLayer(drainageLayer);
+
+        if (multiPoly && typeof drainageLayer.addFilter === "function") {
+          drainageLayer.addFilter(
+            new Crop({
+              feature: new Feature(multiPoly),
+              wrapX: false,
+              inner: false,
+            })
+          );
+        }
+      } else {
+        console.warn("Drainage not found:", drainageLayerName);
+      }
+    } catch (err) {
+      console.error("Drainage error:", err);
     }
-  } else {
-    console.warn("Drainage not found:", drainageLayerName);
-  }
-} catch (err) {
-  console.error("Drainage error:", err);
-}
 
     };
     
@@ -748,10 +749,11 @@ try {
       <div
         id={id}
         ref={mapElement}
-        style={{width: "100%", 
-          width: selectedWaterbody ? "100%" : "1500px",
+        style={{
+          width: "1500px",
           height: styleHeight, 
-          border: "1px solid #ccc" }}
+          border: "1px solid #ccc" 
+        }}
       />
 
       {/* ZOOM CONTROLS */}

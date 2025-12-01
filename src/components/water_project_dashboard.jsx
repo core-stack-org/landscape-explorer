@@ -50,8 +50,8 @@ const WaterProjectDashboard = () => {
   const [loadingData, setLoadingData] = useState(true);
 
   const [tehsilGeoData, setTehsilGeoData] = useState(null);
-const [tehsilSelectedFeature, setTehsilSelectedFeature] = useState(null);
-const [mwsFromLocalStorage, setMwsFromLocalStorage] = useState(null);
+  const [tehsilSelectedFeature, setTehsilSelectedFeature] = useState(null);
+  const [mwsFromLocalStorage, setMwsFromLocalStorage] = useState(null);
 
   const [selectedWaterbodyForTehsil, setSelectedWaterbodyForTehsil] =
   useRecoilState(selectedWaterbodyForTehsilAtom);
@@ -84,69 +84,14 @@ const [mwsFromLocalStorage, setMwsFromLocalStorage] = useState(null);
   const isTehsilMode = typeParam === "tehsil";
 
 
-const activeSelectedWaterbody = isTehsilMode
-  ? selectedWaterbodyForTehsil
-  : selectedWaterbody;
+  const activeSelectedWaterbody = isTehsilMode
+    ? selectedWaterbodyForTehsil
+    : selectedWaterbody;
 
 
   const [view, setView] = useState(
     isTehsilMode ? "map" : typeParam === "tehsil" ? "map" : "table"
   );
-
-  useEffect(() => {
-    const stored = localStorage.getItem("selectedWaterbody");
-    if (stored) {
-      const parsed = JSON.parse(stored);
-      setSelectedWaterbodyForTehsil(parsed);
-      console.log("Loaded selected waterbody for tehsil:", parsed);
-    }
-  }, []);
-
-  useEffect(() => {
-    const raw = localStorage.getItem("mwsGeojson");
-    if (!raw) return;
-  
-    try {
-      const parsed = JSON.parse(raw);
-      console.log("📌 Loaded MWS from localStorage (raw):", parsed);
-  
-      const features = new GeoJSON().readFeatures(parsed, {
-        featureProjection: "EPSG:4326"
-      });
-  
-      setMwsFromLocalStorage(features);
-      console.log("📌 Converted OL Features:", features);
-    } catch (err) {
-      console.error("❌ Error reading MWS from storage:", err);
-    }
-  }, []);
-
-
-useEffect(() => {
-  if (typeParam === "tehsil" && selectedWaterbodyForTehsil?.geometry) {
-      
-    // 1) create a FeatureCollection with only 1 feature  
-    const fc = {
-      type: "FeatureCollection",
-      features: [selectedWaterbodyForTehsil],
-    };
-
-    setTehsilGeoData(fc);
-
-    // 2) Convert to OL Feature
-    const featureOL = new GeoJSON().readFeature(
-      selectedWaterbodyForTehsil,
-      {
-        dataProjection: "EPSG:4326",
-        featureProjection: "EPSG:4326",
-      }
-    );
-
-    setTehsilSelectedFeature(featureOL);
-  }
-}, [selectedWaterbodyForTehsil, typeParam]);
-
-  
 
   const config = WATER_DASHBOARD_CONFIG[mode];
 
@@ -173,6 +118,61 @@ useEffect(() => {
     setInfoOpen(false);
     setOpenInfoKey(null);
   };
+
+
+  useEffect(() => {
+    const stored = localStorage.getItem("selectedWaterbody");
+    if (stored) {
+      const parsed = JSON.parse(stored);
+      setSelectedWaterbodyForTehsil(parsed);
+      console.log("Loaded selected waterbody for tehsil:", parsed);
+    }
+  }, []);
+
+  useEffect(() => {
+    const raw = localStorage.getItem("selectedMWS");
+    if (!raw) return;
+    const parsed = JSON.parse(raw);
+    setMwsFromLocalStorage(parsed);
+    // try {
+    //   const parsed = JSON.parse(raw);
+    //   console.log("📌 Loaded MWS from localStorage (raw):", parsed);
+  
+    //   const features = new GeoJSON().readFeatures(parsed, {
+    //     featureProjection: "EPSG:4326"
+    //   });
+  
+    //   setMwsFromLocalStorage(features);
+    //   console.log("📌 Converted OL Features:", features);
+    // } catch (err) {
+    //   console.error("❌ Error reading MWS from storage:", err);
+    // }
+  }, []);
+
+
+  useEffect(() => {
+    if (typeParam === "tehsil" && selectedWaterbodyForTehsil?.geometry) {
+        
+      // 1) create a FeatureCollection with only 1 feature  
+      const fc = {
+        type: "FeatureCollection",
+        features: [selectedWaterbodyForTehsil],
+      };
+
+      setTehsilGeoData(fc);
+
+      // 2) Convert to OL Feature
+      const featureOL = new GeoJSON().readFeature(
+        selectedWaterbodyForTehsil,
+        {
+          dataProjection: "EPSG:4326",
+          featureProjection: "EPSG:4326",
+        }
+      );
+
+      setTehsilSelectedFeature(featureOL);
+    }
+  }, [selectedWaterbodyForTehsil, typeParam]);
 
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -225,7 +225,8 @@ useEffect(() => {
     }
   }, [view]);
 
-  const geoData = useRecoilValue(waterGeoDataAtom);
+  let tempGeoData =  useRecoilValue(waterGeoDataAtom);
+  const geoData = isTehsilMode ? selectedWaterbodyForTehsil : tempGeoData
   const mwsGeoData = useRecoilValue(waterMwsDataAtom);
   const zoiFeatures = useRecoilValue(zoiFeaturesAtom);
   
@@ -629,7 +630,7 @@ useEffect(() => {
     };
   }, [geoData, zoiFeatures]);
 
-    const totalRows = rows.length;
+  const totalRows = rows.length;
   
   const handleFilterClick = (event, type) => {
     setAnchorEl(event.currentTarget);
@@ -779,12 +780,8 @@ useEffect(() => {
       console.warn("No matching row found.");
     }
   };
-  const capitalize = (str) =>
-    str ? str.charAt(0).toUpperCase() + str.slice(1).toLowerCase() : "";
+  const capitalize = (str) => str ? str.charAt(0).toUpperCase() + str.slice(1).toLowerCase() : "";
   
-
-  
-
   return (
     <div className="relative w-full">
       {!hideHeaderSelect && (
@@ -840,7 +837,7 @@ useEffect(() => {
           )
         ) : view === "map" ? (
           <div className="flex flex-col gap-4 mt-2 w-full px-2 sm:px-4 md:px-6">
-            {selectedWaterbody && (
+            {activeSelectedWaterbody && (
               <div className="flex flex-col gap-2 w-full p-4 sm:p-6 md:p-4 rounded-xl bg-white shadow-md">
                 {/* Heading */}
                 <h2 className="text-xl font-bold text-blue-600 border-b-2 border-blue-600 pb-1">
@@ -853,15 +850,21 @@ useEffect(() => {
             )}
 
             <div className="flex flex-col md:flex-row items-start gap-4 w-full">
-              <div className={`relative ${selectedWaterbody ? "w-full md:w-[65%]" : "w-full"}`}>
-                {!selectedWaterbody &&  typeParam !== "tehsil" && (
+              <div className={`relative ${activeSelectedWaterbody ? "w-full md:w-[65%]" : "w-full"}`}>
+                {!activeSelectedWaterbody &&  typeParam !== "tehsil" && (
                   <div className="absolute top-0 left-0 right-0 bg-white/90 text-center  py-1 border-b border-gray-300    font-semibold text-[16px] z-[1200] flex items-center justify-center gap-2">
                     {WATER_DASHBOARD_CONFIG.labels.clickToView}
                     <img src="https://cdn-icons-png.flaticon.com/512/684/684908.png" alt="marke" className="w-5 h-5 mx-1"/>
                   </div>
                 )}
 
-                <DashboardBasemap id="map1" 
+                {isTehsilMode ? <DashboardBasemap 
+                  id="map1"
+                  type={typeParam}
+                  district={districtParam}
+                  block={blockParam}
+                  
+                />  : <DashboardBasemap id="map1" 
                 type={typeParam}
                 district={districtParam}
                 block={blockParam}
@@ -886,33 +889,33 @@ useEffect(() => {
                       areaOred: data.areaOred ?? data.area_ored ?? null,
                     });
                   }}
-                />
+                />}
 
                 {/* Top-left Label */}
-                {selectedWaterbody && (
+                {activeSelectedWaterbody && (
                   <div  className="absolute top-4 left-4 bg-white/90 p-2 sm:p-3 rounded-md font-bold shadow flex flex-col items-start gap-1 z-[1000] max-w-[90%] sm:max-w-[300px]">
                     <div className="flex items-center gap-1">
                       <LocationOnIcon className="text-blue-600" fontSize="small"/>
                       <p className="font-semibold text-gray-900">
-                        {selectedWaterbody?.waterbody_name ?? selectedWaterbody?.waterbody ?? "Waterbody Name"}
+                        {activeSelectedWaterbody?.waterbody_name ?? activeSelectedWaterbody?.waterbody ?? "Waterbody Name"}
                       </p>
                     </div>
                     <p className="font-semibold text-gray-900">
-                        {selectedWaterbody?.UID ?? selectedWaterbody?.UID ?? "UID"}
+                        {activeSelectedWaterbody?.UID ?? activeSelectedWaterbody?.UID ?? "UID"}
                       </p>
                     <p className="text-gray-700 text-sm font-semibold">
-                      Silt Removed: {selectedWaterbody?.siltRemoved != null ? `${selectedWaterbody.siltRemoved} cubic metres`: "NA"
+                      Silt Removed: {activeSelectedWaterbody?.siltRemoved != null ? `${activeSelectedWaterbody.siltRemoved} cubic metres`: "NA"
   }
                     </p>
 
                     <p className="text-gray-700 text-sm font-semibold">
-                      Area (in hectares):{" "}{(selectedWaterbody?.areaOred || 0).toFixed(2)} hectares
+                      Area (in hectares):{" "}{(activeSelectedWaterbody?.areaOred || 0).toFixed(2)} hectares
                     </p>
                   </div>
                 )}
 
                 {/* Legend + YearSlider wrapper for responsiveness */}
-                {selectedWaterbody && (
+                {activeSelectedWaterbody && (
                   <div
                     className="absolute bottom-4 left-4 right-4 flex flex-col sm:flex-row justify-between gap-2 flex-wrap z-[1000]"
                   >
@@ -969,7 +972,7 @@ useEffect(() => {
                   </div>
                 )}
               </div>
-              {mapClickedWaterbody && !selectedWaterbody && (
+              {mapClickedWaterbody && !activeSelectedWaterbody && (
                 <div
                   onClick={handleMapBoxClick}
                   className="absolute z-[9999] w-[250px] p-2 bg-white rounded-md border border-gray-300 
@@ -1006,13 +1009,14 @@ useEffect(() => {
               )}
 
               {/* Charts Section */}
-              {selectedWaterbody && (
+              {activeSelectedWaterbody && (
                 <div className="w-full md:w-[45%] flex flex-col items-center gap-6 sm:gap-8 md:gap-10 lg:gap-12">
                   <div className="w-full max-w-[700px] h-[300px] sm:h-[350px] md:h-[400px] mx-auto">
                     <WaterAvailabilityChart
-                      waterbody={selectedWaterbody}
-                      water_rej_data={geoData}
-                      mwsFeature={selectedMWSFeature}
+                      isTehsil={isTehsilMode}
+                      waterbody={isTehsilMode ? activeSelectedWaterbody.properties.UID : activeSelectedWaterbody}
+                      water_rej_data={isTehsilMode ? {features : [geoData]} : geoData}
+                      mwsFeature={isTehsilMode ? mwsFromLocalStorage : selectedMWSFeature}
                       onImpactYearChange={(yearData) => setImpactYear(yearData)}
                     />
                   </div>
@@ -1027,7 +1031,7 @@ useEffect(() => {
             </div>
 
             {/* ZOI Section with Map + Side Chart */}
-            {selectedWaterbody && (
+            {activeSelectedWaterbody && (
               <div className="flex flex-col gap-2 w-full p-2 sm:p-3 md:p-2 rounded-xl bg-white shadow-sm">
                 {/* Heading */}
                 <h2 className="text-xl font-bold text-blue-600 border-b-2 border-blue-600 pb-1">
@@ -1044,7 +1048,7 @@ useEffect(() => {
                 )}
               </div>
             )}
-            {selectedWaterbody && (
+            {activeSelectedWaterbody && (
               <>
                 <div className="flex flex-col md:flex-row items-start gap-4 w-full mt-6">
                   <div className="relative w-full md:w-[65%]">
@@ -1067,7 +1071,7 @@ useEffect(() => {
                       <div className="flex items-center gap-1">
                         <LocationOnIcon className="text-blue-600 w-4 h-4" />
                         <p className="text-base font-semibold">
-                          {selectedWaterbody?.waterbody || "Waterbody Name"}
+                          {activeSelectedWaterbody?.waterbody || "Waterbody Name"}
                         </p>
                       </div>
 
@@ -1140,7 +1144,7 @@ useEffect(() => {
                     <div className="w-full max-w-[700px] h-[300px] sm:h-[350px] md:h-[400px]">
                       <CroppingIntensityStackChart
                         zoiFeatures={zoiFeatures}
-                        waterbody={selectedWaterbody}
+                        waterbody={activeSelectedWaterbody}
                         impactYear={impactYear}
                       />
                     </div>
@@ -1148,7 +1152,7 @@ useEffect(() => {
                     <div className="w-full max-w-[700px] h-[300px] sm:h-[350px] md:h-[400px]">
                       <DroughtChart
                         feature={selectedMWSFeature}
-                        waterbody={selectedWaterbody}
+                        waterbody={activeSelectedWaterbody}
                       />
                       {/* <NDMIPointChart
                           zoiFeatures={zoiFeatures}
@@ -1163,7 +1167,7 @@ useEffect(() => {
                   <div className="w-full h-[300px] sm:h-[350px] md:h-[400px]">
                     <NDVIChart
                       zoiFeatures={zoiFeatures}
-                      waterbody={selectedWaterbody}
+                      waterbody={activeSelectedWaterbody}
                       years={WATER_DASHBOARD_CONFIG.ndviYears}
                     />
                   </div>
@@ -1171,7 +1175,7 @@ useEffect(() => {
               </>
             )}
             {/*MWS map section */}
-            {selectedWaterbody && (
+            {activeSelectedWaterbody && (
               <div className="flex flex-col gap-2 w-full p-2 sm:p-3 md:p-4 rounded-lg bg-white shadow-sm">
                 {/* Heading */}
                 <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-blue-600 border-b-2 border-blue-600 pb-1">
@@ -1187,18 +1191,18 @@ useEffect(() => {
               </div>
             )}
 
-{selectedWaterbody && (
+{activeSelectedWaterbody && (
   <>
-    {selectedWaterbody.drainageFlag === 1 ? (
+    {activeSelectedWaterbody.drainageFlag === 1 ? (
       <div className="w-full flex flex-col md:flex-row justify-between gap-3 mt-4 px-2 md:px-0">
         {[
           {
             label: "Max Catchment Area",
-            value: `${selectedWaterbody?.maxCatchmentArea?.toFixed(2)} sq km`,
+            value: `${activeSelectedWaterbody?.maxCatchmentArea?.toFixed(2)} sq km`,
           },
           {
             label: "Max Stream Order",
-            value: `Order ${selectedWaterbody?.maxStreamOrder}`,
+            value: `Order ${activeSelectedWaterbody?.maxStreamOrder}`,
           },
         ].map((item, idx) => (
           <div
@@ -1227,7 +1231,7 @@ useEffect(() => {
 
             <div className="flex flex-col md:flex-row items-start gap-4 w-full">
               {/* Map 3 */}
-              {selectedWaterbody && (
+              {activeSelectedWaterbody && (
                 <div className="relative w-full h-[85vh]">
                   {/* MAP */}
                   <DashboardBasemap

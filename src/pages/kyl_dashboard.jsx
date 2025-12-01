@@ -65,8 +65,6 @@ const KYLDashboardPage = () => {
   const waterbodiesLayerRef = useRef(null);
   const popupRef = useRef(null);
 
-
-
   const [isLoading, setIsLoading] = useState(false);
   const [highlightMWS, setHighlightMWS] = useState(null)
   const [selectedMWS, setSelectedMWS] = useState([]);
@@ -509,47 +507,45 @@ const KYLDashboardPage = () => {
   const fetchWaterBodiesLayer = async() => {
     if (!district || !block || !mapRef.current) return;
 
-  const dist = district.label
-    .toLowerCase()
-    .replace(/\s*\(\s*/g, "_")
-    .replace(/\s*\)\s*/g, "")
-    .replace(/\s+/g, "_");
+    const dist = district.label
+      .toLowerCase()
+      .replace(/\s*\(\s*/g, "_")
+      .replace(/\s*\)\s*/g, "")
+      .replace(/\s+/g, "_");
 
-  const blk = block.label
-    .toLowerCase()
-    .replace(/\s*\(\s*/g, "_")
-    .replace(/\s*\)\s*/g, "")
-    .replace(/\s+/g, "_");
+    const blk = block.label
+      .toLowerCase()
+      .replace(/\s*\(\s*/g, "_")
+      .replace(/\s*\)\s*/g, "")
+      .replace(/\s+/g, "_");
 
-  const layerName = `surface_waterbodies_${dist}_${blk}`;
+    const layerName = `surface_waterbodies_${dist}_${blk}`;
 
-  console.log("Loading WB:", layerName);
+    // If already loaded → just show
+    if (waterbodiesLayerRef.current) {
+      waterbodiesLayerRef.current.setVisible(true);
+      return;
+    }
 
-  // If already loaded → just show
-  if (waterbodiesLayerRef.current) {
-    waterbodiesLayerRef.current.setVisible(true);
-    return;
-  }
+    // 1) Create vector layer via getVectorLayers
+    const wbLayer = await getVectorLayers(
+      "water_bodies",
+      layerName,
+      true,  
+      true 
+    );
 
-  // 1) Create vector layer via getVectorLayers
-  const wbLayer = await getVectorLayers(
-    "water_bodies",
-    layerName,
-    true,  
-    true 
-  );
+    if (!wbLayer) {
+      console.warn("Failed loading waterbodies");
+      return;
+    }
+    const map = mapRef.current;
 
-  if (!wbLayer) {
-    console.warn("Failed loading waterbodies");
-    return;
-  }
-  const map = mapRef.current;
+    map.removeLayer(boundaryLayerRef.current);
+    map.addLayer(wbLayer);
+    map.addLayer(boundaryLayerRef.current);
 
-  map.removeLayer(boundaryLayerRef.current);
-  map.addLayer(wbLayer);
-  map.addLayer(boundaryLayerRef.current);
-
-  waterbodiesLayerRef.current = wbLayer;
+    waterbodiesLayerRef.current = wbLayer;
 
   }
 
@@ -1788,7 +1784,11 @@ const KYLDashboardPage = () => {
       const feature = map.forEachFeatureAtPixel(event.pixel, (feature, layer) => {
         if (layer === wbLayer) return feature;
       });
-  
+
+      const MWSFeature = map.forEachFeatureAtPixel(event.pixel, (feature, layer) => {
+        if (layer === mwsLayerRef.current) return feature;
+      });
+      
       if (feature) {
         const props = feature.getProperties();
         const fullFeature = {
@@ -1798,18 +1798,23 @@ const KYLDashboardPage = () => {
             feature.getGeometry()
           )
         };
+        const MWSWaterbodyFeature = {
+          type: "Feature",
+          properties: props,
+          geometry: new GeoJSON().writeGeometryObject(
+            MWSFeature.getGeometry()
+          )
+        }
         setSelectedWaterbodyForTehsil(fullFeature);
         localStorage.setItem("selectedWaterbody", JSON.stringify(fullFeature));
-        localStorage.setItem("selectedMWS", JSON.stringify(selectedMWS));
-           if (mwsLayerRef.current) {
-             const source = mwsLayerRef.current.getSource();
-             const features = source.getFeatures();
-             const mwsGeoJson = new GeoJSON().writeFeaturesObject(features);
-             localStorage.setItem("mwsGeojson", JSON.stringify(mwsGeoJson));
-             console.log("📌 Saved MWS to localStorage:", mwsGeoJson);
-           }
+        localStorage.setItem("selectedMWS", JSON.stringify(MWSFeature));
+        if (mwsLayerRef.current) {
+          const source = mwsLayerRef.current.getSource();
+          const features = source.getFeatures();
+          const mwsGeoJson = new GeoJSON().writeFeaturesObject(features);
+          localStorage.setItem("mwsGeojson", JSON.stringify(mwsGeoJson));
+        }
 
-  
         const wb_id = props.UID 
   
         if (!wb_id) {
