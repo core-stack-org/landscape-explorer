@@ -89,6 +89,11 @@ export const selectedWaterbodyForTehsilAtom = atom({
   default: null,
 });
 
+export const tehsilZoiFeaturesAtom = atom({
+  key: "tehsilZoiFeaturesAtom",
+  default: [],
+});
+
 
 
 

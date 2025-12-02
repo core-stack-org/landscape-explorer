@@ -1,11 +1,14 @@
 // src/store/useGlobalWaterData.jsx
 import { useEffect } from "react";
-import { useRecoilState, useRecoilValue } from "recoil";
+import { useRecoilState } from "recoil";
+
 import {
   waterGeoDataAtom,
   waterMwsDataAtom,
-  zoiFeaturesAtom
+  zoiFeaturesAtom,
+  tehsilZoiFeaturesAtom
 } from "./locationStore";
+
 import GeoJSON from "ol/format/GeoJSON";
 
 export const useGlobalWaterData = ({
@@ -19,10 +22,13 @@ export const useGlobalWaterData = ({
 
   const [waterGeoData, setGeo] = useRecoilState(waterGeoDataAtom);
   const [waterMwsData, setMws] = useRecoilState(waterMwsDataAtom);
-  const [zoiFeatures, setZoi] = useRecoilState(zoiFeaturesAtom);
+  const [projectZoi, setProjectZoi] = useRecoilState(zoiFeaturesAtom);
+  const [tehsilZoi, setTehsilZoi] = useRecoilState(tehsilZoiFeaturesAtom);
 
   useEffect(() => {
     const fetchAll = async () => {
+
+      // ---------------- FETCH HELPER ----------------
       const fetchWFS = async (typeName) => {
         if (!typeName) return null;
 
@@ -39,9 +45,11 @@ export const useGlobalWaterData = ({
 
         try {
           const url = base + params.toString();
+          console.log("Fetching:", url);
+
           const res = await fetch(url);
-          console.log(url)
           if (!res.ok) return null;
+
           return await res.json();
         } catch (e) {
           console.log("WFS Fetch Error:", e);
@@ -53,39 +61,60 @@ export const useGlobalWaterData = ({
       let mws = null;
       let zoi = null;
 
-      // ------------------ PROJECT MODE ------------------
+      // ---------------- PROJECT MODE ----------------
       if (type === "project" && projectName && projectId) {
         const p = projectName.toLowerCase();
-        console.log(p)
 
         geo = await fetchWFS(`water_bodies:waterbodies_${p}_${projectId}`);
         mws = await fetchWFS(`mws:waterbodies_mws_${p}_${projectId}`);
         zoi = await fetchWFS(`zoi_layers:waterbodies_zoi_${p}_${projectId}`);
+
+        // Convert ZOI → PROJECT ZOI ATOM
+        if (zoi?.features) {
+          const features = new GeoJSON().readFeatures(zoi, {
+            dataProjection: "EPSG:4326",
+            featureProjection: "EPSG:4326"
+          });
+          setProjectZoi(features);
+        } else {
+          setProjectZoi([]);
+        }
+
+        // CLEAR tehsil zoi
+        setTehsilZoi([]);
       }
 
+      // ---------------- TEHSIL MODE ----------------
+      if (type === "tehsil" && district && block) {
+        const d = district.toLowerCase().replace(/\s+/g, "_");
+        const b = block.toLowerCase().replace(/\s+/g, "_");
 
-      // ------------------ TEHSIL MODE ------------------
-      // if (type === "tehsil" && district && block) {
-      //   const d = district.toLowerCase().replace(/\s+/g, "_");
-      //   const b = block.toLowerCase().replace(/\s+/g, "_");
+        // water_bodies workspace
+        zoi = await fetchWFS(`water_bodies:waterbodies_zoi_${d}_${b}`);
 
-      //   mws = await fetchWFS(`mws:waterbodies_mws_${d}_${b}`);
-      //   zoi = await fetchWFS(`water_bodies:waterbodies_zoi_${d}_${b}`);
-      // }
+        // fallback
+        if (!zoi?.features?.length) {
+          zoi = await fetchWFS(`zoi_layers:waterbodies_zoi_${d}_${b}`);
+        }
 
-      // save to recoil
+        // Convert ZOI → TEHSIL ZOI ATOM
+        if (zoi?.features) {
+          const features = new GeoJSON().readFeatures(zoi, {
+            dataProjection: "EPSG:4326",
+            featureProjection: "EPSG:4326"
+          });
+          setTehsilZoi(features);
+        } else {
+          setTehsilZoi([]);
+        }
+
+        // TEHSIL MODE DOES NOT USE project ZOI
+        setProjectZoi([]);
+      }
+
+      // ---------------- SET GEO + MWS ----------------
       setGeo(geo || null);
       setMws(mws || null);
-
-      if (zoi?.features) {
-        const features = new GeoJSON().readFeatures(zoi, {
-          dataProjection: "EPSG:4326",
-          featureProjection: "EPSG:4326",
-        });
-        setZoi(features);
-      } else {
-        setZoi([]);
-      }
     };
 
     fetchAll();
@@ -94,6 +123,7 @@ export const useGlobalWaterData = ({
   return {
     geoData: waterGeoData,
     mwsData: waterMwsData,
-    zoiData: zoiFeatures,
+    projectZoi,
+    tehsilZoi,
   };
 };

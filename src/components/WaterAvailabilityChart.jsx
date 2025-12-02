@@ -36,7 +36,7 @@ const WaterAvailabilityChart = ({
 }) => {
   const [showImpact, setShowImpact] = useState(false);
   const prevImpactRef = useRef(null);
-
+console.log(mwsFeature)
   const yearMap = {
     "17-18": "2017-2018",
     "18-19": "2018-2019",
@@ -47,17 +47,56 @@ const WaterAvailabilityChart = ({
     "23-24": "2023-2024",
   };
 
-  const totalRainfall = years.reduce((acc, year) => {
+// -------------------------------
+// RAINFALL LOGIC FOR TEHSIL + PROJECT
+// -------------------------------
+const totalRainfall = years.reduce((acc, year) => {
+  if (!mwsFeature) {
+    acc[`TR${year}`] = 0;
+    return acc;
+  }
+
+  // ✔️ Project Mode → Use original kharif/rabi/zaid fields
+  if (!isTehsil) {
     const longYear = yearMap[year];
-    const kharif =
-      mwsFeature?.properties?.[`precipitation_kharif_${longYear}`] ?? 0;
-    const rabi =
-      mwsFeature?.properties?.[`precipitation_rabi_${longYear}`] ?? 0;
-    const zaid =
-      mwsFeature?.properties?.[`precipitation_zaid_${longYear}`] ?? 0;
+    const kharif = mwsFeature?.properties?.[`precipitation_kharif_${longYear}`] ?? 0;
+    const rabi = mwsFeature?.properties?.[`precipitation_rabi_${longYear}`] ?? 0;
+    const zaid = mwsFeature?.properties?.[`precipitation_zaid_${longYear}`] ?? 0;
+
     acc[`TR${year}`] = kharif + rabi + zaid;
     return acc;
-  }, {});
+  }
+
+  // -----------------------------------------
+  // ✔️ TEHSIL MODE → Use Precipitation from values_
+  // -----------------------------------------
+  const p = mwsFeature?.values_ ?? {};
+
+  // Convert "17-18" → "2017_2018"
+  const [yy1, yy2] = year.split("-");
+  const key = `20${yy1}_20${yy2}`; // ex: 2017_2018
+
+  const raw = p[key];
+  if (!raw) {
+    acc[`TR${year}`] = 0;
+    return acc;
+  }
+
+  let parsed;
+  try {
+    parsed = JSON.parse(raw);
+  } catch (err) {
+    console.warn("Error parsing mwsFeature precipitation JSON:", raw);
+    parsed = {};
+  }
+
+  // THE REAL TEHSIL PRECIPITATION
+  const rainfall = Number(parsed?.Precipitation ?? 0);
+  acc[`TR${year}`] = rainfall;
+
+  return acc;
+}, {});
+
 
   const groups = {
     "Water Indicators": [
@@ -74,46 +113,77 @@ const WaterAvailabilityChart = ({
     ],
   };
 
-  const rawData = years.map(() => ({
-    kharif: 0,
-    rabi: 0,
-    zaid: 0,
-    shrubs: 0,
-    single_kharif: 0,
-    single_non_kharif: 0,
-    tree: 0,
-    barren_land: 0,
-    double_cropping: 0,
-    triple_cropping: 0,
-    builtup: 0,
-  }));
+  let rawData;
 
-  water_rej_data.features.forEach((feature) => {
-    if (feature.properties.UID === waterbody.UID) {
-      const p = feature.properties;
-      years.forEach((year, i) => {
-        const k = p[`k_${year}`] ?? 0;
-        const kr = p[`kr_${year}`] ?? 0;
-        const krz = p[`krz_${year}`] ?? 0;
-
-        const kharif = Math.max(0, k - kr);
-        const rabi = Math.max(0, kr - krz);
-        const zaid = krz;
-
-        rawData[i].rabi += rabi;
-        rawData[i].zaid += zaid;
-        rawData[i].kharif += kharif;
-        rawData[i].shrubs += p[`shrubs_${year}`] ?? 0;
-        rawData[i].single_kharif += p[`single_kharif_${year}`] ?? 0;
-        rawData[i].single_non_kharif += p[`single_kharif_no_${year}`] ?? 0;
-        rawData[i].tree += p[`tree_${year}`] ?? 0;
-        rawData[i].barren_land += p[`barren_land_${year}`] ?? 0;
-        rawData[i].double_cropping += p[`double_cropping_${year}`] ?? 0;
-        rawData[i].triple_cropping += p[`tripple_cropping_${year}`] ?? 0;
-        rawData[i].builtup += p[`build_up_${year}`] ?? 0;
-      });
-    }
-  });
+  if (isTehsil) {
+    //  TEHSIL MODE — only ONE feature exists
+    const p = water_rej_data?.features?.[0]?.properties || {};
+  
+    rawData = years.map((year) => {
+      // same logic as project, but reading directly
+      const k = p[`k_${year}`] ?? 0;
+      const kr = p[`kr_${year}`] ?? 0;
+      const krz = p[`krz_${year}`] ?? 0;
+  
+      return {
+        kharif: Math.max(0, k - kr),
+        rabi: Math.max(0, kr - krz),
+        zaid: krz,
+  
+        shrubs: p[`shrubs_${year}`] ?? 0,
+        single_kharif: p[`single_kharif_${year}`] ?? 0,
+        single_non_kharif: p[`single_kharif_no_${year}`] ?? 0,
+        tree: p[`tree_${year}`] ?? 0,
+        barren_land: p[`barren_land_${year}`] ?? 0,
+        double_cropping: p[`double_cropping_${year}`] ?? 0,
+        triple_cropping: p[`tripple_cropping_${year}`] ?? 0,
+        builtup: p[`build_up_${year}`] ?? 0,
+      };
+    });
+  
+  } else {
+    // PROJECT MODE — original code
+    rawData = years.map(() => ({
+      kharif: 0,
+      rabi: 0,
+      zaid: 0,
+      shrubs: 0,
+      single_kharif: 0,
+      single_non_kharif: 0,
+      tree: 0,
+      barren_land: 0,
+      double_cropping: 0,
+      triple_cropping: 0,
+      builtup: 0,
+    }));
+  
+    water_rej_data.features.forEach((feature) => {
+      if (feature.properties.UID === waterbody.UID) {
+        const p = feature.properties;
+  
+        years.forEach((year, i) => {
+          const k = p[`k_${year}`] ?? 0;
+          const kr = p[`kr_${year}`] ?? 0;
+          const krz = p[`krz_${year}`] ?? 0;
+  
+          rawData[i].kharif += Math.max(0, k - kr);
+          rawData[i].rabi += Math.max(0, kr - krz);
+          rawData[i].zaid += krz;
+  
+          rawData[i].shrubs += p[`shrubs_${year}`] ?? 0;
+          rawData[i].single_kharif += p[`single_kharif_${year}`] ?? 0;
+          rawData[i].single_non_kharif += p[`single_kharif_no_${year}`] ?? 0;
+          rawData[i].tree += p[`tree_${year}`] ?? 0;
+          rawData[i].barren_land += p[`barren_land_${year}`] ?? 0;
+          rawData[i].double_cropping += p[`double_cropping_${year}`] ?? 0;
+          rawData[i].triple_cropping += p[`tripple_cropping_${year}`] ?? 0;
+          rawData[i].builtup += p[`build_up_${year}`] ?? 0;
+        });
+      }
+    });
+  }
+  
+  
 
   const normalizedData = rawData.map((yearData) => {
     const total = Object.values(yearData).reduce((sum, v) => sum + v, 0);
