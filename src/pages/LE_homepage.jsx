@@ -270,32 +270,35 @@ export default function KYLHomePage() {
 
               {/* Card 2  */}
               <a
-                href="mailto:support@core-stack.org"
-                className="block hover:shadow-lg transition duration-200 ease-in-out"
-              >
-                <div className="flex flex-col items-center text-center cursor-pointer">
-                  <div className="w-full max-w-[420px] aspect-square mx-auto rounded overflow-hidden shadow mb-4 relative">
-                    <img
-                      src={newLogo}
-                      alt="Commons Connect App"
-                      className="w-full h-full object-cover object-center"
-                    />
-                  </div>
+  href="https://play.google.com/store/apps/details?id=com.corestack.commonsconnect"
+  target="_blank"
+  rel="noopener noreferrer"
+  className="block hover:shadow-lg transition duration-200 ease-in-out"
+>
+  <div className="flex flex-col items-center text-center cursor-pointer">
+    <div className="w-full max-w-[420px] aspect-square mx-auto rounded overflow-hidden shadow mb-4 relative">
+      <img
+        src={newLogo}
+        alt="Commons Connect App"
+        className="w-full h-full object-cover object-center"
+      />
+    </div>
 
-                  <div className="p-4">
-                    <h3 className="font-bold mb-2 text-sm">
-                      Download Commons Connect App
-                    </h3>
-                    <p className="text-xs text-gray-700 mb-2">
-                      An Android app to guide you in a step-by-step manner to
-                      record community demands for NRM assets.
-                    </p>
-                    <span className="text-purple-700 text-sm font-semibold underline">
-                      support@core-stack.org →
-                    </span>
-                  </div>
-                </div>
-              </a>
+    <div className="p-4">
+      <h3 className="font-bold mb-2 text-sm">
+        Download Commons Connect App
+      </h3>
+      <p className="text-xs text-gray-700 mb-2">
+        An Android app to guide you in a step-by-step manner to
+        record community demands for NRM assets.
+      </p>
+      <span className="text-purple-700 text-sm font-semibold underline">
+        Download App →
+      </span>
+    </div>
+  </div>
+</a>
+
 
               {/*  Card 3 */}
               <div
