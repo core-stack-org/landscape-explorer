@@ -56,11 +56,24 @@ const NDVIChart = ({
   zoiFeatures,
   waterbody,
   years = ["2017", "2018", "2019", "2020", "2021", "2022", "2023", "2024"],
+
 }) => {
+  const wbUID =
+  waterbody?.UID ||
+  waterbody?.uid ||
+  waterbody?.properties?.UID ||
+  waterbody?.properties?.uid ||
+  null;
+
   const matchedFeature = zoiFeatures.find(
     (feature) =>
-      feature.get("UID")?.toLowerCase() === waterbody?.UID?.toLowerCase()
+      feature.get("UID")?.toString().trim() ===
+      wbUID?.toString().trim()
   );
+  // const matchedFeature = zoiFeatures.find(
+  //   (feature) =>
+  //     feature.get("UID")?.toLowerCase() === waterbody?.UID?.toLowerCase()
+  // );
 
   if (!matchedFeature) return null;
 

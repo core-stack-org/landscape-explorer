@@ -94,6 +94,12 @@ export const tehsilZoiFeaturesAtom = atom({
   default: [],
 });
 
+export const mwsLayerRefAtom = atom({
+  key: "mwsLayerRefAtom",
+  default: null,
+});
+
+
 
 
 

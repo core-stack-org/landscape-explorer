@@ -16,7 +16,7 @@ import TableView from "./tableView.jsx";
 import { WATER_DASHBOARD_CONFIG } from "../config/dashboard_configs/waterDashboard.config.js";
 import DashboardBasemap from "./dashboard_basemap.jsx";
 import { useGlobalWaterData } from "../store/useGlobalWaterData";
-import { waterGeoDataAtom, waterMwsDataAtom, zoiFeaturesAtom,selectedWaterbodyForTehsilAtom,tehsilZoiFeaturesAtom } from "../store/locationStore.jsx";
+import { waterGeoDataAtom, waterMwsDataAtom, zoiFeaturesAtom,selectedWaterbodyForTehsilAtom,tehsilZoiFeaturesAtom,mwsLayerRefAtom } from "../store/locationStore.jsx";
 
 const WaterProjectDashboard = () => {
   const [selectedWaterbody, setSelectedWaterbody] = useState(null);
@@ -134,6 +134,10 @@ const WaterProjectDashboard = () => {
     const parsed = JSON.parse(raw);
     setMwsFromLocalStorage(parsed);
   }, []);
+
+  const mwsLayerRef = useRecoilValue(mwsLayerRefAtom);
+console.log(mwsLayerRef)
+console.log(mwsFromLocalStorage)
 
 
   useEffect(() => {
@@ -1124,11 +1128,11 @@ const WaterProjectDashboard = () => {
 
                   <div className="w-full md:w-[45%] flex flex-col items-center">
                     <div className="w-full max-w-[700px] h-[300px] sm:h-[350px] md:h-[400px]">
-                      {/* <CroppingIntensityStackChart
+                      <CroppingIntensityStackChart
                         zoiFeatures={zoiFeatures}
                         waterbody={activeSelectedWaterbody}
                         impactYear={impactYear}
-                      /> */}
+                      />
                     </div>
 
                     <div className="w-full max-w-[700px] h-[300px] sm:h-[350px] md:h-[400px]">
@@ -1147,11 +1151,11 @@ const WaterProjectDashboard = () => {
                 <div className="w-full flex flex-col md:flex-row gap-4 md:gap-6 items-stretch md:items-end">
                   {/* NDVI Chart (Left Side) */}
                   <div className="w-full h-[300px] sm:h-[350px] md:h-[400px]">
-                    {/* <NDVIChart
+                    <NDVIChart
                       zoiFeatures={zoiFeatures}
                       waterbody={activeSelectedWaterbody}
                       years={WATER_DASHBOARD_CONFIG.ndviYears}
-                    /> */}
+                    />
                   </div>
                 </div>
               </>
@@ -1224,7 +1228,7 @@ const WaterProjectDashboard = () => {
 
                     // mwsData={mwsGeoData}
                     selectedWaterbody={activeSelectedWaterbody}
-                    selectedFeature={typeParam === "tehsil" ? tehsilSelectedFeature : selectedFeature}
+                    selectedFeature={typeParam === "tehsil" ? mwsFromLocalStorage : selectedFeature}
                     lulcYear={lulcYear2} 
                     projectName={typeParam === "project" ? project?.label : null}
                     projectId={typeParam === "project" ? project?.value : null}
