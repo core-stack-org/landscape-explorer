@@ -101,6 +101,11 @@ const KYLDashboardPage = () => {
   const [filterTrigger, setFilterTrigger] = useState(0)
   const [patternTrigger, setPatternTrigger] = useState(0)
 
+  const [clickedWaterbodyId, setClickedWaterbodyId] = useState(null);
+const [waterbodyDashboardUrl, setWaterbodyDashboardUrl] = useState(null);
+const waterbodyClickedRef = useRef(false);
+
+
   
   const { geoData, mwsData, zoiData } = useGlobalWaterData({
     type: "tehsil",
@@ -534,6 +539,40 @@ const KYLDashboardPage = () => {
       true,  
       true 
     );
+    wbLayer.setStyle((feature) => {
+      const geom = feature.getGeometry();
+      if (!geom) return null;
+    
+      let pointGeom = null;
+    
+      if (geom.getType() === "Polygon") {
+        pointGeom = geom.getInteriorPoint();
+      } else if (geom.getType() === "MultiPolygon") {
+        const pts = geom.getInteriorPoints();
+        pointGeom = pts.getPoint(0);
+      }
+    
+      return [
+        // 1️⃣ Invisible polygon for click detection
+        new Style({
+          geometry: geom,
+          fill: new Fill({ color: "rgba(0,0,0,0)" }),
+          stroke: new Stroke({ color: "rgba(0,0,0,0)", width: 1 }),
+        }),
+    
+        // 2️⃣ Icon visible on map
+        new Style({
+          geometry: pointGeom,
+          image: new Icon({
+            src: waterbodyIcon,
+            scale: 0.6,
+            anchor: [0.5, 1],
+          }),
+        }),
+      ];
+    });
+    
+    
 
     if (!wbLayer) {
       console.warn("Failed loading waterbodies");
@@ -1230,9 +1269,66 @@ const KYLDashboardPage = () => {
 
   useEffect(() => {
     if (!mapRef.current) return;
+    const map = mapRef.current;
+  
+    const handleWaterbodyClick = (event) => {
+      if (!waterbodiesLayerRef.current) return;
+    
+      const map = mapRef.current;
+    
+      const wbFeature = map.forEachFeatureAtPixel(
+        event.pixel,
+        (feature, layer) => {
+          if (layer === waterbodiesLayerRef.current) return feature;
+        },
+        {
+          hitTolerance: 8,
+        }
+      );
+    
+      if (!wbFeature) return;
+    
+      // Stop MWS click handler from firing
+      waterbodyClickedRef.current = true;
+      setTimeout(() => (waterbodyClickedRef.current = false), 150);
+    
+      const props = wbFeature.getProperties();
+      const wb_id = props.UID;
+      if (!wb_id) return;
+    
+      // Construct GeoJSON feature
+      const fullFeature = {
+        type: "Feature",
+        properties: props,
+        geometry: new GeoJSON().writeGeometryObject(
+          wbFeature.getGeometry()
+        ),
+      };
+    
+      setSelectedWaterbodyForTehsil(fullFeature);
+      localStorage.setItem("selectedWaterbody", JSON.stringify(fullFeature));
+    
+      setClickedWaterbodyId(wb_id);
+      setWaterbodyDashboardUrl(
+        `/dashboard?type=tehsil&state=${state.label}&district=${district.label}&block=${block.label}&waterbody=${wb_id}`
+      );
+    
+      console.log("WATERBODY CLICKED →", wb_id);
+    };
+    
+  
+    map.on("click", handleWaterbodyClick);
+    return () => map.un("click", handleWaterbodyClick);
+  }, [mapRef.current, state, district, block]);
+  
+
+  useEffect(() => {
+    if (!mapRef.current) return;
 
     const handleMapClick = (event) => {
-
+      if (waterbodyClickedRef.current) {
+        return;
+      }
       const feature = mapRef.current.forEachFeatureAtPixel(
         event.pixel,
         (feature, layer) => {
@@ -1770,73 +1866,7 @@ const KYLDashboardPage = () => {
     }
   }, [searchLatLong])
 
-  useEffect(() => {
-    if (!mapRef.current) return;
-  
-    const map = mapRef.current;
-  
-    const handleWaterbodyClick = (event) => {
-      if (!waterbodiesLayerRef.current) return;
-  
-      const wbLayer = waterbodiesLayerRef.current;
-  
-      // Detect only waterbody layer clicks
-      const feature = map.forEachFeatureAtPixel(event.pixel, (feature, layer) => {
-        if (layer === wbLayer) return feature;
-      });
 
-      const MWSFeature = map.forEachFeatureAtPixel(event.pixel, (feature, layer) => {
-        if (layer === mwsLayerRef.current) return feature;
-      });
-      
-      if (feature) {
-        const props = feature.getProperties();
-        const fullFeature = {
-          type: "Feature",
-          properties: props,
-          geometry: new GeoJSON().writeGeometryObject(
-            feature.getGeometry()
-          )
-        };
-        const MWSWaterbodyFeature = {
-          type: "Feature",
-          properties: props,
-          geometry: new GeoJSON().writeGeometryObject(
-            MWSFeature.getGeometry()
-          )
-        }
-        setSelectedWaterbodyForTehsil(fullFeature);
-        localStorage.setItem("selectedWaterbody", JSON.stringify(fullFeature));
-        localStorage.setItem("selectedMWS", JSON.stringify(MWSFeature));
-        if (mwsLayerRef.current) {
-          const source = mwsLayerRef.current.getSource();
-          const features = source.getFeatures();
-          const mwsGeoJson = new GeoJSON().writeFeaturesObject(features);
-          localStorage.setItem("mwsGeojson", JSON.stringify(mwsGeoJson));
-        }
-
-        const wb_id = props.UID 
-  
-        if (!wb_id) {
-          console.warn("No valid waterbody ID found");
-          return;
-        }
-  
-        // Build URL for water dashboard
-        const url = `/dashboard?type=tehsil&state=${state.label}&district=${district.label}&block=${block.label}&waterbody=${wb_id}`;
-  
-        // Open in new tab
-        window.open(url, "_blank");
-      }
-    };
-  
-    map.on("click", handleWaterbodyClick);
-  
-    return () => {
-      map.un("click", handleWaterbodyClick);
-    };
-  }, [mapRef.current, state, district, block]);
-  
   
   return (
     <div className="min-h-screenbg-white flex flex-col">
@@ -1913,6 +1943,9 @@ const KYLDashboardPage = () => {
           onResetMWS={handleResetMWS}
           selectedMWSProfile={selectedMWSProfile}
           fetchWaterbodiesLayer={fetchWaterBodiesLayer}
+          waterbodiesLayerRef={waterbodiesLayerRef} 
+          clickedWaterbodyId={clickedWaterbodyId}
+          waterbodyDashboardUrl={waterbodyDashboardUrl}
 
         />
       </div>

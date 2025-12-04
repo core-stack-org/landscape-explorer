@@ -38,11 +38,16 @@ const KYLRightSidebar = ({
   //onAnalyzeClick,
   onResetMWS,
   selectedMWSProfile,
-  fetchWaterbodiesLayer
+  fetchWaterbodiesLayer,
+  waterbodiesLayerRef,
+  clickedWaterbodyId,
+  waterbodyDashboardUrl,
 }) => {
   const [globalState, setGlobalState] = useRecoilState(stateAtom);
   const [globalDistrict, setGlobalDistrict] = useRecoilState(districtAtom);
   const [globalBlock, setGlobalBlock] = useRecoilState(blockAtom);
+  const [showWB, setShowWB] = React.useState(false);
+
 
 
   const handleMultiReport = () => {
@@ -136,6 +141,21 @@ const KYLRightSidebar = ({
       }));
     }
   };
+
+  const toggleWaterbodies = async () => {
+    if (!showWB) {
+      await fetchWaterbodiesLayer();  
+      setShowWB(true);
+      return;
+    }
+      if (mapRef.current && waterbodiesLayerRef.current) {
+      mapRef.current.removeLayer(waterbodiesLayerRef.current);
+      waterbodiesLayerRef.current = null; 
+    }
+  
+    setShowWB(false);
+  };
+  
 
 
   return (
@@ -314,9 +334,26 @@ const KYLRightSidebar = ({
             </div>
             
           </div>
-          <button onClick={fetchWaterbodiesLayer}  className="w-full py-2 px-3 mt-3 bg-blue-600 text-white rounded">
-            Show Waterbodies
+          <button onClick={() => toggleWaterbodies()} className={`w-full py-2 px-3 mt-3 text-white rounded  ${showWB ? "bg-red-600" : "bg-blue-600"}`}>
+            {showWB ? "Hide Waterbodies" : "Show Waterbodies"}
           </button>
+
+
+          {clickedWaterbodyId && (
+  <div className="p-3 bg-blue-50 border border-blue-200 rounded mt-3">
+    <p className="font-semibold text-blue-800">
+      Waterbody Selected: {clickedWaterbodyId}
+    </p>
+
+    <button
+      onClick={() => window.open(waterbodyDashboardUrl, "_blank")}
+      className="mt-2 px-3 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+    >
+      Click to View Dashboard →
+    </button>
+  </div>
+)}
+
 
 
         </div>
