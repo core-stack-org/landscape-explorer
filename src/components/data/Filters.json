@@ -180,19 +180,28 @@
             {
                 "name": "drought_category",
                 "label": "Number of drought years since 2017",
-                "type": 1,
+                "type": 2,
                 "values": [
                     {
                         "label": "No Drought",
-                        "value": 0
+                        "value": {
+                            "lower": 0,
+                            "upper": 0
+                        }
                     },
                     {
                         "label": "At least one drought year",
-                        "value": 1
+                        "value": {
+                            "lower": 1,
+                            "upper": 1
+                        }
                     },
                     {
                         "label": "At least two drought years",
-                        "value": 2
+                        "value": {
+                            "lower": 1,
+                            "upper": 2
+                        }
                     }
                 ],
                 "layer_store": [
