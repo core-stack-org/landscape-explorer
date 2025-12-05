@@ -822,7 +822,7 @@
             },
             {
                 "name": "green_credit",
-                "label": "Green Credit",
+                "label": "Green Credits",
                 "type": 1,
                 "values": [
                     {
