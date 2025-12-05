@@ -1,6 +1,6 @@
-export default async function getPlans(block_id) {
+export default async function getPlans(block_id=null) {
     try {
-        let response = await fetch(`${process.env.REACT_APP_API_URL}/watershed/plans/?block=${block_id}`, {
+        let response = await fetch(`${process.env.REACT_APP_API_URL}/watershed/plans`, {
             method: "GET",
             headers: {
                 "ngrok-skip-browser-warning": "1",
