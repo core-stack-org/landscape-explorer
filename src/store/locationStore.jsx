@@ -47,3 +47,8 @@ export const dataJsonAtom = atom({
   key: 'dataJsonAtom', 
   default: null,
 }) 
+
+export const plansAtom = atom({
+  key: "plansAtom",
+  default: [],
+});

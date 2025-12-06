@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
+import { useRecoilState } from "recoil";
 import TileLayer from "ol/layer/Tile";
 import XYZ from "ol/source/XYZ";
 import { Control, defaults as defaultControls } from "ol/control";
@@ -7,6 +8,9 @@ import Map from "ol/Map";
 import SelectReact from "react-select";
 import YearSlider from "./yearSlider.jsx";
 import LandingNavbar from "../components/landing_navbar.jsx";
+import { plansAtom, stateAtom } from "../store/locationStore";
+import getPlans from "../actions/getPlans";
+import getStates from "../actions/getStates";
 
 const PlansPage = () => {
   const mapElement = useRef(null);
@@ -14,6 +18,9 @@ const PlansPage = () => {
   const [selectedOption, setSelectedOption] = useState("default");
   const [organization, setOrganization] = useState();
   const [organizationOptions, setOrganizationOptions] = useState([]);
+  const [plans, setPlans] = useRecoilState(plansAtom);
+  const [states, setStates] = useRecoilState(stateAtom);
+
 
   useEffect(() => {
     const fetchOrganizations = async () => {
@@ -48,6 +55,33 @@ const PlansPage = () => {
       return [];
     }
   };
+
+  useEffect(() => {
+    const load = async () => {
+      const plansData = await getPlans(); // 👈 use your existing function
+      setPlans(plansData.raw);            // save raw list in Recoil
+    };
+    load();
+  }, []);
+
+  useEffect(() => {
+    const loadStatesData = async () => {
+      if (states && states.length > 0) {
+        return;
+      }
+  
+      try {
+        const data = await getStates();
+        setStates(data);
+      } catch (err) {
+        console.log("State load error", err);
+      }
+    };
+  
+    loadStatesData();
+  }, []);
+  
+  
 
   const customStyles = {
     control: (base) => ({
@@ -154,7 +188,7 @@ const PlansPage = () => {
           <div ref={mapElement} className="w-full h-full" />
 
           {/* Zoom Buttons */}
-          <div className="absolute top-4 right-4 flex flex-col gap-1 z-[1000]">
+          <div className="absolute top-12 right-4 flex flex-col gap-1 z-[1000]">
             {["+", "–"].map((sign) => (
               <button
                 key={sign}
@@ -180,7 +214,7 @@ const PlansPage = () => {
         </div>
 
         {/* Dropdown Section */}
-        <div className="flex flex-col items-start gap-4 w-[25%] text-left">
+        <div className="flex flex-col items-start gap-4 w-[25%] text-left mt-16">
           <label className="font-semibold text-gray-700 text-lg">
             Select Organization
           </label>
@@ -199,6 +233,26 @@ const PlansPage = () => {
               Selected: <span className="font-medium">{selectedOption}</span>
             </p>
           )}
+          {/* Stats Info Box */}
+          <div className="w-full bg-gray-50 border border-gray-300 rounded-lg p-4 shadow-sm mt-12">
+            <h3 className="font-semibold text-gray-800 text-lg mb-3">Overview</h3>
+
+            <div className="flex flex-col gap-2 text-sm text-gray-700">
+              <p>
+                <span className="font-medium">Commons Connect operational in:</span>  —
+              </p>
+              <p>
+                <span className="font-medium">DPRs submitted:</span>  —
+              </p>
+              <p>
+                <span className="font-medium">Demands approved:</span>  —
+              </p>
+              <p>
+                <span className="font-medium">Landscape stewards working:</span>  —
+              </p>
+            </div>
+          </div>
+
         </div>
       </div>
     </div>
