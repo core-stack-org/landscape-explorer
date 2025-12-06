@@ -21,20 +21,25 @@ ChartJS.register(
   Legend
 );
 
-const DroughtChart = ({ feature }) => {
-  if (!feature) return null;
+const DroughtChart = ({ mwsGeoData, waterbody }) => {
+  if (!mwsGeoData || !waterbody) return null;
 
-  // handle OL feature or plain GeoJSON
-  const props = feature.get
-    ? feature.getProperties()
-    : feature.properties || feature;
+  const mwsUid = waterbody?.MWS_UID?.toString();
+  if (!mwsUid) return null;
+
+  const matchedFeature = mwsGeoData.features?.find(
+    (f) => f.properties?.uid?.toString().trim() === mwsUid.trim()
+  );
+
+  if (!matchedFeature) return null;
+
+  const props = matchedFeature.properties;
 
   const years = [2017, 2018, 2019, 2020, 2021, 2022];
 
-  // extract arrays from properties
-  const w_mod = years.map((y) => props[`w_mod_${y}`] ?? 0);
-  const w_sev = years.map((y) => props[`w_sev_${y}`] ?? 0);
-  const drysp = years.map((y) => props[`drysp_${y}`] ?? 0);
+  const w_mod = years.map((y) => props[`drought_w_mod_${y}`] ?? 0);
+  const w_sev = years.map((y) => props[`drought_w_sev_${y}`] ?? 0);
+  const drysp = years.map((y) => props[`drought_drysp_${y}`] ?? 0);
 
   const data = {
     labels: years,
@@ -42,46 +47,23 @@ const DroughtChart = ({ feature }) => {
       {
         label: "Moderate Weeks",
         data: w_mod,
-        borderColor: "#EB984E",
         backgroundColor: "#EB984E",
-        tension: 0.3,
       },
       {
         label: "Severe Weeks",
         data: w_sev,
-        borderColor: "#E74C3C",
         backgroundColor: "#E74C3C",
-        tension: 0.3,
       },
       {
-        label: "Dry Spells Weeks",
+        label: "Dry Spell Weeks",
         data: drysp,
-        borderColor: "#8884d8",
         backgroundColor: "#8884d8",
-        tension: 0.3,
       },
     ],
   };
 
-  const options = {
-    maintainAspectRatio: false,
-    responsive: true,
-    layout: {
-      padding: { bottom: 30 }, // same padding for both
-    },
-    interaction: { mode: "index", intersect: false },
-    position: "top",
-    plugins: {
-      title: { display: true, text: "Drought Data over the years" },
-    },
-    scales: {
-      y: {
-        title: { display: true, text: "No. of weeks" },
-      },
-    },
-  };
-
-  return <Bar data={data} options={options} />;
+  return <Bar data={data} options={{ responsive: true }} />;
 };
+
 
 export default DroughtChart;

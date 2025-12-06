@@ -182,11 +182,7 @@ console.log(mwsFromLocalStorage)
   useEffect(() => {
     const storedOrg = localStorage.getItem("selectedOrganization");
     const storedProject = localStorage.getItem("selectedProject");
-    const mode = storedProject ? "project" : "tehsil";
-    const config = WATER_DASHBOARD_CONFIG[mode];
-    const selectedOrganization = JSON.parse(
-      localStorage.getItem("selectedOrganization")
-    );
+
     if (storedOrg) {
       const parsedOrg = JSON.parse(storedOrg);
 
@@ -224,13 +220,17 @@ console.log(mwsFromLocalStorage)
   
 
   useEffect(() => {
-    if (geoData?.features) {
+    if (!window.__userSelectedOrgProject && geoData === null) {
+      setLoadingData(false);
+      return;
+    }
+      if (geoData?.features) {
       setLoadingData(false);
     } else {
       setLoadingData(true);
     }
   }, [geoData]);
-
+  
   useEffect(() => {
     if (isTehsilMode) return; 
     if (!geoData || !waterbodyParam || autoOpened) return;
@@ -623,6 +623,21 @@ console.log(mwsFromLocalStorage)
   }, [geoData, zoiFeatures]);
 
   const totalRows = rows.length;
+
+  const matchedZoiFeature = useMemo(() => {
+    if (!zoiFeatures || !activeSelectedWaterbody?.UID) return null;
+  
+    return zoiFeatures.find(
+      (f) =>
+        f.get("UID")?.toString().trim() ===
+        activeSelectedWaterbody.UID.toString().trim()
+    );
+  }, [zoiFeatures, activeSelectedWaterbody]);
+  
+  const zoiAreaFromFeature = matchedZoiFeature
+    ? Number(matchedZoiFeature.get("zoi_area")) || 0
+    : 0;
+  
   
   const handleFilterClick = (event, type) => {
     setAnchorEl(event.currentTarget);
@@ -808,7 +823,15 @@ console.log(mwsFromLocalStorage)
       )}
 
       {/* Conditional Rendering for Table or Map */}
-      <div className="absolute top-[calc(20%+72px)] md:top-[calc(18%+64px)] sm:top-[calc(16%+48px)] left-[2.5%] w-[92%]h-auto bg-white p-5 rounded-md z-[1]">
+      <div
+  className={`
+    absolute top-[calc(20%+72px)]
+    md:top-[calc(18%+64px)]
+    sm:top-[calc(16%+48px)]
+    left-[2.5%] w-[92%] h-auto z-[1]
+    ${project && geoData?.features?.length > 0 ? "bg-white p-5 rounded-md" : "bg-transparent p-0"}
+  `}
+>
         {!isTehsilMode && view === "table" ? (
           loadingData ? (
             <div className="flex justify-center items-center h-40">
@@ -816,16 +839,45 @@ console.log(mwsFromLocalStorage)
             </div>
           ) : (
             <>
-              <TopSection configTextFn={config.topSectionText} data={{projectName: project?.label,
-                  tehsilName: mode === "tehsil" ? capitalize(blockParam) : null, totalRows,totalSiltRemoved,
-                  rabiImpact: projectLevelRabiImpact,
-                  zaidImpact: projectLevelZaidImpact,
-                  interventionYear: rows?.[0]?.interventionYear || "NA",
-                }}/>
+            {(project && geoData?.features?.length > 0) ? (
+              <>
+                <TopSection
+                  configTextFn={config.topSectionText}
+                  data={{
+                    projectName: project?.label,
+                    tehsilName: mode === "tehsil" ? capitalize(blockParam) : null,
+                    totalRows,
+                    totalSiltRemoved,
+                    rabiImpact: projectLevelRabiImpact,
+                    zaidImpact: projectLevelZaidImpact,
+                    interventionYear: rows?.[0]?.interventionYear || "NA",
+                  }}
+                />
+          
+                <TableView
+                  headers={config.tableHeaders}
+                  rows={sortedRows}
+                  sortField={sortField}
+                  sortOrder={sortOrder}
+                  waterbodySearch={waterbodySearch}
+                  onSort={handleSort}
+                  onFilterClick={handleFilterClick}
+                  onInfoClick={handleInfoClick}
+                  onSearchChange={(value) => setWaterbodySearch(value)}
+                  onRowClick={handleWaterbodyClick}
+                />
+              </>
+            ) : (
+              <div className="fixed top-[160px] left-0 w-full px-6 mt-12">
+  <div className="w-full py-6 bg-white border border-gray-300 rounded-md shadow text-center text-gray-700 font-semibold text-lg">
+    Please select Organization & Project to view data.
+  </div>
+</div>
 
-              <TableView headers={config.tableHeaders} rows={sortedRows} sortField={sortField} sortOrder={sortOrder}     waterbodySearch={waterbodySearch} onSort={handleSort} onFilterClick={handleFilterClick} 
-              onInfoClick={handleInfoClick} onSearchChange={(value) => setWaterbodySearch(value)} onRowClick={handleWaterbodyClick}/>
-            </>
+            
+            )}
+          </>
+          
           )
         ) : view === "map" ? (
           <div className="flex flex-col gap-4 mt-2 w-full px-2 sm:px-4 md:px-6">
@@ -882,17 +934,25 @@ console.log(mwsFromLocalStorage)
                   <div  className="absolute top-4 left-4 bg-white/90 p-2 sm:p-3 rounded-md font-bold shadow flex flex-col items-start gap-1 z-[1000] max-w-[90%] sm:max-w-[300px]">
                     <div className="flex items-center gap-1">
                       <LocationOnIcon className="text-blue-600" fontSize="small"/>
+                      {!(
+                        activeSelectedWaterbody?.waterbody_name?.trim().toUpperCase() === "NA" ||
+                        activeSelectedWaterbody?.waterbody_name?.trim().toUpperCase() === "N/A" ||
+                        activeSelectedWaterbody?.waterbody_name?.trim() === ""
+                      ) && (
+                        <p className="font-semibold text-gray-900">
+                          {activeSelectedWaterbody.waterbody_name}
+                        </p>
+                      )}
                       <p className="font-semibold text-gray-900">
-                        {activeSelectedWaterbody?.waterbody_name ?? activeSelectedWaterbody?.waterbody ?? "Waterbody Name"}
-                      </p>
-                    </div>
-                    <p className="font-semibold text-gray-900">
                         {activeSelectedWaterbody?.UID ?? activeSelectedWaterbody?.UID ?? "UID"}
                       </p>
-                    <p className="text-gray-700 text-sm font-semibold">
-                      Silt Removed: {activeSelectedWaterbody?.siltRemoved != null ? `${activeSelectedWaterbody.siltRemoved} cubic metres`: "NA"
-  }
-                    </p>
+                    </div>         
+                    {Number(activeSelectedWaterbody?.siltRemoved) > 0 && (
+                      <p className="text-gray-700 text-sm font-semibold">
+                        Silt Removed: {activeSelectedWaterbody.siltRemoved} cubic metres
+                      </p>
+                    )}
+
 
                     <p className="text-gray-700 text-sm font-semibold">
                       Area (in hectares):{" "}{(activeSelectedWaterbody?.areaOred || 0).toFixed(2)} hectares
@@ -1056,17 +1116,25 @@ console.log(mwsFromLocalStorage)
                     <div className="absolute top-4 left-4 bg-white/90 px-3 py-2 rounded-md font-bold shadow-sm flex flex-col items-start gap-1 z-[1000] max-w-[90%] sm:max-w-[300px]">
                       <div className="flex items-center gap-1">
                         <LocationOnIcon className="text-blue-600 w-4 h-4" />
-                        <p className="text-base font-semibold">
-                          {activeSelectedWaterbody?.waterbody || "Waterbody Name"}
+                        {!(
+                        activeSelectedWaterbody?.waterbody_name?.trim().toUpperCase() === "NA" ||
+                        activeSelectedWaterbody?.waterbody_name?.trim().toUpperCase() === "N/A" ||
+                        activeSelectedWaterbody?.waterbody_name?.trim() === ""
+                      ) && (
+                        <p className="font-semibold text-gray-900">
+                          {activeSelectedWaterbody.waterbody_name}
                         </p>
+                      )}
+                      <p className="font-semibold text-gray-900">
+                        {activeSelectedWaterbody?.UID ?? activeSelectedWaterbody?.UID ?? "UID"}
+                      </p>
                       </div>
 
                       <p className="text-sm text-gray-700 font-extrabold">
-                        ZOI Area:{" "}
-                        {zoiArea !== null
-                          ? `${zoiArea.toFixed(2)} hectares`
-                          : "NA"}
+                        ZOI Area:{zoiAreaFromFeature > 0 ? `${zoiAreaFromFeature.toFixed(2)} hectares` : "NA"}
                       </p>
+
+
                     </div>
 
                     {/* Legend + YearSlider wrapper */}
@@ -1137,7 +1205,7 @@ console.log(mwsFromLocalStorage)
 
                     <div className="w-full max-w-[700px] h-[300px] sm:h-[350px] md:h-[400px]">
                       <DroughtChart
-                        feature={selectedMWSFeature}
+                      mwsGeoData={mwsGeoData}
                         waterbody={activeSelectedWaterbody}
                       />
                       {/* <NDMIPointChart

@@ -196,6 +196,7 @@ const HeaderSelect = ({
 
   // ---- ORGANIZATION CHANGE ----
   const handleOrganizationChange = (selectedOption) => {
+    window.__userSelectedOrgProject = true;
     setOrganization(selectedOption);
     setProject(null);
     setProjectOptions([]);
@@ -222,6 +223,7 @@ const HeaderSelect = ({
 
   // ---- PROJECT CHANGE ----
   const handleProjectChange = (selectedOption) => {
+    window.__userSelectedOrgProject = true;
     setProject(selectedOption);
 
     localStorage.setItem("selectedProject", JSON.stringify(selectedOption));
