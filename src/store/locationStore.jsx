@@ -99,6 +99,12 @@ export const mwsLayerRefAtom = atom({
   default: null,
 });
 
+export const tehsilDroughtDataAtom = atom({
+  key: "tehsilDroughtDataAtom",
+  default: null,
+});
+
+
 
 
 

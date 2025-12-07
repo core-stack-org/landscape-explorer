@@ -46,6 +46,8 @@ const DashboardBasemap = ({
   const geojsonReaderRef = useRef(new GeoJSON());
   const lulcLoadedRef = useRef(false);
 
+  console.log("mws:", mwsData);
+
   const read4326 = (data) =>
     geojsonReaderRef.current.readFeatures(data, {
       dataProjection: "EPSG:4326",
@@ -125,6 +127,7 @@ const DashboardBasemap = ({
         try {
           m.removeLayer(layer);
         } catch {
+          /* ignore */
         }
       }
     });
@@ -143,6 +146,7 @@ const DashboardBasemap = ({
           }
         }
       } catch {
+        /* ignore */
       }
     });
   };
@@ -165,10 +169,11 @@ const DashboardBasemap = ({
 
       try {
         const params = layer.getSource?.().getParams?.();
-        if (params?.LAYERS && params.LAYERS.includes("LULC")) {
+        if (params?.LAYERS && params.includes("LULC")) {
           map.removeLayer(layer);
         }
       } catch {
+        /* ignore */
       }
 
       const src = layer.getSource?.();
@@ -269,7 +274,8 @@ const DashboardBasemap = ({
           ...props,
           UID: uid,
           waterbody_name: name,
-          geometry: geometryJSON, // PURE GEOJSON
+          geometry: geometryJSON,
+          pixel:event.pixel
         });
       }
 
@@ -291,6 +297,7 @@ const DashboardBasemap = ({
       try {
         map.setTarget(null);
       } catch {
+        /* ignore */
       }
     };
   }, []);
@@ -306,7 +313,11 @@ const DashboardBasemap = ({
 
     // NORMALIZE selectedWaterbody (tehsil OL feature → plain object)
     let normalizedWaterbody = selectedWaterbody;
-    if ( normalizedWaterbody && typeof normalizedWaterbody.get === "function" &&  normalizedWaterbody.get("UID")) {
+    if (
+      normalizedWaterbody &&
+      typeof normalizedWaterbody.get === "function" &&
+      normalizedWaterbody.get("UID")
+    ) {
       normalizedWaterbody = {
         UID: normalizedWaterbody.get("UID"),
         MWS_ID:
@@ -322,6 +333,7 @@ const DashboardBasemap = ({
         State: normalizedWaterbody.get("State"),
       };
     }
+
     lulcLoadedRef.current = false;
     removeLayersById([
       "wb_all_layer",
@@ -404,7 +416,7 @@ const DashboardBasemap = ({
     const addWaterbody = async () => {
       const isTehsil = !projectName && !projectId;
 
-      // PROJECT MODE
+      // PROJECT MODE (unchanged)
       if (!isTehsil) {
         if (!geoData) return;
 
@@ -468,483 +480,627 @@ const DashboardBasemap = ({
         return;
       }
 
-      // TEHSIL MODE
-      if (isTehsil) {
-        if (!selectedWaterbody?.geometry) return;
+      // TEHSIL MODE — PATCHED
+    // TEHSIL MODE — FINAL PATCH
+if (isTehsil) {
+  let wbGeometry = selectedWaterbody?.geometry || null;
 
-        const tehsilFeature = geojsonReaderRef.current.readFeature(
-          {
-            type: "Feature",
-            geometry: selectedWaterbody.geometry,
-            properties: selectedWaterbody,
-          },
-          {
-            dataProjection: "EPSG:4326",
-            featureProjection: "EPSG:4326",
-          }
-        );
+  // fallback from geoData
+  if (!wbGeometry && geoData?.type === "FeatureCollection") {
+    const feats = geoData.features || [];
+    let f = feats[0];
 
-        const geom = tehsilFeature.getGeometry();
-        if (!geom) return;
-
-        view.fit(geom.getExtent(), {
-          padding: [20, 20, 20, 20],
-          maxZoom: 17,
-          duration: 300,
-        });
-
-        const wbLayer = new VectorLayer({
-          source: new VectorSource({ features: [tehsilFeature] }),
-          style: new Style({
-            stroke: new Stroke({ color: "blue", width: 3 }),
-          }),
-        });
-        wbLayer.set("id", "wb_single_layer");
-        wbLayer.setZIndex(10);
-        map.addLayer(wbLayer);
-
-        removeLulcLayers();
-        await addLulcLayer(
-          "lulc_RWB",
-          "lulc_waterbody_layer",
-          tehsilFeature,
-          false
-        );
-        return;
-      }
-    };
-
-    // ───── ZOI MODE ─────
-    const addZoi = async () => {
-      if (!normalizedWaterbody) return;
-
-      const zoiOl = getZoiOlFeatures();
-      if (!zoiOl.length) return;
-
-      const uid =
-        normalizedWaterbody.UID?.toString() ||
-        normalizedWaterbody.uid?.toString();
-
-      let selectedZoi = null;
-
-      if (uid) {
-        selectedZoi = zoiOl.find((f) => {
-          const fu =
-            f.get("UID") || f.get("uid") || f.get("waterbody_uid");
-          return fu?.toString() === uid;
-        });
-      }
-
-      if (!selectedZoi) return;
-
-      // send ZOI area back up (if available in attributes)
-      if (onZoiArea) {
-        const rawArea =
-          selectedZoi.get("zoi_area") ??
-          selectedZoi.get("ZOI_AREA") ??
-          selectedZoi.get("area_ha") ??
-          selectedZoi.get("AREA_HA");
-        const areaHa = rawArea != null ? Number(rawArea) : null;
-        if (!Number.isNaN(areaHa) && areaHa != null) {
-          onZoiArea(areaHa);
-        } else {
-          onZoiArea(null);
-        }
-      }
-
-      const zoiFeature = new Feature(selectedZoi.getGeometry().clone());
-      const geom = zoiFeature.getGeometry();
-
-      if (geom) {
-        map.getView().fit(geom.getExtent(), {
-          padding: [40, 40, 40, 40],
-          maxZoom: 17,
-          duration: 500,
-        });
-      }
-
-      const zoiLayer = new VectorLayer({
-        source: new VectorSource({ features: [zoiFeature] }),
-        style: new Style({ stroke: new Stroke({ color: "yellow", width: 3 }) }),
-      });
-      zoiLayer.set("id", "zoi_border_layer");
-      map.addLayer(zoiLayer);
-
-      removeLulcLayers();
-      await addLulcLayer("waterrej_lulc", "lulc_zoi_layer", zoiFeature, false);
-
-      // PROJECT ZOI → draw WB inside ZOI
-      if (geoData && normalizedWaterbody.UID) {
-        const allWB = read4326(geoData);
-        const matchedWB = allWB.find(
-          (f) =>
-            f.get("UID")?.toString() === normalizedWaterbody.UID?.toString()
-        );
-
-        if (matchedWB) {
-          const wbFeature = new Feature(matchedWB.getGeometry().clone());
-
-          const wbLayer = new VectorLayer({
-            source: new VectorSource({ features: [wbFeature] }),
-            style: new Style({ stroke: new Stroke({ color: "blue", width: 3 }) }),
-          });
-          wbLayer.set("id", "wb_single_layer");
-          map.addLayer(wbLayer);
-
-          const lulcLayer = map
-            .getLayers()
-            .getArray()
-            .find((l) => l.get("id") === "lulc_zoi_layer");
-
-          if (lulcLayer) {
-            lulcLayer.addFilter(
-              new Crop({ feature: wbFeature, wrapX: true, inner: true })
-            );
-          }
-        }
-      }
-
-      // TEHSIL ZOI → add WB the same way using selectedWaterbody geometry
-      if (!projectName && !projectId) {
-        if (!selectedWaterbody?.geometry) return;
-
-        const wbFeatureOl = geojsonReaderRef.current.readFeature(
-          {
-            type: "Feature",
-            geometry: selectedWaterbody.geometry,
-            properties: selectedWaterbody,
-          },
-          {
-            dataProjection: "EPSG:4326",
-            featureProjection: "EPSG:4326",
-          }
-        );
-
-        const wbLayer = new VectorLayer({
-          source: new VectorSource({ features: [wbFeatureOl] }),
-          style: new Style({
-            stroke: new Stroke({ color: "blue", width: 3 }),
-          }),
-        });
-        wbLayer.set("id", "wb_single_layer");
-        wbLayer.setZIndex(99999);
-        map.addLayer(wbLayer);
-
-        const lulcLayer = map
-          .getLayers()
-          .getArray()
-          .find((l) => l.get("id") === "lulc_zoi_layer");
-
-        if (lulcLayer) {
-          lulcLayer.addFilter(
-            new Crop({
-              feature: wbFeatureOl,
-              wrapX: true,
-              inner: true,
-            })
-          );
-        }
-      }
-
-      const zoiTop = new VectorLayer({
-        source: new VectorSource({ features: [zoiFeature] }),
-        style: new Style({ stroke: new Stroke({ color: "yellow", width: 3 }) }),
-      });
-      zoiTop.set("id", "zoi_top_layer");
-      map.addLayer(zoiTop);
-    };  
-
-    // ───── MWS MODE ─────
-    const addMws = async () => {
-      if (!normalizedWaterbody || !selectedWaterbody) {
-        console.warn("❗ normalizedWaterbody OR selectedWaterbody missing");
-        return;
-      }
-
-      const map = mapRef.current;
-      
-      // WAIT FOR MAP TO BE READY
-      if (!map?.isReady) {
-        await new Promise((resolve) => {
-          const checkReady = () => {
-            if (map?.isReady) {
-              resolve();
-            } else {
-              setTimeout(checkReady, 50);
-            }
-          };
-          checkReady();
-        });
-      }
-      
-      const view = map.getView();
-
-      const isTehsil = !projectName && !projectId;
-      const isProject = projectName && projectId;
-
-      let selectedMws = null;
-      let allMws = [];
-      let mwsUid = null;
-
-      // PROJECT MODE → use mwsData FeatureCollection + MWS_UID
-      if (isProject) {
-        mwsUid = normalizedWaterbody?.MWS_ID?.toString() ||
-                normalizedWaterbody?.MWS_UID?.toString();
-
-        if (!mwsUid) {
-          console.warn("Project mode → missing MWS UID");
-          return;
-        }
-
-        try {
-          allMws = geojsonReaderRef.current.readFeatures(mwsData || []);
-        } catch (err) {
-          console.error("Project mode → failed to parse mwsData:", err);
-          return;
-        }
-
-        selectedMws = allMws.find((f) => {
-          const fu = f.get("uid") || f.get("UID") || f.get("MWS_UID");
-          return fu?.toString() === mwsUid;
-        });
-
-        if (!selectedMws) {
-          console.warn("Project mode → No MWS matched for UID", mwsUid);
-          return;
-        }
-      }
-      // TEHSIL MODE → mwsData is raw OL feature-like
-      if (isTehsil) {
-        const rawGeom = mwsData?.values_?.geometry;
-
-        if (!rawGeom) {
-          console.error("Tehsil → NO GEOMETRY FOUND in mwsData");
-          return;
-        }
-
-        let realGeom;
-        try {
-          const flat = rawGeom.flatCoordinates;
-          const stride = rawGeom.stride || 2;
-          const ring = [];
-
-          for (let i = 0; i < flat.length; i += stride) {
-            ring.push([flat[i], flat[i + 1]]);
-          }
-
-          realGeom = new Polygon([ring]);
-        } catch (err) {
-          console.error("Failed to rebuild polygon:", err);
-          return;
-        }
-        selectedMws = new Feature({
-          geometry: realGeom,
-          UID: mwsData?.uid,
-        });
-      }
-
-      // MultiPolygon for cropping (MOVED UP - prepare BEFORE loading layers)
-      let multiPoly = null;
-      try {
-        const selGeom = selectedMws.getGeometry?.();
-        if (selGeom) {
-          const type = selGeom.getType();
-          if (type === "Polygon") {
-            multiPoly = new MultiPolygon([selGeom.getCoordinates()]);
-          } else {
-            multiPoly = selGeom;
-          }
-        }
-      } catch (err) {
-        console.error(" multiPoly error:", err);
-      }
-
-      // ═══════════════════════════════════════════════════
-      // LOAD ALL LAYERS IN PARALLEL (instead of sequential)
-      // ═══════════════════════════════════════════════════
-      
-      const terrainLayerName = isProject
-        ? `${projectName.toLowerCase()}_${projectId}_terrain_raster`
-        : `${district.toLowerCase()}_${block.toLowerCase()}_terrain_raster`;
-        
-      const drainageLayerName = isProject
-        ? `${projectName.toLowerCase()}_${projectId}`
-        : `${district.toLowerCase()}_${block.toLowerCase()}`;
-
-      console.log("🔄 Loading terrain & drainage in parallel...");
-
-      // Load terrain and drainage at the SAME TIME
-      const [terrainLayer, drainageLayer] = await Promise.all([
-        getImageLayer("terrain", terrainLayerName, true, "Terrain_Style_11_Classes").catch(err => {
-          console.error("Terrain load failed:", err);
-          return null;
-        }),
-        getVectorLayers("drainage", drainageLayerName, true, "drainage").catch(err => {
-          console.error("Drainage load failed:", err);
-          return null;
-        })
-      ]);
-      // Add terrain layer
-      if (terrainLayer) {
-        terrainLayer.setOpacity(0.7);
-        terrainLayer.setZIndex(0);
-        terrainLayer.set("id", "terrain_layer");
-
-        if (multiPoly && terrainLayer.addFilter) {
-          terrainLayer.addFilter(
-            new Crop({
-              feature: new Feature(multiPoly),
-              wrapX: false,
-              inner: false,
-            })
-          );
-        }
-        
-        map.addLayer(terrainLayer);
-      }
-
-      // Add drainage layer
-      if (drainageLayer) {
-        const drainageColors = [
-          "#03045E", "#023E8A", "#0077B6", "#0096C7", "#00B4D8",
-          "#48CAE4", "#90E0EF", "#ADE8F4", "#CAF0F8",
-        ];
-
-        drainageLayer.setStyle((feature) => {
-          const order = feature.get("ORDER") || 1;
-          return new Style({
-            stroke: new Stroke({
-              color: drainageColors[order - 1] || drainageColors[0],
-              width: 2,
-            }),
-          });
-        });
-
-        drainageLayer.set("id", "drainage_layer");
-        drainageLayer.setZIndex(2);
-
-        if (multiPoly && drainageLayer.addFilter) {
-          drainageLayer.addFilter(
-            new Crop({
-              feature: new Feature(multiPoly),
-              wrapX: false,
-              inner: false,
-            })
-          );
-        }
-        
-        map.addLayer(drainageLayer);
-      }
-
-      // Draw MWS boundary
-      try {
-        const boundaryLayer = new VectorLayer({
-          source: new VectorSource({ features: [selectedMws] }),
-          style: new Style({
-            stroke: new Stroke({ color: "black", width: 3 }),
-            fill: null,
-          }),
-        });
-
-        boundaryLayer.set("id", "mws_boundary_layer");
-        boundaryLayer.setZIndex(3);
-        map.addLayer(boundaryLayer);
-      } catch (err) {
-        console.error("Failed to create boundary layer:", err);
-        return;
-      }
-
-      const geom = selectedMws.getGeometry?.();
-      if (geom) {
-        try {
-          view.fit(geom.getExtent(), {
-            padding: [60, 60, 60, 60],
-            maxZoom: 17,
-          });
-        } catch (err) {
-          console.error(" Error fitting view:", err);
-        }
-      }
-
-      // waterbody from selectedWaterbody.geometry
-      let wbFeatureObj = null;
-
-      try {
-        if (selectedWaterbody?.geometry) {
-          wbFeatureObj = geojsonReaderRef.current.readFeature(
-            {
-              type: "Feature",
-              geometry: selectedWaterbody.geometry,
-              properties: {},
-            },
-            {
-              dataProjection: "EPSG:4326",
-              featureProjection: "EPSG:4326",
-            }
-          );
-        }
-
-    // TRY FALLBACK IF selectedWaterbody.geometry IS MISSING
-    if (!wbFeatureObj) {
-      console.warn(" No WB geometry found — attempting fallback...");
-
-      let fallbackWB = null;
-
-      // Try from geoData (project mode)
-      if (geoData) {
-        const allWB = geojsonReaderRef.current.readFeatures(geoData);
-        fallbackWB = allWB.find(
-          (f) =>
-            f.get("UID")?.toString() === normalizedWaterbody.UID?.toString()
-        );
-      }
-
-      // Try from zoiFeatures (tehsil mode)
-      if (!fallbackWB && zoiFeatures) {
-        const zoiOl = getZoiOlFeatures();
-        fallbackWB = zoiOl.find(
-          (f) =>
-            f.get("UID")?.toString() === normalizedWaterbody.UID?.toString()
-        );
-      }
-
-      if (!fallbackWB) {
-        console.error(" Could not reconstruct waterbody!");
-        return;
-      }
-
-      wbFeatureObj = new Feature(fallbackWB.getGeometry().clone());
+    if (normalizedWaterbody?.UID) {
+      const match = feats.find(
+        feat => feat?.properties?.UID?.toString() === normalizedWaterbody.UID?.toString()
+      );
+      if (match) f = match;
     }
 
+    if (f?.geometry) wbGeometry = f.geometry;
+  }
 
-        const selectedWaterLayer = new VectorLayer({
-          source: new VectorSource({ features: [wbFeatureObj] }),
-          style: new Style({
-            stroke: new Stroke({ color: "blue", width: 3 }),
-          }),
-        });
+  if (!wbGeometry) {
+    console.warn("No tehsil WB geometry found.");
+    return;
+  }
 
-        selectedWaterLayer.set("id", "selected_waterbody_layer");
-        selectedWaterLayer.setZIndex(10);
-        map.addLayer(selectedWaterLayer);
+  // Convert geometry → OL geometry
+  let realGeom = null;
 
-        const wbTop = new VectorLayer({
-          source: new VectorSource({ features: [wbFeatureObj] }),
-          style: new Style({
-            stroke: new Stroke({ color: "blue", width: 3 }),
-          }),
-        });
+  if (typeof wbGeometry.getExtent === "function") {
+    realGeom = wbGeometry;
+  }
+  else if (wbGeometry.type === "Polygon" || wbGeometry.type === "MultiPolygon") {
+    realGeom = geojsonReaderRef.current.readGeometry(wbGeometry, {
+      dataProjection: "EPSG:4326",
+      featureProjection: "EPSG:4326",
+    });
+  }
+  else if (wbGeometry.flatCoordinates) {
+    const flat = wbGeometry.flatCoordinates;
+    const stride = wbGeometry.stride || 2;
+    const ring = [];
+    for (let i = 0; i < flat.length; i += stride) {
+      ring.push([flat[i], flat[i + 1]]);
+    }
+    realGeom = new Polygon([ring]);
+  }
 
-        wbTop.set("id", "wb_top_layer_mws");
-        wbTop.setZIndex(999999);
-        map.addLayer(wbTop);
-      } catch (err) {
-        console.error("Failed to draw waterbody:", err);
+  if (!realGeom) {
+    console.error("Could not rebuild tehsil geometry");
+    return;
+  }
+
+  // SAFE Feature creation
+  const tehsilFeature = new Feature();
+  tehsilFeature.setGeometry(realGeom);
+
+  // copy only safe primitive properties (avoid OL objects)
+  if (selectedWaterbody) {
+    Object.entries(selectedWaterbody).forEach(([k, v]) => {
+      if (k !== "geometry" &&
+         (typeof v === "string" || typeof v === "number" || typeof v === "boolean" || v == null)
+      ) {
+        tehsilFeature.set(k, v);
       }
-      
-      // Force map to render
-      map.renderSync();
+    });
+  }
+
+  const geom = tehsilFeature.getGeometry();
+  view.fit(geom.getExtent(), {
+    padding: [20, 20, 20, 20],
+    maxZoom: 17,
+    duration: 300,
+  });
+
+  const wbLayer = new VectorLayer({
+    source: new VectorSource({ features: [tehsilFeature] }),
+    style: new Style({ stroke: new Stroke({ color: "blue", width: 3 }) }),
+  });
+
+  wbLayer.set("id", "wb_single_layer");
+  wbLayer.setZIndex(10);
+  map.addLayer(wbLayer);
+
+  removeLulcLayers();
+  await addLulcLayer("lulc_RWB", "lulc_waterbody_layer", tehsilFeature, false);
+
+  return;
+}
+
     };
+
+    // =========================
+// SAFE ZOI MATCHER (Tehsil + Project)
+// =========================
+const matchZoiFeature = (zoiList, selectedWB) => {
+  if (!zoiList || !selectedWB) return null;
+
+  // Determine UID from all possible positions
+  let uid =
+    selectedWB.UID ||
+    selectedWB.uid ||
+    selectedWB.waterbody_uid ||
+    selectedWB.properties?.UID ||
+    selectedWB.properties?.uid ||
+    null;
+
+  if (!uid) return null;
+  uid = uid.toString().trim();
+
+  return zoiList.find((f) => {
+    const fu =
+      f.get("UID") ||
+      f.get("uid") ||
+      f.get("waterbody_uid");
+
+    return fu?.toString().trim() === uid;
+  });
+};
+// ───── ZOI MODE ─────
+const addZoi = async () => {
+  if (!normalizedWaterbody) return;
+
+  const map = mapRef.current;
+
+  // 1) Read ZOI Features safely
+  const zoiOl = getZoiOlFeatures();
+  if (!zoiOl?.length) {
+    console.warn("ZOI list empty in basemap");
+    return;
+  }
+
+  // 2) Match correct ZOI (works for both project + tehsil)
+  const selectedZoi = matchZoiFeature(zoiOl, normalizedWaterbody);
+  if (!selectedZoi) {
+    console.warn("No ZOI matched");
+    return;
+  }
+
+  // 3) Pass ZOI area
+  if (onZoiArea) {
+    const rawArea =
+      selectedZoi.get("zoi_area") ||
+      selectedZoi.get("ZOI_AREA") ||
+      selectedZoi.get("area_ha") ||
+      selectedZoi.get("AREA_HA") ||
+      null;
+
+    onZoiArea(rawArea ? Number(rawArea) : null);
+  }
+
+  // 4) Clone geometry
+  const zoiFeature = new Feature(selectedZoi.getGeometry().clone());
+  const geom = zoiFeature.getGeometry();
+
+  // 5) Zoom — increased
+  if (geom) {
+    map.getView().fit(geom.getExtent(), {
+      padding: [30, 30, 30, 30],
+      maxZoom: 19.5,
+      duration: 450,
+    });
+  }
+
+  // 6) Add ZOI border
+  const zoiLayer = new VectorLayer({
+    source: new VectorSource({ features: [zoiFeature] }),
+    style: new Style({
+      stroke: new Stroke({ color: "yellow", width: 3 }),
+    }),
+  });
+  zoiLayer.set("id", "zoi_border_layer");
+  map.addLayer(zoiLayer);
+
+  // 7) Add LULC clipped to ZOI (allowed)
+  removeLulcLayers();
+  await addLulcLayer("waterrej_lulc", "lulc_zoi_layer", zoiFeature, false);
+
+  // ----------------------------------------------------------------------
+  // ⭐ PROJECT MODE — UNTOUCHED (same as your original working logic)
+  // ----------------------------------------------------------------------
+  if (projectName && projectId && geoData) {
+    const allWB = read4326(geoData);
+    const matchedWB = allWB.find(
+      (f) => f.get("UID")?.toString() === normalizedWaterbody.UID?.toString()
+    );
+
+    if (matchedWB) {
+      const wbFeature = new Feature(matchedWB.getGeometry().clone());
+
+      const wbLayer = new VectorLayer({
+        source: new VectorSource({ features: [wbFeature] }),
+        style: new Style({
+          stroke: new Stroke({ color: "blue", width: 3 }),
+        }),
+      });
+
+      wbLayer.set("id", "wb_single_layer");
+      wbLayer.setZIndex(99999);
+      map.addLayer(wbLayer);
+
+      const lulcLayer = map
+        .getLayers()
+        .getArray()
+        .find((l) => l.get("id") === "lulc_zoi_layer");
+
+      if (lulcLayer) {
+        lulcLayer.addFilter(
+          new Crop({
+            feature: wbFeature,
+            wrapX: true,
+            inner: true,
+          })
+        );
+      }
+    }
+  }
+
+// TEHSIL MODE — FINAL FIX (WB ALWAYS BLUE + ALWAYS VISIBLE)
+if (!projectName && !projectId) {
+
+  let wbGeom = selectedWaterbody?.geometry;
+
+  if (!wbGeom) {
+    console.warn("Tehsil ZOI → No WB geometry found, cannot draw waterbody");
+    return;
+  }
+
+  // Convert GeoJSON → OL Feature
+  const wbFeatureOl = geojsonReaderRef.current.readFeature(
+    {
+      type: "Feature",
+      geometry: wbGeom,
+      properties: {
+        UID: selectedWaterbody?.UID,
+        name: selectedWaterbody?.waterbody_name,
+      },
+    },
+    {
+      dataProjection: "EPSG:4326",
+      featureProjection: "EPSG:4326",
+    }
+  );
+
+  const wbGeometry = wbFeatureOl.getGeometry();
+
+  // --- HARD FIX: if geometry failed to load ---
+  if (!wbGeometry) {
+    console.error(" Waterbody Geometry is NULL — cannot draw");
+    return;
+  }
+
+  // Force MultiPolygon handling  
+  if (wbGeometry.getType() === "Polygon") {
+    wbGeometry.translate(0, 0); // forces OL to "wake up" polygon
+  }
+
+  // ADD WB HIGHLIGHT LAYER
+  const wbLayer = new VectorLayer({
+    source: new VectorSource({ features: [wbFeatureOl] }),
+    style: new Style({
+      stroke: new Stroke({
+        color: "blue",
+        width: 4,        // THICKER to guarantee visibility
+      }),
+    }),
+  });
+
+  wbLayer.set("id", "wb_single_layer");
+  wbLayer.setZIndex(99999999);
+  map.addLayer(wbLayer);
+       const lulcLayer = map
+        .getLayers()
+        .getArray()
+        .find((l) => l.get("id") === "lulc_zoi_layer");
+
+      if (lulcLayer) {
+        lulcLayer.addFilter(
+          new Crop({
+            feature: wbFeatureOl,
+            wrapX: true,
+            inner: true,
+          })
+        );
+      }
+}
+
+
+  // 9) Top ZOI highlight
+  const zoiTop = new VectorLayer({
+    source: new VectorSource({ features: [zoiFeature] }),
+    style: new Style({
+      stroke: new Stroke({ color: "yellow", width: 3 }),
+    }),
+  });
+  zoiTop.set("id", "zoi_top_layer");
+  zoiTop.setZIndex(1000000);
+  map.addLayer(zoiTop);
+};
+
+const buildRealGeom = (wbGeom) => {
+  if (!wbGeom) return null;
+
+  // Case 1: already OL geometry
+  if (typeof wbGeom.getExtent === "function") {
+    return wbGeom;
+  }
+
+  // Case 2: proper GeoJSON Polygon / MultiPolygon
+  if (wbGeom.type === "Polygon" || wbGeom.type === "MultiPolygon") {
+    return geojsonReaderRef.current.readGeometry(wbGeom, {
+      dataProjection: "EPSG:4326",
+      featureProjection: "EPSG:4326",
+    });
+  }
+
+  // Case 3: OpenLayers raw geometry (flatCoordinates)
+  if (wbGeom.flatCoordinates) {
+    const flat = wbGeom.flatCoordinates;
+    const stride = wbGeom.stride || 2;
+    const ring = [];
+
+    for (let i = 0; i < flat.length; i += stride) {
+      ring.push([flat[i], flat[i + 1]]);
+    }
+    return new Polygon([ring]);
+  }
+
+  console.warn("Unknown geometry format:", wbGeom);
+  return null;
+};
+
+
+const addMws = async () => {
+  if (!normalizedWaterbody || !selectedWaterbody) {
+    console.warn("normalizedWaterbody OR selectedWaterbody missing");
+    return;
+  }
+
+  const map = mapRef.current;
+
+  // Wait until OL map is fully initialized
+  if (!map?.isReady) {
+    await new Promise((resolve) => {
+      const check = () => (map?.isReady ? resolve() : setTimeout(check, 40));
+      check();
+    });
+  }
+
+  const view = map.getView();
+  const isProject = projectName && projectId;
+  const isTehsil = !isProject;
+
+  // ---------------------------------------------------
+  // 1) FETCH / SELECT MWS FEATURE
+  // ---------------------------------------------------
+  let selectedMws = null;
+  let mwsUid = null;
+
+  // ---------- PROJECT MODE (unchanged) ----------
+  if (isProject) {
+    mwsUid =
+      normalizedWaterbody?.MWS_UID?.toString() ||
+      normalizedWaterbody?.MWS_ID?.toString();
+
+    if (!mwsUid) {
+      console.warn("Project mode → missing MWS UID");
+      return;
+    }
+
+    const allMws = geojsonReaderRef.current.readFeatures(mwsData || []);
+    selectedMws = allMws.find((f) => {
+      const fu = f.get("uid") || f.get("UID") || f.get("MWS_UID");
+      return fu?.toString() === mwsUid;
+    });
+
+    if (!selectedMws) {
+      console.warn("Project → No matching MWS for", mwsUid);
+      return;
+    }
+  }
+
+  // ---------- TEHSIL MODE (fix: match by UID) ----------
+  if (isTehsil) {
+    let allMws = [];
+
+    // mwsData already OL features?
+    if (
+      Array.isArray(mwsData) &&
+      mwsData.length &&
+      typeof mwsData[0].getGeometry === "function"
+    ) {
+      allMws = mwsData;
+    }
+    // or a GeoJSON FeatureCollection?
+    else if (mwsData?.type === "FeatureCollection") {
+      allMws = read4326(mwsData);
+    }
+
+    const wbUid =
+      normalizedWaterbody?.UID?.toString() ||
+      normalizedWaterbody?.uid?.toString() ||
+      null;
+
+    if (allMws.length && wbUid) {
+      // 🔑 MAIN LOGIC: match tehsil MWS by UID of waterbody
+      selectedMws = allMws.find((f) => {
+        const fu =
+          f.get("UID") ||
+          f.get("uid") ||
+          f.get("MWS_UID") ||
+          f.get("waterbody_uid");
+        return fu?.toString() === wbUid;
+      });
+
+      if (!selectedMws) {
+        console.warn("Tehsil → No MWS matched for WB UID:", wbUid);
+        return;
+      }
+    } else {
+      // Fallback: old raw-geometry path (if you still ever send it like that)
+      const rawGeom = mwsData?.values_?.geometry;
+      if (!rawGeom) {
+        console.error("Tehsil → No MWS geometry found");
+        return;
+      }
+
+      const flat = rawGeom.flatCoordinates;
+      const stride = rawGeom.stride || 2;
+      const ring = [];
+      for (let i = 0; i < flat.length; i += stride) {
+        ring.push([flat[i], flat[i + 1]]);
+      }
+
+      selectedMws = new Feature({
+        geometry: new Polygon([ring]),
+        UID: mwsData?.uid,
+      });
+    }
+  }
+
+  if (!selectedMws) {
+    console.warn("No MWS found for any mode.");
+    return;
+  }
+
+  // ---------------------------------------------------
+  // 2) MultiPolygon for cropping
+  // ---------------------------------------------------
+  let multiPoly = null;
+  const g = selectedMws.getGeometry();
+  if (g) {
+    multiPoly = g.getType() === "Polygon"
+      ? new MultiPolygon([g.getCoordinates()])
+      : g;
+  }
+
+  // ---------------------------------------------------
+  // 3) Load Terrain & Drainage Layers
+  // ---------------------------------------------------
+  const terrainKey = isProject
+    ? `${projectName.toLowerCase()}_${projectId}_terrain_raster`
+    : `${district.toLowerCase()}_${block.toLowerCase()}_terrain_raster`;
+
+  const drainageKey = isProject
+    ? `${projectName.toLowerCase()}_${projectId}`
+    : `${district.toLowerCase()}_${block.toLowerCase()}`;
+
+  const [terrainLayer, drainageLayer] = await Promise.all([
+    getImageLayer("terrain", terrainKey, true, "Terrain_Style_11_Classes").catch(
+      (err) => {
+        console.error("Terrain load failed:", err);
+        return null;
+      }
+    ),
+    getVectorLayers("drainage", drainageKey, true, "drainage").catch((err) => {
+      console.error("Drainage load failed:", err);
+      return null;
+    }),
+  ]);
+
+  // --- TERRAIN (bottom) ---
+  if (terrainLayer) {
+    terrainLayer.setOpacity(0.7);
+    terrainLayer.set("id", "terrain_layer");
+    terrainLayer.setZIndex(1);
+
+    if (multiPoly && terrainLayer.addFilter) {
+      terrainLayer.addFilter(
+        new Crop({
+          feature: new Feature(multiPoly),
+          wrapX: false,
+          inner: false,
+        })
+      );
+    }
+
+    map.addLayer(terrainLayer);
+  }
+
+  // --- DRAINAGE (above terrain) ---
+  if (drainageLayer) {
+    const colors = [
+      "#03045E",
+      "#023E8A",
+      "#0077B6",
+      "#0096C7",
+      "#00B4D8",
+      "#48CAE4",
+      "#90E0EF",
+      "#ADE8F4",
+      "#CAF0F8",
+    ];
+
+    drainageLayer.setStyle((feature) => {
+      const o = feature.get("ORDER") || 1;
+      return new Style({
+        stroke: new Stroke({
+          color: colors[o - 1] || colors[0],
+          width: 2,
+        }),
+      });
+    });
+
+    drainageLayer.set("id", "drainage_layer");
+    drainageLayer.setZIndex(2);
+
+    if (multiPoly && drainageLayer.addFilter) {
+      drainageLayer.addFilter(
+        new Crop({
+          feature: new Feature(multiPoly),
+          wrapX: false,
+          inner: false,
+        })
+      );
+    }
+
+    map.addLayer(drainageLayer);
+  }
+
+  // ---------------------------------------------------
+  // 4) Draw MWS boundary
+  // ---------------------------------------------------
+  const boundaryLayer = new VectorLayer({
+    source: new VectorSource({ features: [selectedMws] }),
+    style: new Style({
+      stroke: new Stroke({ color: "black", width: 3 }),
+    }),
+  });
+
+  boundaryLayer.set("id", "mws_boundary_layer");
+  boundaryLayer.setZIndex(3);
+  map.addLayer(boundaryLayer);
+
+  const mwsGeom = selectedMws.getGeometry();
+  if (mwsGeom) {
+    view.fit(mwsGeom.getExtent(), {
+      padding: [60, 60, 60, 60],
+      maxZoom: 17,
+    });
+  }
+
+  // ---------------------------------------------------
+  // 5) UNIVERSAL WATERBODY DRAWING (PROJECT + TEHSIL)
+  // ---------------------------------------------------
+  let wbFeatureObj = null;
+
+  // PROJECT MODE → from geoData by UID
+  if (isProject && geoData?.type === "FeatureCollection") {
+    const allWB = read4326(geoData);
+    wbFeatureObj = allWB.find(
+      (f) =>
+        f.get("UID")?.toString() === normalizedWaterbody.UID?.toString()
+    );
+  }
+
+  // TEHSIL (or fallback) → from selectedWaterbody.geometry
+  if (!wbFeatureObj && selectedWaterbody?.geometry) {
+    const wbGeom = buildRealGeom(selectedWaterbody.geometry);
+    if (!wbGeom) {
+      console.error("Failed to rebuild WB geometry");
+      return;
+    }
+    wbFeatureObj = new Feature({ geometry: wbGeom });
+  }
+
+  if (!wbFeatureObj) {
+    console.warn("No WB geometry found for project/tehsil");
+    return;
+  }
+
+  // WB base layer
+  const wbLayer = new VectorLayer({
+    source: new VectorSource({ features: [wbFeatureObj] }),
+    style: new Style({
+      stroke: new Stroke({ color: "blue", width: 3 }),
+    }),
+  });
+  wbLayer.set("id", "selected_waterbody_layer");
+  wbLayer.setZIndex(50);
+  map.addLayer(wbLayer);
+
+  // WB top highlight
+  const wbTop = new VectorLayer({
+    source: new VectorSource({ features: [wbFeatureObj] }),
+    style: new Style({
+      stroke: new Stroke({ color: "blue", width: 3 }),
+    }),
+  });
+  wbTop.set("id", "wb_top_layer_mws");
+  wbTop.setZIndex(999);
+  map.addLayer(wbTop);
+
+  console.log("✅ Waterbody + MWS drawn (Project/Tehsil)");
+
+  map.renderSync();
+};
+
+    
+    
+
+
 
     (async () => {
       try {
@@ -1003,7 +1159,7 @@ const DashboardBasemap = ({
         }}
       />
 
-      {/* POPUP ELEMENT (for onSelectWaterbody click) */}
+      {/* POPUP ELEMENT */}
       <div
         ref={popupRef}
         style={{
@@ -1046,3 +1202,4 @@ const DashboardBasemap = ({
 };
 
 export default DashboardBasemap;
+

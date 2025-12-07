@@ -16,7 +16,7 @@ import TableView from "./tableView.jsx";
 import { WATER_DASHBOARD_CONFIG } from "../config/dashboard_configs/waterDashboard.config.js";
 import DashboardBasemap from "./dashboard_basemap.jsx";
 import { useGlobalWaterData } from "../store/useGlobalWaterData";
-import { waterGeoDataAtom, waterMwsDataAtom, zoiFeaturesAtom,selectedWaterbodyForTehsilAtom,tehsilZoiFeaturesAtom,mwsLayerRefAtom } from "../store/locationStore.jsx";
+import { waterGeoDataAtom, waterMwsDataAtom, zoiFeaturesAtom,selectedWaterbodyForTehsilAtom,tehsilZoiFeaturesAtom,mwsLayerRefAtom,tehsilDroughtDataAtom } from "../store/locationStore.jsx";
 
 const WaterProjectDashboard = () => {
   const [selectedWaterbody, setSelectedWaterbody] = useState(null);
@@ -55,6 +55,10 @@ const WaterProjectDashboard = () => {
 
   const [selectedWaterbodyForTehsil, setSelectedWaterbodyForTehsil] =
   useRecoilState(selectedWaterbodyForTehsilAtom);
+
+  const tehsilDrought = useRecoilValue(tehsilDroughtDataAtom);
+  console.log(tehsilDrought)
+
 
   const [filters, setFilters] = useState({
     state: [],
@@ -1101,7 +1105,7 @@ console.log(mwsFromLocalStorage)
                     <DashboardBasemap
                       id="map2"
                       mode="zoi"
-                      geoData={geoData}
+                      geoData={typeParam === "tehsil" ? tehsilGeoData : geoData}
                       zoiFeatures={zoiFeatures}
                       selectedWaterbody={activeSelectedWaterbody}
                       lulcYear={lulcYear2}
@@ -1203,10 +1207,11 @@ console.log(mwsFromLocalStorage)
                       />
                     </div>
 
-                    <div className="w-full max-w-[700px] h-[300px] sm:h-[350px] md:h-[400px]">
+                    <div className="w-full max-w-[700px] h-[300px] sm:h-[350px] md:h-[400px] mt-10">
                       <DroughtChart
-                      mwsGeoData={mwsGeoData}
+                      mwsGeoData={isTehsilMode ? tehsilDrought : mwsGeoData}
                         waterbody={activeSelectedWaterbody}
+                        typeparam={typeParam}
                       />
                       {/* <NDMIPointChart
                           zoiFeatures={zoiFeatures}
