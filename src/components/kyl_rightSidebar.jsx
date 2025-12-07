@@ -39,6 +39,40 @@ const KYLRightSidebar = ({
   selectedMWSProfile,
 }) => {
 
+  const handleMultiReport = () => {
+        const filtersList = getFormattedSelectedFilters()
+    
+        fetch(`http://127.0.0.1:8000/api/v1/generate_multi_report/?state=${state.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_')}&district=${district.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_')}&block=${block.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_')}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                filters: filtersList,
+                mwsList: selectedMWS
+            })
+        })
+        .then(response => response.text())
+        .then(html => {
+            // Create a blob from the HTML content
+            const blob = new Blob([html], { type: 'text/html' });
+            // Create an object URL for the blob
+            const blobUrl = URL.createObjectURL(blob);
+            
+            // Open a new window with the blob URL
+            const newWindow = window.open(blobUrl, '_blank');
+            
+            // Clean up the object URL when no longer needed
+            // This will happen when the new window is closed
+            if (newWindow) {
+                newWindow.addEventListener('beforeunload', () => {
+                    URL.revokeObjectURL(blobUrl);
+                });
+            }
+        })
+        .catch(err => console.log('Error in fetching the page : ', err));
+  }
+
   const handleIndicatorRemoval = (filter) => {
     // First, remove the visualization if it exists
     if (toggleStates[filter.name]) {
@@ -97,17 +131,17 @@ const KYLRightSidebar = ({
     }
   };
 
-  const handleTehsilReport = () => {
-    const reportURL = `${process.env.REACT_APP_API_URL}/generate_tehsil_report/?state=${state.label.toLowerCase().split(" ").join("_")}&district=${district.label.toLowerCase().split(" ").join("_")}&block=${block.label.toLowerCase().split(" ").join("_")}`; // Replace with your actual URL
-    window.open(reportURL, '_blank', 'noopener,noreferrer');
-  };
-
   return (
     <div className="w-[320px] flex flex-col gap-2">
       {selectedMWSProfile ? (
         <KYLMWSProfilePanel mwsData={selectedMWSProfile} onBack={onResetMWS} />
       ) : (
         <div className="bg-white rounded-lg border border-gray-100 p-3">
+          <button
+              className="w-full py-2 px-2 text-indigo-600 bg-indigo-100 rounded-lg text-xs font-medium text-left mb-1"
+            >
+            Click on a micro-watershed (blue outline) to view its report.
+            </button>
           <div className="bg-white rounded-lg border border-gray-100 p-3">
             <div className="space-y-4">
               <div className="flex items-center gap-3">
@@ -147,42 +181,7 @@ const KYLRightSidebar = ({
                 />
               </div>
             </div>
-            {block && (
-              <div className="mt-6 space-y-2">
-                <button 
-                  className="w-full flex items-center justify-center gap-2 text-indigo-600 py-2 text-sm hover:bg-indigo-50 rounded-md transition-colors" 
-                  onClick={handleTehsilReport}
-                >
-                  <svg
-                    className="w-4 h-4"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                    />
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M2.458 12C3.732 7.943 7.523 5 12 5s8.268 2.943 9.542 7c-1.274 4.057-5.065 7-9.542 7s-8.268-2.943-9.542-7z"
-                    />
-                  </svg>
-                  View Tehsil Report
-                </button>
-              </div>
-            )}
           </div>
-          <button
-              className="w-full py-2 px-2 text-indigo-600 bg-indigo-100 rounded-lg text-xs font-medium text-left mb-1 mt-1"
-            >
-            Click on a micro-watershed (blue outline) to view its report.
-            </button>
           <div className="bg-white rounded-lg border border-gray-100 p-3">
             <span className="text-sm font-medium">
               Selected Indicators ({getFormattedSelectedFilters().length})
@@ -289,6 +288,48 @@ const KYLRightSidebar = ({
           </div>
         </div>
       )}
+      {/* <div className="bg-white rounded-lg border border-gray-100 p-3">
+        <div className="space-y-4">
+          <div className="flex items-center gap-2">
+            <label className="text-sm text-gray-700 min-w-[100px]">
+              Selected Plan:
+            </label>
+            <SelectButton
+              label={currentPlan === null ? "Select Plan" : currentPlan}
+              stateData={plansState}
+              handleItemSelect={(setter, e) => setter(e)}
+              setState={setCurrentPlan}
+              className="w-full"
+            />
+          </div>
+
+          <div className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              id="mapped-assets"
+              checked={mappedAssets}
+              onChange={(e) => handleAssetSelection(1, e.target.checked)}
+              className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+            />
+            <label htmlFor="mapped-assets" className="text-sm text-gray-700">
+              Assets Registry
+            </label>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              id="proposed-works"
+              checked={mappedDemands}
+              onChange={(e) => handleAssetSelection(0, e.target.checked)}
+              className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+            />
+            <label htmlFor="proposed-works" className="text-sm text-gray-700">
+              Proposed Works
+            </label>
+          </div>
+        </div>
+      </div> */}
     </div>
   );
 };
