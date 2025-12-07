@@ -536,11 +536,11 @@
                 "type": 1,
                 "values": [
                     {
-                        "label": "Positive Trend",
+                        "label": "Positive",
                         "value": "1"
                     },
                     {
-                        "label": "Negative Trend",
+                        "label": "Negative",
                         "value": "-1"
                     },
                     {
