@@ -416,9 +416,12 @@ const waterbodyClickedRef = useRef(false);
             mapRef.current.removeLayer(boundaryLayerRef.current);
             mapRef.current.addLayer(mwsLayer);
             mapRef.current.addLayer(boundaryLayerRef.current);
+          
           }
           mwsLayerRef.current = mwsLayer;
+       
         }
+        saveAllMwsToLocalStorage();
         mwsLayerRef.current.setStyle((feature) => {
           if (highlightMWS !== null && feature.values_.uid === highlightMWS) {
             setSelectedMWSProfile(feature.getProperties())
@@ -1266,6 +1269,24 @@ const waterbodyClickedRef = useRef(false);
       setIsLoading(false);
     }
   }
+
+  const saveAllMwsToLocalStorage = () => {
+    if (!mwsLayerRef.current) return;
+  
+    const source = mwsLayerRef.current.getSource();
+    if (!source) return;
+  
+    const features = source.getFeatures();
+    if (!features || !features.length) return;
+  
+    const geojson = new GeoJSON();
+    const featureList = features.map(f => geojson.writeFeatureObject(f));
+  
+    localStorage.setItem("all_mws_features", JSON.stringify(featureList));
+  
+    console.log("✅ Saved all MWS:", featureList.length);
+  };
+  
 
   useEffect(() => {
     if (!mapRef.current) return;
