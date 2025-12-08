@@ -80,9 +80,5 @@ export default async function getVectorLayers(layer_store, layer_name, setVisibl
     });
   });
   
-  
-
-  console.log(wmsLayer)
-
   return wmsLayer;
 }

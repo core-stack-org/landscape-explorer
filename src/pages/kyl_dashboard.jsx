@@ -419,9 +419,8 @@ const waterbodyClickedRef = useRef(false);
           
           }
           mwsLayerRef.current = mwsLayer;
-       
+          saveAllMwsToLocalStorage(mwsLayer);
         }
-        saveAllMwsToLocalStorage();
         mwsLayerRef.current.setStyle((feature) => {
           if (highlightMWS !== null && feature.values_.uid === highlightMWS) {
             setSelectedMWSProfile(feature.getProperties())
@@ -687,7 +686,7 @@ const waterbodyClickedRef = useRef(false);
       addLayerSafe(boundaryLayer);
       boundaryLayerRef.current = boundaryLayer;
       mwsLayerRef.current = mwsLayer;
-
+      saveAllMwsToLocalStorage(mwsLayer);
       const vectorSource = boundaryLayer.getSource();
 
       await new Promise((resolve, reject) => {
@@ -1270,23 +1269,49 @@ const waterbodyClickedRef = useRef(false);
     }
   }
 
-  const saveAllMwsToLocalStorage = () => {
-    if (!mwsLayerRef.current) return;
+const saveAllMwsToLocalStorage = async(mwsLayer) => {
+  console.log("Reached here !")
+  console.log(mwsLayer)
   
-    const source = mwsLayerRef.current.getSource();
-    if (!source) return;
+  const source = mwsLayer.getSource();
   
+  // Wait for features to be loaded
+  return new Promise((resolve, reject) => {
     const features = source.getFeatures();
-    if (!features || !features.length) return;
+    
+    if (features && features.length > 0) {
+      // Features already loaded
+      saveFeaturestoStorage(features);
+      resolve();
+    } else {
+      // Wait for features to load
+      const key = source.on('change', () => {
+        if (source.getState() === 'ready') {
+          const loadedFeatures = source.getFeatures();
+          console.log("Features loaded:", loadedFeatures.length);
+          
+          if (loadedFeatures && loadedFeatures.length > 0) {
+            saveFeaturestoStorage(loadedFeatures);
+            source.un('change', key); // Unsubscribe
+            resolve();
+          }
+        }
+      });
+    }
+  });
   
+  function saveFeaturestoStorage(features) {
     const geojson = new GeoJSON();
     const featureList = features.map(f => geojson.writeFeatureObject(f));
-  
     localStorage.setItem("all_mws_features", JSON.stringify(featureList));
-  
     console.log("✅ Saved all MWS:", featureList.length);
-  };
-  
+  }
+};
+  // useEffect(()=> {
+  //   if(mwsLayerRef.current !== null){
+  //     saveAllMwsToLocalStorage(mwsLayerRef.current)
+  //   }
+  // },[mwsLayerRef.current])
 
   useEffect(() => {
     if (!mapRef.current) return;

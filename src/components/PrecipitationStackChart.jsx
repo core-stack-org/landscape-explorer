@@ -77,6 +77,7 @@ const extractTehsilRainfall = (values_) => {
 
    //MAIN COMPONENT
 const PrecipitationStackChart = ({ feature }) => {
+  console.log("Reached in the pRecippatiton",feature)
   if (!feature) return null;
   console.log(feature)
 
