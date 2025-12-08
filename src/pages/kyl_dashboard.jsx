@@ -536,7 +536,7 @@ const waterbodyClickedRef = useRef(false);
 
     // 1) Create vector layer via getVectorLayers
     const wbLayer = await getVectorLayers(
-      "water_bodies",
+      "swb",
       layerName,
       true,  
       true 
