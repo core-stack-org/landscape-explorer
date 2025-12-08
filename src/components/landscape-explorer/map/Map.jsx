@@ -851,6 +851,7 @@ const Map = forwardRef(({
     { LayerRef: useRef(null), name: "Change Detection Restoration", isRaster: true },
     { LayerRef: useRef(null), name: "SOGE", isRaster: true },
     { LayerRef: useRef(null), name: "Aquifer", isRaster: true },
+    { LayerRef: useRef(null), name: "Fortnight Hydrological Variables", isRaster: false },
     { LayerRef: useRef(null), name: "LULC_1", isRaster: true },
     { LayerRef: useRef(null), name: "LULC_2", isRaster: true },
     { LayerRef: useRef(null), name: "LULC_3", isRaster: true },
@@ -922,7 +923,8 @@ const Map = forwardRef(({
           'cropintensity': 'Change Detection Crop-Intensity',
           'restoration': 'Change Detection Restoration',
           'soge': 'SOGE',
-          'aquifer': 'Aquifer'
+          'aquifer': 'Aquifer',
+          'mws_layers_fortnight' : 'Fortnight Hydrological Variables'
         };
 
         const layerName = layerMap[layerId] || layerId;
@@ -1816,7 +1818,6 @@ const Map = forwardRef(({
         LayersArray[17].LayerRef.current = RestorationLayer;
       }
 
-
       // === SOGE Layer ===
       let SOGELayer = await getVectorLayers(
         "soge",
@@ -1996,6 +1997,32 @@ const Map = forwardRef(({
         LayersArray[19].LayerRef.current = AquiferLayer;
       }
 
+      // === Fortnight Well Depth ===
+      let fortnightLayer = await getVectorLayers(
+        "mws_layers",
+        "deltaG_fortnight_" +
+        district.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_') +
+        "_" +
+        block.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_'),
+        true,
+        true
+      );
+
+      if(fortnightLayer){
+        fortnightLayer.setStyle(function (feature) {
+          return new Style({
+              stroke: new Stroke({
+                color: "#000000",
+                width: 1.5,
+              }),
+            });
+        });
+        if (LayersArray[20].LayerRef.current != null) {
+          safeRemoveLayer(LayersArray[20].LayerRef.current);
+        }
+        LayersArray[20].LayerRef.current = fortnightLayer;
+      }
+
       // Enable Demographics layer by default
       if (LayersArray[0].LayerRef.current && !currentLayers.includes("Demographics")) {
         currentActiveLayers.push("Demographics");
@@ -2172,8 +2199,8 @@ const Map = forwardRef(({
       }
 
       if (lulcYear1.value === null) {
-        if (LayersArray[19].LayerRef.current != null) {
-          safeRemoveLayer(LayersArray[19].LayerRef.current);
+        if (LayersArray[21].LayerRef.current != null) {
+          safeRemoveLayer(LayersArray[21].LayerRef.current);
         }
       }
 
@@ -2185,11 +2212,11 @@ const Map = forwardRef(({
       );
 
       if (LulcLayer) {
-        if (LayersArray[19].LayerRef.current != null) {
-          safeRemoveLayer(LayersArray[19].LayerRef.current);
+        if (LayersArray[21].LayerRef.current != null) {
+          safeRemoveLayer(LayersArray[21].LayerRef.current);
         }
         safeAddLayer(LulcLayer)
-        LayersArray[19].LayerRef.current = LulcLayer;
+        LayersArray[21].LayerRef.current = LulcLayer;
       }
     }
     fetchLulc()
@@ -2202,8 +2229,8 @@ const Map = forwardRef(({
       }
 
       if (lulcYear2.value === null) {
-        if (LayersArray[20].LayerRef.current != null) {
-          safeRemoveLayer(LayersArray[20].LayerRef.current);
+        if (LayersArray[22].LayerRef.current != null) {
+          safeRemoveLayer(LayersArray[22].LayerRef.current);
         }
       }
 
@@ -2215,11 +2242,11 @@ const Map = forwardRef(({
       );
 
       if (LulcLayer) {
-        if (LayersArray[20].LayerRef.current != null) {
-          safeRemoveLayer(LayersArray[20].LayerRef.current);
+        if (LayersArray[22].LayerRef.current != null) {
+          safeRemoveLayer(LayersArray[22].LayerRef.current);
         }
         safeAddLayer(LulcLayer)
-        LayersArray[20].LayerRef.current = LulcLayer;
+        LayersArray[22].LayerRef.current = LulcLayer;
       }
     }
     fetchLulc()
@@ -2232,8 +2259,8 @@ const Map = forwardRef(({
       }
 
       if (lulcYear3.value === null) {
-        if (LayersArray[21].LayerRef.current != null) {
-          safeRemoveLayer(LayersArray[21].LayerRef.current);
+        if (LayersArray[23].LayerRef.current != null) {
+          safeRemoveLayer(LayersArray[23].LayerRef.current);
         }
       }
 
@@ -2245,11 +2272,11 @@ const Map = forwardRef(({
       );
 
       if (LulcLayer) {
-        if (LayersArray[21].LayerRef.current != null) {
-          safeRemoveLayer(LayersArray[21].LayerRef.current);
+        if (LayersArray[23].LayerRef.current != null) {
+          safeRemoveLayer(LayersArray[23].LayerRef.current);
         }
         safeAddLayer(LulcLayer)
-        LayersArray[21].LayerRef.current = LulcLayer;
+        LayersArray[23].LayerRef.current = LulcLayer;
       }
     }
     fetchLulc()
@@ -2333,7 +2360,11 @@ const Map = forwardRef(({
           'deforestation': 'Change Detection Deforestation',
           'degradation': 'Change Detection Degradation',
           'urbanization': 'Change Detection Urbanization',
-          'cropIntensity': 'Change Detection Crop-Intensity'
+          'cropintensity': 'Change Detection Crop-Intensity',
+          'restoration': 'Change Detection Restoration',
+          'soge': 'SOGE',
+          'aquifer': 'Aquifer',
+          'mws_layers_fortnight' : 'Fortnight Hydrological Variables'
         };
 
         const layerName = layerMap[id];
