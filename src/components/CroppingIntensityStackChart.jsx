@@ -30,6 +30,8 @@ const CroppingIntensityStackChart = ({
 }) => {
   const [showImpact, setShowImpact] = useState(false);
 
+  console.log(zoiFeatures)
+
   const wbUID =
   waterbody?.UID ||
   waterbody?.uid ||
@@ -43,17 +45,17 @@ const CroppingIntensityStackChart = ({
       wbUID?.toString().trim()
   );
   if (!matchedFeature) return null;
+  console.log(matchedFeature)
 
   const getAreaData = (years) =>
     years.map((year) => ({
       year,
-      triple: (matchedFeature.get(`triply_cropped_area_${year}`) || 0) / 10000,
-      double: (matchedFeature.get(`doubly_cropped_area_${year}`) || 0) / 10000,
+      triple: (matchedFeature.get(`triply_cropped_area_${year}`) || 0),
+      double: (matchedFeature.get(`doubly_cropped_area_${year}`) || 0),
       single_kharif:
-        (matchedFeature.get(`single_kharif_cropped_area_${year}`) || 0) / 10000,
+        (matchedFeature.get(`single_kharif_cropped_area_${year}`) || 0),
       single_non_kharif:
-        (matchedFeature.get(`single_non_kharif_cropped_area_${year}`) || 0) /
-        10000,
+        (matchedFeature.get(`single_non_kharif_cropped_area_${year}`) || 0),
     }));
 
   const fullYearLabels = [
