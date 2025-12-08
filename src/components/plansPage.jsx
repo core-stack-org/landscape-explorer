@@ -1,35 +1,57 @@
 import React, { useEffect, useRef, useState } from "react";
-import { useRecoilState } from "recoil";
+import { useRecoilState, useRecoilValue } from "recoil";
 import TileLayer from "ol/layer/Tile";
 import XYZ from "ol/source/XYZ";
 import { Control, defaults as defaultControls } from "ol/control";
 import View from "ol/View";
 import Map from "ol/Map";
 import SelectReact from "react-select";
+
+// Components
 import YearSlider from "./yearSlider.jsx";
 import LandingNavbar from "../components/landing_navbar.jsx";
-import { plansAtom, stateAtom } from "../store/locationStore";
-import getPlans from "../actions/getPlans";
+
+// Recoil Store
+import {
+  plansAtom,
+  stateDataAtom,
+  stateAtom,
+  districtAtom,
+  blockAtom,
+  districtLookupAtom,
+  blockLookupAtom,
+} from "../store/locationStore";
+
+// APIs
 import getStates from "../actions/getStates";
+import getPlans from "../actions/getPlans";
 
 const PlansPage = () => {
   const mapElement = useRef(null);
   const mapRef = useRef(null);
-  const [selectedOption, setSelectedOption] = useState("default");
+
   const [organization, setOrganization] = useState();
   const [organizationOptions, setOrganizationOptions] = useState([]);
+
+  // Recoil Atoms
   const [plans, setPlans] = useRecoilState(plansAtom);
+  const [rawStateData, setRawStateData] = useRecoilState(stateDataAtom);
+
   const [states, setStates] = useRecoilState(stateAtom);
+  const [districts, setDistricts] = useRecoilState(districtAtom);
+  const [blocks, setBlocks] = useRecoilState(blockAtom);
 
+  const [districtLookup, setDistrictLookup] =
+    useRecoilState(districtLookupAtom);
+  const [blockLookup, setBlockLookup] = useRecoilState(blockLookupAtom);
 
+  // ======================================================
+  // ⭐ 1. Load organizations
   useEffect(() => {
     const fetchOrganizations = async () => {
-      const start = performance.now();
       const options = await loadOrganization();
-      const end = performance.now();
       setOrganizationOptions(options);
     };
-
     fetchOrganizations();
   }, []);
 
@@ -46,6 +68,7 @@ const PlansPage = () => {
         }
       );
       const data = await response.json();
+
       return data.map((org) => ({
         value: org.id,
         label: org.name,
@@ -56,72 +79,124 @@ const PlansPage = () => {
     }
   };
 
+  // ======================================================
+  // ⭐ 2. Load PLANS (only once)
   useEffect(() => {
-    const load = async () => {
-      const plansData = await getPlans(); // 👈 use your existing function
-      setPlans(plansData.raw);            // save raw list in Recoil
-    };
-    load();
-  }, []);
-
-  useEffect(() => {
-    const loadStatesData = async () => {
-      if (states && states.length > 0) {
-        return;
-      }
-  
+    const loadPlans = async () => {
       try {
-        const data = await getStates();
-        setStates(data);
+        if (plans && plans.length > 0) return;
+        const data = await getPlans();
+
+        if (data?.raw) setPlans(data.raw);
       } catch (err) {
-        console.log("State load error", err);
+        console.error("Plans load error:", err);
       }
     };
-  
-    loadStatesData();
-  }, []);
-  
-  
 
+    loadPlans();
+  }, []);
+
+  // ======================================================
+  // ⭐ 3. Load ALL location data → states, districts, blocks + lookup tables
+  useEffect(() => {
+    const loadLocationData = async () => {
+      try {
+        // Already loaded → skip
+        if (
+          rawStateData &&
+          states.length > 0 &&
+          districts.length > 0 &&
+          blocks.length > 0
+        )
+          return;
+
+        // SAME as KYLHomePage
+        const data = await getStates();
+        setRawStateData(data);
+
+        const stateList = data?.states || [];
+        setStates(stateList);
+
+        // DISTRICTS + lookup
+        let districtList = [];
+        let distLookup = {};
+
+        stateList.forEach((st) => {
+          st?.district?.forEach((d) => {
+            districtList.push(d);
+            distLookup[d.id] = d.name;
+          });
+        });
+
+        setDistricts(districtList);
+        setDistrictLookup(distLookup);
+
+        // BLOCKS + lookup
+        let blockList = [];
+        let blkLookup = {};
+
+        stateList.forEach((st) => {
+          st?.district?.forEach((d) => {
+            d?.blocks?.forEach((b) => {
+              blockList.push(b);
+              blkLookup[b.id] = b.name;
+            });
+          });
+        });
+
+        setBlocks(blockList);
+        setBlockLookup(blkLookup);
+
+        // DEBUG LOGS
+        console.log("🟦 RAW STATE DATA:", data);
+        console.log("🟩 STATES:", stateList);
+        console.log("🟧 DISTRICTS:", districtList);
+        console.log("🟪 BLOCKS:", blockList);
+      } catch (err) {
+        console.error("Location load error:", err);
+      }
+    };
+
+    loadLocationData();
+  }, []);
+
+  // ======================================================
+  // ⭐ 4. Print PLAN → District + Block Names
+  useEffect(() => {
+    if (!plans || plans.length === 0) return;
+    if (!districtLookup || !blockLookup) return;
+
+    console.log("🔍 Plan District & Block Names:");
+
+    plans.forEach((p) => {
+      console.log({
+        planId: p.id,
+        district_id: p.district_id,
+        district_name: districtLookup[p.district_id],
+        block_id: p.block_id,
+        block_name: blockLookup[p.block_id],
+      });
+    });
+  }, [plans, districtLookup, blockLookup]);
+
+  // ======================================================
+  // ⭐ Select style
   const customStyles = {
     control: (base) => ({
       ...base,
       height: 48,
-      minHeight: 48,
       width: 464,
       backgroundColor: "#fff",
       borderRadius: 4,
       paddingLeft: 4,
       zIndex: 2,
     }),
-    menu: (base) => ({
-      ...base,
-      zIndex: 9999,
-    }),
-    menuPortal: (base) => ({
-      ...base,
-      zIndex: 1300,
-    }),
+    menu: (base) => ({ ...base, zIndex: 9999 }),
+    menuPortal: (base) => ({ ...base, zIndex: 1300 }),
   };
 
-  const handleOrganizationChange = (selectedOption) => {
-    setOrganization(selectedOption);
-
-    if (selectedOption) {
-      sessionStorage.setItem(
-        "selectedOrganization",
-        JSON.stringify(selectedOption)
-      );
-      sessionStorage.setItem(
-        "organizationName",
-        selectedOption.label.toUpperCase()
-      );
-    } else {
-      sessionStorage.removeItem("selectedOrganization");
-      sessionStorage.removeItem("organizationName");
-    }
-  };
-
+  // ======================================================
+  // ⭐ MAP INITIALIZATION
   useEffect(() => {
     initializeMap();
     return () => {
@@ -171,19 +246,17 @@ const PlansPage = () => {
     mapRef.current = map;
   };
 
+  // ======================================================
+  // ⭐ UI
   return (
     <div className="bg-white min-h-screen">
       <LandingNavbar />
 
-      {/* Flex Layout */}
-      <div className="flex r gap-8 items-start p-6">
-        {/* Map Section */}
+      <div className="flex gap-8 items-start p-6">
+        {/* Map */}
         <div
           className="relative border border-gray-300 rounded-lg overflow-hidden shadow"
-          style={{
-            width: "60%",
-            height: "900px",
-          }}
+          style={{ width: "60%", height: "900px" }}
         >
           <div ref={mapElement} className="w-full h-full" />
 
@@ -192,8 +265,7 @@ const PlansPage = () => {
             {["+", "–"].map((sign) => (
               <button
                 key={sign}
-                className="bg-white border border-gray-300 rounded-md w-10 h-10 text-xl cursor-pointer 
-                           hover:bg-gray-100 active:scale-95 transition shadow"
+                className="bg-white border border-gray-300 rounded-md w-10 h-10 text-xl hover:bg-gray-100 shadow"
                 onClick={() => {
                   const view = mapRef.current?.getView();
                   const delta = sign === "+" ? 1 : -1;
@@ -213,14 +285,31 @@ const PlansPage = () => {
           </div>
         </div>
 
-        {/* Dropdown Section */}
+        {/* Sidebar */}
         <div className="flex flex-col items-start gap-4 w-[25%] text-left mt-16">
           <label className="font-semibold text-gray-700 text-lg">
             Select Organization
           </label>
+
           <SelectReact
             value={organization}
-            onChange={handleOrganizationChange}
+            onChange={(selected) => {
+              setOrganization(selected);
+
+              if (selected) {
+                sessionStorage.setItem(
+                  "selectedOrganization",
+                  JSON.stringify(selected)
+                );
+                sessionStorage.setItem(
+                  "organizationName",
+                  selected.label.toUpperCase()
+                );
+              } else {
+                sessionStorage.removeItem("selectedOrganization");
+                sessionStorage.removeItem("organizationName");
+              }
+            }}
             options={organizationOptions}
             placeholder="Select Organization"
             styles={customStyles}
@@ -228,31 +317,31 @@ const PlansPage = () => {
             menuPosition="fixed"
           />
 
-          {selectedOption !== "default" && (
-            <p className="text-gray-600 text-sm">
-              Selected: <span className="font-medium">{selectedOption}</span>
-            </p>
-          )}
-          {/* Stats Info Box */}
+          {/* INFO BOX */}
           <div className="w-full bg-gray-50 border border-gray-300 rounded-lg p-4 shadow-sm mt-12">
-            <h3 className="font-semibold text-gray-800 text-lg mb-3">Overview</h3>
+            <h3 className="font-semibold text-gray-800 text-lg mb-3">
+              Overview
+            </h3>
 
             <div className="flex flex-col gap-2 text-sm text-gray-700">
               <p>
-                <span className="font-medium">Commons Connect operational in:</span>  —
+                <span className="font-medium">States Loaded:</span>{" "}
+                {states?.length || 0}
               </p>
               <p>
-                <span className="font-medium">DPRs submitted:</span>  —
+                <span className="font-medium">Districts Loaded:</span>{" "}
+                {districts?.length || 0}
               </p>
               <p>
-                <span className="font-medium">Demands approved:</span>  —
+                <span className="font-medium">Blocks Loaded:</span>{" "}
+                {blocks?.length || 0}
               </p>
               <p>
-                <span className="font-medium">Landscape stewards working:</span>  —
+                <span className="font-medium">Plans Loaded:</span>{" "}
+                {plans?.length || 0}
               </p>
             </div>
           </div>
-
         </div>
       </div>
     </div>

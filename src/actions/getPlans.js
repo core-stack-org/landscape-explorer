@@ -1,7 +1,7 @@
 export default async function getPlans(block_id = null) {
     try {
       let response = await fetch(
-        `${process.env.REACT_APP_API_URL}/watershed/plans/?block=${block_id}`,
+        `${process.env.REACT_APP_API_URL}/watershed/plans/`,
         {
           method: "GET",
           headers: {
@@ -13,7 +13,7 @@ export default async function getPlans(block_id = null) {
       );
   
       response = await response.json();
-  
+  console.log(response)
       let result = [];
   
       response.map((item) => {

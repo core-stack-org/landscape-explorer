@@ -52,3 +52,13 @@ export const plansAtom = atom({
   key: "plansAtom",
   default: [],
 });
+
+export const districtLookupAtom = atom({
+  key: "districtLookupAtom",
+  default: {},
+});
+
+export const blockLookupAtom = atom({
+  key: "blockLookupAtom",
+  default: {},
+});
