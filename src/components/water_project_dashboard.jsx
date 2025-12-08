@@ -1113,14 +1113,14 @@ const matchedMwsOlFeature = useMemo(() => {
                       isTehsil={isTehsilMode}
                       waterbody={isTehsilMode ? activeSelectedWaterbody.properties.UID : activeSelectedWaterbody}
                       water_rej_data={isTehsilMode ? {features : [geoData]} : geoData}
-                      mwsFeature={isTehsilMode ? mwsFromLocalStorage : selectedMWSFeature}
+                      mwsFeature={isTehsilMode ? matchedMwsOlFeature : mwsGeoData}
                       onImpactYearChange={(yearData) => setImpactYear(yearData)}
                     />
                   </div>
 
                   {(isTehsilMode ? mwsFromLocalStorage : selectedMWSFeature) && (
                   <div className="w-full max-w-[700px] h-[300px] sm:h-[350px] md:h-[350px] mt-28 mx-auto">
-                    <PrecipitationStackChart feature={isTehsilMode ? mwsFromLocalStorage : selectedMWSFeature}/>
+                    <PrecipitationStackChart feature={typeParam === "tehsil" ? matchedMwsOlFeature : mwsGeoData}/>
                   </div>
                   )}
                 </div>

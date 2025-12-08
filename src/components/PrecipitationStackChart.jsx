@@ -8,11 +8,13 @@ import {
   Legend,
 } from "chart.js";
 import { Bar } from "react-chartjs-2";
+import { Proportions } from "lucide-react";
 
 ChartJS.register(BarElement, CategoryScale, LinearScale, Tooltip, Legend);
 
   // PROJECT MODE PARSING (unchanged)
 const extractProjectSeasonalData = (properties) => {
+  
   const seasons = ["kharif", "rabi", "zaid"];
   const yearMap = new Map();
 
@@ -76,6 +78,7 @@ const extractTehsilRainfall = (values_) => {
    //MAIN COMPONENT
 const PrecipitationStackChart = ({ feature }) => {
   if (!feature) return null;
+  console.log(feature)
 
   const isTehsil = feature.values_ !== undefined;
   let labels = [];
