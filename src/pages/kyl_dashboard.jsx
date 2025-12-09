@@ -1086,6 +1086,7 @@ const KYLDashboardPage = () => {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
+          "X-API-Key" : `${process.env.REACT_APP_API_KEY}`
         }
       }
       )
