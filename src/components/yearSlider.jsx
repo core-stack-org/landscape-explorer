@@ -35,7 +35,6 @@ const YearSlider = ({ currentLayer }) => {
   };
 
   if (!isLulcLayerActive) return null;
-  console.log("✅ YearSlider rendered");
 
   return (
     <div className="w-full max-w-2xl mx-auto">
