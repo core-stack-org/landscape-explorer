@@ -1391,28 +1391,41 @@ const matchedMwsOlFeature = useMemo(() => {
         </p>
       </div>
 
+      <div
+  className="flex-1 bg-gradient-to-br from-gray-50 to-gray-100 p-4 md:p-6 rounded-xl 
+  border border-gray-200 shadow-sm flex flex-col items-center text-center min-h-[120px] 
+  transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md"
+>
+  <p className="uppercase tracking-wide font-bold text-sm text-gray-800">
+    On Drainage Line
+  </p>
+
+  {activeSelectedWaterbody?.drainageFlag === 1 ? (
+    <p className="mt-1 text-xl md:text-2xl font-semibold text-blue-600">
+       ON (Order {activeSelectedWaterbody?.maxStreamOrder})
+    </p>
+  ) : (
+    <p className="mt-1 text-xl md:text-2xl font-semibold text-red-500">
+       Not On Drainage Line
+    </p>
+  )}
+</div>
+
+
       {/* Max Stream Order → Only visible if on drainage line */}
-      {activeSelectedWaterbody.drainageFlag === 1 ? (
         <div
           className="flex-1 bg-gradient-to-br from-gray-50 to-gray-100 p-4 md:p-6 rounded-xl 
           border border-gray-200 shadow-sm flex flex-col items-center text-center min-h-[120px] 
           transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md"
         >
           <p className="uppercase tracking-wide font-bold text-sm text-gray-800">
-            Max Stream Order (On drainage line)
+           Watershed position
           </p>
           <p className="mt-1 text-xl md:text-2xl font-semibold text-blue-600">
             Order {activeSelectedWaterbody?.maxStreamOrder}
           </p>
         </div>
-      ) : (
-        <div
-          className="flex-1 bg-red-50 border border-red-300 text-red-700 p-4 rounded-lg 
-          shadow-sm font-semibold text-center min-h-[120px] flex items-center justify-center"
-        >
-          No waterbody is on drainage line
-        </div>
-      )}
+      
     </div>
 
   </div>
