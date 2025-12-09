@@ -987,7 +987,7 @@ const matchedMwsOlFeature = useMemo(() => {
             {activeSelectedWaterbody && (
               <div className="flex flex-col gap-2 w-full p-4 sm:p-6 md:p-4 rounded-xl bg-white shadow-md">
                 {/* Heading */}
-                <h2 className="text-xl font-bold text-blue-600 border-b-2 border-blue-600 pb-1">
+                <h2 className="text-lg sm:text-lg md:text-xl font-bold text-blue-600 border-b-2 border-blue-600 pb-1">
                   {WATER_DASHBOARD_CONFIG.sections.section1.title}{" "}
                 </h2>
                 {WATER_DASHBOARD_CONFIG.sections.section1.paragraphs.map(
@@ -1195,7 +1195,7 @@ const matchedMwsOlFeature = useMemo(() => {
             {activeSelectedWaterbody && (
               <div className="flex flex-col gap-2 w-full p-2 sm:p-3 md:p-2 rounded-xl bg-white shadow-sm">
                 {/* Heading */}
-                <h2 className="text-xl font-bold text-blue-600 border-b-2 border-blue-600 pb-1">
+                <h2 className="text-lg sm:text-lg md:text-xl font-bold text-blue-600 border-b-2 border-blue-600 pb-1">
                   {WATER_DASHBOARD_CONFIG.sections.section2.title}{" "}
                 </h2>
 
@@ -1361,7 +1361,7 @@ const matchedMwsOlFeature = useMemo(() => {
             {activeSelectedWaterbody && (
               <div className="flex flex-col gap-2 w-full p-2 sm:p-3 md:p-4 rounded-lg bg-white shadow-sm">
                 {/* Heading */}
-                <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-blue-600 border-b-2 border-blue-600 pb-1">
+                <h2 className="text-lg sm:text-lg md:text-xl font-bold text-blue-600 border-b-2 border-blue-600 pb-1">
                   {WATER_DASHBOARD_CONFIG.sections.section3.title}{" "}
                 </h2>
                 {WATER_DASHBOARD_CONFIG.sections.section3.paragraphs.map(
