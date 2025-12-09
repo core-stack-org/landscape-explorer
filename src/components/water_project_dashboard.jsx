@@ -16,7 +16,7 @@ import TableView from "./tableView.jsx";
 import { WATER_DASHBOARD_CONFIG } from "../config/dashboard_configs/waterDashboard.config.js";
 import DashboardBasemap from "./dashboard_basemap.jsx";
 import { useGlobalWaterData } from "../store/useGlobalWaterData";
-import { waterGeoDataAtom, waterMwsDataAtom, zoiFeaturesAtom,selectedWaterbodyForTehsilAtom,tehsilZoiFeaturesAtom,mwsLayerRefAtom,tehsilDroughtDataAtom } from "../store/locationStore.jsx";
+import { waterGeoDataAtom, waterMwsDataAtom, zoiFeaturesAtom,selectedWaterbodyForTehsilAtom,tehsilZoiFeaturesAtom,tehsilDroughtDataAtom } from "../store/locationStore.jsx";
 
 const WaterProjectDashboard = () => {
   const [selectedWaterbody, setSelectedWaterbody] = useState(null);
@@ -57,8 +57,6 @@ const WaterProjectDashboard = () => {
   useRecoilState(selectedWaterbodyForTehsilAtom);
 
   const tehsilDrought = useRecoilValue(tehsilDroughtDataAtom);
-  console.log(tehsilDrought)
-
 
   const [filters, setFilters] = useState({
     state: [],
@@ -93,7 +91,6 @@ const WaterProjectDashboard = () => {
     : selectedWaterbody;
 
     console.log(activeSelectedWaterbody)
-
 
   const [view, setView] = useState(
     isTehsilMode ? "map" : typeParam === "tehsil" ? "map" : "table"
@@ -161,8 +158,6 @@ const matchedMwsOlFeature = useMemo(() => {
     featureProjection: "EPSG:4326",
   });
 }, [matchedMwsFeature]);
-
-
 
   useEffect(() => {
     if (typeParam === "tehsil" && selectedWaterbodyForTehsil?.geometry) {
@@ -241,7 +236,34 @@ const matchedMwsOlFeature = useMemo(() => {
   const projectZoi = useRecoilValue(zoiFeaturesAtom);
   const tehsilZoi = useRecoilValue(tehsilZoiFeaturesAtom);
   const zoiFeatures = isTehsilMode ? tehsilZoi : projectZoi;
-  console.log(zoiFeatures)
+  console.log(mwsGeoData)
+  console.log(activeSelectedWaterbody)
+
+  const getMatchedMWSFeatureProject = (mwsGeoData, activeSelectedWaterbody) => {
+    if (!mwsGeoData?.features?.length || !activeSelectedWaterbody) return null;
+  
+    // UID from waterbody (project mode)
+    const wbMwsUID =
+      activeSelectedWaterbody.MWS_UID ||
+      activeSelectedWaterbody.properties?.MWS_UID;
+  
+    if (!wbMwsUID) return null;
+  
+    // Find feature where UID matches
+    const matched = mwsGeoData.features.find(
+      (f) =>
+        f.properties?.UID?.toString().trim() === wbMwsUID.toString().trim()
+    );
+  
+    return matched || null;
+  };
+
+  const matchedMWSFeatureProject = getMatchedMWSFeatureProject(
+    mwsGeoData,
+    activeSelectedWaterbody
+  );
+  
+  console.log("Matched MWS Feature:", matchedMWSFeatureProject);
 
   const matchedZoiFeature = useMemo(() => {
     if (!zoiFeatures || !activeSelectedWaterbody) return null;
@@ -264,10 +286,6 @@ const matchedMwsOlFeature = useMemo(() => {
   const zoiAreaFromFeature = matchedZoiFeature
   ? Number(matchedZoiFeature.get("zoi_area")) || 0
   : 0;
-
-
-  
-  
 
   useEffect(() => {
     if (!window.__userSelectedOrgProject && geoData === null) {
@@ -1016,49 +1034,45 @@ const matchedMwsOlFeature = useMemo(() => {
 
                 {/* Top-left Label */}
                 {activeSelectedWaterbody && (
-  <div className="absolute top-4 left-4 bg-white/90 p-2 sm:p-3 rounded-md font-bold shadow flex flex-col items-start gap-1 z-[1000] max-w-[90%] sm:max-w-[300px]">
+                <div className="absolute top-4 left-4 bg-white/90 p-2 sm:p-3 rounded-md font-bold shadow flex flex-col items-start gap-1 z-[1000] max-w-[90%] sm:max-w-[300px]">
+                  {(() => {const props = activeSelectedWaterbody.properties || activeSelectedWaterbody;
+                  return (
+                    <>
+                      <div className="flex items-center gap-1">
+                        <LocationOnIcon className="text-blue-600" fontSize="small" />
 
-    {(() => {
-      const props = activeSelectedWaterbody.properties || activeSelectedWaterbody;
+                        {/* Waterbody Name */}
+                        {/* {props.waterbody_name &&
+                          props.waterbody_name.trim().toUpperCase() !== "NA" &&
+                          props.waterbody_name.trim() !== "" && (
+                            <p className="font-semibold text-gray-900">
+                              {props.waterbody_name}
+                            </p>
+                          )
+                        } */}
 
-      return (
-        <>
-          <div className="flex items-center gap-1">
-            <LocationOnIcon className="text-blue-600" fontSize="small" />
+                        {/* UID */}
+                        <p className="font-semibold text-gray-900">
+                          {props.UID || "UID"}
+                        </p>
+                      </div>
 
-            {/* Waterbody Name */}
-            {/* {props.waterbody_name &&
-              props.waterbody_name.trim().toUpperCase() !== "NA" &&
-              props.waterbody_name.trim() !== "" && (
-                <p className="font-semibold text-gray-900">
-                  {props.waterbody_name}
-                </p>
-              )
-            } */}
+                      {/* Silt removed */}
+                      {Number(props.siltRemoved || props.slit_excavated) > 0 && (
+                        <p className="text-gray-700 text-sm font-semibold">
+                          Silt Removed: {props.siltRemoved || props.slit_excavated} cubic metres
+                        </p>
+                      )}
 
-            {/* UID */}
-            <p className="font-semibold text-gray-900">
-              {props.UID || "UID"}
-            </p>
-          </div>
-
-          {/* Silt removed */}
-          {Number(props.siltRemoved || props.slit_excavated) > 0 && (
-            <p className="text-gray-700 text-sm font-semibold">
-              Silt Removed: {props.siltRemoved || props.slit_excavated} cubic metres
-            </p>
-          )}
-
-          {/* Area ORED */}
-          <p className="text-gray-700 text-sm font-semibold">
-            Area (in hectares): {(props.areaOred || props.area_ored || 0).toFixed(2)} hectares
-          </p>
-        </>
-      );
-    })()}
-  </div>
-)}
-
+                      {/* Area ORED */}
+                      <p className="text-gray-700 text-sm font-semibold">
+                        Area (in hectares): {(props.areaOred || props.area_ored || 0).toFixed(2)} hectares
+                      </p>
+                    </>
+                  );
+                  })()}
+                </div>
+                )}
 
                 {/* Legend + YearSlider wrapper for responsiveness */}
                 {activeSelectedWaterbody && (
@@ -1157,7 +1171,7 @@ const matchedMwsOlFeature = useMemo(() => {
               {/* Charts Section */}
               {activeSelectedWaterbody && (
                 <div className="w-full md:w-[45%] flex flex-col items-center gap-6 sm:gap-8 md:gap-10 lg:gap-12">
-                  <div className="w-full max-w-[700px] h-[300px] sm:h-[350px] md:h-[400px] mx-auto">
+                  <div className="w-full max-w-[700px] h-[200px] sm:h-[350px] md:h-[300px] mx-auto">
                     <WaterAvailabilityChart
                       isTehsil={isTehsilMode}
                       waterbody={isTehsilMode ? activeSelectedWaterbody.properties.UID : activeSelectedWaterbody}
@@ -1168,8 +1182,9 @@ const matchedMwsOlFeature = useMemo(() => {
                   </div>
 
                   {(isTehsilMode ? mwsFromLocalStorage : selectedMWSFeature) && (
-                  <div className="w-full max-w-[700px] h-[300px] sm:h-[350px] md:h-[350px] mt-28 mx-auto">
-                    <PrecipitationStackChart feature={typeParam === "tehsil" ? matchedMwsOlFeature : mwsGeoData}/>
+                  <div className="w-full max-w-[700px] h-[200px] sm:h-[350px] md:h-[290px] mt-36 mx-auto">
+                    <PrecipitationStackChart feature={typeParam === "tehsil" ? matchedMwsOlFeature : mwsGeoData}
+                     waterbody={activeSelectedWaterbody} typeparam={typeParam}/>
                   </div>
                   )}
                 </div>
@@ -1213,42 +1228,41 @@ const matchedMwsOlFeature = useMemo(() => {
                       type={typeParam}
                     />
 
-<div className="absolute top-4 left-4 bg-white/90 px-3 py-2 rounded-md font-bold shadow-sm flex flex-col items-start gap-1 z-[1000] max-w-[90%] sm:max-w-[300px]">
-  {(() => {
-    const props = activeSelectedWaterbody.properties || activeSelectedWaterbody;
+      <div className="absolute top-4 left-4 bg-white/90 px-3 py-2 rounded-md font-bold shadow-sm flex flex-col items-start gap-1 z-[1000] max-w-[90%] sm:max-w-[300px]">
+        {(() => {
+          const props = activeSelectedWaterbody.properties || activeSelectedWaterbody;
 
-    return (
-      <>
-        <div className="flex items-center gap-1">
-          <LocationOnIcon className="text-blue-600 w-4 h-4" />
+          return (
+            <>
+              <div className="flex items-center gap-1">
+                <LocationOnIcon className="text-blue-600 w-4 h-4" />
 
-          {/* Waterbody Name */}
-          {/* {props.waterbody_name &&
-    props.waterbody_name.trim() !== "" &&
-    props.waterbody_name.trim().toUpperCase() !== "NA" && (
-      <p className="font-semibold text-gray-900">
-        {props.waterbody_name}
-      </p>
-    )} */}
+                {/* Waterbody Name */}
+                {/* {props.waterbody_name &&
+          props.waterbody_name.trim() !== "" &&
+          props.waterbody_name.trim().toUpperCase() !== "NA" && (
+            <p className="font-semibold text-gray-900">
+              {props.waterbody_name}
+            </p>
+          )} */}
 
-          {/* UID */}
-          <p className="font-semibold text-gray-900">
-            {props.UID || "UID"}
-          </p>
-        </div>
+                {/* UID */}
+                <p className="font-semibold text-gray-900">
+                  {props.UID || "UID"}
+                </p>
+              </div>
 
-        {/* ZOI Area */}
-        <p className="text-sm text-gray-700 font-extrabold">
-          ZOI Area:{" "}
-          {zoiAreaFromFeature > 0
-            ? `${zoiAreaFromFeature.toFixed(2)} hectares`
-            : "NA"}
-        </p>
-      </>
-    );
-  })()}
-</div>
-
+              {/* ZOI Area */}
+              <p className="text-sm text-gray-700 font-extrabold">
+                ZOI Area:{" "}
+                {zoiAreaFromFeature > 0
+                  ? `${zoiAreaFromFeature.toFixed(2)} hectares`
+                  : "NA"}
+              </p>
+            </>
+          );
+        })()}
+      </div>
 
                     {/* Legend + YearSlider wrapper */}
                     <div className="absolute bottom-4 left-4 right-4 flex flex-col sm:flex-row justify-between gap-2 flex-wrap z-[1000]">

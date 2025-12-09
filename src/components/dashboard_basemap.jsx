@@ -38,15 +38,13 @@ const DashboardBasemap = ({
   onSelectWaterbody,
   onZoiArea,
   organizationLabel,
-  styleHeight = "900px",
+  styleHeight = "800px",
 }) => {
   const mapRef = useRef(null);
   const mapElement = useRef(null);
   const popupRef = useRef(null);
   const geojsonReaderRef = useRef(new GeoJSON());
   const lulcLoadedRef = useRef(false);
-
-  console.log("mws:", mwsData);
 
   const read4326 = (data) =>
     geojsonReaderRef.current.readFeatures(data, {

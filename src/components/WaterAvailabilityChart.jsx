@@ -369,8 +369,8 @@ const totalRainfall = years.reduce((acc, year) => {
       <div
         className="flex flex-col mb-2 px-4"
         style={{
-          minHeight: "150px", // fix height so it doesn't jump
-          maxHeight: "150px",
+          minHeight: "120px", // fix height so it doesn't jump
+          maxHeight: "135px",
           overflow: "hidden",
           fontSize: "clamp(0.55rem, 0.8vw, 0.8rem)",
           transition: "all 0.3s ease-in-out",

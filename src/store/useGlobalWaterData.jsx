@@ -43,12 +43,16 @@ export const useGlobalWaterData = ({
           outputFormat: "application/json",
         });
 
+        const fullURL = base + params.toString();
+        console.log("Fetching WFS:", fullURL);
+
+
         try {
           const res = await fetch(base + params.toString());
           if (!res.ok) return null;
           return await res.json();
         } catch (e) {
-          console.log("🔴 WFS Fetch Error:", typeName, e);
+          console.log(" WFS Fetch Error:", typeName, e);
           return null;
         }
       };
@@ -58,9 +62,7 @@ export const useGlobalWaterData = ({
       let zoi = null;
       let drought = null;
 
-      // -------------------------------------------------------
-      // ⭐ PROJECT MODE
-      // -------------------------------------------------------
+      //  PROJECT MODE
       if (type === "project" && projectName && projectId) {
         const p = projectName.toLowerCase();
 
@@ -82,9 +84,7 @@ export const useGlobalWaterData = ({
         setTehsilDrought(null);
       }
 
-      // -------------------------------------------------------
-      // ⭐ TEHSIL MODE
-      // -------------------------------------------------------
+      //  TEHSIL MODE
       if (type === "tehsil" && district && block) {
         const d = district.toLowerCase().replace(/\s+/g, "_");
         const b = block.toLowerCase().replace(/\s+/g, "_");
