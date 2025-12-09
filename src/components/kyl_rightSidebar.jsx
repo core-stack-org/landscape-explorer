@@ -214,6 +214,41 @@ const KYLRightSidebar = ({
                   </svg>
                   View Tehsil Report
                 </button>
+                <button
+                      onClick={() => toggleWaterbodies()}
+                      className={`w-full flex items-center justify-center gap-2 py-2 text-sm 
+                                  rounded-md transition-colors hover:bg-indigo-50 
+                                  ${showWB ? "text-red-600" : "text-indigo-600"}`}
+                    >
+                      {showWB ? (
+                        <>
+                          {/* Hide Waterbodies Icon */}
+                          <svg xmlns="http://www.w3.org/2000/svg" 
+                              width="18" height="18" viewBox="0 0 24 24" 
+                              fill="none" stroke="currentColor" strokeWidth="2" 
+                              strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M12 2C12 2 7 8 7 12a5 5 0 0 0 8.6 3.5"/>
+                            <path d="M5 12a7 7 0 0 0 11.6 4.5"/>
+                            <line x1="3" y1="3" x2="21" y2="21"/>
+                          </svg>
+                          Hide Waterbodies
+                        </>
+                      ) : (
+                        <>
+                          {/* Show Waterbodies Icon */}
+                          <svg xmlns="http://www.w3.org/2000/svg" 
+                              width="18" height="18" viewBox="0 0 24 24" 
+                              fill="none" stroke="currentColor" strokeWidth="2" 
+                              strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M12 2C12 2 7 8 7 12a5 5 0 0 0 10 0c0-4-5-10-5-10z"/>
+                            <path d="M5 12a7 7 0 0 0 14 0"/>
+                          </svg>
+                          Show Waterbodies
+                        </>
+                      )}
+              </button>
+
+
               </div>
             )}
           </div>
@@ -333,11 +368,6 @@ const KYLRightSidebar = ({
             </div>
             
           </div>
-          <button onClick={() => toggleWaterbodies()} className={`w-full py-2 px-3 mt-3 text-white rounded  ${showWB ? "bg-red-600" : "bg-blue-600"}`}>
-            {showWB ? "Hide Waterbodies" : "Show Waterbodies"}
-          </button>
-
-
           {clickedWaterbodyId && (
   <div className="p-3 bg-blue-50 border border-blue-200 rounded mt-3">
     <p className="font-semibold text-blue-800">

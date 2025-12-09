@@ -47,6 +47,7 @@ import {
 } from "../services/analytics";
 import getWebGlLayers from "../actions/getWebGlLayers.js";
 import { useGlobalWaterData } from "../store/useGlobalWaterData.jsx";
+import waterbodyIcon from '../assets/waterbodies_proposed.svg'
 
 const KYLDashboardPage = () => {
   const mapElement = useRef(null);
