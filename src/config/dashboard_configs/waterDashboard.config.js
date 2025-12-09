@@ -148,9 +148,9 @@ export const WATER_DASHBOARD_CONFIG = {
       title:
         "Section 3: Micro-watershed context of the waterbody and Catchment area and stream position",
       paragraphs: [
-        "This section gives the catchment area from which runoff may drain into the waterbody. A larger catchment area would imply a higher rainfall runoff draining into the waterbody, in turn leading to more storage. This can however get impacted by blocked inlet channels and other changes.",
-        "This section also gives the stream order in which the waterbody lies. The stream order indicates the relative position of the waterbody in the drainage network. Waterbodies present in higher stream orders would typically see sub-surface flows from upstream watersheds.",
-        "This map displays the micro-watershed boundary along with its drainage network (blue lines), showing how water flows and is distributed within the micro-watershed. The map also shows the terrain in the micro-watershed.",
+        "This section gives the catchment area from which runoff may drain into the waterbody. A larger catchment area would imply a higher rainfall runoff draining into the waterbody, in turn leading to more storage.This can however get impacted by blocked inlet channels and other changes.",
+        "This section also specifies whether the waterbody lies on a drainage line or off a drainage line. Waterbodies on a drainage line, like those behind checkdams, are likely to get silted more quickly. The stream order of the drainage line is also specified in this case. Higher stream orders imply larger drainage lines, and therefore likely more silting in which the waterbody lies.",
+        "This adjancent map displays the micro-watershed boundary along with its drainage network (blue lines), showing how water flows and is distributed within the micro-watershed. The map also shows the terrain in the micro-watershed.",
       ],
     },
   },

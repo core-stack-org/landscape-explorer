@@ -823,10 +823,57 @@ const matchedMwsOlFeature = useMemo(() => {
       console.warn("No matching row found.");
     }
   };
+
+  const printReport=()=>{
+    window.print();
+  }
   const capitalize = (str) => str ? str.charAt(0).toUpperCase() + str.slice(1).toLowerCase() : "";
   
   return (
-    <div className="relative w-full">
+    <div className="relative w-full ">
+      {isTehsilMode && (
+  <div className="relative w-full left-1/2 right-1/2 -ml-[50vw] -mr-[50vw]">
+    <div
+      className="w-full shadow-md"
+      style={{
+        backgroundColor: "#2c3e50",
+        margin: 0,
+        paddingTop: "48px",
+        paddingBottom: "48px",        
+        width: "100vw",
+        position: "relative",
+        left: "50%",
+        right: "50%",
+        marginLeft: "-50vw",
+        marginRight: "-50vw",
+      }}
+    >
+      <button
+        className="absolute top-4 right-6 flex items-center gap-2
+                   bg-green-600 hover:bg-green-700 text-white font-semibold 
+                   px-4 py-2 rounded-md shadow-md transition-all"
+                   onClick={printReport}
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18"
+             viewBox="0 0 24 24" fill="none" stroke="currentColor"
+             strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="6 9 6 2 18 2 18 9"></polyline>
+            <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
+            <rect x="6" y="14" width="12" height="8"></rect>
+        </svg>
+        Save as PDF
+      </button>
+      <h1 className="text-2xl md:text-3xl font-bold text-center text-white">
+        Waterbody Data Analysis Report
+      </h1>
+      <p className="text-sm md:text-base text-blue-100 text-center mt-1">
+        {`Tehsil: ${activeSelectedWaterbody?.properties?.Taluka || blockParam || "NA"}`}
+        {activeSelectedWaterbody?.properties?.UID ? ` • UID: ${activeSelectedWaterbody.properties.UID}` : ""}
+      </p>
+    </div>
+  </div>
+)}
+
       {!hideHeaderSelect && (
           <HeaderSelect showExtras organization={organization} project={project} setView={setView}/>
       )} 
@@ -860,13 +907,13 @@ const matchedMwsOlFeature = useMemo(() => {
 
       {/* Conditional Rendering for Table or Map */}
       <div
-  className={`
-    absolute top-[calc(20%+72px)]
-    md:top-[calc(18%+64px)]
-    sm:top-[calc(16%+48px)]
-    left-[2.5%] w-[92%] h-auto z-[1]
-    ${project && geoData?.features?.length > 0 ? "bg-white p-5 rounded-md" : "bg-transparent p-0"}
-  `}
+          className={`
+            absolute top-[calc(20%+72px)]
+            md:top-[calc(18%+64px)]
+            sm:top-[calc(16%+48px)]
+            left-[2.5%] w-[92%] h-auto z-[1]
+            ${project && geoData?.features?.length > 0 ? "bg-white p-5 rounded-md" : "bg-transparent p-0"}
+          `}
 >
         {!isTehsilMode && view === "table" ? (
           loadingData ? (
@@ -916,7 +963,9 @@ const matchedMwsOlFeature = useMemo(() => {
           
           )
         ) : view === "map" ? (
-          <div className="flex flex-col gap-4 mt-2 w-full px-2 sm:px-4 md:px-6">
+          <div >
+
+          <div  className={`flex flex-col gap-4 w-full px-2 sm:px-4 md:px-6 ${isTehsilMode ? "mt-28" : "mt-2"}`}>
             {activeSelectedWaterbody && (
               <div className="flex flex-col gap-2 w-full p-4 sm:p-6 md:p-4 rounded-xl bg-white shadow-md">
                 {/* Heading */}
@@ -1264,6 +1313,7 @@ const matchedMwsOlFeature = useMemo(() => {
                         zoiFeatures={zoiFeatures}
                         waterbody={activeSelectedWaterbody}
                         impactYear={impactYear}
+                        isTehsil={isTehsilMode}
                       />
                     </div>
 
@@ -1309,43 +1359,51 @@ const matchedMwsOlFeature = useMemo(() => {
                 )}
               </div>
             )}
-
 {activeSelectedWaterbody && (
-  <>
-    {activeSelectedWaterbody.drainageFlag === 1 ? (
-      <div className="w-full flex flex-col md:flex-row justify-between gap-3 mt-4 px-2 md:px-0">
-        {[
-          {
-            label: "Max Catchment Area",
-            value: `${activeSelectedWaterbody?.maxCatchmentArea?.toFixed(2)} sq km`,
-          },
-          {
-            label: "Max Stream Order",
-            value: `Order ${activeSelectedWaterbody?.maxStreamOrder}`,
-          },
-        ].map((item, idx) => (
-          <div
-            key={idx}
-            className="flex-1 bg-gradient-to-br from-gray-50 to-gray-100 p-4 md:p-6 rounded-xl border border-gray-200 shadow-sm flex flex-col items-center text-center min-h-[120px] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md"
-          >
-            <p className="uppercase tracking-wide font-bold text-sm text-gray-800">
-              {item.label}
-            </p>
-            <p className="mt-1 text-xl md:text-2xl font-semibold text-blue-600">
-              {item.value}
-            </p>
-          </div>
-        ))}
+  <div className="w-full mt-4 px-2 md:px-0">
+
+    {/* Always show Max Catchment Area */}
+    <div className="w-full flex flex-col md:flex-row justify-between gap-3">
+      <div
+        className="flex-1 bg-gradient-to-br from-gray-50 to-gray-100 p-4 md:p-6 rounded-xl 
+        border border-gray-200 shadow-sm flex flex-col items-center text-center min-h-[120px] 
+        transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md"
+      >
+        <p className="uppercase tracking-wide font-bold text-sm text-gray-800">
+          Max Catchment Area
+        </p>
+        <p className="mt-1 text-xl md:text-2xl font-semibold text-blue-600">
+          {activeSelectedWaterbody?.maxCatchmentArea?.toFixed(2)} sq km
+        </p>
       </div>
-    ) : (
-      <div className="w-full mt-4 px-2 md:px-0">
-        <div className="bg-red-50 border border-red-300 text-red-700 p-4 rounded-lg shadow-sm font-semibold text-center">
+
+      {/* Max Stream Order → Only visible if on drainage line */}
+      {activeSelectedWaterbody.drainageFlag === 1 ? (
+        <div
+          className="flex-1 bg-gradient-to-br from-gray-50 to-gray-100 p-4 md:p-6 rounded-xl 
+          border border-gray-200 shadow-sm flex flex-col items-center text-center min-h-[120px] 
+          transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md"
+        >
+          <p className="uppercase tracking-wide font-bold text-sm text-gray-800">
+            Max Stream Order (On drainage line)
+          </p>
+          <p className="mt-1 text-xl md:text-2xl font-semibold text-blue-600">
+            Order {activeSelectedWaterbody?.maxStreamOrder}
+          </p>
+        </div>
+      ) : (
+        <div
+          className="flex-1 bg-red-50 border border-red-300 text-red-700 p-4 rounded-lg 
+          shadow-sm font-semibold text-center min-h-[120px] flex items-center justify-center"
+        >
           No waterbody is on drainage line
         </div>
-      </div>
-    )}
-  </>
+      )}
+    </div>
+
+  </div>
 )}
+
 
 
             <div className="flex flex-col md:flex-row items-start gap-4 w-full">
@@ -1472,6 +1530,8 @@ const matchedMwsOlFeature = useMemo(() => {
               )}
             </div>
           </div>
+          </div>
+         
         ) : null}
       </div>
     </div>

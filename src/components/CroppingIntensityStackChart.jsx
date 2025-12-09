@@ -27,6 +27,7 @@ const CroppingIntensityStackChart = ({
   zoiFeatures,
   waterbody,
   impactYear,
+  isTehsil
 }) => {
   const [showImpact, setShowImpact] = useState(false);
 
@@ -128,28 +129,32 @@ const CroppingIntensityStackChart = ({
       legend: { position: "bottom" },
       title: {
         display: true,
-        text: showImpact
-          ? `Impact Analysis: Showing Only Pre (${impactYear.pre}) and Post (${impactYear.post}) Years`
-          : "Cropping Intensity (Area in hectares) (Black line = intervention year)",
+        text: isTehsil
+          ? "Cropping Intensity (Area in hectares)"
+          : !showImpact
+            ? "Impact Analysis: Showing Only Pre (${impactYear.pre}) and Post (${impactYear.post}) Years"
+            : "Cropping Intensity (Area in hectares) (Black line = intervention year)",
         font: { size: 16, weight: "bold" },
       },
       annotation: {
-        annotations: {
-          interventionLine: {
-            type: "line",
-            scaleID: "x",
-            value: "22-23",
-            borderColor: "black",
-            borderWidth: 2,
-            label: {
-              content: "Intervention Year",
-              enabled: true,
-              position: "start",
-              color: "black",
-              font: { weight: "bold" },
+        annotations: isTehsil
+          ? {} // hide annotation completely in tehsil mode
+          : {
+              interventionLine: {
+                type: "line",
+                scaleID: "x",
+                value: "22-23",
+                borderColor: "black",
+                borderWidth: 2,
+                label: {
+                  content: "Intervention Year",
+                  enabled: true,
+                  position: "start",
+                  color: "black",
+                  font: { weight: "bold" },
+                },
+              },
             },
-          },
-        },
       },
     },
     scales: {
@@ -168,6 +173,7 @@ const CroppingIntensityStackChart = ({
   return (
     <div>
       {/* Toggle above chart */}
+      {!isTehsil && (
       <div className="flex items-center justify-end mb-4">
         <span className="text-[0.7rem] sm:text-[0.75rem] text-gray-700 font-medium mr-2 leading-tight w-auto whitespace-nowrap">
           {showImpact ? "Comparison years" : "Comparison years"}
@@ -183,6 +189,7 @@ const CroppingIntensityStackChart = ({
           <div className="absolute left-0.5 top-0.5 bg-white w-5 h-5 rounded-full peer-checked:translate-x-5 transition-all"></div>
         </label>
       </div>
+      )}
 
       <Bar data={maskedData} options={options} />
     </div>

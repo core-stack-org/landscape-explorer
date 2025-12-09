@@ -66,10 +66,7 @@ const totalRainfall = years.reduce((acc, year) => {
     acc[`TR${year}`] = kharif + rabi + zaid;
     return acc;
   }
-
-  // -----------------------------------------
-  // ✔️ TEHSIL MODE → Use Precipitation from values_
-  // -----------------------------------------
+  //  TEHSIL MODE → Use Precipitation from values_
   const p = mwsFeature?.values_ ?? {};
 
   // Convert "17-18" → "2017_2018"
@@ -301,29 +298,35 @@ const totalRainfall = years.reduce((acc, year) => {
       legend: { display: false },
       title: {
         display: true,
-        text: !showImpact
-          ? "Land Use Categories vs Rainfall (Black line = intervention year)"
-          : "Impact Analysis Graph (Black line = intervention year)",
+        text: isTehsil
+          ? "Land Use Categories vs Rainfall"
+          : !showImpact
+            ? "Land Use Categories vs Rainfall (Black line = intervention year)"
+            : "Impact Analysis Graph (Black line = intervention year)",
         font: { size: 16, weight: "bold" },
       },
+      
       annotation: {
-        annotations: {
-          interventionLine: {
-            type: "line",
-            scaleID: "x",
-            value: "22-23",
-            borderColor: "black",
-            borderWidth: 2,
-            label: {
-              content: "Intervention Year",
-              enabled: true,
-              position: "start",
-              color: "black",
-              font: { weight: "bold" },
+        annotations: isTehsil
+          ? {} // hide annotation completely in tehsil mode
+          : {
+              interventionLine: {
+                type: "line",
+                scaleID: "x",
+                value: "22-23",
+                borderColor: "black",
+                borderWidth: 2,
+                label: {
+                  content: "Intervention Year",
+                  enabled: true,
+                  position: "start",
+                  color: "black",
+                  font: { weight: "bold" },
+                },
+              },
             },
-          },
-        },
       },
+      
     },
     scales: {
       x: {
@@ -414,6 +417,7 @@ const totalRainfall = years.reduce((acc, year) => {
             ))}
 
           {/* Toggle always rendered once (unchanged) */}
+          {!isTehsil && (
           <div className="flex items-center ml-auto mt-2 sm:mt-0 absolute right-0 top-0 text-right">
             <span
               className="font-medium mr-2 leading-tight w-auto whitespace-nowrap text-gray-700"
@@ -433,6 +437,7 @@ const totalRainfall = years.reduce((acc, year) => {
               <div className="absolute left-0.5 top-0.5 bg-white w-5 h-5 rounded-full peer-checked:translate-x-5 transition-all"></div>
             </label>
           </div>
+          )}
         </div>
 
         {/* Impact-only legends (keeps same place, doesn't change layout since minHeight above is set) */}
