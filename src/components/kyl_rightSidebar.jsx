@@ -11,6 +11,7 @@ import {
   filterSelectionsAtom,
 } from "../store/locationStore.jsx";
 import KYLMWSProfilePanel from "./kyl_MWSProfilePanel.jsx";
+import { useRecoilState } from "recoil";
 
 const KYLRightSidebar = ({
   state,
@@ -37,7 +38,15 @@ const KYLRightSidebar = ({
   //onAnalyzeClick,
   onResetMWS,
   selectedMWSProfile,
+  fetchWaterbodiesLayer,
+  waterbodiesLayerRef,
+  clickedWaterbodyId,
+  waterbodyDashboardUrl,
 }) => {
+  const [globalState, setGlobalState] = useRecoilState(stateAtom);
+  const [globalDistrict, setGlobalDistrict] = useRecoilState(districtAtom);
+  const [globalBlock, setGlobalBlock] = useRecoilState(blockAtom);
+  const [showWB, setShowWB] = React.useState(false);
 
   const handleIndicatorRemoval = (filter) => {
     // First, remove the visualization if it exists
@@ -97,6 +106,22 @@ const KYLRightSidebar = ({
     }
   };
 
+  const toggleWaterbodies = async () => {
+    if (!showWB) {
+      await fetchWaterbodiesLayer();  
+      setShowWB(true);
+      return;
+    }
+      if (mapRef.current && waterbodiesLayerRef.current) {
+      mapRef.current.removeLayer(waterbodiesLayerRef.current);
+      waterbodiesLayerRef.current = null; 
+    }
+  
+    setShowWB(false);
+  };
+  
+
+
   const handleTehsilReport = () => {
     const reportURL = `${process.env.REACT_APP_API_URL}/generate_tehsil_report/?state=${state.label.toLowerCase().split(" ").join("_")}&district=${district.label.toLowerCase().split(" ").join("_")}&block=${block.label.toLowerCase().split(" ").join("_")}`; // Replace with your actual URL
     window.open(reportURL, '_blank', 'noopener,noreferrer');
@@ -118,7 +143,11 @@ const KYLRightSidebar = ({
                   currVal={state || { label: "Select State" }}
                   stateData={statesData}
                   handleItemSelect={handleItemSelect}
-                  setState={setState}
+                  setState={(val) => {
+                    setState(val);        // existing behaviour
+                    setGlobalState(val);  // NEW → sync to recoil
+                  }}
+                  // setState={setState}
                   className="w-full border border-gray-200 rounded-md py-1.5 px-3"
                 />
               </div>
@@ -130,7 +159,12 @@ const KYLRightSidebar = ({
                   currVal={district || { label: "Select District" }}
                   stateData={state !== null ? state.district : null}
                   handleItemSelect={handleItemSelect}
-                  setState={setDistrict}
+                  setState={(val) => {
+                    setDistrict(val);
+                    setGlobalDistrict(val);
+                  }}
+                  
+                  // setState={setDistrict}
                   className="w-full border border-gray-200 rounded-md py-1.5 px-3"
                 />
               </div>
@@ -142,7 +176,12 @@ const KYLRightSidebar = ({
                   currVal={block || { label: "Select Tehsil" }}
                   stateData={district !== null ? district.blocks : null}
                   handleItemSelect={handleItemSelect}
-                  setState={setBlock}
+                  setState={(val) => {
+                    setBlock(val);
+                    setGlobalBlock(val);
+                  }}
+                  
+                  // setState={setBlock}
                   className="w-full border border-gray-200 rounded-md py-1.5 px-3"
                 />
               </div>
@@ -248,6 +287,8 @@ const KYLRightSidebar = ({
             <span className="text-sm font-medium">
               Selected Patterns ({getFormattedSelectedPatterns().length})
             </span>
+   
+
             <div className="mt-2 max-h-[150px] overflow-y-auto pr-2">
               <div className="space-y-2">
                 {getFormattedSelectedPatterns().map((pattern, index) => (
@@ -282,11 +323,38 @@ const KYLRightSidebar = ({
                         </svg>
                       </button>
                     </div>
+                    
                   </div>
+                  
                 ))}
+                
               </div>
+              
             </div>
+            
           </div>
+          <button onClick={() => toggleWaterbodies()} className={`w-full py-2 px-3 mt-3 text-white rounded  ${showWB ? "bg-red-600" : "bg-blue-600"}`}>
+            {showWB ? "Hide Waterbodies" : "Show Waterbodies"}
+          </button>
+
+
+          {clickedWaterbodyId && (
+  <div className="p-3 bg-blue-50 border border-blue-200 rounded mt-3">
+    <p className="font-semibold text-blue-800">
+      Waterbody Selected: {clickedWaterbodyId}
+    </p>
+
+    <button
+      onClick={() => window.open(waterbodyDashboardUrl, "_blank")}
+      className="mt-2 px-3 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+    >
+      Click to View Dashboard →
+    </button>
+  </div>
+)}
+
+
+
         </div>
       )}
     </div>
