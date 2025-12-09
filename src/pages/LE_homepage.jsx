@@ -73,7 +73,7 @@ export default function KYLHomePage() {
     <div className="font-sans ">
       <LandingNavbar />
       <div
-        className="min-h-screen snap-y snap-mandatory bg-cover bg-center bg-no-repeat "
+        className="min-h-screen snap-y snap-mandatory bg-cover bg-center bg-no-repeat pt-8 md:pt-12"
         style={{
           backgroundImage: `url(${landingPageBg})`,
           scrollBehavior: "smooth",
@@ -81,7 +81,7 @@ export default function KYLHomePage() {
       >
         {/* Know Section */}
         <section
-          className="snap-start backdrop-brightness-90 backdrop-blur-sm bg-white/0 px-4 py-6 md:px-8 md:py-10 rounded-xl mx-2 md:mx-6 mb-4 md:mb-6"
+          className="snap-start backdrop-brightness-90 backdrop-blur-sm bg-white/0 px-4 pt-8 pb-6 md:px-10 md:pt-10 md:pb-10 rounded-xl mx-2 md:mx-6 mb-4 md:mb-6"
           style={{ position: "relative", overflow: "visible", zIndex: 10 }}
         >
           <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-8">
@@ -93,7 +93,7 @@ export default function KYLHomePage() {
                 </span>
               </h2>
 
-              <ul className="list-disc list-inside text-black text-base md:text-lg space-y-3 font-medium">
+              <ul className="list-disc list-outside ml-5 text-black text-base md:text-lg space-y-3 font-medium text-justify">
                 <li>
                   With 20+ geospatial layers, explore your landscape’s
                   diversity, build evidence-based proposals, and plan
@@ -128,14 +128,14 @@ export default function KYLHomePage() {
             <div className="flex flex-col items-end gap-0 ">
               {/* First Card */}
               <div
-                className="w-full max-w-md bg-white p-4 rounded shadow flex flex-col justify-between relative rounded-xl -mt-4"
+                className="w-full max-w-lg bg-white/95 backdrop-blur-sm p-6 rounded-2xl shadow-lg border border-gray-100 flex flex-col justify-between relative"
                 style={{ overflow: "visible", zIndex: 100 }}
               >
-                <p className="mb-0 text-center font-semibold text-2xl md:text-2xl leading-none">
+                <p className="mb-0 text-center font-semibold text-xl md:text-2xl text-gray-800 leading-none">
                   Select Location
                 </p>
 
-                <div className="space-y-3 mt-3 relative">
+                <div className="space-y-4 mt-5 relative">
                   {/* State */}
                   <div className="relative z-[9999]">
                     <SelectButton
@@ -188,7 +188,7 @@ export default function KYLHomePage() {
               </div>
 
               {/* Second Card directly below first */}
-              <div className="bg-purple-50 border-l-4 border-purple-500 text-purple-700 p-4 rounded-md mt-4 max-w-md w-full">
+              <div className="bg-purple-50 border-l-4 border-purple-500 text-purple-700 p-4 rounded-md mt-4 max-w-lg w-full">
                 <p className="text-sm">
                   Generate data for a specific location?{" "}
                   <a
@@ -206,7 +206,7 @@ export default function KYLHomePage() {
         </section>
 
         {/* Plan Section */}
-        <section className="  snap-start backdrop-brightness-90 backdrop-blur-sm bg-white/0 px-4 py-6 md:px-16 md:py-10 rounded-xl mx-2 md:mx-6 my-6">
+        <section className="snap-start backdrop-brightness-90 backdrop-blur-sm bg-white/0 px-4 py-6 md:px-10 md:py-10 rounded-xl mx-2 md:mx-6 my-6">
           <div>
             <div className="w-full lg:w-2/3 mb-10">
               <h2 className="text-3xl md:text-4xl mb-4">
@@ -216,7 +216,7 @@ export default function KYLHomePage() {
                 </span>
               </h2>
 
-              <ul className="list-disc list-inside text-black text-base md:text-lg space-y-3 font-medium">
+              <ul className="list-disc list-outside ml-5 text-black text-base md:text-lg space-y-3 font-medium text-justify">
                 <li>
                   <b>Identification of the right problems</b> is key to
                   sustainable Natural Resource Management (NRM). Commons Connect
@@ -343,7 +343,7 @@ export default function KYLHomePage() {
         </section>
 
         {/* Track Section */}
-        <section className="snap-start backdrop-brightness-90 backdrop-blur-sm bg-white/0 px-4 py-6 md:px-16 md:py-10 rounded-xl mx-2 md:mx-6 mt-6">
+        <section className="snap-start backdrop-brightness-90 backdrop-blur-sm bg-white/0 px-4 py-6 md:px-10 md:py-10 rounded-xl mx-2 md:mx-6 mt-6">
           <div>
             {/* Narrow text container */}
             <div className="w-full lg:w-2/3 mb-10">
@@ -351,7 +351,7 @@ export default function KYLHomePage() {
                 <span className="font-bold">Track and Assess </span>
                 <span className="font-normal">NRM interventions</span>
               </h2>
-              <ul className="list-disc list-inside text-black text-base md:text-xl font-medium space-y-5 mb-6">
+              <ul className="list-disc list-outside ml-5 text-black text-base md:text-xl font-medium space-y-5 mb-6 text-justify">
                 <li>
                   A suite of dashboards enabling continuous monitoring of
                   Natural Resource Management (NRM) interventions undertaken in
