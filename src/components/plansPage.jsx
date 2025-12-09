@@ -49,8 +49,8 @@ const STATE_COORDINATES = {
 const getPlanMetaStats = async (organizationId = null) => {
   try {
     const url = organizationId
-      ? `https://614f0dbf85ed.ngrok-free.app/api/v1/watershed/plans/meta-stats/?organization_id=${organizationId}`
-      : `https://614f0dbf85ed.ngrok-free.app/api/v1/watershed/plans/meta-stats/`;
+      ? `https://92c32fb6bade.ngrok-free.app/api/v1/watershed/plans/meta-stats/?organization_id=${organizationId}`
+      : `https://92c32fb6bade.ngrok-free.app/api/v1/watershed/plans/meta-stats/`;
 
     const response = await fetch(url, {
       method: "GET",
