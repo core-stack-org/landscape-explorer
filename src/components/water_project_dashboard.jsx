@@ -259,7 +259,7 @@ const WaterProjectDashboard = () => {
   const tehsilZoi = useRecoilValue(tehsilZoiFeaturesAtom);
   const zoiFeatures = isTehsilMode ? tehsilZoi : projectZoi;
 
-
+console.log(activeSelectedWaterbody)
   const getMatchedMWSFeatureProject = (mwsGeoData, activeSelectedWaterbody) => {
     if (!mwsGeoData?.features?.length || !activeSelectedWaterbody) return null;
   
@@ -342,7 +342,7 @@ const WaterProjectDashboard = () => {
     if (matchedFeatureIndex !== -1) {
       const feature = geoData.features[matchedFeatureIndex];
       const props = feature.properties ?? {};
-
+console.log(props)
       const row = {
         featureIndex: matchedFeatureIndex,
         UID: props.UID,
@@ -361,6 +361,7 @@ const WaterProjectDashboard = () => {
         intervention_year:props.intervention_year || 0,
         coordinates: null,
         geometry: feature.geometry,
+        OnDrainage:props.on_drainage_line || 0,
       };
 
       setSelectedWaterbody(row);
