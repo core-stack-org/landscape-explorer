@@ -396,7 +396,7 @@ export default function KYLHomePage() {
                   description:
                     "Visualize waterbody interventions and evaluate their effects on water availability and agriculture.",
                   icon: "💧",
-                  // link: "https://development-waterbody-dashboard.d2s4eeyazvtd2g.amplifyapp.com/water_dashboard",
+                  link: "/water_dashboard",
                 },
                 {
                   title: "Commons Connect Plans",
