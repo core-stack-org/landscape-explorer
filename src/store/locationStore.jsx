@@ -30,6 +30,15 @@ export const filterSelectionsAtom = atom({
   },
 });
 
+export const patternSelectionsAtom = atom({
+  key: 'patternSelectionsAtom',
+  default: {
+    selectedMWSPatterns: {},      // { filterName: [selectedOptions] }
+    selectedVillagePatterns: {},  // { filterName: [selectedOptions] }
+  },
+});
+
+
 export const yearAtom = atom({
   key: "yearAtom",
   default: null,
@@ -69,3 +78,59 @@ export const projectOptionsAtom = atom({
   key: "projectOptionsAtom",
   default: [],
 });
+export const waterGeoDataAtom = atom({
+  key: "waterGeoDataAtom",
+  default: null,
+});
+
+export const waterMwsDataAtom = atom({
+  key: "waterMwsDataAtom",
+  default: null,
+});
+
+export const zoiFeaturesAtom = atom({
+  key: "zoiFeaturesAtom",
+  default: null,
+});
+
+export const selectedWaterbodyAtom = atom({
+  key: "selectedWaterbodyAtom",
+  default: null,
+});
+
+export const selectedMwsAtom = atom({
+  key: "selectedMwsAtom",
+  default: null,
+});
+
+export const selectedZoiAtom = atom({
+  key: "selectedZoiAtom",
+  default: null,
+});
+
+export const selectedWaterbodyForTehsilAtom = atom({
+  key: "selectedWaterbodyForTehsil",
+  default: null,
+});
+
+export const tehsilZoiFeaturesAtom = atom({
+  key: "tehsilZoiFeaturesAtom",
+  default: [],
+});
+
+export const mwsLayerRefAtom = atom({
+  key: "mwsLayerRefAtom",
+  default: null,
+});
+
+export const tehsilDroughtDataAtom = atom({
+  key: "tehsilDroughtDataAtom",
+  default: null,
+});
+
+
+
+
+
+
+

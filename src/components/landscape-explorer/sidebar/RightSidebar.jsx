@@ -56,6 +56,7 @@ const landLayersData = [
 
 const climateLayersData = [
   { id: 1, name: "mws_layers", label: "Hydrological Variables (Precipitation, ET, Groundwater, etc.)", hasGeojson: true, hasKml: true, hasStyle : true },
+  { id: 2, name: "mws_layers_fortnight", label: "Fortnightly Hydrological Variables (Precipitation, ET, Groundwater, etc.)", hasGeojson: true, hasKml: true, hasStyle : false }
 ]
 
 const hydrologyLayersData = [
@@ -98,7 +99,9 @@ const yearDataLulc = [
   { label: "2019-2020", value: "19_20" },
   { label: "2020-2021", value: "20_21" },
   { label: "2021-2022", value: "21_22" },
-  { label: "2022-2023", value: "22_23" }
+  { label: "2022-2023", value: "22_23" },
+  { label: "2023-2024", value: "23_24" },
+  { label: "2024-2025", value: "24_25" }
 ];
 
 // Enhanced DownloadButton component to replace your current one
@@ -171,7 +174,7 @@ const handleStyleDownload = (layerName) => {
       url = "https://drive.google.com/file/d/13cgF1Cg6YWZMCQXH7XV7cITxsg9v2SBu/view?usp=sharing"
       break;
     case "restoration":
-      url = "https://drive.google.com/file/d/1D_4MoPiraKZcXpsLsp2wRQ65B3Tf-d89/view?usp=sharing"
+      url = "https://drive.google.com/file/d/1JANwwxGDpy5vUkM2v8wqJDUKbVS8I72u/view?usp=sharing"
       break;
     case "clart":
       url = "https://drive.google.com/file/d/1B8ibmiv8dBNYZZ1gZWIp4AQPdu82t1yl/view?usp=drive_link"
@@ -205,6 +208,9 @@ const handleStyleDownload = (layerName) => {
       break;
     case "mws_layers":
       url = "https://github.com/core-stack-org/QGIS-Styles/tree/main/Climate"
+      break;
+    case "cropIntensity":
+      url = "https://drive.google.com/file/d/1OkjCjs2RF0kLCMpgnM3REE4of1GpDisn/view?usp=sharing"
       break;
   }
 
@@ -415,6 +421,9 @@ const RightSidebar = ({
         case 'mws_layers':
           url = `https://geoserver.core-stack.org:8443/geoserver/mws_layers/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=mws_layers:deltaG_well_depth_${districtFormatted}_${blockFormatted}&outputFormat=application/json&screen=main`;
           break;
+        case 'mws_layers_fortnight':
+          url = `https://geoserver.core-stack.org:8443/geoserver/mws_layers/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=mws_layers:deltaG_fortnight_${districtFormatted}_${blockFormatted}&outputFormat=application/json&screen=main`;
+          break;
         case 'drought':
           url = `https://geoserver.core-stack.org:8443/geoserver/cropping_drought/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=cropping_drought:${districtFormatted}_${blockFormatted}_drought&outputFormat=application/json&screen=main`;
           break;
@@ -458,6 +467,9 @@ const RightSidebar = ({
           break;
         case 'mws_layers':
           url = `https://geoserver.core-stack.org:8443/geoserver/mws_layers/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=mws_layers:deltaG_well_depth_${districtFormatted}_${blockFormatted}&outputFormat=application/vnd.google-earth.kml+xml&screen=main`;
+          break;
+        case 'mws_layers_fortnight':
+          url = `https://geoserver.core-stack.org:8443/geoserver/mws_layers/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=mws_layers:deltaG_fortnight_${districtFormatted}_${blockFormatted}&outputFormat=application/vnd.google-earth.kml+xml&screen=main`;
           break;
         case 'drought':
           url = `https://geoserver.core-stack.org:8443/geoserver/cropping_drought/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=cropping_drought:${districtFormatted}_${blockFormatted}_drought&outputFormat=application/vnd.google-earth.kml+xml&screen=main`;
@@ -527,18 +539,15 @@ const RightSidebar = ({
     let url = '';
     
     if (layerName === 'clart') {
-      url = `https://geoserver.core-stack.org:8443/geoserver/clart/wcs?service=WCS&version=2.0.1&request=GetCoverage&CoverageId=clart:${districtFormatted}_${blockFormatted}_clart&format=geotiff&compression=LZW&tiling=false;`;
+      url = `https://geoserver.core-stack.org:8443/geoserver/clart/wcs?service=WCS&version=2.0.1&request=GetCoverage&CoverageId=clart:${districtFormatted}_${blockFormatted}_clart&format=geotiff&compression=LZW`;
     } else if (layerName === 'terrain') {
-      url = `https://geoserver.core-stack.org:8443/geoserver/terrain/wcs?service=WCS&version=2.0.1&request=GetCoverage&CoverageId=terrain:${districtFormatted}_${blockFormatted}_terrain_raster&format=geotiff&compression=LZW&tiling=true&tileheight=256&tilewidth=256`;
+      url = `https://geoserver.core-stack.org:8443/geoserver/terrain/wcs?service=WCS&version=2.0.1&request=GetCoverage&CoverageId=terrain:${districtFormatted}_${blockFormatted}_terrain_raster&format=geotiff&compression=LZW`;
     }
     else if(layerName === 'restoration'){
-      url = `https://geoserver.core-stack.org:8443/geoserver/restoration/wcs?service=WCS&version=2.0.1&request=GetCoverage&CoverageId=restoration:restoration_${districtFormatted}_${blockFormatted}_raster&format=geotiff&compression=LZW&tiling=true&tileheight=256&tilewidth=256`
+      url = `https://geoserver.core-stack.org:8443/geoserver/restoration/wcs?service=WCS&version=2.0.1&request=GetCoverage&CoverageId=restoration:restoration_${districtFormatted}_${blockFormatted}_raster&format=geotiff&compression=LZW`;
     }
-    // else if(layerName === 'cropintensity') {
-    //   url = `https://geoserver.core-stack.org:8443/geoserver/change_detection/wcs?service=WCS&version=2.0.1&request=GetCoverage&CoverageId=change_detection:change_${districtFormatted}_${blockFormatted}_}&format=geotiff&compression=LZW&tiling=true&tileheight=256&tilewidth=256`
-    // }
     else{
-      url = `https://geoserver.core-stack.org:8443/geoserver/change_detection/wcs?service=WCS&version=2.0.1&request=GetCoverage&CoverageId=change_detection:change_${districtFormatted}_${blockFormatted}_${layerName.charAt(0).toUpperCase() + layerName.slice(1)}&format=geotiff&compression=LZW&tiling=true&tileheight=256&tilewidth=256`
+      url = `https://geoserver.core-stack.org:8443/geoserver/change_detection/wcs?service=WCS&version=2.0.1&request=GetCoverage&CoverageId=change_detection:change_${districtFormatted}_${blockFormatted}_${layerName.charAt(0).toUpperCase() + layerName.slice(1)}&format=geotiff&compression=LZW`;
     }
     if (url) {
       // Use our direct geotiff download function

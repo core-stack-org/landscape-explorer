@@ -1,10 +1,11 @@
-export default async function getPlans(block_id) {
+export default async function getPlans(block_id=null) {
     try {
-        let response = await fetch(`${process.env.REACT_APP_API_URL}/get_plans/?block_id=${block_id}`, {
+        let response = await fetch(`${process.env.REACT_APP_API_URL}/watershed/plans`, {
             method: "GET",
             headers: {
                 "ngrok-skip-browser-warning": "1",
                 "Content-Type": "application/json",
+                "X-API-Key" : `${process.env.REACT_APP_API_KEY}`,
                 }
             }
         )
@@ -12,12 +13,13 @@ export default async function getPlans(block_id) {
 
     let result = []
 
-    response.plans.map((item, idx) => {
+    response.map((item, idx) => {
         let tempObj = {}
         tempObj['label'] = item.plan
         tempObj['value'] = item
         result.push(tempObj)
     })
+
 
     return result
 

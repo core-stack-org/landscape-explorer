@@ -24,7 +24,7 @@ import getStates from "../../../actions/getStates";
 import mapMarker from '../../../assets/map_marker.svg';
 
 
-const MapLegend = ({toggledLayers, lulcYear1, lulcYear2, lulcYear3}) => {
+const MapLegend = ({ toggledLayers, lulcYear1, lulcYear2, lulcYear3 }) => {
 
   const [isCollapsed, setIsCollapsed] = useState(true);
 
@@ -63,42 +63,42 @@ const MapLegend = ({toggledLayers, lulcYear1, lulcYear2, lulcYear3}) => {
 
   const cropIntensityItems = [
     { color: "#f7fcf5", label: "Double - Single" },
-    { color: "#ff4500", label: "Triple - Single" },
-    { color: "#ff0000", label: "Triple - Double" },
+    { color: "#ff4500", label: "Tripple/annual/perennial - Single" },
+    { color: "#ff0000", label: "Tripple/annual/perennial - Double" },
     { color: "#00ff00", label: "Single - Double" },
-    { color: "#32cd32", label: "Single - Triple" },
-    { color: "#228b22", label: "Double - Triple" },
+    { color: "#32cd32", label: "Single - Tripple/annual/perennial" },
+    { color: "#228b22", label: "Double - Tripple/annual/perennial" },
     { color: "#712103", label: "As it is" },
   ]
 
   const deforestationItems = [
-    { color: "#73bb53", label: "Forest - Forest" },
-    { color: "#ff0000", label: "Forest - Built Up" },
-    { color: "#eee05d", label: "Forest - Farm" },
-    { color: "#a9a9a9", label: "Forest - Barren" },
-    { color: "#eaa4f0", label: "Forest - Scrub land" },
+    { color: "#73bb53", label: "Trees - Trees" },
+    { color: "#ff0000", label: "Trees - Built Up" },
+    { color: "#eee05d", label: "Trees - Crops" },
+    { color: "#a9a9a9", label: "Trees - Barren" },
+    { color: "#eaa4f0", label: "Trees - Shrubs and Scrubs" },
   ]
 
   const degradationItems = [
-    { color: "#eee05d", label: "Farm - Farm" },
-    { color: "#ff0000", label: "Farm - Built Up" },
-    { color: "#a9a9a9", label: "Farm - Barren" },
-    { color: "#eaa4f0", label: "Farm - Scrub Land" },
+    { color: "#eee05d", label: "Crops - Crops" },
+    { color: "#ff0000", label: "Crops - Built Up" },
+    { color: "#a9a9a9", label: "Crops - Barren" },
+    { color: "#eaa4f0", label: "Crops - Shrubs and Scrubs" },
   ]
 
   const urbanizationItems = [
     { color: "#ff0000", label: "Built Up - Built Up" },
     { color: "#1ca3ec", label: "Water - Built Up" },
-    { color: "#73bb53", label: "Tree/Farm - Built Up" },
-    { color: "#a9a9a9", label: "Barren/Shrub - Built Up" },
+    { color: "#73bb53", label: "Tree/Crops - Built Up" },
+    { color: "#a9a9a9", label: "Barren/Shrubs and Scrubs - Built Up" },
   ]
 
   const afforestationItems = [
-    { color: "#73bb53", label: "Forest - Forest" },
-    { color: "#ff0000", label: "Built Up - Forest" },
-    { color: "#eee05d", label: "Farm - Forest" },
-    { color: "#a9a9a9", label: "Barren - Forest" },
-    { color: "#eaa4f0", label: "Scrub Land - Forest" },
+    { color: "#73bb53", label: "Trees - Trees" },
+    { color: "#ff0000", label: "Built Up - Trees" },
+    { color: "#eee05d", label: "Crops - Trees" },
+    { color: "#a9a9a9", label: "Barren - Trees" },
+    { color: "#eaa4f0", label: "Shrubs and Scrubs - Trees" },
   ]
 
   const aquiferItems = [
@@ -119,10 +119,19 @@ const MapLegend = ({toggledLayers, lulcYear1, lulcYear2, lulcYear3}) => {
   ];
 
   const SOGEItems = [
-    { color: "#ffffff", label: " Safe " },
+    { color: "#ffffff", label: "Safe" },
     { color: "#e0f3f8", label: "Semi - Critical " },
     { color: "#4575b4", label: " Critical " },
     { color: "#313695", label: "Over - Exploited " },
+    { color: "#a9a9a9", label: "Not Assessed" },
+  ];
+
+  const GreenCreditItems = [
+    { color: "#ffffff", label: "Safe" },
+    { color: "#e0f3f8", label: "Semi - Critical " },
+    { color: "#4575b4", label: " Critical " },
+    { color: "#313695", label: "Over - Exploited " },
+    { color: "#a9a9a9", label: "Not Assessed" },
   ];
 
   const terrainVector = [
@@ -146,12 +155,12 @@ const MapLegend = ({toggledLayers, lulcYear1, lulcYear2, lulcYear3}) => {
   ]
 
   const LULCLvl3Item = [
-    { color: "#ff0000", label: "Barren Lands" },
+    { color: "#A9A9A9", label: "Barren Lands" },
     { color: "#c6e46d", label: "Single Kharif" },
     { color: "#eee05d", label: "Single Non-Kharif" },
     { color: "#f9b249", label: "Double Cropping" },
     { color: "#fb5139", label: "Triple Cropping" },
-    { color: "#ff0000", label: "Shrubs and Scrubs" },
+    { color: "#4c4ef5", label: "Shrubs and Scrubs" },
   ]
 
   const socioEconomicItem = [
@@ -181,10 +190,32 @@ const MapLegend = ({toggledLayers, lulcYear1, lulcYear2, lulcYear3}) => {
   ]
 
   const restorationItem = [
-    { color: "#ffa500", label: "Protection" },
-    { color: "#007500", label: "Wide-scale Restoration" },
-    { color: "#000000", label: "Mosaic Restoration" },
+    { color: "#4fbc14", label: "Protection" },
+    { color: "#0f077c", label: "Wide-scale Restoration" },
+    { color: "#d79b0f", label: "Mosaic Restoration" },
     { color: "#ffff00", label: "Excluded Areas" },
+  ]
+
+  const NREGAItem = [
+    { color: "#C2678D", label: "Household Livelihood" },
+    { color: "#355070", label: "Others - HH, Community" },
+    { color: "#FFA500", label: "Agri Impact - HH, Community" },
+    { color: "#6495ED", label: "SWC - Landscape level impact" },
+    { color: "#1A759F", label: "Irrigation - Site level impact" },
+    { color: "#52B69A", label: "Plantation" },
+    { color: "#6D597A", label: "Un Identified" },
+  ]
+
+  const DrainageItem = [
+    { color: "#03045E", label: "1" },
+    { color: "#023E8A", label: "2" },
+    { color: "#0077B6", label: "2" },
+    { color: "#0096C7", label: "3" },
+    { color: "#00B4D8", label: "4" },
+    { color: "#48CAE4", label: "5" },
+    { color: "#90E0EF", label: "6" },
+    { color: "#ADE8F4", label: "7" },
+    { color: "#CAF0F8", label: "8" },
   ]
 
   const isTerrainActive = toggledLayers["terrain"]
@@ -196,18 +227,20 @@ const MapLegend = ({toggledLayers, lulcYear1, lulcYear2, lulcYear3}) => {
   const isAfforestationActive = toggledLayers["afforestation"]
   const isRestorationActive = toggledLayers["restoration"]
   const isSOGEActive = toggledLayers["soge"]
+  const isGreenCreditActive = toggledLayers["green_credit"]
   const isAquiferActive = toggledLayers["aquifer"]
   const isTerrainVector = toggledLayers["terrain_vector"]
   const socioEconomic = toggledLayers["demographics"]
   const wellDepthActive = toggledLayers["mws_layers"]
   const droughtActive = toggledLayers["drought"]
   const cropIntenActive = toggledLayers["cropping_intensity"]
+  const NREGAActive = toggledLayers["nrega"]
+  const DrainageActive = toggledLayers["drainage"]
 
   return (
     <div
-      className={`absolute bottom-24 left-0 z-10 transition-all duration-300 ${
-        isCollapsed ? "translate-x-2" : "translate-x-6"
-      }`}
+      className={`absolute bottom-24 left-0 z-10 transition-all duration-300 ${isCollapsed ? "translate-x-2" : "translate-x-6"
+        }`}
     >
       {/* Collapse toggle button */}
       <button
@@ -238,11 +271,10 @@ const MapLegend = ({toggledLayers, lulcYear1, lulcYear2, lulcYear3}) => {
 
       {/* Main legend container */}
       <div
-        className={`bg-white rounded-lg shadow-md overflow-hidden transition-all duration-300 ${
-          isCollapsed
-            ? "w-10 h-48 opacity-80 hover:opacity-100"
-            : "w-72 max-h-[60vh] opacity-100"
-        }`}
+        className={`bg-white rounded-lg shadow-md overflow-hidden transition-all duration-300 ${isCollapsed
+          ? "w-10 h-48 opacity-80 hover:opacity-100"
+          : "w-72 max-h-[60vh] opacity-100"
+          }`}
       >
         {/* Collapsed state - vertical "Legend" text */}
         {isCollapsed && (
@@ -451,6 +483,30 @@ const MapLegend = ({toggledLayers, lulcYear1, lulcYear2, lulcYear3}) => {
                 </div>
               )}
 
+              {/* Green Credit Section */}
+              {isGreenCreditActive && (
+                <div className="space-y-2">
+                  <h4 className="text-xs font-medium text-gray-600">Green Credit</h4>
+                  {GreenCreditItems.map((item, index) => (
+                    <div
+                      key={`trend-${index}`}
+                      className="flex items-center gap-2"
+                    >
+                      <div
+                        className="w-4 h-4 rounded"
+                        style={{
+                          backgroundColor: item.color,
+                          border: `1px solid rgba(0,0,0,0.2)`,
+                        }}
+                      />
+                      <span className="text-sm text-gray-600">
+                        {item.label}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
               {/* Aquifer Section */}
               {isAquiferActive && (
                 <div className="space-y-2">
@@ -523,11 +579,59 @@ const MapLegend = ({toggledLayers, lulcYear1, lulcYear2, lulcYear3}) => {
                 </div>
               )}
 
+              {/*  NREGA Section */}
+              {NREGAActive && (
+                <div className="space-y-2">
+                  <h4 className="text-xs font-medium text-gray-600">NREGA Works</h4>
+                  {NREGAItem.map((item, index) => (
+                    <div
+                      key={`trend-${index}`}
+                      className="flex items-center gap-2"
+                    >
+                      <div
+                        className="w-4 h-4 rounded"
+                        style={{
+                          backgroundColor: item.color,
+                          border: `1px solid rgba(0,0,0,0.2)`,
+                        }}
+                      />
+                      <span className="text-sm text-gray-600">
+                        {item.label}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
               {/* Well Depth Section */}
               {wellDepthActive && (
                 <div className="space-y-2">
                   <h4 className="text-xs font-medium text-gray-600">Well Depth</h4>
                   {wellDepthItem.map((item, index) => (
+                    <div
+                      key={`trend-${index}`}
+                      className="flex items-center gap-2"
+                    >
+                      <div
+                        className="w-4 h-4 rounded"
+                        style={{
+                          backgroundColor: item.color,
+                          border: `1px solid rgba(0,0,0,0.2)`,
+                        }}
+                      />
+                      <span className="text-sm text-gray-600">
+                        {item.label}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/*  Drainage Section */}
+              {DrainageActive && (
+                <div className="space-y-2">
+                  <h4 className="text-xs font-medium text-gray-600">Drainage Order</h4>
+                  {DrainageItem.map((item, index) => (
                     <div
                       key={`trend-${index}`}
                       className="flex items-center gap-2"
@@ -721,10 +825,10 @@ const Map = forwardRef(({
   const mapRef = useRef(null);
   const baseLayerRef = useRef(null);
   const markersLayer = useRef(null);
-  
+
   // Added flag to prevent recursion
   const handlingExternalToggle = useRef(false);
-  
+
   // Layer arrays matching original implementation structure
   const LayersArray = [
     { LayerRef: useRef(null), name: "Demographics", isRaster: false },
@@ -747,6 +851,7 @@ const Map = forwardRef(({
     { LayerRef: useRef(null), name: "Change Detection Restoration", isRaster: true },
     { LayerRef: useRef(null), name: "SOGE", isRaster: true },
     { LayerRef: useRef(null), name: "Aquifer", isRaster: true },
+    { LayerRef: useRef(null), name: "Fortnight Hydrological Variables", isRaster: false },
     { LayerRef: useRef(null), name: "LULC_1", isRaster: true },
     { LayerRef: useRef(null), name: "LULC_2", isRaster: true },
     { LayerRef: useRef(null), name: "LULC_3", isRaster: true },
@@ -759,13 +864,13 @@ const Map = forwardRef(({
   const [isLayersFetched, setIsLayersFetched] = useState(false);
   const [stateData, setStateData] = useState(null);
   const [isInitialized, setIsInitialized] = useState(false);
-  
+
   // Color constants from original implementation
   const terrainClusterColors = ["#324A1C", "#97C76B", "#673A13", "#E5E059"];
   const drainageColors = [
     "03045E", "023E8A", "0077B6", "0096C7", "00B4D8", "48CAE4", "90E0EF", "ADE8F4", "CAF0F8",
   ];
-  let years = ["2017","2018","2019","2020","2021","2022"]
+  let years = ["2017", "2018", "2019", "2020", "2021", "2022"]
 
   // Helper function to change polygon color (from original)
   function changePolygonColor(color) {
@@ -786,7 +891,7 @@ const Map = forwardRef(({
     toggleLayer: (layerId, isVisible) => {
       // Set flag to prevent recursion
       handlingExternalToggle.current = true;
-      
+
       try {
         // Convert ID format from parent component (e.g., hydrological_boundaries)
         // to the format used internally in this component (e.g., Hydrological Boundries)
@@ -811,21 +916,22 @@ const Map = forwardRef(({
           'agri_structure': 'Agriculture Structure',
           'livelihood_structure': 'Livelihood Structure',
           'recharge_structure': 'Recharge Structures',
-          'afforestation' : 'Change Detection Afforestation',
-          'deforestation' : 'Change Detection Deforestation',
-          'degradation' : 'Change Detection Degradation',
-          'urbanization' : 'Change Detection Urbanization',
-          'cropintensity' : 'Change Detection Crop-Intensity',
-          'restoration' : 'Change Detection Restoration',
-          'soge' : 'SOGE',
-          'aquifer' : 'Aquifer'
+          'afforestation': 'Change Detection Afforestation',
+          'deforestation': 'Change Detection Deforestation',
+          'degradation': 'Change Detection Degradation',
+          'urbanization': 'Change Detection Urbanization',
+          'cropintensity': 'Change Detection Crop-Intensity',
+          'restoration': 'Change Detection Restoration',
+          'soge': 'SOGE',
+          'aquifer': 'Aquifer',
+          'mws_layers_fortnight' : 'Fortnight Hydrological Variables'
         };
-        
+
         const layerName = layerMap[layerId] || layerId;
-        
+
         // Find if the layer is currently visible in our internal state
         const isCurrentlyVisible = currentLayers.includes(layerName);
-        
+
         // Only toggle if the requested state is different from current state
         if (isVisible !== isCurrentlyVisible) {
           handleLayerToggle(layerName, layerName);
@@ -849,24 +955,24 @@ const Map = forwardRef(({
     },
     getMap: () => mapRef.current
   }));
-  
+
   // Get block features (copied from original implementation)
   const getblockFeatures = async (data) => {
     let coordinates = null;
     let unAvailableStates = [];
 
     let AdminURl = `https://geoserver.core-stack.org:8443/geoserver/panchayat_boundaries/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=panchayat_boundaries:${data.district.toLowerCase().split(" ").join("_")}_${data.block.toLowerCase().split(" ").join("_")}&outputFormat=application/json&screen=main`;
-    
+
     try {
       await fetch(AdminURl)
         .then((res) => res.json())
         .then((Geojson) => {
-          if (Geojson.features && Geojson.features.length > 0 && 
-              Geojson.features[0].geometry && 
-              Geojson.features[0].geometry.coordinates &&
-              Geojson.features[0].geometry.coordinates[0] &&
-              Geojson.features[0].geometry.coordinates[0][0] &&
-              Geojson.features[0].geometry.coordinates[0][0][0]) {
+          if (Geojson.features && Geojson.features.length > 0 &&
+            Geojson.features[0].geometry &&
+            Geojson.features[0].geometry.coordinates &&
+            Geojson.features[0].geometry.coordinates[0] &&
+            Geojson.features[0].geometry.coordinates[0][0] &&
+            Geojson.features[0].geometry.coordinates[0][0][0]) {
             coordinates = Geojson.features[0].geometry.coordinates[0][0][0];
           } else {
             console.log("Invalid GeoJSON structure for: ", data.block.toLowerCase());
@@ -880,7 +986,7 @@ const Map = forwardRef(({
     }
     return { coordinates: coordinates || [78.9, 23.6], data: data };
   };
-  
+
   // Initialize map
   const initializeMap = () => {
     // Create Google base layer - using same URL as original implementation
@@ -891,9 +997,9 @@ const Map = forwardRef(({
       }),
       visible: true,
     });
-    
+
     baseLayerRef.current = baseLayer;
-    
+
     // Create map view with same center as original
     const view = new View({
       center: [80.0, 22.0], // Center of India
@@ -901,7 +1007,7 @@ const Map = forwardRef(({
       projection: "EPSG:4326",
       maxZoom: 19,
     });
-    
+
     // Create the map
     const map = new OLMap({
       target: mapElement.current,
@@ -909,9 +1015,9 @@ const Map = forwardRef(({
       controls: defaultControls(),
       view: view,
     });
-    
+
     mapRef.current = map;
-    
+
     // Add click handler (from original implementation)
     map.on("singleclick", (e) => {
       map.forEachFeatureAtPixel(e.pixel, (feature, layer) => {
@@ -932,7 +1038,7 @@ const Map = forwardRef(({
         }
       });
     });
-    
+
     // Add pointer move handler for cursor change
     map.on("pointermove", function (e) {
       const pixel = map.getEventPixel(e.originalEvent);
@@ -940,19 +1046,19 @@ const Map = forwardRef(({
       map.getTarget().style.cursor = hit ? "pointer" : "";
     });
   };
-  
+
   // Load state markers on initial load
   const getStatesData = async () => {
     setIsLoading(true);
-    
+
     try {
       let data = await getStates();
       let temp_blockNames = [];
       let unAvailableStates = [];
-  
+
       data.forEach((item) => {
-        if (item.district && item.district.length > 0 && 
-            item.district[0].blocks && item.district[0].blocks.length > 0) {
+        if (item.district && item.district.length > 0 &&
+          item.district[0].blocks && item.district[0].blocks.length > 0) {
           let tempDS = {
             state: item.label,
             district: item.district[0].label,
@@ -962,7 +1068,7 @@ const Map = forwardRef(({
           temp_blockNames.push(tempDS);
         }
       });
-  
+
       let layer_features = await Promise.all(
         temp_blockNames.map((item) => {
           return getblockFeatures(item);
@@ -977,14 +1083,14 @@ const Map = forwardRef(({
             });
           });
       });
-  
+
       const StateMarkers = new Style({
         image: new Icon({
           src: mapMarker,
           scale: 0.8,
         }),
       });
-  
+
       let StateLevelLayer = new VectorLayer({
         source: new VectorSource({
           features: layer_features,
@@ -992,10 +1098,10 @@ const Map = forwardRef(({
         style: StateMarkers,
         zIndex: 99
       });
-  
+
       let availableData = [];
       let dataLen = unAvailableStates.length;
-  
+
       data.forEach((item) => {
         let unavailable = false;
         for (let i = 0; i < dataLen; ++i) {
@@ -1008,15 +1114,15 @@ const Map = forwardRef(({
           availableData.push(item);
         }
       });
-  
+
       setStateData(availableData);
-  
+
       if (mapRef.current) {
         // Remove any existing markers layer
         if (markersLayer.current) {
           mapRef.current.removeLayer(markersLayer.current);
         }
-        
+
         mapRef.current.addLayer(StateLevelLayer);
         markersLayer.current = StateLevelLayer;
       }
@@ -1030,10 +1136,10 @@ const Map = forwardRef(({
   // Handle district selection - add district markers
   const getDistrictData = async () => {
     if (!state || !state.district) return;
-    
+
     try {
       setIsLoading(true);
-      
+
       let temp_blocks = state.district.map((item) => {
         return {
           district: item.label,
@@ -1041,9 +1147,9 @@ const Map = forwardRef(({
           disGrp: item.blocks,
         };
       }).filter(item => item.block); // Filter out items without blocks
-  
+
       let temp_coordinates = null;
-  
+
       let layer_features = await Promise.all(
         temp_blocks.map((item) => {
           return getblockFeatures(item);
@@ -1059,14 +1165,14 @@ const Map = forwardRef(({
             });
           });
       });
-  
+
       const DistrictMarkers = new Style({
         image: new Icon({
           src: mapMarker,
           scale: 0.8,
         }),
       });
-  
+
       let districtLevelLayer = new VectorLayer({
         source: new VectorSource({
           features: layer_features,
@@ -1074,18 +1180,18 @@ const Map = forwardRef(({
         style: DistrictMarkers,
         zIndex: 99
       });
-  
+
       // Remove previous markers layer if it exists
       if (markersLayer.current && mapRef.current) {
         mapRef.current.removeLayer(markersLayer.current);
       }
-  
+
       // Add new district markers
       if (mapRef.current) {
         mapRef.current.addLayer(districtLevelLayer);
         markersLayer.current = districtLevelLayer;
       }
-  
+
       // Zoom to district with animation
       if (mapRef.current && temp_coordinates) {
         const view = mapRef.current.getView();
@@ -1106,16 +1212,16 @@ const Map = forwardRef(({
   // Handle block selection - add block markers  
   const getBlockData = async () => {
     if (!district || !district.blocks) return;
-    
+
     try {
       setIsLoading(true);
-      
+
       const temp_blocks = district.blocks.map((item) => {
         return { district: district.label, block: item.label };
       }).filter(item => item.block); // Ensure all blocks have a name
-  
+
       let temp_coordinates = null;
-  
+
       let layer_features = await Promise.all(
         temp_blocks.map((item) => {
           return getblockFeatures(item);
@@ -1131,14 +1237,14 @@ const Map = forwardRef(({
             });
           });
       });
-  
+
       const BlockMarkers = new Style({
         image: new Icon({
           src: mapMarker,
           scale: 0.8,
         }),
       });
-  
+
       let blockLevelLayer = new VectorLayer({
         source: new VectorSource({
           features: layer_features,
@@ -1146,18 +1252,18 @@ const Map = forwardRef(({
         style: BlockMarkers,
         zIndex: 99
       });
-  
+
       // Remove previous markers layer if it exists
       if (markersLayer.current && mapRef.current) {
         mapRef.current.removeLayer(markersLayer.current);
       }
-  
+
       // Add new block markers
       if (mapRef.current) {
         mapRef.current.addLayer(blockLevelLayer);
         markersLayer.current = blockLevelLayer;
       }
-  
+
       // Zoom to block with animation
       if (mapRef.current && temp_coordinates) {
         const view = mapRef.current.getView();
@@ -1182,12 +1288,12 @@ const Map = forwardRef(({
       console.warn("Attempted to add null/undefined layer");
       return;
     }
-    
+
     try {
       // Check if layer is already in the map
       const mapLayers = mapRef.current.getLayers().getArray();
       const exists = mapLayers.some(l => l === layer);
-      
+
       if (!exists) {
         mapRef.current.addLayer(layer);
       } else {
@@ -1197,11 +1303,11 @@ const Map = forwardRef(({
       console.error("Error adding layer:", error);
     }
   };
-  
+
   // Safe remove layer function
   const safeRemoveLayer = (layer) => {
     if (!mapRef.current || !layer) return;
-    
+
     try {
       mapRef.current.removeLayer(layer);
     } catch (error) {
@@ -1212,7 +1318,7 @@ const Map = forwardRef(({
   // Handle location change - fetch all layers
   const handleLocationChange = async () => {
     if (!block) return;
-    
+
     setIsLoading(true);
     let currentActiveLayers = [];
 
@@ -1221,55 +1327,55 @@ const Map = forwardRef(({
       let adminLayer = await getVectorLayers(
         "panchayat_boundaries",
         district.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_') +
-          "_" +
-          block.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_'),
+        "_" +
+        block.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_'),
         true,
         true
       );
       adminLayer.setStyle(function (feature) {
         if (!feature || !feature.values_) return null;
-        
+
         let bin = (feature.values_.P_LIT / feature.values_.TOT_P) * 100;
         if (bin < 46) {
           return new Style({
-              stroke: new Stroke({
-                  color: "#000000",
-                  width: 0.5,
-              }),
-              fill: new Fill({
-                  color: "#98FB98",
-              })
+            stroke: new Stroke({
+              color: "#000000",
+              width: 0.5,
+            }),
+            fill: new Fill({
+              color: "#98FB98",
+            })
           })
         } else if (bin >= 46 && bin < 59) {
           return new Style({
-              stroke: new Stroke({
-                  color: "#000000",
-                  width: 0.5,
-              }),
-              fill: new Fill({
-                  color: "#32CD32",
-              })
+            stroke: new Stroke({
+              color: "#000000",
+              width: 0.5,
+            }),
+            fill: new Fill({
+              color: "#32CD32",
+            })
           })
         } else if (bin >= 59 && bin <= 70) {
           return new Style({
-              stroke: new Stroke({
-                  color: "#000000",
-                  width: 0.5,
-              }),
-              fill: new Fill({
-                  color: "#228B22",
-              })
+            stroke: new Stroke({
+              color: "#000000",
+              width: 0.5,
+            }),
+            fill: new Fill({
+              color: "#228B22",
+            })
           })
         } else if (bin > 70) {
           return new Style({
             stroke: new Stroke({
-                color: "#000000",
-                width: 0.5,
+              color: "#000000",
+              width: 0.5,
             }),
             fill: new Fill({
-                color: "#006400",
+              color: "#006400",
             })
-        })
+          })
         }
         return null;
       });
@@ -1314,8 +1420,8 @@ const Map = forwardRef(({
       let DrainageLayer = await getVectorLayers(
         "drainage",
         district.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_') +
-          "_" +
-          block.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_'),
+        "_" +
+        block.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_'),
         true,
         true,
         "drainage",
@@ -1324,7 +1430,7 @@ const Map = forwardRef(({
       if (DrainageLayer) {
         DrainageLayer.setStyle(function (feature) {
           if (!feature || !feature.values_) return null;
-          
+
           let order = feature.values_.ORDER || 1;
           return new Style({
             stroke: new Stroke({
@@ -1379,7 +1485,7 @@ const Map = forwardRef(({
       if (MicroWaterShedLayer) {
         MicroWaterShedLayer.setStyle(function (feature) {
           if (!feature || !feature.values_) return null;
-          
+
           let bin = feature.values_.Net2018_23;
           if (bin < -5) {
             return changePolygonColor("rgba(255, 0, 0, 0.5)"); // red
@@ -1402,7 +1508,7 @@ const Map = forwardRef(({
       // === CLART Layer ===
       let clartLayer = await getImageLayers(
         "clart",
-        district.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_') + "_" + 
+        district.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_') + "_" +
         block.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_') + "_clart",
         true
       );
@@ -1422,8 +1528,8 @@ const Map = forwardRef(({
       let NregaLayer = await getWebGlLayers(
         "nrega_assets",
         district.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_') +
-          "_" +
-          block.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_')
+        "_" +
+        block.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_')
       );
 
       if (NregaLayer) {
@@ -1438,57 +1544,57 @@ const Map = forwardRef(({
       let DroughtLayer = await getVectorLayers(
         "cropping_drought",
         district.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_') +
-          "_" +
-          block.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_') +
-          "_drought",
+        "_" +
+        block.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_') +
+        "_drought",
         true,
         true
       );
 
       if (DroughtLayer) {
-        
+
         DroughtLayer.setStyle(function (feature) {
           if (!feature || !feature.values_) return null;
-          
+
           let avg_Res = 0
-          
+
           years.map((item) => {
-            let tempDro = (feature.values_["drlb_"+item].match(/2/g) || []).length + (feature.values_["drlb_"+item].match(/3/g)||[]).length;
-            if(tempDro >= 5){avg_Res++;}
+            let tempDro = (feature.values_["drlb_" + item].match(/2/g) || []).length + (feature.values_["drlb_" + item].match(/3/g) || []).length;
+            if (tempDro >= 5) { avg_Res++; }
           })
 
-          if(avg_Res === 0){
-            return new Style({
-                stroke: new Stroke({
-                    color: "rgba(244, 208, 63, 1)",
-                    width: 1.0,
-                }),
-                fill: new Fill({
-                    color: "rgba(244, 208, 63, 0.5)",
-                })
-            })
-          }
-          else if(avg_Res >= 2){
-            return new Style({
-                stroke: new Stroke({
-                    color: "rgba(231, 76, 60, 1)",
-                    width: 1.0,
-                }),
-                fill: new Fill({
-                    color: "rgba(231, 76, 60, 0.5)",
-                })
-            })
-          }
-          else{
+          if (avg_Res === 0) {
             return new Style({
               stroke: new Stroke({
-                  color: "rgba(235, 152, 78, 1)",
-                  width: 1.0,
+                color: "rgba(244, 208, 63, 1)",
+                width: 1.0,
               }),
               fill: new Fill({
-                  color: "rgba(235, 152, 78, 0.5)",
+                color: "rgba(244, 208, 63, 0.5)",
               })
-          })
+            })
+          }
+          else if (avg_Res >= 2) {
+            return new Style({
+              stroke: new Stroke({
+                color: "rgba(231, 76, 60, 1)",
+                width: 1.0,
+              }),
+              fill: new Fill({
+                color: "rgba(231, 76, 60, 0.5)",
+              })
+            })
+          }
+          else {
+            return new Style({
+              stroke: new Stroke({
+                color: "rgba(235, 152, 78, 1)",
+                width: 1.0,
+              }),
+              fill: new Fill({
+                color: "rgba(235, 152, 78, 0.5)",
+              })
+            })
           }
         });
 
@@ -1502,8 +1608,8 @@ const Map = forwardRef(({
       let TerrainLayer = await getImageLayers(
         "terrain",
         district.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_') +
-          "_" +
-          block.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_') + "_terrain_raster",
+        "_" +
+        block.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_') + "_terrain_raster",
         true,
         "Terrain_Style_11_Classes"
       );
@@ -1519,8 +1625,8 @@ const Map = forwardRef(({
       let AdminBoundaryLayer = await getVectorLayers(
         "panchayat_boundaries",
         district.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_') +
-          "_" +
-          block.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_'),
+        "_" +
+        block.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_'),
         true,
         true
       );
@@ -1547,22 +1653,22 @@ const Map = forwardRef(({
           if (!feature || !feature.values_) return null;
           let values = feature.values_
           let avg_crp_inten = (values.cropping_intensity_2017 + values.cropping_intensity_2018 + values.cropping_intensity_2019 + values.cropping_intensity_2020 + values.cropping_intensity_2021 + values.cropping_intensity_2022 + values.cropping_intensity_2023) / 7
-          
-          if(avg_crp_inten >= 0 && avg_crp_inten < 1){
+
+          if (avg_crp_inten >= 0 && avg_crp_inten < 1) {
             return new Style({
               fill: new Fill({
                 color: "#FF9371",
               }),
             });
           }
-          else if(avg_crp_inten >= 1 && avg_crp_inten < 1.5){
+          else if (avg_crp_inten >= 1 && avg_crp_inten < 1.5) {
             return new Style({
               fill: new Fill({
                 color: "#FFA500",
               }),
             });
           }
-          else{
+          else {
             return new Style({
               fill: new Fill({
                 color: "#BAD93E",
@@ -1580,9 +1686,9 @@ const Map = forwardRef(({
       let TerrainVectorLayer = await getVectorLayers(
         "terrain",
         district.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_') +
-          "_" +
-          block.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_') +
-          "_cluster",
+        "_" +
+        block.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_') +
+        "_cluster",
         true,
         true
       );
@@ -1590,7 +1696,7 @@ const Map = forwardRef(({
       if (TerrainVectorLayer) {
         TerrainVectorLayer.setStyle(function (feature) {
           if (!feature || !feature.values_) return null;
-          
+
           return new Style({
             fill: new Fill({
               color: terrainClusterColors[feature.values_.terrainClu] || "#000000",
@@ -1609,8 +1715,8 @@ const Map = forwardRef(({
         "change_detection",
         "change_" +
         district.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_') +
-          "_" +
-          block.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_') + "_Afforestation",
+        "_" +
+        block.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_') + "_Afforestation",
         true,
         "afforestation"
       );
@@ -1627,8 +1733,8 @@ const Map = forwardRef(({
         "change_detection",
         "change_" +
         district.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_') +
-          "_" +
-          block.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_') + "_Deforestation",
+        "_" +
+        block.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_') + "_Deforestation",
         true,
         "	deforestation"
       );
@@ -1645,8 +1751,8 @@ const Map = forwardRef(({
         "change_detection",
         "change_" +
         district.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_') +
-          "_" +
-          block.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_') + "_Degradation",
+        "_" +
+        block.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_') + "_Degradation",
         true,
         "degradation"
       );
@@ -1663,8 +1769,8 @@ const Map = forwardRef(({
         "change_detection",
         "change_" +
         district.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_') +
-          "_" +
-          block.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_') + "_Urbanization",
+        "_" +
+        block.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_') + "_Urbanization",
         true,
         "urbanization"
       );
@@ -1681,10 +1787,10 @@ const Map = forwardRef(({
         "change_detection",
         "change_" +
         district.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_') +
-          "_" +
-          block.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_') + "_CropIntensity",
+        "_" +
+        block.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_') + "_CropIntensity",
         true,
-        "croppingintensity"
+        "cropintensity"
       );
 
       if (CropIntensityLayer) {
@@ -1699,8 +1805,8 @@ const Map = forwardRef(({
         "restoration",
         "restoration_" +
         district.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_') +
-          "_" +
-          block.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_') + "_raster",
+        "_" +
+        block.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_') + "_raster",
         true,
         "restoration_style"
       );
@@ -1711,15 +1817,14 @@ const Map = forwardRef(({
         }
         LayersArray[17].LayerRef.current = RestorationLayer;
       }
-      
 
       // === SOGE Layer ===
       let SOGELayer = await getVectorLayers(
         "soge",
         "soge_vector_" +
         district.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_') +
-          "_" +
-          block.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_'),
+        "_" +
+        block.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_'),
         true,
         true
       );
@@ -1729,29 +1834,36 @@ const Map = forwardRef(({
           if (!feature || !feature.values_) return null;
 
           console.log(feature.values_)
-          
-          if(feature.values_.class === "Safe"){
+
+          if (feature.values_.class === "Safe") {
             return new Style({
               fill: new Fill({
                 color: "#ffffff",
               }),
             });
           }
-          else if(feature.values_.class === "Semi-critical"){
+          else if (feature.values_.class === "Semi-critical") {
             return new Style({
               fill: new Fill({
                 color: "#e0f3f8",
               }),
             });
           }
-          else if(feature.values_.class === "Critical"){
+          else if (feature.values_.class === "Critical") {
             return new Style({
               fill: new Fill({
                 color: "#4575b4",
               }),
             });
           }
-          else{
+          else if (feature.values_.class === "Not Assessed") {
+            return new Style({
+              fill: new Fill({
+                color: "#a9a9a9",
+              }),
+            });
+          }
+          else {
             return new Style({
               fill: new Fill({
                 color: "#313695",
@@ -1770,8 +1882,8 @@ const Map = forwardRef(({
         "aquifer",
         "aquifer_vector_" +
         district.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_') +
-          "_" +
-          block.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_'),
+        "_" +
+        block.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_'),
         true,
         true
       );
@@ -1779,99 +1891,99 @@ const Map = forwardRef(({
       if (AquiferLayer) {
         AquiferLayer.setStyle(function (feature) {
           if (!feature || !feature.values_) return null;
-          
-          if(feature.values_.Principal_ === "Alluvium"){
+
+          if (feature.values_.Principal_ === "Alluvium") {
             return new Style({
               fill: new Fill({
                 color: "#fffdb5",
               }),
             });
           }
-          else if(feature.values_.Principal_ === "Laterite"){
+          else if (feature.values_.Principal_ === "Laterite") {
             return new Style({
               fill: new Fill({
                 color: "#f3a425",
               }),
             });
           }
-          else if(feature.values_.Principal_ === "Basalt"){
+          else if (feature.values_.Principal_ === "Basalt") {
             return new Style({
               fill: new Fill({
                 color: "#99ecf1",
               }),
             });
           }
-          else if(feature.values_.Principal_ === "Sandstone"){
+          else if (feature.values_.Principal_ === "Sandstone") {
             return new Style({
               fill: new Fill({
                 color: "#a5f8c5",
               }),
             });
           }
-          else if(feature.values_.Principal_ === "Shale"){
+          else if (feature.values_.Principal_ === "Shale") {
             return new Style({
               fill: new Fill({
                 color: "#f57c99",
               }),
             });
           }
-          else if(feature.values_.Principal_ === "Limestone"){
+          else if (feature.values_.Principal_ === "Limestone") {
             return new Style({
               fill: new Fill({
                 color: "#e8d52e",
               }),
             });
           }
-          else if(feature.values_.Principal_ === "Granite"){
+          else if (feature.values_.Principal_ === "Granite") {
             return new Style({
               fill: new Fill({
                 color: "#3c92f2",
               }),
             });
           }
-          else if(feature.values_.Principal_ === "Schist"){
+          else if (feature.values_.Principal_ === "Schist") {
             return new Style({
               fill: new Fill({
                 color: "#d5db21",
               }),
             });
           }
-          else if(feature.values_.Principal_ === "Quartzite"){
+          else if (feature.values_.Principal_ === "Quartzite") {
             return new Style({
               fill: new Fill({
                 color: "#cf7ff4",
               }),
             });
           }
-          else if(feature.values_.Principal_ === "Charnockite"){
+          else if (feature.values_.Principal_ === "Charnockite") {
             return new Style({
               fill: new Fill({
                 color: "#f4dbff",
               }),
             });
           }
-          else if(feature.values_.Principal_ === "Khondalite"){
+          else if (feature.values_.Principal_ === "Khondalite") {
             return new Style({
               fill: new Fill({
                 color: "#50c02b",
               }),
             });
           }
-          else if(feature.values_.Principal_ === "Banded Gneissic Complex"){
+          else if (feature.values_.Principal_ === "Banded Gneissic Complex") {
             return new Style({
               fill: new Fill({
                 color: "#ffe1b5",
               }),
             });
           }
-          else if(feature.values_.Principal_ === "Gneiss"){
+          else if (feature.values_.Principal_ === "Gneiss") {
             return new Style({
               fill: new Fill({
                 color: "#e4cff1",
               }),
             });
           }
-          else{
+          else {
             return new Style({
               fill: new Fill({
                 color: "#57d2ff",
@@ -1885,6 +1997,32 @@ const Map = forwardRef(({
         LayersArray[19].LayerRef.current = AquiferLayer;
       }
 
+      // === Fortnight Well Depth ===
+      let fortnightLayer = await getVectorLayers(
+        "mws_layers",
+        "deltaG_fortnight_" +
+        district.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_') +
+        "_" +
+        block.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_'),
+        true,
+        true
+      );
+
+      if(fortnightLayer){
+        fortnightLayer.setStyle(function (feature) {
+          return new Style({
+              stroke: new Stroke({
+                color: "#000000",
+                width: 1.5,
+              }),
+            });
+        });
+        if (LayersArray[20].LayerRef.current != null) {
+          safeRemoveLayer(LayersArray[20].LayerRef.current);
+        }
+        LayersArray[20].LayerRef.current = fortnightLayer;
+      }
+
       // Enable Demographics layer by default
       if (LayersArray[0].LayerRef.current && !currentLayers.includes("Demographics")) {
         currentActiveLayers.push("Demographics");
@@ -1892,7 +2030,7 @@ const Map = forwardRef(({
 
       setCurrentLayers(currentActiveLayers);
       setIsLayersFetched(true);
-      
+
     } catch (error) {
       console.error("Error fetching layers:", error);
       setLayerErrors(prev => ({
@@ -1919,7 +2057,7 @@ const Map = forwardRef(({
           return LayersArray[i].LayerRef;
         }
       }
-      
+
       return null;
     };
 
@@ -1963,29 +2101,29 @@ const Map = forwardRef(({
           "shape-points": 12,
           "shape-radius": 6,
           "shape-fill-color": [
-              "match",
-              ["get", "itemColor"],
-              4, "#6495ED",
-              1, "#C2678D",
-              3, "#FFA500",
-              5, "#1A759F",
-              6, "#52B69A",
-              2, "#355070",
-              7, "#6D597A",
-              "#00000000"
+            "match",
+            ["get", "itemColor"],
+            4, "#6495ED",
+            1, "#C2678D",
+            3, "#FFA500",
+            5, "#1A759F",
+            6, "#52B69A",
+            2, "#355070",
+            7, "#6D597A",
+            "#00000000"
           ]
         };
-        
+
         if (LayersArray[6].LayerRef.current) {
           const nregaVectorSource = LayersArray[6].LayerRef.current.getSource();
           if (nregaVectorSource) {
             safeRemoveLayer(LayersArray[6].LayerRef.current);
-            
+
             let nregaWebGlLayer = new WebGLPointsLayer({
               source: nregaVectorSource,
               style: tempNregaStyle,
             });
-            
+
             nregaWebGlLayer.setVisible(true);
             safeAddLayer(nregaWebGlLayer);
             LayersArray[6].LayerRef.current = nregaWebGlLayer;
@@ -2023,11 +2161,11 @@ const Map = forwardRef(({
         tempLayer.push(name);
         if (layerRef?.current) {
           layerRef.current.setVisible(true);
-          
+
           if (mapRef.current) {
             const mapLayers = mapRef.current.getLayers().getArray();
             const exists = mapLayers.some(l => l === layerRef.current);
-            
+
             if (!exists) {
               safeAddLayer(layerRef.current);
             }
@@ -2045,7 +2183,7 @@ const Map = forwardRef(({
     if (!handlingExternalToggle.current && toggleLayer && typeof toggleLayer === 'function') {
       const layerName = name.toLowerCase().replace(/\s+/g, '_');
       console.log(`Map is notifying parent that ${layerName} is now ${tempLayer.includes(name) ? 'ON' : 'OFF'}`);
-      
+
       // Small delay to ensure state is consistent
       setTimeout(() => {
         toggleLayer(layerName, tempLayer.includes(name));
@@ -2055,80 +2193,20 @@ const Map = forwardRef(({
 
   // Handle LULC Year Change
   useEffect(() => {
-    const fetchLulc = async() => {
+    const fetchLulc = async () => {
       if (!isLayersFetched) {
         return;
       }
 
-      if(lulcYear1.value === null){
-        if (LayersArray[19].LayerRef.current != null) {
-          safeRemoveLayer(LayersArray[19].LayerRef.current);
-        }
-      }
-
-      let LulcLayer = await getImageLayers(
-        "LULC_level_1",
-        `LULC_${lulcYear1.value}_${block.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_')}_level_1`,
-        true,
-        ""
-      );
-
-      if (LulcLayer) {
-        if (LayersArray[19].LayerRef.current != null) {
-          safeRemoveLayer(LayersArray[19].LayerRef.current);
-        }
-        safeAddLayer(LulcLayer)
-        LayersArray[19].LayerRef.current = LulcLayer;
-      }
-    }
-    fetchLulc()
-  },[lulcYear1])
-
-  useEffect(() => {
-    const fetchLulc = async() => {
-      if (!isLayersFetched) {
-        return;
-      }
-
-      if(lulcYear2.value === null){
-        if (LayersArray[20].LayerRef.current != null) {
-          safeRemoveLayer(LayersArray[20].LayerRef.current);
-        }
-      }
-
-      let LulcLayer = await getImageLayers(
-        "LULC_level_2",
-        `LULC_${lulcYear2.value}_${block.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_')}_level_2`,
-        true,
-        ""
-      );
-
-      if (LulcLayer) {
-        if (LayersArray[20].LayerRef.current != null) {
-          safeRemoveLayer(LayersArray[20].LayerRef.current);
-        }
-        safeAddLayer(LulcLayer)
-        LayersArray[20].LayerRef.current = LulcLayer;
-      }
-    }
-    fetchLulc()
-  },[lulcYear2])
-
-  useEffect(() => {
-    const fetchLulc = async() => {
-      if (!isLayersFetched) {
-        return;
-      }
-
-      if(lulcYear3.value === null){
+      if (lulcYear1.value === null) {
         if (LayersArray[21].LayerRef.current != null) {
           safeRemoveLayer(LayersArray[21].LayerRef.current);
         }
       }
 
       let LulcLayer = await getImageLayers(
-        "LULC_level_3",
-        `LULC_${lulcYear3.value}_${block.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_')}_level_3`,
+        "LULC_level_1",
+        `LULC_${lulcYear1.value}_${block.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_')}_level_1`,
         true,
         ""
       );
@@ -2142,7 +2220,67 @@ const Map = forwardRef(({
       }
     }
     fetchLulc()
-  },[lulcYear3])
+  }, [lulcYear1])
+
+  useEffect(() => {
+    const fetchLulc = async () => {
+      if (!isLayersFetched) {
+        return;
+      }
+
+      if (lulcYear2.value === null) {
+        if (LayersArray[22].LayerRef.current != null) {
+          safeRemoveLayer(LayersArray[22].LayerRef.current);
+        }
+      }
+
+      let LulcLayer = await getImageLayers(
+        "LULC_level_2",
+        `LULC_${lulcYear2.value}_${block.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_')}_level_2`,
+        true,
+        ""
+      );
+
+      if (LulcLayer) {
+        if (LayersArray[22].LayerRef.current != null) {
+          safeRemoveLayer(LayersArray[22].LayerRef.current);
+        }
+        safeAddLayer(LulcLayer)
+        LayersArray[22].LayerRef.current = LulcLayer;
+      }
+    }
+    fetchLulc()
+  }, [lulcYear2])
+
+  useEffect(() => {
+    const fetchLulc = async () => {
+      if (!isLayersFetched) {
+        return;
+      }
+
+      if (lulcYear3.value === null) {
+        if (LayersArray[23].LayerRef.current != null) {
+          safeRemoveLayer(LayersArray[23].LayerRef.current);
+        }
+      }
+
+      let LulcLayer = await getImageLayers(
+        "LULC_level_3",
+        `LULC_${lulcYear3.value}_${block.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_')}_level_3`,
+        true,
+        ""
+      );
+
+      if (LulcLayer) {
+        if (LayersArray[23].LayerRef.current != null) {
+          safeRemoveLayer(LayersArray[23].LayerRef.current);
+        }
+        safeAddLayer(LulcLayer)
+        LayersArray[23].LayerRef.current = LulcLayer;
+      }
+    }
+    fetchLulc()
+  }, [lulcYear3])
 
   // Initialize map once
   useEffect(() => {
@@ -2151,21 +2289,21 @@ const Map = forwardRef(({
       getStatesData(); // Load state markers on init
       setIsInitialized(true);
     }
-    
+
     return () => {
       if (mapRef.current) {
         mapRef.current.setTarget(null);
       }
     };
   }, []);
-  
+
   // When state changes, update district markers
   useEffect(() => {
     if (mapRef.current && state && !district) {
       getDistrictData();
     }
   }, [state]);
-  
+
   // When district changes, update block markers
   useEffect(() => {
     if (mapRef.current && district && !block) {
@@ -2177,22 +2315,22 @@ const Map = forwardRef(({
   useEffect(() => {
     if (mapRef.current && district && block) {
       handleLocationChange();
-      
+
       // If Demographics is not in currentLayers, add it
       if (!currentLayers.includes("Demographics") && LayersArray[0].LayerRef.current) {
         handleLayerToggle("Demographics", LayersArray[0].LayerRef);
       }
     }
   }, [district, block]);
-  
-  
+
+
   // Modified useEffect for handling toggledLayers changes to fix resource/planning layer toggling
   useEffect(() => {
     if (!mapRef.current || !isLayersFetched) return;
-    
+
     // Set flag to prevent recursion
     handlingExternalToggle.current = true;
-    
+
     try {
       // Handle toggles from parent UI
       Object.entries(toggledLayers).forEach(([id, isVisible]) => {
@@ -2222,15 +2360,19 @@ const Map = forwardRef(({
           'deforestation': 'Change Detection Deforestation',
           'degradation': 'Change Detection Degradation',
           'urbanization': 'Change Detection Urbanization',
-          'cropIntensity': 'Change Detection Crop-Intensity'
+          'cropintensity': 'Change Detection Crop-Intensity',
+          'restoration': 'Change Detection Restoration',
+          'soge': 'SOGE',
+          'aquifer': 'Aquifer',
+          'mws_layers_fortnight' : 'Fortnight Hydrological Variables'
         };
-        
+
         const layerName = layerMap[id];
         if (!layerName) return;
-        
+
         // Find if the layer is currently visible in our internal state
         const isCurrentlyVisible = currentLayers.includes(layerName);
-        
+
         // If there's a mismatch between toggle state and visibility, 
         // use handleLayerToggle to fix it
         if (isVisible !== isCurrentlyVisible) {
@@ -2246,15 +2388,15 @@ const Map = forwardRef(({
 
   return (
     <div className="relative w-full h-full">
-      <div 
-        ref={mapElement} 
+      <div
+        ref={mapElement}
         className="w-full h-full rounded-xl overflow-hidden"
         aria-label="Map"
       />
-      
+
       <MapLegend toggledLayers={toggledLayers} lulcYear1={lulcYear1} lulcYear2={lulcYear2} lulcYear3={lulcYear3} />
 
-      <MapControls 
+      <MapControls
         showMWS={showMWS}
         setShowMWS={setShowMWS}
         showVillages={showVillages}
@@ -2268,7 +2410,7 @@ const Map = forwardRef(({
         }}
         toggledLayers={toggledLayers}
       />
-      
+
       {isLoading && (
         <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-30">
           <div className="bg-white p-4 rounded-lg shadow-lg flex items-center space-x-3">
@@ -2280,7 +2422,7 @@ const Map = forwardRef(({
           </div>
         </div>
       )}
-      
+
       {/* Layer error notifications */}
       {Object.keys(layerErrors).length > 0 && (
         <div className="absolute bottom-24 right-6 bg-white p-2 rounded-lg shadow-lg text-sm max-w-xs">
