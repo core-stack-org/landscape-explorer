@@ -106,7 +106,7 @@ export const useGlobalWaterData = ({
 
 
        // NEW: DROUGHT FETCH FOR TEHSIL
-      const droughtTypeName = `cropping_drought:${d}_${b}_drought`;
+      const droughtTypeName = `drought:${d}_${b}_drought`;
 
 // PRINT FULL URL BEFORE FETCHING
           const droughtWorkspace = droughtTypeName.split(":")[0];
