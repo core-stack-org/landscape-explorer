@@ -48,9 +48,10 @@ const HeaderSelect = ({ setView }) => {
   const fetchOrganizations = async () => {
     try {
       const response = await fetch(
-        `${process.env.REACT_APP_BASEURL}api/v1/auth/register/available_organizations/?app_type=plantation`
+        `${process.env.REACT_APP_API_URL}/auth/register/available_organizations/?app_type=plantation`
       );
       const data = await response.json();
+      console.log(data)
       const options = data.map((org) => ({
         value: org.id,
         label: org.name,
@@ -68,7 +69,7 @@ const HeaderSelect = ({ setView }) => {
   const loginAndGetToken = async () => {
     try {
       const response = await fetch(
-        `${process.env.REACT_APP_BASEURL}api/v1/auth/login/`,
+        `${process.env.REACT_APP_API_URL}/auth/login/`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -95,7 +96,7 @@ const HeaderSelect = ({ setView }) => {
 
     try {
       const response = await fetch(
-        `${process.env.REACT_APP_BASEURL}/api/v1/projects/`,
+        `${process.env.REACT_APP_API_URL}/projects/`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
