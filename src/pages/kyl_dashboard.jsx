@@ -94,6 +94,7 @@ const KYLDashboardPage = () => {
   // * Triggers
   const [filterTrigger, setFilterTrigger] = useState(0)
   const [patternTrigger, setPatternTrigger] = useState(0)
+  const [villagePatternTrigger, setvillagePatternTrigger] = useState(0)
 
   const [clickedWaterbodyId, setClickedWaterbodyId] = useState(null);
 const [waterbodyDashboardUrl, setWaterbodyDashboardUrl] = useState(null);
@@ -1453,10 +1454,7 @@ const saveAllMwsToLocalStorage = async(mwsLayer) => {
         return;
       }
 
-      if (
-        !filterSelections?.selectedMWSValues ||
-        !filterSelections?.selectedVillageValues
-      ) {
+      if (!filterSelections?.selectedMWSValues || !filterSelections?.selectedVillageValues) {
         console.warn("Invalid filter selections structure");
         return;
       }
@@ -1469,15 +1467,11 @@ const saveAllMwsToLocalStorage = async(mwsLayer) => {
 
       if (keys.length > 0) {
         try {
-          const filterHasMatches = {};
 
           keys.forEach((item) => {
             const mwsValues = filterSelections.selectedMWSValues[item];
             if (!mwsValues) return;
-
-            filterHasMatches[item] = false;
             let tempArr = [];
-
             mwsValues.forEach((selectedOption) => {
 
               const filter = getAllFilters().find((f) => f.name === item);
@@ -1512,12 +1506,6 @@ const saveAllMwsToLocalStorage = async(mwsLayer) => {
                   }
                 });
               }
-
-              if (tempArr.length > 0) {
-                filterHasMatches[item] = true;
-              }
-
-
             });
             if (tempMWS.length > 0) {
               tempMWS = tempMWS.filter((id) => tempArr.includes(id));
@@ -1532,13 +1520,21 @@ const saveAllMwsToLocalStorage = async(mwsLayer) => {
             setVillageIdList(mwsVillageList);
           }
           else if (getFormattedSelectedFilters().length > 0 && getFormattedSelectedPatterns().length > 0) {
-            let intersection = tempMWS.filter(x => selectedMWS.includes(x));
+            let intersection
+            if(keys.length === 1){
+              intersection = tempMWS
+            }
+            else{
+              intersection = tempMWS.filter(x => selectedMWS.includes(x));
+            }
             setSelectedMWS(intersection);
             fetchMWSLayer(intersection);
             setVillageIdList(mwsVillageList);
+            setvillagePatternTrigger(!villagePatternTrigger)
           }
           else if (getFormattedSelectedFilters().length === 0 && getFormattedSelectedPatterns().length > 0) {
             setPatternTrigger(!patternTrigger)
+            setvillagePatternTrigger(!villagePatternTrigger)
           }
           else {
             setSelectedMWS([]);
@@ -1564,38 +1560,25 @@ const saveAllMwsToLocalStorage = async(mwsLayer) => {
             return;
           }
 
-          const filterHasMatches = {};
-
           villageKeys.forEach((item) => {
             const villageValues = filterSelections.selectedVillageValues[item];
             if (!villageValues) return;
 
-            filterHasMatches[item] = false;
-
+            let tempArr = [];
+    
             villageValues.forEach((selectedOption) => {
-              let tempArr = [];
-
-              if (typeof selectedOption.value === "object") {
+              console.log("Reached Here 1")
                 villageJson.forEach((tempItem) => {
                   try {
-                    if (
-                      tempItem &&
-                      typeof tempItem[item] !== "undefined" &&
-                      tempItem.village_id
-                    ) {
+                    if (tempItem && typeof tempItem[item] !== "undefined" && tempItem.village_id) {
                       const itemValue = Number(tempItem[item]);
-                      if (
-                        !isNaN(itemValue) &&
-                        itemValue >= selectedOption.value.lower &&
-                        itemValue <= selectedOption.value.upper
-                      ) {
+                      if (!isNaN(itemValue) && itemValue >= selectedOption.value.lower && itemValue <= selectedOption.value.upper) {
                         // Only include villages that are in MWS selection if we have an MWS selection
-                        if (
-                          villageIdList.size === 0 ||
-                          villageIdList.has(tempItem.village_id)
-                        ) {
+                        if (mwsVillageList.size !== 0 && mwsVillageList.has(tempItem.village_id)) {
                           tempArr.push(tempItem.village_id);
-                          filterHasMatches[item] = true;
+                        }
+                        else if(mwsVillageList.size === 0 && tempMWS.length === 0){
+                          tempArr.push(tempItem.village_id);
                         }
                       }
                     }
@@ -1603,50 +1586,14 @@ const saveAllMwsToLocalStorage = async(mwsLayer) => {
                     console.warn("Error processing village item:", err);
                   }
                 });
-              } else {
-                villageJson.forEach((tempItem) => {
-                  try {
-                    if (
-                      tempItem &&
-                      tempItem[item] === selectedOption.value &&
-                      tempItem.village_id
-                    ) {
-                      // Only include villages that are in MWS selection if we have an MWS selection
-                      if (
-                        villageIdList.size === 0 ||
-                        villageIdList.has(tempItem.village_id)
-                      ) {
-                        tempArr.push(tempItem.village_id);
-                        filterHasMatches[item] = true;
-                      }
-                    }
-                  } catch (err) {
-                    console.warn("Error processing village item:", err);
-                  }
-                });
-              }
-
-              if (tempVillages.length > 0) {
-                tempVillages = tempVillages.filter((id) =>
-                  tempArr.includes(id)
-                );
-              } else {
-                tempVillages = tempArr;
-              }
             });
+            tempVillages = tempArr;
           });
-
-          // If any filter has no matches, clear results
-          if (
-            Object.keys(filterHasMatches).length > 0 &&
-            Object.values(filterHasMatches).includes(false)
-          ) {
-            tempVillages = [];
-          }
 
           setSelectedVillages(tempVillages);
           fetchAdminLayer(tempVillages);
-        } catch (error) {
+        } 
+        catch (error) {
           console.error("Error processing village data:", error);
           setSelectedVillages([]);
           fetchAdminLayer([]);
@@ -1662,100 +1609,63 @@ const saveAllMwsToLocalStorage = async(mwsLayer) => {
       fetchMWSLayer([]);
       fetchAdminLayer([]);
     }
-  }, [filterSelections, dataJson, villageJson, filterTrigger]);
+  }, [filterSelections.selectedMWSValues, dataJson, filterTrigger]);
 
   useEffect(() => {
-    // Skip if no village filters or no data
-    if (
-      !villageJson ||
-      !Object.keys(filterSelections.selectedVillageValues).length
-    )
-      return;
+    
+    let villageKeys = Object.keys(filterSelections.selectedVillageValues);
+    let tempVillages = [];
+    
+    if (villageKeys.length > 0) {
+        try {
+          if (!villageJson || !Array.isArray(villageJson)) {
+            console.warn("VillageJson not loaded or invalid format");
+            return;
+          }
 
-    // Re-process village filters when villageIdList changes
-    try {
-      let tempVillages = [];
-      const villageKeys = Object.keys(filterSelections.selectedVillageValues);
+          villageKeys.forEach((item) => {
+            const villageValues = filterSelections.selectedVillageValues[item];
+            if (!villageValues) return;
 
-      villageKeys.forEach((item) => {
-        const villageValues = filterSelections.selectedVillageValues[item];
-        if (!villageValues) return;
-
-        villageValues.forEach((selectedOption) => {
-          if (!selectedOption?.value) return;
-
-          let tempArr = [];
-
-          if (typeof selectedOption.value === "object") {
-            // Range filter (numeric)
-            villageJson.forEach((tempItem) => {
-              try {
-                // Key change: Always check against villageIdList if it has entries
-                if (
-                  tempItem &&
-                  typeof tempItem[item] !== "undefined" &&
-                  tempItem.village_id
-                ) {
-                  const itemValue = Number(tempItem[item]);
-
-                  if (
-                    !isNaN(itemValue) &&
-                    itemValue >= selectedOption.value.lower &&
-                    itemValue <= selectedOption.value.upper
-                  ) {
-                    // Only include villages that are in the MWS selection if we have an MWS selection
-                    if (
-                      villageIdList.size === 0 ||
-                      villageIdList.has(tempItem.village_id)
-                    ) {
-                      tempArr.push(tempItem.village_id);
+            let tempArr = [];
+    
+            villageValues.forEach((selectedOption) => {
+                villageJson.forEach((tempItem) => {
+                  try {
+                    if (tempItem && typeof tempItem[item] !== "undefined" && tempItem.village_id) {
+                      const itemValue = Number(tempItem[item]);
+                      if (!isNaN(itemValue) && itemValue >= selectedOption.value.lower && itemValue <= selectedOption.value.upper) {
+                        // Only include villages that are in MWS selection if we have an MWS selection
+                        console.log(villageIdList.size)
+                        if (villageIdList.size !== 0 && villageIdList.has(tempItem.village_id)) {
+                          tempArr.push(tempItem.village_id);
+                        }
+                        else if(villageIdList.size === 0){
+                          tempArr.push(tempItem.village_id);
+                        }
+                      }
                     }
+                  } catch (err) {
+                    console.warn("Error processing village item:", err);
                   }
-                }
-              } catch (err) {
-                console.warn("Error processing village item:", err);
-              }
+                });
             });
-          } else {
-            // Value match filter
-            villageJson.forEach((tempItem) => {
-              try {
-                if (
-                  tempItem &&
-                  tempItem[item] === selectedOption.value &&
-                  tempItem.village_id
-                ) {
-                  // Only include villages that are in the MWS selection if we have an MWS selection
-                  if (
-                    villageIdList.size === 0 ||
-                    villageIdList.has(tempItem.village_id)
-                  ) {
-                    tempArr.push(tempItem.village_id);
-                  }
-                }
-              } catch (err) {
-                console.warn("Error processing village item:", err);
-              }
-            });
-          }
-
-          if (tempVillages.length > 0) {
-            tempVillages = tempVillages.filter((id) => tempArr.includes(id));
-          } else {
             tempVillages = tempArr;
-          }
-        });
-      });
-
-      setSelectedVillages(tempVillages);
-      fetchAdminLayer(tempVillages);
-    } catch (error) {
-      console.error("Error re-processing village data:", error);
-      setSelectedVillages([]);
-      fetchAdminLayer([]);
-    }
-  }, [villageIdList, villageJson, filterSelections.selectedVillageValues]);
-
+          });
+          setSelectedVillages(tempVillages);
+          fetchAdminLayer(tempVillages);
+        } 
+        catch (error) {
+          console.error("Error processing village data:", error);
+          setSelectedVillages([]);
+          fetchAdminLayer([]);
+        }
+      } else {
+        setSelectedVillages([]);
+        fetchAdminLayer([]);
+      }
+  },[filterSelections.selectedVillageValues, villageJson])
+ 
   useEffect(() => {
     try {
       if (!dataJson || !Array.isArray(dataJson)) {
@@ -1870,7 +1780,11 @@ const saveAllMwsToLocalStorage = async(mwsLayer) => {
               tempVillage = tempIntersection
             }
           })
-          setVillageIdList(tempVillage)
+          if (villageIdList.size !== 0) {
+              tempVillage = new Set(
+                  [...tempVillage].filter(id => villageIdList.has(id))
+              );
+          }
           setSelectedVillages([...tempVillage])
           fetchAdminLayer([...tempVillage])
         }catch(err){
@@ -1881,7 +1795,7 @@ const saveAllMwsToLocalStorage = async(mwsLayer) => {
     }catch(err){
       console.log(err)
     }
-  },[patternSelections.selectedVillagePatterns])
+  },[patternSelections.selectedVillagePatterns, villagePatternTrigger])
 
   useEffect(() => {
     if (statesData === null) {
