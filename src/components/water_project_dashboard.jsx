@@ -90,7 +90,7 @@ const WaterProjectDashboard = () => {
     ? selectedWaterbodyForTehsil
     : selectedWaterbody;
 
-    console.log(activeSelectedWaterbody)
+    
 
   const [view, setView] = useState(
     isTehsilMode ? "map" : typeParam === "tehsil" ? "map" : "table"
@@ -122,7 +122,6 @@ const WaterProjectDashboard = () => {
     setOpenInfoKey(null);
   };
 
-
   useEffect(() => {
     const stored = localStorage.getItem("selectedWaterbody");
     if (stored) {
@@ -138,26 +137,50 @@ const WaterProjectDashboard = () => {
     setMwsFromLocalStorage(parsed);
   }, []);
 
-const matchedMwsFeature = useMemo(() => {
-  if (!selectedWaterbodyForTehsil || !mwsFromLocalStorage?.length) return null;
-
-  const mwsUid = selectedWaterbodyForTehsil.properties?.MWS_UID?.toString()?.trim();
-  if (!mwsUid) return null;
-
-  return mwsFromLocalStorage.find(f =>
-    f.properties?.uid?.toString()?.trim() === mwsUid ||
-    f.properties?.MWS_UID?.toString()?.trim() === mwsUid
-  );
-}, [selectedWaterbodyForTehsil, mwsFromLocalStorage]);
-
-const matchedMwsOlFeature = useMemo(() => {
-  if (!matchedMwsFeature) return null;
-
-  return new GeoJSON().readFeature(matchedMwsFeature, {
-    dataProjection: "EPSG:4326",
-    featureProjection: "EPSG:4326",
-  });
-}, [matchedMwsFeature]);
+  console.log(mwsFromLocalStorage)
+  const matchedMwsFeature = useMemo(() => {
+    if (!selectedWaterbodyForTehsil || !mwsFromLocalStorage?.length) return null;
+  
+    const mwsUid = selectedWaterbodyForTehsil.properties?.MWS_UID?.toString()?.trim();
+    if (!mwsUid) return null;
+  
+    // Extract first two UID parts → e.g. "12_96671_12_96925" → "12_96671"
+    const parts = mwsUid.split("_");
+    const partialUid =
+      parts.length >= 2 ? `${parts[0]}_${parts[1]}` : mwsUid;
+  
+    console.log("Searching partial UID:", partialUid);
+  
+    // 1️⃣ Try exact match first
+    let exact = mwsFromLocalStorage.find(f =>
+      f.properties?.uid?.toString()?.trim() === mwsUid ||
+      f.properties?.MWS_UID?.toString()?.trim() === mwsUid
+    );
+  
+    if (exact) return exact;
+  
+    // 2️⃣ Fallback: partial match using includes
+    let partial = mwsFromLocalStorage.find(f => {
+      const uid = f.properties?.uid?.toString()?.trim() || "";
+      const mws_uid = f.properties?.MWS_UID?.toString()?.trim() || "";
+      return uid.includes(partialUid) || mws_uid.includes(partialUid);
+    });
+  
+    return partial || null;
+  
+  }, [selectedWaterbodyForTehsil, mwsFromLocalStorage]);
+  
+  
+  
+  const matchedMwsOlFeature = useMemo(() => {
+    if (!matchedMwsFeature) return null;
+  
+    return new GeoJSON().readFeature(matchedMwsFeature, {
+      dataProjection: "EPSG:4326",
+      featureProjection: "EPSG:4326",
+    });
+  }, [matchedMwsFeature]);
+  
 
   useEffect(() => {
     if (typeParam === "tehsil" && selectedWaterbodyForTehsil?.geometry) {
@@ -248,7 +271,7 @@ const matchedMwsOlFeature = useMemo(() => {
       activeSelectedWaterbody.properties?.MWS_UID;
   
     if (!wbMwsUID) return null;
-  
+  console.log(mwsGeoData)
     // Find feature where UID matches
     const matched = mwsGeoData.features.find(
       (f) =>
@@ -1387,10 +1410,17 @@ const matchedMwsOlFeature = useMemo(() => {
           Max Catchment Area
         </p>
         <p className="mt-1 text-xl md:text-2xl font-semibold text-blue-600">
-          {activeSelectedWaterbody?.maxCatchmentArea?.toFixed(2)} sq km
-        </p>
-      </div>
+          {(() => {
+            const props = activeSelectedWaterbody.properties || {};
+            const value = isTehsilMode
+              ? props.max_catchment_area
+              : activeSelectedWaterbody.maxCatchmentArea;
 
+            return value ? `${Number(value).toFixed(2)} sq km` : "N/A";
+          })()}
+        </p>
+ 
+      </div>
       <div
   className="flex-1 bg-gradient-to-br from-gray-50 to-gray-100 p-4 md:p-6 rounded-xl 
   border border-gray-200 shadow-sm flex flex-col items-center text-center min-h-[120px] 
@@ -1400,16 +1430,37 @@ const matchedMwsOlFeature = useMemo(() => {
     On Drainage Line
   </p>
 
-  {activeSelectedWaterbody?.drainageFlag === 1 ? (
-    <p className="mt-1 text-xl md:text-2xl font-semibold text-blue-600">
-       ON (Order {activeSelectedWaterbody?.maxStreamOrder})
-    </p>
-  ) : (
-    <p className="mt-1 text-xl md:text-2xl font-semibold text-red-500">
-       Not On Drainage Line
-    </p>
-  )}
+  {(() => {
+    const props = activeSelectedWaterbody?.properties || {};
+
+    // ⭐ Drainage flag based on mode
+    const drainageFlag = isTehsilMode
+      ? props.on_drainage_line ?? props.drainage
+      : activeSelectedWaterbody?.drainageFlag;
+
+    // ⭐ Stream order based on mode
+    const streamOrder = isTehsilMode
+      ? props.max_stream_order
+      : activeSelectedWaterbody?.maxStreamOrder;
+
+    // ⭐ If NOT on drainage line
+    if (drainageFlag !== 1) {
+      return (
+        <p className="mt-1 text-xl md:text-2xl font-semibold text-red-500">
+          Not On Drainage Line
+        </p>
+      );
+    }
+
+    // ⭐ If ON drainage line → show stream order
+    return (
+      <p className="mt-1 text-xl md:text-2xl font-semibold text-blue-600">
+        {streamOrder ? `ON (Order ${streamOrder})` : "N/A"}
+      </p>
+    );
+  })()}
 </div>
+
 
 
       {/* Max Stream Order → Only visible if on drainage line */}
@@ -1422,8 +1473,20 @@ const matchedMwsOlFeature = useMemo(() => {
            Watershed position
           </p>
           <p className="mt-1 text-xl md:text-2xl font-semibold text-blue-600">
-            Order {activeSelectedWaterbody?.maxStreamOrder}
-          </p>
+  {(() => {
+    const props = activeSelectedWaterbody?.properties || {};
+
+    const streamOrder = isTehsilMode
+      ? props.max_stream_order
+      : activeSelectedWaterbody?.maxStreamOrder;
+
+    return streamOrder
+      ? `Order ${streamOrder}`
+      : "N/A";
+  })()}
+</p>
+
+
         </div>
       
     </div>
