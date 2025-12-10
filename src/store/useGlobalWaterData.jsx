@@ -66,7 +66,7 @@ export const useGlobalWaterData = ({
       if (type === "project" && projectName && projectId) {
         const p = projectName.toLowerCase();
 
-        geo = await fetchWFS(`water_bodies:waterbodies_${p}_${projectId}`);
+        geo = await fetchWFS(`swb:surface_waterbodies_${p}_${projectId}`);
         mws = await fetchWFS(`mws:waterbodies_mws_${p}_${projectId}`);
         zoi = await fetchWFS(`zoi_layers:waterbodies_zoi_${p}_${projectId}`);
 
@@ -90,7 +90,7 @@ export const useGlobalWaterData = ({
         const b = block.toLowerCase().replace(/\s+/g, "_");
 
         // ZOI
-        zoi = await fetchWFS(`water_bodies:waterbodies_zoi_${d}_${b}`);
+        zoi = await fetchWFS(`swb:waterbodies_zoi_${d}_${b}`);
         if (!zoi?.features?.length) {
           zoi = await fetchWFS(`zoi_layers:waterbodies_zoi_${d}_${b}`);
         }
