@@ -259,6 +259,7 @@ const WaterProjectDashboard = () => {
   const projectZoi = useRecoilValue(zoiFeaturesAtom);
   const tehsilZoi = useRecoilValue(tehsilZoiFeaturesAtom);
   const zoiFeatures = isTehsilMode ? tehsilZoi : projectZoi;
+  console.log(zoiFeatures)
   console.log(mwsGeoData)
   console.log(activeSelectedWaterbody)
 
