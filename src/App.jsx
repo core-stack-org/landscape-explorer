@@ -3,6 +3,8 @@ import KYLDashboardPage from "./pages/kyl_dashboard";
 import WaterDashboard from "./pages/water_dashboard";
 import WaterProjectDashboard from "./components/water_project_dashboard";
 import LEHomepage from "./pages/LE_homepage";
+import PlantationDashboard from "./pages/plantationDashboard";
+import PlantationProjectDashboard from "./components/plantation_project_dashboard";
 
 
 function App() {
@@ -11,6 +13,15 @@ function App() {
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<LEHomepage />} />
+          <Route path="/kyl_dashboard" element={<KYLDashboardPage />} />
+          <Route path="/download_layers" element={<LandscapeExplorer />} />
+          <Route
+            path="/plantationDashboard"
+            element={<PlantationDashboard />}
+          />
+          <Route
+            path="/dashboard/:projectId"
+            element={<PlantationProjectDashboard />}
           {/* <Route path="/kyl_dashboard" element={<KYLDashboardPage />} />
         <Route path="/download_layers" element={<LandscapeExplorer/>}/>
           <Route path="/" element={<LandingPage />} /> */}
