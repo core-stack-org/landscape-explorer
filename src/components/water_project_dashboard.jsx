@@ -90,6 +90,7 @@ const WaterProjectDashboard = () => {
     ? selectedWaterbodyForTehsil
     : selectedWaterbody;
 
+
     
 
   const [view, setView] = useState(
@@ -137,7 +138,6 @@ const WaterProjectDashboard = () => {
     setMwsFromLocalStorage(parsed);
   }, []);
 
-  console.log(mwsFromLocalStorage)
   const matchedMwsFeature = useMemo(() => {
     if (!selectedWaterbodyForTehsil || !mwsFromLocalStorage?.length) return null;
   
@@ -149,9 +149,8 @@ const WaterProjectDashboard = () => {
     const partialUid =
       parts.length >= 2 ? `${parts[0]}_${parts[1]}` : mwsUid;
   
-    console.log("Searching partial UID:", partialUid);
   
-    // 1️⃣ Try exact match first
+    // Try exact match first
     let exact = mwsFromLocalStorage.find(f =>
       f.properties?.uid?.toString()?.trim() === mwsUid ||
       f.properties?.MWS_UID?.toString()?.trim() === mwsUid
@@ -159,7 +158,7 @@ const WaterProjectDashboard = () => {
   
     if (exact) return exact;
   
-    // 2️⃣ Fallback: partial match using includes
+    // Fallback: partial match using includes
     let partial = mwsFromLocalStorage.find(f => {
       const uid = f.properties?.uid?.toString()?.trim() || "";
       const mws_uid = f.properties?.MWS_UID?.toString()?.trim() || "";
@@ -259,9 +258,7 @@ const WaterProjectDashboard = () => {
   const projectZoi = useRecoilValue(zoiFeaturesAtom);
   const tehsilZoi = useRecoilValue(tehsilZoiFeaturesAtom);
   const zoiFeatures = isTehsilMode ? tehsilZoi : projectZoi;
-  console.log(zoiFeatures)
-  console.log(mwsGeoData)
-  console.log(activeSelectedWaterbody)
+
 
   const getMatchedMWSFeatureProject = (mwsGeoData, activeSelectedWaterbody) => {
     if (!mwsGeoData?.features?.length || !activeSelectedWaterbody) return null;
@@ -274,10 +271,15 @@ const WaterProjectDashboard = () => {
     if (!wbMwsUID) return null;
   console.log(mwsGeoData)
     // Find feature where UID matches
-    const matched = mwsGeoData.features.find(
-      (f) =>
-        f.properties?.UID?.toString().trim() === wbMwsUID.toString().trim()
-    );
+    const matched = mwsGeoData.features.find((f) => {
+      const uid = f.properties?.uid?.toString()?.trim() || "";
+      const wb = wbMwsUID?.toString()?.trim() || "";
+    
+      return (
+        uid.includes(wb) || wb.includes(uid)
+      );
+    });
+    
   
     return matched || null;
   };
@@ -1197,14 +1199,14 @@ const WaterProjectDashboard = () => {
                       isTehsil={isTehsilMode}
                       waterbody={isTehsilMode ? activeSelectedWaterbody.properties.UID : activeSelectedWaterbody}
                       water_rej_data={isTehsilMode ? {features : [geoData]} : geoData}
-                      mwsFeature={isTehsilMode ? matchedMwsOlFeature : mwsGeoData}
+                      mwsFeature={isTehsilMode ? matchedMwsOlFeature : matchedMWSFeatureProject}
                       onImpactYearChange={(yearData) => setImpactYear(yearData)}
                     />
                   </div>
 
                   {(isTehsilMode ? mwsFromLocalStorage : selectedMWSFeature) && (
                   <div className="w-full max-w-[700px] h-[200px] sm:h-[350px] md:h-[290px] mt-36 mx-auto">
-                    <PrecipitationStackChart feature={typeParam === "tehsil" ? matchedMwsOlFeature : mwsGeoData}
+                    <PrecipitationStackChart feature={typeParam === "tehsil" ? matchedMwsOlFeature : matchedMWSFeatureProject}
                      waterbody={activeSelectedWaterbody} typeparam={typeParam}/>
                   </div>
                   )}

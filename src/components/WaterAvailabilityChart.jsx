@@ -25,7 +25,7 @@ ChartJS.register(
   LineController
 );
 
-const years = ["17-18", "18-19", "19-20", "20-21", "21-22", "22-23", "23-24","24-25"];
+const years = ["17-18", "18-19", "19-20", "20-21", "21-22", "22-23", "23-24"];
 
 const WaterAvailabilityChart = ({
   isTehsil,
@@ -37,6 +37,18 @@ const WaterAvailabilityChart = ({
   const [showImpact, setShowImpact] = useState(false);
   const prevImpactRef = useRef(null);
 console.log(mwsFeature)
+const getProp = (feature, key) => {
+  if (!feature) return 0;
+
+  // ✔ If OL Feature (tehsil case)
+  if (typeof feature.get === "function") {
+    return feature.get(key);
+  }
+
+  // ✔ If GeoJSON Feature (project case)
+  return feature.properties?.[key] ?? 0;
+};
+
   const yearMap = {
     "17-18": "2017-2018",
     "18-19": "2018-2019",
@@ -59,9 +71,11 @@ const totalRainfall = years.reduce((acc, year) => {
   // ✔️ Project Mode → Use original kharif/rabi/zaid fields
   if (!isTehsil) {
     const longYear = yearMap[year];
-    const kharif = mwsFeature?.properties?.[`precipitation_kharif_${longYear}`] ?? 0;
-    const rabi = mwsFeature?.properties?.[`precipitation_rabi_${longYear}`] ?? 0;
-    const zaid = mwsFeature?.properties?.[`precipitation_zaid_${longYear}`] ?? 0;
+    const kharif = Number(getProp(mwsFeature, `precipitation_kharif_${longYear}`));
+const rabi   = Number(getProp(mwsFeature, `precipitation_rabi_${longYear}`));
+const zaid   = Number(getProp(mwsFeature, `precipitation_zaid_${longYear}`));
+
+acc[`TR${year}`] = kharif + rabi + zaid;
 
     acc[`TR${year}`] = kharif + rabi + zaid;
     return acc;
