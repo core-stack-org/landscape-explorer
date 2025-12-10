@@ -6,7 +6,6 @@ import LEHomepage from "./pages/LE_homepage";
 import PlantationDashboard from "./pages/plantationDashboard";
 import PlantationProjectDashboard from "./components/plantation_project_dashboard";
 
-
 function App() {
   return (
     <>
@@ -22,20 +21,23 @@ function App() {
           <Route
             path="/dashboard/:projectId"
             element={<PlantationProjectDashboard />}
+          />   {/* ← THIS was missing */}
+          
           {/* <Route path="/kyl_dashboard" element={<KYLDashboardPage />} />
-        <Route path="/download_layers" element={<LandscapeExplorer/>}/>
+          <Route path="/download_layers" element={<LandscapeExplorer/>}/>
           <Route path="/" element={<LandingPage />} /> */}
+
           <Route path="/kyl_dashboard" element={<KYLDashboardPage />} />
+
           {/* <Route path="/landscape_explorer" element={<LE_page />} /> */}
+
           <Route path="/water_dashboard" element={<WaterProjectDashboard />} />
-          <Route
-            path="/dashboard"
-            element={<WaterProjectDashboard />}
-          />
+          <Route path="/dashboard" element={<WaterProjectDashboard />} />
         </Routes>
       </BrowserRouter>
     </>
   );
 }
+
 
 export default App;
