@@ -86,6 +86,8 @@ const PlansPage = () => {
   const [districtLookup, setDistrictLookup] =    useRecoilState(districtLookupAtom);
   const [blockLookup, setBlockLookup] = useRecoilState(blockLookupAtom);
   const bubbleLayerRef = useRef(null);
+  const planLayerRef = useRef(null);
+
 
 
   //  Load Meta Stats
@@ -156,7 +158,7 @@ const PlansPage = () => {
   console.log(data)
       const stateList = data || [];
       setStates(stateList);
-  
+  console.log(stateList)
       // ------------------------------
       // DISTRICT + BLOCK LOOKUP FLAT
       // ------------------------------
@@ -171,12 +173,12 @@ const PlansPage = () => {
         state?.district?.forEach((d) => {
           // Collect district list
           distList.push(d);
-          districtLookupTemp[d.id] = d.name;
+          districtLookupTemp[d.district_id] = d.label;
   
           // Collect block list
           d?.blocks?.forEach((b) => {
             blockList.push(b);
-            blockLookupTemp[b.id] = b.name;
+            blockLookupTemp[b.block_id] = b.label;
           });
         });
       });
@@ -271,6 +273,150 @@ useEffect(() => {
 
   mapRef.current.addLayer(bubbleLayer);
 }, [metaStats]);
+
+useEffect(() => {
+  if (!mapRef.current || !metaStats) return;
+
+  const map = mapRef.current;
+
+  const handleClick = (evt) => {
+    map.forEachFeatureAtPixel(evt.pixel, (feature) => {
+      const clickedStateName = feature.get("name");
+      const state = states.find((s) => s.label === clickedStateName);
+
+      if (!state) {
+        console.warn("State not found:", clickedStateName);
+        return;
+      }
+
+      const state_id = state.state_id;
+
+      console.log("STATE CLICKED:", clickedStateName, " → ID:", state_id);
+
+      fetchTehsilLevelPlans(state).then((plans) => {
+        setPlans(plans);
+      
+        setMetaStats((prev) => ({
+          ...prev,
+          summary: {
+            total_plans: plans.length,
+            dpr_generated: plans.filter(p => p.dpr_generated).length,
+            dpr_reviewed: plans.filter(p => p.dpr_reviewed).length,
+          },
+          filtered_plans: plans,
+        }));
+      });
+      
+      // OPTIONAL: zoom into state
+      const coords = STATE_COORDINATES[clickedStateName];
+      if (coords) {
+        map.getView().animate({
+          center: coords,
+          zoom: 7,
+          duration: 600,
+        });
+      }
+    });
+  };
+
+  map.on("click", handleClick);
+
+  return () => map.un("click", handleClick);
+}, [metaStats, states, plans]);
+
+const fetchTehsilLevelPlans = async (state) => {
+
+  // 1️⃣ Extract all block IDs for this state
+  const allBlockIds = state.district
+    ?.flatMap((d) => d.blocks)
+    ?.map((b) => String(b.block_id));
+
+  console.log("🔹 Blocks in this state:", allBlockIds);
+
+  // 2️⃣ Fetch ALL plans for this state at once
+  const data = await getPlans({ state: state.state_id });
+  const statePlans = data?.raw || [];
+
+  console.log(`🔹 Raw plans from API for state ${state.label} →`, statePlans.length);
+  console.log("Raw plans list:", statePlans);
+
+  // 3️⃣ Filter plans that match tehsil/block IDs of this state
+  const filtered = statePlans.filter((p) =>
+    allBlockIds.includes(String(p.block))
+  );
+
+  console.log(`🔹 Filtered Tehsil Plans for ${state.label} →`, filtered.length);
+  console.log("Filtered plans list:", filtered);
+
+  plotPlansOnMap(filtered);
+  return filtered;
+};
+
+const plotPlansOnMap = (plans) => {
+  if (!mapRef.current) return;
+
+  // Remove old layer if it exists
+  if (planLayerRef.current) {
+    mapRef.current.removeLayer(planLayerRef.current);
+  }
+
+  const features = [];
+
+  plans.forEach((p) => {
+    const lat = parseFloat(p.latitude);
+    const lon = parseFloat(p.longitude);
+
+    if (!lat || !lon) return; // skip invalid coordinates
+
+    const feature = new Feature({
+      geometry: new Point([lon, lat]), // EPSG:4326
+      plan_id: p.id,
+      plan_name: p.plan,
+      district: p.district,
+      block: p.block
+    });
+
+    feature.setStyle(
+      new Style({
+        image: new CircleStyle({
+          radius: 6,
+          fill: new Fill({ color: "rgba(255,0,0,0.8)" }),
+          stroke: new Stroke({ color: "#fff", width: 2 }),
+        }),
+        text: new Text({
+          text: p.plan.substring(0, 10), // optional label
+          font: "bold 12px sans-serif",
+          offsetY: -15,
+          fill: new Fill({ color: "#fff" }),
+        }),
+      })
+    );
+
+    features.push(feature);
+  });
+
+  const vectorSource = new VectorSource({
+    features: features,
+  });
+
+  const vectorLayer = new VectorLayer({
+    source: vectorSource,
+  });
+
+  planLayerRef.current = vectorLayer;
+  mapRef.current.addLayer(vectorLayer);
+
+  // Auto-zoom to plans
+  if (features.length > 0) {
+    const extent = vectorSource.getExtent();
+    mapRef.current.getView().fit(extent, { padding: [50, 50, 50, 50], duration: 600 });
+  }
+};
+
+
+
+
+
 
   return (
     <div className="bg-white min-h-screen">
