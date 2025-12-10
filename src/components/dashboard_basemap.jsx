@@ -368,7 +368,7 @@ const DashboardBasemap = ({
       let layerName = null;
 
       if (projectName && projectId) {
-        layerName = `LULC_${lulcYear}_${projectName}_${projectId}__level_3`;
+        layerName = `LULC_${lulcYear}_${projectName.toLowerCase()}_${projectId}__level_3`;
       }
       if (!projectName && !projectId && district && block) {
         layerName = `LULC_${lulcYear}_${block.toLowerCase()}_level_3`;
