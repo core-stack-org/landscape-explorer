@@ -122,7 +122,7 @@ const PlantationStackBarGraph = ({
       legend: { display: false },
       title: {
         display: true,
-        text: "Plantation Land Use Over Time",
+        text: "Plantation Land Use Over Time (Black line = Intervention year)",
       },
       annotation: {
         annotations: {

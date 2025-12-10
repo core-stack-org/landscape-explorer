@@ -270,7 +270,9 @@ export default function KYLHomePage() {
 
               {/* Card 2  */}
               <a
-                href="mailto:support@core-stack.org"
+                href="https://play.google.com/store/apps/details?id=com.corestack.commonsconnect"
+                target="_blank"
+                rel="noopener noreferrer"
                 className="block hover:shadow-lg transition duration-200 ease-in-out"
               >
                 <div className="flex flex-col items-center text-center cursor-pointer">
