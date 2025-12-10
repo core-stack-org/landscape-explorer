@@ -66,7 +66,7 @@ export const useGlobalWaterData = ({
       if (type === "project" && projectName && projectId) {
         const p = projectName.toLowerCase();
 
-        geo = await fetchWFS(`swb:surface_waterbodies_${p}_${projectId}`);
+        geo = await fetchWFS(`swb:waterbodies_${p}_${projectId}`);
         mws = await fetchWFS(`mws:waterbodies_mws_${p}_${projectId}`);
         zoi = await fetchWFS(`zoi_layers:waterbodies_zoi_${p}_${projectId}`);
 
