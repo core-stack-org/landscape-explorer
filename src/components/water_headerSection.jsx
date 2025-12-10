@@ -112,7 +112,8 @@ const HeaderSelect = ({
         const data = await response.json();
 
         const filtered = data.filter(
-          (project) => project.organization === organization.value
+          (project) => project.organization === organization.value &&
+          project.app_type === "waterbody"
         );
 
         const options = filtered.map((project) => ({
@@ -157,7 +158,8 @@ const HeaderSelect = ({
   // ---- FETCH ORGANIZATIONS API ----
   const loadOrganization = async () => {
     try {
-      const response = await fetch(
+      // Fetch organizations list
+      const orgRes = await fetch(
         `${process.env.REACT_APP_API_URL}/auth/register/available_organizations/?app_type=waterbody`,
         {
           method: "GET",
@@ -167,16 +169,49 @@ const HeaderSelect = ({
           },
         }
       );
-      const data = await response.json();
-      return data.map((org) => ({
-        value: org.id,
-        label: org.name,
-      }));
+      const orgData = await orgRes.json();
+  
+      // Fetch ALL projects
+      const projectRes = await fetch(
+        `${process.env.REACT_APP_API_URL}/projects/`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            "ngrok-skip-browser-warning": "420",
+            Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+          },
+        }
+      );
+      const projectData = await projectRes.json();
+  
+      // Keep only waterbody projects
+      const waterbodyProjects = projectData.filter(
+        (p) => p.app_type === "waterbody"
+      );
+  
+      // Extract orgs that have at least one waterbody project
+      const orgsWithProjects = new Set(
+        waterbodyProjects.map((p) => p.organization)
+      );
+  
+      // Filter organization list based on above
+      const filteredOrgs = orgData
+        .filter((org) => orgsWithProjects.has(org.id))
+        .map((org) => ({
+          value: org.id,
+          label: org.name,
+        }));
+  
+      console.log("Allowed Orgs:", filteredOrgs);
+  
+      return filteredOrgs;
     } catch (error) {
       console.error("Error fetching organizations:", error);
       return [];
     }
   };
+  
 
   // ---- SELECT MENUS UI ----
   const customStyles = {

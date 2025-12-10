@@ -47,20 +47,49 @@ const HeaderSelect = ({ setView }) => {
 
   const fetchOrganizations = async () => {
     try {
-      const response = await fetch(
+      // 1️⃣ Fetch all plantation organizations
+      const orgRes = await fetch(
         `${process.env.REACT_APP_API_URL}/auth/register/available_organizations/?app_type=plantation`
       );
-      const data = await response.json();
-      console.log(data)
-      const options = data.map((org) => ({
-        value: org.id,
-        label: org.name,
-      }));
-      setOrganizationOptions(options);
+      const orgData = await orgRes.json();
+  
+      // 2️⃣ Fetch ALL plantation projects
+      let token = sessionStorage.getItem("accessToken");
+      if (!token) token = await loginAndGetToken();
+  
+      const projRes = await fetch(
+        `${process.env.REACT_APP_API_URL}/projects/?app_type=plantation`,
+        {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+            "ngrok-skip-browser-warning": "420",
+          },
+        }
+      );
+  
+      const projectData = await projRes.json();
+  
+      // 3️⃣ Build a set of organization IDs that *actually have* plantation projects
+      const orgsWithProjects = new Set(projectData.map((p) => p.organization));
+  
+      // 4️⃣ Filter organizations → keep only those present in orgsWithProjects
+      const validOrganizations = orgData
+        .filter((org) => orgsWithProjects.has(org.id))
+        .map((org) => ({
+          value: org.id,
+          label: org.name,
+        }));
+  
+      console.log("Organizations with plantation projects →", validOrganizations);
+  
+      setOrganizationOptions(validOrganizations);
     } catch (error) {
       console.error("Error fetching organizations:", error);
     }
   };
+  
 
   useEffect(() => {
     fetchOrganizations();
@@ -106,7 +135,7 @@ const HeaderSelect = ({ setView }) => {
         }
       );
       const data = await response.json();
-      const filtered = data.filter((p) => p.organization === orgId);
+      const filtered = data.filter((p) => p.organization === orgId && p.app_type==="plantation");
       const options = filtered.map((p) => ({
         label: p.name,
         value: String(p.id),
