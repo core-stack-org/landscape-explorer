@@ -1,7 +1,8 @@
 export default async function getPlans(block_id = null) {
     try {
       let response = await fetch(
-        `${process.env.REACT_APP_API_URL}/watershed/plans/`,
+        `https://92c32fb6bade.ngrok-free.app/api/v1/watershed/plans/`,
+        // `${process.env.REACT_APP_API_URL}/watershed/plans/`,
         {
           method: "GET",
           headers: {

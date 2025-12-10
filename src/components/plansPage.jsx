@@ -140,6 +140,7 @@ const PlansPage = () => {
     const loadPlansOnce = async () => {
       if (plans?.length > 0) return;
       const data = await getPlans();
+      console.log(data)
       if (data?.raw) setPlans(data.raw);
     };
     loadPlansOnce();
@@ -148,45 +149,52 @@ const PlansPage = () => {
   // Load States, Districts, Blocks
   useEffect(() => {
     const loadLocations = async () => {
-      if (rawStateData && states?.length > 0) return;
-
+      if (  states?.length > 0) return;
+  
       const data = await getStates();
       setRawStateData(data);
-
-      const stateList = data?.states || [];
+  console.log(data)
+      const stateList = data || [];
       setStates(stateList);
-
-      let distList = [];
-      let distLookupTemp = {};
-
-      stateList.forEach((s) => {
-        s?.district?.forEach((d) => {
+  
+      // ------------------------------
+      // DISTRICT + BLOCK LOOKUP FLAT
+      // ------------------------------
+  
+      const districtLookupTemp = {};
+      const blockLookupTemp = [];
+  
+      const distList = [];
+      const blockList = [];
+  console.log(stateList)
+      stateList.forEach((state) => {
+        state?.district?.forEach((d) => {
+          // Collect district list
           distList.push(d);
-          distLookupTemp[d.id] = d.name;
-        });
-      });
-
-      setDistricts(distList);
-      setDistrictLookup(distLookupTemp);
-
-      let blockList = [];
-      let blockLookupTemp = {};
-
-      stateList.forEach((s) => {
-        s?.district?.forEach((d) => {
+          districtLookupTemp[d.id] = d.name;
+  
+          // Collect block list
           d?.blocks?.forEach((b) => {
             blockList.push(b);
             blockLookupTemp[b.id] = b.name;
           });
         });
       });
-
+  
+      // Save in recoil
+      setDistricts(distList);
+      setDistrictLookup(districtLookupTemp);
+  
       setBlocks(blockList);
       setBlockLookup(blockLookupTemp);
+  
+      console.log("District Lookup:", districtLookupTemp);
+      console.log("Block Lookup:", blockLookupTemp);
     };
-
+  
     loadLocations();
   }, []);
+  
 
   //  MAP INIT
   useEffect(() => {
@@ -242,7 +250,7 @@ useEffect(() => {
     feature.setStyle(
       new Style({
         image: new CircleStyle({
-          radius: radius, // ⭐ DYNAMIC BUBBLE SIZE HERE
+          radius: radius, // DYNAMIC BUBBLE SIZE HERE
           fill: new Fill({ color: "rgba(0,122,255,0.75)" }),
           stroke: new Stroke({ color: "#fff", width: 2 }),
         }),
