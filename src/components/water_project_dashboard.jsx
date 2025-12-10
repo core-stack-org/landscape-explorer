@@ -1427,23 +1427,23 @@ const WaterProjectDashboard = () => {
   transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md"
 >
   <p className="uppercase tracking-wide font-bold text-sm text-gray-800">
-    On Drainage Line
+    Drainage Line
   </p>
 
   {(() => {
     const props = activeSelectedWaterbody?.properties || {};
 
-    // ⭐ Drainage flag based on mode
+    // Drainage flag based on mode
     const drainageFlag = isTehsilMode
       ? props.on_drainage_line ?? props.drainage
       : activeSelectedWaterbody?.drainageFlag;
 
-    // ⭐ Stream order based on mode
+    //  Stream order based on mode
     const streamOrder = isTehsilMode
       ? props.max_stream_order
       : activeSelectedWaterbody?.maxStreamOrder;
 
-    // ⭐ If NOT on drainage line
+    //  If NOT on drainage line
     if (drainageFlag !== 1) {
       return (
         <p className="mt-1 text-xl md:text-2xl font-semibold text-red-500">
@@ -1455,7 +1455,7 @@ const WaterProjectDashboard = () => {
     // ⭐ If ON drainage line → show stream order
     return (
       <p className="mt-1 text-xl md:text-2xl font-semibold text-blue-600">
-        {streamOrder ? `ON (Order ${streamOrder})` : "N/A"}
+        {streamOrder ? `ON Drainage Line Stream Order ${streamOrder}` : "N/A"}
       </p>
     );
   })()}

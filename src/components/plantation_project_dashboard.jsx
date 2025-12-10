@@ -1441,9 +1441,7 @@ const PlantationProjectDashboard = () => {
                       plantation={selectedPlantation}
                       plantationData={geoData}
                     />
-                    <p className="text-[14px] text-gray-800 mt-24 text-center">
-                      <b>Black line</b> represents the year of intervention.
-                    </p>
+                    
                   </div>
 
                   {/* NDVI Chart */}
