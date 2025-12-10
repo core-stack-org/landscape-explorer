@@ -410,73 +410,99 @@ const DashboardBasemap = ({
       }
     };
 
+    const showAllWaterbodies = () => {
+      if (!geoData) return;
+    
+      const allWB = read4326(geoData);
+      if (!allWB.length) return;
+    
+      // Remove previous ALL WB layer
+      map.getLayers().forEach(layer => {
+        if (layer.get("id") === "wb_all_layer") map.removeLayer(layer);
+      });
+    
+      const wbLayer = new VectorLayer({
+        source: new VectorSource({ features: allWB }),
+        style: waterBodyStyle,
+      });
+    
+      wbLayer.set("id", "wb_all_layer");
+      wbLayer.setZIndex(5);
+      map.addLayer(wbLayer);
+    
+      // ⭐ FIT MAP TO ALL WATERBODIES
+      let fullExtent = allWB[0].getGeometry().getExtent().slice();
+    
+      allWB.forEach(f => {
+        const ex = f.getGeometry().getExtent();
+        fullExtent[0] = Math.min(fullExtent[0], ex[0]);
+        fullExtent[1] = Math.min(fullExtent[1], ex[1]);
+        fullExtent[2] = Math.max(fullExtent[2], ex[2]);
+        fullExtent[3] = Math.max(fullExtent[3], ex[3]);
+      });
+    
+      view.fit(fullExtent, {
+        padding: [50, 50, 50, 50],
+        duration: 400,
+        maxZoom: 13, // ⭐ prevent zooming in too much
+      });
+    };
+    
+    
+
     // ───── WATERBODY MODE ─────
     const addWaterbody = async () => {
       const isTehsil = !projectName && !projectId;
 
       // PROJECT MODE (unchanged)
-      if (!isTehsil) {
-        if (!geoData) return;
+// PROJECT MODE — show ONLY selected
+if (!isTehsil) {
 
-        const allWB = read4326(geoData);
+  const allWB = read4326(geoData);
+  const selectedFeatureOl = allWB.find(
+    f => f.get("UID")?.toString() === normalizedWaterbody?.UID?.toString()
+  );
 
-        const wbLayer = new VectorLayer({
-          source: new VectorSource({ features: allWB }),
-          style: waterBodyStyle,
-        });
-        wbLayer.setZIndex(5);
-        wbLayer.set("id", "wb_all_layer");
-        map.addLayer(wbLayer);
+  if (!selectedFeatureOl) {
+    console.warn("Selected WB not found — falling back to ALL WBs");
+    showAllWaterbodies();
+    return;
+  }
 
-        if (allWB.length > 0) {
-          let fullExtent = allWB[0].getGeometry().getExtent().slice();
+  // REMOVE ALL LAYERS BEFORE ADDING SELECTED
+  map.getLayers().forEach(layer => {
+    if (["wb_all_layer", "wb_selected_layer", "lulc_waterbody_layer"].includes(layer.get("id"))) {
+      map.removeLayer(layer);
+    }
+  });
 
-          allWB.forEach((f) => {
-            const ex = f.getGeometry().getExtent();
-            fullExtent[0] = Math.min(fullExtent[0], ex[0]);
-            fullExtent[1] = Math.min(fullExtent[1], ex[1]);
-            fullExtent[2] = Math.max(fullExtent[2], ex[2]);
-            fullExtent[3] = Math.max(fullExtent[3], ex[3]);
-          });
+  // FIT MAP TO SELECTED WB
+  view.fit(selectedFeatureOl.getGeometry().getExtent(), {
+    padding: [20, 20, 20, 20],
+    maxZoom: 16,
+    duration: 350,
+  });
 
-          view.fit(fullExtent, {
-            padding: [50, 50, 50, 50],
-            maxZoom: 11,
-            duration: 400,
-          });
-        }
+  // ADD ONLY SELECTED WB
+  const wbSelected = new VectorLayer({
+    source: new VectorSource({ features: [selectedFeatureOl] }),
+    style: new Style({
+      stroke: new Stroke({ color: "blue", width: 3 }),
+    }),
+  });
 
-        if (normalizedWaterbody) {
-          const selectedFeatureOl = allWB.find(
-            (f) =>
-              f.get("UID")?.toString() === normalizedWaterbody.UID?.toString()
-          );
+  wbSelected.set("id", "wb_selected_layer");
+  wbSelected.setZIndex(10);
+  map.addLayer(wbSelected);
 
-          if (selectedFeatureOl) {
-            view.fit(selectedFeatureOl.getGeometry().getExtent(), {
-              padding: [20, 20, 20, 20],
-            });
-            removeLulcLayers();
-            await addLulcLayer(
-              "lulc_RWB",
-              "lulc_waterbody_layer",
-              selectedFeatureOl,
-              false
-            );
+  // LOAD LULC FOR SELECTED WB
+  removeLulcLayers();
+  await addLulcLayer("lulc_RWB", "lulc_waterbody_layer", selectedFeatureOl, false);
 
-            const wbTop = new VectorLayer({
-              source: new VectorSource({ features: [selectedFeatureOl] }),
-              style: new Style({
-                stroke: new Stroke({ color: "blue", width: 3 }),
-              }),
-            });
-            wbTop.setZIndex(11);
-            wbTop.set("id", "wb_top_layer");
-            map.addLayer(wbTop);
-          }
-        }
-        return;
-      }
+  return;
+}
+
+
 
       // TEHSIL MODE — PATCHED
     // TEHSIL MODE — FINAL PATCH

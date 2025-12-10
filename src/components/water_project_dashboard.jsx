@@ -842,28 +842,25 @@ const WaterProjectDashboard = () => {
   };
 
   const handleMapBoxClick = () => {
-    const matchingRow = rows.find((row) => {
-      const a = (row.waterbody ?? row.waterbody_name ?? "")
-        .toString()
-        .trim()
-        .toLowerCase();
-      const b = (
-        mapClickedWaterbody?.name ??
-        mapClickedWaterbody?.waterbody ??
-        ""
-      )
-        .toString()
-        .trim()
-        .toLowerCase();
-      return a === b;
-    });
-
+    if (!mapClickedWaterbody?.UID) {
+      console.warn("Popup has no UID");
+      return;
+    }
+  
+    const uid = mapClickedWaterbody.UID.toString().trim();
+  
+    // Find row by UID
+    const matchingRow = rows.find(
+      (row) => row.UID?.toString().trim() === uid
+    );
+  
     if (matchingRow) {
       handleWaterbodyClick(matchingRow);
     } else {
-      console.warn("No matching row found.");
+      console.warn("No matching row found for UID:", uid);
     }
   };
+  
 
   const printReport=()=>{
     window.print();
