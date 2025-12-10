@@ -369,6 +369,7 @@ export default function KYLHomePage() {
                   description:
                     "Track the health and growth of plantations across time using satellite-based monitoring.",
                   icon: "🌳",
+                  link:"/plantationDashboard"
                 },
                 {
                   title: "Waterbody Rejuvenation",
