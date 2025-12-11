@@ -108,7 +108,6 @@ const PrecipitationStackChart = ({ feature ,waterbody,typeparam}) => {
 
   else {
     if (!feature.properties) return null;
-    console.log(feature)
 
     const { years, seasonData } =
       extractProjectSeasonalData(feature.properties);
@@ -142,7 +141,8 @@ const PrecipitationStackChart = ({ feature ,waterbody,typeparam}) => {
     maintainAspectRatio: false,
     responsive: true,
     plugins: {
-      legend: { position: "top" },
+      // legend: { position: "top" },
+      // title:{display:true,text:"Rainfall (in mm)",position:"bottom"},
       tooltip: { mode: "index", intersect: false },
     },
     scales: {
@@ -156,6 +156,7 @@ const PrecipitationStackChart = ({ feature ,waterbody,typeparam}) => {
 
   return (
     <div style={{ width: "100%", height: "100%" }}>
+
       <Bar data={data} options={options} />
     </div>
   );

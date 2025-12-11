@@ -2,6 +2,37 @@ export const WATER_DASHBOARD_CONFIG = {
   project: {
     interventionYear: "2022-23",
 
+    sections: {
+      section1: {
+        title: "Section 1: Water presence and land-use change in the waterbody",
+        paragraphs: [
+          "This section shows the selected waterbody, silt removal details, and seasonal water availability before and after the intervention, along with yearly trends of cropping patterns within the waterbody boundary.",
+          "The boundary shown for the waterbody is the maximal coverage ever gained by the waterbody over the last several years. Depending on rainfall, water use, and other factors like changes in the inlet and outlet channels of the waterbody, not all of the waterbody area will see water in a given year and some of the area may also get utilized for agriculture. This land use in each year can be observed from the map and graphs.",
+          "Similarly, the duration of water presence can be seen in terms of how much of the waterbody saw water throughout the year, or during the monsoon and post-monsoon months, or only during the monsoon months.",
+        ],
+      },
+  
+      section2: {
+        title:
+          "Section 2: Cropping patterns in the Zone of Influence of the waterbody",
+        paragraphs: [
+          "This section shows the waterbody’s zone of influence (ZoI) and cropping intensities within this zone, along with the NDVI values in the area.",
+          "The ZoI of the waterbody is the area impacted by the waterbody through improved soil moisture or use of water for irrigation. Changes before and after the intervention in cropping intensities and NDVI (Normalized Difference Vegetation Index, a common remotely sensed indicator of greenness) in the ZoI can be seen through maps and graphs.",
+        ],
+      },
+  
+      section3: {
+        title:
+          "Section 3: Micro-watershed context of the waterbody and Catchment area and stream position",
+        paragraphs: [
+          "This section gives the catchment area from which runoff may drain into the waterbody. A larger catchment area would imply a higher rainfall runoff draining into the waterbody, in turn leading to more storage.This can however get impacted by blocked inlet channels and other changes.",
+          "This section also specifies whether the waterbody lies on a drainage line or off a drainage line. Waterbodies on a drainage line, like those behind checkdams, are likely to get silted more quickly. The stream order of the drainage line is also specified in this case. Higher stream orders imply larger drainage lines, and therefore likely more silting in which the waterbody lies.",
+          "An additional indicator for the watershed position of the waterbody is also provided. Waterbodies at the head of a watershed up-land areas have a position of 1, and this increases for mid-land and low-land areas. Waterbodies present in lower positions would typically see sub-surface flows from upstream areas in the watershed.",
+          "This adjacent map displays the micro-watershed boundary along with its drainage network (blue lines), showing how water flows and is distributed within the micro-watershed. The map also shows the terrain in the micro-watershed.",
+        ],
+      },
+    },
+
     topSectionText: (data) =>
       `Under the project ${data.projectName || "—"}, a total of ${
         data.totalRows?.toLocaleString?.("en-IN") || 0
@@ -84,6 +115,38 @@ export const WATER_DASHBOARD_CONFIG = {
   },
 
   tehsil: {
+
+    sections: {
+      section1: {
+        title: "Section 1: Water presence and land-use change in the waterbody",
+        paragraphs: [
+          "This section shows the selected waterbody and seasonal water availability before and after the intervention, along with yearly trends of cropping patterns within the waterbody boundary.",
+          "The boundary shown for the waterbody is the maximal coverage ever gained by the waterbody over the last several years. Depending on rainfall, water use, and other factors like changes in the inlet and outlet channels of the waterbody, not all of the waterbody area will see water in a given year and some of the area may also get utilized for agriculture. This land use in each year can be observed from the map and graphs.",
+          "Similarly, the duration of water presence can be seen in terms of how much of the waterbody saw water throughout the year, or during the monsoon and post-monsoon months, or only during the monsoon months.",
+        ],
+      },
+  
+      section2: {
+        title:
+          "Section 2: Cropping patterns in the Zone of Influence of the waterbody",
+        paragraphs: [
+          "This section shows the waterbody’s zone of influence (ZoI) and cropping intensities within this zone, along with the NDVI values in the area.",
+          "The ZoI of the waterbody is the area impacted by the waterbody through improved soil moisture or use of water for irrigation. Changes before and after the RWB intervention in cropping intensities and NDVI (Normalized Difference Vegetation Index, a common remotely sensed indicator of greenness) in the ZoI can be seen through maps and graphs.",
+        ],
+      },
+  
+      section3: {
+        title:
+          "Section 3: Micro-watershed context of the waterbody and Catchment area and stream position",
+        paragraphs: [
+          "This section gives the catchment area from which runoff may drain into the waterbody. A larger catchment area would imply a higher rainfall runoff draining into the waterbody, in turn leading to more storage.This can however get impacted by blocked inlet channels and other changes.",
+          "This section also specifies whether the waterbody lies on a drainage line or off a drainage line. Waterbodies on a drainage line, like those behind checkdams, are likely to get silted more quickly. The stream order of the drainage line is also specified in this case. Higher stream orders imply larger drainage lines, and therefore likely more silting in which the waterbody lies.",
+          "An additional indicator for the watershed position of the waterbody is also provided. Waterbodies at the head of a watershed up-land areas have a position of 1, and this increases for mid-land and low-land areas. Waterbodies present in lower positions would typically see sub-surface flows from upstream areas in the watershed.",
+          "This adjacent map displays the micro-watershed boundary along with its drainage network (blue lines), showing how water flows and is distributed within the micro-watershed. The map also shows the terrain in the micro-watershed.",
+        ],
+      },
+    },
+
     topSectionText: (data) =>
       `In Tehsil ${data.tehsilName || "—"}, ${
         data.totalRows || 0
@@ -125,36 +188,7 @@ export const WATER_DASHBOARD_CONFIG = {
     ],
   },
 
-  sections: {
-    section1: {
-      title: "Section 1: Water presence and land-use change in the waterbody",
-      paragraphs: [
-        "This section shows the selected waterbody, silt removal details, and seasonal water availability before and after the intervention, along with yearly trends of cropping patterns within the waterbody boundary.",
-        "The boundary shown for the waterbody is the maximal coverage ever gained by the waterbody over the last several years. Depending on rainfall, water use, and other factors like changes in the inlet and outlet channels of the waterbody, not all of the waterbody area will see water in a given year and some of the area may also get utilized for agriculture. This land use in each year can be observed from the map and graphs.",
-        "Similarly, the duration of water presence can be seen in terms of how much of the waterbody saw water throughout the year, or during the monsoon and post-monsoon months, or only during the monsoon months.",
-      ],
-    },
 
-    section2: {
-      title:
-        "Section 2: Cropping patterns in the Zone of Influence of the waterbody",
-      paragraphs: [
-        "This section shows the waterbody’s zone of influence (ZoI) and cropping intensities within this zone, along with the NDVI values in the area.",
-        "The ZoI of the waterbody is the area impacted by the waterbody through improved soil moisture or use of water for irrigation. Changes before and after the intervention in cropping intensities and NDVI (Normalized Difference Vegetation Index, a common remotely sensed indicator of greenness) in the ZoI can be seen through maps and graphs.",
-      ],
-    },
-
-    section3: {
-      title:
-        "Section 3: Micro-watershed context of the waterbody and Catchment area and stream position",
-      paragraphs: [
-        "This section gives the catchment area from which runoff may drain into the waterbody. A larger catchment area would imply a higher rainfall runoff draining into the waterbody, in turn leading to more storage.This can however get impacted by blocked inlet channels and other changes.",
-        "This section also specifies whether the waterbody lies on a drainage line or off a drainage line. Waterbodies on a drainage line, like those behind checkdams, are likely to get silted more quickly. The stream order of the drainage line is also specified in this case. Higher stream orders imply larger drainage lines, and therefore likely more silting in which the waterbody lies.",
-        "An additional indicator for the watershed position of the waterbody is also provided. Waterbodies at the head of a watershed up-land areas have a position of 1, and this increases for mid-land and low-land areas. Waterbodies present in lower positions would typically see sub-surface flows from upstream areas in the watershed.",
-        "This adjacent map displays the micro-watershed boundary along with its drainage network (blue lines), showing how water flows and is distributed within the micro-watershed. The map also shows the terrain in the micro-watershed.",
-      ],
-    },
-  },
 
   legends: {
     waterbody: [

@@ -31,8 +31,6 @@ const CroppingIntensityStackChart = ({
 }) => {
   const [showImpact, setShowImpact] = useState(false);
 
-  console.log(zoiFeatures)
-
   const wbUID =
   waterbody?.UID ||
   waterbody?.uid ||
@@ -46,7 +44,6 @@ const CroppingIntensityStackChart = ({
       wbUID?.toString().trim()
   );
   if (!matchedFeature) return null;
-  console.log(matchedFeature)
 
   const getAreaData = (years) =>
     years.map((year) => ({

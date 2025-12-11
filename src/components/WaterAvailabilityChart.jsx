@@ -313,9 +313,9 @@ acc[`TR${year}`] = kharif + rabi + zaid;
       title: {
         display: true,
         text: isTehsil
-          ? "Land Use Categories vs Rainfall"
+          ? "Water Availabilty & Land use inside Waterbody"
           : !showImpact
-            ? "Land Use Categories vs Rainfall (Black line = intervention year)"
+            ? "Water Availabilty & Land use inside Waterbody (Black line = intervention year)"
             : "Impact Analysis Graph (Black line = intervention year)",
         font: { size: 16, weight: "bold" },
       },
