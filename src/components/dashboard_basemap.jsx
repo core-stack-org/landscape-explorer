@@ -191,15 +191,6 @@ const DashboardBasemap = ({
     });
   };
 
-  const getZoomForArea = (areaSqKm) => {
-    if (areaSqKm < 0.05) return 18;   // VERY small ponds → zoom very close
-    if (areaSqKm < 0.2) return 17;
-    if (areaSqKm < 1) return 16;
-    if (areaSqKm < 5) return 15;
-    return 14;  // Larger waterbodies → less zoom-in
-  };
-  
-
   // INITIAL MAP SETUP
   useEffect(() => {
     if (!mapElement.current) return;
@@ -390,7 +381,7 @@ const DashboardBasemap = ({
         layerName = `LULC_${lulcYear}_${projectName.toLowerCase()}_${projectId}__level_3`;
       }
       if (!projectName && !projectId && district && block) {
-        layerName = `LULC_${lulcYear}_${block.toLowerCase()}_level_3`;
+        layerName = `LULC_${lulcYear}_${district.toLowerCase()}_${block.toLowerCase()}_level_3`;
       }
 
       try {
