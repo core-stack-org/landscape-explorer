@@ -1126,10 +1126,7 @@ const KYLMapContainer = ({
   mwsLayerRef,
   boundaryLayerRef,
   mapRef,
-  currentLayer,
-  setSearchLatLong,
-  mappedAssets,
-  mappedDemands
+  currentLayer, // Add this prop
 }) => {
   const areMWSLayersAvailable = mwsLayerRef?.current !== null;
   const areVillageLayersAvailable = boundaryLayerRef?.current !== null;
@@ -1157,8 +1154,6 @@ const KYLMapContainer = ({
         showMWS={showMWS && areMWSLayersAvailable}
         showVillages={showVillages && areVillageLayersAvailable}
         currentLayer={currentLayer}
-        mappedAssets={mappedAssets}
-        mappedDemands={mappedDemands}
       />
 
       {/* Search Bar */}
@@ -1166,7 +1161,6 @@ const KYLMapContainer = ({
         <KYLLocationSearchBar
           statesData={statesData}
           onLocationSelect={onLocationSelect}
-          setSearchLatLong={setSearchLatLong}
         />
       </div>
 

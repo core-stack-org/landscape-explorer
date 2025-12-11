@@ -220,13 +220,13 @@
                     {
                         "fill": "rgba(231, 76, 60, 0.5)",
                         "stroke": "rgba(231, 76, 60, 1)",
-                        "lower": 2,
+                        "lower": 1,
                         "upper": 99999
                     },
                     {
                         "fill": "rgba(235, 152, 78, 0.5)",
                         "stroke": "rgba(235, 152, 78, 1)",
-                        "lower": 1,
+                        "lower": 2,
                         "upper": 99999
                     }
                 ],
@@ -536,11 +536,11 @@
                 "type": 1,
                 "values": [
                     {
-                        "label": "Positive",
+                        "label": "Positive Trend",
                         "value": "1"
                     },
                     {
-                        "label": "Negative",
+                        "label": "Negative Trend",
                         "value": "-1"
                     },
                     {
