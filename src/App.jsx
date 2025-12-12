@@ -6,6 +6,9 @@ import LEHomepage from "./pages/LE_homepage";
 import PlantationDashboard from "./pages/plantationDashboard";
 import PlantationProjectDashboard from "./components/plantation_project_dashboard";
 import LandscapeExplorer from "./pages/LandscapeExplorer";
+import PlansPage from "./components/plansPage";
+import StewardDetailPage from "./components/steward_detailPage";
+
 function App() {
   return (
     <BrowserRouter>
@@ -34,6 +37,10 @@ function App() {
           path="/dashboard"
           element={<WaterProjectDashboard />}
         />
+        <Route path="/plansPage" element={<PlansPage />} />
+        <Route path="/steward" element={<StewardDetailPage />} />
+
+
       </Routes>
     </BrowserRouter>
   );

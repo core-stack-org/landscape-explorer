@@ -300,11 +300,7 @@ export default function KYLHomePage() {
               </a>
 
               {/*  Card 3 */}
-              <div
-                onClick={() => {
-                  setShowOverlay(true);
-                  setTimeout(() => setShowOverlay(false), 5000);
-                }}
+              <div onClick={() => navigate("/plansPage")}
                 className="cursor-pointer hover:shadow-lg transition duration-200 ease-in-out"
               >
                 <div className="flex flex-col items-center text-center">
@@ -314,13 +310,6 @@ export default function KYLHomePage() {
                       alt="View and Support Plans"
                       className="absolute inset-0 w-full h-full object-cover"
                     />
-                    {showOverlay && (
-                      <div className="absolute inset-0 bg-gray-800 bg-opacity-75 flex items-center justify-center z-10">
-                        <p className="text-white text-lg font-semibold">
-                          Coming Soon...
-                        </p>
-                      </div>
-                    )}
                   </div>
 
                   <div className="p-4">
