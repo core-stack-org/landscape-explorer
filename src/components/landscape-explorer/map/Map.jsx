@@ -1542,7 +1542,7 @@ const Map = forwardRef(({
 
       // === Drought Layer ===
       let DroughtLayer = await getVectorLayers(
-        "cropping_drought",
+        "drought",
         district.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_') +
         "_" +
         block.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_') +
@@ -2206,7 +2206,7 @@ const Map = forwardRef(({
 
       let LulcLayer = await getImageLayers(
         "LULC_level_1",
-        `LULC_${lulcYear1.value}_${block.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_')}_level_1`,
+        `LULC_${lulcYear1.value}_${district.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_')}_${block.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_')}_level_1`,
         true,
         ""
       );
@@ -2236,7 +2236,7 @@ const Map = forwardRef(({
 
       let LulcLayer = await getImageLayers(
         "LULC_level_2",
-        `LULC_${lulcYear2.value}_${block.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_')}_level_2`,
+        `LULC_${lulcYear2.value}_${district.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_')}_${block.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_')}_level_2`,
         true,
         ""
       );
@@ -2266,7 +2266,7 @@ const Map = forwardRef(({
 
       let LulcLayer = await getImageLayers(
         "LULC_level_3",
-        `LULC_${lulcYear3.value}_${block.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_')}_level_3`,
+        `LULC_${lulcYear3.value}_${district.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_')}_${block.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_')}_level_3`,
         true,
         ""
       );

@@ -425,7 +425,7 @@ const RightSidebar = ({
           url = `https://geoserver.core-stack.org:8443/geoserver/mws_layers/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=mws_layers:deltaG_fortnight_${districtFormatted}_${blockFormatted}&outputFormat=application/json&screen=main`;
           break;
         case 'drought':
-          url = `https://geoserver.core-stack.org:8443/geoserver/cropping_drought/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=cropping_drought:${districtFormatted}_${blockFormatted}_drought&outputFormat=application/json&screen=main`;
+          url = `https://geoserver.core-stack.org:8443/geoserver/drought/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=drought:${districtFormatted}_${blockFormatted}_drought&outputFormat=application/json&screen=main`;
           break;
         case 'nrega':
           url = `https://geoserver.core-stack.org:8443/geoserver/nrega_assets/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=nrega_assets:${districtFormatted}_${blockFormatted}&outputFormat=application/json&screen=main`;
@@ -519,7 +519,10 @@ const RightSidebar = ({
       return;
     }
     
-    const url = `https://geoserver.core-stack.org:8443/geoserver/LULC_level_${level.split('_').pop()}/wcs?service=WCS&version=2.0.1&request=GetCoverage&CoverageId=LULC_level_${level.split('_').pop()}:LULC_${yearValue}_${block.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_')}_level_${level.split('_').pop()}&format=geotiff&compression=LZW&tiling=false`;
+    const districtFormatted = district.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_');
+    const blockFormatted = block.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_');
+
+    const url = `https://geoserver.core-stack.org:8443/geoserver/LULC_level_${level.split('_').pop()}/wcs?service=WCS&version=2.0.1&request=GetCoverage&CoverageId=LULC_level_${level.split('_').pop()}:LULC_${yearValue}_${districtFormatted}_${blockFormatted}_level_${level.split('_').pop()}&format=geotiff&compression=LZW&tiling=false`;
     
     // Use our direct geotiff download function
     downloadGeoTiff(url, `LULC_${level.split('_').pop()}_${yearValue}`);

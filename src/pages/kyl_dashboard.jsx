@@ -8,8 +8,7 @@ import {
   filterSelectionsAtom,
   yearAtom,
   dataJsonAtom,
-  selectedWaterbodyForTehsilAtom,
-  waterGeoDataAtom,waterMwsDataAtom,zoiFeaturesAtom
+  selectedWaterbodyForTehsilAtom
 } from "../store/locationStore.jsx";
 
 //* OpenLayers imports
@@ -22,8 +21,6 @@ import { Map, View } from "ol";
 import { Fill, Stroke, Style, Icon } from "ol/style.js";
 import Overlay from "ol/Overlay";
 import GeoJSON from "ol/format/GeoJSON";
-
-
 
 import LandingNavbar from "../components/landing_navbar.jsx";
 import getStates from "../actions/getStates.js";
@@ -46,7 +43,6 @@ import {
   initializeAnalytics,
 } from "../services/analytics";
 import getWebGlLayers from "../actions/getWebGlLayers.js";
-import { useGlobalWaterData } from "../store/useGlobalWaterData.jsx";
 import waterbodyIcon from '../assets/waterbodies_proposed.svg'
 
 const KYLDashboardPage = () => {
@@ -62,7 +58,6 @@ const KYLDashboardPage = () => {
   const [islayerLoaded, setIsLayerLoaded] = useState(false);
   const [highlightMWS, setHighlightMWS] = useState(null)
   const [selectedMWS, setSelectedMWS] = useState([]);
-  const [selectedVillages, setSelectedVillages] = useState([]);
 
   const [dataJson, setDataJson] = useRecoilState(dataJsonAtom);
   const [villageJson, setVillageJson] = useState(null);
@@ -72,6 +67,8 @@ const KYLDashboardPage = () => {
   const [currentLayer, setCurrentLayer] = useState([]);
   const [toggleStates, setToggleStates] = useState({});
   const [villageIdList, setVillageIdList] = useState(new Set([]));
+  const [patternVillageList, setPatternVillageList] = useState(new Set([]));
+  const [finalVillageList, setFinalVillageList] = useState(new Set([]))
 
   const [statesData, setStatesData] = useRecoilState(stateDataAtom);
   const [state, setState] = useRecoilState(stateAtom);
@@ -97,24 +94,13 @@ const KYLDashboardPage = () => {
   const [villagePatternTrigger, setvillagePatternTrigger] = useState(0)
 
   const [clickedWaterbodyId, setClickedWaterbodyId] = useState(null);
-const [waterbodyDashboardUrl, setWaterbodyDashboardUrl] = useState(null);
-const [selectedWaterbodyProfile, setSelectedWaterbodyProfile] = useState(null);
+  const [waterbodyDashboardUrl, setWaterbodyDashboardUrl] = useState(null);
+  const [selectedWaterbodyProfile, setSelectedWaterbodyProfile] = useState(null);
 
-const waterbodyClickedRef = useRef(false);
+  const waterbodyClickedRef = useRef(false);
 
+  const [selectedWaterbodyForTehsil, setSelectedWaterbodyForTehsil] = useRecoilState(selectedWaterbodyForTehsilAtom);
 
-  
-  const { geoData, mwsData, zoiData } = useGlobalWaterData({
-    type: "tehsil",
-    state: state?.label,
-    district: district?.label,
-    block: block?.label,
-  });
-
-  const [selectedWaterbodyForTehsil, setSelectedWaterbodyForTehsil] =
-  useRecoilState(selectedWaterbodyForTehsilAtom);
-
-  
   const addLayerSafe = (layer) => layer && mapRef.current && mapRef.current.addLayer(layer);
 
   const handleResetMWS = () => {
@@ -360,6 +346,55 @@ const waterbodyClickedRef = useRef(false);
     );
   };
 
+  const filterWaterbodiesByMWS = () => {
+    console.log(waterbodiesLayerRef.current)
+    console.log(mwsLayerRef.current)
+    console.log(selectedMWS.length)
+    if (!waterbodiesLayerRef.current || !mwsLayerRef.current || !selectedMWS.length) {
+      if (waterbodiesLayerRef.current) {
+        waterbodiesLayerRef.current.getSource().getFeatures().forEach(feature => {
+          feature.setStyle(undefined);
+        });
+      }
+      return;
+    }
+
+    const mwsSource = mwsLayerRef.current.getSource();
+    const waterbodiesSource = waterbodiesLayerRef.current.getSource();
+
+    const selectedMWSPolygons = mwsSource.getFeatures().filter(feature => {
+      const uid = feature.get('uid');
+      return selectedMWS.includes(uid);
+    });
+
+    if (selectedMWSPolygons.length === 0) {
+      console.warn('No MWS polygons found for selected UIDs');
+      return;
+    }
+
+    waterbodiesSource.getFeatures().forEach(wbFeature => {
+      const wbGeom = wbFeature.getGeometry();
+      if (!wbGeom) return;
+
+      const intersects = selectedMWSPolygons.some(mwsFeature => {
+        const mwsGeom = mwsFeature.getGeometry();
+        if (!mwsGeom) return false;
+
+        // Check if any coordinate of waterbody is inside MWS polygon
+        const coordinates = wbGeom.getType() === 'Polygon' 
+          ? wbGeom.getCoordinates()[0] 
+          : wbGeom.getCoordinates()[0][0];
+        
+        return coordinates.some(coord => mwsGeom.intersectsCoordinate(coord));
+      });
+
+      if (intersects) {
+        wbFeature.setStyle(undefined);
+      } else {
+        wbFeature.setStyle(new Style({}));
+      }
+    });
+  };
 
   const resetMWSStyle = () => {
     mwsLayerRef.current.setStyle((feature) => {
@@ -413,7 +448,6 @@ const waterbodyClickedRef = useRef(false);
             mapRef.current.removeLayer(boundaryLayerRef.current);
             mapRef.current.addLayer(mwsLayer);
             mapRef.current.addLayer(boundaryLayerRef.current);
-          
           }
           mwsLayerRef.current = mwsLayer;
           saveAllMwsToLocalStorage(mwsLayer);
@@ -450,7 +484,7 @@ const waterbodyClickedRef = useRef(false);
                 width: 1.0,
               }),
               fill: new Fill({
-                color: "rgba(74, 144, 226, 0.2)",
+                color: "rgba(85, 152, 229, 0.2)",
               }),
             });
           }
@@ -528,7 +562,7 @@ const waterbodyClickedRef = useRef(false);
     // If already loaded → just show
     if (waterbodiesLayerRef.current) {
       waterbodiesLayerRef.current.setVisible(true);
-      mwsLayerRef.current.setVisible(false)
+      //mwsLayerRef.current.setVisible(true)
       return;
     }
 
@@ -560,23 +594,9 @@ const waterbodyClickedRef = useRef(false);
             color: "#fcfc3a",
             width: 2,
           }),
-          
         }),
-    
-        // 2 Waterbody icon at centroid
-        // new Style({
-        //   geometry: pointGeom,
-        //   image: new Icon({
-        //     src: waterbodyIcon,
-        //     scale: 0.5,
-        //     anchor: [0.5, 1],
-        //   }),
-        // }),
       ];
     });
-    
-    
-
     if (!wbLayer) {
       console.warn("Failed loading waterbodies");
       return;
@@ -997,7 +1017,7 @@ const waterbodyClickedRef = useRef(false);
           );
           layerRef.push(tempLayer);
           mapRef.current.addLayer(tempLayer);
-        } else if (filter.layer_store[i] === "cropping_drought" || filter.layer_store[i] === "green_credit") {
+        } else if (filter.layer_store[i] === "drought" || filter.layer_store[i] === "green_credit") {
           tempLayer = await getVectorLayers(
             filter.layer_store[i],
             `${district.label.toLowerCase().split(" ").join("_")}_${block.label
@@ -1124,14 +1144,6 @@ const waterbodyClickedRef = useRef(false);
     });
 
     mapRef.current = map;
-
-    const popup = new Overlay({
-      element: document.getElementById("waterbody-popup"),
-      positioning: "bottom-center",
-      stopEvent: true,
-    });
-    map.addOverlay(popup);
-    popupRef.current = popup;
   };
 
   const handleItemSelect = (setter, value) => {
@@ -1194,7 +1206,7 @@ const waterbodyClickedRef = useRef(false);
     setMappedDemands(false);
 
     setSelectedMWS([]);
-    setSelectedVillages([]);
+    setVillageIdList(new Set([]));
 
     setShowMWS(true);
     setShowVillages(true);
@@ -1271,49 +1283,39 @@ const waterbodyClickedRef = useRef(false);
     }
   }
 
-const saveAllMwsToLocalStorage = async(mwsLayer) => {
-  console.log("Reached here !")
-  console.log(mwsLayer)
-  
-  const source = mwsLayer.getSource();
-  
-  // Wait for features to be loaded
-  return new Promise((resolve, reject) => {
-    const features = source.getFeatures();
+  const saveAllMwsToLocalStorage = async(mwsLayer) => {
+    const source = mwsLayer.getSource();
     
-    if (features && features.length > 0) {
-      // Features already loaded
-      saveFeaturestoStorage(features);
-      resolve();
-    } else {
-      // Wait for features to load
-      const key = source.on('change', () => {
-        if (source.getState() === 'ready') {
-          const loadedFeatures = source.getFeatures();
-          console.log("Features loaded:", loadedFeatures.length);
-          
-          if (loadedFeatures && loadedFeatures.length > 0) {
-            saveFeaturestoStorage(loadedFeatures);
-            source.un('change', key); // Unsubscribe
-            resolve();
+    // Wait for features to be loaded
+    return new Promise((resolve, reject) => {
+      const features = source.getFeatures();
+      
+      if (features && features.length > 0) {
+        // Features already loaded
+        saveFeaturestoStorage(features);
+        resolve();
+      } else {
+        // Wait for features to load
+        const key = source.on('change', () => {
+          if (source.getState() === 'ready') {
+            const loadedFeatures = source.getFeatures();
+            console.log("Features loaded:", loadedFeatures.length);
+            
+            if (loadedFeatures && loadedFeatures.length > 0) {
+              saveFeaturestoStorage(loadedFeatures);
+              source.un('change', key); // Unsubscribe
+              resolve();
+            }
           }
-        }
-      });
+        });
+      }
+    });
+    function saveFeaturestoStorage(features) {
+      const geojson = new GeoJSON();
+      const featureList = features.map(f => geojson.writeFeatureObject(f));
+      localStorage.setItem("all_mws_features", JSON.stringify(featureList));
     }
-  });
-  
-  function saveFeaturestoStorage(features) {
-    const geojson = new GeoJSON();
-    const featureList = features.map(f => geojson.writeFeatureObject(f));
-    localStorage.setItem("all_mws_features", JSON.stringify(featureList));
-    console.log("Saved all MWS:", featureList.length);
-  }
-};
-  // useEffect(()=> {
-  //   if(mwsLayerRef.current !== null){
-  //     saveAllMwsToLocalStorage(mwsLayerRef.current)
-  //   }
-  // },[mwsLayerRef.current])
+  };
 
   useEffect(() => {
     if (!mapRef.current) return;
@@ -1355,36 +1357,24 @@ const saveAllMwsToLocalStorage = async(mwsLayer) => {
     
       setSelectedWaterbodyForTehsil(fullFeature);
       localStorage.setItem("selectedWaterbody", JSON.stringify(fullFeature));
-    
-      // setClickedWaterbodyId(wb_id);
-      // setWaterbodyDashboardUrl(
-      //   `/dashboard?type=tehsil&state=${state.label}&district=${district.label}&block=${block.label}&waterbody=${wb_id}`
-      // );
       setSelectedWaterbodyProfile({
         id: wb_id,
         dashboardUrl: `/dashboard?type=tehsil&state=${state.label}&district=${district.label}&block=${block.label}&waterbody=${wb_id}`,
         properties: props,
         geometry: new GeoJSON().writeGeometryObject(wbFeature.getGeometry())
       });
-      
-
-    
       console.log("WATERBODY CLICKED →", wb_id);
     };
     
-  
     map.on("click", handleWaterbodyClick);
     return () => map.un("click", handleWaterbodyClick);
   }, [mapRef.current, state, district, block]);
-  
 
   useEffect(() => {
     if (!mapRef.current) return;
 
     const handleMapClick = (event) => {
-      if (waterbodyClickedRef.current) {
-        return;
-      }
+
       const feature = mapRef.current.forEachFeatureAtPixel(
         event.pixel,
         (feature, layer) => {
@@ -1460,356 +1450,6 @@ const saveAllMwsToLocalStorage = async(mwsLayer) => {
       boundaryLayerRef.current.setVisible(showVillages);
     }
   }, [showMWS, showVillages]);
-
-  useEffect(() => {
-    try {
-      if (!dataJson || !Array.isArray(dataJson)) {
-        console.warn("DataJson not loaded or invalid format");
-        return;
-      }
-
-      if (!filterSelections?.selectedMWSValues || !filterSelections?.selectedVillageValues) {
-        console.warn("Invalid filter selections structure");
-        return;
-      }
-
-      let keys = Object.keys(filterSelections.selectedMWSValues);
-      let villageKeys = Object.keys(filterSelections.selectedVillageValues);
-      let tempMWS = [];
-      let tempVillages = [];
-      let mwsVillageList = new Set([]);
-
-      if (keys.length > 0) {
-        try {
-
-          keys.forEach((item) => {
-            const mwsValues = filterSelections.selectedMWSValues[item];
-            if (!mwsValues) return;
-            let tempArr = [];
-            mwsValues.forEach((selectedOption) => {
-
-              const filter = getAllFilters().find((f) => f.name === item);
-
-              if (filter?.type === 2) {
-                dataJson.forEach((tempItem) => {
-                  try {
-                    if (tempItem && typeof tempItem[item] !== "undefined" && tempItem.mws_id) {
-                      const itemValue = Number(tempItem[item]);
-                      if (!isNaN(itemValue) && itemValue >= selectedOption.value.lower && itemValue <= selectedOption.value.upper) {
-                        tempArr.push(tempItem.mws_id);
-                        tempItem.mws_intersect_villages.forEach((ids) =>
-                          mwsVillageList.add(ids)
-                        );
-                      }
-                    }
-                  } catch (err) {
-                    console.warn("Error processing MWS item:", err);
-                  }
-                });
-              } else {
-                dataJson.forEach((tempItem) => {
-                  try {
-                    if (tempItem && tempItem[item] === selectedOption.value && tempItem.mws_id) {
-                      tempArr.push(tempItem.mws_id);
-                      tempItem.mws_intersect_villages.forEach((ids) =>
-                        mwsVillageList.add(ids)
-                      );
-                    }
-                  } catch (err) {
-                    console.warn("Error processing MWS item:", err);
-                  }
-                });
-              }
-            });
-            if (tempMWS.length > 0) {
-              tempMWS = tempMWS.filter((id) => tempArr.includes(id));
-            } else {
-              tempMWS = tempArr;
-            }
-          });
-
-          if (getFormattedSelectedFilters().length > 0 && getFormattedSelectedPatterns().length === 0) {
-            setSelectedMWS(tempMWS);
-            fetchMWSLayer(tempMWS);
-            setVillageIdList(mwsVillageList);
-          }
-          else if (getFormattedSelectedFilters().length > 0 && getFormattedSelectedPatterns().length > 0) {
-            let intersection
-            if(keys.length === 1){
-              intersection = tempMWS
-            }
-            else{
-              intersection = tempMWS.filter(x => selectedMWS.includes(x));
-            }
-            setSelectedMWS(intersection);
-            fetchMWSLayer(intersection);
-            setVillageIdList(mwsVillageList);
-            setvillagePatternTrigger(!villagePatternTrigger)
-          }
-          else if (getFormattedSelectedFilters().length === 0 && getFormattedSelectedPatterns().length > 0) {
-            setPatternTrigger(!patternTrigger)
-            setvillagePatternTrigger(!villagePatternTrigger)
-          }
-          else {
-            setSelectedMWS([]);
-            fetchMWSLayer([]);
-            setVillageIdList(new Set([]));
-          }
-
-        } catch (error) {
-          console.error("Error processing MWS data:", error);
-          setSelectedMWS([]);
-          fetchMWSLayer([]);
-        }
-      }
-      else {
-        //setSelectedMWS([]);
-        fetchMWSLayer([]);
-      }
-
-      if (villageKeys.length > 0) {
-        try {
-          if (!villageJson || !Array.isArray(villageJson)) {
-            console.warn("VillageJson not loaded or invalid format");
-            return;
-          }
-
-          villageKeys.forEach((item) => {
-            const villageValues = filterSelections.selectedVillageValues[item];
-            if (!villageValues) return;
-
-            let tempArr = [];
-    
-            villageValues.forEach((selectedOption) => {
-              console.log("Reached Here 1")
-                villageJson.forEach((tempItem) => {
-                  try {
-                    if (tempItem && typeof tempItem[item] !== "undefined" && tempItem.village_id) {
-                      const itemValue = Number(tempItem[item]);
-                      if (!isNaN(itemValue) && itemValue >= selectedOption.value.lower && itemValue <= selectedOption.value.upper) {
-                        // Only include villages that are in MWS selection if we have an MWS selection
-                        if (mwsVillageList.size !== 0 && mwsVillageList.has(tempItem.village_id)) {
-                          tempArr.push(tempItem.village_id);
-                        }
-                        else if(mwsVillageList.size === 0 && tempMWS.length === 0){
-                          tempArr.push(tempItem.village_id);
-                        }
-                      }
-                    }
-                  } catch (err) {
-                    console.warn("Error processing village item:", err);
-                  }
-                });
-            });
-            tempVillages = tempArr;
-          });
-
-          setSelectedVillages(tempVillages);
-          fetchAdminLayer(tempVillages);
-        } 
-        catch (error) {
-          console.error("Error processing village data:", error);
-          setSelectedVillages([]);
-          fetchAdminLayer([]);
-        }
-      } else {
-        setSelectedVillages([]);
-        fetchAdminLayer([]);
-      }
-    } catch (error) {
-      console.error("Critical error in filter processing:", error);
-      setSelectedMWS([]);
-      setSelectedVillages([]);
-      fetchMWSLayer([]);
-      fetchAdminLayer([]);
-    }
-  }, [filterSelections.selectedMWSValues, dataJson, filterTrigger]);
-
-  useEffect(() => {
-    
-    let villageKeys = Object.keys(filterSelections.selectedVillageValues);
-    let tempVillages = [];
-    
-    if (villageKeys.length > 0) {
-        try {
-          if (!villageJson || !Array.isArray(villageJson)) {
-            console.warn("VillageJson not loaded or invalid format");
-            return;
-          }
-
-          villageKeys.forEach((item) => {
-            const villageValues = filterSelections.selectedVillageValues[item];
-            if (!villageValues) return;
-
-            let tempArr = [];
-    
-            villageValues.forEach((selectedOption) => {
-                villageJson.forEach((tempItem) => {
-                  try {
-                    if (tempItem && typeof tempItem[item] !== "undefined" && tempItem.village_id) {
-                      const itemValue = Number(tempItem[item]);
-                      if (!isNaN(itemValue) && itemValue >= selectedOption.value.lower && itemValue <= selectedOption.value.upper) {
-                        // Only include villages that are in MWS selection if we have an MWS selection
-                        console.log(villageIdList.size)
-                        if (villageIdList.size !== 0 && villageIdList.has(tempItem.village_id)) {
-                          tempArr.push(tempItem.village_id);
-                        }
-                        else if(villageIdList.size === 0){
-                          tempArr.push(tempItem.village_id);
-                        }
-                      }
-                    }
-                  } catch (err) {
-                    console.warn("Error processing village item:", err);
-                  }
-                });
-            });
-            tempVillages = tempArr;
-          });
-          setSelectedVillages(tempVillages);
-          fetchAdminLayer(tempVillages);
-        } 
-        catch (error) {
-          console.error("Error processing village data:", error);
-          setSelectedVillages([]);
-          fetchAdminLayer([]);
-        }
-      } else {
-        setSelectedVillages([]);
-        fetchAdminLayer([]);
-      }
-  },[filterSelections.selectedVillageValues, villageJson])
- 
-  useEffect(() => {
-    try {
-      if (!dataJson || !Array.isArray(dataJson)) {
-        console.warn("DataJson not loaded or invalid format");
-        return;
-      }
-      if (!patternSelections?.selectedMWSPatterns) {
-        console.warn("Invalid patterns selections structure");
-        return;
-      }
-      let mwsKeys = Object.keys(patternSelections.selectedMWSPatterns)
-      
-      let tempMWS = new Set([]);
-
-      if (mwsKeys.length > 0) {
-        try {
-          mwsKeys.forEach((item) => {
-            let patternValues = patternSelections.selectedMWSPatterns[item]
-            if (!patternValues) return
-
-            let tempIntersection = new Set([])
-            patternValues.conditions.forEach((tempItem) => {
-              dataJson.forEach((mwsItem) => {
-                if (tempItem.type === 1 && mwsItem[tempItem.key] === tempItem.value) {
-                  tempIntersection.add(mwsItem["mws_id"])
-                }
-                else if (tempItem.type === 2 && mwsItem[tempItem.key] >= tempItem.value.lower && mwsItem[tempItem.key] <= tempItem.value.upper) {
-                  tempIntersection.add(mwsItem["mws_id"])
-                }
-                else {
-                  if (tempItem.type === 3 && mwsItem[tempItem.key] != tempItem.value) {
-                    tempIntersection.add(mwsItem["mws_id"])
-                  }
-                }
-              })
-            })
-            if (tempMWS.size > 0) {
-              tempMWS = new Set([...tempMWS].filter(x => tempIntersection.has(x)));
-            }
-            else {
-              tempMWS = tempIntersection
-            }
-          })
-
-          let intersectionArray = []
-          if (getFormattedSelectedPatterns().length >= 1 && getFormattedSelectedFilters().length > 0) {
-            let mwsSet = new Set(selectedMWS)
-            intersectionArray = [...tempMWS].filter(x => mwsSet.has(x));
-            setSelectedMWS(intersectionArray)
-            fetchMWSLayer(intersectionArray)
-          }
-          else if (getFormattedSelectedPatterns().length === 0 && getFormattedSelectedFilters().length > 0) {
-            setFilterTrigger(!filterTrigger)
-          }
-          else {
-            intersectionArray = [...tempMWS]
-            setSelectedMWS(intersectionArray)
-            fetchMWSLayer(intersectionArray)
-          }
-        } catch (err) {
-          console.log(err)
-        }
-      }
-    } catch (err) {
-      console.log(err)
-    }
-
-  }, [patternSelections.selectedMWSPatterns, patternTrigger])
-
-  useEffect(() =>{
-    try{
-      if (!villageJson || !Array.isArray(villageJson)) {
-        console.warn("Village not loaded or invalid format");
-        return;
-      }
-
-      if (!patternSelections?.selectedVillagePatterns) {
-        console.warn("Invalid patterns selections structure");
-        return;
-      }
-
-      let villageKeys = Object.keys(patternSelections.selectedVillagePatterns)
-
-      let tempVillage = new Set([]);
-
-      if(villageKeys.length > 0){
-        try{
-          villageKeys.map((item) => {
-            let patternValues = patternSelections.selectedVillagePatterns[item]
-            if (!patternValues) return
-
-            let tempIntersection = new Set([])
-            patternValues.conditions.forEach((tempItem) => {
-              villageJson.map((villageItem) => {
-                if(tempItem.type === 1 && villageItem[tempItem.key] === tempItem.value){
-                  tempIntersection.add(villageItem["village_id"])
-                }
-                else if(tempItem.type === 2 && villageItem[tempItem.key] >= tempItem.value.lower && villageItem[tempItem.key] <= tempItem.value.upper){
-                  tempIntersection.add(villageItem["village_id"])
-                }
-                else {
-                  if (tempItem.type === 3 && villageItem[tempItem.key] != tempItem.value) {
-                    tempIntersection.add(villageItem["village_id"])
-                  }
-                }
-              })
-            })
-            if (tempVillage.size > 0) {
-              tempVillage = new Set([...tempVillage].filter(x => tempIntersection.has(x)));
-            }
-            else {
-              tempVillage = tempIntersection
-            }
-          })
-          if (villageIdList.size !== 0) {
-              tempVillage = new Set(
-                  [...tempVillage].filter(id => villageIdList.has(id))
-              );
-          }
-          setSelectedVillages([...tempVillage])
-          fetchAdminLayer([...tempVillage])
-        }catch(err){
-          console.log(err)
-        }
-      }
-
-    }catch(err){
-      console.log(err)
-    }
-  },[patternSelections.selectedVillagePatterns, villagePatternTrigger])
 
   useEffect(() => {
     if (statesData === null) {
@@ -1894,8 +1534,302 @@ const saveAllMwsToLocalStorage = async(mwsLayer) => {
     }
   }, [searchLatLong])
 
+  useEffect(() => {
+    try {
+      if (!dataJson || !Array.isArray(dataJson)) {
+        console.warn("DataJson not loaded");
+        return;
+      }
 
-  
+      const mwsFilterKeys = Object.keys(filterSelections.selectedMWSValues || {});
+      
+      if (mwsFilterKeys.length === 0) {
+        // No MWS filters, patterns will handle it or reset
+        return;
+      }
+
+      let resultMWS = [];
+      
+      // Process each MWS filter (AND between different filters)
+      mwsFilterKeys.forEach((filterName) => {
+        const filterValues = filterSelections.selectedMWSValues[filterName];
+        if (!filterValues) return;
+        
+        let tempArr = [];
+        const filter = getAllFilters().find((f) => f.name === filterName);
+        
+        // Process each value in the filter (OR within same filter)
+        filterValues.forEach((selectedOption) => {
+          if (filter?.type === 2) {
+            // Range filter
+            dataJson.forEach((item) => {
+              if (item && typeof item[filterName] !== "undefined" && item.mws_id) {
+                const value = Number(item[filterName]);
+                if (!isNaN(value) && value >= selectedOption.value.lower && value <= selectedOption.value.upper) {
+                  if (!tempArr.includes(item.mws_id)) {
+                    tempArr.push(item.mws_id);
+                  }
+                }
+              }
+            });
+          } else {
+            // Exact match filter
+            dataJson.forEach((item) => {
+              if (item && item[filterName] === selectedOption.value && item.mws_id) {
+                if (!tempArr.includes(item.mws_id)) {
+                  tempArr.push(item.mws_id);
+                }
+              }
+            });
+          }
+        });
+        
+        // AND operation between filters
+        if (resultMWS.length > 0) {
+          resultMWS = resultMWS.filter(id => tempArr.includes(id));
+        } else {
+          resultMWS = tempArr;
+        }
+      });
+
+      // Store MWS from filters
+      setSelectedMWS(resultMWS);
+      fetchMWSLayer(resultMWS);
+      
+    } catch (error) {
+      console.error("Error in MWS filter processing:", error);
+    }
+  }, [filterSelections.selectedMWSValues, dataJson]);
+
+  useEffect(() => {
+    try {
+      if (!dataJson || !Array.isArray(dataJson)) return;
+      
+      const mwsPatternKeys = Object.keys(patternSelections.selectedMWSPatterns || {});
+      
+      if (mwsPatternKeys.length === 0) {
+        // No MWS patterns - filters handle it
+        return;
+      }
+
+      let resultMWS = new Set();
+      
+      // Process each pattern (AND between different patterns)
+      mwsPatternKeys.forEach((patternName) => {
+        const pattern = patternSelections.selectedMWSPatterns[patternName];
+        if (!pattern) return;
+        
+        let tempIntersection = new Set();
+        
+        // Process conditions within pattern
+        pattern.conditions.forEach((condition) => {
+          dataJson.forEach((item) => {
+            let matches = false;
+            
+            if (condition.type === 1 && item[condition.key] === condition.value) {
+              matches = true;
+            } else if (condition.type === 2 && item[condition.key] >= condition.value.lower && item[condition.key] <= condition.value.upper) {
+              matches = true;
+            } else if (condition.type === 3 && item[condition.key] != condition.value) {
+              matches = true;
+            }
+            
+            if (matches) {
+              tempIntersection.add(item.mws_id);
+            }
+          });
+        });
+        
+        // AND operation between patterns
+        if (resultMWS.size > 0) {
+          resultMWS = new Set([...resultMWS].filter(x => tempIntersection.has(x)));
+        } else {
+          resultMWS = tempIntersection;
+        }
+      });
+
+      // Intersect with MWS from filters if they exist
+      const mwsFilterKeys = Object.keys(filterSelections.selectedMWSValues || {});
+      const hasMwsFilters = mwsFilterKeys.some(key => filterSelections.selectedMWSValues[key] !== null);
+      
+      let finalMWS;
+      if (hasMwsFilters && selectedMWS.length > 0) {
+        // Both filters and patterns exist - intersect them
+        finalMWS = [...resultMWS].filter(id => selectedMWS.includes(id));
+      } else {
+        // Only patterns exist
+        finalMWS = [...resultMWS];
+      }
+      
+      setSelectedMWS(finalMWS);
+      fetchMWSLayer(finalMWS);
+      
+    } catch (error) {
+      console.error("Error in MWS pattern processing:", error);
+    }
+  }, [patternSelections.selectedMWSPatterns, patternTrigger]);
+
+  useEffect(() => {
+    try {
+      if (!villageJson || !Array.isArray(villageJson)) return;
+      if (!dataJson || !Array.isArray(dataJson)) return;
+      
+      const villageFilterKeys = Object.keys(filterSelections.selectedVillageValues || {});
+      const villagePatternKeys = Object.keys(patternSelections.selectedVillagePatterns || {});
+      
+      // Check if there are any village filters or patterns
+      const hasVillageFilters = villageFilterKeys.some(key => filterSelections.selectedVillageValues[key] !== null);
+      const hasVillagePatterns = villagePatternKeys.some(key => patternSelections.selectedVillagePatterns[key] !== null);
+      
+      if (!hasVillageFilters) {
+        // No village filters - reset to empty (patterns will handle if they exist)
+        if (!hasVillagePatterns) {
+          setVillageIdList(new Set());
+        }
+        return;
+      }
+
+      // Get candidate villages from selected MWS (if any)
+      let candidateVillages = new Set();
+      if (selectedMWS.length > 0) {
+        dataJson.forEach((mwsItem) => {
+          if (selectedMWS.includes(mwsItem.mws_id) && Array.isArray(mwsItem.mws_intersect_villages)) {
+            mwsItem.mws_intersect_villages.forEach(villageId => {
+              candidateVillages.add(villageId);
+            });
+          }
+        });
+      }
+      // If no MWS selected, candidateVillages remains empty (meaning all villages are candidates)
+
+      let resultVillages = new Set();
+      
+      // Process each village filter (AND between different filters)
+      villageFilterKeys.forEach((filterName) => {
+        const filterValues = filterSelections.selectedVillageValues[filterName];
+        if (!filterValues) return;
+        
+        let tempArr = new Set();
+        
+        // Process each value in the filter (OR within same filter)
+        filterValues.forEach((selectedOption) => {
+          villageJson.forEach((village) => {
+            if (village && typeof village[filterName] !== "undefined" && village.village_id) {
+              const value = Number(village[filterName]);
+              if (!isNaN(value) && value >= selectedOption.value.lower && value <= selectedOption.value.upper) {
+                // Only include if no MWS selected OR village is in candidateVillages
+                if (candidateVillages.size === 0 || candidateVillages.has(village.village_id)) {
+                  tempArr.add(village.village_id);
+                }
+              }
+            }
+          });
+        });
+        
+        // AND operation between filters
+        if (resultVillages.size > 0) {
+          resultVillages = new Set([...resultVillages].filter(x => tempArr.has(x)));
+        } else {
+          resultVillages = tempArr;
+        }
+      });
+      
+      setVillageIdList(resultVillages);
+      
+    } catch (error) {
+      console.error("Error in village filter processing:", error);
+    }
+  }, [filterSelections.selectedVillageValues, villageJson, selectedMWS, dataJson]);
+
+  useEffect(() => {
+    try {
+      if (!villageJson || !Array.isArray(villageJson)) return;
+      if (!dataJson || !Array.isArray(dataJson)) return;
+      
+      const villagePatternKeys = Object.keys(patternSelections.selectedVillagePatterns || {});
+      
+      if (villagePatternKeys.length === 0) {
+        // No village patterns - filters handle it
+        return;
+      }
+
+      let resultVillages = new Set();
+      
+      // Process each pattern (AND between different patterns)
+      villagePatternKeys.forEach((patternName) => {
+        const pattern = patternSelections.selectedVillagePatterns[patternName];
+        if (!pattern) return;
+        
+        let tempIntersection = new Set();
+        
+        // Process conditions within pattern
+        pattern.conditions.forEach((condition) => {
+          villageJson.forEach((village) => {
+            let matches = false;
+            
+            if (condition.type === 1 && village[condition.key] === condition.value) {
+              matches = true;
+            } else if (condition.type === 2 && village[condition.key] >= condition.value.lower && village[condition.key] <= condition.value.upper) {
+              matches = true;
+            } else if (condition.type === 3 && village[condition.key] != condition.value) {
+              matches = true;
+            }
+            
+            if (matches) {
+              tempIntersection.add(village.village_id);
+            }
+          });
+        });
+        
+        // AND operation between patterns
+        if (resultVillages.size > 0) {
+          resultVillages = new Set([...resultVillages].filter(x => tempIntersection.has(x)));
+        } else {
+          resultVillages = tempIntersection;
+        }
+      });
+
+      // Get candidate villages from selected MWS (if any)
+      let candidateVillages = new Set();
+      if (selectedMWS.length > 0) {
+        dataJson.forEach((mwsItem) => {
+          if (selectedMWS.includes(mwsItem.mws_id) && Array.isArray(mwsItem.mws_intersect_villages)) {
+            mwsItem.mws_intersect_villages.forEach(villageId => {
+              candidateVillages.add(villageId);
+            });
+          }
+        });
+      }
+
+      // Intersect with candidate villages from MWS if they exist
+      if (candidateVillages.size > 0) {
+        resultVillages = new Set([...resultVillages].filter(id => candidateVillages.has(id)));
+      }
+
+      // Intersect with villages from filters if they exist
+      const villageFilterKeys = Object.keys(filterSelections.selectedVillageValues || {});
+      const hasVillageFilters = villageFilterKeys.some(key => filterSelections.selectedVillageValues[key] !== null);
+      
+      if (hasVillageFilters && villageIdList.size > 0) {
+        resultVillages = new Set([...resultVillages].filter(id => villageIdList.has(id)));
+      }
+      
+      setVillageIdList(resultVillages);
+      
+    } catch (error) {
+      console.error("Error in village pattern processing:", error);
+    }
+  }, [patternSelections.selectedVillagePatterns, villagePatternTrigger, selectedMWS, dataJson]);
+
+  useEffect(() => {
+    fetchAdminLayer([...villageIdList]);
+    setFinalVillageList(villageIdList);
+  }, [villageIdList]);
+
+  useEffect(() => {
+    filterWaterbodiesByMWS();
+  }, [selectedMWS,waterbodiesLayerRef.current]);
+
   return (
     <div className="min-h-screenbg-white flex flex-col">
       <Toaster />
@@ -1961,7 +1895,7 @@ const saveAllMwsToLocalStorage = async(mwsLayer) => {
           getFormattedSelectedPatterns={getFormattedSelectedPatterns}
           handlePatternRemoval={handlePatternRemoval}
           selectedMWS={selectedMWS}
-          selectedVillages={selectedVillages}
+          selectedVillages={villageIdList}
           handleLayerSelection={handleLayerSelection}
           toggleStates={toggleStates}
           setToggleStates={setToggleStates}
@@ -1977,7 +1911,6 @@ const saveAllMwsToLocalStorage = async(mwsLayer) => {
           selectedWaterbodyProfile={selectedWaterbodyProfile}
           onResetWaterbody={() => setSelectedWaterbodyProfile(null)}
           mwsLayerRef={mwsLayerRef}
-
         />
       </div>
     </div>
