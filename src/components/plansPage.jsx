@@ -292,37 +292,39 @@ const PlansPage = () => {
   
     const handleClick = (evt) => {
       let clickedPlan = null;
-    
+  
       map.forEachFeatureAtPixel(evt.pixel, (feature, layer) => {
         if (layer && layer.get("layerName") === "planLayer") {
           clickedPlan = feature;
         }
       });
-    
-      // 👉 If a plan is clicked → show details, don't remove layers
+  
+      // If plan bubble clicked → show details
       if (clickedPlan) {
-        const handler = clickedPlan.getLayer(this)?.get("handleClick");
-        if (handler) handler(clickedPlan);
-        return;
+        setSelectedPlan({
+          id: clickedPlan.get("plan_id"),
+          name: clickedPlan.get("plan_name"),
+          district: clickedPlan.get("district"),
+          block: clickedPlan.get("block"),
+        });
+        return; // IMPORTANT: do NOT process state bubbles
       }
-    
-      // 👉 Otherwise, treat it as state bubble click
+  
+      // Otherwise → state bubble clicked
       map.forEachFeatureAtPixel(evt.pixel, (feature) => {
         const clickedStateName = feature.get("name");
         const state = states.find((s) => s.label === clickedStateName);
-    
         if (!state) return;
-    
-        // Remove bubble + old layers
+  
+        // Remove old layers except base
         map.getLayers().forEach((layer, index) => {
           if (index > 0) map.removeLayer(layer);
         });
-    
+  
         bubbleLayerRef.current = null;
         planLayerRef.current = null;
         setSelectedPlan(null);
-    
-        // Fetch plans
+  
         fetchTehsilLevelPlans(state).then((plans) => {
           setPlans(plans);
           setMetaStats((prev) => ({
@@ -334,7 +336,7 @@ const PlansPage = () => {
             },
           }));
         });
-    
+  
         const coords = STATE_COORDINATES[clickedStateName];
         if (coords) {
           map.getView().animate({
@@ -345,13 +347,12 @@ const PlansPage = () => {
         }
       });
     };
-    
-    
   
     map.on("click", handleClick);
   
     return () => map.un("click", handleClick);
   }, [metaStats, states, plans]);
+  
   
   const fetchTehsilLevelPlans = async (state) => {
   
@@ -562,59 +563,50 @@ const PlansPage = () => {
             )}     
         </div>
 
-          {/* METRICS CARD */}
-      <div className="w-full bg-gradient-to-br from-gray-50 to-gray-100 border border-gray-200 rounded-2xl p-6 shadow-sm mt-4">
-      <h3 className="font-semibold text-gray-800 text-lg mb-4">
-          Overview Metrics
-      </h3>
-      <div className="grid grid-cols-1 gap-4">
-        {/* Commons Connect Operational In */}
-        <div className="flex items-center justify-between bg-white p-4 rounded-xl shadow-sm border border-gray-200">
-            <span className="text-gray-600 font-medium">
-              Commons Connect Operational In
-            </span>
-            <span className="text-blue-600 font-bold text-xl">
-              {/* {metaStats?.summary?.total_plans ?? 0} */}--
-            </span>
+ {/* METRICS CARD — hide when a plan is selected */}
+{!selectedPlan && (
+  <div className="w-full bg-gradient-to-br from-gray-50 to-gray-100 border border-gray-200 rounded-2xl p-6 shadow-sm mt-4">
+    <h3 className="font-semibold text-gray-800 text-lg mb-4">
+      Overview Metrics
+    </h3>
+
+    <div className="grid grid-cols-1 gap-4">
+
+      <div className="flex items-center justify-between bg-white p-4 rounded-xl shadow-sm border border-gray-200">
+        <span className="text-gray-600 font-medium">Commons Connect Operational In</span>
+        <span className="text-blue-600 font-bold text-xl">--</span>
       </div>
 
-        {/* No. of plans */}
       <div className="flex items-center justify-between bg-white p-4 rounded-xl shadow-sm border border-gray-200">
-            <span className="text-gray-600 font-medium">
-              Total no. of Plans
-            </span>
-            <span className="text-blue-600 font-bold text-xl">
-              {metaStats?.summary?.total_plans ?? 0}
-            </span>
+        <span className="text-gray-600 font-medium">Total no. of Plans</span>
+        <span className="text-blue-600 font-bold text-xl">
+          {metaStats?.summary?.total_plans ?? 0}
+        </span>
       </div>
 
-      {/* DPRs Submitted */}
       <div className="flex items-center justify-between bg-white p-4 rounded-xl shadow-sm border border-gray-200">
-            <span className="text-gray-600 font-medium">DPRs Submitted</span>
-            <span className="text-purple-600 font-bold text-xl">
-              {metaStats?.summary?.dpr_generated ?? 0}
-            </span>
+        <span className="text-gray-600 font-medium">DPRs Submitted</span>
+        <span className="text-purple-600 font-bold text-xl">
+          {metaStats?.summary?.dpr_generated ?? 0}
+        </span>
       </div>
 
-      {/* Demands Approved */}
       <div className="flex items-center justify-between bg-white p-4 rounded-xl shadow-sm border border-gray-200">
-            <span className="text-gray-600 font-medium">Demands Approved</span>
-            <span className="text-green-600 font-bold text-xl">
-              {metaStats?.summary?.dpr_reviewed ?? 0}
-            </span>
+        <span className="text-gray-600 font-medium">Demands Approved</span>
+        <span className="text-green-600 font-bold text-xl">
+          {metaStats?.summary?.dpr_reviewed ?? 0}
+        </span>
       </div>
 
-      {/* Landscape Stewards Working */}
       <div className="flex items-center justify-between bg-white p-4 rounded-xl shadow-sm border border-gray-200">
-            <span className="text-gray-600 font-medium">
-              Landscape Stewards Working
-            </span>
-            <span className="text-rose-600 font-bold text-xl">
-              {/* {metaStats?.summary?.in_progress_plans ?? 0} */}--
-            </span>
-      </div>    
+        <span className="text-gray-600 font-medium">Landscape Stewards Working</span>
+        <span className="text-rose-600 font-bold text-xl">--</span>
+      </div>
+
     </div>
-      </div>
+  </div>
+)}
+
 
       {/* SELECTED PLAN DETAILS */}
 {selectedPlan && (
