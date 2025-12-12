@@ -810,9 +810,7 @@ const KYLDashboardPage = () => {
         })
       );
 
-      if (selectedMWS.length > 0) {
-        await fetchMWSLayer(selectedMWS);
-      }
+      await fetchMWSLayer(selectedMWS); 
       setIsLayerLoaded(false)
     } catch (error) {
       console.error("Error loading boundary:", error);
@@ -1534,6 +1532,9 @@ const KYLDashboardPage = () => {
     }
   }, [searchLatLong])
 
+/// ============================================
+// 1. PROCESS MWS FILTERS (unchanged)
+// ============================================
   useEffect(() => {
     try {
       if (!dataJson || !Array.isArray(dataJson)) {
@@ -1544,13 +1545,11 @@ const KYLDashboardPage = () => {
       const mwsFilterKeys = Object.keys(filterSelections.selectedMWSValues || {});
       
       if (mwsFilterKeys.length === 0) {
-        // No MWS filters, patterns will handle it or reset
         return;
       }
 
       let resultMWS = [];
       
-      // Process each MWS filter (AND between different filters)
       mwsFilterKeys.forEach((filterName) => {
         const filterValues = filterSelections.selectedMWSValues[filterName];
         if (!filterValues) return;
@@ -1558,10 +1557,8 @@ const KYLDashboardPage = () => {
         let tempArr = [];
         const filter = getAllFilters().find((f) => f.name === filterName);
         
-        // Process each value in the filter (OR within same filter)
         filterValues.forEach((selectedOption) => {
           if (filter?.type === 2) {
-            // Range filter
             dataJson.forEach((item) => {
               if (item && typeof item[filterName] !== "undefined" && item.mws_id) {
                 const value = Number(item[filterName]);
@@ -1573,7 +1570,6 @@ const KYLDashboardPage = () => {
               }
             });
           } else {
-            // Exact match filter
             dataJson.forEach((item) => {
               if (item && item[filterName] === selectedOption.value && item.mws_id) {
                 if (!tempArr.includes(item.mws_id)) {
@@ -1584,7 +1580,6 @@ const KYLDashboardPage = () => {
           }
         });
         
-        // AND operation between filters
         if (resultMWS.length > 0) {
           resultMWS = resultMWS.filter(id => tempArr.includes(id));
         } else {
@@ -1592,7 +1587,6 @@ const KYLDashboardPage = () => {
         }
       });
 
-      // Store MWS from filters
       setSelectedMWS(resultMWS);
       fetchMWSLayer(resultMWS);
       
@@ -1601,6 +1595,9 @@ const KYLDashboardPage = () => {
     }
   }, [filterSelections.selectedMWSValues, dataJson]);
 
+  // ============================================
+  // 2. PROCESS MWS PATTERNS - OR within pattern, AND between patterns
+  // ============================================
   useEffect(() => {
     try {
       if (!dataJson || !Array.isArray(dataJson)) return;
@@ -1608,7 +1605,6 @@ const KYLDashboardPage = () => {
       const mwsPatternKeys = Object.keys(patternSelections.selectedMWSPatterns || {});
       
       if (mwsPatternKeys.length === 0) {
-        // No MWS patterns - filters handle it
         return;
       }
 
@@ -1619,9 +1615,9 @@ const KYLDashboardPage = () => {
         const pattern = patternSelections.selectedMWSPatterns[patternName];
         if (!pattern) return;
         
-        let tempIntersection = new Set();
+        let patternMatches = new Set(); // Items matching ANY condition in THIS pattern (OR)
         
-        // Process conditions within pattern
+        // Process conditions within pattern (OR operation)
         pattern.conditions.forEach((condition) => {
           dataJson.forEach((item) => {
             let matches = false;
@@ -1635,16 +1631,18 @@ const KYLDashboardPage = () => {
             }
             
             if (matches) {
-              tempIntersection.add(item.mws_id);
+              patternMatches.add(item.mws_id);
             }
           });
         });
         
-        // AND operation between patterns
+        // AND operation between different patterns
         if (resultMWS.size > 0) {
-          resultMWS = new Set([...resultMWS].filter(x => tempIntersection.has(x)));
+          // Intersection: keep only items present in both sets
+          resultMWS = new Set([...resultMWS].filter(x => patternMatches.has(x)));
         } else {
-          resultMWS = tempIntersection;
+          // First pattern, initialize with its matches
+          resultMWS = patternMatches;
         }
       });
 
@@ -1654,10 +1652,8 @@ const KYLDashboardPage = () => {
       
       let finalMWS;
       if (hasMwsFilters && selectedMWS.length > 0) {
-        // Both filters and patterns exist - intersect them
         finalMWS = [...resultMWS].filter(id => selectedMWS.includes(id));
       } else {
-        // Only patterns exist
         finalMWS = [...resultMWS];
       }
       
@@ -1669,6 +1665,9 @@ const KYLDashboardPage = () => {
     }
   }, [patternSelections.selectedMWSPatterns, patternTrigger]);
 
+  // ============================================
+  // 3. APPLY VILLAGE FILTERS (unchanged)
+  // ============================================
   useEffect(() => {
     try {
       if (!villageJson || !Array.isArray(villageJson)) return;
@@ -1677,19 +1676,16 @@ const KYLDashboardPage = () => {
       const villageFilterKeys = Object.keys(filterSelections.selectedVillageValues || {});
       const villagePatternKeys = Object.keys(patternSelections.selectedVillagePatterns || {});
       
-      // Check if there are any village filters or patterns
       const hasVillageFilters = villageFilterKeys.some(key => filterSelections.selectedVillageValues[key] !== null);
       const hasVillagePatterns = villagePatternKeys.some(key => patternSelections.selectedVillagePatterns[key] !== null);
       
       if (!hasVillageFilters) {
-        // No village filters - reset to empty (patterns will handle if they exist)
         if (!hasVillagePatterns) {
           setVillageIdList(new Set());
         }
         return;
       }
 
-      // Get candidate villages from selected MWS (if any)
       let candidateVillages = new Set();
       if (selectedMWS.length > 0) {
         dataJson.forEach((mwsItem) => {
@@ -1700,24 +1696,20 @@ const KYLDashboardPage = () => {
           }
         });
       }
-      // If no MWS selected, candidateVillages remains empty (meaning all villages are candidates)
 
       let resultVillages = new Set();
       
-      // Process each village filter (AND between different filters)
       villageFilterKeys.forEach((filterName) => {
         const filterValues = filterSelections.selectedVillageValues[filterName];
         if (!filterValues) return;
         
         let tempArr = new Set();
         
-        // Process each value in the filter (OR within same filter)
         filterValues.forEach((selectedOption) => {
           villageJson.forEach((village) => {
             if (village && typeof village[filterName] !== "undefined" && village.village_id) {
               const value = Number(village[filterName]);
               if (!isNaN(value) && value >= selectedOption.value.lower && value <= selectedOption.value.upper) {
-                // Only include if no MWS selected OR village is in candidateVillages
                 if (candidateVillages.size === 0 || candidateVillages.has(village.village_id)) {
                   tempArr.add(village.village_id);
                 }
@@ -1726,7 +1718,6 @@ const KYLDashboardPage = () => {
           });
         });
         
-        // AND operation between filters
         if (resultVillages.size > 0) {
           resultVillages = new Set([...resultVillages].filter(x => tempArr.has(x)));
         } else {
@@ -1741,6 +1732,9 @@ const KYLDashboardPage = () => {
     }
   }, [filterSelections.selectedVillageValues, villageJson, selectedMWS, dataJson]);
 
+  // ============================================
+  // 4. APPLY VILLAGE PATTERNS - OR within pattern, AND between patterns
+  // ============================================
   useEffect(() => {
     try {
       if (!villageJson || !Array.isArray(villageJson)) return;
@@ -1749,7 +1743,6 @@ const KYLDashboardPage = () => {
       const villagePatternKeys = Object.keys(patternSelections.selectedVillagePatterns || {});
       
       if (villagePatternKeys.length === 0) {
-        // No village patterns - filters handle it
         return;
       }
 
@@ -1760,9 +1753,9 @@ const KYLDashboardPage = () => {
         const pattern = patternSelections.selectedVillagePatterns[patternName];
         if (!pattern) return;
         
-        let tempIntersection = new Set();
+        let patternMatches = new Set(); // Villages matching ANY condition in THIS pattern (OR)
         
-        // Process conditions within pattern
+        // Process conditions within pattern (OR operation)
         pattern.conditions.forEach((condition) => {
           villageJson.forEach((village) => {
             let matches = false;
@@ -1776,16 +1769,18 @@ const KYLDashboardPage = () => {
             }
             
             if (matches) {
-              tempIntersection.add(village.village_id);
+              patternMatches.add(village.village_id);
             }
           });
         });
         
-        // AND operation between patterns
+        // AND operation between different patterns
         if (resultVillages.size > 0) {
-          resultVillages = new Set([...resultVillages].filter(x => tempIntersection.has(x)));
+          // Intersection: keep only villages present in both sets
+          resultVillages = new Set([...resultVillages].filter(x => patternMatches.has(x)));
         } else {
-          resultVillages = tempIntersection;
+          // First pattern, initialize with its matches
+          resultVillages = patternMatches;
         }
       });
 
@@ -1821,6 +1816,9 @@ const KYLDashboardPage = () => {
     }
   }, [patternSelections.selectedVillagePatterns, villagePatternTrigger, selectedMWS, dataJson]);
 
+  // ============================================
+  // 5. UPDATE MAP DISPLAY
+  // ============================================
   useEffect(() => {
     fetchAdminLayer([...villageIdList]);
     setFinalVillageList(villageIdList);
