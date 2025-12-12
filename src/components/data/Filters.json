@@ -205,7 +205,7 @@
                     }
                 ],
                 "layer_store": [
-                    "cropping_drought"
+                    "drought"
                 ],
                 "layer_name": [
                     "drought"
@@ -261,7 +261,7 @@
                     }
                 ],
                 "layer_store": [
-                    "cropping_drought"
+                    "drought"
                 ],
                 "layer_name": [
                     "drought"
