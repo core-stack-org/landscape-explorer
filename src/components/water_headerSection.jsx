@@ -33,42 +33,39 @@ const HeaderSelect = ({
     }
   }, [location.pathname, project]);
 
-  // ---- LOGIN TOKEN ----
-  const loginAndGetToken = async () => {
+  const loadOrganization = async () => {
     try {
-      const response = await fetch(
-        `${process.env.REACT_APP_API_URL}/auth/login/`,
+      const orgRes = await fetch(
+        `${process.env.REACT_APP_API_URL}/auth/register/available_organizations/?app_type=waterbody`,
         {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            username: process.env.REACT_APP_WATERBODYREJ_USERNAME,
-            password: process.env.REACT_APP_WATERBODYREJ_PASSWORD,
-          }),
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            "ngrok-skip-browser-warning": "420",
+          },
         }
       );
-
-      if (!response.ok) throw new Error("Login failed");
-
-      const data = await response.json();
-      localStorage.setItem("accessToken", data.access);
-      return data.access;
-    } catch (err) {
-      console.error(" Auto-login failed:", err);
-      return null;
+  
+      const orgData = await orgRes.json();
+  
+      // Convert into select options
+      return orgData.map((org) => ({
+        value: org.id,
+        label: org.name,
+      }));
+    } catch (error) {
+      console.error("Error fetching organizations:", error);
+      return [];
     }
   };
 
   useEffect(() => {
-    loginAndGetToken(); // always refresh token when dashboard loads
-  }, []);
-
-  // ---- LOAD ORGANIZATIONS ----
-  useEffect(() => {
-    const fetchOrganizations = async () => {
+    const init = async () => {
+      // Step 1: load organizations (NO TOKEN)
       const options = await loadOrganization();
       setOrganizationOptions(options);
-
+  
+      // Preselect
       if (!organization && isOnDashboard) {
         const storedOrg = localStorage.getItem("selectedOrganization");
         if (storedOrg) {
@@ -77,22 +74,51 @@ const HeaderSelect = ({
           setOrganization(options[0]);
         }
       }
-    };
-
-    fetchOrganizations();
-  }, []);
-
-  // ---- LOAD PROJECTS FOR ORG ----
-  useEffect(() => {
-    const fetchProjects = async () => {
-      if (!organization) return;
-
+  
+      // Step 2: NOW fetch token
       let token = localStorage.getItem("accessToken");
       if (!token) {
         token = await loginAndGetToken();
-        if (!token) return;
       }
+    };
+  
+    init();
+  }, []);
 
+    // ---- LOGIN TOKEN ----
+    const loginAndGetToken = async () => {
+      try {
+        const response = await fetch(
+          `${process.env.REACT_APP_API_URL}/auth/login/`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              username: process.env.REACT_APP_WATERBODYREJ_USERNAME,
+              password: process.env.REACT_APP_WATERBODYREJ_PASSWORD,
+            }),
+          }
+        );
+  
+        if (!response.ok) throw new Error("Login failed");
+  
+        const data = await response.json();
+        localStorage.setItem("accessToken", data.access);
+        return data.access;
+      } catch (err) {
+        console.error(" Auto-login failed:", err);
+        return null;
+      }
+    };
+
+  useEffect(() => {
+    const fetchProjects = async () => {
+      if (!organization) return;
+  
+      let token = localStorage.getItem("accessToken");
+      if (!token) token = await loginAndGetToken();
+      if (!token) return;
+  
       try {
         const response = await fetch(
           `${process.env.REACT_APP_API_URL}/projects/`,
@@ -105,112 +131,48 @@ const HeaderSelect = ({
             },
           }
         );
-
-        if (!response.ok)
+  
+        if (!response.ok) {
           throw new Error(`HTTP error! Status: ${response.status}`);
-
-        const data = await response.json();
-
-        const filtered = data.filter(
-          (project) => project.organization === organization.value &&
-          project.app_type === "waterbody"
-        );
-
-        const options = filtered.map((project) => ({
-          label: project.name,
-          value: String(project.id),
-        }));
-
-        setProjectOptions(options);
-        setProjectCount(filtered.length);
-        setProjects(filtered);
-
-        // Try to restore from URL
-        const params = new URLSearchParams(location.search);
-        const projectNameFromURL = params.get("project_name");
-
-        if (projectNameFromURL) {
-          const match = options.find(
-            (p) => p.label.toLowerCase() === projectNameFromURL.toLowerCase()
-          );
-          if (match) {
-            setProject(match);
-            localStorage.setItem("selectedProject", JSON.stringify(match));
-            return;
-          }
         }
-
-        // Fallback to saved project
+  
+        const data = await response.json();
+  
+        if (!Array.isArray(data)) {
+          console.error("Unexpected projects response:", data);
+          return;
+        }
+  
+        const filtered = data.filter(
+          (p) =>
+            p.organization === organization.value &&
+            p.app_type === "waterbody"
+        );
+  
+        const options = filtered.map((p) => ({
+          label: p.name,
+          value: String(p.id),
+        }));
+  
+        setProjectOptions(options);
+        setProjects(filtered);
+  
+        // restore saved project
         const storedProject = localStorage.getItem("selectedProject");
         if (storedProject) {
           const parsed = JSON.parse(storedProject);
-          const matched = options.find((p) => p.value === parsed.value);
-          if (matched) setProject(matched);
+          const match = options.find((o) => o.value === parsed.value);
+          if (match) setProject(match);
         }
+  
       } catch (error) {
         console.error("Error fetching projects:", error);
       }
     };
-
+  
     fetchProjects();
-  }, [organization, location.search]);
-
-  // ---- FETCH ORGANIZATIONS API ----
-  const loadOrganization = async () => {
-    try {
-      // Fetch organizations list
-      const orgRes = await fetch(
-        `${process.env.REACT_APP_API_URL}/auth/register/available_organizations/?app_type=waterbody`,
-        {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            "ngrok-skip-browser-warning": "420",
-          },
-        }
-      );
-      const orgData = await orgRes.json();
+  }, [organization]);
   
-      // Fetch ALL projects
-      const projectRes = await fetch(
-        `${process.env.REACT_APP_API_URL}/projects/`,
-        {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            "ngrok-skip-browser-warning": "420",
-            Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
-          },
-        }
-      );
-      const projectData = await projectRes.json();
-  
-      // Keep only waterbody projects
-      const waterbodyProjects = projectData.filter(
-        (p) => p.app_type === "waterbody"
-      );
-  
-      // Extract orgs that have at least one waterbody project
-      const orgsWithProjects = new Set(
-        waterbodyProjects.map((p) => p.organization)
-      );
-  
-      // Filter organization list based on above
-      const filteredOrgs = orgData
-        .filter((org) => orgsWithProjects.has(org.id))
-        .map((org) => ({
-          value: org.id,
-          label: org.name,
-        }));
-  
-      console.log("Allowed Orgs:", filteredOrgs);
-  
-      return filteredOrgs;
-    } catch (error) {
-      console.error("Error fetching organizations:", error);
-      return [];
-    }
-  };
   
 
   // ---- SELECT MENUS UI ----

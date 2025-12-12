@@ -45,87 +45,90 @@ const HeaderSelect = ({ setView }) => {
     }
   }, [location.pathname, organizationOptions]);
 
-  const fetchOrganizations = async () => {
+  // const fetchOrganizations = async () => {
+  //   try {
+  //     // 1️⃣ Fetch all plantation organizations
+  //     const orgRes = await fetch(
+  //       `${process.env.REACT_APP_API_URL}/auth/register/available_organizations/?app_type=plantation`
+  //     );
+  //     const orgData = await orgRes.json();
+  
+  //     // 2️⃣ Fetch ALL plantation projects
+  //     let token = sessionStorage.getItem("accessToken");
+  //     if (!token) token = await loginAndGetToken();
+  
+  //     const projRes = await fetch(
+  //       `${process.env.REACT_APP_API_URL}/projects/?app_type=plantation`,
+  //       {
+  //         method: "GET",
+  //         headers: {
+  //           Authorization: `Bearer ${token}`,
+  //           "Content-Type": "application/json",
+  //           "ngrok-skip-browser-warning": "420",
+  //         },
+  //       }
+  //     );
+  
+  //     const projectData = await projRes.json();
+  
+  //     // 3️⃣ Build a set of organization IDs that *actually have* plantation projects
+  //     const orgsWithProjects = new Set(projectData.map((p) => p.organization));
+  
+  //     // 4️⃣ Filter organizations → keep only those present in orgsWithProjects
+  //     const validOrganizations = orgData
+  //       .filter((org) => orgsWithProjects.has(org.id))
+  //       .map((org) => ({
+  //         value: org.id,
+  //         label: org.name,
+  //       }));
+  
+  //     console.log("Organizations with plantation projects →", validOrganizations);
+  
+  //     setOrganizationOptions(validOrganizations);
+  //   } catch (error) {
+  //     console.error("Error fetching organizations:", error);
+  //   }
+  // };
+  const getOrganizations = async () => {
     try {
-      // 1️⃣ Fetch all plantation organizations
-      const orgRes = await fetch(
+      const res = await fetch(
         `${process.env.REACT_APP_API_URL}/auth/register/available_organizations/?app_type=plantation`
       );
-      const orgData = await orgRes.json();
-  
-      // 2️⃣ Fetch ALL plantation projects
-      let token = sessionStorage.getItem("accessToken");
-      if (!token) token = await loginAndGetToken();
-  
-      const projRes = await fetch(
-        `${process.env.REACT_APP_API_URL}/projects/?app_type=plantation`,
-        {
-          method: "GET",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-            "ngrok-skip-browser-warning": "420",
-          },
-        }
-      );
-  
-      const projectData = await projRes.json();
-  
-      // 3️⃣ Build a set of organization IDs that *actually have* plantation projects
-      const orgsWithProjects = new Set(projectData.map((p) => p.organization));
-  
-      // 4️⃣ Filter organizations → keep only those present in orgsWithProjects
-      const validOrganizations = orgData
-        .filter((org) => orgsWithProjects.has(org.id))
-        .map((org) => ({
-          value: org.id,
-          label: org.name,
-        }));
-  
-      console.log("Organizations with plantation projects →", validOrganizations);
-  
-      setOrganizationOptions(validOrganizations);
-    } catch (error) {
-      console.error("Error fetching organizations:", error);
+      return await res.json();
+    } catch (err) {
+      console.error("Org fetch error:", err);
+      return [];
     }
   };
-  
 
-  useEffect(() => {
-    fetchOrganizations();
-  }, []);
-
-  const loginAndGetToken = async () => {
+  const getToken = async () => {
     try {
-      const response = await fetch(
-        `${process.env.REACT_APP_API_URL}/auth/login/`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            username: process.env.REACT_APP_WATERBODYREJ_USERNAME,
-            password: process.env.REACT_APP_WATERBODYREJ_PASSWORD,
-          }),
-        }
-      );
-      if (!response.ok) throw new Error("Login failed");
-      const data = await response.json();
+      const res = await fetch(`${process.env.REACT_APP_API_URL}/auth/login/`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          username: process.env.REACT_APP_WATERBODYREJ_USERNAME,
+          password: process.env.REACT_APP_WATERBODYREJ_PASSWORD,
+        }),
+      });
+  
+      const data = await res.json();
       sessionStorage.setItem("accessToken", data.access);
       return data.access;
     } catch (err) {
-      console.error("Auto-login failed:", err);
+      console.error("Token error:", err);
       return null;
     }
   };
 
-  const fetchProjects = async (orgId) => {
-    let token = sessionStorage.getItem("accessToken");
-    if (!token) token = await loginAndGetToken();
-    if (!token) return;
-
+  const getProjects = async () => {
     try {
-      const response = await fetch(
-        `${process.env.REACT_APP_API_URL}/projects/`,
+      let token = sessionStorage.getItem("accessToken");
+      if (!token) token = await getToken();
+      if (!token) return [];
+  
+      const res = await fetch(
+        `${process.env.REACT_APP_API_URL}/projects/?app_type=plantation`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -134,29 +137,119 @@ const HeaderSelect = ({ setView }) => {
           },
         }
       );
-      const data = await response.json();
-      const filtered = data.filter((p) => p.organization === orgId && p.app_type==="plantation");
-      const options = filtered.map((p) => ({
-        label: p.name,
-        value: String(p.id),
-      }));
-      setProjectOptions(options);
-
-      const savedProj = sessionStorage.getItem("selectedProject");
-      if (savedProj) {
-        const parsed = JSON.parse(savedProj);
-        const matched = options.find((p) => p.value === parsed.value);
-        if (matched) setProject(matched);
-        else setProject(null);
-      }
+  
+      return await res.json();
     } catch (err) {
-      console.error("Error fetching projects:", err);
+      console.error("Project fetch error:", err);
+      return [];
     }
   };
 
+  const filterOrganizations = (orgList, projectList) => {
+    const orgIdsWithProjects = new Set(projectList.map((p) => p.organization));
+  
+    return orgList
+      .filter((org) => orgIdsWithProjects.has(org.id))
+      .map((org) => ({
+        value: org.id,
+        label: org.name,
+      }));
+  };
+
   useEffect(() => {
-    if (organization) fetchProjects(organization.value);
-  }, [organization]);
+    const init = async () => {
+      // Step 1: get organizations
+      const orgList = await getOrganizations();
+  
+      // Step 2: ensure token
+      let token = sessionStorage.getItem("accessToken");
+      if (!token) token = await getToken();
+  
+      // Step 3: fetch all projects
+      const projectList = await getProjects();
+  
+      // Step 4: filter orgs based on projects
+      const validOrgs = filterOrganizations(orgList, projectList);
+  
+      // Save filtered organizations
+      setOrganizationOptions(validOrgs);
+  
+      // Restore saved organization
+      const savedOrg = sessionStorage.getItem("selectedOrganization");
+      if (savedOrg) {
+        const parsed = JSON.parse(savedOrg);
+        const match = validOrgs.find((o) => o.value === parsed.value);
+        if (match) setOrganization(match);
+      }
+    };
+  
+    init();
+  }, []);
+  
+
+
+  // const loginAndGetToken = async () => {
+  //   try {
+  //     const response = await fetch(
+  //       `${process.env.REACT_APP_API_URL}/auth/login/`,
+  //       {
+  //         method: "POST",
+  //         headers: { "Content-Type": "application/json" },
+  //         body: JSON.stringify({
+  //           username: process.env.REACT_APP_WATERBODYREJ_USERNAME,
+  //           password: process.env.REACT_APP_WATERBODYREJ_PASSWORD,
+  //         }),
+  //       }
+  //     );
+  //     if (!response.ok) throw new Error("Login failed");
+  //     const data = await response.json();
+  //     sessionStorage.setItem("accessToken", data.access);
+  //     return data.access;
+  //   } catch (err) {
+  //     console.error("Auto-login failed:", err);
+  //     return null;
+  //   }
+  // };
+
+  // const fetchProjects = async (orgId) => {
+  //   let token = sessionStorage.getItem("accessToken");
+  //   if (!token) token = await loginAndGetToken();
+  //   if (!token) return;
+
+  //   try {
+  //     const response = await fetch(
+  //       `${process.env.REACT_APP_API_URL}/projects/`,
+  //       {
+  //         headers: {
+  //           Authorization: `Bearer ${token}`,
+  //           "Content-Type": "application/json",
+  //           "ngrok-skip-browser-warning": "420",
+  //         },
+  //       }
+  //     );
+  //     const data = await response.json();
+  //     const filtered = data.filter((p) => p.organization === orgId && p.app_type==="plantation");
+  //     const options = filtered.map((p) => ({
+  //       label: p.name,
+  //       value: String(p.id),
+  //     }));
+  //     setProjectOptions(options);
+
+  //     const savedProj = sessionStorage.getItem("selectedProject");
+  //     if (savedProj) {
+  //       const parsed = JSON.parse(savedProj);
+  //       const matched = options.find((p) => p.value === parsed.value);
+  //       if (matched) setProject(matched);
+  //       else setProject(null);
+  //     }
+  //   } catch (err) {
+  //     console.error("Error fetching projects:", err);
+  //   }
+  // };
+
+  // useEffect(() => {
+  //   if (organization) fetchProjects(organization.value);
+  // }, [organization]);
 
   const handleOrganizationChange = (option) => {
     setOrganization(option);
