@@ -14,6 +14,9 @@ import { Style, Fill, Stroke, Text, Circle as CircleStyle } from "ol/style";
 import SelectReact from "react-select";
 import LandingNavbar from "../components/landing_navbar.jsx";
 import YearSlider from "./yearSlider.jsx";
+import MouseWheelZoom from "ol/interaction/MouseWheelZoom";
+import PinchZoom from "ol/interaction/PinchZoom";
+import DoubleClickZoom from "ol/interaction/DoubleClickZoom";
 
 import {
   plansAtom,
@@ -76,6 +79,7 @@ const PlansPage = () => {
   const [organization, setOrganization] = useState();
   const [organizationOptions, setOrganizationOptions] = useState([]);
   const [metaStats, setMetaStats] = useState(null);
+  const [selectedPlan, setSelectedPlan] = useState(null);
 
   const [plans, setPlans] = useRecoilState(plansAtom);
   const [rawStateData, setRawStateData] = useRecoilState(stateDataAtom);
@@ -219,204 +223,239 @@ const PlansPage = () => {
     });
 
     mapRef.current = map;
+    map.getInteractions().forEach((interaction) => {
+      if (
+        interaction instanceof MouseWheelZoom ||
+        interaction instanceof PinchZoom ||
+        interaction instanceof DoubleClickZoom
+      ) {
+        interaction.setActive(false);
+      }
+    });
   }, []);
 
   // ADD BUBBLES TO MAP (state plan counts)
 
-useEffect(() => {
-  if (!mapRef.current || !metaStats) return;
-
-  const features = [];
-
-  const getBubbleRadius = (plans) => {
-    const base = 8;       // minimum size
-    const scale = 2.2;    // bubble growth constant
-    return base + Math.sqrt(plans) * scale;
-  };
-
-  metaStats.state_breakdown.forEach((state) => {
-    const coords = STATE_COORDINATES[state.state_name];
-    if (!coords) return;
-
-    const total = state.total_plans;
-    const radius = getBubbleRadius(total);
-
-    const feature = new Feature({
-      geometry: new Point(coords),
-      name: state.state_name,
-      plans: total,
+  useEffect(() => {
+    if (!mapRef.current || !metaStats) return;
+  
+    const features = [];
+  
+    const getBubbleRadius = (plans) => {
+      const base = 8;       // minimum size
+      const scale = 2.2;    // bubble growth constant
+      return base + Math.sqrt(plans) * scale;
+    };
+  
+    metaStats.state_breakdown.forEach((state) => {
+      const coords = STATE_COORDINATES[state.state_name];
+      if (!coords) return;
+  
+      const total = state.total_plans;
+      const radius = getBubbleRadius(total);
+  
+      const feature = new Feature({
+        geometry: new Point(coords),
+        name: state.state_name,
+        plans: total,
+      });
+  
+      feature.setStyle(
+        new Style({
+          image: new CircleStyle({
+            radius: radius, // DYNAMIC BUBBLE SIZE HERE
+            fill: new Fill({ color: "rgba(0,122,255,0.75)" }),
+            stroke: new Stroke({ color: "#fff", width: 2 }),
+          }),
+          text: new Text({
+            text: total.toString(), // number inside bubble
+            font: "bold 14px sans-serif",
+            fill: new Fill({ color: "#fff" }),
+          }),
+        })
+      );
+  
+      features.push(feature);
     });
-
-    feature.setStyle(
-      new Style({
-        image: new CircleStyle({
-          radius: radius, // DYNAMIC BUBBLE SIZE HERE
-          fill: new Fill({ color: "rgba(0,122,255,0.75)" }),
-          stroke: new Stroke({ color: "#fff", width: 2 }),
-        }),
-        text: new Text({
-          text: total.toString(), // number inside bubble
-          font: "bold 14px sans-serif",
-          fill: new Fill({ color: "#fff" }),
-        }),
-      })
-    );
-
-    features.push(feature);
-  });
-
-  const bubbleLayer = new VectorLayer({
-    source: new VectorSource({ features }),
-  });
-
-  mapRef.current.addLayer(bubbleLayer);
-}, [metaStats]);
-
-useEffect(() => {
-  if (!mapRef.current || !metaStats) return;
-
-  const map = mapRef.current;
-
-  const handleClick = (evt) => {
-    map.forEachFeatureAtPixel(evt.pixel, (feature) => {
-      const clickedStateName = feature.get("name");
-      const state = states.find((s) => s.label === clickedStateName);
-
-      if (!state) {
-        console.warn("State not found:", clickedStateName);
+  
+    const bubbleLayer = new VectorLayer({
+      source: new VectorSource({ features }),
+    });
+    bubbleLayerRef.current = bubbleLayer; 
+    mapRef.current.addLayer(bubbleLayer);
+  }, [metaStats]);
+  
+  useEffect(() => {
+    if (!mapRef.current || !metaStats) return;
+  
+    const map = mapRef.current;
+  
+    const handleClick = (evt) => {
+      let clickedPlan = null;
+    
+      map.forEachFeatureAtPixel(evt.pixel, (feature, layer) => {
+        if (layer && layer.get("layerName") === "planLayer") {
+          clickedPlan = feature;
+        }
+      });
+    
+      // 👉 If a plan is clicked → show details, don't remove layers
+      if (clickedPlan) {
+        const handler = clickedPlan.getLayer(this)?.get("handleClick");
+        if (handler) handler(clickedPlan);
         return;
       }
-
-      const state_id = state.state_id;
-
-      console.log("STATE CLICKED:", clickedStateName, " → ID:", state_id);
-
-      fetchTehsilLevelPlans(state).then((plans) => {
-        setPlans(plans);
-      
-        setMetaStats((prev) => ({
-          ...prev,
-          summary: {
-            total_plans: plans.length,
-            dpr_generated: plans.filter(p => p.dpr_generated).length,
-            dpr_reviewed: plans.filter(p => p.dpr_reviewed).length,
-          },
-          filtered_plans: plans,
-        }));
-      });
-      
-      // OPTIONAL: zoom into state
-      const coords = STATE_COORDINATES[clickedStateName];
-      if (coords) {
-        map.getView().animate({
-          center: coords,
-          zoom: 7,
-          duration: 600,
+    
+      // 👉 Otherwise, treat it as state bubble click
+      map.forEachFeatureAtPixel(evt.pixel, (feature) => {
+        const clickedStateName = feature.get("name");
+        const state = states.find((s) => s.label === clickedStateName);
+    
+        if (!state) return;
+    
+        // Remove bubble + old layers
+        map.getLayers().forEach((layer, index) => {
+          if (index > 0) map.removeLayer(layer);
         });
-      }
-    });
-  };
-
-  map.on("click", handleClick);
-
-  return () => map.un("click", handleClick);
-}, [metaStats, states, plans]);
-
-const fetchTehsilLevelPlans = async (state) => {
-
-  // 1️⃣ Extract all block IDs for this state
-  const allBlockIds = state.district
-    ?.flatMap((d) => d.blocks)
-    ?.map((b) => String(b.block_id));
-
-  console.log("🔹 Blocks in this state:", allBlockIds);
-
-  // 2️⃣ Fetch ALL plans for this state at once
-  const data = await getPlans({ state: state.state_id });
-  const statePlans = data?.raw || [];
-
-  console.log(`🔹 Raw plans from API for state ${state.label} →`, statePlans.length);
-  console.log("Raw plans list:", statePlans);
-
-  // 3️⃣ Filter plans that match tehsil/block IDs of this state
-  const filtered = statePlans.filter((p) =>
-    allBlockIds.includes(String(p.block))
-  );
-
-  console.log(`🔹 Filtered Tehsil Plans for ${state.label} →`, filtered.length);
-  console.log("Filtered plans list:", filtered);
-
-  plotPlansOnMap(filtered);
-  return filtered;
-};
-
-const plotPlansOnMap = (plans) => {
-  if (!mapRef.current) return;
-
-  // Remove old layer if it exists
-  if (planLayerRef.current) {
-    mapRef.current.removeLayer(planLayerRef.current);
-  }
-
-  const features = [];
-
-  plans.forEach((p) => {
-    const lat = parseFloat(p.latitude);
-    const lon = parseFloat(p.longitude);
-
-    if (!lat || !lon) return; // skip invalid coordinates
-
-    const feature = new Feature({
-      geometry: new Point([lon, lat]), // EPSG:4326
-      plan_id: p.id,
-      plan_name: p.plan,
-      district: p.district,
-      block: p.block
-    });
-
-    feature.setStyle(
-      new Style({
-        image: new CircleStyle({
-          radius: 6,
-          fill: new Fill({ color: "rgba(255,0,0,0.8)" }),
-          stroke: new Stroke({ color: "#fff", width: 2 }),
-        }),
-        text: new Text({
-          text: p.plan.substring(0, 10), // optional label
-          font: "bold 12px sans-serif",
-          offsetY: -15,
-          fill: new Fill({ color: "#fff" }),
-        }),
-      })
+    
+        bubbleLayerRef.current = null;
+        planLayerRef.current = null;
+        setSelectedPlan(null);
+    
+        // Fetch plans
+        fetchTehsilLevelPlans(state).then((plans) => {
+          setPlans(plans);
+          setMetaStats((prev) => ({
+            ...prev,
+            summary: {
+              total_plans: plans.length,
+              dpr_generated: plans.filter((p) => p.dpr_generated).length,
+              dpr_reviewed: plans.filter((p) => p.dpr_reviewed).length,
+            },
+          }));
+        });
+    
+        const coords = STATE_COORDINATES[clickedStateName];
+        if (coords) {
+          map.getView().animate({
+            center: coords,
+            zoom: 8,
+            duration: 600,
+          });
+        }
+      });
+    };
+    
+    
+  
+    map.on("click", handleClick);
+  
+    return () => map.un("click", handleClick);
+  }, [metaStats, states, plans]);
+  
+  const fetchTehsilLevelPlans = async (state) => {
+  
+    // 1️⃣ Extract all block IDs for this state
+    const allBlockIds = state.district
+      ?.flatMap((d) => d.blocks)
+      ?.map((b) => String(b.block_id));
+  
+    console.log("🔹 Blocks in this state:", allBlockIds);
+  
+    // 2️⃣ Fetch ALL plans for this state at once
+    const data = await getPlans({ state: state.state_id });
+    const statePlans = data?.raw || [];
+  
+    console.log(`🔹 Raw plans from API for state ${state.label} →`, statePlans.length);
+    console.log("Raw plans list:", statePlans);
+  
+    // 3️⃣ Filter plans that match tehsil/block IDs of this state
+    const filtered = statePlans.filter((p) =>
+      allBlockIds.includes(String(p.block))
     );
-
-    features.push(feature);
-  });
-
-  const vectorSource = new VectorSource({
-    features: features,
-  });
-
-  const vectorLayer = new VectorLayer({
-    source: vectorSource,
-  });
-
-  planLayerRef.current = vectorLayer;
-  mapRef.current.addLayer(vectorLayer);
-
-  // Auto-zoom to plans
-  if (features.length > 0) {
-    const extent = vectorSource.getExtent();
-    mapRef.current.getView().fit(extent, { padding: [50, 50, 50, 50], duration: 600 });
-  }
-};
-
-
-
-
-
-
-  return (
+  
+    console.log(`🔹 Filtered Tehsil Plans for ${state.label} →`, filtered.length);
+    console.log("Filtered plans list:", filtered);
+  
+    plotPlansOnMap(filtered);
+    return filtered;
+  };
+  
+  const plotPlansOnMap = (plans) => {
+    if (!mapRef.current) return;
+  
+    // Remove old layer if it exists
+    if (planLayerRef.current) {
+      mapRef.current.removeLayer(planLayerRef.current);
+    }
+  
+    const features = [];
+  
+    plans.forEach((p) => {
+      const lat = parseFloat(p.latitude);
+      const lon = parseFloat(p.longitude);
+  
+      if (!lat || !lon) return; // skip invalid coordinates
+  
+      const feature = new Feature({
+        geometry: new Point([lon, lat]), // EPSG:4326
+        plan_id: p.id,
+        plan_name: p.plan,
+        district: p.district,
+        block: p.block
+      });
+  
+      feature.setStyle(
+        new Style({
+          image: new CircleStyle({
+            radius: 6,
+            fill: new Fill({ color: "rgba(255,0,0,0.8)" }),
+            stroke: new Stroke({ color: "#fff", width: 2 }),
+          }),
+          text: new Text({
+            text: p.plan.substring(0, 10), // optional label
+            font: "bold 12px sans-serif",
+            offsetY: -15,
+            fill: new Fill({ color: "#fff" }),
+          }),
+        })
+      );
+  
+      features.push(feature);
+    });
+  
+    const vectorSource = new VectorSource({
+      features: features,
+    });
+  
+    const vectorLayer = new VectorLayer({
+      source: vectorSource,
+    });
+    
+    vectorLayer.set("layerName", "planLayer");
+    
+    //  ADD CLICK HANDLER FOR PLANS
+    vectorLayer.set("handleClick", (feature) => {
+      setSelectedPlan({
+        id: feature.get("plan_id"),
+        name: feature.get("plan_name"),
+        district: feature.get("district"),
+        block: feature.get("block"),
+      });
+    });
+    
+  
+    planLayerRef.current = vectorLayer;
+    mapRef.current.addLayer(vectorLayer);
+  
+    // Auto-zoom to plans
+    if (features.length > 0) {
+      const extent = vectorSource.getExtent();
+      mapRef.current.getView().fit(extent, { padding: [50, 50, 50, 50], duration: 600 });
+    }
+  };
+  
+    return (
     <div className="bg-white min-h-screen">
       <LandingNavbar />
       <div className="flex gap-8 items-start p-6">
@@ -426,6 +465,29 @@ const plotPlansOnMap = (plans) => {
           <div className="absolute bottom-4 right-0 w-full max-w-xl px-4">
             <YearSlider currentLayer={[{ name: "lulc_test_layer" }]} />
           </div>
+                {/* ZOOM CONTROLS */}
+      <div className="absolute top-10 right-4 flex flex-col gap-1 z-[1100]">
+        {["+", "–"].map((sign) => (
+          <button
+            key={sign}
+            className="bg-white border border-gray-300 rounded-md w-10 h-10 text-xl 
+                     cursor-pointer hover:bg-gray-100 active:scale-95 transition"
+            onClick={() => {
+              const map = mapRef.current;
+              if (!map) return;
+              const view = map.getView();
+              const delta = sign === "+" ? 1 : -1;
+
+              view.animate({
+                zoom: view.getZoom() + delta,
+                duration: 300,
+              });
+            }}
+          >
+            {sign}
+          </button>
+        ))}
+      </div>
         </div>
         {/* SIDEBAR */}
         <div className="flex flex-col items-start gap-4 w-[25%] text-left mt-16">
@@ -553,6 +615,38 @@ const plotPlansOnMap = (plans) => {
       </div>    
     </div>
       </div>
+
+      {/* SELECTED PLAN DETAILS */}
+{selectedPlan && (
+  <div className="w-full bg-white border border-gray-200 rounded-2xl p-5 shadow mt-6">
+    <h3 className="font-semibold text-gray-800 text-lg mb-3">Plan Details</h3>
+
+    <div className="space-y-2 text-sm">
+      <p>
+        <span className="font-medium text-gray-600">Plan Name:</span><br />
+        <span className="text-gray-900">{selectedPlan.name}</span>
+      </p>
+
+      <p>
+        <span className="font-medium text-gray-600">District:</span><br />
+        <span className="text-gray-900">{districtLookup[selectedPlan.district] || selectedPlan.district}</span>
+      </p>
+
+      <p>
+        <span className="font-medium text-gray-600">Block:</span><br />
+        <span className="text-gray-900">{blockLookup[selectedPlan.block] || selectedPlan.block}</span>
+      </p>
+    </div>
+
+    <button
+      className="mt-4 px-3 py-2 rounded-lg bg-red-500 text-white text-sm hover:bg-red-600"
+      onClick={() => setSelectedPlan(null)}
+    >
+      Clear
+    </button>
+  </div>
+)}
+
       <button
   onClick={() => navigate("/steward")}
   className="px-4 py-2 bg-blue-600 text-white rounded-lg shadow hover:bg-blue-700"
