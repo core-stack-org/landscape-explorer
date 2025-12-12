@@ -5,14 +5,7 @@ import {  useState } from 'react';
 
 const KYLWaterbodyPanel = ({ waterbody, onBack }) => {
 
-  const state = useRecoilValue(stateAtom);
-  const district = useRecoilValue(districtAtom);
-  const block = useRecoilValue(blockAtom);
-  const dataJson = useRecoilValue(dataJsonAtom)
-
   const [dataString, setDataString] = useState("")
-  console.log(waterbody)
-
 
   return (
     <div className="bg-white rounded-lg border border-gray-100 p-3">
@@ -31,7 +24,7 @@ const KYLWaterbodyPanel = ({ waterbody, onBack }) => {
           Waterbody Id: {waterbody?.id || '--'}
         </p>
         <p className="text-sm text-gray-600">
-  This waterbody extends over {waterbody?.properties?.area_ored} hectares
+  This waterbody extends over {Number(waterbody?.properties?.area_ored)?.toFixed(2)} hectares
   and is situated {waterbody?.properties?.on_drainage_line === 1 ? "on" : "off"} the drainage line,
   belonging to stream order {waterbody?.properties?.max_stream_order}.
 </p>

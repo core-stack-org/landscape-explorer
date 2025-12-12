@@ -459,7 +459,7 @@ const DashboardBasemap = ({
     };
     const getZoomForAreaHa = (ha) => {
       if (!ha) return 18; // default closer
-      if (ha < 0.05) return 22.5; 
+      if (ha < 0.05) return 20.5; 
       if (ha < 0.5) return 20;     // tiny ponds
       if (ha < 1) return 19;       // < 1 ha
       if (ha < 2) return 18.5;     // your case: 1.7 ha → zoom 18.5
