@@ -3,3 +3,4 @@ build/
 .env
 .env.local
 bun.lock
+package-lock.json

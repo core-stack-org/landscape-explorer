@@ -1127,6 +1127,7 @@ const KYLMapContainer = ({
   boundaryLayerRef,
   mapRef,
   currentLayer, // Add this prop
+  setSearchLatLong
 }) => {
   const areMWSLayersAvailable = mwsLayerRef?.current !== null;
   const areVillageLayersAvailable = boundaryLayerRef?.current !== null;
@@ -1161,6 +1162,7 @@ const KYLMapContainer = ({
         <KYLLocationSearchBar
           statesData={statesData}
           onLocationSelect={onLocationSelect}
+          setSearchLatLong={setSearchLatLong}
         />
       </div>
 
