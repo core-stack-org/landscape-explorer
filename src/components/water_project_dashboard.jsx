@@ -361,7 +361,7 @@ console.log(props)
         intervention_year:props.intervention_year || 0,
         coordinates: null,
         geometry: feature.geometry,
-        OnDrainage:props.on_drainage_line || 0,
+        drainageFlag:props.on_drainage_line || 0,
       };
 
       setSelectedWaterbody(row);
@@ -1012,9 +1012,9 @@ console.log(props)
               <div className="flex flex-col gap-2 w-full p-4 sm:p-6 md:p-4 rounded-xl bg-white shadow-md">
                 {/* Heading */}
                 <h2 className="text-lg sm:text-lg md:text-xl font-bold text-blue-600 border-b-2 border-blue-600 pb-1">
-                  {WATER_DASHBOARD_CONFIG.sections.section1.title}{" "}
+                  {config.sections.section1.title}{" "}
                 </h2>
-                {WATER_DASHBOARD_CONFIG.sections.section1.paragraphs.map(
+                {config.sections.section1.paragraphs.map(
                   (t, i) => ( <p key={i}>{t}</p>)
                 )}
               </div>
@@ -1220,11 +1220,11 @@ console.log(props)
               <div className="flex flex-col gap-2 w-full p-2 sm:p-3 md:p-2 rounded-xl bg-white shadow-sm">
                 {/* Heading */}
                 <h2 className="text-lg sm:text-lg md:text-xl font-bold text-blue-600 border-b-2 border-blue-600 pb-1">
-                  {WATER_DASHBOARD_CONFIG.sections.section2.title}{" "}
+                  {config.sections.section2.title}{" "}
                 </h2>
 
                 {/* Explanation */}
-                {WATER_DASHBOARD_CONFIG.sections.section2.paragraphs.map(
+                {config.sections.section2.paragraphs.map(
                   (p, i) => (
                     <p key={i} className="text-gray-600 leading-relaxed">
                       {p}
@@ -1386,9 +1386,9 @@ console.log(props)
               <div className="flex flex-col gap-2 w-full p-2 sm:p-3 md:p-4 rounded-lg bg-white shadow-sm">
                 {/* Heading */}
                 <h2 className="text-lg sm:text-lg md:text-xl font-bold text-blue-600 border-b-2 border-blue-600 pb-1">
-                  {WATER_DASHBOARD_CONFIG.sections.section3.title}{" "}
+                  {config.sections.section3.title}{" "}
                 </h2>
-                {WATER_DASHBOARD_CONFIG.sections.section3.paragraphs.map(
+                {config.sections.section3.paragraphs.map(
                   (p, i) => (
                     <p key={i} className="text-gray-600 leading-relaxed">
                       {p}

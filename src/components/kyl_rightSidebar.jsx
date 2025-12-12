@@ -11,6 +11,7 @@ import {
   filterSelectionsAtom,
 } from "../store/locationStore.jsx";
 import KYLMWSProfilePanel from "./kyl_MWSProfilePanel.jsx";
+import KYLWaterbodyPanel from "./kyl_waterbodypanel.jsx";
 import { useRecoilState } from "recoil";
 
 const KYLRightSidebar = ({
@@ -42,11 +43,15 @@ const KYLRightSidebar = ({
   waterbodiesLayerRef,
   clickedWaterbodyId,
   waterbodyDashboardUrl,
+  selectedWaterbodyProfile,
+  onResetWaterbody,
+  mwsLayerRef
 }) => {
   const [globalState, setGlobalState] = useRecoilState(stateAtom);
   const [globalDistrict, setGlobalDistrict] = useRecoilState(districtAtom);
   const [globalBlock, setGlobalBlock] = useRecoilState(blockAtom);
   const [showWB, setShowWB] = React.useState(false);
+
 
   const handleMultiReport = () => {
         const filtersList = getFormattedSelectedFilters()
@@ -141,8 +146,12 @@ const KYLRightSidebar = ({
   };
 
   const toggleWaterbodies = async () => {
+    const map = mapRef.current;
     if (!showWB) {
-      await fetchWaterbodiesLayer();  
+      await fetchWaterbodiesLayer(); 
+      if (mwsLayerRef.current) {
+        mwsLayerRef.current.setVisible(false);
+      } 
       setShowWB(true);
       return;
     }
@@ -165,7 +174,13 @@ const KYLRightSidebar = ({
     <div className="w-[320px] flex flex-col gap-2">
       {selectedMWSProfile ? (
         <KYLMWSProfilePanel mwsData={selectedMWSProfile} onBack={onResetMWS} />
-      ) : (
+      )  : selectedWaterbodyProfile ? (
+        <KYLWaterbodyPanel
+        waterbody={selectedWaterbodyProfile}
+        onBack={onResetWaterbody}
+      />
+      ):
+      (
         <div className="bg-white rounded-lg border border-gray-100 p-3">
           <button
               className="w-full py-2 px-2 text-indigo-600 bg-indigo-100 rounded-lg text-xs font-medium text-left mb-1"

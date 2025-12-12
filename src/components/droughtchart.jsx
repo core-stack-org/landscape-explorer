@@ -24,11 +24,9 @@ ChartJS.register(
 const DroughtChart = ({ mwsGeoData, waterbody, typeparam }) => {
   if (!mwsGeoData || !waterbody) return null;
 
-  console.log("Incoming waterbody:", waterbody);
+  console.log("Incoming waterbody:", mwsGeoData);
 
-  // --------------------------------------------
-  // ⭐ GET UID BASED ON MODE
-  // --------------------------------------------
+  // GET UID BASED ON MODE
   let mwsUid =
     typeparam === "tehsil"
       ? waterbody?.properties?.MWS_UID?.toString()?.trim()
@@ -45,20 +43,18 @@ const DroughtChart = ({ mwsGeoData, waterbody, typeparam }) => {
 
   let matchedFeature = null;
 
-  // --------------------------------------------
-  // ⭐ PROJECT MODE → mwsGeoData.features[]
-  // --------------------------------------------
+  // PROJECT MODE → mwsGeoData.features[]
   if (typeparam === "project") {
     const features = mwsGeoData?.features || [];
 
-    // 1️⃣ exact match
+    // 1 exact match
     matchedFeature = features.find(
       (f) =>
         f.properties?.uid?.toString()?.trim() === mwsUid ||
         f.properties?.MWS_UID?.toString()?.trim() === mwsUid
     );
 
-    // 2️⃣ partial match fallback
+    // 2️ partial match fallback
     if (!matchedFeature) {
       matchedFeature = features.find((f) => {
         const props = f.properties || {};
@@ -70,10 +66,10 @@ const DroughtChart = ({ mwsGeoData, waterbody, typeparam }) => {
   }
 
   // --------------------------------------------
-  // ⭐ TEHSIL MODE → array of OL Features
+  //  TEHSIL MODE → array of OL Features
   // --------------------------------------------
   if (typeparam === "tehsil") {
-    // 1️⃣ exact match
+    // 1️ exact match
     matchedFeature = mwsGeoData.find((f) => {
       const props = f.getProperties();
       return (
@@ -82,7 +78,7 @@ const DroughtChart = ({ mwsGeoData, waterbody, typeparam }) => {
       );
     });
 
-    // 2️⃣ partial match fallback
+    // 2️ partial match fallback
     if (!matchedFeature) {
       matchedFeature = mwsGeoData.find((f) => {
         const props = f.getProperties();
@@ -99,17 +95,13 @@ const DroughtChart = ({ mwsGeoData, waterbody, typeparam }) => {
     return null;
   }
 
-  // --------------------------------------------
-  // ⭐ PROPERTIES EXTRACTOR
-  // --------------------------------------------
+  // PROPERTIES EXTRACTOR
   const props =
     typeparam === "project"
       ? matchedFeature.properties
       : matchedFeature.getProperties();
 
-  // --------------------------------------------
-  // ⭐ CHART VALUES
-  // --------------------------------------------
+  //  CHART VALUES
   const years = [2017, 2018, 2019, 2020, 2021, 2022];
 
   const getProjectKeys = (y) => ({
@@ -151,7 +143,18 @@ const DroughtChart = ({ mwsGeoData, waterbody, typeparam }) => {
     ],
   };
 
-  return <Bar data={data} options={{ responsive: true }} />;
+  return <Bar data={data} options={{ responsive: true,plugins: {
+    title: {
+      display: true,
+      text: typeparam === "tehsil"
+        ? "Drought Incidence "
+        : "Drought Incidence",
+        font: { size: 16, weight: "bold" },
+    },
+    legend: {
+      position: "top",
+    },
+  }, }} />;
 };
 
 export default DroughtChart;

@@ -52,6 +52,7 @@ const DashboardBasemap = ({
       featureProjection: "EPSG:4326",
     });
 
+
   const getZoiOlFeatures = () => {
     if (!zoiFeatures) return [];
     if (
@@ -114,6 +115,15 @@ const DashboardBasemap = ({
     }
     return styles;
   };
+
+  const waterbodyPointStyle = new Style({
+    image: new Icon({
+      src: waterbodyIcon,
+      scale: 1.1,
+      anchor: [0.5, 1],
+    }),
+  });
+  
 
   const removeLayersById = (ids = []) => {
     const m = mapRef.current;
@@ -368,10 +378,10 @@ const DashboardBasemap = ({
       let layerName = null;
 
       if (projectName && projectId) {
-        layerName = `LULC_${lulcYear}_${projectName}_${projectId}__level_3`;
+        layerName = `LULC_${lulcYear}_${projectName.toLowerCase()}_${projectId}__level_3`;
       }
       if (!projectName && !projectId && district && block) {
-        layerName = `LULC_${lulcYear}_${block.toLowerCase()}_level_3`;
+        layerName = `LULC_${lulcYear}_${district.toLowerCase()}_${block.toLowerCase()}_level_3`;
       }
 
       try {
@@ -444,8 +454,21 @@ const DashboardBasemap = ({
       view.fit(fullExtent, {
         padding: [50, 50, 50, 50],
         duration: 400,
-        maxZoom: 13, // ⭐ prevent zooming in too much
+        maxZoom: 13, //  prevent zooming in too much
       });
+    };
+    const getZoomForAreaHa = (ha) => {
+      if (!ha) return 18; // default closer
+      if (ha < 0.05) return 20.5; 
+      if (ha < 0.5) return 20;     // tiny ponds
+      if (ha < 1) return 19;       // < 1 ha
+      if (ha < 2) return 18.5;     // your case: 1.7 ha → zoom 18.5
+      if (ha < 5) return 18;
+      if (ha < 15) return 17;
+      if (ha < 40) return 16;
+      if (ha < 100) return 15;
+    
+      return 14; // big waterbodies
     };
     
     
@@ -454,7 +477,6 @@ const DashboardBasemap = ({
     const addWaterbody = async () => {
       const isTehsil = !projectName && !projectId;
 
-      // PROJECT MODE (unchanged)
 // PROJECT MODE — show ONLY selected
 if (!isTehsil) {
 
@@ -475,13 +497,28 @@ if (!isTehsil) {
       map.removeLayer(layer);
     }
   });
+console.log(normalizedWaterbody)
+  const areaHa =
+  normalizedWaterbody?.areaOred ||
+  normalizedWaterbody?.area_ha ||
+  normalizedWaterbody?.AREA_HA ||
+  normalizedWaterbody?.area ||
+  null;
+
+const targetZoom = getZoomForAreaHa(Number(areaHa));
+
+view.fit(selectedFeatureOl.getGeometry().getExtent(), {
+  padding: [20, 20, 20, 20],
+  maxZoom: targetZoom,
+  duration: 400,
+});
 
   // FIT MAP TO SELECTED WB
-  view.fit(selectedFeatureOl.getGeometry().getExtent(), {
-    padding: [20, 20, 20, 20],
-    maxZoom: 16,
-    duration: 350,
-  });
+  // view.fit(selectedFeatureOl.getGeometry().getExtent(), {
+  //   padding: [20, 20, 20, 20],
+  //   maxZoom: 16,
+  //   duration: 350,
+  // });
 
   // ADD ONLY SELECTED WB
   const wbSelected = new VectorLayer({
@@ -502,9 +539,6 @@ if (!isTehsil) {
   return;
 }
 
-
-
-      // TEHSIL MODE — PATCHED
     // TEHSIL MODE — FINAL PATCH
 if (isTehsil) {
   let wbGeometry = selectedWaterbody?.geometry || null;
@@ -570,11 +604,28 @@ if (isTehsil) {
       }
     });
   }
+  console.log(selectedWaterbody)
+
+  // Extract area (from tehsil WB)
+const areaHa =
+selectedWaterbody?.properties.areaOred ||
+selectedWaterbody?.properties.area_ha ||
+selectedWaterbody?.properties.AREA_HA ||
+selectedWaterbody?.properties.area_ored ||
+normalizedWaterbody?.areaOred ||
+normalizedWaterbody?.area_ha ||
+normalizedWaterbody?.AREA_HA ||
+normalizedWaterbody?.area ||
+null;
+
+// Compute zoom based on WB area
+const targetZoom = getZoomForAreaHa(Number(areaHa));
+
 
   const geom = tehsilFeature.getGeometry();
   view.fit(geom.getExtent(), {
     padding: [20, 20, 20, 20],
-    maxZoom: 17,
+    maxZoom: targetZoom,
     duration: 300,
   });
 
@@ -1116,15 +1167,39 @@ const addMws = async () => {
   wbTop.setZIndex(999);
   map.addLayer(wbTop);
 
-  console.log("✅ Waterbody + MWS drawn (Project/Tehsil)");
+// ---------------------------------------------
+//  ADD WATERBODY ICON (centroid marker)
+// ---------------------------------------------
+try {
+  const geom = wbFeatureObj.getGeometry();
+  let center = null;
+
+  if (geom.getType() === "Polygon") {
+    center = geom.getInteriorPoint().getCoordinates();
+  } else if (geom.getType() === "MultiPolygon") {
+    center = geom.getInteriorPoints().getFirstCoordinate();
+  }
+
+  if (center) {
+    const iconFeature = new Feature({
+      geometry: new Point(center),
+    });
+
+    const iconLayer = new VectorLayer({
+      source: new VectorSource({ features: [iconFeature] }),
+      style: waterbodyPointStyle,
+    });
+
+    iconLayer.set("id", "wb_icon_layer_mws");
+    iconLayer.setZIndex(2000); // always visible above everything
+    map.addLayer(iconLayer);
+  }
+} catch (e) {
+  console.error("Failed to add WB icon:", e);
+}
 
   map.renderSync();
 };
-
-    
-    
-
-
 
     (async () => {
       try {
