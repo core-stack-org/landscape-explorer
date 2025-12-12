@@ -98,6 +98,8 @@ const KYLDashboardPage = () => {
 
   const [clickedWaterbodyId, setClickedWaterbodyId] = useState(null);
 const [waterbodyDashboardUrl, setWaterbodyDashboardUrl] = useState(null);
+const [selectedWaterbodyProfile, setSelectedWaterbodyProfile] = useState(null);
+
 const waterbodyClickedRef = useRef(false);
 
 
@@ -526,6 +528,7 @@ const waterbodyClickedRef = useRef(false);
     // If already loaded → just show
     if (waterbodiesLayerRef.current) {
       waterbodiesLayerRef.current.setVisible(true);
+      mwsLayerRef.current.setVisible(false)
       return;
     }
 
@@ -550,22 +553,25 @@ const waterbodyClickedRef = useRef(false);
       }
     
       return [
-        // 1️⃣ Invisible polygon for click detection
+        // 1️⃣ Visible polygon boundary (blue)
         new Style({
           geometry: geom,
-          fill: new Fill({ color: "rgba(0,0,0,0)" }),
-          stroke: new Stroke({ color: "rgba(0,0,0,0)", width: 1 }),
+          stroke: new Stroke({
+            color: "#fcfc3a",
+            width: 2,
+          }),
+          
         }),
     
-        // 2️⃣ Icon visible on map
-        new Style({
-          geometry: pointGeom,
-          image: new Icon({
-            src: waterbodyIcon,
-            scale: 0.6,
-            anchor: [0.5, 1],
-          }),
-        }),
+        // 2 Waterbody icon at centroid
+        // new Style({
+        //   geometry: pointGeom,
+        //   image: new Icon({
+        //     src: waterbodyIcon,
+        //     scale: 0.5,
+        //     anchor: [0.5, 1],
+        //   }),
+        // }),
       ];
     });
     
@@ -1300,7 +1306,7 @@ const saveAllMwsToLocalStorage = async(mwsLayer) => {
     const geojson = new GeoJSON();
     const featureList = features.map(f => geojson.writeFeatureObject(f));
     localStorage.setItem("all_mws_features", JSON.stringify(featureList));
-    console.log("✅ Saved all MWS:", featureList.length);
+    console.log("Saved all MWS:", featureList.length);
   }
 };
   // useEffect(()=> {
@@ -1350,10 +1356,18 @@ const saveAllMwsToLocalStorage = async(mwsLayer) => {
       setSelectedWaterbodyForTehsil(fullFeature);
       localStorage.setItem("selectedWaterbody", JSON.stringify(fullFeature));
     
-      setClickedWaterbodyId(wb_id);
-      setWaterbodyDashboardUrl(
-        `/dashboard?type=tehsil&state=${state.label}&district=${district.label}&block=${block.label}&waterbody=${wb_id}`
-      );
+      // setClickedWaterbodyId(wb_id);
+      // setWaterbodyDashboardUrl(
+      //   `/dashboard?type=tehsil&state=${state.label}&district=${district.label}&block=${block.label}&waterbody=${wb_id}`
+      // );
+      setSelectedWaterbodyProfile({
+        id: wb_id,
+        dashboardUrl: `/dashboard?type=tehsil&state=${state.label}&district=${district.label}&block=${block.label}&waterbody=${wb_id}`,
+        properties: props,
+        geometry: new GeoJSON().writeGeometryObject(wbFeature.getGeometry())
+      });
+      
+
     
       console.log("WATERBODY CLICKED →", wb_id);
     };
@@ -1960,6 +1974,9 @@ const saveAllMwsToLocalStorage = async(mwsLayer) => {
           waterbodiesLayerRef={waterbodiesLayerRef} 
           clickedWaterbodyId={clickedWaterbodyId}
           waterbodyDashboardUrl={waterbodyDashboardUrl}
+          selectedWaterbodyProfile={selectedWaterbodyProfile}
+          onResetWaterbody={() => setSelectedWaterbodyProfile(null)}
+          mwsLayerRef={mwsLayerRef}
 
         />
       </div>
