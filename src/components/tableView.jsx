@@ -115,9 +115,9 @@ function formatCell(row, key) {
     return (
       <>
         {row.avgWaterAvailabilityRabi ?? "NA"}{" "}
-        {row.ImpactRabi && (
+        {/* {row.ImpactRabi && (
           <span style={{ color: row.ImpactRabiColor }}>({row.ImpactRabi})</span>
-        )}
+        )} */}
       </>
     );
   }
@@ -126,9 +126,9 @@ function formatCell(row, key) {
     return (
       <>
         {row.avgWaterAvailabilityZaid ?? "NA"}{" "}
-        {row.ImpactZaid && (
+        {/* {row.ImpactZaid && (
           <span style={{ color: row.ImpactZaidColor }}>({row.ImpactZaid})</span>
-        )}
+        )} */}
       </>
     );
   }
