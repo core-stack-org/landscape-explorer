@@ -1952,7 +1952,6 @@ const KYLDashboardPage = () => {
           mapRef={mapRef}
           onResetMWS={handleResetMWS}
           selectedMWSProfile={selectedMWSProfile}
-          fetchWaterbodiesLayer={fetchWaterBodiesLayer}
           waterbodiesLayerRef={waterbodiesLayerRef} 
           clickedWaterbodyId={clickedWaterbodyId}
           waterbodyDashboardUrl={waterbodyDashboardUrl}
