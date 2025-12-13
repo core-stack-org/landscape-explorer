@@ -315,16 +315,20 @@ const PlansPage = () => {
     }
     
     // remove bubble layer
-    if (bubbleLayerRef.current) {
-      mapRef.current.removeLayer(bubbleLayerRef.current);
-      bubbleLayerRef.current = null;
-    }
+
   
     setShowBubbleLayer(false);
       setIsStateView(false);     
     setSelectedPlan(null);
-    setMapLoading(false);
+    setTimeout(() => {
+      if (bubbleLayerRef.current) {
+        mapRef.current.removeLayer(bubbleLayerRef.current);
+        bubbleLayerRef.current = null;
+      }
+    }, 600);
     await fetchTehsilPlans(stateObj);
+    setTimeout(() => setMapLoading(false), 300);
+
   };
   
   const handleBackToStateView = () => {
