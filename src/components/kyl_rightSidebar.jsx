@@ -3,6 +3,7 @@ import React from "react";
 import SelectButton from "./buttons/select_button";
 import filtersDetails from "../components/data/Filters.json";
 import ToggleButton from "./buttons/toggle_button_kyl";
+import { ArrowLeft } from 'lucide-react';
 import {
   stateDataAtom,
   stateAtom,
@@ -38,7 +39,6 @@ const KYLRightSidebar = ({
   mapRef,
   onResetMWS,
   selectedMWSProfile,
-  fetchWaterbodiesLayer,
   waterbodiesLayerRef,
   clickedWaterbodyId,
   waterbodyDashboardUrl,
@@ -52,6 +52,15 @@ const KYLRightSidebar = ({
   const [globalDistrict, setGlobalDistrict] = useRecoilState(districtAtom);
   const [globalBlock, setGlobalBlock] = useRecoilState(blockAtom);
   
+  // Check if both panels are shown
+  const showBothPanels = selectedMWSProfile && selectedWaterbodyProfile;
+
+  // Universal back handler - resets both panels
+  const handleUniversalBack = () => {
+    onResetMWS();
+    onResetWaterbody();
+  };
+
   const handleIndicatorRemoval = (filter) => {
     // First, remove the visualization if it exists
     if (toggleStates[filter.name]) {
@@ -130,27 +139,51 @@ const KYLRightSidebar = ({
   };
   
   const handleTehsilReport = () => {
-    const reportURL = `${process.env.REACT_APP_API_URL}/generate_tehsil_report/?state=${state.label.toLowerCase().split(" ").join("_")}&district=${district.label.toLowerCase().split(" ").join("_")}&block=${block.label.toLowerCase().split(" ").join("_")}`; // Replace with your actual URL
+    const reportURL = `${process.env.REACT_APP_API_URL}/generate_tehsil_report/?state=${state.label.toLowerCase().split(" ").join("_")}&district=${district.label.toLowerCase().split(" ").join("_")}&block=${block.label.toLowerCase().split(" ").join("_")}`;
     window.open(reportURL, '_blank', 'noopener,noreferrer');
   };
 
   return (
     <div className="w-[320px] flex flex-col gap-2">
-      {selectedMWSProfile ? (
-        <KYLMWSProfilePanel mwsData={selectedMWSProfile} onBack={onResetMWS} />
-      )  : selectedWaterbodyProfile ? (
+      {/* Universal Back Button - Shows only when both panels are selected */}
+      {showBothPanels && (
+        <div className="bg-white rounded-lg border border-gray-100 p-3">
+          <button 
+            onClick={handleUniversalBack}
+            className="flex items-center gap-2 text-gray-700 hover:text-gray-900"
+          >
+            <ArrowLeft className="h-5 w-5" />
+            <span className="text-sm font-medium">Back to Map</span>
+          </button>
+        </div>
+      )}
+
+      {/* MWS Profile Panel - Shows first when both are selected */}
+      {selectedMWSProfile && (
+        <KYLMWSProfilePanel 
+          mwsData={selectedMWSProfile} 
+          onBack={onResetMWS}
+          hideBackButton={showBothPanels} 
+        />
+      )}
+      
+      {/* Waterbody Panel - Shows second when both are selected */}
+      {selectedWaterbodyProfile && (
         <KYLWaterbodyPanel
-        waterbody={selectedWaterbodyProfile}
-        onBack={onResetWaterbody}
-      />
-      ):
-      (
+          waterbody={selectedWaterbodyProfile}
+          onBack={onResetWaterbody}
+          hideBackButton={showBothPanels}
+        />
+      )}
+      
+      {/* Default view - Shows only when neither MWS nor Waterbody is selected */}
+      {!selectedMWSProfile && !selectedWaterbodyProfile && (
         <div className="bg-white rounded-lg border border-gray-100 p-3">
           <button
-              className="w-full py-2 px-2 text-indigo-600 bg-indigo-100 rounded-lg text-xs font-medium text-left mb-1"
-            >
+            className="w-full py-2 px-2 text-indigo-600 bg-indigo-100 rounded-lg text-xs font-medium text-left mb-1"
+          >
             Click on a micro-watershed (blue outline) to view its report.
-            </button>
+          </button>
           <div className="bg-white rounded-lg border border-gray-100 p-3">
             <div className="space-y-4">
               <div className="flex items-center gap-3">
@@ -162,10 +195,9 @@ const KYLRightSidebar = ({
                   stateData={statesData}
                   handleItemSelect={handleItemSelect}
                   setState={(val) => {
-                    setState(val);        // existing behaviour
-                    setGlobalState(val);  // NEW → sync to recoil
+                    setState(val);
+                    setGlobalState(val);
                   }}
-                  // setState={setState}
                   className="w-full border border-gray-200 rounded-md py-1.5 px-3"
                 />
               </div>
@@ -181,8 +213,6 @@ const KYLRightSidebar = ({
                     setDistrict(val);
                     setGlobalDistrict(val);
                   }}
-                  
-                  // setState={setDistrict}
                   className="w-full border border-gray-200 rounded-md py-1.5 px-3"
                 />
               </div>
@@ -198,8 +228,6 @@ const KYLRightSidebar = ({
                     setBlock(val);
                     setGlobalBlock(val);
                   }}
-                  
-                  // setState={setBlock}
                   className="w-full border border-gray-200 rounded-md py-1.5 px-3"
                 />
               </div>
@@ -207,7 +235,7 @@ const KYLRightSidebar = ({
             {block && (
               <div className="mt-6 flex gap-2">
                 <button 
-                  className="flex items-center justify-center text-indigo-600 py-2 text-sm hover:bg-indigo-50 rounded-md transition-colors" 
+                  className="flex-1 flex items-center justify-center gap-1 text-indigo-600 py-2 text-sm hover:bg-indigo-50 rounded-md transition-colors" 
                   onClick={handleTehsilReport}
                 >
                   <svg
@@ -234,13 +262,12 @@ const KYLRightSidebar = ({
                 </button>
                 <button
                   onClick={() => toggleWaterbodies()}
-                  className={`flex items-center justify-center py-2 text-sm 
+                  className={`flex-1 flex items-center justify-center gap-1 py-2 text-sm 
                               rounded-md transition-colors hover:bg-indigo-50 
                               ${showWB ? "text-red-600" : "text-indigo-600"}`}
                 >
                   {showWB ? (
                     <>
-                      {/* Hide Waterbodies Icon */}
                       <svg xmlns="http://www.w3.org/2000/svg" 
                           width="18" height="18" viewBox="0 0 24 24" 
                           fill="none" stroke="currentColor" strokeWidth="2" 
@@ -253,7 +280,6 @@ const KYLRightSidebar = ({
                     </>
                   ) : (
                     <>
-                      {/* Show Waterbodies Icon */}
                       <svg xmlns="http://www.w3.org/2000/svg" 
                           width="18" height="18" viewBox="0 0 24 24" 
                           fill="none" stroke="currentColor" strokeWidth="2" 
@@ -274,51 +300,51 @@ const KYLRightSidebar = ({
             </span>
             <div className="mt-2 max-h-[150px] overflow-y-auto pr-2">
               <div className="space-y-2">
-              {getFormattedSelectedFilters().map((filter, index) => (
-                <div key={index} className="flex items-center justify-between gap-2">
-                  <div className="flex-1 flex items-center bg-gray-50 rounded px-2 py-1.5">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex flex-col gap-y-0.5 text-[10px]">
-                        <div className="flex gap-x-1">
-                          <span className="text-gray-900 font-medium">
-                            {filter.filterName}
-                          </span>
-                          <span className="text-gray-400">-</span>
+                {getFormattedSelectedFilters().map((filter, index) => (
+                  <div key={index} className="flex items-center justify-between gap-2">
+                    <div className="flex-1 flex items-center bg-gray-50 rounded px-2 py-1.5">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex flex-col gap-y-0.5 text-[10px]">
+                          <div className="flex gap-x-1">
+                            <span className="text-gray-900 font-medium">
+                              {filter.filterName}
+                            </span>
+                            <span className="text-gray-400">-</span>
+                          </div>
+                          {filter.values.map((value, valueIndex) => (
+                            <span key={valueIndex} className="text-gray-500 pl-1">
+                              {value}
+                            </span>
+                          ))}
                         </div>
-                        {filter.values.map((value, valueIndex) => (
-                          <span key={valueIndex} className="text-gray-500 pl-1">
-                            {value}
-                          </span>
-                        ))}
                       </div>
-                    </div>
-                    <button
-                      onClick={() => handleIndicatorRemoval(filter)}
-                      className={`text-gray-400 hover:text-gray-600 ml-2 ${
-                        toggleStates[filter.name] ? "invisible" : "visible"
-                      }`}
-                    >
-                      <svg
-                        className="w-3 h-3"
-                        fill="none"
-                        viewBox="0 0 12 12"
+                      <button
+                        onClick={() => handleIndicatorRemoval(filter)}
+                        className={`text-gray-400 hover:text-gray-600 ml-2 ${
+                          toggleStates[filter.name] ? "invisible" : "visible"
+                        }`}
                       >
-                        <path
-                          d="M8.5 3.5l-5 5M3.5 3.5l5 5"
-                          stroke="currentColor"
-                          strokeWidth="1.5"
-                          strokeLinecap="round"
-                        />
-                      </svg>
-                    </button>
+                        <svg
+                          className="w-3 h-3"
+                          fill="none"
+                          viewBox="0 0 12 12"
+                        >
+                          <path
+                            d="M8.5 3.5l-5 5M3.5 3.5l5 5"
+                            stroke="currentColor"
+                            strokeWidth="1.5"
+                            strokeLinecap="round"
+                          />
+                        </svg>
+                      </button>
+                    </div>
+                    <ToggleButton
+                      isOn={toggleStates[filter.name]}
+                      toggleSwitch={() => handleLayerSelection(filter)}
+                    />
                   </div>
-                  <ToggleButton
-                    isOn={toggleStates[filter.name]}
-                    toggleSwitch={() => handleLayerSelection(filter)}
-                  />
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
             </div>
             {getFormattedSelectedFilters().length > 0 && (
               <div className="mt-4 text-xs text-gray-600">
@@ -333,8 +359,6 @@ const KYLRightSidebar = ({
             <span className="text-sm font-medium">
               Selected Patterns ({getFormattedSelectedPatterns().length})
             </span>
-   
-
             <div className="mt-2 max-h-[150px] overflow-y-auto pr-2">
               <div className="space-y-2">
                 {getFormattedSelectedPatterns().map((pattern, index) => (
@@ -346,7 +370,6 @@ const KYLRightSidebar = ({
                             {pattern.category}
                           </span>
                           <span className="text-gray-400">-</span>
-                          {/* <span className="text-gray-500">{pattern.characterstics}</span> */}
                         </div>
                       </div>
                       <button
@@ -369,22 +392,17 @@ const KYLRightSidebar = ({
                         </svg>
                       </button>
                     </div>
-                    
                   </div>
-                  
                 ))}
-                
               </div>
-              
             </div>
-            
           </div>
+          
           {clickedWaterbodyId && (
             <div className="p-3 bg-blue-50 border border-blue-200 rounded mt-3">
               <p className="font-semibold text-blue-800">
                 Waterbody Selected: {clickedWaterbodyId}
               </p>
-
               <button
                 onClick={() => window.open(waterbodyDashboardUrl, "_blank")}
                 className="mt-2 px-3 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
