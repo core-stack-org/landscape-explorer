@@ -1,505 +1,267 @@
-import React, { useEffect, useRef,useMemo } from "react";
-import TileLayer from "ol/layer/Tile";
-import XYZ from "ol/source/XYZ";
-import { defaults as defaultControls } from "ol/control";
-import { Fill, Stroke, Style, Icon } from "ol/style.js";
-import Map from "ol/Map";
-import View from "ol/View";
-import MouseWheelZoom from "ol/interaction/MouseWheelZoom";
-import PinchZoom from "ol/interaction/PinchZoom";
-import DoubleClickZoom from "ol/interaction/DoubleClickZoom";
+import React, {  useMemo } from "react";
+import { useLocation } from "react-router";
 import { useRecoilValue } from "recoil";
-import { districtLookupAtom, blockLookupAtom } from "../store/locationStore";
+
+import {
+  districtLookupAtom,
+  blockLookupAtom,
+} from "../store/locationStore";
+
 import getVectorLayers from "../actions/getVectorLayers";
-import SettlementIcon from '../assets/settlement_icon.svg';
-import WellIcon from "../assets/well_proposed.svg";  
-import WaterStructureIcon from '../assets/waterbodies_proposed.svg';
-import RechargeIcon from '../assets/recharge_icon.svg';
+import SettlementIcon from "../assets/settlement_icon.svg";
+import WellIcon from "../assets/well_proposed.svg";
+import WaterStructureIcon from "../assets/waterbodies_proposed.svg";
+import RechargeIcon from "../assets/recharge_icon.svg";
 import IrrigationIcon from "../assets/irrigation_icon.svg";
 import LivelihoodIcon from "../assets/livelihood_proposed.svg";
 
+import MapSection from "./planMapSection";
+
+import { Fill, Stroke, Style, Icon } from "ol/style";
+
+const PlanViewPage = () => {
+  const { state } = useLocation();
+  const plan = state?.plan;
+
+  const districtLookup = useRecoilValue(districtLookupAtom);
+  const blockLookup = useRecoilValue(blockLookupAtom);
+
+  const districtName = useMemo(
+    () => districtLookup[plan?.district] || plan?.district,
+    [plan, districtLookup]
+  );
+
+  const blockName = useMemo(
+    () => blockLookup[plan?.block] || plan?.block,
+    [plan, blockLookup]
+  );
+
+  if (!plan) return <div className="p-10">No plan data found</div>;
+
+  // Normalize names
+  const districtNameSafe = (districtName || "").toLowerCase().replace(/\s+/g, "_");
+  const blockNameSafe = (blockName || "").toLowerCase().replace(/\s+/g, "_");
 
 
-
-const PlanViewDialog = ({ open, onClose, plan }) => {
-const districtLookup = useRecoilValue(districtLookupAtom);
-const blockLookup = useRecoilValue(blockLookupAtom);
-
-const districtName = useMemo(() => {
-    return districtLookup[plan?.district] || plan?.district || "--";
-  }, [plan, districtLookup]);
-  
-  const blockName = useMemo(() => {
-    return blockLookup[plan?.block] || plan?.block || "--";
-  }, [plan, blockLookup]);
-
-  const mapRef = useRef(null);
-  const mapElement = useRef(null);
-
-  // ---------- INIT BASEMAP ----------
-  useEffect(() => {
-    if (!open) return;
-  
-    const map = new Map({
-      target: mapElement.current,
-      layers: [
-        new TileLayer({
-          source: new XYZ({
-            url: "https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}",
-            maxZoom: 20,
-          }),
-        }),
-      ],
-      view: new View({
-        center: [78.9, 23.6],
-        zoom: 6,
-        projection: "EPSG:4326",
-      }),
-      controls: defaultControls(),
-    });
-  
-    // Disable unnecessary interactions
-    map.getInteractions().forEach((interaction) => {
-      if (
-        interaction instanceof MouseWheelZoom ||
-        interaction instanceof PinchZoom ||
-        interaction instanceof DoubleClickZoom
-      ) {
-        interaction.setActive(false);
-      }
-    });
-  
-    mapRef.current = map;
-  
-    loadBoundary();
-    loadSettlement();
-    loadWell();
-    loadWaterStructure();
-    loadRechargeStructure();
-    loadIrrigationStructure();
-    loadLivelihood();
-  
-    return () => {
-      if (mapRef.current) {
-        mapRef.current.setTarget(null);
-      }
-    };
-  }, [open, plan]);
-  
-
-  const loadBoundary = async () => {
-    if (!plan) return;
-  
-    const districtNameSafe = (districtName || "")
-      .toLowerCase()
-      .replace(/\s+/g, "_");
-  
-    const blockNameSafe = (blockName || "")
-      .toLowerCase()
-      .replace(/\s+/g, "_");
-  
-    const layerStore = "panchayat_boundaries";
-    const layerName = `${districtNameSafe}_${blockNameSafe}`;
-    
-    const boundaryLayer = await getVectorLayers(
-      layerStore,
-      layerName,
+  const loadBoundary = async (map, districtNameSafe, blockNameSafe) => {
+    const layer = await getVectorLayers(
+      "panchayat_boundaries",
+      `${districtNameSafe}_${blockNameSafe}`,
       true
     );
   
-    mapRef.current.addLayer(boundaryLayer);
-  
-    // Remove fill & keep only stroke
-    boundaryLayer.setStyle(
+    layer.setStyle(
       new Style({
-        stroke: new Stroke({
-          color: "#000",
-          width: 2,
-        }),
-        fill: new Fill({
-          color: "rgba(0,0,0,0)",
-        }),
+        stroke: new Stroke({ color: "#000", width: 2 }),
+        fill: new Fill({ color: "rgba(0,0,0,0)" }),
       })
     );
   
-    // ⭐ FIT ALL FEATURES, NOT ONLY FIRST ONE
-    boundaryLayer.getSource().on("change", () => {
-      const source = boundaryLayer.getSource();
+    map.addLayer(layer);
   
-      if (source.getState() === "ready") {
-        const extent = source.getExtent();
-  
-        if (extent) {
-          mapRef.current.getView().fit(extent, {
-            padding: [40, 40, 40, 40],
-            duration: 800,
-            maxZoom: 12, // you can increase to 13 for closer view
-          });
-        }
+    layer.getSource().on("change", () => {
+      if (layer.getSource().getState() === "ready") {
+        const extent = layer.getSource().getExtent();
+        map.getView().fit(extent, {
+          padding: [30, 30, 30, 30],
+          duration: 400,
+        });
       }
     });
   };
+  
 
-  const loadSettlement = async () => {
-    if (!plan) return;
-  
-    const districtNameSafe = (districtName || "").toLowerCase().replace(/\s+/g, "_");
-    const blockNameSafe = (blockName || "").toLowerCase().replace(/\s+/g, "_");
-    const layerStore = "resources";
-    const layerName = `settlement_${plan.id}_${districtNameSafe}_${blockNameSafe}`;
-    
-    // Load as vector
-    const settlementLayer = await getVectorLayers(
-      layerStore,
-      layerName,
+  const loadSettlement = async (map) => {
+    const layer = await getVectorLayers(
+      "resources",
+      `settlement_${plan.id}_${districtNameSafe}_${blockNameSafe}`,
       true
     );
-  
-    //  OVERRIDE STYLE USING STYLE FUNCTION (strongest override in OL)
-    settlementLayer.setStyle((feature) => {
-      const geom = feature.getGeometry();
-      if (!geom) return null;
-  
-      // If the feature is a POINT → show icon
-      if (geom.getType() === "Point") {
+
+    layer.setStyle((feature) => {
+      if (feature.getGeometry()?.getType() === "Point") {
         return new Style({
-          image: new Icon({
-            src: SettlementIcon,
-            scale: 1.08,
-          }),
+          image: new Icon({ src: SettlementIcon, scale: 1.1 }),
         });
       }
-       return new Style({
-            stroke: new Stroke({
-            color: "#000",
-            width: 1,
-            }),
-            fill: new Fill({
-            color: "rgba(0,0,0,0)",
-            }),
-        });
-    });
-  
-    mapRef.current.addLayer(settlementLayer);
-  
-    return settlementLayer;
-  };
-  
-  const loadWell = async () => {
-    if (!plan) return;
-  
-    const districtNameSafe = (districtName || "").toLowerCase().replace(/\s+/g, "_");
-    const blockNameSafe = (blockName || "").toLowerCase().replace(/\s+/g, "_");
-  
-    // Correct layer name formation (same as GeoServer)
-    const layerStore = "resources";
-    const layerName = `well_${plan.id}_${districtNameSafe}_${blockNameSafe}`;
-    
-    // Load as VECTOR
-    const wellLayer = await getVectorLayers(
-      layerStore,
-      layerName,
-      true
-    );
-  
-    //  OVERRIDE STYLE COMPLETELY (same trick as settlement)
-    wellLayer.setStyle((feature) => {
-      const geom = feature.getGeometry();
-      if (!geom) return null;
-  
-      if (geom.getType() === "Point") {
-        return new Style({
-          image: new Icon({
-            src: WellIcon,  // your well icon
-            scale: 1.08,
-          }),
-        });
-      }
-  
-      // fallback for polygons (usually not needed)
       return new Style({
         stroke: new Stroke({ color: "#000", width: 1 }),
         fill: new Fill({ color: "rgba(0,0,0,0)" }),
       });
     });
-  
-    mapRef.current.addLayer(wellLayer);
-  
-    return wellLayer;
+
+    map.addLayer(layer);
   };
 
-  const loadWaterStructure = async () => {
-    if (!plan) return;
-
-    const districtNameSafe = (districtName || "").toLowerCase().replace(/\s+/g, "_");
-    const blockNameSafe = (blockName || "").toLowerCase().replace(/\s+/g, "_");
-
-    // Construct layer name exactly like GeoServer convention
-    const layerStore = "resources";
-    const layerName = `waterbody_${plan.id}_${districtNameSafe}_${blockNameSafe}`;
-
-
-    // Load as VECTOR (same as settlement + well)
-    const waterLayer = await getVectorLayers(
-        layerStore,
-        layerName,
-        true
+  const loadWell = async (map) => {
+    const layer = await getVectorLayers(
+      "resources",
+      `well_${plan.id}_${districtNameSafe}_${blockNameSafe}`,
+      true
     );
 
-    // Apply icon (strong override)
-    waterLayer.setStyle((feature) => {
-        const geom = feature.getGeometry();
-        if (!geom) return null;
-
-        if (geom.getType() === "Point") {
-        return new Style({
-            image: new Icon({
-            src: WaterStructureIcon,
-            scale: 1.08,
-            }),
-        });
-        }
-
-        return new Style({
-        stroke: new Stroke({ color: "#000", width: 1 }),
-        fill: new Fill({ color: "rgba(0,0,0,0)" }),
-        });
+    layer.setStyle((feature) => {
+      if (feature.getGeometry()?.getType() === "Point") {
+        return new Style({ image: new Icon({ src: WellIcon, scale: 1.1 }) });
+      }
+      return new Style();
     });
 
-    mapRef.current.addLayer(waterLayer);
-    return waterLayer;
-    };
+    map.addLayer(layer);
+  };
 
-    
-  const loadRechargeStructure = async () => {
-      if (!plan) return;
-    
-      // Normalize names
-      const districtNameSafe = (districtName || "")
-        .toLowerCase()
-        .replace(/\s+/g, "_");
-    
-      const blockNameSafe = (blockName || "")
-        .toLowerCase()
-        .replace(/\s+/g, "_");
-    
-      // Workspace + layer name
-      const layerStore = "works";
-      const layerName = `plan_gw_${plan.id}_${districtNameSafe}_${blockNameSafe}`;
-        
-      // Load vector layer
-      const rechargeLayer = await getVectorLayers(
-        layerStore,
-        layerName,
-        true, // visible
-        true
-      );
-    
-      // Apply custom icon (for point features)
-      rechargeLayer.setStyle((feature) => {
-        const geom = feature.getGeometry();
-        if (!geom) return null;
-    
-        if (geom.getType() === "Point") {
-          return new Style({
-            image: new Icon({
-              src: RechargeIcon,
-              scale: 1.09,
-            }),
-          });
-        }
-    
-        // fallback style for polygons/lines (if any)
+  const loadWaterStructure = async (map) => {
+    const layer = await getVectorLayers(
+      "resources",
+      `waterbody_${plan.id}_${districtNameSafe}_${blockNameSafe}`,
+      true
+    );
+
+    layer.setStyle((feature) => {
+      if (feature.getGeometry()?.getType() === "Point") {
         return new Style({
-          stroke: new Stroke({ color: "#000", width: 1 }),
-          fill: new Fill({ color: "rgba(0,0,0,0)" }),
+          image: new Icon({ src: WaterStructureIcon, scale: 1.1 }),
         });
-      });
-    
-      // Add to map
-      mapRef.current.addLayer(rechargeLayer);
-    
-      return rechargeLayer;
-    };
-
-
-const loadIrrigationStructure = async () => {
-  if (!plan) return;
-
-  // Normalize text
-  const districtNameSafe = (districtName || "")
-    .toLowerCase()
-    .replace(/\s+/g, "_");
-
-  const blockNameSafe = (blockName || "")
-    .toLowerCase()
-    .replace(/\s+/g, "_");
-
-  // Workspace + layer naming
-  const layerStore = "works";
-  const layerName = `plan_agri_${plan.id}_${districtNameSafe}_${blockNameSafe}`;
-
-  // Load vector layer
-  const irrigationLayer = await getVectorLayers(
-    layerStore,
-    layerName,
-    true, // visible
-    true  // active
-  );
-
-  // Style with custom icon (applies only to points)
-  irrigationLayer.setStyle((feature) => {
-    const geom = feature.getGeometry();
-    if (!geom) return null;
-
-    if (geom.getType() === "Point") {
-      return new Style({
-        image: new Icon({
-          src: IrrigationIcon,
-          scale: 1.1,
-        }),
-      });
-    }
-
-    // fallback polygon/line style (if any)
-    return new Style({
-      stroke: new Stroke({
-        color: "#000",
-        width: 1.2,
-      }),
-      fill: new Fill({
-        color: "rgba(0,0,0,0)",
-      }),
+      }
+      return new Style();
     });
-  });
 
-  // Add to map
-  mapRef.current.addLayer(irrigationLayer);
+    map.addLayer(layer);
+  };
 
-  return irrigationLayer;
-};
+  const loadRechargeStructure = async (map) => {
+    const layer = await getVectorLayers(
+      "works",
+      `plan_gw_${plan.id}_${districtNameSafe}_${blockNameSafe}`,
+      true
+    );
 
-
-const loadLivelihood = async () => {
-  if (!plan) return;
-
-  // Normalize text (district & block)
-  const districtNameSafe = (districtName || "")
-    .toLowerCase()
-    .replace(/\s+/g, "_");
-
-  const blockNameSafe = (blockName || "")
-    .toLowerCase()
-    .replace(/\s+/g, "_");
-
-  // Workspace + Layer Name
-  const layerStore = "works";
-  const layerName = `plan_lh_${plan.id}_${districtNameSafe}_${blockNameSafe}`;
-
-  // Load vector layer (WFS)
-  const livelihoodLayer = await getVectorLayers(
-    layerStore,
-    layerName,
-    true, // visible
-    true  // active
-  );
-
-  // Style the layer (Points → icon, others → transparent)
-  livelihoodLayer.setStyle((feature) => {
-    const geom = feature.getGeometry();
-    if (!geom) return null;
-
-    if (geom.getType() === "Point") {
-      return new Style({
-        image: new Icon({
-          src: LivelihoodIcon,
-          scale: 1.1,
-        }),
-      });
-    }
-
-    // fallback styling for polygon/line features
-    return new Style({
-      stroke: new Stroke({
-        color: "#000",
-        width: 1.2,
-      }),
-      fill: new Fill({
-        color: "rgba(0,0,0,0)",
-      }),
+    layer.setStyle((feature) => {
+      if (feature.getGeometry()?.getType() === "Point") {
+        return new Style({ image: new Icon({ src: RechargeIcon, scale: 1.1 }) });
+      }
+      return new Style();
     });
-  });
 
-  // Add to map
-  mapRef.current.addLayer(livelihoodLayer);
+    map.addLayer(layer);
+  };
 
-  return livelihoodLayer;
-};
+  const loadIrrigationStructure = async (map) => {
+    const layer = await getVectorLayers(
+      "works",
+      `plan_agri_${plan.id}_${districtNameSafe}_${blockNameSafe}`,
+      true
+    );
 
+    layer.setStyle((feature) => {
+      if (feature.getGeometry()?.getType() === "Point") {
+        return new Style({ image: new Icon({ src: IrrigationIcon, scale: 1.1 }) });
+      }
+      return new Style();
+    });
 
-    
+    map.addLayer(layer);
+  };
 
-  
-  
-  
-  
-  
-  
+  const loadLivelihood = async (map) => {
+    const layer = await getVectorLayers(
+      "works",
+      `plan_lh_${plan.id}_${districtNameSafe}_${blockNameSafe}`,
+      true
+    );
 
+    layer.setStyle((feature) => {
+      if (feature.getGeometry()?.getType() === "Point") {
+        return new Style({ image: new Icon({ src: LivelihoodIcon, scale: 1.1 }) });
+      }
+      return new Style();
+    });
 
-  if (!open) return null;
+    map.addLayer(layer);
+  };
+
 
   return (
-    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-[2000]">
-      <div className="bg-white w-[1000px] h-[800px] rounded-xl shadow-xl p-6 relative">
+    <div className="w-full h-full bg-white p-8">
 
-        {/* Close Button */}
-        <button
-          className="absolute top-4 right-4 text-gray-500 hover:text-gray-700 text-xl"
-          onClick={onClose}
-        >
-          ✕
-        </button>
+      {/* HEADER */}
+      <div className="w-full bg-[#2e4a62] text-white rounded-md py-6 mb-10 shadow">
+        <h1 className="text-2xl font-bold text-center">
+          Resource & Demand Map Report
+        </h1>
 
-        {/* Heading */}
-        <h2 className="text-xl font-semibold text-gray-800 mb-4">
-          {plan?.plan} 
-        </h2>
+        <div className="mt-3 text-center">
+          <p className="text-lg font-medium">
+            Plan Name: <span className="font-semibold">{plan.plan}</span>
+          </p>
 
-        {/* MAP CONTAINER */}
-        <div className="relative">
-        <div
-          ref={mapElement}
-          className="w-full h-[700px] rounded-lg border border-gray-300 shadow-inner"
-        />
-                        {/* ZOOM CONTROLS */}
-      <div className="absolute top-10 right-4 flex flex-col gap-1 z-[1100]">
-        {["+", "–"].map((sign) => (
-          <button
-            key={sign}
-            className="bg-white border border-gray-300 rounded-md w-10 h-10 text-xl 
-                     cursor-pointer hover:bg-gray-100 active:scale-95 transition"
-            onClick={() => {
-              const map = mapRef.current;
-              if (!map) return;
-              const view = map.getView();
-              const delta = sign === "+" ? 1 : -1;
-
-              view.animate({
-                zoom: view.getZoom() + delta,
-                duration: 300,
-              });
-            }}
-          >
-            {sign}
-          </button>
-        ))}
-      </div>
+          <p className="text-lg font-medium">
+            Plan ID: <span className="font-semibold">{plan.id}</span>
+          </p>
+        </div>
       </div>
 
-      </div>
+      {/* MAP SECTIONS */}
+
+<MapSection
+  title="Settlement Overview"
+  loadLayer={loadSettlement}
+  loadBoundary={loadBoundary}
+  districtNameSafe={districtNameSafe}
+  blockNameSafe={blockNameSafe}
+  plan={plan}
+/>
+
+<MapSection
+  title="Well Structure Overview"
+  loadLayer={loadWell}
+  loadBoundary={loadBoundary}
+  districtNameSafe={districtNameSafe}
+  blockNameSafe={blockNameSafe}
+  plan={plan}
+/>
+
+<MapSection
+  title="Water Structures Overview"
+  loadLayer={loadWaterStructure}
+  loadBoundary={loadBoundary}
+  districtNameSafe={districtNameSafe}
+  blockNameSafe={blockNameSafe}
+  plan={plan}
+/>
+
+<MapSection
+  title="Groundwater Recharge Overview"
+  loadLayer={loadRechargeStructure}
+  loadBoundary={loadBoundary}
+  districtNameSafe={districtNameSafe}
+  blockNameSafe={blockNameSafe}
+  plan={plan}
+/>
+
+<MapSection
+  title="Irrigation Structure Overview"
+  loadLayer={loadIrrigationStructure}
+  loadBoundary={loadBoundary}
+  districtNameSafe={districtNameSafe}
+  blockNameSafe={blockNameSafe}
+  plan={plan}
+/>
+
+<MapSection
+  title="Livelihood Structure Overview"
+  loadLayer={loadLivelihood}
+  loadBoundary={loadBoundary}
+  districtNameSafe={districtNameSafe}
+  blockNameSafe={blockNameSafe}
+  plan={plan}
+/>
+
+
+
+
     </div>
   );
 };
 
-export default PlanViewDialog;
+export default PlanViewPage;

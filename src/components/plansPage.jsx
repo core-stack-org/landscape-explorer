@@ -13,7 +13,6 @@ import Point from "ol/geom/Point";
 import { Style, Fill, Stroke, Text, Circle as CircleStyle } from "ol/style";
 import SelectReact from "react-select";
 import LandingNavbar from "../components/landing_navbar.jsx";
-import YearSlider from "./yearSlider.jsx";
 import MouseWheelZoom from "ol/interaction/MouseWheelZoom";
 import PinchZoom from "ol/interaction/PinchZoom";
 import DoubleClickZoom from "ol/interaction/DoubleClickZoom";
@@ -91,7 +90,6 @@ const PlansPage = () => {
   const [isStateView, setIsStateView] = useState(true);
   const [mapLoading, setMapLoading] = useState(false);
 
-
   const [plans, setPlans] = useRecoilState(plansAtom);
   const [rawStateData, setRawStateData] = useRecoilState(stateDataAtom);
   const [states, setStates] = useRecoilState(stateAtom);
@@ -108,7 +106,6 @@ const PlansPage = () => {
     const loadMeta = async () => {
       const stats = await getPlanMetaStats();
       setMetaStats(stats);
-      console.log(" Meta Stats:", stats);
     };
     loadMeta();
   }, []);
@@ -165,23 +162,18 @@ const PlansPage = () => {
   useEffect(() => {
     const loadLocations = async () => {
       if (  states?.length > 0) return;
-  
       const data = await getStates();
       setRawStateData(data);
-  console.log(data)
       const stateList = data || [];
       setStates(stateList);
-  console.log(stateList)
-      // ------------------------------
-      // DISTRICT + BLOCK LOOKUP FLAT
-      // ------------------------------
-  
+
+      // DISTRICT + BLOCK LOOKUP FLAT  
       const districtLookupTemp = {};
       const blockLookupTemp = [];
   
       const distList = [];
       const blockList = [];
-  console.log(stateList)
+      console.log(stateList)
       stateList.forEach((state) => {
         state?.district?.forEach((d) => {
           // Collect district list
@@ -202,15 +194,11 @@ const PlansPage = () => {
   
       setBlocks(blockList);
       setBlockLookup(blockLookupTemp);
-  
-      console.log("District Lookup:", districtLookupTemp);
-      console.log("Block Lookup:", blockLookupTemp);
     };
   
     loadLocations();
   }, []);
   
-
   //  MAP INIT
   useEffect(() => {
     const baseLayer = new TileLayer({
@@ -296,23 +284,13 @@ const PlansPage = () => {
     mapRef.current.addLayer(layer);
   };
 
-
-
-
   // Re-add blue bubbles whenever metaStats loads
   useEffect(() => {
     if (showBubbleLayer) addStateBubbles();
   }, [metaStats, showBubbleLayer]);
 
-
-
-
-  // ===============================================================
   //            WHEN USER CLICKS A BLUE BUBBLE (STATE)
-  // ===============================================================
   const handleStateBubbleClick = async (feature) => {
-    console.log("⛳ Bubble clicked → feature:", feature);
-    console.log("📌 states:", states);
   
     if (!feature) {
       console.warn("⚠ handleStateBubbleClick: feature is null");
@@ -326,7 +304,6 @@ const PlansPage = () => {
     }
   
     const clickedStateName = feature.get("name");
-    console.log("🌍 Clicked State:", clickedStateName);
   
     // SAFETY CHECK 2 — ensure label matches
     const stateObj = states.find((s) => s.label === clickedStateName);
@@ -336,9 +313,7 @@ const PlansPage = () => {
       console.warn("Available states:", states.map((s) => s.label));
       return;
     }
-  
-    console.log("✅ Matched State Object:", stateObj);
-  
+    
     // remove bubble layer
     if (bubbleLayerRef.current) {
       mapRef.current.removeLayer(bubbleLayerRef.current);
@@ -378,12 +353,7 @@ const PlansPage = () => {
     });
   };
 
-
-
-
-  // ===============================================================
   //              FETCH PLANS FOR A STATE → ADD RED DOTS
-  // ===============================================================
   const fetchTehsilPlans = async (stateObj) => {
     const allBlocks = stateObj.district
       ?.flatMap((d) => d.blocks)
@@ -400,12 +370,7 @@ const PlansPage = () => {
     return filtered;
   };
 
-
-
-
-  // ===============================================================
   //               ADD RED PLAN DOTS — SEPARATE FUNCTION
-  // ===============================================================
   const addPlanDots = (plans) => {
     if (!mapRef.current) return;
 
@@ -430,7 +395,7 @@ const PlansPage = () => {
       f.setStyle(
         new Style({
           image: new CircleStyle({
-            radius: 6,
+            radius: 16,
             fill: new Fill({ color: "rgba(255,0,0,0.85)" }),
             stroke: new Stroke({ color: "#fff", width: 2 }),
           }),
@@ -513,7 +478,7 @@ const applyHoverStyle = (feature) => {
   feature.setStyle(
     new Style({
       image: new CircleStyle({
-        radius: 10, // bigger dot on hover
+        radius: 20, // bigger dot on hover
         fill: new Fill({ color: "rgba(255,0,0,0.95)" }),
         stroke: new Stroke({ color: "#fff", width: 2 }),
       }),
@@ -534,7 +499,7 @@ const resetDotStyle = (feature) => {
   feature.setStyle(
     new Style({
       image: new CircleStyle({
-        radius: 6,
+        radius: 16,
         fill: new Fill({ color: "rgba(255,0,0,0.85)" }),
         stroke: new Stroke({ color: "#fff", width: 2 }),
       }),
@@ -549,14 +514,7 @@ const resetDotStyle = (feature) => {
   );
 };
 
-
-
-
-
-
-  // ===============================================================
   //                 CLICK HANDLER FOR MAP
-  // ===============================================================
   useEffect(() => {
     if (!mapRef.current || !states || states.length === 0) return; 
 
@@ -583,11 +541,6 @@ const resetDotStyle = (feature) => {
     map.on("click", handleClick);
     return () => map.un("click", handleClick);
   }, [states, showBubbleLayer]);
-
-
-  
-
- console.log(selectedPlan)
   
     return (
     <div className="bg-white min-h-screen">
@@ -870,7 +823,8 @@ const resetDotStyle = (feature) => {
     {/* Button */}
     <div className="flex items-center gap-3 mt-6 justify-center">
       <button className="px-4 py-2 flex items-center gap-2 rounded-lg text-blue-600 text-sm hover:bg-blue-200"
-  onClick={() => setIsPlanModalOpen(true)}>
+onClick={() => navigate("/plan-view", { state: { plan: selectedPlan } })}
+>
         <span>View Plan Page</span>
         <img src={ArrowPlan} alt="arrow icon" className="w-4 h-4"     style={{ filter: "brightness(0) saturate(100%) invert(32%) sepia(94%) saturate(2817%) hue-rotate(205deg) brightness(95%) contrast(101%)" }}
  />
@@ -883,10 +837,10 @@ const resetDotStyle = (feature) => {
       </div>
 </div>
 
-  <PlanViewDialog
+  {/* <PlanViewDialog
   open={isPlanModalOpen}
   onClose={() => setIsPlanModalOpen(false)}
-  plan={selectedPlan}/>
+  plan={selectedPlan}/> */}
 
   {/* STEWARD DETAIL DIALOG */}
     {isStewardModalOpen && (

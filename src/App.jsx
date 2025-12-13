@@ -7,6 +7,7 @@ import PlantationDashboard from "./pages/plantationDashboard";
 import PlantationProjectDashboard from "./components/plantation_project_dashboard";
 import LandscapeExplorer from "./pages/LandscapeExplorer";
 import PlansPage from "./components/plansPage";
+import PlanViewPage from "./components/plan_detailView";
 
 function App() {
   return (
@@ -37,6 +38,8 @@ function App() {
           element={<WaterProjectDashboard />}
         />
         <Route path="/CCUsagePage" element={<PlansPage />} />
+        <Route path="/plan-view" element={<PlanViewPage />} />
+
 
 
       </Routes>
