@@ -1,7 +1,5 @@
-import React, { useState } from 'react';
-
 const KYLPatternDisplay = ({ pattern, isDisabled, isSelected, onPatternSelect, handlePatternRemoval }) => {
-    const [isExpanded, setIsExpanded] = useState(false);
+    //const [isExpanded, setIsExpanded] = useState(false);
 
     const handleApplyClick = () => {
         if (!isDisabled && !isSelected) {
@@ -33,7 +31,7 @@ const KYLPatternDisplay = ({ pattern, isDisabled, isSelected, onPatternSelect, h
                             </div>
                         </div>
                     </div>
-                    <button
+                    {/* <button
                         onClick={() => setIsExpanded(!isExpanded)}
                         className="ml-2 text-gray-400 hover:text-gray-600 transition-colors"
                         disabled={isDisabled}
@@ -49,7 +47,7 @@ const KYLPatternDisplay = ({ pattern, isDisabled, isSelected, onPatternSelect, h
                                 clipRule="evenodd"
                             />
                         </svg>
-                    </button>
+                    </button> */}
                 </div>
 
                 {/* Characteristics - Always Visible */}
@@ -60,7 +58,7 @@ const KYLPatternDisplay = ({ pattern, isDisabled, isSelected, onPatternSelect, h
             </div>
 
             {/* Expanded Content - Only Value Labels */}
-            {isExpanded && (
+            {/* {isExpanded && (
                 <div className="mt-4 pt-4 border-t border-gray-200 space-y-2">
                     <div className="text-xs font-medium text-gray-700 mb-2">
                         Conditions:
@@ -74,7 +72,7 @@ const KYLPatternDisplay = ({ pattern, isDisabled, isSelected, onPatternSelect, h
                         </div>
                     ))}
                 </div>
-            )}
+            )} */}
 
             {/* Apply Pattern Button */}
             <div className="mt-3 pt-3 border-t border-gray-200">
