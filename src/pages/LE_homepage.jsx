@@ -293,7 +293,7 @@ export default function KYLHomePage() {
                       record community demands for NRM assets.
                     </p>
                     <span className="text-purple-700 text-sm font-semibold underline">
-                      support@core-stack.org →
+                      Download Now →
                     </span>
                   </div>
                 </div>
