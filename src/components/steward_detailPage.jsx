@@ -21,11 +21,11 @@ const StewardDetailPage = () => {
   // Hardcoded data
   const steward = {
     photo: "",
-    name: "Aman Kumar",
+    name: "Radha Grag",
     experience: "5 Years",
     organization: "CFPT",
     age: 32 ,
-    gender: "Male",
+    gender: "Female",
     Education:"Graduate",
     State:"Uttar Pradesh",
     approvedDocs: 10,
@@ -39,17 +39,7 @@ const StewardDetailPage = () => {
   };
 
   return (
-    <Box sx={{ p: 4, mt: 2 }}>
-      {/* ---------- PAGE HEADING ---------- */}
-      <Typography
-        variant="h4"
-        fontWeight={700}
-        align="center"
-        sx={{ mb: 4, color: "#1e293b" }}
-      >
-        Steward Page
-      </Typography>
-
+    <Box sx={{ p: 1, mt: 1 }}>
       {/* ---------- MAIN CARD ---------- */}
       <Card
         elevation={3}
@@ -58,78 +48,100 @@ const StewardDetailPage = () => {
           margin: "0 auto",
           borderRadius: 4,
           overflow: "hidden",
-          p: 3,
+          p: 2,
         }}
       >
-        {/* ---------- BASIC DETAILS SECTION ---------- */}
-      {/* ---------- BASIC DETAILS SECTION ---------- */}
-<Typography variant="h6" fontWeight={700} sx={{ mb: 2, color: "#334155" }}>
-  Basic Details
-</Typography>
-
-<Card
-  elevation={0}
-  sx={{
-    p: 4,
-    borderRadius: 3,
-    border: "1px solid #e2e8f0",
-    background: "#fafafa",
-    mb: 4,
+{/* ---------- BASIC DETAILS SECTION ---------- */}
+<Box 
+  sx={{ 
+    display: "flex", 
+    justifyContent: "space-between", 
+    alignItems: "center",
+    mb: 0 
   }}
 >
-  <Grid container spacing={4}>
-    
-    {/* Avatar */}
-    <Grid item xs={12} sm={3} textAlign="center">
-      <Avatar
-        src={steward.photo}
+  <Typography variant="h6" fontWeight={700} sx={{ color: "#334155" }}>
+    Basic Details of Steward
+  </Typography>
+
+  {/* CLOSE BUTTON */}
+  <Typography
+    sx={{
+      fontSize: "20px",
+      fontWeight: "bold",
+      cursor: "pointer",
+      color: "#475569",
+      "&:hover": { color: "#1e293b" }
+    }}
+    onClick={() => window.closeStewardModal?.()} 
+  >
+    ×
+  </Typography>
+</Box>
+
+
+      <Card
+        elevation={0}
         sx={{
-          width: 150,
-          height: 150,
-          margin: "0 auto",
-          background: "#e2e8f0",
+          p: 2,
+          borderRadius: 3,
+          border: "1px solid #e2e8f0",
+          background: "#fafafa",
+          mb: 4,
         }}
-      />
-    </Grid>
+      >
+        <Grid container spacing={4}>
+          
+          {/* Avatar */}
+          <Grid item xs={12} sm={3} textAlign="center">
+            <Avatar
+              src={steward.photo}
+              sx={{
+                width: 150,
+                height: 150,
+                margin: "0 auto",
+                background: "#e2e8f0",
+              }}
+            />
+          </Grid>
 
-    {/* DETAILS - Vertical list */}
-    <Grid item xs={12} sm={9}>
-      <Typography variant="h5" fontWeight={700} sx={{ mb: 2 }}>
-        {steward.name}
-      </Typography>
+          {/* DETAILS - Vertical list */}
+          <Grid item xs={12} sm={9}>
+            <Typography variant="h5" fontWeight={700} sx={{ mb: 2 }}>
+              {steward.name}
+            </Typography>
 
 
-      <Typography sx={{ mb: 1 }}>
-        <strong>Organization:</strong> {steward.organization}
-      </Typography>
+            <Typography sx={{ mb: 1 }}>
+              <strong>Organization:</strong> {steward.organization}
+            </Typography>
 
-      <Typography sx={{ mb: 1 }}>
-        <strong>Age:</strong> {steward.age}
-      </Typography>
+            <Typography sx={{ mb: 1 }}>
+              <strong>Age:</strong> {steward.age}
+            </Typography>
 
-      <Typography sx={{ mb: 1 }}>
-        <strong>Gender:</strong> {steward.gender}
-      </Typography>
+            <Typography sx={{ mb: 1 }}>
+              <strong>Gender:</strong> {steward.gender}
+            </Typography>
 
-      <Typography sx={{ mb: 1 }}>
-        <strong>Education Qualification:</strong> {steward.Education}
-      </Typography>
+            <Typography sx={{ mb: 1 }}>
+              <strong>Education Qualification:</strong> {steward.Education}
+            </Typography>
 
-      <Typography sx={{ mb: 1 }}>
-        <strong>Years of Experience:</strong> {steward.experience}
-      </Typography>
+            <Typography sx={{ mb: 1 }}>
+              <strong>Years of Experience:</strong> {steward.experience}
+            </Typography>
 
-      <Typography sx={{ mb: 1 }}>
-        <strong>State:</strong> {steward.State}
-      </Typography>
-    </Grid>
+            <Typography sx={{ mb: 1 }}>
+              <strong>State:</strong> {steward.State}
+            </Typography>
+          </Grid>
 
-  </Grid>
-</Card>
-
+        </Grid>
+      </Card>
 
         {/* ---------- STEWARDSHIP DETAILS ---------- */}
-        <Typography variant="h6" fontWeight={700} sx={{ mb: 2, color: "#334155" }}>
+        <Typography variant="h6" fontWeight={700} sx={{ mb: 1, color: "#334155" }}>
           Stewardship Details
         </Typography>
 
@@ -140,7 +152,7 @@ const StewardDetailPage = () => {
             <Paper
               elevation={0}
               sx={{
-                p: 3,
+                p: 2,
                 borderRadius: 3,
                 border: "1px solid #e2e8f0",
                 textAlign: "center",
@@ -165,7 +177,7 @@ const StewardDetailPage = () => {
             <Paper
               elevation={0}
               sx={{
-                p: 3,
+                p: 2,
                 borderRadius: 3,
                 border: "1px solid #e2e8f0",
                 textAlign: "center",

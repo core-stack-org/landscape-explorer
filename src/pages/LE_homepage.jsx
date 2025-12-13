@@ -300,7 +300,7 @@ export default function KYLHomePage() {
               </a>
 
               {/*  Card 3 */}
-              <div onClick={() => navigate("/plansPage")}
+              <div onClick={() => navigate("/CCUsagePage")}
                 className="cursor-pointer hover:shadow-lg transition duration-200 ease-in-out"
               >
                 <div className="flex flex-col items-center text-center">

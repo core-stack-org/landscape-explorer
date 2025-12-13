@@ -17,6 +17,11 @@ import YearSlider from "./yearSlider.jsx";
 import MouseWheelZoom from "ol/interaction/MouseWheelZoom";
 import PinchZoom from "ol/interaction/PinchZoom";
 import DoubleClickZoom from "ol/interaction/DoubleClickZoom";
+import PlanViewDialog from "../components/plan_detailView.jsx";
+import ArrowPlan from '../assets/arrow_plan.svg';
+import StewardDetailPage from "./steward_detailPage.jsx";
+
+
 
 import {
   plansAtom,
@@ -80,6 +85,12 @@ const PlansPage = () => {
   const [organizationOptions, setOrganizationOptions] = useState([]);
   const [metaStats, setMetaStats] = useState(null);
   const [selectedPlan, setSelectedPlan] = useState(null);
+  const [isPlanModalOpen, setIsPlanModalOpen] = useState(false);
+  const [isStewardModalOpen, setIsStewardModalOpen] = useState(false);
+  const [showBubbleLayer, setShowBubbleLayer] = useState(true);
+  const [isStateView, setIsStateView] = useState(true);
+  const [mapLoading, setMapLoading] = useState(false);
+
 
   const [plans, setPlans] = useRecoilState(plansAtom);
   const [rawStateData, setRawStateData] = useRecoilState(stateDataAtom);
@@ -235,226 +246,348 @@ const PlansPage = () => {
   }, []);
 
   // ADD BUBBLES TO MAP (state plan counts)
+  const addStateBubbles = () => {
+    if (!metaStats || !mapRef.current) return;
 
-  useEffect(() => {
-    if (!mapRef.current || !metaStats) return;
-  
+    // remove existing layer if any
+    if (bubbleLayerRef.current) {
+      mapRef.current.removeLayer(bubbleLayerRef.current);
+      bubbleLayerRef.current = null;
+    }
+
     const features = [];
-  
-    const getBubbleRadius = (plans) => {
-      const base = 8;       // minimum size
-      const scale = 2.2;    // bubble growth constant
-      return base + Math.sqrt(plans) * scale;
-    };
-  
-    metaStats.state_breakdown.forEach((state) => {
-      const coords = STATE_COORDINATES[state.state_name];
+
+    const getRadius = (count) => 8 + Math.sqrt(count) * 2.2;
+
+    metaStats.state_breakdown.forEach((s) => {
+      const coords = STATE_COORDINATES[s.state_name];
       if (!coords) return;
-  
-      const total = state.total_plans;
-      const radius = getBubbleRadius(total);
-  
-      const feature = new Feature({
+
+      const f = new Feature({
         geometry: new Point(coords),
-        name: state.state_name,
-        plans: total,
+        name: s.state_name,
+        plans: s.total_plans,
       });
-  
-      feature.setStyle(
+
+      f.setStyle(
         new Style({
           image: new CircleStyle({
-            radius: radius, // DYNAMIC BUBBLE SIZE HERE
+            radius: getRadius(s.total_plans),
             fill: new Fill({ color: "rgba(0,122,255,0.75)" }),
             stroke: new Stroke({ color: "#fff", width: 2 }),
           }),
           text: new Text({
-            text: total.toString(), // number inside bubble
-            font: "bold 14px sans-serif",
+            text: String(s.total_plans),
             fill: new Fill({ color: "#fff" }),
+            font: "bold 14px sans-serif",
           }),
         })
       );
-  
-      features.push(feature);
+
+      features.push(f);
     });
-  
-    const bubbleLayer = new VectorLayer({
+
+    const layer = new VectorLayer({
       source: new VectorSource({ features }),
     });
-    bubbleLayerRef.current = bubbleLayer; 
-    mapRef.current.addLayer(bubbleLayer);
-  }, [metaStats]);
-  
-  useEffect(() => {
-    if (!mapRef.current || !metaStats) return;
-  
-    const map = mapRef.current;
-  
-    const handleClick = (evt) => {
-      let clickedPlan = null;
-  
-      map.forEachFeatureAtPixel(evt.pixel, (feature, layer) => {
-        if (layer && layer.get("layerName") === "planLayer") {
-          clickedPlan = feature;
-        }
-      });
-  
-      // If plan bubble clicked → show details
-      if (clickedPlan) {
-        setSelectedPlan({
-          id: clickedPlan.get("plan_id"),
-          name: clickedPlan.get("plan_name"),
-          district: clickedPlan.get("district"),
-          block: clickedPlan.get("block"),
-        });
-        return; // IMPORTANT: do NOT process state bubbles
-      }
-  
-      // Otherwise → state bubble clicked
-      map.forEachFeatureAtPixel(evt.pixel, (feature) => {
-        const clickedStateName = feature.get("name");
-        const state = states.find((s) => s.label === clickedStateName);
-        if (!state) return;
-  
-        // Remove old layers except base
-        map.getLayers().forEach((layer, index) => {
-          if (index > 0) map.removeLayer(layer);
-        });
-  
-        bubbleLayerRef.current = null;
-        planLayerRef.current = null;
-        setSelectedPlan(null);
-  
-        fetchTehsilLevelPlans(state).then((plans) => {
-          setPlans(plans);
-          setMetaStats((prev) => ({
-            ...prev,
-            summary: {
-              total_plans: plans.length,
-              dpr_generated: plans.filter((p) => p.dpr_generated).length,
-              dpr_reviewed: plans.filter((p) => p.dpr_reviewed).length,
-            },
-          }));
-        });
-  
-        const coords = STATE_COORDINATES[clickedStateName];
-        if (coords) {
-          map.getView().animate({
-            center: coords,
-            zoom: 8,
-            duration: 600,
-          });
-        }
-      });
-    };
-  
-    map.on("click", handleClick);
-  
-    return () => map.un("click", handleClick);
-  }, [metaStats, states, plans]);
-  
-  
-  const fetchTehsilLevelPlans = async (state) => {
-  
-    // 1️⃣ Extract all block IDs for this state
-    const allBlockIds = state.district
-      ?.flatMap((d) => d.blocks)
-      ?.map((b) => String(b.block_id));
-  
-    console.log("🔹 Blocks in this state:", allBlockIds);
-  
-    // 2️⃣ Fetch ALL plans for this state at once
-    const data = await getPlans({ state: state.state_id });
-    const statePlans = data?.raw || [];
-  
-    console.log(`🔹 Raw plans from API for state ${state.label} →`, statePlans.length);
-    console.log("Raw plans list:", statePlans);
-  
-    // 3️⃣ Filter plans that match tehsil/block IDs of this state
-    const filtered = statePlans.filter((p) =>
-      allBlockIds.includes(String(p.block))
-    );
-  
-    console.log(`🔹 Filtered Tehsil Plans for ${state.label} →`, filtered.length);
-    console.log("Filtered plans list:", filtered);
-  
-    plotPlansOnMap(filtered);
-    return filtered;
+    layer.set("layerName", "bubbleLayer");
+
+    bubbleLayerRef.current = layer;
+    mapRef.current.addLayer(layer);
   };
+
+
+
+
+  // Re-add blue bubbles whenever metaStats loads
+  useEffect(() => {
+    if (showBubbleLayer) addStateBubbles();
+  }, [metaStats, showBubbleLayer]);
+
+
+
+
+  // ===============================================================
+  //            WHEN USER CLICKS A BLUE BUBBLE (STATE)
+  // ===============================================================
+  const handleStateBubbleClick = async (feature) => {
+    console.log("⛳ Bubble clicked → feature:", feature);
+    console.log("📌 states:", states);
   
-  const plotPlansOnMap = (plans) => {
-    if (!mapRef.current) return;
-  
-    // Remove old layer if it exists
-    if (planLayerRef.current) {
-      mapRef.current.removeLayer(planLayerRef.current);
+    if (!feature) {
+      console.warn("⚠ handleStateBubbleClick: feature is null");
+      return;
     }
   
-    const features = [];
+    // SAFETY CHECK 1 — states must be loaded
+    if (!states || !Array.isArray(states) || states.length === 0) {
+      console.warn("⚠ handleStateBubbleClick: states not loaded yet!");
+      return;
+    }
   
+    const clickedStateName = feature.get("name");
+    console.log("🌍 Clicked State:", clickedStateName);
+  
+    // SAFETY CHECK 2 — ensure label matches
+    const stateObj = states.find((s) => s.label === clickedStateName);
+  
+    if (!stateObj) {
+      console.warn("⚠ State NOT FOUND in states list:", clickedStateName);
+      console.warn("Available states:", states.map((s) => s.label));
+      return;
+    }
+  
+    console.log("✅ Matched State Object:", stateObj);
+  
+    // remove bubble layer
+    if (bubbleLayerRef.current) {
+      mapRef.current.removeLayer(bubbleLayerRef.current);
+      bubbleLayerRef.current = null;
+    }
+  
+    setShowBubbleLayer(false);
+      setIsStateView(false);     
+    setSelectedPlan(null);
+    setMapLoading(false);
+    await fetchTehsilPlans(stateObj);
+  };
+  
+  const handleBackToStateView = () => {
+    const map = mapRef.current;
+    if (!map) return;
+  
+    // Remove plan layer
+    if (planLayerRef.current) {
+      map.removeLayer(planLayerRef.current);
+      planLayerRef.current = null;
+    }
+  
+    // Re-add blue bubbles
+    setShowBubbleLayer(true);
+    addStateBubbles();
+  
+    // Switch view mode
+    setIsStateView(true);
+    setSelectedPlan(null);
+  
+    // Reset map view (optional)
+    map.getView().animate({
+      center: [78.9, 23.6],  // India center
+      zoom: 6,
+      duration: 600,
+    });
+  };
+
+
+
+
+  // ===============================================================
+  //              FETCH PLANS FOR A STATE → ADD RED DOTS
+  // ===============================================================
+  const fetchTehsilPlans = async (stateObj) => {
+    const allBlocks = stateObj.district
+      ?.flatMap((d) => d.blocks)
+      ?.map((b) => String(b.block_id));
+
+    const result = await getPlans({ state: stateObj.state_id });
+
+    const filtered = result.raw.filter((p) =>
+      allBlocks.includes(String(p.block))
+    );
+
+    addPlanDots(filtered);
+
+    return filtered;
+  };
+
+
+
+
+  // ===============================================================
+  //               ADD RED PLAN DOTS — SEPARATE FUNCTION
+  // ===============================================================
+  const addPlanDots = (plans) => {
+    if (!mapRef.current) return;
+
+    // remove old plan layer
+    if (planLayerRef.current) {
+      mapRef.current.removeLayer(planLayerRef.current);
+      planLayerRef.current = null;
+    }
+
+    const features = [];
+
     plans.forEach((p) => {
       const lat = parseFloat(p.latitude);
       const lon = parseFloat(p.longitude);
-  
-      if (!lat || !lon) return; // skip invalid coordinates
-  
-      const feature = new Feature({
-        geometry: new Point([lon, lat]), // EPSG:4326
-        plan_id: p.id,
-        plan_name: p.plan,
-        district: p.district,
-        block: p.block
+      if (!lat || !lon) return;
+
+      const f = new Feature({
+        geometry: new Point([lon, lat]),
+        plan_details: p,
       });
-  
-      feature.setStyle(
+
+      f.setStyle(
         new Style({
           image: new CircleStyle({
             radius: 6,
-            fill: new Fill({ color: "rgba(255,0,0,0.8)" }),
+            fill: new Fill({ color: "rgba(255,0,0,0.85)" }),
             stroke: new Stroke({ color: "#fff", width: 2 }),
           }),
           text: new Text({
-            text: p.plan.substring(0, 10), // optional label
+            text: p.plan || "",  // short label
             font: "bold 12px sans-serif",
-            offsetY: -15,
-            fill: new Fill({ color: "#fff" }),
+            fill: new Fill({ color: "#333" }),
+            stroke: new Stroke({ color: "#fff", width: 3 }),
+            offsetY: -15, // move text above the dot
           }),
         })
       );
-  
-      features.push(feature);
+
+      features.push(f);
     });
-  
-    const vectorSource = new VectorSource({
-      features: features,
+
+    const layer = new VectorLayer({
+      source: new VectorSource({ features }),
     });
-  
-    const vectorLayer = new VectorLayer({
-      source: vectorSource,
-    });
-    
-    vectorLayer.set("layerName", "planLayer");
-    
-    //  ADD CLICK HANDLER FOR PLANS
-    vectorLayer.set("handleClick", (feature) => {
-      setSelectedPlan({
-        id: feature.get("plan_id"),
-        name: feature.get("plan_name"),
-        district: feature.get("district"),
-        block: feature.get("block"),
-      });
-    });
-    
-  
-    planLayerRef.current = vectorLayer;
-    mapRef.current.addLayer(vectorLayer);
-  
-    // Auto-zoom to plans
+    layer.set("layerName", "planLayer");
+
+    planLayerRef.current = layer;
+    mapRef.current.addLayer(layer);
+
+    // auto zoom to extent
     if (features.length > 0) {
-      const extent = vectorSource.getExtent();
-      mapRef.current.getView().fit(extent, { padding: [50, 50, 50, 50], duration: 600 });
+      mapRef.current
+        .getView()
+        .fit(layer.getSource().getExtent(), {
+          padding: [40, 40, 40, 40],
+          duration: 500,
+        });
     }
   };
+
+  // --- HOVER ANIMATION FOR PLAN DOTS ---
+useEffect(() => {
+  const map = mapRef.current;
+  if (!map) return;
+
+  let lastHovered = null;
+
+  const handlePointerMove = (evt) => {
+    if (!planLayerRef.current) return;
+
+    map.getTargetElement().style.cursor = "default";
+
+    let hitFeature = null;
+
+    map.forEachFeatureAtPixel(evt.pixel, (feature, layer) => {
+      if (layer?.get("layerName") === "planLayer") {
+        hitFeature = feature;
+      }
+    });
+
+    if (hitFeature !== lastHovered) {
+      // Reset previous hover style
+      if (lastHovered) {
+        resetDotStyle(lastHovered);
+      }
+
+      // Apply new hover style
+      if (hitFeature) {
+        applyHoverStyle(hitFeature);
+        map.getTargetElement().style.cursor = "pointer";
+      }
+
+      lastHovered = hitFeature;
+    }
+  };
+
+  map.on("pointermove", handlePointerMove);
+
+  return () => map.un("pointermove", handlePointerMove);
+}, []);
+
+const applyHoverStyle = (feature) => {
+  const p = feature.get("plan_details");
+
+  feature.setStyle(
+    new Style({
+      image: new CircleStyle({
+        radius: 10, // bigger dot on hover
+        fill: new Fill({ color: "rgba(255,0,0,0.95)" }),
+        stroke: new Stroke({ color: "#fff", width: 2 }),
+      }),
+      text: new Text({
+        text: p.plan || "",
+        font: "bold 14px sans-serif",
+        fill: new Fill({ color: "#111" }),
+        stroke: new Stroke({ color: "#fff", width: 4 }),
+        offsetY: -20,
+      }),
+    })
+  );
+};
+
+const resetDotStyle = (feature) => {
+  const p = feature.get("plan_details");
+
+  feature.setStyle(
+    new Style({
+      image: new CircleStyle({
+        radius: 6,
+        fill: new Fill({ color: "rgba(255,0,0,0.85)" }),
+        stroke: new Stroke({ color: "#fff", width: 2 }),
+      }),
+      text: new Text({
+        text: p.plan || "",
+        font: "bold 12px sans-serif",
+        fill: new Fill({ color: "#333" }),
+        stroke: new Stroke({ color: "#fff", width: 3 }),
+        offsetY: -15,
+      }),
+    })
+  );
+};
+
+
+
+
+
+
+  // ===============================================================
+  //                 CLICK HANDLER FOR MAP
+  // ===============================================================
+  useEffect(() => {
+    if (!mapRef.current || !states || states.length === 0) return; 
+
+    const map = mapRef.current;
+
+    const handleClick = (evt) => {
+      let found = false;
+
+      map.forEachFeatureAtPixel(evt.pixel, (feature, layer) => {
+        const layerName = layer?.get("layerName");
+
+        if (layerName === "planLayer") {
+          setSelectedPlan(feature.get("plan_details"));
+          found = true;
+        }
+
+        if (!found && layerName === "bubbleLayer" && showBubbleLayer) {
+          handleStateBubbleClick(feature);
+          found = true;
+        }
+      });
+    };
+
+    map.on("click", handleClick);
+    return () => map.un("click", handleClick);
+  }, [states, showBubbleLayer]);
+
+
+  
+
+ console.log(selectedPlan)
   
     return (
     <div className="bg-white min-h-screen">
@@ -463,9 +596,15 @@ const PlansPage = () => {
         {/* MAP */}
         <div  className="relative border border-gray-300 rounded-lg overflow-hidden shadow" style={{ width: "60%", height: "900px" }}>
           <div ref={mapElement} className="w-full h-full" />
-          <div className="absolute bottom-4 right-0 w-full max-w-xl px-4">
+          {mapLoading && (
+            <div className="absolute inset-0 bg-white/60 backdrop-blur-sm flex items-center justify-center z-[999]">
+              <div className="animate-spin h-12 w-12 border-4 border-blue-500 border-t-transparent rounded-full"></div>
+            </div>
+)}
+
+          {/* <div className="absolute bottom-4 right-0 w-full max-w-xl px-4">
             <YearSlider currentLayer={[{ name: "lulc_test_layer" }]} />
-          </div>
+          </div> */}
                 {/* ZOOM CONTROLS */}
       <div className="absolute top-10 right-4 flex flex-col gap-1 z-[1100]">
         {["+", "–"].map((sign) => (
@@ -488,6 +627,17 @@ const PlansPage = () => {
             {sign}
           </button>
         ))}
+        {/* BACK BUTTON (visible only when NOT in state bubble view) */}
+{!isStateView && (
+  <button
+    className="bg-white border border-gray-300 rounded-md w-10 h-10 text-lg 
+               cursor-pointer hover:bg-gray-100 active:scale-95 transition mt-2 flex items-center justify-center"
+    onClick={handleBackToStateView}
+  >
+    ←
+  </button>
+)}
+
       </div>
         </div>
         {/* SIDEBAR */}
@@ -608,45 +758,150 @@ const PlansPage = () => {
 )}
 
 
-      {/* SELECTED PLAN DETAILS */}
 {selectedPlan && (
-  <div className="w-full bg-white border border-gray-200 rounded-2xl p-5 shadow mt-6">
-    <h3 className="font-semibold text-gray-800 text-lg mb-3">Plan Details</h3>
-
-    <div className="space-y-2 text-sm">
-      <p>
-        <span className="font-medium text-gray-600">Plan Name:</span><br />
-        <span className="text-gray-900">{selectedPlan.name}</span>
-      </p>
-
-      <p>
-        <span className="font-medium text-gray-600">District:</span><br />
-        <span className="text-gray-900">{districtLookup[selectedPlan.district] || selectedPlan.district}</span>
-      </p>
-
-      <p>
-        <span className="font-medium text-gray-600">Block:</span><br />
-        <span className="text-gray-900">{blockLookup[selectedPlan.block] || selectedPlan.block}</span>
-      </p>
-    </div>
-
+  <div
+    className="w-[620px] bg-white border border-gray-200 rounded-2xl p-6 shadow-lg mt-6 relative"
+  >
+    {/* ❌ Close Button */}
     <button
-      className="mt-4 px-3 py-2 rounded-lg bg-red-500 text-white text-sm hover:bg-red-600"
+      className="absolute top-4 right-4 text-gray-500 hover:text-gray-700 text-xl"
       onClick={() => setSelectedPlan(null)}
     >
-      Clear
+      ×
     </button>
+
+    <h3 className="font-bold text-gray-800 text-xl mb-5 flex items-center gap-2">
+      <span className="text-blue-600">📄</span> Plan Details
+    </h3>
+
+    {/* 2-Column Grid */}
+    <div className="grid grid-cols-2 gap-x-6 gap-y-4 text-sm">
+
+      <div className="bg-gray-50 p-3 rounded-lg border border-gray-200">
+        <p className="font-semibold text-gray-700">Plan Name</p>
+        <p className="text-gray-900">{selectedPlan.plan}</p>
+      </div>
+
+      <div className="bg-gray-50 p-3 rounded-lg border border-gray-200">
+        <p className="font-semibold text-gray-700">District</p>
+        <p className="text-gray-900">
+          {districtLookup[selectedPlan.district] || selectedPlan.district}
+        </p>
+      </div>
+
+      <div className="bg-gray-50 p-3 rounded-lg border border-gray-200">
+        <p className="font-semibold text-gray-700">Block</p>
+        <p className="text-gray-900">
+          {blockLookup[selectedPlan.block] || selectedPlan.block}
+        </p>
+      </div>
+
+      <div className="bg-gray-50 p-3 rounded-lg border border-gray-200">
+        <p className="font-semibold text-gray-700">Village</p>
+        <p className="text-gray-900">{selectedPlan.village_name || "--"}</p>
+      </div>
+
+      <div className="bg-gray-50 p-3 rounded-lg border border-gray-200 group relative cursor-pointer">
+        <p className="font-semibold text-gray-700">Steward</p>
+        <div className="flex items-center justify-between mt-1">
+          {/* LEFT: Name */}
+          <p className="text-gray-900">{selectedPlan.facilitator_name || "--"}</p>
+            {/* RIGHT: Arrow */}
+            {selectedPlan.facilitator_name && (
+              <img
+                src={ArrowPlan}
+                alt="arrow icon"
+                className="w-4 h-4 cursor-pointer hover:opacity-80"
+                onClick={() => setIsStewardModalOpen(true)}
+                style={{
+                  filter:
+                    "brightness(0) saturate(100%) invert(32%) sepia(94%) saturate(2817%) hue-rotate(205deg) brightness(95%) contrast(101%)",
+                }}
+              />
+            )}
+        </div>
+
+  {/* Tooltip */}
+  <div className="absolute left-1/2 -bottom-8 -translate-x-1/2 
+                  bg-black text-white text-xs px-3 py-1 rounded-md
+                  opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none">
+    Click the arrow to view steward details
+  </div>
+      </div>
+
+
+
+
+      <div className="bg-gray-50 p-3 rounded-lg border border-gray-200">
+        <p className="font-semibold text-gray-700">Organization</p>
+        <p className="text-gray-900">{selectedPlan.organization_name || "--"}</p>
+      </div>
+
+      <div className="bg-gray-50 p-3 rounded-lg border border-gray-200">
+        <p className="font-semibold text-gray-700">Plan Status</p>
+        <p
+          className={`font-medium ${
+            selectedPlan.is_completed ? "text-green-600" : "text-orange-600"
+          }`}
+        >
+          {selectedPlan.is_completed ? "Completed" : "In Progress"}
+        </p>
+      </div>
+
+      <div className="bg-gray-50 p-3 rounded-lg border border-gray-200">
+        <p className="font-semibold text-gray-700">Demands Approved</p>
+        <p className="text-gray-900">
+          {selectedPlan.is_dpr_approved ? "Yes" : "No"}
+        </p>
+      </div>
+
+      <div className="bg-gray-50 p-3 rounded-lg border border-gray-200 col-span-2">
+        <p className="font-semibold text-gray-700">
+          Commons Connect Operational Since
+        </p>
+        <p className="text-gray-900">
+          {selectedPlan.created_at
+            ? new Date(selectedPlan.created_at).toLocaleDateString()
+            : "--"}
+        </p>
+      </div>
+    </div>
+
+    {/* Button */}
+    <div className="flex items-center gap-3 mt-6 justify-center">
+      <button className="px-4 py-2 flex items-center gap-2 rounded-lg text-blue-600 text-sm hover:bg-blue-200"
+  onClick={() => setIsPlanModalOpen(true)}>
+        <span>View Plan Page</span>
+        <img src={ArrowPlan} alt="arrow icon" className="w-4 h-4"     style={{ filter: "brightness(0) saturate(100%) invert(32%) sepia(94%) saturate(2817%) hue-rotate(205deg) brightness(95%) contrast(101%)" }}
+ />
+      </button>
+
+    </div>
   </div>
 )}
 
-      <button
-  onClick={() => navigate("/steward")}
-  className="px-4 py-2 bg-blue-600 text-white rounded-lg shadow hover:bg-blue-700"
->
-  Steward
-</button></div>
+      </div>
 </div>
+
+  <PlanViewDialog
+  open={isPlanModalOpen}
+  onClose={() => setIsPlanModalOpen(false)}
+  plan={selectedPlan}/>
+
+  {/* STEWARD DETAIL DIALOG */}
+    {isStewardModalOpen && (
+      <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-[3000]">
+        <div className="bg-white w-[1000px] h-[850px] rounded-xl shadow-xl p-2 overflow-auto relative">
+          {(() => (window.closeStewardModal = () => setIsStewardModalOpen(false)))()}
+          <StewardDetailPage />
+        </div>
+      </div>
+    )}
+
+
 </div>
+
+
   );
 };
 

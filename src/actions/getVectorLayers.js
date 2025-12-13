@@ -50,12 +50,15 @@ export default async function getVectorLayers(layer_store, layer_name, setVisibl
         }
         return response.json();
       }).then(json => {
+        console.log(`📌 WFS COUNT for ${layer_name}:`, json?.features?.length);
         vectorSource.addFeatures(vectorSource.getFormat().readFeatures(json));
       }).catch(error => {
         console.log(`Failed to load the "${layer_name}" layer. Please check your connection or the map layer details.`, error)
       });
     }
   });
+
+  console.log(url)
 
   const wmsLayer = new VectorLayer({
     source: vectorSource,
