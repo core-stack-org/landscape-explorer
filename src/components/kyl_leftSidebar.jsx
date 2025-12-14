@@ -131,7 +131,7 @@ const KYLLeftSidebar = ({
                             ))}
                         </div>
 
-                        {indicatorType && (
+                        {/* {indicatorType && (
                             <div className="flex justify-end">
                                 <button
                                     onClick={handleClearAll}
@@ -141,7 +141,7 @@ const KYLLeftSidebar = ({
                                     Clear all
                                 </button>
                             </div>
-                        )}
+                        )} */}
 
                         {indicatorType && (
                             <div className="bg-gray-50 rounded-lg p-4 mt-2 relative">
