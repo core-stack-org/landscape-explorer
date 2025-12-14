@@ -1417,7 +1417,7 @@ console.log(props)
               ? props.max_catchment_area
               : activeSelectedWaterbody.maxCatchmentArea;
 
-            return value ? `${Number(value).toFixed(2)} sq km` : "N/A";
+            return value ? `${Number(value).toFixed(2)} hectares` : "N/A";
           })()}
         </p>
  
