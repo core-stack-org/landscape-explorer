@@ -661,47 +661,6 @@
                     "KYL_Crop_Degradation"
                 ],
                 "styleIdx": 0
-            },
-            {
-                "name": "degradation_cropping_intensity",
-                "label": "Change in Cropping Intensity",
-                "type": 2,
-                "values": [
-                    {
-                        "label": "Less than 30 hectares",
-                        "value": {
-                            "lower": 0,
-                            "upper": 30
-                        }
-                    },
-                    {
-                        "label": "Between 30 hectares to 90 hectares",
-                        "value": {
-                            "lower": 30,
-                            "upper": 90
-                        }
-                    },
-                    {
-                        "label": "More than 90 hectares",
-                        "value": {
-                            "lower": 90,
-                            "upper": 999999
-                        }
-                    }
-                ],
-                "layer_store": [
-                    "change_detection"
-                ],
-                "layer_name": [
-                    "CropIntensity"
-                ],
-                "vectorStyle": [
-                    {}
-                ],
-                "rasterStyle": [
-                    "cropping_intensity_kyl"
-                ],
-                "styleIdx": 0
             }
         ],
         "Restoration": [

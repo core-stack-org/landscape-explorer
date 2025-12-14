@@ -101,6 +101,16 @@ const KYLDashboardPage = () => {
 
   const addLayerSafe = (layer) => layer && mapRef.current && mapRef.current.addLayer(layer);
 
+  const transformName = (name) => {
+                    if (!name) return name;
+                    return name
+                        .replace(/[()]/g, "") // Remove all parentheses
+                        .replace(/[-\s]+/g, "_") // Replace dashes and spaces with "_"
+                        .replace(/_+/g, "_") // Collapse multiple underscores to one
+                        .replace(/^_|_$/g, "") // Remove leading/trailing underscores
+                        .toLowerCase();
+                };
+
   const handleResetMWS = () => {
     if (!selectedMWSProfile) return; // If no MWS is selected, do nothing
 
@@ -200,6 +210,8 @@ const KYLDashboardPage = () => {
     Object.values(groupedSelections).forEach(group => {
       allSelections.push(group);
     });
+
+    console.log(allSelections)
 
     return allSelections;
   };
@@ -1015,10 +1027,7 @@ const KYLDashboardPage = () => {
         else if (filter.layer_store[i] === "LULC") {
           tempLayer = await getImageLayer(
             `${filter.layer_store[i]}_${filter.layer_name[i]}`,
-            `LULC_${lulcYear}_${block.label
-              .toLowerCase()
-              .split(" ")
-              .join("_")}_${filter.layer_name[i]}`,
+            `LULC_${lulcYear}_${transformName(district.label)}_${transformName(block.label)}_${filter.layer_name[i]}`,
             true,
             filter.rasterStyle
           );
@@ -1516,10 +1525,7 @@ const KYLDashboardPage = () => {
             mapRef.current.removeLayer(tempArr[i].layerRef[0]);
             let tempLayer = await getImageLayer(
               `LULC_level_3`,
-              `LULC_${lulcYear}_${block.label
-                .toLowerCase()
-                .split(" ")
-                .join("_")}_level_3`,
+              `LULC_${lulcYear}_${transformName(district.label)}_${transformName(block.label)}_level_3`,
               true
             );
             mapRef.current.addLayer(tempLayer);
@@ -1529,10 +1535,7 @@ const KYLDashboardPage = () => {
             mapRef.current.removeLayer(tempArr[i].layerRef[0]);
             let tempLayer = await getImageLayer(
               `LULC_level_1`,
-              `LULC_${lulcYear}_${block.label
-                .toLowerCase()
-                .split(" ")
-                .join("_")}_level_1`,
+              `LULC_${lulcYear}_${transformName(district.label)}_${transformName(block.label)}_level_1`,
               true
             );
             mapRef.current.addLayer(tempLayer);
