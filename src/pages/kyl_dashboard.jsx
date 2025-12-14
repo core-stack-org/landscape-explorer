@@ -18,8 +18,7 @@ import TileLayer from "ol/layer/Tile";
 import Control from "ol/control/Control.js";
 import { defaults as defaultControls } from "ol/control/defaults.js";
 import { Map, View } from "ol";
-import { Fill, Stroke, Style, Icon } from "ol/style.js";
-import Overlay from "ol/Overlay";
+import { Fill, Stroke, Style } from "ol/style.js";
 import GeoJSON from "ol/format/GeoJSON";
 
 import LandingNavbar from "../components/landing_navbar.jsx";
@@ -43,7 +42,6 @@ import {
   initializeAnalytics,
 } from "../services/analytics";
 import getWebGlLayers from "../actions/getWebGlLayers.js";
-import waterbodyIcon from '../assets/waterbodies_proposed.svg'
 
 const KYLDashboardPage = () => {
   const mapElement = useRef(null);
@@ -603,11 +601,11 @@ const KYLDashboardPage = () => {
         new Style({
           geometry: geom,
           stroke: new Stroke({
-            color: "#2669ce",
+            color: "rgba(246, 252, 83, 0.8)",
             width: 2,
           }),
           fill: new Fill({
-            color: "rgba(100, 180, 255, 0.4)",
+            color: "rgba(246, 252, 83, 0.45)",
           }),
         }),
       ];
@@ -620,8 +618,6 @@ const KYLDashboardPage = () => {
 
     // Just store the layer, don't add to map yet
     waterbodiesLayerRef.current = wbLayer;
-    
-    console.log('Waterbody layer loaded and ready');
   }
 
   const fetchAdminLayer = async (tempVillages) => {
@@ -1352,8 +1348,11 @@ const KYLDashboardPage = () => {
           hitTolerance: 8,
         }
       );
-    
-      if (!wbFeature) return;
+      
+      if (!wbFeature){
+        setSelectedWaterbodyProfile(null)
+        return;
+      }
     
       // Stop MWS click handler from firing
       waterbodyClickedRef.current = true;
