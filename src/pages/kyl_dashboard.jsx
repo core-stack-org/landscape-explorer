@@ -1614,68 +1614,165 @@ const KYLDashboardPage = () => {
     }
   }, [filterSelections.selectedMWSValues, dataJson]);
 
-  useEffect(() => {
-    try {
-      if (!dataJson || !Array.isArray(dataJson)) return;
-      
-      const mwsPatternKeys = Object.keys(patternSelections.selectedMWSPatterns || {});
-      
-      if (mwsPatternKeys.length === 0) {
-        return;
-      }
-
-      let resultMWS = new Set();
-      
-      // Process each pattern (AND between different patterns)
-      mwsPatternKeys.forEach((patternName) => {
-        const pattern = patternSelections.selectedMWSPatterns[patternName];
-        if (!pattern) return;
-        let patternMatches = new Set(); // Items matching ANY condition in THIS pattern (OR)
+  // ============================================
+// 2. PROCESS MWS PATTERNS - OR within pattern, AND between patterns
+// ============================================
+useEffect(() => {
+  try {
+    if (!dataJson || !Array.isArray(dataJson)) return;
+    
+    const mwsPatternKeys = Object.keys(patternSelections.selectedMWSPatterns || {});
+    const mwsFilterKeys = Object.keys(filterSelections.selectedMWSValues || {});
+    const hasMwsFilters = mwsFilterKeys.some(key => filterSelections.selectedMWSValues[key] !== null);
+    const hasMwsPatterns = mwsPatternKeys.some(key => patternSelections.selectedMWSPatterns[key] !== null);
+    
+    // If no patterns exist
+    if (!hasMwsPatterns) {
+      // If filters exist, RECOMPUTE filter results
+      if (hasMwsFilters) {
+        let resultMWS = [];
         
-        // Process conditions within pattern (OR operation)
-        pattern.conditions.forEach((condition) => {
-          dataJson.forEach((item) => {
-            let matches = false;
-            
-            if (condition.type === 1 && item[condition.key] === condition.value) {
-              matches = true;
-            } else if (condition.type === 2 && item[condition.key] >= condition.value.lower && item[condition.key] <= condition.value.upper) {
-              matches = true;
-            } else if (condition.type === 3 && item[condition.key] != condition.value) {
-              matches = true;
-            }
-            if (matches) {
-              patternMatches.add(item.mws_id);
+        mwsFilterKeys.forEach((filterName) => {
+          const filterValues = filterSelections.selectedMWSValues[filterName];
+          if (!filterValues) return;
+          
+          let tempArr = [];
+          const filter = getAllFilters().find((f) => f.name === filterName);
+          
+          filterValues.forEach((selectedOption) => {
+            if (filter?.type === 2) {
+              dataJson.forEach((item) => {
+                if (item && typeof item[filterName] !== "undefined" && item.mws_id) {
+                  const value = Number(item[filterName]);
+                  if (!isNaN(value) && value >= selectedOption.value.lower && value <= selectedOption.value.upper) {
+                    if (!tempArr.includes(item.mws_id)) {
+                      tempArr.push(item.mws_id);
+                    }
+                  }
+                }
+              });
+            } else {
+              dataJson.forEach((item) => {
+                if (item && item[filterName] === selectedOption.value && item.mws_id) {
+                  if (!tempArr.includes(item.mws_id)) {
+                    tempArr.push(item.mws_id);
+                  }
+                }
+              });
             }
           });
+          
+          if (resultMWS.length > 0) {
+            resultMWS = resultMWS.filter(id => tempArr.includes(id));
+          } else {
+            resultMWS = tempArr;
+          }
         });
-        // AND operation between different patterns
-        if (resultMWS.size > 0) {
-          // Intersection: keep only items present in both sets
-          resultMWS = new Set([...resultMWS].filter(x => patternMatches.has(x)));
+
+        setSelectedMWS(resultMWS);
+        fetchMWSLayer(resultMWS);
+        return;
+      } else {
+        // No patterns AND no filters - clear everything
+        setSelectedMWS([]);
+        fetchMWSLayer([]);
+        return;
+      }
+    }
+
+    // Patterns exist - process them
+    let resultMWS = new Set();
+    
+    // Process each pattern (AND between different patterns)
+    mwsPatternKeys.forEach((patternName) => {
+      const pattern = patternSelections.selectedMWSPatterns[patternName];
+      if (!pattern) return;
+      let patternMatches = new Set(); // Items matching ANY condition in THIS pattern (OR)
+      
+      // Process conditions within pattern (OR operation)
+      pattern.conditions.forEach((condition) => {
+        dataJson.forEach((item) => {
+          let matches = false;
+          
+          if (condition.type === 1 && item[condition.key] === condition.value) {
+            matches = true;
+          } else if (condition.type === 2 && item[condition.key] >= condition.value.lower && item[condition.key] <= condition.value.upper) {
+            matches = true;
+          } else if (condition.type === 3 && item[condition.key] != condition.value) {
+            matches = true;
+          }
+          if (matches) {
+            patternMatches.add(item.mws_id);
+          }
+        });
+      });
+      // AND operation between different patterns
+      if (resultMWS.size > 0) {
+        // Intersection: keep only items present in both sets
+        resultMWS = new Set([...resultMWS].filter(x => patternMatches.has(x)));
+      } else {
+        // First pattern, initialize with its matches
+        resultMWS = patternMatches;
+      }
+    });
+    
+    // Intersect with MWS from filters if they exist
+    if (hasMwsFilters) {
+      // Recompute filter results
+      let filterResults = [];
+      
+      mwsFilterKeys.forEach((filterName) => {
+        const filterValues = filterSelections.selectedMWSValues[filterName];
+        if (!filterValues) return;
+        
+        let tempArr = [];
+        const filter = getAllFilters().find((f) => f.name === filterName);
+        
+        filterValues.forEach((selectedOption) => {
+          if (filter?.type === 2) {
+            dataJson.forEach((item) => {
+              if (item && typeof item[filterName] !== "undefined" && item.mws_id) {
+                const value = Number(item[filterName]);
+                if (!isNaN(value) && value >= selectedOption.value.lower && value <= selectedOption.value.upper) {
+                  if (!tempArr.includes(item.mws_id)) {
+                    tempArr.push(item.mws_id);
+                  }
+                }
+              }
+            });
+          } else {
+            dataJson.forEach((item) => {
+              if (item && item[filterName] === selectedOption.value && item.mws_id) {
+                if (!tempArr.includes(item.mws_id)) {
+                  tempArr.push(item.mws_id);
+                }
+              }
+            });
+          }
+        });
+        
+        if (filterResults.length > 0) {
+          filterResults = filterResults.filter(id => tempArr.includes(id));
         } else {
-          // First pattern, initialize with its matches
-          resultMWS = patternMatches;
+          filterResults = tempArr;
         }
       });
-      // Intersect with MWS from filters if they exist
-      const mwsFilterKeys = Object.keys(filterSelections.selectedMWSValues || {});
-      const hasMwsFilters = mwsFilterKeys.some(key => filterSelections.selectedMWSValues[key] !== null);
       
-      let finalMWS;
-      if (hasMwsFilters && selectedMWS.length > 0) {
-        finalMWS = [...resultMWS].filter(id => selectedMWS.includes(id));
-      } else {
-        finalMWS = [...resultMWS];
-      }
-      
+      // Intersect patterns with filters
+      const finalMWS = [...resultMWS].filter(id => filterResults.includes(id));
       setSelectedMWS(finalMWS);
       fetchMWSLayer(finalMWS);
-      
-    } catch (error) {
-      console.error("Error in MWS pattern processing:", error);
+    } else {
+      // No filters, just use pattern results
+      const finalMWS = [...resultMWS];
+      setSelectedMWS(finalMWS);
+      fetchMWSLayer(finalMWS);
     }
-  }, [patternSelections.selectedMWSPatterns, patternTrigger]);
+    
+  } catch (error) {
+    console.error("Error in MWS pattern processing:", error);
+  }
+}, [patternSelections.selectedMWSPatterns, filterSelections.selectedMWSValues, dataJson]);
 
 
   useEffect(() => {
