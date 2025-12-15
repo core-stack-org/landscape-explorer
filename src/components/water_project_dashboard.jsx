@@ -244,6 +244,8 @@ const WaterProjectDashboard = () => {
     }
   }, [location.key]);
 
+  
+
   useEffect(() => {
     if (view === "table") {
       setSelectedWaterbody(null);
@@ -260,6 +262,7 @@ const WaterProjectDashboard = () => {
   const zoiFeatures = isTehsilMode ? tehsilZoi : projectZoi;
 
 console.log(activeSelectedWaterbody)
+
   const getMatchedMWSFeatureProject = (mwsGeoData, activeSelectedWaterbody) => {
     if (!mwsGeoData?.features?.length || !activeSelectedWaterbody) return null;
   
