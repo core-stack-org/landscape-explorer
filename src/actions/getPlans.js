@@ -3,7 +3,7 @@ export default async function getPlans(state = null,block=null) {
     try {
         console.log("inside tryyy")
         let response = await fetch(
-            `https://92c32fb6bade.ngrok-free.app/api/v1/watershed/plans/`,
+            `https://2bb02f703cef.ngrok-free.app/api/v1/watershed/plans/`,
             // `${process.env.REACT_APP_API_URL}/watershed/plans`, 
             {
             method: "GET",

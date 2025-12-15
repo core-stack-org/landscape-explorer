@@ -8,6 +8,7 @@ import {
 } from "../store/locationStore";
 
 import getVectorLayers from "../actions/getVectorLayers";
+import getImageLayer from "../actions/getImageLayers";
 import SettlementIcon from "../assets/settlement_icon.svg";
 import WellIcon from "../assets/well_proposed.svg";
 import WaterStructureIcon from "../assets/waterbodies_proposed.svg";
@@ -44,6 +45,18 @@ const PlanViewPage = () => {
 
 
   const loadBoundary = async (map, districtNameSafe, blockNameSafe) => {
+
+    const lulcLayer = await getImageLayer(
+      "LULC_level_3",
+      `LULC_24_25_${districtNameSafe}_${blockNameSafe}_level_3`,
+      true ,
+      "lulc_level_3_style"
+    );
+  
+    lulcLayer.set("layerName", "lulcLayer");
+  
+    map.addLayer(lulcLayer);
+
     const layer = await getVectorLayers(
       "panchayat_boundaries",
       `${districtNameSafe}_${blockNameSafe}`,
@@ -203,6 +216,15 @@ const PlanViewPage = () => {
 
       {/* MAP SECTIONS */}
 
+
+      <MapSection
+  title="Admin Boundary"
+  loadLayer={loadBoundary}
+  loadBoundary={loadBoundary}
+  districtNameSafe={districtNameSafe}
+  blockNameSafe={blockNameSafe}
+  plan={plan}
+/>
 <MapSection
   title="Settlement Overview"
   loadLayer={loadSettlement}

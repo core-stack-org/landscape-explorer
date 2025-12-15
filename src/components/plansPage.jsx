@@ -55,8 +55,8 @@ const STATE_COORDINATES = {
 const getPlanMetaStats = async (organizationId = null) => {
   try {
     const url = organizationId
-      ? `https://92c32fb6bade.ngrok-free.app/api/v1/watershed/plans/meta-stats/?organization_id=${organizationId}`
-      : `https://92c32fb6bade.ngrok-free.app/api/v1/watershed/plans/meta-stats/`;
+      ? `https://2bb02f703cef.ngrok-free.app/api/v1/watershed/plans/meta-stats/?organization=${organizationId}`
+      : `https://2bb02f703cef.ngrok-free.app/api/v1/watershed/plans/meta-stats/`;
 
     const response = await fetch(url, {
       method: "GET",
@@ -66,7 +66,6 @@ const getPlanMetaStats = async (organizationId = null) => {
         "X-API-KEY": "siOgP9SO.oUCc1vuWQRPkdjXjPmtIZYADe5eGl3FK",
       },
     });
-
     if (!response.ok) throw new Error("API error");
 
     return await response.json();
@@ -84,7 +83,6 @@ const PlansPage = () => {
   const [organizationOptions, setOrganizationOptions] = useState([]);
   const [metaStats, setMetaStats] = useState(null);
   const [selectedPlan, setSelectedPlan] = useState(null);
-  const [isPlanModalOpen, setIsPlanModalOpen] = useState(false);
   const [isStewardModalOpen, setIsStewardModalOpen] = useState(false);
   const [showBubbleLayer, setShowBubbleLayer] = useState(true);
   const [isStateView, setIsStateView] = useState(true);
@@ -110,6 +108,7 @@ const PlansPage = () => {
     loadMeta();
   }, []);
 
+  console.log(metaStats)
   //  State → Plan Count lookup
   const statePlanCounts = useMemo(() => {
     if (!metaStats?.state_breakdown) return {};
@@ -436,87 +435,87 @@ const PlansPage = () => {
   };
 
   // --- HOVER ANIMATION FOR PLAN DOTS ---
-useEffect(() => {
-  const map = mapRef.current;
-  if (!map) return;
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
 
-  let lastHovered = null;
+    let lastHovered = null;
 
-  const handlePointerMove = (evt) => {
-    if (!planLayerRef.current) return;
+    const handlePointerMove = (evt) => {
+      if (!planLayerRef.current) return;
 
-    map.getTargetElement().style.cursor = "default";
+      map.getTargetElement().style.cursor = "default";
 
-    let hitFeature = null;
+      let hitFeature = null;
 
-    map.forEachFeatureAtPixel(evt.pixel, (feature, layer) => {
-      if (layer?.get("layerName") === "planLayer") {
-        hitFeature = feature;
+      map.forEachFeatureAtPixel(evt.pixel, (feature, layer) => {
+        if (layer?.get("layerName") === "planLayer") {
+          hitFeature = feature;
+        }
+      });
+
+      if (hitFeature !== lastHovered) {
+        // Reset previous hover style
+        if (lastHovered) {
+          resetDotStyle(lastHovered);
+        }
+
+        // Apply new hover style
+        if (hitFeature) {
+          applyHoverStyle(hitFeature);
+          map.getTargetElement().style.cursor = "pointer";
+        }
+
+        lastHovered = hitFeature;
       }
-    });
+    };
 
-    if (hitFeature !== lastHovered) {
-      // Reset previous hover style
-      if (lastHovered) {
-        resetDotStyle(lastHovered);
-      }
+    map.on("pointermove", handlePointerMove);
 
-      // Apply new hover style
-      if (hitFeature) {
-        applyHoverStyle(hitFeature);
-        map.getTargetElement().style.cursor = "pointer";
-      }
+    return () => map.un("pointermove", handlePointerMove);
+  }, []);
 
-      lastHovered = hitFeature;
-    }
+  const applyHoverStyle = (feature) => {
+    const p = feature.get("plan_details");
+
+    feature.setStyle(
+      new Style({
+        image: new CircleStyle({
+          radius: 20, // bigger dot on hover
+          fill: new Fill({ color: "rgba(255,0,0,0.95)" }),
+          stroke: new Stroke({ color: "#fff", width: 2 }),
+        }),
+        text: new Text({
+          text: p.plan || "",
+          font: "bold 14px sans-serif",
+          fill: new Fill({ color: "#111" }),
+          stroke: new Stroke({ color: "#fff", width: 4 }),
+          offsetY: -20,
+        }),
+      })
+    );
   };
 
-  map.on("pointermove", handlePointerMove);
+  const resetDotStyle = (feature) => {
+    const p = feature.get("plan_details");
 
-  return () => map.un("pointermove", handlePointerMove);
-}, []);
-
-const applyHoverStyle = (feature) => {
-  const p = feature.get("plan_details");
-
-  feature.setStyle(
-    new Style({
-      image: new CircleStyle({
-        radius: 20, // bigger dot on hover
-        fill: new Fill({ color: "rgba(255,0,0,0.95)" }),
-        stroke: new Stroke({ color: "#fff", width: 2 }),
-      }),
-      text: new Text({
-        text: p.plan || "",
-        font: "bold 14px sans-serif",
-        fill: new Fill({ color: "#111" }),
-        stroke: new Stroke({ color: "#fff", width: 4 }),
-        offsetY: -20,
-      }),
-    })
-  );
-};
-
-const resetDotStyle = (feature) => {
-  const p = feature.get("plan_details");
-
-  feature.setStyle(
-    new Style({
-      image: new CircleStyle({
-        radius: 16,
-        fill: new Fill({ color: "rgba(255,0,0,0.85)" }),
-        stroke: new Stroke({ color: "#fff", width: 2 }),
-      }),
-      text: new Text({
-        text: p.plan || "",
-        font: "bold 12px sans-serif",
-        fill: new Fill({ color: "#333" }),
-        stroke: new Stroke({ color: "#fff", width: 3 }),
-        offsetY: -15,
-      }),
-    })
-  );
-};
+    feature.setStyle(
+      new Style({
+        image: new CircleStyle({
+          radius: 16,
+          fill: new Fill({ color: "rgba(255,0,0,0.85)" }),
+          stroke: new Stroke({ color: "#fff", width: 2 }),
+        }),
+        text: new Text({
+          text: p.plan || "",
+          font: "bold 12px sans-serif",
+          fill: new Fill({ color: "#333" }),
+          stroke: new Stroke({ color: "#fff", width: 3 }),
+          offsetY: -15,
+        }),
+      })
+    );
+  };
 
   //                 CLICK HANDLER FOR MAP
   useEffect(() => {
@@ -604,37 +603,28 @@ const resetDotStyle = (feature) => {
           </label>
           <div className="flex items-center gap-2">
           <SelectReact value={organization} 
-                      onChange={async (selected) => { setOrganization(selected);
+                    onChange={async (selected) => {
+                      setOrganization(selected);
+                    
+                      // RESET (no org selected)
                       if (!selected) {
-                                  setMetaStats(await getPlanMetaStats());
-                                  return;
-                            }
-                      const fullStats = await getPlanMetaStats();
-                      // FILTER BY ORG
-                      const orgData = fullStats.organization_breakdown.find(
-                        (o) => o.organization_id === selected.value
-                      );
-                      if (!orgData) {
-                        console.warn("No stats found for selected organization");
+                        const stats = await getPlanMetaStats();
+                        console.log("🔄 META STATS (NO FILTER):", stats);
+                        setMetaStats(stats);
                         return;
                       }
-                      // BUILD NEW FILTERED SUMMARY
-                      const filteredStats = {
-                        ...fullStats,
-                        summary: {
-                          total_plans: orgData.total_plans,
-                          completed_plans: orgData.completed_plans,
-                          in_progress_plans: orgData.total_plans - orgData.completed_plans,
-                          dpr_generated: orgData.dpr_generated,
-                          dpr_reviewed: orgData.dpr_approved,
-                        },
-                        filters_applied: {
-                          organization_id: selected.value,
-                        },
-                      };
-
-                      setMetaStats(filteredStats);
+                    
+                      // ORG FILTERED (BACKEND HANDLES IT)
+                      const stats = await getPlanMetaStats(selected.value);
+                    
+                      console.log("✅ META STATS FROM API (ORG FILTERED):", stats);
+                      console.log("📍 STATE BREAKDOWN (USED FOR MAP):", stats?.state_breakdown);
+                      console.log("📊 SUMMARY (USED FOR METRICS):", stats?.summary);
+                      console.log("🧪 FILTERS APPLIED:", stats?.filters_applied);
+                    
+                      setMetaStats(stats);
                     }}
+                    
                       options={organizationOptions}
                       placeholder="Select Organization"
                       styles={{
@@ -665,7 +655,7 @@ const resetDotStyle = (feature) => {
                         const stats = await getPlanMetaStats(); // reload full data
                         setMetaStats(stats);
                       }}>
-                      Clear
+                      X
                 </button>
             )}     
         </div>
