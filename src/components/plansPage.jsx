@@ -55,15 +55,16 @@ const STATE_COORDINATES = {
 const getPlanMetaStats = async (organizationId = null) => {
   try {
     const url = organizationId
-      ? `https://2bb02f703cef.ngrok-free.app/api/v1/watershed/plans/meta-stats/?organization=${organizationId}`
-      : `https://2bb02f703cef.ngrok-free.app/api/v1/watershed/plans/meta-stats/`;
+      ? `${process.env.REACT_APP_API_URL}/watershed/plans/meta-stats/?organization=${organizationId}`
+      : `${process.env.REACT_APP_API_URL}/watershed/plans/meta-stats/`;
 
     const response = await fetch(url, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
         "ngrok-skip-browser-warning": "420",
-        "X-API-KEY": "siOgP9SO.oUCc1vuWQRPkdjXjPmtIZYADe5eGl3FK",
+        "X-API-Key" : `${process.env.REACT_APP_API_KEY}`
+        // "X-API-KEY": "siOgP9SO.oUCc1vuWQRPkdjXjPmtIZYADe5eGl3FK",
       },
     });
     if (!response.ok) throw new Error("API error");

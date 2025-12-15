@@ -3,15 +3,15 @@ export default async function getPlans(state = null,block=null) {
     try {
         console.log("inside tryyy")
         let response = await fetch(
-            `https://2bb02f703cef.ngrok-free.app/api/v1/watershed/plans/`,
-            // `${process.env.REACT_APP_API_URL}/watershed/plans`, 
+            // `https://2bb02f703cef.ngrok-free.app/api/v1/watershed/plans/`,
+            `${process.env.REACT_APP_API_URL}/watershed/plans`, 
             {
             method: "GET",
             headers: {
                 "ngrok-skip-browser-warning": "1",
                 "Content-Type": "application/json",
-                "X-API-Key": "siOgP9SO.oUCc1vuWQRPkdjXjPmtIZYADe5eGl3FK"
-                // "X-API-Key" : `${process.env.REACT_APP_API_KEY}`,
+                // "X-API-Key": "siOgP9SO.oUCc1vuWQRPkdjXjPmtIZYADe5eGl3FK"
+                "X-API-Key" : `${process.env.REACT_APP_API_KEY}`,
                 }
             }
         )
