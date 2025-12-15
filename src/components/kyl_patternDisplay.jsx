@@ -31,23 +31,6 @@ const KYLPatternDisplay = ({ pattern, isDisabled, isSelected, onPatternSelect, h
                             </div>
                         </div>
                     </div>
-                    {/* <button
-                        onClick={() => setIsExpanded(!isExpanded)}
-                        className="ml-2 text-gray-400 hover:text-gray-600 transition-colors"
-                        disabled={isDisabled}
-                    >
-                        <svg
-                            className={`w-5 h-5 transform transition-transform ${isExpanded ? 'rotate-180' : ''}`}
-                            viewBox="0 0 20 20"
-                            fill="currentColor"
-                        >
-                            <path
-                                fillRule="evenodd"
-                                d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
-                                clipRule="evenodd"
-                            />
-                        </svg>
-                    </button> */}
                 </div>
 
                 {/* Characteristics - Always Visible */}
@@ -58,22 +41,6 @@ const KYLPatternDisplay = ({ pattern, isDisabled, isSelected, onPatternSelect, h
             </div>
 
             {/* Expanded Content - Only Value Labels */}
-            {/* {isExpanded && (
-                <div className="mt-4 pt-4 border-t border-gray-200 space-y-2">
-                    <div className="text-xs font-medium text-gray-700 mb-2">
-                        Conditions:
-                    </div>
-                    {pattern.values.map((valueItem, index) => (
-                        <div
-                            key={index}
-                            className="text-sm text-gray-700 pl-3 py-1"
-                        >
-                            • {valueItem.label}
-                        </div>
-                    ))}
-                </div>
-            )} */}
-
             {/* Apply Pattern Button */}
             <div className="mt-3 pt-3 border-t border-gray-200">
                 <button
