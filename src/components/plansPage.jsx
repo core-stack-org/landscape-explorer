@@ -88,6 +88,7 @@ const PlansPage = () => {
   const [showBubbleLayer, setShowBubbleLayer] = useState(true);
   const [isStateView, setIsStateView] = useState(true);
   const [mapLoading, setMapLoading] = useState(false);
+  const [noMapData, setNoMapData] = useState(false);
 
   const [plans, setPlans] = useRecoilState(plansAtom);
   const [rawStateData, setRawStateData] = useRecoilState(stateDataAtom);
@@ -235,28 +236,40 @@ const PlansPage = () => {
 
   // ADD BUBBLES TO MAP (state plan counts)
   const addStateBubbles = () => {
-    if (!metaStats || !mapRef.current) return;
-
-    // remove existing layer if any
+    if (!mapRef.current) return;
+  
+    // remove old bubble layer
     if (bubbleLayerRef.current) {
       mapRef.current.removeLayer(bubbleLayerRef.current);
       bubbleLayerRef.current = null;
     }
-
+  
+    // ✅ NO DATA CASE
+    if (
+      !metaStats?.state_breakdown ||
+      !Array.isArray(metaStats.state_breakdown) ||
+      metaStats.state_breakdown.length === 0
+    ) {
+      console.warn("⚠ No state data available");
+      setNoMapData(true);
+      return;
+    }
+  
+    setNoMapData(false);
+  
     const features = [];
-
     const getRadius = (count) => 8 + Math.sqrt(count) * 2.2;
-
+  
     metaStats.state_breakdown.forEach((s) => {
       const coords = STATE_COORDINATES[s.state_name];
       if (!coords) return;
-
+  
       const f = new Feature({
         geometry: new Point(coords),
         name: s.state_name,
         plans: s.total_plans,
       });
-
+  
       f.setStyle(
         new Style({
           image: new CircleStyle({
@@ -265,24 +278,30 @@ const PlansPage = () => {
             stroke: new Stroke({ color: "#fff", width: 2 }),
           }),
           text: new Text({
-            text: String(s.total_plans),
+            text: String(s.total_plans ?? "--"),
             fill: new Fill({ color: "#fff" }),
             font: "bold 14px sans-serif",
           }),
         })
       );
-
+  
       features.push(f);
     });
-
+  
+    if (features.length === 0) {
+      setNoMapData(true);
+      return;
+    }
+  
     const layer = new VectorLayer({
       source: new VectorSource({ features }),
     });
+  
     layer.set("layerName", "bubbleLayer");
-
     bubbleLayerRef.current = layer;
     mapRef.current.addLayer(layer);
   };
+  
 
   // Re-add blue bubbles whenever metaStats loads
   useEffect(() => {
@@ -553,11 +572,18 @@ const PlansPage = () => {
         {/* MAP */}
         <div  className="relative border border-gray-300 rounded-lg overflow-hidden shadow" style={{ width: "60%", height: "900px" }}>
           <div ref={mapElement} className="w-full h-full" />
+          {noMapData && (
+  <div className="absolute inset-0 flex items-center justify-center z-[1000] pointer-events-none">
+    <span className="text-4xl font-bold text-gray-400">--</span>
+  </div>
+)}
           {mapLoading && (
             <div className="absolute inset-0 bg-white/60 backdrop-blur-sm flex items-center justify-center z-[999]">
               <div className="animate-spin h-12 w-12 border-4 border-blue-500 border-t-transparent rounded-full"></div>
             </div>
 )}
+
+
 
           {/* <div className="absolute bottom-4 right-0 w-full max-w-xl px-4">
             <YearSlider currentLayer={[{ name: "lulc_test_layer" }]} />
