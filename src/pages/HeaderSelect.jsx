@@ -64,9 +64,18 @@ const HeaderSelect = ({ setView }) => {
         }
       );
       const projectData = await projRes.json();
+      const plantationProjects = projectData.filter(
+        (p) => p.app_type === "plantation"
+      );
+  
+      //  Collect org IDs that actually have projects
+      const orgsWithProjects = new Set(
+        plantationProjects.map((p) => p.organization)
+      );
+  
   
       // Extract org IDs that have plantation projects
-      const orgsWithProjects = new Set(projectData.map((p) => p.organization));
+      // const orgsWithProjects = new Set(projectData.map((p) => p.organization));
   
       // Fetch organizations AFTER knowing which ones have projects
       const orgRes = await fetch(
