@@ -1,13 +1,10 @@
-import React from "react";
+import React,{useEffect,useState} from "react";
 import {
   Box,
   Avatar,
   Typography,
   Card,
-  CardContent,
-  Divider,
   Grid,
-  Chip,
   Paper,
   Table,
   TableBody,
@@ -17,7 +14,53 @@ import {
   TableRow,
 } from "@mui/material";
 
-const StewardDetailPage = () => {
+const StewardDetailPage = ({ plan }) => {
+  console.log(plan)
+  const [stewardData, setStewardData] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!plan) return;
+
+    const organizationId = plan.organization;   
+    const username = "7008144429";              
+
+    const getStewardDetails = async (organizationId, username) => {
+      try {
+        const url = `https://2bb02f703cef.ngrok-free.app/api/v1/organizations/${organizationId}/watershed/plans/steward-details/?username=${username}`;
+    
+        const response = await fetch(url, {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            "ngrok-skip-browser-warning": "420",
+            "X-API-KEY": "siOgP9SO.oUCc1vuWQRPkdjXjPmtIZYADe5eGl3FK",
+          },
+        });
+        if (!response.ok) {
+          throw new Error("Failed to fetch steward details");
+        }
+        const data = await response.json();
+        console.log(data)
+        return data;
+     
+       
+      } catch (error) {
+        console.error("Steward Details API Error:", error);
+        return null;
+      }
+    };
+    
+
+    const loadSteward = async () => {
+      setLoading(true);
+      const data = await getStewardDetails(organizationId, username);
+      setStewardData(data);
+      setLoading(false);
+    };
+
+    loadSteward();
+  }, [plan]);
   // Hardcoded data
   const steward = {
     photo: "",

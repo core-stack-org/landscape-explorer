@@ -33,7 +33,7 @@ const MapSection = ({
       ],
       view: new View({
         center: [78.9, 23.6],
-        zoom: 6,
+        zoom: 8,
         projection: "EPSG:4326",
       }),
       controls: defaultControls(),

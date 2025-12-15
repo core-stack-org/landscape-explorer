@@ -837,11 +837,11 @@ onClick={() => navigate("/plan-view", { state: { plan: selectedPlan } })}
   plan={selectedPlan}/> */}
 
   {/* STEWARD DETAIL DIALOG */}
-    {isStewardModalOpen && (
+    {isStewardModalOpen && selectedPlan && (
       <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-[3000]">
         <div className="bg-white w-[1000px] h-[850px] rounded-xl shadow-xl p-2 overflow-auto relative">
           {(() => (window.closeStewardModal = () => setIsStewardModalOpen(false)))()}
-          <StewardDetailPage />
+          <StewardDetailPage plan={selectedPlan}  onClose={() => setIsStewardModalOpen(false)} />
         </div>
       </div>
     )}
