@@ -193,14 +193,14 @@
                         "label": "At least one drought year",
                         "value": {
                             "lower": 1,
-                            "upper": 1
+                            "upper": 9999
                         }
                     },
                     {
                         "label": "At least two drought years",
                         "value": {
-                            "lower": 1,
-                            "upper": 2
+                            "lower": 2,
+                            "upper": 9999
                         }
                     }
                 ],
