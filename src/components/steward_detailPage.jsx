@@ -23,19 +23,19 @@ const StewardDetailPage = ({ plan }) => {
     if (!plan) return;
 
     const organizationId = plan.organization;   
-    const username = "7008144429";              
+    const username = plan.facilitator_name;              
 
     const getStewardDetails = async (organizationId, username) => {
       try {
-        const url = `${process.env.REACT_APP_API_URL}/organizations/${organizationId}/watershed/plans/steward-details/?username=${username}`;
-    
+        // const url = `${process.env.REACT_APP_API_URL}/organizations/${organizationId}/watershed/plans/steward-details/?facilitator_name=${username}`;
+    const url = `https://2bb02f703cef.ngrok-free.app/api/v1/organizations/${organizationId}/watershed/plans/steward-details/?facilitator_name=${username}`;
         const response = await fetch(url, {
           method: "GET",
           headers: {
             "Content-Type": "application/json",
             "ngrok-skip-browser-warning": "420",
-            "X-API-Key" : `${process.env.REACT_APP_API_KEY}`,
-            // "X-API-KEY": "siOgP9SO.oUCc1vuWQRPkdjXjPmtIZYADe5eGl3FK",
+            // "X-API-Key" : `${process.env.REACT_APP_API_KEY}`,
+            "X-API-KEY": "siOgP9SO.oUCc1vuWQRPkdjXjPmtIZYADe5eGl3FK",
           },
         });
         if (!response.ok) {
@@ -62,26 +62,14 @@ const StewardDetailPage = ({ plan }) => {
 
     loadSteward();
   }, [plan]);
-  // Hardcoded data
-  const steward = {
-    photo: "",
-    name: "Radha Grag",
-    experience: "5 Years",
-    organization: "CFPT",
-    age: 32 ,
-    gender: "Female",
-    Education:"Graduate",
-    State:"Uttar Pradesh",
-    approvedDocs: 10,
-    totalPlans: 3,
-    dprGenerated: 2,
-    plans: [
-      { name: "Plantation Plan", status: "Completed", demandsApproved: 3 },
-      { name: "Status Report", status: "In Progress", demandsApproved: 1 },
-      { name: "Improvement Plan", status: "Completed", demandsApproved: 2 },
-    ],
-  };
-
+  
+  if (loading) {
+    return <Typography sx={{ p: 4 }}>Loading steward details...</Typography>;
+  }
+  
+  if (!stewardData) {
+    return <Typography sx={{ p: 4 }}>No steward data found</Typography>;
+  }
   return (
     <Box sx={{ p: 1, mt: 1 }}>
       {/* ---------- MAIN CARD ---------- */}
@@ -138,46 +126,46 @@ const StewardDetailPage = ({ plan }) => {
           
           {/* Avatar */}
           <Grid item xs={12} sm={3} textAlign="center">
-            <Avatar
-              src={steward.photo}
-              sx={{
-                width: 150,
-                height: 150,
-                margin: "0 auto",
-                background: "#e2e8f0",
-              }}
-            />
+          <Avatar
+  src={stewardData.profile_picture || ""}
+  sx={{
+    width: 150,
+    height: 150,
+    margin: "0 auto",
+    background: "#e2e8f0",
+  }}
+/>
+
           </Grid>
 
           {/* DETAILS - Vertical list */}
           <Grid item xs={12} sm={9}>
             <Typography variant="h5" fontWeight={700} sx={{ mb: 2 }}>
-              {steward.name}
+            {stewardData.facilitator_name}
             </Typography>
 
 
             <Typography sx={{ mb: 1 }}>
-              <strong>Organization:</strong> {steward.organization}
+              <strong>Organization:</strong>   {stewardData.organization?.name || "N/A"}
+
             </Typography>
 
             <Typography sx={{ mb: 1 }}>
-              <strong>Age:</strong> {steward.age}
+              <strong>Gender:</strong> {stewardData.gender || "N/A"}
             </Typography>
 
             <Typography sx={{ mb: 1 }}>
-              <strong>Gender:</strong> {steward.gender}
+              <strong>Education Qualification:</strong>   {stewardData.education_qualification || "N/A"}
+
             </Typography>
 
             <Typography sx={{ mb: 1 }}>
-              <strong>Education Qualification:</strong> {steward.Education}
+              <strong>Years of Experience:</strong> {stewardData.experience || "N/A"}
             </Typography>
 
             <Typography sx={{ mb: 1 }}>
-              <strong>Years of Experience:</strong> {steward.experience}
-            </Typography>
+              <strong>State:</strong>   {stewardData.working_locations?.states?.[0]?.name || "N/A"}
 
-            <Typography sx={{ mb: 1 }}>
-              <strong>State:</strong> {steward.State}
             </Typography>
           </Grid>
 
@@ -211,8 +199,8 @@ const StewardDetailPage = ({ plan }) => {
                 fontWeight={700}
                 sx={{ color: "#2563eb" }}
               >
-                {steward.totalPlans}
-              </Typography>
+  {stewardData.statistics?.total_plans ?? 0}
+  </Typography>
             </Paper>
           </Grid>
 
@@ -236,8 +224,8 @@ const StewardDetailPage = ({ plan }) => {
                 fontWeight={700}
                 sx={{ color: "#4f46e5" }}
               >
-                {steward.dprGenerated}
-              </Typography>
+  {stewardData.statistics?.dpr_completed ?? 0}
+  </Typography>
             </Paper>
           </Grid>
         </Grid>
@@ -260,21 +248,39 @@ const StewardDetailPage = ({ plan }) => {
               <TableRow>
                 <TableCell sx={{ fontWeight: 700 }}>Plan Name</TableCell>
                 <TableCell sx={{ fontWeight: 700 }}>Status</TableCell>
-                <TableCell sx={{ fontWeight: 700 }}>
+                {/* <TableCell sx={{ fontWeight: 700 }}>
                   No. of Demands Approved
-                </TableCell>
+                </TableCell> */}
               </TableRow>
             </TableHead>
 
             <TableBody>
-              {steward.plans.map((plan, index) => (
-                <TableRow key={index}>
-                  <TableCell>{plan.name}</TableCell>
-                  <TableCell>{plan.status}</TableCell>
-                  <TableCell>{plan.demandsApproved}</TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
+  {stewardData.plans?.length > 0 ? (
+    stewardData.plans.map((p, index) => (
+      <TableRow key={p.id || index}>
+        <TableCell>{p.name}</TableCell>
+        <TableCell>
+  <Typography
+    sx={{
+      fontWeight: 600,
+      color: p.is_completed ? "#16a34a" : "#dc2626", // green / red
+    }}
+  >
+    {p.is_completed ? "Completed" : "Not Completed"}
+  </Typography>
+</TableCell>
+        {/* <TableCell>--</TableCell> */}
+      </TableRow>
+    ))
+  ) : (
+    <TableRow>
+      <TableCell colSpan={3} align="center">
+        No plans available
+      </TableCell>
+    </TableRow>
+  )}
+</TableBody>
+
           </Table>
         </TableContainer>
       </Card>

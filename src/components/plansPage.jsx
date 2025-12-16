@@ -19,9 +19,6 @@ import DoubleClickZoom from "ol/interaction/DoubleClickZoom";
 import PlanViewDialog from "../components/plan_detailView.jsx";
 import ArrowPlan from '../assets/arrow_plan.svg';
 import StewardDetailPage from "./steward_detailPage.jsx";
-
-
-
 import {
   plansAtom,
   stateDataAtom,
@@ -31,8 +28,6 @@ import {
   districtLookupAtom,
   blockLookupAtom,
 } from "../store/locationStore";
-
-// APIs
 import getStates from "../actions/getStates";
 import getPlans from "../actions/getPlans";
 
@@ -50,8 +45,6 @@ const STATE_COORDINATES = {
   "Madhya Pradesh": [78.6569, 22.9734],
 };
 
-//  NEW FUNCTION: Meta Stats API
-
 const getPlanMetaStats = async (organizationId = null) => {
   try {
     const url = organizationId
@@ -64,7 +57,6 @@ const getPlanMetaStats = async (organizationId = null) => {
         "Content-Type": "application/json",
         "ngrok-skip-browser-warning": "420",
         "X-API-Key" : `${process.env.REACT_APP_API_KEY}`
-        // "X-API-KEY": "siOgP9SO.oUCc1vuWQRPkdjXjPmtIZYADe5eGl3FK",
       },
     });
     if (!response.ok) throw new Error("API error");
@@ -77,8 +69,6 @@ const getPlanMetaStats = async (organizationId = null) => {
 };
 
 const PlansPage = () => {
-  const mapElement = useRef(null);
-  const mapRef = useRef(null);
 
   const [organization, setOrganization] = useState();
   const [organizationOptions, setOrganizationOptions] = useState([]);
@@ -89,7 +79,6 @@ const PlansPage = () => {
   const [isStateView, setIsStateView] = useState(true);
   const [mapLoading, setMapLoading] = useState(false);
   const [noMapData, setNoMapData] = useState(false);
-
   const [plans, setPlans] = useRecoilState(plansAtom);
   const [rawStateData, setRawStateData] = useRecoilState(stateDataAtom);
   const [states, setStates] = useRecoilState(stateAtom);
@@ -99,6 +88,9 @@ const PlansPage = () => {
   const [blockLookup, setBlockLookup] = useRecoilState(blockLookupAtom);
   const bubbleLayerRef = useRef(null);
   const planLayerRef = useRef(null);
+  const organizationRef = useRef(null);
+  const mapElement = useRef(null);
+  const mapRef = useRef(null);
   const navigate = useNavigate();
 
   //  Load Meta Stats
@@ -110,18 +102,6 @@ const PlansPage = () => {
     loadMeta();
   }, []);
 
-  console.log(metaStats)
-  //  State → Plan Count lookup
-  const statePlanCounts = useMemo(() => {
-    if (!metaStats?.state_breakdown) return {};
-    const lookup = {};
-    metaStats.state_breakdown.forEach((s) => {
-      lookup[s.state_name] = s.total_plans;
-    });
-    return lookup;
-  }, [metaStats]);
-
-  //  1. Load organizations
   useEffect(() => {
     fetchOrganizations();
   }, []);
@@ -149,15 +129,15 @@ const PlansPage = () => {
   };
 
   //  Load PLANS once
-  useEffect(() => {
-    const loadPlansOnce = async () => {
-      if (plans?.length > 0) return;
-      const data = await getPlans();
-      console.log(data)
-      if (data?.raw) setPlans(data.raw);
-    };
-    loadPlansOnce();
-  }, []);
+  // useEffect(() => {
+  //   const loadPlansOnce = async () => {
+  //     if (plans?.length > 0) return;
+  //     const data = await getPlans();
+  //     console.log(data)
+  //     if (data?.raw) setPlans(data.raw);
+  //   };
+  //   loadPlansOnce();
+  // }, []);
 
   // Load States, Districts, Blocks
   useEffect(() => {
@@ -234,7 +214,6 @@ const PlansPage = () => {
     });
   }, []);
 
-  // ADD BUBBLES TO MAP (state plan counts)
   const addStateBubbles = () => {
     if (!mapRef.current) return;
   
@@ -292,39 +271,29 @@ const PlansPage = () => {
       setNoMapData(true);
       return;
     }
-  
     const layer = new VectorLayer({
       source: new VectorSource({ features }),
     });
-  
     layer.set("layerName", "bubbleLayer");
     bubbleLayerRef.current = layer;
     mapRef.current.addLayer(layer);
   };
   
-
-  // Re-add blue bubbles whenever metaStats loads
   useEffect(() => {
     if (showBubbleLayer) addStateBubbles();
   }, [metaStats, showBubbleLayer]);
 
-  //            WHEN USER CLICKS A BLUE BUBBLE (STATE)
   const handleStateBubbleClick = async (feature) => {
-  
     if (!feature) {
       console.warn("⚠ handleStateBubbleClick: feature is null");
       return;
     }
-  
-    // SAFETY CHECK 1 — states must be loaded
-    if (!states || !Array.isArray(states) || states.length === 0) {
+      if (!states || !Array.isArray(states) || states.length === 0) {
       console.warn("⚠ handleStateBubbleClick: states not loaded yet!");
       return;
     }
   
     const clickedStateName = feature.get("name");
-  
-    // SAFETY CHECK 2 — ensure label matches
     const stateObj = states.find((s) => s.label === clickedStateName);
   
     if (!stateObj) {
@@ -332,12 +301,9 @@ const PlansPage = () => {
       console.warn("Available states:", states.map((s) => s.label));
       return;
     }
-    
-    // remove bubble layer
-
   
     setShowBubbleLayer(false);
-      setIsStateView(false);     
+    setIsStateView(false);     
     setSelectedPlan(null);
     setTimeout(() => {
       if (bubbleLayerRef.current) {
@@ -347,7 +313,6 @@ const PlansPage = () => {
     }, 600);
     await fetchTehsilPlans(stateObj);
     setTimeout(() => setMapLoading(false), 300);
-
   };
   
   const handleBackToStateView = () => {
@@ -376,45 +341,39 @@ const PlansPage = () => {
     });
   };
 
-  //              FETCH PLANS FOR A STATE → ADD RED DOTS
   const fetchTehsilPlans = async (stateObj) => {
     const allBlocks = stateObj.district
       ?.flatMap((d) => d.blocks)
       ?.map((b) => String(b.block_id));
-
+    const selectedOrg = organizationRef.current || null;
     const result = await getPlans({ state: stateObj.state_id });
-
-    const filtered = result.raw.filter((p) =>
+    let filtered = result.raw.filter((p) =>
       allBlocks.includes(String(p.block))
-    );
-
+    );  
+    if (selectedOrg?.value) {
+      filtered = filtered.filter(
+        (p) => String(p.organization) === String(selectedOrg.value)
+      );
+    }
     addPlanDots(filtered);
-
     return filtered;
   };
 
-  //               ADD RED PLAN DOTS — SEPARATE FUNCTION
   const addPlanDots = (plans) => {
     if (!mapRef.current) return;
-
-    // remove old plan layer
     if (planLayerRef.current) {
       mapRef.current.removeLayer(planLayerRef.current);
       planLayerRef.current = null;
     }
-
     const features = [];
-
     plans.forEach((p) => {
       const lat = parseFloat(p.latitude);
       const lon = parseFloat(p.longitude);
       if (!lat || !lon) return;
-
       const f = new Feature({
         geometry: new Point([lon, lat]),
         plan_details: p,
       });
-
       f.setStyle(
         new Style({
           image: new CircleStyle({
@@ -423,15 +382,14 @@ const PlansPage = () => {
             stroke: new Stroke({ color: "#fff", width: 2 }),
           }),
           text: new Text({
-            text: p.plan || "",  // short label
+            text: p.plan || "", 
             font: "bold 12px sans-serif",
             fill: new Fill({ color: "#333" }),
             stroke: new Stroke({ color: "#fff", width: 3 }),
-            offsetY: -15, // move text above the dot
+            offsetY: -15, 
           }),
         })
       );
-
       features.push(f);
     });
 
@@ -454,7 +412,6 @@ const PlansPage = () => {
     }
   };
 
-  // --- HOVER ANIMATION FOR PLAN DOTS ---
   useEffect(() => {
     const map = mapRef.current;
     if (!map) return;
@@ -537,7 +494,6 @@ const PlansPage = () => {
     );
   };
 
-  //                 CLICK HANDLER FOR MAP
   useEffect(() => {
     if (!mapRef.current || !states || states.length === 0) return; 
 
@@ -573,34 +529,28 @@ const PlansPage = () => {
         <div  className="relative border border-gray-300 rounded-lg overflow-hidden shadow" style={{ width: "60%", height: "900px" }}>
           <div ref={mapElement} className="w-full h-full" />
           {noMapData && (
-  <div className="absolute inset-0 flex items-center justify-center z-[1000] pointer-events-none">
-    <span className="text-4xl font-bold text-gray-400">--</span>
-  </div>
-)}
+            <div className="absolute inset-0 flex items-center justify-center z-[1000] pointer-events-none">
+              <span className="text-4xl font-bold text-gray-400">--</span>
+            </div>
+          )}
           {mapLoading && (
             <div className="absolute inset-0 bg-white/60 backdrop-blur-sm flex items-center justify-center z-[999]">
               <div className="animate-spin h-12 w-12 border-4 border-blue-500 border-t-transparent rounded-full"></div>
             </div>
-)}
+          )}
 
-
-
-          {/* <div className="absolute bottom-4 right-0 w-full max-w-xl px-4">
-            <YearSlider currentLayer={[{ name: "lulc_test_layer" }]} />
-          </div> */}
                 {/* ZOOM CONTROLS */}
       <div className="absolute top-10 right-4 flex flex-col gap-1 z-[1100]">
         {["+", "–"].map((sign) => (
           <button
             key={sign}
             className="bg-white border border-gray-300 rounded-md w-10 h-10 text-xl 
-                     cursor-pointer hover:bg-gray-100 active:scale-95 transition"
+                      cursor-pointer hover:bg-gray-100 active:scale-95 transition"
             onClick={() => {
               const map = mapRef.current;
               if (!map) return;
               const view = map.getView();
               const delta = sign === "+" ? 1 : -1;
-
               view.animate({
                 zoom: view.getZoom() + delta,
                 duration: 300,
@@ -611,15 +561,15 @@ const PlansPage = () => {
           </button>
         ))}
         {/* BACK BUTTON (visible only when NOT in state bubble view) */}
-{!isStateView && (
-  <button
-    className="bg-white border border-gray-300 rounded-md w-10 h-10 text-lg 
-               cursor-pointer hover:bg-gray-100 active:scale-95 transition mt-2 flex items-center justify-center"
-    onClick={handleBackToStateView}
-  >
-    ←
-  </button>
-)}
+          {!isStateView && (
+            <button
+              className="bg-white border border-gray-300 rounded-md w-10 h-10 text-lg 
+                        cursor-pointer hover:bg-gray-100 active:scale-95 transition mt-2 flex items-center justify-center"
+              onClick={handleBackToStateView}
+            >
+              ←
+            </button>
+          )}
 
       </div>
         </div>
@@ -632,26 +582,16 @@ const PlansPage = () => {
           <SelectReact value={organization} 
                     onChange={async (selected) => {
                       setOrganization(selected);
-                    
-                      // RESET (no org selected)
+                      organizationRef.current = selected;
                       if (!selected) {
                         const stats = await getPlanMetaStats();
                         console.log("🔄 META STATS (NO FILTER):", stats);
                         setMetaStats(stats);
                         return;
                       }
-                    
-                      // ORG FILTERED (BACKEND HANDLES IT)
-                      const stats = await getPlanMetaStats(selected.value);
-                    
-                      console.log("✅ META STATS FROM API (ORG FILTERED):", stats);
-                      console.log("📍 STATE BREAKDOWN (USED FOR MAP):", stats?.state_breakdown);
-                      console.log("📊 SUMMARY (USED FOR METRICS):", stats?.summary);
-                      console.log("🧪 FILTERS APPLIED:", stats?.filters_applied);
-                    
+                      const stats = await getPlanMetaStats(selected.value);                    
                       setMetaStats(stats);
                     }}
-                    
                       options={organizationOptions}
                       placeholder="Select Organization"
                       styles={{
@@ -679,7 +619,7 @@ const PlansPage = () => {
                     className="px-3 py-2 rounded-lg bg-red-500 text-white text-sm hover:bg-red-600 shadow"
                     onClick={async () => {
                       setOrganization(null);
-                        const stats = await getPlanMetaStats(); // reload full data
+                        const stats = await getPlanMetaStats();
                         setMetaStats(stats);
                       }}>
                       X
@@ -736,7 +676,6 @@ const PlansPage = () => {
   <div
     className="w-[620px] bg-white border border-gray-200 rounded-2xl p-6 shadow-lg mt-6 relative"
   >
-    {/* ❌ Close Button */}
     <button
       className="absolute top-4 right-4 text-gray-500 hover:text-gray-700 text-xl"
       onClick={() => setSelectedPlan(null)}
@@ -764,7 +703,7 @@ const PlansPage = () => {
       </div>
 
       <div className="bg-gray-50 p-3 rounded-lg border border-gray-200">
-        <p className="font-semibold text-gray-700">Block</p>
+        <p className="font-semibold text-gray-700">Tehsil</p>
         <p className="text-gray-900">
           {blockLookup[selectedPlan.block] || selectedPlan.block}
         </p>
@@ -802,10 +741,6 @@ const PlansPage = () => {
     Click the arrow to view steward details
   </div>
       </div>
-
-
-
-
       <div className="bg-gray-50 p-3 rounded-lg border border-gray-200">
         <p className="font-semibold text-gray-700">Organization</p>
         <p className="text-gray-900">{selectedPlan.organization_name || "--"}</p>
@@ -857,11 +792,6 @@ onClick={() => navigate("/plan-view", { state: { plan: selectedPlan } })}
 
       </div>
 </div>
-
-  {/* <PlanViewDialog
-  open={isPlanModalOpen}
-  onClose={() => setIsPlanModalOpen(false)}
-  plan={selectedPlan}/> */}
 
   {/* STEWARD DETAIL DIALOG */}
     {isStewardModalOpen && selectedPlan && (

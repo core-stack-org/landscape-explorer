@@ -21,7 +21,6 @@ const MapSection = ({
 
   useEffect(() => {
     if (!plan) return;
-
     const mapInstance = new Map({
       target: mapEl.current,
       layers: [
@@ -38,7 +37,6 @@ const MapSection = ({
       }),
       controls: defaultControls(),
     });
-
     setMap(mapInstance);
     mapInstance.getInteractions().forEach((interaction) => {
         if (
@@ -49,13 +47,8 @@ const MapSection = ({
           interaction.setActive(false);
         }
       });
-
-    // Boundary first
     loadBoundary(mapInstance, districtNameSafe, blockNameSafe);
-
-    // Load the layer for this map section
     loadLayer(mapInstance);
-
     return () => mapInstance.setTarget(null);
   }, [plan]);
 
@@ -72,25 +65,23 @@ const MapSection = ({
   return (
     <div className="mb-10 relative">
       <h2 className="text-xl font-semibold mb-3">{title}</h2>
-
       <div
         ref={mapEl}
-        className="w-full h-[450px] border rounded-lg shadow bg-white relative"
+        className="w-full h-[550px] border rounded-lg shadow bg-white relative"
       />
 
       {/* ZOOM CONTROLS */}
       <div className="absolute top-14 right-4 flex flex-col gap-1 z-[999]">
         <button
           className="bg-white border border-gray-300 rounded-md w-9 h-9 text-lg 
-                     cursor-pointer hover:bg-gray-100 active:scale-95 transition"
+                    cursor-pointer hover:bg-gray-100 active:scale-95 transition"
           onClick={() => zoomMap(+1)}
         >
           +
         </button>
-
         <button
           className="bg-white border border-gray-300 rounded-md w-9 h-9 text-lg 
-                     cursor-pointer hover:bg-gray-100 active:scale-95 transition"
+                    cursor-pointer hover:bg-gray-100 active:scale-95 transition"
           onClick={() => zoomMap(-1)}
         >
           –
