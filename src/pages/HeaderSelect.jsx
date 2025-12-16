@@ -84,17 +84,18 @@ const HeaderSelect = ({ setView }) => {
       );
       const orgData = await orgRes.json();
   
-      const validOrganizations = orgData
-        .filter((org) => orgsWithProjects.has(org.id))
-        .map((org) => ({
+      const validOrganizations = orgData.map((org) => ({
           value: org.id,
           label: org.name,
         }));
+        //.filter((org) => orgsWithProjects.has(org.id))
+        
       
         console.log(validOrganizations)
 
       setOrganizationOptions(validOrganizations);
 
+      console.log(validOrganizations)
       
       // Restore selected org if saved
       const savedOrg = sessionStorage.getItem("selectedOrganization");
@@ -139,7 +140,10 @@ const HeaderSelect = ({ setView }) => {
   
       // restore saved project
       const savedProj = sessionStorage.getItem("selectedProject");
-      if (savedProj) {
+
+      console.log(savedProj)
+
+      if (savedProj !== null) {
         const parsed = JSON.parse(savedProj);
         const matched = options.find((p) => p.value === parsed.value);
         if (matched) setProject(matched);
