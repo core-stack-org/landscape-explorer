@@ -6,6 +6,9 @@ import LEHomepage from "./pages/LE_homepage";
 import PlantationDashboard from "./pages/plantationDashboard";
 import PlantationProjectDashboard from "./components/plantation_project_dashboard";
 import LandscapeExplorer from "./pages/LandscapeExplorer";
+import PlansPage from "./components/plansPage";
+import PlanViewPage from "./components/plan_detailView";
+
 function App() {
   return (
     <BrowserRouter>
@@ -34,6 +37,11 @@ function App() {
           path="/dashboard"
           element={<WaterProjectDashboard />}
         />
+        <Route path="/CCUsagePage" element={<PlansPage />} />
+        <Route path="/plan-view" element={<PlanViewPage />} />
+
+
+
       </Routes>
     </BrowserRouter>
   );

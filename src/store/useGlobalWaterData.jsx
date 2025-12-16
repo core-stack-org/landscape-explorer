@@ -92,7 +92,7 @@ export const useGlobalWaterData = ({
         // ZOI
         zoi = await fetchWFS(`swb:waterbodies_zoi_${d}_${b}`);
         if (!zoi?.features?.length) {
-          zoi = await fetchWFS(`water_bodies:waterbodies_zoi_${d}_${b}`);
+          // zoi = await fetchWFS(`water_bodies:waterbodies_zoi_${d}_${b}`);
         }
 
         if (zoi?.features) {
