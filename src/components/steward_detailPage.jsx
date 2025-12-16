@@ -27,15 +27,15 @@ const StewardDetailPage = ({ plan }) => {
 
     const getStewardDetails = async (organizationId, username) => {
       try {
-        // const url = `${process.env.REACT_APP_API_URL}/organizations/${organizationId}/watershed/plans/steward-details/?facilitator_name=${username}`;
-    const url = `https://2bb02f703cef.ngrok-free.app/api/v1/organizations/${organizationId}/watershed/plans/steward-details/?facilitator_name=${username}`;
+        const url = `${process.env.REACT_APP_API_URL}/organizations/${organizationId}/watershed/plans/steward-details/?facilitator_name=${username}`;
+    // const url = `https://2bb02f703cef.ngrok-free.app/api/v1/organizations/${organizationId}/watershed/plans/steward-details/?facilitator_name=${username}`;
         const response = await fetch(url, {
           method: "GET",
           headers: {
             "Content-Type": "application/json",
             "ngrok-skip-browser-warning": "420",
-            // "X-API-Key" : `${process.env.REACT_APP_API_KEY}`,
-            "X-API-KEY": "siOgP9SO.oUCc1vuWQRPkdjXjPmtIZYADe5eGl3FK",
+            "X-API-Key" : `${process.env.REACT_APP_API_KEY}`,
+            // "X-API-KEY": "siOgP9SO.oUCc1vuWQRPkdjXjPmtIZYADe5eGl3FK",
           },
         });
         if (!response.ok) {
