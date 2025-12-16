@@ -493,7 +493,7 @@ const PlanViewPage = () => {
           <p className="text-lg font-medium">
             Plan ID: <span className="font-semibold">{plan.id}</span>
           </p>
-          <p><span>District:{plan.district}</span><span>Tehsil:{plan.block}</span></p>
+          {/* <p><span>District:{plan.district}</span><span>Tehsil:{plan.block}</span></p> */}
         </div>
       </div>
 
