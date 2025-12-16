@@ -20,19 +20,19 @@ const HeaderSelect = ({ setView }) => {
   const [project, setProject] = useRecoilState(projectAtom);
   const [dashboardLocked, setDashboardLocked] =
     useRecoilState(dashboardLockedAtom);
-  const [organizationOptions, setOrganizationOptions] = useRecoilState(
-    organizationOptionsAtom
-  );
-  const [projectOptions, setProjectOptions] =
-    useRecoilState(projectOptionsAtom);
+  const [organizationOptions, setOrganizationOptions] = useRecoilState(organizationOptionsAtom);
+
+  const [projectOptions, setProjectOptions] = useRecoilState(projectOptionsAtom);
 
   const isOnDashboard = location.pathname.includes("/dashboard");
+
   useEffect(() => {
     if (isOnDashboard && project) setDashboardLocked(true);
     else setDashboardLocked(false);
 
     const savedOrg = sessionStorage.getItem("selectedOrganization");
-    if (savedOrg) {
+
+    if (savedOrg !== null) {
       const parsed = JSON.parse(savedOrg);
       const matched = organizationOptions.find((o) => o.value === parsed.value);
       if (matched) setOrganization(matched);
@@ -47,6 +47,7 @@ const HeaderSelect = ({ setView }) => {
 
   const fetchOrganizations = async () => {
     try {
+
       // Login and get token first
       let token = sessionStorage.getItem("accessToken");
       if (!token) token = await loginAndGetToken();
@@ -89,12 +90,16 @@ const HeaderSelect = ({ setView }) => {
           value: org.id,
           label: org.name,
         }));
-          
+      
+        console.log(validOrganizations)
+
       setOrganizationOptions(validOrganizations);
-  
+
+      
       // Restore selected org if saved
       const savedOrg = sessionStorage.getItem("selectedOrganization");
-      if (savedOrg) {
+
+      if (savedOrg !== "null") {
         const parsed = JSON.parse(savedOrg);
         const match = validOrganizations.find((o) => o.value === parsed.value);
         if (match) setOrganization(match);
