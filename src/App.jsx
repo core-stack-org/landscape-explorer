@@ -8,6 +8,7 @@ import PlantationProjectDashboard from "./components/plantation_project_dashboar
 import LandscapeExplorer from "./pages/LandscapeExplorer";
 import PlansPage from "./components/plansPage";
 import PlanViewPage from "./components/plan_detailView";
+import AgroHorticulture from "./pages/AgroHorticulture"
 
 function App() {
   return (
@@ -17,8 +18,9 @@ function App() {
 
         <Route path="/kyl_dashboard" element={<KYLDashboardPage />} />
         <Route path="/download_layers" element={<LandscapeExplorer />} />
+        <Route path="/agrohorticulture" element={<AgroHorticulture/>}/>
 
-        <Route
+        {/* <Route
           path="/plantationDashboard"
           element={<PlantationDashboard />}
         />
@@ -26,7 +28,7 @@ function App() {
         <Route
           path="/dashboard/:projectId"
           element={<PlantationProjectDashboard />}
-        />
+        /> */}
 
         <Route
           path="/water_dashboard"

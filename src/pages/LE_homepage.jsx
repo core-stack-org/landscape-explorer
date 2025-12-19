@@ -378,7 +378,7 @@ export default function KYLHomePage() {
                   description:
                     "Track the health and growth of plantations across time using satellite-based monitoring.",
                   icon: "🌳",
-                  link:"/plantationDashboard"
+                  link:"/agrohorticulture"
                 },
                 {
                   title: "Waterbody Rejuvenation",
@@ -397,7 +397,7 @@ export default function KYLHomePage() {
                 <div key={index} className="h-full">
                   <div
                     onClick={() =>
-                      item.link && window.open(item.link, "_blank")
+                      handleNavigate("/agrohorticulture")
                     }
                     className="cursor-pointer bg-white rounded-2xl shadow-md p-6 sm:p-8 h-full min-h-[220px] flex flex-col justify-start transform transition-all duration-300 hover:shadow-xl hover:-translate-y-1 hover:scale-[1.02]"
                   >
