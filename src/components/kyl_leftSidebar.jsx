@@ -10,7 +10,9 @@ const KYLLeftSidebar = ({
     getAllFilterTypes,
     getAllFilters,
     handleFilterSelection,
+    toggleStates,
     setToggleStates,
+    handleLayerSelection,
     currentLayer,
     setCurrentLayer,
     mapRef,
@@ -145,19 +147,24 @@ const KYLLeftSidebar = ({
 
                         {indicatorType && (
                             <div className="bg-gray-50 rounded-lg p-4 mt-2 relative">
-                                <button
-                                    onClick={() => setIndicatorType(null)}
-                                    className="absolute top-2 right-2 text-gray-400 hover:text-gray-600"
-                                >
-                                    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none">
-                                        <path
-                                            d="M18 6L6 18M6 6l12 12"
-                                            stroke="currentColor"
-                                            strokeWidth={2}
-                                            strokeLinecap="round"
-                                        />
-                                    </svg>
-                                </button>
+                                <div className="flex items-center justify-between mb-4 pr-6">
+                                    <h4 className="text-sm font-semibold text-gray-700">
+                                        {indicatorType}
+                                    </h4>
+                                    <button
+                                        onClick={() => setIndicatorType(null)}
+                                        className="text-gray-400 hover:text-gray-600 transition-colors"
+                                    >
+                                        <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none">
+                                            <path
+                                                d="M18 6L6 18M6 6l12 12"
+                                                stroke="currentColor"
+                                                strokeWidth={2}
+                                                strokeLinecap="round"
+                                            />
+                                        </svg>
+                                    </button>
+                                </div>
 
                                 <div
                                     className="overflow-y-auto custom-scrollbar"
@@ -176,6 +183,8 @@ const KYLLeftSidebar = ({
                                                         onFilterChange={handleFilterSelection}
                                                         isDisabled={!filtersEnabled}
                                                         getFormattedSelectedFilters={getFormattedSelectedFilters}
+                                                        toggleStates={toggleStates}
+                                                        handleLayerSelection={handleLayerSelection}
                                                     />
                                                 </div>
                                             ))}
