@@ -5,6 +5,7 @@ import FilterListIcon from "@mui/icons-material/FilterList";
 export default function TableView({
   headers = [],
   rows = [],
+  pageSize = null,
   sortField,
   sortOrder,
   onSort,
@@ -15,6 +16,23 @@ export default function TableView({
   loading,
   onRowClick,
 }) {
+  const [currentPage, setCurrentPage] = React.useState(1);
+  const totalPages = pageSize
+  ? Math.ceil(rows.length / pageSize)
+  : 1;
+
+const paginatedRows = React.useMemo(() => {
+  if (!pageSize) return rows;
+
+  const startIndex = (currentPage - 1) * pageSize;
+  return rows.slice(startIndex, startIndex + pageSize);
+}, [rows, currentPage, pageSize]);
+
+React.useEffect(() => {
+  setCurrentPage(1);
+}, [rows.length]);
+
+
   return (
     <div className="mt-4 bg-white rounded-md shadow-sm overflow-x-auto">
       <table className="w-full border border-gray-200 text-sm md:text-base text-gray-800">
@@ -22,11 +40,7 @@ export default function TableView({
         <thead className="bg-gray-100 font-semibold">
           <tr className="border-b">
             {headers.map((col) => (
-              <th
-                key={col.key}
-                className="relative px-3 py-4 text-center"
-                onClick={col.sortable ? () => onSort(col.key) : undefined}
-              >
+              <th key={col.key} className="relative px-3 py-4 text-center" onClick={col.sortable ? () => onSort(col.key) : undefined}>
                 <div
                   className={`flex items-center justify-center gap-1 ${
                     col.sortable ? "cursor-pointer select-none" : ""
@@ -91,51 +105,77 @@ export default function TableView({
 
         {/* BODY */}
         <tbody className="text-sm text-gray-700">
-          {rows.map((row) => (
+          {paginatedRows.map((row) => (
             <tr
               key={row.id}
               className="hover:bg-gray-50 cursor-pointer transition-colors border-b"
               onClick={() => onRowClick(row)}
             >
               {headers.map((col) => (
-                <td key={col.key} className="px-3 py-4 text-center">
-                  {formatCell(row, col.key)}
-                </td>
+               <td key={col.key} className="px-3 py-4 text-center">
+               {col.render ? col.render(row) : row[col.key] ?? "NA"}
+             </td>
+             
               ))}
             </tr>
           ))}
         </tbody>
       </table>
+      {pageSize && totalPages > 1 && (
+  <div className="flex justify-center mt-6">
+    <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-full shadow-sm">
+      
+      {/* Previous */}
+      <button
+        disabled={currentPage === 1}
+        onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
+        className={`w-8 h-8 flex items-center justify-center rounded-full ${
+          currentPage === 1
+            ? "text-gray-400 cursor-not-allowed"
+            : "hover:bg-gray-100"
+        }`}
+      >
+        ‹
+      </button>
+
+      {/* Page numbers (max 5) */}
+      {Array.from({ length: Math.min(5, totalPages) }).map((_, i) => {
+        const page = i + 1;
+        return (
+          <button
+            key={page}
+            onClick={() => setCurrentPage(page)}
+            className={`w-8 h-8 rounded-full text-sm ${
+              currentPage === page
+                ? "bg-blue-500 text-white"
+                : "hover:bg-gray-100"
+            }`}
+          >
+            {page}
+          </button>
+        );
+      })}
+
+      {/* Next */}
+      <button
+        disabled={currentPage === totalPages}
+        onClick={() =>
+          setCurrentPage((p) => Math.min(p + 1, totalPages))
+        }
+        className={`w-8 h-8 flex items-center justify-center rounded-full ${
+          currentPage === totalPages
+            ? "text-gray-400 cursor-not-allowed"
+            : "hover:bg-gray-100"
+        }`}
+      >
+        ›
+      </button>
+    </div>
+  </div>
+)}
+
     </div>
   );
 }
 
-function formatCell(row, key) {
-  if (key === "avgWaterAvailabilityRabi") {
-    return (
-      <>
-        {row.avgWaterAvailabilityRabi ?? "NA"}{" "}
-        {/* {row.ImpactRabi && (
-          <span style={{ color: row.ImpactRabiColor }}>({row.ImpactRabi})</span>
-        )} */}
-      </>
-    );
-  }
 
-  if (key === "avgWaterAvailabilityZaid") {
-    return (
-      <>
-        {row.avgWaterAvailabilityZaid ?? "NA"}{" "}
-        {/* {row.ImpactZaid && (
-          <span style={{ color: row.ImpactZaidColor }}>({row.ImpactZaid})</span>
-        )} */}
-      </>
-    );
-  }
-
-  if (key === "areaOred") {
-    return row.areaOred?.toFixed?.(2) ?? "NA";
-  }
-
-  return row[key] ?? "NA";
-}

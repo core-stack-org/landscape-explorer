@@ -96,18 +96,21 @@ export const WATER_DASHBOARD_CONFIG = {
       {
         key: "areaOred",
         label: "Size (ha)",
+        render: (row) => row.areaOred?.toFixed?.(2) ?? "NA",
         info: "Area of waterbody in hectares.",
       },
 
       {
         key: "avgWaterAvailabilityRabi",
         label: "Mean Water Availability Rabi (%)",
+        render: (row) => row.avgWaterAvailabilityRabi ?? "NA",
         info: "Average water presence during Rabi.",
         sortable: true,
       },
       {
         key: "avgWaterAvailabilityZaid",
         label: "Mean Water Availability Zaid (%)",
+        render: (row) => row.avgWaterAvailabilityZaid ?? "NA",
         info: "Average water presence during Zaid.",
         sortable: true,
       },
@@ -243,3 +246,89 @@ export const WATER_DASHBOARD_CONFIG = {
       "To view the detailed dashboard of a waterbody, click on its icon",
   },
 };
+
+export const AGROFORESTRY_DASHBOARD_CONFIG = {
+  
+  tableHeaders: [
+    {
+      key: "state",
+      label: "State",
+      filter: true,
+      info: "State where the plantation site is located.",
+    },
+    {
+      key: "district",
+      label: "District",
+      filter: true,
+      info: "District where the plantation site is located.",
+    },
+    {
+      key: "block",
+      label: "Taluka",
+      filter: true,
+      info: "Taluka where the plantation site is located.",
+    },
+    {
+      key: "village",
+      label: "GP/Village",
+      filter: true,
+      info: "GP/Village where the plantation site is located.",
+    },
+    {
+      key: "farmerName",
+      label: "Farmer's Name",
+      search: true,
+      info:
+        "Name of the Farmer whose plantation site is being monitored.",
+    },
+    {
+      key: "interventionYear",
+      label: "Intervention Year",
+      info:
+        "Year in which intervention was carried out.",
+    },
+    {
+      key: "area",
+      label: "Area (ha)",
+      info: "Total area of the plantation site.",
+      render: (row) => row.area ?? "NA",
+    },
+    {
+      key: "patchSuitability",
+      label: "Patch Suitability",
+      sortable: true,
+      info:
+        "Shows whether the plantation site is suitable or not.",
+    },
+    {
+      key: "averageTreeCover",
+      label: "Average Tree Cover (%)",
+      sortable: true,
+      info:
+        "Average tree cover of the plantation site.",
+      render: (row) => (
+        <>
+          {row.averageTreeCover ?? "NA"}
+          {row.treeCoverChange !== "NA" && (
+            <span
+              className={`ml-1 ${
+                row.treeCoverChangeColor === "green"
+                  ? "text-green-600"
+                  : row.treeCoverChangeColor === "red"
+                  ? "text-red-600"
+                  : ""
+              }`}
+            >
+              ({row.treeCoverChange > 0 ? "+" : ""}
+              {row.treeCoverChange})
+            </span>
+          )}
+        </>
+      ),
+    },
+  ],
+  topSummaryText: ({ projectName, totalRows, totalArea }) =>
+    `Under the project ${projectName || "—"}, ${totalRows} sites have had plantations covering ${totalArea} hectares.`,
+};
+
+
