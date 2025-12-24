@@ -165,6 +165,7 @@ const PlantationProjectDashboard = ({organization,project}) => {
       </div>
     </div>
     {showMap ? (
+      <>
   <div className="h-[70vh] bg-white rounded-xl shadow-md flex overflow-hidden">
 
     {/* MAP CONTAINER */}
@@ -182,13 +183,35 @@ const PlantationProjectDashboard = ({organization,project}) => {
     </div>
 
     {/* RIGHT PANEL (future details / charts) */}
-    {selectedPlantation && (
-      <div className="w-[40%] h-full border-l bg-white overflow-y-auto p-4">
-        <PlantationStackBarGraph plantation={selectedPlantation}/>
+ {/* RIGHT PANEL (details / charts) */}
+{selectedPlantation && (
+  <div className="w-[40%] h-full border-l bg-white overflow-y-auto p-4 space-y-6">
+
+    {/* Stack Bar Chart */}
+    <div className="h-[320px]">
+      <PlantationStackBarGraph
+        plantation={selectedPlantation}
+        plantationData={plantationData}
+        selectedFeature={selectedPlantation}
+      />
+    </div>
+
+    {/* NDVI Chart */}
+    <div className="h-[280px]">
+      <PlantationNDVIChart
+        plantation={selectedPlantation}
+      />
+    </div>
+  </div>
+)}
+  </div>
+  {selectedPlantation && (
+      <div className="mt-6 bg-white rounded-xl shadow-md p-6">
+        <SoilPropertiesSection plantation={selectedPlantation} />
       </div>
     )}
-
-  </div>
+  </>
+  
 ) : (
 
       <TableView

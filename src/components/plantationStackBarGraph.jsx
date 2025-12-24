@@ -29,26 +29,16 @@ ChartJS.register(
 
 const PlantationStackBarGraph = ({
   plantation,
-  plantationData,
-  selectedFeature,
 }) => {
-  console.log(plantation)
-  const features = plantationData?.features || [];
-  const farmerId = plantation?.farmerId;
-
-  // Match by farmerId inside description
-  const matchedFeature = features.find((feature) => {
-    const desc = feature?.properties?.description || "";
-    return desc.includes(`Farmer ID: ${farmerId}`);
-  });
-
   let lulcData = [];
   try {
-    if (matchedFeature?.properties?.IS_LULC) {
-      lulcData = JSON.parse(matchedFeature.properties.IS_LULC);
+    const rawIS = plantation?.IS_LULC;
+  
+    if (rawIS) {
+      lulcData = JSON.parse(rawIS);
     }
   } catch (e) {
-    console.error("Failed to parse LULC:", e);
+    console.error("Failed to parse IS_LULC:", e);
   }
 
   const groups = {
@@ -112,7 +102,7 @@ const PlantationStackBarGraph = ({
     )
   );
 
-  const totalArea = Number(selectedFeature?.properties?.area_ha || 0);
+  const totalArea = Number(plantation?.properties?.area_ha || 0);
 
   const data = { labels: years, datasets };
 
