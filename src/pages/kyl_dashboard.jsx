@@ -1525,6 +1525,22 @@ const KYLDashboardPage = () => {
   }, [mapRef.current, selectedMWS]);
 
   useEffect(() => {
+    // When location changes, reset waterbodies completely
+    if (mapRef.current && waterbodiesLayerRef.current) {
+      mapRef.current.removeLayer(waterbodiesLayerRef.current);
+      waterbodiesLayerRef.current = null;
+    }
+  
+    // Reset waterbody UI state
+    setShowWB(false);
+    setSelectedWaterbodyProfile(null);
+    localStorage.removeItem("selectedWaterbody");
+    localStorage.removeItem("matched_mws_feature");
+  
+  }, [state, district, block]);
+  
+
+  useEffect(() => {
     if (mwsLayerRef.current) {
       mwsLayerRef.current.setVisible(showMWS);
     }
