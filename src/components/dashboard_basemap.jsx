@@ -46,6 +46,8 @@ const DashboardBasemap = ({
   const geojsonReaderRef = useRef(new GeoJSON());
   const lulcLoadedRef = useRef(false);
 
+  console.log(mwsData)
+
   const read4326 = (data) =>
     geojsonReaderRef.current.readFeatures(data, {
       dataProjection: "EPSG:4326",

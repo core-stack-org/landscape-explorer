@@ -474,7 +474,6 @@ const KYLDashboardPage = () => {
             mapRef.current.addLayer(boundaryLayerRef.current);
           }
           mwsLayerRef.current = mwsLayer;
-          saveAllMwsToLocalStorage(mwsLayer);
         }
         mwsLayerRef.current.setStyle((feature) => {
           if (highlightMWS !== null && feature.values_.uid === highlightMWS) {
@@ -727,7 +726,6 @@ const KYLDashboardPage = () => {
       addLayerSafe(boundaryLayer);
       boundaryLayerRef.current = boundaryLayer;
       mwsLayerRef.current = mwsLayer;
-      saveAllMwsToLocalStorage(mwsLayer);
       const vectorSource = boundaryLayer.getSource();
 
       await new Promise((resolve, reject) => {
@@ -841,6 +839,37 @@ const KYLDashboardPage = () => {
       view.setZoom(5);
     }
   };
+
+  const getMatchedMwsForWaterbody = (wbFeature) => {
+    if (!mwsLayerRef.current || !wbFeature) return null;
+  
+    const wbGeom = wbFeature.getGeometry();
+    if (!wbGeom) return null;
+  
+    const mwsFeatures = mwsLayerRef.current.getSource().getFeatures();
+  
+    for (const mws of mwsFeatures) {
+      const mwsGeom = mws.getGeometry();
+      if (!mwsGeom) continue;
+  
+      // polygon intersection check
+      const coords =
+        wbGeom.getType() === "Polygon"
+          ? wbGeom.getCoordinates()[0]
+          : wbGeom.getCoordinates()[0][0];
+  
+      const intersects = coords.some(coord =>
+        mwsGeom.intersectsCoordinate(coord)
+      );
+  
+      if (intersects) {
+        return mws;
+      }
+    }
+  
+    return null;
+  };
+  
 
   const fetchDataJson = async () => {
     try {
@@ -1305,61 +1334,26 @@ const KYLDashboardPage = () => {
     }
   }
 
-  const saveAllMwsToLocalStorage = async(mwsLayer) => {
-    const source = mwsLayer.getSource();
-    
-    // Wait for features to be loaded
-    return new Promise((resolve, reject) => {
-      const features = source.getFeatures();
-      
-      if (features && features.length > 0) {
-        // Features already loaded
-        saveFeaturestoStorage(features);
-        resolve();
-      } else {
-        // Wait for features to load
-        const key = source.on('change', () => {
-          if (source.getState() === 'ready') {
-            const loadedFeatures = source.getFeatures();
-            console.log("Features loaded:", loadedFeatures.length);
-            
-            if (loadedFeatures && loadedFeatures.length > 0) {
-              saveFeaturestoStorage(loadedFeatures);
-              source.un('change', key); // Unsubscribe
-              resolve();
-            }
-          }
-        });
-      }
-    });
-    function saveFeaturestoStorage(features) {
-      const geojson = new GeoJSON();
-      const featureList = features.map(f => geojson.writeFeatureObject(f));
-      localStorage.setItem("all_mws_features", JSON.stringify(featureList));
-    }
-  };
-
   useEffect(() => {
     if (!mapRef.current) return;
     const map = mapRef.current;
   
     const handleWaterbodyClick = (event) => {
-      if (!waterbodiesLayerRef.current) return;
+      if (!waterbodiesLayerRef.current || !mapRef.current) return;
     
       const map = mapRef.current;
     
+      // 1️⃣ Get clicked waterbody feature
       const wbFeature = map.forEachFeatureAtPixel(
         event.pixel,
         (feature, layer) => {
           if (layer === waterbodiesLayerRef.current) return feature;
         },
-        {
-          hitTolerance: 8,
-        }
+        { hitTolerance: 8 }
       );
-      
-      if (!wbFeature){
-        setSelectedWaterbodyProfile(null)
+    
+      if (!wbFeature) {
+        setSelectedWaterbodyProfile(null);
         return;
       }
     
@@ -1368,28 +1362,91 @@ const KYLDashboardPage = () => {
       setTimeout(() => (waterbodyClickedRef.current = false), 150);
     
       const props = wbFeature.getProperties();
-      const wb_id = props.UID;
+      const wb_id = props?.UID;
       if (!wb_id) return;
     
-      // Construct GeoJSON feature
+      // 2️⃣ Construct Waterbody GeoJSON (existing logic)
+      const geojson = new GeoJSON();
+    
       const fullFeature = {
         type: "Feature",
         properties: props,
-        geometry: new GeoJSON().writeGeometryObject(
+        geometry: geojson.writeGeometryObject(
           wbFeature.getGeometry()
         ),
       };
     
+      // Save selected waterbody (unchanged)
       setSelectedWaterbodyForTehsil(fullFeature);
       localStorage.setItem("selectedWaterbody", JSON.stringify(fullFeature));
+    
       setSelectedWaterbodyProfile({
         id: wb_id,
         dashboardUrl: `/dashboard?type=tehsil&state=${state.label}&district=${district.label}&block=${block.label}&waterbody=${wb_id}`,
         properties: props,
-        geometry: new GeoJSON().writeGeometryObject(wbFeature.getGeometry())
+        geometry: geojson.writeGeometryObject(wbFeature.getGeometry()),
       });
+    
+      // 3️⃣ FIND MATCHED MWS FEATURE (IMPORTANT PART)
+      let matchedMws = null;
+    
+      if (mwsLayerRef.current) {
+        const mwsFeatures = mwsLayerRef.current.getSource().getFeatures();
+        const wbGeom = wbFeature.getGeometry();
+    
+        if (wbGeom) {
+          for (const mws of mwsFeatures) {
+            const mwsGeom = mws.getGeometry();
+            if (!mwsGeom) continue;
+    
+            // Check intersection using coordinates
+            const coords =
+              wbGeom.getType() === "Polygon"
+                ? wbGeom.getCoordinates()[0]
+                : wbGeom.getCoordinates()[0][0];
+    
+            const intersects = coords.some((coord) =>
+              mwsGeom.intersectsCoordinate(coord)
+            );
+    
+            if (intersects) {
+              matchedMws = mws;
+              break;
+            }
+          }
+        }
+      }
+    
+      // 4️⃣ SAVE ONLY MATCHED MWS TO LOCAL STORAGE
+      if (matchedMws) {
+        const matchedMwsGeoJSON = new GeoJSON().writeFeatureObject(
+          matchedMws,
+          {
+            dataProjection: "EPSG:4326",
+            featureProjection: "EPSG:4326",
+          }
+        );
+        
+        localStorage.setItem(
+          "matched_mws_feature",
+          JSON.stringify(matchedMwsGeoJSON)
+        );
+        
+        console.log("🟢 FULL MATCHED MWS FEATURE:", matchedMwsGeoJSON);
+        console.log("🟢 MWS PROPERTIES:", matchedMwsGeoJSON.properties);
+        
+    
+        console.log(
+          "MATCHED MWS SAVED →",
+          matchedMwsGeoJSON.properties.uid
+        );
+      } else {
+        console.warn("No matching MWS found for waterbody:", wb_id);
+      }
+    
       console.log("WATERBODY CLICKED →", wb_id);
     };
+    
     
     map.on("click", handleWaterbodyClick);
     return () => map.un("click", handleWaterbodyClick);
