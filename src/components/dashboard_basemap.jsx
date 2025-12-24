@@ -28,8 +28,11 @@ const DashboardBasemap = ({
   geoData,
   zoiFeatures,
   mwsData,
+  plantationGeodata,
   selectedWaterbody,
   selectedFeature,
+  selectedPlantation, 
+  onSelectPlantation, 
   lulcYear,
   projectName,
   projectId,
@@ -43,14 +46,88 @@ const DashboardBasemap = ({
   const mapRef = useRef(null);
   const mapElement = useRef(null);
   const popupRef = useRef(null);
+  const pendingPlantationRef = useRef(null);
   const geojsonReaderRef = useRef(new GeoJSON());
   const lulcLoadedRef = useRef(false);
 
-  const read4326 = (data) =>
-    geojsonReaderRef.current.readFeatures(data, {
-      dataProjection: "EPSG:4326",
-      featureProjection: "EPSG:4326",
-    });
+  console.log(plantationGeodata)
+  const read4326 = (data) => {
+    if (!data) return [];
+  
+    // Case 1: already OL features
+    if (
+      Array.isArray(data) &&
+      data.length &&
+      typeof data[0]?.getGeometry === "function"
+    ) {
+      return data;
+    }
+  
+    // Case 2: GeoJSON FeatureCollection
+    if (data.type === "FeatureCollection") {
+      const safeData = filteredGeoJSON(data);
+  
+      return geojsonReaderRef.current.readFeatures(safeData, {
+        dataProjection: "EPSG:4326",
+        featureProjection: "EPSG:4326",
+      });
+    }
+  
+    console.warn("Invalid data passed to read4326:", data);
+    return [];
+  };
+  
+
+  const filteredGeoJSON = (geojson) => {
+    if (!geojson || geojson.type !== "FeatureCollection" || !Array.isArray(geojson.features)) {
+      return { type: "FeatureCollection", features: [] };
+    }
+  
+    const safeFeatures = geojson.features
+      .filter(
+        (f) =>
+          f &&
+          f.geometry &&
+          Array.isArray(f.geometry.coordinates) &&
+          f.geometry.coordinates.length > 0
+      )
+      .map((feature) => {
+        const geom = feature.geometry;
+  
+        // Polygon → MultiPolygon
+        if (geom.type === "Polygon") {
+          return {
+            ...feature,
+            geometry: {
+              type: "MultiPolygon",
+              coordinates: [geom.coordinates],
+            },
+          };
+        }
+  
+        // Clean MultiPolygon rings
+        if (geom.type === "MultiPolygon") {
+          const cleanCoords = geom.coordinates
+            .filter((poly) => Array.isArray(poly) && poly.length > 0)
+            .map((poly) => (Array.isArray(poly[0][0]) ? poly : [poly]));
+  
+          return {
+            ...feature,
+            geometry: {
+              ...geom,
+              coordinates: cleanCoords,
+            },
+          };
+        }
+  
+        return feature;
+      });
+  
+    return { type: "FeatureCollection", features: safeFeatures };
+  };
+  
+  
+  
 
 
   const getZoiOlFeatures = () => {
@@ -84,6 +161,7 @@ const DashboardBasemap = ({
         }),
       }),
     ];
+
     const geometry = feature.getGeometry?.();
     if (geometry) {
       let center;
@@ -192,123 +270,336 @@ const DashboardBasemap = ({
   };
 
   // INITIAL MAP SETUP
-  useEffect(() => {
-    if (!mapElement.current) return;
+//   useEffect(() => {
+//     if (!mapElement.current) return;
 
-    const baseLayer = new TileLayer({
-      source: new XYZ({
-        url: "https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}",
-      }),
-      zIndex: 0,
+//     const baseLayer = new TileLayer({
+//       source: new XYZ({
+//         url: "https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}",
+//       }),
+//       zIndex: 0,
+//     });
+
+//     const view = new View({
+//       projection: "EPSG:4326",
+//       center: [80, 23.5],
+//       zoom: 6,
+//     });
+
+//     const map = new Map({
+//       target: mapElement.current,
+//       view,
+//       layers: [baseLayer],
+//     });
+
+//     mapRef.current = map;
+
+//     map.isReady = false;
+//     map.once("postrender", () => {
+//       map.isReady = true;
+//     });
+
+//     const overlay = new Overlay({
+//       element: popupRef.current,
+//       positioning: "bottom-center",
+//       offset: [0, -15],
+//       stopEvent: false,
+//     });
+//     map.addOverlay(overlay);
+//     map.overlayRef = overlay;
+
+//     // CLICK HANDLER (returns pure GeoJSON geometry)
+//     map.on("singleclick", (event) => {
+//       const m = mapRef.current;
+//       if (!m) return;
+
+//       // const feature = m.forEachFeatureAtPixel(
+//       //   event.pixel,
+//       //   (feat) => {
+//       //     const type = feat.getGeometry()?.getType();
+//       //     if (type === "Point") return null;
+//       //     return feat;
+//       //   },
+//       //   { hitTolerance: 6 }
+//       // );
+//       const feature = m.forEachFeatureAtPixel(
+//         event.pixel,
+//         (feat) => feat,
+//         { hitTolerance: 6 }
+//       );
+      
+//       const popupEl = popupRef.current;
+//       if (!popupEl) return;
+
+//       if (!feature) {
+//         popupEl.style.display = "none";
+//         return;
+//       }
+
+//       // ================= PLANTATION POPUP =================
+// if (layerType === "plantation") {
+//   const area =
+//     props.area_ha ||
+//     props.area ||
+//     props.AREA_HA ||
+//     "NA";
+
+//   const suitability =
+//     props.patch_suitability ||
+//     props.suitability ||
+//     "NA";
+
+//   popupEl.innerHTML = `
+//     <div style="min-width:160px">
+//       <strong>Plantation Site</strong><br/>
+//       Area: ${Number(area).toFixed?.(2) ?? area} ha<br/>
+//       Suitability: ${suitability}
+//     </div>
+//   `;
+
+//   popupEl.style.display = "block";
+//   m.overlayRef.setPosition(event.coordinate);
+//   return; // ⛔ STOP HERE
+// }
+
+
+//       const props = feature.getProperties?.() || {};
+//       const layerType = feature.get("layerType");
+//       const uid =
+//         props?.UID ||
+//         props?.uid ||
+//         feature.get("UID") ||
+//         feature.get("uid");
+
+//       const name =
+//         props.waterbody_name ||
+//         props.name ||
+//         feature.get("waterbody_name") ||
+//         feature.get("name") ||
+//         (uid ? `Waterbody ${uid}` : "Feature");
+
+//       const olGeom = feature.getGeometry();
+//       let geometryJSON = null;
+
+//       if (olGeom) {
+//         geometryJSON = geojsonReaderRef.current.writeGeometryObject(olGeom, {
+//           dataProjection: "EPSG:4326",
+//           featureProjection: "EPSG:4326",
+//         });
+//       }
+
+//       if (onSelectWaterbody && uid) {
+//         onSelectWaterbody({
+//           ...props,
+//           UID: uid,
+//           waterbody_name: name,
+//           geometry: geometryJSON,
+//           pixel:event.pixel
+//         });
+//       }
+
+//       popupEl.style.display = "block";
+//       m.overlayRef.setPosition(event.coordinate);
+//     });
+
+//     map.getInteractions().forEach((interaction) => {
+//       if (
+//         interaction instanceof MouseWheelZoom ||
+//         interaction instanceof PinchZoom ||
+//         interaction instanceof DoubleClickZoom
+//       ) {
+//         interaction.setActive(false);
+//       }
+//     });
+
+//     return () => {
+//       try {
+//         map.setTarget(null);
+//       } catch {
+//         /* ignore */
+//       }
+//     };
+//   }, []);
+
+useEffect(() => {
+  if (!mapElement.current) return;
+
+  const baseLayer = new TileLayer({
+    source: new XYZ({
+      url: "https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}",
+    }),
+    zIndex: 0,
+  });
+
+  const view = new View({
+    projection: "EPSG:4326",
+    center: [80, 23.5],
+    zoom: 6,
+  });
+
+  const map = new Map({
+    target: mapElement.current,
+    view,
+    layers: [baseLayer],
+  });
+
+  mapRef.current = map;
+
+  map.isReady = false;
+  map.once("postrender", () => {
+    map.isReady = true;
+  });
+
+  const overlay = new Overlay({
+    element: popupRef.current,
+    positioning: "bottom-center",
+    offset: [0, -15],
+    stopEvent: false,
+  });
+  map.addOverlay(overlay);
+  map.overlayRef = overlay;
+
+  // CLICK HANDLER
+  map.on("singleclick", (event) => {
+    const m = mapRef.current;
+    if (!m) return;
+
+    const feature = m.forEachFeatureAtPixel(
+      event.pixel,
+      (feat) => feat,
+      { hitTolerance: 6 }
+    );
+
+    const popupEl = popupRef.current;
+    if (!popupEl) return;
+
+    if (!feature) {
+      popupEl.style.display = "none";
+      return;
+    }
+
+    // ✅ FIX: DEFINE THESE FIRST
+    const props = feature.getProperties?.() || {};
+    const layerType = feature.get("layerType");
+
+// ================= PLANTATION POPUP =================
+// ================= PLANTATION POPUP =================
+if (layerType === "plantation") {
+
+  // 🔑 FIX: define geometryJSON FIRST
+  const olGeom = feature.getGeometry();
+  let geometryJSON = null;
+
+  if (olGeom) {
+    geometryJSON = geojsonReaderRef.current.writeGeometryObject(olGeom, {
+      dataProjection: "EPSG:4326",
+      featureProjection: "EPSG:4326",
     });
+  }
 
-    const view = new View({
-      projection: "EPSG:4326",
-      center: [80, 23.5],
-      zoom: 6,
-    });
+  const FarmerName =
+    props.Name?.replace(/\s*\(.*?\)\s*/g, "").trim() || "NA";
 
-    const map = new Map({
-      target: mapElement.current,
-      view,
-      layers: [baseLayer],
-    });
+  const area =
+    props.area_ha ||
+    props.area ||
+    props.AREA_HA ||
+    "NA";
 
-    mapRef.current = map;
+  const suitability =
+    props.patch_suitability ||
+    props.suitability ||
+    "NA";
 
-    map.isReady = false;
-    map.once("postrender", () => {
-      map.isReady = true;
-    });
+  popupEl.innerHTML = `
+    <div style="min-width:200px; cursor:pointer">
+      <strong>Farmer's name:</strong> ${FarmerName}<br/>
+      <strong>Area:</strong> ${Number(area).toFixed?.(2) ?? area} ha<br/>
+      <strong>Suitability:</strong> ${suitability}<br/>
+      <em style="color:#2563eb">Click to zoom</em>
+    </div>
+  `;
 
-    const overlay = new Overlay({
-      element: popupRef.current,
-      positioning: "bottom-center",
-      offset: [0, -15],
-      stopEvent: false,
-    });
-    map.addOverlay(overlay);
-    map.overlayRef = overlay;
+  // ✅ store data ONLY
+  pendingPlantationRef.current = {
+    ...props,
+    geometry: geometryJSON,
+  };
 
-    // CLICK HANDLER (returns pure GeoJSON geometry)
-    map.on("singleclick", (event) => {
-      const m = mapRef.current;
-      if (!m) return;
+  popupEl.style.display = "block";
+  m.overlayRef.setPosition(event.coordinate);
 
-      const feature = m.forEachFeatureAtPixel(
-        event.pixel,
-        (feat) => {
-          const type = feat.getGeometry()?.getType();
-          if (type === "Point") return null;
-          return feat;
-        },
-        { hitTolerance: 6 }
-      );
+  // ✅ zoom ONLY on popup click
+  popupEl.onclick = (e) => {
+    e.stopPropagation(); 
 
-      const popupEl = popupRef.current;
-      if (!popupEl) return;
+    if (onSelectPlantation && pendingPlantationRef.current) {
+      onSelectPlantation(pendingPlantationRef.current);
+      pendingPlantationRef.current = null;
+    }
+  };
 
-      if (!feature) {
-        popupEl.style.display = "none";
-        return;
-      }
+  return;
+}
 
-      const props = feature.getProperties?.() || {};
-      const uid =
-        props?.UID ||
-        props?.uid ||
-        feature.get("UID") ||
-        feature.get("uid");
 
-      const name =
-        props.waterbody_name ||
-        props.name ||
-        feature.get("waterbody_name") ||
-        feature.get("name") ||
-        (uid ? `Waterbody ${uid}` : "Feature");
+    // ================= WATERBODY / OTHERS =================
+    const uid =
+      props?.UID ||
+      props?.uid ||
+      feature.get("UID") ||
+      feature.get("uid");
 
-      const olGeom = feature.getGeometry();
-      let geometryJSON = null;
+    const name =
+      props.waterbody_name ||
+      props.name ||
+      feature.get("waterbody_name") ||
+      feature.get("name") ||
+      (uid ? `Waterbody ${uid}` : "Feature");
 
-      if (olGeom) {
-        geometryJSON = geojsonReaderRef.current.writeGeometryObject(olGeom, {
-          dataProjection: "EPSG:4326",
-          featureProjection: "EPSG:4326",
-        });
-      }
+    const olGeom = feature.getGeometry();
+    let geometryJSON = null;
 
-      if (onSelectWaterbody && uid) {
-        onSelectWaterbody({
-          ...props,
-          UID: uid,
-          waterbody_name: name,
-          geometry: geometryJSON,
-          pixel:event.pixel
-        });
-      }
+    if (olGeom) {
+      geometryJSON = geojsonReaderRef.current.writeGeometryObject(olGeom, {
+        dataProjection: "EPSG:4326",
+        featureProjection: "EPSG:4326",
+      });
+    }
 
-      popupEl.style.display = "block";
-      m.overlayRef.setPosition(event.coordinate);
-    });
+    if (onSelectWaterbody && uid) {
+      onSelectWaterbody({
+        ...props,
+        UID: uid,
+        waterbody_name: name,
+        geometry: geometryJSON,
+        pixel: event.pixel,
+      });
+    }
 
-    map.getInteractions().forEach((interaction) => {
-      if (
-        interaction instanceof MouseWheelZoom ||
-        interaction instanceof PinchZoom ||
-        interaction instanceof DoubleClickZoom
-      ) {
-        interaction.setActive(false);
-      }
-    });
+    popupEl.style.display = "block";
+    m.overlayRef.setPosition(event.coordinate);
+  });
 
-    return () => {
-      try {
-        map.setTarget(null);
-      } catch {
-        /* ignore */
-      }
-    };
-  }, []);
+  map.getInteractions().forEach((interaction) => {
+    if (
+      interaction instanceof MouseWheelZoom ||
+      interaction instanceof PinchZoom ||
+      interaction instanceof DoubleClickZoom
+    ) {
+      interaction.setActive(false);
+    }
+  });
+
+  return () => {
+    try {
+      map.setTarget(null);
+    } catch {
+      /* ignore */
+    }
+  };
+}, []);
+
 
   // MODE HANDLER + LULC
   useEffect(() => {
@@ -341,6 +632,23 @@ const DashboardBasemap = ({
         State: normalizedWaterbody.get("State"),
       };
     }
+
+      // ---------- PLANTATION ZOOM ----------
+if (mode === "plantation" && selectedPlantation?.geometry) {
+  const olGeom = geojsonReaderRef.current.readGeometry(
+    selectedPlantation.geometry,
+    {
+      dataProjection: "EPSG:4326",
+      featureProjection: "EPSG:4326",
+    }
+  );
+
+  map.getView().fit(olGeom.getExtent(), {
+    padding: [40, 40, 40, 40],
+    maxZoom: 18,
+    duration: 400,
+  });
+}
 
     lulcLoadedRef.current = false;
     removeLayersById([
@@ -1201,18 +1509,122 @@ try {
   map.renderSync();
 };
 
+const addPlantations = () => {
+  const map = mapRef.current;
+  if (!map) return;
+
+  if (
+    !plantationGeodata ||
+    plantationGeodata.type !== "FeatureCollection" ||
+    !Array.isArray(plantationGeodata.features) ||
+    plantationGeodata.features.length === 0
+  ) {
+    console.warn("Invalid or empty plantationGeodata:", plantationGeodata);
+    return;
+  }
+  const safePlantationData = filteredGeoJSON(plantationGeodata);
+  const features = read4326(safePlantationData);
+  
+  if (!features || !features.length) return;
+
+  // remove old plantation layer
+  removeLayersById(["plantation_layer"]);
+  const plantationStyle = new Style({
+    stroke: new Stroke({
+      color: "yellow", 
+      width: 3,
+    }),
+  });
+
+  const plantationLayer = new VectorLayer({
+    source: new VectorSource({ features }),
+    style: plantationStyle,
+  });
+
+  plantationLayer.set("id", "plantation_layer");
+  plantationLayer.setZIndex(10);
+  map.addLayer(plantationLayer);
+
+  let extent = features[0].getGeometry().getExtent().slice();
+
+  features.forEach((f) => {
+    const ex = f.getGeometry().getExtent();
+    extent[0] = Math.min(extent[0], ex[0]);
+    extent[1] = Math.min(extent[1], ex[1]);
+    extent[2] = Math.max(extent[2], ex[2]);
+    extent[3] = Math.max(extent[3], ex[3]);
+  });
+
+  map.getView().fit(extent, {
+    padding: [40, 40, 40, 40],
+    maxZoom: 17,
+    duration: 400,
+  });
+
+  features.forEach((f) => {
+    f.set("layerType", "plantation");
+  });
+
+
+  
+};
+
+const showOnlySelectedPlantation = () => {
+  const map = mapRef.current;
+  if (!map || !selectedPlantation?.geometry) return;
+
+  removeLayersById(["plantation_layer", "plantation_selected_layer"]);
+
+  // Convert GeoJSON → OL geometry
+  const geom = geojsonReaderRef.current.readGeometry(
+    selectedPlantation.geometry,
+    {
+      dataProjection: "EPSG:4326",
+      featureProjection: "EPSG:4326",
+    }
+  );
+
+  const feature = new Feature({ geometry: geom });
+  feature.set("layerType", "plantation");
+
+  const selectedLayer = new VectorLayer({
+    source: new VectorSource({ features: [feature] }),
+    style: new Style({
+      stroke: new Stroke({
+        color: "yellow",
+        width: 4,
+      }),
+    }),
+  });
+
+  selectedLayer.set("id", "plantation_selected_layer");
+  selectedLayer.setZIndex(20);
+
+  map.addLayer(selectedLayer);
+};
+
     (async () => {
       try {
         if (mode === "waterbody") await addWaterbody();
         else if (mode === "zoi") await addZoi();
         else if (mode === "mws") await addMws();
-      } catch (err) {
+        if (mode === "plantation") {
+          if (selectedPlantation) {
+            showOnlySelectedPlantation();
+            return;
+          } else {
+            addPlantations(); // show all again
+            return;
+          }
+        }
+            } catch (err) {
         console.error("[DashboardBasemap] mode layer error:", err);
       }
     })();
 
     return () => {
       removeLayersById([
+        "plantation_layer",
         "wb_all_layer",
         "zoi_border_layer",
         "wb_single_layer",
@@ -1243,20 +1655,23 @@ try {
     onZoiArea,
     district,
     block,
+    plantationGeodata,
+    selectedPlantation
   ]);
 
   return (
     <div className="relative w-full">
       {/* MAP DIV */}
       <div
-        id={id}
         ref={mapElement}
         style={{
-          width: selectedWaterbody ? "100%" : "1500px",
+          width: selectedPlantation || selectedWaterbody ? "100%" : "1800px",
           height: styleHeight,
           border: "1px solid #ccc",
         }}
       />
+
+
 
       {/* POPUP ELEMENT */}
       <div
@@ -1269,7 +1684,7 @@ try {
           borderRadius: "4px",
           border: "1px solid #ccc",
           display: "none",
-          pointerEvents: "none",
+          pointerEvents: "auto",
         }}
       />
 

@@ -32,6 +32,7 @@ const PlantationStackBarGraph = ({
   plantationData,
   selectedFeature,
 }) => {
+  console.log(plantation)
   const features = plantationData?.features || [];
   const farmerId = plantation?.farmerId;
 

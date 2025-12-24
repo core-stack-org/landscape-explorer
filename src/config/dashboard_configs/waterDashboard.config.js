@@ -248,7 +248,7 @@ export const WATER_DASHBOARD_CONFIG = {
 };
 
 export const AGROFORESTRY_DASHBOARD_CONFIG = {
-  
+  mapMode: "plantation",  
   tableHeaders: [
     {
       key: "state",

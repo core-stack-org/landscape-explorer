@@ -5,6 +5,7 @@ import TableView from "./tableView.jsx";
 import ArrowBackIosNewIcon from "@mui/icons-material/ArrowBackIosNew";
 import PublicIcon from "@mui/icons-material/Public";
 import TableRowsIcon from "@mui/icons-material/TableRows";
+import DashboardBasemap from "./dashboard_basemap.jsx";
 import { useRecoilState, useRecoilValue } from "recoil";
 // import { yearAtom } from "../store/locationStore.jsx";
 import HeaderSelect from "../pages/HeaderSelect.jsx";
@@ -41,6 +42,7 @@ import SoilPropertiesSection from "./soilPropertiesSection.jsx";
 
 const PlantationProjectDashboard = ({organization,project}) => {
   const [plantationData,setPlantationData] = useState(null);
+  const [selectedPlantation, setSelectedPlantation] = useState(null);
   const [showMap, setShowMap] = useState(false);
   const orgName = organization?.label;
   const projectName = project?.label;
@@ -138,8 +140,9 @@ const PlantationProjectDashboard = ({organization,project}) => {
               <ArrowBackIosNewIcon sx={{ fontSize: 16 }} />
               <span>Back to Projects</span>
           </button>
-          <button onClick={() => setShowMap((prev) => !prev)}
-                  className="px-4 py-2 bg-purple-600 text-white rounded-md text-sm hover:bg-purple-600 flex items-center gap-2">
+          <button onClick={() => {  setSelectedPlantation(null);
+                                    setShowMap((prev) => !prev)}}
+                                    className="px-4 py-2 bg-purple-600 text-white rounded-md text-sm hover:bg-purple-600 flex items-center gap-2">
             {showMap ? (
               <TableRowsIcon sx={{ fontSize: 18 }} />
             ) : (
@@ -162,11 +165,32 @@ const PlantationProjectDashboard = ({organization,project}) => {
       </div>
     </div>
     {showMap ? (
-      <div className="h-[70vh] bg-white rounded-xl shadow-md">
-        {/* Your MAP component here */}
-        <div id="plantation-map" className="w-full h-full" />
+  <div className="h-[70vh] bg-white rounded-xl shadow-md flex overflow-hidden">
+
+    {/* MAP CONTAINER */}
+    <div
+      className={`transition-all duration-300 h-full ${
+        selectedPlantation ? "w-[50%]" : "w-full"
+      }`}
+    >
+      <DashboardBasemap
+        mode="plantation"
+        plantationGeodata={plantationData}
+        selectedPlantation={selectedPlantation}
+        onSelectPlantation={setSelectedPlantation}
+      />
+    </div>
+
+    {/* RIGHT PANEL (future details / charts) */}
+    {selectedPlantation && (
+      <div className="w-[40%] h-full border-l bg-white overflow-y-auto p-4">
+        <PlantationStackBarGraph plantation={selectedPlantation}/>
       </div>
-    ) : (
+    )}
+
+  </div>
+) : (
+
       <TableView
         headers={AGROFORESTRY_DASHBOARD_CONFIG.tableHeaders}
         rows={rows}
