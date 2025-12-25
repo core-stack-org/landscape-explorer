@@ -26,6 +26,36 @@ export const useGlobalWaterData = ({
   const [tehsilZoi, setTehsilZoi] = useRecoilState(tehsilZoiFeaturesAtom);
   const [tehsilDrought, setTehsilDrought] = useRecoilState(tehsilDroughtDataAtom);
 
+  const transformName = (name) => {
+    if (!name) return "";
+  
+    // Extract base + alias from parentheses
+    const match = name.match(/^(.+?)\s*\((.+?)\)$/);
+  
+    let parts = [];
+  
+    if (match) {
+      const main = match[1];
+      const alias = match[2];
+  
+      parts = [main, alias];
+    } else {
+      // no parentheses → repeat twice
+      parts = [name];
+    }
+  
+    return parts
+      .map((p) =>
+        p
+          .replace(/[^\w\s-]/g, "") // remove special chars
+          .replace(/[-\s]+/g, "_")  // space/dash → _
+          .replace(/_+/g, "_")      // collapse _
+          .replace(/^_|_$/g, "")    // trim _
+          .toLowerCase()
+      )
+      .join("_");
+  };
+
   useEffect(() => {
     const fetchAll = async () => {
 
@@ -104,9 +134,10 @@ export const useGlobalWaterData = ({
           );
         } else setTehsilZoi([]);
 
-
+        const safeDistrict = transformName(d);
+        const safeBlock = transformName(b);
        // NEW: DROUGHT FETCH FOR TEHSIL
-      const droughtTypeName = `drought:${d}_${b}_drought`;
+      const droughtTypeName = `drought:${safeDistrict}_${safeBlock}_drought`;
 
 // PRINT FULL URL BEFORE FETCHING
           const droughtWorkspace = droughtTypeName.split(":")[0];
