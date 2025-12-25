@@ -132,42 +132,18 @@ const WaterProjectDashboard = () => {
   }, []);
 
   useEffect(() => {
-    const raw = localStorage.getItem("all_mws_features");
+    const raw = localStorage.getItem("matched_mws_feature");
     if (!raw) return;
     const parsed = JSON.parse(raw);
+    console.log("🔵 MWS from localStorage (RAW GeoJSON):", parsed);
     setMwsFromLocalStorage(parsed);
   }, []);
 
+  console.log(mwsFromLocalStorage)
+
   const matchedMwsFeature = useMemo(() => {
-    if (!selectedWaterbodyForTehsil || !mwsFromLocalStorage?.length) return null;
-  
-    const mwsUid = selectedWaterbodyForTehsil.properties?.MWS_UID?.toString()?.trim();
-    if (!mwsUid) return null;
-  
-    // Extract first two UID parts → e.g. "12_96671_12_96925" → "12_96671"
-    const parts = mwsUid.split("_");
-    const partialUid =
-      parts.length >= 2 ? `${parts[0]}_${parts[1]}` : mwsUid;
-  
-  
-    // Try exact match first
-    let exact = mwsFromLocalStorage.find(f =>
-      f.properties?.uid?.toString()?.trim() === mwsUid ||
-      f.properties?.MWS_UID?.toString()?.trim() === mwsUid
-    );
-  
-    if (exact) return exact;
-  
-    // Fallback: partial match using includes
-    let partial = mwsFromLocalStorage.find(f => {
-      const uid = f.properties?.uid?.toString()?.trim() || "";
-      const mws_uid = f.properties?.MWS_UID?.toString()?.trim() || "";
-      return uid.includes(partialUid) || mws_uid.includes(partialUid);
-    });
-  
-    return partial || null;
-  
-  }, [selectedWaterbodyForTehsil, mwsFromLocalStorage]);
+    return mwsFromLocalStorage || null;
+  }, [mwsFromLocalStorage]);
   
   
   
@@ -179,6 +155,7 @@ const WaterProjectDashboard = () => {
       featureProjection: "EPSG:4326",
     });
   }, [matchedMwsFeature]);
+  
   
 
   useEffect(() => {
