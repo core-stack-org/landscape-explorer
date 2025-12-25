@@ -351,7 +351,7 @@ export default function KYLHomePage() {
                   been undertaken.
                 </li>
                 <li>
-                  Agroforestry practitioners can assess the health of tree
+                  agrohorticulture practitioners can assess the health of tree
                   plantations over time using the{" "}
                   <b>Plantation Health Assessment Dashboard</b>.
                 </li>
@@ -374,7 +374,7 @@ export default function KYLHomePage() {
                   link: "https://welllabs.org/jaltol/",
                 },
                 {
-                  title: "Agroforestry Plantations",
+                  title: "agrohorticulture Plantations",
                   description:
                     "Track the health and growth of plantations across time using satellite-based monitoring.",
                   icon: "🌳",
