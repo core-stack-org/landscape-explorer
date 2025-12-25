@@ -1687,6 +1687,38 @@ const showOnlySelectedPlantation = () => {
           pointerEvents: "auto",
         }}
       />
+      {/* LEFT INFO PANEL */}
+{selectedPlantation && (
+  <div
+    className="absolute top-6 left-6 z-[1200] bg-white rounded-lg shadow-lg p-4 w-[260px]"
+  >
+    <div className="flex flex-col gap-2 text-sm text-gray-800">
+      <div className="font-semibold text-base">
+        {selectedPlantation?.Name?.replace(/\s*\(.*?\)\s*/g, "").trim() || "Plantation Site"}
+      </div>
+
+      <div className="text-gray-600">
+        <span className="font-medium">Patch Suitability:</span>{" "}
+        {selectedPlantation?.patch_suitability || "NA"}
+      </div>
+
+      <div className="text-gray-600">
+        <span className="font-medium">Suitability Score:</span>{" "}
+        {selectedPlantation?.patch_conf
+          ? (selectedPlantation.patch_conf * 100).toFixed(1)
+          : "NA"}
+      </div>
+
+      <div className="text-gray-600">
+        <span className="font-medium">Area (ha):</span>{" "}
+        {selectedPlantation?.area_ha
+          ? Number(selectedPlantation.area_ha).toFixed(2)
+          : "NA"}
+      </div>
+    </div>
+  </div>
+)}
+
 
       {/* ZOOM CONTROLS */}
       <div className="absolute top-10 right-4 flex flex-col gap-1 z-[1100]">

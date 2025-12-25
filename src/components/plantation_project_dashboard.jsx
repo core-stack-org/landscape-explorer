@@ -6,39 +6,10 @@ import ArrowBackIosNewIcon from "@mui/icons-material/ArrowBackIosNew";
 import PublicIcon from "@mui/icons-material/Public";
 import TableRowsIcon from "@mui/icons-material/TableRows";
 import DashboardBasemap from "./dashboard_basemap.jsx";
-import { useRecoilState, useRecoilValue } from "recoil";
-// import { yearAtom } from "../store/locationStore.jsx";
-import HeaderSelect from "../pages/HeaderSelect.jsx";
-import VectorLayer from "ol/layer/Vector";
-import VectorSource from "ol/source/Vector";
-import GeoJSON from "ol/format/GeoJSON";
-import Map from "ol/Map";
-import { Style, Fill, Stroke, Icon } from "ol/style";
-import LocationOnIcon from "@mui/icons-material/LocationOn";
-import YearSlider from "./yearSlider";
-import { yearAtomFamily } from "../store/locationStore.jsx";
-import { fromLonLat } from "ol/proj";
-import Point from "ol/geom/Point";
-import Overlay from "ol/Overlay";
-
-import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import { Lightbulb } from "lucide-react";
-import View from "ol/View";
-import TileLayer from "ol/layer/Tile";
-import XYZ from "ol/source/XYZ";
-import { Control, defaults as defaultControls } from "ol/control";
-import FilterListIcon from "@mui/icons-material/FilterList";
-import getImageLayer from "../actions/getImageLayers";
-import Crop from "ol-ext/filter/Crop";
-import MultiPolygon from "ol/geom/MultiPolygon";
-import Feature from "ol/Feature";
-import MouseWheelZoom from "ol/interaction/MouseWheelZoom";
-import PinchZoom from "ol/interaction/PinchZoom";
-import DoubleClickZoom from "ol/interaction/DoubleClickZoom";
 import PlantationStackBarGraph from "./plantationStackBarGraph.jsx";
 import PlantationNDVIChart from "./plantationNDVIChart.jsx";
 import SoilPropertiesSection from "./soilPropertiesSection.jsx";
-
 
 const PlantationProjectDashboard = ({organization,project}) => {
   const [plantationData,setPlantationData] = useState(null);
@@ -47,15 +18,7 @@ const PlantationProjectDashboard = ({organization,project}) => {
   const orgName = organization?.label;
   const projectName = project?.label;
   const projectID = project?.value;
-  console.log(orgName,projectName) 
-
   const navigate = useNavigate();
-
-  useEffect(() => {
-    if (!organization || !project) {
-      navigate(-1);
-    }
-  }, [organization, project, navigate]);
 
   useEffect(()=>{
     if(!orgName && ! projectName) return;
@@ -123,7 +86,6 @@ const PlantationProjectDashboard = ({organization,project}) => {
     }, 0).toFixed(2);
   }, [rows]);
 
-
   function extractValue(description, key) {
     if (!description) return "NA";
   
@@ -131,25 +93,53 @@ const PlantationProjectDashboard = ({organization,project}) => {
     return match ? match[1].trim() : "NA";
   };
 
+  const handlePlantationRowClick = (row) => {
+    if (!plantationData?.features) return;
+  
+    // find matching feature by farmer name OR id
+    const matchedFeature = plantationData.features.find((f) => {
+      const props = f.properties || {};
+      return (
+        props.Name === row.farmerName ||
+        f.id === row.id
+      );
+    });
+  
+    if (!matchedFeature) {
+      console.warn("No plantation feature matched for row:", row);
+      return;
+    }
+  
+    // Build selectedPlantation object (same shape as map click)
+    setSelectedPlantation({
+      ...matchedFeature.properties,
+      geometry: matchedFeature.geometry,
+    });
+  
+    // switch to map view
+    setShowMap(true);
+  };
+  
+
   return (
       <div className="mx-6 my-8 bg-white rounded-xl shadow-md p-6">
         <div className="flex items-center justify-between mb-6">
           <div className="flex gap-3">
-          <button onClick={() => navigate("/agrohorticulture")}
-                className="px-4 py-2 bg-purple-600 text-white rounded-md text-sm hover:bg-purple-600 flex items-center gap-2">
-              <ArrowBackIosNewIcon sx={{ fontSize: 16 }} />
-              <span>Back to Projects</span>
-          </button>
-          <button onClick={() => {  setSelectedPlantation(null);
-                                    setShowMap((prev) => !prev)}}
-                                    className="px-4 py-2 bg-purple-600 text-white rounded-md text-sm hover:bg-purple-600 flex items-center gap-2">
-            {showMap ? (
-              <TableRowsIcon sx={{ fontSize: 18 }} />
-            ) : (
-              <PublicIcon sx={{ fontSize: 18 }} />
-            )}            
-            <span>{showMap ? "View Table" : "View Map"}</span>
-          </button>
+            <button onClick={() => navigate("/agrohorticulture",{replace:true})}
+                  className="px-4 py-2 bg-purple-600 text-white rounded-md text-sm hover:bg-purple-600 flex items-center gap-2">
+                <ArrowBackIosNewIcon sx={{ fontSize: 16 }} />
+                <span>Back to Projects</span>
+            </button>
+            <button onClick={() => {  setSelectedPlantation(null);
+                                      setShowMap((prev) => !prev)}}
+                                      className="px-4 py-2 bg-purple-600 text-white rounded-md text-sm hover:bg-purple-600 flex items-center gap-2">
+              {showMap ? (
+                <TableRowsIcon sx={{ fontSize: 18 }} />
+              ) : (
+                <PublicIcon sx={{ fontSize: 18 }} />
+              )}            
+              <span>{showMap ? "View Table" : "View Map"}</span>
+            </button>
           <div className="flex justify-end ml-24">
             <div className="flex items-center gap-6 bg-white px-6 py-2 rounded-xl shadow-sm">
               <Lightbulb size={36} className="text-gray-800" />
@@ -166,62 +156,59 @@ const PlantationProjectDashboard = ({organization,project}) => {
     </div>
     {showMap ? (
       <>
-  <div className="h-[70vh] bg-white rounded-xl shadow-md flex overflow-hidden">
+        <div className="h-[70vh] bg-white rounded-xl shadow-md flex overflow-hidden">
 
-    {/* MAP CONTAINER */}
-    <div
-      className={`transition-all duration-300 h-full ${
-        selectedPlantation ? "w-[50%]" : "w-full"
-      }`}
-    >
-      <DashboardBasemap
-        mode="plantation"
-        plantationGeodata={plantationData}
-        selectedPlantation={selectedPlantation}
-        onSelectPlantation={setSelectedPlantation}
-      />
-    </div>
+          {/* MAP CONTAINER */}
+          <div
+            className={`transition-all duration-300 h-full ${
+              selectedPlantation ? "w-[50%]" : "w-full"
+            }`}
+          >
+            <DashboardBasemap
+              mode="plantation"
+              plantationGeodata={plantationData}
+              selectedPlantation={selectedPlantation}
+              onSelectPlantation={setSelectedPlantation}
+            />
+          </div>
 
-    {/* RIGHT PANEL (future details / charts) */}
- {/* RIGHT PANEL (details / charts) */}
-{selectedPlantation && (
-  <div className="w-[40%] h-full border-l bg-white overflow-y-auto p-4 space-y-6">
+          {/* RIGHT PANEL (future details / charts) */}
+      {/* RIGHT PANEL (details / charts) */}
+      {selectedPlantation && (
+        <div className="w-[40%] h-full border-l bg-white overflow-y-auto p-4 space-y-6">
 
-    {/* Stack Bar Chart */}
-    <div className="h-[320px]">
-      <PlantationStackBarGraph
-        plantation={selectedPlantation}
-        plantationData={plantationData}
-        selectedFeature={selectedPlantation}
-      />
-    </div>
+          {/* Stack Bar Chart */}
+          <div className="h-[320px]">
+            <PlantationStackBarGraph
+              plantation={selectedPlantation}
+              plantationData={plantationData}
+              selectedFeature={selectedPlantation}
+            />
+          </div>
 
-    {/* NDVI Chart */}
-    <div className="h-[280px]">
-      <PlantationNDVIChart
-        plantation={selectedPlantation}
-      />
-    </div>
-  </div>
-)}
-  </div>
-  {selectedPlantation && (
-      <div className="mt-6 bg-white rounded-xl shadow-md p-6">
-        <SoilPropertiesSection plantation={selectedPlantation} />
-      </div>
-    )}
-  </>
-  
+          {/* NDVI Chart */}
+          <div className="h-[280px]">
+            <PlantationNDVIChart
+              plantation={selectedPlantation}
+            />
+          </div>
+        </div>
+      )}
+        </div>
+        {selectedPlantation && (
+            <div className="mt-6 bg-white rounded-xl shadow-md p-6">
+              <SoilPropertiesSection plantation={selectedPlantation} />
+            </div>
+          )}
+        </> 
 ) : (
-
       <TableView
         headers={AGROFORESTRY_DASHBOARD_CONFIG.tableHeaders}
         rows={rows}
         pageSize={50}
-        // onRowClick={handlePlantationClick}
+        onRowClick={handlePlantationRowClick}
       />
     )}
-
       </div>
   );
 };

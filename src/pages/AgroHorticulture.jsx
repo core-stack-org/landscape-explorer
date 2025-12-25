@@ -104,12 +104,14 @@ const AgroHorticulture =()=>{
             }
     };
 
-    useEffect(()=>{
-        const params= new URLSearchParams(location.search);
-        if(params.get("projectId")){
-            setShowPlantationSites(true);
+    useEffect(() => {
+        const params = new URLSearchParams(location.search);
+        if (!params.get("projectId")) {
+          setShowPlantationSites(false);
+          setProject(null);
         }
-    },[]);
+      }, [location.search]);
+      
 
         return (
             <div className="bg-slate-100">
