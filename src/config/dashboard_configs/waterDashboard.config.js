@@ -249,6 +249,23 @@ export const WATER_DASHBOARD_CONFIG = {
 
 export const AGROFORESTRY_DASHBOARD_CONFIG = {
   mapMode: "plantation",  
+  sections: {
+    section1: {
+      title: "Section 1: Tree Cover and Land Use Change",
+      paragraphs: [
+        "This section shows the plantation site as it looks currently. Alongside, the stacked bar chart shows the shifts in tree cover, cropland, and non-vegetated areas in the plantation site. Over time, plantations are expected to mature and gain perennial vegetation cover. The NDVI trend captures vegetation greenness over time, reflecting plantation health and growth. Seasonal fluctuations in NDVI indicate cropping patterns and phenological cycles of trees, while long-term trends indicate overall vegetation recovery.",
+      ],
+    },
+
+    section2: {
+      title: "Section 2: Soil and Site Properties",
+      paragraphs: [
+        "This section highlights the climatic, soil, and topographical characteristics of the plantation site, which influence plantation success and species selection.",
+        "Indicators such as soil texture, organic carbon, bulk density, and pH provide insights into soil fertility and water-holding capacity.",
+        "Together, these factors help assess the ecological suitability of the site for plantation interventions.",
+      ],
+    },
+  },
   tableHeaders: [
     {
       key: "state",

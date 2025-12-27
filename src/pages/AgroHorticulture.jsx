@@ -139,7 +139,7 @@ const AgroHorticulture =()=>{
                                 </li>
                                 <li>
                                 A tool for monitoring health of the plantation sites, select the
-                                <b>organization and project</b> to view.
+                                <b> organization and project</b> to view.
                                 </li>
                             </ul>
                         </div>

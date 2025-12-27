@@ -1703,13 +1703,6 @@ const showOnlySelectedPlantation = () => {
       </div>
 
       <div className="text-gray-600">
-        <span className="font-medium">Suitability Score:</span>{" "}
-        {selectedPlantation?.patch_conf
-          ? (selectedPlantation.patch_conf * 100).toFixed(1)
-          : "NA"}
-      </div>
-
-      <div className="text-gray-600">
         <span className="font-medium">Area (ha):</span>{" "}
         {selectedPlantation?.area_ha
           ? Number(selectedPlantation.area_ha).toFixed(2)
