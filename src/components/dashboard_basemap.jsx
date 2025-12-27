@@ -128,7 +128,44 @@ const DashboardBasemap = ({
   
   
   
+  console.log(mwsData)
 
+  const transformName = (name) => {
+    if (!name) return "";
+  
+    // Extract base + alias from parentheses
+    const match = name.match(/^(.+?)\s*\((.+?)\)$/);
+  
+    let parts = [];
+  
+    if (match) {
+      const main = match[1];
+      const alias = match[2];
+  
+      parts = [main, alias];
+    } else {
+      // no parentheses → repeat twice
+      parts = [name];
+    }
+  
+    return parts
+      .map((p) =>
+        p
+          .replace(/[^\w\s-]/g, "") // remove special chars
+          .replace(/[-\s]+/g, "_")  // space/dash → _
+          .replace(/_+/g, "_")      // collapse _
+          .replace(/^_|_$/g, "")    // trim _
+          .toLowerCase()
+      )
+      .join("_");
+  };
+  
+
+  const read4326 = (data) =>
+    geojsonReaderRef.current.readFeatures(data, {
+      dataProjection: "EPSG:4326",
+      featureProjection: "EPSG:4326",
+    });
 
   const getZoiOlFeatures = () => {
     if (!zoiFeatures) return [];
@@ -689,9 +726,13 @@ if (mode === "plantation" && selectedPlantation?.geometry) {
         layerName = `LULC_${lulcYear}_${projectName.toLowerCase()}_${projectId}__level_3`;
       }
       if (!projectName && !projectId && district && block) {
-        layerName = `LULC_${lulcYear}_${district.toLowerCase()}_${block.toLowerCase()}_level_3`;
-      }
+        const safeDistrict = transformName(district);
+        const safeBlock = transformName(block);
+        console.log(safeDistrict)
 
+        layerName = `LULC_${lulcYear}_${safeDistrict}_${safeBlock}_level_3`;
+      }
+console.log(layerName)
       try {
         const lulcLayer = await getImageLayer(
           workspace,
@@ -1322,13 +1363,15 @@ const addMws = async () => {
   // ---------------------------------------------------
   // 3) Load Terrain & Drainage Layers
   // ---------------------------------------------------
+  const safeDistrict = transformName(district);
+  const safeBlock = transformName(block);
   const terrainKey = isProject
     ? `${projectName.toLowerCase()}_${projectId}_terrain_raster`
-    : `${district.toLowerCase()}_${block.toLowerCase()}_terrain_raster`;
+    : `${safeDistrict.toLowerCase()}_${safeBlock.toLowerCase()}_terrain_raster`;
 
   const drainageKey = isProject
     ? `${projectName.toLowerCase()}_${projectId}`
-    : `${district.toLowerCase()}_${block.toLowerCase()}`;
+    : `${safeDistrict.toLowerCase()}_${safeBlock.toLowerCase()}`;
 
   const [terrainLayer, drainageLayer] = await Promise.all([
     getImageLayer("terrain", terrainKey, true, "Terrain_Style_11_Classes").catch(
