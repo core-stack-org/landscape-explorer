@@ -24,6 +24,7 @@ import GeoJSON from "ol/format/GeoJSON";
 import LandingNavbar from "../components/landing_navbar.jsx";
 import getStates from "../actions/getStates.js";
 import getVectorLayers from "../actions/getVectorLayers.js";
+import { getWaterbodyData } from "../actions/getWaterbodyData.jsx";
 import getImageLayer from "../actions/getImageLayers.js";
 import filtersDetails from "../components/data/Filters.json";
 import PatternsData from '../components/data/Patterns.json';
@@ -563,71 +564,25 @@ const KYLDashboardPage = () => {
     }
   };
 
-  const fetchWaterBodiesLayer = async() => {
+  const fetchWaterBodiesLayer = async () => {
     if (!district || !block || !mapRef.current) return;
-
-    const dist = district.label
-      .toLowerCase()
-      .replace(/\s*\(\s*/g, "_")
-      .replace(/\s*\)\s*/g, "")
-      .replace(/\s+/g, "_");
-
-    const blk = block.label
-      .toLowerCase()
-      .replace(/\s*\(\s*/g, "_")
-      .replace(/\s*\)\s*/g, "")
-      .replace(/\s+/g, "_");
-
-    const layerName = `surface_waterbodies_${dist}_${blk}`;
-
-    // If already loaded, skip
-    if (waterbodiesLayerRef.current) {
-      return;
-    }
-
-    // Create vector layer
-    const wbLayer = await getVectorLayers(
-      "swb",
-      layerName,
-      true,  
-      true 
-    );
-    
-    wbLayer.setStyle((feature) => {
-      const geom = feature.getGeometry();
-      if (!geom) return null;
-    
-      let pointGeom = null;
-    
-      if (geom.getType() === "Polygon") {
-        pointGeom = geom.getInteriorPoint();
-      } else if (geom.getType() === "MultiPolygon") {
-        const pts = geom.getInteriorPoints();
-        pointGeom = pts.getPoint(0);
-      }
-    
-      return [
-        new Style({
-          geometry: geom,
-          stroke: new Stroke({
-            color: "rgba(246, 252, 83, 0.8)",
-            width: 2,
-          }),
-          fill: new Fill({
-            color: "rgba(246, 252, 83, 0.45)",
-          }),
-        }),
-      ];
+  
+    const result = await getWaterbodyData({
+      district,
+      block,
+      map: mapRef.current,
     });
-    
-    if (!wbLayer) {
-      console.warn("Failed loading waterbodies");
-      return;
-    }
-
-    // Just store the layer, don't add to map yet
-    waterbodiesLayerRef.current = wbLayer;
-  }
+  
+    if (!result) return;
+  
+    // Save refs (optional)
+    waterbodiesLayerRef.current = result.wbLayer;
+  
+    // NOTE:
+    // WB + MWS dono ab ek hi jagah se aa gaye
+    console.log("WB Feature →", result.wbFeature);
+    console.log("MWS Feature →", result.mwsFeature);
+  };
 
   const fetchAdminLayer = async (tempVillages) => {
     if (!district || !block) return;

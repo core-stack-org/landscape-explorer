@@ -39,6 +39,7 @@ const DashboardBasemap = ({
   onZoiArea,
   organizationLabel,
   styleHeight = "800px",
+  onMapReady,
 }) => {
   const mapRef = useRef(null);
   const mapElement = useRef(null);
@@ -247,6 +248,9 @@ const DashboardBasemap = ({
     });
 
     mapRef.current = map;
+    if (onMapReady) {
+      onMapReady(map);
+    }
 
     map.isReady = false;
     map.once("postrender", () => {
