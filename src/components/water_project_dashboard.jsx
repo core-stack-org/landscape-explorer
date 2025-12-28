@@ -17,6 +17,8 @@ import { WATER_DASHBOARD_CONFIG } from "../config/dashboard_configs/waterDashboa
 import DashboardBasemap from "./dashboard_basemap.jsx";
 import { useGlobalWaterData } from "../store/useGlobalWaterData";
 import { waterGeoDataAtom, waterMwsDataAtom, zoiFeaturesAtom,selectedWaterbodyForTehsilAtom,tehsilZoiFeaturesAtom,tehsilDroughtDataAtom } from "../store/locationStore.jsx";
+import { getWaterbodyData } from "../actions/getWaterbodyData";
+
 
 const WaterProjectDashboard = () => {
   const [selectedWaterbody, setSelectedWaterbody] = useState(null);
@@ -67,6 +69,8 @@ const WaterProjectDashboard = () => {
 
   const location = useLocation();
   const navigate = useNavigate();
+  const mapRef = useRef(null);
+
 
   // Extract URL parameters 
   const params = new URLSearchParams(location.search);
@@ -90,9 +94,6 @@ const WaterProjectDashboard = () => {
     ? selectedWaterbodyForTehsil
     : selectedWaterbody;
 
-
-    
-
   const [view, setView] = useState(
     isTehsilMode ? "map" : typeParam === "tehsil" ? "map" : "table"
   );
@@ -106,8 +107,37 @@ const WaterProjectDashboard = () => {
     state: stateParam,
     district: districtParam,
     block: blockParam,
+    waterbody: waterbodyParam
   });
-
+  
+  useEffect(() => {
+    if (!isTehsilMode || !mapRef.current) return;
+  
+    const loadData = async () => {
+      const result = await getWaterbodyData({
+        district: districtParam,
+        block: blockParam,
+        map: mapRef.current,
+        waterbodyUID: waterbodyParam,
+      });
+  
+      if (!result) return;
+  
+      setSelectedWaterbodyForTehsil(result.waterbody.geojson);
+  
+      setTehsilGeoData({
+        type: "FeatureCollection",
+        features: [result.waterbody.geojson],
+      });
+  
+      if (result.mws) {
+        setMwsFromLocalStorage(result.mws.geojson);
+      }
+    };
+  
+    loadData();
+  }, []);
+  
   const handleInfoClick = (anchor, text, key = null) => {
     // anchor must be e.currentTarget (DOM element)
     setInfoAnchor(anchor);
@@ -138,8 +168,6 @@ const WaterProjectDashboard = () => {
     console.log("🔵 MWS from localStorage (RAW GeoJSON):", parsed);
     setMwsFromLocalStorage(parsed);
   }, []);
-
-  console.log(mwsFromLocalStorage)
 
   const matchedMwsFeature = useMemo(() => {
     return mwsFromLocalStorage || null;
@@ -235,8 +263,6 @@ const WaterProjectDashboard = () => {
   const projectZoi = useRecoilValue(zoiFeaturesAtom);
   const tehsilZoi = useRecoilValue(tehsilZoiFeaturesAtom);
   const zoiFeatures = isTehsilMode ? tehsilZoi : projectZoi;
-
-console.log(activeSelectedWaterbody)
   const getMatchedMWSFeatureProject = (mwsGeoData, activeSelectedWaterbody) => {
     if (!mwsGeoData?.features?.length || !activeSelectedWaterbody) return null;
   
@@ -1016,6 +1042,10 @@ console.log(props)
                   lulcYear={lulcYear1} 
                 projectName={typeParam === "project" ? project?.label : null}
                 projectId={typeParam === "project" ? project?.value : null}
+                onMapReady={(map) => {
+                  mapRef.current = map;
+                  console.log("🗺️ MAP READY", map);
+                }}
                 onSelectWaterbody={(data) => {
                     const name = data.name ?? data.waterbody_name ?? data.waterbody ??
                       (data.properties && (data.properties.waterbody_name || data.properties.name)) ?? "";
