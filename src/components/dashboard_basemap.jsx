@@ -161,11 +161,11 @@ const DashboardBasemap = ({
   };
   
 
-  const read4326 = (data) =>
-    geojsonReaderRef.current.readFeatures(data, {
-      dataProjection: "EPSG:4326",
-      featureProjection: "EPSG:4326",
-    });
+  // const read4326 = (data) =>
+  //   geojsonReaderRef.current.readFeatures(data, {
+  //     dataProjection: "EPSG:4326",
+  //     featureProjection: "EPSG:4326",
+  //   });
 
   const getZoiOlFeatures = () => {
     if (!zoiFeatures) return [];
