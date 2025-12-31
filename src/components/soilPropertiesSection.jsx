@@ -39,12 +39,12 @@ const groupGradients = {
   Socioeconomic: "linear-gradient(135deg, #ce93d8, #f3e5f5)", // purple
 };
 
-const SoilPropertiesSection = ({ feature }) => {
-  if (!feature?.properties?.site_props) return null;
+const SoilPropertiesSection = ({ plantation }) => {
+  if (!plantation?.site_props) return null;
 
   let siteProps = {};
   try {
-    siteProps = JSON.parse(feature.properties.site_props);
+    siteProps = JSON.parse(plantation.site_props);
   } catch (err) {
     console.error("Invalid site_props JSON", err);
     return null;
@@ -81,7 +81,7 @@ const SoilPropertiesSection = ({ feature }) => {
       </div>
 
       {/* Section 1 block — now below the heading */}
-      {feature && (
+      {plantation && (
         <div className="flex flex-col gap-2 w-full p-4 sm:p-6 md:p-4 rounded-lg bg-white shadow mb-4">
           {/* Heading */}
           <h2 className="text-2xl font-bold text-blue-600 border-b-2 border-blue-600 pb-1">
