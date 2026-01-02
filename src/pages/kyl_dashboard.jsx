@@ -577,11 +577,13 @@ const KYLDashboardPage = () => {
   
     // Save refs (optional)
     waterbodiesLayerRef.current = result.wbLayer;
+    setShowWB(true);
+
   
     // NOTE:
     // WB + MWS dono ab ek hi jagah se aa gaye
-    console.log("WB Feature →", result.wbFeature);
-    console.log("MWS Feature →", result.mwsFeature);
+    console.log("WB Feature →", result.wbFeatures);
+    console.log("MWS Feature →", result.mw);
   };
 
   const fetchAdminLayer = async (tempVillages) => {

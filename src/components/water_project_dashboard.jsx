@@ -111,18 +111,23 @@ const WaterProjectDashboard = () => {
   });
   
   useEffect(() => {
-    if (!isTehsilMode || !mapRef.current) return;
+    if (!isTehsilMode || !mapRef.current || !districtParam || !blockParam) return;
   
     const loadData = async () => {
+      const districtObj = { label: districtParam };
+      const blockObj = { label: blockParam };
+      
       const result = await getWaterbodyData({
-        district: districtParam,
-        block: blockParam,
+        district: districtObj,
+        block: blockObj,
         map: mapRef.current,
         waterbodyUID: waterbodyParam,
       });
   
-      if (!result) return;
-  
+      if (!result?.waterbody?.geojson) {
+        console.warn("❌ Waterbody not found from URL params");
+        return;
+      }
       setSelectedWaterbodyForTehsil(result.waterbody.geojson);
   
       setTehsilGeoData({
@@ -152,22 +157,6 @@ const WaterProjectDashboard = () => {
     setInfoOpen(false);
     setOpenInfoKey(null);
   };
-
-  useEffect(() => {
-    const stored = localStorage.getItem("selectedWaterbody");
-    if (stored) {
-      const parsed = JSON.parse(stored);
-      setSelectedWaterbodyForTehsil(parsed);
-    }
-  }, []);
-
-  useEffect(() => {
-    const raw = localStorage.getItem("matched_mws_feature");
-    if (!raw) return;
-    const parsed = JSON.parse(raw);
-    console.log("🔵 MWS from localStorage (RAW GeoJSON):", parsed);
-    setMwsFromLocalStorage(parsed);
-  }, []);
 
   const matchedMwsFeature = useMemo(() => {
     return mwsFromLocalStorage || null;

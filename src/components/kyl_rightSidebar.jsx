@@ -124,19 +124,14 @@ const KYLRightSidebar = ({
       console.warn("Waterbodies layer not loaded yet");
       return;
     }
-
-    if (showWB) {
-      // Remove from map
-      mapRef.current.removeLayer(waterbodiesLayerRef.current);
-      setShowWB(false);
-    } else {
-      // Add to map in correct order (between MWS and boundary)
-      mapRef.current.removeLayer(boundaryLayerRef.current);
-      mapRef.current.addLayer(waterbodiesLayerRef.current);
-      mapRef.current.addLayer(boundaryLayerRef.current);
-      setShowWB(true);
-    }
+  
+    const layer = waterbodiesLayerRef.current;
+    const currentlyVisible = layer.getVisible();
+  
+    layer.setVisible(!currentlyVisible);
+    setShowWB(!currentlyVisible);
   };
+  
   
   const handleTehsilReport = () => {
     const reportURL = `${process.env.REACT_APP_API_URL}/generate_tehsil_report/?state=${state.label.toLowerCase().split(" ").join("_")}&district=${district.label.toLowerCase().split(" ").join("_")}&block=${block.label.toLowerCase().split(" ").join("_")}`;
