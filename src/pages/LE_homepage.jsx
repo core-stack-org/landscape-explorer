@@ -385,7 +385,7 @@ export default function KYLHomePage() {
                   description:
                     "Visualize waterbody interventions and evaluate their effects on water availability and agriculture.",
                   icon: "💧",
-                  link: "/water_dashboard",
+                  link: "/rwb",
                 },
                 {
                   title: "Commons Connect Plans",
@@ -396,9 +396,11 @@ export default function KYLHomePage() {
               ].map((item, index) => (
                 <div key={index} className="h-full">
                   <div
-                    onClick={() =>
-                      handleNavigate("/agrohorticulture")
-                    }
+                    onClick={() => {
+                      if (item.link) {
+                        handleNavigate(item.link, item.title);
+                      }
+                    }}
                     className="cursor-pointer bg-white rounded-2xl shadow-md p-6 sm:p-8 h-full min-h-[220px] flex flex-col justify-start transform transition-all duration-300 hover:shadow-xl hover:-translate-y-1 hover:scale-[1.02]"
                   >
                     <div className="flex items-start gap-4">

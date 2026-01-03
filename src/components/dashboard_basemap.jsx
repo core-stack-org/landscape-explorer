@@ -1,5 +1,5 @@
 // DashboardBasemap.jsx
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef,useState } from "react";
 import Map from "ol/Map";
 import View from "ol/View";
 import TileLayer from "ol/layer/Tile";
@@ -20,6 +20,9 @@ import MultiPolygon from "ol/geom/MultiPolygon";
 import Overlay from "ol/Overlay";
 import Polygon from "ol/geom/Polygon";
 import waterbodyIcon from "../assets/waterbodies_proposed.svg";
+import YearSlider from "./yearSlider";
+import { WATER_DASHBOARD_CONFIG } from "../config/dashboard_configs/waterDashboard.config";
+
 
 const DashboardBasemap = ({
   id,
@@ -41,17 +44,24 @@ const DashboardBasemap = ({
   onSelectWaterbody,
   onZoiArea,
   organizationLabel,
+  showMap,
   styleHeight = "800px",
 }) => {
   const mapRef = useRef(null);
   const mapElement = useRef(null);
   const popupRef = useRef(null);
   const pendingPlantationRef = useRef(null);
+  const pendingWaterbodyRef = useRef(null);
+
   const geojsonReaderRef = useRef(new GeoJSON());
   const lulcLoadedRef = useRef(false);
+  const [waterLegendOpen, setWaterLegendOpen] = useState(false);
 
-  console.log(plantationGeodata)
-  const read4326 = (data) => {
+
+console.log("districtttt",district)
+console.log("districtttt",block)
+
+    const read4326 = (data) => {
     if (!data) return [];
   
     // Case 1: already OL features
@@ -126,10 +136,6 @@ const DashboardBasemap = ({
     return { type: "FeatureCollection", features: safeFeatures };
   };
   
-  
-  
-  console.log(mwsData)
-
   const transformName = (name) => {
     if (!name) return "";
   
@@ -144,7 +150,6 @@ const DashboardBasemap = ({
   
       parts = [main, alias];
     } else {
-      // no parentheses → repeat twice
       parts = [name];
     }
   
@@ -159,14 +164,31 @@ const DashboardBasemap = ({
       )
       .join("_");
   };
+
+  const getTehsilDistrictBlock = (selectedWaterbody) => {
+    if (!selectedWaterbody) return {};
   
-
-  // const read4326 = (data) =>
-  //   geojsonReaderRef.current.readFeatures(data, {
-  //     dataProjection: "EPSG:4326",
-  //     featureProjection: "EPSG:4326",
-  //   });
-
+    const props =
+      selectedWaterbody.properties ||
+      selectedWaterbody;
+  
+    return {
+      district:
+        props["District Name"] ||
+        props.District ||
+        props.district ||
+        null,
+  
+      block:
+        props["Block/Tehsil Name"] ||
+        props.Block ||
+        props.block ||
+        props.Taluka ||
+        null,
+    };
+  };
+  
+  
   const getZoiOlFeatures = () => {
     if (!zoiFeatures) return [];
     if (
@@ -306,157 +328,6 @@ const DashboardBasemap = ({
     });
   };
 
-  // INITIAL MAP SETUP
-//   useEffect(() => {
-//     if (!mapElement.current) return;
-
-//     const baseLayer = new TileLayer({
-//       source: new XYZ({
-//         url: "https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}",
-//       }),
-//       zIndex: 0,
-//     });
-
-//     const view = new View({
-//       projection: "EPSG:4326",
-//       center: [80, 23.5],
-//       zoom: 6,
-//     });
-
-//     const map = new Map({
-//       target: mapElement.current,
-//       view,
-//       layers: [baseLayer],
-//     });
-
-//     mapRef.current = map;
-
-//     map.isReady = false;
-//     map.once("postrender", () => {
-//       map.isReady = true;
-//     });
-
-//     const overlay = new Overlay({
-//       element: popupRef.current,
-//       positioning: "bottom-center",
-//       offset: [0, -15],
-//       stopEvent: false,
-//     });
-//     map.addOverlay(overlay);
-//     map.overlayRef = overlay;
-
-//     // CLICK HANDLER (returns pure GeoJSON geometry)
-//     map.on("singleclick", (event) => {
-//       const m = mapRef.current;
-//       if (!m) return;
-
-//       // const feature = m.forEachFeatureAtPixel(
-//       //   event.pixel,
-//       //   (feat) => {
-//       //     const type = feat.getGeometry()?.getType();
-//       //     if (type === "Point") return null;
-//       //     return feat;
-//       //   },
-//       //   { hitTolerance: 6 }
-//       // );
-//       const feature = m.forEachFeatureAtPixel(
-//         event.pixel,
-//         (feat) => feat,
-//         { hitTolerance: 6 }
-//       );
-      
-//       const popupEl = popupRef.current;
-//       if (!popupEl) return;
-
-//       if (!feature) {
-//         popupEl.style.display = "none";
-//         return;
-//       }
-
-//       // ================= PLANTATION POPUP =================
-// if (layerType === "plantation") {
-//   const area =
-//     props.area_ha ||
-//     props.area ||
-//     props.AREA_HA ||
-//     "NA";
-
-//   const suitability =
-//     props.patch_suitability ||
-//     props.suitability ||
-//     "NA";
-
-//   popupEl.innerHTML = `
-//     <div style="min-width:160px">
-//       <strong>Plantation Site</strong><br/>
-//       Area: ${Number(area).toFixed?.(2) ?? area} ha<br/>
-//       Suitability: ${suitability}
-//     </div>
-//   `;
-
-//   popupEl.style.display = "block";
-//   m.overlayRef.setPosition(event.coordinate);
-//   return; // ⛔ STOP HERE
-// }
-
-
-//       const props = feature.getProperties?.() || {};
-//       const layerType = feature.get("layerType");
-//       const uid =
-//         props?.UID ||
-//         props?.uid ||
-//         feature.get("UID") ||
-//         feature.get("uid");
-
-//       const name =
-//         props.waterbody_name ||
-//         props.name ||
-//         feature.get("waterbody_name") ||
-//         feature.get("name") ||
-//         (uid ? `Waterbody ${uid}` : "Feature");
-
-//       const olGeom = feature.getGeometry();
-//       let geometryJSON = null;
-
-//       if (olGeom) {
-//         geometryJSON = geojsonReaderRef.current.writeGeometryObject(olGeom, {
-//           dataProjection: "EPSG:4326",
-//           featureProjection: "EPSG:4326",
-//         });
-//       }
-
-//       if (onSelectWaterbody && uid) {
-//         onSelectWaterbody({
-//           ...props,
-//           UID: uid,
-//           waterbody_name: name,
-//           geometry: geometryJSON,
-//           pixel:event.pixel
-//         });
-//       }
-
-//       popupEl.style.display = "block";
-//       m.overlayRef.setPosition(event.coordinate);
-//     });
-
-//     map.getInteractions().forEach((interaction) => {
-//       if (
-//         interaction instanceof MouseWheelZoom ||
-//         interaction instanceof PinchZoom ||
-//         interaction instanceof DoubleClickZoom
-//       ) {
-//         interaction.setActive(false);
-//       }
-//     });
-
-//     return () => {
-//       try {
-//         map.setTarget(null);
-//       } catch {
-//         /* ignore */
-//       }
-//     };
-//   }, []);
 
 useEffect(() => {
   if (!mapElement.current) return;
@@ -515,15 +386,14 @@ useEffect(() => {
       return;
     }
 
-    // ✅ FIX: DEFINE THESE FIRST
+    //  FIX: DEFINE THESE FIRST
     const props = feature.getProperties?.() || {};
     const layerType = feature.get("layerType");
 
 // ================= PLANTATION POPUP =================
-// ================= PLANTATION POPUP =================
 if (layerType === "plantation") {
 
-  // 🔑 FIX: define geometryJSON FIRST
+  //  FIX: define geometryJSON FIRST
   const olGeom = feature.getGeometry();
   let geometryJSON = null;
 
@@ -557,7 +427,7 @@ if (layerType === "plantation") {
     </div>
   `;
 
-  // ✅ store data ONLY
+  // store data ONLY
   pendingPlantationRef.current = {
     ...props,
     geometry: geometryJSON,
@@ -566,7 +436,7 @@ if (layerType === "plantation") {
   popupEl.style.display = "block";
   m.overlayRef.setPosition(event.coordinate);
 
-  // ✅ zoom ONLY on popup click
+  // zoom ONLY on popup click
   popupEl.onclick = (e) => {
     e.stopPropagation(); 
 
@@ -579,8 +449,7 @@ if (layerType === "plantation") {
   return;
 }
 
-
-    // ================= WATERBODY / OTHERS =================
+    // ================= WATERBODY POPUP =================
     const uid =
       props?.UID ||
       props?.uid ||
@@ -604,19 +473,38 @@ if (layerType === "plantation") {
       });
     }
 
-    if (onSelectWaterbody && uid) {
-      onSelectWaterbody({
-        ...props,
-        UID: uid,
-        waterbody_name: name,
-        geometry: geometryJSON,
-        pixel: event.pixel,
-      });
-    }
+    popupEl.innerHTML = `
+  <div style="min-width:220px; cursor:pointer">
+    <strong>${name}</strong><br/>
+    <span style="font-size:12px;color:#555">
+      UID: ${uid}
+    </span><br/>
+    <em style="color:#2563eb">Click to view details</em>
+  </div>
+`;
+
+pendingWaterbodyRef.current = {
+  ...props,
+  UID: uid,
+  waterbody_name: name,
+  geometry: geometryJSON,
+};
+
+popupEl.onclick = (e) => {
+  e.stopPropagation();
+
+  if (onSelectWaterbody && pendingWaterbodyRef.current) {
+    onSelectWaterbody(pendingWaterbodyRef.current);
+    pendingWaterbodyRef.current = null;
+  }
+};
+
+
 
     popupEl.style.display = "block";
     m.overlayRef.setPosition(event.coordinate);
   });
+
 
   map.getInteractions().forEach((interaction) => {
     if (
@@ -725,14 +613,27 @@ if (mode === "plantation" && selectedPlantation?.geometry) {
       if (projectName && projectId) {
         layerName = `LULC_${lulcYear}_${projectName.toLowerCase()}_${projectId}__level_3`;
       }
-      if (!projectName && !projectId && district && block) {
-        const safeDistrict = transformName(district);
-        const safeBlock = transformName(block);
-        console.log(safeDistrict)
 
+      if (!projectName && !projectId) {
+        const { district: d, block: b } =
+          getTehsilDistrictBlock(selectedWaterbody);
+      
+        if (!d || !b) {
+          console.warn("❌ LULC skipped: district/block missing", { d, b });
+          return null;
+        }
+      
+        const safeDistrict = transformName(d);
+        const safeBlock = transformName(b);
+      
         layerName = `LULC_${lulcYear}_${safeDistrict}_${safeBlock}_level_3`;
       }
-console.log(layerName)
+      
+      console.log("🟢 REQUESTING LULC:", {
+        workspace,
+        layerName,
+        styleName
+      });
       try {
         const lulcLayer = await getImageLayer(
           workspace,
@@ -825,174 +726,111 @@ console.log(layerName)
     // ───── WATERBODY MODE ─────
     const addWaterbody = async () => {
       const isTehsil = !projectName && !projectId;
+      if (isTehsil) {
+        let wbGeom = selectedWaterbody?.geometry;
+    
+        // fallback from geoData
+        if (!wbGeom && geoData?.type === "FeatureCollection") {
+          const f = geoData.features?.[0];
+          wbGeom = f?.geometry || null;
+        }
+    
+        if (!wbGeom) {
+          console.warn("Tehsil → WB geometry missing");
+          return;
+        }
+    
+        const olGeom = geojsonReaderRef.current.readGeometry(wbGeom, {
+          dataProjection: "EPSG:4326",
+          featureProjection: "EPSG:4326",
+        });
+    
+        if (!olGeom) {
+          console.error("Tehsil → OL geometry failed");
+          return;
+        }
+    
+        // 🔥 ZOOM — THIS WAS MISSING EFFECTIVELY
+        view.fit(olGeom.getExtent(), {
+          padding: [40, 40, 40, 40],
+          maxZoom: 18,
+          duration: 400,
+        });
+    
+        // Draw WB
+        removeLayersById(["wb_single_layer"]);
+        const wbFeature = new Feature({ geometry: olGeom });
+        const wbLayer = new VectorLayer({
+          source: new VectorSource({
+            features: [new Feature({ geometry: olGeom })],
+          }),
+          style: new Style({
+            stroke: new Stroke({
+              color: "blue",
+              width: 4,
+            }),
+          }),
+        });
+    
+        wbLayer.set("id", "wb_single_layer");
+        wbLayer.setZIndex(9999);
+        map.addLayer(wbLayer);
+    
+        await addLulcLayer(
+          "lulc_RWB",
+          "lulc_waterbody_layer",
+          wbFeature,
+          false
+        );
+    
+        return; 
+      }
+      if (showMap && !selectedWaterbody) {
+        showAllWaterbodies();   
+        return;
+      }
 
 // PROJECT MODE — show ONLY selected
-if (!isTehsil) {
+if (!normalizedWaterbody?.UID) return;
 
-  const allWB = read4326(geoData);
-  const selectedFeatureOl = allWB.find(
-    f => f.get("UID")?.toString() === normalizedWaterbody?.UID?.toString()
-  );
+const allWB = read4326(geoData);
 
-  if (!selectedFeatureOl) {
-    console.warn("Selected WB not found — falling back to ALL WBs");
-    showAllWaterbodies();
-    return;
-  }
+const selectedFeatureOl = allWB.find(
+  f => f.get("UID")?.toString() === normalizedWaterbody.UID.toString()
+);
 
-  // REMOVE ALL LAYERS BEFORE ADDING SELECTED
-  map.getLayers().forEach(layer => {
-    if (["wb_all_layer", "wb_selected_layer", "lulc_waterbody_layer"].includes(layer.get("id"))) {
-      map.removeLayer(layer);
-    }
-  });
-console.log(normalizedWaterbody)
-  const areaHa =
-  normalizedWaterbody?.areaOred ||
-  normalizedWaterbody?.area_ha ||
-  normalizedWaterbody?.AREA_HA ||
-  normalizedWaterbody?.area ||
-  null;
-
-const targetZoom = getZoomForAreaHa(Number(areaHa));
-
+if (!selectedFeatureOl) {
+  showAllWaterbodies();
+  return;
+}
 view.fit(selectedFeatureOl.getGeometry().getExtent(), {
-  padding: [20, 20, 20, 20],
-  maxZoom: targetZoom,
+  padding: [30, 30, 30, 30],
+  maxZoom: 18,
   duration: 400,
 });
 
-  // FIT MAP TO SELECTED WB
-  // view.fit(selectedFeatureOl.getGeometry().getExtent(), {
-  //   padding: [20, 20, 20, 20],
-  //   maxZoom: 16,
-  //   duration: 350,
-  // });
-
-  // ADD ONLY SELECTED WB
-  const wbSelected = new VectorLayer({
-    source: new VectorSource({ features: [selectedFeatureOl] }),
-    style: new Style({
-      stroke: new Stroke({ color: "blue", width: 3 }),
+const wbLayer = new VectorLayer({
+  source: new VectorSource({ features: [selectedFeatureOl] }),
+  style: new Style({
+    stroke: new Stroke({
+      color: "#2563eb",
+      width: 4,
     }),
-  });
+  }),
+});
 
-  wbSelected.set("id", "wb_selected_layer");
-  wbSelected.setZIndex(10);
-  map.addLayer(wbSelected);
+wbLayer.set("id", "wb_single_layer");
+wbLayer.setZIndex(999999); // IMPORTANT
+map.addLayer(wbLayer);
 
-  // LOAD LULC FOR SELECTED WB
-  removeLulcLayers();
-  await addLulcLayer("lulc_RWB", "lulc_waterbody_layer", selectedFeatureOl, false);
+removeLulcLayers();
 
-  return;
-}
-
-    // TEHSIL MODE — FINAL PATCH
-if (isTehsil) {
-  let wbGeometry = selectedWaterbody?.geometry || null;
-
-  // fallback from geoData
-  if (!wbGeometry && geoData?.type === "FeatureCollection") {
-    const feats = geoData.features || [];
-    let f = feats[0];
-
-    if (normalizedWaterbody?.UID) {
-      const match = feats.find(
-        feat => feat?.properties?.UID?.toString() === normalizedWaterbody.UID?.toString()
-      );
-      if (match) f = match;
-    }
-
-    if (f?.geometry) wbGeometry = f.geometry;
-  }
-
-  if (!wbGeometry) {
-    console.warn("No tehsil WB geometry found.");
-    return;
-  }
-
-  // Convert geometry → OL geometry
-  let realGeom = null;
-
-  if (typeof wbGeometry.getExtent === "function") {
-    realGeom = wbGeometry;
-  }
-  else if (wbGeometry.type === "Polygon" || wbGeometry.type === "MultiPolygon") {
-    realGeom = geojsonReaderRef.current.readGeometry(wbGeometry, {
-      dataProjection: "EPSG:4326",
-      featureProjection: "EPSG:4326",
-    });
-  }
-  else if (wbGeometry.flatCoordinates) {
-    const flat = wbGeometry.flatCoordinates;
-    const stride = wbGeometry.stride || 2;
-    const ring = [];
-    for (let i = 0; i < flat.length; i += stride) {
-      ring.push([flat[i], flat[i + 1]]);
-    }
-    realGeom = new Polygon([ring]);
-  }
-
-  if (!realGeom) {
-    console.error("Could not rebuild tehsil geometry");
-    return;
-  }
-
-  // SAFE Feature creation
-  const tehsilFeature = new Feature();
-  tehsilFeature.setGeometry(realGeom);
-
-  // copy only safe primitive properties (avoid OL objects)
-  if (selectedWaterbody) {
-    Object.entries(selectedWaterbody).forEach(([k, v]) => {
-      if (k !== "geometry" &&
-         (typeof v === "string" || typeof v === "number" || typeof v === "boolean" || v == null)
-      ) {
-        tehsilFeature.set(k, v);
-      }
-    });
-  }
-  console.log(selectedWaterbody)
-
-  // Extract area (from tehsil WB)
-const areaHa =
-selectedWaterbody?.properties.areaOred ||
-selectedWaterbody?.properties.area_ha ||
-selectedWaterbody?.properties.AREA_HA ||
-selectedWaterbody?.properties.area_ored ||
-normalizedWaterbody?.areaOred ||
-normalizedWaterbody?.area_ha ||
-normalizedWaterbody?.AREA_HA ||
-normalizedWaterbody?.area ||
-null;
-
-// Compute zoom based on WB area
-const targetZoom = getZoomForAreaHa(Number(areaHa));
-
-
-  const geom = tehsilFeature.getGeometry();
-  view.fit(geom.getExtent(), {
-    padding: [20, 20, 20, 20],
-    maxZoom: targetZoom,
-    duration: 300,
-  });
-
-  const wbLayer = new VectorLayer({
-    source: new VectorSource({ features: [tehsilFeature] }),
-    style: new Style({ stroke: new Stroke({ color: "blue", width: 3 }) }),
-  });
-
-  wbLayer.set("id", "wb_single_layer");
-  wbLayer.setZIndex(10);
-  map.addLayer(wbLayer);
-
-  removeLulcLayers();
-  await addLulcLayer("lulc_RWB", "lulc_waterbody_layer", tehsilFeature, false);
-
-  return;
-}
-
+await addLulcLayer(
+  "lulc_RWB",               // style name
+  "lulc_waterbody_layer",   // layer id
+  selectedFeatureOl,        // waterbody feature
+  false                     // inner crop
+);
     };
 
     // =========================
@@ -1235,179 +1073,54 @@ const buildRealGeom = (wbGeom) => {
   return null;
 };
 
+const normalizeMwsFeatures = (features) => {
+  if (!features) return [];
+
+  // already OL features
+  if (
+    Array.isArray(features) &&
+    features.length &&
+    typeof features[0]?.getGeometry === "function"
+  ) {
+    return features;
+  }
+
+  // GeoJSON array → OL features
+  if (Array.isArray(features)) {
+    return geojsonReaderRef.current.readFeatures(
+      {
+        type: "FeatureCollection",
+        features,
+      },
+      {
+        dataProjection: "EPSG:4326",
+        featureProjection: "EPSG:4326",
+      }
+    );
+  }
+
+  return [];
+};
+
 
 const addMws = async () => {
-  if (!normalizedWaterbody || !selectedWaterbody) {
-    console.warn("normalizedWaterbody OR selectedWaterbody missing");
+  if (!selectedWaterbody || !selectedFeature) {
+    console.warn("addMws → missing selectedWaterbody / selectedFeature");
     return;
   }
 
   const map = mapRef.current;
-
-  // Wait until OL map is fully initialized
   if (!map?.isReady) {
     await new Promise((resolve) => {
-      const check = () => (map?.isReady ? resolve() : setTimeout(check, 40));
+      const check = () => (map.isReady ? resolve() : setTimeout(check, 40));
       check();
     });
   }
 
   const view = map.getView();
-  const isProject = projectName && projectId;
-  const isTehsil = !isProject;
-
-  // ---------------------------------------------------
-  // 1) FETCH / SELECT MWS FEATURE
-  // ---------------------------------------------------
-  let selectedMws = null;
-  let mwsUid = null;
-
-  // ---------- PROJECT MODE (unchanged) ----------
-  if (isProject) {
-    mwsUid =
-      normalizedWaterbody?.MWS_UID?.toString() ||
-      normalizedWaterbody?.MWS_ID?.toString();
-
-    if (!mwsUid) {
-      console.warn("Project mode → missing MWS UID");
-      return;
-    }
-
-    const allMws = geojsonReaderRef.current.readFeatures(mwsData || []);
-    selectedMws = allMws.find((f) => {
-      const fu = f.get("uid") || f.get("UID") || f.get("MWS_UID");
-      return fu?.toString() === mwsUid;
-    });
-
-    if (!selectedMws) {
-      console.warn("Project → No matching MWS for", mwsUid);
-      return;
-    }
-  }
-
-  // ---------- TEHSIL MODE (fix: match by UID) ----------
-  if (isTehsil) {
-    let allMws = [];
-
-    // mwsData already OL features?
-    if (
-      Array.isArray(mwsData) &&
-      mwsData.length &&
-      typeof mwsData[0].getGeometry === "function"
-    ) {
-      allMws = mwsData;
-    }
-    // or a GeoJSON FeatureCollection?
-    else if (mwsData?.type === "FeatureCollection") {
-      allMws = read4326(mwsData);
-    }
-
-    const wbUid =
-      normalizedWaterbody?.UID?.toString() ||
-      normalizedWaterbody?.uid?.toString() ||
-      null;
-
-    if (allMws.length && wbUid) {
-      // 🔑 MAIN LOGIC: match tehsil MWS by UID of waterbody
-      selectedMws = allMws.find((f) => {
-        const fu =
-          f.get("UID") ||
-          f.get("uid") ||
-          f.get("MWS_UID") ||
-          f.get("waterbody_uid");
-        return fu?.toString() === wbUid;
-      });
-
-      if (!selectedMws) {
-        console.warn("Tehsil → No MWS matched for WB UID:", wbUid);
-        return;
-      }
-    } else {
-      // Fallback: old raw-geometry path (if you still ever send it like that)
-      const rawGeom = mwsData?.values_?.geometry;
-      if (!rawGeom) {
-        console.error("Tehsil → No MWS geometry found");
-        return;
-      }
-
-      const flat = rawGeom.flatCoordinates;
-      const stride = rawGeom.stride || 2;
-      const ring = [];
-      for (let i = 0; i < flat.length; i += stride) {
-        ring.push([flat[i], flat[i + 1]]);
-      }
-
-      selectedMws = new Feature({
-        geometry: new Polygon([ring]),
-        UID: mwsData?.uid,
-      });
-    }
-  }
-
-  if (!selectedMws) {
-    console.warn("No MWS found for any mode.");
-    return;
-  }
-
-  // ---------------------------------------------------
-  // 2) MultiPolygon for cropping
-  // ---------------------------------------------------
-  let multiPoly = null;
-  const g = selectedMws.getGeometry();
-  if (g) {
-    multiPoly = g.getType() === "Polygon"
-      ? new MultiPolygon([g.getCoordinates()])
-      : g;
-  }
-
-  // ---------------------------------------------------
-  // 3) Load Terrain & Drainage Layers
-  // ---------------------------------------------------
-  const safeDistrict = transformName(district);
-  const safeBlock = transformName(block);
-  const terrainKey = isProject
-    ? `${projectName.toLowerCase()}_${projectId}_terrain_raster`
-    : `${safeDistrict.toLowerCase()}_${safeBlock.toLowerCase()}_terrain_raster`;
-
-  const drainageKey = isProject
-    ? `${projectName.toLowerCase()}_${projectId}`
-    : `${safeDistrict.toLowerCase()}_${safeBlock.toLowerCase()}`;
-
-  const [terrainLayer, drainageLayer] = await Promise.all([
-    getImageLayer("terrain", terrainKey, true, "Terrain_Style_11_Classes").catch(
-      (err) => {
-        console.error("Terrain load failed:", err);
-        return null;
-      }
-    ),
-    getVectorLayers("drainage", drainageKey, true, "drainage").catch((err) => {
-      console.error("Drainage load failed:", err);
-      return null;
-    }),
-  ]);
-
-  // --- TERRAIN (bottom) ---
-  if (terrainLayer) {
-    terrainLayer.setOpacity(0.7);
-    terrainLayer.set("id", "terrain_layer");
-    terrainLayer.setZIndex(1);
-
-    if (multiPoly && terrainLayer.addFilter) {
-      terrainLayer.addFilter(
-        new Crop({
-          feature: new Feature(multiPoly),
-          wrapX: false,
-          inner: false,
-        })
-      );
-    }
-
-    map.addLayer(terrainLayer);
-  }
-
-  // --- DRAINAGE (above terrain) ---
-  if (drainageLayer) {
-    const colors = [
+  const isProject = type === "project";
+  const isTehsil = type === "tehsil";
+    const drainageColors = [
       "#03045E",
       "#023E8A",
       "#0077B6",
@@ -1419,138 +1132,264 @@ const addMws = async () => {
       "#CAF0F8",
     ];
 
-    drainageLayer.setStyle((feature) => {
-      const o = feature.get("ORDER") || 1;
-      return new Style({
-        stroke: new Stroke({
-          color: colors[o - 1] || colors[0],
-          width: 2,
-        }),
-      });
+  /* =====================================================
+     🟢 PROJECT MODE — MULTIPLE MWS
+  ===================================================== */
+  if (isProject) {
+    // ✅ THIS WAS THE MAIN FIX
+    const mwsFeatures = normalizeMwsFeatures(selectedFeature);
+
+    console.log(
+      "MWS normalized:",
+      mwsFeatures.map((f) => f.getGeometry()?.getType())
+    );
+
+    if (!mwsFeatures.length) {
+      console.warn("No valid MWS features after normalize");
+      return;
+    }
+
+    // 1️⃣ Build MultiPolygon from ALL MWS
+    const multiCoords = [];
+
+    mwsFeatures.forEach((f) => {
+      const geom = f.getGeometry();   // ✅ FIXED
+      if (!geom) return;
+
+      if (geom.getType() === "Polygon") {
+        multiCoords.push(geom.getCoordinates());
+      } else if (geom.getType() === "MultiPolygon") {
+        geom.getCoordinates().forEach((c) => multiCoords.push(c));
+      }
     });
 
-    drainageLayer.set("id", "drainage_layer");
-    drainageLayer.setZIndex(2);
+    if (!multiCoords.length) {
+      console.warn("No valid MWS geometry");
+      return;
+    }
 
-    if (multiPoly && drainageLayer.addFilter) {
+    const mwsMultiPolygon = new MultiPolygon(multiCoords);
+    const mwsCropFeature = new Feature({ geometry: mwsMultiPolygon });
+
+    // 2️⃣ TERRAIN + DRAINAGE
+    const terrainKey = `${projectName.toLowerCase()}_${projectId}_terrain_raster`;
+    const drainageKey = `${projectName.toLowerCase()}_${projectId}`;
+
+    const [terrainLayer, drainageLayer] = await Promise.all([
+      getImageLayer("terrain", terrainKey, true, "Terrain_Style_11_Classes").catch(() => null),
+      getVectorLayers("drainage", drainageKey, true, "drainage").catch(() => null),
+    ]);
+
+    if (terrainLayer) {
+      terrainLayer.setZIndex(1);
+      terrainLayer.setOpacity(0.7);
+      terrainLayer.addFilter(new Crop({ feature: mwsCropFeature }));
+      map.addLayer(terrainLayer);
+    }
+
+  
+    
+
+  if (drainageLayer) {
+  drainageLayer.setStyle((feature) => {
+    const o = Number(feature.get("ORDER")) || 1;
+    return new Style({
+      stroke: new Stroke({
+        color: drainageColors[o - 1] || drainageColors[0],
+        width: 2,
+      }),
+    });
+  });
+
+  drainageLayer.set("id", "drainage_layer");
+  drainageLayer.setZIndex(2);
+
+  // 🔥 crop with MULTI MWS polygon
+  drainageLayer.addFilter(
+    new Crop({
+      feature: mwsCropFeature,
+      wrapX: false,
+      inner: false,
+    })
+  );
+
+  map.addLayer(drainageLayer);
+}
+
+
+    // 3️⃣ Draw MWS boundaries
+    map.addLayer(
+      new VectorLayer({
+        source: new VectorSource({ features: mwsFeatures }),
+        style: new Style({
+          stroke: new Stroke({ color: "black", width: 3 }),
+        }),
+        zIndex: 3,
+      })
+    );
+
+    // 4️⃣ Zoom
+    view.fit(mwsMultiPolygon.getExtent(), {
+      padding: [60, 60, 60, 60],
+      maxZoom: 17,
+    });
+
+    // 5️⃣ Draw selected waterbody (BLUE) — SAME LOCATION
+const allWB = read4326(geoData);
+
+const wbFeatureOl = allWB.find(
+  (f) =>
+    f.get("UID")?.toString() ===
+    selectedWaterbody?.UID?.toString()
+);
+
+if (!wbFeatureOl) {
+  console.warn("Project MWS → Waterbody not found in geoData");
+} else {
+  const wbLayer = new VectorLayer({
+    source: new VectorSource({
+      features: [wbFeatureOl],
+    }),
+    style: new Style({
+      stroke: new Stroke({
+        color: "blue",
+        width: 3,
+      }),
+    }),
+  });
+
+  wbLayer.set("id", "selected_waterbody_layer");
+  wbLayer.setZIndex(50); // 🔥 always above drainage & MWS
+  map.addLayer(wbLayer);
+}
+
+
+
+    map.renderSync();
+    return;
+  }
+
+  /* =====================================================
+     🔵 TEHSIL MODE — SINGLE MWS (UNCHANGED)
+  ===================================================== */
+  if (isTehsil) {
+    let mwsFeatureOl = null;
+
+    if (selectedFeature?.getGeometry) {
+      mwsFeatureOl = selectedFeature;
+    } else if (selectedFeature?.geometry) {
+      mwsFeatureOl = geojsonReaderRef.current.readFeature(
+        {
+          type: "Feature",
+          geometry: selectedFeature.geometry,
+          properties: selectedFeature.properties || {},
+        },
+        {
+          dataProjection: "EPSG:4326",
+          featureProjection: "EPSG:4326",
+        }
+      );
+    }
+
+    if (!mwsFeatureOl) {
+      console.warn("Tehsil → MWS feature not found");
+      return;
+    }
+
+    const mwsBoundaryLayer = new VectorLayer({
+      source: new VectorSource({ features: [mwsFeatureOl] }),
+      style: new Style({
+        stroke: new Stroke({
+          color: "black",
+          width: 3,
+        }),
+      }),
+    });
+    
+    mwsBoundaryLayer.set("id", "mws_boundary_layer");
+    mwsBoundaryLayer.setZIndex(20);
+    map.addLayer(mwsBoundaryLayer);
+
+    
+    const terrainKey = `${transformName(district)}_${transformName(block)}_terrain_raster`;
+    const drainageKey = `${transformName(district)}_${transformName(block)}`;
+
+    const [terrainLayer, drainageLayer] = await Promise.all([
+      getImageLayer("terrain", terrainKey, true, "Terrain_Style_11_Classes").catch(() => null),
+      getVectorLayers("drainage", drainageKey, true, "drainage").catch(() => null),
+    ]);
+
+    if (terrainLayer) {
+      terrainLayer.addFilter(new Crop({ feature: mwsFeatureOl }));
+      map.addLayer(terrainLayer);
+    }
+
+    if (drainageLayer) {
+      drainageLayer.setStyle((feature) => {
+        const o = Number(feature.get("ORDER")) || 1;
+        return new Style({
+          stroke: new Stroke({
+            color: drainageColors[o - 1] || drainageColors[0],
+            width: 2,
+          }),
+        });
+      });
+    
+      drainageLayer.set("id", "drainage_layer");
+      drainageLayer.setZIndex(2);
+    
+      // 🔥 clip drainage to MWS (TEHSIL)
       drainageLayer.addFilter(
         new Crop({
-          feature: new Feature(multiPoly),
+          feature: mwsFeatureOl,
           wrapX: false,
           inner: false,
         })
       );
+    
+      map.addLayer(drainageLayer);
     }
+    
 
-    map.addLayer(drainageLayer);
-  }
-
-  // ---------------------------------------------------
-  // 4) Draw MWS boundary
-  // ---------------------------------------------------
-  const boundaryLayer = new VectorLayer({
-    source: new VectorSource({ features: [selectedMws] }),
-    style: new Style({
-      stroke: new Stroke({ color: "black", width: 3 }),
-    }),
-  });
-
-  boundaryLayer.set("id", "mws_boundary_layer");
-  boundaryLayer.setZIndex(3);
-  map.addLayer(boundaryLayer);
-
-  const mwsGeom = selectedMws.getGeometry();
-  if (mwsGeom) {
-    view.fit(mwsGeom.getExtent(), {
+    view.fit(mwsFeatureOl.getGeometry().getExtent(), {
       padding: [60, 60, 60, 60],
       maxZoom: 17,
     });
-  }
-
-  // ---------------------------------------------------
-  // 5) UNIVERSAL WATERBODY DRAWING (PROJECT + TEHSIL)
-  // ---------------------------------------------------
-  let wbFeatureObj = null;
-
-  // PROJECT MODE → from geoData by UID
-  if (isProject && geoData?.type === "FeatureCollection") {
-    const allWB = read4326(geoData);
-    wbFeatureObj = allWB.find(
-      (f) =>
-        f.get("UID")?.toString() === normalizedWaterbody.UID?.toString()
-    );
-  }
-
-  // TEHSIL (or fallback) → from selectedWaterbody.geometry
-  if (!wbFeatureObj && selectedWaterbody?.geometry) {
-    const wbGeom = buildRealGeom(selectedWaterbody.geometry);
-    if (!wbGeom) {
-      console.error("Failed to rebuild WB geometry");
-      return;
+    // 🔵 DRAW WATERBODY (TEHSIL MODE)
+if (selectedWaterbody?.geometry) {
+  const wbGeom = geojsonReaderRef.current.readGeometry(
+    selectedWaterbody.geometry,
+    {
+      dataProjection: "EPSG:4326",
+      featureProjection: "EPSG:4326",
     }
-    wbFeatureObj = new Feature({ geometry: wbGeom });
-  }
+  );
 
-  if (!wbFeatureObj) {
-    console.warn("No WB geometry found for project/tehsil");
-    return;
-  }
+  if (wbGeom) {
+    const wbFeature = new Feature({ geometry: wbGeom });
 
-  // WB base layer
-  const wbLayer = new VectorLayer({
-    source: new VectorSource({ features: [wbFeatureObj] }),
-    style: new Style({
-      stroke: new Stroke({ color: "blue", width: 3 }),
-    }),
-  });
-  wbLayer.set("id", "selected_waterbody_layer");
-  wbLayer.setZIndex(50);
-  map.addLayer(wbLayer);
-
-  // WB top highlight
-  const wbTop = new VectorLayer({
-    source: new VectorSource({ features: [wbFeatureObj] }),
-    style: new Style({
-      stroke: new Stroke({ color: "blue", width: 3 }),
-    }),
-  });
-  wbTop.set("id", "wb_top_layer_mws");
-  wbTop.setZIndex(999);
-  map.addLayer(wbTop);
-
-// ---------------------------------------------
-//  ADD WATERBODY ICON (centroid marker)
-// ---------------------------------------------
-try {
-  const geom = wbFeatureObj.getGeometry();
-  let center = null;
-
-  if (geom.getType() === "Polygon") {
-    center = geom.getInteriorPoint().getCoordinates();
-  } else if (geom.getType() === "MultiPolygon") {
-    center = geom.getInteriorPoints().getFirstCoordinate();
-  }
-
-  if (center) {
-    const iconFeature = new Feature({
-      geometry: new Point(center),
+    const wbLayer = new VectorLayer({
+      source: new VectorSource({ features: [wbFeature] }),
+      style: new Style({
+        stroke: new Stroke({
+          color: "blue",
+          width: 4,
+        }),
+      }),
     });
 
-    const iconLayer = new VectorLayer({
-      source: new VectorSource({ features: [iconFeature] }),
-      style: waterbodyPointStyle,
-    });
-
-    iconLayer.set("id", "wb_icon_layer_mws");
-    iconLayer.setZIndex(2000); // always visible above everything
-    map.addLayer(iconLayer);
+    wbLayer.set("id", "selected_waterbody_layer");
+    wbLayer.setZIndex(50); // always above MWS
+    map.addLayer(wbLayer);
   }
-} catch (e) {
-  console.error("Failed to add WB icon:", e);
 }
 
-  map.renderSync();
+
+    map.renderSync();
+  }
 };
+
+
 
 const addPlantations = () => {
   const map = mapRef.current;
@@ -1670,7 +1509,6 @@ const showOnlySelectedPlantation = () => {
         "plantation_layer",
         "wb_all_layer",
         "zoi_border_layer",
-        "wb_single_layer",
         "mws_boundary_layer",
         "terrain_layer",
         "drainage_layer",
@@ -1754,6 +1592,68 @@ const showOnlySelectedPlantation = () => {
     </div>
   </div>
 )}
+
+          {/* YEAR SLIDER — ONLY FOR WATERBODY */}
+          {mode === "waterbody" && selectedWaterbody && (
+            <div
+              className="absolute bottom-16 left-4 right-4 
+                        flex justify-end z-[1000]"
+            >
+              <div className="bg-white/90 p-4 rounded-md shadow-md 
+                              min-w-[220px] sm:min-w-[300px] md:min-w-[500px]">
+                <YearSlider
+                  currentLayer={{ name: "lulcWaterrej" }}
+                  sliderId={id}
+                />
+              </div>
+            </div>
+          )}
+
+          {/* WATERBODY LEGEND */}
+          {mode === "waterbody" && selectedWaterbody && (
+            <div className="absolute bottom-16 left-4 z-[1000]">
+              {!waterLegendOpen ? (
+                /* COLLAPSED TAB */
+                <div
+                  onClick={() => setWaterLegendOpen(true)}
+                  className="bg-white/90 px-2 py-2 rounded-r-md shadow-md 
+                            cursor-pointer font-semibold text-sm select-none"
+                  style={{
+                    writingMode: "vertical-rl",
+                    textOrientation: "mixed",
+                  }}
+                >
+                  Water Legend ▶
+                </div>
+              ) : (
+                /* EXPANDED LEGEND */
+                <div className="bg-white/90 p-4 rounded-md shadow-md ml-2 min-w-[180px]">
+                  <div className="flex justify-between items-center mb-2">
+                    <p className="font-semibold text-sm">Waterbody Legend</p>
+                    <button
+                      onClick={() => setWaterLegendOpen(false)}
+                      className="text-sm font-bold hover:opacity-70"
+                    >
+                      ◀
+                    </button>
+                  </div>
+
+                  {WATER_DASHBOARD_CONFIG.legends.waterbody.map((item, idx) => (
+                    <div key={idx} className="flex items-center gap-2 mb-1">
+                      <div
+                        className="w-4 h-4 border border-gray-400"
+                        style={{ backgroundColor: item.color }}
+                      />
+                      <span className="text-gray-700 text-sm">
+                        {item.label}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
 
 
       {/* ZOOM CONTROLS */}

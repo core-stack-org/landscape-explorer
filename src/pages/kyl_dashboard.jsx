@@ -1381,7 +1381,7 @@ const KYLDashboardPage = () => {
     
       setSelectedWaterbodyProfile({
         id: wb_id,
-        dashboardUrl: `/dashboard?type=tehsil&state=${state.label}&district=${district.label}&block=${block.label}&waterbody=${wb_id}`,
+        dashboardUrl: `/rwb?type=tehsil&state=${state.label}&district=${district.label}&block=${block.label}&waterbody=${wb_id}`,
         properties: props,
         geometry: geojson.writeGeometryObject(wbFeature.getGeometry()),
       });

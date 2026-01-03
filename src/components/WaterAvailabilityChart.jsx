@@ -36,10 +36,9 @@ const WaterAvailabilityChart = ({
 }) => {
   const [showImpact, setShowImpact] = useState(false);
   const prevImpactRef = useRef(null);
-console.log(mwsFeature)
 const getProp = (feature, key) => {
   if (!feature) return 0;
-
+console.log(mwsFeature)
   // ✔ If OL Feature (tehsil case)
   if (typeof feature.get === "function") {
     return feature.get(key);
@@ -384,7 +383,7 @@ acc[`TR${year}`] = kharif + rabi + zaid;
         className="flex flex-col mb-2 px-4"
         style={{
           minHeight: "120px", // fix height so it doesn't jump
-          maxHeight: "135px",
+          maxHeight: "134px",
           overflow: "hidden",
           fontSize: "clamp(0.55rem, 0.8vw, 0.8rem)",
           transition: "all 0.3s ease-in-out",
@@ -497,7 +496,7 @@ acc[`TR${year}`] = kharif + rabi + zaid;
       </div>
 
       {/* Chart wrapper: fix the chart area height so it doesn't reflow */}
-      <div className="w-full" style={{ minHeight: "360px" }}>
+      <div className="w-full px-0" style={{ minHeight: "280px" }}>
         <Bar data={data} options={options} />
       </div>
     </div>

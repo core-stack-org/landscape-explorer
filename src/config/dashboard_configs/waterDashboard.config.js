@@ -103,17 +103,58 @@ export const WATER_DASHBOARD_CONFIG = {
       {
         key: "avgWaterAvailabilityRabi",
         label: "Mean Water Availability Rabi (%)",
-        render: (row) => row.avgWaterAvailabilityRabi ?? "NA",
-        info: "Average water presence during Rabi.",
         sortable: true,
+        render: (row) => {
+          const mean = row.avgWaterAvailabilityRabi;
+          const impact = row.ImpactRabi;
+      
+          if (mean == null) return "NA";
+      
+          return (
+            <>
+              {Number(mean).toFixed(2)}
+              {impact !== undefined && (
+                <span
+                  className={`ml-1 ${
+                    impact >= 0 ? "text-green-600" : "text-red-600"
+                  }`}
+                >
+                  ({impact >= 0 ? "+" : ""}
+                  {impact.toFixed(2)})
+                </span>
+              )}
+            </>
+          );
+        },
       },
       {
         key: "avgWaterAvailabilityZaid",
         label: "Mean Water Availability Zaid (%)",
-        render: (row) => row.avgWaterAvailabilityZaid ?? "NA",
-        info: "Average water presence during Zaid.",
         sortable: true,
+        render: (row) => {
+          const mean = row.avgWaterAvailabilityZaid;
+          const impact = row.ImpactZaid;
+      
+          if (mean == null) return "NA";
+      
+          return (
+            <>
+              {Number(mean).toFixed(2)}
+              {impact !== undefined && (
+                <span
+                  className={`ml-1 ${
+                    impact >= 0 ? "text-green-600" : "text-red-600"
+                  }`}
+                >
+                  ({impact >= 0 ? "+" : ""}
+                  {impact.toFixed(2)})
+                </span>
+              )}
+            </>
+          );
+        },
       },
+      
     ],
   },
 
