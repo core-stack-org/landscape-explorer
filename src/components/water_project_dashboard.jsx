@@ -91,7 +91,6 @@ const tehsilRefetchDoneRef = useRef(false);
     district: districtParam,
     block: blockParam,
   });
-  console.log(districtParam,blockParam)
 
   const handleCloseInfo = () => {
     setInfoAnchor(null);
@@ -119,33 +118,42 @@ const tehsilRefetchDoneRef = useRef(false);
 
   useEffect(() => {
     if (!isTehsilMode) return;
-  
-    console.log("🟡 effect chala");
-  
-    if (!tehsilMap) {
-      console.log("❌ map abhi nahi aaya");
-      return;
-    }
+    if (!tehsilMap) return;
   
     if (selectedWaterbodyForTehsil && mwsFromLocalStorage) {
-      console.log("✅ data already hai");
       return;
     }
   
-    console.log("🔁 refetch kar raha hoon");
+    const fetchTehsilData = async () => {
   
-    getWaterbodyData({
-      district: { label: districtParam },
-      block: { label: blockParam },
-      map: tehsilMap,
-      waterbodyUID: waterbodyParam,
-    });
+      const result = await getWaterbodyData({
+        district: { label: districtParam },
+        block: { label: blockParam },
+        map: tehsilMap,
+        waterbodyUID: waterbodyParam,
+      });
+  
+  
+      if (result?.waterbody?.geojson) {
+        setSelectedWaterbodyForTehsil(result.waterbody.geojson);
+      }
+  
+      if (result?.mws?.geojson) {
+        setMwsFromLocalStorage(result.mws.geojson);
+      }
+    };
+  
+    fetchTehsilData();
   }, [
     isTehsilMode,
     tehsilMap,
+    districtParam,
+    blockParam,
+    waterbodyParam,
     selectedWaterbodyForTehsil,
     mwsFromLocalStorage,
   ]);
+  
   
 
 
@@ -355,7 +363,6 @@ const matchedMWSFeaturesProject = useMemo(() => {
     if (matchedFeatureIndex !== -1) {
       const feature = geoData.features[matchedFeatureIndex];
       const props = feature.properties ?? {};
-console.log(props)
       const row = {
         featureIndex: matchedFeatureIndex,
         UID: props.UID,
@@ -827,7 +834,6 @@ console.log(props)
     district={districtParam}
     block={blockParam}
     onMapReady={(map) => {
-      console.log("✅ map mil gaya");
       setTehsilMap(map);
     }}
   />

@@ -1269,12 +1269,7 @@ if (!wbFeatureOl) {
     source: new VectorSource({
       features: [wbFeatureOl],
     }),
-    style: new Style({
-      stroke: new Stroke({
-        color: "blue",
-        width: 3,
-      }),
-    }),
+    style: waterBodyStyle
   });
 
   wbLayer.set("id", "selected_waterbody_layer");
@@ -1317,12 +1312,7 @@ if (!wbFeatureOl) {
 
     const mwsBoundaryLayer = new VectorLayer({
       source: new VectorSource({ features: [mwsFeatureOl] }),
-      style: new Style({
-        stroke: new Stroke({
-          color: "black",
-          width: 3,
-        }),
-      }),
+      style: waterBodyStyle
     });
     
     mwsBoundaryLayer.set("id", "mws_boundary_layer");
