@@ -1430,15 +1430,6 @@ const KYLDashboardPage = () => {
           "matched_mws_feature",
           JSON.stringify(matchedMwsGeoJSON)
         );
-        
-        console.log("🟢 FULL MATCHED MWS FEATURE:", matchedMwsGeoJSON);
-        console.log("🟢 MWS PROPERTIES:", matchedMwsGeoJSON.properties);
-        
-    
-        console.log(
-          "MATCHED MWS SAVED →",
-          matchedMwsGeoJSON.properties.uid
-        );
       } else {
         console.warn("No matching MWS found for waterbody:", wb_id);
       }
