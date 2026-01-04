@@ -55,6 +55,12 @@ export const getWaterbodyData = async ({
         const uid = f.get("UID") || f.get("uid");
         return uid?.toString() === waterbodyUID.toString();
       });
+
+      console.log(
+        matchedWaterbody
+          ? "✅ matched waterbody mil gaya"
+          : "⚠️ matched waterbody nahi mila, but ALL loaded"
+      );
   
       if (!matchedWaterbody) {
         console.warn(" No waterbody matched UID:", waterbodyUID);

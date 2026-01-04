@@ -45,6 +45,7 @@ const DashboardBasemap = ({
   onZoiArea,
   organizationLabel,
   showMap,
+  onMapReady,
   styleHeight = "800px",
 }) => {
   const mapRef = useRef(null);
@@ -60,6 +61,9 @@ const DashboardBasemap = ({
 
 console.log("districtttt",district)
 console.log("districtttt",block)
+
+
+
 
     const read4326 = (data) => {
     if (!data) return [];
@@ -165,28 +169,28 @@ console.log("districtttt",block)
       .join("_");
   };
 
-  const getTehsilDistrictBlock = (selectedWaterbody) => {
-    if (!selectedWaterbody) return {};
+  // const getTehsilDistrictBlock = (selectedWaterbody) => {
+  //   if (!selectedWaterbody) return {};
   
-    const props =
-      selectedWaterbody.properties ||
-      selectedWaterbody;
+  //   const props =
+  //     selectedWaterbody.properties ||
+  //     selectedWaterbody;
   
-    return {
-      district:
-        props["District Name"] ||
-        props.District ||
-        props.district ||
-        null,
+  //   return {
+  //     district:
+  //       props["District Name"] ||
+  //       props.District ||
+  //       props.district ||
+  //       null,
   
-      block:
-        props["Block/Tehsil Name"] ||
-        props.Block ||
-        props.block ||
-        props.Taluka ||
-        null,
-    };
-  };
+  //     block:
+  //       props["Block/Tehsil Name"] ||
+  //       props.Block ||
+  //       props.block ||
+  //       props.Taluka ||
+  //       null,
+  //   };
+  // };
   
   
   const getZoiOlFeatures = () => {
@@ -352,6 +356,9 @@ useEffect(() => {
   });
 
   mapRef.current = map;
+  if (onMapReady) {
+    onMapReady(map);
+  }
 
   map.isReady = false;
   map.once("postrender", () => {
@@ -598,6 +605,8 @@ if (mode === "plantation" && selectedPlantation?.geometry) {
 
     removeLulcLayers();
 
+    
+
     // Helper: add LULC
     const addLulcLayer = async (
       styleName,
@@ -607,6 +616,12 @@ if (mode === "plantation" && selectedPlantation?.geometry) {
     ) => {
       if (!lulcYear) return null;
 
+      removeLayersById([
+        "lulc_waterbody_layer",
+        "lulc_zoi_layer",
+        "lulc_zoi_excluded_layer",
+      ]);
+
       let workspace = "LULC_level_3";
       let layerName = null;
 
@@ -615,19 +630,23 @@ if (mode === "plantation" && selectedPlantation?.geometry) {
       }
 
       if (!projectName && !projectId) {
-        const { district: d, block: b } =
-          getTehsilDistrictBlock(selectedWaterbody);
-      
-        if (!d || !b) {
-          console.warn("❌ LULC skipped: district/block missing", { d, b });
+        if (!district || !block) {
+          console.warn("❌ LULC skipped: district/block missing", {
+            district,
+            block,
+          });
           return null;
         }
       
-        const safeDistrict = transformName(d);
-        const safeBlock = transformName(b);
+        const safeDistrict = transformName(district);
+        const safeBlock = transformName(block);
       
         layerName = `LULC_${lulcYear}_${safeDistrict}_${safeBlock}_level_3`;
       }
+      console.log("🔥 LULC YEAR SWITCH", {
+        year: lulcYear,
+        layerName,
+      });
       
       console.log("🟢 REQUESTING LULC:", {
         workspace,
@@ -1383,13 +1402,9 @@ if (selectedWaterbody?.geometry) {
     map.addLayer(wbLayer);
   }
 }
-
-
     map.renderSync();
   }
 };
-
-
 
 const addPlantations = () => {
   const map = mapRef.current;
@@ -1446,9 +1461,6 @@ const addPlantations = () => {
   features.forEach((f) => {
     f.set("layerType", "plantation");
   });
-
-
-  
 };
 
 const showOnlySelectedPlantation = () => {
@@ -1603,7 +1615,7 @@ const showOnlySelectedPlantation = () => {
                               min-w-[220px] sm:min-w-[300px] md:min-w-[500px]">
                 <YearSlider
                   currentLayer={{ name: "lulcWaterrej" }}
-                  sliderId={id}
+                  sliderId="map1"
                 />
               </div>
             </div>
@@ -1653,6 +1665,23 @@ const showOnlySelectedPlantation = () => {
               )}
             </div>
           )}
+
+{mode === "zoi" && selectedWaterbody && (
+  <div
+    className="absolute bottom-16 left-4 right-4 
+               flex justify-end z-[1000]"
+  >
+    <div
+      className="bg-white/90 p-4 rounded-md shadow-md 
+                 min-w-[220px] sm:min-w-[300px] md:min-w-[500px]"
+    >
+      <YearSlider
+        currentLayer={{ name: "lulcWaterrej" }}
+        sliderId="map2"
+      />
+    </div>
+  </div>
+)}
 
 
 

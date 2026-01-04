@@ -16,6 +16,7 @@ import TableRowsIcon from "@mui/icons-material/TableRows";
 import PublicIcon from "@mui/icons-material/Public";
 import DashboardBasemap from "./dashboard_basemap.jsx";
 import { useGlobalWaterData } from "../store/useGlobalWaterData";
+import { getWaterbodyData } from "../actions/getWaterbodyData";
 import {getRainfallByYear,calculateImpactYear} from "../components/utils/impactYear.js";
 import { waterGeoDataAtom, waterMwsDataAtom, zoiFeaturesAtom,selectedWaterbodyForTehsilAtom,tehsilZoiFeaturesAtom,tehsilDroughtDataAtom } from "../store/locationStore.jsx";
 
@@ -32,7 +33,9 @@ const WaterProjectDashboard = () => {
   const [openInfoKey, setOpenInfoKey] = useState(null);
   const [impactYear, setImpactYear] = useState({ pre: null, post: null });
   const [autoOpened, setAutoOpened] = useState(false);
-    const [showMap, setShowMap] = useState(false);   
+    const [showMap, setShowMap] = useState(false);  
+    const [tehsilMap, setTehsilMap] = useState(null);
+ 
 
   const lulcYear1 = useRecoilValue(yearAtomFamily("map1"));
   const lulcYear2 = useRecoilValue(yearAtomFamily("map2"));
@@ -51,6 +54,8 @@ const WaterProjectDashboard = () => {
 
   const location = useLocation();
   const navigate = useNavigate();
+
+const tehsilRefetchDoneRef = useRef(false);
 
   // Extract URL parameters 
   const params = new URLSearchParams(location.search);
@@ -86,6 +91,7 @@ const WaterProjectDashboard = () => {
     district: districtParam,
     block: blockParam,
   });
+  console.log(districtParam,blockParam)
 
   const handleCloseInfo = () => {
     setInfoAnchor(null);
@@ -108,6 +114,40 @@ const WaterProjectDashboard = () => {
     const parsed = JSON.parse(raw);
     setMwsFromLocalStorage(parsed);
   }, []);
+
+
+
+  useEffect(() => {
+    if (!isTehsilMode) return;
+  
+    console.log("🟡 effect chala");
+  
+    if (!tehsilMap) {
+      console.log("❌ map abhi nahi aaya");
+      return;
+    }
+  
+    if (selectedWaterbodyForTehsil && mwsFromLocalStorage) {
+      console.log("✅ data already hai");
+      return;
+    }
+  
+    console.log("🔁 refetch kar raha hoon");
+  
+    getWaterbodyData({
+      district: { label: districtParam },
+      block: { label: blockParam },
+      map: tehsilMap,
+      waterbodyUID: waterbodyParam,
+    });
+  }, [
+    isTehsilMode,
+    tehsilMap,
+    selectedWaterbodyForTehsil,
+    mwsFromLocalStorage,
+  ]);
+  
+
 
   useEffect(() => {
     if (typeParam === "tehsil") {
@@ -784,6 +824,12 @@ console.log(props)
       setShowMap(true);  
     }}
     lulcYear={lulcYear1}
+    district={districtParam}
+    block={blockParam}
+    onMapReady={(map) => {
+      console.log("✅ map mil gaya");
+      setTehsilMap(map);
+    }}
   />
 </div>
 
@@ -865,6 +911,8 @@ console.log(props)
         projectId={typeParam === "project" ? projectIdParam : null}
         showMap={showMap}
         lulcYear={lulcYear2}  
+        district={districtParam}
+        block={blockParam}
       />
     </div>
 
