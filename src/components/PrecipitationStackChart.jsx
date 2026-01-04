@@ -77,18 +77,12 @@ const extractTehsilRainfall = (values_) => {
 
    //MAIN COMPONENT
 const PrecipitationStackChart = ({ feature ,waterbody,typeparam}) => {
-  console.log("Reached in the pRecippatiton",feature,waterbody,typeparam)
   if (!feature) return null;
-  console.log(typeparam)
 
   const isTehsil = feature.values_ !== undefined;
   let labels = [];
   let datasets = [];
-  if (isTehsil) {
-    console.log("📌 TEHSIL MODE FEATURE:", feature.values_);
-  } else {
-    console.log("📌 PROJECT MODE FEATURE:", feature);
-  }
+
 
     // TEHSIL MODE
   if (isTehsil) {

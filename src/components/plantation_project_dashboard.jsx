@@ -155,12 +155,12 @@ const PlantationProjectDashboard = ({organization,project}) => {
       </div>
     </div>
     {showMap && selectedPlantation && (
-  <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
+      <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
           <h2 className="text-2xl font-bold text-blue-600 border-b-2 border-blue-600 pb-1">
           {AGROFORESTRY_DASHBOARD_CONFIG.sections.section1.title}
-    </h2>
+          </h2>
 
-    <div className="space-y-3 leading-relaxed">
+      <div className="space-y-3 leading-relaxed">
       {AGROFORESTRY_DASHBOARD_CONFIG.sections.section1.paragraphs.map(
         (text, idx) => (
           <p className="text-gray-700 leading-relaxed" key={idx}>{text}</p>
@@ -216,6 +216,7 @@ const PlantationProjectDashboard = ({organization,project}) => {
               <SoilPropertiesSection plantation={selectedPlantation} />
             </div>
           )}
+          
         </> 
 ) : (
       <TableView
