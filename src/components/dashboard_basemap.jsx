@@ -20,8 +20,10 @@ import MultiPolygon from "ol/geom/MultiPolygon";
 import Overlay from "ol/Overlay";
 import Polygon from "ol/geom/Polygon";
 import waterbodyIcon from "../assets/waterbodies_proposed.svg";
+import LocationOnIcon from "@mui/icons-material/LocationOn";
 import YearSlider from "./yearSlider";
 import { WATER_DASHBOARD_CONFIG } from "../config/dashboard_configs/waterDashboard.config";
+
 
 
 const DashboardBasemap = ({
@@ -47,6 +49,7 @@ const DashboardBasemap = ({
   showMap,
   onMapReady,
   styleHeight = "800px",
+
 }) => {
   const mapRef = useRef(null);
   const mapElement = useRef(null);
@@ -57,15 +60,13 @@ const DashboardBasemap = ({
   const geojsonReaderRef = useRef(new GeoJSON());
   const lulcLoadedRef = useRef(false);
   const [waterLegendOpen, setWaterLegendOpen] = useState(false);
+  const [terrainLegend, setTerrainLegend] = useState(false);
+  const [drainageLegend, setDrainageLegend] = useState(false);
+  const [selectedZoiFeature, setSelectedZoiFeature] = useState(null);
+  const [zoiAreaState, setZoiAreaState] = useState(null)
+  
 
-
-console.log("districtttt",district)
-console.log("districtttt",block)
-
-
-
-
-    const read4326 = (data) => {
+  const read4326 = (data) => {
     if (!data) return [];
   
     // Case 1: already OL features
@@ -91,7 +92,6 @@ console.log("districtttt",block)
     return [];
   };
   
-
   const filteredGeoJSON = (geojson) => {
     if (!geojson || geojson.type !== "FeatureCollection" || !Array.isArray(geojson.features)) {
       return { type: "FeatureCollection", features: [] };
@@ -168,30 +168,6 @@ console.log("districtttt",block)
       )
       .join("_");
   };
-
-  // const getTehsilDistrictBlock = (selectedWaterbody) => {
-  //   if (!selectedWaterbody) return {};
-  
-  //   const props =
-  //     selectedWaterbody.properties ||
-  //     selectedWaterbody;
-  
-  //   return {
-  //     district:
-  //       props["District Name"] ||
-  //       props.District ||
-  //       props.district ||
-  //       null,
-  
-  //     block:
-  //       props["Block/Tehsil Name"] ||
-  //       props.Block ||
-  //       props.block ||
-  //       props.Taluka ||
-  //       null,
-  //   };
-  // };
-  
   
   const getZoiOlFeatures = () => {
     if (!zoiFeatures) return [];
@@ -265,7 +241,6 @@ console.log("districtttt",block)
     }),
   });
   
-
   const removeLayersById = (ids = []) => {
     const m = mapRef.current;
     if (!m) return;
@@ -333,143 +308,74 @@ console.log("districtttt",block)
   };
 
 
-useEffect(() => {
-  if (!mapElement.current) return;
+  useEffect(() => {
+    if (!mapElement.current) return;
 
-  const baseLayer = new TileLayer({
-    source: new XYZ({
-      url: "https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}",
-    }),
-    zIndex: 0,
-  });
-
-  const view = new View({
-    projection: "EPSG:4326",
-    center: [80, 23.5],
-    zoom: 6,
-  });
-
-  const map = new Map({
-    target: mapElement.current,
-    view,
-    layers: [baseLayer],
-  });
-
-  mapRef.current = map;
-  if (onMapReady) {
-    onMapReady(map);
-  }
-
-  map.isReady = false;
-  map.once("postrender", () => {
-    map.isReady = true;
-  });
-
-  const overlay = new Overlay({
-    element: popupRef.current,
-    positioning: "bottom-center",
-    offset: [0, -15],
-    stopEvent: false,
-  });
-  map.addOverlay(overlay);
-  map.overlayRef = overlay;
-
-  // CLICK HANDLER
-  map.on("singleclick", (event) => {
-    const m = mapRef.current;
-    if (!m) return;
-
-    const feature = m.forEachFeatureAtPixel(
-      event.pixel,
-      (feat) => feat,
-      { hitTolerance: 6 }
-    );
-
-    const popupEl = popupRef.current;
-    if (!popupEl) return;
-
-    if (!feature) {
-      popupEl.style.display = "none";
-      return;
-    }
-
-    //  FIX: DEFINE THESE FIRST
-    const props = feature.getProperties?.() || {};
-    const layerType = feature.get("layerType");
-
-// ================= PLANTATION POPUP =================
-if (layerType === "plantation") {
-
-  //  FIX: define geometryJSON FIRST
-  const olGeom = feature.getGeometry();
-  let geometryJSON = null;
-
-  if (olGeom) {
-    geometryJSON = geojsonReaderRef.current.writeGeometryObject(olGeom, {
-      dataProjection: "EPSG:4326",
-      featureProjection: "EPSG:4326",
+    const baseLayer = new TileLayer({
+      source: new XYZ({
+        url: "https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}",
+      }),
+      zIndex: 0,
     });
-  }
 
-  const FarmerName =
-    props.Name?.replace(/\s*\(.*?\)\s*/g, "").trim() || "NA";
+    const view = new View({
+      projection: "EPSG:4326",
+      center: [80, 23.5],
+      zoom: 6,
+    });
 
-  const area =
-    props.area_ha ||
-    props.area ||
-    props.AREA_HA ||
-    "NA";
+    const map = new Map({
+      target: mapElement.current,
+      view,
+      layers: [baseLayer],
+    });
 
-  const suitability =
-    props.patch_suitability ||
-    props.suitability ||
-    "NA";
-
-  popupEl.innerHTML = `
-    <div style="min-width:200px; cursor:pointer">
-      <strong>Farmer's name:</strong> ${FarmerName}<br/>
-      <strong>Area:</strong> ${Number(area).toFixed?.(2) ?? area} ha<br/>
-      <strong>Suitability:</strong> ${suitability}<br/>
-      <em style="color:#2563eb">Click to zoom</em>
-    </div>
-  `;
-
-  // store data ONLY
-  pendingPlantationRef.current = {
-    ...props,
-    geometry: geometryJSON,
-  };
-
-  popupEl.style.display = "block";
-  m.overlayRef.setPosition(event.coordinate);
-
-  // zoom ONLY on popup click
-  popupEl.onclick = (e) => {
-    e.stopPropagation(); 
-
-    if (onSelectPlantation && pendingPlantationRef.current) {
-      onSelectPlantation(pendingPlantationRef.current);
-      pendingPlantationRef.current = null;
+    mapRef.current = map;
+    if (onMapReady) {
+      onMapReady(map);
     }
-  };
 
-  return;
-}
+    map.isReady = false;
+    map.once("postrender", () => {
+      map.isReady = true;
+    });
 
-    // ================= WATERBODY POPUP =================
-    const uid =
-      props?.UID ||
-      props?.uid ||
-      feature.get("UID") ||
-      feature.get("uid");
+    const overlay = new Overlay({
+      element: popupRef.current,
+      positioning: "bottom-center",
+      offset: [0, -15],
+      stopEvent: false,
+    });
+    map.addOverlay(overlay);
+    map.overlayRef = overlay;
 
-    const name =
-      props.waterbody_name ||
-      props.name ||
-      feature.get("waterbody_name") ||
-      feature.get("name") ||
-      (uid ? `Waterbody ${uid}` : "Feature");
+    // CLICK HANDLER
+    map.on("singleclick", (event) => {
+      const m = mapRef.current;
+      if (!m) return;
 
+      const feature = m.forEachFeatureAtPixel(
+        event.pixel,
+        (feat) => feat,
+        { hitTolerance: 6 }
+      );
+
+      const popupEl = popupRef.current;
+      if (!popupEl) return;
+
+      if (!feature) {
+        popupEl.style.display = "none";
+        return;
+      }
+
+      //  FIX: DEFINE THESE FIRST
+      const props = feature.getProperties?.() || {};
+      const layerType = feature.get("layerType");
+
+  // ================= PLANTATION POPUP =================
+  if (layerType === "plantation") {
+
+    //  FIX: define geometryJSON FIRST
     const olGeom = feature.getGeometry();
     let geometryJSON = null;
 
@@ -480,58 +386,126 @@ if (layerType === "plantation") {
       });
     }
 
+    const FarmerName =
+      props.Name?.replace(/\s*\(.*?\)\s*/g, "").trim() || "NA";
+
+    const area =
+      props.area_ha ||
+      props.area ||
+      props.AREA_HA ||
+      "NA";
+
+    const suitability =
+      props.patch_suitability ||
+      props.suitability ||
+      "NA";
+
     popupEl.innerHTML = `
-  <div style="min-width:220px; cursor:pointer">
-    <strong>${name}</strong><br/>
-    <span style="font-size:12px;color:#555">
-      UID: ${uid}
-    </span><br/>
-    <em style="color:#2563eb">Click to view details</em>
-  </div>
-`;
+      <div style="min-width:200px; cursor:pointer">
+        <strong>Farmer's name:</strong> ${FarmerName}<br/>
+        <strong>Area:</strong> ${Number(area).toFixed?.(2) ?? area} ha<br/>
+        <strong>Suitability:</strong> ${suitability}<br/>
+        <em style="color:#2563eb">Click to zoom</em>
+      </div>
+    `;
 
-pendingWaterbodyRef.current = {
-  ...props,
-  UID: uid,
-  waterbody_name: name,
-  geometry: geometryJSON,
-};
-
-popupEl.onclick = (e) => {
-  e.stopPropagation();
-
-  if (onSelectWaterbody && pendingWaterbodyRef.current) {
-    onSelectWaterbody(pendingWaterbodyRef.current);
-    pendingWaterbodyRef.current = null;
-  }
-};
-
-
+    // store data ONLY
+    pendingPlantationRef.current = {
+      ...props,
+      geometry: geometryJSON,
+    };
 
     popupEl.style.display = "block";
     m.overlayRef.setPosition(event.coordinate);
-  });
 
+    // zoom ONLY on popup click
+    popupEl.onclick = (e) => {
+      e.stopPropagation(); 
 
-  map.getInteractions().forEach((interaction) => {
-    if (
-      interaction instanceof MouseWheelZoom ||
-      interaction instanceof PinchZoom ||
-      interaction instanceof DoubleClickZoom
-    ) {
-      interaction.setActive(false);
-    }
-  });
+      if (onSelectPlantation && pendingPlantationRef.current) {
+        onSelectPlantation(pendingPlantationRef.current);
+        pendingPlantationRef.current = null;
+      }
+    };
 
-  return () => {
-    try {
-      map.setTarget(null);
-    } catch {
-      /* ignore */
+    return;
+  }
+
+      // ================= WATERBODY POPUP =================
+      const uid =
+        props?.UID ||
+        props?.uid ||
+        feature.get("UID") ||
+        feature.get("uid");
+
+      const name =
+        props.waterbody_name ||
+        props.name ||
+        feature.get("waterbody_name") ||
+        feature.get("name") ||
+        (uid ? `Waterbody ${uid}` : "Feature");
+
+      const olGeom = feature.getGeometry();
+      let geometryJSON = null;
+
+      if (olGeom) {
+        geometryJSON = geojsonReaderRef.current.writeGeometryObject(olGeom, {
+          dataProjection: "EPSG:4326",
+          featureProjection: "EPSG:4326",
+        });
+      }
+
+      popupEl.innerHTML = `
+    <div style="min-width:220px; cursor:pointer">
+      <strong>${name}</strong><br/>
+      <span style="font-size:12px;color:#555">
+        UID: ${uid}
+      </span><br/>
+      <em style="color:#2563eb">Click to view details</em>
+    </div>
+  `;
+
+  pendingWaterbodyRef.current = {
+    ...props,
+    UID: uid,
+    waterbody_name: name,
+    geometry: geometryJSON,
+  };
+
+  popupEl.onclick = (e) => {
+    e.stopPropagation();
+
+    if (onSelectWaterbody && pendingWaterbodyRef.current) {
+      onSelectWaterbody(pendingWaterbodyRef.current);
+      pendingWaterbodyRef.current = null;
     }
   };
-}, []);
 
+
+
+      popupEl.style.display = "block";
+      m.overlayRef.setPosition(event.coordinate);
+    });
+
+
+    map.getInteractions().forEach((interaction) => {
+      if (
+        interaction instanceof MouseWheelZoom ||
+        interaction instanceof PinchZoom ||
+        interaction instanceof DoubleClickZoom
+      ) {
+        interaction.setActive(false);
+      }
+    });
+
+    return () => {
+      try {
+        map.setTarget(null);
+      } catch {
+        /* ignore */
+      }
+    };
+  }, []);
 
   // MODE HANDLER + LULC
   useEffect(() => {
@@ -631,7 +605,7 @@ if (mode === "plantation" && selectedPlantation?.geometry) {
 
       if (!projectName && !projectId) {
         if (!district || !block) {
-          console.warn("❌ LULC skipped: district/block missing", {
+          console.warn("LULC skipped: district/block missing", {
             district,
             block,
           });
@@ -643,16 +617,6 @@ if (mode === "plantation" && selectedPlantation?.geometry) {
       
         layerName = `LULC_${lulcYear}_${safeDistrict}_${safeBlock}_level_3`;
       }
-      console.log("🔥 LULC YEAR SWITCH", {
-        year: lulcYear,
-        layerName,
-      });
-      
-      console.log("🟢 REQUESTING LULC:", {
-        workspace,
-        layerName,
-        styleName
-      });
       try {
         const lulcLayer = await getImageLayer(
           workspace,
@@ -900,16 +864,20 @@ const addZoi = async () => {
   }
 
   // 3) Pass ZOI area
-  if (onZoiArea) {
-    const rawArea =
-      selectedZoi.get("zoi_area") ||
-      selectedZoi.get("ZOI_AREA") ||
-      selectedZoi.get("area_ha") ||
-      selectedZoi.get("AREA_HA") ||
-      null;
+  const rawArea =
+  selectedZoi.get("zoi_area") ||
+  selectedZoi.get("ZOI_AREA") ||
+  selectedZoi.get("area_ha") ||
+  selectedZoi.get("AREA_HA") ||
+  null;
 
-    onZoiArea(rawArea ? Number(rawArea) : null);
-  }
+setSelectedZoiFeature(selectedZoi);  // 💥 store full feature
+setZoiAreaState(rawArea ? Number(rawArea) : null);
+
+if (onZoiArea) {
+  onZoiArea(rawArea ? Number(rawArea) : null);
+}
+
 
   // 4) Clone geometry
   const zoiFeature = new Feature(selectedZoi.getGeometry().clone());
@@ -1152,27 +1120,22 @@ const addMws = async () => {
     ];
 
   /* =====================================================
-     🟢 PROJECT MODE — MULTIPLE MWS
+      PROJECT MODE — MULTIPLE MWS
   ===================================================== */
   if (isProject) {
-    // ✅ THIS WAS THE MAIN FIX
+    //  THIS WAS THE MAIN FIX
     const mwsFeatures = normalizeMwsFeatures(selectedFeature);
-
-    console.log(
-      "MWS normalized:",
-      mwsFeatures.map((f) => f.getGeometry()?.getType())
-    );
 
     if (!mwsFeatures.length) {
       console.warn("No valid MWS features after normalize");
       return;
     }
 
-    // 1️⃣ Build MultiPolygon from ALL MWS
+    // 1 Build MultiPolygon from ALL MWS
     const multiCoords = [];
 
     mwsFeatures.forEach((f) => {
-      const geom = f.getGeometry();   // ✅ FIXED
+      const geom = f.getGeometry(); 
       if (!geom) return;
 
       if (geom.getType() === "Polygon") {
@@ -1190,7 +1153,7 @@ const addMws = async () => {
     const mwsMultiPolygon = new MultiPolygon(multiCoords);
     const mwsCropFeature = new Feature({ geometry: mwsMultiPolygon });
 
-    // 2️⃣ TERRAIN + DRAINAGE
+    // 2️ TERRAIN + DRAINAGE
     const terrainKey = `${projectName.toLowerCase()}_${projectId}_terrain_raster`;
     const drainageKey = `${projectName.toLowerCase()}_${projectId}`;
 
@@ -1206,9 +1169,6 @@ const addMws = async () => {
       map.addLayer(terrainLayer);
     }
 
-  
-    
-
   if (drainageLayer) {
   drainageLayer.setStyle((feature) => {
     const o = Number(feature.get("ORDER")) || 1;
@@ -1223,7 +1183,7 @@ const addMws = async () => {
   drainageLayer.set("id", "drainage_layer");
   drainageLayer.setZIndex(2);
 
-  // 🔥 crop with MULTI MWS polygon
+  //  crop with MULTI MWS polygon
   drainageLayer.addFilter(
     new Crop({
       feature: mwsCropFeature,
@@ -1236,7 +1196,7 @@ const addMws = async () => {
 }
 
 
-    // 3️⃣ Draw MWS boundaries
+    // 3️ Draw MWS boundaries
     map.addLayer(
       new VectorLayer({
         source: new VectorSource({ features: mwsFeatures }),
@@ -1247,153 +1207,147 @@ const addMws = async () => {
       })
     );
 
-    // 4️⃣ Zoom
+    // 4️ Zoom
     view.fit(mwsMultiPolygon.getExtent(), {
       padding: [60, 60, 60, 60],
       maxZoom: 17,
     });
 
-    // 5️⃣ Draw selected waterbody (BLUE) — SAME LOCATION
+    // 5️ Draw selected waterbody (BLUE) — SAME LOCATION
 const allWB = read4326(geoData);
 
-const wbFeatureOl = allWB.find(
-  (f) =>
-    f.get("UID")?.toString() ===
-    selectedWaterbody?.UID?.toString()
-);
+  const wbFeatureOl = allWB.find(
+    (f) =>
+      f.get("UID")?.toString() ===
+      selectedWaterbody?.UID?.toString()
+  );
 
-if (!wbFeatureOl) {
-  console.warn("Project MWS → Waterbody not found in geoData");
-} else {
-  const wbLayer = new VectorLayer({
-    source: new VectorSource({
-      features: [wbFeatureOl],
-    }),
-    style: waterBodyStyle
-  });
+  if (!wbFeatureOl) {
+    console.warn("Project MWS → Waterbody not found in geoData");
+  } else {
+    const wbLayer = new VectorLayer({
+      source: new VectorSource({
+        features: [wbFeatureOl],
+      }),
+      style: waterBodyStyle
+    });
 
-  wbLayer.set("id", "selected_waterbody_layer");
-  wbLayer.setZIndex(50); // 🔥 always above drainage & MWS
-  map.addLayer(wbLayer);
-}
-
-
-
+    wbLayer.set("id", "selected_waterbody_layer");
+    wbLayer.setZIndex(50); //  always above drainage & MWS
+    map.addLayer(wbLayer);
+  }
     map.renderSync();
     return;
   }
 
   /* =====================================================
-     🔵 TEHSIL MODE — SINGLE MWS (UNCHANGED)
+      TEHSIL MODE — SINGLE MWS (UNCHANGED)
   ===================================================== */
-  if (isTehsil) {
-    let mwsFeatureOl = null;
+    if (isTehsil) {
+      let mwsFeatureOl = null;
 
-    if (selectedFeature?.getGeometry) {
-      mwsFeatureOl = selectedFeature;
-    } else if (selectedFeature?.geometry) {
-      mwsFeatureOl = geojsonReaderRef.current.readFeature(
-        {
-          type: "Feature",
-          geometry: selectedFeature.geometry,
-          properties: selectedFeature.properties || {},
-        },
-        {
-          dataProjection: "EPSG:4326",
-          featureProjection: "EPSG:4326",
-        }
-      );
-    }
+      if (selectedFeature?.getGeometry) {
+        mwsFeatureOl = selectedFeature;
+      } else if (selectedFeature?.geometry) {
+        mwsFeatureOl = geojsonReaderRef.current.readFeature(
+          {
+            type: "Feature",
+            geometry: selectedFeature.geometry,
+            properties: selectedFeature.properties || {},
+          },
+          {
+            dataProjection: "EPSG:4326",
+            featureProjection: "EPSG:4326",
+          }
+        );
+      }
 
-    if (!mwsFeatureOl) {
-      console.warn("Tehsil → MWS feature not found");
-      return;
-    }
+      if (!mwsFeatureOl) {
+        console.warn("Tehsil → MWS feature not found");
+        return;
+      }
 
-    const mwsBoundaryLayer = new VectorLayer({
-      source: new VectorSource({ features: [mwsFeatureOl] }),
-      style: waterBodyStyle
-    });
-    
-    mwsBoundaryLayer.set("id", "mws_boundary_layer");
-    mwsBoundaryLayer.setZIndex(20);
-    map.addLayer(mwsBoundaryLayer);
-
-    
-    const terrainKey = `${transformName(district)}_${transformName(block)}_terrain_raster`;
-    const drainageKey = `${transformName(district)}_${transformName(block)}`;
-
-    const [terrainLayer, drainageLayer] = await Promise.all([
-      getImageLayer("terrain", terrainKey, true, "Terrain_Style_11_Classes").catch(() => null),
-      getVectorLayers("drainage", drainageKey, true, "drainage").catch(() => null),
-    ]);
-
-    if (terrainLayer) {
-      terrainLayer.addFilter(new Crop({ feature: mwsFeatureOl }));
-      map.addLayer(terrainLayer);
-    }
-
-    if (drainageLayer) {
-      drainageLayer.setStyle((feature) => {
-        const o = Number(feature.get("ORDER")) || 1;
-        return new Style({
-          stroke: new Stroke({
-            color: drainageColors[o - 1] || drainageColors[0],
-            width: 2,
-          }),
-        });
-      });
-    
-      drainageLayer.set("id", "drainage_layer");
-      drainageLayer.setZIndex(2);
-    
-      // 🔥 clip drainage to MWS (TEHSIL)
-      drainageLayer.addFilter(
-        new Crop({
-          feature: mwsFeatureOl,
-          wrapX: false,
-          inner: false,
-        })
-      );
-    
-      map.addLayer(drainageLayer);
-    }
-    
-
-    view.fit(mwsFeatureOl.getGeometry().getExtent(), {
-      padding: [60, 60, 60, 60],
-      maxZoom: 17,
-    });
-    // 🔵 DRAW WATERBODY (TEHSIL MODE)
-if (selectedWaterbody?.geometry) {
-  const wbGeom = geojsonReaderRef.current.readGeometry(
-    selectedWaterbody.geometry,
-    {
-      dataProjection: "EPSG:4326",
-      featureProjection: "EPSG:4326",
-    }
-  );
-
-  if (wbGeom) {
-    const wbFeature = new Feature({ geometry: wbGeom });
-
-    const wbLayer = new VectorLayer({
-      source: new VectorSource({ features: [wbFeature] }),
-      style: new Style({
-        stroke: new Stroke({
-          color: "blue",
-          width: 4,
+      const mwsBoundaryLayer = new VectorLayer({
+        source: new VectorSource({ features: [mwsFeatureOl] }),
+        style: new Style({
+          stroke: new Stroke({ color: "black", width: 3 }),
         }),
-      }),
-    });
+        zIndex: 3,      });
+      
+      mwsBoundaryLayer.set("id", "mws_boundary_layer");
+      mwsBoundaryLayer.setZIndex(20);
+      map.addLayer(mwsBoundaryLayer);
 
-    wbLayer.set("id", "selected_waterbody_layer");
-    wbLayer.setZIndex(50); // always above MWS
-    map.addLayer(wbLayer);
+      
+      const terrainKey = `${transformName(district)}_${transformName(block)}_terrain_raster`;
+      const drainageKey = `${transformName(district)}_${transformName(block)}`;
+
+      const [terrainLayer, drainageLayer] = await Promise.all([
+        getImageLayer("terrain", terrainKey, true, "Terrain_Style_11_Classes").catch(() => null),
+        getVectorLayers("drainage", drainageKey, true, "drainage").catch(() => null),
+      ]);
+
+      if (terrainLayer) {
+        terrainLayer.addFilter(new Crop({ feature: mwsFeatureOl }));
+        map.addLayer(terrainLayer);
+      }
+
+      if (drainageLayer) {
+        drainageLayer.setStyle((feature) => {
+          const o = Number(feature.get("ORDER")) || 1;
+          return new Style({
+            stroke: new Stroke({
+              color: drainageColors[o - 1] || drainageColors[0],
+              width: 2,
+            }),
+          });
+        });
+      
+        drainageLayer.set("id", "drainage_layer");
+        drainageLayer.setZIndex(2);
+      
+        // 🔥 clip drainage to MWS (TEHSIL)
+        drainageLayer.addFilter(
+          new Crop({
+            feature: mwsFeatureOl,
+            wrapX: false,
+            inner: false,
+          })
+        );
+      
+        map.addLayer(drainageLayer);
+      }
+      
+
+      view.fit(mwsFeatureOl.getGeometry().getExtent(), {
+        padding: [60, 60, 60, 60],
+        maxZoom: 17,
+      });
+      // 🔵 DRAW WATERBODY (TEHSIL MODE)
+  if (selectedWaterbody?.geometry) {
+    const wbGeom = geojsonReaderRef.current.readGeometry(
+      selectedWaterbody.geometry,
+      {
+        dataProjection: "EPSG:4326",
+        featureProjection: "EPSG:4326",
+      }
+    );
+
+    if (wbGeom) {
+      const wbFeature = new Feature({ geometry: wbGeom });
+
+      const wbLayer = new VectorLayer({
+        source: new VectorSource({ features: [wbFeature] }),
+        style: waterBodyStyle
+      });
+
+      wbLayer.set("id", "selected_waterbody_layer");
+      wbLayer.setZIndex(50); // always above MWS
+      map.addLayer(wbLayer);
+    }
   }
-}
-    map.renderSync();
-  }
+      map.renderSync();
+    }
 };
 
 const addPlantations = () => {
@@ -1554,8 +1508,6 @@ const showOnlySelectedPlantation = () => {
         }}
       />
 
-
-
       {/* POPUP ELEMENT */}
       <div
         ref={popupRef}
@@ -1571,29 +1523,93 @@ const showOnlySelectedPlantation = () => {
         }}
       />
       {/* LEFT INFO PANEL */}
-{selectedPlantation && (
+        {selectedPlantation && (
+          <div
+            className="absolute top-6 left-6 z-[1200] bg-white rounded-lg shadow-lg p-4 w-[260px]"
+          >
+            <div className="flex flex-col gap-2 text-sm text-gray-800">
+              <div className="font-semibold text-base">
+                {selectedPlantation?.Name?.replace(/\s*\(.*?\)\s*/g, "").trim() || "Plantation Site"}
+              </div>
+
+              <div className="text-gray-600">
+                <span className="font-medium">Patch Suitability:</span>{" "}
+                {selectedPlantation?.patch_suitability || "NA"}
+              </div>
+
+              <div className="text-gray-600">
+                <span className="font-medium">Area (ha):</span>{" "}
+                {selectedPlantation?.area_ha
+                  ? Number(selectedPlantation.area_ha).toFixed(2)
+                  : "NA"}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* LEFT INFO PANEL — WATERBODY */}
+          {mode === "waterbody" && selectedWaterbody && !selectedPlantation && (
+              <div
+                className="absolute top-6 left-6 z-[1200]
+                          bg-white rounded-md shadow-lg px-3 py-2
+                          flex flex-col gap-1 text-sm text-gray-800 border"
+                style={{ minWidth: "180px" }}
+              >
+                <div className="flex items-center gap-1 font-semibold text-gray-900">
+                  <LocationOnIcon fontSize="small" sx={{ color: "#2563eb" }} />
+                  <span>
+                    {selectedWaterbody?.UID ||
+                    selectedWaterbody?.uid ||
+                    selectedWaterbody?.properties?.UID ||
+                    "NA"}
+                  </span>
+                </div>
+
+                <div className="text-gray-700">
+                  <span className="font-medium">Area (ha): </span>
+                  {selectedWaterbody?.area_ored
+                    ? Number(selectedWaterbody.area_ored).toFixed(2)
+                    : selectedWaterbody?.properties?.area_ored
+                    ? Number(selectedWaterbody.properties.area_ored).toFixed(2)
+                    :selectedWaterbody?.areaOred?Number(selectedWaterbody?.areaOred).toFixed(2)
+                    : "NA"}
+                </div>
+              </div>
+            )}
+
+            {/* LEFT INFO PANEL — ZOI */}
+            {mode === "zoi" && selectedZoiFeature && zoiAreaState !== null && (
   <div
-    className="absolute top-6 left-6 z-[1200] bg-white rounded-lg shadow-lg p-4 w-[260px]"
+    className="absolute top-6 left-6 z-[1200]
+               bg-white rounded-md shadow-lg px-3 py-2
+               flex flex-col gap-1 text-sm text-gray-800 border"
+    style={{ minWidth: "180px" }}
   >
-    <div className="flex flex-col gap-2 text-sm text-gray-800">
-      <div className="font-semibold text-base">
-        {selectedPlantation?.Name?.replace(/\s*\(.*?\)\s*/g, "").trim() || "Plantation Site"}
-      </div>
-
-      <div className="text-gray-600">
-        <span className="font-medium">Patch Suitability:</span>{" "}
-        {selectedPlantation?.patch_suitability || "NA"}
-      </div>
-
-      <div className="text-gray-600">
-        <span className="font-medium">Area (ha):</span>{" "}
-        {selectedPlantation?.area_ha
-          ? Number(selectedPlantation.area_ha).toFixed(2)
-          : "NA"}
-      </div>
+    <div className="flex items-center gap-1 font-semibold text-gray-900">
+      <LocationOnIcon fontSize="small" sx={{ color: "#d97706" }} />
+      <span>ZOI</span>
     </div>
+
+    <div className="text-gray-700">
+      <span className="font-medium">Area (ha): </span>
+      {zoiAreaState.toFixed(2)}
+    </div>
+
+    {/* You can read ANYTHING from ZOI now */}
+    {selectedZoiFeature.get &&
+      selectedZoiFeature.get("Village") && (
+        <div className="text-gray-700">
+          <span className="font-medium">Village:</span>{" "}
+          {selectedZoiFeature.get("Village")}
+        </div>
+      )}
   </div>
-)}
+              )}
+
+
+
+
+
 
           {/* YEAR SLIDER — ONLY FOR WATERBODY */}
           {mode === "waterbody" && selectedWaterbody && (
@@ -1656,24 +1672,132 @@ const showOnlySelectedPlantation = () => {
             </div>
           )}
 
-{mode === "zoi" && selectedWaterbody && (
-  <div
-    className="absolute bottom-16 left-4 right-4 
-               flex justify-end z-[1000]"
-  >
-    <div
-      className="bg-white/90 p-4 rounded-md shadow-md 
-                 min-w-[220px] sm:min-w-[300px] md:min-w-[500px]"
-    >
-      <YearSlider
-        currentLayer={{ name: "lulcWaterrej" }}
-        sliderId="map2"
-      />
-    </div>
-  </div>
-)}
+        {mode === "zoi" && selectedWaterbody && (
+          <div
+            className="absolute bottom-16 left-4 right-4 
+                      flex justify-end z-[1000]"
+          >
+            <div
+              className="bg-white/90 p-4 rounded-md shadow-md 
+                        min-w-[220px] sm:min-w-[300px] md:min-w-[500px]"
+            >
+              <YearSlider
+                currentLayer={{ name: "lulcWaterrej" }}
+                sliderId="map2"
+              />
+            </div>
+          </div>
+        )}
+
+        {/* ZOI LEGEND */}
+        {mode === "zoi" && selectedWaterbody && (
+          <div className="absolute bottom-16 left-4 z-[1000]">
+            {!waterLegendOpen ? (
+              /* COLLAPSED TAB */
+              <div
+                onClick={() => setWaterLegendOpen(true)}
+                className="bg-white/90 px-2 py-2 rounded-r-md shadow-md 
+                          cursor-pointer font-semibold text-sm select-none"
+                style={{
+                  writingMode: "vertical-rl",
+                  textOrientation: "mixed",
+                }}
+              >
+                ZOI Legend ▶
+              </div>
+            ) : (
+              /* EXPANDED LEGEND */
+              <div className="bg-white/90 p-4 rounded-md shadow-md ml-2 min-w-[180px]">
+                <div className="flex justify-between items-center mb-2">
+                  <p className="font-semibold text-sm">ZOI Legend</p>
+                  <button
+                    onClick={() => setWaterLegendOpen(false)}
+                    className="text-sm font-bold hover:opacity-70"
+                  >
+                    ◀
+                  </button>
+                </div>
+
+                {WATER_DASHBOARD_CONFIG.legends.zoi.map((item, idx) => (
+                  <div key={idx} className="flex items-center gap-2 mb-1">
+                    <div
+                      className="w-4 h-4 border border-gray-400"
+                      style={{ backgroundColor: item.color }}
+                    />
+                    <span className="text-gray-700 text-sm">
+                      {item.label}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
 
 
+        {mode === "mws" && selectedWaterbody && (
+          <>
+            {/* 🌄 TERRAIN LEGEND — LEFT */}
+            <div className="absolute left-0 bottom-0 p-4 pointer-events-auto z-[1000]">
+              {!terrainLegend ? (
+                <div
+                  onClick={() => setTerrainLegend(true)}
+                  className="bg-white/90 px-2 py-1 rounded-r-md shadow-md cursor-pointer font-bold text-gray-800"
+                  style={{ writingMode: "vertical-rl" }}
+                >
+                  Terrain Legend ▶
+                </div>
+              ) : (
+                <div className="bg-white/90 p-4 rounded-md shadow-md min-w-[220px] max-h-[240px] overflow-auto">
+                  <div className="flex justify-between mb-2">
+                    <p className="text-sm font-semibold">Terrain Layer Legend</p>
+                    <button onClick={() => setTerrainLegend(false)}>◀</button>
+                  </div>
+
+                  {WATER_DASHBOARD_CONFIG.legends.terrain.map((item, idx) => (
+                    <div key={idx} className="flex items-center gap-2 mt-1">
+                      <div
+                        className="w-5 h-5 border border-black"
+                        style={{ backgroundColor: item.color }}
+                      />
+                      <p className="text-xs">{item.label}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* 🌊 DRAINAGE LEGEND — RIGHT */}
+            <div className="absolute right-0 bottom-0 p-4 pointer-events-auto z-[1000]">
+              {!drainageLegend ? (
+                <div
+                  onClick={() => setDrainageLegend(true)}
+                  className="bg-white/90 px-2 py-1 rounded-l-md shadow-md cursor-pointer font-bold text-gray-800"
+                  style={{ writingMode: "vertical-rl" }}
+                >
+                  Drainage Legend ▶
+                </div>
+              ) : (
+                <div className="bg-white/90 p-4 rounded-md shadow-md min-w-[220px] max-h-[240px] overflow-auto">
+                  <div className="flex justify-between mb-2">
+                    <p className="text-sm font-semibold">Drainage Layer Legend</p>
+                    <button onClick={() => setDrainageLegend(false)}>◀</button>
+                  </div>
+
+                  {WATER_DASHBOARD_CONFIG.legends.drainage.map((item, idx) => (
+                    <div key={idx} className="flex items-center gap-2 mt-1">
+                      <div
+                        className="w-5 h-5 border border-black"
+                        style={{ backgroundColor: item.color }}
+                      />
+                      <p className="text-xs">Order {item.label}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </>
+        )}
 
       {/* ZOOM CONTROLS */}
       <div className="absolute top-10 right-4 flex flex-col gap-1 z-[1100]">

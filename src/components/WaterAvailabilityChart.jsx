@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef,useMemo } from "react";
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -25,8 +25,6 @@ ChartJS.register(
   LineController
 );
 
-const years = ["17-18", "18-19", "19-20", "20-21", "21-22", "22-23", "23-24"];
-
 const WaterAvailabilityChart = ({
   isTehsil,
   waterbody,
@@ -36,9 +34,53 @@ const WaterAvailabilityChart = ({
 }) => {
   const [showImpact, setShowImpact] = useState(false);
   const prevImpactRef = useRef(null);
+
+  const extractSeasonYears = (props = {}) => {
+    const years = new Set();
+  
+    Object.keys(props).forEach((key) => {
+      const match = key.match(/^(k_|kr_|krz_)(\d{2}[-_]\d{2})$/);
+      if (match) {
+        years.add(match[2].replace("_", "-"));
+      }
+    });
+  
+    return Array.from(years).sort();
+  };
+
+  const yearSourceProps = useMemo(() => {
+    if (isTehsil) {
+      return water_rej_data?.features?.[0]?.properties || {};
+    }
+  
+    if (!water_rej_data?.features?.length || !waterbody) return {};
+  
+    const feature = water_rej_data.features.find(
+      (f) => f.properties?.UID === waterbody.UID
+    );
+  
+    if (!isTehsil) {
+      console.log("📌 Matched Project Feature =>", feature);
+    }
+
+    return feature?.properties || {};
+  }, [isTehsil, water_rej_data, waterbody]);
+
+  
+  const years = useMemo(() => {
+    const extracted = extractSeasonYears(yearSourceProps);
+    console.log("✅ WaterAvailabilityChart extracted years:", extracted);
+    return extracted;
+  }, [yearSourceProps]);
+  
+
+  console.log("isTehsil:", isTehsil);
+console.log("years:", years);
+
+
 const getProp = (feature, key) => {
   if (!feature) return 0;
-console.log(mwsFeature)
+
   // ✔ If OL Feature (tehsil case)
   if (typeof feature.get === "function") {
     return feature.get(key);
@@ -48,15 +90,10 @@ console.log(mwsFeature)
   return feature.properties?.[key] ?? 0;
 };
 
-  const yearMap = {
-    "17-18": "2017-2018",
-    "18-19": "2018-2019",
-    "19-20": "2019-2020",
-    "20-21": "2020-2021",
-    "21-22": "2021-2022",
-    "22-23": "2022-2023",
-    "23-24": "2023-2024",
-  };
+const toLongYear = (year) => {
+  const [start, end] = year.split("-");
+  return `20${start}-20${end}`;
+};
 
 // -------------------------------
 // RAINFALL LOGIC FOR TEHSIL + PROJECT
@@ -69,10 +106,10 @@ const totalRainfall = years.reduce((acc, year) => {
 
   // ✔️ Project Mode → Use original kharif/rabi/zaid fields
   if (!isTehsil) {
-    const longYear = yearMap[year];
+    const longYear = toLongYear(year);
     const kharif = Number(getProp(mwsFeature, `precipitation_kharif_${longYear}`));
-const rabi   = Number(getProp(mwsFeature, `precipitation_rabi_${longYear}`));
-const zaid   = Number(getProp(mwsFeature, `precipitation_zaid_${longYear}`));
+    const rabi   = Number(getProp(mwsFeature, `precipitation_rabi_${longYear}`));
+    const zaid   = Number(getProp(mwsFeature, `precipitation_zaid_${longYear}`));
 
 acc[`TR${year}`] = kharif + rabi + zaid;
 
@@ -106,6 +143,68 @@ acc[`TR${year}`] = kharif + rabi + zaid;
 
   return acc;
 }, {});
+
+const computedImpactYear = React.useMemo(() => {
+  if (!years?.length || !totalRainfall) return null;
+
+  const interventionYear = (() => {
+    if (isTehsil) return "22-23"; // fallback for now
+  
+    const f = water_rej_data?.features?.find(
+      (x) => x.properties?.UID === waterbody?.UID
+    );
+  console.log(f)
+  let iv = f?.properties?.intervention_year;
+  if (!iv || typeof iv !== "string" || !iv.includes("-")) {
+    iv = "22-23";
+  }
+  return iv;
+    })();
+  
+  console.log(interventionYear)
+  const preYears = years.filter((y) => y < interventionYear);
+  const postYears = years.filter((y) => y > interventionYear);
+
+  let minDiff = Infinity;
+  let selected = null;
+
+  preYears.forEach((pre) => {
+    const preRain = totalRainfall[`TR${pre}`] ?? 0;
+
+    postYears.forEach((post) => {
+      const postRain = totalRainfall[`TR${post}`] ?? 0;
+      const diff = Math.abs(preRain - postRain);
+
+      if (diff < minDiff) {
+        minDiff = diff;
+        selected = { pre, post, diff };
+      }
+    });
+  });
+
+  console.log(
+    "🎯 IMPACT YEAR SELECTION →",
+    "intervention:", interventionYear,
+    "pre:", selected?.pre,
+    "post:", selected?.post
+  );
+  
+  return selected;
+}, [years, totalRainfall]);
+
+useEffect(() => {
+  if (!computedImpactYear || !onImpactYearChange) return;
+
+  if (
+    !prevImpactRef.current ||
+    prevImpactRef.current.pre !== computedImpactYear.pre ||
+    prevImpactRef.current.post !== computedImpactYear.post
+  ) {
+    prevImpactRef.current = computedImpactYear;
+    onImpactYearChange(computedImpactYear);
+  }
+}, [computedImpactYear, onImpactYearChange]);
+
 
 
   const groups = {
@@ -209,35 +308,8 @@ acc[`TR${year}`] = kharif + rabi + zaid;
     return scaled;
   });
 
-  const interventionYear = "22-23";
-  const preYears = years.filter((y) => y < interventionYear);
-  const postYears = years.filter((y) => y > interventionYear);
-  let minDiff = Infinity;
-  let impactYear = null;
 
-  preYears.forEach((pre) => {
-    const preRain = totalRainfall[`TR${pre}`] ?? 0;
-    postYears.forEach((post) => {
-      const postRain = totalRainfall[`TR${post}`] ?? 0;
-      const diff = Math.abs(preRain - postRain);
-      if (diff < minDiff) {
-        minDiff = diff;
-        impactYear = { pre, post, diff };
-      }
-    });
-  });
 
-  useEffect(() => {
-    if (!impactYear || !onImpactYearChange) return;
-    const hasChanged =
-      !prevImpactRef.current ||
-      prevImpactRef.current.pre !== impactYear.pre ||
-      prevImpactRef.current.post !== impactYear.post;
-    if (hasChanged) {
-      prevImpactRef.current = impactYear;
-      onImpactYearChange(impactYear);
-    }
-  }, [impactYear, onImpactYearChange]);
 
   let data;
 
@@ -275,9 +347,9 @@ acc[`TR${year}`] = kharif + rabi + zaid;
     });
   }
 
-  if (!showImpact) {
+  if (!showImpact || !computedImpactYear) {
     data = baseData;
-  } else if (impactYear) {
+  } else if (computedImpactYear) {
     const waterIndicators = ["kharif", "rabi", "zaid"];
 
     data = {
@@ -292,7 +364,7 @@ acc[`TR${year}`] = kharif + rabi + zaid;
           // ✅ only show bars for impact years, set others to 0
           data: years.map((year, i) => {
             const isImpactYear =
-              year === impactYear.pre || year === impactYear.post;
+            year === computedImpactYear.pre || year === computedImpactYear.post;
             return isImpactYear ? normalizedData[i][key] ?? 0 : 0;
           }),
           position: "center",
@@ -321,24 +393,40 @@ acc[`TR${year}`] = kharif + rabi + zaid;
       
       annotation: {
         annotations: isTehsil
-          ? {} // hide annotation completely in tehsil mode
-          : {
-              interventionLine: {
-                type: "line",
-                scaleID: "x",
-                value: "22-23",
-                borderColor: "black",
-                borderWidth: 2,
-                label: {
-                  content: "Intervention Year",
-                  enabled: true,
-                  position: "start",
-                  color: "black",
-                  font: { weight: "bold" },
+          ? {}
+          : (() => {
+              const f = water_rej_data?.features?.find(
+                (x) => x.properties?.UID === waterbody?.UID
+              );
+              const interventionYear = (() => {
+                if (isTehsil) return "22-23";
+              
+                const iv = f?.properties?.intervention_year;
+                return typeof iv === "string" && iv.includes("-")
+                  ? iv
+                  : "22-23";
+              })();
+              
+      
+              return {
+                interventionLine: {
+                  type: "line",
+                  scaleID: "x",
+                  value: interventionYear,
+                  borderColor: "black",
+                  borderWidth: 2,
+                  label: {
+                    content: `Intervention Year (${interventionYear})`,
+                    enabled: true,
+                    position: "start",
+                    color: "black",
+                    font: { weight: "bold" },
+                  },
                 },
-              },
-            },
+              };
+            })(),
       },
+      
       
     },
     scales: {
@@ -376,13 +464,13 @@ acc[`TR${year}`] = kharif + rabi + zaid;
     },
   };
 
+  
   return (
     <div className="w-full">
-      {/* Outer wrapper - lets chart area be sized separately */}
       <div
         className="flex flex-col mb-2 px-4"
         style={{
-          minHeight: "120px", // fix height so it doesn't jump
+          minHeight: "120px",
           maxHeight: "134px",
           overflow: "hidden",
           fontSize: "clamp(0.55rem, 0.8vw, 0.8rem)",
@@ -483,8 +571,8 @@ acc[`TR${year}`] = kharif + rabi + zaid;
                 Kharif Rabi Zaid : Water available in Kharif, Rabi And Zaid
               </span>
             </div>
-            {showImpact && impactYear && (
-              <div className=" mx-auto w-fit text-xs sm:text-sm text-gray-700 rounded-md px-3 py-2  text-center shadow-sm">
+            {showImpact && computedImpactYear && (
+              <div className=" mx-auto w-fit text-xs sm:text-xs text-gray-700 rounded-md px-1 py-0.5  text-center shadow-sm">
                 <p>
                   Criteria for selecting the pre and post intervention years
                   selected are <br /> with minimum difference in rainfall.

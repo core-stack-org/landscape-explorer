@@ -82,6 +82,7 @@ export default function TableView({
     setInfoAnchor(anchor);
     setInfoText(text);
   };
+  
 
   const handleFilterClick = (anchor, key) => {
     setFilterAnchor(anchor);
@@ -110,6 +111,10 @@ export default function TableView({
       <table className="w-full border border-gray-200 text-sm md:text-base text-gray-800">
         <thead className="bg-gray-100 font-semibold">
           <tr className="border-b">
+          <th className="px-3 py-4 text-center">
+            S.No.
+          </th>
+
             {headers.map((col) => (
               <th key={col.key} className="relative px-3 py-4 text-center">
                 <div
@@ -181,12 +186,17 @@ export default function TableView({
 
         {/* BODY */}
         <tbody className="text-sm text-gray-700">
-          {paginatedRows.map((row) => (
+          {paginatedRows.map((row,index) => (
             <tr
               key={row.id}
               className="hover:bg-gray-50 cursor-pointer transition-colors border-b"
               onClick={() => onRowClick(row)}
             >
+              <td className="px-3 py-4 text-center text-gray-700">
+                {pageSize
+                  ? (currentPage - 1) * pageSize + index + 1
+                  : index + 1}
+              </td>
               {headers.map((col) => (
                 <td key={col.key} className="px-3 py-4 text-center">
                 {col.render ? col.render(row) : row[col.key] ?? "NA"}

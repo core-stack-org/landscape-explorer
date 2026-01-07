@@ -14,6 +14,7 @@ import { Lightbulb } from "lucide-react";
 import ArrowBackIosNewIcon from "@mui/icons-material/ArrowBackIosNew";
 import TableRowsIcon from "@mui/icons-material/TableRows";
 import PublicIcon from "@mui/icons-material/Public";
+import CircularProgress from "@mui/material/CircularProgress";
 import DashboardBasemap from "./dashboard_basemap.jsx";
 import { useGlobalWaterData } from "../store/useGlobalWaterData";
 import { getWaterbodyData } from "../actions/getWaterbodyData";
@@ -33,55 +34,52 @@ const WaterProjectDashboard = () => {
   const [openInfoKey, setOpenInfoKey] = useState(null);
   const [impactYear, setImpactYear] = useState({ pre: null, post: null });
   const [autoOpened, setAutoOpened] = useState(false);
-    const [showMap, setShowMap] = useState(false);  
-    const [tehsilMap, setTehsilMap] = useState(null);
- 
-
+  const [showMap, setShowMap] = useState(false);  
+  const [tehsilMap, setTehsilMap] = useState(null);
   const lulcYear1 = useRecoilValue(yearAtomFamily("map1"));
   const lulcYear2 = useRecoilValue(yearAtomFamily("map2"));
   const [waterbodySearch, setWaterbodySearch] = useState("");
   const [organization, setOrganization] = useState(null);
   const [loadingData, setLoadingData] = useState(true);
-
   const [tehsilGeoData, setTehsilGeoData] = useState(null);
   const [tehsilSelectedFeature, setTehsilSelectedFeature] = useState(null);
   const [mwsFromLocalStorage, setMwsFromLocalStorage] = useState(null);
-
-  const [selectedWaterbodyForTehsil, setSelectedWaterbodyForTehsil] =
-  useRecoilState(selectedWaterbodyForTehsilAtom);
-
+  const [extractedSeasonalYears, setExtractedSeasonalYears] = useState([]);
+  const [selectedWaterbodyForTehsil, setSelectedWaterbodyForTehsil] = useRecoilState(selectedWaterbodyForTehsilAtom);
   const tehsilDrought = useRecoilValue(tehsilDroughtDataAtom);
-
   const location = useLocation();
   const navigate = useNavigate();
+  let tempGeoData =  useRecoilValue(waterGeoDataAtom);
+    // Extract URL parameters 
+    const params = new URLSearchParams(location.search);
 
-const tehsilRefetchDoneRef = useRef(false);
+    const projectIdParam = params.get("projectId");
+    const projectNameParam = params.get("project_name");
+    const typeParam = params.get("type");
 
-  // Extract URL parameters 
-  const params = new URLSearchParams(location.search);
-
-  const typeParam = params.get("type");
-  const projectIdParam = params.get("projectId");
-  const projectNameParam = params.get("project_name");
+    const mode = typeParam === "project" ? "project" : "tehsil";
   
-  const mode = typeParam === "project" ? "project" : "tehsil";
-
-  const stateParam = params.get("state");
-  const districtParam = params.get("district");
-  const blockParam = params.get("block");
-
-  const waterbodyParam = params.get("waterbody");
+    const stateParam = params.get("state");
+    const districtParam = params.get("district");
+    const blockParam = params.get("block");
+  
+    const waterbodyParam = params.get("waterbody");
   const isTehsilMode = typeParam === "tehsil";
+  const geoData = isTehsilMode ? selectedWaterbodyForTehsil : tempGeoData
+  const mwsGeoData = useRecoilValue(waterMwsDataAtom);
+  const projectZoi = useRecoilValue(zoiFeaturesAtom);
+  const tehsilZoi = useRecoilValue(tehsilZoiFeaturesAtom);
+  const zoiFeatures = isTehsilMode ? tehsilZoi : projectZoi;
 
 
-  const activeSelectedWaterbody = isTehsilMode
-    ? selectedWaterbodyForTehsil
-    : selectedWaterbody;
+
+
+
+  const activeSelectedWaterbody = isTehsilMode ? selectedWaterbodyForTehsil : selectedWaterbody;
 
   const [view, setView] = useState(
     isTehsilMode ? "map" : typeParam === "tehsil" ? "map" : "table"
   );
-
 
   useGlobalWaterData({
     type: typeParam,
@@ -113,8 +111,6 @@ const tehsilRefetchDoneRef = useRef(false);
     const parsed = JSON.parse(raw);
     setMwsFromLocalStorage(parsed);
   }, []);
-
-
 
   useEffect(() => {
     if (!isTehsilMode) return;
@@ -154,9 +150,6 @@ const tehsilRefetchDoneRef = useRef(false);
     mwsFromLocalStorage,
   ]);
   
-  
-
-
   useEffect(() => {
     if (typeParam === "tehsil") {
       setShowMap(true);
@@ -215,30 +208,6 @@ const tehsilRefetchDoneRef = useRef(false);
     };
   }, [infoAnchor]);
 
-  // useEffect(() => {
-  //   const storedOrg = localStorage.getItem("selectedOrganization");
-  //   const storedProject = localStorage.getItem("selectedProject");
-
-  //   if (storedOrg) {
-  //     const parsedOrg = JSON.parse(storedOrg);
-
-  //     setOrganization((prev) =>
-  //       prev?.value !== parsedOrg.value ? parsedOrg : prev
-  //     );
-  //   } else {
-  //     setOrganization(null);
-  //   }
-
-  //   if (storedProject) {
-  //     const parsedProj = JSON.parse(storedProject);
-  //     setProject((prev) =>
-  //       prev?.value !== parsedProj.value ? parsedProj : prev
-  //     );
-  //   } else {
-  //     setProject(null);
-  //   }
-  // }, [location.key]);
-
   useEffect(() => {
     if (view === "table") {
       setSelectedWaterbody(null);
@@ -259,55 +228,49 @@ const tehsilRefetchDoneRef = useRef(false);
   
       // tehsil cleanup
       setSelectedWaterbodyForTehsil(null);
+      setExtractedSeasonalYears([]);
     }
   }, [location.search]);
   
-  let tempGeoData =  useRecoilValue(waterGeoDataAtom);
-  const geoData = isTehsilMode ? selectedWaterbodyForTehsil : tempGeoData
-  const mwsGeoData = useRecoilValue(waterMwsDataAtom);
-  const projectZoi = useRecoilValue(zoiFeaturesAtom);
-  const tehsilZoi = useRecoilValue(tehsilZoiFeaturesAtom);
-  const zoiFeatures = isTehsilMode ? tehsilZoi : projectZoi;
+  const extractMwsUidList = (mwsUidString) => {
+    if (!mwsUidString) return [];
 
-const extractMwsUidList = (mwsUidString) => {
-  if (!mwsUidString) return [];
+    return mwsUidString
+      .split("_")
+      .reduce((acc, val, idx, arr) => {
+        // join pairs: 12 + 33823 → 12_33823
+        if (idx % 2 === 0 && arr[idx + 1]) {
+          acc.push(`${val}_${arr[idx + 1]}`);
+        }
+        return acc;
+      }, []);
+  };
 
-  return mwsUidString
-    .split("_")
-    .reduce((acc, val, idx, arr) => {
-      // join pairs: 12 + 33823 → 12_33823
-      if (idx % 2 === 0 && arr[idx + 1]) {
-        acc.push(`${val}_${arr[idx + 1]}`);
-      }
-      return acc;
-    }, []);
-};
+  const getMatchedMWSFeaturesProject = (mwsGeoData, activeSelectedWaterbody) => {
+    if (!mwsGeoData?.features?.length || !activeSelectedWaterbody) return [];
 
-const getMatchedMWSFeaturesProject = (mwsGeoData, activeSelectedWaterbody) => {
-  if (!mwsGeoData?.features?.length || !activeSelectedWaterbody) return [];
+    const raw =
+      activeSelectedWaterbody.MWS_UID ||
+      activeSelectedWaterbody.properties?.MWS_UID;
 
-  const raw =
-    activeSelectedWaterbody.MWS_UID ||
-    activeSelectedWaterbody.properties?.MWS_UID;
+    if (!raw) return [];
 
-  if (!raw) return [];
+    const wbMwsList = extractMwsUidList(raw);
 
-  const wbMwsList = extractMwsUidList(raw);
+    const matchedFeatures = mwsGeoData.features.filter((f) => {
+      const uid = f.properties?.uid?.toString().trim();
+      return wbMwsList.includes(uid);
+    });
 
-  const matchedFeatures = mwsGeoData.features.filter((f) => {
-    const uid = f.properties?.uid?.toString().trim();
-    return wbMwsList.includes(uid);
-  });
+    return matchedFeatures;
+  };
 
-  return matchedFeatures;
-};
-
-const matchedMWSFeaturesProject = useMemo(() => {
-  return getMatchedMWSFeaturesProject(
-    mwsGeoData,
-    activeSelectedWaterbody
-  );
-}, [mwsGeoData, activeSelectedWaterbody]);
+  const matchedMWSFeaturesProject = useMemo(() => {
+    return getMatchedMWSFeaturesProject(
+      mwsGeoData,
+      activeSelectedWaterbody
+    );
+  }, [mwsGeoData, activeSelectedWaterbody]);
 
   const mwsForMap = matchedMWSFeaturesProject;
   const mwsForCharts = matchedMWSFeaturesProject?.[0] || null;
@@ -335,14 +298,10 @@ const matchedMWSFeaturesProject = useMemo(() => {
   : 0;
 
   useEffect(() => {
-    if (!window.__userSelectedOrgProject && geoData === null) {
-      setLoadingData(false);
-      return;
-    }
-      if (geoData?.features) {
-      setLoadingData(false);
+    if (geoData === null) {
+      setLoadingData(true);          // data not arrived yet
     } else {
-      setLoadingData(true);
+      setLoadingData(false);         // data arrived (even if empty)
     }
   }, [geoData]);
   
@@ -359,7 +318,6 @@ const matchedMWSFeaturesProject = useMemo(() => {
       );
     });
     
-
     if (matchedFeatureIndex !== -1) {
       const feature = geoData.features[matchedFeatureIndex];
       const props = feature.properties ?? {};
@@ -372,7 +330,7 @@ const matchedMWSFeaturesProject = useMemo(() => {
         state: props.State || "NA",
         district: props.District || "NA",
         block: props.Taluka || "NA",
-        village: props.village || "NA",
+        village: props.Village || "NA",
 
         siltRemoved: Number(props.slit_excavated) || 0,
         areaOred: props.area_ored || 0,
@@ -392,6 +350,43 @@ const matchedMWSFeaturesProject = useMemo(() => {
     }
   }, [geoData, waterbodyParam, autoOpened]);
 
+  const extractSeasonYears = (props) => {  
+    const years = new Set();
+    Object.keys(props).forEach((key) => {
+      const match = key.match(/^(k_|kr_|krz_)(\d{2}[-_]\d{2})$/);
+  
+      if (match) {
+        // console.log(" matched key:", key);
+  
+        let yr = match[2];
+        yr = yr.replace("_", "-");
+        years.add(yr);
+      }
+    });
+    const result = Array.from(years).sort();  
+    return result;
+  };
+  
+  const fullWaterbodyFeature = useMemo(() => {
+    if (!geoData?.features || !selectedFeature) return null;
+  
+    return geoData.features.find(
+      (f) =>
+        f.properties?.UID?.toString() ===
+        selectedFeature.properties?.UID?.toString()
+    );
+  }, [geoData, selectedFeature]);
+
+  useEffect(() => {
+    if (!fullWaterbodyFeature?.properties) return;
+  
+    const years = extractSeasonYears(fullWaterbodyFeature.properties);
+    console.log("✅ FINAL years:", years);
+  
+    setExtractedSeasonalYears(years);
+  }, [fullWaterbodyFeature]);
+
+  
   const impactYearMap = useMemo(() => {
     const map = {};
   
@@ -419,22 +414,6 @@ const matchedMWSFeaturesProject = useMemo(() => {
     return map;
   }, [geoData, mwsGeoData]);
   
-  const extractSeasonYears = (props) => {
-    const years = new Set();
-
-    Object.keys(props).forEach((key) => {
-      const match = key.match(/^(k_|kr_|krz_)(\d{2}[-_]\d{2})$/);
-      if (match) {
-        let yr = match[2];
-        // normalize 17_18 → 17-18
-        yr = yr.replace("_", "-");
-        years.add(yr);
-      }
-    });
-
-    return Array.from(years).sort(); // sorted list: ["17-18", "18-19", ...]
-  };
-
   const getFirstNonZeroYearIndex = (props) => {
     const years = extractSeasonYears(props); // dynamic years like ["17-18","18-19",...]
 
@@ -666,7 +645,7 @@ const matchedMWSFeaturesProject = useMemo(() => {
         state: props.State || "NA",
         district: props.District || "NA",
         block: props.Taluka || "NA",
-        village: props.village || "NA",
+        village: props.Village || "NA",
         waterbody: props.waterbody_name || "NA",
         UID: props.UID || "NA",
         areaOred: props.area_ored || 0,
@@ -675,21 +654,15 @@ const matchedMWSFeaturesProject = useMemo(() => {
         maxStreamOrder: props.max_stream_order || 0,
         MWS_UID: props.MWS_UID || 0,
         drainageFlag: props.on_drainage_line ?? props.drainage ?? 0,
-
-
         siltRemoved: Number(props.slit_excavated) || 0,
-
         avgWaterAvailabilityRabi: avgRabi,
         avgWaterAvailabilityZaid: avgZaid,
-
         ImpactRabi,
         ImpactRabiColor: getImpactColor(ImpactRabi),
         ImpactZaid,
         ImpactZaidColor: getImpactColor(ImpactZaid),
-
         rabiImpactedArea,
         zaidImpactedArea,
-
         avgDoubleCropped: avgDouble,
         avgTripleCropped: avgTriple,
 
@@ -744,6 +717,12 @@ const matchedMWSFeaturesProject = useMemo(() => {
   
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
+
+  const TableLoader = () => (
+    <div className="w-full h-[60vh] flex items-center justify-center">
+      <CircularProgress />
+    </div>
+  );
   
   return (
     <div className="mx-6 my-8 bg-white rounded-xl shadow-md p-6">
@@ -847,22 +826,11 @@ const matchedMWSFeaturesProject = useMemo(() => {
     <div className="min-h-[320px] bg-white rounded-lg shadow-sm p-2 overflow-hidden">
       <WaterAvailabilityChart
         isTehsil={isTehsilMode}
-        waterbody={
-          isTehsilMode
-            ? activeSelectedWaterbody.properties.UID
-            : activeSelectedWaterbody
-        }
-        water_rej_data={
-          isTehsilMode
-            ? { features: [geoData] }
-            : geoData
-        }
-        mwsFeature={
-          isTehsilMode
-            ? matchedMwsOlFeature
-            : mwsForCharts
-        }
-        impactYear={impactYearMap[activeSelectedWaterbody?.UID]}
+        waterbody={isTehsilMode ? activeSelectedWaterbody.properties.UID: activeSelectedWaterbody }
+        water_rej_data={isTehsilMode ? geoData ? { features: [geoData]} : null : geoData }        
+        mwsFeature={isTehsilMode ? matchedMwsOlFeature : mwsForCharts}
+        onImpactYearChange={setImpactYear} 
+        years={extractedSeasonalYears} 
         />
     </div>
 
@@ -876,6 +844,7 @@ const matchedMWSFeaturesProject = useMemo(() => {
         }
         waterbody={activeSelectedWaterbody}
           typeparam={typeParam}
+          
         />
     </div>
 
@@ -932,6 +901,7 @@ const matchedMWSFeaturesProject = useMemo(() => {
                         waterbody={activeSelectedWaterbody}
                         impactYear={impactYear}
                         isTehsil={isTehsilMode}
+                        years={extractedSeasonalYears}
                       />
       </div>
 
@@ -1106,85 +1076,28 @@ const matchedMWSFeaturesProject = useMemo(() => {
                     block={blockParam}
                     type={typeParam}
                   />
-      {/* LEGENDS OVERLAY */}
-      <div className="absolute inset-0 z-20 pointer-events-none">
-
-        {/* TERRAIN LEGEND */}
-        <div className="absolute left-0 bottom-0 p-4 pointer-events-auto">
-          {!terrainLegend ? (
-            <div
-              onClick={() => setTerrainLegend(true)}
-              className="bg-white/90 px-2 py-1 rounded-r-md shadow-md cursor-pointer font-bold text-gray-800"
-              style={{ writingMode: "vertical-rl" }}
-            >
-              Terrain Legend ▶
-            </div>
-          ) : (
-            <div className="bg-white/90 p-4 rounded-md shadow-md min-w-[220px]">
-              <div className="flex justify-between mb-2">
-                <p className="text-sm font-semibold">Terrain Layer Legend</p>
-                <button onClick={() => setTerrainLegend(false)}>◀</button>
-              </div>
-
-              {WATER_DASHBOARD_CONFIG.legends.terrain.map((item, idx) => (
-                <div key={idx} className="flex items-center gap-2 mt-1">
-                  <div
-                    className="w-5 h-5 border border-black"
-                    style={{ backgroundColor: item.color }}
-                  />
-                  <p className="text-xs">{item.label}</p>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* DRAINAGE LEGEND */}
-        <div className="absolute right-0 bottom-0 p-4 pointer-events-auto">
-          {!drainageLegend ? (
-            <div
-              onClick={() => setDrainageLegend(true)}
-              className="bg-white/90 px-2 py-1 rounded-l-md shadow-md cursor-pointer font-bold text-gray-800"
-              style={{ writingMode: "vertical-rl" }}
-            >
-              Drainage Legend ▶
-            </div>
-          ) : (
-            <div className="bg-white/90 p-4 rounded-md shadow-md min-w-[220px]">
-              <div className="flex justify-between mb-2">
-                <p className="text-sm font-semibold">Drainage Layer Legend</p>
-                <button onClick={() => setDrainageLegend(false)}>◀</button>
-              </div>
-
-              {WATER_DASHBOARD_CONFIG.legends.drainage.map((item, idx) => (
-                <div key={idx} className="flex items-center gap-2 mt-1">
-                  <div
-                    className="w-5 h-5 border border-black"
-                    style={{ backgroundColor: item.color }}
-                  />
-                  <p className="text-xs">{item.label}</p>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-
-      </div>
+  
     </div>
   </div>
 )}
       </> 
-      ) : (
-        <TableView
-          headers={WATER_DASHBOARD_CONFIG[mode].tableHeaders}
-          rows={rows}
-          waterbodySearch={waterbodySearch}
-          onSearchChange={setWaterbodySearch}
-          pageSize={50}
-          onRowClick={handleWaterbodyClick}
-
-        />
-      )}
+     ) : loadingData ? (
+      <TableLoader />
+    ) : rows.length === 0 ? (
+      <div className="w-full h-[60vh] flex items-center justify-center text-gray-500 text-sm">
+        No data available
+      </div>
+    ) : (
+      <TableView
+        headers={WATER_DASHBOARD_CONFIG[mode].tableHeaders}
+        rows={rows}
+        waterbodySearch={waterbodySearch}
+        onSearchChange={setWaterbodySearch}
+        pageSize={50}
+        onRowClick={handleWaterbodyClick}
+      />
+    )}
+    
       </div>
   );
 };
