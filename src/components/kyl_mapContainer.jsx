@@ -218,12 +218,6 @@ const MapLegend = ({ showMWS, showVillages, currentLayer, mappedAssets, mappedDe
     { color: "#feb24c", label: "Broad open slopes" },
     { color: "#f46d43", label: "Flat tops" },
     { color: "#d73027", label: "Upper Slopes" },
-    { color: "#91bfdb", label: "Deep valleys and canyons" },
-    {
-      color: "#800000",
-      label: "Incised drainages and low ridges",
-    },
-    { color: "#4d0000", label: "Mountain tops, high ridges" },
   ];
 
   const rainfallLegendItems = [
