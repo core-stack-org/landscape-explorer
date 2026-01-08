@@ -135,8 +135,8 @@ const PrecipitationStackChart = ({ feature ,waterbody,typeparam}) => {
     maintainAspectRatio: false,
     responsive: true,
     plugins: {
-      // legend: { position: "top" },
-      // title:{display:true,text:"Rainfall (in mm)",position:"bottom"},
+      legend: { position: "bottom" },
+      title:{display:true,text:"Rainfall (in mm)",position:"top"},
       tooltip: { mode: "index", intersect: false },
     },
     scales: {
@@ -149,7 +149,7 @@ const PrecipitationStackChart = ({ feature ,waterbody,typeparam}) => {
   };
 
   return (
-    <div style={{ width: "100%", height: "100%" }}>
+<div className="px-0" style={{ minHeight: "330px",width:"90%" }}>
 
       <Bar data={data} options={options} />
     </div>

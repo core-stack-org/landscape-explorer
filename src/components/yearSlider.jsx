@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useRecoilState } from "recoil";
 import { yearAtom, yearAtomFamily } from "../store/locationStore.jsx";
 
-const YearSlider = ({ currentLayer, sliderId = null }) => {
+const YearSlider = ({ currentLayer, sliderId = null,interventionYear }) => {
   const yearDataLulc = [
     { label: "2017-2018", value: "17_18" },
     { label: "2018-2019", value: "18_19" },
@@ -11,7 +11,17 @@ const YearSlider = ({ currentLayer, sliderId = null }) => {
     { label: "2021-2022", value: "21_22" },
     { label: "2022-2023", value: "22_23" },
     { label: "2023-2024", value: "23_24" },
+    { label: "2024-2025", value: "24_25" },
   ];
+  const normIntervention = interventionYear
+  ? interventionYear.replace("-", "_")
+  : null;
+
+  const interventionIndex = normIntervention
+  ? yearDataLulc.findIndex(y => y.value === normIntervention)
+  : -1;
+
+
 
   const [currentValue, setCurrentValue] = useState(0);
   const [showTooltip, setShowTooltip] = useState(false);
@@ -61,9 +71,14 @@ const YearSlider = ({ currentLayer, sliderId = null }) => {
     <div className="w-full max-w-2xl mx-auto">
       <div className="relative">
         <div className="bg-white bg-opacity-70 rounded-lg px-4 py-2">
-          <div className="text-sm font-medium text-gray-700 mb-1">
-            Year Slider
-          </div>
+        <div className="flex justify-between items-center text-sm font-medium text-gray-700 mb-1">
+          <span>Year Slider</span>
+          {interventionYear && (
+            <span className="text-gray-900">
+              Intervention year: {interventionYear}
+            </span>
+          )}
+        </div>
 
           <div className="relative">
             {showTooltip && (
@@ -106,8 +121,20 @@ const YearSlider = ({ currentLayer, sliderId = null }) => {
             </div>
 
             {/* Year labels */}
-            <div className="relative w-full mt-3 h-8">
-              {yearDataLulc.map(({ label }, index) => (
+            <div className="relative w-full mt-3 h-10 overflow-visible">
+                      {interventionIndex !== -1 && (
+              <div
+                className="absolute top-0 h-full w-[2px] bg-red-500"
+                style={{
+                  left: `${(interventionIndex / (yearDataLulc.length - 1)) * 100}%`,
+                  transform: "translateX(-1px)",
+                  zIndex: 20,
+                }}
+              />
+            )}
+            {yearDataLulc.map(({ label,value }, index) => {
+
+              return (
                 <div
                   key={index}
                   className="absolute text-[10px] text-gray-700 text-center whitespace-nowrap"
@@ -115,12 +142,15 @@ const YearSlider = ({ currentLayer, sliderId = null }) => {
                     left: `${(index / (yearDataLulc.length - 1)) * 65 + 15.5}%`,
                   }}
                 >
+                  {/* Year label */}
                   {label.split("-")[0]}
                   <br />
                   {label.split("-")[1]}
                 </div>
-              ))}
-            </div>
+              );
+            })}
+          </div>
+
           </div>
         </div>
       </div>

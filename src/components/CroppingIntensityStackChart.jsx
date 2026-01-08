@@ -31,8 +31,6 @@ const CroppingIntensityStackChart = ({
   years
 }) => {
   const [showImpact, setShowImpact] = useState(false);
-console.log(impactYear)
-
 
   const wbUID =
   waterbody?.UID ||
@@ -58,7 +56,6 @@ console.log(impactYear)
       single_non_kharif:
         (matchedFeature.get(`single_non_kharif_cropped_area_${year}`) || 0),
     }));
-
 
     const extractYearsFromZoi = (feature) => {
       if (!feature) return [];
@@ -180,8 +177,6 @@ console.log(impactYear)
       },
     },
   };
-  console.log("ZOI keys:", matchedFeature.getKeys());
-console.log("years:", years);
 
   return (
     <div>

@@ -70,11 +70,6 @@ const WaterProjectDashboard = () => {
   const projectZoi = useRecoilValue(zoiFeaturesAtom);
   const tehsilZoi = useRecoilValue(tehsilZoiFeaturesAtom);
   const zoiFeatures = isTehsilMode ? tehsilZoi : projectZoi;
-
-
-
-
-
   const activeSelectedWaterbody = isTehsilMode ? selectedWaterbodyForTehsil : selectedWaterbody;
 
   const [view, setView] = useState(
@@ -355,9 +350,7 @@ const WaterProjectDashboard = () => {
     Object.keys(props).forEach((key) => {
       const match = key.match(/^(k_|kr_|krz_)(\d{2}[-_]\d{2})$/);
   
-      if (match) {
-        // console.log(" matched key:", key);
-  
+      if (match) {  
         let yr = match[2];
         yr = yr.replace("_", "-");
         years.add(yr);
@@ -381,7 +374,6 @@ const WaterProjectDashboard = () => {
     if (!fullWaterbodyFeature?.properties) return;
   
     const years = extractSeasonYears(fullWaterbodyFeature.properties);
-    console.log("✅ FINAL years:", years);
   
     setExtractedSeasonalYears(years);
   }, [fullWaterbodyFeature]);
@@ -723,9 +715,43 @@ const WaterProjectDashboard = () => {
       <CircularProgress />
     </div>
   );
+
+  const printReport=()=>{
+    window.print();
+  }
   
   return (
-    <div className="mx-6 my-8 bg-white rounded-xl shadow-md p-6">
+<div className={`${isTehsilMode ? "pb-8 w-full" : "mx-6 my-8 bg-white rounded-xl shadow-md p-6"}`}>
+  
+    {isTehsilMode && activeSelectedWaterbody && (
+      <div className="w-full overflow-hidden">
+        <div className="w-full py-10 bg-[#2c3e50] text-white relative shadow-md">
+          <button
+            className="absolute top-4 right-6 flex items-center gap-2
+            bg-green-600 hover:bg-green-700 text-white font-semibold 
+            px-4 py-2 rounded-md shadow-md transition-all"
+            onClick={printReport}
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18"
+              viewBox="0 0 24 24" fill="none" stroke="currentColor"
+              strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="6 9 6 2 18 2 18 9"></polyline>
+              <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
+              <rect x="6" y="14" width="12" height="8"></rect>
+            </svg>
+            Save as PDF
+          </button>
+
+          <h1 className="text-3xl font-bold text-center">
+            Waterbody Data Analysis Report
+          </h1>
+
+          <p className="text-base text-blue-100 text-center mt-1">
+            Tehsil: {activeSelectedWaterbody?.properties?.Taluka || blockParam || "NA"} • UID: {activeSelectedWaterbody?.properties?.UID}
+          </p>
+        </div>
+      </div>
+    )}
         <div className="flex items-center justify-between mb-6">
         {mode === "project" && (
           <div className="flex gap-3">
@@ -767,6 +793,8 @@ const WaterProjectDashboard = () => {
         )}
     </div>
     {/* SECTION TEXT — show only when zoomed on a waterbody */}
+    <div className="px-6 md:px-10 w-full box-border overflow-x-hidden">
+
       {showMap && activeSelectedWaterbody && (
         <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
           <h2 className="text-2xl font-bold text-blue-600 border-b-2 border-blue-600 pb-1">
@@ -790,7 +818,7 @@ const WaterProjectDashboard = () => {
 
     {showMap ? (
       <>
-      <div className="h-[80vh] bg-white rounded-xl shadow-md overflow-hidden flex">
+      <div className="h-[90vh] bg-white rounded-xl shadow-md overflow-hidden flex">
 
 {/* MAP */}
 <div
@@ -823,7 +851,7 @@ const WaterProjectDashboard = () => {
   <div className="w-[40%] h-full border-l bg-white overflow-y-auto p-4 flex flex-col gap-6">
 
     {/* WATER AVAILABILITY */}
-    <div className="min-h-[320px] bg-white rounded-lg shadow-sm p-2 overflow-hidden">
+    <div className="min-h-[320px] bg-white rounded-lg shadow-sm p-2 overflow-visible">
       <WaterAvailabilityChart
         isTehsil={isTehsilMode}
         waterbody={isTehsilMode ? activeSelectedWaterbody.properties.UID: activeSelectedWaterbody }
@@ -835,7 +863,7 @@ const WaterProjectDashboard = () => {
     </div>
 
     {/* PRECIPITATION */}
-    <div className="min-h-[320px] bg-white rounded-lg shadow-sm p-2 overflow-hidden">
+    <div className="min-h-[320px] bg-white rounded-lg shadow-sm p-2 overflow-visible">
       <PrecipitationStackChart
         feature={
           typeParam === "tehsil"
@@ -1097,8 +1125,53 @@ const WaterProjectDashboard = () => {
         onRowClick={handleWaterbodyClick}
       />
     )}
-    
+    </div>
+{/* ==================== BOTTOM REPORT FOOTER ==================== */}
+      {isTehsilMode && activeSelectedWaterbody && (
+        <footer
+          className="mt-10 border-t border-gray-300 pt-5 text-center text-[#2c2d2d]"
+        >
+          <p>
+            Report generated on{" "}
+            <span>{new Date().toLocaleDateString("en-IN", {
+              year: "numeric",
+              month: "long",
+              day: "numeric",
+            })}</span>{" "}
+            | CoRE Stack Team
+          </p>
+
+          <p className="mt-2">
+            Refer to our{" "}
+            <a
+              href="https://drive.google.com/file/d/1ZxovdpPThkN09cB1TcUYSE2BImI7M3k_/view"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="underline text-blue-600"
+            >
+              technical manual
+            </a>{" "}
+            for more details on how data was collected and processed.
+          </p>
+
+          <p className="mt-2 max-w-7xl mx-auto text-xs sm:text-sm leading-relaxed">
+            Do note that while the underlying datasets have been validated against
+            ground-truth in some locations, we need your feedback if the outputs
+            shown here are in agreement with your observations about this area.
+            Please do share your feedback with{" "}
+            <a
+              href="mailto:contact@core-stack.org"
+              className="underline text-blue-600"
+            >
+              contact@core-stack.org
+            </a>.
+          </p>
+        </footer>
+      )}
+
+
       </div>
+      
   );
 };
 
