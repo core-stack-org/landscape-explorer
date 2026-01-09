@@ -207,23 +207,17 @@ const MapLegend = ({ showMWS, showVillages, currentLayer, mappedAssets, mappedDe
   ];
 
   const terrainLegendItems = [
-    { color: "#313695", label: "V-shape river valleys, Deep narrow canyons" },
+    { color: "#313695", label: "Deep valleys and canyons" },
     {
       color: "#4575b4",
-      label: "Lateral midslope incised drainages, Local valleys in plains",
+      label: "Incised drainages and low ridges",
     },
-    { color: "#91bfdb", label: "Local ridge/hilltops within broad valleys" },
+    { color: "#a50026", label: "Mountain tops and high ridges" },
     { color: "#e0f3f8", label: "U-shape valleys" },
     { color: "#fffc00", label: "Broad Flat Areas" },
     { color: "#feb24c", label: "Broad open slopes" },
-    { color: "#f46d43", label: "Mesa tops" },
+    { color: "#f46d43", label: "Flat tops" },
     { color: "#d73027", label: "Upper Slopes" },
-    { color: "#a50026", label: "Upland incised drainages Stream headwaters" },
-    {
-      color: "#800000",
-      label: "Lateral midslope drainage divides, Local ridges in plains",
-    },
-    { color: "#4d0000", label: "Mountain tops, high ridges" },
   ];
 
   const rainfallLegendItems = [
