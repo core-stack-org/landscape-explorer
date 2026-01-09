@@ -1529,6 +1529,7 @@ const getRadiusFromArea = (ha) => {
   const radius_m = Math.sqrt(area_m2 / Math.PI);
   return radius_m / 1000;                 // meters → km
 };
+console.log(selectedWaterbody)
 
   return (
     <div className="relative w-full overflow-visible">
@@ -1624,10 +1625,11 @@ const getRadiusFromArea = (ha) => {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-1 font-semibold text-gray-900">
                 <LocationOnIcon fontSize="small" sx={{ color: '#2563eb', marginTop:'1px' }} />
-                <span className="tracking-wide font-semibold">
+                Waterbody name : <span className="tracking-wide font-semibold">
                 {selectedWaterbody?.waterbody_name ||
               selectedWaterbody?.name ||
               selectedWaterbody?.properties?.waterbody_name ||
+              selectedWaterbody?.waterbody ||
               "NA"}
                 </span>
               </div>
