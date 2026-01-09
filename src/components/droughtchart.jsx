@@ -24,8 +24,6 @@ ChartJS.register(
 const DroughtChart = ({ mwsGeoData, waterbody, typeparam }) => {
   if (!mwsGeoData || !waterbody) return null;
 
-  console.log("Incoming waterbody:", mwsGeoData);
-
   // GET UID BASED ON MODE
   let mwsUid =
     typeparam === "tehsil"
@@ -38,8 +36,6 @@ const DroughtChart = ({ mwsGeoData, waterbody, typeparam }) => {
   const parts = mwsUid.split("_");
   const partialUid =
     parts.length >= 2 ? `${parts[0]}_${parts[1]}` : mwsUid;
-
-  console.log("Searching UID:", mwsUid, " Partial:", partialUid);
 
   let matchedFeature = null;
 

@@ -300,11 +300,7 @@ export default function KYLHomePage() {
               </a>
 
               {/*  Card 3 */}
-              <div
-                onClick={() => {
-                  setShowOverlay(true);
-                  setTimeout(() => setShowOverlay(false), 5000);
-                }}
+              <div onClick={() => navigate("/CCUsagePage")}
                 className="cursor-pointer hover:shadow-lg transition duration-200 ease-in-out"
               >
                 <div className="flex flex-col items-center text-center">
@@ -314,13 +310,6 @@ export default function KYLHomePage() {
                       alt="View and Support Plans"
                       className="absolute inset-0 w-full h-full object-cover"
                     />
-                    {showOverlay && (
-                      <div className="absolute inset-0 bg-gray-800 bg-opacity-75 flex items-center justify-center z-10">
-                        <p className="text-white text-lg font-semibold">
-                          Coming Soon...
-                        </p>
-                      </div>
-                    )}
                   </div>
 
                   <div className="p-4">
@@ -362,7 +351,7 @@ export default function KYLHomePage() {
                   been undertaken.
                 </li>
                 <li>
-                  Agroforestry practitioners can assess the health of tree
+                  Agrohorticulture practitioners can assess the health of tree
                   plantations over time using the{" "}
                   <b>Plantation Health Assessment Dashboard</b>.
                 </li>
@@ -385,18 +374,18 @@ export default function KYLHomePage() {
                   link: "https://welllabs.org/jaltol/",
                 },
                 {
-                  title: "Agroforestry Plantations",
+                  title: "Agrohorticulture Plantations",
                   description:
                     "Track the health and growth of plantations across time using satellite-based monitoring.",
                   icon: "🌳",
-                  link:"/plantationDashboard"
+                  link:"/agrohorticulture"
                 },
                 {
                   title: "Waterbody Rejuvenation",
                   description:
                     "Visualize waterbody interventions and evaluate their effects on water availability and agriculture.",
                   icon: "💧",
-                  link: "/water_dashboard",
+                  link: "/rwb",
                 },
                 {
                   title: "Commons Connect Plans",
@@ -407,9 +396,11 @@ export default function KYLHomePage() {
               ].map((item, index) => (
                 <div key={index} className="h-full">
                   <div
-                    onClick={() =>
-                      item.link && window.open(item.link, "_blank")
-                    }
+                    onClick={() => {
+                      if (item.link) {
+                        handleNavigate(item.link, item.title);
+                      }
+                    }}
                     className="cursor-pointer bg-white rounded-2xl shadow-md p-6 sm:p-8 h-full min-h-[220px] flex flex-col justify-start transform transition-all duration-300 hover:shadow-xl hover:-translate-y-1 hover:scale-[1.02]"
                   >
                     <div className="flex items-start gap-4">
