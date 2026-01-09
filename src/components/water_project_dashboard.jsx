@@ -23,15 +23,8 @@ import { waterGeoDataAtom, waterMwsDataAtom, zoiFeaturesAtom,selectedWaterbodyFo
 
 const WaterProjectDashboard = () => {
   const [selectedWaterbody, setSelectedWaterbody] = useState(null);
-  const [mapClickedWaterbody, setMapClickedWaterbody] = useState(null);
   const [selectedFeature, setSelectedFeature] = useState(null);
-  const [zoiArea, setZoiArea] = useState(null);
-  const [terrainLegend, setTerrainLegend] = useState(false);
-  const [drainageLegend, setDrainageLegend] = useState(false);
-  const [infoText, setInfoText] = useState("");
   const [infoAnchor, setInfoAnchor] = useState(null);
-  const [infoOpen, setInfoOpen] = useState(false);
-  const [openInfoKey, setOpenInfoKey] = useState(null);
   const [impactYear, setImpactYear] = useState({ pre: null, post: null });
   const [autoOpened, setAutoOpened] = useState(false);
   const [showMap, setShowMap] = useState(false);  
@@ -42,7 +35,6 @@ const WaterProjectDashboard = () => {
   const [organization, setOrganization] = useState(null);
   const [loadingData, setLoadingData] = useState(true);
   const [tehsilGeoData, setTehsilGeoData] = useState(null);
-  const [tehsilSelectedFeature, setTehsilSelectedFeature] = useState(null);
   const [mwsFromLocalStorage, setMwsFromLocalStorage] = useState(null);
   const [extractedSeasonalYears, setExtractedSeasonalYears] = useState([]);
   const [selectedWaterbodyForTehsil, setSelectedWaterbodyForTehsil] = useRecoilState(selectedWaterbodyForTehsilAtom);
@@ -87,9 +79,6 @@ const WaterProjectDashboard = () => {
 
   const handleCloseInfo = () => {
     setInfoAnchor(null);
-    setInfoText("");
-    setInfoOpen(false);
-    setOpenInfoKey(null);
   };
 
   useEffect(() => {
@@ -184,7 +173,6 @@ const WaterProjectDashboard = () => {
         }
       );
 
-      setTehsilSelectedFeature(featureOL);
     }
   }, [selectedWaterbodyForTehsil, typeParam]);
 
@@ -207,7 +195,6 @@ const WaterProjectDashboard = () => {
     if (view === "table") {
       setSelectedWaterbody(null);
       setSelectedFeature(null);
-      setMapClickedWaterbody(null);
     }
   }, [view]);
 
@@ -219,7 +206,6 @@ const WaterProjectDashboard = () => {
       setShowMap(false);
       setSelectedWaterbody(null);
       setSelectedFeature(null);
-      setMapClickedWaterbody(null);
   
       // tehsil cleanup
       setSelectedWaterbodyForTehsil(null);
@@ -244,20 +230,7 @@ const WaterProjectDashboard = () => {
   const getMatchedMWSFeaturesProject = (mwsGeoData, activeSelectedWaterbody) => {
     if (!mwsGeoData?.features?.length || !activeSelectedWaterbody) return [];
 
-    const raw =
-      activeSelectedWaterbody.MWS_UID ||
-      activeSelectedWaterbody.properties?.MWS_UID;
-      console.log("--------------------------------------------------");
-      console.log("🌊 SELECTED WATERBODY UID:", 
-        activeSelectedWaterbody?.UID || activeSelectedWaterbody?.properties?.UID
-      );
-
-      console.log("📦 RAW MWS UID STRING FROM WATERBODY:", raw);
-      console.log(
-        "🧩 EXTRACTED UID LIST (pairs):",
-        extractMwsUidList(raw)
-      );
-      console.log("--------------------------------------------------");
+    const raw = activeSelectedWaterbody.MWS_UID ||  activeSelectedWaterbody.properties?.MWS_UID;
 
     if (!raw) return [];
 
@@ -294,19 +267,11 @@ const WaterProjectDashboard = () => {
     );
   };
   
-  
-
   const mwsForMap = matchedMWSFeaturesProject;
 
   const mwsForCharts = useMemo(() => {
     return getFirstMwsWithValues(matchedMWSFeaturesProject);
   }, [matchedMWSFeaturesProject]);
-
-
-  if (!isTehsilMode) {
-    console.log("🔍 Project Mode → MWS List:", matchedMWSFeaturesProject);
-    console.log("📊 Project Mode → MWS for Charts (first):", mwsForCharts);
-  }
 
   const matchedZoiFeature = useMemo(() => {
     if (!zoiFeatures || !activeSelectedWaterbody) return null;
@@ -1142,7 +1107,6 @@ const WaterProjectDashboard = () => {
                     projectName={typeParam === "project" ? projectNameParam : null}
                     projectId={typeParam === "project" ? projectIdParam : null}
                     organizationLabel={organization?.label}
-                    onZoiArea={setZoiArea}
                     district={districtParam}
                     block={blockParam}
                     type={typeParam}
