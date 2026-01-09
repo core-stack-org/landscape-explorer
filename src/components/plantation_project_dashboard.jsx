@@ -140,7 +140,7 @@ const PlantationProjectDashboard = ({organization,project}) => {
               )}            
               <span>{showMap ? "View Table" : "View Map"}</span>
             </button>
-            {!selectedPlantation(
+            {!selectedPlantation && (
                   <div className="flex justify-end ml-24">
                   <div className="flex items-center gap-6 bg-white px-6 py-2 rounded-xl shadow-sm">
                     <Lightbulb size={36} className="text-gray-800" />
