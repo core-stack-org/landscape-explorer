@@ -15,7 +15,6 @@ const PanchayatBoundariesStyle = (feature, resolution) => {
       fill: new Fill({
         color: "rgba(255, 255, 255, 0)",
       }),
-      //text : createTextStyle(feature, resolution)
     });
   } catch (e) {
     nameStyle = new Style({
@@ -28,7 +27,6 @@ const PanchayatBoundariesStyle = (feature, resolution) => {
       }),
     });
   }
-
   return nameStyle;
 }
 
@@ -57,6 +55,7 @@ export default async function getVectorLayers(layer_store, layer_name, setVisibl
     }
   });
 
+
   const wmsLayer = new VectorLayer({
     source: vectorSource,
     visible: setVisible,
@@ -75,7 +74,7 @@ export default async function getVectorLayers(layer_store, layer_name, setVisibl
         width: 1.2,
       }),
       fill: new Fill({
-        color: "rgba(0, 0, 255, 0.25)", // Semi-transparent for click detection
+        color: "rgba(0, 0, 255, 0.25)", 
       }),
     });
   });

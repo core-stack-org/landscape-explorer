@@ -53,23 +53,13 @@ const whittakerSmooth = (y, lambda = 100, d = 2) => {
 };
 
 const PlantationNDVIChart = ({
-  plantationData,
   plantation,
   years = ["2017", "2018", "2019", "2020", "2021", "2022", "2023", "2024"],
 }) => {
-  const features = plantationData?.features || [];
-  const uid = plantation?.uid;
-
-  const matchedFeature = features.find(
-    (feature) => feature?.properties?.uid === uid
-  );
-
-  if (!matchedFeature) return null;
-
   const ndviPoints = [];
 
   years.forEach((year) => {
-    const raw = matchedFeature.properties?.[`NDVI_${year}`];
+    const raw = plantation?.[`NDVI_${year}`];
     if (raw) {
       try {
         const parsed = JSON.parse(raw);

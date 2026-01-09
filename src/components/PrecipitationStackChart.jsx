@@ -8,7 +8,6 @@ import {
   Legend,
 } from "chart.js";
 import { Bar } from "react-chartjs-2";
-import { Proportions } from "lucide-react";
 
 ChartJS.register(BarElement, CategoryScale, LinearScale, Tooltip, Legend);
 
@@ -76,19 +75,13 @@ const extractTehsilRainfall = (values_) => {
 };
 
    //MAIN COMPONENT
-const PrecipitationStackChart = ({ feature ,waterbody,typeparam}) => {
-  console.log("Reached in the pRecippatiton",feature,waterbody,typeparam)
+const PrecipitationStackChart = ({ feature ,waterbody,typeparam,water_rej_data}) => {
   if (!feature) return null;
-  console.log(typeparam)
 
   const isTehsil = feature.values_ !== undefined;
   let labels = [];
   let datasets = [];
-  if (isTehsil) {
-    console.log("📌 TEHSIL MODE FEATURE:", feature.values_);
-  } else {
-    console.log("📌 PROJECT MODE FEATURE:", feature);
-  }
+
 
     // TEHSIL MODE
   if (isTehsil) {
@@ -115,25 +108,40 @@ const PrecipitationStackChart = ({ feature ,waterbody,typeparam}) => {
     labels = years;
     datasets = [
       {
-        label: "Kharif",
-        data: seasonData.kharif,
-        backgroundColor: "#1E90FF",
+        label: "Kharif Rabi Zaid",
+        data: seasonData.zaid,
+        backgroundColor: "#0f5e9c",
         stack: "precip",
       },
       {
         label: "Kharif Rabi",
         data: seasonData.rabi,
-        backgroundColor: "#87CEFA",
+        backgroundColor: "#1ca3ec",
         stack: "precip",
       },
       {
-        label: "Kharif Rabi Zaid",
-        data: seasonData.zaid,
-        backgroundColor: "#B0E0E6",
+        label: "Kharif",
+        data: seasonData.kharif,
+        backgroundColor: "#74CCF4",
         stack: "precip",
       },
+
+ 
     ];
   }
+
+  const interventionYear = (() => {
+    if (isTehsil) return "22-23"; // fallback for now
+  
+    const f = water_rej_data?.features?.find(
+      (x) => x.properties?.UID === waterbody?.UID
+    );
+  let iv = f?.properties?.intervention_year;
+  if (!iv || typeof iv !== "string" || !iv.includes("-")) {
+    iv = "22-23";
+  }
+  return iv;
+    })();
 
   const data = { labels, datasets };
 
@@ -141,9 +149,44 @@ const PrecipitationStackChart = ({ feature ,waterbody,typeparam}) => {
     maintainAspectRatio: false,
     responsive: true,
     plugins: {
-      // legend: { position: "top" },
-      // title:{display:true,text:"Rainfall (in mm)",position:"bottom"},
+      legend: { position: "bottom" },
+      title:{display:true,text:"Rainfall (in mm) (Black line = intervention year)",position:"top",font: { size: 16, weight: "bold" },},
       tooltip: { mode: "index", intersect: false },
+      annotation: {
+        annotations: isTehsil
+          ? {}
+          : (() => {
+              const f = water_rej_data?.features?.find(
+                (x) => x.properties?.UID === waterbody?.UID
+              );
+              const interventionYear = (() => {
+                if (isTehsil) return "22-23";
+              
+                const iv = f?.properties?.intervention_year;
+                return typeof iv === "string" && iv.includes("-")
+                  ? iv
+                  : "22-23";
+              })();
+              
+      
+              return {
+                interventionLine: {
+                  type: "line",
+                  scaleID: "x",
+                  value: interventionYear.slice(-5),
+                  borderColor: "black",
+                  borderWidth: 2,
+                  label: {
+                    content: `Intervention Year (${interventionYear})`,
+                    enabled: true,
+                    position: "start",
+                    color: "black",
+                    font: { weight: "bold" },
+                  },
+                },
+              };
+            })(),
+      },
     },
     scales: {
       x: { stacked: !isTehsil },
@@ -155,7 +198,7 @@ const PrecipitationStackChart = ({ feature ,waterbody,typeparam}) => {
   };
 
   return (
-    <div style={{ width: "100%", height: "100%" }}>
+<div className="px-0" style={{ minHeight: "330px",width:"90%" }}>
 
       <Bar data={data} options={options} />
     </div>

@@ -339,10 +339,11 @@ const KYLRightSidebar = ({
                       </button>
                     </div>
 
-                    {filter.name !== "area_wide_scale_restoration" && filter.name !== "area_protection" && <ToggleButton
+                    {/* {filter.name !== "area_wide_scale_restoration" && filter.name !== "area_protection" && 
+                    <ToggleButton
                       isOn={toggleStates[filter.name]}
                       toggleSwitch={() => handleLayerSelection(filter)}
-                    />}
+                    />} */}
                   </div>
                 ))}
               </div>

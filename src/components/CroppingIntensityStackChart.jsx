@@ -27,7 +27,8 @@ const CroppingIntensityStackChart = ({
   zoiFeatures,
   waterbody,
   impactYear,
-  isTehsil
+  isTehsil,
+  years
 }) => {
   const [showImpact, setShowImpact] = useState(false);
 
@@ -56,34 +57,44 @@ const CroppingIntensityStackChart = ({
         (matchedFeature.get(`single_non_kharif_cropped_area_${year}`) || 0),
     }));
 
-  const fullYearLabels = [
-    "17-18",
-    "18-19",
-    "19-20",
-    "20-21",
-    "21-22",
-    "22-23",
-    "23-24",
-  ];
-  const yearSuffix = ["2017", "2018", "2019", "2020", "2021", "2022", "2023"];
-  const fullYearData = getAreaData(yearSuffix);
+    const extractYearsFromZoi = (feature) => {
+      if (!feature) return [];
+    
+      const years = new Set();
+    
+      feature.getKeys().forEach((key) => {
+        const match = key.match(/_(20\d{2})$/); // match 2017, 2018, ...
+        if (match) {
+          years.add(match[1]);
+        }
+      });
+    
+      return Array.from(years).sort(); // ["2017","2018",...]
+    };
+    const chartYears = isTehsil
+    ? extractYearsFromZoi(matchedFeature)
+    : years.map((y) => `20${y.split("-")[0]}`);
+  
+  const fullYearData = getAreaData(chartYears);
+  
   const maxFullValue = Math.max(
     ...fullYearData.map(
       (a) => a.triple + a.double + a.single_kharif + a.single_non_kharif
     )
   );
 
+
   // Get impact years
   const preLabel = impactYear.pre;
   const postLabel = impactYear.post;
 
   // When in impact mode, zero out non-impact years
-  const visibleIndices = fullYearLabels.map((label, i) =>
+  const visibleIndices = years.map((label, i) =>
     label === preLabel || label === postLabel ? i : -1
   );
 
   const maskedData = {
-    labels: fullYearLabels,
+    labels: isTehsil ? chartYears : years,
     datasets: [
       {
         label: "Triple Crop",
