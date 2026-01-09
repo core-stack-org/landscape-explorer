@@ -74,8 +74,6 @@ export const useGlobalWaterData = ({
         });
 
         const fullURL = base + params.toString();
-        console.log("Fetching WFS:", fullURL);
-
 
         try {
           const res = await fetch(base + params.toString());
@@ -149,7 +147,6 @@ export const useGlobalWaterData = ({
             typeName: droughtTypeName,
             outputFormat: "application/json",
           });
-          console.log("Drought WFS URL:", droughtBase + droughtParams.toString());
 
           drought = await fetchWFS(droughtTypeName);
 

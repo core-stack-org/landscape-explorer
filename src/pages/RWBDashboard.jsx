@@ -14,6 +14,9 @@ const RWBDashboard =()=>{
     const [showWaterbodies, setShowWaterbodies] = useState(false);
     const navigate = useNavigate();
     const location = useLocation();
+    const params = new URLSearchParams(location.search);
+    const isTehsilMode = params.get("type") === "tehsil";
+
 
     useEffect(()=>{
         const loadOrganization = async()=>{
@@ -129,8 +132,8 @@ const RWBDashboard =()=>{
 
         return (
             <div className="bg-slate-100">
-                <LandingNavbar />
-                {!showWaterbodies?(
+                    {!isTehsilMode && <LandingNavbar />}
+                    {!showWaterbodies?(
                     <div className="relative min-h-screen w-full flex items-center px-20">
                     <div className="absolute inset-0 bg-cover bg-center"
                         style={{ backgroundImage: `url(${Waterbodies})`, opacity: 0.3 }}/>
@@ -209,8 +212,8 @@ const RWBDashboard =()=>{
                 </div>
                 ):(<WaterProjectDashboard organization={organization} project={project}/>)}
                     
-            <Footer />
-            </div>
+                    {!isTehsilMode && <Footer />}
+                    </div>
         );
 }
 

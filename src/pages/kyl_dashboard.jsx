@@ -1433,9 +1433,7 @@ const KYLDashboardPage = () => {
       } else {
         console.warn("No matching MWS found for waterbody:", wb_id);
       }
-    
-      console.log("WATERBODY CLICKED →", wb_id);
-    };
+        };
     
     
     map.on("click", handleWaterbodyClick);

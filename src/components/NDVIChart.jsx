@@ -70,10 +70,6 @@ const NDVIChart = ({
       feature.get("UID")?.toString().trim() ===
       wbUID?.toString().trim()
   );
-  // const matchedFeature = zoiFeatures.find(
-  //   (feature) =>
-  //     feature.get("UID")?.toLowerCase() === waterbody?.UID?.toLowerCase()
-  // );
 
   if (!matchedFeature) return null;
 

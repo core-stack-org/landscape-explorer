@@ -58,10 +58,6 @@ const WaterAvailabilityChart = ({
     const feature = water_rej_data.features.find(
       (f) => f.properties?.UID === waterbody.UID
     );
-  
-    if (!isTehsil) {
-      console.log("📌 Matched Project Feature =>", feature);
-    }
 
     return feature?.properties || {};
   }, [isTehsil, water_rej_data, waterbody]);
@@ -69,14 +65,10 @@ const WaterAvailabilityChart = ({
   
   const years = useMemo(() => {
     const extracted = extractSeasonYears(yearSourceProps);
-    console.log("✅ WaterAvailabilityChart extracted years:", extracted);
     return extracted;
   }, [yearSourceProps]);
-  
 
-  console.log("isTehsil:", isTehsil);
-console.log("years:", years);
-
+  console.log(years)
 
 const getProp = (feature, key) => {
   if (!feature) return 0;
@@ -153,7 +145,6 @@ const computedImpactYear = React.useMemo(() => {
     const f = water_rej_data?.features?.find(
       (x) => x.properties?.UID === waterbody?.UID
     );
-  console.log(f)
   let iv = f?.properties?.intervention_year;
   if (!iv || typeof iv !== "string" || !iv.includes("-")) {
     iv = "22-23";
@@ -161,7 +152,6 @@ const computedImpactYear = React.useMemo(() => {
   return iv;
     })();
   
-  console.log(interventionYear)
   const preYears = years.filter((y) => y < interventionYear);
   const postYears = years.filter((y) => y > interventionYear);
 
@@ -182,13 +172,6 @@ const computedImpactYear = React.useMemo(() => {
     });
   });
 
-  console.log(
-    "🎯 IMPACT YEAR SELECTION →",
-    "intervention:", interventionYear,
-    "pre:", selected?.pre,
-    "post:", selected?.post
-  );
-  
   return selected;
 }, [years, totalRainfall]);
 
@@ -204,8 +187,6 @@ useEffect(() => {
     onImpactYearChange(computedImpactYear);
   }
 }, [computedImpactYear, onImpactYearChange]);
-
-
 
   const groups = {
     "Water Indicators": [
@@ -292,8 +273,6 @@ useEffect(() => {
     });
   }
   
-  
-
   const normalizedData = rawData.map((yearData) => {
     const total = Object.values(yearData).reduce((sum, v) => sum + v, 0);
     const scale = total > 100 ? 100 / total : 1;
@@ -307,9 +286,6 @@ useEffect(() => {
       (scaled.triple_cropping ?? 0);
     return scaled;
   });
-
-
-
 
   let data;
 
@@ -361,7 +337,7 @@ useEffect(() => {
           backgroundColor: cat.color,
           stack: "Stack 0",
           order: 2,
-          // ✅ only show bars for impact years, set others to 0
+          //  only show bars for impact years, set others to 0
           data: years.map((year, i) => {
             const isImpactYear =
             year === computedImpactYear.pre || year === computedImpactYear.post;
@@ -412,7 +388,7 @@ useEffect(() => {
                 interventionLine: {
                   type: "line",
                   scaleID: "x",
-                  value: interventionYear,
+                  value: interventionYear.slice(-5),
                   borderColor: "black",
                   borderWidth: 2,
                   label: {
@@ -443,7 +419,7 @@ useEffect(() => {
           text: "Water Availability (%) in Waterbody area",
         },
       },
-      // ✅ always reserve y1 scale space even if not visible
+      //  always reserve y1 scale space even if not visible
       y1: {
         position: "right",
         display: true,
@@ -468,11 +444,11 @@ useEffect(() => {
   return (
     <div className="w-full">
       <div
-        className="flex flex-col mb-2 px-4"
+        className="flex flex-col mb-4 px-4"
         style={{
           minHeight: "120px",
-          maxHeight: "134px",
-          overflow: "hidden",
+          // maxHeight: "134px",
+          // overflow: "hidden",
           fontSize: "clamp(0.55rem, 0.8vw, 0.8rem)",
           transition: "all 0.3s ease-in-out",
         }}
@@ -584,7 +560,7 @@ useEffect(() => {
       </div>
 
       {/* Chart wrapper: fix the chart area height so it doesn't reflow */}
-      <div className="w-full px-0" style={{ minHeight: "280px" }}>
+      <div className="w-full px-0" style={{ minHeight: "330px" }}>
         <Bar data={data} options={options} />
       </div>
     </div>
