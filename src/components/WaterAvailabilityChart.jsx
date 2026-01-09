@@ -68,6 +68,8 @@ const WaterAvailabilityChart = ({
     return extracted;
   }, [yearSourceProps]);
 
+  console.log(years)
+
 const getProp = (feature, key) => {
   if (!feature) return 0;
 
@@ -386,7 +388,7 @@ useEffect(() => {
                 interventionLine: {
                   type: "line",
                   scaleID: "x",
-                  value: interventionYear,
+                  value: interventionYear.slice(-5),
                   borderColor: "black",
                   borderWidth: 2,
                   label: {

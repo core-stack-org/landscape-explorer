@@ -247,6 +247,17 @@ const WaterProjectDashboard = () => {
     const raw =
       activeSelectedWaterbody.MWS_UID ||
       activeSelectedWaterbody.properties?.MWS_UID;
+      console.log("--------------------------------------------------");
+      console.log("🌊 SELECTED WATERBODY UID:", 
+        activeSelectedWaterbody?.UID || activeSelectedWaterbody?.properties?.UID
+      );
+
+      console.log("📦 RAW MWS UID STRING FROM WATERBODY:", raw);
+      console.log(
+        "🧩 EXTRACTED UID LIST (pairs):",
+        extractMwsUidList(raw)
+      );
+      console.log("--------------------------------------------------");
 
     if (!raw) return [];
 
@@ -259,7 +270,7 @@ const WaterProjectDashboard = () => {
 
     return matchedFeatures;
   };
-
+  
   const matchedMWSFeaturesProject = useMemo(() => {
     return getMatchedMWSFeaturesProject(
       mwsGeoData,
@@ -267,8 +278,35 @@ const WaterProjectDashboard = () => {
     );
   }, [mwsGeoData, activeSelectedWaterbody]);
 
+  const getFirstMwsWithValues = (features = []) => {
+    if (!Array.isArray(features) || !features.length) return null;
+  
+    return (
+      features.find((f) => {
+        const p = f.properties || {};
+        return Object.keys(p).some((k) => {
+          if (/^precipitation_(kharif|rabi|zaid)_/.test(k)) {
+            return Number(p[k]) > 0;   // <-- VALUE CHECK
+          }
+          return false;
+        });
+      }) || features[0]
+    );
+  };
+  
+  
+
   const mwsForMap = matchedMWSFeaturesProject;
-  const mwsForCharts = matchedMWSFeaturesProject?.[0] || null;
+
+  const mwsForCharts = useMemo(() => {
+    return getFirstMwsWithValues(matchedMWSFeaturesProject);
+  }, [matchedMWSFeaturesProject]);
+
+
+  if (!isTehsilMode) {
+    console.log("🔍 Project Mode → MWS List:", matchedMWSFeaturesProject);
+    console.log("📊 Project Mode → MWS for Charts (first):", mwsForCharts);
+  }
 
   const matchedZoiFeature = useMemo(() => {
     if (!zoiFeatures || !activeSelectedWaterbody) return null;
@@ -299,7 +337,7 @@ const WaterProjectDashboard = () => {
       setLoadingData(false);         // data arrived (even if empty)
     }
   }, [geoData]);
-  
+
   useEffect(() => {
     if (isTehsilMode) return; 
     if (!geoData || !waterbodyParam || autoOpened) return;
@@ -312,7 +350,7 @@ const WaterProjectDashboard = () => {
         props.waterbody_uid?.toString() === waterbodyParam.toString()
       );
     });
-    
+  
     if (matchedFeatureIndex !== -1) {
       const feature = geoData.features[matchedFeatureIndex];
       const props = feature.properties ?? {};
@@ -326,6 +364,8 @@ const WaterProjectDashboard = () => {
         district: props.District || "NA",
         block: props.Taluka || "NA",
         village: props.Village || "NA",
+        latitude: Number(props.latitude) || null,
+        longitude: Number(props.longitude) || null,
 
         siltRemoved: Number(props.slit_excavated) || 0,
         areaOred: props.area_ored || 0,
@@ -657,6 +697,8 @@ const WaterProjectDashboard = () => {
         zaidImpactedArea,
         avgDoubleCropped: avgDouble,
         avgTripleCropped: avgTriple,
+        latitude: props.latitude,
+        longitude:props.longitude,
 
         coordinates,
         featureIndex: index,
@@ -772,7 +814,7 @@ const WaterProjectDashboard = () => {
               <span>{showMap ? "View Table" : "View Map"}</span>
             </button>
           <div className="flex justify-end ml-24">
-          {mode === "project" && projectNameParam && (
+{mode === "project" && projectNameParam && !activeSelectedWaterbody && (
             <div className="flex items-center gap-6 bg-white px-6 py-2 rounded-xl shadow-sm">
               <Lightbulb size={36} className="text-gray-800" />
               <p className="text-gray-800 text-sm md:text-base font-medium text-center">
@@ -821,11 +863,11 @@ const WaterProjectDashboard = () => {
       <div className="h-[90vh] bg-white rounded-xl shadow-md overflow-hidden flex">
 
 {/* MAP */}
-<div
-  className={`transition-all duration-300 h-full ${
-     "w-[60%]" 
-  }`}
->
+  <div
+    className={`transition-all duration-300 h-full ${
+      "w-[60%]" 
+    }`}
+  >
   <DashboardBasemap
     mode="waterbody"
     geoData={typeParam === "tehsil" ? tehsilGeoData : geoData}
@@ -871,6 +913,7 @@ const WaterProjectDashboard = () => {
             : mwsForCharts
         }
         waterbody={activeSelectedWaterbody}
+        water_rej_data={isTehsilMode ? geoData ? { features: [geoData]} : null : geoData }        
           typeparam={typeParam}
           
         />

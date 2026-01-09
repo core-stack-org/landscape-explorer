@@ -64,7 +64,22 @@ const DashboardBasemap = ({
   const [drainageLegend, setDrainageLegend] = useState(false);
   const [selectedZoiFeature, setSelectedZoiFeature] = useState(null);
   const [zoiAreaState, setZoiAreaState] = useState(null)
+  const [radiusState, setRadiusState] = useState(null);
+
   
+  const getWBProps = (wb) => {
+    if (!wb) return {};
+  
+    // CASE 1: Already plain object (table)
+    if (!wb.properties) return wb;
+  
+    // CASE 2: OL feature structure
+    return {
+      ...wb.properties,
+      geometry: wb.geometry ?? wb.properties.geometry,
+    };
+  };
+
   const read4326 = (data) => {
     if (!data) return [];
   
@@ -472,6 +487,8 @@ const DashboardBasemap = ({
     props.INTERVENTION_YEAR ||
     props.intv_year ||
     null,
+    latitude: props.latitude ?? props.Latitude ?? props.lat ?? null,
+    longitude: props.longitude ?? props.Longitude ?? props.lon ?? null,
     geometry: geometryJSON,
 
 
@@ -879,6 +896,8 @@ const addZoi = async () => {
 
 setSelectedZoiFeature(selectedZoi);  //  store full feature
 setZoiAreaState(rawArea ? Number(rawArea) : null);
+const radius = getRadiusFromArea(rawArea);
+setRadiusState(radius);
 
 if (onZoiArea) {
   onZoiArea(rawArea ? Number(rawArea) : null);
@@ -1501,6 +1520,15 @@ const showOnlySelectedPlantation = () => {
     plantationGeodata,
     selectedPlantation
   ]);
+const props = getWBProps(selectedWaterbody);
+
+const getRadiusFromArea = (ha) => {
+  if (!ha || isNaN(ha)) return null;
+
+  const area_m2 = ha * 10000;             // 1 ha = 10000 m²
+  const radius_m = Math.sqrt(area_m2 / Math.PI);
+  return radius_m / 1000;                 // meters → km
+};
 
   return (
     <div className="relative w-full overflow-visible">
@@ -1584,34 +1612,55 @@ const showOnlySelectedPlantation = () => {
         )}
 
         {/* LEFT INFO PANEL — WATERBODY */}
-          {mode === "waterbody" && selectedWaterbody && !selectedPlantation && (
-              <div
-                className="absolute top-6 left-6 z-[1200]
-                          bg-white rounded-md shadow-lg px-3 py-2
-                          flex flex-col gap-1 text-sm text-gray-800 border"
-                style={{ minWidth: "180px" }}
-              >
-                <div className="flex items-center gap-1 font-semibold text-gray-900">
-                  <LocationOnIcon fontSize="small" sx={{ color: "#2563eb" }} />
-                  <span>
-                    {selectedWaterbody?.UID ||
-                    selectedWaterbody?.uid ||
-                    selectedWaterbody?.properties?.UID ||
-                    "NA"}
-                  </span>
-                </div>
+        {mode === "waterbody" && selectedWaterbody && !selectedPlantation && (
+          <div
+            className="absolute top-6 left-6 z-[1200]
+                        bg-white rounded-md shadow-lg px-3 py-2
+                        flex flex-col gap-2 text-sm text-gray-800 border"
+            style={{ minWidth: "200px" }}
+          >
 
-                <div className="text-gray-700">
-                  <span className="font-medium">Area (ha): </span>
-                  {selectedWaterbody?.area_ored
-                    ? Number(selectedWaterbody.area_ored).toFixed(2)
-                    : selectedWaterbody?.properties?.area_ored
-                    ? Number(selectedWaterbody.properties.area_ored).toFixed(2)
-                    :selectedWaterbody?.areaOred?Number(selectedWaterbody?.areaOred).toFixed(2)
-                    : "NA"}
-                </div>
+            {/* Location Header */}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-1 font-semibold text-gray-900">
+                <LocationOnIcon fontSize="small" sx={{ color: '#2563eb', marginTop:'1px' }} />
+                <span className="tracking-wide font-semibold">
+                {selectedWaterbody?.waterbody_name ||
+              selectedWaterbody?.name ||
+              selectedWaterbody?.properties?.waterbody_name ||
+              "NA"}
+                </span>
               </div>
-            )}
+            </div>
+            {/* Lat / Long Box */}
+            <div className="bg-gray-50 rounded-md p-2 shadow-sm border border-gray-200">
+              <div className="text-gray-700 flex justify-between">
+                <span className="font-medium">Lat:</span>
+                <span>{props?.latitude_dec ?? props?.latitude ?? 'NA'}</span>
+              </div>
+              <div className="text-gray-700 flex justify-between">
+                <span className="font-medium">Long:</span>
+                <span>{props?.longitude_dec ?? props?.longitude ?? 'NA'}</span>
+              </div>
+            </div>
+
+            {/* Area Row */}
+            <div className="flex justify-between items-center">
+              <span className="font-medium text-gray-700">Area (ha):</span>
+              <span>
+                {props?.area_ored
+                  ? Number(props.area_ored).toFixed(2)
+                  : selectedWaterbody?.properties?.area_ored
+                  ? Number(props.properties.area_ored).toFixed(2)
+                  : selectedWaterbody?.areaOred
+                  ? Number(props.areaOred).toFixed(2)
+                  : 'NA'}
+              </span>
+            </div>
+
+          </div>
+        )}
+
 
             {/* LEFT INFO PANEL — ZOI */}
             {mode === "zoi" && selectedZoiFeature && zoiAreaState !== null && (
@@ -1629,6 +1678,12 @@ const showOnlySelectedPlantation = () => {
               <div className="text-gray-700">
                 <span className="font-medium">Area (ha): </span>
                 {zoiAreaState.toFixed(2)}
+              </div>
+
+                  {/* RADIUS */}
+              <div className="text-gray-700">
+                <span className="font-medium">Radius (km) : </span>
+                {radiusState ? radiusState.toFixed(2) : "NA"}
               </div>
 
     {/* You can read ANYTHING from ZOI now */}
@@ -1658,7 +1713,7 @@ const showOnlySelectedPlantation = () => {
                 <YearSlider
                   currentLayer={{ name: "lulcWaterrej" }}
                   sliderId="map1"
-                  interventionYear={selectedWaterbody?.intervention_year}
+                  interventionYear={props?.intervention_year}
                 />
               </div>
             </div>
@@ -1721,7 +1776,7 @@ const showOnlySelectedPlantation = () => {
               <YearSlider
                 currentLayer={{ name: "lulcWaterrej" }}
                 sliderId="map2"
-                interventionYear={selectedWaterbody?.intervention_year}
+                interventionYear={props?.intervention_year}
               />
             </div>
           </div>
