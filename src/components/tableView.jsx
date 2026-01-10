@@ -108,15 +108,28 @@ export default function TableView({
 
   return (
     <div className="mt-4 bg-white rounded-md shadow-sm overflow-x-auto">
-      <table className="w-full border border-gray-200 text-sm md:text-base text-gray-800">
-        <thead className="bg-gray-100 font-semibold">
+      <table className="w-full border border-gray-200 text-[8px] sm:text-[10px] md:text-xs lg:text-sm text-gray-800">
+        <thead className="bg-gray-100 font-medium">
           <tr className="border-b">
-          <th className="px-3 py-4 text-center">
+          <th className="
+                px-1 py-1 
+                sm:px-2 sm:py-1.5 
+                md:px-3 md:py-2 
+                align-middle
+                text-center whitespace-normal break-words">
             S.No.
           </th>
 
             {headers.map((col) => (
-              <th key={col.key} className="relative px-3 py-4 text-center">
+              <th key={col.key} className=" relative
+              px-1 py-1 
+              sm:px-2 sm:py-1.5 
+              md:px-3 md:py-2 
+              align-middle
+              text-center whitespace-normal break-words
+
+            "
+            >
                 <div
                   className={`flex items-center justify-center gap-1 ${
                     col.sortable ? "cursor-pointer select-none" : ""
@@ -192,13 +205,31 @@ export default function TableView({
               className="hover:bg-gray-50 cursor-pointer transition-colors border-b"
               onClick={() => onRowClick(row)}
             >
-              <td className="px-3 py-4 text-center text-gray-700">
+              <td className="
+  px-1 py-2 
+  sm:px-2 sm:py-2.5 
+  md:px-3 md:py-3 
+  align-middle
+  text-center whitespace-normal break-words
+
+"
+>
                 {pageSize
                   ? (currentPage - 1) * pageSize + index + 1
                   : index + 1}
               </td>
               {headers.map((col) => (
-                <td key={col.key} className="px-3 py-4 text-center">
+                <td key={col.key} cclassName="
+                px-1 py-2 
+                sm:px-2 sm:py-2.5 
+                md:px-3 md:py-2 
+                align-middle
+                text-center
+                whitespace-normal 
+                break-words
+
+              "
+              >
                 {col.render ? col.render(row) : row[col.key] ?? "NA"}
               </td>
               ))}

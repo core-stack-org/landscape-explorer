@@ -1549,12 +1549,20 @@ console.log(selectedWaterbody)
   />
   
   {/* ZOOM CONTROLS MOVED INSIDE */}
-  <div className="absolute top-10 right-10 flex flex-col gap-1 z-[1100]">
+    <div className=" absolute top-6 right-10 flex flex-col gap-1">
     {["+", "–"].map((sign) => (
       <button
         key={sign}
-        className="bg-white border border-gray-300 rounded-md w-10 h-10 text-xl 
-                   cursor-pointer hover:bg-gray-100 active:scale-95 transition"
+        className="
+          bg-white border border-gray-300 rounded-md
+          cursor-pointer hover:bg-gray-100 active:scale-95 transition
+          flex items-center justify-center
+          text-[clamp(1rem,1.4vw,1.6rem)]
+        "
+        style={{
+          width: "clamp(28px, 2.3vw, 42px)",
+          height: "clamp(28px, 2.3vw, 42px)",
+        }}
         onClick={() => {
           const map = mapRef.current;
           if (!map) return;
@@ -1569,8 +1577,8 @@ console.log(selectedWaterbody)
         {sign}
       </button>
     ))}
-  </div>
-</div>
+    </div>
+      </div>
 
 
       {/* POPUP ELEMENT */}
@@ -1590,7 +1598,7 @@ console.log(selectedWaterbody)
       {/* LEFT INFO PANEL */}
         {selectedPlantation && (
           <div
-            className="absolute top-6 left-6 z-[1200] bg-white rounded-lg shadow-lg p-4 w-[260px]"
+            className="absolute top-6 left-6 bg-white rounded-lg shadow-lg p-4 w-[260px]"
           >
             <div className="flex flex-col gap-2 text-sm text-gray-800">
               <div className="font-semibold text-base">
@@ -1615,39 +1623,66 @@ console.log(selectedWaterbody)
         {/* LEFT INFO PANEL — WATERBODY */}
         {mode === "waterbody" && selectedWaterbody && !selectedPlantation && (
           <div
-            className="absolute top-6 left-6 z-[1200]
-                        bg-white rounded-md shadow-lg px-3 py-2
-                        flex flex-col gap-2 text-sm text-gray-800 border"
+            className="
+              absolute top-6 left-6
+              bg-white rounded-md shadow-lg px-3 py-2 border
+              flex flex-col gap-2
+              text-gray-800
+              text-[clamp(0.65rem,0.9vw,0.85rem)]
+            "
             style={{ minWidth: "200px" }}
           >
 
             {/* Location Header */}
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-1 font-semibold text-gray-900">
+              <div
+                className="
+                  flex items-center gap-1 font-semibold text-gray-900
+                  text-[clamp(0.75rem,1vw,1rem)]
+                "
+              >
                 <LocationOnIcon fontSize="small" sx={{ color: '#2563eb', marginTop:'1px' }} />
-                Waterbody name : <span className="tracking-wide font-semibold">
-                {selectedWaterbody?.waterbody_name ||
-              selectedWaterbody?.name ||
-              selectedWaterbody?.properties?.waterbody_name ||
-              selectedWaterbody?.waterbody ||
-              "NA"}
+                Waterbody name :{" "}
+                <span className="tracking-wide font-semibold">
+                  {selectedWaterbody?.waterbody_name ||
+                    selectedWaterbody?.name ||
+                    selectedWaterbody?.properties?.waterbody_name ||
+                    selectedWaterbody?.waterbody ||
+                    "NA"}
                 </span>
               </div>
             </div>
+
             {/* Lat / Long Box */}
             <div className="bg-gray-50 rounded-md p-2 shadow-sm border border-gray-200">
-              <div className="text-gray-700 flex justify-between">
+              <div
+                className="
+                  text-gray-700 flex justify-between
+                  text-[clamp(0.70rem,0.95vw,0.9rem)]
+                "
+              >
                 <span className="font-medium">Lat:</span>
                 <span>{props?.latitude_dec ?? props?.latitude ?? 'NA'}</span>
               </div>
-              <div className="text-gray-700 flex justify-between">
+
+              <div
+                className="
+                  text-gray-700 flex justify-between
+                  text-[clamp(0.70rem,0.95vw,0.9rem)]
+                "
+              >
                 <span className="font-medium">Long:</span>
                 <span>{props?.longitude_dec ?? props?.longitude ?? 'NA'}</span>
               </div>
             </div>
 
             {/* Area Row */}
-            <div className="flex justify-between items-center">
+            <div
+              className="
+                flex justify-between items-center
+                text-[clamp(0.70rem,0.95vw,0.9rem)]
+              "
+            >
               <span className="font-medium text-gray-700">Area (ha):</span>
               <span>
                 {props?.area_ored
@@ -1656,64 +1691,97 @@ console.log(selectedWaterbody)
                   ? Number(props.properties.area_ored).toFixed(2)
                   : selectedWaterbody?.areaOred
                   ? Number(props.areaOred).toFixed(2)
-                  : 'NA'}
+                  : "NA"}
               </span>
             </div>
 
           </div>
         )}
-
-
             {/* LEFT INFO PANEL — ZOI */}
             {mode === "zoi" && selectedZoiFeature && zoiAreaState !== null && (
               <div
-                className="absolute top-6 left-6 z-[1200]
-                          bg-white rounded-md shadow-lg px-3 py-2
-                          flex flex-col gap-1 text-sm text-gray-800 border"
+                className="
+                  absolute top-6 left-6
+                  bg-white rounded-md shadow-lg px-3 py-2 border
+                  flex flex-col gap-1
+                  text-gray-800
+                  text-[clamp(0.65rem,0.9vw,0.85rem)]
+                "
                 style={{ minWidth: "180px" }}
               >
-              <div className="flex items-center gap-1 font-semibold text-gray-900">
-                <LocationOnIcon fontSize="small" sx={{ color: "#d97706" }} />
-                <span>ZOI</span>
+                {/* ZOI Header */}
+                <div
+                  className="
+                    flex items-center gap-1 font-semibold text-gray-900
+                    text-[clamp(0.75rem,1vw,1rem)]
+                  "
+                >
+                  <LocationOnIcon
+                    fontSize="small"
+                    sx={{ color: "#d97706", marginTop: "1px" }}
+                  />
+                  <span>ZOI</span>
+                </div>
+
+                {/* AREA */}
+                <div
+                  className="
+                    text-gray-700
+                    flex justify-between
+                    text-[clamp(0.70rem,0.95vw,0.9rem)]
+                  "
+                >
+                  <span className="font-medium">Area (ha):</span>
+                  <span>{zoiAreaState.toFixed(2)}</span>
+                </div>
+
+                {/* RADIUS */}
+                <div
+                  className="
+                    text-gray-700
+                    flex justify-between
+                    text-[clamp(0.70rem,0.95vw,0.9rem)]
+                  "
+                >
+                  <span className="font-medium">Radius (km):</span>
+                  <span>{radiusState ? radiusState.toFixed(2) : "NA"}</span>
+                </div>
+
+                {/* VILLAGE */}
+                {selectedZoiFeature.get && selectedZoiFeature.get("Village") && (
+                  <div
+                    className="
+                      text-gray-700 flex justify-between
+                      text-[clamp(0.70rem,0.95vw,0.9rem)]
+                    "
+                  >
+                    <span className="font-medium">Village:</span>
+                    <span>{selectedZoiFeature.get("Village")}</span>
+                  </div>
+                )}
               </div>
-
-              <div className="text-gray-700">
-                <span className="font-medium">Area (ha): </span>
-                {zoiAreaState.toFixed(2)}
-              </div>
-
-                  {/* RADIUS */}
-              <div className="text-gray-700">
-                <span className="font-medium">Radius (km) : </span>
-                {radiusState ? radiusState.toFixed(2) : "NA"}
-              </div>
-
-    {/* You can read ANYTHING from ZOI now */}
-    {selectedZoiFeature.get &&
-      selectedZoiFeature.get("Village") && (
-        <div className="text-gray-700">
-          <span className="font-medium">Village:</span>{" "}
-          {selectedZoiFeature.get("Village")}
-        </div>
-      )}
-  </div>
-              )}
-
-
-
-
-
+            )}
 
           {/* YEAR SLIDER — ONLY FOR WATERBODY */}
           {mode === "waterbody" && selectedWaterbody && (
             <div
-              className="absolute bottom-16 left-4 right-4 
-                        flex justify-end z-[1000]"
+              className="absolute left-4 right-4 flex justify-end"
+              style={{
+                bottom: "clamp(2rem, 6vh, 4.2rem)",  // adaptive vertical position
+              }}
             >
-              <div className="bg-white/90 p-4 rounded-md shadow-md 
-                              min-w-[220px] sm:min-w-[300px] md:min-w-[500px]">
+              <div
+                className="
+                  bg-white/90 rounded-md shadow-md
+                "
+                style={{
+                  padding: "clamp(3px, 1vw, 9px)",                      // shrinks padding
+                  minWidth: "clamp(200px, 55vw, 600px)",                // responsive width
+                  fontSize: "clamp(0.55rem, 0.8vw, 0.9rem)",            // slider text scales
+                }}
+              >
                 <YearSlider
-                  currentLayer={{ name: "lulcWaterrej" }}
+                  currentLayer={{ name: 'lulcWaterrej' }}
                   sliderId="map1"
                   interventionYear={props?.intervention_year}
                 />
@@ -1721,16 +1789,19 @@ console.log(selectedWaterbody)
             </div>
           )}
 
+
           {/* WATERBODY LEGEND */}
           {mode === "waterbody" && selectedWaterbody && (
-            <div className="absolute bottom-16 left-4 z-[1000]">
+            <div className="absolute bottom-8 left-4">
+
               {!waterLegendOpen ? (
                 /* COLLAPSED TAB */
                 <div
                   onClick={() => setWaterLegendOpen(true)}
-                  className="bg-white/90 px-2 py-2 rounded-r-md shadow-md 
-                            cursor-pointer font-semibold text-sm select-none"
+                  className="bg-white/90 rounded-r-md shadow-md cursor-pointer font-semibold select-none"
                   style={{
+                    padding: "clamp(3px, 0.6vw, 8px)",
+                    fontSize: "clamp(0.55rem, 0.75vw, 0.85rem)",
                     writingMode: "vertical-rl",
                     textOrientation: "mixed",
                   }}
@@ -1739,26 +1810,44 @@ console.log(selectedWaterbody)
                 </div>
               ) : (
                 /* EXPANDED LEGEND */
-                <div className="bg-white/90 p-4 rounded-md shadow-md ml-2 min-w-[180px]">
-                  <div className="flex justify-between items-center mb-2">
-                    <p className="font-semibold text-sm">Waterbody Legend</p>
+                <div
+                  className="bg-white/90 rounded-md shadow-md ml-2"
+                  style={{
+                    padding: "clamp(6px, 1vw, 14px)",
+                    minWidth: "clamp(140px, 16vw, 200px)",
+                    fontSize: "clamp(0.55rem, 0.8vw, 0.9rem)",
+                  }}
+                >
+                  <div
+                    className="flex justify-between items-center mb-2"
+                    style={{
+                      fontSize: "clamp(0.6rem, 0.8vw, 0.9rem)",
+                    }}
+                  >
+                    <p className="font-semibold">Waterbody Legend</p>
                     <button
                       onClick={() => setWaterLegendOpen(false)}
-                      className="text-sm font-bold hover:opacity-70"
+                      className="font-bold hover:opacity-70"
                     >
                       ◀
                     </button>
                   </div>
 
                   {WATER_DASHBOARD_CONFIG.legends.waterbody.map((item, idx) => (
-                    <div key={idx} className="flex items-center gap-2 mb-1">
+                    <div
+                      key={idx}
+                      className="flex items-center gap-2 mb-1"
+                      style={{ fontSize: "clamp(0.55rem, 0.75vw, 0.85rem)" }}
+                    >
                       <div
-                        className="w-4 h-4 border border-gray-400"
-                        style={{ backgroundColor: item.color }}
+                        className="border border-gray-400"
+                        style={{
+                          width: "clamp(10px, 1vw, 14px)",
+                          height: "clamp(10px, 1vw, 14px)",
+                          backgroundColor: item.color,
+                        }}
                       />
-                      <span className="text-gray-700 text-sm">
-                        {item.label}
-                      </span>
+                      <span className="text-gray-700">{item.label}</span>
                     </div>
                   ))}
                 </div>
@@ -1766,14 +1855,19 @@ console.log(selectedWaterbody)
             </div>
           )}
 
+
         {mode === "zoi" && selectedWaterbody && (
-          <div
-            className="absolute bottom-36 left-4 right-4 
-                      flex justify-end z-[1000]"
-          >
             <div
-              className="bg-white/90 p-4 rounded-md shadow-md 
-                        min-w-[220px] sm:min-w-[300px] md:min-w-[500px]"
+            className="absolute left-4 right-4 flex justify-end bottom-36" >
+            <div
+              className="
+                bg-white/90 rounded-md shadow-md
+              "
+              style={{
+                padding: "clamp(3px, 1vw, 9px)",                      // shrinks padding
+                minWidth: "clamp(200px, 55vw, 600px)",                // responsive width
+                fontSize: "clamp(0.55rem, 0.8vw, 0.9rem)",            // slider text scales
+              }}
             >
               <YearSlider
                 currentLayer={{ name: "lulcWaterrej" }}
@@ -1786,14 +1880,15 @@ console.log(selectedWaterbody)
 
         {/* ZOI LEGEND */}
         {mode === "zoi" && selectedWaterbody && (
-          <div className="absolute bottom-36 left-4 z-[1000]">
+          <div className="absolute bottom-36 left-4">
             {!waterLegendOpen ? (
               /* COLLAPSED TAB */
               <div
                 onClick={() => setWaterLegendOpen(true)}
-                className="bg-white/90 px-2 py-2 rounded-r-md shadow-md 
-                          cursor-pointer font-semibold text-sm select-none"
+                className="bg-white/90 rounded-r-md shadow-md cursor-pointer font-semibold select-none"
                 style={{
+                  padding: "clamp(3px, 0.6vw, 8px)",
+                  fontSize: "clamp(0.55rem, 0.75vw, 0.85rem)",
                   writingMode: "vertical-rl",
                   textOrientation: "mixed",
                 }}
@@ -1802,26 +1897,44 @@ console.log(selectedWaterbody)
               </div>
             ) : (
               /* EXPANDED LEGEND */
-              <div className="bg-white/90 p-4 rounded-md shadow-md ml-2 min-w-[180px]">
-                <div className="flex justify-between items-center mb-2">
-                  <p className="font-semibold text-sm">ZOI Legend</p>
+              <div
+                className="bg-white/90 rounded-md shadow-md ml-2"
+                style={{
+                  padding: "clamp(6px, 1vw, 14px)",
+                  minWidth: "clamp(140px, 16vw, 200px)",
+                  fontSize: "clamp(0.55rem, 0.75vw, 0.85rem)", // match waterbody legend
+                }}
+              >
+                <div
+                  className="flex justify-between items-center mb-2"
+                  style={{
+                    fontSize: "clamp(0.6rem, 0.75vw, 0.85rem)", // match waterbody legend
+                  }}
+                >
+                  <p className="font-semibold">ZOI Legend</p>
                   <button
                     onClick={() => setWaterLegendOpen(false)}
-                    className="text-sm font-bold hover:opacity-70"
+                    className="font-bold hover:opacity-70"
                   >
                     ◀
                   </button>
                 </div>
 
                 {WATER_DASHBOARD_CONFIG.legends.zoi.map((item, idx) => (
-                  <div key={idx} className="flex items-center gap-2 mb-1">
+                  <div
+                    key={idx}
+                    className="flex items-center gap-2 mb-1"
+                    style={{ fontSize: "clamp(0.55rem, 0.75vw, 0.85rem)" }}
+                  >
                     <div
-                      className="w-4 h-4 border border-gray-400"
-                      style={{ backgroundColor: item.color }}
+                      className="border border-gray-400"
+                      style={{
+                        width: "clamp(10px, 1vw, 14px)",
+                        height: "clamp(10px, 1vw, 14px)",
+                        backgroundColor: item.color,
+                      }}
                     />
-                    <span className="text-gray-700 text-sm">
-                      {item.label}
-                    </span>
+                    <span className="text-gray-700">{item.label}</span>
                   </div>
                 ))}
               </div>
@@ -1830,67 +1943,134 @@ console.log(selectedWaterbody)
         )}
 
 
+
         {mode === "mws" && selectedWaterbody && (
           <>
             {/* TERRAIN LEGEND — LEFT */}
-            <div className="absolute left-0 bottom-20 p-4 pointer-events-auto z-[1000]">
+            <div className="absolute left-0 bottom-20 p-4 pointer-events-auto">
               {!terrainLegend ? (
+                /* COLLAPSED TAB */
                 <div
                   onClick={() => setTerrainLegend(true)}
-                  className="bg-white/90 px-2 py-1 rounded-r-md shadow-md cursor-pointer font-bold text-gray-800"
-                  style={{ writingMode: "vertical-rl" }}
+                  className="bg-white/90 rounded-r-md shadow-md cursor-pointer font-semibold text-gray-800 select-none"
+                  style={{
+                    padding: "clamp(3px, 0.6vw, 8px)",
+                    fontSize: "clamp(0.55rem, 0.75vw, 0.85rem)",
+                    writingMode: "vertical-rl",
+                    textOrientation: "mixed",
+                  }}
                 >
                   Terrain Legend ▶
                 </div>
               ) : (
-                <div className="bg-white/90 p-4 rounded-md shadow-md min-w-[220px] max-h-[240px] overflow-auto">
-                  <div className="flex justify-between mb-2">
-                    <p className="text-sm font-semibold">Terrain Layer Legend</p>
-                    <button onClick={() => setTerrainLegend(false)}>◀</button>
+                /* EXPANDED */
+                <div
+                  className="bg-white/90 rounded-md shadow-md ml-2"
+                  style={{
+                    padding: "clamp(6px, 1vw, 14px)",
+                    minWidth: "clamp(140px, 16vw, 200px)",
+                    fontSize: "clamp(0.55rem, 0.75vw, 0.85rem)",
+                    maxHeight: "clamp(140px, 22vw, 240px)",
+                    overflowY: "auto",
+                  }}
+                >
+                  <div
+                    className="flex justify-between items-center mb-2"
+                    style={{ fontSize: "clamp(0.6rem, 0.8vw, 0.9rem)" }}
+                  >
+                    <p className="font-semibold">Terrain Layer Legend</p>
+                    <button
+                      onClick={() => setTerrainLegend(false)}
+                      className="font-bold hover:opacity-70"
+                    >
+                      ◀
+                    </button>
                   </div>
 
                   {WATER_DASHBOARD_CONFIG.legends.terrain.map((item, idx) => (
-                    <div key={idx} className="flex items-center gap-2 mt-1">
+                    <div
+                      key={idx}
+                      className="flex items-center gap-2 mb-1"
+                      style={{ fontSize: "clamp(0.55rem, 0.75vw, 0.85rem)" }}
+                    >
                       <div
-                        className="w-5 h-5 border border-black"
-                        style={{ backgroundColor: item.color }}
+                        className="border border-gray-400"
+                        style={{
+                          width: "clamp(10px, 1vw, 14px)",
+                          height: "clamp(10px, 1vw, 14px)",
+                          backgroundColor: item.color,
+                        }}
                       />
-                      <p className="text-xs">{item.label}</p>
+                      <span className="text-gray-700">{item.label}</span>
                     </div>
                   ))}
                 </div>
               )}
             </div>
+
 
             {/*  DRAINAGE LEGEND — RIGHT */}
-            <div className="absolute right-0 bottom-20 p-4 pointer-events-auto z-[1000]">
-              {!drainageLegend ? (
+            <div className="absolute right-0 bottom-20 p-4 pointer-events-auto">
+            {!drainageLegend ? (
+              /* COLLAPSED TAB */
+              <div
+                onClick={() => setDrainageLegend(true)}
+                className="bg-white/90 rounded-l-md shadow-md cursor-pointer font-semibold text-gray-800 select-none"
+                style={{
+                  padding: "clamp(3px, 0.6vw, 8px)",
+                  fontSize: "clamp(0.55rem, 0.75vw, 0.85rem)",
+                  writingMode: "vertical-rl",
+                  textOrientation: "mixed",
+                }}
+              >
+                Drainage Legend ▶
+              </div>
+            ) : (
+              /* EXPANDED LEGEND */
+              <div
+                className="bg-white/90 rounded-md shadow-md mr-2"
+                style={{
+                  padding: "clamp(6px, 1vw, 14px)",
+                  minWidth: "clamp(140px, 16vw, 200px)",
+                  fontSize: "clamp(0.55rem, 0.75vw, 0.85rem)",
+                  maxHeight: "clamp(140px, 22vw, 240px)",
+                  overflowY: "auto",
+                }}
+              >
                 <div
-                  onClick={() => setDrainageLegend(true)}
-                  className="bg-white/90 px-2 py-1 rounded-l-md shadow-md cursor-pointer font-bold text-gray-800"
-                  style={{ writingMode: "vertical-rl" }}
+                  className="flex justify-between items-center mb-2"
+                  style={{ fontSize: "clamp(0.6rem, 0.8vw, 0.9rem)" }}
                 >
-                  Drainage Legend ▶
+                  <p className="font-semibold">Drainage Layer Legend</p>
+                  <button
+                    onClick={() => setDrainageLegend(false)}
+                    className="font-bold hover:opacity-70"
+                  >
+                    ◀
+                  </button>
                 </div>
-              ) : (
-                <div className="bg-white/90 p-4 rounded-md shadow-md min-w-[220px] max-h-[240px] overflow-auto">
-                  <div className="flex justify-between mb-2">
-                    <p className="text-sm font-semibold">Drainage Layer Legend</p>
-                    <button onClick={() => setDrainageLegend(false)}>◀</button>
-                  </div>
 
-                  {WATER_DASHBOARD_CONFIG.legends.drainage.map((item, idx) => (
-                    <div key={idx} className="flex items-center gap-2 mt-1">
-                      <div
-                        className="w-5 h-5 border border-black"
-                        style={{ backgroundColor: item.color }}
-                      />
-                      <p className="text-xs">Order {item.label}</p>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
+                {WATER_DASHBOARD_CONFIG.legends.drainage.map((item, idx) => (
+                  <div
+                    key={idx}
+                    className="flex items-center gap-2 mb-1"
+                    style={{ fontSize: "clamp(0.55rem, 0.75vw, 0.85rem)" }}
+                  >
+                    <div
+                      className="border border-gray-400"
+                      style={{
+                        width: "clamp(10px, 1vw, 14px)",
+                        height: "clamp(10px, 1vw, 14px)",
+                        backgroundColor: item.color,
+                      }}
+                    />
+                    <span className="text-gray-700">Order {item.label}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
           </>
         )}
     </div>

@@ -296,12 +296,14 @@ const WaterProjectDashboard = () => {
   : 0;
 
   useEffect(() => {
-    if (geoData === null) {
-      setLoadingData(true);          // data not arrived yet
-    } else {
-      setLoadingData(false);         // data arrived (even if empty)
-    }
-  }, [geoData]);
+    const allLoaded =
+      geoData &&
+      zoiFeatures &&
+      mwsGeoData;
+  
+    setLoadingData(!allLoaded);
+  }, [geoData, zoiFeatures, mwsGeoData]);
+  
 
   useEffect(() => {
     if (isTehsilMode) return; 
@@ -726,6 +728,8 @@ const WaterProjectDashboard = () => {
   const printReport=()=>{
     window.print();
   }
+
+  console.log(zoiFeatures)
   
   return (
 <div className={`${isTehsilMode ? "pb-8 w-full" : "mx-6 my-8 bg-white rounded-xl shadow-md p-6"}`}>
@@ -759,52 +763,64 @@ const WaterProjectDashboard = () => {
         </div>
       </div>
     )}
-        <div className="flex items-center justify-between mb-6">
-        {mode === "project" && (
-          <div className="flex gap-3">
-            <button onClick={() => {navigate("/rwb", { replace: true });}}
-                  className="px-4 py-2 bg-purple-600 text-white rounded-md text-sm hover:bg-purple-600 flex items-center gap-2">
-                <ArrowBackIosNewIcon sx={{ fontSize: 16 }} />
-                <span>Back to Projects</span>
-            </button>
-            <button onClick={() => {  setSelectedWaterbody(null);      
-                                      setSelectedFeature(null);   
-                                      setShowMap((prev) => !prev)}}
-                                      className="px-4 py-2 bg-purple-600 text-white rounded-md text-sm hover:bg-purple-600 flex items-center gap-2">
-              {showMap ? (
-                <TableRowsIcon sx={{ fontSize: 18 }} />
-              ) : (
-                <PublicIcon sx={{ fontSize: 18 }} />
-              )}            
-              <span>{showMap ? "View Table" : "View Map"}</span>
-            </button>
-          <div className="flex justify-end ml-24">
-          {mode === "project" && projectNameParam && !activeSelectedWaterbody && (
-            <div className="flex items-center gap-6 bg-white px-6 py-2 rounded-xl shadow-sm">
-              <Lightbulb size={36} className="text-gray-800" />
-              <p className="text-gray-800 text-sm md:text-base font-medium text-center">
-                {WATER_DASHBOARD_CONFIG.project.topSectionText({
-                  projectName: projectNameParam,
-                  totalRows,
-                  totalSiltRemoved,
-                  interventionYear:
-                    WATER_DASHBOARD_CONFIG.project.interventionYear,
-                  rabiImpact: projectLevelRabiImpact,
-                  zaidImpact: projectLevelZaidImpact,
-                })}
-              </p>
-            </div>
-          )}
-          </div>
-          </div>
-        )}
-    </div>
+  <div className="flex flex-col gap-1 mb-6 lg:flex-row lg:items-start lg:justify-between">
+
+{/* LEFT — BUTTONS */}
+{mode === "project" && (
+  <div className="flex gap-2 flex-shrink-0">
+    <button
+      onClick={() => navigate("/rwb", { replace: true })}
+      className="px-4 py-2 bg-purple-600 text-white rounded-md text-sm hover:bg-purple-600 flex items-center gap-2 flex-shrink-0"
+    >
+      <ArrowBackIosNewIcon sx={{ fontSize: 16 }} />
+      <span>Back to Projects</span>
+    </button>
+
+    <button
+      onClick={() => {
+        setSelectedWaterbody(null);
+        setSelectedFeature(null);
+        setShowMap((prev) => !prev);
+      }}
+      className="px-4 py-2 bg-purple-600 text-white rounded-md text-sm hover:bg-purple-600 flex items-center gap-2 flex-shrink-0"
+    >
+      {showMap ? (
+        <TableRowsIcon sx={{ fontSize: 18 }} />
+      ) : (
+        <PublicIcon sx={{ fontSize: 18 }} />
+      )}
+      <span>{showMap ? "View Table" : "View Map"}</span>
+    </button>
+  </div>
+)}
+
+{/* RIGHT — SUMMARY BOX */}
+  {mode === "project" && projectNameParam && !activeSelectedWaterbody && (
+        <div
+          className="
+            flex items-start gap-2 bg-white px-0 py-2 rounded-xl shadow-sm
+              w-full md:max-w-[90%] lg:max-w-[60%] xl:max-w-[80%] flex-grow mt-1 lg:mt-0 sm:max-w-[99%]">
+          <Lightbulb size={32} className="text-gray-800 flex-shrink-0" />
+          <p className="text-gray-800 text-sm md:text-base font-medium leading-snug">
+            {WATER_DASHBOARD_CONFIG.project.topSectionText({
+              projectName: projectNameParam,
+              totalRows,
+              totalSiltRemoved,
+              interventionYear: WATER_DASHBOARD_CONFIG.project.interventionYear,
+              rabiImpact: projectLevelRabiImpact,
+              zaidImpact: projectLevelZaidImpact,
+            })}
+          </p>
+        </div>
+  )}
+</div>
+
     {/* SECTION TEXT — show only when zoomed on a waterbody */}
     <div className="px-6 md:px-10 w-full box-border overflow-x-hidden">
 
       {showMap && activeSelectedWaterbody && (
         <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
-          <h2 className="text-2xl font-bold text-blue-600 border-b-2 border-blue-600 pb-1">
+        <h2 className="font-bold text-blue-600 border-b-2 border-blue-600 pb-1 text-[clamp(1.1rem,1.7vw,1.5rem)]">
             {WATER_DASHBOARD_CONFIG[mode].sections.section1.title}
           </h2>
 
@@ -814,7 +830,8 @@ const WaterProjectDashboard = () => {
                 <p
                   key={idx}
                   className="text-gray-700 leading-relaxed"
-                >
+                  style={{ fontSize: "clamp(0.70rem, 1vw, 1rem)" }}
+                                  >
                   {text}
                 </p>
               )
@@ -823,16 +840,17 @@ const WaterProjectDashboard = () => {
         </div>
       )}
 
-    {showMap ? (
+    {showMap && loadingData ? (
+      <div className="w-full h-[80vh] flex items-center justify-center">
+        <CircularProgress />
+      </div>
+    ) : showMap ? (
       <>
       <div className="h-[90vh] bg-white rounded-xl shadow-md overflow-hidden flex">
 
 {/* MAP */}
   <div
-    className={`transition-all duration-300 h-full ${
-      "w-[60%]" 
-    }`}
-  >
+    className="transition-all duration-300 h-full flex-[2] min-w-[50%]">
   <DashboardBasemap
     mode="waterbody"
     geoData={typeParam === "tehsil" ? tehsilGeoData : geoData}
@@ -855,7 +873,7 @@ const WaterProjectDashboard = () => {
 
 {/* RIGHT PANEL */}
 {showMap && activeSelectedWaterbody && (
-  <div className="w-[40%] h-full border-l bg-white overflow-y-auto p-4 flex flex-col gap-6">
+  <div className="h-full border-l bg-white overflow-y-auto p-4 flex-[1] min-w-[350px] flex flex-col gap-6">
 
     {/* WATER AVAILABILITY */}
     <div className="min-h-[320px] bg-white rounded-lg shadow-sm p-2 overflow-visible">
@@ -886,10 +904,11 @@ const WaterProjectDashboard = () => {
 
   </div>
 )}
+
 </div>
 {showMap && activeSelectedWaterbody && (
         <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
-          <h2 className="text-2xl font-bold text-blue-600 border-b-2 border-blue-600 pb-1">
+        <h2 className="font-bold text-blue-600 border-b-2 border-blue-600 pb-1 text-[clamp(1.1rem,1.7vw,1.5rem)]">
             {WATER_DASHBOARD_CONFIG[mode].sections.section2.title}
           </h2>
 
@@ -899,7 +918,7 @@ const WaterProjectDashboard = () => {
                 <p
                   key={idx}
                   className="text-gray-700 leading-relaxed"
-                >
+                  style={{ fontSize: "clamp(0.70rem, 1vw, 1rem)" }}>
                   {text}
                 </p>
               )
@@ -938,6 +957,7 @@ const WaterProjectDashboard = () => {
                         impactYear={impactYear}
                         isTehsil={isTehsilMode}
                         years={extractedSeasonalYears}
+                        water_rej_data={isTehsilMode ? geoData ? { features: [geoData]} : null : geoData }        
                       />
       </div>
 
@@ -968,14 +988,15 @@ const WaterProjectDashboard = () => {
 {/* SECTION 3 TEXT — BELOW NDVI */}
 {showMap && activeSelectedWaterbody && (
   <div className="bg-white rounded-xl shadow-sm p-6 mt-6 mb-6">
-    <h2 className="text-2xl font-bold text-blue-600 border-b-2 border-blue-600 pb-1">
+        <h2 className="font-bold text-blue-600 border-b-2 border-blue-600 pb-1 text-[clamp(1.1rem,1.7vw,1.5rem)]">
       {WATER_DASHBOARD_CONFIG[mode].sections.section3.title}
     </h2>
 
     <div className="space-y-3 leading-relaxed mt-3">
       {WATER_DASHBOARD_CONFIG[mode].sections.section3.paragraphs.map(
         (text, idx) => (
-          <p key={idx} className="text-gray-700 leading-relaxed">
+          <p key={idx}  className="text-gray-700 leading-relaxed"
+          style={{ fontSize: "clamp(0.70rem, 1vw, 1rem)" }}>
             {text}
           </p>
         )
@@ -985,109 +1006,81 @@ const WaterProjectDashboard = () => {
 )}
 
 {/* SECTION 3 — SUMMARY CARDS */}
-{showMap && activeSelectedWaterbody && (
-  <div className="w-full mt-4 px-2 md:px-0">
-    <div className="w-full flex flex-col md:flex-row justify-between gap-3">
+  {showMap && activeSelectedWaterbody && (
+    <div className="w-full mt-4 px-2 md:px-0">
+      <div className="w-full flex flex-col md:flex-row justify-between gap-3">
 
-      {/* MAX CATCHMENT AREA */}
-      <div
-        className="flex-1 bg-gradient-to-br from-gray-50 to-gray-100 p-4 md:p-6 rounded-xl
-        border border-gray-200 shadow-sm flex flex-col items-center text-center min-h-[120px]
-        transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md"
-      >
-        <p className="uppercase tracking-wide font-bold text-sm text-gray-800">
-          Max Catchment Area
-        </p>
+        {/* CARD TEMPLATE UPDATED */}
+        {[
+          {
+            title: "Max Catchment Area",
+            value: (() => {
+              const props = activeSelectedWaterbody?.properties ?? activeSelectedWaterbody ?? {};
+              const v =
+                props.max_catchment_area ??   // tehsil / underscore format
+                props.maxCatchmentArea ??     // camelCase format
+                props.max_catchment ??        // fallback old format
+                null;
+              return v ? `${Number(v).toFixed(2)} hectares` : "N/A";
+            })(),
+            color: "text-blue-600",
+          },
+          {
+            title: "Drainage Line",
+            value: (() => {
+              const props = activeSelectedWaterbody?.properties ?? activeSelectedWaterbody ?? {};
+              const onDrain = props.on_drainage_line ?? props.drainage ?? props.drainageFlag;
+              const streamOrder = props.max_stream_order ?? props.maxStreamOrder;
 
-        <p className="mt-1 text-xl md:text-2xl font-semibold text-blue-600">
-          {(() => {
-            const props =
-              activeSelectedWaterbody?.properties ??
-              activeSelectedWaterbody ??
-              {};
-
-            const value =
-              isTehsilMode
-                ? props.max_catchment_area
-                : props.max_catchment_area;
-
-            return value ? `${Number(value).toFixed(2)} hectares` : "N/A";
-          })()}
-        </p>
-      </div>
-
-      {/* DRAINAGE LINE */}
-      <div
-        className="flex-1 bg-gradient-to-br from-gray-50 to-gray-100 p-4 md:p-6 rounded-xl
-        border border-gray-200 shadow-sm flex flex-col items-center text-center min-h-[120px]
-        transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md"
-      >
-        <p className="uppercase tracking-wide font-bold text-sm text-gray-800">
-          Drainage Line
-        </p>
-
-        {(() => {
-          const props =
-            activeSelectedWaterbody?.properties ??
-            activeSelectedWaterbody ??
-            {};
-
-          const drainageFlag =
-            props.on_drainage_line ??
-            props.drainage ??
-            props.drainageFlag;
-
-          const streamOrder =
-            props.max_stream_order ??
-            props.maxStreamOrder;
-
-          if (drainageFlag !== 1) {
-            return (
-              <p className="mt-1 text-xl md:text-2xl font-semibold text-red-500">
-                Not On Drainage Line
-              </p>
-            );
-          }
-
-          return (
-            <p className="mt-1 text-xl md:text-2xl font-semibold text-blue-600">
-              {streamOrder
-                ? `ON Drainage Line Stream Order ${streamOrder}`
-                : "N/A"}
+              if (onDrain !== 1)
+                return <span className="text-red-500">Not On Drainage Line</span>;
+              return streamOrder ? `ON Drainage Line Stream Order ${streamOrder}` : "N/A";
+            })(),
+            color: "text-blue-600",
+          },
+          {
+            title: "Watershed Position",
+            value: (() => {
+              const props = activeSelectedWaterbody?.properties ?? activeSelectedWaterbody ?? {};
+              const streamOrder = props.max_stream_order ?? props.maxStreamOrder;
+              return streamOrder ? `Order ${streamOrder}` : "N/A";
+            })(),
+            color: "text-blue-600",
+          },
+        ].map((card, idx) => (
+          <div
+            key={idx}
+            className="
+              flex-1 bg-gradient-to-br from-gray-50 to-gray-100
+              rounded-xl border border-gray-200 shadow-sm
+              flex flex-col items-center text-center
+              transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md
+            "
+            style={{
+              padding: "clamp(10px, 2vw, 24px)",
+              minHeight: "clamp(100px, 16vh, 140px)",
+            }}
+          >
+            <p
+              className="uppercase tracking-wide font-bold text-gray-800"
+              style={{ fontSize: "clamp(0.55rem, 0.8vw, 0.9rem)" }}
+            >
+              {card.title}
             </p>
-          );
-        })()}
+
+            <p
+              className={`font-semibold mt-1 ${card.color}`}
+              style={{ fontSize: "clamp(0.9rem, 1.5vw, 1.4rem)" }}
+            >
+              {card.value}
+            </p>
+          </div>
+        ))}
+
       </div>
-
-      {/* WATERSHED POSITION */}
-      <div
-        className="flex-1 bg-gradient-to-br from-gray-50 to-gray-100 p-4 md:p-6 rounded-xl
-        border border-gray-200 shadow-sm flex flex-col items-center text-center min-h-[120px]
-        transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md"
-      >
-        <p className="uppercase tracking-wide font-bold text-sm text-gray-800">
-          Watershed Position
-        </p>
-
-        <p className="mt-1 text-xl md:text-2xl font-semibold text-blue-600">
-          {(() => {
-            const props =
-              activeSelectedWaterbody?.properties ??
-              activeSelectedWaterbody ??
-              {};
-
-            const streamOrder =
-              props.max_stream_order ??
-              props.maxStreamOrder;
-
-            return streamOrder ? `Order ${streamOrder}` : "N/A";
-          })()}
-        </p>
-      </div>
-
     </div>
-  </div>
-)}
+  )}
+
 
 {/* FULL WIDTH MWS MAP — AFTER SECTION 3 */}
 {showMap && activeSelectedWaterbody && (
