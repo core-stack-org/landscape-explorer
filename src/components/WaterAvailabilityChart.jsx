@@ -48,6 +48,37 @@ const WaterAvailabilityChart = ({
     return Array.from(years).sort();
   };
 
+  // 🔧 Normalize Year Helper — ALWAYS returns "YY-YY"
+const normalizeYear = (iv) => {
+  if (!iv || typeof iv !== "string" || !iv.includes("-")) return "22-23";
+
+  let clean = iv.replace(/_/g, "-").trim();
+  const parts = clean.split("-");
+
+  // 22-23 → already OK
+  if (parts[0].length === 2 && parts[1].length === 2) return clean;
+
+  // 2022-23 → take last 2 digits of first part
+  if (parts[0].length === 4 && parts[1].length === 2) {
+    return `${parts[0].slice(2)}-${parts[1]}`;
+  }
+
+  // 22-2023 → take last 2 digits of last part
+  if (parts[0].length === 2 && parts[1].length === 4) {
+    return `${parts[0]}-${parts[1].slice(2)}`;
+  }
+
+  // 2022-2023 → take last 2-2 digits
+  if (parts[0].length === 4 && parts[1].length === 4) {
+    return `${parts[0].slice(2)}-${parts[1].slice(2)}`;
+  }
+
+  return "22-23";
+};
+
+const getYearIndex = (year, years) => years.indexOf(year);
+
+
   const yearSourceProps = useMemo(() => {
     if (isTehsil) {
       return water_rej_data?.features?.[0]?.properties || {};
@@ -67,8 +98,6 @@ const WaterAvailabilityChart = ({
     const extracted = extractSeasonYears(yearSourceProps);
     return extracted;
   }, [yearSourceProps]);
-
-  console.log(years)
 
 const getProp = (feature, key) => {
   if (!feature) return 0;
@@ -145,11 +174,11 @@ const computedImpactYear = React.useMemo(() => {
     const f = water_rej_data?.features?.find(
       (x) => x.properties?.UID === waterbody?.UID
     );
-  let iv = f?.properties?.intervention_year;
-  if (!iv || typeof iv !== "string" || !iv.includes("-")) {
-    iv = "22-23";
-  }
-  return iv;
+    let iv = f?.properties?.intervention_year;
+    const normalized = normalizeYear(iv);
+    console.log("🎯 Normalized IV:", normalized);
+    return normalized;
+
     })();
   
   const preYears = years.filter((y) => y < interventionYear);
@@ -374,21 +403,13 @@ useEffect(() => {
               const f = water_rej_data?.features?.find(
                 (x) => x.properties?.UID === waterbody?.UID
               );
-              const interventionYear = (() => {
-                if (isTehsil) return "22-23";
-              
-                const iv = f?.properties?.intervention_year;
-                return typeof iv === "string" && iv.includes("-")
-                  ? iv
-                  : "22-23";
-              })();
-              
-      
+              const iv = f?.properties?.intervention_year;
+              const interventionYear = normalizeYear(iv);    
               return {
                 interventionLine: {
                   type: "line",
                   scaleID: "x",
-                  value: interventionYear.slice(-5),
+                  value: interventionYear,
                   borderColor: "black",
                   borderWidth: 2,
                   label: {
@@ -442,15 +463,14 @@ useEffect(() => {
 
   
   return (
-    <div className="w-full">
+    <div className="w-full chart-wrapper">
       <div
-        className="flex flex-col mb-4 px-4"
+        className="flex flex-col mb-1 px-2"
         style={{
-          minHeight: "120px",
-          // maxHeight: "134px",
-          // overflow: "hidden",
-          fontSize: "clamp(0.55rem, 0.8vw, 0.8rem)",
-          transition: "all 0.3s ease-in-out",
+          minHeight: "clamp(110px, 15vh, 200px)",  // <-- reduced height
+          maxHeight: "200px",
+          overflow: "hidden",
+          rowGap: "2px"                            // small vertical gap only
         }}
       >
         <div className="flex flex-wrap items-start w-full relative gap-x-3 gap-y-1">
@@ -495,32 +515,60 @@ useEffect(() => {
 
           {/* Toggle always rendered once (unchanged) */}
           {!isTehsil && (
-          <div className="flex items-center ml-auto mt-2 sm:mt-0 absolute right-0 top-0 text-right">
+            <div className="flex items-center ml-auto mt-2 sm:mt-0 absolute right-0 top-0 text-right "
+            style={{
+              transformOrigin: "right top",
+              transform: "scale(0.8)",         // smaller on high zoom
+              maxWidth: "150px",                // prevents pushing inside legend
+              whiteSpace: "nowrap",             // don't wrap
+            }}
+          >
             <span
-              className="font-medium mr-2 leading-tight w-auto whitespace-nowrap text-gray-700"
-              style={{ fontSize: "clamp(0.55rem, 0.8vw, 0.75rem)" }}
+              className="font-medium mr-2 leading-tight text-gray-700"
+              style={{ fontSize: "clamp(0.45rem, 0.7vw, 0.7rem)" }}
             >
               {showImpact ? "Comparison years" : "Comparison years"}
             </span>
 
-            <label className="relative inline-flex items-center cursor-pointer">
-              <input
-                type="checkbox"
-                checked={showImpact}
-                onChange={() => setShowImpact(!showImpact)}
-                className="sr-only peer"
-              />
-              <div className="w-11 h-6 bg-gray-300 rounded-full peer peer-checked:bg-blue-600 transition-all"></div>
-              <div className="absolute left-0.5 top-0.5 bg-white w-5 h-5 rounded-full peer-checked:translate-x-5 transition-all"></div>
-            </label>
-          </div>
+          <label className="relative inline-flex items-center cursor-pointer">
+            <input
+              type="checkbox"
+              checked={showImpact}
+              onChange={() => setShowImpact(!showImpact)}
+              className="sr-only peer"
+            />
+            <div
+              className="
+                bg-gray-300 rounded-full
+                peer peer-checked:bg-blue-600 transition-all
+              "
+              style={{
+                width: "clamp(28px, 3vw, 44px)",
+                height: "clamp(14px, 2vw, 24px)",
+              }}
+            ></div>
+            <div
+              className="
+                absolute bg-white rounded-full transition-all
+              "
+              style={{
+                width: "clamp(12px, 2vw, 20px)",
+                height: "clamp(12px, 2vw, 20px)",
+                top: "2px",
+                left: "2px",
+              }}
+            ></div>
+          </label>
+        </div>
           )}
+
         </div>
 
         {/* Impact-only legends (keeps same place, doesn't change layout since minHeight above is set) */}
         {showImpact && (
-          <div className="flex flex-col items-start justify-start gap-2 mt-4 whitespace-nowrap">
-            <div className="flex items-center">
+          <div className="flex flex-col items-start justify-start mt-2 whitespace-nowrap">
+
+            <div className="flex items-center mb-0.5">
               <span
                 className="inline-block w-4 h-4 rounded-sm mr-2"
                 style={{ backgroundColor: "#74CCF4" }}
@@ -529,7 +577,8 @@ useEffect(() => {
                 Kharif : Water available in Kharif
               </span>
             </div>
-            <div className="flex items-center">
+
+            <div className="flex items-center mb-0.5">
               <span
                 className="inline-block w-4 h-4 rounded-sm mr-2"
                 style={{ backgroundColor: "#1ca3ec" }}
@@ -538,7 +587,8 @@ useEffect(() => {
                 Kharif Rabi : Water available in Kharif, Rabi
               </span>
             </div>
-            <div className="flex items-center">
+
+            <div className="flex items-center mb-0.5">
               <span
                 className="inline-block w-4 h-4 rounded-sm mr-2"
                 style={{ backgroundColor: "#0f5e9c" }}
@@ -547,8 +597,9 @@ useEffect(() => {
                 Kharif Rabi Zaid : Water available in Kharif, Rabi And Zaid
               </span>
             </div>
+
             {showImpact && computedImpactYear && (
-              <div className=" mx-auto w-fit text-xs sm:text-xs text-gray-700 rounded-md px-1 py-0.5  text-center shadow-sm">
+              <div className="mx-auto w-fit text-xs text-gray-700 rounded-md px-1 py-0.5 text-center shadow-sm">
                 <p>
                   Criteria for selecting the pre and post intervention years
                   selected are <br /> with minimum difference in rainfall.
@@ -557,6 +608,7 @@ useEffect(() => {
             )}
           </div>
         )}
+
       </div>
 
       {/* Chart wrapper: fix the chart area height so it doesn't reflow */}

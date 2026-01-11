@@ -28,7 +28,8 @@ const CroppingIntensityStackChart = ({
   waterbody,
   impactYear,
   isTehsil,
-  years
+  years,
+  water_rej_data
 }) => {
   const [showImpact, setShowImpact] = useState(false);
 
@@ -57,6 +58,7 @@ const CroppingIntensityStackChart = ({
         (matchedFeature.get(`single_non_kharif_cropped_area_${year}`) || 0),
     }));
 
+
     const extractYearsFromZoi = (feature) => {
       if (!feature) return [];
     
@@ -82,6 +84,33 @@ const CroppingIntensityStackChart = ({
       (a) => a.triple + a.double + a.single_kharif + a.single_non_kharif
     )
   );
+
+  const normalizeYear = (iv) => {
+    if (!iv || typeof iv !== "string" || !iv.includes("-")) return "22-23";
+  
+    let clean = iv.replace(/_/g, "-").trim();
+    const parts = clean.split("-");
+  
+    // 22-23 → already OK
+    if (parts[0].length === 2 && parts[1].length === 2) return clean;
+  
+    // 2022-23 → take last 2 digits of first part
+    if (parts[0].length === 4 && parts[1].length === 2) {
+      return `${parts[0].slice(2)}-${parts[1]}`;
+    }
+  
+    // 22-2023 → take last 2 digits of last part
+    if (parts[0].length === 2 && parts[1].length === 4) {
+      return `${parts[0]}-${parts[1].slice(2)}`;
+    }
+  
+    // 2022-2023 → take last 2-2 digits
+    if (parts[0].length === 4 && parts[1].length === 4) {
+      return `${parts[0].slice(2)}-${parts[1].slice(2)}`;
+    }
+  
+    return "22-23";
+  };
 
 
   // Get impact years
@@ -133,6 +162,7 @@ const CroppingIntensityStackChart = ({
 
   const options = {
     responsive: true,
+
     plugins: {
       legend: { position: "bottom" },
       title: {
@@ -143,26 +173,37 @@ const CroppingIntensityStackChart = ({
             ? "Cropping Intensity (Area in hectares) (Black line = intervention year)"
             : `Impact Analysis: Showing Only Pre (${impactYear.pre}) and Post (${impactYear.post}) Years`,
             font: { size: 16, weight: "bold" },
+             padding: {
+              bottom: 20,   
+              top: 0,
+            },
       },
       annotation: {
         annotations: isTehsil
-          ? {} // hide annotation completely in tehsil mode
-          : {
-              interventionLine: {
-                type: "line",
-                scaleID: "x",
-                value: "22-23",
-                borderColor: "black",
-                borderWidth: 2,
-                label: {
-                  content: "Intervention Year",
-                  enabled: true,
-                  position: "start",
-                  color: "black",
-                  font: { weight: "bold" },
+          ? {}
+          : (() => {
+              const f = water_rej_data?.features?.find(
+                (x) => x.properties?.UID === waterbody?.UID
+              );
+              const iv = f?.properties?.intervention_year;
+              const interventionYear = normalizeYear(iv);    
+              return {
+                interventionLine: {
+                  type: "line",
+                  scaleID: "x",
+                  value: interventionYear,
+                  borderColor: "black",
+                  borderWidth: 2,
+                  label: {
+                    content: `Intervention Year (${interventionYear})`,
+                    enabled: true,
+                    position: "start",
+                    color: "black",
+                    font: { weight: "bold" },
+                  },
                 },
-              },
-            },
+              };
+            })(),
       },
     },
     scales: {
@@ -182,22 +223,53 @@ const CroppingIntensityStackChart = ({
     <div>
       {/* Toggle above chart */}
       {!isTehsil && (
-      <div className="flex items-center justify-end mb-4">
-        <span className="text-[0.7rem] sm:text-[0.75rem] text-gray-700 font-medium mr-2 leading-tight w-auto whitespace-nowrap">
-          {showImpact ? "Comparison years" : "Comparison years"}
-        </span>
-        <label className="relative inline-flex items-center cursor-pointer">
-          <input
-            type="checkbox"
-            checked={showImpact}
-            onChange={() => setShowImpact(!showImpact)}
-            className="sr-only peer"
-          />
-          <div className="w-11 h-6 bg-gray-300 rounded-full peer peer-checked:bg-blue-600 transition-all"></div>
-          <div className="absolute left-0.5 top-0.5 bg-white w-5 h-5 rounded-full peer-checked:translate-x-5 transition-all"></div>
-        </label>
-      </div>
-      )}
+          <div
+            className="flex items-center ml-auto justify-end mb-2"
+            style={{
+              transformOrigin: "right center",
+              transform: "scale(0.85)",      // shrink on XL monitors
+              maxWidth: "160px",             // prevent overflow
+              whiteSpace: "nowrap",
+            }}
+          >
+            <span
+              className="font-medium mr-2 leading-tight text-gray-700"
+              style={{ fontSize: "clamp(0.55rem, 0.75vw, 0.8rem)" }}
+            >
+              Comparison years
+            </span>
+
+            <label className="relative inline-flex items-center cursor-pointer">
+              <input
+                type="checkbox"
+                checked={showImpact}
+                onChange={() => setShowImpact(!showImpact)}
+                className="sr-only peer"
+              />
+
+              {/* TRACK */}
+              <div
+                className="bg-gray-300 rounded-full peer-checked:bg-blue-600 transition-all"
+                style={{
+                  width: "clamp(30px, 3vw, 42px)",
+                  height: "clamp(14px, 1.9vw, 22px)",
+                }}
+              ></div>
+
+              {/* THUMB */}
+              <div
+                className="absolute bg-white rounded-full transition-all peer-checked:translate-x-[calc(clamp(30px,3vw,42px)-clamp(14px,1.9vw,22px))]"
+                style={{
+                  width: "clamp(12px, 1.6vw, 18px)",
+                  height: "clamp(12px, 1.6vw, 18px)",
+                  top: "2px",
+                  left: "2px",
+                }}
+              ></div>
+            </label>
+          </div>
+        )}
+
 
       <Bar data={maskedData} options={options} />
     </div>
