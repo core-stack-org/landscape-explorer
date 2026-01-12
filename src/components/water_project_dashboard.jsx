@@ -795,24 +795,31 @@ const WaterProjectDashboard = () => {
 )}
 
 {/* RIGHT — SUMMARY BOX */}
-  {mode === "project" && projectNameParam && !activeSelectedWaterbody && (
-        <div
-          className="
-            flex items-start gap-2 bg-white px-0 py-2 rounded-xl shadow-sm
-              w-full md:max-w-[90%] lg:max-w-[60%] xl:max-w-[80%] flex-grow mt-1 lg:mt-0 sm:max-w-[99%]">
-          <Lightbulb size={32} className="text-gray-800 flex-shrink-0" />
-          <p className="text-gray-800 text-sm md:text-base font-medium leading-snug">
-            {WATER_DASHBOARD_CONFIG.project.topSectionText({
-              projectName: projectNameParam,
-              totalRows,
-              totalSiltRemoved,
-              interventionYear: WATER_DASHBOARD_CONFIG.project.interventionYear,
-              rabiImpact: projectLevelRabiImpact,
-              zaidImpact: projectLevelZaidImpact,
-            })}
-          </p>
-        </div>
-  )}
+{mode === "project" && projectNameParam && !activeSelectedWaterbody && (
+  loadingData ? (
+    // Loader while text waits
+    <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-xl shadow-sm w-full md:max-w-[90%]">
+      <CircularProgress size={20} />
+      <p className="text-gray-500 text-sm">Loading...</p>
+    </div>
+  ) : (
+    <div className="flex items-start gap-2 bg-white px-0 py-2 rounded-xl shadow-sm
+      w-full md:max-w-[90%] lg:max-w-[60%] xl:max-w-[80%] flex-grow mt-1 lg:mt-0 sm:max-w-[99%]">
+      <Lightbulb size={32} className="text-gray-800 flex-shrink-0" />
+      <p className="text-gray-800 text-sm md:text-base font-medium leading-snug">
+        {WATER_DASHBOARD_CONFIG.project.topSectionText({
+          projectName: projectNameParam,
+          totalRows,
+          totalSiltRemoved,
+          interventionYear: WATER_DASHBOARD_CONFIG.project.interventionYear,
+          rabiImpact: projectLevelRabiImpact,
+          zaidImpact: projectLevelZaidImpact,
+        })}
+      </p>
+    </div>
+  )
+)}
+
 </div>
 
     {/* SECTION TEXT — show only when zoomed on a waterbody */}
@@ -846,30 +853,38 @@ const WaterProjectDashboard = () => {
       </div>
     ) : showMap ? (
       <>
-      <div className="h-[90vh] bg-white rounded-xl shadow-md overflow-hidden flex">
-
+<div
+  className="
+    bg-white rounded-xl shadow-md overflow-hidden flex
+    h-[60vh]        /* base mobile */
+    sm:h-[65vh]
+    md:h-[75vh]
+    lg:h-[85vh]
+    xl:h-[110vh]
+  "
+>
 {/* MAP */}
-  <div
-    className="transition-all duration-300 h-full flex-[2] min-w-[50%]">
-  <DashboardBasemap
-    mode="waterbody"
-    geoData={typeParam === "tehsil" ? tehsilGeoData : geoData}
-    selectedWaterbody={activeSelectedWaterbody}
-    showMap={showMap}
-    projectName={typeParam === "project" ? projectNameParam : null}
-    projectId={typeParam === "project" ? projectIdParam : null}
-    onSelectWaterbody={(wb) => {
-      setSelectedWaterbody(wb);
-      setShowMap(true);  
-    }}
-    lulcYear={lulcYear1}
-    district={districtParam}
-    block={blockParam}
-    onMapReady={(map) => {
-      setTehsilMap(map);
-    }}
-  />
-</div>
+        <div
+          className="transition-all duration-300 h-full flex-[2] min-w-[50%]">
+        <DashboardBasemap
+          mode="waterbody"
+          geoData={typeParam === "tehsil" ? tehsilGeoData : geoData}
+          selectedWaterbody={activeSelectedWaterbody}
+          showMap={showMap}
+          projectName={typeParam === "project" ? projectNameParam : null}
+          projectId={typeParam === "project" ? projectIdParam : null}
+          onSelectWaterbody={(wb) => {
+            setSelectedWaterbody(wb);
+            setShowMap(true);  
+          }}
+          lulcYear={lulcYear1}
+          district={districtParam}
+          block={blockParam}
+          onMapReady={(map) => {
+            setTehsilMap(map);
+          }}
+        />
+      </div>
 
 {/* RIGHT PANEL */}
 {showMap && activeSelectedWaterbody && (
@@ -905,7 +920,7 @@ const WaterProjectDashboard = () => {
   </div>
 )}
 
-</div>
+      </div>
 {showMap && activeSelectedWaterbody && (
         <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
         <h2 className="font-bold text-blue-600 border-b-2 border-blue-600 pb-1 text-[clamp(1.1rem,1.7vw,1.5rem)]">
@@ -928,7 +943,11 @@ const WaterProjectDashboard = () => {
       )}
       {/* SECOND MAP + GRAPHS (Cropping + Drought) */}
 {showMap && activeSelectedWaterbody && (
-  <div className="h-[80vh] bg-white rounded-xl shadow-md overflow-hidden flex mt-6">
+  <div className=" bg-white rounded-xl shadow-md overflow-hidden flex mt-6 h-[60vh]
+    sm:h-[65vh]
+    md:h-[75vh]
+    lg:h-[85vh]
+    xl:h-[110vh]">
 
     {/* MAP */}
     <div className="w-[60%] h-full">
@@ -1085,7 +1104,11 @@ const WaterProjectDashboard = () => {
 {/* FULL WIDTH MWS MAP — AFTER SECTION 3 */}
 {showMap && activeSelectedWaterbody && (
   <div className="w-full mt-6">
-    <div className="relative w-full h-[85vh] bg-white rounded-xl shadow-md overflow-hidden">
+    <div className="relative w-full     h-[60vh]
+    sm:h-[65vh]
+    md:h-[75vh]
+    lg:h-[85vh]
+    xl:h-[110vh] bg-white rounded-xl shadow-md overflow-hidden">
 
     <DashboardBasemap
                     id="map3"

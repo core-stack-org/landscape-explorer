@@ -107,29 +107,28 @@ export default function TableView({
   };
 
   return (
-    <div className="mt-4 bg-white rounded-md shadow-sm overflow-x-auto">
-      <table className="w-full border border-gray-200 text-[8px] sm:text-[10px] md:text-xs lg:text-sm text-gray-800">
+    <div className="mt-2 bg-white rounded-md shadow-sm overflow-x-auto w-full p-0">
+      <table className="min-w-[1200px] text-[7px] sm:text-[8px] md:text-[9px] lg:text-[10px] xl:text-[12px] 2xl:text-[14px] border border-gray-200">
         <thead className="bg-gray-100 font-medium">
           <tr className="border-b">
           <th className="
-                px-1 py-1 
-                sm:px-2 sm:py-1.5 
-                md:px-3 md:py-2 
-                align-middle
-                text-center whitespace-normal break-words">
+              px-[2px] py-[2px]
+              sm:px-1 sm:py-1
+              md:px-2 md:py-1.5
+              lg:px-2 lg:py-2
+              align-center text-center whitespace-normal break-words
+            ">
             S.No.
           </th>
 
             {headers.map((col) => (
               <th key={col.key} className=" relative
-              px-1 py-1 
-              sm:px-2 sm:py-1.5 
-              md:px-3 md:py-2 
-              align-middle
-              text-center whitespace-normal break-words
-
-            "
-            >
+                  px-[2px] py-[2px]
+                  sm:px-1 sm:py-1
+                  md:px-2 md:py-1.5
+                  lg:px-2 lg:py-2
+                  align-center text-center whitespace-normal break-words
+                ">
                 <div
                   className={`flex items-center justify-center gap-1 ${
                     col.sortable ? "cursor-pointer select-none" : ""
@@ -198,7 +197,7 @@ export default function TableView({
         </thead>
 
         {/* BODY */}
-        <tbody className="text-sm text-gray-700">
+        <tbody className="text-gray-700">
           {paginatedRows.map((row,index) => (
             <tr
               key={row.id}
@@ -206,28 +205,23 @@ export default function TableView({
               onClick={() => onRowClick(row)}
             >
               <td className="
-  px-1 py-2 
-  sm:px-2 sm:py-2.5 
-  md:px-3 md:py-3 
-  align-middle
-  text-center whitespace-normal break-words
-
-"
->
+                px-[2px] py-[2px]
+                sm:px-1 sm:py-1
+                md:px-2 md:py-1.5
+                lg:px-2 lg:py-2
+                align-center text-center whitespace-normal break-words
+              ">
                 {pageSize
                   ? (currentPage - 1) * pageSize + index + 1
                   : index + 1}
               </td>
               {headers.map((col) => (
-                <td key={col.key} cclassName="
-                px-1 py-2 
-                sm:px-2 sm:py-2.5 
-                md:px-3 md:py-2 
-                align-middle
-                text-center
-                whitespace-normal 
-                break-words
-
+                <td key={col.key} className="
+                px-[2px] py-[2px]
+                sm:px-1 sm:py-1
+                md:px-2 md:py-1.5
+                lg:px-2 lg:py-2
+                align-center text-center whitespace-normal break-words
               "
               >
                 {col.render ? col.render(row) : row[col.key] ?? "NA"}

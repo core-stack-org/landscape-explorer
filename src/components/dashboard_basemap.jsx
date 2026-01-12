@@ -1765,10 +1765,8 @@ console.log(selectedWaterbody)
           {/* YEAR SLIDER — ONLY FOR WATERBODY */}
           {mode === "waterbody" && selectedWaterbody && (
             <div
-              className="absolute left-4 right-4 flex justify-end"
-              style={{
-                bottom: "clamp(2rem, 6vh, 4.2rem)",  // adaptive vertical position
-              }}
+              className="absolute left-4 right-4 flex justify-end bottom-16"
+           
             >
               <div
                 className="
@@ -1792,7 +1790,7 @@ console.log(selectedWaterbody)
 
           {/* WATERBODY LEGEND */}
           {mode === "waterbody" && selectedWaterbody && (
-            <div className="absolute bottom-8 left-4">
+            <div className="absolute bottom-16 left-4">
 
               {!waterLegendOpen ? (
                 /* COLLAPSED TAB */
@@ -1858,7 +1856,7 @@ console.log(selectedWaterbody)
 
         {mode === "zoi" && selectedWaterbody && (
             <div
-            className="absolute left-4 right-4 flex justify-end bottom-36" >
+            className="absolute left-4 right-4 flex justify-end bottom-20" >
             <div
               className="
                 bg-white/90 rounded-md shadow-md
@@ -1880,7 +1878,7 @@ console.log(selectedWaterbody)
 
         {/* ZOI LEGEND */}
         {mode === "zoi" && selectedWaterbody && (
-          <div className="absolute bottom-36 left-4">
+          <div className="absolute bottom-20 left-4">
             {!waterLegendOpen ? (
               /* COLLAPSED TAB */
               <div
