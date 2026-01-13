@@ -108,13 +108,13 @@ const PrecipitationStackChart = ({ feature ,waterbody,typeparam,water_rej_data})
     labels = years;
     datasets = [
       {
-        label: "Kharif Rabi Zaid",
+        label: "Zaid",
         data: seasonData.zaid,
         backgroundColor: "#0f5e9c",
         stack: "precip",
       },
       {
-        label: "Kharif Rabi",
+        label: "Rabi",
         data: seasonData.rabi,
         backgroundColor: "#1ca3ec",
         stack: "precip",
@@ -218,10 +218,13 @@ const PrecipitationStackChart = ({ feature ,waterbody,typeparam,water_rej_data})
   };
 
   return (
-<div className="px-0" style={{ minHeight: "330px",width:"90%" }}>
-
-      <Bar data={data} options={options} />
-    </div>
+<div
+  className="chart-container px-0 w-full"
+  style={{ height: "clamp(280px, 40vh, 450px)" }}
+>
+  <Bar data={data} options={options} />
+</div>
+     
   );
 };
 

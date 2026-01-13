@@ -165,9 +165,65 @@ const PlantationNDVIChart = ({
   };
 
   return (
-    <div style={{ width: "100%", height: "100%" }}>
-      <Line data={data} options={options} />
-    </div>
+    <div 
+    className="chart-container w-full px-0 mt-20"
+    style={{
+      height: "clamp(320px, 50vh, 450px)",
+      minHeight: "260px",
+      overflow: "visible",
+    }}
+  >
+    <Line 
+      data={data} 
+      options={{
+        ...options,
+        plugins: {
+          legend: { 
+            display: true,
+            position: "bottom",
+            labels: {
+              font: {
+                size: window.innerWidth < 768 ? 10 : 12,
+              },
+            },
+          },
+          title: {
+            display: false,
+          }
+        },
+        scales: {
+          x: {
+            ...options.scales.x,
+            ticks: {
+              font: {
+                size: window.innerWidth < 768 ? 9 : 12,
+              },
+            },
+            title: {
+              display: true,
+              text: "Date",
+              font: { size: window.innerWidth < 768 ? 12 : 14 },
+            },
+          },
+          y: {
+            ...options.scales.y,
+            ticks: {
+              font: {
+                size: window.innerWidth < 768 ? 9 : 12,
+              },
+            },
+            title: {
+              display: true,
+              text: "NDVI",
+              font: { size: window.innerWidth < 768 ? 12 : 14 },
+            },
+          },
+        },
+        maintainAspectRatio: false,
+      }} 
+    />
+  </div>
+
   );
 };
 

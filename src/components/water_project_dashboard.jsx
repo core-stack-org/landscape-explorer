@@ -393,17 +393,20 @@ const WaterProjectDashboard = () => {
   
     geoData.features.forEach((wb) => {
       const uid = wb.properties?.UID;
-      if (!uid) return;
+      const raw = wb.properties?.MWS_UID;
+      if (!uid || !raw) return;
   
-      // matching MWS
-      const mws = mwsGeoData.features.find((m) =>
-        m.properties?.uid?.includes(wb.properties?.MWS_UID)
+      const wbMwsList = extractMwsUidList(raw);
+  
+      const mws = mwsGeoData.features.find((f) =>
+        wbMwsList.includes(f.properties?.uid?.toString().trim())
       );
   
       if (!mws) return;
   
       const rainfall = getRainfallByYear(mws);
-      const impact = calculateImpactYear(rainfall);
+      const ivRaw = wb.properties?.intervention_year;
+      const impact = calculateImpactYear(rainfall, ivRaw);
   
       if (impact) {
         map[uid] = impact;
@@ -412,6 +415,8 @@ const WaterProjectDashboard = () => {
   
     return map;
   }, [geoData, mwsGeoData]);
+  
+  
   
   const getFirstNonZeroYearIndex = (props) => {
     const years = extractSeasonYears(props); // dynamic years like ["17-18","18-19",...]
@@ -695,6 +700,11 @@ const WaterProjectDashboard = () => {
   }, [geoData, zoiFeatures]);
 
   const totalRows = rows.length;
+  const projectInterventionYear =
+  rows.length > 0
+    ? rows.find(r => r.interventionYear && r.interventionYear !== "—")?.interventionYear ||
+      "—"
+    : "—";
 
   const handleWaterbodyClick = (row) => {
     const params = new URLSearchParams(location.search);
@@ -718,6 +728,7 @@ const WaterProjectDashboard = () => {
   
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
+  console.log(projectLevelZaidImpact)
 
   const TableLoader = () => (
     <div className="w-full h-[60vh] flex items-center justify-center">
@@ -811,7 +822,7 @@ const WaterProjectDashboard = () => {
           projectName: projectNameParam,
           totalRows,
           totalSiltRemoved,
-          interventionYear: WATER_DASHBOARD_CONFIG.project.interventionYear,
+          interventionYear: projectInterventionYear,
           rabiImpact: projectLevelRabiImpact,
           zaidImpact: projectLevelZaidImpact,
         })}
@@ -819,7 +830,6 @@ const WaterProjectDashboard = () => {
     </div>
   )
 )}
-
 </div>
 
     {/* SECTION TEXT — show only when zoomed on a waterbody */}
@@ -854,15 +864,7 @@ const WaterProjectDashboard = () => {
     ) : showMap ? (
       <>
 <div
-  className="
-    bg-white rounded-xl shadow-md overflow-hidden flex
-    h-[60vh]        /* base mobile */
-    sm:h-[65vh]
-    md:h-[75vh]
-    lg:h-[85vh]
-    xl:h-[110vh]
-  "
->
+  className="bg-white rounded-xl shadow-md overflow-hidden flex">
 {/* MAP */}
         <div
           className="transition-all duration-300 h-full flex-[2] min-w-[50%]">
@@ -884,7 +886,15 @@ const WaterProjectDashboard = () => {
             setTehsilMap(map);
           }}
         />
+        {showMap && activeSelectedWaterbody && (
+          <div className="text-gray-500 text-[clamp(0.65rem,0.95vw,0.7rem)] mt-2 pl-2 w-full">
+            <p><b>Water Availability : </b> We use Sentinel-1 (SAR data) VV band for water pixel detection in Kharif season and Dynamic World to detect water pixels in Rabi and Zaid seasons.</p>
+            <p><b>Land Use Land Cover : </b> Data remotely sensed from satellites including LandSat-7, LandSat-8, Sentinel-2, Sentinel-1, MODIS and Dynamic World</p>
+            <p><b>Rainfall : </b> Precipitation data is calculated from the Global Satellite Mapping of Precipitation (GSMaP) dataset available on Google Earth Engine's data catalogue. GSMaP provides a global precipitation in mm/hr at spatial resolution of approximately 11km.</p>
+          </div>
+        )}
       </div>
+      
 
 {/* RIGHT PANEL */}
 {showMap && activeSelectedWaterbody && (
@@ -920,10 +930,12 @@ const WaterProjectDashboard = () => {
   </div>
 )}
 
+
+
       </div>
 {showMap && activeSelectedWaterbody && (
-        <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
-        <h2 className="font-bold text-blue-600 border-b-2 border-blue-600 pb-1 text-[clamp(1.1rem,1.7vw,1.5rem)]">
+        <div className="bg-white rounded-xl shadow-sm p-6 mb-6 mt-8">
+        <h2 className="font-bold text-blue-600 border-b-2 border-blue-600 pb-1 text-[clamp(1.2rem,1.7vw,1.6rem)]">
             {WATER_DASHBOARD_CONFIG[mode].sections.section2.title}
           </h2>
 
@@ -943,11 +955,7 @@ const WaterProjectDashboard = () => {
       )}
       {/* SECOND MAP + GRAPHS (Cropping + Drought) */}
 {showMap && activeSelectedWaterbody && (
-  <div className=" bg-white rounded-xl shadow-md overflow-hidden flex mt-6 h-[60vh]
-    sm:h-[65vh]
-    md:h-[75vh]
-    lg:h-[85vh]
-    xl:h-[110vh]">
+  <div className=" bg-white rounded-xl shadow-md overflow-hidden flex mt-6">
 
     {/* MAP */}
     <div className="w-[60%] h-full">
@@ -963,13 +971,21 @@ const WaterProjectDashboard = () => {
         district={districtParam}
         block={blockParam}
       />
+              {showMap && activeSelectedWaterbody && (
+  <div className="text-gray-500 text-[clamp(0.65rem,0.95vw,0.7rem)] mt-2 pl-2 w-full">
+    <p><b>Cropping Intensity : </b> We use annual land use land cover (LULC), to identify areas under single cropping, double cropping and triple cropping using pixels which are classified as single kharif, single non-kharif, double and triple classes of LULC classifier to determine cropping intensity. The data used is from 2017 to 2024.</p>
+    <p><b>Drought Incidence : </b> Drought is defined as per the Government of India's Drought Manual and considered moderate or severe if the number of weeks of drought is five or more. Drought weeks are identified based on whether meteorological drought occurred in that week (i.e. the rains were less than usual in that week as compared to previous years, possibly intensified by dry spells defined as consecutive weeks of low rainfall) and/or agricultural drought occurred in that week (i.e. cropped area or crop health were lower than usual in that week as compared to previous years). Severe drought weeks are those when meteorological and agricultural drought are both coincident.</p>
+    
+  </div>
+)}
     </div>
 
     {/* RIGHT PANEL */}
-    <div className="w-[40%] h-full border-l bg-white overflow-y-auto p-4 flex flex-col gap-6">
+     <div className="h-full border-l bg-white overflow-y-auto p-4 flex-[1] min-w-[280px] md:min-w-[350px] xl:min-w-[420px] flex flex-col gap-6">
+
 
       {/* CROPPING INTENSITY */}
-      <div className="min-h-[320px] bg-white rounded-lg shadow-sm p-2 overflow-hidden">
+      <div className="min-h-[280px] bg-white rounded-lg shadow-sm p-2 overflow-hidden">
       <CroppingIntensityStackChart
                         zoiFeatures={zoiFeatures}
                         waterbody={activeSelectedWaterbody}
@@ -1002,6 +1018,11 @@ const WaterProjectDashboard = () => {
                       years={WATER_DASHBOARD_CONFIG.ndviYears}
                     />
     </div>
+    {showMap && activeSelectedWaterbody && (
+  <div className="text-gray-500 text-[clamp(0.65rem,0.95vw,0.7rem)] mt-2 pl-2 w-full">
+    <p><b>NDVI : </b> Used harmonized Landsat-7, Landsat-8 and Sentinel-2 NDVI values to construct 16-day NDVI time series, gap-filled with MODIS NDVI values.</p>
+  </div>
+)}
   </div>
 )}
 {/* SECTION 3 TEXT — BELOW NDVI */}
@@ -1022,6 +1043,7 @@ const WaterProjectDashboard = () => {
       )}
     </div>
   </div>
+  
 )}
 
 {/* SECTION 3 — SUMMARY CARDS */}
@@ -1104,11 +1126,7 @@ const WaterProjectDashboard = () => {
 {/* FULL WIDTH MWS MAP — AFTER SECTION 3 */}
 {showMap && activeSelectedWaterbody && (
   <div className="w-full mt-6">
-    <div className="relative w-full     h-[60vh]
-    sm:h-[65vh]
-    md:h-[75vh]
-    lg:h-[85vh]
-    xl:h-[110vh] bg-white rounded-xl shadow-md overflow-hidden">
+    <div className="relative w-full bg-white rounded-xl shadow-md overflow-hidden">
 
     <DashboardBasemap
                     id="map3"
@@ -1127,6 +1145,16 @@ const WaterProjectDashboard = () => {
                     block={blockParam}
                     type={typeParam}
                   />
+                  {showMap && activeSelectedWaterbody && (
+  <div className="text-gray-500 text-[clamp(0.65rem,0.95vw,0.7rem)] mt-2 pl-2 w-full">
+    <p><b>Terrain : </b> We used NASA's SRTM Digital Elevation Model at 30m resolution to generate landform classification.</p>
+    <p><b>Drainage Lines : </b> Drainage lines use digital elevation model (DEM) raster dataset as input. The DEM provides pixel level information on the elevation of the terrain, which is used to determine the flow of water across the landscape.
+    </p>
+    <p><b>Catchment Area : </b>  We use a digital elevation model (DEM) that provides pixel-level elevation information. We preprocessed the elevation data to generate depression-less elevation data, which is further used to compute flow accumulation. Flow accumulation represents the number of upstream pixels flowing to a pixel. The upstream pixels flowing to a pixel forms the catchment area of that pixel.</p>
+    <p><b>Stream Order/Watershed Position : </b>  We use digital elevation model (DEM) data that provides pixel level information on the elevation and drainage lines (with stream orders) as inputs to compute stream order rasters.
+    </p>
+  </div>
+)}
   
     </div>
   </div>
@@ -1150,7 +1178,7 @@ const WaterProjectDashboard = () => {
     )}
     </div>
 {/* ==================== BOTTOM REPORT FOOTER ==================== */}
-      {isTehsilMode && activeSelectedWaterbody && (
+      {  (
         <footer
           className="mt-10 border-t border-gray-300 pt-5 text-center text-[#2c2d2d]"
         >
