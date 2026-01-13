@@ -1,6 +1,5 @@
 export const WATER_DASHBOARD_CONFIG = {
   project: {
-    interventionYear: "2022-23",
 
     sections: {
       section1: {
@@ -33,21 +32,35 @@ export const WATER_DASHBOARD_CONFIG = {
       },
     },
 
-    topSectionText: (data) =>
-      `Under the project ${data.projectName || "—"}, a total of ${
-        data.totalRows?.toLocaleString?.("en-IN") || 0
-      } waterbodies have been de-silted, spanning around ${
-        data.totalSiltRemoved?.toLocaleString?.("en-IN", {
-          minimumFractionDigits: 2,
-          maximumFractionDigits: 2,
-        }) || "0.00"
-      } Cu.m. After desilting, during the intervention year ${
-        data.interventionYear || "—"
-      }, the impacted area in the Rabi season is ${
-        data.rabiImpact?.toFixed?.(2) || "0.00"
-      } hectares and the impacted area in the Zaid season is ${
-        data.zaidImpact?.toFixed?.(2) || "0.00"
-      } hectares.`,
+    topSectionText: (data) => {
+      const rImpact = Number(data.rabiImpact ?? 0);
+      const zImpact = Number(data.zaidImpact ?? 0);
+    
+      const projectName = data.projectName || "—";
+      const year = data.interventionYear || "—";
+      const total = data.totalRows || 0;
+      const silt = Number(data.totalSiltRemoved || 0).toLocaleString("en-IN");
+    
+      let parts = [];
+    
+      if (rImpact > 0) {
+        parts.push(`the impacted area in the Rabi season is ${rImpact.toFixed(2)} hectares`);
+      }
+    
+      if (zImpact > 0) {
+        parts.push(`the impacted area in the Zaid season is ${zImpact.toFixed(2)} hectares`);
+      }
+    
+      // Nothing positive → show fallback
+      if (parts.length === 0) {
+        return `Under the project ${projectName}, a total of ${total} waterbodies have been de-silted. The de-silted amount spans around ${silt} meter cube. Click on any waterbody to view its detailed report!`;
+      }
+    
+      // Join both parts if required
+      const impactMessage = parts.join(" and ");
+      return `Under the project ${projectName}, a total of ${total} waterbodies have been de-silted.The de-silted amount spans around ${silt} meter cube. After desilting, during the intervention year ${year}, ${impactMessage}.`;
+    },
+    
 
     tableHeaders: [
       {
@@ -386,7 +399,9 @@ export const AGROFORESTRY_DASHBOARD_CONFIG = {
     },
   ],
   topSummaryText: ({ projectName, totalRows, totalArea }) =>
-    `Under the project ${projectName || "—"}, ${totalRows} sites have had plantations covering ${totalArea} hectares.`,
+    `Under the project ${projectName || "—"},a total of , ${totalRows} sites have had plantations, covering ${totalArea} hectares. Click on any site for detailed assessment of its suitability for plantations.
+
+`,
 };
 
 

@@ -382,7 +382,7 @@ useEffect(() => {
     maintainAspectRatio: false,
     responsive: true,
     layout: {
-      padding: { top: 10, bottom: 10, left: 10, right: 10 },
+      padding: { top: 0, bottom: 10, left: 10, right: 10 },
     },
     plugins: {
       legend: { display: false },
@@ -393,7 +393,13 @@ useEffect(() => {
           : !showImpact
             ? "Water Availabilty & Land use inside Waterbody (Black line = intervention year)"
             : "Impact Analysis Graph (Black line = intervention year)",
-        font: { size: 16, weight: "bold" },
+            font: {
+              font: {
+                size: Math.max(9, Math.min(window.innerHeight * 0.02, 18)),
+                weight: "bold",
+              }
+                         
+            },
       },
       
       annotation: {
@@ -438,7 +444,11 @@ useEffect(() => {
         title: {
           display: true,
           text: "Water Availability (%) in Waterbody area",
+          font: {
+            size: Math.max(9, Math.min(window.innerWidth * 0.012, 8)), // responsive
+          },
         },
+
       },
       //  always reserve y1 scale space even if not visible
       y1: {
@@ -464,155 +474,160 @@ useEffect(() => {
   
   return (
     <div className="w-full chart-wrapper">
-      <div
-        className="flex flex-col mb-1 px-2"
-        style={{
-          minHeight: "clamp(110px, 15vh, 200px)",  // <-- reduced height
-          maxHeight: "200px",
-          overflow: "hidden",
-          rowGap: "2px"                            // small vertical gap only
-        }}
-      >
-        <div className="flex flex-wrap items-start w-full relative gap-x-3 gap-y-1">
-          {/* Keep your original legend rendering exactly as before */}
-          {!showImpact &&
-            Object.entries(groups).map(([group, items]) => (
-              <div key={group} className="min-w-[130px] mb-1">
-                <strong className="block mb-1">{group}</strong>
-                {items.map((item) => (
-                  <div
-                    key={item.key}
-                    className="flex items-center ml-2 mt-1 whitespace-nowrap"
-                  >
-                    <span
-                      className="inline-block rounded-sm mr-2"
-                      style={{
-                        width: "clamp(10px, 1.5vw, 14px)",
-                        height: "clamp(10px, 1.5vw, 14px)",
-                        backgroundColor: item.color,
-                      }}
-                    ></span>
-                    <span className="legend-label">{item.label}</span>
-                  </div>
-                ))}
-                {group === "Water Indicators" && (
-                  <div className="flex items-center mt-2 ml-2">
-                    <span
-                      className="inline-block mr-2"
-                      style={{
-                        width: "clamp(20px, 3vw, 30px)",
-                        height: 2,
-                        backgroundColor: "#4F555F",
-                      }}
-                    ></span>
-                    <span className="font-medium text-gray-700">
-                      Total Rainfall (mm)
-                    </span>
-                  </div>
-                )}
-              </div>
-            ))}
+<div
+  className="legend-container flex flex-col mb-1 px-2"
+  style={{
+    minHeight: "clamp(6rem, 15vh, 10rem)",
+    overflow: "hidden",
+    rowGap: "0.15rem",
+  }}
+>
+  <div className="flex flex-wrap items-start w-full relative gap-x-[0.3rem] gap-y-[0.2rem]">
 
-          {/* Toggle always rendered once (unchanged) */}
-          {!isTehsil && (
-            <div className="flex items-center ml-auto mt-2 sm:mt-0 absolute right-0 top-0 text-right "
-            style={{
-              transformOrigin: "right top",
-              transform: "scale(0.8)",         // smaller on high zoom
-              maxWidth: "150px",                // prevents pushing inside legend
-              whiteSpace: "nowrap",             // don't wrap
-            }}
-          >
-            <span
-              className="font-medium mr-2 leading-tight text-gray-700"
-              style={{ fontSize: "clamp(0.45rem, 0.7vw, 0.7rem)" }}
+    {/* Keep your original legend rendering exactly as before */}
+    {!showImpact &&
+      Object.entries(groups).map(([group, items]) => (
+        <div key={group} className="min-w-[5rem] mb-[0.3rem]">
+          <strong className="block text-[clamp(0.40rem,0.50rem,0.60rem)] mb-[0.3rem]">
+            {group}
+          </strong>
+
+          {items.map((item) => (
+            <div
+              key={item.key}
+              className="flex items-center ml-[0.3rem] mt-[0.2rem] whitespace-nowrap"
             >
-              {showImpact ? "Comparison years" : "Comparison years"}
-            </span>
+              <span
+                className="inline-block rounded-sm mr-[0.25rem]"
+                style={{
+                  width: "clamp(0.45rem, 0.55rem, 0.65rem)",
+                  height: "clamp(0.45rem, 0.55rem, 0.65rem)",
+                  backgroundColor: item.color,
+                }}
+              ></span>
 
-          <label className="relative inline-flex items-center cursor-pointer">
-            <input
-              type="checkbox"
-              checked={showImpact}
-              onChange={() => setShowImpact(!showImpact)}
-              className="sr-only peer"
-            />
-            <div
-              className="
-                bg-gray-300 rounded-full
-                peer peer-checked:bg-blue-600 transition-all
-              "
-              style={{
-                width: "clamp(28px, 3vw, 44px)",
-                height: "clamp(14px, 2vw, 24px)",
-              }}
-            ></div>
-            <div
-              className="
-                absolute bg-white rounded-full transition-all
-              "
-              style={{
-                width: "clamp(12px, 2vw, 20px)",
-                height: "clamp(12px, 2vw, 20px)",
-                top: "2px",
-                left: "2px",
-              }}
-            ></div>
-          </label>
-        </div>
+              <span className="legend-label text-[clamp(0.45rem,0.55rem,0.65rem)]">
+                {item.label}
+              </span>
+            </div>
+          ))}
+
+          {group === "Water Indicators" && (
+            <div className="flex items-center mt-[0.3rem] ml-[0.3rem]">
+              <span
+                className="inline-block mr-[0.25rem]"
+                style={{
+                  width: "clamp(0.6rem, 0.8rem, 1rem)",
+                  height: "0.2rem",
+                  backgroundColor: "#4F555F",
+                }}
+              ></span>
+
+              <span className="font-medium text-gray-700 text-[clamp(0.4rem,0.4rem,0.4rem)]">
+                Total Rainfall (mm)
+              </span>
+            </div>
           )}
-
         </div>
+      ))}
 
-        {/* Impact-only legends (keeps same place, doesn't change layout since minHeight above is set) */}
-        {showImpact && (
-          <div className="flex flex-col items-start justify-start mt-2 whitespace-nowrap">
+    {/* Toggle always rendered once */}
+    {!isTehsil && (
+  <div
+    className="flex items-center ml-auto self-start mt-[0.15rem] sm:mt-0 text-right"
+    style={{
+      transformOrigin: "right top",
+      transform: "scale(0.8)",
+      whiteSpace: "nowrap",
+    }}
+  >
+    <span
+      className="font-medium mr-[0.4rem] leading-tight text-gray-700"
+      style={{ fontSize: "clamp(0.5rem, 0.55rem, 0.8rem)" }}
+    >
+      {showImpact ? "Comparison years" : "Comparison years"}
+    </span>
 
-            <div className="flex items-center mb-0.5">
-              <span
-                className="inline-block w-4 h-4 rounded-sm mr-2"
-                style={{ backgroundColor: "#74CCF4" }}
-              ></span>
-              <span className="text-sm text-gray-700 font-medium">
-                Kharif : Water available in Kharif
-              </span>
-            </div>
+    <label className="relative inline-flex items-center cursor-pointer">
+      <input
+        type="checkbox"
+        checked={showImpact}
+        onChange={() => setShowImpact(!showImpact)}
+        className="sr-only peer"
+      />
 
-            <div className="flex items-center mb-0.5">
-              <span
-                className="inline-block w-4 h-4 rounded-sm mr-2"
-                style={{ backgroundColor: "#1ca3ec" }}
-              ></span>
-              <span className="text-sm text-gray-700 font-medium">
-                Kharif Rabi : Water available in Kharif, Rabi
-              </span>
-            </div>
+      <div
+        className="bg-gray-300 rounded-full peer peer-checked:bg-blue-600 transition-all"
+        style={{
+          width: "clamp(1.6rem, 2rem, 2.4rem)",
+          height: "clamp(0.9rem, 1.1rem, 1.4rem)",
+        }}
+      ></div>
 
-            <div className="flex items-center mb-0.5">
-              <span
-                className="inline-block w-4 h-4 rounded-sm mr-2"
-                style={{ backgroundColor: "#0f5e9c" }}
-              ></span>
-              <span className="text-sm text-gray-700 font-medium">
-                Kharif Rabi Zaid : Water available in Kharif, Rabi And Zaid
-              </span>
-            </div>
+      <div
+        className="absolute bg-white rounded-full transition-all"
+        style={{
+          width: "clamp(0.7rem, 0.9rem, 1.1rem)",
+          height: "clamp(0.7rem, 0.9rem, 1.1rem)",
+          top: "0.1rem",
+          left: "0.1rem",
+        }}
+      ></div>
+    </label>
+  </div>
+)}
 
-            {showImpact && computedImpactYear && (
-              <div className="mx-auto w-fit text-xs text-gray-700 rounded-md px-1 py-0.5 text-center shadow-sm">
-                <p>
-                  Criteria for selecting the pre and post intervention years
-                  selected are <br /> with minimum difference in rainfall.
-                </p>
-              </div>
-            )}
-          </div>
-        )}
+  </div>
 
+  {showImpact && (
+    <div className="flex flex-col items-start justify-start mt-[0.4rem] whitespace-nowrap">
+      <div className="flex items-center mb-[0.2rem]">
+        <span
+          className="inline-block rounded-sm mr-[0.3rem]"
+          style={{ width: "0.8rem", height: "0.8rem", backgroundColor: "#74CCF4" }}
+        ></span>
+        <span className="text-[clamp(0.7rem,0.55rem,0.9rem)] text-gray-700 font-medium">
+          Kharif : Water available in Kharif
+        </span>
       </div>
 
+      <div className="flex items-center mb-[0.2rem]">
+        <span
+          className="inline-block rounded-sm mr-[0.3rem]"
+          style={{ width: "0.8rem", height: "0.8rem", backgroundColor: "#1ca3ec" }}
+        ></span>
+        <span className="text-[clamp(0.7rem,0.55rem,0.9rem)] text-gray-700 font-medium">
+          Kharif Rabi : Water available in Kharif, Rabi
+        </span>
+      </div>
+
+      <div className="flex items-center mb-[0.2rem]">
+        <span
+          className="inline-block rounded-sm mr-[0.3rem]"
+          style={{ width: "0.8rem", height: "0.8rem", backgroundColor: "#0f5e9c" }}
+        ></span>
+        <span className="text-[clamp(0.7rem,0.55rem,0.9rem)] text-gray-700 font-medium">
+          Kharif Rabi Zaid : Water available in Kharif, Rabi And Zaid
+        </span>
+      </div>
+
+      {showImpact && computedImpactYear && (
+        <div className="mx-auto w-fit text-[clamp(0.55rem,0.55rem, 0.8rem)] text-gray-700 rounded-md px-[0.3rem] py-[0.15rem] text-center shadow-sm">
+          <p>
+            Criteria for selecting the pre and post intervention years selected are <br />
+            with minimum difference in rainfall.
+          </p>
+        </div>
+      )}
+    </div>
+  )}
+</div>
+
+
+
       {/* Chart wrapper: fix the chart area height so it doesn't reflow */}
-      <div className="w-full px-0" style={{ minHeight: "330px" }}>
+      <div className="chart-container w-full px-0"   style={{ height: "clamp(280px, 40vh, 450px)" }}
+      >
         <Bar data={data} options={options} />
       </div>
     </div>

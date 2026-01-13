@@ -34,11 +34,11 @@ const CroppingIntensityStackChart = ({
   const [showImpact, setShowImpact] = useState(false);
 
   const wbUID =
-  waterbody?.UID ||
-  waterbody?.uid ||
-  waterbody?.properties?.UID ||
-  waterbody?.properties?.uid ||
-  null;
+    waterbody?.UID ||
+    waterbody?.uid ||
+    waterbody?.properties?.UID ||
+    waterbody?.properties?.uid ||
+    null;
 
   const matchedFeature = zoiFeatures.find(
     (feature) =>
@@ -58,22 +58,21 @@ const CroppingIntensityStackChart = ({
         (matchedFeature.get(`single_non_kharif_cropped_area_${year}`) || 0),
     }));
 
-
-    const extractYearsFromZoi = (feature) => {
-      if (!feature) return [];
-    
-      const years = new Set();
-    
-      feature.getKeys().forEach((key) => {
-        const match = key.match(/_(20\d{2})$/); // match 2017, 2018, ...
-        if (match) {
-          years.add(match[1]);
-        }
-      });
-    
-      return Array.from(years).sort(); // ["2017","2018",...]
-    };
-    const chartYears = isTehsil
+  const extractYearsFromZoi = (feature) => {
+    if (!feature) return [];
+  
+    const years = new Set();
+  
+    feature.getKeys().forEach((key) => {
+      const match = key.match(/_(20\d{2})$/); // match 2017, 2018, ...
+      if (match) {
+        years.add(match[1]);
+      }
+    });
+  
+    return Array.from(years).sort(); // ["2017","2018",...]
+  };
+  const chartYears = isTehsil
     ? extractYearsFromZoi(matchedFeature)
     : years.map((y) => `20${y.split("-")[0]}`);
   
@@ -111,7 +110,6 @@ const CroppingIntensityStackChart = ({
   
     return "22-23";
   };
-
 
   // Get impact years
   const preLabel = impactYear.pre;
@@ -162,9 +160,16 @@ const CroppingIntensityStackChart = ({
 
   const options = {
     responsive: true,
-
+    maintainAspectRatio: false, // Allow the chart to fill the container without maintaining aspect ratio
     plugins: {
-      legend: { position: "bottom" },
+      legend: { 
+        position: "bottom",
+        labels: {
+          font: {
+            size: window.innerWidth < 768 ? 10 : 12, // Smaller font on mobile
+          },
+        },
+      },
       title: {
         display: true,
         text: isTehsil
@@ -172,11 +177,14 @@ const CroppingIntensityStackChart = ({
           : !showImpact
             ? "Cropping Intensity (Area in hectares) (Black line = intervention year)"
             : `Impact Analysis: Showing Only Pre (${impactYear.pre}) and Post (${impactYear.post}) Years`,
-            font: { size: 16, weight: "bold" },
-             padding: {
-              bottom: 20,   
-              top: 0,
-            },
+        font: { 
+          size: window.innerWidth < 768 ? 14 : 16, // Responsive font size
+          weight: "bold" 
+        },
+        padding: {
+          bottom: 20,   
+          top: 0,
+        },
       },
       annotation: {
         annotations: isTehsil
@@ -199,7 +207,10 @@ const CroppingIntensityStackChart = ({
                     enabled: true,
                     position: "start",
                     color: "black",
-                    font: { weight: "bold" },
+                    font: { 
+                      weight: "bold",
+                      size: window.innerWidth < 768 ? 10 : 12, // Responsive font size
+                    },
                   },
                 },
               };
@@ -208,70 +219,95 @@ const CroppingIntensityStackChart = ({
     },
     scales: {
       x: {
-        title: { display: true, text: "Year" },
+        title: { 
+          display: true, 
+          text: "Year",
+          font: {
+            size: window.innerWidth < 768 ? 12 : 14, // Responsive font size
+          },
+        },
+        ticks: {
+          font: {
+            size: window.innerWidth < 768 ? 10 : 12, // Responsive font size
+          },
+        },
       },
       y: {
         min: 0,
         max: maxFullValue,
-        title: { display: true, text: "Area (hectares)" },
-        ticks: { callback: (v) => `${v.toFixed(1)} ha` },
+        title: { 
+          display: true, 
+          text: "Area (hectares)",
+          font: {
+            size: window.innerWidth < 768 ? 12 : 14, // Responsive font size
+          },
+        },
+        ticks: { 
+          callback: (v) => `${v.toFixed(1)} ha`,
+          font: {
+            size: window.innerWidth < 768 ? 10 : 12, // Responsive font size
+          },
+        },
       },
     },
   };
 
   return (
-    <div>
-      {/* Toggle above chart */}
+    <div className="w-full chart-wrapper">
+      {/* Toggle above chart - Made more responsive */}
       {!isTehsil && (
-          <div
-            className="flex items-center ml-auto justify-end mb-2"
-            style={{
-              transformOrigin: "right center",
-              transform: "scale(0.85)",      // shrink on XL monitors
-              maxWidth: "160px",             // prevent overflow
-              whiteSpace: "nowrap",
-            }}
+        <div
+          className="flex flex-col sm:flex-row items-start sm:items-center justify-start sm:justify-end mb-2 sm:mb-4"
+          style={{
+            maxWidth: "100%", // Allow full width on small screens
+          }}
+        >
+          <span
+            className="font-medium mr-0 sm:mr-2 mb-1 sm:mb-0 leading-tight text-gray-700 text-xs sm:text-sm"
           >
-            <span
-              className="font-medium mr-2 leading-tight text-gray-700"
-              style={{ fontSize: "clamp(0.55rem, 0.75vw, 0.8rem)" }}
-            >
-              Comparison years
-            </span>
+            Comparison years
+          </span>
 
-            <label className="relative inline-flex items-center cursor-pointer">
-              <input
-                type="checkbox"
-                checked={showImpact}
-                onChange={() => setShowImpact(!showImpact)}
-                className="sr-only peer"
-              />
+          <label className="relative inline-flex items-center cursor-pointer">
+            <input
+              type="checkbox"
+              checked={showImpact}
+              onChange={() => setShowImpact(!showImpact)}
+              className="sr-only peer"
+            />
 
-              {/* TRACK */}
-              <div
-                className="bg-gray-300 rounded-full peer-checked:bg-blue-600 transition-all"
-                style={{
-                  width: "clamp(30px, 3vw, 42px)",
-                  height: "clamp(14px, 1.9vw, 22px)",
-                }}
-              ></div>
+            {/* TRACK */}
+            <div
+              className="bg-gray-300 rounded-full peer-checked:bg-blue-600 transition-all"
+              style={{
+                width: "clamp(30px, 3vw, 42px)",
+                height: "clamp(14px, 1.9vw, 22px)",
+              }}
+            ></div>
 
-              {/* THUMB */}
-              <div
-                className="absolute bg-white rounded-full transition-all peer-checked:translate-x-[calc(clamp(30px,3vw,42px)-clamp(14px,1.9vw,22px))]"
-                style={{
-                  width: "clamp(12px, 1.6vw, 18px)",
-                  height: "clamp(12px, 1.6vw, 18px)",
-                  top: "2px",
-                  left: "2px",
-                }}
-              ></div>
-            </label>
-          </div>
-        )}
+            {/* THUMB */}
+            <div
+              className="absolute bg-white rounded-full transition-all peer-checked:translate-x-[calc(clamp(30px,3vw,42px)-clamp(14px,1.9vw,22px))]"
+              style={{
+                width: "clamp(12px, 1.6vw, 18px)",
+                height: "clamp(12px, 1.6vw, 18px)",
+                top: "2px",
+                left: "2px",
+              }}
+            ></div>
+          </label>
+        </div>
+      )}
 
-
-      <Bar data={maskedData} options={options} />
+      <div 
+        className="chart-container w-full px-0"   
+        style={{ 
+          height: "clamp(300px, 40vh, 450px)", // Adjusted min height for better mobile view
+          minHeight: "200px", // Ensure minimum height
+        }}
+      >
+        <Bar data={maskedData} options={options} />
+      </div>
     </div>
   );
 };

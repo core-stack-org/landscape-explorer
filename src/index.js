@@ -5,6 +5,17 @@ import App from "./App";
 import { RecoilRoot } from "recoil";
 import { APIProvider } from "@vis.gl/react-google-maps";
 
+// 👇 Add this at the very top of index.js or main.jsx
+function applyInverseZoom() {
+  const zoom = window.devicePixelRatio;  // browser zoom detect
+  const scale = 1 / zoom;                // invert zoom
+  document.documentElement.style.setProperty("--inv-zoom", scale);
+}
+
+applyInverseZoom();
+window.addEventListener("resize", applyInverseZoom);
+
+
 const root = ReactDOM.createRoot(document.getElementById("root"));
 root.render(
   <APIProvider apiKey={process.env.REACT_APP_GOOGLE_KEY}>
