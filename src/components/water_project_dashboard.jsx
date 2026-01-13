@@ -295,14 +295,39 @@ const WaterProjectDashboard = () => {
   ? Number(matchedZoiFeature.get("zoi_area")) || 0
   : 0;
 
-  useEffect(() => {
-    const allLoaded =
-      geoData &&
-      zoiFeatures &&
-      mwsGeoData;
-  
-    setLoadingData(!allLoaded);
-  }, [geoData, zoiFeatures, mwsGeoData]);
+// ====================== FIXED LOADING HANDLER ======================
+useEffect(() => {
+  // ---- TEHSIL MODE ----
+  if (typeParam === "tehsil") {
+    const ready =
+      !!selectedWaterbodyForTehsil &&
+      !!tehsilZoi &&
+      !!tehsilDrought &&
+      !!mwsFromLocalStorage;
+
+    setLoadingData(!ready);
+    return;
+  }
+
+  // ---- PROJECT MODE ----
+  const ready =
+    !!tempGeoData &&
+    !!projectZoi &&
+    !!mwsGeoData;
+
+  setLoadingData(!ready);
+}, [
+  typeParam,
+  selectedWaterbodyForTehsil,
+  tehsilZoi,
+  tehsilDrought,
+  mwsFromLocalStorage,
+  tempGeoData,
+  projectZoi,
+  mwsGeoData
+]);
+// ===============================================================
+
   
 
   useEffect(() => {
