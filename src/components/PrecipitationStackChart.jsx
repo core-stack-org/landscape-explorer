@@ -175,6 +175,9 @@ const PrecipitationStackChart = ({ feature ,waterbody,typeparam,water_rej_data})
   const options = {
     maintainAspectRatio: false,
     responsive: true,
+    layout: {
+      padding: { right: 6 },
+    },
     plugins: {
       legend: { position: "bottom" },
       title:{display:true,text:"Rainfall (in mm) (Black line = intervention year)",position:"top",font: { size: 16, weight: "bold" },},
@@ -208,7 +211,7 @@ const PrecipitationStackChart = ({ feature ,waterbody,typeparam,water_rej_data})
       },
     },
     scales: {
-      x: { stacked: !isTehsil },
+      x: { stacked: !isTehsil},
       y: {
         stacked: !isTehsil,
         title: { display: true, text: "Rainfall (mm)" },
@@ -218,8 +221,8 @@ const PrecipitationStackChart = ({ feature ,waterbody,typeparam,water_rej_data})
 
   return (
 <div
-  className="chart-container px-0 w-full"
-  style={{ height: "clamp(280px, 40vh, 450px)" }}
+  className=" px-0"
+  style={{ height: "clamp(280px, 40vh, 450px)",width:"87%" }}
 >
   <Bar data={data} options={options} />
 </div>

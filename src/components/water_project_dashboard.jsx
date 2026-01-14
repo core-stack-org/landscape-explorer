@@ -918,7 +918,7 @@ const WaterProjectDashboard = () => {
                 />
               </div>
   
-              <div className="min-h-[320px] bg-white rounded-lg shadow-sm p-2 overflow-visible">
+              <div className="min-h-[320px] bg-white rounded-lg shadow-sm p-2 overflow-visible min-w-[320px]">
                 <PrecipitationStackChart
                   feature={isTehsilMode ? matchedMwsOlFeatures[0] : mwsForCharts}
                   waterbody={activeSelectedWaterbody}
@@ -996,6 +996,7 @@ const WaterProjectDashboard = () => {
                   mwsGeoData={isTehsilMode ? tehsilDrought : mwsGeoData}
                   waterbody={activeSelectedWaterbody}
                   typeparam={typeParam}
+                  years={extractedSeasonalYears} 
                 />
               </div>
             </div>
