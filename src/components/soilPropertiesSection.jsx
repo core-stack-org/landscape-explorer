@@ -84,12 +84,12 @@ const SoilPropertiesSection = ({ plantation }) => {
       {plantation && (
         <div className="flex flex-col gap-2 w-full p-4 sm:p-6 md:p-4 rounded-lg bg-white shadow mb-4">
           {/* Heading */}
-          <h2 className="text-2xl font-bold text-blue-600 border-b-2 border-blue-600 pb-1">
+          <h2 className="font-bold text-blue-600 border-b-2 border-blue-600 pb-1 text-[clamp(1.1rem,1.7vw,1.5rem)]">
             Section 2: Soil & Site Properties
           </h2>
 
           {/* Description */}
-          <p className="text-gray-700 leading-relaxed">
+          <p className="text-gray-700 leading-relaxed "style={{ fontSize: "clamp(0.70rem, 1vw, 1rem)" }}>
             This section highlights the <strong>climatic</strong>,{" "}
             <strong>soil</strong>, and <strong>topographical</strong>{" "}
             characteristics of the plantation site, which influence plantation

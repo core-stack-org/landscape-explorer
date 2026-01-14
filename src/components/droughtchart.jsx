@@ -139,18 +139,39 @@ const DroughtChart = ({ mwsGeoData, waterbody, typeparam }) => {
     ],
   };
 
-  return <Bar data={data} options={{ responsive: true,plugins: {
-    title: {
-      display: true,
-      text: typeparam === "tehsil"
-        ? "Drought Incidence "
-        : "Drought Incidence",
-        font: { size: 16, weight: "bold" },
-    },
-    legend: {
-      position: "top",
-    },
-  }, }} />;
+  return (
+    <div
+      className="chart-container w-full px-0"
+      style={{
+        height: "clamp(300px, 45vh, 400px)",   // never too small
+        minHeight: "260px",
+        overflow: "visible",
+      }}
+    >
+      <Bar
+        data={data}
+        options={{
+          responsive: true,
+          maintainAspectRatio: false,   // SUPER IMPORTANT
+          plugins: {
+            title: {
+              display: true,
+              text:
+                typeparam === "tehsil"
+                  ? "Drought Incidence"
+                  : "Drought Incidence",
+              font: { size: 16, weight: "bold" },
+            },
+            legend: {
+              position: "bottom",
+            },
+          },
+        }}
+      />
+    </div>
+  );
+  
+  
 };
 
 export default DroughtChart;

@@ -134,33 +134,26 @@ const RWBDashboard =()=>{
             <div className="bg-slate-100">
                     {!isTehsilMode && <LandingNavbar />}
                     {!showWaterbodies?(
-                    <div className="relative min-h-screen w-full flex items-center px-20">
+                    <div className="relative w-full flex items-center min-h-[calc(98vh-64px)] px-6 lg:px-20 overflow-hidden">
                     <div className="absolute inset-0 bg-cover bg-center"
                         style={{ backgroundImage: `url(${Waterbodies})`, opacity: 0.3 }}/>
                     <div className="absolute inset-0 bg-white/10"></div>
-                    <div className="relative z-10 w-full max-w-8xl mx-auto bg-white/10 backdrop-blur-md rounded-2xl shadow-xl border border-white/30 p-10 flex gap-10 min-h-[450px]">
+                    <div className="relative z-10 w-full max-w-7xl mx-auto bg-white/10 backdrop-blur-md rounded-2xl shadow-xl border border-white/30 p-10 flex gap-10 min-h-[450px]">
                         <div className="flex-1">
                         <h2 className="text-2xl md:text-4xl mb-4 text-purple-700">
-                            <span className="font-bold">Track and Assess </span>
-                            <span className="font-normal">NRM interventions</span>
+                            <span className="font-normal text-purple-700">Waterbody Rejuvenation<br/> Impact Assessment Dashboard</span>
                         </h2>
-                        <div className="rounded-md text-gray-700">
-                            <ul className="list-disc list-outside ml-5 text-black text-base md:text-lg space-y-6 font-medium text-justify leading-relaxed break-words max-w-4xl">
-                                <li>
-                                Track waterbody rejuvenation interventions and their impact on
-                                cropping in nearby areas with the{" "}
-                                <b>WaterBody Rejuvenation Assessment Dashboard</b>.
-                                </li>
-                                <li>
-                                Visualize <b>waterbody interventions</b> and evaluate their effects on water availability and agriculture.
-                                </li>
-                                <li>
-                                A tool for monitoring health of the waterbodies, select the
-                                <b> organization and project</b> to view.
-                                </li>
-                            </ul>
+                        <div className="rounded-md text-gray-700 mt-12">
+                                <p className="text-3xl">
+                                Track waterbody rejuvenation interventions and their impact on water availability and agriculture in nearby areas!
+                                </p>
+                                <p className="mt-8 text-xl">
+                                To get started, simply select your organization and project!
+                                </p>
+                              
+                        
                         </div>
-                        <div className="bg-purple-50 border-l-4 border-purple-500 text-purple-700 p-4 rounded-md mt-8 max-w-3xl">
+                        {/* <div className="bg-purple-50 border-l-4 border-purple-500 text-purple-700 p-4 rounded-md mt-8 max-w-3xl">
                             <p className="text-sm">
                             Check out the vision and demo{" "}
                             <a
@@ -172,7 +165,7 @@ const RWBDashboard =()=>{
                                 here →
                             </a>
                             </p>
-                        </div>
+                        </div> */}
 
                         </div>
                         <div className="w-[420px] bg-white rounded-xl shadow-lg p-6">
@@ -212,7 +205,7 @@ const RWBDashboard =()=>{
                 </div>
                 ):(<WaterProjectDashboard organization={organization} project={project}/>)}
                     
-                    {!isTehsilMode && <Footer />}
+                    
                     </div>
         );
 }

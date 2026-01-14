@@ -107,16 +107,28 @@ export default function TableView({
   };
 
   return (
-    <div className="mt-4 bg-white rounded-md shadow-sm overflow-x-auto">
-      <table className="w-full border border-gray-200 text-sm md:text-base text-gray-800">
-        <thead className="bg-gray-100 font-semibold">
+    <div className="mt-2 bg-white rounded-md shadow-sm overflow-x-auto w-full p-0">
+      <table className="min-w-[1200px] text-[7px] sm:text-[8px] md:text-[9px] lg:text-[10px] xl:text-[12px] 2xl:text-[14px] border border-gray-200">
+        <thead className="bg-gray-100 font-medium">
           <tr className="border-b">
-          <th className="px-3 py-4 text-center">
+          <th className="
+              px-[2px] py-[2px]
+              sm:px-1 sm:py-1
+              md:px-2 md:py-1.5
+              lg:px-2 lg:py-2
+              align-center text-center whitespace-normal break-words
+            ">
             S.No.
           </th>
 
             {headers.map((col) => (
-              <th key={col.key} className="relative px-3 py-4 text-center">
+              <th key={col.key} className=" relative
+                  px-[2px] py-[2px]
+                  sm:px-1 sm:py-1
+                  md:px-2 md:py-1.5
+                  lg:px-2 lg:py-2
+                  align-center text-center whitespace-normal break-words
+                ">
                 <div
                   className={`flex items-center justify-center gap-1 ${
                     col.sortable ? "cursor-pointer select-none" : ""
@@ -185,20 +197,33 @@ export default function TableView({
         </thead>
 
         {/* BODY */}
-        <tbody className="text-sm text-gray-700">
+        <tbody className="text-gray-700">
           {paginatedRows.map((row,index) => (
             <tr
               key={row.id}
               className="hover:bg-gray-50 cursor-pointer transition-colors border-b"
               onClick={() => onRowClick(row)}
             >
-              <td className="px-3 py-4 text-center text-gray-700">
+              <td className="
+                px-[2px] py-[2px]
+                sm:px-1 sm:py-1
+                md:px-2 md:py-1.5
+                lg:px-2 lg:py-2
+                align-center text-center whitespace-normal break-words
+              ">
                 {pageSize
                   ? (currentPage - 1) * pageSize + index + 1
                   : index + 1}
               </td>
               {headers.map((col) => (
-                <td key={col.key} className="px-3 py-4 text-center">
+                <td key={col.key} className="
+                px-[2px] py-[2px]
+                sm:px-1 sm:py-1
+                md:px-2 md:py-1.5
+                lg:px-2 lg:py-2
+                align-center text-center whitespace-normal break-words
+              "
+              >
                 {col.render ? col.render(row) : row[col.key] ?? "NA"}
               </td>
               ))}
