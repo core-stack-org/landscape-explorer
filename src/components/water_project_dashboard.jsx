@@ -78,6 +78,8 @@ const WaterProjectDashboard = () => {
     block: blockParam,
   });
 
+  
+
   const handleCloseInfo = () => {
     setInfoAnchor(null);
   };
@@ -98,49 +100,53 @@ const WaterProjectDashboard = () => {
       Array.isArray(parsed) ? parsed : [parsed]
     );  }, []);
 
-  useEffect(() => {
-    if (!isTehsilMode) return;
-    if (!tehsilMap) return;
-  
-    if (selectedWaterbodyForTehsil && mwsFromLocalStorage) {
-      return;
-    }
-  
-    const fetchTehsilData = async () => {
-  
-      const result = await getWaterbodyData({
-        district: { label: districtParam },
-        block: { label: blockParam },
-        map: tehsilMap,
-        waterbodyUID: waterbodyParam,
-      });
-  
-  
-      if (result?.waterbody?.geojson) {
-        setSelectedWaterbodyForTehsil(result.waterbody.geojson);
+    useEffect(() => {
+      if (typeParam === "tehsil") {
+        setShowMap(true);
       }
+    }, [typeParam]);
+
+    useEffect(() => {
+      if (!isTehsilMode) return;
+      if (!tehsilMap) return;
+      if (!districtParam || !blockParam) return;
+    
+      if (mwsFromLocalStorage?.length && selectedWaterbodyForTehsil) return;
+    
+    
+      const fetchTehsilData = async () => {
+        const result = await getWaterbodyData({
+          district: { label: districtParam },
+          block: { label: blockParam },
+          map: tehsilMap,
+          waterbodyUID: waterbodyParam,
+        });
+    
+        if (result?.waterbody?.geojson) {
+          setSelectedWaterbodyForTehsil(result.waterbody.geojson);
+          localStorage.setItem("selectedWaterbody", JSON.stringify(result.waterbody.geojson));
+        }
+    
+        if (Array.isArray(result?.mws) && result.mws.length) {
+          const allGeo = result.mws.map(o => o.geojson);
+          setMwsFromLocalStorage(allGeo);
+          localStorage.setItem("matched_mws_features", JSON.stringify(allGeo));
+        }
+      };
+    
+      fetchTehsilData();
+    }, [
+      isTehsilMode,
+      tehsilMap,
+      districtParam,
+      blockParam,
+      waterbodyParam,
+    ]);
+    
+    
+    
   
-      if (result?.mws?.geojson) {
-        setMwsFromLocalStorage(result.mws.geojson);
-      }
-    };
-  
-    fetchTehsilData();
-  }, [
-    isTehsilMode,
-    tehsilMap,
-    districtParam,
-    blockParam,
-    waterbodyParam,
-    selectedWaterbodyForTehsil,
-    mwsFromLocalStorage,
-  ]);
-  
-  useEffect(() => {
-    if (typeParam === "tehsil") {
-      setShowMap(true);
-    }
-  }, [typeParam]);
+
 
   const matchedMwsOlFeatures = useMemo(() => {
     if (!mwsFromLocalStorage?.length) return [];
@@ -738,7 +744,6 @@ const WaterProjectDashboard = () => {
   
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
-  console.log(projectLevelZaidImpact)
 
   const TableLoader = () => (
     <div className="w-full h-[60vh] flex items-center justify-center">
@@ -750,287 +755,253 @@ const WaterProjectDashboard = () => {
     window.print();
   }
 
-  console.log(zoiFeatures)
   
   return (
-<div className={`${isTehsilMode ? "pb-8 w-full" : "mx-6 my-8 bg-white rounded-xl shadow-md p-6"}`}>
+    <div className={`${isTehsilMode ? "pb-8 w-full" : "mx-6 my-8 bg-white rounded-xl shadow-md p-6"}`}>
   
-    {isTehsilMode && activeSelectedWaterbody && (
-      <div className="w-full overflow-hidden">
-        <div className="w-full py-10 bg-[#2c3e50] text-white relative shadow-md">
-          <button
-            className="absolute top-4 right-6 flex items-center gap-2
-            bg-green-600 hover:bg-green-700 text-white font-semibold 
-            px-4 py-2 rounded-md shadow-md transition-all"
-            onClick={printReport}
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18"
-              viewBox="0 0 24 24" fill="none" stroke="currentColor"
-              strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <polyline points="6 9 6 2 18 2 18 9"></polyline>
-              <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
-              <rect x="6" y="14" width="12" height="8"></rect>
-            </svg>
-            Save as PDF
-          </button>
-
-          <h1 className="text-3xl font-bold text-center">
-            Waterbody Data Analysis Report
-          </h1>
-
-          <p className="text-base text-blue-100 text-center mt-1">
-            Tehsil: {activeSelectedWaterbody?.properties?.Taluka || blockParam || "NA"} • UID: {activeSelectedWaterbody?.properties?.UID}
-          </p>
-        </div>
-      </div>
-    )}
-  <div className="flex flex-col gap-1 mb-6 lg:flex-row lg:items-start lg:justify-between">
-
-{/* LEFT — BUTTONS */}
-{mode === "project" && (
-  <div className="flex gap-2 flex-shrink-0">
-    <button
-      onClick={() => navigate("/rwb", { replace: true })}
-      className="px-4 py-2 bg-purple-600 text-white rounded-md text-sm hover:bg-purple-600 flex items-center gap-2 flex-shrink-0"
-    >
-      <ArrowBackIosNewIcon sx={{ fontSize: 16 }} />
-      <span>Back to Projects</span>
-    </button>
-
-    <button
-      onClick={() => {
-        setSelectedWaterbody(null);
-        setSelectedFeature(null);
-        setShowMap((prev) => !prev);
-      }}
-      className="px-4 py-2 bg-purple-600 text-white rounded-md text-sm hover:bg-purple-600 flex items-center gap-2 flex-shrink-0"
-    >
-      {showMap ? (
-        <TableRowsIcon sx={{ fontSize: 18 }} />
-      ) : (
-        <PublicIcon sx={{ fontSize: 18 }} />
-      )}
-      <span>{showMap ? "View Table" : "View Map"}</span>
-    </button>
-  </div>
-)}
-
-{/* RIGHT — SUMMARY BOX */}
-{mode === "project" && projectNameParam && !activeSelectedWaterbody && (
-  loadingData ? (
-    // Loader while text waits
-    <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-xl shadow-sm w-full md:max-w-[90%]">
-      <CircularProgress size={20} />
-      <p className="text-gray-500 text-sm">Loading...</p>
-    </div>
-  ) : (
-    <div className="flex items-start gap-2 bg-white px-0 py-2 rounded-xl shadow-sm
-      w-full md:max-w-[90%] lg:max-w-[60%] xl:max-w-[80%] flex-grow mt-1 lg:mt-0 sm:max-w-[99%]">
-      <Lightbulb size={32} className="text-gray-800 flex-shrink-0" />
-      <p className="text-gray-800 text-sm md:text-base font-medium leading-snug">
-        {WATER_DASHBOARD_CONFIG.project.topSectionText({
-          projectName: projectNameParam,
-          totalRows,
-          totalSiltRemoved,
-          interventionYear: projectInterventionYear,
-          rabiImpact: projectLevelRabiImpact,
-          zaidImpact: projectLevelZaidImpact,
-        })}
-      </p>
-    </div>
-  )
-)}
-</div>
-
-    {/* SECTION TEXT — show only when zoomed on a waterbody */}
-    <div className="px-6 md:px-10 w-full box-border overflow-x-hidden">
-
-      {showMap && activeSelectedWaterbody && (
-        <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
-        <h2 className="font-bold text-blue-600 border-b-2 border-blue-600 pb-1 text-[clamp(1.1rem,1.7vw,1.5rem)]">
-            {WATER_DASHBOARD_CONFIG[mode].sections.section1.title}
-          </h2>
-
-          <div className="space-y-3 leading-relaxed mt-3">
-            {WATER_DASHBOARD_CONFIG[mode].sections.section1.paragraphs.map(
-              (text, idx) => (
-                <p
-                  key={idx}
-                  className="text-gray-700 leading-relaxed"
-                  style={{ fontSize: "clamp(0.70rem, 1vw, 1rem)" }}
-                                  >
-                  {text}
-                </p>
-              )
-            )}
+      {/* HEADER FOR TEHSIL MODE */}
+      {isTehsilMode && activeSelectedWaterbody && (
+        <div className="w-full overflow-hidden">
+          <div className="w-full py-10 bg-[#2c3e50] text-white relative shadow-md">
+            <button
+              className="absolute top-4 right-6 flex items-center gap-2
+                bg-green-600 hover:bg-green-700 text-white font-semibold 
+                px-4 py-2 rounded-md shadow-md transition-all"
+              onClick={printReport}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18"
+                viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="6 9 6 2 18 2 18 9"></polyline>
+                <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
+                <rect x="6" y="14" width="12" height="8"></rect>
+              </svg>
+              Save as PDF
+            </button>
+  
+            <h1 className="text-3xl font-bold text-center">
+              Waterbody Data Analysis Report
+            </h1>
+  
+            <p className="text-base text-blue-100 text-center mt-1">
+              Tehsil: {activeSelectedWaterbody?.properties?.Taluka || blockParam || "NA"} • UID: {activeSelectedWaterbody?.properties?.UID}
+            </p>
           </div>
         </div>
       )}
-
-{showMap && loadingData && !timeoutReached ? (
-  <div className="w-full h-[80vh] flex flex-col items-center justify-center gap-3">
-    <CircularProgress />
-    <p className="text-gray-500 text-sm mt-2">Loading data...</p>
-  </div>
-) : showMap && timeoutReached && (!geoData || !geoData.features?.length) ? (
-  <div className="w-full h-[80vh] flex flex-col items-center justify-center gap-3 text-center px-4">
-    <p className="text-gray-600 text-base font-medium">
-      Data is being generated for this area.
-    </p>
-    <p className="text-gray-500 text-sm">
-      Please check again in a few minutes.
-    </p>
-  </div>
-) : showMap ? (
- 
-      <>
-<div
-  className="bg-white rounded-xl shadow-md overflow-hidden flex">
-{/* MAP */}
-        <div
-          className="transition-all duration-300 h-full flex-[2] min-w-[50%]">
-        <DashboardBasemap
-          mode="waterbody"
-          geoData={typeParam === "tehsil" ? tehsilGeoData : geoData}
-          selectedWaterbody={activeSelectedWaterbody}
-          showMap={showMap}
-          projectName={typeParam === "project" ? projectNameParam : null}
-          projectId={typeParam === "project" ? projectIdParam : null}
-          onSelectWaterbody={(wb) => {
-            setSelectedWaterbody(wb);
-            setShowMap(true);  
+  
+  {/* ====================== TOP BUTTONS + SUMMARY ====================== */}
+  <div className="flex flex-col gap-1 mb-6 lg:flex-row lg:items-start lg:justify-between">
+  
+    {mode === "project" && (
+      <div className="flex gap-2 flex-shrink-0">
+        <button
+          onClick={() => navigate("/rwb", { replace: true })}
+          className="px-4 py-2 bg-purple-600 text-white rounded-md text-sm hover:bg-purple-600 flex items-center gap-2 flex-shrink-0"
+        >
+          <ArrowBackIosNewIcon sx={{ fontSize: 16 }} />
+          <span>Back to Projects</span>
+        </button>
+  
+        <button
+          onClick={() => {
+            setSelectedWaterbody(null);
+            setSelectedFeature(null);
+            setShowMap((prev) => !prev);
           }}
-          lulcYear={lulcYear1}
-          district={districtParam}
-          block={blockParam}
-          onMapReady={(map) => {
-            setTehsilMap(map);
-          }}
+          className="px-4 py-2 bg-purple-600 text-white rounded-md text-sm hover:bg-purple-600 flex items-center gap-2 flex-shrink-0"
+        >
+          {showMap ? (
+            <TableRowsIcon sx={{ fontSize: 18 }} />
+          ) : (
+            <PublicIcon sx={{ fontSize: 18 }} />
+          )}
+          <span>{showMap ? "View Table" : "View Map"}</span>
+        </button>
+      </div>
+    )}
+  
+    {mode === "project" && projectNameParam && !activeSelectedWaterbody && (
+      loadingData ? (
+        <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-xl shadow-sm w-full md:max-w-[90%]">
+          <CircularProgress size={20} />
+          <p className="text-gray-500 text-sm">Loading...</p>
+        </div>
+      ) : (
+        <div className="flex items-start gap-2 bg-white px-0 py-2 rounded-xl shadow-sm
+          w-full md:max-w-[90%] lg:max-w-[60%] xl:max-w-[80%] flex-grow mt-1 lg:mt-0 sm:max-w-[99%]">
+          <Lightbulb size={32} className="text-gray-800 flex-shrink-0" />
+          <p className="text-gray-800 text-sm md:text-base font-medium leading-snug">
+            {WATER_DASHBOARD_CONFIG.project.topSectionText({
+              projectName: projectNameParam,
+              totalRows,
+              totalSiltRemoved,
+              interventionYear: projectInterventionYear,
+              rabiImpact: projectLevelRabiImpact,
+              zaidImpact: projectLevelZaidImpact,
+            })}
+          </p>
+        </div>
+      )
+    )}
+  </div>
+  
+  {/* ====================== MAIN CONTENT SWITCH ====================== */}
+  <div className="px-6 md:px-10 w-full box-border overflow-x-hidden">
+  
+    {/*  TABLE MODE */}
+    {!showMap && (
+      loadingData ? (
+        <div className="w-full h-[60vh] flex items-center justify-center">
+          <CircularProgress />
+        </div>
+      ) : (rows.length === 0 ? (
+        <div className="w-full h-[60vh] flex items-center justify-center text-gray-500 text-sm">
+          No data available
+        </div>
+      ) : (
+        <TableView
+          headers={WATER_DASHBOARD_CONFIG[mode].tableHeaders}
+          rows={rows}
+          waterbodySearch={waterbodySearch}
+          onSearchChange={setWaterbodySearch}
+          pageSize={50}
+          onRowClick={handleWaterbodyClick}
         />
-        {showMap && activeSelectedWaterbody && (
+      ))
+    )}
+  
+    {/* MAP MODE — ALWAYS SHOW MAP */}
+    {showMap && (
+      <>
+        {/* MAP BLOCK */}
+        <div className="bg-white rounded-xl shadow-md overflow-hidden flex">
+          <div className="h-full flex-[2] min-w-[50%]">
+            <DashboardBasemap
+              mode="waterbody"
+              geoData={isTehsilMode ? tehsilGeoData : geoData}
+              selectedWaterbody={activeSelectedWaterbody}
+              showMap={showMap}
+              projectName={typeParam === "project" ? projectNameParam : null}
+              projectId={typeParam === "project" ? projectIdParam : null}
+              onSelectWaterbody={(wb) => {
+                setSelectedWaterbody(wb);
+                setShowMap(true);
+              }}
+              lulcYear={lulcYear1}
+              district={districtParam}
+              block={blockParam}
+              onMapReady={(map) => {
+                setTehsilMap(map);
+              }}
+            />
+             {showMap && activeSelectedWaterbody && (
           <div className="text-gray-500 text-[clamp(0.65rem,0.95vw,0.7rem)] mt-2 pl-2 w-full">
             <p><b>Water Availability : </b> We use Sentinel-1 (SAR data) VV band for water pixel detection in Kharif season and Dynamic World to detect water pixels in Rabi and Zaid seasons.</p>
             <p><b>Land Use Land Cover : </b> Data remotely sensed from satellites including LandSat-7, LandSat-8, Sentinel-2, Sentinel-1, MODIS and Dynamic World</p>
             <p><b>Rainfall : </b> Precipitation data is calculated from the Global Satellite Mapping of Precipitation (GSMaP) dataset available on Google Earth Engine's data catalogue. GSMaP provides a global precipitation in mm/hr at spatial resolution of approximately 11km.</p>
           </div>
         )}
-      </div>
-      
-
-{/* RIGHT PANEL */}
-{showMap && activeSelectedWaterbody && (
-  <div className="h-full border-l bg-white overflow-y-auto p-4 flex-[1] min-w-[350px] flex flex-col gap-6">
-
-    {/* WATER AVAILABILITY */}
-    <div className="min-h-[320px] bg-white rounded-lg shadow-sm p-2 overflow-visible">
-      <WaterAvailabilityChart
-        isTehsil={isTehsilMode}
-        waterbody={isTehsilMode ? activeSelectedWaterbody.properties.UID: activeSelectedWaterbody }
-        water_rej_data={isTehsilMode ? geoData ? { features: [geoData]} : null : geoData }        
-        mwsFeature={isTehsilMode ? matchedMwsOlFeatures[0] : mwsForCharts}
-        onImpactYearChange={setImpactYear} 
-        years={extractedSeasonalYears} 
-        />
-    </div>
-
-    {/* PRECIPITATION */}
-    <div className="min-h-[320px] bg-white rounded-lg shadow-sm p-2 overflow-visible">
-      <PrecipitationStackChart
-        feature={
-          typeParam === "tehsil"
-            ? matchedMwsOlFeatures[0]
-            : mwsForCharts
-        }
-        waterbody={activeSelectedWaterbody}
-        water_rej_data={isTehsilMode ? geoData ? { features: [geoData]} : null : geoData }        
-          typeparam={typeParam}
-          
-        />
-    </div>
-
-  </div>
-)}
-
-
-
-      </div>
-{showMap && activeSelectedWaterbody && (
-        <div className="bg-white rounded-xl shadow-sm p-6 mb-6 mt-8">
-        <h2 className="font-bold text-blue-600 border-b-2 border-blue-600 pb-1 text-[clamp(1.2rem,1.7vw,1.6rem)]">
-            {WATER_DASHBOARD_CONFIG[mode].sections.section2.title}
-          </h2>
-
-          <div className="space-y-3 leading-relaxed mt-3">
-            {WATER_DASHBOARD_CONFIG[mode].sections.section2.paragraphs.map(
-              (text, idx) => (
-                <p
-                  key={idx}
-                  className="text-gray-700 leading-relaxed"
-                  style={{ fontSize: "clamp(0.70rem, 1vw, 1rem)" }}>
-                  {text}
-                </p>
-              )
-            )}
           </div>
+  
+          {activeSelectedWaterbody && (
+            <div className="h-full border-l bg-white overflow-y-auto p-4 flex-[1] min-w-[350px] flex flex-col gap-6">
+  
+              <div className="min-h-[320px] bg-white rounded-lg shadow-sm p-2 overflow-visible">
+                <WaterAvailabilityChart
+                  isTehsil={isTehsilMode}
+                  waterbody={isTehsilMode ? activeSelectedWaterbody.properties.UID: activeSelectedWaterbody }
+                  water_rej_data={isTehsilMode ? geoData ? { features: [geoData]} : null : geoData }        
+                  mwsFeature={isTehsilMode ? matchedMwsOlFeatures[0] : mwsForCharts}
+                  onImpactYearChange={setImpactYear} 
+                  years={extractedSeasonalYears} 
+                />
+              </div>
+  
+              <div className="min-h-[320px] bg-white rounded-lg shadow-sm p-2 overflow-visible">
+                <PrecipitationStackChart
+                  feature={isTehsilMode ? matchedMwsOlFeatures[0] : mwsForCharts}
+                  waterbody={activeSelectedWaterbody}
+                  water_rej_data={isTehsilMode ? geoData ? { features: [geoData]} : null : geoData }
+                  typeparam={typeParam}
+                />
+              </div>
+  
+            </div>
+          )}
         </div>
-      )}
-      {/* SECOND MAP + GRAPHS (Cropping + Drought) */}
-{showMap && activeSelectedWaterbody && (
-  <div className=" bg-white rounded-xl shadow-md overflow-hidden flex mt-6">
-
-    {/* MAP */}
-    <div className="w-[60%] h-full">
-      <DashboardBasemap
-        mode="zoi"
-        geoData={typeParam === "tehsil" ? tehsilGeoData : geoData}
-        zoiFeatures={zoiFeatures}
-        selectedWaterbody={activeSelectedWaterbody}
-        projectName={typeParam === "project" ? projectNameParam : null}
-        projectId={typeParam === "project" ? projectIdParam : null}
-        showMap={showMap}
-        lulcYear={lulcYear2}  
-        district={districtParam}
-        block={blockParam}
-      />
-              {showMap && activeSelectedWaterbody && (
+  
+        {/* LOADING OVERLAY */}
+        {isTehsilMode && loadingData && !activeSelectedWaterbody && (
+          <div className="fixed inset-0 bg-black/20 flex items-center justify-center z-[9999]">
+            <div className="bg-white rounded-lg shadow-xl p-6 flex flex-col items-center gap-3">
+              <CircularProgress />
+              <p className="text-gray-700 font-medium">Loading waterbody data...</p>
+            </div>
+          </div>
+        )}
+  
+        {/* EVERYTHING BELOW SHOWS ONLY AFTER YOU GET WB */}
+        {activeSelectedWaterbody && (
+          <>
+            {/* SECTION 1 */}
+            <div className="bg-white rounded-xl shadow-sm p-6 mb-6 mt-6">
+              <h2 className="font-bold text-blue-600 border-b-2 border-blue-600 pb-1 text-[clamp(1.1rem,1.7vw,1.5rem)]">
+                {WATER_DASHBOARD_CONFIG[mode].sections.section1.title}
+              </h2>
+              <div className="space-y-3 leading-relaxed mt-3">
+                {WATER_DASHBOARD_CONFIG[mode].sections.section1.paragraphs.map(
+                  (text, idx) => (
+                    <p key={idx} className="text-gray-700 leading-relaxed" style={{ fontSize: "clamp(0.70rem, 1vw, 1rem)" }}>{text}</p>
+                  )
+                )}
+              </div>
+            </div>
+  
+            {/* ZOI BLOCK */}
+            <div className="bg-white rounded-xl shadow-md overflow-hidden flex mt-6">
+              <div className="w-[60%] h-full">
+                <DashboardBasemap
+                  mode="zoi"
+                  geoData={isTehsilMode ? tehsilGeoData : geoData}
+                  zoiFeatures={zoiFeatures}
+                  selectedWaterbody={activeSelectedWaterbody}
+                  projectName={projectNameParam}
+                  projectId={projectIdParam}
+                  showMap={showMap}
+                  lulcYear={lulcYear2}
+                  district={districtParam}
+                  block={blockParam}
+                />
+                {showMap && activeSelectedWaterbody && (
   <div className="text-gray-500 text-[clamp(0.65rem,0.95vw,0.7rem)] mt-2 pl-2 w-full">
     <p><b>Cropping Intensity : </b> We use annual land use land cover (LULC), to identify areas under single cropping, double cropping and triple cropping using pixels which are classified as single kharif, single non-kharif, double and triple classes of LULC classifier to determine cropping intensity. The data used is from 2017 to 2024.</p>
     <p><b>Drought Incidence : </b> Drought is defined as per the Government of India's Drought Manual and considered moderate or severe if the number of weeks of drought is five or more. Drought weeks are identified based on whether meteorological drought occurred in that week (i.e. the rains were less than usual in that week as compared to previous years, possibly intensified by dry spells defined as consecutive weeks of low rainfall) and/or agricultural drought occurred in that week (i.e. cropped area or crop health were lower than usual in that week as compared to previous years). Severe drought weeks are those when meteorological and agricultural drought are both coincident.</p>
     
   </div>
 )}
-    </div>
-
-    {/* RIGHT PANEL */}
-     <div className="h-full border-l bg-white overflow-y-auto p-4 flex-[1] min-w-[280px] md:min-w-[350px] xl:min-w-[420px] flex flex-col gap-6">
-
-
-      {/* CROPPING INTENSITY */}
-      <div className="min-h-[280px] bg-white rounded-lg shadow-sm p-2 overflow-hidden">
-      <CroppingIntensityStackChart
-                        zoiFeatures={zoiFeatures}
-                        waterbody={activeSelectedWaterbody}
-                        impactYear={impactYear}
-                        isTehsil={isTehsilMode}
-                        years={extractedSeasonalYears}
-                        water_rej_data={isTehsilMode ? geoData ? { features: [geoData]} : null : geoData }        
-                      />
-      </div>
-
-      {/* DROUGHT */}
-      <div className="min-h-[320px] bg-white rounded-lg shadow-sm p-2 overflow-hidden">
-      <DroughtChart
-                      mwsGeoData={isTehsilMode ? tehsilDrought : mwsGeoData}
-                        waterbody={activeSelectedWaterbody}
-                        typeparam={typeParam}
-                      />
-      </div>
-    </div>
-  </div>
+              </div>
   
-)}
-{/* NDVI — FULL WIDTH SECTION */}
-{showMap && activeSelectedWaterbody && (
+              <div className="h-full border-l bg-white overflow-y-auto p-4 flex-[1] min-w-[350px] flex flex-col gap-6">
+                <CroppingIntensityStackChart
+                  zoiFeatures={zoiFeatures}
+                  waterbody={activeSelectedWaterbody}
+                  impactYear={impactYear}
+                  isTehsil={isTehsilMode}
+                  years={extractedSeasonalYears}
+                  water_rej_data={isTehsilMode ? geoData ? { features: [geoData]} : null : geoData }
+                />
+  
+                <DroughtChart
+                  mwsGeoData={isTehsilMode ? tehsilDrought : mwsGeoData}
+                  waterbody={activeSelectedWaterbody}
+                  typeparam={typeParam}
+                />
+              </div>
+            </div>
+  
+            {/* NDVI */}
+            {showMap && activeSelectedWaterbody && (
   <div className="bg-white rounded-xl shadow-md p-6 mt-8">
     <div className="w-full min-h-[420px]">
     <NDVIChart
@@ -1046,127 +1017,113 @@ const WaterProjectDashboard = () => {
 )}
   </div>
 )}
-{/* SECTION 3 TEXT — BELOW NDVI */}
-{showMap && activeSelectedWaterbody && (
-  <div className="bg-white rounded-xl shadow-sm p-6 mt-6 mb-6">
-        <h2 className="font-bold text-blue-600 border-b-2 border-blue-600 pb-1 text-[clamp(1.1rem,1.7vw,1.5rem)]">
-      {WATER_DASHBOARD_CONFIG[mode].sections.section3.title}
-    </h2>
-
-    <div className="space-y-3 leading-relaxed mt-3">
-      {WATER_DASHBOARD_CONFIG[mode].sections.section3.paragraphs.map(
-        (text, idx) => (
-          <p key={idx}  className="text-gray-700 leading-relaxed"
-          style={{ fontSize: "clamp(0.70rem, 1vw, 1rem)" }}>
-            {text}
-          </p>
-        )
-      )}
-    </div>
-  </div>
   
-)}
-
-{/* SECTION 3 — SUMMARY CARDS */}
-  {showMap && activeSelectedWaterbody && (
-    <div className="w-full mt-4 px-2 md:px-0">
-      <div className="w-full flex flex-col md:flex-row justify-between gap-3">
-
-        {/* CARD TEMPLATE UPDATED */}
-        {[
-          {
-            title: "Max Catchment Area",
-            value: (() => {
-              const props = activeSelectedWaterbody?.properties ?? activeSelectedWaterbody ?? {};
-              const v =
-                props.max_catchment_area ??   // tehsil / underscore format
-                props.maxCatchmentArea ??     // camelCase format
-                props.max_catchment ??        // fallback old format
-                null;
-              return v ? `${Number(v).toFixed(2)} hectares` : "N/A";
-            })(),
-            color: "text-blue-600",
-          },
-          {
-            title: "Drainage Line",
-            value: (() => {
-              const props = activeSelectedWaterbody?.properties ?? activeSelectedWaterbody ?? {};
-              const onDrain = props.on_drainage_line ?? props.drainage ?? props.drainageFlag;
-              const streamOrder = props.max_stream_order ?? props.maxStreamOrder;
-
-              if (onDrain !== 1)
-                return <span className="text-red-500">Not On Drainage Line</span>;
-              return streamOrder ? `ON Drainage Line Stream Order ${streamOrder}` : "N/A";
-            })(),
-            color: "text-blue-600",
-          },
-          {
-            title: "Watershed Position",
-            value: (() => {
-              const props = activeSelectedWaterbody?.properties ?? activeSelectedWaterbody ?? {};
-              const streamOrder = props.max_stream_order ?? props.maxStreamOrder;
-              return streamOrder ? `Order ${streamOrder}` : "N/A";
-            })(),
-            color: "text-blue-600",
-          },
-        ].map((card, idx) => (
-          <div
-            key={idx}
-            className="
-              flex-1 bg-gradient-to-br from-gray-50 to-gray-100
-              rounded-xl border border-gray-200 shadow-sm
-              flex flex-col items-center text-center
-              transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md
-            "
-            style={{
-              padding: "clamp(10px, 2vw, 24px)",
-              minHeight: "clamp(100px, 16vh, 140px)",
-            }}
-          >
-            <p
-              className="uppercase tracking-wide font-bold text-gray-800"
-              style={{ fontSize: "clamp(0.55rem, 0.8vw, 0.9rem)" }}
-            >
-              {card.title}
-            </p>
-
-            <p
-              className={`font-semibold mt-1 ${card.color}`}
-              style={{ fontSize: "clamp(0.9rem, 1.5vw, 1.4rem)" }}
-            >
-              {card.value}
-            </p>
-          </div>
-        ))}
-
-      </div>
-    </div>
-  )}
-
-
-{/* FULL WIDTH MWS MAP — AFTER SECTION 3 */}
-{showMap && activeSelectedWaterbody && (
-  <div className="w-full mt-6">
-    <div className="relative w-full bg-white rounded-xl shadow-md overflow-hidden">
-
-    <DashboardBasemap
-                    id="map3"
-                    mode="mws"
-                    geoData={typeParam === "tehsil" ? tehsilGeoData : geoData}
-                    mwsData={typeParam === "tehsil" ? matchedMwsOlFeatures : mwsGeoData}
-
-                    // mwsData={mwsGeoData}
-                    selectedWaterbody={activeSelectedWaterbody}
-                    selectedFeature={typeParam === "tehsil" ? matchedMwsOlFeatures : mwsForMap}
-                    lulcYear={lulcYear2} 
-                    projectName={typeParam === "project" ? projectNameParam : null}
-                    projectId={typeParam === "project" ? projectIdParam : null}
-                    organizationLabel={organization?.label}
-                    district={districtParam}
-                    block={blockParam}
-                    type={typeParam}
-                  />
-                  {showMap && activeSelectedWaterbody && (
+            {/* SECTION 3 */}
+            <div className="bg-white rounded-xl shadow-sm p-6 mt-6 mb-6">
+              <h2 className="font-bold text-blue-600 border-b-2 border-blue-600 pb-1 text-[clamp(1.1rem,1.7vw,1.5rem)]">
+                {WATER_DASHBOARD_CONFIG[mode].sections.section3.title}
+              </h2>
+              <div className="space-y-3 leading-relaxed mt-3">
+                {WATER_DASHBOARD_CONFIG[mode].sections.section3.paragraphs.map(
+                  (text, idx) => (
+                    <p key={idx} className="text-gray-700 leading-relaxed"
+                       style={{ fontSize: "clamp(0.70rem, 1vw, 1rem)" }}>
+                      {text}
+                    </p>
+                  )
+                )}
+              </div>
+            </div>
+  
+            {/* SUMMARY CARDS */}
+            <div className="w-full mt-4 px-2 md:px-0">
+              <div className="w-full flex flex-col md:flex-row justify-between gap-3">
+  
+                {[
+                  {
+                    title: "Max Catchment Area",
+                    value: (() => {
+                      const props = activeSelectedWaterbody?.properties ?? activeSelectedWaterbody ?? {};
+                      const v =
+                        props.max_catchment_area ??
+                        props.maxCatchmentArea ??
+                        props.max_catchment ??
+                        null;
+                      return v ? `${Number(v).toFixed(2)} hectares` : "N/A";
+                    })(),
+                    color: "text-blue-600",
+                  },
+                  {
+                    title: "Drainage Line",
+                    value: (() => {
+                      const props = activeSelectedWaterbody?.properties ?? activeSelectedWaterbody ?? {};
+                      const onDrain = props.on_drainage_line ?? props.drainage ?? props.drainageFlag;
+                      const streamOrder = props.max_stream_order ?? props.maxStreamOrder;
+                      if (onDrain !== 1)
+                        return <span className="text-red-500">Not On Drainage Line</span>;
+                      return streamOrder ? `ON Drainage Line Stream Order ${streamOrder}` : "N/A";
+                    })(),
+                    color: "text-blue-600",
+                  },
+                  {
+                    title: "Watershed Position",
+                    value: (() => {
+                      const props = activeSelectedWaterbody?.properties ?? activeSelectedWaterbody ?? {};
+                      const streamOrder = props.max_stream_order ?? props.maxStreamOrder;
+                      return streamOrder ? `Order ${streamOrder}` : "N/A";
+                    })(),
+                    color: "text-blue-600",
+                  },
+                ].map((card, idx) => (
+                  <div key={idx}
+                    className="flex-1 bg-gradient-to-br from-gray-50 to-gray-100
+                      rounded-xl border border-gray-200 shadow-sm
+                      flex flex-col items-center text-center
+                      transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md"
+                    style={{
+                      padding: "clamp(10px, 2vw, 24px)",
+                      minHeight: "clamp(100px, 16vh, 140px)",
+                    }}
+                  >
+                    <p
+                      className="uppercase tracking-wide font-bold text-gray-800"
+                      style={{ fontSize: "clamp(0.55rem, 0.8vw, 0.9rem)" }}
+                    >
+                      {card.title}
+                    </p>
+  
+                    <p
+                      className={`font-semibold mt-1 ${card.color}`}
+                      style={{ fontSize: "clamp(0.9rem, 1.5vw, 1.4rem)" }}
+                    >
+                      {card.value}
+                    </p>
+                  </div>
+                ))}
+  
+              </div>
+            </div>
+  
+            {/* MWS FULL WIDTH MAP */}
+            <div className="w-full mt-6">
+              <div className="relative w-full bg-white rounded-xl shadow-md overflow-hidden">
+  
+                <DashboardBasemap
+                  id="map3"
+                  mode="mws"
+                  geoData={typeParam === "tehsil" ? tehsilGeoData : geoData}
+                  mwsData={isTehsilMode ? matchedMwsOlFeatures : mwsGeoData}
+                  selectedWaterbody={activeSelectedWaterbody}
+                  selectedFeature={isTehsilMode ? matchedMwsOlFeatures : mwsForMap}
+                  lulcYear={lulcYear2}
+                  projectName={projectNameParam}
+                  projectId={projectIdParam}
+                  organizationLabel={organization?.label}
+                  district={districtParam}
+                  block={blockParam}
+                  type={typeParam}
+                />
+                {showMap && activeSelectedWaterbody && (
   <div className="text-gray-500 text-[clamp(0.65rem,0.95vw,0.7rem)] mt-2 pl-2 w-full">
     <p><b>Terrain : </b> We used NASA's SRTM Digital Elevation Model at 30m resolution to generate landform classification.</p>
     <p><b>Drainage Lines : </b> Drainage lines use digital elevation model (DEM) raster dataset as input. The DEM provides pixel level information on the elevation of the terrain, which is used to determine the flow of water across the landscape.
@@ -1177,74 +1134,55 @@ const WaterProjectDashboard = () => {
   </div>
 )}
   
-    </div>
-  </div>
-)}
-      </> 
-     ) : loadingData ? (
-      <TableLoader />
-    ) : rows.length === 0 ? (
-      <div className="w-full h-[60vh] flex items-center justify-center text-gray-500 text-sm">
-        No data available
-      </div>
-    ) : (
-      <TableView
-        headers={WATER_DASHBOARD_CONFIG[mode].tableHeaders}
-        rows={rows}
-        waterbodySearch={waterbodySearch}
-        onSearchChange={setWaterbodySearch}
-        pageSize={50}
-        onRowClick={handleWaterbodyClick}
-      />
+              </div>
+            </div>
+  
+          </>
+        )}
+      </>
     )}
-    </div>
-{/* ==================== BOTTOM REPORT FOOTER ==================== */}
-      {  (
-        <footer
-          className="mt-10 border-t border-gray-300 pt-5 text-center text-[#2c2d2d]"
-        >
-          <p>
-            Report generated on{" "}
-            <span>{new Date().toLocaleDateString("en-IN", {
-              year: "numeric",
-              month: "long",
-              day: "numeric",
-            })}</span>{" "}
-            | CoRE Stack Team
-          </p>
-
-          <p className="mt-2">
-            Refer to our{" "}
-            <a
-              href="https://drive.google.com/file/d/1ZxovdpPThkN09cB1TcUYSE2BImI7M3k_/view"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="underline text-blue-600"
-            >
-              technical manual
-            </a>{" "}
-            for more details on how data was collected and processed.
-          </p>
-
-          <p className="mt-2 max-w-7xl mx-auto text-xs sm:text-sm leading-relaxed">
-            Do note that while the underlying datasets have been validated against
-            ground-truth in some locations, we need your feedback if the outputs
-            shown here are in agreement with your observations about this area.
-            Please do share your feedback with{" "}
-            <a
-              href="mailto:contact@core-stack.org"
-              className="underline text-blue-600"
-            >
-              contact@core-stack.org
-            </a>.
-          </p>
-        </footer>
-      )}
-
-
-      </div>
-      
+  
+  </div>
+  
+  {/* FOOTER */}
+  <footer className="mt-10 border-t border-gray-300 pt-5 text-center text-[#2c2d2d]">
+    <p>
+      Report generated on{" "}
+      <span>{new Date().toLocaleDateString("en-IN", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      })}</span>{" "}
+      | CoRE Stack Team
+    </p>
+  
+    <p className="mt-2">
+      Refer to our{" "}
+      <a
+        href="https://drive.google.com/file/d/1ZxovdpPThkN09cB1TcUYSE2BImI7M3k_/view"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="underline text-blue-600"
+      >
+        technical manual
+      </a>{" "}
+      for more details on how data was collected and processed.
+    </p>
+  
+    <p className="mt-2 max-w-7xl mx-auto text-xs sm:text-sm leading-relaxed">
+      Do note that while the underlying datasets have been validated against
+      ground-truth in some locations, we need your feedback if the outputs
+      shown here are in agreement with your observations about this area.
+      Please do share your feedback with{" "}
+      <a href="mailto:contact@core-stack.org" className="underline text-blue-600">
+        contact@core-stack.org
+      </a>.
+    </p>
+  </footer>
+  
+  </div>
   );
+  
 };
 
 export default WaterProjectDashboard;

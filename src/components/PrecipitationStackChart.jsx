@@ -167,7 +167,6 @@ const PrecipitationStackChart = ({ feature ,waterbody,typeparam,water_rej_data})
     );
     let iv = f?.properties?.intervention_year;
     const normalized = normalizeYear(iv);
-    console.log("🎯 Normalized IV:", normalized);
     return normalized;
     })();
 

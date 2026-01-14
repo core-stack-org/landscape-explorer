@@ -349,10 +349,7 @@ console.log(mwsData)
         onMapReady(map);
       }
 
-      map.isReady = false;
-      map.once("postrender", () => {
-        map.isReady = true;
-      });
+      map.isReady = true;
 
       const overlay = new Overlay({
         element: popupRef.current,

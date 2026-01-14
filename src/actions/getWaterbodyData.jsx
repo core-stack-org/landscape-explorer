@@ -8,6 +8,7 @@ export const getWaterbodyData = async ({
     map,
     waterbodyUID = null, 
   }) => {
+    console.log(district,block,waterbodyUID,map)
     if (
       !district?.label ||
       !block?.label ||
@@ -33,6 +34,20 @@ export const getWaterbodyData = async ({
         width: 1.5,
       }),
     });
+
+    const extractMwsUidList = (mwsUidString) => {
+      if (!mwsUidString) return [];
+  
+      return mwsUidString
+        .split("_")
+        .reduce((acc, val, idx, arr) => {
+          // join pairs: 12 + 33823 → 12_33823
+          if (idx % 2 === 0 && arr[idx + 1]) {
+            acc.push(`${val}_${arr[idx + 1]}`);
+          }
+          return acc;
+        }, []);
+    };
   
     const wbLayerName = `surface_waterbodies_${dist}_${blk}`;
     const wbLayer = await getVectorLayers("swb", wbLayerName, false, true);
@@ -74,20 +89,29 @@ export const getWaterbodyData = async ({
     const mwsFeatures = await waitForFeatures(mwsSource);
   
   
-    let matchedMWS = null;
-  
+    let matchedMWS = [];
+
+
     if (matchedWaterbody) {
       const wbMwsUID =
         matchedWaterbody.get("MWS_UID") ||
         matchedWaterbody.get("mws_uid");
-  
+    
+     
+    
       if (wbMwsUID) {
-        matchedMWS = mwsFeatures.find((f) => {
-          const uid = f.get("uid") || f.get("UID");
-          return uid?.toString() === wbMwsUID.toString();
+        // extract list like ["12_308838","12_311076","12_316294"]
+        const mwsUidList = extractMwsUidList(wbMwsUID.toString());
+   
+    
+        matchedMWS = mwsFeatures.filter((f) => {
+          const uid = (f.get("uid") || f.get("UID"))?.toString();
+          return uid && mwsUidList.includes(uid.trim());
         });
       }
     }
+    
+    
   
     return {
       wbLayer,
@@ -102,16 +126,18 @@ export const getWaterbodyData = async ({
             }),
           }
         : null,
+        
   
-      mws: matchedMWS
-        ? {
-            olFeature: matchedMWS,
-            geojson: new GeoJSON().writeFeatureObject(matchedMWS, {
+        mws: matchedMWS.length
+        ? matchedMWS.map(f => ({
+            olFeature: f,
+            geojson: new GeoJSON().writeFeatureObject(f, {
               dataProjection: "EPSG:4326",
               featureProjection: "EPSG:4326",
-            }),
-          }
-        : null,
+            })
+          }))
+        : [],
+        
     };
   };
   

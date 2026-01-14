@@ -1415,9 +1415,6 @@ const KYLDashboardPage = () => {
 
      matchedMws = matched;
 
-     console.log("🎯 MWS UID LIST:", uidList);
-     console.log("📦 ALL MWS ON MAP:", allMws.length);
-     console.log("✅ FOUND MATCHING MWS:", matchedMws.length);
    }
  }
 
@@ -1433,7 +1430,6 @@ const KYLDashboardPage = () => {
    );
 
    localStorage.setItem("matched_mws_features", JSON.stringify(jsonArray));
-   console.log("💾 SAVED matched_mws_features:", jsonArray);
  } else {
    console.warn("⚠️ No matching MWS found for clicked WB");
  }
