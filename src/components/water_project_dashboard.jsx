@@ -37,6 +37,7 @@ const WaterProjectDashboard = () => {
   const [tehsilGeoData, setTehsilGeoData] = useState(null);
   const [mwsFromLocalStorage, setMwsFromLocalStorage] = useState(null);
   const [extractedSeasonalYears, setExtractedSeasonalYears] = useState([]);
+  const [timeoutReached, setTimeoutReached] = useState(false);
   const [selectedWaterbodyForTehsil, setSelectedWaterbodyForTehsil] = useRecoilState(selectedWaterbodyForTehsilAtom);
   const tehsilDrought = useRecoilValue(tehsilDroughtDataAtom);
   const location = useLocation();
@@ -90,11 +91,12 @@ const WaterProjectDashboard = () => {
   }, []);
 
   useEffect(() => {
-    const raw = localStorage.getItem("matched_mws_feature");
+    const raw = localStorage.getItem("matched_mws_features");
     if (!raw) return;
     const parsed = JSON.parse(raw);
-    setMwsFromLocalStorage(parsed);
-  }, []);
+    setMwsFromLocalStorage(
+      Array.isArray(parsed) ? parsed : [parsed]
+    );  }, []);
 
   useEffect(() => {
     if (!isTehsilMode) return;
@@ -140,18 +142,17 @@ const WaterProjectDashboard = () => {
     }
   }, [typeParam]);
 
-  const matchedMwsFeature = useMemo(() => {
-    return mwsFromLocalStorage || null;
+  const matchedMwsOlFeatures = useMemo(() => {
+    if (!mwsFromLocalStorage?.length) return [];
+    const reader = new GeoJSON();
+    return mwsFromLocalStorage.map(f =>
+      reader.readFeature(f, {
+        dataProjection: "EPSG:4326",
+        featureProjection: "EPSG:4326",
+      })
+    );
   }, [mwsFromLocalStorage]);
   
-  const matchedMwsOlFeature = useMemo(() => {
-    if (!matchedMwsFeature) return null;
-  
-    return new GeoJSON().readFeature(matchedMwsFeature, {
-      dataProjection: "EPSG:4326",
-      featureProjection: "EPSG:4326",
-    });
-  }, [matchedMwsFeature]);
   
   useEffect(() => {
     if (typeParam === "tehsil" && selectedWaterbodyForTehsil?.geometry) {
@@ -212,6 +213,17 @@ const WaterProjectDashboard = () => {
       setExtractedSeasonalYears([]);
     }
   }, [location.search]);
+
+  useEffect(() => {
+    if (!loadingData) return;
+  
+    const t = setTimeout(() => {
+      setTimeoutReached(true);
+      setLoadingData(false);   // loader off
+    }, 10000); // 10 seconds
+  
+    return () => clearTimeout(t);
+  }, [loadingData]);
   
   const extractMwsUidList = (mwsUidString) => {
     if (!mwsUidString) return [];
@@ -296,15 +308,13 @@ const WaterProjectDashboard = () => {
   : 0;
 
 // ====================== FIXED LOADING HANDLER ======================
-useEffect(() => {
-  if (geoData === null) {
-    setLoadingData(true);          // data not arrived yet
-  } else {
-    setLoadingData(false);         // data arrived (even if empty)
-  }
-}, [geoData]);
-
-
+  useEffect(() => {
+    if (geoData === null) {
+      setLoadingData(true);          // data not arrived yet
+    } else {
+      setLoadingData(false);         // data arrived (even if empty)
+    }
+  }, [geoData]);
   useEffect(() => {
     if (isTehsilMode) return; 
     if (!geoData || !waterbodyParam || autoOpened) return;
@@ -857,11 +867,22 @@ useEffect(() => {
         </div>
       )}
 
-    {showMap && loadingData ? (
-      <div className="w-full h-[80vh] flex items-center justify-center">
-        <CircularProgress />
-      </div>
-    ) : showMap ? (
+{showMap && loadingData && !timeoutReached ? (
+  <div className="w-full h-[80vh] flex flex-col items-center justify-center gap-3">
+    <CircularProgress />
+    <p className="text-gray-500 text-sm mt-2">Loading data...</p>
+  </div>
+) : showMap && timeoutReached && (!geoData || !geoData.features?.length) ? (
+  <div className="w-full h-[80vh] flex flex-col items-center justify-center gap-3 text-center px-4">
+    <p className="text-gray-600 text-base font-medium">
+      Data is being generated for this area.
+    </p>
+    <p className="text-gray-500 text-sm">
+      Please check again in a few minutes.
+    </p>
+  </div>
+) : showMap ? (
+ 
       <>
 <div
   className="bg-white rounded-xl shadow-md overflow-hidden flex">
@@ -906,7 +927,7 @@ useEffect(() => {
         isTehsil={isTehsilMode}
         waterbody={isTehsilMode ? activeSelectedWaterbody.properties.UID: activeSelectedWaterbody }
         water_rej_data={isTehsilMode ? geoData ? { features: [geoData]} : null : geoData }        
-        mwsFeature={isTehsilMode ? matchedMwsOlFeature : mwsForCharts}
+        mwsFeature={isTehsilMode ? matchedMwsOlFeatures[0] : mwsForCharts}
         onImpactYearChange={setImpactYear} 
         years={extractedSeasonalYears} 
         />
@@ -917,7 +938,7 @@ useEffect(() => {
       <PrecipitationStackChart
         feature={
           typeParam === "tehsil"
-            ? matchedMwsOlFeature
+            ? matchedMwsOlFeatures[0]
             : mwsForCharts
         }
         waterbody={activeSelectedWaterbody}
@@ -1132,11 +1153,11 @@ useEffect(() => {
                     id="map3"
                     mode="mws"
                     geoData={typeParam === "tehsil" ? tehsilGeoData : geoData}
-                    mwsData={typeParam === "tehsil" ? matchedMwsOlFeature : mwsGeoData}
+                    mwsData={typeParam === "tehsil" ? matchedMwsOlFeatures : mwsGeoData}
 
                     // mwsData={mwsGeoData}
                     selectedWaterbody={activeSelectedWaterbody}
-                    selectedFeature={typeParam === "tehsil" ? mwsFromLocalStorage : mwsForMap}
+                    selectedFeature={typeParam === "tehsil" ? matchedMwsOlFeatures : mwsForMap}
                     lulcYear={lulcYear2} 
                     projectName={typeParam === "project" ? projectNameParam : null}
                     projectId={typeParam === "project" ? projectIdParam : null}
