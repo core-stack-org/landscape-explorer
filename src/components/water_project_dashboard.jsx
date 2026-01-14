@@ -297,38 +297,13 @@ const WaterProjectDashboard = () => {
 
 // ====================== FIXED LOADING HANDLER ======================
 useEffect(() => {
-  // ---- TEHSIL MODE ----
-  if (typeParam === "tehsil") {
-    const ready =
-      !!selectedWaterbodyForTehsil &&
-      !!tehsilZoi &&
-      !!tehsilDrought &&
-      !!mwsFromLocalStorage;
-
-    setLoadingData(!ready);
-    return;
+  if (geoData === null) {
+    setLoadingData(true);          // data not arrived yet
+  } else {
+    setLoadingData(false);         // data arrived (even if empty)
   }
+}, [geoData]);
 
-  // ---- PROJECT MODE ----
-  const ready =
-    !!tempGeoData &&
-    !!projectZoi &&
-    !!mwsGeoData;
-
-  setLoadingData(!ready);
-}, [
-  typeParam,
-  selectedWaterbodyForTehsil,
-  tehsilZoi,
-  tehsilDrought,
-  mwsFromLocalStorage,
-  tempGeoData,
-  projectZoi,
-  mwsGeoData
-]);
-// ===============================================================
-
-  
 
   useEffect(() => {
     if (isTehsilMode) return; 

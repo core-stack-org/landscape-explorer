@@ -368,6 +368,11 @@
         const m = mapRef.current;
         if (!m) return;
 
+        if (mode === "mws") {
+          popupRef.current.style.display = "none";
+          return;
+        }
+
         const feature = m.forEachFeatureAtPixel(
           event.pixel,
           (feat) => feat,
