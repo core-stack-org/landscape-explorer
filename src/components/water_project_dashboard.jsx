@@ -751,7 +751,6 @@ console.log(tehsilZoi)
   const printReport=()=>{
     window.print();
   }
-
   
   return (
     <div className={`${isTehsilMode ? "pb-8 w-full" : "mx-6 my-8 bg-white rounded-xl shadow-md p-6"}`}>
