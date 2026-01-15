@@ -1387,52 +1387,54 @@ const KYLDashboardPage = () => {
       });
     
       // 3️⃣ FIND MATCHED MWS FEATURE (IMPORTANT PART)
-      let matchedMws = null;
-    
-      if (mwsLayerRef.current) {
-        const mwsFeatures = mwsLayerRef.current.getSource().getFeatures();
-        const wbGeom = wbFeature.getGeometry();
-    
-        if (wbGeom) {
-          for (const mws of mwsFeatures) {
-            const mwsGeom = mws.getGeometry();
-            if (!mwsGeom) continue;
-    
-            // Check intersection using coordinates
-            const coords =
-              wbGeom.getType() === "Polygon"
-                ? wbGeom.getCoordinates()[0]
-                : wbGeom.getCoordinates()[0][0];
-    
-            const intersects = coords.some((coord) =>
-              mwsGeom.intersectsCoordinate(coord)
-            );
-    
-            if (intersects) {
-              matchedMws = mws;
-              break;
-            }
-          }
-        }
-      }
-    
-      // 4️⃣ SAVE ONLY MATCHED MWS TO LOCAL STORAGE
-      if (matchedMws) {
-        const matchedMwsGeoJSON = new GeoJSON().writeFeatureObject(
-          matchedMws,
-          {
-            dataProjection: "EPSG:4326",
-            featureProjection: "EPSG:4326",
-          }
-        );
-        
-        localStorage.setItem(
-          "matched_mws_feature",
-          JSON.stringify(matchedMwsGeoJSON)
-        );
-      } else {
-        console.warn("No matching MWS found for waterbody:", wb_id);
-      }
+ // 3️⃣ EXTRACT ALL MWS FEATURES FOR THIS WATERBODY (UID match)
+ let matchedMws = [];
+
+ if (mwsLayerRef.current && wbFeature) {
+   const props = wbFeature.getProperties();
+   const raw = props.MWS_UID || props.mws_uid;
+
+   if (raw) {
+     // 3.1 Convert UID string "12_315970 12_308838..." → ["12_315970","12_308838",...]
+     const uidList = raw
+       .split("_")
+       .reduce((acc, val, idx, arr) => {
+         if (idx % 2 === 0 && arr[idx + 1]) {
+           acc.push(`${val}_${arr[idx + 1]}`);
+         }
+         return acc;
+       }, []);
+
+     // 3.2 Filter REAL MWS GEOJSON FEATURES from mwsGeoData
+     const allMws = mwsLayerRef.current.getSource().getFeatures();
+
+     const matched = allMws.filter((f) => {
+       const uid = f.get("uid")?.toString().trim();
+       return uidList.includes(uid);
+     });
+
+     matchedMws = matched;
+
+   }
+ }
+
+ // 4️⃣ SAVE ARRAY OF FULL GEOJSON FEATURES
+ if (matchedMws.length > 0) {
+   const geojsonWriter = new GeoJSON();
+
+   const jsonArray = matchedMws.map((m) =>
+     geojsonWriter.writeFeatureObject(m, {
+       dataProjection: "EPSG:4326",
+       featureProjection: "EPSG:4326",
+     })
+   );
+
+   localStorage.setItem("matched_mws_features", JSON.stringify(jsonArray));
+ } else {
+   console.warn("⚠️ No matching MWS found for clicked WB");
+ }
+
+      
         };
     
     

@@ -44,21 +44,21 @@ export const WATER_DASHBOARD_CONFIG = {
       let parts = [];
     
       if (rImpact > 0) {
-        parts.push(`the impacted area in the Rabi season is ${rImpact.toFixed(2)} hectares`);
+        parts.push(`the impacted area in the Rabi season has improved by ${rImpact.toFixed(2)} %`);
       }
     
       if (zImpact > 0) {
-        parts.push(`the impacted area in the Zaid season is ${zImpact.toFixed(2)} hectares`);
+        parts.push(`the impacted area in the Zaid season has improved by ${zImpact.toFixed(2)} %`);
       }
     
       // Nothing positive → show fallback
       if (parts.length === 0) {
-        return `Under the project ${projectName}, a total of ${total} waterbodies have been de-silted. The de-silted amount spans around ${silt} meter cube. Click on any waterbody to view its detailed report!`;
+        return `Under the project ${projectName}, a total of ${total} waterbodies have been de-silted. The de-silted amount spans ${silt} m³. Click on any waterbody to view its detailed report!`;
       }
     
       // Join both parts if required
       const impactMessage = parts.join(" and ");
-      return `Under the project ${projectName}, a total of ${total} waterbodies have been de-silted.The de-silted amount spans around ${silt} meter cube. After desilting, during the intervention year ${year}, ${impactMessage}.`;
+      return `Under the project ${projectName}, a total of ${total} waterbodies have been de-silted. The de-silted amount spans around ${silt} m³. After desilting in the intervention year ${year}, ${impactMessage}.`;
     },
     
 
