@@ -68,7 +68,7 @@ const WaterProjectDashboard = () => {
   const [view, setView] = useState(
     isTehsilMode ? "map" : typeParam === "tehsil" ? "map" : "table"
   );
-
+console.log(tehsilZoi)
   useGlobalWaterData({
     type: typeParam,
     projectName: projectNameParam,
@@ -133,7 +133,7 @@ const WaterProjectDashboard = () => {
           localStorage.setItem("matched_mws_features", JSON.stringify(allGeo));
         }
       };
-    
+    console.log(fetchTehsilData)
       fetchTehsilData();
     }, [
       isTehsilMode,
@@ -143,11 +143,6 @@ const WaterProjectDashboard = () => {
       waterbodyParam,
     ]);
     
-    
-    
-  
-
-
   const matchedMwsOlFeatures = useMemo(() => {
     if (!mwsFromLocalStorage?.length) return [];
     const reader = new GeoJSON();
@@ -308,6 +303,8 @@ const WaterProjectDashboard = () => {
       return zoiUid === wbUID;
     });
   }, [zoiFeatures, activeSelectedWaterbody]);
+  console.log("TEHSIL UID MATCHED ZOI", matchedZoiFeature);
+
   
   const zoiAreaFromFeature = matchedZoiFeature
   ? Number(matchedZoiFeature.get("zoi_area")) || 0

@@ -90,15 +90,12 @@ export const getWaterbodyData = async ({
   
   
     let matchedMWS = [];
-
-
+    
     if (matchedWaterbody) {
       const wbMwsUID =
         matchedWaterbody.get("MWS_UID") ||
         matchedWaterbody.get("mws_uid");
-    
-     
-    
+
       if (wbMwsUID) {
         // extract list like ["12_308838","12_311076","12_316294"]
         const mwsUidList = extractMwsUidList(wbMwsUID.toString());
@@ -110,6 +107,51 @@ export const getWaterbodyData = async ({
         });
       }
     }
+
+// ===================== ZOI FETCH ======================
+const zoiLayerName = `waterbodies_zoi_${dist}_${blk}`;
+
+// Try multiple namespaces — some servers store ZOI differently
+const zoiLayer =
+  (await getVectorLayers("swb", zoiLayerName, false, true)) ||
+  (await getVectorLayers("zoi_layers", zoiLayerName, false, true)) ||
+  null;
+
+  console.log("Zoi layer check:", {
+    dist,
+    blk,
+    try1: `swb:waterbodies_zoi_${dist}_${blk}`,
+    try2: `zoi_layers:waterbodies_zoi_${dist}_${blk}`
+  });
+  
+
+let rawZoiFeatures = [];
+let matchedZOI = [];
+
+if (zoiLayer) {
+  map.addLayer(zoiLayer);
+
+  const zoiSource = zoiLayer.getSource();
+  zoiSource.loadFeatures(extent, view.getResolution(), view.getProjection());
+
+  rawZoiFeatures = await waitForFeatures(zoiSource);
+
+  // Match only for selected WB
+  if (matchedWaterbody) {
+    const wbUid =
+      matchedWaterbody.get("UID")?.toString()?.trim() ||
+      matchedWaterbody.get("uid")?.toString()?.trim();
+
+    matchedZOI = rawZoiFeatures.filter(f => {
+      const zUid =
+        f.get("UID")?.toString()?.trim() ||
+        f.get("uid")?.toString()?.trim();
+      return zUid === wbUid;
+    });
+  }
+}
+console.log("ZOI Layer fetched:", rawZoiFeatures.length);
+console.log("ZOI matched:", matchedZOI.length);
     
     
   
@@ -137,6 +179,15 @@ export const getWaterbodyData = async ({
             })
           }))
         : [],
+
+        zoi: matchedZOI.length
+    ? matchedZOI.map(f =>
+        new GeoJSON().writeFeatureObject(f, {
+          dataProjection: "EPSG:4326",
+          featureProjection: "EPSG:4326",
+        })
+      )
+    : [],
         
     };
   };

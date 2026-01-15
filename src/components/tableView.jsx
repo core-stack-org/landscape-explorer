@@ -8,8 +8,6 @@ export default function TableView({
   headers = [],
   rows = [],
   pageSize = null,
-  onSearchChange,
-  waterbodySearch,
   onRowClick,
 }) {
   const [currentPage, setCurrentPage] = useState(1);
@@ -20,6 +18,8 @@ export default function TableView({
   const [columnFilters, setColumnFilters] = useState({});
   const [sortField, setSortField] = useState(null);
   const [sortOrder, setSortOrder] = useState("asc");
+  const [searchText, setSearchText] = useState("");
+
 
   const totalPages = pageSize ? Math.ceil(rows.length / pageSize): 1;
 
@@ -31,11 +31,33 @@ export default function TableView({
       })
     );
   }, [rows, columnFilters]);
+
+  const searchedRows = useMemo(() => {
+    if (!searchText) {
+      console.log("🔍 No search — returning filteredRows:", filteredRows);
+      return filteredRows;
+    }
+  
+    const term = searchText.toLowerCase();
+  
+    const results = filteredRows.filter(r => {
+      console.log("👉 Checking row:", r);   // <—— Console each row
+      return (
+        r.farmerName?.toLowerCase().includes(term) ||
+        r.waterbody?.toLowerCase().includes(term)
+      );
+    });
+  
+    console.log("🎯 Search term:", searchText, "Matched:", results);
+    return results;
+  }, [filteredRows, searchText]);
+  
+  
   
   const sortedRows = useMemo(() => {
-    if (!sortField) return filteredRows;
+    if (!sortField) return searchedRows;
   
-    return [...filteredRows].sort((a, b) => {
+    return [...searchedRows].sort((a, b) => {
       const aVal = a[sortField];
       const bVal = b[sortField];
   
@@ -51,7 +73,7 @@ export default function TableView({
         ? String(aVal ?? "").localeCompare(String(bVal ?? ""))
         : String(bVal ?? "").localeCompare(String(aVal ?? ""));
     });
-  }, [filteredRows, sortField, sortOrder]);
+  }, [searchedRows, sortField, sortOrder]);
   
   const paginatedRows = useMemo(() => {
     if (!pageSize) return sortedRows;
@@ -185,8 +207,8 @@ export default function TableView({
                     <input
                       type="text"
                       placeholder={`Search ${col.label}`}
-                      value={waterbodySearch}
-                      onChange={(e) => onSearchChange(e.target.value)}
+                      value={searchText}
+                      onChange={(e) => setSearchText(e.target.value)}
                       className="border-b border-gray-700 bg-gray-100 text-xs text-gray-700 px-1 py-0.5 w-40 focus:outline-none focus:border-blue-500"
                     />
                   </div>

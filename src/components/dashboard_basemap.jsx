@@ -21,11 +21,10 @@
   import Overlay from "ol/Overlay";
   import Polygon from "ol/geom/Polygon";
   import waterbodyIcon from "../assets/waterbodies_proposed.svg";
+  import plantationIcon from "../assets/Plantation.svg"
   import LocationOnIcon from "@mui/icons-material/LocationOn";
   import YearSlider from "./yearSlider";
   import { WATER_DASHBOARD_CONFIG } from "../config/dashboard_configs/waterDashboard.config";
-
-
 
   const DashboardBasemap = ({
     id,
@@ -66,7 +65,6 @@
     const [selectedZoiFeature, setSelectedZoiFeature] = useState(null);
     const [zoiAreaState, setZoiAreaState] = useState(null)
     const [radiusState, setRadiusState] = useState(null);
-console.log(mwsData)
     
     const getWBProps = (wb) => {
       if (!wb) return {};
@@ -247,6 +245,14 @@ console.log(mwsData)
       }
       return styles;
     };
+
+    const plantationPointStyle = new Style({
+      image: new Icon({
+        src: plantationIcon,
+        scale: 1.2,
+        anchor: [0.5, 1],
+      }),
+    })
 
     const waterbodyPointStyle = new Style({
       image: new Icon({
@@ -1418,12 +1424,43 @@ if (isTehsil) {
 
     // remove old plantation layer
     removeLayersById(["plantation_layer"]);
-    const plantationStyle = new Style({
-      stroke: new Stroke({
-        color: "yellow", 
-        width: 3,
-      }),
-    });
+    const plantationStyle = (feature) => {
+      const styles = [
+        new Style({
+          stroke: new Stroke({
+            color: "yellow",
+            width: 3,
+          }),
+        }),
+      ];
+  
+      const geom = feature.getGeometry();
+      if (geom) {
+        let center;
+        try {
+          if (geom.getType() === "Polygon")
+            center = geom.getInteriorPoint().getCoordinates();
+          else if (geom.getType() === "MultiPolygon")
+            center = geom.getInteriorPoints().getFirstCoordinate();
+        } catch {
+          const ex = geom.getExtent();
+          center = [(ex[0] + ex[2]) / 2, (ex[1] + ex[3]) / 2];
+        }
+  
+        styles.push(
+          new Style({
+            geometry: new Point(center),
+            image: new Icon({
+              src: plantationIcon, 
+              anchor: [0.5, 1],
+              scale: 1.2,
+            }),
+          })
+        );
+      }
+  
+      return styles;
+    };
 
     const plantationLayer = new VectorLayer({
       source: new VectorSource({ features }),

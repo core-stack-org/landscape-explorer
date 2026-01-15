@@ -60,6 +60,34 @@ const PlantationProjectDashboard = ({organization,project}) => {
     return plantationData.features.map((feature, index) => {
       const props = feature.properties || {};
   
+      // ---- Parse IS_LULC safely ----
+      let isLulc = [];
+      try {
+        if (props.IS_LULC) {
+          isLulc = JSON.parse(props.IS_LULC);
+        }
+      } catch (e) {
+        console.error("Failed to parse IS_LULC:", props.IS_LULC);
+      }
+  
+      // ---- Extract 6.0 each year ----
+      const treeValues = isLulc.map((yObj) => ({
+        year: yObj.year,
+        value: Number(yObj["6.0"]) || 0,
+      }));
+  
+      // ---- Average canopy fraction across years ----
+      const avgFraction =
+        treeValues.length > 0
+          ? treeValues.reduce((sum, v) => sum + v.value, 0) /
+            treeValues.length
+          : 0;
+  
+      // ---- Normalize by area → % canopy cover ----
+      const area = Number(props.area_ha) || 0;
+      const normalizedTreeCover =
+        area > 0 && avgFraction > 0 ? (avgFraction / area) * 100 : 0;
+  
       return {
         id: feature.id || index,
         state: extractValue(props.description, "State"),
@@ -67,15 +95,18 @@ const PlantationProjectDashboard = ({organization,project}) => {
         block: extractValue(props.description, "Taluka"),
         village: extractValue(props.description, "Village"),
         farmerName: props.Name || "NA",
-        interventionYear: "2020-21", // chnage after dynamic
-        area: props.area_ha ? props.area_ha.toFixed(2) : "NA",
+        interventionYear: "2020-21", // change after dynamic
+        area: area ? area.toFixed(2) : "NA",
         patchSuitability: props.patch_suitability ?? "NA",
-        averageTreeCover: (props.patch_conf * 100)?.toFixed(1) ?? "NA",
+          averageTreeCover: normalizedTreeCover.toFixed(2),
+  
         treeCoverChange: "NA",
         treeCoverChangeColor: "",
       };
     });
   }, [plantationData]);
+  
+
 
   const totalRows = rows.length;
 
@@ -119,8 +150,9 @@ const PlantationProjectDashboard = ({organization,project}) => {
     // switch to map view
     setShowMap(true);
   };
-  
 
+  console.log(selectedPlantation)
+  
   return (
       <div className="mx-6 my-8 bg-white rounded-xl shadow-md p-6">
         <div className="flex items-center justify-between mb-6">
@@ -154,7 +186,6 @@ const PlantationProjectDashboard = ({organization,project}) => {
                   </div>
                 </div>
             )}
-      
       </div>
     </div>
     {showMap && selectedPlantation && (
@@ -193,11 +224,11 @@ const PlantationProjectDashboard = ({organization,project}) => {
               onSelectPlantation={setSelectedPlantation}
             />
                 {showMap && selectedPlantation && (
-          <div className="text-gray-500 text-[clamp(0.65rem,0.95vw,0.7rem)] mt-2 pl-2 w-full">
-            <p><b>Land Use Land Cover : </b> Data remotely sensed from satellites including LandSat-7, LandSat-8, Sentinel-2, Sentinel-1, MODIS and Dynamic World</p>
-            <p><b>NDVI : </b> Used harmonized Landsat-7, Landsat-8 and Sentinel-2 NDVI values to construct 16-day NDVI time series, gap-filled with MODIS NDVI values.</p>
-          </div>
-        )}
+                <div className="text-gray-500 text-[clamp(0.65rem,0.95vw,0.7rem)] mt-2 pl-2 w-full">
+                  <p><b>Land Use Land Cover : </b> Data remotely sensed from satellites including LandSat-7, LandSat-8, Sentinel-2, Sentinel-1, MODIS and Dynamic World</p>
+                  <p><b>NDVI : </b> Used harmonized Landsat-7, Landsat-8 and Sentinel-2 NDVI values to construct 16-day NDVI time series, gap-filled with MODIS NDVI values.</p>
+                </div>
+                )}
           </div>
 
           {/* RIGHT PANEL (future details / charts) */}

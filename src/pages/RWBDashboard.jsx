@@ -139,19 +139,16 @@ const RWBDashboard =()=>{
                     <div className="absolute inset-0 bg-white/10"></div>
                     <div className="relative z-10 w-full max-w-7xl mx-auto bg-white/10 backdrop-blur-md rounded-2xl shadow-xl border border-white/30 p-10 flex gap-10 min-h-[450px]">
                         <div className="flex-1">
-                        <h2 className="text-purple-700 font-semibold text-[clamp(1.8rem,3vw,2.6rem)] leading-tight mb-4">
-                        Waterbody Rejuvenation<br /> Impact Assessment Dashboard
+                        <h2 className=" text-3xl md:text-4xl text-purple-700 leading-tight mb-4">
+                        <b>Waterbody Rejuvenation</b> <br/>Impact Assessment Dashboard
                         </h2>
 
-                        <div className="rounded-md text-gray-700 mt-10 space-y-6">
-                        <p className="text-[clamp(1rem,1.5vw,1.35rem)] leading-relaxed">
-                            Track waterbody rejuvenation interventions and their impact on water availability
-                            and agriculture in nearby areas!
-                        </p>
-
-                        <p className="text-[clamp(0.9rem,1.3vw,1.15rem)] text-gray-600">
-                            To get started, simply select your organization and project.
-                        </p>
+                        <div className="rounded-md text-gray-700 mt-10 space-y-6 text-xl md:text-lg">
+                            <ul className="list-disc list-outside  space-y-8 font-medium text-justify">
+                                <li>Track <b>Waterbody Rejuvenation Interventions</b> and their impact on water availability
+                                and agriculture in nearby areas!</li>
+                                <li className="mt-4">To get started, simply select your <b>organization</b> and <b>project</b> . </li>
+                            </ul>
                         </div>
                         </div>
                         <div className="w-[420px] bg-white rounded-xl shadow-lg p-6">
@@ -160,7 +157,7 @@ const RWBDashboard =()=>{
                             </h2>
                         <div className="space-y-6">
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                <label className="block text-sm font-semibold text-gray-700 mb-2">
                                 Select Organization
                                 </label>
                                 <SelectButton
@@ -171,7 +168,7 @@ const RWBDashboard =()=>{
                                 />
                             </div>
                         <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                <label className="block text-sm font-semibold text-gray-700 mb-2">
                                 Select Project
                                 </label>
                                 <SelectButton
