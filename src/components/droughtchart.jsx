@@ -121,7 +121,7 @@ const DroughtChart = ({ mwsGeoData, waterbody, typeparam }) => {
   };
 
   return (
-    <div className=" px-0 ml-12" style={{ height: "clamp(300px, 45vh, 400px)",width:"90%"  }}>
+    <div className=" px-0 ml-6" style={{ height: "clamp(300px, 45vh, 400px)",width:"85%"  }}>
       <Bar
         data={data}
         options={{

@@ -971,12 +971,11 @@ console.log(tehsilZoi)
                   block={blockParam}
                 />
                 {showMap && activeSelectedWaterbody && (
-  <div className="text-gray-500 text-[clamp(0.65rem,0.95vw,0.7rem)] mt-2 pl-2 w-full">
-    <p><b>Cropping Intensity : </b> We use annual land use land cover (LULC), to identify areas under single cropping, double cropping and triple cropping using pixels which are classified as single kharif, single non-kharif, double and triple classes of LULC classifier to determine cropping intensity. The data used is from 2017 to 2024.</p>
-    <p><b>Drought Incidence : </b> Drought is defined as per the Government of India's Drought Manual and considered moderate or severe if the number of weeks of drought is five or more. Drought weeks are identified based on whether meteorological drought occurred in that week (i.e. the rains were less than usual in that week as compared to previous years, possibly intensified by dry spells defined as consecutive weeks of low rainfall) and/or agricultural drought occurred in that week (i.e. cropped area or crop health were lower than usual in that week as compared to previous years). Severe drought weeks are those when meteorological and agricultural drought are both coincident.</p>
-    
-  </div>
-)}
+                  <div className="text-gray-500 text-[clamp(0.65rem,0.95vw,0.7rem)] mt-2 pl-2 w-full">
+                    <p><b>Cropping Intensity : </b> We use annual land use land cover (LULC), to identify areas under single cropping, double cropping and triple cropping using pixels which are classified as single kharif, single non-kharif, double and triple classes of LULC classifier to determine cropping intensity. The data used is from 2017 to 2024.</p>
+                    <p><b>Drought Incidence : </b> Drought is defined as per the Government of India's Drought Manual and considered moderate or severe if the number of weeks of drought is five or more. Drought weeks are identified based on whether meteorological drought occurred in that week (i.e. the rains were less than usual in that week as compared to previous years, possibly intensified by dry spells defined as consecutive weeks of low rainfall) and/or agricultural drought occurred in that week (i.e. cropped area or crop health were lower than usual in that week as compared to previous years). Severe drought weeks are those when meteorological and agricultural drought are both coincident.</p>  
+                  </div>
+                )}
               </div>
   
               <div className="h-full border-l bg-white overflow-y-auto p-4 flex-[1] min-w-[350px] flex flex-col gap-6">

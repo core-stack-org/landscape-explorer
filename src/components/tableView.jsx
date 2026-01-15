@@ -34,22 +34,18 @@ export default function TableView({
 
   const searchedRows = useMemo(() => {
     if (!searchText) {
-      console.log("🔍 No search — returning filteredRows:", filteredRows);
       return filteredRows;
     }
   
     const term = searchText.toLowerCase();
   
     const results = filteredRows.filter(r => {
-      console.log("👉 Checking row:", r);   // <—— Console each row
       return (
         r.farmerName?.toLowerCase().includes(term) ||
         r.waterbody?.toLowerCase().includes(term)
       );
     });
-  
-    console.log("🎯 Search term:", searchText, "Matched:", results);
-    return results;
+      return results;
   }, [filteredRows, searchText]);
   
   
