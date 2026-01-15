@@ -65,6 +65,7 @@
     const [selectedZoiFeature, setSelectedZoiFeature] = useState(null);
     const [zoiAreaState, setZoiAreaState] = useState(null)
     const [radiusState, setRadiusState] = useState(null);
+    console.log(mwsData)
     
     const getWBProps = (wb) => {
       if (!wb) return {};
@@ -1582,6 +1583,45 @@ if (isTehsil) {
     ]);
   const props = getWBProps(selectedWaterbody);
 
+  const getCentroidFromGeom = (geom) => {
+    if (!geom) return null;
+    try {
+      const olGeom = geojsonReaderRef.current.readGeometry(geom, {
+        dataProjection: "EPSG:4326",
+        featureProjection: "EPSG:4326",
+      });
+  
+      if (olGeom.getType() === "Polygon") {
+        return olGeom.getInteriorPoint().getCoordinates();
+      }
+  
+      if (olGeom.getType() === "MultiPolygon") {
+        return olGeom.getInteriorPoints().getFirstCoordinate();
+      }
+  
+      const ex = olGeom.getExtent();
+      return [(ex[0] + ex[2]) / 2, (ex[1] + ex[3]) / 2]; // fallback
+    } catch (e) {
+      console.error("Centroid failed:", e);
+      return null;
+    }
+  };
+  
+  const hasProject = projectName && projectId;
+
+// TEHSIL MODE → TRY lat_dec/lon_dec, else centroid
+let lat = props?.latitude_dec ?? props?.latitude ?? null;
+let lon = props?.longitude_dec ?? props?.longitude ?? null;
+
+// If TEHSIL AND missing → derive centroid
+if (!hasProject && (lat == null || lon == null) && props?.geometry) {
+  const centroid = getCentroidFromGeom(props.geometry);
+  if (centroid) {
+    lon = centroid[0];
+    lat = centroid[1];
+  }
+}
+
   const getRadiusFromArea = (ha) => {
     if (!ha || isNaN(ha)) return null;
 
@@ -1596,6 +1636,10 @@ if (isTehsil) {
   };
 
   console.log(selectedWaterbody)
+
+
+  
+  
 
     return (
       <div className="relative w-full overflow-visible">
@@ -1706,25 +1750,28 @@ if (isTehsil) {
               style={{ minWidth: "200px" }}
             >
 
-              {/* Location Header */}
-              <div className="flex items-center justify-between">
-                <div
-                  className="
-                    flex items-center gap-1 font-semibold text-gray-900
-                    text-[clamp(0.75rem,1vw,1rem)]
-                  "
-                >
-                  <LocationOnIcon fontSize="small" sx={{ color: '#2563eb', marginTop:'1px' }} />
-                  Waterbody name :{" "}
-                  <span className="tracking-wide font-semibold">
-                    {selectedWaterbody?.waterbody_name ||
-                      selectedWaterbody?.name ||
-                      selectedWaterbody?.properties?.waterbody_name ||
-                      selectedWaterbody?.waterbody ||
-                      "NA"}
-                  </span>
+           {/* Location Header — hide in tehsil */}
+              {!( !projectName && !projectId ) && (
+                <div className="flex items-center justify-between">
+                  <div
+                    className="
+                      flex items-center gap-1 font-semibold text-gray-900
+                      text-[clamp(0.75rem,1vw,1rem)]
+                    "
+                  >
+                    <LocationOnIcon fontSize="small" sx={{ color: '#2563eb', marginTop:'1px' }} />
+                    Waterbody name :{" "}
+                    <span className="tracking-wide font-semibold">
+                      {selectedWaterbody?.waterbody_name ||
+                        selectedWaterbody?.name ||
+                        selectedWaterbody?.properties?.waterbody_name ||
+                        selectedWaterbody?.waterbody ||
+                        "NA"}
+                    </span>
+                  </div>
                 </div>
-              </div>
+              )}
+
 
               {/* Lat, Long in single line */}
             <div className="bg-gray-50 rounded-md p-2 shadow-sm border border-gray-200">
@@ -1734,8 +1781,8 @@ if (isTehsil) {
                   text-[clamp(0.70rem,0.95vw,0.9rem)]">
                 <span className="font-medium">Lat, Long:</span>
                 <span>
-                  {fmt(props?.latitude_dec ?? props?.latitude)}   ,  
-                  {fmt(props?.longitude_dec ?? props?.longitude)}
+                {lat ? fmt(lat) : "NA"} , {lon ? fmt(lon) : "NA"}
+
                 </span>
               </div>
             </div>

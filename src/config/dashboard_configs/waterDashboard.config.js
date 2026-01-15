@@ -58,7 +58,7 @@ export const WATER_DASHBOARD_CONFIG = {
     
       // Join both parts if required
       const impactMessage = parts.join(" and ");
-      return `Under the project ${projectName}, a total of ${total} waterbodies have been de-silted. The de-silted amount spans around ${silt} m³. After desilting in the intervention year ${year}, ${impactMessage}.`;
+      return `Under the project ${projectName}, a total of ${total} waterbodies have been de-silted. The de-silted amount spans ${silt} m³. After desilting in the intervention year ${year}, ${impactMessage}.`;
     },
     
 

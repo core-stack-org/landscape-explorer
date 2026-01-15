@@ -11,6 +11,8 @@ import {
   LineElement,
   LineController,
 } from "chart.js";
+import annotationPlugin from "chartjs-plugin-annotation";
+
 
 ChartJS.register(
   CategoryScale,
@@ -20,7 +22,8 @@ ChartJS.register(
   Legend,
   PointElement,
   LineElement,
-  LineController
+  LineController,
+  annotationPlugin
 );
 
 const CroppingIntensityStackChart = ({
@@ -46,6 +49,7 @@ const CroppingIntensityStackChart = ({
       wbUID?.toString().trim()
   );
   if (!matchedFeature) return null;
+  console.log(matchedFeature)
 
   // ---------------- GET AREA VALUES ----------------
   const getAreaData = (rawYears) =>
@@ -69,24 +73,16 @@ const CroppingIntensityStackChart = ({
     return Array.from(years).sort(); // ["2017","2018",...]
   };
 
-  // ---------------- FORMAT FOR UI (17-18) ----------------
-  const convertToRange = (rawYears) =>
-    rawYears.map((y, i) => {
-      if (i === rawYears.length - 1) return null;
-      const start = y.slice(2);
-      const end = (parseInt(y) + 1).toString().slice(2);
-      return `${start}-${end}`;
-    }).filter(Boolean);
+  
 
   // ---------------- BUILD YEAR LISTS ----------------
   const extracted = extractYearsFromZoi(matchedFeature);     // ["2017","2018","2019",...]
-  const labelYears = isTehsil
-    ? convertToRange(extracted)              // ["17-18","18-19",...]
-    : years;                                 // already like "21-22"
-
-  const rawYearsToFetch = isTehsil
-    ? extracted                              // feed 2017,2018..
-    : years.map((y) => `20${y.split("-")[0]}`);  // convert 22-23→2022
+  const labelYears = extracted.map((y) => {
+    const start = y.slice(2);
+    const end = (parseInt(y) + 1).toString().slice(2);
+    return `${start}-${end}`;
+  });
+  const rawYearsToFetch = extracted;
 
   // ---------------- FETCH DATA WITH RAW YEARS ----------------
   const fullYearData = getAreaData(rawYearsToFetch);
@@ -101,12 +97,31 @@ const CroppingIntensityStackChart = ({
   // ---------------- INTERVENTION YEAR FIX ----------------
   const normalizeYear = (iv) => {
     if (!iv || typeof iv !== "string") return "22-23";
+  
     let clean = iv.replace(/_/g, "-").trim();
     const parts = clean.split("-");
-    if (parts[0].length === 4) clean = `${parts[0].slice(2)}-${parts[1]}`;
-    if (parts[1].length === 4) clean = `${parts[0]}-${parts[1].slice(2)}`;
+  
+    // 22-23 → already correct
+    if (parts[0].length === 2 && parts[1].length === 2) return clean;
+  
+    // 2022-23 → trim first part only
+    if (parts[0].length === 4 && parts[1].length === 2) {
+      return `${parts[0].slice(2)}-${parts[1]}`;
+    }
+  
+    // 22-2023 → trim second part only
+    if (parts[0].length === 2 && parts[1].length === 4) {
+      return `${parts[0]}-${parts[1].slice(2)}`;
+    }
+  
+    // 2022-2023 → trim BOTH parts
+    if (parts[0].length === 4 && parts[1].length === 4) {
+      return `${parts[0].slice(2)}-${parts[1].slice(2)}`;
+    }
+  
     return clean;
   };
+  
 
   // ---------------- IMPACT MODE MASKING ----------------
   const visibleIndices = labelYears.map((lbl, i) =>
@@ -166,7 +181,40 @@ const CroppingIntensityStackChart = ({
           ? "Cropping Intensity (Area in hectares) (Black line = intervention year)"
           : `Impact Analysis: Showing Only Pre (${impactYear.pre}) and Post (${impactYear.post}) Years`,
       },
+      annotation: isTehsil
+      ? {}
+      : (() => {
+          const f = water_rej_data?.features?.find(
+            (x) => x.properties?.UID === waterbody?.UID
+          );
+          const iv = f?.properties?.intervention_year;
+          const interventionYear = normalizeYear(iv);
+    
+          console.log("📍 Intervention Year:", iv, "→ normalized:", interventionYear);
+    
+          return {
+            annotations: {
+              interventionLine: {
+                type: "line",
+                scaleID: "x",
+                value: interventionYear,
+                borderColor: "black",
+                borderWidth: 2,
+                label: {
+                  content: `Intervention Year (${interventionYear})`,
+                  enabled: true,
+                  position: "start",
+                  color: "black",
+                  font: { weight: "bold" },
+                },
+              },
+            },
+          };
+        })(),
+    
     },
+
+  
     scales: {
       x: {
         title: {
@@ -188,14 +236,45 @@ const CroppingIntensityStackChart = ({
   return (
     <div className="w-full">
       {!isTehsil && (
-        <div className="flex justify-end mb-2">
-          <label className="flex items-center gap-2">
-            <span>Comparison years</span>
+        <div
+          className="flex flex-col sm:flex-row items-start sm:items-center justify-start sm:justify-end mb-2 sm:mb-4"
+          style={{
+            maxWidth: "100%", // Allow full width on small screens
+          }}
+        >
+          <span
+            className="font-medium mr-0 sm:mr-2 mb-1 sm:mb-0 leading-tight text-gray-700 text-xs sm:text-sm"
+          >
+            Comparison years
+          </span>
+
+          <label className="relative inline-flex items-center cursor-pointer">
             <input
               type="checkbox"
               checked={showImpact}
               onChange={() => setShowImpact(!showImpact)}
+              className="sr-only peer"
             />
+
+            {/* TRACK */}
+            <div
+              className="bg-gray-300 rounded-full peer-checked:bg-blue-600 transition-all"
+              style={{
+                width: "clamp(30px, 3vw, 42px)",
+                height: "clamp(14px, 1.9vw, 22px)",
+              }}
+            ></div>
+
+            {/* THUMB */}
+            <div
+              className="absolute bg-white rounded-full transition-all peer-checked:translate-x-[calc(clamp(30px,3vw,42px)-clamp(14px,1.9vw,22px))]"
+              style={{
+                width: "clamp(12px, 1.6vw, 18px)",
+                height: "clamp(12px, 1.6vw, 18px)",
+                top: "2px",
+                left: "2px",
+              }}
+            ></div>
           </label>
         </div>
       )}
