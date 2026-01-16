@@ -176,7 +176,6 @@ const computedImpactYear = React.useMemo(() => {
     );
     let iv = f?.properties?.intervention_year;
     const normalized = normalizeYear(iv);
-    console.log("🎯 Normalized IV:", normalized);
     return normalized;
 
     })();
@@ -392,7 +391,7 @@ useEffect(() => {
           ? "Water Availabilty & Land use inside Waterbody"
           : !showImpact
             ? "Water Availabilty & Land use inside Waterbody (Black line = intervention year)"
-            : "Impact Analysis Graph (Black line = intervention year)",
+            : `Impact Analysis: Showing Only Pre (${computedImpactYear.pre}) and Post (${computedImpactYear.post}) Years`,
             font: {
               font: {
                 size: Math.max(9, Math.min(window.innerHeight * 0.02, 18)),

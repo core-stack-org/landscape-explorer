@@ -49,15 +49,10 @@ export const getRainfallByYear = (mwsFeature) => {
 export const calculateImpactYear = (rainfall, ivRaw) => {
   const interventionYear = normalizeYear(ivRaw);
 
-  console.log("🟦 Intervention Raw:", ivRaw);
-  console.log("🟦 Intervention Normalized:", interventionYear);
 
   const preYears = YEARS.filter((y) => y < interventionYear);
   const postYears = YEARS.filter((y) => y > interventionYear);
 
-  console.log("📌 Available Rainfall:", rainfall);
-  console.log("🟩 PRE Years:", preYears);
-  console.log("🟪 POST Years:", postYears);
 
   let minDiff = Infinity;
   let result = null;
@@ -66,19 +61,12 @@ export const calculateImpactYear = (rainfall, ivRaw) => {
     postYears.forEach((post) => {
       const diff = Math.abs((rainfall[pre] ?? 0) - (rainfall[post] ?? 0));
 
-      console.log(
-        `🔍 Comparing ${pre} vs ${post} | ${rainfall[pre]} - ${rainfall[post]} = ${diff}`
-      );
-
       if (diff < minDiff) {
         minDiff = diff;
         result = { pre, post, diff };
       }
     });
   });
-
-  console.log("🎯 FINAL IMPACT YEAR:", result);
-  console.log("---------------------------------------");
 
   return result;
 };

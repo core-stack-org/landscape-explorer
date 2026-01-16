@@ -11,6 +11,8 @@ import {
   LineElement,
   LineController,
 } from "chart.js";
+import annotationPlugin from "chartjs-plugin-annotation";
+
 
 ChartJS.register(
   CategoryScale,
@@ -20,7 +22,8 @@ ChartJS.register(
   Legend,
   PointElement,
   LineElement,
-  LineController
+  LineController,
+  annotationPlugin
 );
 
 const CroppingIntensityStackChart = ({
@@ -46,82 +49,88 @@ const CroppingIntensityStackChart = ({
       wbUID?.toString().trim()
   );
   if (!matchedFeature) return null;
+  console.log(matchedFeature)
 
-  const getAreaData = (years) =>
-    years.map((year) => ({
+  // ---------------- GET AREA VALUES ----------------
+  const getAreaData = (rawYears) =>
+    rawYears.map((year) => ({
       year,
-      triple: (matchedFeature.get(`triply_cropped_area_${year}`) || 0),
-      double: (matchedFeature.get(`doubly_cropped_area_${year}`) || 0),
+      triple: matchedFeature.get(`triply_cropped_area_${year}`) || 0,
+      double: matchedFeature.get(`doubly_cropped_area_${year}`) || 0,
       single_kharif:
-        (matchedFeature.get(`single_kharif_cropped_area_${year}`) || 0),
+        matchedFeature.get(`single_kharif_cropped_area_${year}`) || 0,
       single_non_kharif:
-        (matchedFeature.get(`single_non_kharif_cropped_area_${year}`) || 0),
+        matchedFeature.get(`single_non_kharif_cropped_area_${year}`) || 0,
     }));
 
+  // ---------------- EXTRACT RAW YEARS ----------------
   const extractYearsFromZoi = (feature) => {
-    if (!feature) return [];
-  
     const years = new Set();
-  
     feature.getKeys().forEach((key) => {
-      const match = key.match(/_(20\d{2})$/); // match 2017, 2018, ...
-      if (match) {
-        years.add(match[1]);
-      }
+      const match = key.match(/_(20\d{2})$/);
+      if (match) years.add(match[1]);
     });
-  
     return Array.from(years).sort(); // ["2017","2018",...]
   };
-  const chartYears = isTehsil
-    ? extractYearsFromZoi(matchedFeature)
-    : years.map((y) => `20${y.split("-")[0]}`);
+
   
-  const fullYearData = getAreaData(chartYears);
-  
+
+  // ---------------- BUILD YEAR LISTS ----------------
+  const extracted = extractYearsFromZoi(matchedFeature);     // ["2017","2018","2019",...]
+  const labelYears = extracted.map((y) => {
+    const start = y.slice(2);
+    const end = (parseInt(y) + 1).toString().slice(2);
+    return `${start}-${end}`;
+  });
+  const rawYearsToFetch = extracted;
+
+  // ---------------- FETCH DATA WITH RAW YEARS ----------------
+  const fullYearData = getAreaData(rawYearsToFetch);
+
+  // ---------------- AXIS MAX ----------------
   const maxFullValue = Math.max(
     ...fullYearData.map(
       (a) => a.triple + a.double + a.single_kharif + a.single_non_kharif
     )
   );
 
+  // ---------------- INTERVENTION YEAR FIX ----------------
   const normalizeYear = (iv) => {
-    if (!iv || typeof iv !== "string" || !iv.includes("-")) return "22-23";
+    if (!iv || typeof iv !== "string") return "22-23";
   
     let clean = iv.replace(/_/g, "-").trim();
     const parts = clean.split("-");
   
-    // 22-23 → already OK
+    // 22-23 → already correct
     if (parts[0].length === 2 && parts[1].length === 2) return clean;
   
-    // 2022-23 → take last 2 digits of first part
+    // 2022-23 → trim first part only
     if (parts[0].length === 4 && parts[1].length === 2) {
       return `${parts[0].slice(2)}-${parts[1]}`;
     }
   
-    // 22-2023 → take last 2 digits of last part
+    // 22-2023 → trim second part only
     if (parts[0].length === 2 && parts[1].length === 4) {
       return `${parts[0]}-${parts[1].slice(2)}`;
     }
   
-    // 2022-2023 → take last 2-2 digits
+    // 2022-2023 → trim BOTH parts
     if (parts[0].length === 4 && parts[1].length === 4) {
       return `${parts[0].slice(2)}-${parts[1].slice(2)}`;
     }
   
-    return "22-23";
+    return clean;
   };
+  
 
-  // Get impact years
-  const preLabel = impactYear.pre;
-  const postLabel = impactYear.post;
-
-  // When in impact mode, zero out non-impact years
-  const visibleIndices = years.map((label, i) =>
-    label === preLabel || label === postLabel ? i : -1
+  // ---------------- IMPACT MODE MASKING ----------------
+  const visibleIndices = labelYears.map((lbl, i) =>
+    lbl === impactYear.pre || lbl === impactYear.post ? i : -1
   );
 
+  // ---------------- CHART DATA ----------------
   const maskedData = {
-    labels: isTehsil ? chartYears : years,
+    labels: labelYears,
     datasets: [
       {
         label: "Triple Crop",
@@ -158,103 +167,74 @@ const CroppingIntensityStackChart = ({
     ],
   };
 
+  // ---------------- OPTIONS ----------------
   const options = {
     responsive: true,
-    maintainAspectRatio: false, // Allow the chart to fill the container without maintaining aspect ratio
+    maintainAspectRatio: false,
     plugins: {
-      legend: { 
-        position: "bottom",
-        labels: {
-          font: {
-            size: window.innerWidth < 768 ? 10 : 12, // Smaller font on mobile
-          },
-        },
-      },
+      legend: { position: "bottom" },
       title: {
         display: true,
         text: isTehsil
           ? "Cropping Intensity (Area in hectares)"
           : !showImpact
-            ? "Cropping Intensity (Area in hectares) (Black line = intervention year)"
-            : `Impact Analysis: Showing Only Pre (${impactYear.pre}) and Post (${impactYear.post}) Years`,
-        font: { 
-          size: window.innerWidth < 768 ? 14 : 16, // Responsive font size
-          weight: "bold" 
-        },
-        padding: {
-          bottom: 20,   
-          top: 0,
-        },
+          ? "Cropping Intensity (Area in hectares) (Black line = intervention year)"
+          : `Impact Analysis: Showing Only Pre (${impactYear.pre}) and Post (${impactYear.post}) Years`,
       },
-      annotation: {
-        annotations: isTehsil
-          ? {}
-          : (() => {
-              const f = water_rej_data?.features?.find(
-                (x) => x.properties?.UID === waterbody?.UID
-              );
-              const iv = f?.properties?.intervention_year;
-              const interventionYear = normalizeYear(iv);    
-              return {
-                interventionLine: {
-                  type: "line",
-                  scaleID: "x",
-                  value: interventionYear,
-                  borderColor: "black",
-                  borderWidth: 2,
-                  label: {
-                    content: `Intervention Year (${interventionYear})`,
-                    enabled: true,
-                    position: "start",
-                    color: "black",
-                    font: { 
-                      weight: "bold",
-                      size: window.innerWidth < 768 ? 10 : 12, // Responsive font size
-                    },
-                  },
+      annotation: isTehsil
+      ? {}
+      : (() => {
+          const f = water_rej_data?.features?.find(
+            (x) => x.properties?.UID === waterbody?.UID
+          );
+          const iv = f?.properties?.intervention_year;
+          const interventionYear = normalizeYear(iv);
+    
+          console.log("📍 Intervention Year:", iv, "→ normalized:", interventionYear);
+    
+          return {
+            annotations: {
+              interventionLine: {
+                type: "line",
+                scaleID: "x",
+                value: interventionYear,
+                borderColor: "black",
+                borderWidth: 2,
+                label: {
+                  content: `Intervention Year (${interventionYear})`,
+                  enabled: true,
+                  position: "start",
+                  color: "black",
+                  font: { weight: "bold" },
                 },
-              };
-            })(),
-      },
+              },
+            },
+          };
+        })(),
+    
     },
+
+  
     scales: {
       x: {
-        title: { 
-          display: true, 
-          text: "Year",
-          font: {
-            size: window.innerWidth < 768 ? 12 : 14, // Responsive font size
-          },
-        },
-        ticks: {
-          font: {
-            size: window.innerWidth < 768 ? 10 : 12, // Responsive font size
-          },
+        title: {
+          display: true,
+          text: "Years",   
         },
       },
       y: {
         min: 0,
         max: maxFullValue,
-        title: { 
-          display: true, 
-          text: "Area (hectares)",
-          font: {
-            size: window.innerWidth < 768 ? 12 : 14, // Responsive font size
-          },
-        },
-        ticks: { 
-          callback: (v) => `${v.toFixed(1)} ha`,
-          font: {
-            size: window.innerWidth < 768 ? 10 : 12, // Responsive font size
-          },
+        title: {
+          display: true,
+          text: "Area (in hectares)",
         },
       },
     },
   };
 
   return (
-    <div className="w-full chart-wrapper">
-      {/* Toggle above chart - Made more responsive */}
+    <div className="w-full">
       {!isTehsil && (
         <div
           className="flex flex-col sm:flex-row items-start sm:items-center justify-start sm:justify-end mb-2 sm:mb-4"
@@ -299,13 +279,7 @@ const CroppingIntensityStackChart = ({
         </div>
       )}
 
-      <div 
-        className="chart-container w-full px-0"   
-        style={{ 
-          height: "clamp(300px, 40vh, 450px)", // Adjusted min height for better mobile view
-          minHeight: "200px", // Ensure minimum height
-        }}
-      >
+      <div style={{ height: "clamp(300px, 40vh, 450px)" }}>
         <Bar data={maskedData} options={options} />
       </div>
     </div>

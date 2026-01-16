@@ -3,7 +3,6 @@ import { useNavigate,useLocation } from "react-router";
 import LandingNavbar from "../components/landing_navbar";
 import SelectButton from "../components/buttons/select_button";
 import Waterbodies from "../assets/water.jpeg";
-import Footer from "../components/footer";
 import WaterProjectDashboard from "../components/water_project_dashboard";
 
 const RWBDashboard =()=>{
@@ -140,33 +139,17 @@ const RWBDashboard =()=>{
                     <div className="absolute inset-0 bg-white/10"></div>
                     <div className="relative z-10 w-full max-w-7xl mx-auto bg-white/10 backdrop-blur-md rounded-2xl shadow-xl border border-white/30 p-10 flex gap-10 min-h-[450px]">
                         <div className="flex-1">
-                        <h2 className="text-2xl md:text-4xl mb-4 text-purple-700">
-                            <span className="font-normal text-purple-700">Waterbody Rejuvenation<br/> Impact Assessment Dashboard</span>
+                        <h2 className=" text-3xl md:text-4xl text-purple-700 leading-tight mb-4">
+                        <b>Waterbody Rejuvenation</b> <br/>Impact Assessment Dashboard
                         </h2>
-                        <div className="rounded-md text-gray-700 mt-12">
-                                <p className="text-3xl">
-                                Track waterbody rejuvenation interventions and their impact on water availability and agriculture in nearby areas!
-                                </p>
-                                <p className="mt-8 text-xl">
-                                To get started, simply select your organization and project!
-                                </p>
-                              
-                        
-                        </div>
-                        {/* <div className="bg-purple-50 border-l-4 border-purple-500 text-purple-700 p-4 rounded-md mt-8 max-w-3xl">
-                            <p className="text-sm">
-                            Check out the vision and demo{" "}
-                            <a
-                                href="https://core-stack.org/"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="underline font-medium hover:text-purple-900"
-                            >
-                                here →
-                            </a>
-                            </p>
-                        </div> */}
 
+                        <div className="rounded-md text-gray-700 mt-10 space-y-6 text-xl md:text-lg">
+                            <ul className="list-disc list-outside  space-y-8 font-medium text-justify">
+                                <li>Track <b>Waterbody Rejuvenation Interventions</b> and their impact on water availability
+                                and agriculture in nearby areas!</li>
+                                <li className="mt-4">To get started, simply select your <b>organization</b> and <b>project</b> . </li>
+                            </ul>
+                        </div>
                         </div>
                         <div className="w-[420px] bg-white rounded-xl shadow-lg p-6">
                             <h2 className="text-lg font-semibold text-gray-800 mb-6 text-center">
@@ -174,7 +157,7 @@ const RWBDashboard =()=>{
                             </h2>
                         <div className="space-y-6">
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                <label className="block text-sm font-semibold text-gray-700 mb-2">
                                 Select Organization
                                 </label>
                                 <SelectButton
@@ -185,7 +168,7 @@ const RWBDashboard =()=>{
                                 />
                             </div>
                         <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                <label className="block text-sm font-semibold text-gray-700 mb-2">
                                 Select Project
                                 </label>
                                 <SelectButton
