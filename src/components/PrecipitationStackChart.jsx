@@ -108,13 +108,13 @@ const PrecipitationStackChart = ({ feature ,waterbody,typeparam,water_rej_data})
     labels = years;
     datasets = [
       {
-        label: "Kharif Rabi Zaid",
+        label: "Zaid",
         data: seasonData.zaid,
         backgroundColor: "#0f5e9c",
         stack: "precip",
       },
       {
-        label: "Kharif Rabi",
+        label: "Rabi",
         data: seasonData.rabi,
         backgroundColor: "#1ca3ec",
         stack: "precip",
@@ -130,17 +130,44 @@ const PrecipitationStackChart = ({ feature ,waterbody,typeparam,water_rej_data})
     ];
   }
 
+  const normalizeYear = (iv) => {
+    if (!iv || typeof iv !== "string" || !iv.includes("-")) return "22-23";
+  
+    let clean = iv.replace(/_/g, "-").trim();
+    const parts = clean.split("-");
+  
+    // 22-23 → already OK
+    if (parts[0].length === 2 && parts[1].length === 2) return clean;
+  
+    // 2022-23 → take last 2 digits of first part
+    if (parts[0].length === 4 && parts[1].length === 2) {
+      return `${parts[0].slice(2)}-${parts[1]}`;
+    }
+  
+    // 22-2023 → take last 2 digits of last part
+    if (parts[0].length === 2 && parts[1].length === 4) {
+      return `${parts[0]}-${parts[1].slice(2)}`;
+    }
+  
+    // 2022-2023 → take last 2-2 digits
+    if (parts[0].length === 4 && parts[1].length === 4) {
+      return `${parts[0].slice(2)}-${parts[1].slice(2)}`;
+    }
+  
+    return "22-23";
+  };
+
+  const getYearIndex = (year, years) => years.indexOf(year);
+
   const interventionYear = (() => {
     if (isTehsil) return "22-23"; // fallback for now
   
     const f = water_rej_data?.features?.find(
       (x) => x.properties?.UID === waterbody?.UID
     );
-  let iv = f?.properties?.intervention_year;
-  if (!iv || typeof iv !== "string" || !iv.includes("-")) {
-    iv = "22-23";
-  }
-  return iv;
+    let iv = f?.properties?.intervention_year;
+    const normalized = normalizeYear(iv);
+    return normalized;
     })();
 
   const data = { labels, datasets };
@@ -148,6 +175,9 @@ const PrecipitationStackChart = ({ feature ,waterbody,typeparam,water_rej_data})
   const options = {
     maintainAspectRatio: false,
     responsive: true,
+    layout: {
+      padding: { right: 6 },
+    },
     plugins: {
       legend: { position: "bottom" },
       title:{display:true,text:"Rainfall (in mm) (Black line = intervention year)",position:"top",font: { size: 16, weight: "bold" },},
@@ -159,21 +189,13 @@ const PrecipitationStackChart = ({ feature ,waterbody,typeparam,water_rej_data})
               const f = water_rej_data?.features?.find(
                 (x) => x.properties?.UID === waterbody?.UID
               );
-              const interventionYear = (() => {
-                if (isTehsil) return "22-23";
-              
-                const iv = f?.properties?.intervention_year;
-                return typeof iv === "string" && iv.includes("-")
-                  ? iv
-                  : "22-23";
-              })();
-              
-      
+              const iv = f?.properties?.intervention_year;
+              const interventionYear = normalizeYear(iv);    
               return {
                 interventionLine: {
                   type: "line",
                   scaleID: "x",
-                  value: interventionYear.slice(-5),
+                  value: interventionYear,
                   borderColor: "black",
                   borderWidth: 2,
                   label: {
@@ -189,7 +211,7 @@ const PrecipitationStackChart = ({ feature ,waterbody,typeparam,water_rej_data})
       },
     },
     scales: {
-      x: { stacked: !isTehsil },
+      x: { stacked: !isTehsil},
       y: {
         stacked: !isTehsil,
         title: { display: true, text: "Rainfall (mm)" },
@@ -198,10 +220,13 @@ const PrecipitationStackChart = ({ feature ,waterbody,typeparam,water_rej_data})
   };
 
   return (
-<div className="px-0" style={{ minHeight: "330px",width:"90%" }}>
-
-      <Bar data={data} options={options} />
-    </div>
+<div
+  className=" px-0"
+  style={{ height: "clamp(280px, 40vh, 450px)",width:"87%" }}
+>
+  <Bar data={data} options={options} />
+</div>
+     
   );
 };
 

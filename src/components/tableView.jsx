@@ -8,8 +8,6 @@ export default function TableView({
   headers = [],
   rows = [],
   pageSize = null,
-  onSearchChange,
-  waterbodySearch,
   onRowClick,
 }) {
   const [currentPage, setCurrentPage] = useState(1);
@@ -20,6 +18,8 @@ export default function TableView({
   const [columnFilters, setColumnFilters] = useState({});
   const [sortField, setSortField] = useState(null);
   const [sortOrder, setSortOrder] = useState("asc");
+  const [searchText, setSearchText] = useState("");
+
 
   const totalPages = pageSize ? Math.ceil(rows.length / pageSize): 1;
 
@@ -31,11 +31,29 @@ export default function TableView({
       })
     );
   }, [rows, columnFilters]);
+
+  const searchedRows = useMemo(() => {
+    if (!searchText) {
+      return filteredRows;
+    }
+  
+    const term = searchText.toLowerCase();
+  
+    const results = filteredRows.filter(r => {
+      return (
+        r.farmerName?.toLowerCase().includes(term) ||
+        r.waterbody?.toLowerCase().includes(term)
+      );
+    });
+      return results;
+  }, [filteredRows, searchText]);
+  
+  
   
   const sortedRows = useMemo(() => {
-    if (!sortField) return filteredRows;
+    if (!sortField) return searchedRows;
   
-    return [...filteredRows].sort((a, b) => {
+    return [...searchedRows].sort((a, b) => {
       const aVal = a[sortField];
       const bVal = b[sortField];
   
@@ -51,7 +69,7 @@ export default function TableView({
         ? String(aVal ?? "").localeCompare(String(bVal ?? ""))
         : String(bVal ?? "").localeCompare(String(aVal ?? ""));
     });
-  }, [filteredRows, sortField, sortOrder]);
+  }, [searchedRows, sortField, sortOrder]);
   
   const paginatedRows = useMemo(() => {
     if (!pageSize) return sortedRows;
@@ -107,16 +125,28 @@ export default function TableView({
   };
 
   return (
-    <div className="mt-4 bg-white rounded-md shadow-sm overflow-x-auto">
-      <table className="w-full border border-gray-200 text-sm md:text-base text-gray-800">
-        <thead className="bg-gray-100 font-semibold">
+    <div className="mt-2 bg-white rounded-md shadow-sm overflow-x-auto w-full p-0">
+      <table className="min-w-[1200px] text-[7px] sm:text-[8px] md:text-[9px] lg:text-[10px] xl:text-[12px] 2xl:text-[14px] border border-gray-200">
+        <thead className="bg-gray-100 font-medium">
           <tr className="border-b">
-          <th className="px-3 py-4 text-center">
+          <th className="
+              px-[2px] py-[2px]
+              sm:px-1 sm:py-1
+              md:px-2 md:py-1.5
+              lg:px-2 lg:py-2
+              align-center text-center whitespace-normal break-words
+            ">
             S.No.
           </th>
 
             {headers.map((col) => (
-              <th key={col.key} className="relative px-3 py-4 text-center">
+              <th key={col.key} className=" relative
+                  px-[2px] py-[2px]
+                  sm:px-1 sm:py-1
+                  md:px-2 md:py-1.5
+                  lg:px-2 lg:py-2
+                  align-center text-center whitespace-normal break-words
+                ">
                 <div
                   className={`flex items-center justify-center gap-1 ${
                     col.sortable ? "cursor-pointer select-none" : ""
@@ -173,8 +203,8 @@ export default function TableView({
                     <input
                       type="text"
                       placeholder={`Search ${col.label}`}
-                      value={waterbodySearch}
-                      onChange={(e) => onSearchChange(e.target.value)}
+                      value={searchText}
+                      onChange={(e) => setSearchText(e.target.value)}
                       className="border-b border-gray-700 bg-gray-100 text-xs text-gray-700 px-1 py-0.5 w-40 focus:outline-none focus:border-blue-500"
                     />
                   </div>
@@ -185,20 +215,33 @@ export default function TableView({
         </thead>
 
         {/* BODY */}
-        <tbody className="text-sm text-gray-700">
+        <tbody className="text-gray-700">
           {paginatedRows.map((row,index) => (
             <tr
               key={row.id}
               className="hover:bg-gray-50 cursor-pointer transition-colors border-b"
               onClick={() => onRowClick(row)}
             >
-              <td className="px-3 py-4 text-center text-gray-700">
+              <td className="
+                px-[2px] py-[2px]
+                sm:px-1 sm:py-1
+                md:px-2 md:py-1.5
+                lg:px-2 lg:py-2
+                align-center text-center whitespace-normal break-words
+              ">
                 {pageSize
                   ? (currentPage - 1) * pageSize + index + 1
                   : index + 1}
               </td>
               {headers.map((col) => (
-                <td key={col.key} className="px-3 py-4 text-center">
+                <td key={col.key} className="
+                px-[2px] py-[2px]
+                sm:px-1 sm:py-1
+                md:px-2 md:py-1.5
+                lg:px-2 lg:py-2
+                align-center text-center whitespace-normal break-words
+              "
+              >
                 {col.render ? col.render(row) : row[col.key] ?? "NA"}
               </td>
               ))}

@@ -4,33 +4,63 @@
 @import url('https://fonts.googleapis.com/css2?family=Roboto&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap');
 
-*{
-  font-family: "Montserrat",ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace !important;
+* {
+  font-family: "Montserrat", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace !important;
   font-weight: 400;
   font-style: normal;
 }
 
+/* html {
+  transform: scale(var(--inv-zoom));
+  transform-origin: top left;
+  width: calc(100% * var(--inv-zoom));
+  height: calc(100% * var(--inv-zoom));
+} */
+
+:root {
+  --browser-zoom: 1;
+  --inv-zoom: calc(1 / var(--browser-zoom));
+}
+
+.legend-container {
+  transform: scale(var(--inv-zoom));
+  transform-origin: top left;
+}
+
+.chart-container {
+  width: 100%;
+  height: clamp(280px, 35vh, 420px);
+}
+
+
+.core-map-wrapper .ol-viewport {
+  transform: scale(1) !important;
+  transform-origin: top left !important;
+  image-rendering: pixelated;
+}
+
+
 /* width */
 ::-webkit-scrollbar {
-    width: 6px;
+  width: 6px;
 }
- 
+
 /* Track */
 ::-webkit-scrollbar-track {
-    background-color: #e4e4e4;
+  background-color: #e4e4e4;
   border-radius: 100px;
 }
- 
+
 /* Handle */
 ::-webkit-scrollbar-thumb {
-    background-color: #7F56D9E5;
+  background-color: #7F56D9E5;
   border-radius: 100px;
 
 }
- 
+
 /* Handle on hover */
 ::-webkit-scrollbar-thumb:hover {
-    background: #555;
+  background: #555;
 }
 
 .ol-zoom {
@@ -50,10 +80,42 @@
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb {
-  background:  #7F56D9E5;  
+  background: #7F56D9E5;
   border-radius: 4px;
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: #7F56D9E5;  
+  background: #7F56D9E5;
+}
+
+/* ---- Fix browser-default font-size inflation inside chart area ---- */
+.chart-wrapper,
+.chart-wrapper * {
+  font-size: 10px !important;
+  /* base */
+}
+
+@media (min-width: 640px) {
+
+  .chart-wrapper,
+  .chart-wrapper * {
+    font-size: 11px !important;
+  }
+}
+
+@media (min-width: 1024px) {
+
+  .chart-wrapper,
+  .chart-wrapper * {
+    font-size: 12px !important;
+  }
+}
+
+/* Prevent legend icon blowing up */
+.chart-wrapper .legend-label {
+  font-size: 0.85em !important;
+}
+
+.chart-wrapper canvas {
+  font-size: inherit !important;
 }
