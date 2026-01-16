@@ -175,7 +175,7 @@
         .map((p) =>
           p
             .replace(/[^\w\s-]/g, "") // remove special chars
-            .replace(/[-\s]+/g, "_")  // space/dash → _
+            .replace(/\s+/g, "_")     // Space
             .replace(/_+/g, "_")      // collapse _
             .replace(/^_|_$/g, "")    // trim _
             .toLowerCase()
@@ -1610,8 +1610,8 @@ if (isTehsil) {
   const hasProject = projectName && projectId;
 
 // TEHSIL MODE → TRY lat_dec/lon_dec, else centroid
-let lat = props?.latitude_dec ?? props?.latitude ?? null;
-let lon = props?.longitude_dec ?? props?.longitude ?? null;
+let lat =  props?.latitude ?? null;
+let lon = props?.longitude ?? null;
 
 // If TEHSIL AND missing → derive centroid
 if (!hasProject && (lat == null || lon == null) && props?.geometry) {
