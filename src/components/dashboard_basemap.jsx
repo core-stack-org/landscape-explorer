@@ -7,7 +7,7 @@
   import VectorLayer from "ol/layer/Vector";
   import VectorSource from "ol/source/Vector";
   import GeoJSON from "ol/format/GeoJSON";
-  import { Style, Stroke, Icon } from "ol/style";
+  import { Style, Stroke, Icon ,Fill} from "ol/style";
   import Point from "ol/geom/Point";
   import Crop from "ol-ext/filter/Crop";
   import getImageLayer from "../actions/getImageLayers";
@@ -212,6 +212,8 @@
             color: "blue",
             width: 3,
           }),
+          fill: new Fill({
+            color: "rgba(70, 130, 180, 0.9)"             })
         }),
       ];
 

@@ -84,6 +84,7 @@ console.log(tehsilZoi)
     setInfoAnchor(null);
   };
 
+  
   useEffect(() => {
     const stored = localStorage.getItem("selectedWaterbody");
     if (stored) {
@@ -870,6 +871,21 @@ console.log(tehsilZoi)
     {/* MAP MODE — ALWAYS SHOW MAP */}
     {showMap && (
       <>
+      {activeSelectedWaterbody &&(
+                <div className="bg-white rounded-xl shadow-sm p-6 mb-6 mt-6">
+                <h2 className="font-bold text-blue-600 border-b-2 border-blue-600 pb-1 text-[clamp(1.1rem,1.7vw,1.5rem)]">
+                  {WATER_DASHBOARD_CONFIG[mode].sections.section1.title}
+                </h2>
+                <div className="space-y-3 leading-relaxed mt-3">
+                  {WATER_DASHBOARD_CONFIG[mode].sections.section1.paragraphs.map(
+                    (text, idx) => (
+                      <p key={idx} className="text-gray-700 leading-relaxed" style={{ fontSize: "clamp(0.70rem, 1vw, 1rem)" }}>{text}</p>
+                    )
+                  )}
+                </div>
+              </div>
+      )}
+  
         {/* MAP BLOCK */}
         <div className="bg-white rounded-xl shadow-md overflow-hidden flex">
           <div className="h-full flex-[2] min-w-[50%]">
@@ -940,13 +956,13 @@ console.log(tehsilZoi)
         {/* EVERYTHING BELOW SHOWS ONLY AFTER YOU GET WB */}
         {activeSelectedWaterbody && (
           <>
-            {/* SECTION 1 */}
+            {/* SECTION 2 */}
             <div className="bg-white rounded-xl shadow-sm p-6 mb-6 mt-6">
               <h2 className="font-bold text-blue-600 border-b-2 border-blue-600 pb-1 text-[clamp(1.1rem,1.7vw,1.5rem)]">
-                {WATER_DASHBOARD_CONFIG[mode].sections.section1.title}
+                {WATER_DASHBOARD_CONFIG[mode].sections.section2.title}
               </h2>
               <div className="space-y-3 leading-relaxed mt-3">
-                {WATER_DASHBOARD_CONFIG[mode].sections.section1.paragraphs.map(
+                {WATER_DASHBOARD_CONFIG[mode].sections.section2.paragraphs.map(
                   (text, idx) => (
                     <p key={idx} className="text-gray-700 leading-relaxed" style={{ fontSize: "clamp(0.70rem, 1vw, 1rem)" }}>{text}</p>
                   )
