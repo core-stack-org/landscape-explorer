@@ -323,14 +323,10 @@ console.log(tehsilZoi)
     if (isTehsilMode) return; 
     if (!geoData || !waterbodyParam || autoOpened) return;
 
-    const matchedFeatureIndex = geoData.features.findIndex((f) => {
-      const props = f.properties ?? {};
-      return (
-        props.UID?.toString() === waterbodyParam.toString() ||
-        props.uid?.toString() === waterbodyParam.toString() ||
-        props.waterbody_uid?.toString() === waterbodyParam.toString()
-      );
-    });
+    const matchedFeatureIndex = geoData.features.findIndex(
+      (f) => f.id?.toString() === waterbodyParam?.toString()
+    );
+    
   
     if (matchedFeatureIndex !== -1) {
       const feature = geoData.features[matchedFeatureIndex];
@@ -347,7 +343,7 @@ console.log(tehsilZoi)
         village: props.Village || "NA",
         latitude: Number(props.latitude) || null,
         longitude: Number(props.longitude) || null,
-
+        waterbody_id:props.id || null,
         siltRemoved: Number(props.slit_excavated) || 0,
         areaOred: props.area_ored || 0,
         maxCatchmentArea: props.max_catchment_area || 0,
@@ -624,6 +620,7 @@ console.log(tehsilZoi)
     let totalSiltRemoved = 0;
     const mappedRows = geoData.features.map((feature, index) => {
       const props = feature.properties ?? {};
+      const waterbody_id = feature.id ?? null; 
 
       // const { preYears, postYears } = getPrePostYears(props, props.intervention_year);
       const impact = impactYearMap[props.UID];
@@ -685,7 +682,7 @@ console.log(tehsilZoi)
         avgTripleCropped: avgTriple,
         latitude: props.latitude,
         longitude:props.longitude,
-
+        waterbody_id: feature.id ?? null,
         coordinates,
         featureIndex: index,
       };
@@ -720,28 +717,37 @@ console.log(tehsilZoi)
       "—"
     : "—";
 
-  const handleWaterbodyClick = (row) => {
-    const params = new URLSearchParams(location.search);
+    const handleWaterbodyClick = (row) => {
+      const params = new URLSearchParams(location.search);
+    
       params.set("type", "project");
-    if (projectIdParam) {
-      params.set("projectId", projectIdParam);
-    }
-    if (projectNameParam) {
-      params.set("project_name", projectNameParam);
-    }
-      params.set("waterbody", row.UID);
-  
-    navigate(`/rwb?${params.toString()}`);
-  
-    const feature = geoData.features.find((f, idx) => idx === row.featureIndex);
-    if (!feature) return;
-  
-    setSelectedWaterbody(row);
-    setSelectedFeature(feature);
-    setShowMap(true);
-  
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  };
+    
+      if (projectIdParam) {
+        params.set("projectId", projectIdParam);
+      }
+      if (projectNameParam) {
+        params.set("project_name", projectNameParam);
+      }
+    
+      // ✅ USE waterbody_id IN URL
+      params.set("waterbody", row.waterbody_id);
+    
+      navigate(`/rwb?${params.toString()}`);
+    
+      // ✅ MATCH FEATURE USING feature.id
+      const feature = geoData.features.find(
+        (f) => f.id === row.waterbody_id
+      );
+    
+      if (!feature) return;
+    
+      setSelectedWaterbody(row);
+      setSelectedFeature(feature);
+      setShowMap(true);
+    
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    };
+    
 
   const TableLoader = () => (
     <div className="w-full h-[60vh] flex items-center justify-center">
