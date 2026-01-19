@@ -838,38 +838,7 @@ const KYLDashboardPage = () => {
       view.setZoom(5);
     }
   };
-
-  const getMatchedMwsForWaterbody = (wbFeature) => {
-    if (!mwsLayerRef.current || !wbFeature) return null;
   
-    const wbGeom = wbFeature.getGeometry();
-    if (!wbGeom) return null;
-  
-    const mwsFeatures = mwsLayerRef.current.getSource().getFeatures();
-  
-    for (const mws of mwsFeatures) {
-      const mwsGeom = mws.getGeometry();
-      if (!mwsGeom) continue;
-  
-      // polygon intersection check
-      const coords =
-        wbGeom.getType() === "Polygon"
-          ? wbGeom.getCoordinates()[0]
-          : wbGeom.getCoordinates()[0][0];
-  
-      const intersects = coords.some(coord =>
-        mwsGeom.intersectsCoordinate(coord)
-      );
-  
-      if (intersects) {
-        return mws;
-      }
-    }
-  
-    return null;
-  };
-  
-
   const fetchDataJson = async () => {
     try {
       setIsLoading(true);
@@ -993,7 +962,7 @@ const KYLDashboardPage = () => {
         ) {
           tempLayer = await getImageLayer(
             `${filter.layer_store[i]}_${filter.layer_name[i]}`,
-            `LULC_22_23_${block.label.toLowerCase().split(" ").join("_")}_${filter.layer_name[i]
+            `LULC_24_25_${transformName(district.label)}_${transformName(block.label)}_${filter.layer_name[i]
             }`,
             true,
             filter.rasterStyle
@@ -1418,26 +1387,22 @@ const KYLDashboardPage = () => {
    }
  }
 
- // 4️⃣ SAVE ARRAY OF FULL GEOJSON FEATURES
- if (matchedMws.length > 0) {
-   const geojsonWriter = new GeoJSON();
+    // 4️⃣ SAVE ARRAY OF FULL GEOJSON FEATURES
+    if (matchedMws.length > 0) {
+      const geojsonWriter = new GeoJSON();
 
-   const jsonArray = matchedMws.map((m) =>
-     geojsonWriter.writeFeatureObject(m, {
-       dataProjection: "EPSG:4326",
-       featureProjection: "EPSG:4326",
-     })
-   );
+      const jsonArray = matchedMws.map((m) =>
+        geojsonWriter.writeFeatureObject(m, {
+          dataProjection: "EPSG:4326",
+          featureProjection: "EPSG:4326",
+        })
+      );
 
-   localStorage.setItem("matched_mws_features", JSON.stringify(jsonArray));
- } else {
-   console.warn("⚠️ No matching MWS found for clicked WB");
- }
-
-      
-        };
-    
-    
+      localStorage.setItem("matched_mws_features", JSON.stringify(jsonArray));
+    } else {
+      console.warn("⚠️ No matching MWS found for clicked WB");
+    }
+    };
     map.on("click", handleWaterbodyClick);
     return () => map.un("click", handleWaterbodyClick);
   }, [mapRef.current, state, district, block]);
