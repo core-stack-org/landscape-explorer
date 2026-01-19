@@ -53,7 +53,7 @@ export const WATER_DASHBOARD_CONFIG = {
     
       // Nothing positive → show fallback
       if (parts.length === 0) {
-        return `Under the project ${projectName}, a total of ${total} waterbodies have been de-silted. The de-silted amount spans ${silt} m³. Click on any waterbody to view its detailed report!`;
+        return `Under the project ${projectName}, a total of ${total} waterbodies have been de-silted. The de-silted amount spans ${silt} m³. Click on any waterbody to view its detailed report.`;
       }
     
       // Join both parts if required

@@ -84,6 +84,7 @@ console.log(tehsilZoi)
     setInfoAnchor(null);
   };
 
+  
   useEffect(() => {
     const stored = localStorage.getItem("selectedWaterbody");
     if (stored) {
@@ -322,14 +323,10 @@ console.log(tehsilZoi)
     if (isTehsilMode) return; 
     if (!geoData || !waterbodyParam || autoOpened) return;
 
-    const matchedFeatureIndex = geoData.features.findIndex((f) => {
-      const props = f.properties ?? {};
-      return (
-        props.UID?.toString() === waterbodyParam.toString() ||
-        props.uid?.toString() === waterbodyParam.toString() ||
-        props.waterbody_uid?.toString() === waterbodyParam.toString()
-      );
-    });
+    const matchedFeatureIndex = geoData.features.findIndex(
+      (f) => f.id?.toString() === waterbodyParam?.toString()
+    );
+    
   
     if (matchedFeatureIndex !== -1) {
       const feature = geoData.features[matchedFeatureIndex];
@@ -346,7 +343,7 @@ console.log(tehsilZoi)
         village: props.Village || "NA",
         latitude: Number(props.latitude) || null,
         longitude: Number(props.longitude) || null,
-
+        waterbody_id:props.id || null,
         siltRemoved: Number(props.slit_excavated) || 0,
         areaOred: props.area_ored || 0,
         maxCatchmentArea: props.max_catchment_area || 0,
@@ -623,6 +620,7 @@ console.log(tehsilZoi)
     let totalSiltRemoved = 0;
     const mappedRows = geoData.features.map((feature, index) => {
       const props = feature.properties ?? {};
+      const waterbody_id = feature.id ?? null; 
 
       // const { preYears, postYears } = getPrePostYears(props, props.intervention_year);
       const impact = impactYearMap[props.UID];
@@ -684,7 +682,7 @@ console.log(tehsilZoi)
         avgTripleCropped: avgTriple,
         latitude: props.latitude,
         longitude:props.longitude,
-
+        waterbody_id: feature.id ?? null,
         coordinates,
         featureIndex: index,
       };
@@ -719,28 +717,37 @@ console.log(tehsilZoi)
       "—"
     : "—";
 
-  const handleWaterbodyClick = (row) => {
-    const params = new URLSearchParams(location.search);
+    const handleWaterbodyClick = (row) => {
+      const params = new URLSearchParams(location.search);
+    
       params.set("type", "project");
-    if (projectIdParam) {
-      params.set("projectId", projectIdParam);
-    }
-    if (projectNameParam) {
-      params.set("project_name", projectNameParam);
-    }
-      params.set("waterbody", row.UID);
-  
-    navigate(`/rwb?${params.toString()}`);
-  
-    const feature = geoData.features.find((f, idx) => idx === row.featureIndex);
-    if (!feature) return;
-  
-    setSelectedWaterbody(row);
-    setSelectedFeature(feature);
-    setShowMap(true);
-  
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  };
+    
+      if (projectIdParam) {
+        params.set("projectId", projectIdParam);
+      }
+      if (projectNameParam) {
+        params.set("project_name", projectNameParam);
+      }
+    
+      // ✅ USE waterbody_id IN URL
+      params.set("waterbody", row.waterbody_id);
+    
+      navigate(`/rwb?${params.toString()}`);
+    
+      // ✅ MATCH FEATURE USING feature.id
+      const feature = geoData.features.find(
+        (f) => f.id === row.waterbody_id
+      );
+    
+      if (!feature) return;
+    
+      setSelectedWaterbody(row);
+      setSelectedFeature(feature);
+      setShowMap(true);
+    
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    };
+    
 
   const TableLoader = () => (
     <div className="w-full h-[60vh] flex items-center justify-center">
@@ -870,6 +877,21 @@ console.log(tehsilZoi)
     {/* MAP MODE — ALWAYS SHOW MAP */}
     {showMap && (
       <>
+      {activeSelectedWaterbody &&(
+                <div className="bg-white rounded-xl shadow-sm p-6 mb-6 mt-6">
+                <h2 className="font-bold text-blue-600 border-b-2 border-blue-600 pb-1 text-[clamp(1.1rem,1.7vw,1.5rem)]">
+                  {WATER_DASHBOARD_CONFIG[mode].sections.section1.title}
+                </h2>
+                <div className="space-y-3 leading-relaxed mt-3">
+                  {WATER_DASHBOARD_CONFIG[mode].sections.section1.paragraphs.map(
+                    (text, idx) => (
+                      <p key={idx} className="text-gray-700 leading-relaxed" style={{ fontSize: "clamp(0.70rem, 1vw, 1rem)" }}>{text}</p>
+                    )
+                  )}
+                </div>
+              </div>
+      )}
+  
         {/* MAP BLOCK */}
         <div className="bg-white rounded-xl shadow-md overflow-hidden flex">
           <div className="h-full flex-[2] min-w-[50%]">
@@ -940,13 +962,13 @@ console.log(tehsilZoi)
         {/* EVERYTHING BELOW SHOWS ONLY AFTER YOU GET WB */}
         {activeSelectedWaterbody && (
           <>
-            {/* SECTION 1 */}
+            {/* SECTION 2 */}
             <div className="bg-white rounded-xl shadow-sm p-6 mb-6 mt-6">
               <h2 className="font-bold text-blue-600 border-b-2 border-blue-600 pb-1 text-[clamp(1.1rem,1.7vw,1.5rem)]">
-                {WATER_DASHBOARD_CONFIG[mode].sections.section1.title}
+                {WATER_DASHBOARD_CONFIG[mode].sections.section2.title}
               </h2>
               <div className="space-y-3 leading-relaxed mt-3">
-                {WATER_DASHBOARD_CONFIG[mode].sections.section1.paragraphs.map(
+                {WATER_DASHBOARD_CONFIG[mode].sections.section2.paragraphs.map(
                   (text, idx) => (
                     <p key={idx} className="text-gray-700 leading-relaxed" style={{ fontSize: "clamp(0.70rem, 1vw, 1rem)" }}>{text}</p>
                   )
