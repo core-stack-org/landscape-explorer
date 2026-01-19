@@ -779,7 +779,6 @@ const WaterProjectDashboard = () => {
       );
     
       if (!feature) return;
-    console.log(feature)
       setSelectedWaterbody(row);
       setSelectedFeature(feature);
       setShowMap(true);
