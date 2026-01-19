@@ -57,18 +57,18 @@ const WaterProjectDashboard = () => {
     const blockParam = params.get("block");
   
     const waterbodyParam = params.get("waterbody");
-  const isTehsilMode = typeParam === "tehsil";
-  const geoData = isTehsilMode ? selectedWaterbodyForTehsil : tempGeoData
-  const mwsGeoData = useRecoilValue(waterMwsDataAtom);
-  const projectZoi = useRecoilValue(zoiFeaturesAtom);
-  const tehsilZoi = useRecoilValue(tehsilZoiFeaturesAtom);
-  const zoiFeatures = isTehsilMode ? tehsilZoi : projectZoi;
-  const activeSelectedWaterbody = isTehsilMode ? selectedWaterbodyForTehsil : selectedWaterbody;
+    const isTehsilMode = typeParam === "tehsil";
+    const geoData = isTehsilMode ? selectedWaterbodyForTehsil : tempGeoData
+    const mwsGeoData = useRecoilValue(waterMwsDataAtom);
+    const projectZoi = useRecoilValue(zoiFeaturesAtom);
+    const tehsilZoi = useRecoilValue(tehsilZoiFeaturesAtom);
+    const zoiFeatures = isTehsilMode ? tehsilZoi : projectZoi;
+    const activeSelectedWaterbody = isTehsilMode ? selectedWaterbodyForTehsil : selectedWaterbody;
 
-  const [view, setView] = useState(
-    isTehsilMode ? "map" : typeParam === "tehsil" ? "map" : "table"
-  );
-console.log(tehsilZoi)
+    const [view, setView] = useState(
+      isTehsilMode ? "map" : typeParam === "tehsil" ? "map" : "table"
+    );
+
   useGlobalWaterData({
     type: typeParam,
     projectName: projectNameParam,
@@ -78,13 +78,10 @@ console.log(tehsilZoi)
     block: blockParam,
   });
 
-  
-
   const handleCloseInfo = () => {
     setInfoAnchor(null);
   };
 
-  
   useEffect(() => {
     const stored = localStorage.getItem("selectedWaterbody");
     if (stored) {
@@ -134,7 +131,6 @@ console.log(tehsilZoi)
           localStorage.setItem("matched_mws_features", JSON.stringify(allGeo));
         }
       };
-    console.log(fetchTehsilData)
       fetchTehsilData();
     }, [
       isTehsilMode,
@@ -304,7 +300,6 @@ console.log(tehsilZoi)
       return zoiUid === wbUID;
     });
   }, [zoiFeatures, activeSelectedWaterbody]);
-  console.log("TEHSIL UID MATCHED ZOI", matchedZoiFeature);
 
   
   const zoiAreaFromFeature = matchedZoiFeature
@@ -425,8 +420,6 @@ console.log(tehsilZoi)
   
     return map;
   }, [geoData, mwsGeoData]);
-  
-  
   
   const getFirstNonZeroYearIndex = (props) => {
     const years = extractSeasonYears(props); // dynamic years like ["17-18","18-19",...]
@@ -601,6 +594,30 @@ console.log(tehsilZoi)
     }
   };
 
+  const formatInterventionYear = (year) => {
+    if (!year) return "—";
+  
+    // already correct: 2023-2024
+    if (/^\d{4}-\d{4}$/.test(year)) return year;
+  
+    // short format: 2024-25
+    const shortMatch = year.match(/^(\d{4})-(\d{2})$/);
+    if (shortMatch) {
+      const start = Number(shortMatch[1]);
+      const end = 2000 + Number(shortMatch[2]);
+      return `${start}-${end}`;
+    }
+  
+    // only single year: 2024 → 2024-2025
+    if (/^\d{4}$/.test(year)) {
+      const y = Number(year);
+      return `${y}-${y + 1}`;
+    }
+  
+    return year; // fallback
+  };
+  
+
   const {
     rows,
     totalSiltRemoved,
@@ -664,7 +681,7 @@ console.log(tehsilZoi)
         waterbody: props.waterbody_name || "NA",
         UID: props.UID || "NA",
         areaOred: props.area_ored || 0,
-        interventionYear: props.intervention_year ?? "—",
+        interventionYear: formatInterventionYear(props.intervention_year) ?? null,
         maxCatchmentArea: props.max_catchment_area || 0,
         maxStreamOrder: props.max_stream_order || 0,
         MWS_UID: props.MWS_UID || 0,
@@ -709,13 +726,35 @@ console.log(tehsilZoi)
         : 0,
     };
   }, [geoData, zoiFeatures]);
+ 
 
+  //  SAFE: year-wise project impact (parallel calculation)
+  const projectImpactByInterventionYear = useMemo(() => {
+    if (!rows?.length) return {};
+  
+    return rows.reduce((acc, row) => {
+      const year = row.interventionYear;
+  
+      //  TEMP: strict filter hata do
+      if (!acc[year]) {
+        acc[year] = {
+          totalArea: 0,
+          rabiImpactArea: 0,
+          zaidImpactArea: 0,
+          count: 0,
+        };
+      }
+  
+      acc[year].totalArea += Number(row.areaOred) || 0;
+      acc[year].rabiImpactArea += Number(row.rabiImpactedArea) || 0;
+      acc[year].zaidImpactArea += Number(row.zaidImpactedArea) || 0;
+      acc[year].count += 1;
+  
+      return acc;
+    }, {});
+  }, [rows]);
+  
   const totalRows = rows.length;
-  const projectInterventionYear =
-  rows.length > 0
-    ? rows.find(r => r.interventionYear && r.interventionYear !== "—")?.interventionYear ||
-      "—"
-    : "—";
 
     const handleWaterbodyClick = (row) => {
       const params = new URLSearchParams(location.search);
@@ -729,18 +768,18 @@ console.log(tehsilZoi)
         params.set("project_name", projectNameParam);
       }
     
-      // ✅ USE waterbody_id IN URL
+      //  USE waterbody_id IN URL
       params.set("waterbody", row.waterbody_id);
     
       navigate(`/rwb?${params.toString()}`);
     
-      // ✅ MATCH FEATURE USING feature.id
+      //  MATCH FEATURE USING feature.id
       const feature = geoData.features.find(
         (f) => f.id === row.waterbody_id
       );
     
       if (!feature) return;
-    
+    console.log(feature)
       setSelectedWaterbody(row);
       setSelectedFeature(feature);
       setShowMap(true);
@@ -839,9 +878,7 @@ console.log(tehsilZoi)
               projectName: projectNameParam,
               totalRows,
               totalSiltRemoved,
-              interventionYear: projectInterventionYear,
-              rabiImpact: projectLevelRabiImpact,
-              zaidImpact: projectLevelZaidImpact,
+              projectImpactByInterventionYear
             })}
           </p>
         </div>
@@ -915,9 +952,9 @@ console.log(tehsilZoi)
             />
              {showMap && activeSelectedWaterbody && (
           <div className="text-gray-500 text-[clamp(0.65rem,0.95vw,0.7rem)] mt-2 pl-2 w-full">
-            <p><b>Water Availability : </b> We use Sentinel-1 (SAR data) VV band for water pixel detection in Kharif season and Dynamic World to detect water pixels in Rabi and Zaid seasons.</p>
+            <p><b>Water Availability : </b> We use Sentinel-1 (SAR data) VV band for water pixel detection in Kharif season and Dynamic World to detect water pixels in Rabi and Zaid seasons.This method reliably detects waterbodies of more than 1000 m² surface area.</p>
             <p><b>Land Use Land Cover : </b> Data remotely sensed from satellites including LandSat-7, LandSat-8, Sentinel-2, Sentinel-1, MODIS and Dynamic World</p>
-            <p><b>Rainfall : </b> Precipitation data is calculated from the Global Satellite Mapping of Precipitation (GSMaP) dataset available on Google Earth Engine's data catalogue. GSMaP provides a global precipitation in mm/hr at spatial resolution of approximately 11km.</p>
+            <p><b>Rainfall : </b> Precipitation data is calculated from the Global Satellite Mapping of Precipitation (GSMaP) dataset available on Google Earth Engine's data catalogue. GSMaP provides a global precipitation in mm/hr at spatial resolution of approximately 11 km.</p>
           </div>
         )}
           </div>
