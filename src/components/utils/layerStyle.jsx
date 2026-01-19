@@ -147,8 +147,11 @@ const layerStyles = (feature, vectorStyle, idx = 0, villageJson, dataJson) => {
             }
             else if(feature.values_.class === "Semi-Critical"){avg_Res = 1}
             else if(feature.values_.class === "Critical"){avg_Res = 2}
-            else{
+            else if(feature.values_.class === "Over Exploited"){
                 avg_Res = 3
+            }
+            else{
+                avg_Res = 4
             }
             break;
     }
