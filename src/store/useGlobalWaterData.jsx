@@ -48,7 +48,7 @@ export const useGlobalWaterData = ({
       .map((p) =>
         p
           .replace(/[^\w\s-]/g, "") // remove special chars
-          .replace(/[-\s]+/g, "_")  // space/dash → _
+          .replace(/\s+/g, "_")     // Space
           .replace(/_+/g, "_")      // collapse _
           .replace(/^_|_$/g, "")    // trim _
           .toLowerCase()

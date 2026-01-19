@@ -7,7 +7,7 @@
   import VectorLayer from "ol/layer/Vector";
   import VectorSource from "ol/source/Vector";
   import GeoJSON from "ol/format/GeoJSON";
-  import { Style, Stroke, Icon } from "ol/style";
+  import { Style, Stroke, Icon ,Fill} from "ol/style";
   import Point from "ol/geom/Point";
   import Crop from "ol-ext/filter/Crop";
   import getImageLayer from "../actions/getImageLayers";
@@ -175,7 +175,7 @@
         .map((p) =>
           p
             .replace(/[^\w\s-]/g, "") // remove special chars
-            .replace(/[-\s]+/g, "_")  // space/dash → _
+            .replace(/\s+/g, "_")     // Space
             .replace(/_+/g, "_")      // collapse _
             .replace(/^_|_$/g, "")    // trim _
             .toLowerCase()
@@ -212,6 +212,8 @@
             color: "blue",
             width: 3,
           }),
+          fill: new Fill({
+            color: "rgba(70, 130, 180, 0.9)"             })
         }),
       ];
 
@@ -1610,8 +1612,8 @@ if (isTehsil) {
   const hasProject = projectName && projectId;
 
 // TEHSIL MODE → TRY lat_dec/lon_dec, else centroid
-let lat = props?.latitude_dec ?? props?.latitude ?? null;
-let lon = props?.longitude_dec ?? props?.longitude ?? null;
+let lat =  props?.latitude ?? null;
+let lon = props?.longitude ?? null;
 
 // If TEHSIL AND missing → derive centroid
 if (!hasProject && (lat == null || lon == null) && props?.geometry) {

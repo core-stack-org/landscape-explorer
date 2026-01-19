@@ -203,6 +203,24 @@ const computedImpactYear = React.useMemo(() => {
   return selected;
 }, [years, totalRainfall]);
 
+const hasPostYear = React.useMemo(() => {
+  if (!years?.length) return false;
+
+  const interventionYear = (() => {
+    if (isTehsil) return null;
+
+    const f = water_rej_data?.features?.find(
+      (x) => x.properties?.UID === waterbody?.UID
+    );
+    return normalizeYear(f?.properties?.intervention_year);
+  })();
+
+  if (!interventionYear) return false;
+
+  return years.some((y) => y > interventionYear);
+}, [years, water_rej_data, waterbody, isTehsil]);
+
+
 useEffect(() => {
   if (!computedImpactYear || !onImpactYearChange) return;
 
@@ -351,7 +369,7 @@ useEffect(() => {
     });
   }
 
-  if (!showImpact || !computedImpactYear) {
+  if (!showImpact || !computedImpactYear || !hasPostYear) {
     data = baseData;
   } else if (computedImpactYear) {
     const waterIndicators = ["kharif", "rabi", "zaid"];
@@ -389,7 +407,7 @@ useEffect(() => {
         display: true,
         text: isTehsil
           ? "Water Availabilty & Land use inside Waterbody"
-          : !showImpact
+          : !showImpact || !computedImpactYear || !hasPostYear
             ? "Water Availabilty & Land use inside Waterbody (Black line = intervention year)"
             : `Impact Analysis: Showing Only Pre (${computedImpactYear.pre}) and Post (${computedImpactYear.post}) Years`,
             font: {
@@ -484,51 +502,60 @@ useEffect(() => {
   <div className="flex flex-wrap items-start w-full relative gap-x-[0.3rem] gap-y-[0.2rem]">
 
     {/* Keep your original legend rendering exactly as before */}
-    {!showImpact &&
-      Object.entries(groups).map(([group, items]) => (
-        <div key={group} className="min-w-[5rem] mb-[0.3rem]">
-          <strong className="block text-[clamp(0.40rem,0.50rem,0.60rem)] mb-[0.3rem]">
-            {group}
-          </strong>
+    {(!showImpact || !computedImpactYear || !hasPostYear) && (
+  Object.entries(groups).map(([group, items]) => (
+    <div key={group} className="min-w-[5rem] mb-[0.3rem]">
+      <strong className="block text-[clamp(0.40rem,0.50rem,0.60rem)] mb-[0.3rem]">
+        {group}
+      </strong>
 
-          {items.map((item) => (
-            <div
-              key={item.key}
-              className="flex items-center ml-[0.3rem] mt-[0.2rem] whitespace-nowrap"
-            >
-              <span
-                className="inline-block rounded-sm mr-[0.25rem]"
-                style={{
-                  width: "clamp(0.45rem, 0.55rem, 0.65rem)",
-                  height: "clamp(0.45rem, 0.55rem, 0.65rem)",
-                  backgroundColor: item.color,
-                }}
-              ></span>
+      {items.map((item) => (
+        <div
+          key={item.key}
+          className="flex items-center ml-[0.3rem] mt-[0.2rem] whitespace-nowrap"
+        >
+          <span
+            className="inline-block rounded-sm mr-[0.25rem]"
+            style={{
+              width: "clamp(0.45rem, 0.55rem, 0.65rem)",
+              height: "clamp(0.45rem, 0.55rem, 0.65rem)",
+              backgroundColor: item.color,
+            }}
+          ></span>
 
-              <span className="legend-label text-[clamp(0.45rem,0.55rem,0.65rem)]">
-                {item.label}
-              </span>
-            </div>
-          ))}
-
-          {group === "Water Indicators" && (
-            <div className="flex items-center mt-[0.3rem] ml-[0.3rem]">
-              <span
-                className="inline-block mr-[0.25rem]"
-                style={{
-                  width: "clamp(0.6rem, 0.8rem, 1rem)",
-                  height: "0.2rem",
-                  backgroundColor: "#4F555F",
-                }}
-              ></span>
-
-              <span className="font-medium text-gray-700 text-[clamp(0.4rem,0.4rem,0.4rem)]">
-                Total Rainfall (mm)
-              </span>
-            </div>
-          )}
+          <span className="legend-label text-[clamp(0.45rem,0.55rem,0.65rem)]">
+            {item.label}
+          </span>
         </div>
       ))}
+
+      {group === "Water Indicators" && (
+        <div className="flex items-center mt-[0.3rem] ml-[0.3rem]">
+          <span
+            className="inline-block mr-[0.25rem]"
+            style={{
+              width: "clamp(0.6rem, 0.8rem, 1rem)",
+              height: "0.2rem",
+              backgroundColor: "#4F555F",
+            }}
+          ></span>
+
+          <span className="font-medium text-gray-700 text-[clamp(0.4rem,0.4rem,0.4rem)]">
+            Total Rainfall (mm)
+          </span>
+        </div>
+      )}
+    </div>
+  ))
+)}
+
+
+{showImpact && !hasPostYear && (
+  <div className="mx-auto mt-2 text-center text-[clamp(0.55rem,0.6rem,0.8rem)] text-orange-700 bg-orange-50 border border-orange-200 rounded-md px-3 py-2 w-fit">
+    No data available for post intervention year.  
+    Please wait for next year’s data.
+  </div>
+)}
 
     {/* Toggle always rendered once */}
     {!isTehsil && (
@@ -578,7 +605,7 @@ useEffect(() => {
 
   </div>
 
-  {showImpact && (
+  {showImpact && hasPostYear &&(
     <div className="flex flex-col items-start justify-start mt-[0.4rem] whitespace-nowrap">
       <div className="flex items-center mb-[0.2rem]">
         <span
