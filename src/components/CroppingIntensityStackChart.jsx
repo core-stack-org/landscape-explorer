@@ -49,7 +49,6 @@ const CroppingIntensityStackChart = ({
       wbUID?.toString().trim()
   );
   if (!matchedFeature) return null;
-  console.log(matchedFeature)
 
   // ---------------- GET AREA VALUES ----------------
   const getAreaData = (rawYears) =>
@@ -189,9 +188,7 @@ const CroppingIntensityStackChart = ({
           );
           const iv = f?.properties?.intervention_year;
           const interventionYear = normalizeYear(iv);
-    
-          console.log("📍 Intervention Year:", iv, "→ normalized:", interventionYear);
-    
+        
           return {
             annotations: {
               interventionLine: {

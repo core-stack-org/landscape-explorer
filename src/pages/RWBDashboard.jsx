@@ -146,8 +146,8 @@ const RWBDashboard =()=>{
                         <div className="rounded-md text-gray-700 mt-10 space-y-6 text-xl md:text-lg">
                             <ul className="list-disc list-outside  space-y-8 font-medium text-justify">
                                 <li>Track <b>Waterbody Rejuvenation Interventions</b> and their impact on water availability
-                                and agriculture in nearby areas!</li>
-                                <li className="mt-4">To get started, simply select your <b>organization</b> and <b>project</b> . </li>
+                                and agriculture in nearby areas.</li>
+                                <li className="mt-4">To get started, select your <b>organization</b> and <b>project</b> . </li>
                             </ul>
                         </div>
                         </div>
