@@ -31,6 +31,7 @@ const WaterAvailabilityChart = ({
   water_rej_data,
   mwsFeature,
   onImpactYearChange,
+  impactPair
 }) => {
   const [showImpact, setShowImpact] = useState(false);
   const prevImpactRef = useRef(null);
@@ -48,6 +49,15 @@ const WaterAvailabilityChart = ({
     return Array.from(years).sort();
   };
 
+
+  const computedImpactYear = impactPair ?? null;
+
+  useEffect(() => {
+    if (impactPair && onImpactYearChange) {
+      onImpactYearChange(impactPair);
+    }
+  }, [impactPair]);
+  
   // 🔧 Normalize Year Helper — ALWAYS returns "YY-YY"
 const normalizeYear = (iv) => {
   if (!iv || typeof iv !== "string" || !iv.includes("-")) return "22-23";
@@ -165,43 +175,43 @@ acc[`TR${year}`] = kharif + rabi + zaid;
   return acc;
 }, {});
 
-const computedImpactYear = React.useMemo(() => {
-  if (!years?.length || !totalRainfall) return null;
+// const computedImpactYear = React.useMemo(() => {
+//   if (!years?.length || !totalRainfall) return null;
 
-  const interventionYear = (() => {
-    if (isTehsil) return "22-23"; // fallback for now
+//   const interventionYear = (() => {
+//     if (isTehsil) return "22-23"; // fallback for now
   
-    const f = water_rej_data?.features?.find(
-      (x) => x.properties?.UID === waterbody?.UID
-    );
-    let iv = f?.properties?.intervention_year;
-    const normalized = normalizeYear(iv);
-    return normalized;
+//     const f = water_rej_data?.features?.find(
+//       (x) => x.properties?.UID === waterbody?.UID
+//     );
+//     let iv = f?.properties?.intervention_year;
+//     const normalized = normalizeYear(iv);
+//     return normalized;
 
-    })();
+//     })();
   
-  const preYears = years.filter((y) => y < interventionYear);
-  const postYears = years.filter((y) => y > interventionYear);
+//   const preYears = years.filter((y) => y < interventionYear);
+//   const postYears = years.filter((y) => y > interventionYear);
 
-  let minDiff = Infinity;
-  let selected = null;
+//   let minDiff = Infinity;
+//   let selected = null;
 
-  preYears.forEach((pre) => {
-    const preRain = totalRainfall[`TR${pre}`] ?? 0;
+//   preYears.forEach((pre) => {
+//     const preRain = totalRainfall[`TR${pre}`] ?? 0;
 
-    postYears.forEach((post) => {
-      const postRain = totalRainfall[`TR${post}`] ?? 0;
-      const diff = Math.abs(preRain - postRain);
+//     postYears.forEach((post) => {
+//       const postRain = totalRainfall[`TR${post}`] ?? 0;
+//       const diff = Math.abs(preRain - postRain);
 
-      if (diff < minDiff) {
-        minDiff = diff;
-        selected = { pre, post, diff };
-      }
-    });
-  });
+//       if (diff < minDiff) {
+//         minDiff = diff;
+//         selected = { pre, post, diff };
+//       }
+//     });
+//   });
 
-  return selected;
-}, [years, totalRainfall]);
+//   return selected;
+// }, [years, totalRainfall]);
 
 const hasPostYear = React.useMemo(() => {
   if (!years?.length) return false;
