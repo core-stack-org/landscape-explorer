@@ -61,53 +61,112 @@ export const WATER_DASHBOARD_CONFIG = {
     //   return `Under the project ${projectName}, a total of ${total} waterbodies have been de-silted. The de-silted amount spans ${silt} m³. After desilting in the intervention year ${year}, ${impactMessage}.`;
     // },
     
+    // topSectionText: (data) => {
+    //   const projectName = data.projectName || "—";
+    //   const total = data.totalRows || 0;
+    //   const silt = Number(data.totalSiltRemoved || 0).toLocaleString("en-IN");
+    
+    //   const impactByYear = data.projectImpactByInterventionYear || {};
+    
+    //   // Base intro
+    //   let text =
+    //     `Under the project ${projectName}, a total of ${total} waterbodies have been de-silted. ` +
+    //     `The de-silted amount spans ${silt} m³.`;
+    
+    //   const yearLines = Object.entries(impactByYear)
+    //     .map(([year, val]) => {
+    //       if (!val.totalArea) return null;
+    
+    //       const rabiImpact = val.rabiImpactArea / val.totalArea;
+    //       const zaidImpact = val.zaidImpactArea / val.totalArea;
+    
+    //       const parts = [];
+    
+    //       if (rabiImpact > 0) {
+    //         parts.push(
+    //           `the impacted area in the Rabi season has improved by ${(rabiImpact).toFixed(2)}%`
+    //         );
+    //       }
+    
+    //       if (zaidImpact > 0) {
+    //         parts.push(
+    //           `the impacted area in the Zaid season has improved by ${(zaidImpact).toFixed(2)}%`
+    //         );
+    //       }
+    
+    //       // ❌ agar dono negative → kuch bhi mat dikhao
+    //       if (parts.length === 0) return null;
+    
+    //       return ` After desilting in the intervention year ${year}, ${parts.join(" and ")}.`;
+    //     })
+    //     .filter(Boolean)
+    //     .join("");
+    
+    //   if (!yearLines) {
+    //     return text + " Click on any waterbody to view its detailed report.";
+    //   }
+    
+    //   return text + yearLines;
+    // },
+
     topSectionText: (data) => {
       const projectName = data.projectName || "—";
-      const total = data.totalRows || 0;
-      const silt = Number(data.totalSiltRemoved || 0).toLocaleString("en-IN");
+      const summaryByYear = data.projectSummaryByInterventionYear || {};
     
-      const impactByYear = data.projectImpactByInterventionYear || {};
-    
-      // Base intro
-      let text =
-        `Under the project ${projectName}, a total of ${total} waterbodies have been de-silted. ` +
-        `The de-silted amount spans ${silt} m³.`;
-    
-      const yearLines = Object.entries(impactByYear)
-        .map(([year, val]) => {
-          if (!val.totalArea) return null;
-    
-          const rabiImpact = val.rabiImpactArea / val.totalArea;
-          const zaidImpact = val.zaidImpactArea / val.totalArea;
-    
-          const parts = [];
-    
-          if (rabiImpact > 0) {
-            parts.push(
-              `the impacted area in the Rabi season has improved by ${(rabiImpact).toFixed(2)}%`
-            );
-          }
-    
-          if (zaidImpact > 0) {
-            parts.push(
-              `the impacted area in the Zaid season has improved by ${(zaidImpact).toFixed(2)}%`
-            );
-          }
-    
-          // ❌ agar dono negative → kuch bhi mat dikhao
-          if (parts.length === 0) return null;
-    
-          return ` After desilting in the intervention year ${year}, ${parts.join(" and ")}.`;
-        })
-        .filter(Boolean)
-        .join("");
-    
-      if (!yearLines) {
-        return text + " Click on any waterbody to view its detailed report.";
+      if (!Object.keys(summaryByYear).length) {
+        return (
+          <p>
+            Under the project {projectName}, no intervention-wise data is available yet.
+          </p>
+        );
       }
     
-      return text + yearLines;
+      return (
+        <>
+          <p className="mb-2">
+            Under the project <b>{projectName}</b>, interventions were carried out across multiple years.
+          </p>
+    
+          {Object.entries(summaryByYear).map(([year, stats]) => {
+            const {
+              waterbodyCount,
+              totalSiltRemoved,
+              totalAreaOred,
+              totalRabiImpactArea,
+              totalZaidImpactArea,
+            } = stats;
+    
+            const rabiChange = totalAreaOred
+              ? (totalRabiImpactArea / totalAreaOred).toFixed(2)
+              : null;
+    
+            const zaidChange = totalAreaOred
+              ? (totalZaidImpactArea / totalAreaOred).toFixed(2)
+              : null;
+    
+            return (
+              <p key={year} className="mb-2">
+                In the intervention year<b> {year}</b>, {waterbodyCount} waterbodies were
+                de-silted, with a total de-silting volume of{" "}
+                <b>{Number(totalSiltRemoved).toLocaleString("en-IN")} m³</b>.
+                {(rabiChange && Number(rabiChange) > 0) && (
+                  <> As a result, Rabi season water availability improved by <b>{rabiChange}%</b>.</>
+                )}
+                {(zaidChange && Number(zaidChange) > 0) && (
+                  <> Zaid season water availability improved by <b>{zaidChange}%</b>.</>
+                )}
+              </p>
+            );
+          })}
+    
+          <p className="mt-2">
+            Click on any waterbody to view its detailed report.
+          </p>
+        </>
+      );
     },
+    
+    
     
     
 

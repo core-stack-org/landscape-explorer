@@ -420,7 +420,7 @@ const WaterProjectDashboard = () => {
   
     return map;
   }, [geoData, mwsGeoData]);
-  
+    
   const getFirstNonZeroYearIndex = (props) => {
     const years = extractSeasonYears(props); // dynamic years like ["17-18","18-19",...]
 
@@ -616,6 +616,14 @@ const WaterProjectDashboard = () => {
   
     return year; // fallback
   };
+
+  const getTotalWaterAvailability = (props, year) => {
+    return (
+      (Number(props[`k_${year}`]) || 0) +
+      (Number(props[`kr_${year}`]) || 0) +
+      (Number(props[`krz_${year}`]) || 0)
+    );
+  };
   
 
   const {
@@ -640,10 +648,24 @@ const WaterProjectDashboard = () => {
       const waterbody_id = feature.id ?? null; 
 
       // const { preYears, postYears } = getPrePostYears(props, props.intervention_year);
-      const impact = impactYearMap[props.UID];
+      const impactPairs = impactYearMap[props.UID];
 
-      const preYears = impact ? [impact.pre] : [];
-      const postYears = impact ? [impact.post] : [];
+      let selectedPair = null;
+      let maxWater = -Infinity;
+      
+      if (Array.isArray(impactPairs)) {
+        impactPairs.forEach((pair) => {
+          const postYear = pair.post;
+          const water = getTotalWaterAvailability(props, postYear);
+      
+          if (water > maxWater) {
+            maxWater = water;
+            selectedPair = pair;
+          }
+        });
+      }
+      const preYears = selectedPair ? [selectedPair.pre] : [];
+      const postYears = selectedPair ? [selectedPair.post] : [];
 
       const { avgRabi, avgZaid } = computeTotalSeasonAverages(props);
 
@@ -702,6 +724,7 @@ const WaterProjectDashboard = () => {
         waterbody_id: feature.id ?? null,
         coordinates,
         featureIndex: index,
+        selectedPair
       };
     });
 
@@ -727,6 +750,17 @@ const WaterProjectDashboard = () => {
     };
   }, [geoData, zoiFeatures]);
  
+  const selectedPair = useMemo(() => {
+    if (!activeSelectedWaterbody || !rows?.length) return null;
+  
+    const uid =
+      activeSelectedWaterbody.properties?.UID ??
+      activeSelectedWaterbody.UID;
+  
+    const row = rows.find((r) => r.UID === uid);
+  
+    return row?.selectedPair ?? null;
+  }, [rows, activeSelectedWaterbody]);
 
   //  SAFE: year-wise project impact (parallel calculation)
   const projectImpactByInterventionYear = useMemo(() => {
@@ -754,7 +788,49 @@ const WaterProjectDashboard = () => {
     }, {});
   }, [rows]);
   
+  const projectSummaryByInterventionYear = useMemo(() => {
+    if (!rows?.length) return {};
+  
+    return rows.reduce((acc, row) => {
+      const year = row.interventionYear;
+      if (!year) return acc;
+  
+      if (!acc[year]) {
+        acc[year] = {
+          interventionYear: year,
+          waterbodyCount: 0,
+          totalSiltRemoved: 0,
+          totalAreaOred: 0,
+          totalRabiImpactArea: 0,
+          totalZaidImpactArea: 0,
+        };
+      }
+  
+      acc[year].waterbodyCount += 1;
+      acc[year].totalSiltRemoved += Number(row.siltRemoved) || 0;
+      acc[year].totalAreaOred += Number(row.areaOred) || 0;
+      acc[year].totalRabiImpactArea += Number(row.rabiImpactedArea) || 0;
+      acc[year].totalZaidImpactArea += Number(row.zaidImpactedArea) || 0;
+  
+      return acc;
+    }, {});
+  }, [rows]);
+
+  
   const totalRows = rows.length;
+
+  const waterbodyCountByInterventionYear = useMemo(() => {
+    if (!rows?.length) return {};
+  
+    return rows.reduce((acc, row) => {
+      const year = row.interventionYear;
+      if (!year) return acc;
+  
+      acc[year] = (acc[year] || 0) + 1;
+      return acc;
+    }, {});
+  }, [rows]);
+
 
     const handleWaterbodyClick = (row) => {
       const params = new URLSearchParams(location.search);
@@ -796,6 +872,9 @@ const WaterProjectDashboard = () => {
   const printReport=()=>{
     window.print();
   }
+
+
+
   
   return (
     <div className={`${isTehsilMode ? "pb-8 w-full" : "mx-6 my-8 bg-white rounded-xl shadow-md p-6"}`}>
@@ -877,7 +956,8 @@ const WaterProjectDashboard = () => {
               projectName: projectNameParam,
               totalRows,
               totalSiltRemoved,
-              projectImpactByInterventionYear
+              projectSummaryByInterventionYear
+              // projectImpactByInterventionYear
             })}
           </p>
         </div>
@@ -969,6 +1049,7 @@ const WaterProjectDashboard = () => {
                   mwsFeature={isTehsilMode ? matchedMwsOlFeatures[0] : mwsForCharts}
                   onImpactYearChange={setImpactYear} 
                   years={extractedSeasonalYears} 
+                  impactPair={selectedPair} 
                 />
               </div>
   
