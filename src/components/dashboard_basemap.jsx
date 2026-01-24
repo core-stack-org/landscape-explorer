@@ -1857,7 +1857,7 @@ if (!hasProject && (lat == null || lon == null) && props?.geometry) {
               )}
 
             {/* YEAR SLIDER — ONLY FOR WATERBODY */}
-            {mode === "waterbody" && selectedWaterbody && validInterventionYear && (
+            {mode === "waterbody" && selectedWaterbody &&  (
               <div
                 className="absolute left-4 right-4 flex justify-end bottom-16"
             
