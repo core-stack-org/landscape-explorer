@@ -424,8 +424,7 @@ useEffect(() => {
               font: {
                 size: Math.max(9, Math.min(window.innerHeight * 0.02, 18)),
                 weight: "bold",
-              }
-                         
+              }  
             },
       },
       
@@ -560,12 +559,7 @@ useEffect(() => {
 )}
 
 
-{showImpact && !hasPostYear && (
-  <div className="mx-auto mt-2 text-center text-[clamp(0.55rem,0.6rem,0.8rem)] text-orange-700 bg-orange-50 border border-orange-200 rounded-md px-3 py-2 w-fit">
-    No data available for post intervention year.  
-    Please wait for next year’s data.
-  </div>
-)}
+
 
     {/* Toggle always rendered once */}
     {!isTehsil && (
@@ -581,7 +575,7 @@ useEffect(() => {
       className="font-medium mr-[0.4rem] leading-tight text-gray-700"
       style={{ fontSize: "clamp(0.5rem, 0.55rem, 0.8rem)" }}
     >
-      {showImpact ? "Comparison years" : "Comparison years"}
+      Comparison years
     </span>
 
     <label className="relative inline-flex items-center cursor-pointer">
@@ -601,8 +595,8 @@ useEffect(() => {
       ></div>
 
       <div
-        className="absolute bg-white rounded-full transition-all"
-        style={{
+ className="absolute bg-white rounded-full transition-all
+ peer-checked:translate-x-[calc(clamp(1.6rem,2rem,2.4rem)-clamp(0.7rem,0.9rem,1.1rem)-0.2rem)]"              style={{
           width: "clamp(0.7rem, 0.9rem, 1.1rem)",
           height: "clamp(0.7rem, 0.9rem, 1.1rem)",
           top: "0.1rem",
@@ -612,7 +606,12 @@ useEffect(() => {
     </label>
   </div>
 )}
-
+{showImpact && !hasPostYear && (
+  <div className="mx-auto mt-2 text-center text-[clamp(0.55rem,0.6rem,0.8rem)] text-orange-700 bg-orange-50 border border-orange-200 rounded-md px-3 py-2 w-fit">
+    No data available for post intervention year.  
+    Please wait for next year’s data.
+  </div>
+)}
   </div>
 
   {showImpact && hasPostYear &&(
