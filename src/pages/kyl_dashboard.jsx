@@ -1541,7 +1541,7 @@ const KYLDashboardPage = () => {
         view.cancelAnimations();
       }
     };
-  }, [district, block, mapRef.current]);
+  }, [block, mapRef.current]);
 
   useEffect(() => {
     const fetchUpdateLulc = async () => {
