@@ -862,12 +862,15 @@ const WaterProjectDashboard = () => {
       const resolvedRow = {
         UID: props.UID,
         waterbody_name: props.waterbody_name,
-        intervention_year: props.intervention_year, // 🔒 GUARANTEED
+        intervention_year: props.intervention_year,
         areaOred: props.area_ored,
         latitude: props.latitude,
         longitude: props.longitude,
         geometry: feature.geometry,
         MWS_UID: props.MWS_UID,
+        maxCatchmentArea: Number(props.max_catchment_area) || 0,
+        drainageFlag: props.on_drainage_line ?? 0,
+        maxStreamOrder: props.max_stream_order ?? null,
       };
   
       setSelectedWaterbody(resolvedRow);
