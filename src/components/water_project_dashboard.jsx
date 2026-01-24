@@ -762,31 +762,17 @@ const WaterProjectDashboard = () => {
     return row?.selectedPair ?? null;
   }, [rows, activeSelectedWaterbody]);
 
-  //  SAFE: year-wise project impact (parallel calculation)
-  const projectImpactByInterventionYear = useMemo(() => {
-    if (!rows?.length) return {};
+  const selectedInterventionYear = useMemo(() => {
+    if (!activeSelectedWaterbody || !rows?.length) return null;
   
-    return rows.reduce((acc, row) => {
-      const year = row.interventionYear;
+    const uid =
+      activeSelectedWaterbody.properties?.UID ??
+      activeSelectedWaterbody.UID;
   
-      //  TEMP: strict filter hata do
-      if (!acc[year]) {
-        acc[year] = {
-          totalArea: 0,
-          rabiImpactArea: 0,
-          zaidImpactArea: 0,
-          count: 0,
-        };
-      }
+    const row = rows.find((r) => r.UID === uid);
   
-      acc[year].totalArea += Number(row.areaOred) || 0;
-      acc[year].rabiImpactArea += Number(row.rabiImpactedArea) || 0;
-      acc[year].zaidImpactArea += Number(row.zaidImpactedArea) || 0;
-      acc[year].count += 1;
-  
-      return acc;
-    }, {});
-  }, [rows]);
+    return row?.interventionYear ?? null;
+  }, [rows, activeSelectedWaterbody]);
   
   const projectSummaryByInterventionYear = useMemo(() => {
     if (!rows?.length) return {};
@@ -818,19 +804,6 @@ const WaterProjectDashboard = () => {
 
   
   const totalRows = rows.length;
-
-  const waterbodyCountByInterventionYear = useMemo(() => {
-    if (!rows?.length) return {};
-  
-    return rows.reduce((acc, row) => {
-      const year = row.interventionYear;
-      if (!year) return acc;
-  
-      acc[year] = (acc[year] || 0) + 1;
-      return acc;
-    }, {});
-  }, [rows]);
-
 
     const handleWaterbodyClick = (row) => {
       const params = new URLSearchParams(location.search);
@@ -873,9 +846,42 @@ const WaterProjectDashboard = () => {
     window.print();
   }
 
+  const handleSelectWaterbody = (wb) => {
 
-
+    //  PROJECT MODE
+    if (typeParam === "project" && wb?.UID && geoData?.features) {
   
+      const feature = geoData.features.find(
+        f => f.properties?.UID?.toString() === wb.UID.toString()
+      );
+  
+      if (!feature) return;
+  
+      const props = feature.properties;
+  
+      const resolvedRow = {
+        UID: props.UID,
+        waterbody_name: props.waterbody_name,
+        intervention_year: props.intervention_year, // 🔒 GUARANTEED
+        areaOred: props.area_ored,
+        latitude: props.latitude,
+        longitude: props.longitude,
+        geometry: feature.geometry,
+        MWS_UID: props.MWS_UID,
+      };
+  
+      setSelectedWaterbody(resolvedRow);
+      setSelectedFeature(feature);
+      setShowMap(true);
+      return;
+    }
+  
+    //  TEHSIL MODE (AS IS)
+    setSelectedWaterbody(wb);
+  };
+  
+  console.log(activeSelectedWaterbody)
+
   return (
     <div className={`${isTehsilMode ? "pb-8 w-full" : "mx-6 my-8 bg-white rounded-xl shadow-md p-6"}`}>
   
@@ -1018,16 +1024,18 @@ const WaterProjectDashboard = () => {
               showMap={showMap}
               projectName={typeParam === "project" ? projectNameParam : null}
               projectId={typeParam === "project" ? projectIdParam : null}
-              onSelectWaterbody={(wb) => {
-                setSelectedWaterbody(wb);
-                setShowMap(true);
-              }}
+              onSelectWaterbody={handleSelectWaterbody}
+              // onSelectWaterbody={(wb) => {
+              //   setSelectedWaterbody(wb);
+              //   setShowMap(true);
+              // }}
               lulcYear={lulcYear1}
               district={districtParam}
               block={blockParam}
               onMapReady={(map) => {
                 setTehsilMap(map);
               }}
+              interventionYear={selectedInterventionYear} 
             />
              {showMap && activeSelectedWaterbody && (
           <div className="text-gray-500 text-[clamp(0.65rem,0.95vw,0.7rem)] mt-2 pl-2 w-full">
@@ -1107,6 +1115,8 @@ const WaterProjectDashboard = () => {
                   lulcYear={lulcYear2}
                   district={districtParam}
                   block={blockParam}
+                  interventionYear={selectedInterventionYear} 
+
                 />
                 {showMap && activeSelectedWaterbody && (
                   <div className="text-gray-500 text-[clamp(0.65rem,0.95vw,0.7rem)] mt-2 pl-2 w-full">
