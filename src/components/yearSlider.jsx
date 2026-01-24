@@ -13,6 +13,19 @@ const YearSlider = ({ currentLayer, sliderId = null,interventionYear }) => {
     { label: "2023-2024", value: "23_24" },
     { label: "2024-2025", value: "24_25" },
   ];
+
+  useEffect(() => {
+    if (!interventionYear) return;
+  
+    // normalize if needed (23-24 / 2023-2024)
+    const normalized =
+      interventionYear.includes("-") && interventionYear.length === 9
+        ? interventionYear
+        : interventionYear;
+  
+    setYearAtom(normalized);
+  }, [interventionYear]);
+  
   const normIntervention = interventionYear
   ? interventionYear.replace("-", "_")
   : null;
@@ -66,6 +79,7 @@ const YearSlider = ({ currentLayer, sliderId = null,interventionYear }) => {
   };
 
   if (!isLulcLayerActive) return null;
+
 
   return (
     <div className="w-full max-w-2xl mx-auto">
