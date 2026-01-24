@@ -64,7 +64,6 @@
     const [selectedZoiFeature, setSelectedZoiFeature] = useState(null);
     const [zoiAreaState, setZoiAreaState] = useState(null)
     const [radiusState, setRadiusState] = useState(null);
-    console.log(selectedWaterbody)
     
     const getWBProps = (wb) => {
       if (!wb) return {};
