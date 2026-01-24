@@ -48,8 +48,7 @@
     organizationLabel,
     showMap,
     onMapReady,
-    styleHeight = "900px",
-
+    interventionYear
   }) => {
     const mapRef = useRef(null);
     const mapElement = useRef(null);
@@ -65,6 +64,7 @@
     const [selectedZoiFeature, setSelectedZoiFeature] = useState(null);
     const [zoiAreaState, setZoiAreaState] = useState(null)
     const [radiusState, setRadiusState] = useState(null);
+    console.log(selectedWaterbody)
     
     const getWBProps = (wb) => {
       if (!wb) return {};
@@ -477,6 +477,7 @@
       props.Intervention_Year ||
       props.INTERVENTION_YEAR ||
       props.intv_year ||
+      props.interventionYear ||
       null,
       latitude: props.latitude ?? props.Latitude ?? props.lat ?? null,
       longitude: props.longitude ?? props.Longitude ?? props.lon ?? null,
@@ -1876,7 +1877,7 @@ if (!hasProject && (lat == null || lon == null) && props?.geometry) {
                   <YearSlider
                     currentLayer={{ name: 'lulcWaterrej' }}
                     sliderId="map1"
-                    interventionYear={props?.intervention_year}
+                    interventionYear={interventionYear}
                   />
                 </div>
               </div>
@@ -1964,9 +1965,10 @@ if (!hasProject && (lat == null || lon == null) && props?.geometry) {
                 
               >
                 <YearSlider
+                key={`zoi-${interventionYear}`} 
                   currentLayer={{ name: "lulcWaterrej" }}
                   sliderId="map2"
-                  interventionYear={props?.intervention_year}
+                  interventionYear={interventionYear}
                 />
               </div>
             </div>
