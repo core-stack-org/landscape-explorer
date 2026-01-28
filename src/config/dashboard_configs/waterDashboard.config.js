@@ -112,7 +112,9 @@ export const WATER_DASHBOARD_CONFIG = {
     topSectionText: (data) => {
       const projectName = data.projectName || "—";
       const summaryByYear = data.projectSummaryByInterventionYear || {};
-    
+      const years = Object.keys(summaryByYear);
+      const yearCount = years.length;
+
       if (!Object.keys(summaryByYear).length) {
         return (
           <p>
@@ -123,9 +125,11 @@ export const WATER_DASHBOARD_CONFIG = {
     
       return (
         <>
-          <p className="mb-2">
-            Under the project <b>{projectName}</b>, interventions were carried out across multiple years.
-          </p>
+             <p className="mb-2">
+                  Under the project <b>{projectName}</b>, intervention
+                  {yearCount > 1 ? "s were" : " was"} carried out
+                  {yearCount > 1 ? " across multiple years." : ` in the year ${years[0]}.`}
+              </p>
     
           {Object.entries(summaryByYear).map(([year, stats]) => {
             const {
@@ -213,12 +217,14 @@ export const WATER_DASHBOARD_CONFIG = {
         key: "interventionYear",
         label: "Intervention Year",
         info: "Year of intervention.",
+        sortable: true,
       },
       {
         key: "areaOred",
         label: "Size (ha)",
         render: (row) => row.areaOred?.toFixed?.(2) ?? "NA",
         info: "Area of waterbody in hectares.",
+        sortable: true,
       },
 
       {
