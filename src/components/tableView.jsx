@@ -50,12 +50,25 @@ export default function TableView({
   
   
   
+  const getSortableValue = (val) => {
+    if (!val) return "";
+  
+    // Intervention year like "2023-2024"
+    if (typeof val === "string" && val.includes("-")) {
+      const yr = parseInt(val.split("-")[0], 10);
+      return isNaN(yr) ? val : yr;
+    }
+  
+    return val;
+  };
+
+  
   const sortedRows = useMemo(() => {
     if (!sortField) return searchedRows;
   
     return [...searchedRows].sort((a, b) => {
-      const aVal = a[sortField];
-      const bVal = b[sortField];
+      const aVal = getSortableValue(a[sortField]);
+      const bVal = getSortableValue(b[sortField]);
   
       // numeric sort
       if (!isNaN(parseFloat(aVal)) && !isNaN(parseFloat(bVal))) {

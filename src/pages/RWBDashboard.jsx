@@ -118,7 +118,7 @@ const RWBDashboard =()=>{
                 }
                 );
                 const projectResult = await projects.json();
-                const options = projectResult.filter((p)=>p.organization==orgId).map((p)=>({
+                const options = projectResult.filter((p)=>p.organization==orgId  && p.app_type === "waterbody").map((p)=>({
                     label:p.name,
                     value:p.id
                 }));

@@ -882,6 +882,11 @@ const WaterProjectDashboard = () => {
     //  TEHSIL MODE (AS IS)
     setSelectedWaterbody(wb);
   };
+
+  useEffect(() => {
+    console.log("Project Level Rabi Impact:", projectLevelRabiImpact);
+    console.log("Project Level Zaid Impact:", projectLevelZaidImpact);
+  }, [projectLevelRabiImpact, projectLevelZaidImpact]);
   
   return (
     <div className={`${isTehsilMode ? "pb-8 w-full" : "mx-6 my-8 bg-white rounded-xl shadow-md p-6"}`}>
