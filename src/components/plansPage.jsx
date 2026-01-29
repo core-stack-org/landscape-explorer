@@ -30,6 +30,7 @@ import {
 } from "../store/locationStore";
 import getStates from "../actions/getStates";
 import getPlans from "../actions/getPlans";
+import getVectorLayers from "../actions/getVectorLayers.js";
 
 const STATE_COORDINATES = {
   Jharkhand: [85.2799, 23.6102],
@@ -92,6 +93,8 @@ const PlansPage = () => {
   const mapElement = useRef(null);
   const mapRef = useRef(null);
   const navigate = useNavigate();
+  const tehsilBoundaryRef = useRef(new Map());
+
 
   //  Load Meta Stats
   useEffect(() => {
@@ -154,7 +157,6 @@ const PlansPage = () => {
   
       const distList = [];
       const blockList = [];
-      console.log(stateList)
       stateList.forEach((state) => {
         state?.district?.forEach((d) => {
           // Collect district list
@@ -213,7 +215,7 @@ const PlansPage = () => {
       }
     });
   }, []);
-
+  
   const addStateBubbles = () => {
     if (!mapRef.current) return;
   
@@ -222,9 +224,7 @@ const PlansPage = () => {
       mapRef.current.removeLayer(bubbleLayerRef.current);
       bubbleLayerRef.current = null;
     }
-  
-    // ✅ NO DATA CASE
-    if (
+      if (
       !metaStats?.state_breakdown ||
       !Array.isArray(metaStats.state_breakdown) ||
       metaStats.state_breakdown.length === 0
@@ -278,6 +278,11 @@ const PlansPage = () => {
     bubbleLayerRef.current = layer;
     mapRef.current.addLayer(layer);
   };
+
+  const lowerFirst = (str) => {
+    if (!str || typeof str !== "string") return str;
+    return str.charAt(0).toLowerCase() + str.slice(1);
+  };  
   
   useEffect(() => {
     if (showBubbleLayer) addStateBubbles();
@@ -341,24 +346,110 @@ const PlansPage = () => {
     });
   };
 
+  const transformName = (name) => {
+    if (!name) return "";
+  
+    // Extract base + alias from parentheses
+    const match = name.match(/^(.+?)\s*\((.+?)\)$/);
+  
+    let parts = [];
+  
+    if (match) {
+      const main = match[1];
+      const alias = match[2];
+  
+      parts = [main, alias];
+    } else {
+      // no parentheses → repeat twice
+      parts = [name];
+    }
+  
+    return parts
+      .map((p) =>
+        p
+          .replace(/[^\w\s-]/g, "") // remove special chars
+          .replace(/\s+/g, "_")     // Space
+          .replace(/_+/g, "_")      // collapse _
+          .replace(/^_|_$/g, "")    // trim _
+          .toLowerCase()
+      )
+      .join("_");
+  };
+
+  const getUniqueTehsils = (plans) => {
+    const unique = {};   // 👈 simple JS object
+  
+    plans.forEach((p) => {
+      const districtRaw = districtLookup[p.district_soi];
+      const tehsilRaw = blockLookup[p.tehsil_soi];
+  
+      if (!districtRaw || !tehsilRaw) return;
+  
+      const district = transformName(districtRaw);
+      const tehsil = transformName(tehsilRaw);
+  
+      const key = `${district}_${tehsil}`;
+  
+      if (!unique[key]) {
+        unique[key] = { district, tehsil };
+      }
+    });
+  
+    return Object.values(unique);
+  };
+  
+  
+
   const fetchTehsilPlans = async (stateObj) => {
     const allBlocks = stateObj.district
       ?.flatMap((d) => d.blocks)
       ?.map((b) => String(b.block_id));
     const selectedOrg = organizationRef.current || null;
+    
     const result = await getPlans({ state: stateObj.state_id });
+
     let filtered = result.raw.filter((p) =>
-      allBlocks.includes(String(p.block))
+      allBlocks.includes(String(p.tehsil_soi))
     );  
+    
     if (selectedOrg?.value) {
       filtered = filtered.filter(
         (p) => String(p.organization) === String(selectedOrg.value)
       );
     }
     addPlanDots(filtered);
+    if (filtered.length > 0) {
+      const uniqueTehsils = getUniqueTehsils(filtered);
+    
+      uniqueTehsils.forEach(({ district, tehsil }) => {
+        loadTehsilBoundary(district, tehsil);
+      });
+    }
+    
+  
     return filtered;
   };
 
+  const loadTehsilBoundary = async (districtName, tehsilName) => {
+    const map = mapRef.current;
+    if (!map) return;
+  
+    const key = `${districtName}_${tehsilName}`;
+  
+    // already loaded → skip
+    if (tehsilBoundaryRef.current[key]) return;
+  
+    const layer = await getVectorLayers(
+      "panchayat_boundaries",
+      key,
+      true
+    );
+  
+    tehsilBoundaryRef.current[key] = layer;
+    map.addLayer(layer);
+  };
+  
+  
   const addPlanDots = (plans) => {
     if (!mapRef.current) return;
     if (planLayerRef.current) {
@@ -585,7 +676,6 @@ const PlansPage = () => {
                       organizationRef.current = selected;
                       if (!selected) {
                         const stats = await getPlanMetaStats();
-                        console.log("🔄 META STATS (NO FILTER):", stats);
                         setMetaStats(stats);
                         return;
                       }

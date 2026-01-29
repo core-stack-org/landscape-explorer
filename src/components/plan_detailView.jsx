@@ -80,13 +80,13 @@ const PlanViewPage = () => {
       }
     };
   
-    // 🔑 THIS IS THE KEY FIX
+    //  THIS IS THE KEY FIX
     primarySource.on("addfeature", tryPrimary);
   
     // safety retry (in case features load instantly)
     setTimeout(tryPrimary, 300);
   
-    /* 2️⃣ FALLBACK → STREAM ORDER RASTER */
+    /* 2️FALLBACK → STREAM ORDER RASTER */
     if (!fallbackLayer) return;
   
     const rasterSource = fallbackLayer.getSource();
