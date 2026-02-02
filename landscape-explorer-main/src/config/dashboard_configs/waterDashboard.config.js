@@ -1,0 +1,456 @@
+export const WATER_DASHBOARD_CONFIG = {
+  project: {
+
+    sections: {
+      section1: {
+        title: "Section 1: Water presence and land-use change in the waterbody",
+        paragraphs: [
+          "This section shows the selected waterbody, silt removal details, and seasonal water availability before and after the intervention, along with yearly trends of cropping patterns within the waterbody boundary.",
+          "The boundary shown for the waterbody is the maximal coverage ever gained by the waterbody over the last several years. Depending on rainfall, water use, and other factors like changes in the inlet and outlet channels of the waterbody, not all of the waterbody area will see water in a given year and some of the area may also get utilized for agriculture. This land use in each year can be observed from the map and graphs.",
+          "Similarly, the duration of water presence can be seen in terms of how much of the waterbody saw water throughout the year, or during the monsoon and post-monsoon months, or only during the monsoon months.",
+        ],
+      },
+  
+      section2: {
+        title:
+          "Section 2: Cropping patterns in the Zone of Influence of the waterbody",
+        paragraphs: [
+          "This section shows the waterbody’s zone of influence (ZoI) and cropping intensities within this zone, along with the NDVI values in the area.",
+          "The ZoI of the waterbody is the area impacted by the waterbody through improved soil moisture or use of water for irrigation. Changes before and after the intervention in cropping intensities and NDVI (Normalized Difference Vegetation Index, a common remotely sensed indicator of greenness) in the ZoI can be seen through maps and graphs.",
+        ],
+      },
+  
+      section3: {
+        title:
+          "Section 3: Micro-watershed context of the waterbody and Catchment area and stream position",
+        paragraphs: [
+          "This section gives the catchment area from which runoff may drain into the waterbody. A larger catchment area would imply a higher rainfall runoff draining into the waterbody, in turn leading to more storage.This can however get impacted by blocked inlet channels and other changes.",
+          "This section also specifies whether the waterbody lies on a drainage line or off a drainage line. Waterbodies on a drainage line, like those behind checkdams, are likely to get silted more quickly. The stream order of the drainage line is also specified in this case. Higher stream orders imply larger drainage lines, and therefore likely more silting in which the waterbody lies.",
+          "An additional indicator for the watershed position of the waterbody is also provided. Waterbodies at the head of a watershed up-land areas have a position of 1, and this increases for mid-land and low-land areas. Waterbodies present in lower positions would typically see sub-surface flows from upstream areas in the watershed.",
+          "This adjacent map displays the micro-watershed boundary along with its drainage network (blue lines), showing how water flows and is distributed within the micro-watershed. The map also shows the terrain in the micro-watershed.",
+        ],
+      },
+    },
+
+    // topSectionText: (data) => {
+    //   const rImpact = Number(data.rabiImpact ?? 0);
+    //   const zImpact = Number(data.zaidImpact ?? 0);
+    
+    //   const projectName = data.projectName || "—";
+    //   const year = data.interventionYear || "—";
+    //   const total = data.totalRows || 0;
+    //   const silt = Number(data.totalSiltRemoved || 0).toLocaleString("en-IN");
+    
+    //   let parts = [];
+    
+    //   if (rImpact > 0) {
+    //     parts.push(`the impacted area in the Rabi season has improved by ${rImpact.toFixed(2)} %`);
+    //   }
+    
+    //   if (zImpact > 0) {
+    //     parts.push(`the impacted area in the Zaid season has improved by ${zImpact.toFixed(2)} %`);
+    //   }
+    
+    //   // Nothing positive → show fallback
+    //   if (parts.length === 0) {
+    //     return `Under the project ${projectName}, a total of ${total} waterbodies have been de-silted. The de-silted amount spans ${silt} m³. Click on any waterbody to view its detailed report.`;
+    //   }
+    
+    //   // Join both parts if required
+    //   const impactMessage = parts.join(" and ");
+    //   return `Under the project ${projectName}, a total of ${total} waterbodies have been de-silted. The de-silted amount spans ${silt} m³. After desilting in the intervention year ${year}, ${impactMessage}.`;
+    // },
+    
+    topSectionText: (data) => {
+      const projectName = data.projectName || "—";
+      const total = data.totalRows || 0;
+      const silt = Number(data.totalSiltRemoved || 0).toLocaleString("en-IN");
+    
+      const impactByYear = data.projectImpactByInterventionYear || {};
+    
+      // Base intro
+      let text =
+        `Under the project ${projectName}, a total of ${total} waterbodies have been de-silted. ` +
+        `The de-silted amount spans ${silt} m³.`;
+    
+      const yearLines = Object.entries(impactByYear)
+        .map(([year, val]) => {
+          if (!val.totalArea) return null;
+    
+          const rabiImpact = val.rabiImpactArea / val.totalArea;
+          const zaidImpact = val.zaidImpactArea / val.totalArea;
+    
+          const parts = [];
+    
+          if (rabiImpact > 0) {
+            parts.push(
+              `the impacted area in the Rabi season has improved by ${(rabiImpact).toFixed(2)}%`
+            );
+          }
+    
+          if (zaidImpact > 0) {
+            parts.push(
+              `the impacted area in the Zaid season has improved by ${(zaidImpact).toFixed(2)}%`
+            );
+          }
+    
+          // ❌ agar dono negative → kuch bhi mat dikhao
+          if (parts.length === 0) return null;
+    
+          return ` After desilting in the intervention year ${year}, ${parts.join(" and ")}.`;
+        })
+        .filter(Boolean)
+        .join("");
+    
+      if (!yearLines) {
+        return text + " Click on any waterbody to view its detailed report.";
+      }
+    
+      return text + yearLines;
+    },
+    
+    
+
+    tableHeaders: [
+      {
+        key: "state",
+        label: "State",
+        info: "State where the waterbody is located.",
+        filter: true,
+      },
+      {
+        key: "district",
+        label: "District",
+        info: "District in which the waterbody falls.",
+        filter: true,
+      },
+      {
+        key: "block",
+        label: "Taluka",
+        info: "Taluka (administrative block).",
+        filter: true,
+      },
+      {
+        key: "village",
+        label: "GP/Village",
+        info: "Gram Panchayat or Village.",
+        filter: true,
+      },
+
+      {
+        key: "waterbody",
+        label: "Waterbody",
+        info: "Name of waterbody.",
+        search: true,
+      },
+
+      {
+        key: "siltRemoved",
+        label: "Silt Removed (Cu.m.)",
+        info: "Total amount of silt removed.",
+        sortable: true,
+      },
+      {
+        key: "interventionYear",
+        label: "Intervention Year",
+        info: "Year of intervention.",
+      },
+      {
+        key: "areaOred",
+        label: "Size (ha)",
+        render: (row) => row.areaOred?.toFixed?.(2) ?? "NA",
+        info: "Area of waterbody in hectares.",
+      },
+
+      {
+        key: "avgWaterAvailabilityRabi",
+        label: "Mean Water Availability Rabi (%)",
+        sortable: true,
+        render: (row) => {
+          const mean = row.avgWaterAvailabilityRabi;
+          const impact = row.ImpactRabi;
+      
+          if (mean == null) return "NA";
+      
+          return (
+            <>
+              {Number(mean).toFixed(2)}
+              {impact !== undefined && (
+                <span
+                  className={`ml-1 ${
+                    impact >= 0 ? "text-green-600" : "text-red-600"
+                  }`}
+                >
+                  ({impact >= 0 ? "+" : ""}
+                  {impact.toFixed(2)})
+                </span>
+              )}
+            </>
+          );
+        },
+      },
+      {
+        key: "avgWaterAvailabilityZaid",
+        label: "Mean Water Availability Zaid (%)",
+        sortable: true,
+        render: (row) => {
+          const mean = row.avgWaterAvailabilityZaid;
+          const impact = row.ImpactZaid;
+      
+          if (mean == null) return "NA";
+      
+          return (
+            <>
+              {Number(mean).toFixed(2)}
+              {impact !== undefined && (
+                <span
+                  className={`ml-1 ${
+                    impact >= 0 ? "text-green-600" : "text-red-600"
+                  }`}
+                >
+                  ({impact >= 0 ? "+" : ""}
+                  {impact.toFixed(2)})
+                </span>
+              )}
+            </>
+          );
+        },
+      },
+      
+    ],
+  },
+
+  tehsil: {
+
+    sections: {
+      section1: {
+        title: "Section 1: Water presence and land-use change in the waterbody",
+        paragraphs: [
+          "This section shows the selected waterbody and seasonal water availability before and after the intervention, along with yearly trends of cropping patterns within the waterbody boundary.",
+          "The boundary shown for the waterbody is the maximal coverage ever gained by the waterbody over the last several years. Depending on rainfall, water use, and other factors like changes in the inlet and outlet channels of the waterbody, not all of the waterbody area will see water in a given year and some of the area may also get utilized for agriculture. This land use in each year can be observed from the map and graphs.",
+          "Similarly, the duration of water presence can be seen in terms of how much of the waterbody saw water throughout the year, or during the monsoon and post-monsoon months, or only during the monsoon months.",
+        ],
+      },
+  
+      section2: {
+        title:
+          "Section 2: Cropping patterns in the Zone of Influence of the waterbody",
+        paragraphs: [
+          "This section shows the waterbody’s zone of influence (ZoI) and cropping intensities within this zone, along with the NDVI values in the area.",
+          "The ZoI of the waterbody is the area impacted by the waterbody through improved soil moisture or use of water for irrigation. Changes before and after the RWB intervention in cropping intensities and NDVI (Normalized Difference Vegetation Index, a common remotely sensed indicator of greenness) in the ZoI can be seen through maps and graphs.",
+        ],
+      },
+  
+      section3: {
+        title:
+          "Section 3: Micro-watershed context of the waterbody and Catchment area and stream position",
+        paragraphs: [
+          "This section gives the catchment area from which runoff may drain into the waterbody. A larger catchment area would imply a higher rainfall runoff draining into the waterbody, in turn leading to more storage.This can however get impacted by blocked inlet channels and other changes.",
+          "This section also specifies whether the waterbody lies on a drainage line or off a drainage line. Waterbodies on a drainage line, like those behind checkdams, are likely to get silted more quickly. The stream order of the drainage line is also specified in this case. Higher stream orders imply larger drainage lines, and therefore likely more silting in which the waterbody lies.",
+          "An additional indicator for the watershed position of the waterbody is also provided. Waterbodies at the head of a watershed up-land areas have a position of 1, and this increases for mid-land and low-land areas. Waterbodies present in lower positions would typically see sub-surface flows from upstream areas in the watershed.",
+          "This adjacent map displays the micro-watershed boundary along with its drainage network (blue lines), showing how water flows and is distributed within the micro-watershed. The map also shows the terrain in the micro-watershed.",
+        ],
+      },
+    },
+
+    topSectionText: (data) =>
+      `In Tehsil ${data.tehsilName || "—"}, ${
+        data.totalRows || 0
+      } waterbodies were studied with a combined silt removal of ${
+        data.totalSiltRemoved || 0
+      } Cu.m. Seasonal water spread changes reflect cropping pattern variability.`,
+
+    tableHeaders: [
+      {
+        key: "district",
+        label: "District",
+        info: "District name.",
+        filter: true,
+      },
+      { key: "tehsil", label: "Tehsil", info: "Tehsil name.", filter: true },
+      { key: "village", label: "Village", info: "Village name.", filter: true },
+
+      {
+        key: "waterbody",
+        label: "Waterbody",
+        info: "Name of waterbody.",
+        search: true,
+      },
+
+      { key: "areaOred", label: "Area (ha)", info: "Area in hectares." },
+
+      {
+        key: "avgWaterAvailabilityRabi",
+        label: "Rabi Water (%)",
+        info: "Seasonal water availability in Rabi.",
+        sortable: true,
+      },
+      {
+        key: "avgWaterAvailabilityZaid",
+        label: "Zaid Water (%)",
+        info: "Seasonal water availability in Zaid.",
+        sortable: true,
+      },
+    ],
+  },
+
+
+
+  legends: {
+    waterbody: [
+      { color: "#74CCF4", label: "Kharif Water" },
+      { color: "#1ca3ec", label: "Kharif and Rabi Water" },
+      { color: "#0f5e9c", label: "Kharif, Rabi and Zaid Water" },
+    ],
+
+    zoi: [
+      { color: "#b3561d", label: "Triple Crop" },
+      { color: "#FF9371", label: "Double Crop" },
+      { color: "#f59d22", label: "Single Non-Kharif" },
+      { color: "#BAD93E", label: "Single Kharif" },
+    ],
+
+    terrain: [
+      { color: "#313695", label: "V-shape river valleys" },
+      { color: "#4575b4", label: "Midslope incised drainages" },
+      { color: "#91bfdb", label: "Local ridge/hilltops" },
+      { color: "#e0f3f8", label: "U-shape valleys" },
+      { color: "#fffc00", label: "Broad Flat Areas" },
+      { color: "#feb24c", label: "Broad open slopes" },
+      { color: "#f46d43", label: "Mesa tops" },
+      { color: "#d73027", label: "Upper Slopes" },
+      { color: "#a50026", label: "Upland incised drainages" },
+      { color: "#800000", label: "Drainage divides" },
+      { color: "#4d0000", label: "Mountain tops" },
+    ],
+
+    drainage: [
+      { color: "#03045E", label: "1" },
+      { color: "#023E8A", label: "2" },
+      { color: "#0077B6", label: "3" },
+      { color: "#0096C7", label: "4" },
+      { color: "#00B4D8", label: "5" },
+      { color: "#48CAE4", label: "6" },
+      { color: "#90E0EF", label: "7" },
+      { color: "#ADE8F4", label: "8" },
+      { color: "#CAF0F8", label: "9" },
+    ],
+  },
+
+  ndviYears: ["2017", "2018", "2019", "2020", "2021", "2022", "2023", "2024"],
+
+  sliderLayers: {
+    map1: "lulcWaterrej",
+    map2: "lulcWaterrej",
+  },
+
+  labels: {
+    clickToView:
+      "To view the detailed dashboard of a waterbody, click on its icon",
+  },
+};
+
+export const AGROFORESTRY_DASHBOARD_CONFIG = {
+  mapMode: "plantation",  
+  sections: {
+    section1: {
+      title: "Section 1: Tree Cover and Land Use Change",
+      paragraphs: [
+        "This section shows the plantation site as it looks currently. Alongside, the stacked bar chart shows the shifts in tree cover, cropland, and non-vegetated areas in the plantation site. Over time, plantations are expected to mature and gain perennial vegetation cover. The NDVI trend captures vegetation greenness over time, reflecting plantation health and growth. Seasonal fluctuations in NDVI indicate cropping patterns and phenological cycles of trees, while long-term trends indicate overall vegetation recovery.",
+      ],
+    },
+
+    section2: {
+      title: "Section 2: Soil and Site Properties",
+      paragraphs: [
+        "This section highlights the climatic, soil, and topographical characteristics of the plantation site, which influence plantation success and species selection.",
+        "Indicators such as soil texture, organic carbon, bulk density, and pH provide insights into soil fertility and water-holding capacity.",
+        "Together, these factors help assess the ecological suitability of the site for plantation interventions.",
+      ],
+    },
+  },
+  tableHeaders: [
+    {
+      key: "state",
+      label: "State",
+      filter: true,
+      info: "State where the plantation site is located.",
+    },
+    {
+      key: "district",
+      label: "District",
+      filter: true,
+      info: "District where the plantation site is located.",
+    },
+    {
+      key: "block",
+      label: "Taluka",
+      filter: true,
+      info: "Taluka where the plantation site is located.",
+    },
+    {
+      key: "village",
+      label: "GP/Village",
+      filter: true,
+      info: "GP/Village where the plantation site is located.",
+    },
+    {
+      key: "farmerName",
+      label: "Farmer's Name",
+      search: true,
+      info:
+        "Name of the Farmer whose plantation site is being monitored.",
+    },
+    {
+      key: "interventionYear",
+      label: "Intervention Year",
+      info:
+        "Year in which intervention was carried out.",
+    },
+    {
+      key: "area",
+      label: "Area (ha)",
+      info: "Total area of the plantation site.",
+      render: (row) => row.area ?? "NA",
+    },
+    {
+      key: "patchSuitability",
+      label: "Patch Suitability",
+      sortable: true,
+      info:
+        "Shows whether the plantation site is suitable or not.",
+    },
+    {
+      key: "averageTreeCover",
+      label: "Average Tree Cover (%)",
+      sortable: true,
+      info:
+        "Average tree cover of the plantation site.",
+      render: (row) => (
+        <>
+          {row.averageTreeCover ?? "NA"}
+          {row.treeCoverChange !== "NA" && (
+            <span
+              className={`ml-1 ${
+                row.treeCoverChangeColor === "green"
+                  ? "text-green-600"
+                  : row.treeCoverChangeColor === "red"
+                  ? "text-red-600"
+                  : ""
+              }`}
+            >
+              ({row.treeCoverChange > 0 ? "+" : ""}
+              {row.treeCoverChange})
+            </span>
+          )}
+        </>
+      ),
+    },
+  ],
+  topSummaryText: ({ projectName, totalRows, totalArea }) =>
+    `Under the project ${projectName || "—"},a total of , ${totalRows} sites have had plantations, covering ${totalArea} hectares. Click on any site for detailed assessment of its suitability for plantations.
+
+`,
+};
+
+

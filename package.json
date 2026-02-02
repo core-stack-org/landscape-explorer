@@ -1,4 +1,5 @@
 {
+<<<<<<< HEAD
   "name": "nrm-landscape-explorer",
   "version": "0.1.0",
   "private": true,
@@ -63,5 +64,9 @@
   },
   "devDependencies": {
     "tailwindcss": "^3.4.1"
+=======
+  "dependencies": {
+    "react-icons": "^4.10.1"
+>>>>>>> d26ded2 (Add stream raster and stream order features)
   }
 }
