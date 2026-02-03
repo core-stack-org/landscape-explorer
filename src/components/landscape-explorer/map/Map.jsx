@@ -1,4 +1,4 @@
-import React, { useRef, useState, useEffect, forwardRef, useImperativeHandle } from "react";
+ import React, { useRef, useState, useEffect, forwardRef, useImperativeHandle } from "react";
 
 // Import OL modules
 import OLMap from "ol/Map";
