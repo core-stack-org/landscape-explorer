@@ -1,0 +1,103 @@
+*{
+    font-family: 'Mulish', Helvetica, Arial, Lucida, sans-serif;
+}
+
+.wrapper_show{
+    position: absolute;
+    z-index: 1000;
+    height: 100vh;
+    width: 100%;
+    background-color: rgba(103, 103, 103, 0.5);
+    z-index: 1000;
+}
+
+.wrapper_hide{
+    position: absolute;
+    z-index: 1;
+}
+
+
+.top_menu_wrapper{
+    display: flex;
+    margin-top: 1.5em;
+    margin-left: 1em;
+    align-items: center;
+}
+
+
+.m_menu{
+  position: absolute;
+  top: 0;
+  left: 0;
+  max-width: 450px;
+  width: calc(100vw - 5em);
+  height: 100vh;
+  -moz-transform: translate3d(-450px, 0, 0);
+  -o-transform: translate3d(-450px, 0, 0);
+  -ms-transform: translate3d(-450px, 0, 0);
+  -webkit-transform: translate3d(-450px, 0, 0);
+  transform: translate3d(-450px, 0, 0);
+  -moz-transition: transform 0.35s;
+  -o-transition: transform 0.35s;
+  -webkit-transition: transform 0.35s;
+  transition: transform 0.35s;
+  z-index: 1002;
+  overflow: hidden;
+  background-color: #047857;
+  backdrop-filter: blur(10px);
+}
+
+.m_menu_visible {
+    position: absolute;
+    top: 0;
+    left: 0;
+    max-width: 600px;
+    width: calc(100vw - 5em);
+    height: 100vh;
+    -moz-transform: translate3d(0, 0, 0);
+    -o-transform: translate3d(0, 0, 0);
+    -ms-transform: translate3d(0, 0, 0);
+    -webkit-transform: translate3d(0, 0, 0);
+    transform: translate3d(0, 0, 0);
+    -moz-transition: transform 0.35s;
+    -o-transition: transform 0.35s;
+    -webkit-transition: transform 0.35s;
+    transition: transform 0.35s;
+    z-index: 1002;
+    overflow-y: scroll;
+    background-color: #4F8883;
+    backdrop-filter: blur(10px);
+    
+}
+
+.m_menu__header{
+  padding: 10px 16px;
+  /* display: -ms-flexbox;
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: flex;
+  -webkit-justify-content: space-between;
+  justify-content: space-between;
+  -ms-flex-pack: space-between;
+  -webkit-align-items: center;
+  align-items: center; */
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  width: 100%;
+  border-bottom: 1px solid #e8e8e8;
+}
+
+.m_menu__header span {
+    font-size: large;
+    font-weight: bold;
+    text-align: center;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    color: aliceblue;
+    justify-content: center;
+    font-family: 'Mulish', Helvetica, Arial, Lucida, sans-serif;
+}
+
+
