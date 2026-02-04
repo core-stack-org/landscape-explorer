@@ -1,3 +1,5 @@
+// TEST: Natural Depression & Canopy Height integration
+
 import React, { useRef, useState, useEffect, forwardRef, useImperativeHandle } from "react";
 
 // Import OL modules
