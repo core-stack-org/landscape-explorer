@@ -1,0 +1,62 @@
+{
+    "panchayat_boundaries" : {"info" : "Administrative boundaries in India are like invisible lines that separate different regions of the country, helping to organize how it's governed. These boundaries create a hierarchy of areas, starting with states at the top. States are then divided into smaller areas called districts, which are further split into blocks. Blocks are made up of even smaller units called panchayats, and panchayats contain the smallest units, which are villages. To create maps of panchayats for 15 Indian states, researchers combined the shape files of villages that belong to each panchayat. These village shape files, which show the outlines of village boundaries, were from 2001 and came from a NASA website. To figure out which villages belonged to which panchayats, they used information from the Local Government Directory. This data was then processed to create a clear map showing how villages are grouped into panchayats, helping to visualize the administrative structure of rural India.",
+    "style_url" : [{
+       "url" : "https://drive.google.com/file/d/1YjEkdjBIFJqSHVAtDmo4jF5pZ7PLQA2W/view?usp=sharing",
+        "name" : "Download Boundary Style"
+    }]
+},
+    "drainage_layer" : {"info" : "Drainage lines in hydrology are the natural pathways that water follows as it moves from higher to lower ground on Earth's surface. These pathways include streams and rivers, which are vital for transporting surface water. When it rains or snow melts, these drainage lines collect the water and carry it downhill, eventually leading it out of the area through a main outlet. To study and map these water routes, scientists use a special kind of map called a digital elevation model (DEM). This map shows the height of the land at many different points, allowing researchers to predict how water will flow across the landscape. By analyzing this information, they can create a network of streams and determine how they connect and flow into each other. This network is then organized into a system where smaller streams are given lower numbers and larger rivers are assigned higher numbers, based on how they join together. This helps scientists understand the structure and complexity of the water drainage system in a given area.",
+    "style_url" : [{
+       "url" : "https://drive.google.com/file/d/1z1xSIVFa9RrCwRdWPRxbYSjTcFg3Mz9p/view?usp=sharing",
+       "name" : "Download Drainage Style"
+    }]
+},
+    "mws_layer" : {"info" :  "A watershed is a region of land where all the water, whether from rain, melting snow, or underground sources, eventually flows to the same place. This could be a river, lake, or ocean. Think of it like a giant funnel collecting water from a wide area and channeling it to one spot. Watersheds come in different sizes, from very large areas called basins to smaller ones known as micro-watersheds. To map these areas, scientists use special tools to measure the height of the land. One such tool is called SRTM, which uses radar from space to create detailed maps of Earth's surface. These maps help researchers understand how water moves across the land and where it collects, allowing them to identify even the smallest watersheds within larger ones. This information is crucial for managing water resources, predicting floods, and understanding the environment.",
+    "style_url" : [{
+        "url" : "https://drive.google.com/file/d/1NDyHrCuezkdcZ1H5CpopYuCEPEi_B8rG/view?usp=sharing",
+        "name" : "Download MWS 17-22 Style"
+    },{
+        "url" : "https://drive.google.com/file/d/1owzdPGHhh8eSzplVtu455PeRDH1hiLlD/view?usp=sharing",
+        "name" : "Download MWS 18-23 Style"
+    }]
+},
+    "nrega_layer" : {"info" : "The Mahatma Gandhi National Rural Employment Guarantee Act, or MGNREGA, is an Indian program that guarantees paid work to rural households for various public projects. In 2018-2019, the Ministry of Rural Development listed 260 types of allowed work, including building and maintaining water conservation structures. These works were then categorized based on how they manage natural resources, their impact on agriculture at both local and broader levels, and their ability to create jobs. To track these projects, the government began using geographic tagging in September 2016, recording the location of MGNREGA assets built from January 2005 to November 2022. This information was collected through a system called Bhuvan. Additional details about each project, such as its name, type, cost, and the number of work days it provided, were stored in the NREGA Management Information System. This data helps to monitor and evaluate the program's effectiveness in providing employment and improving rural infrastructure.",
+    "style_url" : [{
+        "url" : "https://drive.google.com/file/d/13cnTfXl8yhCejWLocs0v3ZiOkAvaJBPt/view?usp=sharing",
+        "name" : "Download NREGA Classes Style"
+    }]
+},
+    "terrain_layer" : {"info" : "The Indian government's Ministry of Rural Development has a project called 'Environmental benefits of MGNREGA' that focuses on watershed development to create long-lasting and sustainable assets. This approach follows a 'ridge to valley' method, dividing the watershed into different terrain areas to build specific structures that improve water recharge and surface storage. Currently, experts identify these areas by visually observing how water flows during monsoons and categorizing each farm plot on digital land records (called cadastral maps) as upland, midland, or lowland. To improve this process, we used advanced technology to classify the terrain more accurately. We employed NASA's SRTM Digital Elevation Model, which provides detailed height information of the Earth's surface at 30-meter intervals. Using a method developed by The Nature Conservancy, we classified landforms like hilltops, valley bottoms, ridges, plains, and slopes. This classification relies on the Topographic Position Index (TPI), which compares each point's elevation to the average elevation of its surrounding area, along with the slope at that point. This more precise approach helps in better planning and implementation of watershed development projects.",
+    "style_url" : [{
+        "url" : "https://drive.google.com/file/d/13cnTfXl8yhCejWLocs0v3ZiOkAvaJBPt/view?usp=sharing",
+        "name" : "Download Terrain Vector Style"
+    }]
+},
+    "drought_layer" : {"info" : "Drought is a recurring climate issue that happens when rainfall significantly deviates from normal patterns, both in terms of where and when it falls. This lack of rain can harm crops during one or more growing seasons. To measure how severe a drought is, experts look at five main categories: rainfall, plant health, water availability, crop conditions, and other factors. These other factors include things like the prices of essential goods compared to normal, how hard it is to find drinking water, and farm worker wages. To track rainfall, we compare weekly and monthly amounts to the average over the past 30 years. When rainfall is much lower than this long-term average, it's a strong sign of drought. We pay close attention to dry spells, which happen when four weeks in a row have less than half the normal rainfall. These long dry periods can greatly reduce the amount of land where crops can be planted. Another tool we use is the Standardized Precipitation Index (SPI), which looks at monthly rainfall and compares it to what we'd typically expect based on historical patterns. All these methods help us understand how serious a drought is and how it might affect agriculture and people's lives.",
+    "style_url" : []
+},
+    "hydrological_layer" : {"info" : "The Hydrological layer encompasses several important water-related variables, including runoff, evapotranspiration, rainfall, and changes in groundwater. Surface runoff occurs when excess rainwater can't be absorbed by the soil or plants, causing it to flow over the ground. This process is a key part of the water cycle and is also called overland flow. Understanding how runoff changes over time and space is crucial for planning water harvesting structures, managing water resources effectively, boosting agricultural output, and controlling floods. A common method for calculating surface runoff from rainfall is the Soil Conservation Service Curve Number (SCS-CN) approach. This technique uses a curve number along with information about land cover, soil types, slope, and recent rainfall to estimate runoff. Evapotranspiration is another vital component of the water cycle, involving the movement of water from the earth's surface to the air. It combines water loss through plant transpiration, evaporation from bare soil and open water, and evaporation of rain caught on plant surfaces. In fact, evapotranspiration returns over 60% of land-based precipitation to the atmosphere. For this study, evapotranspiration data was sourced from NASA and USGS's FLDAS Noah land surface model, chosen for its resolution, coverage, and frequent updates. Lastly, Delta G represents changes in groundwater volume, assuming that both vertical and horizontal water movements within the aquifer balance out to zero.",
+    "style_url" : []
+},
+    "waterbodies_layer" : {"info" : "Our developed method can accurately identify water bodies of various sizes, even those as small as 1000-5000 square meters, and many even smaller than that. We can also determine how much water is available in these bodies during different seasons. By combining this information with existing census data on water bodies, we'll be able to create a detailed map showing the water capacity of different areas. To do this, we use our land use and land cover (LULC) data to find pixels that represent water in a specific region of interest. We divide the year into three agricultural seasons: Kharif (July-October), Rabi (November-February), and Zaid (March-June). For the Kharif season, we use special radar data from Sentinel-1 satellites to detect water. For the other two seasons, we use a system called Dynamic World. We then use a method that looks at how many months water is present in each season to classify each pixel. This detailed information about water storage structures, their capacity, seasonal water availability, and maintenance needs can provide valuable insights into how well a landscape can withstand droughts and floods, which is especially important as we face climate change.",
+    "style_url" : [{
+        "url" : "https://drive.google.com/file/d/1SziUOt3f9AHxY9EPau_Hb1vZUYcb9i2l/view?usp=sharing",
+        "name" : "Download Surface WB Style"
+    }]
+},
+"lulc_layer" : {"info" : "Land Use Land Cover (LULC) classification is a method used to identify different features on the Earth's surface, such as forests, rivers, croplands, or buildings, and is used for monitoring and planning land use. The LULC data is derived from multiple sources including multi-spectral data from Landsat-7, Landsat-8, Sentinel-2, MODIS, and Sentinel-1 satellite constellations, Dynamic World data, and Open Street Maps. The classification process involves a series of binary classifications, followed by error-correction layers for each LULC class. Dynamic World data is used to identify built-up areas, barren lands, and shrubs, while Sentinel-1 SAR data is used to identify water pixels, particularly in the Kharif season. Non-classified pixels are categorized into croplands and forests/trees, with further classification of cropland pixels into single Kharif, single non-Kharif, double, and triple cropping. The LULC classifier generates annual outputs from 2003 to the present, with a spatial resolution of 10m. The model has an accuracy of 83% in classifying areas by cropping intensity and 94% accuracy on standard LULC labels. LULC data is used for tracking anthropogenic activities, designing sustainable land management policies, understanding changes in crop water usage, and detecting water bodies with seasonal availability.",
+    "style_url" : [{
+        "url" : "https://drive.google.com/file/d/1ZJQ5_e_C0GBHcfhXcxsZy4je3479BNgq/view?usp=sharing",
+        "name" : "Download Level 1 Style"
+        },
+        {
+            "url" : "https://drive.google.com/file/d/1FTgc3oX_F9zoVzJq7_fYn9mEHT-u_mkG/view?usp=sharing",
+            "name" : "Download Level 2 Style"
+        },
+        {
+            "url" : "https://drive.google.com/file/d/10Pct1h3P6gBlyEg-NQ5f3qcQgixk7_PK/view?usp=sharing",
+            "name" : "Download Level 3 Style"
+        }
+    ]
+}
+}
