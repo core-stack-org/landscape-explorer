@@ -1,4 +1,4 @@
-﻿{
+{
     "panchayat_boundaries" : {"info" : "Administrative boundaries in India are like invisible lines that separate different regions of the country, helping to organize how it's governed. These boundaries create a hierarchy of areas, starting with states at the top. States are then divided into smaller areas called districts, which are further split into blocks. Blocks are made up of even smaller units called panchayats, and panchayats contain the smallest units, which are villages. To create maps of panchayats for 15 Indian states, researchers combined the shape files of villages that belong to each panchayat. These village shape files, which show the outlines of village boundaries, were from 2001 and came from a NASA website. To figure out which villages belonged to which panchayats, they used information from the Local Government Directory. This data was then processed to create a clear map showing how villages are grouped into panchayats, helping to visualize the administrative structure of rural India.",
     "style_url" : [{
        "url" : "https://drive.google.com/file/d/1YjEkdjBIFJqSHVAtDmo4jF5pZ7PLQA2W/view?usp=sharing",
@@ -58,11 +58,5 @@
             "name" : "Download Level 3 Style"
         }
     ]
-},
-    "stream_order_raster" : {"info" : "Raster representation of stream order (hierarchical ordering of drainage network). Tiles/coverages are generated per district and block as stream_order_{district}_{block}_raster.",
-        "style_url" : []
-    },
-    "stream_order_vector" : {"info" : "Vector representation of stream order (line features for stream segments with order attributes). Features are generated per district and block as stream_order_{district}_{block}_vector.",
-        "style_url" : []
-    }
+}
 }
