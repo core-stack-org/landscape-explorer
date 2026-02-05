@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+﻿import { useState, useEffect, useRef, useCallback } from "react";
 import Map from "../components/landscape-explorer/map/Map.jsx";
 import LeftSidebar from "../components/landscape-explorer/sidebar/LeftSidebar.jsx";
 import RightSidebar from "../components/landscape-explorer/sidebar/RightSidebar.jsx";
@@ -25,6 +25,10 @@ const LandscapeExplorer = () => {
   const [showRightSidebar, setShowRightSidebar] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
 
+  // Layer selection state for left sidebar
+  const [currTab, setCurrTab] = useState("panchayat_boundaries");
+  const [currSection, setCurrSection] = useState("Administrative Boundaries");
+
   // Recoil state
   const [statesData, setStatesData] = useRecoilState(stateDataAtom);
   const [state, setState] = useRecoilState(stateAtom);
@@ -44,6 +48,12 @@ const LandscapeExplorer = () => {
 
   // Track which resource category is active
   const [activeResourceCategory, setActiveResourceCategory] = useState(null);
+
+  // Handle left sidebar tab toggling
+  const toggleTabs = (name, section) => {
+    setCurrTab(name);
+    setCurrSection(section);
+  };
 
   // Set map ref with callback
   const setMapRef = useCallback((node) => {
@@ -76,6 +86,9 @@ const LandscapeExplorer = () => {
     cropintensity: false,
     soge: false,
     aquifer: false,
+    // Stream Order
+    stream_order_raster: false,
+    stream_order_vector: false,
   });
 
   // State for map view settings
@@ -375,7 +388,12 @@ const LandscapeExplorer = () => {
       </div>
       <div className="flex h-[calc(100vh-48px)]">
         {showLeftSidebar && (
-          <LeftSidebar onClose={() => setShowLeftSidebar(false)} />
+          <LeftSidebar 
+            onClose={() => setShowLeftSidebar(false)} 
+            currTab={currTab}
+            currSection={currSection}
+            toggleTabs={toggleTabs}
+          />
         )}
 
         <div className="flex-1 relative p-2">
@@ -417,6 +435,7 @@ const LandscapeExplorer = () => {
             lulcYear1={lulcYear1}
             lulcYear2={lulcYear2}
             lulcYear3={lulcYear3}
+            selectedLayer={currTab}
           />
         </div>
 

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+﻿import { useState, useEffect } from 'react';
 import SelectButton from '../../buttons/select_button';
 import { 
   downloadGeoJson, 
@@ -65,6 +65,8 @@ const hydrologyLayersData = [
   { id: 3, name: "clart", label: "CLART", hasGeojson: false, hasKml: false, hasGeoTiff: true, hasStyle : true },
   { id: 4, name: "soge", label: "SOGE", hasGeojson: true, hasKml: false, hasGeoTiff: false, hasStyle : true },
   { id: 5, name: "aquifer", label: "Aquifer", hasGeojson: true, hasKml: false, hasGeoTiff: false, hasStyle : true },
+  { id: 6, name: "stream_order_raster", label: "Stream Order (Raster)", hasGeojson: false, hasKml: false, hasGeoTiff: true, hasStyle : false },
+  { id: 7, name: "stream_order_vector", label: "Stream Order (Vector)", hasGeojson: true, hasKml: true, hasGeoTiff: false, hasStyle : false },
 ]
 
 const agriLayersData = [
@@ -430,6 +432,9 @@ const RightSidebar = ({
         case 'nrega':
           url = `https://geoserver.core-stack.org:8443/geoserver/nrega_assets/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=nrega_assets:${districtFormatted}_${blockFormatted}&outputFormat=application/json&screen=main`;
           break;
+        case 'stream_order_vector':
+          url = `https://geoserver.core-stack.org:8443/geoserver/stream_order/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=stream_order:stream_order_${districtFormatted}_${blockFormatted}_vector&outputFormat=application/json&screen=main`;
+          break;
         case 'cropping_intensity':
           url = `https://geoserver.core-stack.org:8443/geoserver/crop_intensity/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=crop_intensity:${districtFormatted}_${blockFormatted}_intensity&outputFormat=application/json&screen=main`;
           break;
@@ -464,6 +469,9 @@ const RightSidebar = ({
           break;
         case 'terrain_vector':
           url = `https://geoserver.core-stack.org:8443/geoserver/terrain/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=terrain:${districtFormatted}_${blockFormatted}_cluster&outputFormat=application/vnd.google-earth.kml+xml&screen=main`;
+          break;
+        case 'stream_order_vector':
+          url = `https://geoserver.core-stack.org:8443/geoserver/stream_order/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=stream_order:stream_order_${districtFormatted}_${blockFormatted}_vector&outputFormat=application/vnd.google-earth.kml+xml&screen=main`;
           break;
         case 'mws_layers':
           url = `https://geoserver.core-stack.org:8443/geoserver/mws_layers/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=mws_layers:deltaG_well_depth_${districtFormatted}_${blockFormatted}&outputFormat=application/vnd.google-earth.kml+xml&screen=main`;
@@ -548,6 +556,9 @@ const RightSidebar = ({
     }
     else if(layerName === 'restoration'){
       url = `https://geoserver.core-stack.org:8443/geoserver/restoration/wcs?service=WCS&version=2.0.1&request=GetCoverage&CoverageId=restoration:restoration_${districtFormatted}_${blockFormatted}_raster&format=geotiff&compression=LZW`;
+    }
+    else if (layerName === 'stream_order_raster') {
+      url = `https://geoserver.core-stack.org:8443/geoserver/stream_order/wcs?service=WCS&version=2.0.1&request=GetCoverage&CoverageId=stream_order:stream_order_${districtFormatted}_${blockFormatted}_raster&format=geotiff&compression=LZW`;
     }
     else{
       url = `https://geoserver.core-stack.org:8443/geoserver/change_detection/wcs?service=WCS&version=2.0.1&request=GetCoverage&CoverageId=change_detection:change_${districtFormatted}_${blockFormatted}_${layerName.charAt(0).toUpperCase() + layerName.slice(1)}&format=geotiff&compression=LZW`;

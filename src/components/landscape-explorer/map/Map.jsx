@@ -1,4 +1,4 @@
-import React, { useRef, useState, useEffect, forwardRef, useImperativeHandle } from "react";
+﻿import React, { useRef, useState, useEffect, forwardRef, useImperativeHandle } from "react";
 
 // Import OL modules
 import OLMap from "ol/Map";
@@ -218,6 +218,21 @@ const MapLegend = ({ toggledLayers, lulcYear1, lulcYear2, lulcYear3 }) => {
     { color: "#CAF0F8", label: "8" },
   ]
 
+  const streamOrderItems = [
+    { color: "#F5F6FE", label: "Empty" },
+    { color: "#f7fbff", label: "1" },
+    { color: "#e4eff9", label: "2" },
+    { color: "#d1e2f3", label: "3" },
+    { color: "#bad6eb", label: "4" },
+    { color: "#9ac8e0", label: "5" },
+    { color: "#73b2d8", label: "6" },
+    { color: "#529dcc", label: "7" },
+    { color: "#3585bf", label: "8" },
+    { color: "#1d6cb1", label: "9" },
+    { color: "#08519c", label: "10" },
+    { color: "#08306b", label: "11" },
+  ];
+
   const isTerrainActive = toggledLayers["terrain"]
   const isCLARTActive = toggledLayers["clart"]
   const isCropIntensityActive = toggledLayers["cropIntensity"]
@@ -236,6 +251,7 @@ const MapLegend = ({ toggledLayers, lulcYear1, lulcYear2, lulcYear3 }) => {
   const cropIntenActive = toggledLayers["cropping_intensity"]
   const NREGAActive = toggledLayers["nrega"]
   const DrainageActive = toggledLayers["drainage"]
+  const isStreamOrderActive = toggledLayers["stream_order_raster"]
 
   return (
     <div
@@ -651,6 +667,30 @@ const MapLegend = ({ toggledLayers, lulcYear1, lulcYear2, lulcYear3 }) => {
                 </div>
               )}
 
+              {/* Stream Order Section */}
+              {isStreamOrderActive && (
+                <div className="space-y-2">
+                  <h4 className="text-xs font-medium text-gray-600">Stream Order</h4>
+                  {streamOrderItems.map((item, index) => (
+                    <div
+                      key={`stream-order-${index}`}
+                      className="flex items-center gap-2"
+                    >
+                      <div
+                        className="w-4 h-4 rounded"
+                        style={{
+                          backgroundColor: item.color,
+                          border: `1px solid rgba(0,0,0,0.2)`,
+                        }}
+                      />
+                      <span className="text-sm text-gray-600">
+                        {item.label}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
               {/* LULC lvl 1 Section */}
               {lulcYear1 !== null && lulcYear1.label !== "None" && (
                 <div className="space-y-2">
@@ -819,7 +859,8 @@ const Map = forwardRef(({
   setShowVillages,
   lulcYear1,
   lulcYear2,
-  lulcYear3
+  lulcYear3,
+  selectedLayer
 }, ref) => {
   const mapElement = useRef(null);
   const mapRef = useRef(null);
@@ -855,6 +896,8 @@ const Map = forwardRef(({
     { LayerRef: useRef(null), name: "LULC_1", isRaster: true },
     { LayerRef: useRef(null), name: "LULC_2", isRaster: true },
     { LayerRef: useRef(null), name: "LULC_3", isRaster: true },
+    { LayerRef: useRef(null), name: "Stream Order Raster", isRaster: true },
+    { LayerRef: useRef(null), name: "Stream Order Vector", isRaster: false },
   ];
 
   // Track active layers
@@ -924,9 +967,11 @@ const Map = forwardRef(({
           'restoration': 'Change Detection Restoration',
           'soge': 'SOGE',
           'aquifer': 'Aquifer',
-          'mws_layers_fortnight' : 'Fortnight Hydrological Variables'
+          'mws_layers_fortnight' : 'Fortnight Hydrological Variables',
+          'stream_order_raster': 'Stream Order Raster',
+          'stream_order_vector': 'Stream Order Vector'
         };
-
+        
         const layerName = layerMap[layerId] || layerId;
 
         // Find if the layer is currently visible in our internal state
@@ -956,35 +1001,75 @@ const Map = forwardRef(({
     getMap: () => mapRef.current
   }));
 
-  // Get block features (copied from original implementation)
+  // Get block features (improved centroid extraction and error handling)
   const getblockFeatures = async (data) => {
     let coordinates = null;
-    let unAvailableStates = [];
 
-    let AdminURl = `https://geoserver.core-stack.org:8443/geoserver/panchayat_boundaries/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=panchayat_boundaries:${data.district.toLowerCase().split(" ").join("_")}_${data.block.toLowerCase().split(" ").join("_")}&outputFormat=application/json&screen=main`;
+    const sanitize = (s) =>
+      s
+        .toString()
+        .toLowerCase()
+        .replace(/\s*\(\s*/g, '_')
+        .replace(/\s*\)\s*/g, '')
+        .replace(/\s+/g, '_');
+
+    const districtName = sanitize(data.district || '');
+    const blockName = sanitize(data.block || '');
+
+    const AdminURl = `${process.env.REACT_APP_GEOSERVER_URL || 'https://geoserver.core-stack.org:8443/geoserver/'}panchayat_boundaries/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=panchayat_boundaries:${districtName}_${blockName}&outputFormat=application/json&screen=main`;
 
     try {
-      await fetch(AdminURl)
-        .then((res) => res.json())
-        .then((Geojson) => {
-          if (Geojson.features && Geojson.features.length > 0 &&
-            Geojson.features[0].geometry &&
-            Geojson.features[0].geometry.coordinates &&
-            Geojson.features[0].geometry.coordinates[0] &&
-            Geojson.features[0].geometry.coordinates[0][0] &&
-            Geojson.features[0].geometry.coordinates[0][0][0]) {
-            coordinates = Geojson.features[0].geometry.coordinates[0][0][0];
+      const res = await fetch(AdminURl);
+      if (!res.ok) {
+        console.warn(`Failed to fetch ${districtName}_${blockName}: HTTP ${res.status}`);
+      } else {
+        const Geojson = await res.json();
+        if (Geojson.features && Geojson.features.length > 0 && Geojson.features[0].geometry) {
+          const geom = Geojson.features[0].geometry;
+
+          // Compute centroid for Polygon/MultiPolygon robustly
+          const computeCentroidFromRing = (ring) => {
+            let sumX = 0,
+              sumY = 0,
+              cnt = 0;
+            for (let i = 0; i < ring.length; i++) {
+              const c = ring[i];
+              if (Array.isArray(c) && c.length >= 2) {
+                sumX += c[0];
+                sumY += c[1];
+                cnt++;
+              }
+            }
+            if (cnt === 0) return null;
+            return [sumX / cnt, sumY / cnt];
+          };
+
+          if (geom.type === 'Point') {
+            coordinates = geom.coordinates;
+          } else if (geom.type === 'Polygon') {
+            const ring = geom.coordinates && geom.coordinates[0];
+            coordinates = computeCentroidFromRing(ring) || null;
+          } else if (geom.type === 'MultiPolygon') {
+            // use first polygon's outer ring
+            const ring = geom.coordinates && geom.coordinates[0] && geom.coordinates[0][0];
+            coordinates = computeCentroidFromRing(ring) || null;
           } else {
-            console.log("Invalid GeoJSON structure for: ", data.block.toLowerCase());
-            coordinates = [78.9, 23.6]; // Fallback coordinates
+            console.warn('Unsupported geometry type:', geom.type);
           }
-        });
+        } else {
+          console.warn('No features/geometry for:', `${districtName}_${blockName}`);
+        }
+      }
     } catch (e) {
-      console.log("error in fetching for : ", data.block.toLowerCase());
-      unAvailableStates.push(data);
-      return { coordinates: [78.9, 23.6], data: data }; // Fallback coordinates
+      console.error('Error fetching admin geometry for', `${districtName}_${blockName}`, e);
     }
-    return { coordinates: coordinates || [78.9, 23.6], data: data };
+
+    // fallback to a safe coordinate if extraction failed
+    if (!coordinates || !Array.isArray(coordinates) || coordinates.length < 2) {
+      coordinates = [78.9, 23.6];
+    }
+
+    return { coordinates, data };
   };
 
   // Initialize map
@@ -1332,10 +1417,12 @@ const Map = forwardRef(({
         true,
         true
       );
-      adminLayer.setStyle(function (feature) {
-        if (!feature || !feature.values_) return null;
+      
+      if (adminLayer) {
+        adminLayer.setStyle(function (feature) {
+          if (!feature || !feature.values_) return null;
 
-        let bin = (feature.values_.P_LIT / feature.values_.TOT_P) * 100;
+          let bin = (feature.values_.P_LIT / feature.values_.TOT_P) * 100;
         if (bin < 46) {
           return new Style({
             stroke: new Stroke({
@@ -1378,7 +1465,8 @@ const Map = forwardRef(({
           })
         }
         return null;
-      });
+        });
+      }
 
       // Remove the admin Layer if exists to display only one admin layer at a time
       if (LayersArray[0].LayerRef.current != null) {
@@ -2023,20 +2111,91 @@ const Map = forwardRef(({
         LayersArray[20].LayerRef.current = fortnightLayer;
       }
 
-      // Enable Demographics layer by default
-      if (LayersArray[0].LayerRef.current && !currentLayers.includes("Demographics")) {
-        currentActiveLayers.push("Demographics");
+      // === Stream Order Raster ===
+      let StreamOrderRaster = await getImageLayers(
+        "stream_order",
+        "stream_order_" +
+        district.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_') +
+        "_" +
+        block.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_') +
+        "_raster",
+        true,
+        ""
+      );
+      console.log("Stream Order Raster:", StreamOrderRaster);
+      if (StreamOrderRaster) {
+        if (LayersArray[24].LayerRef.current != null) {
+          safeRemoveLayer(LayersArray[24].LayerRef.current);
+        }
+        LayersArray[24].LayerRef.current = StreamOrderRaster;
       }
+
+      // === Stream Order Vector ===
+      let StreamOrderVector = await getVectorLayers(
+        "stream_order",
+        "stream_order_" +
+        district.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_') +
+        "_" +
+        block.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_') +
+        "_vector",
+        true,
+        true
+      );
+
+      if (StreamOrderVector) {
+        StreamOrderVector.setStyle(function (feature) {
+          if (!feature || !feature.values_) return null;
+          return new Style({
+            stroke: new Stroke({
+              color: "#2b6cb0",
+              width: 2.0,
+            }),
+          });
+        });
+
+        if (LayersArray[25].LayerRef.current != null) {
+          safeRemoveLayer(LayersArray[25].LayerRef.current);
+        }
+        LayersArray[25].LayerRef.current = StreamOrderVector;
+      }
+
+      // Add Demographics layer to map by default
+      if (LayersArray[0].LayerRef.current) {
+        if (!currentLayers.includes("Demographics")) {
+          currentActiveLayers.push("Demographics");
+        }
+        safeAddLayer(LayersArray[0].LayerRef.current);
+      }
+
+      // Add all fetched layers to the map (they will be invisible initially)
+      LayersArray.forEach((layerObj, index) => {
+        if (layerObj.LayerRef.current && !currentActiveLayers.includes(layerObj.name)) {
+          safeAddLayer(layerObj.LayerRef.current);
+          layerObj.LayerRef.current.setVisible(false);
+        }
+      });
 
       setCurrentLayers(currentActiveLayers);
       setIsLayersFetched(true);
 
+      // Log which layers were successfully loaded
+      console.log('Successfully loaded layers:', currentActiveLayers);
+
     } catch (error) {
-      console.error("Error fetching layers:", error);
-      setLayerErrors(prev => ({
-        ...prev,
-        fetchLayers: error.message
-      }));
+      console.error("Error fetching layers:", error, error.stack);
+      // Log detailed error information
+      if (error.message) {
+        console.error("Error message:", error.message);
+      }
+      if (error.stack) {
+        console.error("Stack trace:", error.stack);
+      }
+      
+      // Don't set layer error for this - we'll handle individual layer failures
+      // setLayerErrors(prev => ({
+      //   ...prev,
+      //   fetchLayers: error.message || 'Unknown error occurred while loading layers'
+      // }));
     } finally {
       setIsLoading(false);
     }
@@ -2385,6 +2544,45 @@ const Map = forwardRef(({
       handlingExternalToggle.current = false;
     }
   }, [toggledLayers, isLayersFetched]);
+
+  // Handle selectedLayer changes from left sidebar
+  useEffect(() => {
+    if (!mapRef.current || !selectedLayer) return;
+
+    // Map sidebar selection to layer names
+    const layerMap = {
+      'panchayat_boundaries': 'Administrative Boundaries',
+      'drainage_layer': 'Drainage',
+      'mws_layer': 'Hydrological Variables',
+      'nrega_layer': 'NREGA',
+      'terrain_layer': 'Terrain',
+      'drought_layer': 'Drought',
+      'hydrological_layer': 'Hydrological Boundries',
+      'waterbodies_layer': 'Remote-Sensed Waterbodies',
+      'stream_order_raster': 'Stream Order Raster',
+      'stream_order_vector': 'Stream Order Vector',
+      'lulc_layer': lulcYear1 ? 'LULC_1' : lulcYear2 ? 'LULC_2' : 'LULC_3'
+    };
+
+    const targetLayerName = layerMap[selectedLayer];
+    if (!targetLayerName) return;
+
+    // Hide all layers except the selected one
+    LayersArray.forEach((layerInfo, index) => {
+      const layer = layerInfo.LayerRef.current;
+      if (layer) {
+        if (layerInfo.name === targetLayerName) {
+          layer.setVisible(true);
+        } else {
+          layer.setVisible(false);
+        }
+      }
+    });
+
+    // Update currentLayers state
+    setCurrentLayers([targetLayerName]);
+
+  }, [selectedLayer, lulcYear1, lulcYear2, lulcYear3]);
 
   return (
     <div className="relative w-full h-full">
