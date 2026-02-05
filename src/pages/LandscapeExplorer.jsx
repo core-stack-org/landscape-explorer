@@ -76,6 +76,8 @@ const LandscapeExplorer = () => {
     cropintensity: false,
     soge: false,
     aquifer: false,
+    stream_order_raster: false,
+    stream_order_vector: false,
   });
 
   // State for map view settings
@@ -171,6 +173,8 @@ const LandscapeExplorer = () => {
       cropintensity: false,
       soge: false,
       aquifer: false,
+      stream_order_raster: false,
+      stream_order_vector: false,
     });
 
     setLayersReady(false);

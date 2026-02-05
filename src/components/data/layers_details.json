@@ -44,6 +44,20 @@
         "name" : "Download Surface WB Style"
     }]
 },
+    "stream_order_raster" : {
+        "info" : "Rasterized stream order derived from flow accumulation and network extraction. Higher values indicate higher stream order.",
+        "style_url" : [{
+            "url" : "https://drive.google.com/file/d/1a-example-stream-raster-style/view?usp=sharing",
+            "name" : "Download Stream Order Raster Style"
+        }]
+    },
+    "stream_order_vector" : {
+        "info" : "Vector stream network with a `stream_order` attribute. Useful for GeoJSON/KML downloads and vector analyses.",
+        "style_url" : [{
+            "url" : "https://drive.google.com/file/d/1b-example-stream-vector-style/view?usp=sharing",
+            "name" : "Download Stream Order Vector Style"
+        }]
+    },
 "lulc_layer" : {"info" : "Land Use Land Cover (LULC) classification is a method used to identify different features on the Earth's surface, such as forests, rivers, croplands, or buildings, and is used for monitoring and planning land use. The LULC data is derived from multiple sources including multi-spectral data from Landsat-7, Landsat-8, Sentinel-2, MODIS, and Sentinel-1 satellite constellations, Dynamic World data, and Open Street Maps. The classification process involves a series of binary classifications, followed by error-correction layers for each LULC class. Dynamic World data is used to identify built-up areas, barren lands, and shrubs, while Sentinel-1 SAR data is used to identify water pixels, particularly in the Kharif season. Non-classified pixels are categorized into croplands and forests/trees, with further classification of cropland pixels into single Kharif, single non-Kharif, double, and triple cropping. The LULC classifier generates annual outputs from 2003 to the present, with a spatial resolution of 10m. The model has an accuracy of 83% in classifying areas by cropping intensity and 94% accuracy on standard LULC labels. LULC data is used for tracking anthropogenic activities, designing sustainable land management policies, understanding changes in crop water usage, and detecting water bodies with seasonal availability.",
     "style_url" : [{
         "url" : "https://drive.google.com/file/d/1ZJQ5_e_C0GBHcfhXcxsZy4je3479BNgq/view?usp=sharing",

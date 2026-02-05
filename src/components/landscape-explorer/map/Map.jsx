@@ -1,4 +1,4 @@
-import React, { useRef, useState, useEffect, forwardRef, useImperativeHandle } from "react";
+﻿import React, { useRef, useState, useEffect, forwardRef, useImperativeHandle } from "react";
 
 // Import OL modules
 import OLMap from "ol/Map";
@@ -218,6 +218,21 @@ const MapLegend = ({ toggledLayers, lulcYear1, lulcYear2, lulcYear3 }) => {
     { color: "#CAF0F8", label: "8" },
   ]
 
+  const streamOrderItems = [
+    { color: "#e0f7fa", label: "Order 1" },
+    { color: "#b2ebf2", label: "Order 2" },
+    { color: "#80deea", label: "Order 3" },
+    { color: "#4dd0e1", label: "Order 4" },
+    { color: "#26c6da", label: "Order 5" },
+    { color: "#00bcd4", label: "Order 6" },
+    { color: "#00acc1", label: "Order 7" },
+    { color: "#0097a7", label: "Order 8" },
+    { color: "#00838f", label: "Order 9" },
+    { color: "#006064", label: "Order 10" },
+    { color: "#004d40", label: "Order 11" },
+    { color: "#00363a", label: "Order 12" },
+  ];
+
   const isTerrainActive = toggledLayers["terrain"]
   const isCLARTActive = toggledLayers["clart"]
   const isCropIntensityActive = toggledLayers["cropIntensity"]
@@ -236,6 +251,8 @@ const MapLegend = ({ toggledLayers, lulcYear1, lulcYear2, lulcYear3 }) => {
   const cropIntenActive = toggledLayers["cropping_intensity"]
   const NREGAActive = toggledLayers["nrega"]
   const DrainageActive = toggledLayers["drainage"]
+
+  const isStreamOrderActive = toggledLayers["stream_order_raster"] || toggledLayers["stream_order_vector"]
 
   return (
     <div
@@ -634,6 +651,30 @@ const MapLegend = ({ toggledLayers, lulcYear1, lulcYear2, lulcYear3 }) => {
                   {DrainageItem.map((item, index) => (
                     <div
                       key={`trend-${index}`}
+                      className="flex items-center gap-2"
+                    >
+                      <div
+                        className="w-4 h-4 rounded"
+                        style={{
+                          backgroundColor: item.color,
+                          border: `1px solid rgba(0,0,0,0.2)`,
+                        }}
+                      />
+                      <span className="text-sm text-gray-600">
+                        {item.label}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Stream Order Section */}
+              {isStreamOrderActive && (
+                <div className="space-y-2">
+                  <h4 className="text-xs font-medium text-gray-600">Stream Order</h4>
+                  {streamOrderItems.map((item, index) => (
+                    <div
+                      key={`stream-${index}`}
                       className="flex items-center gap-2"
                     >
                       <div
