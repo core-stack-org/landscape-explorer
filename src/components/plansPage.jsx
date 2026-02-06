@@ -93,7 +93,7 @@ const PlansPage = () => {
   const mapElement = useRef(null);
   const mapRef = useRef(null);
   const navigate = useNavigate();
-  const [activeState, setActiveState] = useState(null);
+  const [activeTehsilNames, setActiveTehsilNames] = useState([]);
 
 
   //  Load Meta Stats
@@ -304,7 +304,6 @@ const PlansPage = () => {
         bubbleLayerRef.current = null;
       }
     }, 600);
-    setActiveState(stateObj);
     await fetchTehsilPlans(stateObj);
     setTimeout(() => setMapLoading(false), 300);
   };
@@ -330,6 +329,7 @@ const PlansPage = () => {
     // Switch view mode
     setIsStateView(true);
     setSelectedPlan(null);
+    setActiveTehsilNames([]);
   
     // Reset map view (optional)
     map.getView().animate({
@@ -392,6 +392,7 @@ const PlansPage = () => {
   };
 
   const buildMetaStatsFromPlans = (plans) => {
+    console.log(plans)
     const uniqueTehsils = new Set();
     const uniqueStewards = new Set();
   
@@ -453,71 +454,27 @@ const PlansPage = () => {
       (p) => String(p.organization) === String(selectedOrg.value)
     );
   }
-console.log(allPlans
-  
-)
+console.log(allPlans)
+const tehsilNameSet = new Set();
+
+allPlans.forEach((p) => {
+  if (p.tehsil_soi) {
+    const name = blockLookup[p.tehsil_soi];
+    if (name) tehsilNameSet.add(name);
+  }
+});
+
+setActiveTehsilNames(Array.from(tehsilNameSet));
+
   addPlanDots(allPlans);
   setMetaStats(buildMetaStatsFromPlans(allPlans));
   setMapLoading(false);
 
   return allPlans;
 };
+console.log(metaStats) 
 
-  
-  
-  
 
-  // const fetchTehsilPlans = async (stateObj) => {
-  //   const allBlocks = stateObj.district
-  //     ?.flatMap((d) => d.blocks)
-  //     ?.map((b) => String(b.block_id));
-  //   const selectedOrg = organizationRef.current || null;
-  //   console.log(stateObj)
-  //   const result = await getPlans(stateObj.state_id );
-  //   console.log(result)
-
-  //   let filtered = result.raw.filter((p) =>
-  //     allBlocks.includes(String(p.tehsil_soi))
-  //   );  
-    
-  //   if (selectedOrg?.value) {
-  //     filtered = filtered.filter(
-  //       (p) => String(p.organization) === String(selectedOrg.value)
-  //     );
-  //   }
-    
-  //   addPlanDots(filtered);
-  //   if (filtered.length > 0) {
-  //     const uniqueTehsils = getUniqueTehsils(filtered);
-    
-  //     uniqueTehsils.forEach(({ district, tehsil }) => {
-  //       // loadTehsilBoundary(district, tehsil);
-  //     });
-  //   }
-    
-  
-  //   return filtered;
-  // };
-
-  // const loadTehsilBoundary = async (districtName, tehsilName) => {
-  //   const map = mapRef.current;
-  //   if (!map) return;
-  
-  //   const key = `${districtName}_${tehsilName}`;
-  
-  //   // already loaded → skip
-  //   if (tehsilBoundaryRef.current[key]) return;
-  
-  //   const layer = await getVectorLayers(
-  //     "panchayat_boundaries",
-  //     key,
-  //     true
-  //   );
-  //   layer.setZIndex(10); 
-  //   tehsilBoundaryRef.current[key] = layer;
-  //   map.addLayer(layer);
-  // };
-  
   
   const addPlanDots = (plans) => {
     if (!mapRef.current) return;
@@ -689,7 +646,7 @@ console.log(allPlans
       
       <div className="flex flex-col lg:flex-row gap-6 items-stretch
                 p-4 lg:p-6 max-w-[1800px] mx-auto
-                min-h-[calc(100vh-120px)]">
+                min-h-[calc(100vh-520px)]">
       {/* MAP */}
       <div
   className="relative border border-slate-300 rounded-2xl overflow-hidden shadow-2xl
@@ -875,6 +832,28 @@ console.log(allPlans
                   </div>
                 </div>
 
+                {!isStateView && activeTehsilNames.length > 0 && (
+  <div className="px-6 pb-6">
+    <div className="border-t border-slate-200 pt-4">
+      <p className="text-xs font-semibold text-slate-600 mb-2">
+        Active Tehsils
+      </p>
+
+      <div className="flex flex-wrap gap-2 max-h-40 overflow-y-auto">
+        {activeTehsilNames.map((name, idx) => (
+          <span
+            key={idx}
+            className="px-3 py-1 text-xs rounded-full 
+                       bg-blue-50 text-blue-700 border border-blue-200"
+          >
+            {name}
+          </span>
+        ))}
+      </div>
+    </div>
+  </div>
+)}
+
                 {/* ADDITIONAL STATS ROW */}
                 {/* <div className="grid grid-cols-3 gap-3 pt-4 border-t border-slate-200">
                   <div className="text-center">
@@ -887,6 +866,9 @@ console.log(allPlans
               </div>
             </div>
           )}
+          {/* ACTIVE TEHSIL NAMES (ONLY IN TEHSIL VIEW) */}
+
+
 
           {selectedPlan && (
             <div className="w-full bg-white border border-slate-200 rounded-2xl shadow-xl overflow-hidden relative">
