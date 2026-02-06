@@ -23,12 +23,12 @@ const PlanViewPage = () => {
   const blockLookup = useRecoilValue(blockLookupAtom);
 
   const districtName = useMemo(
-    () => districtLookup[plan?.district] || plan?.district,
+    () => districtLookup[plan?.district_soi] || plan?.district_soi,
     [plan, districtLookup]
   );
 
   const blockName = useMemo(
-    () => blockLookup[plan?.block] || plan?.block,
+    () => blockLookup[plan?.tehsil_soi] || plan?.tehsil_soi,
     [plan, blockLookup]
   );
 
@@ -114,6 +114,18 @@ const PlanViewPage = () => {
   }
 
   const loadAdminBoundary = async (map, districtNameSafe, blockNameSafe) => {
+    console.group("🧱 loadAdminBoundary CALLED");
+    console.log("District (safe):", districtNameSafe);
+    console.log("Block (safe):", blockNameSafe);
+    console.log(
+      "Workspace:",
+      "panchayat_boundaries"
+    );
+    console.log(
+      "Layer key:",
+      `${districtNameSafe}_${blockNameSafe}`
+    );
+    console.log("Map instance:", map);
     await loadLULC(map, districtNameSafe, blockNameSafe);
   
     const layer = await getVectorLayers(
