@@ -216,6 +216,8 @@ const handleStyleDownload = (layerName) => {
     case 'ccd':
       url = "https://geoserver.core-stack.org:8443/geoserver/ccd/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=ccd:${districtFormatted}_${blockFormatted}_tree_health_ccd_vector_2017_2022&outputFormat=application/json&screen=main"
       break;
+    case 'tree_overall_ch':
+      url = "https://geoserver.core-stack.org:8443/geoserver/tree_overall_ch/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=tree_overall_ch:overall_change_vector_${districtFormatted}_${blockFormatted}&outputFormat=application/json&screen=main"
   }
 
 
@@ -438,6 +440,12 @@ const RightSidebar = ({
         case 'cropping_intensity':
           url = `https://geoserver.core-stack.org:8443/geoserver/crop_intensity/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=crop_intensity:${districtFormatted}_${blockFormatted}_intensity&outputFormat=application/json&screen=main`;
           break;
+        case 'ccd':
+          url = `https://geoserver.core-stack.org:8443/geoserver/ccd/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=ccd:${districtFormatted}_${blockFormatted}_tree_health_ccd_vector_2017_2022&outputFormat=application/json&screen=main`;
+          break;
+        case 'tree_overall_ch':
+          url = `https://geoserver.core-stack.org:8443/geoserver/tree_overall_ch/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=tree_overall_ch:overall_change_vector_${districtFormatted}_${blockFormatted}&outputFormat=application/json&screen=main`;
+          break;
         default:
           url = `https://geoserver.core-stack.org:8443/geoserver/${filterName}/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=${filterName}:${districtFormatted}_${blockFormatted}&outputFormat=application/json&screen=main`;
       }
@@ -488,7 +496,9 @@ const RightSidebar = ({
         case 'ccd':
           url = `https://geoserver.core-stack.org:8443/geoserver/ccd/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=ccd:${districtFormatted}_${blockFormatted}_tree_health_ccd_vector_2017_2022&outputFormat=application/vnd.google-earth.kml+xml&screen=main`;
           break;
-
+        case 'tree_overall_ch':
+          url = `https://geoserver.core-stack.org:8443/geoserver/tree_overall_ch/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=tree_overall_ch:overall_change_vector_${districtFormatted}_${blockFormatted}&outputFormat=application/vnd.google-earth.kml+xml&screen=main`;
+          break; 
         default:
           url = `https://geoserver.core-stack.org:8443/geoserver/${filterName}/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=${filterName}:${districtFormatted}_${blockFormatted}&outputFormat=application/vnd.google-earth.kml+xml&screen=main`;
       }
@@ -562,7 +572,9 @@ const RightSidebar = ({
     else if (layerName === 'tree_overall_ch') {
       url = `https://geoserver.core-stack.org:8443/geoserver/tree_overall_ch/wcs?service=WCS&version=2.0.1&request=GetCoverage&CoverageId=tree_overall_ch:overall_change_raster_${districtFormatted}_${blockFormatted}&format=geotiff&compression=LZW`;
     }
-
+    else if(layerName === 'tree health_ccd'){
+      url = `https://geoserver.core-stack.org:8443/geoserver/ccd/wcs?service=WCS&version=2.0.1&request=GetCoverage&CoverageId=ccd:tree_health_ccd_raster_${districtFormatted}_${blockFormatted}&format=geotiff&compression=LZW`;
+    }
     else{
       url = `https://geoserver.core-stack.org:8443/geoserver/change_detection/wcs?service=WCS&version=2.0.1&request=GetCoverage&CoverageId=change_detection:change_${districtFormatted}_${blockFormatted}_${layerName.charAt(0).toUpperCase() + layerName.slice(1)}&format=geotiff&compression=LZW`;
     }
