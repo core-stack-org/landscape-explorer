@@ -805,35 +805,35 @@ const WaterProjectDashboard = () => {
   
   const totalRows = rows.length;
 
-    const handleWaterbodyClick = (row) => {
-      const params = new URLSearchParams(location.search);
-    
-      params.set("type", "project");
-    
-      if (projectIdParam) {
-        params.set("projectId", projectIdParam);
-      }
-      if (projectNameParam) {
-        params.set("project_name", projectNameParam);
-      }
-    
-      //  USE waterbody_id IN URL
-      params.set("waterbody", row.waterbody_id);
-    
-      navigate(`/rwb?${params.toString()}`);
-    
-      //  MATCH FEATURE USING feature.id
-      const feature = geoData.features.find(
-        (f) => f.id === row.waterbody_id
-      );
-    
-      if (!feature) return;
-      setSelectedWaterbody(row);
-      setSelectedFeature(feature);
-      setShowMap(true);
-    
-      window.scrollTo({ top: 0, behavior: "smooth" });
-    };
+const handleWaterbodyClick = (row) => {
+  const params = new URLSearchParams(location.search);
+
+  params.set("type", "project");
+
+  if (projectIdParam) params.set("projectId", projectIdParam);
+  if (projectNameParam) params.set("project_name", projectNameParam);
+
+  params.set("waterbody", row.waterbody_id);
+
+  const feature = geoData.features.find(
+    (f) => f.id === row.waterbody_id
+  );
+  if (!feature) return;
+
+  // state updates rehne do
+  setSelectedWaterbody(row);
+  setSelectedFeature(feature);
+  setShowMap(true);
+
+  // new tab
+  const url = `/rwb?${params.toString()}`;
+  window.open(url, "_blank");
+
+  setShowMap(false);
+
+  window.scrollTo({ top: 0, behavior: "smooth" });
+};
+
     
 
   const TableLoader = () => (
