@@ -50,6 +50,16 @@ const mainCategories = [
 const landLayersData = [
   { id: 1, name: "terrain", label: "Terrain", hasGeojson: false, hasKml: false, hasGeoTiff: true, hasStyle : true},
   { id: 2, name: "terrain_vector", label: "Terrain Vector", hasGeojson: true, hasKml: true, hasStyle : true },
+  {
+  id: 3,
+  name: "natural_depression",
+  label: "Natural Depression",
+  hasGeojson: false,
+  hasKml: false,
+  hasGeoTiff: true,
+  hasStyle: true
+},
+
   { id: "lulc_level_1", name:"lulc_level_1", label: "LULC Layer Level 1" },
   { id: "lulc_level_2", name:"lulc_level_2", label: "LULC Layer Level 2" },
 ]
@@ -79,7 +89,8 @@ const restorationLayersData = [
   { id: 3, name: "degradation", label: "Change Detection Degradation", hasGeojson: false, hasKml: false, hasGeoTiff: true, hasStyle : true },
   { id: 4, name: "urbanization", label: "Change Detection Urbanization", hasGeojson: false, hasKml: false, hasGeoTiff: true, hasStyle : true },
   { id: 5, name: "cropIntensity", label: "Change Detection Crop-Intensity", hasGeojson: false, hasKml: false, hasGeoTiff: true, hasStyle : true },
-  { id: 6, name: "restoration", label: "Change Detection Restoration", hasGeojson: false, hasKml: false, hasGeoTiff: true, hasStyle : true }
+  { id: 6, name: "restoration", label: "Change Detection Restoration", hasGeojson: false, hasKml: false, hasGeoTiff: true, hasStyle : true },
+  {id: 7,name: "canopy_height",label: "Canopy Height",hasGeojson: true,hasKml: true,hasGeoTiff: false,hasStyle: false}
 ]
 
 const NREGALayerData = [
@@ -212,6 +223,11 @@ const handleStyleDownload = (layerName) => {
     case "cropIntensity":
       url = "https://drive.google.com/file/d/1OkjCjs2RF0kLCMpgnM3REE4of1GpDisn/view?usp=sharing"
       break;
+    case "natural_depression":
+      url = "https://drive.google.com/file/d/YOUR_STYLE_FILE_ID/view?usp=sharing";
+      break;
+
+
   }
 
   window.open(url, "_blank");
@@ -433,6 +449,11 @@ const RightSidebar = ({
         case 'cropping_intensity':
           url = `https://geoserver.core-stack.org:8443/geoserver/crop_intensity/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=crop_intensity:${districtFormatted}_${blockFormatted}_intensity&outputFormat=application/json&screen=main`;
           break;
+        case 'canopy_height':
+          url = `https://geoserver.core-stack.org:8443/geoserver/canopy_height/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=canopy_height:${districtFormatted}_${blockFormatted}_tree_health_ch_vector_2017_2022&outputFormat=application/json&screen=main`;
+          break;
+
+
         default:
           url = `https://geoserver.core-stack.org:8443/geoserver/${filterName}/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=${filterName}:${districtFormatted}_${blockFormatted}&outputFormat=application/json&screen=main`;
       }
@@ -479,7 +500,11 @@ const RightSidebar = ({
           break;
         case 'cropping_intensity':
           url = `https://geoserver.core-stack.org:8443/geoserver/crop_intensity/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=crop_intensity:${districtFormatted}_${blockFormatted}_intensity&outputFormat=application/vnd.google-earth.kml+xml&screen=main`;
-          break
+          break;
+        case 'canopy_height':
+          url = `https://geoserver.core-stack.org:8443/geoserver/canopy_height/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=canopy_height:${districtFormatted}_${blockFormatted}_tree_health_ch_vector_2017_2022&outputFormat=application/vnd.google-earth.kml+xml&screen=main`;
+          break;
+
         default:
           url = `https://geoserver.core-stack.org:8443/geoserver/${filterName}/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=${filterName}:${districtFormatted}_${blockFormatted}&outputFormat=application/vnd.google-earth.kml+xml&screen=main`;
       }
@@ -549,6 +574,11 @@ const RightSidebar = ({
     else if(layerName === 'restoration'){
       url = `https://geoserver.core-stack.org:8443/geoserver/restoration/wcs?service=WCS&version=2.0.1&request=GetCoverage&CoverageId=restoration:restoration_${districtFormatted}_${blockFormatted}_raster&format=geotiff&compression=LZW`;
     }
+    else if (layerName === 'natural_depression') {
+  url = `https://geoserver.core-stack.org:8443/geoserver/natural_depression/wcs?service=WCS&version=2.0.1&request=GetCoverage&CoverageId=natural_depression:natural_depression_${districtFormatted}_${blockFormatted}_raster&format=geotiff&compression=LZW`;
+    }
+
+
     else{
       url = `https://geoserver.core-stack.org:8443/geoserver/change_detection/wcs?service=WCS&version=2.0.1&request=GetCoverage&CoverageId=change_detection:change_${districtFormatted}_${blockFormatted}_${layerName.charAt(0).toUpperCase() + layerName.slice(1)}&format=geotiff&compression=LZW`;
     }

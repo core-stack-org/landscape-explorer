@@ -61,6 +61,9 @@ const MapControls = ({
         { id: 'nrega', label: 'NREGA' },
         { id: 'drought', label: 'Drought' },
         { id: 'terrain', label: 'Terrain' },
+
+        { id: 'natural_depression', label: 'Natural Depression' },
+
         { id: 'administrative_boundaries', label: 'Administrative Boundaries' },
         { id: 'cropping_intensity', label: 'Cropping Intensity' },
         { id: 'terrain_vector', label: 'Terrain Vector' },
@@ -70,6 +73,10 @@ const MapControls = ({
         { id: 'urbanization', label: 'Change Detection Urbanization' },
         { id: 'cropIntensity', label: 'Change Detection Crop-Intensity' },
         { id: 'restoration', label: 'Change Detection Restoration' },
+
+        { id: 'canopy_height', label: 'Canopy Height' },
+
+
       ].filter(layer => toggledLayers[layer.id] === true);
     }
     return [];

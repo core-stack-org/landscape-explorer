@@ -1,3 +1,4 @@
+
 import React, { useRef, useState, useEffect, forwardRef, useImperativeHandle } from "react";
 
 // Import OL modules
@@ -218,6 +219,18 @@ const MapLegend = ({ toggledLayers, lulcYear1, lulcYear2, lulcYear3 }) => {
     { color: "#CAF0F8", label: "8" },
   ]
 
+  const naturalDepressionLegendItems = [
+  { color: "#ffffcc", label: "≤ 1" },
+  { color: "#a1dab4", label: "1 - 3" },
+  { color: "#2c7fb8", label: "3 - 5" },
+  { color: "#253494", label: "5 - 10" },
+  { color: "#2e004f", label: "10 - 20" },
+  { color: "#67001f", label: "20 - 50" },
+  { color: "#990000", label: "> 50" },
+];
+
+
+
   const isTerrainActive = toggledLayers["terrain"]
   const isCLARTActive = toggledLayers["clart"]
   const isCropIntensityActive = toggledLayers["cropIntensity"]
@@ -236,6 +249,10 @@ const MapLegend = ({ toggledLayers, lulcYear1, lulcYear2, lulcYear3 }) => {
   const cropIntenActive = toggledLayers["cropping_intensity"]
   const NREGAActive = toggledLayers["nrega"]
   const DrainageActive = toggledLayers["drainage"]
+
+  const isNaturalDepressionActive = toggledLayers["natural_depression"];
+
+
 
   return (
     <div
@@ -314,6 +331,36 @@ const MapLegend = ({ toggledLayers, lulcYear1, lulcYear2, lulcYear3 }) => {
                   ))}
                 </div>
               )}
+
+
+              {/* Natural Depression Section */}
+{isNaturalDepressionActive && (
+  <div className="space-y-2">
+    <h4 className="text-xs font-medium text-gray-600">
+      Natural Depression
+    </h4>
+
+    {naturalDepressionLegendItems.map((item, index) => (
+      <div
+        key={`natural-depression-${index}`}
+        className="flex items-center gap-2"
+      >
+        <div
+          className="w-4 h-4 rounded"
+          style={{
+            backgroundColor: item.color,
+            border: "1px solid rgba(0,0,0,0.2)",
+          }}
+        />
+        <span className="text-sm text-gray-600">
+          {item.label}
+        </span>
+      </div>
+    ))}
+  </div>
+)}
+
+
 
               {/* CLART Section */}
               {isCLARTActive && (
@@ -855,6 +902,12 @@ const Map = forwardRef(({
     { LayerRef: useRef(null), name: "LULC_1", isRaster: true },
     { LayerRef: useRef(null), name: "LULC_2", isRaster: true },
     { LayerRef: useRef(null), name: "LULC_3", isRaster: true },
+
+    { LayerRef: useRef(null), name: "Natural Depression", isRaster: true },
+    { LayerRef: useRef(null), name: "Canopy Height", isRaster: false },
+
+
+
   ];
 
   // Track active layers
@@ -924,7 +977,15 @@ const Map = forwardRef(({
           'restoration': 'Change Detection Restoration',
           'soge': 'SOGE',
           'aquifer': 'Aquifer',
+
+          'mws_layers_fortnight' : 'Fortnight Hydrological Variables',
+          'canopy_height': 'Canopy Height',
+
+          'natural_depression': 'Natural Depression',
+
+
           'mws_layers_fortnight' : 'Fortnight Hydrological Variables'
+
         };
 
         const layerName = layerMap[layerId] || layerId;
@@ -1621,6 +1682,29 @@ const Map = forwardRef(({
         LayersArray[8].LayerRef.current = TerrainLayer;
       }
 
+      // === Natural Depression Layer ===
+let NaturalDepressionLayer = await getImageLayers(
+  "natural_depression",
+  "natural_depression_" +
+    district.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_') +
+    "_" +
+    block.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_') +
+    "_raster",
+  true,
+  "natural_depression_style" // optional style name
+);
+
+if (NaturalDepressionLayer) {
+  // find index = Terrain index + 1 (you added it there)
+  const idx = 9; // adjust if needed
+  if (LayersArray[idx].LayerRef.current != null) {
+    safeRemoveLayer(LayersArray[idx].LayerRef.current);
+  }
+  LayersArray[idx].LayerRef.current = NaturalDepressionLayer;
+}
+
+
+
       // === Admin Without Metadata Layer ===
       let AdminBoundaryLayer = await getVectorLayers(
         "panchayat_boundaries",
@@ -1997,6 +2081,39 @@ const Map = forwardRef(({
         LayersArray[19].LayerRef.current = AquiferLayer;
       }
 
+
+      // === Canopy Height Layer (Vector | Restoration) ===
+let CanopyHeightLayer = await getVectorLayers(
+  "canopy_height",
+  district.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_') +
+  "_" +
+  block.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_') +
+  "_tree_health_ch_vector_2017_2022",
+  true,
+  true
+);
+
+if (CanopyHeightLayer) {
+  CanopyHeightLayer.setStyle(function (feature) {
+    return new Style({
+      fill: new Fill({
+        color: "rgba(34, 139, 34, 0.5)", // forest green
+      }),
+      stroke: new Stroke({
+        color: "#145A32",
+        width: 1,
+      }),
+    });
+  });
+
+  if (LayersArray[20].LayerRef.current != null) {
+    safeRemoveLayer(LayersArray[20].LayerRef.current);
+  }
+  LayersArray[20].LayerRef.current = CanopyHeightLayer;
+}
+
+
+
       // === Fortnight Well Depth ===
       let fortnightLayer = await getVectorLayers(
         "mws_layers",
@@ -2020,7 +2137,11 @@ const Map = forwardRef(({
         if (LayersArray[20].LayerRef.current != null) {
           safeRemoveLayer(LayersArray[20].LayerRef.current);
         }
+
+        LayersArray[21].LayerRef.current = fortnightLayer;
+
         LayersArray[20].LayerRef.current = fortnightLayer;
+
       }
 
       // Enable Demographics layer by default
@@ -2364,7 +2485,14 @@ const Map = forwardRef(({
           'restoration': 'Change Detection Restoration',
           'soge': 'SOGE',
           'aquifer': 'Aquifer',
+
+          'mws_layers_fortnight' : 'Fortnight Hydrological Variables',
+          'canopy_height': 'Canopy Height',
+
+          'natural_depression': 'Natural Depression',
+
           'mws_layers_fortnight' : 'Fortnight Hydrological Variables'
+
         };
 
         const layerName = layerMap[id];
