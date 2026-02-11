@@ -61,6 +61,13 @@ export const getWaterbodyData = async ({
   
     wbSource.loadFeatures(extent, view.getResolution(), view.getProjection());
     const wbFeatures = await waitForFeatures(wbSource);
+
+
+    // Remove properties
+    wbFeatures.forEach(f => {
+      f.setProperties({}, true); // clears all attribute
+      });
+
   
     let matchedWaterbody = null;
   
@@ -87,6 +94,12 @@ export const getWaterbodyData = async ({
     const mwsSource = mwsLayer.getSource();
     mwsSource.loadFeatures(extent, view.getResolution(), view.getProjection());
     const mwsFeatures = await waitForFeatures(mwsSource);
+
+
+    mwsFeatures.forEach(f => {
+      f.setProperties({}, true);
+    });
+
   
   
     let matchedMWS = [];
@@ -135,6 +148,11 @@ if (zoiLayer) {
   zoiSource.loadFeatures(extent, view.getResolution(), view.getProjection());
 
   rawZoiFeatures = await waitForFeatures(zoiSource);
+
+  rawZoiFeatures.forEach(f => {
+  f.setProperties({}, true);
+});
+
 
   // Match only for selected WB
   if (matchedWaterbody) {
