@@ -10,8 +10,18 @@ export const downloadGeoJson = async (url, layerName) => {
       throw new Error(`HTTP error! Status: ${response.status}`);
     }
 
-    const data = await response.text();
-    const blob = new Blob([data], { type: 'application/json' });
+    const data = await response.json();
+   // Make properties null ONLY for demographics layer
+    if (layerName === "administrative_boundaries" && data && data.features) {
+      data.features.forEach(feature => {
+        feature.properties = null;
+      });
+    }
+
+    const blob = new Blob([JSON.stringify(data, null, 2)], { 
+  type: 'application/json' 
+});
+
     const objectUrl = URL.createObjectURL(blob);
 
     const link = document.createElement('a');
