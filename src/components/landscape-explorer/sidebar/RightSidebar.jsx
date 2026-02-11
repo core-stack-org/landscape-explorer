@@ -56,7 +56,15 @@ const landLayersData = [
 
 const climateLayersData = [
   { id: 1, name: "mws_layers", label: "Hydrological Variables (Precipitation, ET, Groundwater, etc.)", hasGeojson: true, hasKml: true, hasStyle : true },
-  { id: 2, name: "mws_layers_fortnight", label: "Fortnightly Hydrological Variables (Precipitation, ET, Groundwater, etc.)", hasGeojson: true, hasKml: true, hasStyle : false }
+  { id: 2, name: "mws_layers_fortnight", label: "Fortnightly Hydrological Variables (Precipitation, ET, Groundwater, etc.)", hasGeojson: true, hasKml: true, hasStyle : false },
+  { 
+    id: 3, 
+    name: "hydrological_boundaries", 
+    label: "Hydrological Boundaries (Precipitation, ET, Groundwater, etc.)", 
+    hasGeojson: true, 
+    hasKml: true, 
+    hasStyle : true 
+  }
 ]
 
 const hydrologyLayersData = [
@@ -433,7 +441,12 @@ const RightSidebar = ({
         case 'cropping_intensity':
           url = `https://geoserver.core-stack.org:8443/geoserver/crop_intensity/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=crop_intensity:${districtFormatted}_${blockFormatted}_intensity&outputFormat=application/json&screen=main`;
           break;
-        default:
+        case 'hydrological_boundaries':
+          url = `https://geoserver.core-stack.org:8443/geoserver/ows?service=WFS&version=1.1.0&request=GetFeature&typeName=mws_layers:deltaG_well_depth_${districtFormatted}_${blockFormatted}&outputFormat=application/json`;
+          break;
+
+
+          default:
           url = `https://geoserver.core-stack.org:8443/geoserver/${filterName}/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=${filterName}:${districtFormatted}_${blockFormatted}&outputFormat=application/json&screen=main`;
       }
 
@@ -479,7 +492,14 @@ const RightSidebar = ({
           break;
         case 'cropping_intensity':
           url = `https://geoserver.core-stack.org:8443/geoserver/crop_intensity/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=crop_intensity:${districtFormatted}_${blockFormatted}_intensity&outputFormat=application/vnd.google-earth.kml+xml&screen=main`;
-          break
+          break;
+        case 'hydrological_boundaries':
+          url = `https://geoserver.core-stack.org:8443/geoserver/ows?service=WFS&version=1.1.0&request=GetFeature&typeName=mws_layers:deltaG_well_depth_${districtFormatted}_${blockFormatted}&outputFormat=application/vnd.google-earth.kml+xml`;
+          break;
+
+
+
+
         default:
           url = `https://geoserver.core-stack.org:8443/geoserver/${filterName}/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=${filterName}:${districtFormatted}_${blockFormatted}&outputFormat=application/vnd.google-earth.kml+xml&screen=main`;
       }
