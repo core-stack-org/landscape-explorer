@@ -1,70 +1,123 @@
-# Getting Started with Create React App
+# Landscape Explorer
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+Landscape Explorer is a **React-based web application** for visualizing geospatial data using interactive maps. It enables users to explore landscapes through administrative boundaries, filters, and pattern-based visualizations.
 
-## Available Scripts
+---
 
-In the project directory, you can run:
+## Tech Stack
 
-### `npm start`
+- React
+- OpenLayers
+- Node.js / npm
+- GeoServer
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+---
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+## 📦 Prerequisites
 
-### `npm test`
+Ensure the following are installed:
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+- Node.js (v16+ recommended)
+- npm
 
-### `npm run build`
+---
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+## 🛠️ Setup & Installation
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+### 1. Clone the repository
+```bash
+git clone https://github.com/core-stack-org/landscape-explorer.git
+cd landscape-explorer
+```
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+### 2. Install dependencies
+```bash
+npm install
+```
 
-### `npm run eject`
+### 3. Environment Variables Setup
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+Create a .env file in the root directory of the project where the package.json is located.
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+```bash
+touch .env
+```
+Add the following variables to .env
+```env
+REACT_APP_API_URL="https://geoserver.core-stack.org/api/v1"
+REACT_APP_GOOGLE_KEY="xxx"
+REACT_APP_GEOSERVER_URL="https://geoserver.core-stack.org:8443/geoserver/"
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+# Google Analytics
+REACT_APP_GA_MEASUREMENT_ID="xxx"
+REACT_APP_API_KEY="xxx"
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+# MANVI environment variables
+REACT_APP_WATERBODYREJ_USERNAME="xxx"
+REACT_APP_WATERBODYREJ_PASSWORD="xxx"
+REACT_APP_BASEURL="https://geoserver.core-stack.org"
+```
+### 4. Running the Application
 
-## Learn More
+```bash
+npm run start
+```
+The application will be available at:
+```bash
+http://localhost:3000
+```
+### Common Issue: react-icons/gi Not Found
+In some cases, after running npm install, the application may fail to start due to a missing react-icons/gi module.
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+#### Fix
+Install the missing dependency manually:
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+```bash
+npm install react-icons
+```
+Then restart the development server:
+```bash
+npm run start
+```
 
-### Code Splitting
+## 🤝 Contributing
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+We welcome contributions to **Landscape Explorer**. Please follow the guidelines below to ensure a smooth collaboration process.
 
-### Analyzing the Bundle Size
+---
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+### Getting Started
 
-### Making a Progressive Web App
+1. **Fork the Repository**  
+   Create your own fork of the repository to start working on the codebase.
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+2. **Clone Your Fork**
+   ```bash
+   git clone https://github.com/core-stack-org/landscape-explorer.git
+   cd landscape-explorer
+   ```
+3. **Work on the development Branch**
+    Always switch to the development branch before starting your work:
+   ```
+   git checkout development
+   ```
 
-### Advanced Configuration
+### Working on Issues
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
+If you want to work on an existing issue:
+1. Comment on the issue expressing your interest.
+2. Tag any of the repository maintainers.
+3. Wait until the issue is officially assigned to you.
+4. After assignment, start working on the implementation.
+5. Submit your changes through a Pull Request.
 
-### Deployment
+### Submitting a Pull Request
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
+Ensure your branch is updated with the latest `development` branch.
 
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+1. Push your changes to your fork.
+2. Create a Pull Request (PR) targeting the `development` branch.
+3. Provide a clear description of:
+   - What changes were made
+   - Why the changes were made
+   - Any related issue number (if applicable)
