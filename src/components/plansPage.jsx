@@ -372,34 +372,27 @@
       });
     };
 
-    const transformName = (name) => {
-      if (!name) return "";
-    
-      // Extract base + alias from parentheses
-      const match = name.match(/^(.+?)\s*\((.+?)\)$/);
-    
-      let parts = [];
-    
-      if (match) {
-        const main = match[1];
-        const alias = match[2];
-    
-        parts = [main, alias];
-      } else {
-        // no parentheses → repeat twice
-        parts = [name];
-      }
-    
-      return parts
-        .map((p) =>
-          p
-            .replace(/[^\w\s-]/g, "") // remove special chars
-            .replace(/\s+/g, "_")     // Space
-            .replace(/_+/g, "_")      // collapse _
-            .replace(/^_|_$/g, "")    // trim _
-            .toLowerCase()
-        )
-        .join("_");
+  const buildMetaStatsFromPlans = (plans) => {
+    const uniqueTehsils = new Set();
+    const uniqueStewards = new Set();
+  
+    plans.forEach((p) => {
+      if (p.tehsil_soi) uniqueTehsils.add(p.tehsil_soi);
+      if (p.facilitator_id) uniqueStewards.add(p.facilitator_id);
+    });
+  
+    return {
+      summary: {
+        total_plans: plans.length,
+        dpr_generated: plans.filter(p => p.is_dpr_generated).length,
+        dpr_reviewed: plans.filter(p => p.is_dpr_approved).length,
+      },
+      commons_connect_operational: {
+        active_tehsils: uniqueTehsils.size,
+      },
+      landscape_stewards: {
+        total_stewards: uniqueStewards.size,
+      },
     };
 
     const buildMetaStatsFromPlans = (plans) => {
