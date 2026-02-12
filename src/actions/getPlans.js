@@ -3,6 +3,7 @@ export default async function getPlans(filters = {}) {
   const params = new URLSearchParams();
 
   if (filters.state) params.append("state", filters.state);
+  if (filters.district) params.append("district", filters.district);
   if (filters.block) params.append("block", filters.block);
   if (filters.tehsil) params.append("tehsil", filters.tehsil);
   if (filters.filter_test_plan)

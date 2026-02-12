@@ -728,10 +728,19 @@ const WaterProjectDashboard = () => {
       };
     });
 
+    const smallWaterbodies = mappedRows.filter(
+      (row) => Number(row.areaOred) <= 5
+    );
+
     // TOTALS
     const totalAreaOred = computeTotalAreaOred(mappedRows);
     const totalRabiImpactedArea = computeTotalRabiImpactedArea(mappedRows);
     const totalZaidImpactedArea = computeTotalZaidImpactedArea(mappedRows);
+
+//     const totalAreaOred = computeTotalAreaOred(smallWaterbodies);
+// const totalRabiImpactedArea = computeTotalRabiImpactedArea(smallWaterbodies);
+// const totalZaidImpactedArea = computeTotalZaidImpactedArea(smallWaterbodies);
+
 
     return {
       rows: mappedRows,
@@ -776,8 +785,14 @@ const WaterProjectDashboard = () => {
   
   const projectSummaryByInterventionYear = useMemo(() => {
     if (!rows?.length) return {};
+
+    const smallWaterbodies = rows.filter(
+          (row) => Number(row.areaOred) <= 5
+          // (row) => Number(row.areaOred) > 5 && Number(row.areaOred) <= 10
+        );
   
     return rows.reduce((acc, row) => {
+      // return smallWaterbodies.reduce((acc, row) => {
       const year = row.interventionYear;
       if (!year) return acc;
   
@@ -802,6 +817,39 @@ const WaterProjectDashboard = () => {
     }, {});
   }, [rows]);
 
+  // const projectSummaryByInterventionYear = useMemo(() => {
+  //   if (!rows?.length) return {};
+  
+  //   //  Only waterbodies <= 5 hectares
+  //   const smallWaterbodies = rows.filter(
+  //     (row) => Number(row.areaOred) <= 5
+  //   );
+  
+  //   return smallWaterbodies.reduce((acc, row) => {
+  //     const year = row.interventionYear;
+  //     if (!year) return acc;
+  
+  //     if (!acc[year]) {
+  //       acc[year] = {
+  //         interventionYear: year,
+  //         waterbodyCount: 0,
+  //         totalSiltRemoved: 0,
+  //         totalAreaOred: 0,
+  //         totalRabiImpactArea: 0,
+  //         totalZaidImpactArea: 0,
+  //       };
+  //     }
+  
+  //     acc[year].waterbodyCount += 1;
+  //     acc[year].totalSiltRemoved += Number(row.siltRemoved) || 0;
+  //     acc[year].totalAreaOred += Number(row.areaOred) || 0;
+  //     acc[year].totalRabiImpactArea += Number(row.rabiImpactedArea) || 0;
+  //     acc[year].totalZaidImpactArea += Number(row.zaidImpactedArea) || 0;
+  
+  //     return acc;
+  //   }, {});
+  // }, [rows]);
+  
   
   const totalRows = rows.length;
 
@@ -1332,4 +1380,5 @@ const handleWaterbodyClick = (row) => {
 };
 
 export default WaterProjectDashboard;
+
 
