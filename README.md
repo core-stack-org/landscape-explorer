@@ -1,10 +1,10 @@
-# 🌍 Landscape Explorer
+# Landscape Explorer
 
 Landscape Explorer is a **React-based web application** for visualizing geospatial data using interactive maps. It enables users to explore landscapes through administrative boundaries, filters, and pattern-based visualizations.
 
 ---
 
-## 🚀 Tech Stack
+## Tech Stack
 
 - React
 - OpenLayers
@@ -79,3 +79,45 @@ Then restart the development server:
 ```bash
 npm run start
 ```
+
+## 🤝 Contributing
+
+We welcome contributions to **Landscape Explorer**. Please follow the guidelines below to ensure a smooth collaboration process.
+
+---
+
+### Getting Started
+
+1. **Fork the Repository**  
+   Create your own fork of the repository to start working on the codebase.
+
+2. **Clone Your Fork**
+   ```bash
+   git clone https://github.com/core-stack-org/landscape-explorer.git
+   cd landscape-explorer
+   ```
+3. **Work on the development Branch**
+    Always switch to the development branch before starting your work:
+   ```
+   git checkout development
+   ```
+
+### Working on Issues
+
+If you want to work on an existing issue:
+1. Comment on the issue expressing your interest.
+2. Tag any of the repository maintainers.
+3. Wait until the issue is officially assigned to you.
+4. After assignment, start working on the implementation.
+5. Submit your changes through a Pull Request.
+
+### Submitting a Pull Request
+
+Ensure your branch is updated with the latest `development` branch.
+
+1. Push your changes to your fork.
+2. Create a Pull Request (PR) targeting the `development` branch.
+3. Provide a clear description of:
+   - What changes were made
+   - Why the changes were made
+   - Any related issue number (if applicable)
