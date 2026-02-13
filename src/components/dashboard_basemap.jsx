@@ -175,7 +175,7 @@
         .map((p) =>
           p
             .replace(/[^\w\s-]/g, "") // remove special chars
-            .replace(/\s+/g, "_")     // Space
+            .replace(/[-\s]+/g, "_")  // space/dash → _
             .replace(/_+/g, "_")      // collapse _
             .replace(/^_|_$/g, "")    // trim _
             .toLowerCase()
@@ -1638,10 +1638,6 @@ if (!hasProject && (lat == null || lon == null) && props?.geometry) {
   };
 
   console.log(selectedWaterbody)
-
-
-  
-  
 
     return (
       <div className="relative w-full overflow-visible">
