@@ -48,8 +48,7 @@
     organizationLabel,
     showMap,
     onMapReady,
-    styleHeight = "900px",
-
+    interventionYear
   }) => {
     const mapRef = useRef(null);
     const mapElement = useRef(null);
@@ -65,7 +64,8 @@
     const [selectedZoiFeature, setSelectedZoiFeature] = useState(null);
     const [zoiAreaState, setZoiAreaState] = useState(null)
     const [radiusState, setRadiusState] = useState(null);
-    console.log(mwsData)
+
+    console.log(selectedWaterbody)
     
     const getWBProps = (wb) => {
       if (!wb) return {};
@@ -156,26 +156,21 @@
     
     const transformName = (name) => {
       if (!name) return "";
-    
       // Extract base + alias from parentheses
       const match = name.match(/^(.+?)\s*\((.+?)\)$/);
-    
       let parts = [];
-    
       if (match) {
         const main = match[1];
         const alias = match[2];
-    
         parts = [main, alias];
       } else {
         parts = [name];
       }
-    
       return parts
         .map((p) =>
           p
             .replace(/[^\w\s-]/g, "") // remove special chars
-            .replace(/[-\s]+/g, "_")  // space/dash → _
+            .replace(/\s+/g, "_")     // Space
             .replace(/_+/g, "_")      // collapse _
             .replace(/^_|_$/g, "")    // trim _
             .toLowerCase()
@@ -213,7 +208,8 @@
             width: 3,
           }),
           fill: new Fill({
-            color: "rgba(70, 130, 180, 0.9)"             })
+            color: "rgba(255, 255, 255, 0.65)",
+          })
         }),
       ];
 
@@ -248,22 +244,6 @@
       }
       return styles;
     };
-
-    const plantationPointStyle = new Style({
-      image: new Icon({
-        src: plantationIcon,
-        scale: 1.2,
-        anchor: [0.5, 1],
-      }),
-    })
-
-    const waterbodyPointStyle = new Style({
-      image: new Icon({
-        src: waterbodyIcon,
-        scale: 1.1,
-        anchor: [0.5, 1],
-      }),
-    });
     
     const removeLayersById = (ids = []) => {
       const m = mapRef.current;
@@ -498,6 +478,7 @@
       props.Intervention_Year ||
       props.INTERVENTION_YEAR ||
       props.intv_year ||
+      props.interventionYear ||
       null,
       latitude: props.latitude ?? props.Latitude ?? props.lat ?? null,
       longitude: props.longitude ?? props.Longitude ?? props.lon ?? null,
@@ -1278,10 +1259,7 @@
       return;
     }
 
-    /* =====================================================
-        TEHSIL MODE — SINGLE MWS (UNCHANGED)
-    ===================================================== */
-   /* ===============================
+  /* ===============================
       TEHSIL MODE — MULTIPLE MWS
 ================================ */
 if (isTehsil) {
@@ -1637,7 +1615,11 @@ if (!hasProject && (lat == null || lon == null) && props?.geometry) {
     return isNaN(num) ? "NA" : num.toFixed(4);   // <-- only 4 decimals
   };
 
-  console.log(selectedWaterbody)
+  const validInterventionYear =
+  props?.intervention_year &&
+  props?.intervention_year !== 0 &&
+  props?.intervention_year !== "0";
+
 
     return (
       <div className="relative w-full overflow-visible">
@@ -1874,7 +1856,7 @@ if (!hasProject && (lat == null || lon == null) && props?.geometry) {
               )}
 
             {/* YEAR SLIDER — ONLY FOR WATERBODY */}
-            {mode === "waterbody" && selectedWaterbody && (
+            {mode === "waterbody" && selectedWaterbody &&  (
               <div
                 className="absolute left-4 right-4 flex justify-end bottom-16"
             
@@ -1893,7 +1875,7 @@ if (!hasProject && (lat == null || lon == null) && props?.geometry) {
                   <YearSlider
                     currentLayer={{ name: 'lulcWaterrej' }}
                     sliderId="map1"
-                    interventionYear={props?.intervention_year}
+                    interventionYear={interventionYear}
                   />
                 </div>
               </div>
@@ -1981,9 +1963,10 @@ if (!hasProject && (lat == null || lon == null) && props?.geometry) {
                 
               >
                 <YearSlider
+                key={`zoi-${interventionYear}`} 
                   currentLayer={{ name: "lulcWaterrej" }}
                   sliderId="map2"
-                  interventionYear={props?.intervention_year}
+                  interventionYear={interventionYear}
                 />
               </div>
             </div>
@@ -2189,4 +2172,3 @@ if (!hasProject && (lat == null || lon == null) && props?.geometry) {
   };
 
   export default DashboardBasemap;
-
