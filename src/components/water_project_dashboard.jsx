@@ -107,10 +107,7 @@ const WaterProjectDashboard = () => {
     useEffect(() => {
       if (!isTehsilMode) return;
       if (!tehsilMap) return;
-      if (!districtParam || !blockParam) return;
-    
-      if (mwsFromLocalStorage?.length && selectedWaterbodyForTehsil) return;
-    
+      if (!districtParam || !blockParam) return;    
     
       const fetchTehsilData = async () => {
         const result = await getWaterbodyData({
@@ -139,6 +136,14 @@ const WaterProjectDashboard = () => {
       blockParam,
       waterbodyParam,
     ]);
+
+    useEffect(() => {
+      localStorage.removeItem("selectedWaterbody");
+      localStorage.removeItem("matched_mws_features");
+    
+      setSelectedWaterbodyForTehsil(null);
+      setMwsFromLocalStorage(null);
+    }, [waterbodyParam]);
     
   const matchedMwsOlFeatures = useMemo(() => {
     if (!mwsFromLocalStorage?.length) return [];
