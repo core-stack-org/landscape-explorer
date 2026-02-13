@@ -108,7 +108,6 @@ const WaterProjectDashboard = () => {
       if (!isTehsilMode) return;
       if (!tehsilMap) return;
       if (!districtParam || !blockParam) return;    
-    
       const fetchTehsilData = async () => {
         const result = await getWaterbodyData({
           district: { label: districtParam },
