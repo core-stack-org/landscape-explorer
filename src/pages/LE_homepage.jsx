@@ -28,8 +28,6 @@ export default function KYLHomePage() {
   const [state, setState] = useRecoilState(stateAtom);
   const [district, setDistrict] = useRecoilState(districtAtom);
   const [block, setBlock] = useRecoilState(blockAtom);
-  const [showOverlay, setShowOverlay] = useState(false);
-  const [showVideo, setShowVideo] = useState(false);
 
   useEffect(() => {
     initializeAnalytics();

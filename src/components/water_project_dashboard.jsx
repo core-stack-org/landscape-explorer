@@ -57,18 +57,18 @@ const WaterProjectDashboard = () => {
     const blockParam = params.get("block");
   
     const waterbodyParam = params.get("waterbody");
-  const isTehsilMode = typeParam === "tehsil";
-  const geoData = isTehsilMode ? selectedWaterbodyForTehsil : tempGeoData
-  const mwsGeoData = useRecoilValue(waterMwsDataAtom);
-  const projectZoi = useRecoilValue(zoiFeaturesAtom);
-  const tehsilZoi = useRecoilValue(tehsilZoiFeaturesAtom);
-  const zoiFeatures = isTehsilMode ? tehsilZoi : projectZoi;
-  const activeSelectedWaterbody = isTehsilMode ? selectedWaterbodyForTehsil : selectedWaterbody;
+    const isTehsilMode = typeParam === "tehsil";
+    const geoData = isTehsilMode ? selectedWaterbodyForTehsil : tempGeoData
+    const mwsGeoData = useRecoilValue(waterMwsDataAtom);
+    const projectZoi = useRecoilValue(zoiFeaturesAtom);
+    const tehsilZoi = useRecoilValue(tehsilZoiFeaturesAtom);
+    const zoiFeatures = isTehsilMode ? tehsilZoi : projectZoi;
+    const activeSelectedWaterbody = isTehsilMode ? selectedWaterbodyForTehsil : selectedWaterbody;
 
-  const [view, setView] = useState(
-    isTehsilMode ? "map" : typeParam === "tehsil" ? "map" : "table"
-  );
-console.log(tehsilZoi)
+    const [view, setView] = useState(
+      isTehsilMode ? "map" : typeParam === "tehsil" ? "map" : "table"
+    );
+
   useGlobalWaterData({
     type: typeParam,
     projectName: projectNameParam,
@@ -78,13 +78,10 @@ console.log(tehsilZoi)
     block: blockParam,
   });
 
-  
-
   const handleCloseInfo = () => {
     setInfoAnchor(null);
   };
 
-  
   useEffect(() => {
     const stored = localStorage.getItem("selectedWaterbody");
     if (stored) {
@@ -131,7 +128,6 @@ console.log(tehsilZoi)
           localStorage.setItem("matched_mws_features", JSON.stringify(allGeo));
         }
       };
-    console.log(fetchTehsilData)
       fetchTehsilData();
     }, [
       isTehsilMode,
@@ -310,7 +306,6 @@ console.log(tehsilZoi)
       return zoiUid === wbUID;
     });
   }, [zoiFeatures, activeSelectedWaterbody]);
-  console.log("TEHSIL UID MATCHED ZOI", matchedZoiFeature);
 
   
   const zoiAreaFromFeature = matchedZoiFeature
@@ -431,9 +426,7 @@ console.log(tehsilZoi)
   
     return map;
   }, [geoData, mwsGeoData]);
-  
-  
-  
+    
   const getFirstNonZeroYearIndex = (props) => {
     const years = extractSeasonYears(props); // dynamic years like ["17-18","18-19",...]
 
@@ -607,6 +600,38 @@ console.log(tehsilZoi)
     }
   };
 
+  const formatInterventionYear = (year) => {
+    if (!year) return "—";
+  
+    // already correct: 2023-2024
+    if (/^\d{4}-\d{4}$/.test(year)) return year;
+  
+    // short format: 2024-25
+    const shortMatch = year.match(/^(\d{4})-(\d{2})$/);
+    if (shortMatch) {
+      const start = Number(shortMatch[1]);
+      const end = 2000 + Number(shortMatch[2]);
+      return `${start}-${end}`;
+    }
+  
+    // only single year: 2024 → 2024-2025
+    if (/^\d{4}$/.test(year)) {
+      const y = Number(year);
+      return `${y}-${y + 1}`;
+    }
+  
+    return year; // fallback
+  };
+
+  const getTotalWaterAvailability = (props, year) => {
+    return (
+      (Number(props[`k_${year}`]) || 0) +
+      (Number(props[`kr_${year}`]) || 0) +
+      (Number(props[`krz_${year}`]) || 0)
+    );
+  };
+  
+
   const {
     rows,
     totalSiltRemoved,
@@ -629,10 +654,24 @@ console.log(tehsilZoi)
       const waterbody_id = feature.id ?? null; 
 
       // const { preYears, postYears } = getPrePostYears(props, props.intervention_year);
-      const impact = impactYearMap[props.UID];
+      const impactPairs = impactYearMap[props.UID];
 
-      const preYears = impact ? [impact.pre] : [];
-      const postYears = impact ? [impact.post] : [];
+      let selectedPair = null;
+      let maxWater = -Infinity;
+      
+      if (Array.isArray(impactPairs)) {
+        impactPairs.forEach((pair) => {
+          const postYear = pair.post;
+          const water = getTotalWaterAvailability(props, postYear);
+      
+          if (water > maxWater) {
+            maxWater = water;
+            selectedPair = pair;
+          }
+        });
+      }
+      const preYears = selectedPair ? [selectedPair.pre] : [];
+      const postYears = selectedPair ? [selectedPair.post] : [];
 
       const { avgRabi, avgZaid } = computeTotalSeasonAverages(props);
 
@@ -670,7 +709,7 @@ console.log(tehsilZoi)
         waterbody: props.waterbody_name || "NA",
         UID: props.UID || "NA",
         areaOred: props.area_ored || 0,
-        interventionYear: props.intervention_year ?? "—",
+        interventionYear: formatInterventionYear(props.intervention_year) ?? null,
         maxCatchmentArea: props.max_catchment_area || 0,
         maxStreamOrder: props.max_stream_order || 0,
         MWS_UID: props.MWS_UID || 0,
@@ -691,6 +730,7 @@ console.log(tehsilZoi)
         waterbody_id: feature.id ?? null,
         coordinates,
         featureIndex: index,
+        selectedPair
       };
     });
 
@@ -715,44 +755,91 @@ console.log(tehsilZoi)
         : 0,
     };
   }, [geoData, zoiFeatures]);
+ 
+  const selectedPair = useMemo(() => {
+    if (!activeSelectedWaterbody || !rows?.length) return null;
+  
+    const uid =
+      activeSelectedWaterbody.properties?.UID ??
+      activeSelectedWaterbody.UID;
+  
+    const row = rows.find((r) => r.UID === uid);
+  
+    return row?.selectedPair ?? null;
+  }, [rows, activeSelectedWaterbody]);
 
+  const selectedInterventionYear = useMemo(() => {
+    if (!activeSelectedWaterbody || !rows?.length) return null;
+  
+    const uid =
+      activeSelectedWaterbody.properties?.UID ??
+      activeSelectedWaterbody.UID;
+  
+    const row = rows.find((r) => r.UID === uid);
+  
+    return row?.interventionYear ?? null;
+  }, [rows, activeSelectedWaterbody]);
+  
+  const projectSummaryByInterventionYear = useMemo(() => {
+    if (!rows?.length) return {};
+  
+    return rows.reduce((acc, row) => {
+      const year = row.interventionYear;
+      if (!year) return acc;
+  
+      if (!acc[year]) {
+        acc[year] = {
+          interventionYear: year,
+          waterbodyCount: 0,
+          totalSiltRemoved: 0,
+          totalAreaOred: 0,
+          totalRabiImpactArea: 0,
+          totalZaidImpactArea: 0,
+        };
+      }
+  
+      acc[year].waterbodyCount += 1;
+      acc[year].totalSiltRemoved += Number(row.siltRemoved) || 0;
+      acc[year].totalAreaOred += Number(row.areaOred) || 0;
+      acc[year].totalRabiImpactArea += Number(row.rabiImpactedArea) || 0;
+      acc[year].totalZaidImpactArea += Number(row.zaidImpactedArea) || 0;
+  
+      return acc;
+    }, {});
+  }, [rows]);
+
+  
   const totalRows = rows.length;
-  const projectInterventionYear =
-  rows.length > 0
-    ? rows.find(r => r.interventionYear && r.interventionYear !== "—")?.interventionYear ||
-      "—"
-    : "—";
 
-    const handleWaterbodyClick = (row) => {
-      const params = new URLSearchParams(location.search);
-    
-      params.set("type", "project");
-    
-      if (projectIdParam) {
-        params.set("projectId", projectIdParam);
-      }
-      if (projectNameParam) {
-        params.set("project_name", projectNameParam);
-      }
-    
-      // ✅ USE waterbody_id IN URL
-      params.set("waterbody", row.waterbody_id);
-    
-      navigate(`/rwb?${params.toString()}`);
-    
-      // ✅ MATCH FEATURE USING feature.id
-      const feature = geoData.features.find(
-        (f) => f.id === row.waterbody_id
-      );
-    
-      if (!feature) return;
-    
-      setSelectedWaterbody(row);
-      setSelectedFeature(feature);
-      setShowMap(true);
-    
-      window.scrollTo({ top: 0, behavior: "smooth" });
-    };
+const handleWaterbodyClick = (row) => {
+  const params = new URLSearchParams(location.search);
+
+  params.set("type", "project");
+
+  if (projectIdParam) params.set("projectId", projectIdParam);
+  if (projectNameParam) params.set("project_name", projectNameParam);
+
+  params.set("waterbody", row.waterbody_id);
+
+  const feature = geoData.features.find(
+    (f) => f.id === row.waterbody_id
+  );
+  if (!feature) return;
+
+  // state updates rehne do
+  setSelectedWaterbody(row);
+  setSelectedFeature(feature);
+  setShowMap(true);
+
+  // new tab
+  const url = `/rwb?${params.toString()}`;
+  window.open(url, "_blank");
+
+  setShowMap(false);
+
+  window.scrollTo({ top: 0, behavior: "smooth" });
+};
+
     
 
   const TableLoader = () => (
@@ -764,6 +851,43 @@ console.log(tehsilZoi)
   const printReport=()=>{
     window.print();
   }
+
+  const handleSelectWaterbody = (wb) => {
+
+    //  PROJECT MODE
+    if (typeParam === "project" && wb?.UID && geoData?.features) {
+  
+      const feature = geoData.features.find(
+        f => f.properties?.UID?.toString() === wb.UID.toString()
+      );
+  
+      if (!feature) return;
+  
+      const props = feature.properties;
+  
+      const resolvedRow = {
+        UID: props.UID,
+        waterbody_name: props.waterbody_name,
+        intervention_year: props.intervention_year,
+        areaOred: props.area_ored,
+        latitude: props.latitude,
+        longitude: props.longitude,
+        geometry: feature.geometry,
+        MWS_UID: props.MWS_UID,
+        maxCatchmentArea: Number(props.max_catchment_area) || 0,
+        drainageFlag: props.on_drainage_line ?? 0,
+        maxStreamOrder: props.max_stream_order ?? null,
+      };
+  
+      setSelectedWaterbody(resolvedRow);
+      setSelectedFeature(feature);
+      setShowMap(true);
+      return;
+    }
+  
+    //  TEHSIL MODE (AS IS)
+    setSelectedWaterbody(wb);
+  };
   
   return (
     <div className={`${isTehsilMode ? "pb-8 w-full" : "mx-6 my-8 bg-white rounded-xl shadow-md p-6"}`}>
@@ -845,9 +969,8 @@ console.log(tehsilZoi)
               projectName: projectNameParam,
               totalRows,
               totalSiltRemoved,
-              interventionYear: projectInterventionYear,
-              rabiImpact: projectLevelRabiImpact,
-              zaidImpact: projectLevelZaidImpact,
+              projectSummaryByInterventionYear
+              // projectImpactByInterventionYear
             })}
           </p>
         </div>
@@ -908,22 +1031,24 @@ console.log(tehsilZoi)
               showMap={showMap}
               projectName={typeParam === "project" ? projectNameParam : null}
               projectId={typeParam === "project" ? projectIdParam : null}
-              onSelectWaterbody={(wb) => {
-                setSelectedWaterbody(wb);
-                setShowMap(true);
-              }}
+              onSelectWaterbody={handleSelectWaterbody}
+              // onSelectWaterbody={(wb) => {
+              //   setSelectedWaterbody(wb);
+              //   setShowMap(true);
+              // }}
               lulcYear={lulcYear1}
               district={districtParam}
               block={blockParam}
               onMapReady={(map) => {
                 setTehsilMap(map);
               }}
+              interventionYear={selectedInterventionYear} 
             />
              {showMap && activeSelectedWaterbody && (
           <div className="text-gray-500 text-[clamp(0.65rem,0.95vw,0.7rem)] mt-2 pl-2 w-full">
-            <p><b>Water Availability : </b> We use Sentinel-1 (SAR data) VV band for water pixel detection in Kharif season and Dynamic World to detect water pixels in Rabi and Zaid seasons.</p>
+            <p><b>Water Availability : </b> We use Sentinel-1 (SAR data) VV band for water pixel detection in Kharif season and Dynamic World to detect water pixels in Rabi and Zaid seasons.This method reliably detects waterbodies of more than 1000 m² surface area.</p>
             <p><b>Land Use Land Cover : </b> Data remotely sensed from satellites including LandSat-7, LandSat-8, Sentinel-2, Sentinel-1, MODIS and Dynamic World</p>
-            <p><b>Rainfall : </b> Precipitation data is calculated from the Global Satellite Mapping of Precipitation (GSMaP) dataset available on Google Earth Engine's data catalogue. GSMaP provides a global precipitation in mm/hr at spatial resolution of approximately 11km.</p>
+            <p><b>Rainfall : </b> Precipitation data is calculated from the Global Satellite Mapping of Precipitation (GSMaP) dataset available on Google Earth Engine's data catalogue. GSMaP provides a global precipitation in mm/hr at spatial resolution of approximately 11 km.</p>
           </div>
         )}
           </div>
@@ -939,6 +1064,7 @@ console.log(tehsilZoi)
                   mwsFeature={isTehsilMode ? matchedMwsOlFeatures[0] : mwsForCharts}
                   onImpactYearChange={setImpactYear} 
                   years={extractedSeasonalYears} 
+                  impactPair={selectedPair} 
                 />
               </div>
   
@@ -996,6 +1122,8 @@ console.log(tehsilZoi)
                   lulcYear={lulcYear2}
                   district={districtParam}
                   block={blockParam}
+                  interventionYear={selectedInterventionYear} 
+
                 />
                 {showMap && activeSelectedWaterbody && (
                   <div className="text-gray-500 text-[clamp(0.65rem,0.95vw,0.7rem)] mt-2 pl-2 w-full">

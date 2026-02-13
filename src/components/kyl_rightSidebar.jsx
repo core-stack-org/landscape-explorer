@@ -3,7 +3,7 @@ import React from "react";
 import SelectButton from "./buttons/select_button";
 import filtersDetails from "../components/data/Filters.json";
 import ToggleButton from "./buttons/toggle_button_kyl";
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft ,Loader2} from 'lucide-react';
 import {
   stateDataAtom,
   stateAtom,
@@ -51,6 +51,8 @@ const KYLRightSidebar = ({
   const [globalState, setGlobalState] = useRecoilState(stateAtom);
   const [globalDistrict, setGlobalDistrict] = useRecoilState(districtAtom);
   const [globalBlock, setGlobalBlock] = useRecoilState(blockAtom);
+  const [loadingWB, setLoadingWB] = React.useState(false);
+
   
   // Check if both panels are shown
   const showBothPanels = selectedMWSProfile && selectedWaterbodyProfile;
@@ -119,24 +121,29 @@ const KYLRightSidebar = ({
     }
   };
 
-  const toggleWaterbodies = () => {
-    if (!waterbodiesLayerRef.current) {
-      console.warn("Waterbodies layer not loaded yet");
-      return;
-    }
+const toggleWaterbodies = () => {
+  if (!waterbodiesLayerRef.current) {
+    console.warn("Waterbodies layer not loaded yet");
+    return;
+  }
 
+  setLoadingWB(true);
+
+  setTimeout(() => {
     if (showWB) {
-      // Remove from map
       mapRef.current.removeLayer(waterbodiesLayerRef.current);
       setShowWB(false);
     } else {
-      // Add to map in correct order (between MWS and boundary)
       mapRef.current.removeLayer(boundaryLayerRef.current);
       mapRef.current.addLayer(waterbodiesLayerRef.current);
       mapRef.current.addLayer(boundaryLayerRef.current);
       setShowWB(true);
     }
-  };
+
+    setLoadingWB(false);
+  }, 500); 
+};
+
   
   const handleTehsilReport = () => {
     const reportURL = `${process.env.REACT_APP_API_URL}/generate_tehsil_report/?state=${state.label.toLowerCase().split(" ").join("_")}&district=${district.label.toLowerCase().split(" ").join("_")}&block=${block.label.toLowerCase().split(" ").join("_")}`;
@@ -262,11 +269,17 @@ const KYLRightSidebar = ({
                 </button>
                 <button
                   onClick={() => toggleWaterbodies()}
+                  disabled={loadingWB}
                   className={`flex-1 flex items-center justify-center gap-1 py-2 text-sm 
                               rounded-md transition-colors hover:bg-indigo-50 
                               ${showWB ? "text-red-600" : "text-indigo-600"}`}
                 >
-                  {showWB ? (
+                {loadingWB ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Loading…
+                  </>
+                ) : showWB ? (
                     <>
                       <svg xmlns="http://www.w3.org/2000/svg" 
                           width="18" height="18" viewBox="0 0 24 24" 

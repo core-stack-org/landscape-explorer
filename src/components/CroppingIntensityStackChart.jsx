@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState,useMemo } from "react";
 import { Bar } from "react-chartjs-2";
 import {
   Chart as ChartJS,
@@ -36,6 +36,8 @@ const CroppingIntensityStackChart = ({
 }) => {
   const [showImpact, setShowImpact] = useState(false);
 
+  const hasValidImpactYears = impactYear?.pre && impactYear?.post;
+
   const wbUID =
     waterbody?.UID ||
     waterbody?.uid ||
@@ -49,8 +51,8 @@ const CroppingIntensityStackChart = ({
       wbUID?.toString().trim()
   );
   if (!matchedFeature) return null;
-  console.log(matchedFeature)
 
+ 
   // ---------------- GET AREA VALUES ----------------
   const getAreaData = (rawYears) =>
     rawYears.map((year) => ({
@@ -125,8 +127,12 @@ const CroppingIntensityStackChart = ({
 
   // ---------------- IMPACT MODE MASKING ----------------
   const visibleIndices = labelYears.map((lbl, i) =>
-    lbl === impactYear.pre || lbl === impactYear.post ? i : -1
+    hasValidImpactYears &&
+    (lbl === impactYear.pre || lbl === impactYear.post)
+      ? i
+      : -1
   );
+  
 
   // ---------------- CHART DATA ----------------
   const maskedData = {
@@ -135,15 +141,14 @@ const CroppingIntensityStackChart = ({
       {
         label: "Triple Crop",
         data: fullYearData.map((a, i) =>
-          showImpact && visibleIndices[i] === -1 ? 0 : a.triple
-        ),
+          showImpact && hasValidImpactYears && visibleIndices[i] === -1  ? 0 : a.triple ),
         backgroundColor: "#b3561d",
         stack: "stack1",
       },
       {
         label: "Double Crop",
         data: fullYearData.map((a, i) =>
-          showImpact && visibleIndices[i] === -1 ? 0 : a.double
+          showImpact && hasValidImpactYears && visibleIndices[i] === -1 ? 0 : a.double
         ),
         backgroundColor: "#FF9371",
         stack: "stack1",
@@ -151,7 +156,7 @@ const CroppingIntensityStackChart = ({
       {
         label: "Single Non-Kharif",
         data: fullYearData.map((a, i) =>
-          showImpact && visibleIndices[i] === -1 ? 0 : a.single_non_kharif
+          showImpact && hasValidImpactYears && visibleIndices[i] === -1 ? 0 : a.single_non_kharif
         ),
         backgroundColor: "#f59d22",
         stack: "stack1",
@@ -159,13 +164,15 @@ const CroppingIntensityStackChart = ({
       {
         label: "Single Kharif",
         data: fullYearData.map((a, i) =>
-          showImpact && visibleIndices[i] === -1 ? 0 : a.single_kharif
+          showImpact && hasValidImpactYears && visibleIndices[i] === -1 ? 0 : a.single_kharif
         ),
         backgroundColor: "#BAD93E",
         stack: "stack1",
       },
     ],
   };
+
+  
 
   // ---------------- OPTIONS ----------------
   const options = {
@@ -177,10 +184,11 @@ const CroppingIntensityStackChart = ({
         display: true,
         text: isTehsil
           ? "Cropping Intensity (Area in hectares)"
-          : !showImpact
-          ? "Cropping Intensity (Area in hectares) (Black line = intervention year)"
-          : `Impact Analysis: Showing Only Pre (${impactYear.pre}) and Post (${impactYear.post}) Years`,
+          : showImpact && hasValidImpactYears
+            ? `Impact Analysis: Showing Only Pre (${impactYear.pre}) and Post (${impactYear.post}) Years`
+            : "Cropping Intensity (Area in hectares) (Black line = intervention year)",
       },
+      
       annotation: isTehsil
       ? {}
       : (() => {
@@ -189,9 +197,7 @@ const CroppingIntensityStackChart = ({
           );
           const iv = f?.properties?.intervention_year;
           const interventionYear = normalizeYear(iv);
-    
-          console.log("📍 Intervention Year:", iv, "→ normalized:", interventionYear);
-    
+        
           return {
             annotations: {
               interventionLine: {
@@ -232,6 +238,7 @@ const CroppingIntensityStackChart = ({
       },
     },
   };
+  
 
   return (
     <div className="w-full">
@@ -276,6 +283,12 @@ const CroppingIntensityStackChart = ({
               }}
             ></div>
           </label>
+        </div>
+      )}
+        {showImpact && !hasValidImpactYears && (
+        <div className="mx-auto mt-2 text-center text-[clamp(0.75rem,0.6rem,0.8rem)] text-orange-700 bg-orange-50 border border-orange-200 rounded-md px-3 py-2 w-fit">
+          No data available for post intervention year.  
+          Please wait for next year’s data.
         </div>
       )}
 

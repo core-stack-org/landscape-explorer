@@ -63,22 +63,45 @@ export const calculateImpactYear = (rainfall, ivRaw) => {
   const preYears = years.filter((y) => yearToNumber(y) < ivNum);
   const postYears = years.filter((y) => yearToNumber(y) > ivNum);
 
-  // 🚨 NO POST YEAR = NO IMPACT
+  //  NO POST YEAR = NO IMPACT
   if (!preYears.length || !postYears.length) return null;
 
+  // let minDiff = Infinity;
+  // let result = null;
+
+  // preYears.forEach((pre) => {
+  //   postYears.forEach((post) => {
+  //     const diff = Math.abs(rainfall[pre] - rainfall[post]);
+
+  //     if (diff < minDiff) {
+  //       minDiff = diff;
+  //       result = { pre, post };
+  //     }
+  //   });
+  // });
+
+  const pairs = [];
+
+postYears.forEach((post) => {
+  let bestPre = null;
   let minDiff = Infinity;
-  let result = null;
 
   preYears.forEach((pre) => {
-    postYears.forEach((post) => {
-      const diff = Math.abs(rainfall[pre] - rainfall[post]);
-
-      if (diff < minDiff) {
-        minDiff = diff;
-        result = { pre, post };
-      }
-    });
+    const diff = Math.abs(rainfall[pre] - rainfall[post]);
+    if (diff < minDiff) {
+      minDiff = diff;
+      bestPre = pre;
+    }
   });
 
-  return result;
+  if (bestPre) {
+    pairs.push({ pre: bestPre, post });
+  }
+});
+
+// agar koi valid pair hi nahi bana
+if (!pairs.length) return null;
+
+return pairs;
+
 };
