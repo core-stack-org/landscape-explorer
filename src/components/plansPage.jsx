@@ -372,34 +372,7 @@
       });
     };
 
-    const transformName = (name) => {
-      if (!name) return "";
-    
-      // Extract base + alias from parentheses
-      const match = name.match(/^(.+?)\s*\((.+?)\)$/);
-    
-      let parts = [];
-    
-      if (match) {
-        const main = match[1];
-        const alias = match[2];
-    
-        parts = [main, alias];
-      } else {
-        // no parentheses → repeat twice
-        parts = [name];
-      }
-    
-      return parts
-        .map((p) =>
-          p
-            .replace(/[^\w\s-]/g, "") // remove special chars
-            .replace(/\s+/g, "_")     // Space
-            .replace(/_+/g, "_")      // collapse _
-            .replace(/^_|_$/g, "")    // trim _
-            .toLowerCase()
-        )
-        .join("_");
+      setMapLoading(false);
     };
 
     const buildMetaStatsFromPlans = (plans) => {
