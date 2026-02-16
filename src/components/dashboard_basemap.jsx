@@ -937,7 +937,7 @@
     await addLulcLayer("waterrej_lulc", "lulc_zoi_layer", zoiFeature, false);
 
     // ----------------------------------------------------------------------
-    // ⭐ PROJECT MODE — UNTOUCHED (same as your original working logic)
+    //  PROJECT MODE — UNTOUCHED (same as your original working logic)
     // ----------------------------------------------------------------------
     if (projectName && projectId && geoData) {
       const allWB = read4326(geoData);
