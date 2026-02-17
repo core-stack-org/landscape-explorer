@@ -20,6 +20,9 @@ import { useGlobalWaterData } from "../store/useGlobalWaterData";
 import { getWaterbodyData } from "../actions/getWaterbodyData";
 import {getRainfallByYear,calculateImpactYear} from "../components/utils/impactYear.js";
 import { waterGeoDataAtom, waterMwsDataAtom, zoiFeaturesAtom,selectedWaterbodyForTehsilAtom,tehsilZoiFeaturesAtom,tehsilDroughtDataAtom } from "../store/locationStore.jsx";
+import * as XLSX from "xlsx";
+import { saveAs } from "file-saver";
+import DownloadIcon from "@mui/icons-material/Download";
 
 const WaterProjectDashboard = () => {
   const [selectedWaterbody, setSelectedWaterbody] = useState(null);
@@ -887,6 +890,43 @@ const handleWaterbodyClick = (row) => {
     //  TEHSIL MODE (AS IS)
     setSelectedWaterbody(wb);
   };
+
+  const handleDownloadExcel = () => {
+    if (!rows?.length) return;
+  
+    // Prepare clean data (remove internal fields)
+    const exportData = rows.map((r) => ({
+      State: r.state,
+      District: r.district,
+      Block: r.block,
+      Village: r.village,
+      Waterbody: r.waterbody,
+      "Intervention Year": r.interventionYear,
+      "Silt Removed (Cu.m.)": r.siltRemoved,
+      "Size (ha)": r.areaOred,
+      "Mean Water Availability Rabi (%)": r.avgWaterAvailabilityRabi,
+      "Mean Water Availability Zaid (%)": r.avgWaterAvailabilityZaid,
+    }));
+  
+    const worksheet = XLSX.utils.json_to_sheet(exportData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Waterbody Data");
+  
+    const excelBuffer = XLSX.write(workbook, {
+      bookType: "xlsx",
+      type: "array",
+    });
+  
+    const data = new Blob([excelBuffer], {
+      type:
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8",
+    });
+  
+    const fileName = `${projectNameParam || "Water_Project"}.xlsx`;
+  
+    saveAs(data, fileName);
+  };
+  
   
   return (
     <div className={`${isTehsilMode ? "pb-8 w-full" : "mx-6 my-8 bg-white rounded-xl shadow-md p-6"}`}>
@@ -960,19 +1000,39 @@ const handleWaterbodyClick = (row) => {
           <p className="text-gray-500 text-sm">Loading...</p>
         </div>
       ) : (
-        <div className="flex items-start gap-2 bg-white px-0 py-2 rounded-xl shadow-sm
-          w-full md:max-w-[90%] lg:max-w-[60%] xl:max-w-[80%] flex-grow mt-1 lg:mt-0 sm:max-w-[99%]">
-          <Lightbulb size={32} className="text-gray-800 flex-shrink-0" />
-          <p className="text-gray-800 text-sm md:text-base font-medium leading-snug">
-            {WATER_DASHBOARD_CONFIG.project.topSectionText({
-              projectName: projectNameParam,
-              totalRows,
-              totalSiltRemoved,
-              projectSummaryByInterventionYear
-              // projectImpactByInterventionYear
-            })}
-          </p>
+        <div className="bg-white px-0 py-2 rounded-xl shadow-sm
+        w-full md:max-w-[90%] lg:max-w-[80%] flex-grow mt-1">
+      
+        <div className="flex items-end justify-between gap-4">
+      
+          {/* LEFT SIDE TEXT */}
+          <div className="flex items-start gap-2 flex-1">
+            <Lightbulb size={32} className="text-gray-800 flex-shrink-0 mt-1" />
+            <p className="text-gray-800 text-sm md:text-base font-medium leading-relaxed">
+              {WATER_DASHBOARD_CONFIG.project.topSectionText({
+                projectName: projectNameParam,
+                totalRows,
+                totalSiltRemoved,
+                projectSummaryByInterventionYear
+              })}
+            </p>
+          </div>
+      
+          {/* RIGHT SIDE BUTTON */}
+          <button
+            onClick={handleDownloadExcel}
+            className="flex items-center gap-2 bg-green-600 hover:bg-green-700
+              text-white text-sm px-4 py-2 rounded-md shadow-md transition-all
+              whitespace-nowrap"
+          >
+            <DownloadIcon sx={{ fontSize: 18 }} />
+            Download Excel
+          </button>
+      
         </div>
+      </div>
+      
+      
       )
     )}
   </div>
