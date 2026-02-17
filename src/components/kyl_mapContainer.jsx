@@ -183,9 +183,7 @@ const MapLegend = ({
   const contentRef = useRef(null);
   const [containerHeight, setContainerHeight] = useState("12rem");
 
-  // If no layers are shown, don't display legend
-  if (!showMWS && !showVillages && (!currentLayer || currentLayer.length === 0))
-    return null;
+
 
   useEffect(() => {
     if (isCollapsed) {
@@ -203,6 +201,10 @@ const MapLegend = ({
     mappedAssets,
     mappedDemands,
   ]);
+
+    // If no layers are shown, don't display legend
+  if (!showMWS && !showVillages && (!currentLayer || currentLayer.length === 0))
+    return null;
 
   const toggleCollapse = () => {
     setIsCollapsed(!isCollapsed);
