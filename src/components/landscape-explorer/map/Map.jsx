@@ -1505,6 +1505,41 @@ const Map = forwardRef(({
         LayersArray[3].LayerRef.current = MicroWaterShedLayer;
       }
 
+      // === Hydrological Boundaries Layer ===
+let HydrologicalBoundariesLayer = await getVectorLayers(
+  "hydrological_boundaries",
+  district.label.toLowerCase().replace(/\s*\(\s*/g, '_')
+    .replace(/\s*\)\s*/g, '')
+    .replace(/\s+/g, '_') +
+  "_" +
+  block.label.toLowerCase().replace(/\s*\(\s*/g, '_')
+    .replace(/\s*\)\s*/g, '')
+    .replace(/\s+/g, '_'),
+  true,
+  true
+);
+
+if (HydrologicalBoundariesLayer) {
+  HydrologicalBoundariesLayer.setStyle(function (feature) {
+    return new Style({
+      stroke: new Stroke({
+        color: "#000000",
+        width: 1.5,
+      }),
+      fill: new Fill({
+        color: "rgba(0, 0, 255, 0.2)",
+      }),
+    });
+  });
+
+  if (LayersArray[3].LayerRef.current != null) {
+    safeRemoveLayer(LayersArray[3].LayerRef.current);
+  }
+
+  LayersArray[3].LayerRef.current = HydrologicalBoundariesLayer;
+}
+
+
       // === CLART Layer ===
       let clartLayer = await getImageLayers(
         "clart",

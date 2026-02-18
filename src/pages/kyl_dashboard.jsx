@@ -854,7 +854,6 @@ const KYLDashboardPage = () => {
       setDataJson(result);
 
       setIsLoading(false);
-      setFiltersEnabled(true)
     } catch (e) {
       console.log(e);
       setIsLoading(false);
@@ -2004,6 +2003,21 @@ const KYLDashboardPage = () => {
       };
     }
   }, [selectedMWS, showWB]);
+
+  useEffect(() => {
+  // Enable filters only when boundary + MWS + data are fully loaded
+  if (
+    !islayerLoaded &&
+    !isLoading &&
+    district &&
+    block
+  ) {
+    setFiltersEnabled(true);
+  } else {
+    setFiltersEnabled(false);
+  }
+}, [islayerLoaded, isLoading, district, block]);
+
 
   return (
     <div className="min-h-screenbg-white flex flex-col">
