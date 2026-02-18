@@ -52,7 +52,6 @@ REACT_APP_GEOSERVER_URL="https://geoserver.core-stack.org:8443/geoserver/"
 REACT_APP_GA_MEASUREMENT_ID="xxx"
 REACT_APP_API_KEY="xxx"
 
-# MANVI environment variables
 REACT_APP_WATERBODYREJ_USERNAME="xxx"
 REACT_APP_WATERBODYREJ_PASSWORD="xxx"
 REACT_APP_BASEURL="https://geoserver.core-stack.org"
