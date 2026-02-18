@@ -1387,7 +1387,7 @@ const KYLDashboardPage = () => {
    }
  }
 
-    // 4️⃣ SAVE ARRAY OF FULL GEOJSON FEATURES
+    // SAVE ARRAY OF FULL GEOJSON FEATURES
     if (matchedMws.length > 0) {
       const geojsonWriter = new GeoJSON();
 

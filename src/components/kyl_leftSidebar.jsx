@@ -39,29 +39,41 @@ const KYLLeftSidebar = ({
     };
 
     const handleClearAll = () => {
-        // Remove all layers from the map
-        if (currentLayer.length > 0) {
-            currentLayer.forEach(layer => {
-                layer.layerRef.forEach(ref => {
-                    if (mapRef.current) {
-                        mapRef.current.removeLayer(ref);
-                    }
-                });
+    // Remove all layers from the map
+    if (currentLayer.length > 0) {
+        currentLayer.forEach(layer => {
+            layer.layerRef.forEach(ref => {
+                if (mapRef.current) {
+                    mapRef.current.removeLayer(ref);
+                }
             });
-        }
-
-        // Reset all toggle states
-        setToggleStates({});
-
-        // Clear all layers
-        setCurrentLayer([]);
-
-        // Clear all filters
-        setFilterSelections({
-            selectedMWSValues: {},
-            selectedVillageValues: {}
         });
-    };
+    }
+
+    // Reset toggle states
+    setToggleStates({});
+
+    // Clear map layers
+    setCurrentLayer([]);
+
+    // Clear filters
+    setFilterSelections({
+        selectedMWSValues: {},
+        selectedVillageValues: {}
+    });
+
+    // Clear patterns
+    if (handlePatternRemoval && patternSelections) {
+        Object.keys(patternSelections).forEach(patternName => {
+            handlePatternRemoval(patternName);
+        });
+    }
+
+    // Reset UI selections
+    setIndicatorType(null);
+    setSelectedSubcategory(null);
+};
+
 
     // Reset subcategory when changing main category or tab
     const handleCategoryChange = (category) => {
@@ -79,6 +91,22 @@ const KYLLeftSidebar = ({
     return (
         <div className="w-[320px] bg-white rounded-lg border border-gray-100 p-4">
             <div className="space-y-2">
+                
+                {/* Clear All Button */}
+                <div className="flex justify-end mb-2">
+            <button
+                onClick={handleClearAll}
+                disabled={
+                    Object.keys(filterSelections.selectedMWSValues).length === 0 &&
+                    Object.keys(filterSelections.selectedVillageValues).length === 0 &&
+                    Object.keys(patternSelections || {}).length === 0
+                }
+                className="px-3 py-1 text-xs bg-red-500 text-white rounded-md hover:bg-red-600 disabled:bg-gray-300 transition-colors"
+            >
+                Clear All
+            </button>
+        </div>
+
                 {/* Tab Buttons */}
                 <div className="flex gap-2 mb-4">
                     <button

@@ -15,17 +15,7 @@ const PanchayatBoundariesStyle = () => {
   });
 };
 
-export default async function getVectorLayers(
-  layer_store,
-  layer_name,
-  setVisible = true,
-  setActive = true,
-  resource_type = null,
-  plan_id = null,
-  district,
-  block,
-  ifBoundary = false
-) {
+export default async function getVectorLayers(layer_store, layer_name, setVisible = true, setActive = true, resource_type = null, plan_id = null, district, block, ifBoundary = false) {
 
   const url =
     plan_id === null
