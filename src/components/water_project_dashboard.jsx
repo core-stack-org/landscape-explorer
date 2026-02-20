@@ -892,41 +892,404 @@ const handleWaterbodyClick = (row) => {
   };
 
   const handleDownloadExcel = () => {
-    if (!rows?.length) return;
+    if (!rows?.length || !geoData?.features?.length) return;
   
-    // Prepare clean data (remove internal fields)
-    const exportData = rows.map((r) => ({
+    // SHEET 1 → SUMMARY
+
+    const summaryData = rows.map((r) => ({
+      UID: r.UID,
+      Waterbody: r.waterbody,
+    
       State: r.state,
       District: r.district,
       Block: r.block,
       Village: r.village,
-      Waterbody: r.waterbody,
+    
       "Intervention Year": r.interventionYear,
-      "Silt Removed (Cu.m.)": r.siltRemoved,
-      "Size (ha)": r.areaOred,
+      "Size (ha)": Number(r.areaOred).toFixed(2),
+      "Silt Removed (Cu.m.)": Number(r.siltRemoved).toFixed(2),
+      "Max Catchment Area (ha)": Number(r.maxCatchmentArea).toFixed(2),
+      "Watershed Position": r.maxStreamOrder,
       "Mean Water Availability Rabi (%)": r.avgWaterAvailabilityRabi,
       "Mean Water Availability Zaid (%)": r.avgWaterAvailabilityZaid,
+      "Impact Rabi": Number(r.ImpactRabi).toFixed(2),
+      "Impact Zaid": Number(r.ImpactZaid).toFixed(2),
     }));
   
-    const worksheet = XLSX.utils.json_to_sheet(exportData);
+    const summarySheet = XLSX.utils.json_to_sheet(summaryData);
+  
+    // SHEET 2 → WATERBODY DATA
+
+
+    const excludedColumns = [
+      "any",
+      "matched",
+      "match_type",
+      "water",
+      "geometry_name",
+      "name_of_ngo",
+      "desilt_id",
+      "desiltingpoint_lat",
+      "desiltingpoint_lon",
+      "distance_from_desilting_point",
+      "category_sq_m",
+      "area_17-18","area_18-19","area_19-20","area_20-21","area_21-22","area_22-23","area_23-24","area_24-25",
+      "State","District"
+    ];
+
+    const renameMap = {
+      area_ored: "Size (ha)",
+      max_stream_order: "Watershed Position",
+      max_catchment_area: "Max Catchment Area (ha)",
+      slit_excavated: "Silt Removed (Cu.m.)",
+      intervention_year: "Intervention Year",
+      waterbody_name: "Waterbody Name",
+      latitude:"Latitude",
+      longitude:"Longitude",
+      on_drainage_line:"On drainage line"
+    };
+
+    const formatDynamicColumnName = (key) => {
+      const match = key.match(
+        /^(barren_land|build_up|cropland|shrubs|tree|single_kharif|single_kharif_no|double_cropping|tripple_cropping|k|kr|krz)_(\d{2}-\d{2})$/
+      );
+
+      if (!match) return null;
+
+      const type = match[1];
+      const year = match[2];
+
+      const labelMap = {
+        barren_land: "Barren land",
+        build_up: "Built up",
+        cropland: "Cropland",
+        shrubs: "Shrubs",
+        tree: "Tree",
+        single_kharif: "Single Kharif",
+        single_kharif_no: "Single Non-Kharif",
+        double_cropping: "Double Cropping",
+        tripple_cropping: "Triple Cropping",
+        k: "Water availabilty during Kharif",
+        kr: "Water availabilty during Rabi",
+        krz: "Water availabilty during Zaid",
+      };
+
+      return labelMap[type]
+        ? `${labelMap[type]} (${year})`
+        : null;
+    };
+
+    // Step 1: Prepare cleaned data
+    const waterbodyData = geoData.features.map((feature) => {
+      const row = {};
+
+      Object.entries(feature.properties).forEach(([key, value]) => {
+        if (excludedColumns.includes(key)) return;
+
+        let newKey = renameMap[key] || key;
+
+        const dynamicName = formatDynamicColumnName(key);
+        if (dynamicName) newKey = dynamicName;
+
+        if (key === "on_drainage_line") {
+          row[newKey] = Number(value) === 1 ? "ON" : "OFF";
+          return;
+        }
+
+        row[newKey] = value;
+      });
+
+      return row;
+    });
+
+ // Base fixed columns
+const orderedColumns = [
+  "UID",
+  "MWS_UID",
+  "Waterbody Name",
+
+  "Taluka",
+  "Village",
+
+  "Intervention Year",
+
+  "Size (ha)",
+  "Max Catchment Area (ha)",
+  "Watershed Position",
+  "On drainage line",
+
+  "Latitude",
+  "Longitude",
+];
+
+// Get all available columns
+const allColumns = Object.keys(waterbodyData[0] || {});
+
+// Dynamically extract seasonal columns
+const kharifCols = allColumns
+  .filter(col => col.startsWith("Water availabilty during Kharif ("))
+  .sort();
+
+const rabiCols = allColumns
+  .filter(col => col.startsWith("Water availabilty during Rabi ("))
+  .sort();
+
+const zaidCols = allColumns
+  .filter(col => col.startsWith("Water availabilty during Zaid ("))
+  .sort();
+
+// Insert them immediately after On drainage line
+orderedColumns.push(...kharifCols);
+orderedColumns.push(...rabiCols);
+orderedColumns.push(...zaidCols);
+
+// Add remaining columns (excluding ones already added)
+allColumns.forEach(col => {
+  if (!orderedColumns.includes(col)) {
+    orderedColumns.push(col);
+  }
+});
+
+
+    const waterbodySheet = XLSX.utils.json_to_sheet(waterbodyData, {
+      header: orderedColumns,
+    });
+
+// SHEET 3 → ZOI DATA//  
+
+let zoiData = [];
+
+const zoiExcludedColumns = [
+  "geometry",
+  "zoi",
+  "sum",
+ ];
+
+ const shouldExcludeZoiColumn = (key) => {
+  return (
+    zoiExcludedColumns.includes(key) ||
+    key.startsWith("NDVI_") || key.startsWith("cropping_intensity_") || 
+    false
+  );
+};
+
+
+const zoiRenameMap = {
+  UID: "UID",
+  zoi_area: "ZOI Area (ha)",
+};
+
+// Dynamic rename for yearly fields
+const formatZoiDynamicColumnName = (key) => {
+  const match = key.match(
+    /^(doubly_cropped_area|triply_cropped_area|single_cropped_area|single_kharif_cropped_area|single_non_kharif_cropped_area)_(\d{4})$/
+  );
+
+  if (!match) return null;
+
+  const type = match[1];
+  const year = match[2];
+
+  const labelMap = {
+    doubly_cropped_area: "Double Cropped Area",
+    triply_cropped_area: "Triple Cropped Area",
+    single_cropped_area: "Single Cropped Area",
+    single_kharif_cropped_area: "Single Kharif Cropped Area",
+    single_non_kharif_cropped_area: "Single Non-Kharif Cropped Area",
+  };
+
+  return labelMap[type]
+    ? `${labelMap[type]} (${year})`
+    : null;
+};
+
+if (zoiFeatures?.length) {
+  zoiData = zoiFeatures.map((feature) => {
+    const props = feature.getProperties();
+    const { geometry, ...cleanProps } = props;
+
+    const row = {};
+
+    Object.entries(cleanProps).forEach(([key, value]) => {
+      if (shouldExcludeZoiColumn(key)) return;
+
+      let newKey = zoiRenameMap[key] || key;
+
+      const dynamicName = formatZoiDynamicColumnName(key);
+      if (dynamicName) newKey = dynamicName;
+
+      row[newKey] = value;
+    });
+
+    return row;
+  });
+}
+
+const zoiOrderedColumns = [
+  "UID",
+  "ZOI Area (ha)",
+];
+
+// Add remaining dynamic columns automatically (safe fallback)
+Object.keys(zoiData[0] || {}).forEach((key) => {
+  if (!zoiOrderedColumns.includes(key)) {
+    zoiOrderedColumns.push(key);
+  }
+});
+
+const zoiSheet = XLSX.utils.json_to_sheet(zoiData, {
+  header: zoiOrderedColumns,
+});
+
+// MWS sheet
+
+let mwsRawData = [];
+
+// PROJECT MODE (GeoJSON)
+if (mwsGeoData?.features?.length) {
+  console.log((mwsGeoData))
+  mwsRawData = mwsGeoData.features.map((feature) => ({
+    ...feature.properties,
+  }));
+}
+
+// TEHSIL MODE (OpenLayers)
+else if (matchedMwsOlFeatures?.length) {
+  mwsRawData = matchedMwsOlFeatures.map((feature) => {
+    const props = feature.getProperties();
+    const { geometry, ...cleanProps } = props;
+    return cleanProps;
+  });
+}
+
+const mwsExcludedColumns = [
+  "feature_id",
+  "drought_avg_dryspell",
+  "drought_system:index","drought_uid"
+ 
+];
+
+const shouldExcludeMwsColumn = (key) => {
+  return (
+    mwsExcludedColumns.includes(key) ||
+
+    // weekly drought fields
+    key.startsWith("drought_rd") ||
+
+    // yearly drought types
+    key.startsWith("drought_drlb") ||
+    key.startsWith("drought_frth") ||
+    key.startsWith("drought_inth") ||
+    key.startsWith("drought_kh_cr") ||
+    key.startsWith("drought_m_ons") ||
+    key.startsWith("drought_pcr_k") ||
+    key.startsWith("drought_rd") ||
+    key.startsWith("drought_w_mld") ||
+    key.startsWith("drought_t_wks") ||
+    key.startsWith("drought_w_no") 
+  );
+};
+
+const mwsRenameMap = {
+  uid: "MWS UID",
+};
+
+const formatMwsDynamicColumn = (key) => {
+
+  // precipitation with year range
+  const precipMatch = key.match(
+    /^(precipitation_kharif|precipitation_rabi|precipitation_zaid)_(\d{4}-\d{4})$/
+  );
+
+  if (precipMatch) {
+    const type = precipMatch[1];
+    const year = precipMatch[2];
+
+    const labelMap = {
+      precipitation_kharif: "Precipitation Kharif",
+      precipitation_rabi: "Precipitation Rabi",
+      precipitation_zaid: "Precipitation Zaid",
+    };
+
+    return `${labelMap[type]} (${year})`;
+  }
+
+  // drought yearly (single year)
+  const droughtMatch = key.match(
+    /^(drought_w_sev|drought_w_mod|drought_drysp)_(\d{4})$/
+  );
+
+  if (droughtMatch) {
+    const type = droughtMatch[1];
+    const year = droughtMatch[2];
+
+    const labelMap = {
+      drought_drysp: "DrySpell",
+      drought_w_sev: "Severe drought",
+      drought_w_mod: "Moderate drought",
+    };
+
+    return `${labelMap[type]} (${year})`;
+  }
+
+  return null;
+};
+
+
+const mwsData = mwsRawData.map((row) => {
+  const cleanedRow = {};
+
+  Object.entries(row).forEach(([key, value]) => {
+    if (shouldExcludeMwsColumn(key)) return;
+
+    let newKey = mwsRenameMap[key] || key;
+
+    const dynamicName = formatMwsDynamicColumn(key);
+    if (dynamicName) newKey = dynamicName;
+
+    cleanedRow[newKey] = value;
+  });
+
+  return cleanedRow;
+});
+
+
+const mwsOrderedColumns = [
+  "MWS UID",
+];
+
+// Add remaining columns automatically
+Object.keys(mwsData[0] || {}).forEach((key) => {
+  if (!mwsOrderedColumns.includes(key)) {
+    mwsOrderedColumns.push(key);
+  }
+});
+
+const mwsSheet = XLSX.utils.json_to_sheet(mwsData, {
+  header: mwsOrderedColumns,
+});
+
     const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Waterbody Data");
+  
+    XLSX.utils.book_append_sheet(workbook, summarySheet, "Summary");
+    XLSX.utils.book_append_sheet(workbook, waterbodySheet, "Waterbody Data");
+    XLSX.utils.book_append_sheet(workbook, zoiSheet, "ZOI Data"); 
+    XLSX.utils.book_append_sheet(workbook, mwsSheet, "MWS Data");
   
     const excelBuffer = XLSX.write(workbook, {
       bookType: "xlsx",
       type: "array",
     });
   
-    const data = new Blob([excelBuffer], {
+    const blob = new Blob([excelBuffer], {
       type:
         "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8",
     });
   
     const fileName = `${projectNameParam || "Water_Project"}.xlsx`;
   
-    saveAs(data, fileName);
+    saveAs(blob, fileName);
   };
-  
   
   return (
     <div className={`${isTehsilMode ? "pb-8 w-full" : "mx-6 my-8 bg-white rounded-xl shadow-md p-6"}`}>
