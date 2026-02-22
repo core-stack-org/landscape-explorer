@@ -78,6 +78,7 @@ const KYLDashboardPage = () => {
 
   const [indicatorType, setIndicatorType] = useState(null);
   const [showMWS, setShowMWS] = useState(true);
+  const [sidebarResetKey, setSidebarResetKey] = useState(0);
   const [showVillages, setShowVillages] = useState(true);
   const [filtersEnabled, setFiltersEnabled] = useState(false);
 
@@ -854,7 +855,6 @@ const KYLDashboardPage = () => {
       setDataJson(result);
 
       setIsLoading(false);
-      setFiltersEnabled(true)
     } catch (e) {
       console.log(e);
       setIsLoading(false);
@@ -1159,28 +1159,17 @@ const KYLDashboardPage = () => {
     mapRef.current = map;
   };
 
-  const handleItemSelect = (setter, value) => {
-    setter(value);
-    // Reset everything when location changes
-    if (setter === setState) {
-      if (value) {
-        trackEvent("Location", "select_state", value.label);
-      }
-      setDistrict(null);
-      setBlock(null);
-      resetAllStates();
-    } else if (setter === setDistrict) {
-      if (value) {
-        trackEvent("Location", "select_district", value.label);
-      }
-      setBlock(null);
-      resetAllStates();
-    } else if (setter === setBlock) {
-      trackEvent("Location", "select_tehsil", value.label);
-      resetAllStates();
-    }
-  };
+ const handleItemSelect = (setter, value) => {
+  setter(value);
 
+  if (setter === setState) {
+    setDistrict(null);
+    setBlock(null);
+  } 
+  else if (setter === setDistrict) {
+    setBlock(null);
+  }
+};
   const handlePatternRemoval = (pattern) => {
     const key = pattern.patternName || pattern.name;
 
@@ -1207,31 +1196,56 @@ const KYLDashboardPage = () => {
   }
 
   const resetAllStates = () => {
-    // Reset filters
-    setFilterSelections({
-      selectedMWSValues: {},
-      selectedVillageValues: {},
+
+  // 1️⃣ Remove all applied filter layers from map
+  if (currentLayer.length > 0 && mapRef.current) {
+    currentLayer.forEach((layer) => {
+      layer.layerRef.forEach((ref) => {
+        mapRef.current.removeLayer(ref);
+      });
     });
+  }
 
-    setIndicatorType(null);
-    setMappedAssets(false);
-    setMappedDemands(false);
-    setSelectedMWS([]);
-    setVillageIdList(new Set([]));
-    setShowMWS(true);
-    setShowVillages(true);
-    setSelectedMWSProfile(null);
-    
-    // Reset waterbody state
-    setShowWB(false); // Add this line
-    
-    // Remove waterbody layer if it exists
-    if (waterbodiesLayerRef.current && mapRef.current) {
-      mapRef.current.removeLayer(waterbodiesLayerRef.current);
-      waterbodiesLayerRef.current = null;
-    }
-  };
+  // 2️⃣ Reset layer tracking
+  setCurrentLayer([]);
+  setToggleStates({});
 
+  // 3️⃣ Clear filter selections (UI + logic)
+  setFilterSelections({
+    selectedMWSValues: {},
+    selectedVillageValues: {},
+  });
+
+  // 4️⃣ Clear pattern selections
+  setPatternSelections({
+    selectedMWSPatterns: {},
+    selectedVillagePatterns: {},
+  });
+
+  // 5️⃣ Reset indicator tab
+  setIndicatorType(null);
+
+  // 6️⃣ Reset MWS & Village selections
+  setSelectedMWS([]);
+  setVillageIdList(new Set([]));
+  setSelectedMWSProfile(null);
+
+  setShowMWS(true);
+  setShowVillages(true);
+
+  // 7️⃣ Reset waterbody
+  setShowWB(false);
+  if (waterbodiesLayerRef.current && mapRef.current) {
+    mapRef.current.removeLayer(waterbodiesLayerRef.current);
+    waterbodiesLayerRef.current = null;
+  }
+
+  // 8️⃣ 🔥 VERY IMPORTANT — Restore default MWS style
+  if (mwsLayerRef.current) {
+    fetchMWSLayer([]);   // This restores default blue style properly
+  }
+  setSidebarResetKey(prev => prev + 1);
+};
   const searchUserLatLong = async () => {
     setIsLoading(true);
     try {
@@ -2005,6 +2019,27 @@ const KYLDashboardPage = () => {
     }
   }, [selectedMWS, showWB]);
 
+  useEffect(() => {
+  // Enable filters only when boundary + MWS + data are fully loaded
+  if (
+    !islayerLoaded &&
+    !isLoading &&
+    district &&
+    block
+  ) {
+    setFiltersEnabled(true);
+  } else {
+    setFiltersEnabled(false);
+  }
+}, [islayerLoaded, isLoading, district, block]);
+
+useEffect(() => {
+  if (district && block) {
+    resetAllStates();
+  }
+}, [district, block]);
+
+
   return (
     <div className="min-h-screenbg-white flex flex-col">
       <Toaster />
@@ -2014,6 +2049,7 @@ const KYLDashboardPage = () => {
       <div className="flex h-[calc(100vh-48px)] p-4 gap-4">
         {/* Left Sidebar */}
         <KYLLeftSidebar
+          key={sidebarResetKey}
           indicatorType={indicatorType}
           setIndicatorType={setIndicatorType}
           filterSelections={filterSelections}
