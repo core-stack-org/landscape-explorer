@@ -181,26 +181,26 @@ const MapLegend = ({
   // Add state for collapsed status
   const [isCollapsed, setIsCollapsed] = useState(false);
   const contentRef = useRef(null);
-  const [containerHeight, setContainerHeight] = useState("12rem");
+  // const [containerHeight, setContainerHeight] = useState("12rem");
 
 
 
-  useEffect(() => {
-    if (isCollapsed) {
-      setContainerHeight("12rem");
-    } else {
-      if (contentRef.current) {
-        setContainerHeight(`${contentRef.current.scrollHeight}px`);
-      }
-    }
-  }, [
-    isCollapsed,
-    showMWS,
-    showVillages,
-    currentLayer,
-    mappedAssets,
-    mappedDemands,
-  ]);
+  // useEffect(() => {
+  //   if (isCollapsed) {
+  //     setContainerHeight("12rem");
+  //   } else {
+  //     if (contentRef.current) {
+  //       setContainerHeight(`${contentRef.current.scrollHeight}px`);
+  //     }
+  //   }
+  // }, [
+  //   isCollapsed,
+  //   showMWS,
+  //   showVillages,
+  //   currentLayer,
+  //   mappedAssets,
+  //   mappedDemands,
+  // ]);
 
     // If no layers are shown, don't display legend
   if (!showMWS && !showVillages && (!currentLayer || currentLayer.length === 0))
@@ -524,7 +524,6 @@ const MapLegend = ({
         className={`bg-white rounded-lg shadow-md overflow-hidden transition-all duration-300 ${
           isCollapsed ? "w-10 opacity-80 hover:opacity-100" : "w-72 opacity-100"
         } max-h-[60vh]`}
-        style={{ height: containerHeight }}
       >
         {/* Collapsed state - vertical "Legend" text */}
         {isCollapsed && (

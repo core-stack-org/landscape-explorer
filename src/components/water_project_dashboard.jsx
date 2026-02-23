@@ -898,7 +898,7 @@ const handleWaterbodyClick = (row) => {
 
     const summaryData = rows.map((r) => ({
       UID: r.UID,
-      Waterbody: r.waterbody,
+      "Waterbody name": r.waterbody,
     
       State: r.state,
       District: r.district,
@@ -934,7 +934,7 @@ const handleWaterbodyClick = (row) => {
       "distance_from_desilting_point",
       "category_sq_m",
       "area_17-18","area_18-19","area_19-20","area_20-21","area_21-22","area_22-23","area_23-24","area_24-25",
-      "State","District"
+      "State","District","cropland_17-18","cropland_18-19","cropland_19-20","cropland_20-21","cropland_21-22","cropland_22-23","cropland_23-24","cropland_24-25"
     ];
 
     const renameMap = {
@@ -951,7 +951,7 @@ const handleWaterbodyClick = (row) => {
 
     const formatDynamicColumnName = (key) => {
       const match = key.match(
-        /^(barren_land|build_up|cropland|shrubs|tree|single_kharif|single_kharif_no|double_cropping|tripple_cropping|k|kr|krz)_(\d{2}-\d{2})$/
+        /^(barren_land|build_up|shrubs|tree|single_kharif|single_kharif_no|double_cropping|tripple_cropping|k|kr|krz)_(\d{2}-\d{2})$/
       );
 
       if (!match) return null;
@@ -960,18 +960,17 @@ const handleWaterbodyClick = (row) => {
       const year = match[2];
 
       const labelMap = {
-        barren_land: "Barren land",
-        build_up: "Built up",
-        cropland: "Cropland",
-        shrubs: "Shrubs",
-        tree: "Tree",
-        single_kharif: "Single Kharif",
-        single_kharif_no: "Single Non-Kharif",
-        double_cropping: "Double Cropping",
-        tripple_cropping: "Triple Cropping",
-        k: "Water availabilty during Kharif",
-        kr: "Water availabilty during Rabi",
-        krz: "Water availabilty during Zaid",
+        barren_land: "Barren land (%)",
+        build_up: "Built up (%)",
+        shrubs: "Shrubs (%)",
+        tree: "Trees (%)",
+        single_kharif: "Single Kharif (%)",
+        single_kharif_no: "Single Non-Kharif (%)",
+        double_cropping: "Double Cropping (%)",
+        tripple_cropping: "Triple Cropping (%)",
+        k: "Water availabilty during Kharif (%)",
+        kr: "Water availabilty during Rabi (%)",
+        krz: "Water availabilty during Zaid (%)",
       };
 
       return labelMap[type]
@@ -1017,6 +1016,7 @@ const orderedColumns = [
   "Max Catchment Area (ha)",
   "Watershed Position",
   "On drainage line",
+  "Silt Removed (Cu.m.)",
 
   "Latitude",
   "Longitude",
@@ -1025,7 +1025,6 @@ const orderedColumns = [
 // Get all available columns
 const allColumns = Object.keys(waterbodyData[0] || {});
 
-// Dynamically extract seasonal columns
 const kharifCols = allColumns
   .filter(col => col.startsWith("Water availabilty during Kharif ("))
   .sort();
@@ -1038,18 +1037,61 @@ const zaidCols = allColumns
   .filter(col => col.startsWith("Water availabilty during Zaid ("))
   .sort();
 
-// Insert them immediately after On drainage line
-orderedColumns.push(...kharifCols);
-orderedColumns.push(...rabiCols);
-orderedColumns.push(...zaidCols);
+const singleKharifCols = allColumns
+  .filter(col => col.startsWith("Single Kharif ("))
+  .sort();
 
-// Add remaining columns (excluding ones already added)
+const singleNonKharifCols = allColumns
+  .filter(col => col.startsWith("Single Non-Kharif ("))
+  .sort();
+
+const doubleCroppingCols = allColumns
+  .filter(col => col.startsWith("Double Cropping ("))
+  .sort();
+
+const tripleCroppingCols = allColumns
+  .filter(col => col.startsWith("Triple Cropping ("))
+  .sort();
+
+const treeCols = allColumns
+  .filter(col => col.startsWith("Tree ("))
+  .sort();
+
+const shrubsCols = allColumns
+  .filter(col => col.startsWith("Shrubs ("))
+  .sort();
+
+const builtUpCols = allColumns
+  .filter(col => col.startsWith("Built up ("))
+  .sort();
+
+const barrenCols = allColumns
+  .filter(col => col.startsWith("Barren land ("))
+  .sort();
+
+
+orderedColumns.push(
+  ...kharifCols,
+  ...rabiCols,
+  ...zaidCols,
+
+  ...singleKharifCols,
+  ...singleNonKharifCols,
+  ...doubleCroppingCols,
+  ...tripleCroppingCols,
+
+  ...treeCols,
+  ...shrubsCols,
+  ...builtUpCols,
+  ...barrenCols
+);
+
+// Add remaining columns
 allColumns.forEach(col => {
   if (!orderedColumns.includes(col)) {
     orderedColumns.push(col);
   }
 });
-
 
     const waterbodySheet = XLSX.utils.json_to_sheet(waterbodyData, {
       header: orderedColumns,
@@ -1068,7 +1110,7 @@ const zoiExcludedColumns = [
  const shouldExcludeZoiColumn = (key) => {
   return (
     zoiExcludedColumns.includes(key) ||
-    key.startsWith("NDVI_") || key.startsWith("cropping_intensity_") || 
+    key.startsWith("NDVI_") || key.startsWith("cropping_intensity_") || key.startsWith("single_cropped_area") ||
     false
   );
 };
@@ -1077,29 +1119,34 @@ const zoiExcludedColumns = [
 const zoiRenameMap = {
   UID: "UID",
   zoi_area: "ZOI Area (ha)",
+  total_cropable_area_ever_hydroyear_2017_2024:"Total cropped area (ha)"
 };
 
 // Dynamic rename for yearly fields
 const formatZoiDynamicColumnName = (key) => {
   const match = key.match(
-    /^(doubly_cropped_area|triply_cropped_area|single_cropped_area|single_kharif_cropped_area|single_non_kharif_cropped_area)_(\d{4})$/
+    /^(doubly_cropped_area|triply_cropped_area|single_kharif_cropped_area|single_non_kharif_cropped_area)_(\d{4})$/
   );
 
   if (!match) return null;
 
   const type = match[1];
-  const year = match[2];
+  const fullYear = Number(match[2]);
+
+  const shortStart = fullYear.toString().slice(2);
+  const shortEnd = (fullYear + 1).toString().slice(2);
+
+  const formattedYear = `${shortStart}-${shortEnd}`;
 
   const labelMap = {
-    doubly_cropped_area: "Double Cropped Area",
-    triply_cropped_area: "Triple Cropped Area",
-    single_cropped_area: "Single Cropped Area",
-    single_kharif_cropped_area: "Single Kharif Cropped Area",
-    single_non_kharif_cropped_area: "Single Non-Kharif Cropped Area",
+    doubly_cropped_area: "Double Cropped Area (%)",
+    triply_cropped_area: "Triple Cropped Area (%)",
+    single_kharif_cropped_area: "Single Kharif Cropped Area (%)",
+    single_non_kharif_cropped_area: "Single Non-Kharif Cropped Area (%)",
   };
 
   return labelMap[type]
-    ? `${labelMap[type]} (${year})`
+    ? `${labelMap[type]} (${formattedYear})`
     : null;
 };
 
@@ -1128,12 +1175,42 @@ if (zoiFeatures?.length) {
 const zoiOrderedColumns = [
   "UID",
   "ZOI Area (ha)",
+  "Total cropped area (ha)"
 ];
 
-// Add remaining dynamic columns automatically (safe fallback)
-Object.keys(zoiData[0] || {}).forEach((key) => {
-  if (!zoiOrderedColumns.includes(key)) {
-    zoiOrderedColumns.push(key);
+const allZoiColumns = [
+  ...new Set(
+    zoiData.flatMap(row => Object.keys(row))
+  )
+];
+
+const zoiSingleKharifCols = allZoiColumns
+  .filter(col => col.startsWith("Single Kharif Cropped Area (%) ("))
+  .sort();
+
+const zoiSingleNonKharifCols = allZoiColumns
+  .filter(col => col.startsWith("Single Non-Kharif Cropped Area (%) ("))
+  .sort();
+
+const zoiDoubleCols = allZoiColumns
+  .filter(col => col.startsWith("Double Cropped Area (%) ("))
+  .sort();
+
+const zoiTripleCols = allZoiColumns
+  .filter(col => col.startsWith("Triple Cropped Area (%) ("))
+  .sort();
+
+zoiOrderedColumns.push(
+  ...zoiSingleKharifCols,
+  ...zoiSingleNonKharifCols,
+  ...zoiDoubleCols,
+  ...zoiTripleCols
+);
+
+// Fallback remaining
+allZoiColumns.forEach(col => {
+  if (!zoiOrderedColumns.includes(col)) {
+    zoiOrderedColumns.push(col);
   }
 });
 
@@ -1144,6 +1221,20 @@ const zoiSheet = XLSX.utils.json_to_sheet(zoiData, {
 // MWS sheet
 
 let mwsRawData = [];
+
+const hasNonZeroPrecipitation = (row) => {
+  return Object.entries(row).some(([key, value]) => {
+    // precipitation columns only
+    if (
+      key.startsWith("precipitation_kharif_") ||
+      key.startsWith("precipitation_rabi_") ||
+      key.startsWith("precipitation_zaid_")
+    ) {
+      return Number(value) !== 0;
+    }
+    return false;
+  });
+};
 
 // PROJECT MODE (GeoJSON)
 if (mwsGeoData?.features?.length) {
@@ -1236,8 +1327,11 @@ const formatMwsDynamicColumn = (key) => {
 };
 
 
-const mwsData = mwsRawData.map((row) => {
-  const cleanedRow = {};
+const filteredRawData = mwsRawData.filter((row) =>
+  hasNonZeroPrecipitation(row)
+);
+
+const mwsData = filteredRawData.map((row) => {  const cleanedRow = {};
 
   Object.entries(row).forEach(([key, value]) => {
     if (shouldExcludeMwsColumn(key)) return;
