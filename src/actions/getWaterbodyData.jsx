@@ -20,13 +20,40 @@ export const getWaterbodyData = async ({
       });
       return null;
     }
-  const dist = district.label
-    .toLowerCase()
-    .replace(/\s+/g, "_");
+
+    const transformName = (name) => {
+      if (!name) return "";
+    
+      // Extract base + alias from parentheses
+      const match = name.match(/^(.+?)\s*\((.+?)\)$/);
+    
+      let parts = [];
+    
+      if (match) {
+        const main = match[1];
+        const alias = match[2];
+    
+        parts = [main, alias];
+      } else {
+        // no parentheses → repeat twice
+        parts = [name];
+      }
+    
+      return parts
+        .map((p) =>
+          p
+            .replace(/[^\w\s-]/g, "") // remove special chars
+            .replace(/\s+/g, "_")     // Space
+            .replace(/_+/g, "_")      // collapse _
+            .replace(/^_|_$/g, "")    // trim _
+            .toLowerCase()
+        )
+        .join("_");
+    };
+
+  const dist = transformName(district.label);
   
-  const blk = block.label
-    .toLowerCase()
-    .replace(/\s+/g, "_");
+  const blk = transformName(block.label);
   
     const yellowWaterbodyStyle = new Style({
       stroke: new Stroke({
