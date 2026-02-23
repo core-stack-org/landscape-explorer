@@ -114,8 +114,10 @@ export const useGlobalWaterData = ({
 
       //  TEHSIL MODE
       if (type === "tehsil" && district && block) {
-        const d = district.toLowerCase().replace(/\s+/g, "_");
-        const b = block.toLowerCase().replace(/\s+/g, "_");
+        const d = transformName(district);
+        const b = transformName(block);
+
+        console.log(d,b)
 
         // ZOI
         zoi = await fetchWFS(`swb:waterbodies_zoi_${d}_${b}`);

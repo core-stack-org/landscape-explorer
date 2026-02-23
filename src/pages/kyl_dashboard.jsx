@@ -717,12 +717,12 @@ const KYLDashboardPage = () => {
         const rotation = -Math.atan2(dy, dx) + Math.PI / 2;
         const isDownstream = end[1] < start[1];
 
-        const arrowColor = isDownstream ? "#39FF14" : "#FF1493";      
+        const arrowColor = isDownstream ? "#39FF14" : "#FF1493";      //green down pink up
         return [
           new Style({
             stroke: new Stroke({
               color: arrowColor,
-              width: 1.2,
+              width: 2.2,
               lineCap: "round",
             }),
           }),
