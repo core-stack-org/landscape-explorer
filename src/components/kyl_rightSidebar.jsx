@@ -46,7 +46,11 @@ const KYLRightSidebar = ({
   onResetWaterbody,
   setShowWB,
   showWB,
-  boundaryLayerRef
+  boundaryLayerRef,
+  mwsConnectivityLayerRef,
+  showConnectivity,
+  setShowConnectivity,
+  mwsArrowLayerRef
 }) => {
   const [globalState, setGlobalState] = useRecoilState(stateAtom);
   const [globalDistrict, setGlobalDistrict] = useRecoilState(districtAtom);
@@ -144,6 +148,18 @@ const toggleWaterbodies = () => {
   }, 500); 
 };
 
+const toggleConnectivity = () => {
+  if (!mwsArrowLayerRef?.current) {
+    console.warn("Arrow layer not ready");
+    return;
+  }
+
+  const layer = mwsArrowLayerRef.current;
+
+  const newVisibility = !showConnectivity;
+  layer.setVisible(newVisibility);
+  setShowConnectivity(newVisibility);
+};
   
   const handleTehsilReport = () => {
     const reportURL = `${process.env.REACT_APP_API_URL}/generate_tehsil_report/?state=${state.label.toLowerCase().split(" ").join("_")}&district=${district.label.toLowerCase().split(" ").join("_")}&block=${block.label.toLowerCase().split(" ").join("_")}`;
@@ -240,7 +256,8 @@ const toggleWaterbodies = () => {
               </div>
             </div>
             {block && (
-              <div className="mt-6 flex gap-2">
+              <div className="mt-6 flex flex-col gap-2">
+                <div className="flex gap-2">
                 <button 
                   className="flex-1 flex items-center justify-center gap-1 text-indigo-600 py-2 text-sm hover:bg-indigo-50 rounded-md transition-colors" 
                   onClick={handleTehsilReport}
@@ -303,6 +320,33 @@ const toggleWaterbodies = () => {
                       Show Waterbodies
                     </>
                   )}
+                </button>
+                </div>
+
+                <button
+                  onClick={toggleConnectivity}
+                  className={`w-full flex items-center justify-center gap-1 py-2 text-sm 
+                              rounded-md transition-colors hover:bg-indigo-50
+                              ${showConnectivity ? "text-red-600" : "text-indigo-600"}`}
+                >
+                  <svg 
+                    xmlns="http://www.w3.org/2000/svg" 
+                    width="18" 
+                    height="18" 
+                    viewBox="0 0 24 24" 
+                    fill="none" 
+                    stroke="currentColor" 
+                    strokeWidth="2" 
+                    strokeLinecap="round" 
+                    strokeLinejoin="round"
+                  >
+                    <circle cx="5" cy="12" r="2" />
+                    <circle cx="19" cy="5" r="2" />
+                    <circle cx="19" cy="19" r="2" />
+                    <line x1="7" y1="12" x2="17" y2="6" />
+                    <line x1="7" y1="12" x2="17" y2="18" />
+                  </svg>
+                  {showConnectivity ? "Hide MWS Connectivity" : "Show MWS Connectivity"}
                 </button>
               </div>
             )}
