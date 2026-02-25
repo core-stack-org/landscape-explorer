@@ -743,7 +743,7 @@ const KYLDashboardPage = () => {
         );
       
         // Arrowhead size proportional to edge length, capped
-        const arrowLen = Math.min(len * 0.15, 0.012);
+        const arrowLen = Math.min(len * 0.08, 0.006);
         const arrowAngle = Math.PI / 6;
       
         const left = [
