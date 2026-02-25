@@ -667,27 +667,37 @@ const KYLDashboardPage = () => {
       return;
     }
   
-    // UID → coordinate map
+    // -------------------------
+    // Create UID → coordinate map
+    // -------------------------
     const uidToCoord = {};
+  
     centroidFeatures.forEach((feature) => {
-      const uid = feature.get("uid");
+      const uid = feature.get("uid") || feature.get("UID");
+      if (!uid) return;
+  
       const coord = feature.getGeometry().getCoordinates();
-      uidToCoord[uid] = coord;
+      uidToCoord[uid.toString().trim()] = coord;
     });
   
     const arrowFeatures = [];
   
+    // -------------------------
+    // Create arrows
+    // -------------------------
     connectivityFeatures.forEach((feature) => {
       const uid = feature.get("uid");
       const downstream = feature.get("downstream");
+  
       if (!uid || !downstream) return;
   
-      const start = uidToCoord[uid];
-      const end = uidToCoord[downstream];
+      const start = uidToCoord[uid.toString().trim()];
+      const end = uidToCoord[downstream.toString().trim()];
   
-        if (!start || !end) return;
+      if (!start || !end) return;
   
       const line = new LineString([start, end]);
+  
       const arrowFeature = new Feature({
         geometry: line,
         upstream: uid,
@@ -704,40 +714,55 @@ const KYLDashboardPage = () => {
     const arrowLayer = new VectorLayer({
       source: arrowSource,
       style: (feature) => {
+        const styles = [];
+      
         const geometry = feature.getGeometry();
         const coords = geometry.getCoordinates();
       
-        const start = coords[0];
-        const end = coords[1];
+        // Need at least 2 points
+        if (!coords || coords.length < 2) return styles;
+      
+        const start = coords[coords.length - 2];
+        const end = coords[coords.length - 1];
       
         const dx = end[0] - start[0];
         const dy = end[1] - start[1];
-        
-        // Fix: subtract Math.PI/2 to align with OL's rotation (from top, clockwise)
-        const rotation = -Math.atan2(dy, dx) + Math.PI / 2;
-        const isDownstream = end[1] < start[1];
-
-        const arrowColor = isDownstream ? "#39FF14" : "#FF1493";      //green down pink up
-        return [
+        const len = Math.sqrt(dx * dx + dy * dy);
+      
+        // Skip zero-length or near-zero edges
+        if (len < 1e-6) return styles;
+      
+        const angle = Math.atan2(dy, dx);
+        const color = "#FF1493";
+      
+        // Main line
+        styles.push(
           new Style({
-            stroke: new Stroke({
-              color: arrowColor,
-              width: 2.2,
-              lineCap: "round",
-            }),
-          }),
-          new Style({
-            geometry: new Point(end),
-            image: new RegularShape({
-              points: 3,
-              radius: 7,
-              fill: new Fill({ color: arrowColor }),
-              rotation: rotation,
-              rotateWithView: true,
-              angle: 0,
-            }),
-          }),
+            stroke: new Stroke({ color, width: 1.5 }),
+          })
+        );
+      
+        // Arrowhead size proportional to edge length, capped
+        const arrowLen = Math.min(len * 0.15, 0.012);
+        const arrowAngle = Math.PI / 6;
+      
+        const left = [
+          end[0] - arrowLen * Math.cos(angle - arrowAngle),
+          end[1] - arrowLen * Math.sin(angle - arrowAngle),
         ];
+        const right = [
+          end[0] - arrowLen * Math.cos(angle + arrowAngle),
+          end[1] - arrowLen * Math.sin(angle + arrowAngle),
+        ];
+      
+        styles.push(
+          new Style({
+            geometry: new LineString([left, end, right]),
+            stroke: new Stroke({ color, width: 1.5 }),
+          })
+        );
+      
+        return styles;
       },
     });
   
