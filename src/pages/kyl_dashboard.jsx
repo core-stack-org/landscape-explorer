@@ -81,7 +81,29 @@ const KYLDashboardPage = () => {
   const [block, setBlock] = useRecoilState(blockAtom);
   const [filterSelections, setFilterSelections] = useRecoilState(filterSelectionsAtom);
   const [patternSelections, setPatternSelections] = useState({ selectedMWSPatterns: {}, selectedVillagePatterns: {} });
+ const handleClearAll = () => {
 
+  // Clear filters
+  setFilterSelections({
+    selectedMWSValues: {},
+    selectedVillageValues: {}
+  });
+
+  // Clear patterns
+  setPatternSelections({
+    selectedMWSPatterns: {},
+    selectedVillagePatterns: {}
+  });
+
+  // Clear map selections
+  setSelectedMWS([]);
+
+  // Clear village lists
+  setVillageIdList(new Set());
+  setPatternVillageList(new Set());
+  setFinalVillageList(new Set());
+
+};
   const lulcYear = useRecoilValue(yearAtom);
 
   const [indicatorType, setIndicatorType] = useState(null);
@@ -1596,7 +1618,7 @@ const KYLDashboardPage = () => {
    }
  }
 
-    // 4️⃣ SAVE ARRAY OF FULL GEOJSON FEATURES
+    // SAVE ARRAY OF FULL GEOJSON FEATURES
     if (matchedMws.length > 0) {
       const geojsonWriter = new GeoJSON();
 
@@ -2223,7 +2245,7 @@ const KYLDashboardPage = () => {
       </div>
       <div className="flex h-[calc(100vh-48px)] p-4 gap-4">
         {/* Left Sidebar */}
-        <KYLLeftSidebar
+              <KYLLeftSidebar
           indicatorType={indicatorType}
           setIndicatorType={setIndicatorType}
           filterSelections={filterSelections}
@@ -2239,13 +2261,19 @@ const KYLDashboardPage = () => {
           mapRef={mapRef}
           filtersEnabled={filtersEnabled}
           getFormattedSelectedFilters={getFormattedSelectedFilters}
+
           getAllPatternTypes={getAllPatternTypes}
           handlePatternRemoval={handlePatternRemoval}
           getSubcategoriesForCategory={getSubcategoriesForCategory}
           getPatternsForSubcategory={getPatternsForSubcategory}
+
           patternSelections={patternSelections}
+          setPatternSelections={setPatternSelections}   
+
           handlePatternSelection={handlePatternSelection}
           isPatternSelected={isPatternSelected}
+
+          handleClearAll={handleClearAll}
         />
 
         {/* Map Container */}
