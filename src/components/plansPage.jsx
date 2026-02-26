@@ -30,6 +30,11 @@ import {
 } from "../store/locationStore";
 import getStates from "../actions/getStates";
 import getPlans from "../actions/getPlans";
+import FilterListIcon from "@mui/icons-material/FilterList";
+import LocationOnIcon from "@mui/icons-material/LocationOn";
+import GroupsOutlinedIcon from "@mui/icons-material/GroupsOutlined";
+import DescriptionOutlinedIcon from "@mui/icons-material/DescriptionOutlined";
+import TaskAltOutlinedIcon from "@mui/icons-material/TaskAltOutlined";
 
 const STATE_COORDINATES = {
   Jharkhand: [85.2799, 23.6102],
@@ -92,6 +97,11 @@ const PlansPage = () => {
   const mapElement = useRef(null);
   const mapRef = useRef(null);
   const navigate = useNavigate();
+  const [activeTehsilNames, setActiveTehsilNames] = useState([]);
+  const [selectedDistrict, setSelectedDistrict] = useState(null);
+  const districtRef = useRef(null);
+  const [currentStateObj, setCurrentStateObj] = useState(null);
+  const [emptyStateType, setEmptyStateType] = useState(null);
 
   //  Load Meta Stats
   useEffect(() => {
@@ -128,18 +138,25 @@ const PlansPage = () => {
     }
   };
 
-  //  Load PLANS once
-  // useEffect(() => {
-  //   const loadPlansOnce = async () => {
-  //     if (plans?.length > 0) return;
-  //     const data = await getPlans();
-  //     console.log(data)
-  //     if (data?.raw) setPlans(data.raw);
-  //   };
-  //   loadPlansOnce();
-  // }, []);
+  const districtOptions = useMemo(() => {
+    // only for state
+    if (currentStateObj && currentStateObj.district) {
+      return currentStateObj.district.map((d) => ({
+        value: d.district_id,
+        label: d.label,
+      }));
+    }
+  
+    // Show all
+    if (!districts || districts.length === 0) return [];
+  
+    return districts.map((d) => ({
+      value: d.district_id,
+      label: d.label,
+    }));
+  }, [districts, currentStateObj]);
 
-  // Load States, Districts, Blocks
+
   useEffect(() => {
     const loadLocations = async () => {
       if (  states?.length > 0) return;
@@ -154,7 +171,6 @@ const PlansPage = () => {
   
       const distList = [];
       const blockList = [];
-      console.log(stateList)
       stateList.forEach((state) => {
         state?.district?.forEach((d) => {
           // Collect district list
@@ -213,7 +229,7 @@ const PlansPage = () => {
       }
     });
   }, []);
-
+  
   const addStateBubbles = () => {
     if (!mapRef.current) return;
   
@@ -222,9 +238,7 @@ const PlansPage = () => {
       mapRef.current.removeLayer(bubbleLayerRef.current);
       bubbleLayerRef.current = null;
     }
-  
-    // ✅ NO DATA CASE
-    if (
+      if (
       !metaStats?.state_breakdown ||
       !Array.isArray(metaStats.state_breakdown) ||
       metaStats.state_breakdown.length === 0
@@ -285,19 +299,21 @@ const PlansPage = () => {
 
   const handleStateBubbleClick = async (feature) => {
     if (!feature) {
-      console.warn("⚠ handleStateBubbleClick: feature is null");
+      console.warn("handleStateBubbleClick: feature is null");
       return;
     }
       if (!states || !Array.isArray(states) || states.length === 0) {
-      console.warn("⚠ handleStateBubbleClick: states not loaded yet!");
+      console.warn("handleStateBubbleClick: states not loaded yet!");
       return;
     }
   
     const clickedStateName = feature.get("name");
     const stateObj = states.find((s) => s.label === clickedStateName);
+    setCurrentStateObj(stateObj);
+
   
     if (!stateObj) {
-      console.warn("⚠ State NOT FOUND in states list:", clickedStateName);
+      console.warn("State NOT FOUND in states list:", clickedStateName);
       console.warn("Available states:", states.map((s) => s.label));
       return;
     }
@@ -315,7 +331,7 @@ const PlansPage = () => {
     setTimeout(() => setMapLoading(false), 300);
   };
   
-  const handleBackToStateView = () => {
+  const handleBackToStateView = async() => {
     const map = mapRef.current;
     if (!map) return;
   
@@ -329,9 +345,17 @@ const PlansPage = () => {
     setShowBubbleLayer(true);
     addStateBubbles();
   
+    const stats = await getPlanMetaStats(
+      organizationRef.current?.value || null
+    );
+    setMetaStats(stats);
     // Switch view mode
     setIsStateView(true);
     setSelectedPlan(null);
+    setActiveTehsilNames([]);
+    setCurrentStateObj(null);
+    setSelectedDistrict(null);
+    districtRef.current = null;
   
     // Reset map view (optional)
     map.getView().animate({
@@ -339,25 +363,157 @@ const PlansPage = () => {
       zoom: 6,
       duration: 600,
     });
+    setMapLoading(false)
+  };
+
+   
+
+  const buildMetaStatsFromPlans = (plans) => {
+    const uniqueTehsils = new Set();
+    const uniqueStewards = new Set();
+  
+    plans.forEach((p) => {
+      if (p.tehsil_soi) uniqueTehsils.add(p.tehsil_soi);
+      if (p.facilitator_id) uniqueStewards.add(p.facilitator_id);
+    });
+  
+    return {
+      summary: {
+        total_plans: plans.length,
+        dpr_generated: plans.filter(p => p.is_dpr_generated).length,
+        dpr_reviewed: plans.filter(p => p.is_dpr_approved).length,
+      },
+      commons_connect_operational: {
+        active_tehsils: uniqueTehsils.size,
+      },
+      landscape_stewards: {
+        total_stewards: uniqueStewards.size,
+      },
+    };
+  };
+  
+
+  const getTehsilIdsFromState = (stateObj) => {
+    return stateObj.district
+      ?.flatMap((d) => d.blocks || [])
+      ?.map((b) => String(b.tehsil_id || b.block_id))
+      ?.filter(Boolean);
   };
 
   const fetchTehsilPlans = async (stateObj) => {
-    const allBlocks = stateObj.district
-      ?.flatMap((d) => d.blocks)
-      ?.map((b) => String(b.block_id));
+    setMapLoading(true);
+
     const selectedOrg = organizationRef.current || null;
-    const result = await getPlans({ state: stateObj.state_id });
-    let filtered = result.raw.filter((p) =>
-      allBlocks.includes(String(p.block))
-    );  
+    const tehsilIds = getTehsilIdsFromState(stateObj);
+
+    if (!tehsilIds.length) {
+      console.warn("No tehsils found");
+      setMapLoading(false);
+      return [];
+    }
+
+    //  parallel API calls
+    const promises = tehsilIds.map((tehsilId) =>
+      getPlans({
+        tehsil: tehsilId,
+        filter_test_plan: true,
+      }).then((res) => res.raw)
+    );
+
+    const results = await Promise.all(promises);
+    let allPlans = results.flat();
+
+    // optional org filter
     if (selectedOrg?.value) {
-      filtered = filtered.filter(
+      allPlans = allPlans.filter(
         (p) => String(p.organization) === String(selectedOrg.value)
       );
     }
-    addPlanDots(filtered);
-    return filtered;
+
+  const tehsilNameSet = new Set();
+
+  allPlans.forEach((p) => {
+    if (p.tehsil_soi) {
+      const name = blockLookup[p.tehsil_soi];
+      if (name) tehsilNameSet.add(name);
+    }
+  });
+
+  setActiveTehsilNames(Array.from(tehsilNameSet));
+  if (allPlans.length === 0) {
+    setEmptyStateType("org");
+    addPlanDots([]);  
+    setMetaStats(buildMetaStatsFromPlans([]));
+    setMapLoading(false);
+    return [];
+  } else {
+    setEmptyStateType(null);
+  }
+
+
+    addPlanDots(allPlans);
+    setMetaStats(buildMetaStatsFromPlans(allPlans));
+    setMapLoading(false);
+
+    return allPlans;
   };
+
+const fetchPlansByDistrict = async (districtId) => {
+      setMapLoading(true);
+      if (bubbleLayerRef.current) {
+        mapRef.current.removeLayer(bubbleLayerRef.current);
+        bubbleLayerRef.current = null;
+      }
+    
+
+      try {
+        const res = await getPlans({
+          district: districtId,
+          filter_test_plan: true,
+        });
+
+        let allPlans = res?.raw || [];
+
+
+        // organization filter
+        if (organizationRef.current?.value) {
+          allPlans = allPlans.filter(
+            (p) => String(p.organization) === String(organizationRef.current.value)
+          );
+        }
+
+        if (allPlans.length === 0) {
+          setEmptyStateType("district");
+          addPlanDots([]);
+          setMetaStats(buildMetaStatsFromPlans([]));
+          setMapLoading(false);
+          return;
+        } else {
+          setEmptyStateType(null);
+        }
+        
+        addPlanDots(allPlans);
+        setMetaStats(buildMetaStatsFromPlans(allPlans));
+
+        // active tehsils update
+        const tehsilSet = new Set();
+        allPlans.forEach((p) => {
+          if (p.tehsil_soi) {
+            const name = blockLookup[p.tehsil_soi];
+            if (name) tehsilSet.add(name);
+          }
+        });
+        setActiveTehsilNames(Array.from(tehsilSet));
+
+        setIsStateView(false);
+        setShowBubbleLayer(false);
+
+      } catch (err) {
+        console.error("District fetch error:", err);
+      }
+
+      setMapLoading(false);
+    };
 
   const addPlanDots = (plans) => {
     if (!mapRef.current) return;
@@ -395,6 +551,7 @@ const PlansPage = () => {
 
     const layer = new VectorLayer({
       source: new VectorSource({ features }),
+      zIndex: 50,
     });
     layer.set("layerName", "planLayer");
 
@@ -520,294 +677,506 @@ const PlansPage = () => {
     map.on("click", handleClick);
     return () => map.un("click", handleClick);
   }, [states, showBubbleLayer]);
-  
-    return (
-    <div className="bg-white min-h-screen">
+    
+  return (
+    <div className="bg-gradient-to-br from-slate-50 to-slate-100 min-h-screen">
       <LandingNavbar />
-      <div className="flex gap-8 items-start p-6">
-        {/* MAP */}
-        <div  className="relative border border-gray-300 rounded-lg overflow-hidden shadow" style={{ width: "60%", height: "900px" }}>
-          <div ref={mapElement} className="w-full h-full" />
-          {noMapData && (
-            <div className="absolute inset-0 flex items-center justify-center z-[1000] pointer-events-none">
-              <span className="text-4xl font-bold text-gray-400">--</span>
-            </div>
-          )}
-          {mapLoading && (
-            <div className="absolute inset-0 bg-white/60 backdrop-blur-sm flex items-center justify-center z-[999]">
-              <div className="animate-spin h-12 w-12 border-4 border-blue-500 border-t-transparent rounded-full"></div>
-            </div>
-          )}
+      {/* PAGE INTRO */}
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-xl m-6">
+      <div className="w-full px-4 lg:px-6 pt-4 pb-3  ">
+        <div className="max-w-[1800px] mx-auto px-4 lg:px-6 pt-4 pb-2">
+          <h1 className="text-2xl lg:text-4xl font-semibold text-slate-700 text-center">
+            Landscape Stewardship Network
+          </h1>
 
-                {/* ZOOM CONTROLS */}
-      <div className="absolute top-10 right-4 flex flex-col gap-1 z-[1100]">
-        {["+", "–"].map((sign) => (
-          <button
-            key={sign}
-            className="bg-white border border-gray-300 rounded-md w-10 h-10 text-xl 
-                      cursor-pointer hover:bg-gray-100 active:scale-95 transition"
-            onClick={() => {
-              const map = mapRef.current;
-              if (!map) return;
-              const view = map.getView();
-              const delta = sign === "+" ? 1 : -1;
-              view.animate({
-                zoom: view.getZoom() + delta,
-                duration: 300,
-              });
-            }}
-          >
-            {sign}
-          </button>
-        ))}
-        {/* BACK BUTTON (visible only when NOT in state bubble view) */}
-          {!isStateView && (
-            <button
-              className="bg-white border border-gray-300 rounded-md w-10 h-10 text-lg 
-                        cursor-pointer hover:bg-gray-100 active:scale-95 transition mt-2 flex items-center justify-center"
-              onClick={handleBackToStateView}
+          <p className="text-slate-600 text-xl mt-1 text-center">
+          Commoning for Resilience and Equality              </p>
+
+          <p className="text-slate-500 text-sm mt-2">
+          Landscape stewards from across 1000+ villages are building natural resource management plans from the ground-up in consultation with their communities. This dashboard shows the network coverage, and (coming soon) the sustainability potential and impact. Discover partner organizations and the on-ground work of landscape stewards in creating detailed project reports for their villages.
+          </p>
+
+          <p className="text-sm mt-2">
+            <span className="text-slate-600">Drop an email to</span>{" "}
+            <a
+              href="mailto:contact@core-stack.org"
+              className="text-blue-600 hover:underline underline-offset-4"
             >
-              ←
-            </button>
-          )}
+              contact@core-stack.org
+            </a>
+            <span className="text-slate-600">  for any further details.</span>{" "}
+          </p>
+        </div>
+      </div>
+
+      <div className="flex flex-col lg:flex-row gap-6 p-4 lg:p-6 max-w-[1800px] mx-auto h-[calc(100vh-120px)]">
+        
+        {/* MAP */}
+        <div className="relative border border-slate-300 rounded-2xl overflow-hidden shadow-2xl w-full lg:w-[65%] h-[50vh] lg:h-full">
+          <div ref={mapElement} className="w-full h-full" />
+            {noMapData && (
+              <div className="absolute inset-0 flex items-center justify-center z-[1000] pointer-events-none">
+                <span className="text-4xl font-bold text-slate-400">--</span>
+              </div>
+            )}
+            {mapLoading && (
+              <div className="absolute inset-0 bg-white/60 backdrop-blur-sm flex items-center justify-center z-[999]">
+                <div className="animate-spin h-12 w-12 border-4 border-blue-500 border-t-transparent rounded-full"></div>
+              </div>
+            )}
+            {emptyStateType && (
+    <div className="absolute inset-0 z-[1200] flex items-center justify-center bg-white/40 backdrop-blur-sm">
+      <div className="relative bg-white px-8 py-6 rounded-2xl shadow-2xl border border-slate-200 text-center w-[340px]">
+
+        <button
+          onClick={async () => {
+            setEmptyStateType(null);
+            setOrganization(null);
+            setSelectedDistrict(null);
+            organizationRef.current = null;
+            districtRef.current = null;
+
+            await handleBackToStateView();
+          }}
+          className="absolute top-3 right-3 text-slate-400 hover:text-red-500 text-sm transition-colors"
+        >
+          ✕
+        </button>
+
+        <p className="text-slate-800 font-semibold text-lg">
+          {emptyStateType === "district"
+            ? "No plans in this district"
+            : "No plans for this organization"}
+        </p>
+
+        <p className="text-slate-500 text-sm mt-2">
+          Please try selecting a different filter.
+        </p>
 
       </div>
-        </div>
-        {/* SIDEBAR */}
-        <div className="flex flex-col items-start gap-4 w-[25%] text-left mt-16">
-          <label className="font-semibold text-gray-700 text-lg">
-            Select Organization
-          </label>
-          <div className="flex items-center gap-2">
-          <SelectReact value={organization} 
-                    onChange={async (selected) => {
-                      setOrganization(selected);
-                      organizationRef.current = selected;
-                      if (!selected) {
-                        const stats = await getPlanMetaStats();
-                        console.log("🔄 META STATS (NO FILTER):", stats);
-                        setMetaStats(stats);
-                        return;
-                      }
-                      const stats = await getPlanMetaStats(selected.value);                    
+    </div>
+            )}
+            {!isStateView && (
+              <button onClick={handleBackToStateView} className="absolute top-4 left-4 z-[1100] bg-white/90 backdrop-blur-sm border border-slate-300 rounded-xl w-11 h-11 text-lg font-semibold flex items-center justify-center hover:bg-white hover:shadow-lg active:scale-95 transition-all duration-200">
+                ←
+              </button>
+            )}
+          {/* ORGANIZATION SELECTOR */}
+          <div className="absolute top-4 left-1/2 -translate-x-1/2 z-[1000] flex gap-4 w-[700px] max-w-[90%]">
+              <div className="relative flex-1">
+                {/* FILTER ICON */}
+                <div className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm z-10">
+                <FilterListIcon style={{ fontSize: 18 }} />
+
+                </div>
+                <SelectReact
+                  value={organization}
+                  onChange={async (selected) => {
+                    setOrganization(selected);
+                    organizationRef.current = selected;
+                  
+                    if (!isStateView && selectedDistrict) {
+                      // District view
+                      await fetchPlansByDistrict(selectedDistrict.value);
+                    } else if (!isStateView && currentStateObj) {
+                      // State → tehsil view
+                      await fetchTehsilPlans(currentStateObj);
+                    } else {
+                      // State bubble view
+                      const stats = await getPlanMetaStats(selected?.value);
                       setMetaStats(stats);
-                    }}
-                      options={organizationOptions}
-                      placeholder="Select Organization"
-                      styles={{
-                        control: (base) => ({
-                                    ...base,
-                                    width: "260px",      
-                                    minWidth: "260px",   
-                                    maxWidth: "260px",   
-                                    height: "48px",
-                                    borderRadius: "8px",
-                                    borderColor: "#cbd5e1",
-                                    boxShadow: "none",
-                                    "&:hover": {
-                                      borderColor: "#94a3b8",
-                                    },
-                                  }),
-                        menu: (base) => ({
-                          ...base,
-                          width: "260px",      
-                        }),
-                }}
-            />   
-            {organization && (
-                <button
-                    className="px-3 py-2 rounded-lg bg-red-500 text-white text-sm hover:bg-red-600 shadow"
+                      
+                      if (!stats?.state_breakdown || stats.state_breakdown.length === 0) {
+                        setEmptyStateType("org");
+                        setShowBubbleLayer(false);
+
+                        if (bubbleLayerRef.current) {
+                          mapRef.current.removeLayer(bubbleLayerRef.current);
+                          bubbleLayerRef.current = null;
+                        }
+
+                      } else {
+                        setEmptyStateType(null);
+                        setShowBubbleLayer(true);
+                        addStateBubbles();
+                      }
+                      
+                    }
+                  }}
+                  
+                  options={organizationOptions}
+                  placeholder="Filter by organization"
+                  components={{
+                    ClearIndicator: () => null, 
+                  }}
+                  styles={{
+                    control: (base) => ({
+                      ...base,
+                      minHeight: "42px",
+                      borderRadius: "10px",
+                      border: "1px solid #e2e8f0",
+                      boxShadow: "0 8px 24px rgba(0,0,0,0.12)",
+                      paddingLeft: "36px",  
+                      paddingRight: "36px", 
+                      backgroundColor: "rgba(255,255,255,0.95)",
+                      backdropFilter: "blur(6px)",
+                    }),
+                    placeholder: (base) => ({
+                      ...base,
+                      color: "#64748b",
+                      fontSize: "14px",
+                    }),
+                    indicatorsContainer: (base) => ({
+                      ...base,
+                      paddingRight: "6px",
+                    }),
+                  }}
+                />
+                {organization && (
+                  <button
                     onClick={async () => {
                       setOrganization(null);
+                      organizationRef.current = null;
+                      if (!isStateView) {
+                        await handleBackToStateView();
+                      } else {
                         const stats = await getPlanMetaStats();
                         setMetaStats(stats);
-                      }}>
-                      X
-                </button>
-            )}     
-        </div>
+                        setShowBubbleLayer(true);
+                        addStateBubbles();
+                      }
+                    }}
+                    className="absolute right-3 top-1/2 -translate-y-1/2
+                              text-slate-400 hover:text-red-500
+                              text-sm transition-colors"
+                    title="Clear filter"
+                  >
+                    ✕
+                  </button>
+                )}
+                  </div>
+                          {/* DISTRICT SELECTOR */}
+            <div className="relative flex-1">
+            <div className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm z-10">
+            <FilterListIcon style={{ fontSize: 18 }} />
 
- {/* METRICS CARD — hide when a plan is selected */}
-{!selectedPlan && (
-  <div className="w-full bg-gradient-to-br from-gray-50 to-gray-100 border border-gray-200 rounded-2xl p-6 shadow-sm mt-4">
-    <h3 className="font-semibold text-gray-800 text-lg mb-4">
-      Overview Metrics
-    </h3>
-
-    <div className="grid grid-cols-1 gap-4">
-
-      <div className="flex items-center justify-between bg-white p-4 rounded-xl shadow-sm border border-gray-200">
-        <span className="text-gray-600 font-medium">Commons Connect Operational In</span>
-        <span className="text-blue-600 font-bold text-xl">--</span>
-      </div>
-
-      <div className="flex items-center justify-between bg-white p-4 rounded-xl shadow-sm border border-gray-200">
-        <span className="text-gray-600 font-medium">Total no. of Plans</span>
-        <span className="text-blue-600 font-bold text-xl">
-          {metaStats?.summary?.total_plans ?? 0}
-        </span>
-      </div>
-
-      <div className="flex items-center justify-between bg-white p-4 rounded-xl shadow-sm border border-gray-200">
-        <span className="text-gray-600 font-medium">DPRs Submitted</span>
-        <span className="text-purple-600 font-bold text-xl">
-          {metaStats?.summary?.dpr_generated ?? 0}
-        </span>
-      </div>
-
-      <div className="flex items-center justify-between bg-white p-4 rounded-xl shadow-sm border border-gray-200">
-        <span className="text-gray-600 font-medium">Demands Approved</span>
-        <span className="text-green-600 font-bold text-xl">
-          {metaStats?.summary?.dpr_reviewed ?? 0}
-        </span>
-      </div>
-
-      <div className="flex items-center justify-between bg-white p-4 rounded-xl shadow-sm border border-gray-200">
-        <span className="text-gray-600 font-medium">Landscape Stewards Working</span>
-        <span className="text-rose-600 font-bold text-xl">--</span>
-      </div>
-
-    </div>
-  </div>
-)}
-
-
-{selectedPlan && (
-  <div
-    className="w-[620px] bg-white border border-gray-200 rounded-2xl p-6 shadow-lg mt-6 relative"
-  >
-    <button
-      className="absolute top-4 right-4 text-gray-500 hover:text-gray-700 text-xl"
-      onClick={() => setSelectedPlan(null)}
-    >
-      ×
-    </button>
-
-    <h3 className="font-bold text-gray-800 text-xl mb-5 flex items-center gap-2">
-      <span className="text-blue-600">📄</span> Plan Details
-    </h3>
-
-    {/* 2-Column Grid */}
-    <div className="grid grid-cols-2 gap-x-6 gap-y-4 text-sm">
-
-      <div className="bg-gray-50 p-3 rounded-lg border border-gray-200">
-        <p className="font-semibold text-gray-700">Plan Name</p>
-        <p className="text-gray-900">{selectedPlan.plan}</p>
-      </div>
-
-      <div className="bg-gray-50 p-3 rounded-lg border border-gray-200">
-        <p className="font-semibold text-gray-700">District</p>
-        <p className="text-gray-900">
-          {districtLookup[selectedPlan.district] || selectedPlan.district}
-        </p>
-      </div>
-
-      <div className="bg-gray-50 p-3 rounded-lg border border-gray-200">
-        <p className="font-semibold text-gray-700">Tehsil</p>
-        <p className="text-gray-900">
-          {blockLookup[selectedPlan.block] || selectedPlan.block}
-        </p>
-      </div>
-
-      <div className="bg-gray-50 p-3 rounded-lg border border-gray-200">
-        <p className="font-semibold text-gray-700">Village</p>
-        <p className="text-gray-900">{selectedPlan.village_name || "--"}</p>
-      </div>
-
-      <div className="bg-gray-50 p-3 rounded-lg border border-gray-200 group relative cursor-pointer">
-        <p className="font-semibold text-gray-700">Steward</p>
-        <div className="flex items-center justify-between mt-1">
-          {/* LEFT: Name */}
-          <p className="text-gray-900">{selectedPlan.facilitator_name || "--"}</p>
-            {/* RIGHT: Arrow */}
-            {selectedPlan.facilitator_name && (
-              <img
-                src={ArrowPlan}
-                alt="arrow icon"
-                className="w-4 h-4 cursor-pointer hover:opacity-80"
-                onClick={() => setIsStewardModalOpen(true)}
-                style={{
-                  filter:
-                    "brightness(0) saturate(100%) invert(32%) sepia(94%) saturate(2817%) hue-rotate(205deg) brightness(95%) contrast(101%)",
+                </div>
+              <SelectReact
+                value={selectedDistrict}
+                onChange={(selected) => {
+                  setSelectedDistrict(selected);
+                  districtRef.current = selected;
+                
+                  if (!selected) {
+                    handleBackToStateView();
+                    return;
+                  }
+                
+                  fetchPlansByDistrict(selected.value);
+                }}
+                
+                options={districtOptions}
+                placeholder="Filter by district"
+                components={{
+                  ClearIndicator: () => null, 
+                }}
+                styles={{
+                  control: (base) => ({
+                    ...base,
+                    minHeight: "42px",
+                    borderRadius: "10px",
+                    border: "1px solid #e2e8f0",
+                    boxShadow: "0 8px 24px rgba(0,0,0,0.12)",
+                    paddingLeft: "36px",  
+                    paddingRight: "36px", 
+                    backgroundColor: "rgba(255,255,255,0.95)",
+                    backdropFilter: "blur(6px)",
+                  }),
+                  placeholder: (base) => ({
+                    ...base,
+                    color: "#64748b",
+                    fontSize: "14px",
+                  }),
+                  indicatorsContainer: (base) => ({
+                    ...base,
+                    paddingRight: "6px",
+                  }),
                 }}
               />
-            )}
+            </div>
+            </div>
+
+    
+
+
+          {/* ZOOM CONTROLS */}
+          <div className="absolute top-4 right-4 flex flex-col gap-2">
+            {["+", "–"].map((sign) => (
+              <button
+                key={sign}
+                className="bg-white/90 backdrop-blur-sm border border-slate-300 rounded-xl w-11 h-11 text-xl font-semibold
+                          cursor-pointer hover:bg-white hover:shadow-lg active:scale-95 transition-all duration-200"
+                onClick={() => {
+                  const map = mapRef.current;
+                  if (!map) return;
+                  const view = map.getView();
+                  const delta = sign === "+" ? 1 : -1;
+                  view.animate({
+                    zoom: view.getZoom() + delta,
+                    duration: 300,
+                  });
+                }}
+              >
+                {sign}
+              </button>
+            ))}
+          
+          </div>
         </div>
 
-  {/* Tooltip */}
-  <div className="absolute left-1/2 -bottom-8 -translate-x-1/2 
-                  bg-black text-white text-xs px-3 py-1 rounded-md
-                  opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none">
-    Click the arrow to view steward details
-  </div>
-      </div>
-      <div className="bg-gray-50 p-3 rounded-lg border border-gray-200">
-        <p className="font-semibold text-gray-700">Organization</p>
-        <p className="text-gray-900">{selectedPlan.organization_name || "--"}</p>
-      </div>
+        {/* SIDEBAR */}
+        <div className="flex flex-col gap-6 w-full lg:w-[35%] h-[50vh] lg:h-full overflow-hidden">
+          {!selectedPlan && (
+            <div className="w-full flex-1 bg-white rounded-2xl border border-slate-200 shadow-xl overflow-hidden flex flex-col">
 
-      <div className="bg-gray-50 p-3 rounded-lg border border-gray-200">
-        <p className="font-semibold text-gray-700">Plan Status</p>
-        <p
-          className={`font-medium ${
-            selectedPlan.is_completed ? "text-green-600" : "text-orange-600"
-          }`}
-        >
-          {selectedPlan.is_completed ? "Completed" : "In Progress"}
-        </p>
-      </div>
 
-      <div className="bg-gray-50 p-3 rounded-lg border border-gray-200">
-        <p className="font-semibold text-gray-700">Demands Approved</p>
-        <p className="text-gray-900">
-          {selectedPlan.is_dpr_approved ? "Yes" : "No"}
-        </p>
-      </div>
+              {/* BIG PRIMARY METRIC */}
+              <div className="relative mt-4 mx-6 mb-6">
+                <div className="bg-gradient-to-br from-blue-500 via-blue-600 to-indigo-700 
+                                rounded-2xl text-center text-white shadow-xl border border-blue-400/20 p-4">
+                  <p className="text-4xl font-bold tracking-tight">
+                    Total Plans : {metaStats?.summary?.total_plans ?? 0}
+                  </p>
+                  
+                </div>
+              </div>
 
-      <div className="bg-gray-50 p-3 rounded-lg border border-gray-200 col-span-2">
-        <p className="font-semibold text-gray-700">
-          Commons Connect Operational Since
-        </p>
-        <p className="text-gray-900">
-          {selectedPlan.created_at
-            ? new Date(selectedPlan.created_at).toLocaleDateString()
-            : "--"}
-        </p>
-      </div>
-    </div>
+              {/* SECONDARY METRICS GRID */}
+              <div className="px-6 pb-6 overflow-y-auto scrollbar-thin">
+              <div className="grid grid-cols-2 gap-4 mb-4 mt-4">
+                  <div className="bg-gradient-to-br from-blue-50 to-blue-100/50 border border-blue-200 rounded-xl p-4 hover:shadow-md transition-shadow">
+                    <div className="flex items-center gap-4 mb-2 justify-center p-2">
+                    <LocationOnIcon fontSize="small" className="text-blue-600" />
+                    <p className="text-xs font-semibold text-blue-900/70">Active Tehsils</p>
+                    </div>
+                    <p className="text-3xl font-bold text-blue-700 text-center">
+                      {metaStats?.commons_connect_operational?.active_tehsils ?? 0}
+                    </p>
+                  </div>
 
-    {/* Button */}
-    <div className="flex items-center gap-3 mt-6 justify-center">
-      <button className="px-4 py-2 flex items-center gap-2 rounded-lg text-blue-600 text-sm hover:bg-blue-200"
-onClick={() => navigate("/plan-view", { state: { plan: selectedPlan } })}
->
-        <span>View Plan Page</span>
-        <img src={ArrowPlan} alt="arrow icon" className="w-4 h-4"     style={{ filter: "brightness(0) saturate(100%) invert(32%) sepia(94%) saturate(2817%) hue-rotate(205deg) brightness(95%) contrast(101%)" }}
- />
-      </button>
+                  <div className="bg-gradient-to-br from-rose-50 to-rose-100/50 border border-rose-200 rounded-xl p-4 hover:shadow-md transition-shadow">
+                    <div className="flex items-center gap-4 mb-2 justify-center p-2">
+                    <GroupsOutlinedIcon sx={{ fontSize: 20 }} className="text-rose-600" />
+                      <p className="text-xs font-semibold text-rose-900/70">Active Stewards </p>
+                    </div>
+                    <p className="text-3xl font-bold text-rose-700 text-center">
+                      {metaStats?.landscape_stewards?.total_stewards ?? 0}
+                    </p>
+                  </div>
 
-    </div>
-  </div>
-)}
+                  <div className="bg-gradient-to-br from-purple-50 to-purple-100/50 border border-purple-200 rounded-xl p-4 hover:shadow-md transition-shadow mt-4">
+                    <div className="flex items-center gap-4 mb-2 justify-center p-2">
+                    <DescriptionOutlinedIcon sx={{ fontSize: 20 }} className="text-purple-600" />
+                    <p className="text-xs font-semibold text-purple-900/70">DPRs Submitted</p>
+                    </div>
+                    <p className="text-3xl font-bold text-purple-700 text-center">
+                      {metaStats?.summary?.dpr_generated ?? 0}
+                    </p>
+                  </div>
 
-      </div>
-</div>
+                  <div className="bg-gradient-to-br from-emerald-50 to-emerald-100/50 border border-emerald-200 rounded-xl p-4 hover:shadow-md transition-shadow mt-4">
+                    <div className="flex items-center gap-4 mb-2 justify-center p-2">
+                    <TaskAltOutlinedIcon sx={{ fontSize: 20 }} className="text-emerald-600" />
+                    <p className="text-xs font-semibold text-emerald-900/70">DPRs Reviewed</p>
+                    </div>
+                    <p className="text-3xl font-bold text-emerald-700 text-center">
+                      {metaStats?.summary?.dpr_reviewed ?? 0}
+                    </p>
+                  </div>                    
+                </div>
+                
+                {!isStateView && currentStateObj && (
+                  <div className="px-6 pb-6 overflow-y-auto scrollbar-thin">
+                    
+                    <div className="border-t border-slate-200 pt-4">
 
-  {/* STEWARD DETAIL DIALOG */}
-    {isStewardModalOpen && selectedPlan && (
-      <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-[3000]">
-        <div className="bg-white w-[1000px] h-[850px] rounded-xl shadow-xl p-2 overflow-auto relative">
-          {(() => (window.closeStewardModal = () => setIsStewardModalOpen(false)))()}
-          <StewardDetailPage plan={selectedPlan}  onClose={() => setIsStewardModalOpen(false)} />
+                      {/* SELECTED STATE */}
+                      <p className="text-xs font-semibold text-slate-600 mb-2">
+                        Selected State
+                      </p>
+
+                      <div className="flex flex-wrap gap-2 mb-4">
+                        <span
+                          className="px-3 py-1 text-xs rounded-full 
+                                    bg-blue-50 text-blue-700 border border-blue-200"
+                        >
+                          {currentStateObj.label}
+                        </span>
+                      </div>
+
+                      {/* ACTIVE TEHSILS */}
+                      {activeTehsilNames.length > 0 && (
+                        <>
+                          <p className="text-xs font-semibold text-slate-600 mb-2">
+                            Active Tehsils
+                          </p>
+
+                          <div className="flex flex-wrap gap-2 max-h-40 overflow-y-auto">
+                            {activeTehsilNames.map((name, idx) => (
+                              <span
+                                key={idx}
+                                className="px-3 py-1 text-xs rounded-full 
+                                          bg-blue-50 text-blue-700 border border-blue-200"
+                              >
+                                {name}
+                              </span>
+                            ))}
+                          </div>
+                        </>
+                      )}
+
+                    </div>
+                  </div>
+                )}
+
+              </div>
+            </div>
+          )}
+          {/* ACTIVE TEHSIL NAMES (ONLY IN TEHSIL VIEW) */}
+
+
+
+          {selectedPlan && (
+            <div className="w-full flex-1 bg-white border border-slate-200 rounded-2xl shadow-xl overflow-hidden relative flex flex-col">
+            <button
+                className="absolute top-4 right-4 text-slate-500 hover:text-slate-700 text-2xl z-10 
+                          w-8 h-8 rounded-full hover:bg-slate-100 flex items-center justify-center transition-all"
+                onClick={() => setSelectedPlan(null)}
+              >
+                ×
+              </button>
+
+              {/* HEADER */}
+              <div className="bg-gradient-to-r from-blue-500 to-indigo-600 p-6 text-white">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center backdrop-blur-sm">
+                    <span className="text-2xl">📄</span>
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-xl">Plan Details : {selectedPlan.plan}</h3>
+                  </div>
+                </div>
+              </div>
+
+              {/* CONTENT */}
+              <div className="p-6 flex-1 overflow-y-auto">
+              {/* 2-Column Grid */}
+                <div className="grid grid-cols-2 gap-4 text-sm mb-6">
+                  <div className="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                    <p className="font-semibold text-slate-600 text-xs mb-1">District</p>
+                    <p className="text-slate-900 font-medium">
+                      {districtLookup[selectedPlan.district_soi] || selectedPlan.district}
+                    </p>
+                  </div>
+
+                  <div className="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                    <p className="font-semibold text-slate-600 text-xs mb-1">Tehsil</p>
+                    <p className="text-slate-900 font-medium">
+                      {blockLookup[selectedPlan.tehsil_soi] || selectedPlan.block}
+                    </p>
+                  </div>
+
+                  <div className="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                    <p className="font-semibold text-slate-600 text-xs mb-1">Village</p>
+                    <p className="text-slate-900 font-medium">{selectedPlan.village_name || "--"}</p>
+                  </div>
+
+                  <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 group relative cursor-pointer" onClick={() => setIsStewardModalOpen(true)}>
+                    <p className="font-semibold text-slate-600 text-xs mb-1">Steward</p>
+                    <div className="flex items-center justify-between">
+                      <p className="text-slate-900 font-medium">{selectedPlan.facilitator_name || "--"}</p>
+                      {selectedPlan.facilitator_name && (
+                        <img
+                          src={ArrowPlan}
+                          alt="arrow icon"
+                          className="w-4 h-4 cursor-pointer hover:opacity-80 transition-opacity"
+                          
+                          style={{
+                            filter: "brightness(0) saturate(100%) invert(32%) sepia(94%) saturate(2817%) hue-rotate(205deg) brightness(95%) contrast(101%)",
+                          }}
+                        />
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                    <p className="font-semibold text-slate-600 text-xs mb-1">Organization</p>
+                    <p className="text-slate-900 font-medium">{selectedPlan.organization_name || "--"}</p>
+                  </div>
+
+                  <div className="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                    <p className="font-semibold text-slate-600 text-xs mb-1">Project</p>
+                    <p className="text-slate-900 font-medium">{selectedPlan.project_name || "--"}</p>
+                  </div>
+
+                  <div className="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                    <p className="font-semibold text-slate-600 text-xs mb-1">Plan Status</p>
+                    <p className={`font-semibold ${selectedPlan.is_completed ? "text-green-600" : "text-orange-600"}`}>
+                      {selectedPlan.is_completed ? "✓ Completed" : "⏳ In Progress"}
+                    </p>
+                  </div>
+
+                  <div className="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                    <p className="font-semibold text-slate-600 text-xs mb-1">Demands Approved</p>
+                    <p className={`font-semibold ${selectedPlan.is_dpr_approved ? "text-green-600" : "text-slate-500"}`}>
+                      {selectedPlan.is_dpr_approved ? "✓ Yes" : "○ No"}
+                    </p>
+                  </div>
+
+                  <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 col-span-2">
+                    <p className="font-semibold text-slate-600 text-xs mb-1">
+                      Commons Connect Operational Since
+                    </p>
+                    <p className="text-slate-900 font-medium">
+                      {selectedPlan.created_at ? new Date(selectedPlan.created_at).toLocaleDateString() : "--"}
+                    </p>
+                  </div>
+                </div>
+
+                {/* ACTION BUTTON */}
+                <button 
+                  className="w-full px-6 py-3 flex items-center justify-center gap-3 rounded-xl 
+                            bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-semibold
+                            hover:from-blue-600 hover:to-indigo-700 transition-all duration-200 
+                            shadow-lg hover:shadow-xl active:scale-[0.98]"
+                  onClick={() => navigate("/plan-view", { state: { plan: selectedPlan } })}
+                >
+                  <span>View Full Plan</span>
+                  <img 
+                    src={ArrowPlan} 
+                    alt="arrow icon" 
+                    className="w-4 h-4"
+                    style={{ filter: "brightness(0) invert(1)" }}
+                  />
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
-    )}
+      </div>
 
-
-</div>
-
-
-  );
+      {/* STEWARD DETAIL DIALOG */}
+      {isStewardModalOpen && selectedPlan && (
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-[3000]">
+          <div className="bg-white w-[1000px] h-[850px] rounded-2xl shadow-2xl p-2 overflow-auto relative">
+            {(() => (window.closeStewardModal = () => setIsStewardModalOpen(false)))()}
+            <StewardDetailPage plan={selectedPlan} onClose={() => setIsStewardModalOpen(false)} />
+          </div>
+        </div>
+      )}
+    </div>
+);
 };
 
 export default PlansPage;

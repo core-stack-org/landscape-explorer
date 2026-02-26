@@ -55,6 +55,7 @@
     const popupRef = useRef(null);
     const pendingPlantationRef = useRef(null);
     const pendingWaterbodyRef = useRef(null);
+    const hasUserZoomedRef = useRef(false);
 
     const geojsonReaderRef = useRef(new GeoJSON());
     const lulcLoadedRef = useRef(false);
@@ -66,6 +67,10 @@
     const [radiusState, setRadiusState] = useState(null);
 
     console.log(selectedWaterbody)
+    useEffect(() => {
+      hasUserZoomedRef.current = false;
+    }, [selectedWaterbody]);
+    
     
     const getWBProps = (wb) => {
       if (!wb) return {};
@@ -429,6 +434,7 @@
 
         if (onSelectPlantation && pendingPlantationRef.current) {
           onSelectPlantation(pendingPlantationRef.current);
+          window.open(window.location.href, "_blank");
           pendingPlantationRef.current = null;
         }
       };
@@ -492,11 +498,11 @@
 
       if (onSelectWaterbody && pendingWaterbodyRef.current) {
         onSelectWaterbody(pendingWaterbodyRef.current);
+        window.open(window.location.href, "_blank");
+
         pendingWaterbodyRef.current = null;
       }
     };
-
-
 
         popupEl.style.display = "block";
         m.overlayRef.setPosition(event.coordinate);
@@ -751,11 +757,13 @@
           }
       
           //  ZOOM — THIS WAS MISSING EFFECTIVELY
-          view.fit(olGeom.getExtent(), {
-            padding: [40, 40, 40, 40],
-            maxZoom: 16,
-            duration: 400,
-          });
+          if (!hasUserZoomedRef.current) {
+              view.fit(olGeom.getExtent(), {
+                padding: [40, 40, 40, 40],
+                maxZoom: 16,
+                duration: 400,
+              });
+            }
       
           // Draw WB
           removeLayersById(["wb_single_layer"]);
@@ -803,11 +811,13 @@
     showAllWaterbodies();
     return;
   }
-  view.fit(selectedFeatureOl.getGeometry().getExtent(), {
-    padding: [30, 30, 30, 30],
-    maxZoom: 18,
-    duration: 400,
-  });
+  if (!hasUserZoomedRef.current) {
+      view.fit(selectedFeatureOl.getGeometry().getExtent(), {
+        padding: [30, 30, 30, 30],
+        maxZoom: 18,
+        duration: 400,
+      });
+    }
 
   const wbLayer = new VectorLayer({
     source: new VectorSource({ features: [selectedFeatureOl] }),
@@ -903,7 +913,8 @@
     const geom = zoiFeature.getGeometry();
 
     // 5) Zoom — increased
-    if (geom) {
+    
+    if (geom && !hasUserZoomedRef.current) {
       map.getView().fit(geom.getExtent(), {
         padding: [30, 30, 30, 30],
         maxZoom: 18,
@@ -926,7 +937,7 @@
     await addLulcLayer("waterrej_lulc", "lulc_zoi_layer", zoiFeature, false);
 
     // ----------------------------------------------------------------------
-    // ⭐ PROJECT MODE — UNTOUCHED (same as your original working logic)
+    //  PROJECT MODE — UNTOUCHED (same as your original working logic)
     // ----------------------------------------------------------------------
     if (projectName && projectId && geoData) {
       const allWB = read4326(geoData);
@@ -1666,6 +1677,7 @@ if (!hasProject && (lat == null || lon == null) && props?.geometry) {
           onClick={() => {
             const map = mapRef.current;
             if (!map) return;
+            hasUserZoomedRef.current = true;
             const view = map.getView();
             const delta = sign === "+" ? 1 : -1;
             view.animate({

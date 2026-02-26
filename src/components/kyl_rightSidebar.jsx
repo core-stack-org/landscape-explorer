@@ -3,7 +3,7 @@ import React from "react";
 import SelectButton from "./buttons/select_button";
 import filtersDetails from "../components/data/Filters.json";
 import ToggleButton from "./buttons/toggle_button_kyl";
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft ,Loader2} from 'lucide-react';
 import {
   stateDataAtom,
   stateAtom,
@@ -46,11 +46,17 @@ const KYLRightSidebar = ({
   onResetWaterbody,
   setShowWB,
   showWB,
-  boundaryLayerRef
+  boundaryLayerRef,
+  mwsConnectivityLayerRef,
+  showConnectivity,
+  setShowConnectivity,
+  mwsArrowLayerRef
 }) => {
   const [globalState, setGlobalState] = useRecoilState(stateAtom);
   const [globalDistrict, setGlobalDistrict] = useRecoilState(districtAtom);
   const [globalBlock, setGlobalBlock] = useRecoilState(blockAtom);
+  const [loadingWB, setLoadingWB] = React.useState(false);
+
   
   // Check if both panels are shown
   const showBothPanels = selectedMWSProfile && selectedWaterbodyProfile;
@@ -119,24 +125,41 @@ const KYLRightSidebar = ({
     }
   };
 
-  const toggleWaterbodies = () => {
-    if (!waterbodiesLayerRef.current) {
-      console.warn("Waterbodies layer not loaded yet");
-      return;
-    }
+const toggleWaterbodies = () => {
+  if (!waterbodiesLayerRef.current) {
+    console.warn("Waterbodies layer not loaded yet");
+    return;
+  }
 
+  setLoadingWB(true);
+
+  setTimeout(() => {
     if (showWB) {
-      // Remove from map
       mapRef.current.removeLayer(waterbodiesLayerRef.current);
       setShowWB(false);
     } else {
-      // Add to map in correct order (between MWS and boundary)
       mapRef.current.removeLayer(boundaryLayerRef.current);
       mapRef.current.addLayer(waterbodiesLayerRef.current);
       mapRef.current.addLayer(boundaryLayerRef.current);
       setShowWB(true);
     }
-  };
+
+    setLoadingWB(false);
+  }, 500); 
+};
+
+const toggleConnectivity = () => {
+  if (!mwsArrowLayerRef?.current) {
+    console.warn("Arrow layer not ready");
+    return;
+  }
+
+  const layer = mwsArrowLayerRef.current;
+
+  const newVisibility = !showConnectivity;
+  layer.setVisible(newVisibility);
+  setShowConnectivity(newVisibility);
+};
   
   const handleTehsilReport = () => {
     const reportURL = `${process.env.REACT_APP_API_URL}/generate_tehsil_report/?state=${state.label.toLowerCase().split(" ").join("_")}&district=${district.label.toLowerCase().split(" ").join("_")}&block=${block.label.toLowerCase().split(" ").join("_")}`;
@@ -233,7 +256,8 @@ const KYLRightSidebar = ({
               </div>
             </div>
             {block && (
-              <div className="mt-6 flex gap-2">
+              <div className="mt-6 flex flex-col gap-2">
+                <div className="flex gap-2">
                 <button 
                   className="flex-1 flex items-center justify-center gap-1 text-indigo-600 py-2 text-sm hover:bg-indigo-50 rounded-md transition-colors" 
                   onClick={handleTehsilReport}
@@ -262,11 +286,17 @@ const KYLRightSidebar = ({
                 </button>
                 <button
                   onClick={() => toggleWaterbodies()}
+                  disabled={loadingWB}
                   className={`flex-1 flex items-center justify-center gap-1 py-2 text-sm 
                               rounded-md transition-colors hover:bg-indigo-50 
                               ${showWB ? "text-red-600" : "text-indigo-600"}`}
                 >
-                  {showWB ? (
+                {loadingWB ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Loading…
+                  </>
+                ) : showWB ? (
                     <>
                       <svg xmlns="http://www.w3.org/2000/svg" 
                           width="18" height="18" viewBox="0 0 24 24" 
@@ -290,6 +320,33 @@ const KYLRightSidebar = ({
                       Show Waterbodies
                     </>
                   )}
+                </button>
+                </div>
+
+                <button
+                  onClick={toggleConnectivity}
+                  className={`w-full flex items-center justify-center gap-1 py-2 text-sm 
+                              rounded-md transition-colors hover:bg-indigo-50
+                              ${showConnectivity ? "text-red-600" : "text-indigo-600"}`}
+                >
+                  <svg 
+                    xmlns="http://www.w3.org/2000/svg" 
+                    width="18" 
+                    height="18" 
+                    viewBox="0 0 24 24" 
+                    fill="none" 
+                    stroke="currentColor" 
+                    strokeWidth="2" 
+                    strokeLinecap="round" 
+                    strokeLinejoin="round"
+                  >
+                    <circle cx="5" cy="12" r="2" />
+                    <circle cx="19" cy="5" r="2" />
+                    <circle cx="19" cy="19" r="2" />
+                    <line x1="7" y1="12" x2="17" y2="6" />
+                    <line x1="7" y1="12" x2="17" y2="18" />
+                  </svg>
+                  {showConnectivity ? "Hide MWS Connectivity" : "Show MWS Connectivity"}
                 </button>
               </div>
             )}
