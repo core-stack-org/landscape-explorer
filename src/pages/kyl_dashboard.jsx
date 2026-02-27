@@ -822,7 +822,21 @@ const KYLDashboardPage = () => {
             }),
           })
         );
-      
+        styles.push(
+          new Style({
+            geometry: new Point(adjustedStart),
+            image: new CircleStyle({
+              radius: 3,   // adjust size if needed
+              fill: new Fill({
+                color: "white",
+              }),
+              stroke: new Stroke({
+                color: "white",
+                width: 1,
+              }),
+            }),
+          })
+        );
         return styles;
       }
     });
