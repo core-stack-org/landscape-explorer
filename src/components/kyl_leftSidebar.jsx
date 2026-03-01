@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import KYLIndicatorFilter from './kyl_indicatorFilter';
 import KYLPatternDisplay from './kyl_patternDisplay';
 
@@ -33,6 +33,11 @@ const KYLLeftSidebar = ({
     // State to track selected pattern subcategory
     const [selectedSubcategory, setSelectedSubcategory] = useState(null);
 
+    useEffect(() => {
+    setActiveTab('Filters');
+    setSelectedSubcategory(null);
+    setIndicatorType(null);   // IMPORTANT
+}, []);
     const combinedSelectedValues = {
         ...filterSelections.selectedMWSValues,
         ...filterSelections.selectedVillageValues

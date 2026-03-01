@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import DownloadButton from '../../buttons/download_button';
 import SelectButton from '../../buttons/select_button';
 import { 
   downloadGeoJson, 
@@ -7,12 +8,6 @@ import {
   downloadExcel 
 } from '../utils/downloadHelper';
 
-// SVG Icons
-const ChevronLeftIcon = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-    <path fillRule="evenodd" d="M11.354 1.646a.5.5 0 0 1 0 .708L5.707 8l5.647 5.646a.5.5 0 0 1-.708.708l-6-6a.5.5 0 0 1 0-.708l6-6a.5.5 0 0 1 .708 0z"/>
-  </svg>
-);
 
 const ChevronRightIcon = () => (
   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
@@ -56,7 +51,15 @@ const landLayersData = [
 
 const climateLayersData = [
   { id: 1, name: "mws_layers", label: "Hydrological Variables (Precipitation, ET, Groundwater, etc.)", hasGeojson: true, hasKml: true, hasStyle : true },
-  { id: 2, name: "mws_layers_fortnight", label: "Fortnightly Hydrological Variables (Precipitation, ET, Groundwater, etc.)", hasGeojson: true, hasKml: true, hasStyle : false }
+  { id: 2, name: "mws_layers_fortnight", label: "Fortnightly Hydrological Variables (Precipitation, ET, Groundwater, etc.)", hasGeojson: true, hasKml: true, hasStyle : false },
+  { 
+    id: 3, 
+    name: "hydrological_boundaries", 
+    label: "Hydrological Boundaries (Precipitation, ET, Groundwater, etc.)", 
+    hasGeojson: true, 
+    hasKml: true, 
+    hasStyle : true 
+  }
 ]
 
 const hydrologyLayersData = [
@@ -68,7 +71,7 @@ const hydrologyLayersData = [
 ]
 
 const agriLayersData = [
-  { id: "lulc_level_3", name:"lulc_level_2", label: "LULC Layer Level 3" },
+  { id: "lulc_level_3", name:"lulc_level_3", label: "LULC Layer Level 3" },
   { id: 1, name: "cropping_intensity", label: "Cropping Intensity", hasGeojson: true, hasKml: true, hasStyle : true },
   { id: 2, name: "drought", label: "Drought", hasGeojson: true, hasKml: true, hasStyle : true },
 ]
@@ -104,118 +107,38 @@ const yearDataLulc = [
   { label: "2024-2025", value: "24_25" }
 ];
 
-// Enhanced DownloadButton component to replace your current one
-const DownloadButton = ({ 
-  name, 
-  onClickEvent, 
-  href, 
-  download, 
-  isDisabled = false,
-  className = ""
-}) => {
-  const handleClick = (e) => {
-    if (isDisabled) {
-      e.preventDefault();
-      return;
-    }
-    
-    if (onClickEvent) {
-      e.preventDefault();
-      onClickEvent();
-    }
-  };
-
-  const buttonClasses = `px-2 py-1 bg-[#EDE9FE] text-[#8B5CF6] rounded-md text-xs 
-    hover:bg-[#DDD6FE] text-center transition-colors duration-200 
-    flex items-center justify-center ${isDisabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'} ${className}`;
-
-  return href ? (
-    <a 
-      href={isDisabled ? undefined : href} 
-      download={download}
-      onClick={handleClick}
-      className={buttonClasses}
-    >
-      <DownloadIcon />
-      <span className="ml-1">{name}</span>
-    </a>
-  ) : (
-    <button 
-      onClick={handleClick}
-      disabled={isDisabled}
-      className={buttonClasses}
-    >
-      <DownloadIcon />
-      <span className="ml-1">{name}</span>
-    </button>
-  );
+const STYLE_DOWNLOAD_URLS = {
+  afforestation: "https://drive.google.com/file/d/10RvFu28sIa-OpQvJ2z6D8-V5RROUUeZz/view?usp=drive_link",
+  deforestation: "https://drive.google.com/file/d/1MFKAXiW5mpfCoBBMJR-K7Y5O_Uwp0kOR/view?usp=drive_link",
+  terrain_vector: "https://drive.google.com/file/d/1RTogX5nacJYQLP2IFMQiQEBrQyyqPf-G/view?usp=sharing",
+  degradation: "https://drive.google.com/file/d/1tPtEqhWO_RisycKnK8Bl_2yEnrfgWqfE/view?usp=drive_link",
+  urbanization: "https://drive.google.com/file/d/16JHaWXxdq5y-g2wr5D_f7OB70jiA9QuA/view?usp=sharing",
+  cropintensity: "https://drive.google.com/file/d/13cgF1Cg6YWZMCQXH7XV7cITxsg9v2SBu/view?usp=sharing",
+  restoration: "https://drive.google.com/file/d/1JANwwxGDpy5vUkM2v8wqJDUKbVS8I72u/view?usp=sharing",
+  clart: "https://drive.google.com/file/d/1B8ibmiv8dBNYZZ1gZWIp4AQPdu82t1yl/view?usp=drive_link",
+  drainage: "https://drive.google.com/file/d/1s57ufrKk_iKWxIJTpy_S1Yt3nQD0DMjc/view?usp=drive_link",
+  terrain: "https://drive.google.com/file/d/1gMh9Dj3ICJuw1vqgP9vEI9oIU_PLNsPs/view?usp=sharing",
+  lulc_level_1: "https://drive.google.com/file/d/1mIVKi9N5QQI3QqFYj9y8uJGet5oRAVqA/view?usp=sharing",
+  lulc_level_2: "https://drive.google.com/file/d/1q7Tzs7zwn3T4jhRqqYc7RgCNAktkWa9m/view?usp=drive_link",
+  lulc_level_3: "https://drive.google.com/file/d/1GFc7W2AtlrYJbnveWkT08uSyeTasFQxT/view?usp=drive_link",
+  soge: "https://drive.google.com/file/d/1iSgiTZOCxQ6t0tYVgVSI059Cz-3YimuR/view?usp=sharing",
+  aquifer: "https://drive.google.com/file/d/1xHjtq893yQcCfBsuQ0G_SKko111xkv6F/view?usp=sharing",
+  drought: "https://drive.google.com/file/d/1BIDbbsLaFxBO4YHMX-vyEt0VTSJLLlmL/view?usp=sharing",
+  cropping_intensity: "https://drive.google.com/file/d/1cAZBQu4DUUPUS3u3VZtCzK4PYuSDgflW/view?usp=sharing",
+  mws_layers: "https://github.com/core-stack-org/QGIS-Styles/tree/main/Climate",
+  cropIntensity: "https://drive.google.com/file/d/1OkjCjs2RF0kLCMpgnM3REE4of1GpDisn/view?usp=sharing",
 };
 
 const handleStyleDownload = (layerName) => {
-  let url = ""
-  console.log(typeof(layerName))
-  switch(layerName){
-    case "afforestation" :
-      url = "https://drive.google.com/file/d/10RvFu28sIa-OpQvJ2z6D8-V5RROUUeZz/view?usp=drive_link"
-      break;
-    case "deforestation" :
-      url = "https://drive.google.com/file/d/1MFKAXiW5mpfCoBBMJR-K7Y5O_Uwp0kOR/view?usp=drive_link"
-      break;
-    case "terrain_vector":
-      url = "https://drive.google.com/file/d/1RTogX5nacJYQLP2IFMQiQEBrQyyqPf-G/view?usp=sharing"
-      break;
-    case "degradation":
-      url = "https://drive.google.com/file/d/1tPtEqhWO_RisycKnK8Bl_2yEnrfgWqfE/view?usp=drive_link"
-      break;
-    case "urbanization":
-      url = "https://drive.google.com/file/d/16JHaWXxdq5y-g2wr5D_f7OB70jiA9QuA/view?usp=sharing"
-      break;
-    case "cropintensity":
-      url = "https://drive.google.com/file/d/13cgF1Cg6YWZMCQXH7XV7cITxsg9v2SBu/view?usp=sharing"
-      break;
-    case "restoration":
-      url = "https://drive.google.com/file/d/1JANwwxGDpy5vUkM2v8wqJDUKbVS8I72u/view?usp=sharing"
-      break;
-    case "clart":
-      url = "https://drive.google.com/file/d/1B8ibmiv8dBNYZZ1gZWIp4AQPdu82t1yl/view?usp=drive_link"
-      break;
-    case "drainage":
-      url = "https://drive.google.com/file/d/1s57ufrKk_iKWxIJTpy_S1Yt3nQD0DMjc/view?usp=drive_link"
-      break;
-    case "terrain":
-      url = "https://drive.google.com/file/d/1gMh9Dj3ICJuw1vqgP9vEI9oIU_PLNsPs/view?usp=sharing"
-      break;
-    case "lulc_level_1":
-      url = "https://drive.google.com/file/d/1mIVKi9N5QQI3QqFYj9y8uJGet5oRAVqA/view?usp=sharing"
-      break;
-    case "lulc_level_2":
-      url = "https://drive.google.com/file/d/1q7Tzs7zwn3T4jhRqqYc7RgCNAktkWa9m/view?usp=drive_link"
-      break;
-    case "lulc_level_3":
-      url = "https://drive.google.com/file/d/1GFc7W2AtlrYJbnveWkT08uSyeTasFQxT/view?usp=drive_link"
-      break;
-    case "soge":
-      url = "https://drive.google.com/file/d/1iSgiTZOCxQ6t0tYVgVSI059Cz-3YimuR/view?usp=sharing"
-      break;
-    case "aquifer":
-      url = "https://drive.google.com/file/d/1xHjtq893yQcCfBsuQ0G_SKko111xkv6F/view?usp=sharing"
-      break;
-    case "drought":
-      url = "https://drive.google.com/file/d/1BIDbbsLaFxBO4YHMX-vyEt0VTSJLLlmL/view?usp=sharing"
-      break;
-    case "cropping_intensity":
-      url = "https://drive.google.com/file/d/1cAZBQu4DUUPUS3u3VZtCzK4PYuSDgflW/view?usp=sharing"
-      break;
-    case "mws_layers":
-      url = "https://github.com/core-stack-org/QGIS-Styles/tree/main/Climate"
-      break;
-    case "cropIntensity":
-      url = "https://drive.google.com/file/d/1OkjCjs2RF0kLCMpgnM3REE4of1GpDisn/view?usp=sharing"
-      break;
+  const url = STYLE_DOWNLOAD_URLS[layerName];
+
+  if (!url) {
+    console.warn(`No style available for ${layerName}`);
+    return;
   }
 
   window.open(url, "_blank");
-}
+};
 
 // Single Layer Item Component
 const LayerItem = ({ layer, isSelected, onToggle, onDownload, isLayersFetched, isLoading }) => {
@@ -241,34 +164,36 @@ const LayerItem = ({ layer, isSelected, onToggle, onDownload, isLayersFetched, i
         <div className="flex mt-2 space-x-2">
           {layer.hasGeojson && (
             <DownloadButton 
-              name="GeoJSON"
-              onClickEvent={() => onDownload(layer.name, 'geojson')}
-              isDisabled={!isLayersFetched || isLoading}
-              className="bg-[#EDE9FE] text-[#8B5CF6] hover:bg-[#DDD6FE]"
-            />
+  name="GeoJSON"
+  onClick={() => onDownload(layer.name, 'geojson')}
+  disabled={!isLayersFetched || isLoading}
+  className="bg-[#EDE9FE] text-[#8B5CF6] hover:bg-[#DDD6FE]"
+/>
           )}
           {layer.hasKml && (
             <DownloadButton 
-              name="KML"
-              onClickEvent={() => onDownload(layer.name, 'kml')}
-              isDisabled={!isLayersFetched || isLoading}
-              className="bg-[#EDE9FE] text-[#8B5CF6] hover:bg-[#DDD6FE]"
-            />
+  name="KML"
+  onClick={() => onDownload(layer.name, 'kml')}
+  disabled={!isLayersFetched || isLoading}
+  className="bg-[#EDE9FE] text-[#8B5CF6] hover:bg-[#DDD6FE]"
+/>
           )}
           {layer.hasGeoTiff && (
-            <DownloadButton 
-              name="GeoTIFF"
-              onClickEvent={() => onDownload(layer.name, 'geotiff')}
-              isDisabled={!isLayersFetched || isLoading}
-              className="bg-[#EDE9FE] text-[#8B5CF6] hover:bg-[#DDD6FE]"
-            />
+           <DownloadButton 
+  name="GeoTIFF"
+  onClick={() => onDownload(layer.name, 'geotiff')}
+  disabled={!isLayersFetched || isLoading}
+  className="bg-[#EDE9FE] text-[#8B5CF6] hover:bg-[#DDD6FE]"
+/>
           )}
-          {layer.hasStyle && (<DownloadButton 
-              name="Style"
-              onClickEvent={() => handleStyleDownload(layer.name)}
-              isDisabled={!isLayersFetched || isLoading}
-              className="bg-[#EDE9FE] text-[#8B5CF6] hover:bg-[#DDD6FE]"
-            />)
+          {layer.hasStyle && (
+            <DownloadButton 
+  name="Style"
+  onClick={() => handleStyleDownload(layer.name)}
+  disabled={!isLayersFetched || isLoading}
+  className="bg-[#EDE9FE] text-[#8B5CF6] hover:bg-[#DDD6FE]"
+/>
+          )
           }
         </div>
       )}
@@ -292,18 +217,18 @@ const LulcSelector = ({ level, lulcYear, setLulcYear, onDownload, isLayersFetche
       </div>
       <div className="flex mt-2 space-x-2">
       <DownloadButton 
-        name="GeoTIFF"
-        onClickEvent={() => onDownload(level.id, 'geotiff')}
-        isDisabled={!lulcYear || !isLayersFetched || isLoading}
-        className={`${!lulcYear ? 'bg-gray-100 text-gray-400' : ''}`}
-      />
+  name="GeoTIFF"
+  onClick={() => onDownload(level.id, 'geotiff')}
+  disabled={!lulcYear || !isLayersFetched || isLoading}
+  className={`${!lulcYear ? 'bg-gray-100 text-gray-400' : ''}`}
+/>
 
       <DownloadButton 
-        name="Style"
-        onClickEvent={() => handleStyleDownload(level.id)}
-        isDisabled={!isLayersFetched || isLoading}
-        className="bg-[#EDE9FE] text-[#8B5CF6] hover:bg-[#DDD6FE]"
-      />
+  name="Style"
+  onClick={() => handleStyleDownload(level.id)}
+  disabled={!isLayersFetched || isLoading}
+  className="bg-[#EDE9FE] text-[#8B5CF6] hover:bg-[#DDD6FE]"
+/>
       </div>
     </div>
   );
@@ -354,7 +279,7 @@ const RightSidebar = ({
   lulcYear3,
   setLulcYear3
 }) => {
-  const [selectedCategory, setSelectedCategory] = useState('basic');
+  const [selectedCategory, setSelectedCategory] = useState('land');
   const [isLayersFetched, setIsLayersFetched] = useState(false);
 
 
@@ -375,14 +300,12 @@ const RightSidebar = ({
   }, [district, block, canFetchLayers]);
 
   // Handle toggle clicklandLayersData
-  const handleToggleClick = (filterName) => {
-    // If there's a handleLayerToggle prop, call it
-    console.log(filterName)
-    if (handleLayerToggle) {
-      const currentState = toggledLayers?.[filterName] || false;
-      handleLayerToggle(filterName, !currentState);
-    }
-  };
+ const handleToggleClick = (filterName) => {
+  if (!handleLayerToggle) return;
+
+  const currentState = toggledLayers?.[filterName] || false;
+  handleLayerToggle(filterName, !currentState);
+};
   // Handle download click with proper URL formatting and direct download
   const handleDownloadClick = (filterName, format) => {
     if (!district || !block) {
@@ -433,7 +356,12 @@ const RightSidebar = ({
         case 'cropping_intensity':
           url = `https://geoserver.core-stack.org:8443/geoserver/crop_intensity/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=crop_intensity:${districtFormatted}_${blockFormatted}_intensity&outputFormat=application/json&screen=main`;
           break;
-        default:
+        case 'hydrological_boundaries':
+          url = `https://geoserver.core-stack.org:8443/geoserver/ows?service=WFS&version=1.1.0&request=GetFeature&typeName=mws_layers:deltaG_well_depth_${districtFormatted}_${blockFormatted}&outputFormat=application/json`;
+          break;
+
+
+          default:
           url = `https://geoserver.core-stack.org:8443/geoserver/${filterName}/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=${filterName}:${districtFormatted}_${blockFormatted}&outputFormat=application/json&screen=main`;
       }
 
@@ -479,7 +407,14 @@ const RightSidebar = ({
           break;
         case 'cropping_intensity':
           url = `https://geoserver.core-stack.org:8443/geoserver/crop_intensity/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=crop_intensity:${districtFormatted}_${blockFormatted}_intensity&outputFormat=application/vnd.google-earth.kml+xml&screen=main`;
-          break
+          break;
+        case 'hydrological_boundaries':
+          url = `https://geoserver.core-stack.org:8443/geoserver/ows?service=WFS&version=1.1.0&request=GetFeature&typeName=mws_layers:deltaG_well_depth_${districtFormatted}_${blockFormatted}&outputFormat=application/vnd.google-earth.kml+xml`;
+          break;
+
+
+
+
         default:
           url = `https://geoserver.core-stack.org:8443/geoserver/${filterName}/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=${filterName}:${districtFormatted}_${blockFormatted}&outputFormat=application/vnd.google-earth.kml+xml&screen=main`;
       }
@@ -558,28 +493,18 @@ const RightSidebar = ({
     }
   };
 
-  // Handle Excel download with enhanced functionality
   const handleLocalExcelDownload = () => {
-    if (!state || !district || !block) {
-      alert('Please select a state, district, and block first');
-      return;
-    }
-    
-    const url = `https://geoserver.core-stack.org/api/v1/download_excel_layer?state=${state.label}&district=${district.label}&block=${block.label}`;
-    
-    // Use the Excel download function from parent component or our local version
-    if (handleExcelDownload) {
-      handleExcelDownload(url, `${block.label}_data.xlsx`);
-    } else {
-      // Fallback to our own implementation if parent doesn't provide one
-      downloadExcel(url, `${block.label}_data.xlsx`)
-        .finally(() => {
-          console.log("Excel download complete");
-        });
-    }
-  };
+  if (!state || !district || !block) {
+    alert("Please select a state, district, and block first");
+    return;
+  }
 
+  const url =
+    `https://geoserver.core-stack.org/api/v1/download_excel_layer` +
+    `?state=${state.label}&district=${district.label}&block=${block.label}`;
 
+  downloadExcel(url, `${block.label}_data.xlsx`);
+};
   return (
     <div className="w-[380px] flex flex-col h-full bg-white shadow-md relative">
       <div className="flex justify-between items-center p-4 border-b border-gray-200">
@@ -665,26 +590,32 @@ const RightSidebar = ({
             {selectedCategory === 'land' && (
               <div>
                 {landLayersData.map(layer => {
-                  if(layer.id === "lulc_level_1"){
-                    return <LulcSelector 
-                      level={layer}
-                      lulcYear={lulcYear1}
-                      setLulcYear={setLulcYear1}
-                      onDownload={handleDownloadClick}
-                      isLayersFetched={isLayersFetched}
-                      isLoading={isLoading}
-                    />;
-                  }
-                  else if(layer.id === "lulc_level_2"){
-                    return <LulcSelector 
-                      level={layer}
-                      lulcYear={lulcYear2}
-                      setLulcYear={setLulcYear2}
-                      onDownload={handleDownloadClick}
-                      isLayersFetched={isLayersFetched}
-                      isLoading={isLoading}
-                    />;
-                  }
+                  if (layer.id === "lulc_level_1") {
+  return (
+    <LulcSelector
+      key={layer.id}
+      level={layer}
+      lulcYear={lulcYear1}
+      setLulcYear={setLulcYear1}
+      onDownload={handleDownloadClick}
+      isLayersFetched={isLayersFetched}
+      isLoading={isLoading}
+    />
+  );
+}
+                  else if (layer.id === "lulc_level_2") {
+  return (
+    <LulcSelector
+      key={layer.id}
+      level={layer}
+      lulcYear={lulcYear2}
+      setLulcYear={setLulcYear2}
+      onDownload={handleDownloadClick}
+      isLayersFetched={isLayersFetched}
+      isLoading={isLoading}
+    />
+  );
+}
                   else{
                     return <LayerItem 
                       key={layer.id}
@@ -735,16 +666,19 @@ const RightSidebar = ({
             {selectedCategory === 'agri' && (
               <div>
                 {agriLayersData.map(layer => {
-                  if(layer.id === "lulc_level_3"){
-                    return <LulcSelector 
-                      level={layer}
-                      lulcYear={lulcYear3}
-                      setLulcYear={setLulcYear3}
-                      onDownload={handleDownloadClick}
-                      isLayersFetched={isLayersFetched}
-                      isLoading={isLoading}
-                    />;
-                  }
+                  if (layer.id === "lulc_level_3") {
+  return (
+    <LulcSelector
+      key={layer.id}
+      level={layer}
+      lulcYear={lulcYear3}
+      setLulcYear={setLulcYear3}
+      onDownload={handleDownloadClick}
+      isLayersFetched={isLayersFetched}
+      isLoading={isLoading}
+    />
+  );
+}
                   else{
                    return <LayerItem 
                       key={layer.id}
