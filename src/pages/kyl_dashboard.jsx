@@ -18,8 +18,7 @@ import TileLayer from "ol/layer/Tile";
 import Control from "ol/control/Control.js";
 import { defaults as defaultControls } from "ol/control/defaults.js";
 import { Map, View } from "ol";
-import { Fill, Stroke, Style,RegularShape } from "ol/style.js";
-import Point from "ol/geom/Point";
+import { Fill, Stroke, Style } from "ol/style.js";
 import GeoJSON from "ol/format/GeoJSON";
 
 import LandingNavbar from "../components/landing_navbar.jsx";
@@ -43,10 +42,6 @@ import {
   initializeAnalytics,
 } from "../services/analytics";
 import getWebGlLayers from "../actions/getWebGlLayers.js";
-import VectorLayer from "ol/layer/Vector";
-import VectorSource from "ol/source/Vector";
-import Feature from "ol/Feature";
-import LineString from "ol/geom/LineString";
 
 const KYLDashboardPage = () => {
   const mapElement = useRef(null);
@@ -55,9 +50,6 @@ const KYLDashboardPage = () => {
   const boundaryLayerRef = useRef(null);
   const mwsLayerRef = useRef(null);
   const waterbodiesLayerRef = useRef(null);
-  const mwsConnectivityLayerRef = useRef(null);
-  const mwsCentroidLayerRef = useRef(null);   
-  const mwsArrowLayerRef = useRef(null);
 
   const [isLoading, setIsLoading] = useState(false);
   const [islayerLoaded, setIsLayerLoaded] = useState(false);
@@ -86,6 +78,7 @@ const KYLDashboardPage = () => {
 
   const [indicatorType, setIndicatorType] = useState(null);
   const [showMWS, setShowMWS] = useState(true);
+  const [sidebarResetKey, setSidebarResetKey] = useState(0);
   const [showVillages, setShowVillages] = useState(true);
   const [filtersEnabled, setFiltersEnabled] = useState(false);
 
@@ -106,7 +99,6 @@ const KYLDashboardPage = () => {
 
   const [selectedWaterbodyForTehsil, setSelectedWaterbodyForTehsil] = useRecoilState(selectedWaterbodyForTehsilAtom);
   const [showWB, setShowWB] = useState(false);
-  const [showConnectivity, setShowConnectivity] = useState(false);
 
   const addLayerSafe = (layer) => layer && mapRef.current && mapRef.current.addLayer(layer);
 
@@ -572,206 +564,6 @@ const KYLDashboardPage = () => {
     }
   };
 
-  const waitForFeatures = (source, label) => {
-    return new Promise((resolve) => {
-      let attempts = 0;
-  
-      const interval = setInterval(() => {
-        const features = source.getFeatures();
-  
-        if (features.length > 0) {
-          clearInterval(interval);
-          resolve(features);
-        }
-  
-        attempts++;
-  
-        if (attempts > 20) { // ~2 seconds max
-          clearInterval(interval);
-          resolve([]);
-        }
-      }, 100);
-    });
-  };
-  
-  const fetchMWSConnectivityLayers = async () => {
-    if (!district || !block || !mapRef.current) return;
-  
-    try {
-      const dist = district.label
-        .toLowerCase()
-        .replace(/\s*\(\s*/g, "_")
-        .replace(/\s*\)\s*/g, "")
-        .replace(/\s+/g, "_");
-  
-      const blk = block.label
-        .toLowerCase()
-        .replace(/\s*\(\s*/g, "_")
-        .replace(/\s*\)\s*/g, "")
-        .replace(/\s+/g, "_");
-  
-      const connectivityLayerName = `${dist}_${blk}_mws_connectivity`;
-  
-      const connectivityLayer = await getVectorLayers(
-        "mws_connectivity",
-        connectivityLayerName,
-        true,
-        true
-      );
-  
-      mapRef.current.addLayer(connectivityLayer);
-      mwsConnectivityLayerRef.current = connectivityLayer;
-  
-      const connectivitySource = connectivityLayer.getSource();
-      await waitForFeatures(connectivitySource, "Connectivity");
-
-      const centroidLayerName = `${dist}_${blk}_mws_centroid`;
-  
-      const centroidLayer = await getVectorLayers(
-        "mws_centroid",
-        centroidLayerName,
-        true,
-        true
-      );
-  
-      mapRef.current.addLayer(centroidLayer);
-      mwsCentroidLayerRef.current = centroidLayer;
-  
-      const centroidSource = centroidLayer.getSource();
-      await waitForFeatures(centroidSource, "Centroid");
-      generateConnectivityArrows();
-  
-    } catch (error) {
-      console.error("Error fetching connectivity layers:", error);
-    }
-  };
-
-  const generateConnectivityArrows = () => {
-    if (
-      !mwsConnectivityLayerRef.current ||
-      !mwsCentroidLayerRef.current ||
-      !mapRef.current
-    ) {
-      console.warn("Connectivity or centroid layer not ready");
-      return;
-    }
-  
-    const connectivityFeatures =
-      mwsConnectivityLayerRef.current.getSource().getFeatures();
-  
-    const centroidFeatures =
-      mwsCentroidLayerRef.current.getSource().getFeatures();
-  
-    if (!connectivityFeatures.length || !centroidFeatures.length) {
-      console.warn("No features found for arrow generation");
-      return;
-    }
-  
-    // -------------------------
-    // Create UID → coordinate map
-    // -------------------------
-    const uidToCoord = {};
-  
-    centroidFeatures.forEach((feature) => {
-      const uid = feature.get("uid") || feature.get("UID");
-      if (!uid) return;
-  
-      const coord = feature.getGeometry().getCoordinates();
-      uidToCoord[uid.toString().trim()] = coord;
-    });
-  
-    const arrowFeatures = [];
-  
-    // -------------------------
-    // Create arrows
-    // -------------------------
-    connectivityFeatures.forEach((feature) => {
-      const uid = feature.get("uid");
-      const downstream = feature.get("downstream");
-  
-      if (!uid || !downstream) return;
-  
-      const start = uidToCoord[uid.toString().trim()];
-      const end = uidToCoord[downstream.toString().trim()];
-  
-      if (!start || !end) return;
-  
-      const line = new LineString([start, end]);
-  
-      const arrowFeature = new Feature({
-        geometry: line,
-        upstream: uid,
-        downstream: downstream,
-      });
-  
-      arrowFeatures.push(arrowFeature);
-    });
-  
-    const arrowSource = new VectorSource({
-      features: arrowFeatures,
-    });
-  
-    const arrowLayer = new VectorLayer({
-      source: arrowSource,
-      style: (feature) => {
-        const styles = [];
-      
-        const geometry = feature.getGeometry();
-        const coords = geometry.getCoordinates();
-      
-        // Need at least 2 points
-        if (!coords || coords.length < 2) return styles;
-      
-        const start = coords[coords.length - 2];
-        const end = coords[coords.length - 1];
-      
-        const dx = end[0] - start[0];
-        const dy = end[1] - start[1];
-        const len = Math.sqrt(dx * dx + dy * dy);
-      
-        // Skip zero-length or near-zero edges
-        if (len < 1e-6) return styles;
-      
-        const angle = Math.atan2(dy, dx);
-        const color = "#FF1493";
-      
-        // Main line
-        styles.push(
-          new Style({
-            stroke: new Stroke({ color, width: 1.5 }),
-          })
-        );
-      
-        // Arrowhead size proportional to edge length, capped
-        const arrowLen = Math.min(len * 0.08, 0.006);
-        const arrowAngle = Math.PI / 6;
-      
-        const left = [
-          end[0] - arrowLen * Math.cos(angle - arrowAngle),
-          end[1] - arrowLen * Math.sin(angle - arrowAngle),
-        ];
-        const right = [
-          end[0] - arrowLen * Math.cos(angle + arrowAngle),
-          end[1] - arrowLen * Math.sin(angle + arrowAngle),
-        ];
-      
-        styles.push(
-          new Style({
-            geometry: new LineString([left, end, right]),
-            stroke: new Stroke({ color, width: 1.5 }),
-          })
-        );
-      
-        return styles;
-      },
-    });
-  
-    arrowLayer.setVisible(false);
-  
-    mapRef.current.addLayer(arrowLayer);
-    mwsArrowLayerRef.current = arrowLayer;
-  };
-
   const fetchWaterBodiesLayer = async() => {
     if (!district || !block || !mapRef.current) return;
 
@@ -1063,7 +855,6 @@ const KYLDashboardPage = () => {
       setDataJson(result);
 
       setIsLoading(false);
-      setFiltersEnabled(true)
     } catch (e) {
       console.log(e);
       setIsLoading(false);
@@ -1368,28 +1159,17 @@ const KYLDashboardPage = () => {
     mapRef.current = map;
   };
 
-  const handleItemSelect = (setter, value) => {
-    setter(value);
-    // Reset everything when location changes
-    if (setter === setState) {
-      if (value) {
-        trackEvent("Location", "select_state", value.label);
-      }
-      setDistrict(null);
-      setBlock(null);
-      resetAllStates();
-    } else if (setter === setDistrict) {
-      if (value) {
-        trackEvent("Location", "select_district", value.label);
-      }
-      setBlock(null);
-      resetAllStates();
-    } else if (setter === setBlock) {
-      trackEvent("Location", "select_tehsil", value.label);
-      resetAllStates();
-    }
-  };
+ const handleItemSelect = (setter, value) => {
+  setter(value);
 
+  if (setter === setState) {
+    setDistrict(null);
+    setBlock(null);
+  } 
+  else if (setter === setDistrict) {
+    setBlock(null);
+  }
+};
   const handlePatternRemoval = (pattern) => {
     const key = pattern.patternName || pattern.name;
 
@@ -1416,31 +1196,56 @@ const KYLDashboardPage = () => {
   }
 
   const resetAllStates = () => {
-    // Reset filters
-    setFilterSelections({
-      selectedMWSValues: {},
-      selectedVillageValues: {},
+
+  // 1️⃣ Remove all applied filter layers from map
+  if (currentLayer.length > 0 && mapRef.current) {
+    currentLayer.forEach((layer) => {
+      layer.layerRef.forEach((ref) => {
+        mapRef.current.removeLayer(ref);
+      });
     });
+  }
 
-    setIndicatorType(null);
-    setMappedAssets(false);
-    setMappedDemands(false);
-    setSelectedMWS([]);
-    setVillageIdList(new Set([]));
-    setShowMWS(true);
-    setShowVillages(true);
-    setSelectedMWSProfile(null);
-    
-    // Reset waterbody state
-    setShowWB(false); // Add this line
-    
-    // Remove waterbody layer if it exists
-    if (waterbodiesLayerRef.current && mapRef.current) {
-      mapRef.current.removeLayer(waterbodiesLayerRef.current);
-      waterbodiesLayerRef.current = null;
-    }
-  };
+  // 2️⃣ Reset layer tracking
+  setCurrentLayer([]);
+  setToggleStates({});
 
+  // 3️⃣ Clear filter selections (UI + logic)
+  setFilterSelections({
+    selectedMWSValues: {},
+    selectedVillageValues: {},
+  });
+
+  // 4️⃣ Clear pattern selections
+  setPatternSelections({
+    selectedMWSPatterns: {},
+    selectedVillagePatterns: {},
+  });
+
+  // 5️⃣ Reset indicator tab
+  setIndicatorType(null);
+
+  // 6️⃣ Reset MWS & Village selections
+  setSelectedMWS([]);
+  setVillageIdList(new Set([]));
+  setSelectedMWSProfile(null);
+
+  setShowMWS(true);
+  setShowVillages(true);
+
+  // 7️⃣ Reset waterbody
+  setShowWB(false);
+  if (waterbodiesLayerRef.current && mapRef.current) {
+    mapRef.current.removeLayer(waterbodiesLayerRef.current);
+    waterbodiesLayerRef.current = null;
+  }
+
+  // 8️⃣ 🔥 VERY IMPORTANT — Restore default MWS style
+  if (mwsLayerRef.current) {
+    fetchMWSLayer([]);   // This restores default blue style properly
+  }
+  setSidebarResetKey(prev => prev + 1);
+};
   const searchUserLatLong = async () => {
     setIsLoading(true);
     try {
@@ -1740,8 +1545,7 @@ const KYLDashboardPage = () => {
 
       setToggleStates({});
       setCurrentLayer([]);
-      fetchWaterBodiesLayer();
-      fetchMWSConnectivityLayers();
+      fetchWaterBodiesLayer()
     }
 
     // Cleanup function
@@ -2215,6 +2019,27 @@ const KYLDashboardPage = () => {
     }
   }, [selectedMWS, showWB]);
 
+  useEffect(() => {
+  // Enable filters only when boundary + MWS + data are fully loaded
+  if (
+    !islayerLoaded &&
+    !isLoading &&
+    district &&
+    block
+  ) {
+    setFiltersEnabled(true);
+  } else {
+    setFiltersEnabled(false);
+  }
+}, [islayerLoaded, isLoading, district, block]);
+
+useEffect(() => {
+  if (district && block) {
+    resetAllStates();
+  }
+}, [district, block]);
+
+
   return (
     <div className="min-h-screenbg-white flex flex-col">
       <Toaster />
@@ -2224,6 +2049,7 @@ const KYLDashboardPage = () => {
       <div className="flex h-[calc(100vh-48px)] p-4 gap-4">
         {/* Left Sidebar */}
         <KYLLeftSidebar
+          key={sidebarResetKey}
           indicatorType={indicatorType}
           setIndicatorType={setIndicatorType}
           filterSelections={filterSelections}
@@ -2299,11 +2125,6 @@ const KYLDashboardPage = () => {
           setShowWB={setShowWB}
           showWB={showWB}
           boundaryLayerRef={boundaryLayerRef}
-          mwsConnectivityLayerRef={mwsConnectivityLayerRef}
-          showConnectivity={showConnectivity}
-          setShowConnectivity={setShowConnectivity}
-          mwsArrowLayerRef={mwsArrowLayerRef}
-
         />
       </div>
     </div>
