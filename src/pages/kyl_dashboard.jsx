@@ -784,23 +784,55 @@ const KYLDashboardPage = () => {
     const arrowLayer = new VectorLayer({
       source: arrowSource,
       style: (feature) => {
-        const color = "white";
-        const type = feature.get("featureType");
-  
-        if (type === "arrowLine" || type === "arrowHead") {
-          return new Style({
-            stroke: new Stroke({ color, width: 1.2 }),
-          });
-        }
-        if (type === "arrowDot") {
-          return new Style({
-            image: new CircleStyle({
-              radius: 3,
-              fill: new Fill({ color }),
-              stroke: new Stroke({ color, width: 1 }),
-            }),
-          });
-        }
+        const styles = [];
+      
+        const geometry = feature.getGeometry();
+        const coords = geometry.getCoordinates();
+      
+        // Need at least 2 points
+        if (!coords || coords.length < 2) return styles;
+      
+        const start = coords[coords.length - 2];
+        const end = coords[coords.length - 1];
+      
+        const dx = end[0] - start[0];
+        const dy = end[1] - start[1];
+        const len = Math.sqrt(dx * dx + dy * dy);
+      
+        // Skip zero-length or near-zero edges
+        if (len < 1e-6) return styles;
+      
+        const angle = Math.atan2(dy, dx);
+        const color = "#FF1493";
+      
+        // Main line
+        styles.push(
+          new Style({
+            stroke: new Stroke({ color, width: 1.5 }),
+          })
+        );
+      
+        // Arrowhead size proportional to edge length, capped
+        const arrowLen = Math.min(len * 0.08, 0.006);
+        const arrowAngle = Math.PI / 6;
+      
+        const left = [
+          end[0] - arrowLen * Math.cos(angle - arrowAngle),
+          end[1] - arrowLen * Math.sin(angle - arrowAngle),
+        ];
+        const right = [
+          end[0] - arrowLen * Math.cos(angle + arrowAngle),
+          end[1] - arrowLen * Math.sin(angle + arrowAngle),
+        ];
+      
+        styles.push(
+          new Style({
+            geometry: new LineString([left, end, right]),
+            stroke: new Stroke({ color, width: 1.5 }),
+          })
+        );
+      
+        return styles;
       },
     });
   
