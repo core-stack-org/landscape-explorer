@@ -183,8 +183,6 @@ const MapLegend = ({
   const contentRef = useRef(null);
   // const [containerHeight, setContainerHeight] = useState("12rem");
 
-
-
   // useEffect(() => {
   //   if (isCollapsed) {
   //     setContainerHeight("12rem");
@@ -496,7 +494,7 @@ const MapLegend = ({
       <button
         onClick={toggleCollapse}
         className="absolute top-2 right-2 z-20 bg-white rounded-full p-1 shadow-sm hover:bg-gray-100 transition-colors"
-        style={{ right: isCollapsed ? "-12px" : "8px" }}
+        style={{ right: isCollapsed ? "-16px" : "8px" }}
       >
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -536,7 +534,8 @@ const MapLegend = ({
 
         {/* Expanded state - full legend content */}
         {!isCollapsed && (
-          <div ref={contentRef} className="p-4 overflow-y-auto max-h-[60vh]">
+          <div ref={contentRef} className={`p-4 overflow-y-auto max-h-[60vh] w-72 transition-opacity duration-300 ${isCollapsed ? "opacity-0 pointer-events-none" : "opacity-100"
+                                }`}>
             <h3 className="text-sm font-medium text-gray-700 mb-3">Legend</h3>
             <div className="space-y-4">
               {/* MWS Legend Section */}
