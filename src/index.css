@@ -88,6 +88,27 @@
   background: #7F56D9E5;
 }
 
+/* ---- Landing page: smooth scroll container (GPU-friendly, less jank) ---- */
+.landing-scroll-container {
+  scroll-behavior: auto;
+  -webkit-overflow-scrolling: touch;
+  scroll-snap-type: y proximity;
+  scroll-padding-top: 0.5rem;
+  scroll-padding-bottom: 0.5rem;
+}
+.landing-scroll-container .landing-scroll-content {
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  min-height: 100%;
+}
+.landing-scroll-container section[class*="snap-start"] {
+  scroll-snap-align: start;
+  scroll-snap-stop: normal;
+}
+.landing-scroll-container #know-your-landscape {
+  scroll-margin-top: 0;
+}
+
 /* ---- Fix browser-default font-size inflation inside chart area ---- */
 .chart-wrapper,
 .chart-wrapper * {
