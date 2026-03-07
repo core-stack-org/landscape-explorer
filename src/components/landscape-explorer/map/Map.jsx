@@ -834,11 +834,13 @@ const Map = forwardRef(({
   state,
   district,
   block,
+  villageIdList,
   filterSelections,
   toggledLayers = {},
   toggleLayer,
   showMWS = true,
   setShowMWS,
+  selectedMWS,
   showVillages = true,
   setShowVillages,
   lulcYear1,
@@ -1360,88 +1362,77 @@ const Map = forwardRef(({
         true,
         true
       );
-      adminLayer.setStyle(function (feature) {
-        if (!feature || !feature.values_) return null;
+       adminLayer.setStyle(function (feature) {
 
-        let bin = (feature.values_.P_LIT / feature.values_.TOT_P) * 100;
-        if (bin < 46) {
+        if (!feature) return null;
+
+        const adminUid = feature.get("uid");
+
+        const isHighlighted =
+          selectedMWS &&
+          selectedMWS.length > 0 &&
+          selectedMWS.includes(adminUid);
+
+        //  Highlight matching Admin Boundaries
+        if (isHighlighted) {
           return new Style({
             stroke: new Stroke({
-              color: "#000000",
-              width: 0.5,
+              color: "#FF0000",
+              width: 2,
             }),
             fill: new Fill({
-              color: "#98FB98",
-            })
-          })
-        } else if (bin >= 46 && bin < 59) {
-          return new Style({
-            stroke: new Stroke({
-              color: "#000000",
-              width: 0.5,
+              color: "rgba(255,0,0,0.3)",
             }),
-            fill: new Fill({
-              color: "#32CD32",
-            })
-          })
-        } else if (bin >= 59 && bin <= 70) {
-          return new Style({
-            stroke: new Stroke({
-              color: "#000000",
-              width: 0.5,
-            }),
-            fill: new Fill({
-              color: "#228B22",
-            })
-          })
-        } else if (bin > 70) {
-          return new Style({
-            stroke: new Stroke({
-              color: "#000000",
-              width: 0.5,
-            }),
-            fill: new Fill({
-              color: "#006400",
-            })
-          })
-        }
-        return null;
-      });
-
-      // Remove the admin Layer if exists to display only one admin layer at a time
-      if (LayersArray[0].LayerRef.current != null) {
-        safeRemoveLayer(LayersArray[0].LayerRef.current);
-      }
-
-      if (adminLayer) {
-        safeAddLayer(adminLayer);
-        currentActiveLayers.push(LayersArray[0].name);
-        LayersArray[0].LayerRef.current = adminLayer;
-
-        // Centering the Map to the Selected Block
-        const Vectorsource = adminLayer.getSource();
-        if (Vectorsource) {
-          Vectorsource.once("change", function (e) {
-            if (Vectorsource.getState() === "ready") {
-              try {
-                const arr = Vectorsource.getExtent();
-                setBBox(arr);
-                const mapcenter = [(arr[0] + arr[2]) / 2, (arr[1] + arr[3]) / 2];
-                if (mapRef.current) {
-                  mapRef.current.getView().animate({
-                    center: mapcenter,
-                    zoom: 11,
-                    duration: 1000,
-                    easing: (t) => t
-                  });
-                }
-              } catch (error) {
-                console.error("Error centering map:", error);
-              }
-            }
           });
         }
-      }
+      
+
+        //  Default Black Boundary
+        return new Style({
+          stroke: new Stroke({
+            color: "#000000",
+            width: 0.8,
+          }),
+          fill: new Fill({
+            color: "rgba(0,0,0,0)",
+          }),
+        });
+      });
+
+        // Remove the admin Layer if exists to display only one admin layer at a time
+        if (LayersArray[0].LayerRef.current != null) {
+          safeRemoveLayer(LayersArray[0].LayerRef.current);
+        }
+
+        if (adminLayer) {
+          safeAddLayer(adminLayer);
+          currentActiveLayers.push(LayersArray[0].name);
+          LayersArray[0].LayerRef.current = adminLayer;
+
+          // Centering the Map to the Selected Block
+          const Vectorsource = adminLayer.getSource();
+          if (Vectorsource) {
+            Vectorsource.once("change", function (e) {
+              if (Vectorsource.getState() === "ready") {
+                try {
+                  const arr = Vectorsource.getExtent();
+                  setBBox(arr);
+                  const mapcenter = [(arr[0] + arr[2]) / 2, (arr[1] + arr[3]) / 2];
+                  if (mapRef.current) {
+                    mapRef.current.getView().animate({
+                      center: mapcenter,
+                      zoom: 11,
+                      duration: 1000,
+                      easing: (t) => t
+                    });
+                  }
+                } catch (error) {
+                  console.error("Error centering map:", error);
+                }
+              }
+            });
+          }
+        }
 
       // Fetch and configure all other layers following original implementation
       // === Drainage Layer ===
@@ -2366,6 +2357,14 @@ const Map = forwardRef(({
     fetchLulc()
   }, [lulcYear3])
 
+  // When MWS selection changes, trigger a refresh of the admin layer to update styles based on new selection
+     useEffect(() => {
+  const adminLayerRef = LayersArray[0]?.LayerRef?.current;
+  if (adminLayerRef) {
+    adminLayerRef.changed();
+  }
+}, [selectedMWS]);
+
   // Initialize map once
   useEffect(() => {
     if (!mapRef.current) {
@@ -2486,7 +2485,9 @@ const Map = forwardRef(({
         setShowMWS={setShowMWS}
         showVillages={showVillages}
         setShowVillages={setShowVillages}
+        villageIdList={villageIdList}
         mapRef={mapRef}
+        selectedMWS={selectedMWS}
         toggleLayer={(layerId, isVisible) => {
           // Call the parent's toggleLayer function directly
           if (toggleLayer) {
