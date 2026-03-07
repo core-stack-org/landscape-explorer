@@ -32,6 +32,7 @@ import PatternsData from '../components/data/Patterns.json';
 import KYLLeftSidebar from "../components/kyl_leftSidebar";
 import KYLRightSidebar from "../components/kyl_rightSidebar.jsx";
 import KYLMapContainer from "../components/kyl_mapContainer.jsx";
+import PatternIntensityMapModal from "../components/PatternIntensityMapModal.jsx";
 import layerStyle from "../components/utils/layerStyle.jsx";
 import { getAllPatternTypes, getSubcategoriesForCategory, getPatternsForSubcategory } from '../components/utils/patternsHelper.js';
 import { handlePatternSelection as handlePatternSelectionLogic, isPatternSelected } from '../components/utils/patternSelectionLogic.js';
@@ -92,6 +93,7 @@ const KYLDashboardPage = () => {
   const [toastId, setToastId] = useState(null);
   const [selectedMWSProfile, setSelectedMWSProfile] = useState(null);
   const [searchLatLong, setSearchLatLong] = useState(null);
+  const [showPatternIntensityModal, setShowPatternIntensityModal] = useState(false);
 
   // * Triggers
   const [filterTrigger, setFilterTrigger] = useState(0)
@@ -2221,6 +2223,8 @@ const KYLDashboardPage = () => {
           patternSelections={patternSelections}
           handlePatternSelection={handlePatternSelection}
           isPatternSelected={isPatternSelected}
+          onOpenPatternIntensityMap={() => setShowPatternIntensityModal(true)}
+          hasLocationSelected={!!(district && block)}
         />
 
         {/* Map Container */}
@@ -2281,6 +2285,15 @@ const KYLDashboardPage = () => {
 
         />
       </div>
+
+      <PatternIntensityMapModal
+        open={showPatternIntensityModal}
+        onClose={() => setShowPatternIntensityModal(false)}
+        district={district}
+        block={block}
+        dataJson={dataJson}
+        patternSelections={patternSelections}
+      />
     </div>
   );
 };
