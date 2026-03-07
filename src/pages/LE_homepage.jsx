@@ -68,18 +68,22 @@ export default function KYLHomePage() {
   };
 
   return (
-    <div className="font-sans ">
-      <LandingNavbar />
-      <div
-        className="min-h-screen snap-y snap-mandatory bg-cover bg-center bg-no-repeat pt-8 md:pt-12"
+    <div className="font-sans flex flex-col h-screen overflow-hidden">
+      <header className="shrink-0">
+        <LandingNavbar />
+      </header>
+      <main
+        role="main"
+        className="landing-scroll-container flex-1 min-h-0 overflow-y-auto overflow-x-hidden overscroll-y-contain bg-cover bg-center bg-no-repeat"
         style={{
           backgroundImage: `url(${landingPageBg})`,
-          scrollBehavior: "smooth",
         }}
       >
-        {/* Know Section */}
+        <div className="landing-scroll-content px-4 pt-6 pb-8 md:px-6 md:pt-8 md:pb-10">
+        {/* Know Section - first section, fully visible below navbar */}
         <section
-          className="snap-start backdrop-brightness-90 backdrop-blur-sm bg-white/0 px-4 pt-8 pb-6 md:px-10 md:pt-10 md:pb-10 rounded-xl mx-2 md:mx-6 mb-4 md:mb-6"
+          id="know-your-landscape"
+          className="snap-start bg-white/10 px-4 pt-6 pb-6 md:px-10 md:pt-10 md:pb-10 rounded-xl mx-0 md:mx-4 mb-4 md:mb-6 first:scroll-mt-0"
           style={{ position: "relative", overflow: "visible", zIndex: 10 }}
         >
           <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-8">
@@ -204,7 +208,7 @@ export default function KYLHomePage() {
         </section>
 
         {/* Plan Section */}
-        <section className="snap-start backdrop-brightness-90 backdrop-blur-sm bg-white/0 px-4 py-6 md:px-10 md:py-10 rounded-xl mx-2 md:mx-6 my-6">
+        <section className="snap-start bg-white/10 px-4 py-6 md:px-10 md:py-10 rounded-xl mx-2 md:mx-6 my-6">
           <div>
             <div className="w-full lg:w-2/3 mb-10">
               <h2 className="text-3xl md:text-4xl mb-4">
@@ -329,7 +333,7 @@ export default function KYLHomePage() {
         </section>
 
         {/* Track Section */}
-        <section className="snap-start backdrop-brightness-90 backdrop-blur-sm bg-white/0 px-4 py-6 md:px-10 md:py-10 rounded-xl mx-2 md:mx-6 mt-6">
+        <section className="snap-start bg-white/10 px-4 py-6 md:px-10 md:py-10 rounded-xl mx-2 md:mx-6 mt-6">
           <div>
             {/* Narrow text container */}
             <div className="w-full lg:w-2/3 mb-10">
@@ -429,9 +433,11 @@ export default function KYLHomePage() {
             </div>
           </div>
         </section>
-      </div>
-
-      <Footer />
+        </div>
+      </main>
+      <footer className="shrink-0">
+        <Footer />
+      </footer>
     </div>
   );
 }
