@@ -93,8 +93,13 @@
   scroll-behavior: auto;
   -webkit-overflow-scrolling: touch;
   scroll-snap-type: y proximity;
-  scroll-padding-top: 0.5rem;
-  scroll-padding-bottom: 0.5rem;
+  scroll-padding-top: 1rem;
+  scroll-padding-bottom: 1rem;
+  overscroll-behavior-y: none;
+  scrollbar-gutter: stable;
+  transform: translateZ(0);
+  will-change: scroll-position;
+  isolation: isolate;
 }
 .landing-scroll-container .landing-scroll-content {
   transform: translateZ(0);
@@ -104,6 +109,7 @@
 .landing-scroll-container section[class*="snap-start"] {
   scroll-snap-align: start;
   scroll-snap-stop: normal;
+  scroll-margin-block: 0.5rem;
 }
 .landing-scroll-container #know-your-landscape {
   scroll-margin-top: 0;
