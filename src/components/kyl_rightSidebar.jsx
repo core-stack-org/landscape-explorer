@@ -325,7 +325,7 @@ const toggleConnectivity = () => {
 
                 <button
                   onClick={toggleConnectivity}
-                  className={`hidden w-full flex items-center justify-center gap-1 py-2 text-sm 
+                  className={`w-full flex items-center justify-center gap-1 py-2 text-sm 
                               rounded-md transition-colors hover:bg-indigo-50
                               ${showConnectivity ? "text-red-600" : "text-indigo-600"}`}
                 >
