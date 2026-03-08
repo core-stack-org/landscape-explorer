@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router";
 import { useRecoilState } from "recoil";
+import Lenis from "lenis";
 import {
   stateDataAtom,
   stateAtom,
@@ -23,11 +24,58 @@ import LandingNavbar from "../components/landing_navbar.jsx";
 
 export default function KYLHomePage() {
   const navigate = useNavigate();
+  const scrollRef = useRef(null);
+  const lenisRef = useRef(null);
 
   const [statesData, setStatesData] = useRecoilState(stateDataAtom);
   const [state, setState] = useRecoilState(stateAtom);
   const [district, setDistrict] = useRecoilState(districtAtom);
   const [block, setBlock] = useRecoilState(blockAtom);
+
+  useEffect(() => {
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+    const el = scrollRef.current;
+    if (!el) return;
+
+    const content = el.firstElementChild;
+    if (!content) return;
+
+    let lenis;
+    const init = () => {
+      lenis = new Lenis({
+        wrapper: el,
+        content,
+        eventsTarget: el,
+        smoothWheel: true,
+        syncTouch: true,
+        syncTouchLerp: 0.12,
+        lerp: 0.18,
+        wheelMultiplier: 1.1,
+        touchMultiplier: 1.15,
+        autoRaf: true,
+        duration: 1.15,
+      });
+      lenisRef.current = lenis;
+    };
+
+    requestAnimationFrame(() => requestAnimationFrame(init));
+
+    return () => {
+      lenisRef.current = null;
+      if (lenis) lenis.destroy();
+    };
+  }, []);
+
+  const scrollToBottom = () => {
+    if (lenisRef.current) {
+      const limit = lenisRef.current.limit;
+      lenisRef.current.scrollTo(limit?.max ?? 1e6, { duration: 1.2 });
+    } else if (scrollRef.current) {
+      const el = scrollRef.current;
+      el.scrollTo({ top: el.scrollHeight - el.clientHeight, behavior: "smooth" });
+    }
+  };
 
   useEffect(() => {
     initializeAnalytics();
@@ -68,22 +116,30 @@ export default function KYLHomePage() {
   };
 
   return (
-    <div className="font-sans flex flex-col h-screen overflow-hidden">
+    <div className="font-sans h-screen flex flex-col">
       <header className="shrink-0">
         <LandingNavbar />
       </header>
-      <main
-        role="main"
-        className="landing-scroll-container flex-1 min-h-0 overflow-y-auto overflow-x-hidden overscroll-y-contain bg-cover bg-center bg-no-repeat"
-        style={{
-          backgroundImage: `url(${landingPageBg})`,
-        }}
+
+      <button
+        type="button"
+        onClick={scrollToBottom}
+        className="fixed bottom-12 right-6 z-50 flex items-center justify-center w-12 h-12 rounded-full bg-white/90 hover:bg-white text-purple-700 border border-purple-200 shadow-md hover:shadow-lg transition-all"
+        aria-label="Scroll to bottom"
       >
-        <div className="landing-scroll-content px-4 pt-6 pb-8 md:px-6 md:pt-8 md:pb-10">
-        {/* Know Section - first section, fully visible below navbar */}
+        <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+          <path d="M12 5v14M19 12l-7 7-7-7" />
+        </svg>
+      </button>
+
+      <main ref={scrollRef} className="landing-scroll-container flex-1 min-h-0">
+        <div
+          className="landing-scroll-content min-h-full bg-cover bg-center bg-no-repeat pt-8 md:pt-12"
+          style={{ backgroundImage: `url(${landingPageBg})` }}
+        >
+        {/* Know Section */}
         <section
-          id="know-your-landscape"
-          className="snap-start bg-white/10 px-4 pt-6 pb-6 md:px-10 md:pt-10 md:pb-10 rounded-xl mx-0 md:mx-4 mb-4 md:mb-6 first:scroll-mt-0"
+          className="landing-section backdrop-brightness-90 bg-white/10 px-4 pt-8 pb-6 md:px-10 md:pt-10 md:pb-10 rounded-xl mx-2 md:mx-6 mb-4 md:mb-6"
           style={{ position: "relative", overflow: "visible", zIndex: 10 }}
         >
           <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-8">
@@ -208,7 +264,7 @@ export default function KYLHomePage() {
         </section>
 
         {/* Plan Section */}
-        <section className="snap-start bg-white/10 px-4 py-6 md:px-10 md:py-10 rounded-xl mx-2 md:mx-6 my-6">
+        <section id="landing-plan-section" className="landing-section backdrop-brightness-90 bg-white/10 px-4 py-6 md:px-10 md:py-10 rounded-xl mx-2 md:mx-6 my-6">
           <div>
             <div className="w-full lg:w-2/3 mb-10">
               <h2 className="text-3xl md:text-4xl mb-4">
@@ -333,7 +389,7 @@ export default function KYLHomePage() {
         </section>
 
         {/* Track Section */}
-        <section className="snap-start bg-white/10 px-4 py-6 md:px-10 md:py-10 rounded-xl mx-2 md:mx-6 mt-6">
+        <section className="landing-section backdrop-brightness-90 bg-white/10 px-4 py-6 md:px-10 md:py-10 rounded-xl mx-2 md:mx-6 mt-6">
           <div>
             {/* Narrow text container */}
             <div className="w-full lg:w-2/3 mb-10">

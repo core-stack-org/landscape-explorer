@@ -88,31 +88,35 @@
   background: #7F56D9E5;
 }
 
-/* ---- Landing page: smooth scroll container (GPU-friendly, less jank) ---- */
+/* Landing page: smooth scroll (Lenis), GPU-friendly, trackpad-sync */
 .landing-scroll-container {
+  overflow-y: scroll;
+  overflow-x: hidden;
   scroll-behavior: auto;
-  -webkit-overflow-scrolling: touch;
-  scroll-snap-type: y proximity;
   scroll-padding-top: 1rem;
-  scroll-padding-bottom: 1rem;
-  overscroll-behavior-y: none;
-  scrollbar-gutter: stable;
-  transform: translateZ(0);
-  will-change: scroll-position;
-  isolation: isolate;
-}
-.landing-scroll-container .landing-scroll-content {
+  scroll-padding-bottom: 1.5rem;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: contain;
   transform: translateZ(0);
   backface-visibility: hidden;
-  min-height: 100%;
+  touch-action: pan-y;
+  -webkit-font-smoothing: antialiased;
+  scrollbar-gutter: stable;
 }
-.landing-scroll-container section[class*="snap-start"] {
-  scroll-snap-align: start;
-  scroll-snap-stop: normal;
-  scroll-margin-block: 0.5rem;
+@media (prefers-reduced-motion: reduce) {
+  .landing-scroll-container {
+    scroll-behavior: auto;
+  }
 }
-.landing-scroll-container #know-your-landscape {
+.landing-scroll-content {
   scroll-margin-top: 0;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+.landing-scroll-content .landing-section {
+  transform: translateZ(0);
+  backface-visibility: hidden;
 }
 
 /* ---- Fix browser-default font-size inflation inside chart area ---- */
