@@ -6,8 +6,9 @@
   import XYZ from "ol/source/XYZ";
   import VectorLayer from "ol/layer/Vector";
   import VectorSource from "ol/source/Vector";
+  import Cluster from "ol/source/Cluster";
   import GeoJSON from "ol/format/GeoJSON";
-  import { Style, Stroke, Icon ,Fill} from "ol/style";
+  import { Style, Stroke, Icon, Fill, Circle as CircleStyle, Text } from "ol/style";
   import Point from "ol/geom/Point";
   import Crop from "ol-ext/filter/Crop";
   import getImageLayer from "../actions/getImageLayers";
@@ -364,10 +365,10 @@
           return;
         }
 
-        const feature = m.forEachFeatureAtPixel(
+        let feature = m.forEachFeatureAtPixel(
           event.pixel,
           (feat) => feat,
-          { hitTolerance: 6 }
+          { hitTolerance: 10 }
         );
 
         const popupEl = popupRef.current;
@@ -376,6 +377,22 @@
         if (!feature) {
           popupEl.style.display = "none";
           return;
+        }
+
+        // Unwrap cluster: if this is a cluster feature, zoom in to expand or use single for popup
+        const clusterFeatures = feature.get("features");
+        if (clusterFeatures && clusterFeatures.length > 1) {
+          const view = m.getView();
+          const extent = feature.getGeometry().getExtent();
+          view.fit(extent, {
+            padding: [60, 60, 60, 60],
+            maxZoom: view.getZoom() + 2,
+            duration: 300,
+          });
+          return;
+        }
+        if (clusterFeatures && clusterFeatures.length === 1) {
+          feature = clusterFeatures[0];
         }
 
         //  FIX: DEFINE THESE FIRST
@@ -1414,12 +1431,64 @@ if (isTehsil) {
     }
     const safePlantationData = filteredGeoJSON(plantationGeodata);
     const features = read4326(safePlantationData);
-    
+
     if (!features || !features.length) return;
+
+    features.forEach((f) => {
+      f.set("layerType", "plantation");
+    });
 
     // remove old plantation layer
     removeLayersById(["plantation_layer"]);
-    const plantationStyle = (feature) => {
+
+    // Centroid for clustering (Cluster source needs point geometry per feature)
+    const geometryFunction = (feature) => {
+      const geom = feature.getGeometry();
+      if (!geom) return null;
+      try {
+        if (geom.getType() === "Polygon" && geom.getInteriorPoint) {
+          return geom.getInteriorPoint();
+        }
+        if (geom.getType() === "MultiPolygon" && geom.getInteriorPoint) {
+          return geom.getInteriorPoint();
+        }
+      } catch (_) {}
+      const ex = geom.getExtent();
+      return new Point([(ex[0] + ex[2]) / 2, (ex[1] + ex[3]) / 2]);
+    };
+
+    const vectorSource = new VectorSource({ features });
+    const clusterSource = new Cluster({
+      source: vectorSource,
+      distance: 45,
+      minDistance: 20,
+      geometryFunction,
+    });
+
+    const plantationClusterStyle = (feature) => {
+      const clusterFeatures = feature.get("features");
+      const count = clusterFeatures ? clusterFeatures.length : 0;
+
+      if (count > 1) {
+        return [
+          new Style({
+            image: new CircleStyle({
+              radius: 16,
+              fill: new Fill({ color: "rgba(34, 139, 34, 0.9)" }),
+              stroke: new Stroke({ color: "#fff", width: 2 }),
+            }),
+            text: new Text({
+              text: String(count),
+              fill: new Fill({ color: "#fff" }),
+              font: "bold 14px sans-serif",
+            }),
+          }),
+        ];
+      }
+
+      const single = clusterFeatures && clusterFeatures[0];
+      if (!single) return [];
+
       const styles = [
         new Style({
           stroke: new Stroke({
@@ -1428,38 +1497,40 @@ if (isTehsil) {
           }),
         }),
       ];
-  
-      const geom = feature.getGeometry();
+
+      const geom = single.getGeometry();
       if (geom) {
         let center;
         try {
-          if (geom.getType() === "Polygon")
+          if (geom.getType() === "Polygon" && geom.getInteriorPoint) {
             center = geom.getInteriorPoint().getCoordinates();
-          else if (geom.getType() === "MultiPolygon")
-            center = geom.getInteriorPoints().getFirstCoordinate();
+          } else if (geom.getType() === "MultiPolygon" && geom.getInteriorPoint) {
+            center = geom.getInteriorPoint().getCoordinates();
+          } else {
+            const ex = geom.getExtent();
+            center = [(ex[0] + ex[2]) / 2, (ex[1] + ex[3]) / 2];
+          }
         } catch {
           const ex = geom.getExtent();
           center = [(ex[0] + ex[2]) / 2, (ex[1] + ex[3]) / 2];
         }
-  
         styles.push(
           new Style({
             geometry: new Point(center),
             image: new Icon({
-              src: plantationIcon, 
+              src: plantationIcon,
               anchor: [0.5, 1],
               scale: 1.2,
             }),
           })
         );
       }
-  
       return styles;
     };
 
     const plantationLayer = new VectorLayer({
-      source: new VectorSource({ features }),
-      style: plantationStyle,
+      source: clusterSource,
+      style: plantationClusterStyle,
     });
 
     plantationLayer.set("id", "plantation_layer");
@@ -1467,7 +1538,6 @@ if (isTehsil) {
     map.addLayer(plantationLayer);
 
     let extent = features[0].getGeometry().getExtent().slice();
-
     features.forEach((f) => {
       const ex = f.getGeometry().getExtent();
       extent[0] = Math.min(extent[0], ex[0]);
@@ -1480,10 +1550,6 @@ if (isTehsil) {
       padding: [40, 40, 40, 40],
       maxZoom: 17,
       duration: 400,
-    });
-
-    features.forEach((f) => {
-      f.set("layerType", "plantation");
     });
   };
 

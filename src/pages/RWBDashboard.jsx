@@ -92,11 +92,11 @@ const RWBDashboard =()=>{
       }, [location.search]);
       
     const handleNavigate =()=>{
-        if(!organization && !project) return;
+        if (!project?.value) return;
         const params  = new URLSearchParams(location.search);
         params.set("type", "project");                 
         params.set("projectId", project.value);       
-        params.set("project_name", project.label); 
+        params.set("project_name", project.label ?? ""); 
         navigate(
             {
                 pathname:location.pathname,
@@ -178,8 +178,10 @@ const RWBDashboard =()=>{
                                 handleItemSelect={(setState, e) => setState(e)}
                                 />
                         </div>
-                        <button className="bg-purple-600 text-white px-4 py-2 rounded-lg w-full"
-                        onClick={handleNavigate}>
+                        <button
+                        className="bg-purple-600 text-white px-4 py-2 rounded-lg w-full disabled:opacity-50 disabled:cursor-not-allowed"
+                        onClick={handleNavigate}
+                        disabled={!project?.value}>
                             Show Waterbodies
                         </button>
                     </div>

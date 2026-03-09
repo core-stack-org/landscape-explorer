@@ -25,7 +25,8 @@ const KYLLeftSidebar = ({
     getPatternsForSubcategory,
     patternSelections,
     handlePatternSelection,
-    isPatternSelected
+    isPatternSelected,
+    onOpenPatternIntensityMap
 }) => {
     // State to track active tab (Patterns or Filters)
     const [activeTab, setActiveTab] = useState('Filters');
@@ -202,6 +203,15 @@ const KYLLeftSidebar = ({
                             className="w-full py-2 px-2 text-indigo-600 bg-indigo-100 rounded-lg text-sm font-medium text-left"
                         >
                             Click to Know More About Patterns
+                        </button>
+
+                        <button
+                            type="button"
+                            onClick={onOpenPatternIntensityMap}
+                            disabled={!filtersEnabled}
+                            className="w-full mt-2 py-2 px-3 rounded-lg text-sm font-medium border border-indigo-200 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-400 disabled:border-gray-200"
+                        >
+                            Map View (Pattern intensity)
                         </button>
 
                         {/* Main Category Buttons (Agriculture, Livelihood) */}

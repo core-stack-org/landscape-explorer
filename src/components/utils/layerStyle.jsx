@@ -7,15 +7,24 @@ const layerStyles = (feature, vectorStyle, idx = 0, villageJson, dataJson) => {
     let tempIdx = 0;
     let avg_Res = 0;
     
+    // High-visibility boundaries: strong contrast, thick stroke, dashed for distinct adjacent polygons
+    const defaultStroke = "rgba(0, 12, 40, 1)";
+    const defaultFill = "rgba(200, 230, 255, 0.45)";
+    const strokeWidth = 6;
+    const lineDash = [16, 8];
+
+    const safeVectorStyle = Array.isArray(vectorStyle) && vectorStyle.length > 0 ? vectorStyle : [{ stroke: defaultStroke, fill: defaultFill }];
+
     switch (idx) {
         case 0:
             return new Style({
                 stroke: new Stroke({
-                    color: vectorStyle[0].stroke !== undefined ? vectorStyle[0].stroke : "#006400",
-                    width: 1.0,
+                    color: safeVectorStyle[0].stroke !== undefined ? safeVectorStyle[0].stroke : defaultStroke,
+                    width: strokeWidth,
+                    lineDash,
                 }),
                 fill: new Fill({
-                    color: vectorStyle[0].fill !== undefined ? vectorStyle[0].fill : "rgba(144, 238, 144, 0.3)",
+                    color: safeVectorStyle[0].fill !== undefined ? safeVectorStyle[0].fill : defaultFill,
                 })
             })
         case 1:
@@ -156,18 +165,21 @@ const layerStyles = (feature, vectorStyle, idx = 0, villageJson, dataJson) => {
             break;
     }
     
-    for(tempIdx = 0; tempIdx < vectorStyle.length; ++tempIdx){
-        if(avg_Res >= vectorStyle[tempIdx].lower && avg_Res <= vectorStyle[tempIdx].upper){
+    for(tempIdx = 0; tempIdx < safeVectorStyle.length; ++tempIdx){
+        if(avg_Res >= safeVectorStyle[tempIdx].lower && avg_Res <= safeVectorStyle[tempIdx].upper){
             break;
         }
     }
+    if (tempIdx >= safeVectorStyle.length) tempIdx = 0;
+    const styleEntry = safeVectorStyle[tempIdx];
     return new Style({
         stroke: new Stroke({
-            color: vectorStyle[tempIdx].stroke !== undefined ? vectorStyle[tempIdx].stroke : "#006400",
-            width: 1.0,
+            color: styleEntry && styleEntry.stroke !== undefined ? styleEntry.stroke : defaultStroke,
+            width: strokeWidth,
+            lineDash,
         }),
         fill: new Fill({
-            color: vectorStyle[tempIdx].fill !== undefined ? vectorStyle[tempIdx].fill : "rgba(144, 238, 144, 0.3)",
+            color: styleEntry && styleEntry.fill !== undefined ? styleEntry.fill : defaultFill,
         })
     })
 }
