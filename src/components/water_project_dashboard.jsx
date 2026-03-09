@@ -1450,7 +1450,7 @@ const mwsSheet = XLSX.utils.json_to_sheet(mwsData, {
       </div>
     )}
   
-    {mode === "project" && projectNameParam && !activeSelectedWaterbody && (
+  {mode === "project" && projectNameParam && !waterbodyParam && (
       loadingData ? (
         <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-xl shadow-sm w-full md:max-w-[90%]">
           <CircularProgress size={20} />
