@@ -32,7 +32,7 @@ import PatternsData from '../components/data/Patterns.json';
 import KYLLeftSidebar from "../components/kyl_leftSidebar";
 import KYLRightSidebar from "../components/kyl_rightSidebar.jsx";
 import KYLMapContainer from "../components/kyl_mapContainer.jsx";
-import PatternIntensityMapModal from "../components/PatternIntensityMapModal.jsx";
+import PatternIntensityMapModal from "../components/PatternIntensityMapModal";
 import layerStyle from "../components/utils/layerStyle.jsx";
 import { getAllPatternTypes, getSubcategoriesForCategory, getPatternsForSubcategory } from '../components/utils/patternsHelper.js';
 import { handlePatternSelection as handlePatternSelectionLogic, isPatternSelected } from '../components/utils/patternSelectionLogic.js';
@@ -88,7 +88,7 @@ const KYLDashboardPage = () => {
   const [indicatorType, setIndicatorType] = useState(null);
   const [showMWS, setShowMWS] = useState(true);
   const [showVillages, setShowVillages] = useState(true);
-  const [filtersEnabled, setFiltersEnabled] = useState(false);
+  const [filtersEnabled, setFiltersEnabled] = useState(true);
 
   const [toastId, setToastId] = useState(null);
   const [selectedMWSProfile, setSelectedMWSProfile] = useState(null);
@@ -1065,10 +1065,11 @@ const KYLDashboardPage = () => {
       setDataJson(result);
 
       setIsLoading(false);
-      setFiltersEnabled(true)
+      setFiltersEnabled(true);
     } catch (e) {
       console.log(e);
       setIsLoading(false);
+      setFiltersEnabled(true);
     }
   };
 
@@ -1103,19 +1104,25 @@ const KYLDashboardPage = () => {
   };
 
   const handleLayerSelection = async (filter) => {
+    if (!mapRef.current) return;
+    if (!district?.label || !block?.label) {
+      toast.error("Please select State, District and Tehsil first.");
+      return;
+    }
     let checkIfPresent = currentLayer.find((f) => f.name === filter.name);
     let checkIfInMap = mapRef.current.getLayers().getArray();
-    let existingLayer = checkIfInMap.find((layer) => {
-      return layer.ol_uid === boundaryLayerRef.current.ol_uid;
-    });
+    const boundaryLayer = boundaryLayerRef.current;
+    let existingLayer = boundaryLayer
+      ? checkIfInMap.find((layer) => layer && layer.ol_uid === boundaryLayer.ol_uid)
+      : false;
     let tempArr = currentLayer;
     let len = filter.layer_store.length;
     if (checkIfPresent) {
-      checkIfPresent.layerRef.map((item) => {
-        mapRef.current.removeLayer(item);
+      checkIfPresent.layerRef.forEach((item) => {
+        if (item) mapRef.current.removeLayer(item);
       });
-      if (!existingLayer) {
-        mapRef.current.addLayer(boundaryLayerRef.current);
+      if (!existingLayer && boundaryLayer) {
+        mapRef.current.addLayer(boundaryLayer);
       }
       mwsLayerRef.current.setStyle((feature) => {
         if (
@@ -1151,8 +1158,8 @@ const KYLDashboardPage = () => {
       //setFiltersEnabled(true);
     } else if (currentLayer.length === 0) {
       let layerRef = [];
-      mapRef.current.removeLayer(mwsLayerRef.current);
-      mapRef.current.removeLayer(boundaryLayerRef.current);
+      if (mwsLayerRef.current) mapRef.current.removeLayer(mwsLayerRef.current);
+      if (boundaryLayerRef.current) mapRef.current.removeLayer(boundaryLayerRef.current);
       for (let i = 0; i < len; ++i) {
         let tempLayer;
         if (filter.layer_store[i] === "terrain") {
@@ -1298,11 +1305,23 @@ const KYLDashboardPage = () => {
               color: "#254871",
               width: 2.0,
             }),
+            fill: new Fill({
+              color: "rgba(255, 75, 75, 0.25)",
+            }),
           });
         }
+        return new Style({
+          stroke: new Stroke({
+            color: "#0a1628",
+            width: 2,
+          }),
+          fill: new Fill({
+            color: "rgba(74, 144, 226, 0.15)",
+          }),
+        });
       });
-      mapRef.current.addLayer(mwsLayerRef.current);
-      mapRef.current.addLayer(boundaryLayerRef.current);
+      if (mwsLayerRef.current) mapRef.current.addLayer(mwsLayerRef.current);
+      if (boundaryLayerRef.current) mapRef.current.addLayer(boundaryLayerRef.current);
       let tempObj = {
         name: filter.name,
         layerRef: layerRef,
@@ -2249,7 +2268,15 @@ const KYLDashboardPage = () => {
           handlePatternSelection={handlePatternSelection}
           isPatternSelected={isPatternSelected}
           onOpenPatternIntensityMap={() => setShowPatternIntensityModal(true)}
-          hasLocationSelected={!!(district && block)}
+        />
+
+        <PatternIntensityMapModal
+          open={showPatternIntensityModal}
+          onClose={() => setShowPatternIntensityModal(false)}
+          district={district}
+          block={block}
+          dataJson={dataJson}
+          patternSelections={patternSelections}
         />
 
         {/* Map Container */}
@@ -2310,15 +2337,6 @@ const KYLDashboardPage = () => {
 
         />
       </div>
-
-      <PatternIntensityMapModal
-        open={showPatternIntensityModal}
-        onClose={() => setShowPatternIntensityModal(false)}
-        district={district}
-        block={block}
-        dataJson={dataJson}
-        patternSelections={patternSelections}
-      />
     </div>
   );
 };

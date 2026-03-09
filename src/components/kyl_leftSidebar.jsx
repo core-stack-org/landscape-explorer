@@ -26,8 +26,7 @@ const KYLLeftSidebar = ({
     patternSelections,
     handlePatternSelection,
     isPatternSelected,
-    onOpenPatternIntensityMap,
-    hasLocationSelected,
+    onOpenPatternIntensityMap
 }) => {
     // State to track active tab (Patterns or Filters)
     const [activeTab, setActiveTab] = useState('Filters');
@@ -206,24 +205,14 @@ const KYLLeftSidebar = ({
                             Click to Know More About Patterns
                         </button>
 
-                        {/* Pattern intensity map view */}
                         <button
                             type="button"
                             onClick={onOpenPatternIntensityMap}
-                            disabled={!hasLocationSelected}
-                            className={`w-full mt-2 py-2.5 px-4 rounded-lg text-sm font-medium flex items-center justify-center gap-2 transition-colors
-                                ${hasLocationSelected
-                                    ? 'bg-indigo-600 text-white hover:bg-indigo-700'
-                                    : 'bg-gray-100 text-gray-400 cursor-not-allowed'}`}
+                            disabled={!filtersEnabled}
+                            className="w-full mt-2 py-2 px-3 rounded-lg text-sm font-medium border border-indigo-200 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-400 disabled:border-gray-200"
                         >
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
-                            </svg>
                             Map View (Pattern intensity)
                         </button>
-                        {!hasLocationSelected && (
-                            <p className="text-xs text-gray-500 mt-1">Select State, District & Tehsil to enable</p>
-                        )}
 
                         {/* Main Category Buttons (Agriculture, Livelihood) */}
                         <div className="flex flex-wrap gap-2 pt-2">

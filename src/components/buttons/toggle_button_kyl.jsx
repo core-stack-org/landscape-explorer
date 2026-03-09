@@ -1,12 +1,13 @@
-const ToggleButton = ({isOn, toggleSwitch}) => {
+const ToggleButton = ({ isOn, toggleSwitch, disabled = false }) => {
   return (
-    <div className="flex items-center gap-2 bg-white px-2 py-1 rounded-md border border-gray-200 shadow-sm hover:shadow transition-shadow">
+    <div className={`flex items-center gap-2 bg-white px-2 py-1 rounded-md border border-gray-200 shadow-sm transition-shadow ${disabled ? 'opacity-60' : 'hover:shadow'}`}>
       <span className="text-xs font-medium text-gray-700">
         Visualize
       </span>
       <button
         onClick={toggleSwitch}
-        className={`relative w-9 h-5 rounded-full transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-blue-500 ${
+        disabled={disabled}
+        className={`relative w-9 h-5 rounded-full transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-70 ${
           isOn ? 'bg-blue-600' : 'bg-gray-300'
         }`}
         role="switch"
