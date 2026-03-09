@@ -20,6 +20,7 @@ const KYLIndicatorFilter = ({ filter, onFilterChange, isDisabled, getFormattedSe
                 <ToggleButton 
                     isOn={toggleStates[filter.name]} 
                     toggleSwitch={() => handleLayerSelection(filter)}
+                    disabled={isDisabled}
                 />
             </div>
             <div className="space-y-2 pt-1">

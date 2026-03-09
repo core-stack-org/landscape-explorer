@@ -19,15 +19,19 @@ const AgroHorticulture =()=>{
         const loadOrganization = async()=>{
         try{
             const orgData = await fetch (`${process.env.REACT_APP_API_URL}/auth/register/available_organizations/?app_type=plantation`);
-                const orgResult = await orgData.json();
-                const options = orgResult.filter(org=>org.name && org.id).map((org=>({
-                    label: org.name,
-                    value: org.id,
-                })))
-                setOrganizationOptions(options)
+            const orgResult = await orgData.json();
+            if (!orgData.ok || !Array.isArray(orgResult)) {
+                console.warn("Organizations API error or non-array:", orgData.status, orgResult);
+                return;
+            }
+            const options = orgResult.filter(org=>org.name && org.id).map((org=>({
+                label: org.name,
+                value: org.id,
+            })));
+            setOrganizationOptions(options);
             }
         catch(error){
-            console.warn("Not loading org",error)
+            console.warn("Not loading org (check REACT_APP_API_URL and network/CORS):", error);
         }
     }       
         loadOrganization();
@@ -69,9 +73,9 @@ const AgroHorticulture =()=>{
     },[organization]);
 
     const handleNavigate =()=>{
-        if(!organization && !project) return;
+        if (!project?.value) return;
         const params  = new URLSearchParams(location.search);
-        params.set("projectId",project.value)
+        params.set("projectId", project.value);
         navigate(
             {
                 pathname:location.pathname,
@@ -82,26 +86,42 @@ const AgroHorticulture =()=>{
     };
 
     const loadProjects = async(orgId)=>{
-        let token = sessionStorage.getItem("accessToken")
-            try{
-                const projects = await fetch (`${process.env.REACT_APP_API_URL}/projects`,
-                    {
-                    headers:{
-                        Authorization:`Bearer ${token}`,
-                        "Content-Type": "application/json",
-                    }
-                }
-                );
-                const projectResult = await projects.json();
-                const options = projectResult.filter((p)=>p.organization==orgId).map((p)=>({
-                    label:p.name,
-                    value:p.id
-                }));
-                setProjectOptions(options);
+        if (!orgId) {
+            setProjectOptions([]);
+            return;
+        }
+        const token = sessionStorage.getItem("accessToken");
+        if (!token) {
+            console.warn("No access token: set REACT_APP_WATERBODYREJ_USERNAME and REACT_APP_WATERBODYREJ_PASSWORD in .env and restart the dev server.");
+            setProjectOptions([]);
+            return;
+        }
+        try {
+            const projects = await fetch (`${process.env.REACT_APP_API_URL}/projects`, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    "Content-Type": "application/json",
+                },
+            });
+            const projectResult = await projects.json();
+            if (!projects.ok) {
+                console.warn("Projects API error:", projects.status, projectResult);
+                setProjectOptions([]);
+                return;
             }
-            catch(error){
-                console.warn("Error while loading projects",error);
+            if (!Array.isArray(projectResult)) {
+                setProjectOptions([]);
+                return;
             }
+            const options = projectResult.filter((p)=>p.organization==orgId).map((p)=>({
+                label: p.name,
+                value: p.id,
+            }));
+            setProjectOptions(options);
+        } catch(error) {
+            console.warn("Error while loading projects (check API and network):", error);
+            setProjectOptions([]);
+        }
     };
 
     useEffect(() => {
@@ -162,10 +182,17 @@ const AgroHorticulture =()=>{
                                 handleItemSelect={(setState, e) => setState(e)}
                                 />
                         </div>
-                        <button className="bg-purple-600 text-white px-4 py-2 rounded-lg w-full"
-                        onClick={handleNavigate}>
+                        <button
+                        className="bg-purple-600 text-white px-4 py-2 rounded-lg w-full disabled:opacity-50 disabled:cursor-not-allowed"
+                        onClick={handleNavigate}
+                        disabled={!project?.value}>
                             Show Plantation sites
                         </button>
+                        {process.env.NODE_ENV === "development" && organizationOptions.length === 0 && (
+                            <p className="mt-3 text-xs text-amber-700 bg-amber-50 rounded p-2">
+                                Dropdowns empty? Set <code className="bg-amber-100 px-1">REACT_APP_API_URL</code>, <code className="bg-amber-100 px-1">REACT_APP_WATERBODYREJ_USERNAME</code> and <code className="bg-amber-100 px-1">REACT_APP_WATERBODYREJ_PASSWORD</code> in <code className="bg-amber-100 px-1">.env</code> (same as production), then restart <code className="bg-amber-100 px-1">npm start</code>.
+                            </p>
+                        )}
                     </div>
                 </div>
             </div>

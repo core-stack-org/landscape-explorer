@@ -32,6 +32,7 @@ import PatternsData from '../components/data/Patterns.json';
 import KYLLeftSidebar from "../components/kyl_leftSidebar";
 import KYLRightSidebar from "../components/kyl_rightSidebar.jsx";
 import KYLMapContainer from "../components/kyl_mapContainer.jsx";
+import PatternIntensityMapModal from "../components/PatternIntensityMapModal";
 import layerStyle from "../components/utils/layerStyle.jsx";
 import { getAllPatternTypes, getSubcategoriesForCategory, getPatternsForSubcategory } from '../components/utils/patternsHelper.js';
 import { handlePatternSelection as handlePatternSelectionLogic, isPatternSelected } from '../components/utils/patternSelectionLogic.js';
@@ -87,11 +88,12 @@ const KYLDashboardPage = () => {
   const [indicatorType, setIndicatorType] = useState(null);
   const [showMWS, setShowMWS] = useState(true);
   const [showVillages, setShowVillages] = useState(true);
-  const [filtersEnabled, setFiltersEnabled] = useState(false);
+  const [filtersEnabled, setFiltersEnabled] = useState(true);
 
   const [toastId, setToastId] = useState(null);
   const [selectedMWSProfile, setSelectedMWSProfile] = useState(null);
   const [searchLatLong, setSearchLatLong] = useState(null);
+  const [showPatternIntensityModal, setShowPatternIntensityModal] = useState(false);
 
   // * Triggers
   const [filterTrigger, setFilterTrigger] = useState(0)
@@ -667,27 +669,37 @@ const KYLDashboardPage = () => {
       return;
     }
   
-    // UID → coordinate map
+    // -------------------------
+    // Create UID → coordinate map
+    // -------------------------
     const uidToCoord = {};
+  
     centroidFeatures.forEach((feature) => {
-      const uid = feature.get("uid");
+      const uid = feature.get("uid") || feature.get("UID");
+      if (!uid) return;
+  
       const coord = feature.getGeometry().getCoordinates();
-      uidToCoord[uid] = coord;
+      uidToCoord[uid.toString().trim()] = coord;
     });
   
     const arrowFeatures = [];
   
+    // -------------------------
+    // Create arrows
+    // -------------------------
     connectivityFeatures.forEach((feature) => {
       const uid = feature.get("uid");
       const downstream = feature.get("downstream");
+  
       if (!uid || !downstream) return;
   
-      const start = uidToCoord[uid];
-      const end = uidToCoord[downstream];
+      const start = uidToCoord[uid.toString().trim()];
+      const end = uidToCoord[downstream.toString().trim()];
   
-        if (!start || !end) return;
+      if (!start || !end) return;
   
       const line = new LineString([start, end]);
+  
       const arrowFeature = new Feature({
         geometry: line,
         upstream: uid,
@@ -704,40 +716,55 @@ const KYLDashboardPage = () => {
     const arrowLayer = new VectorLayer({
       source: arrowSource,
       style: (feature) => {
+        const styles = [];
+      
         const geometry = feature.getGeometry();
         const coords = geometry.getCoordinates();
       
-        const start = coords[0];
-        const end = coords[1];
+        // Need at least 2 points
+        if (!coords || coords.length < 2) return styles;
+      
+        const start = coords[coords.length - 2];
+        const end = coords[coords.length - 1];
       
         const dx = end[0] - start[0];
         const dy = end[1] - start[1];
-        
-        // Fix: subtract Math.PI/2 to align with OL's rotation (from top, clockwise)
-        const rotation = -Math.atan2(dy, dx) + Math.PI / 2;
-        const isDownstream = end[1] < start[1];
-
-        const arrowColor = isDownstream ? "#39FF14" : "#FF1493";      //green down pink up
-        return [
+        const len = Math.sqrt(dx * dx + dy * dy);
+      
+        // Skip zero-length or near-zero edges
+        if (len < 1e-6) return styles;
+      
+        const angle = Math.atan2(dy, dx);
+        const color = "#FF1493";
+      
+        // Main line
+        styles.push(
           new Style({
-            stroke: new Stroke({
-              color: arrowColor,
-              width: 2.2,
-              lineCap: "round",
-            }),
-          }),
-          new Style({
-            geometry: new Point(end),
-            image: new RegularShape({
-              points: 3,
-              radius: 7,
-              fill: new Fill({ color: arrowColor }),
-              rotation: rotation,
-              rotateWithView: true,
-              angle: 0,
-            }),
-          }),
+            stroke: new Stroke({ color, width: 1.5 }),
+          })
+        );
+      
+        // Arrowhead size proportional to edge length, capped
+        const arrowLen = Math.min(len * 0.08, 0.006);
+        const arrowAngle = Math.PI / 6;
+      
+        const left = [
+          end[0] - arrowLen * Math.cos(angle - arrowAngle),
+          end[1] - arrowLen * Math.sin(angle - arrowAngle),
         ];
+        const right = [
+          end[0] - arrowLen * Math.cos(angle + arrowAngle),
+          end[1] - arrowLen * Math.sin(angle + arrowAngle),
+        ];
+      
+        styles.push(
+          new Style({
+            geometry: new LineString([left, end, right]),
+            stroke: new Stroke({ color, width: 1.5 }),
+          })
+        );
+      
+        return styles;
       },
     });
   
@@ -1038,10 +1065,11 @@ const KYLDashboardPage = () => {
       setDataJson(result);
 
       setIsLoading(false);
-      setFiltersEnabled(true)
+      setFiltersEnabled(true);
     } catch (e) {
       console.log(e);
       setIsLoading(false);
+      setFiltersEnabled(true);
     }
   };
 
@@ -1076,19 +1104,25 @@ const KYLDashboardPage = () => {
   };
 
   const handleLayerSelection = async (filter) => {
+    if (!mapRef.current) return;
+    if (!district?.label || !block?.label) {
+      toast.error("Please select State, District and Tehsil first.");
+      return;
+    }
     let checkIfPresent = currentLayer.find((f) => f.name === filter.name);
     let checkIfInMap = mapRef.current.getLayers().getArray();
-    let existingLayer = checkIfInMap.find((layer) => {
-      return layer.ol_uid === boundaryLayerRef.current.ol_uid;
-    });
+    const boundaryLayer = boundaryLayerRef.current;
+    let existingLayer = boundaryLayer
+      ? checkIfInMap.find((layer) => layer && layer.ol_uid === boundaryLayer.ol_uid)
+      : false;
     let tempArr = currentLayer;
     let len = filter.layer_store.length;
     if (checkIfPresent) {
-      checkIfPresent.layerRef.map((item) => {
-        mapRef.current.removeLayer(item);
+      checkIfPresent.layerRef.forEach((item) => {
+        if (item) mapRef.current.removeLayer(item);
       });
-      if (!existingLayer) {
-        mapRef.current.addLayer(boundaryLayerRef.current);
+      if (!existingLayer && boundaryLayer) {
+        mapRef.current.addLayer(boundaryLayer);
       }
       mwsLayerRef.current.setStyle((feature) => {
         if (
@@ -1124,8 +1158,8 @@ const KYLDashboardPage = () => {
       //setFiltersEnabled(true);
     } else if (currentLayer.length === 0) {
       let layerRef = [];
-      mapRef.current.removeLayer(mwsLayerRef.current);
-      mapRef.current.removeLayer(boundaryLayerRef.current);
+      if (mwsLayerRef.current) mapRef.current.removeLayer(mwsLayerRef.current);
+      if (boundaryLayerRef.current) mapRef.current.removeLayer(boundaryLayerRef.current);
       for (let i = 0; i < len; ++i) {
         let tempLayer;
         if (filter.layer_store[i] === "terrain") {
@@ -1271,11 +1305,23 @@ const KYLDashboardPage = () => {
               color: "#254871",
               width: 2.0,
             }),
+            fill: new Fill({
+              color: "rgba(255, 75, 75, 0.25)",
+            }),
           });
         }
+        return new Style({
+          stroke: new Stroke({
+            color: "#0a1628",
+            width: 2,
+          }),
+          fill: new Fill({
+            color: "rgba(74, 144, 226, 0.15)",
+          }),
+        });
       });
-      mapRef.current.addLayer(mwsLayerRef.current);
-      mapRef.current.addLayer(boundaryLayerRef.current);
+      if (mwsLayerRef.current) mapRef.current.addLayer(mwsLayerRef.current);
+      if (boundaryLayerRef.current) mapRef.current.addLayer(boundaryLayerRef.current);
       let tempObj = {
         name: filter.name,
         layerRef: layerRef,
@@ -2221,6 +2267,16 @@ const KYLDashboardPage = () => {
           patternSelections={patternSelections}
           handlePatternSelection={handlePatternSelection}
           isPatternSelected={isPatternSelected}
+          onOpenPatternIntensityMap={() => setShowPatternIntensityModal(true)}
+        />
+
+        <PatternIntensityMapModal
+          open={showPatternIntensityModal}
+          onClose={() => setShowPatternIntensityModal(false)}
+          district={district}
+          block={block}
+          dataJson={dataJson}
+          patternSelections={patternSelections}
         />
 
         {/* Map Container */}
