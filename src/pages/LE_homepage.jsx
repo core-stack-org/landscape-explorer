@@ -77,6 +77,18 @@ export default function KYLHomePage() {
     }
   };
 
+  const scrollToSection = (sectionId) => {
+    const selector = `#${sectionId}`;
+    if (lenisRef.current) {
+      lenisRef.current.scrollTo(selector, { duration: 1.1, offset: -80 });
+    } else {
+      const el = document.querySelector(selector);
+      if (el) {
+        el.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+    }
+  };
+
   useEffect(() => {
     initializeAnalytics();
     trackPageView("/kyl_home");
@@ -121,6 +133,33 @@ export default function KYLHomePage() {
         <LandingNavbar />
       </header>
 
+      {/* In-page navigation for smooth scrolling between sections */}
+      <div className="shrink-0 border-b border-purple-50 bg-white/80 backdrop-blur-sm">
+        <div className="max-w-6xl mx-auto px-4 py-2 flex flex-wrap gap-2 text-sm">
+          <button
+            type="button"
+            onClick={() => scrollToSection("landing-know-section")}
+            className="px-3 py-1 rounded-full border border-purple-200 text-purple-700 bg-purple-50 hover:bg-purple-100 transition-colors"
+          >
+            Know
+          </button>
+          <button
+            type="button"
+            onClick={() => scrollToSection("landing-plan-section")}
+            className="px-3 py-1 rounded-full border border-purple-200 text-purple-700 bg-purple-50 hover:bg-purple-100 transition-colors"
+          >
+            Plan
+          </button>
+          <button
+            type="button"
+            onClick={() => scrollToSection("landing-track-section")}
+            className="px-3 py-1 rounded-full border border-purple-200 text-purple-700 bg-purple-50 hover:bg-purple-100 transition-colors"
+          >
+            Track &amp; Assess
+          </button>
+        </div>
+      </div>
+
       <button
         type="button"
         onClick={scrollToBottom}
@@ -139,6 +178,7 @@ export default function KYLHomePage() {
         >
         {/* Know Section */}
         <section
+          id="landing-know-section"
           className="landing-section backdrop-brightness-90 bg-white/10 px-4 pt-8 pb-6 md:px-10 md:pt-10 md:pb-10 rounded-xl mx-2 md:mx-6 mb-4 md:mb-6"
           style={{ position: "relative", overflow: "visible", zIndex: 10 }}
         >
@@ -389,7 +429,10 @@ export default function KYLHomePage() {
         </section>
 
         {/* Track Section */}
-        <section className="landing-section backdrop-brightness-90 bg-white/10 px-4 py-6 md:px-10 md:py-10 rounded-xl mx-2 md:mx-6 mt-6">
+        <section
+          id="landing-track-section"
+          className="landing-section backdrop-brightness-90 bg-white/10 px-4 py-6 md:px-10 md:py-10 rounded-xl mx-2 md:mx-6 mt-6"
+        >
           <div>
             {/* Narrow text container */}
             <div className="w-full lg:w-2/3 mb-10">

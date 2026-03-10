@@ -22,6 +22,10 @@
   --inv-zoom: calc(1 / var(--browser-zoom));
 }
 
+html {
+  scroll-behavior: smooth;
+}
+
 .legend-container {
   transform: scale(var(--inv-zoom));
   transform-origin: top left;
@@ -92,7 +96,7 @@
 .landing-scroll-container {
   overflow-y: scroll;
   overflow-x: hidden;
-  scroll-behavior: auto;
+  scroll-behavior: smooth;
   scroll-padding-top: 1rem;
   scroll-padding-bottom: 1.5rem;
   -webkit-overflow-scrolling: touch;
