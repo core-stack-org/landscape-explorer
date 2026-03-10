@@ -673,6 +673,14 @@ const impact = calculateImpactYear(rainfall, ivNormalized);
           const ivNumFull = Number(`20${ivShort.split("-")[0]}`);
       
           if (postNum <= ivNumFull) return;
+          console.log("ivShort:", ivShort);
+console.log("ivNumFull:", ivNumFull);
+console.log("pair.post:", pair.post);
+console.log("postNum:", postNum);
+console.log("UID:", props.UID);
+console.log("raw intervention:", props.intervention_year);
+console.log("raw intervention:", props.waterbody_name);
+console.log("normalized:", ivShort);
       
           const water = getTotalWaterAvailability(props, pair.post);
       
