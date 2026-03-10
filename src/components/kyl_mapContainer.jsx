@@ -1,5 +1,5 @@
 // src/components/kyl_mapContainer.jsx
-import { useState, useRef, useEffect } from "react";
+import { useState } from "react";
 import KYLLocationSearchBar from "./kyl_location";
 import YearSlider from "./yearSlider";
 
@@ -7,8 +7,8 @@ import YearSlider from "./yearSlider";
 import settlementIcon from "../assets/settlement_icon.svg";
 import wellIcon from "../assets/well_proposed.svg";
 import waterbodyIcon from "../assets/waterbodies_proposed.svg";
-import RechargeIcon from "../assets/recharge_icon.svg";
-import IrrigationIcon from "../assets/irrigation_icon.svg";
+import RechargeIcon from "../assets/recharge_icon.svg"
+import IrrigationIcon from "../assets/irrigation_icon.svg"
 
 // Layer Controls component
 const LayerControls = ({
@@ -46,9 +46,8 @@ const LayerControls = ({
       {isMenuOpen && (
         <div className="absolute top-12 left-0 bg-white p-3 rounded-lg shadow-md space-y-3 min-w-[200px]">
           <div
-            className={`flex items-center gap-2 ${
-              !areMWSLayersAvailable ? "opacity-50 cursor-not-allowed" : ""
-            }`}
+            className={`flex items-center gap-2 ${!areMWSLayersAvailable ? "opacity-50 cursor-not-allowed" : ""
+              }`}
           >
             <input
               type="checkbox"
@@ -60,18 +59,16 @@ const LayerControls = ({
             />
             <label
               htmlFor="show-mws"
-              className={`text-sm ${
-                areMWSLayersAvailable ? "text-gray-700" : "text-gray-400"
-              }`}
+              className={`text-sm ${areMWSLayersAvailable ? "text-gray-700" : "text-gray-400"
+                }`}
             >
               Show MWS Layers
             </label>
           </div>
 
           <div
-            className={`flex items-center gap-2 ${
-              !areVillageLayersAvailable ? "opacity-50 cursor-not-allowed" : ""
-            }`}
+            className={`flex items-center gap-2 ${!areVillageLayersAvailable ? "opacity-50 cursor-not-allowed" : ""
+              }`}
           >
             <input
               type="checkbox"
@@ -83,9 +80,8 @@ const LayerControls = ({
             />
             <label
               htmlFor="show-villages"
-              className={`text-sm ${
-                areVillageLayersAvailable ? "text-gray-700" : "text-gray-400"
-              }`}
+              className={`text-sm ${areVillageLayersAvailable ? "text-gray-700" : "text-gray-400"
+                }`}
             >
               Show Village Boundaries
             </label>
@@ -171,38 +167,11 @@ const MapZoomControls = ({ mapRef }) => {
 };
 
 // Updated MapLegend component
-const MapLegend = ({
-  showMWS,
-  showVillages,
-  currentLayer,
-  mappedAssets,
-  mappedDemands,
-}) => {
+const MapLegend = ({ showMWS, showVillages, currentLayer, mappedAssets, mappedDemands }) => {
   // Add state for collapsed status
   const [isCollapsed, setIsCollapsed] = useState(false);
-  const contentRef = useRef(null);
-  // const [containerHeight, setContainerHeight] = useState("12rem");
 
-
-
-  // useEffect(() => {
-  //   if (isCollapsed) {
-  //     setContainerHeight("12rem");
-  //   } else {
-  //     if (contentRef.current) {
-  //       setContainerHeight(`${contentRef.current.scrollHeight}px`);
-  //     }
-  //   }
-  // }, [
-  //   isCollapsed,
-  //   showMWS,
-  //   showVillages,
-  //   currentLayer,
-  //   mappedAssets,
-  //   mappedDemands,
-  // ]);
-
-    // If no layers are shown, don't display legend
+  // If no layers are shown, don't display legend
   if (!showMWS && !showVillages && (!currentLayer || currentLayer.length === 0))
     return null;
 
@@ -385,112 +354,108 @@ const MapLegend = ({
       layer.name === "avg_double_cropped" ||
       layer.name === "built_up_area" ||
       layer.name.includes("LULC") ||
-      layer.name.includes("lulc"),
+      layer.name.includes("lulc")
   );
 
   // Check if Terrain layer is active
   const isTerrainLayerActive = currentLayer?.some(
     (layer) =>
-      layer.name === "terrainCluster_ID" || layer.name.includes("terrain"),
+      layer.name === "terrainCluster_ID" || layer.name.includes("terrain")
   );
 
   const isRainfallLayerActive = currentLayer?.some(
     (layer) =>
-      layer.name === "avg_precipitation" || layer.name.includes("mws_layers"),
+      layer.name === "avg_precipitation" || layer.name.includes("mws_layers")
   );
 
   const isDroughtLayerActive = currentLayer?.some(
     (layer) =>
       layer.name === "drought_category" ||
-      layer.name.includes("cropping_drought"),
+      layer.name.includes("cropping_drought")
   );
 
   const isRunoffLayerActive = currentLayer?.some(
-    (layer) => layer.name === "avg_runoff" || layer.name.includes("mws_layers"),
+    (layer) => layer.name === "avg_runoff" || layer.name.includes("mws_layers")
   );
 
   const isDryspellLayerActive = currentLayer?.some(
     (layer) =>
       layer.name === "avg_number_dry_spell" ||
-      layer.name.includes("cropping_drought"),
+      layer.name.includes("cropping_drought")
   );
 
   const isPopulationLayerActive = currentLayer?.some(
     (layer) =>
       layer.name === "total_population" ||
-      layer.name.includes("panchayat_boundaries"),
+      layer.name.includes("panchayat_boundaries")
   );
 
   const isSTPopulationLayerActive = currentLayer?.some(
     (layer) =>
       layer.name === "percent_st_population" ||
-      layer.name.includes("panchayat_boundaries"),
+      layer.name.includes("panchayat_boundaries")
   );
 
   const isSCPopulationLayerActive = currentLayer?.some(
     (layer) =>
       layer.name === "percent_sc_population" ||
-      layer.name.includes("panchayat_boundaries"),
+      layer.name.includes("panchayat_boundaries")
   );
 
   const isLiteracyLayerActive = currentLayer?.some(
     (layer) =>
       layer.name === "literacy_level" ||
-      layer.name.includes("panchayat_boundaries"),
+      layer.name.includes("panchayat_boundaries")
   );
 
   const isWaterLayerActive = currentLayer?.some(
     (layer) =>
       layer.name === "avg_rabi_surface_water_mws" ||
       layer.name === "avg_zaid_surface_water_mws" ||
-      layer.name.includes("water_bodies"),
+      layer.name.includes("water_bodies")
   );
 
   const isNREGALayerActive = currentLayer?.some(
     (layer) =>
       layer.name === "total_assets" ||
-      layer.name.includes("panchayat_boundaries"),
+      layer.name.includes("panchayat_boundaries")
   );
 
   const isTrendLayerActive = currentLayer?.some(
-    (layer) => layer.name === "trend_g" || layer.name.includes("mws_layers"),
+    (layer) => layer.name === "trend_g" || layer.name.includes("mws_layers")
   );
 
   const isCropDegradationActive = currentLayer?.some(
     (layer) =>
       layer.name === "degradation_land_area" ||
-      layer.name.includes("degradation"),
+      layer.name.includes("degradation")
   );
 
   const isCropDeforestationActive = currentLayer?.some(
     (layer) =>
-      layer.name === "decrease_in_tree_cover" ||
-      layer.name.includes("decrease"),
+      layer.name === "decrease_in_tree_cover" || layer.name.includes("decrease")
   );
 
   const isCropAfforestationActive = currentLayer?.some(
     (layer) =>
-      layer.name === "increase_in_tree_cover" ||
-      layer.name.includes("increase"),
+      layer.name === "increase_in_tree_cover" || layer.name.includes("increase")
   );
 
   const isAquiferActive = currentLayer?.some(
-    (layer) => layer.name === "aquifer_class" || layer.name.includes("aquifer"),
+    (layer) => layer.name === "aquifer_class" || layer.name.includes("aquifer")
   );
 
   const isSOGEActive = currentLayer?.some(
-    (layer) => layer.name === "soge_class" || layer.name.includes("soge"),
+    (layer) => layer.name === "soge_class" || layer.name.includes("soge")
   );
 
   const isGreenCreditActive = currentLayer?.some(
-    (layer) =>
-      layer.name === "green_credit" || layer.name.includes("green_credit"),
+    (layer) => layer.name === "green_credit" || layer.name.includes("green_credit")
   );
   return (
     <div
-      className={`absolute bottom-24 left-0 z-10 transition-all duration-300 ${
-        isCollapsed ? "translate-x-2" : "translate-x-6"
-      }`}
+      className={`absolute bottom-24 left-0 z-10 transition-all duration-300 ${isCollapsed ? "translate-x-2" : "translate-x-6"
+        }`}
     >
       {/* Collapse toggle button */}
       <button
@@ -521,9 +486,10 @@ const MapLegend = ({
 
       {/* Main legend container */}
       <div
-        className={`bg-white rounded-lg shadow-md overflow-hidden transition-all duration-300 ${
-          isCollapsed ? "w-10 opacity-80 hover:opacity-100" : "w-72 opacity-100"
-        } max-h-[60vh]`}
+        className={`bg-white rounded-lg shadow-md overflow-hidden transition-all duration-300 ${isCollapsed
+          ? "w-10 h-48 opacity-80 hover:opacity-100"
+          : "w-72 max-h-[60vh] opacity-100"
+          }`}
       >
         {/* Collapsed state - vertical "Legend" text */}
         {isCollapsed && (
@@ -536,7 +502,7 @@ const MapLegend = ({
 
         {/* Expanded state - full legend content */}
         {!isCollapsed && (
-          <div ref={contentRef} className="p-4 overflow-y-auto max-h-[60vh]">
+          <div className="p-4 overflow-y-auto max-h-[60vh]">
             <h3 className="text-sm font-medium text-gray-700 mb-3">Legend</h3>
             <div className="space-y-4">
               {/* MWS Legend Section */}
@@ -1054,9 +1020,7 @@ const MapLegend = ({
               {/* Green Credit Section */}
               {isGreenCreditActive && (
                 <div className="space-y-2">
-                  <h4 className="text-xs font-medium text-gray-600">
-                    Green Credit
-                  </h4>
+                  <h4 className="text-xs font-medium text-gray-600">Green Credit</h4>
                   {GreenCreditItems.map((item, index) => (
                     <div
                       key={`trend-${index}`}
@@ -1080,9 +1044,7 @@ const MapLegend = ({
               {/* Mapped Assets */}
               {mappedAssets && (
                 <div className="space-y-2">
-                  <h4 className="text-xs font-medium text-gray-600">
-                    Mapped Assets
-                  </h4>
+                  <h4 className="text-xs font-medium text-gray-600">Mapped Assets</h4>
                   <div className="flex items-center gap-2">
                     <img
                       src={settlementIcon}
@@ -1108,9 +1070,7 @@ const MapLegend = ({
                       className="w-6 h-6"
                       draggable={false}
                     />
-                    <span className="text-sm text-gray-600">
-                      Water Structure
-                    </span>
+                    <span className="text-sm text-gray-600">Water Structure</span>
                   </div>
                 </div>
               )}
@@ -1118,9 +1078,7 @@ const MapLegend = ({
               {/* Proposed Works */}
               {mappedDemands && (
                 <div className="space-y-2">
-                  <h4 className="text-xs font-medium text-gray-600">
-                    Proposed Works
-                  </h4>
+                  <h4 className="text-xs font-medium text-gray-600">Proposed Works</h4>
                   <div className="flex items-center gap-2">
                     <img
                       src={RechargeIcon}
@@ -1128,9 +1086,7 @@ const MapLegend = ({
                       className="w-6 h-6"
                       draggable={false}
                     />
-                    <span className="text-sm text-gray-600">
-                      Recharge Structure
-                    </span>
+                    <span className="text-sm text-gray-600">Recharge Structure</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <img
@@ -1139,9 +1095,7 @@ const MapLegend = ({
                       className="w-6 h-6"
                       draggable={false}
                     />
-                    <span className="text-sm text-gray-600">
-                      Irrigation Structure
-                    </span>
+                    <span className="text-sm text-gray-600">Irrigation Structure</span>
                   </div>
                 </div>
               )}
@@ -1167,7 +1121,7 @@ const KYLMapContainer = ({
   boundaryLayerRef,
   mapRef,
   currentLayer, // Add this prop
-  setSearchLatLong,
+  setSearchLatLong
 }) => {
   const areMWSLayersAvailable = mwsLayerRef?.current !== null;
   const areVillageLayersAvailable = boundaryLayerRef?.current !== null;
