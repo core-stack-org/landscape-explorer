@@ -98,7 +98,7 @@ const CroppingIntensityStackChart = ({
 
   // ---------------- INTERVENTION YEAR FIX ----------------
   const normalizeYear = (iv) => {
-    if (!iv || typeof iv !== "string") return "22-23";
+    if (!iv || typeof iv !== "string") return null;
   
     let clean = iv.replace(/_/g, "-").trim();
     const parts = clean.split("-");
@@ -121,7 +121,7 @@ const CroppingIntensityStackChart = ({
       return `${parts[0].slice(2)}-${parts[1].slice(2)}`;
     }
   
-    return clean;
+    return null;
   };
   
 
