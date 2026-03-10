@@ -613,7 +613,7 @@ useEffect(() => {
     </label>
   </div>
 )}
-{showImpact && !hasPostYear && (
+{showImpact && !computedImpactYear && (
   <div className="mx-auto mt-2 text-center text-[clamp(0.55rem,0.6rem,0.8rem)] text-orange-700 bg-orange-50 border border-orange-200 rounded-md px-3 py-2 w-fit">
     No data available for post intervention year.  
     Please wait for next year’s data.
@@ -621,7 +621,7 @@ useEffect(() => {
 )}
   </div>
 
-  {showImpact && hasPostYear &&(
+  {showImpact && computedImpactYear &&(
     <div className="flex flex-col items-start justify-start mt-[0.4rem] whitespace-nowrap">
       <div className="flex items-center mb-[0.2rem]">
         <span

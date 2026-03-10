@@ -405,9 +405,10 @@ const WaterProjectDashboard = () => {
     if (!geoData?.features || !mwsGeoData?.features) return map;
   
     geoData.features.forEach((wb) => {
-      const uid = wb.properties?.UID;
+      const featureId = wb.id;
       const raw = wb.properties?.MWS_UID;
-      if (!uid || !raw) return;
+  
+      if (!featureId || !raw) return;
   
       const wbMwsList = extractMwsUidList(raw);
   
@@ -420,11 +421,11 @@ const WaterProjectDashboard = () => {
       const rainfall = getRainfallByYear(mws);
       const ivRaw = wb.properties?.intervention_year;
       const ivNormalized = normalizeYear(ivRaw);
-
-const impact = calculateImpactYear(rainfall, ivNormalized);
+  
+      const impact = calculateImpactYear(rainfall, ivNormalized);
   
       if (impact) {
-        map[uid] = impact;
+        map[featureId] = impact;
       }
     });
   
@@ -658,7 +659,7 @@ const impact = calculateImpactYear(rainfall, ivNormalized);
       const waterbody_id = feature.id ?? null; 
 
       // const { preYears, postYears } = getPrePostYears(props, props.intervention_year);
-      const impactPairs = impactYearMap[props.UID];
+      const impactPairs = impactYearMap[feature.id];
 
       let selectedPair = null;
       let maxWater = -Infinity;
@@ -780,11 +781,11 @@ console.log("normalized:", ivShort);
   const selectedPair = useMemo(() => {
     if (!activeSelectedWaterbody || !rows?.length) return null;
   
-    const uid =
-      activeSelectedWaterbody.properties?.UID ??
-      activeSelectedWaterbody.UID;
+    const featureId =
+      activeSelectedWaterbody?.waterbody_id ??
+      activeSelectedWaterbody?.id;
   
-    const row = rows.find((r) => r.UID === uid);
+    const row = rows.find((r) => r.waterbody_id === featureId);
   
     return row?.selectedPair ?? null;
   }, [rows, activeSelectedWaterbody]);
