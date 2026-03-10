@@ -163,7 +163,7 @@ const PrecipitationStackChart = ({ feature ,waterbody,typeparam,water_rej_data})
     if (isTehsil) return "22-23"; // fallback for now
   
     const f = water_rej_data?.features?.find(
-      (x) => x.properties?.UID === waterbody?.UID
+      (x) => x.id?.toString() === waterbody?.waterbody_id?.toString()
     );
     let iv = f?.properties?.intervention_year;
     const normalized = normalizeYear(iv);
@@ -186,9 +186,9 @@ const PrecipitationStackChart = ({ feature ,waterbody,typeparam,water_rej_data})
         annotations: isTehsil
           ? {}
           : (() => {
-              const f = water_rej_data?.features?.find(
-                (x) => x.properties?.UID === waterbody?.UID
-              );
+            const f = water_rej_data?.features?.find(
+              (x) => x.id?.toString() === waterbody?.waterbody_id?.toString()
+            );
               const iv = f?.properties?.intervention_year;
               const interventionYear = normalizeYear(iv);    
               return {

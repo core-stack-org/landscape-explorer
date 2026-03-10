@@ -12,6 +12,7 @@ const YearSlider = ({ currentLayer, sliderId = null,interventionYear }) => {
     { label: "2022-2023", value: "22_23" },
     { label: "2023-2024", value: "23_24" },
     { label: "2024-2025", value: "24_25" },
+    { label: "2025-2026", value: "25_26" },
   ];
 
   useEffect(() => {

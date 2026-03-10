@@ -35,6 +35,7 @@ const WaterAvailabilityChart = ({
 }) => {
   const [showImpact, setShowImpact] = useState(false);
   const prevImpactRef = useRef(null);
+  console.log(waterbody)
 
   const extractSeasonYears = (props = {}) => {
     const years = new Set();
@@ -48,6 +49,11 @@ const WaterAvailabilityChart = ({
   
     return Array.from(years).sort();
   };
+
+  const yearToNumber = (year) => {
+  if (!year) return 0;
+  return Number(year.split("-")[0]); // "24-25" → 24
+};
 
 
   const computedImpactYear = impactPair ?? null;
@@ -432,11 +438,12 @@ useEffect(() => {
         annotations: isTehsil
           ? {}
           : (() => {
-              const f = water_rej_data?.features?.find(
-                (x) => x.properties?.UID === waterbody?.UID
-              );
+            const f = water_rej_data?.features?.find(
+              (x) => x.id?.toString() === waterbody?.waterbody_id?.toString()
+            );
               const iv = f?.properties?.intervention_year;
-              const interventionYear = normalizeYear(iv);    
+              const interventionYear = normalizeYear(iv);  
+  
               return {
                 interventionLine: {
                   type: "line",

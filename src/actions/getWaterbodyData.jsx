@@ -8,7 +8,6 @@ export const getWaterbodyData = async ({
     map,
     waterbodyUID = null, 
   }) => {
-    console.log(district,block,waterbodyUID,map)
     if (
       !district?.label ||
       !block?.label ||
@@ -143,13 +142,6 @@ const zoiLayer =
   (await getVectorLayers("swb", zoiLayerName, false, true)) ||
   (await getVectorLayers("zoi_layers", zoiLayerName, false, true)) ||
   null;
-
-  console.log("Zoi layer check:", {
-    dist,
-    blk,
-    try1: `swb:waterbodies_zoi_${dist}_${blk}`,
-    try2: `zoi_layers:waterbodies_zoi_${dist}_${blk}`
-  });
   
 
 let rawZoiFeatures = [];
@@ -177,11 +169,6 @@ if (zoiLayer) {
     });
   }
 }
-console.log("ZOI Layer fetched:", rawZoiFeatures.length);
-console.log("ZOI matched:", matchedZOI.length);
-    
-    
-  
     return {
       wbLayer,
       wbFeatures,
