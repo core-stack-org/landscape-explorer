@@ -192,9 +192,9 @@ const CroppingIntensityStackChart = ({
       annotation: isTehsil
       ? {}
       : (() => {
-          const f = water_rej_data?.features?.find(
-            (x) => x.properties?.UID === waterbody?.UID
-          );
+        const f = water_rej_data?.features?.find(
+          (x) => x.id?.toString() === waterbody?.waterbody_id?.toString()
+        );
           const iv = f?.properties?.intervention_year;
           const interventionYear = normalizeYear(iv);
         
