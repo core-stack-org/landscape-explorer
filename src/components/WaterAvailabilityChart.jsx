@@ -66,7 +66,7 @@ const WaterAvailabilityChart = ({
   
   // 🔧 Normalize Year Helper — ALWAYS returns "YY-YY"
 const normalizeYear = (iv) => {
-  if (!iv || typeof iv !== "string" || !iv.includes("-")) return "22-23";
+  if (!iv || typeof iv !== "string" || !iv.includes("-")) return null;
 
   let clean = iv.replace(/_/g, "-").trim();
   const parts = clean.split("-");
@@ -89,7 +89,7 @@ const normalizeYear = (iv) => {
     return `${parts[0].slice(2)}-${parts[1].slice(2)}`;
   }
 
-  return "22-23";
+  return null;
 };
 
 const getYearIndex = (year, years) => years.indexOf(year);
