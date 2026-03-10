@@ -1394,7 +1394,7 @@ const KYLDashboardPage = () => {
       smoothResolutionConstraint: true,
     });
 
-    const map = new OLMap({
+    const map = new Map({
       target: mapElement.current,
       layers: [baseLayer],
       controls: defaultControls().extend([new GoogleLogoControl()]),
