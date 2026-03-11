@@ -1131,10 +1131,7 @@ const KYLDashboardPage = () => {
         if (filter.layer_store[i] === "terrain") {
           tempLayer = await getImageLayer(
             filter.layer_store[i],
-            `${district.label.toLowerCase().split(" ").join("_")}_${block.label
-              .toLowerCase()
-              .split(" ")
-              .join("_")}_${filter.layer_name[i]}`,
+            `${transformName(district.label)}_${transformName(block.label)}_${filter.layer_name[i]}`,
             true,
             filter.rasterStyle
           );
@@ -1146,8 +1143,7 @@ const KYLDashboardPage = () => {
         ) {
           tempLayer = await getImageLayer(
             `${filter.layer_store[i]}_${filter.layer_name[i]}`,
-            `LULC_24_25_${transformName(district.label)}_${transformName(block.label)}_${filter.layer_name[i]
-            }`,
+            `LULC_24_25_${transformName(district.label)}_${transformName(block.label)}_${filter.layer_name[i]}`,
             true,
             filter.rasterStyle
           );
@@ -1159,7 +1155,7 @@ const KYLDashboardPage = () => {
             `change_${district.label
               .toLowerCase()
               .split(" ")
-              .join("_")}_${block.label.toLowerCase().split(" ").join("_")}_${filter.layer_name[i]
+              .join("_")}_${transformName(block.label)}_${filter.layer_name[i]
             }`,
             true,
             filter.rasterStyle[i]
@@ -1167,10 +1163,7 @@ const KYLDashboardPage = () => {
           layerRef.push(tempLayer);
           mapRef.current.addLayer(tempLayer);
         } else if (filter.layer_store[i] === "nrega_assets") {
-          const nregaLayerName = `${district.label
-            .toLowerCase()
-            .split(" ")
-            .join("_")}_${block.label.toLowerCase().split(" ").join("_")}`;
+          const nregaLayerName = `${transformName(district.label)}_${transformName(block.label)}`;
           tempLayer = await getWebGlLayers(
             filter.layer_store[i],
             nregaLayerName,
@@ -1178,8 +1171,8 @@ const KYLDashboardPage = () => {
             true,
             null,
             null,
-            district.label.toLowerCase().split(" ").join("_"),
-            block.label.toLowerCase().split(" ").join("_")
+            transformName(district.label),
+            transformName(block.label)
           );
           layerRef.push(tempLayer);
           mapRef.current.addLayer(tempLayer);
@@ -1188,7 +1181,7 @@ const KYLDashboardPage = () => {
           const industryLayerName = `${district.label
             .toLowerCase()
             .split(" ")
-            .join("_")}_${block.label.toLowerCase().split(" ").join("_")}`;
+            .join("_")}_${transformName(block.label)}`;
 
           const tempLayer = await getWebGlLayers(
             filter.layer_store[i],
@@ -1197,8 +1190,8 @@ const KYLDashboardPage = () => {
             true,
             null,
             null,
-            district.label.toLowerCase().split(" ").join("_"),
-            block.label.toLowerCase().split(" ").join("_")
+            transformName(district.label),
+            transformName(block.label)
           );
 
           layerRef.push(tempLayer);
@@ -1217,26 +1210,17 @@ const KYLDashboardPage = () => {
         } else if (filter.layer_store[i] === "drought" || filter.layer_store[i] === "green_credit") {
           tempLayer = await getVectorLayers(
             filter.layer_store[i],
-            `${district.label.toLowerCase().split(" ").join("_")}_${block.label
-              .toLowerCase()
-              .split(" ")
-              .join("_")}_${filter.layer_name[i]}`
+            `${transformName(district.label)}_${transformName(block.label)}`
           );
         } else if (filter.layer_store[i] === "panchayat_boundaries") {
           tempLayer = await getVectorLayers(
             filter.layer_store[i],
-            `${district.label.toLowerCase().split(" ").join("_")}_${block.label
-              .toLowerCase()
-              .split(" ")
-              .join("_")}`
+            `${transformName(district.label)}_${transformName(block.label)}`
           );
         } else {
           tempLayer = await getVectorLayers(
             filter.layer_store[i],
-            `${filter.layer_name[i]}_${district.label
-              .toLowerCase()
-              .split(" ")
-              .join("_")}_${block.label.toLowerCase().split(" ").join("_")}`
+            `${filter.layer_name[i]}_${transformName(district.label)}_${transformName(block.label)}`
           );
         }
         if (
@@ -1827,9 +1811,7 @@ const KYLDashboardPage = () => {
     }
   }, [filterSelections.selectedMWSValues, dataJson]);
 
-  // ============================================
-// 2. PROCESS MWS PATTERNS - OR within pattern, AND between patterns
-// ============================================
+
   useEffect(() => {
     try {
       if (!dataJson || !Array.isArray(dataJson)) return;
