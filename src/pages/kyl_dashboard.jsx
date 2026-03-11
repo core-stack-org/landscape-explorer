@@ -354,6 +354,10 @@ console.log("Current filterSelections:", filterSelections);
         };
       });
     } else if (sourceType.name === "Waterbody") {
+      if (!showWB) {
+        toast.error("Please enable 'Show Waterbodies' to apply waterbody filters.");
+        return;
+      }
       setFilterSelections((prev) => {
         const currentArray = prev.selectedWaterbodyValues?.[name] || [];
     
@@ -2274,6 +2278,22 @@ console.log("Current filterSelections:", filterSelections);
     return result;
   }, [selectedMWS, dataJson, villageJson]);
 
+  function calculateTrend(values) {
+    let S = 0;
+  
+    for (let i = 0; i < values.length - 1; i++) {
+      for (let j = i + 1; j < values.length; j++) {
+        if (values[j] > values[i]) S++;
+        else if (values[j] < values[i]) S--;
+      }
+    }
+  
+    if (S > 0) return 1;   // increasing
+    if (S < 0) return -1;  // decreasing
+    return 0;              // steady
+  }
+
+
   useEffect(() => {
     if (!waterbodiesLayerRef.current || !mwsLayerRef.current) return;
 
@@ -2365,18 +2385,24 @@ console.log("First Waterbody Props:", wbFeatures[0]?.getProperties());
         }
   
         if (filterName === "drainage_line") {
-          const value = props.drainage_line;
-  
+          const value = Number(props.on_drainage_line ?? 0);
+        
           const pass = selectedOptions.some(opt => value === opt.value);
-  
+        
           if (!pass) matches = false;
         }
   
         if (filterName === "surface_water_trend") {
-          const trend = props.surface_water_trend;
-  
+
+          const areas = Object.keys(props)
+            .filter(key => key.startsWith("area_") && key !== "area_ored")
+            .sort()
+            .map(key => Number(props[key] ?? 0));
+        
+          const trend = calculateTrend(areas);
+        
           const pass = selectedOptions.some(opt => trend === opt.value);
-  
+        
           if (!pass) matches = false;
         }
       });

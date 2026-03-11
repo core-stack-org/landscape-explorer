@@ -144,6 +144,15 @@ const KYLRightSidebar = ({
         },
       }));
     }
+    else if (sourceType === "Waterbody") {
+      setFilterSelections((prev) => ({
+        ...prev,
+        selectedWaterbodyValues: {
+          ...prev.selectedWaterbodyValues,
+          [filter.name]: null,
+        },
+      }));
+    }
   };
 
   const toggleWaterbodies = () => {
@@ -906,8 +915,11 @@ const KYLRightSidebar = ({
                       </div>
                       <button
                         onClick={() => handleIndicatorRemoval(filter)}
-                        className={`text-gray-400 hover:text-gray-600 ml-2 ${toggleStates[filter.name] ? "invisible" : "visible"
-                          }`}
+                        className={`text-gray-400 hover:text-gray-600 ml-2 ${
+                          toggleStates[filter.name] && filter.layer_store?.[0] !== "waterbody"
+                            ? "invisible"
+                            : "visible"
+                        }`}
                       >
                         <svg
                           className="w-3 h-3"
