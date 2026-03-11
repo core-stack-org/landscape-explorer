@@ -773,15 +773,32 @@
                         }
                     }
                 ],
-                "layer_store": [],
-                "layer_name": [],
+                "layer_store": ["restoration"],
+                "layer_name": ["restoration"],
                 "vectorStyle": [
-                    {}
+                    {
+                        "fill": "rgba(176, 224, 230, 0.5)",
+                        "stroke": "rgba(176, 224, 230, 1)",
+                        "lower": 0,
+                        "upper": 200
+                    },
+                    {
+                        "fill": "rgba(135, 206, 250, 0.5)",
+                        "stroke": "rgba(135, 206, 250, 1)",
+                        "lower": 200,
+                        "upper": 600
+                    },
+                    {
+                        "fill": "rgba(30, 144, 255, 0.5)",
+                        "stroke": "rgba(30, 144, 255, 1)",
+                        "lower": 600,
+                        "upper": 9999999
+                    }
                 ],
                 "rasterStyle": [
                     ""
                 ],
-                "styleIdx": 0
+                "styleIdx": 14
             },
             {
                 "name": "area_protection",
@@ -806,19 +823,36 @@
                         "label": "More than 800 hectares",
                         "value": {
                             "lower": 800,
-                            "upper": 999999
+                            "upper": 9999999
                         }
                     }
                 ],
-                "layer_store": [],
-                "layer_name": [],
+                "layer_store": ["restoration"],
+                "layer_name": ["restoration"],
                 "vectorStyle": [
-                    {}
+                    {
+                        "fill": "rgba(176, 224, 230, 0.5)",
+                        "stroke": "rgba(176, 224, 230, 1)",
+                        "lower": 0,
+                        "upper": 400
+                    },
+                    {
+                        "fill": "rgba(135, 206, 250, 0.5)",
+                        "stroke": "rgba(135, 206, 250, 1)",
+                        "lower": 400,
+                        "upper": 800
+                    },
+                    {
+                        "fill": "rgba(30, 144, 255, 0.5)",
+                        "stroke": "rgba(30, 144, 255, 1)",
+                        "lower": 800,
+                        "upper": 9999999
+                    }
                 ],
                 "rasterStyle": [
                     ""
                 ],
-                "styleIdx": 0
+                "styleIdx": 13
             },
             {
                 "name": "green_credit",
