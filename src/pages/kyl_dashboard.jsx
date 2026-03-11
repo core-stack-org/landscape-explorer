@@ -81,7 +81,29 @@ const KYLDashboardPage = () => {
   const [block, setBlock] = useRecoilState(blockAtom);
   const [filterSelections, setFilterSelections] = useRecoilState(filterSelectionsAtom);
   const [patternSelections, setPatternSelections] = useState({ selectedMWSPatterns: {}, selectedVillagePatterns: {} });
+ const handleClearAll = () => {
 
+  // Clear filters
+  setFilterSelections({
+    selectedMWSValues: {},
+    selectedVillageValues: {}
+  });
+
+  // Clear patterns
+  setPatternSelections({
+    selectedMWSPatterns: {},
+    selectedVillagePatterns: {}
+  });
+
+  // Clear map selections
+  setSelectedMWS([]);
+
+  // Clear village lists
+  setVillageIdList(new Set());
+  setPatternVillageList(new Set());
+  setFinalVillageList(new Set());
+
+};
   const lulcYear = useRecoilValue(yearAtom);
 
   const [indicatorType, setIndicatorType] = useState(null);
@@ -667,27 +689,37 @@ const KYLDashboardPage = () => {
       return;
     }
   
-    // UID → coordinate map
+    // -------------------------
+    // Create UID → coordinate map
+    // -------------------------
     const uidToCoord = {};
+  
     centroidFeatures.forEach((feature) => {
-      const uid = feature.get("uid");
+      const uid = feature.get("uid") || feature.get("UID");
+      if (!uid) return;
+  
       const coord = feature.getGeometry().getCoordinates();
-      uidToCoord[uid] = coord;
+      uidToCoord[uid.toString().trim()] = coord;
     });
   
     const arrowFeatures = [];
   
+    // -------------------------
+    // Create arrows
+    // -------------------------
     connectivityFeatures.forEach((feature) => {
       const uid = feature.get("uid");
       const downstream = feature.get("downstream");
+  
       if (!uid || !downstream) return;
   
-      const start = uidToCoord[uid];
-      const end = uidToCoord[downstream];
+      const start = uidToCoord[uid.toString().trim()];
+      const end = uidToCoord[downstream.toString().trim()];
   
-        if (!start || !end) return;
+      if (!start || !end) return;
   
       const line = new LineString([start, end]);
+  
       const arrowFeature = new Feature({
         geometry: line,
         upstream: uid,
@@ -704,40 +736,55 @@ const KYLDashboardPage = () => {
     const arrowLayer = new VectorLayer({
       source: arrowSource,
       style: (feature) => {
+        const styles = [];
+      
         const geometry = feature.getGeometry();
         const coords = geometry.getCoordinates();
       
-        const start = coords[0];
-        const end = coords[1];
+        // Need at least 2 points
+        if (!coords || coords.length < 2) return styles;
+      
+        const start = coords[coords.length - 2];
+        const end = coords[coords.length - 1];
       
         const dx = end[0] - start[0];
         const dy = end[1] - start[1];
-        
-        // Fix: subtract Math.PI/2 to align with OL's rotation (from top, clockwise)
-        const rotation = -Math.atan2(dy, dx) + Math.PI / 2;
-        const isDownstream = end[1] < start[1];
-
-        const arrowColor = isDownstream ? "#39FF14" : "#FF1493";      //green down pink up
-        return [
+        const len = Math.sqrt(dx * dx + dy * dy);
+      
+        // Skip zero-length or near-zero edges
+        if (len < 1e-6) return styles;
+      
+        const angle = Math.atan2(dy, dx);
+        const color = "#FF1493";
+      
+        // Main line
+        styles.push(
           new Style({
-            stroke: new Stroke({
-              color: arrowColor,
-              width: 2.2,
-              lineCap: "round",
-            }),
-          }),
-          new Style({
-            geometry: new Point(end),
-            image: new RegularShape({
-              points: 3,
-              radius: 7,
-              fill: new Fill({ color: arrowColor }),
-              rotation: rotation,
-              rotateWithView: true,
-              angle: 0,
-            }),
-          }),
+            stroke: new Stroke({ color, width: 1.5 }),
+          })
+        );
+      
+        // Arrowhead size proportional to edge length, capped
+        const arrowLen = Math.min(len * 0.08, 0.006);
+        const arrowAngle = Math.PI / 6;
+      
+        const left = [
+          end[0] - arrowLen * Math.cos(angle - arrowAngle),
+          end[1] - arrowLen * Math.sin(angle - arrowAngle),
         ];
+        const right = [
+          end[0] - arrowLen * Math.cos(angle + arrowAngle),
+          end[1] - arrowLen * Math.sin(angle + arrowAngle),
+        ];
+      
+        styles.push(
+          new Style({
+            geometry: new LineString([left, end, right]),
+            stroke: new Stroke({ color, width: 1.5 }),
+          })
+        );
+      
+        return styles;
       },
     });
   
@@ -1555,7 +1602,7 @@ const KYLDashboardPage = () => {
    }
  }
 
-    // 4️⃣ SAVE ARRAY OF FULL GEOJSON FEATURES
+    // SAVE ARRAY OF FULL GEOJSON FEATURES
     if (matchedMws.length > 0) {
       const geojsonWriter = new GeoJSON();
 
@@ -1761,6 +1808,8 @@ const KYLDashboardPage = () => {
       const mwsFilterKeys = Object.keys(filterSelections.selectedMWSValues || {});
       
       if (mwsFilterKeys.length === 0) {
+      // Clear village highlights when no MWS filters are active
+        setVillageIdList(new Set());
         return;
       }
 
@@ -1803,233 +1852,264 @@ const KYLDashboardPage = () => {
         }
       });
 
-      setSelectedMWS(resultMWS);
-      fetchMWSLayer(resultMWS);
-      
+          setSelectedMWS(resultMWS);
+    fetchMWSLayer(resultMWS);
+
+    // Derive villages from matched MWS so Admin Boundary also gets highlighted
+    let villages = new Set();
+    dataJson.forEach((item) => {
+      if (resultMWS.includes(item.mws_id)) {
+        if (Array.isArray(item.mws_intersect_villages)) {
+          item.mws_intersect_villages.forEach((v) => villages.add(v));
+        }
+      }
+    });
+    setVillageIdList(villages);
+
     } catch (error) {
       console.error("Error in MWS filter processing:", error);
     }
-  }, [filterSelections.selectedMWSValues, dataJson]);
+    }, [filterSelections.selectedMWSValues, dataJson]);
 
 
   useEffect(() => {
-    try {
-      if (!dataJson || !Array.isArray(dataJson)) return;
-      
-      const mwsPatternKeys = Object.keys(patternSelections.selectedMWSPatterns || {});
-      const mwsFilterKeys = Object.keys(filterSelections.selectedMWSValues || {});
-      const hasMwsFilters = mwsFilterKeys.some(key => filterSelections.selectedMWSValues[key] !== null);
-      const hasMwsPatterns = mwsPatternKeys.some(key => patternSelections.selectedMWSPatterns[key] !== null);
-      
-      // If no patterns exist
-      if (!hasMwsPatterns) {
-        // If filters exist, RECOMPUTE filter results
-        if (hasMwsFilters) {
-          let resultMWS = [];
-          
-          mwsFilterKeys.forEach((filterName) => {
-            const filterValues = filterSelections.selectedMWSValues[filterName];
-            if (!filterValues) return;
-            
-            let tempArr = [];
-            const filter = getAllFilters().find((f) => f.name === filterName);
-            
-            filterValues.forEach((selectedOption) => {
-              if (filter?.type === 2) {
-                dataJson.forEach((item) => {
-                  if (item && typeof item[filterName] !== "undefined" && item.mws_id) {
-                    const value = Number(item[filterName]);
-                    if (!isNaN(value) && value >= selectedOption.value.lower && value <= selectedOption.value.upper) {
-                      if (!tempArr.includes(item.mws_id)) {
-                        tempArr.push(item.mws_id);
-                      }
-                    }
-                  }
-                });
-              } else {
-                dataJson.forEach((item) => {
-                  if (item && item[filterName] === selectedOption.value && item.mws_id) {
-                    if (!tempArr.includes(item.mws_id)) {
-                      tempArr.push(item.mws_id);
-                    }
-                  }
-                });
-              }
-            });
-            
-            if (resultMWS.length > 0) {
-              resultMWS = resultMWS.filter(id => tempArr.includes(id));
-            } else {
-              resultMWS = tempArr;
-            }
-          });
+  try {
+    if (!dataJson || !Array.isArray(dataJson)) return;
 
-          setSelectedMWS(resultMWS);
-          fetchMWSLayer(resultMWS);
-          return;
-        } else {
-          // No patterns AND no filters - clear everything
-          setSelectedMWS([]);
-          fetchMWSLayer([]);
-          return;
-        }
-      }
+    const mwsPatternKeys = Object.keys(patternSelections.selectedMWSPatterns || {});
+    const mwsFilterKeys = Object.keys(filterSelections.selectedMWSValues || {});
 
-      // Patterns exist - process them
-      let resultMWS = new Set();
-      
-      // Process each pattern (AND between different patterns)
+    const hasMwsPatterns = mwsPatternKeys.some(
+      key => patternSelections.selectedMWSPatterns[key] !== null
+    );
+
+    const hasMwsFilters = mwsFilterKeys.some(
+      key => filterSelections.selectedMWSValues[key] !== null
+    );
+
+    let resultMWS = new Set();
+
+    /* STEP 1: PROCESS PATTERNS */
+
+    if (hasMwsPatterns) {
       mwsPatternKeys.forEach((patternName) => {
         const pattern = patternSelections.selectedMWSPatterns[patternName];
         if (!pattern) return;
-        let patternMatches = new Set(); // Items matching ANY condition in THIS pattern (OR)
-        
-        // Process conditions within pattern (OR operation)
+
+        let patternMatches = new Set();
+
         pattern.conditions.forEach((condition) => {
           dataJson.forEach((item) => {
+            if (!item || !item.mws_id) return;
+
             let matches = false;
-            
+
             if (condition.type === 1 && item[condition.key] === condition.value) {
               matches = true;
-            } else if (condition.type === 2 && item[condition.key] >= condition.value.lower && item[condition.key] <= condition.value.upper) {
+            } 
+            else if (
+              condition.type === 2 &&
+              item[condition.key] >= condition.value.lower &&
+              item[condition.key] <= condition.value.upper
+            ) {
               matches = true;
-            } else if (condition.type === 3 && item[condition.key] != condition.value) {
+            } 
+            else if (condition.type === 3 && item[condition.key] != condition.value) {
               matches = true;
             }
+
             if (matches) {
               patternMatches.add(item.mws_id);
             }
           });
         });
-        // AND operation between different patterns
+
         if (resultMWS.size > 0) {
-          // Intersection: keep only items present in both sets
           resultMWS = new Set([...resultMWS].filter(x => patternMatches.has(x)));
         } else {
-          // First pattern, initialize with its matches
           resultMWS = patternMatches;
         }
       });
-      
-      // Intersect with MWS from filters if they exist
-      if (hasMwsFilters) {
-        // Recompute filter results
-        let filterResults = [];
-        
-        mwsFilterKeys.forEach((filterName) => {
-          const filterValues = filterSelections.selectedMWSValues[filterName];
-          if (!filterValues) return;
-          
-          let tempArr = [];
-          const filter = getAllFilters().find((f) => f.name === filterName);
-          
-          filterValues.forEach((selectedOption) => {
-            if (filter?.type === 2) {
-              dataJson.forEach((item) => {
-                if (item && typeof item[filterName] !== "undefined" && item.mws_id) {
-                  const value = Number(item[filterName]);
-                  if (!isNaN(value) && value >= selectedOption.value.lower && value <= selectedOption.value.upper) {
-                    if (!tempArr.includes(item.mws_id)) {
-                      tempArr.push(item.mws_id);
-                    }
-                  }
-                }
-              });
-            } else {
-              dataJson.forEach((item) => {
-                if (item && item[filterName] === selectedOption.value && item.mws_id) {
-                  if (!tempArr.includes(item.mws_id)) {
-                    tempArr.push(item.mws_id);
-                  }
-                }
-              });
-            }
-          });
-          
-          if (filterResults.length > 0) {
-            filterResults = filterResults.filter(id => tempArr.includes(id));
-          } else {
-            filterResults = tempArr;
-          }
-        });
-        
-        // Intersect patterns with filters
-        const finalMWS = [...resultMWS].filter(id => filterResults.includes(id));
-        setSelectedMWS(finalMWS);
-        fetchMWSLayer(finalMWS);
-      } else {
-        // No filters, just use pattern results
-        const finalMWS = [...resultMWS];
-        setSelectedMWS(finalMWS);
-        fetchMWSLayer(finalMWS);
-      }
-      
-    } catch (error) {
-      console.error("Error in MWS pattern processing:", error);
     }
-  }, [patternSelections.selectedMWSPatterns, filterSelections.selectedMWSValues, dataJson]);
 
+    /* ===============================
+       STEP 2: PROCESS FILTERS
+    =============================== */
 
-  useEffect(() => {
-    try {
-      if (!villageJson || !Array.isArray(villageJson)) return;
-      if (!dataJson || !Array.isArray(dataJson)) return;
-      
-      const villageFilterKeys = Object.keys(filterSelections.selectedVillageValues || {});
-      const hasVillageFilters = villageFilterKeys.some(key => filterSelections.selectedVillageValues[key] !== null);
-      
-      if (!hasVillageFilters) {
-        setPatternVillageList(new Set()); // Store empty filter results
-        return;
-      }
+    let filterResults = [];
 
-      // Get candidate villages from selected MWS (if any)
-      let candidateVillages = new Set();
-      if (selectedMWS.length > 0) {
-        dataJson.forEach((mwsItem) => {
-          if (selectedMWS.includes(mwsItem.mws_id) && Array.isArray(mwsItem.mws_intersect_villages)) {
-            mwsItem.mws_intersect_villages.forEach(villageId => {
-              candidateVillages.add(villageId);
-            });
-          }
-        });
-      }
-
-      let resultVillages = new Set();
-      
-      villageFilterKeys.forEach((filterName) => {
-        const filterValues = filterSelections.selectedVillageValues[filterName];
+    if (hasMwsFilters) {
+      mwsFilterKeys.forEach((filterName) => {
+        const filterValues = filterSelections.selectedMWSValues[filterName];
         if (!filterValues) return;
-        
-        let tempArr = new Set();
-        
+
+        let tempArr = [];
+        const filter = getAllFilters().find((f) => f.name === filterName);
+
         filterValues.forEach((selectedOption) => {
-          villageJson.forEach((village) => {
-            if (village && typeof village[filterName] !== "undefined" && village.village_id) {
-              const value = Number(village[filterName]);
-              if (!isNaN(value) && value >= selectedOption.value.lower && value <= selectedOption.value.upper) {
-                if (candidateVillages.size === 0 || candidateVillages.has(village.village_id)) {
-                  tempArr.add(village.village_id);
+          dataJson.forEach((item) => {
+            if (!item || !item.mws_id) return;
+
+            if (filter?.type === 2) {
+              const value = Number(item[filterName]);
+              if (
+                !isNaN(value) &&
+                value >= selectedOption.value.lower &&
+                value <= selectedOption.value.upper
+              ) {
+                if (!tempArr.includes(item.mws_id)) {
+                  tempArr.push(item.mws_id);
+                }
+              }
+            } else {
+              if (item[filterName] === selectedOption.value) {
+                if (!tempArr.includes(item.mws_id)) {
+                  tempArr.push(item.mws_id);
                 }
               }
             }
           });
         });
-        
-        if (resultVillages.size > 0) {
-          resultVillages = new Set([...resultVillages].filter(x => tempArr.has(x)));
+
+        if (filterResults.length > 0) {
+          filterResults = filterResults.filter(id => tempArr.includes(id));
         } else {
-          resultVillages = tempArr;
+          filterResults = tempArr;
         }
       });
-      
-      // Store filter results in patternVillageList (we'll combine with patterns later)
-      setPatternVillageList(resultVillages);
-      
-    } catch (error) {
-      console.error("Error in village filter processing:", error);
     }
-  }, [filterSelections.selectedVillageValues, villageJson, selectedMWS, dataJson]);
+
+    /* ===============================
+       STEP 3: FINAL INTERSECTION
+    =============================== */
+
+    let finalMWS = [];
+
+    if (hasMwsPatterns && hasMwsFilters) {
+      finalMWS = [...resultMWS].filter(id => filterResults.includes(id));
+    } 
+    else if (hasMwsPatterns) {
+      finalMWS = [...resultMWS];
+    } 
+    else if (hasMwsFilters) {
+      finalMWS = filterResults;
+    } 
+    else {
+      finalMWS = [];
+    }
+
+    /* ===============================
+       STEP 4: UPDATE MWS LAYER
+    =============================== */
+    console.log("selectedMWS:", finalMWS);
+    setSelectedMWS(finalMWS);
+    fetchMWSLayer(finalMWS);
+
+    /* ===============================
+       STEP 5: DERIVE VILLAGES (for Admin Boundary highlight)
+    =============================== */
+
+    let villages = new Set();
+
+    dataJson.forEach((item) => {
+      if (finalMWS.includes(item.mws_id)) {
+        if (Array.isArray(item.mws_intersect_villages)) {
+          item.mws_intersect_villages.forEach((v) => villages.add(v));
+        }
+      }
+    });
+
+    setVillageIdList(villages);
+
+  } catch (error) {
+    console.error("Error in MWS processing:", error);
+  }
+}, [
+  patternSelections.selectedMWSPatterns,
+  filterSelections.selectedMWSValues,
+  dataJson
+]);
+
+
+      useEffect(() => {
+      try {
+        if (!villageJson || !Array.isArray(villageJson)) return;
+        if (!dataJson || !Array.isArray(dataJson)) return;
+
+        const villageFilterKeys = Object.keys(filterSelections.selectedVillageValues || {});
+        const hasVillageFilters = villageFilterKeys.some(
+          key => filterSelections.selectedVillageValues[key] !== null
+        );
+
+        if (!hasVillageFilters) {
+          setPatternVillageList(new Set());
+          return;
+        }
+
+        let candidateVillages = new Set();
+
+        if (selectedMWS.length > 0) {
+          dataJson.forEach((mwsItem) => {
+            if (
+              selectedMWS.includes(mwsItem.mws_id) &&
+              Array.isArray(mwsItem.mws_intersect_villages)
+            ) {
+              mwsItem.mws_intersect_villages.forEach(villageId => {
+                candidateVillages.add(villageId);
+              });
+            }
+          });
+        }
+
+        let resultVillages = new Set();
+
+        villageFilterKeys.forEach((filterName) => {
+          const filterValues = filterSelections.selectedVillageValues[filterName];
+          if (!filterValues) return;
+
+          let tempArr = new Set();
+
+          filterValues.forEach((selectedOption) => {
+            villageJson.forEach((village) => {
+              if (!village || !village.village_id) return;
+
+              const value = Number(village[filterName]);
+
+              if (
+                !isNaN(value) &&
+                value >= selectedOption.value.lower &&
+                value <= selectedOption.value.upper
+              ) {
+                if (
+                  candidateVillages.size === 0 ||
+                  candidateVillages.has(village.village_id)
+                ) {
+                  tempArr.add(village.village_id);
+                }
+              }
+            });
+          });
+
+      if (resultVillages.size > 0) {
+        resultVillages = new Set(
+          [...resultVillages].filter(x => tempArr.has(x))
+        );
+      } else {
+        resultVillages = tempArr;
+      }
+    });
+
+    setPatternVillageList(resultVillages);
+
+  } catch (error) {
+    console.error("Error in village filter processing:", error);
+  }
+}, [
+  filterSelections.selectedVillageValues,
+  villageJson,
+  dataJson,
+  selectedMWS
+]);
 
 
   useEffect(() => {
@@ -2043,11 +2123,26 @@ const KYLDashboardPage = () => {
       const hasVillagePatterns = villagePatternKeys.some(key => patternSelections.selectedVillagePatterns[key] !== null);
       const hasVillageFilters = villageFilterKeys.some(key => filterSelections.selectedVillageValues[key] !== null);
       
-      // If neither patterns nor filters exist, clear villages
-      if (!hasVillagePatterns && !hasVillageFilters) {
-        setVillageIdList(new Set());
-        return;
-      }
+  const mwsFilterKeys = Object.keys(filterSelections.selectedMWSValues || {});
+    const hasMwsFilters = mwsFilterKeys.some(
+      key => filterSelections.selectedMWSValues[key] !== null
+    );
+
+  const mwsPatternKeys = Object.keys(patternSelections.selectedMWSPatterns || {});
+  const hasMwsPatterns = mwsPatternKeys.some(
+    key => patternSelections.selectedMWSPatterns[key] !== null
+  );
+
+    if (!hasVillagePatterns && !hasVillageFilters && !hasMwsFilters && !hasMwsPatterns) {
+      setVillageIdList(new Set());
+      return;
+    }
+
+    // If MWS-level filters/patterns are active, don't touch villageIdList here
+    // — it is managed by the MWS filter/pattern useEffects
+    if (!hasVillagePatterns && !hasVillageFilters) {
+      return;
+    }
       
       // If only filters exist (no patterns), use filter results directly
       if (!hasVillagePatterns && hasVillageFilters) {
@@ -2117,8 +2212,7 @@ const KYLDashboardPage = () => {
     } catch (error) {
       console.error("Error in village pattern processing:", error);
     }
-  }, [patternSelections.selectedVillagePatterns, filterSelections.selectedVillageValues,patternVillageList,villagePatternTrigger, selectedMWS, dataJson,villageJson]);
-
+  }, [patternSelections.selectedVillagePatterns, filterSelections.selectedVillageValues, patternVillageList, villagePatternTrigger, selectedMWS, dataJson, villageJson, filterSelections.selectedMWSValues, patternSelections.selectedMWSPatterns]);
 
   useEffect(() => {
     fetchAdminLayer([...villageIdList]);
@@ -2180,7 +2274,7 @@ const KYLDashboardPage = () => {
       </div>
       <div className="flex h-[calc(100vh-48px)] p-4 gap-4">
         {/* Left Sidebar */}
-        <KYLLeftSidebar
+              <KYLLeftSidebar
           indicatorType={indicatorType}
           setIndicatorType={setIndicatorType}
           filterSelections={filterSelections}
@@ -2196,13 +2290,19 @@ const KYLDashboardPage = () => {
           mapRef={mapRef}
           filtersEnabled={filtersEnabled}
           getFormattedSelectedFilters={getFormattedSelectedFilters}
+
           getAllPatternTypes={getAllPatternTypes}
           handlePatternRemoval={handlePatternRemoval}
           getSubcategoriesForCategory={getSubcategoriesForCategory}
           getPatternsForSubcategory={getPatternsForSubcategory}
+
           patternSelections={patternSelections}
+          setPatternSelections={setPatternSelections}   
+
           handlePatternSelection={handlePatternSelection}
           isPatternSelected={isPatternSelected}
+
+          handleClearAll={handleClearAll}
         />
 
         {/* Map Container */}

@@ -34,10 +34,7 @@ const MapLegend = ({ toggledLayers, lulcYear1, lulcYear2, lulcYear3 }) => {
 
   const terrainLegendItems = [
     { color: "#313695", label: "V-shape river valleys, Deep narrow canyons" },
-    {
-      color: "#4575b4",
-      label: "Lateral midslope incised drainages, Local valleys in plains",
-    },
+    {color: "#4575b4", label: "Lateral midslope incised drainages, Local valleys in plains" },
     { color: "#91bfdb", label: "Local ridge/hilltops within broad valleys" },
     { color: "#e0f3f8", label: "U-shape valleys" },
     { color: "#fffc00", label: "Broad Flat Areas" },
@@ -45,10 +42,7 @@ const MapLegend = ({ toggledLayers, lulcYear1, lulcYear2, lulcYear3 }) => {
     { color: "#f46d43", label: "Mesa tops" },
     { color: "#d73027", label: "Upper Slopes" },
     { color: "#a50026", label: "Upland incised drainages Stream headwaters" },
-    {
-      color: "#800000",
-      label: "Lateral midslope drainage divides, Local ridges in plains",
-    },
+    {color: "#800000", label: "Lateral midslope drainage divides, Local ridges in plains"},
     { color: "#4d0000", label: "Mountain tops, high ridges" },
   ];
 
@@ -195,7 +189,16 @@ const MapLegend = ({ toggledLayers, lulcYear1, lulcYear2, lulcYear3 }) => {
     { color: "#d79b0f", label: "Mosaic Restoration" },
     { color: "#ffff00", label: "Excluded Areas" },
   ]
-
+  
+  const tree_overall_chLegendItem = [
+    {color: "#FF0000",  label: "Deforestation"},
+    { color: "#FFA500", label: "Degradation" },
+    { color: "#FFFFFF", label: "No Change" }, 
+    {color: "#8AFF8A",  label: "Improvement" }, 
+    {color: "#007500",  label: "Afferostation" },
+    { color: "#DEE64C", label: "Partially Degraded"},
+    {color: "#000000",  label: "Missing Data" },
+  ]
   const NREGAItem = [
     { color: "#C2678D", label: "Household Livelihood" },
     { color: "#355070", label: "Others - HH, Community" },
@@ -217,7 +220,7 @@ const MapLegend = ({ toggledLayers, lulcYear1, lulcYear2, lulcYear3 }) => {
     { color: "#ADE8F4", label: "7" },
     { color: "#CAF0F8", label: "8" },
   ]
-
+  
   const isTerrainActive = toggledLayers["terrain"]
   const isCLARTActive = toggledLayers["clart"]
   const isCropIntensityActive = toggledLayers["cropIntensity"]
@@ -236,7 +239,8 @@ const MapLegend = ({ toggledLayers, lulcYear1, lulcYear2, lulcYear3 }) => {
   const cropIntenActive = toggledLayers["cropping_intensity"]
   const NREGAActive = toggledLayers["nrega"]
   const DrainageActive = toggledLayers["drainage"]
-
+  const isTreeOverallActive = toggledLayers["tree_overall_ch"];
+  const treeHealthCCDActive = toggledLayers["treehealth_ccd"]
   return (
     <div
       className={`absolute bottom-24 left-0 z-10 transition-all duration-300 ${isCollapsed ? "translate-x-2" : "translate-x-6"
@@ -794,7 +798,27 @@ const MapLegend = ({ toggledLayers, lulcYear1, lulcYear2, lulcYear3 }) => {
                   ))}
                 </div>
               )}
+             {/* Tree Overall Change Section */}
+              {isTreeOverallActive && (
+                <div className="space-y-2">
+                  <h4 className="text-xs font-medium text-gray-600">
+                    Tree Overall Change Legend
+                  </h4>
 
+                  {tree_overall_chLegendItem.map((item, index) => (
+                    <div key={index} className="flex items-center gap-2">
+                      <div
+                        className="w-4 h-4 rounded"
+                        style={{
+                          backgroundColor: item.color,
+                          border: `1px solid rgba(0,0,0,0.2)`
+                        }}
+                      />
+                      <span className="text-sm text-gray-600">{item.label}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         )}
@@ -810,11 +834,13 @@ const Map = forwardRef(({
   state,
   district,
   block,
+  villageIdList,
   filterSelections,
   toggledLayers = {},
   toggleLayer,
   showMWS = true,
   setShowMWS,
+  selectedMWS,
   showVillages = true,
   setShowVillages,
   lulcYear1,
@@ -855,6 +881,8 @@ const Map = forwardRef(({
     { LayerRef: useRef(null), name: "LULC_1", isRaster: true },
     { LayerRef: useRef(null), name: "LULC_2", isRaster: true },
     { LayerRef: useRef(null), name: "LULC_3", isRaster: true },
+    { LayerRef: useRef(null), name: "tree_overall_ch", isRaster: true },
+    { LayerRef: useRef(null), name: "Tree Health CCD (2017-2022)", isRaster: false}
   ];
 
   // Track active layers
@@ -901,6 +929,7 @@ const Map = forwardRef(({
           'remote_sensed_waterbodies': 'Remote-Sensed Waterbodies',
           'hydrological_boundaries': 'Hydrological Boundries',
           'clart': 'CLART',
+          'ccd': 'Tree Health CCD (2017-2022)',
           'mws_layers': 'Hydrological Variables',
           'nrega': 'NREGA',
           'drought': 'Drought',
@@ -935,6 +964,7 @@ const Map = forwardRef(({
         // Only toggle if the requested state is different from current state
         if (isVisible !== isCurrentlyVisible) {
           handleLayerToggle(layerName, layerName);
+          
         }
       } finally {
         // Reset flag regardless of success or failure
@@ -1332,88 +1362,77 @@ const Map = forwardRef(({
         true,
         true
       );
-      adminLayer.setStyle(function (feature) {
-        if (!feature || !feature.values_) return null;
+       adminLayer.setStyle(function (feature) {
 
-        let bin = (feature.values_.P_LIT / feature.values_.TOT_P) * 100;
-        if (bin < 46) {
+        if (!feature) return null;
+
+        const adminUid = feature.get("uid");
+
+        const isHighlighted =
+          selectedMWS &&
+          selectedMWS.length > 0 &&
+          selectedMWS.includes(adminUid);
+
+        //  Highlight matching Admin Boundaries
+        if (isHighlighted) {
           return new Style({
             stroke: new Stroke({
-              color: "#000000",
-              width: 0.5,
+              color: "#FF0000",
+              width: 2,
             }),
             fill: new Fill({
-              color: "#98FB98",
-            })
-          })
-        } else if (bin >= 46 && bin < 59) {
-          return new Style({
-            stroke: new Stroke({
-              color: "#000000",
-              width: 0.5,
+              color: "rgba(255,0,0,0.3)",
             }),
-            fill: new Fill({
-              color: "#32CD32",
-            })
-          })
-        } else if (bin >= 59 && bin <= 70) {
-          return new Style({
-            stroke: new Stroke({
-              color: "#000000",
-              width: 0.5,
-            }),
-            fill: new Fill({
-              color: "#228B22",
-            })
-          })
-        } else if (bin > 70) {
-          return new Style({
-            stroke: new Stroke({
-              color: "#000000",
-              width: 0.5,
-            }),
-            fill: new Fill({
-              color: "#006400",
-            })
-          })
-        }
-        return null;
-      });
-
-      // Remove the admin Layer if exists to display only one admin layer at a time
-      if (LayersArray[0].LayerRef.current != null) {
-        safeRemoveLayer(LayersArray[0].LayerRef.current);
-      }
-
-      if (adminLayer) {
-        safeAddLayer(adminLayer);
-        currentActiveLayers.push(LayersArray[0].name);
-        LayersArray[0].LayerRef.current = adminLayer;
-
-        // Centering the Map to the Selected Block
-        const Vectorsource = adminLayer.getSource();
-        if (Vectorsource) {
-          Vectorsource.once("change", function (e) {
-            if (Vectorsource.getState() === "ready") {
-              try {
-                const arr = Vectorsource.getExtent();
-                setBBox(arr);
-                const mapcenter = [(arr[0] + arr[2]) / 2, (arr[1] + arr[3]) / 2];
-                if (mapRef.current) {
-                  mapRef.current.getView().animate({
-                    center: mapcenter,
-                    zoom: 11,
-                    duration: 1000,
-                    easing: (t) => t
-                  });
-                }
-              } catch (error) {
-                console.error("Error centering map:", error);
-              }
-            }
           });
         }
-      }
+      
+
+        //  Default Black Boundary
+        return new Style({
+          stroke: new Stroke({
+            color: "#000000",
+            width: 0.8,
+          }),
+          fill: new Fill({
+            color: "rgba(0,0,0,0)",
+          }),
+        });
+      });
+
+        // Remove the admin Layer if exists to display only one admin layer at a time
+        if (LayersArray[0].LayerRef.current != null) {
+          safeRemoveLayer(LayersArray[0].LayerRef.current);
+        }
+
+        if (adminLayer) {
+          safeAddLayer(adminLayer);
+          currentActiveLayers.push(LayersArray[0].name);
+          LayersArray[0].LayerRef.current = adminLayer;
+
+          // Centering the Map to the Selected Block
+          const Vectorsource = adminLayer.getSource();
+          if (Vectorsource) {
+            Vectorsource.once("change", function (e) {
+              if (Vectorsource.getState() === "ready") {
+                try {
+                  const arr = Vectorsource.getExtent();
+                  setBBox(arr);
+                  const mapcenter = [(arr[0] + arr[2]) / 2, (arr[1] + arr[3]) / 2];
+                  if (mapRef.current) {
+                    mapRef.current.getView().animate({
+                      center: mapcenter,
+                      zoom: 11,
+                      duration: 1000,
+                      easing: (t) => t
+                    });
+                  }
+                } catch (error) {
+                  console.error("Error centering map:", error);
+                }
+              }
+            });
+          }
+        }
 
       // Fetch and configure all other layers following original implementation
       // === Drainage Layer ===
@@ -1519,7 +1538,6 @@ const Map = forwardRef(({
         }
         LayersArray[4].LayerRef.current = clartLayer;
       }
-
       // === Well Depth Layer ===
       let wellDepthLayer = MicroWaterShedLayer;
       LayersArray[5].LayerRef.current = wellDepthLayer;
@@ -1603,6 +1621,64 @@ const Map = forwardRef(({
         }
         LayersArray[7].LayerRef.current = DroughtLayer;
       }
+
+                // Helper function to format district/block names correctly
+          const formatName = (value) =>
+            value
+              .toLowerCase()
+              .trim()
+              .replace(/\s*\(.*?\)\s*/g, '')   // remove brackets like (Rural)
+              .replace(/\s+/g, '_')            // spaces → underscore
+              .replace(/_+/g, '_');            // avoid double underscores
+
+
+          // === CCD VECTOR LAYER ===
+          const layerName =
+            formatName(district.label) +
+            "_" +
+            formatName(block.label) +
+            "_tree_health_ccd_vector_2017_2022";
+
+          // Debug log
+          console.log("Requesting CCD layer:", "ccd:" + layerName);
+
+          let ccdLayer = await getVectorLayers(
+            "ccd",
+            layerName,
+            true,
+            true
+          );
+
+          if (ccdLayer) {
+            if (LayersArray[25].LayerRef.current != null) {
+              safeRemoveLayer(LayersArray[25].LayerRef.current);
+            }
+            LayersArray[25].LayerRef.current = ccdLayer;
+          }
+
+
+          // === TREE OVERALL CHANGE RASTER LAYER ===
+          const treeOverallLayerName =
+            "overall_change_raster_" +
+            formatName(district.label) +
+            "_" +
+            formatName(block.label);
+
+          // Debug log
+          console.log("Requesting Tree Overall layer:", "tree_overall_ch:" + treeOverallLayerName);
+
+          let treeOverallLayer = await getImageLayers(
+            "tree_overall_ch",
+            treeOverallLayerName,
+            true
+          );
+
+          if (treeOverallLayer) {
+            if (LayersArray[24].LayerRef.current != null) {
+              safeRemoveLayer(LayersArray[24].LayerRef.current);
+            }
+            LayersArray[24].LayerRef.current = treeOverallLayer;
+          }
 
       // === Terrain Layer ===
       let TerrainLayer = await getImageLayers(
@@ -1736,7 +1812,7 @@ const Map = forwardRef(({
         "_" +
         block.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_') + "_Deforestation",
         true,
-        "	deforestation"
+        "deforestation"
       );
 
       if (DeforestationLayer) {
@@ -2022,7 +2098,6 @@ const Map = forwardRef(({
         }
         LayersArray[20].LayerRef.current = fortnightLayer;
       }
-
       // Enable Demographics layer by default
       if (LayersArray[0].LayerRef.current && !currentLayers.includes("Demographics")) {
         currentActiveLayers.push("Demographics");
@@ -2282,6 +2357,14 @@ const Map = forwardRef(({
     fetchLulc()
   }, [lulcYear3])
 
+  // When MWS selection changes, trigger a refresh of the admin layer to update styles based on new selection
+     useEffect(() => {
+  const adminLayerRef = LayersArray[0]?.LayerRef?.current;
+  if (adminLayerRef) {
+    adminLayerRef.changed();
+  }
+}, [selectedMWS]);
+
   // Initialize map once
   useEffect(() => {
     if (!mapRef.current) {
@@ -2364,7 +2447,8 @@ const Map = forwardRef(({
           'restoration': 'Change Detection Restoration',
           'soge': 'SOGE',
           'aquifer': 'Aquifer',
-          'mws_layers_fortnight' : 'Fortnight Hydrological Variables'
+          'mws_layers_fortnight' : 'Fortnight Hydrological Variables',
+          'ccd': 'Tree Health CCD (2017-2022)'
         };
 
         const layerName = layerMap[id];
@@ -2401,7 +2485,9 @@ const Map = forwardRef(({
         setShowMWS={setShowMWS}
         showVillages={showVillages}
         setShowVillages={setShowVillages}
+        villageIdList={villageIdList}
         mapRef={mapRef}
+        selectedMWS={selectedMWS}
         toggleLayer={(layerId, isVisible) => {
           // Call the parent's toggleLayer function directly
           if (toggleLayer) {
