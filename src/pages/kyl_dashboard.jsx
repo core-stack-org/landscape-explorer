@@ -1214,10 +1214,7 @@ const KYLDashboardPage = () => {
         } else if (filter.layer_store[i] === "change_detection") {
           tempLayer = await getImageLayer(
             `${filter.layer_store[i]}`,
-            `change_${district.label
-              .toLowerCase()
-              .split(" ")
-              .join("_")}_${transformName(block.label)}_${filter.layer_name[i]
+            `change_${transformName(district.label)}_${transformName(block.label)}_${filter.layer_name[i]
             }`,
             true,
             filter.rasterStyle[i]
