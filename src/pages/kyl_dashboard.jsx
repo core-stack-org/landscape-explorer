@@ -1199,10 +1199,8 @@ const KYLDashboardPage = () => {
           );
           layerRef.push(tempLayer);
           mapRef.current.addLayer(tempLayer);
-        } else if (
-          filter.layer_store[i] === "LULC" &&
-          filter.rasterStyle === "lulc_water_pixels"
-        ) {
+        } 
+        else if (filter.layer_store[i] === "LULC" && filter.rasterStyle === "lulc_water_pixels") {
           tempLayer = await getImageLayer(
             `${filter.layer_store[i]}_${filter.layer_name[i]}`,
             `LULC_24_25_${transformName(district.label)}_${transformName(block.label)}_${filter.layer_name[i]}`,
@@ -1211,7 +1209,8 @@ const KYLDashboardPage = () => {
           );
           layerRef.push(tempLayer);
           mapRef.current.addLayer(tempLayer);
-        } else if (filter.layer_store[i] === "change_detection") {
+        } 
+        else if (filter.layer_store[i] === "change_detection") {
           tempLayer = await getImageLayer(
             `${filter.layer_store[i]}`,
             `change_${transformName(district.label)}_${transformName(block.label)}_${filter.layer_name[i]
@@ -1221,7 +1220,8 @@ const KYLDashboardPage = () => {
           );
           layerRef.push(tempLayer);
           mapRef.current.addLayer(tempLayer);
-        } else if (filter.layer_store[i] === "nrega_assets") {
+        } 
+        else if (filter.layer_store[i] === "nrega_assets") {
           const nregaLayerName = `${transformName(district.label)}_${transformName(block.label)}`;
           tempLayer = await getWebGlLayers(
             filter.layer_store[i],
@@ -1253,7 +1253,6 @@ const KYLDashboardPage = () => {
           layerRef.push(tempLayer);
           mapRef.current.addLayer(tempLayer);
         }
-
         else if (filter.layer_store[i] === "LULC") {
           tempLayer = await getImageLayer(
             `${filter.layer_store[i]}_${filter.layer_name[i]}`,
@@ -1263,17 +1262,26 @@ const KYLDashboardPage = () => {
           );
           layerRef.push(tempLayer);
           mapRef.current.addLayer(tempLayer);
-        } else if (filter.layer_store[i] === "drought" || filter.layer_store[i] === "green_credit") {
+        } 
+        else if (filter.layer_store[i] === "drought" || filter.layer_store[i] === "green_credit") {
           tempLayer = await getVectorLayers(
             filter.layer_store[i],
             `${transformName(district.label)}_${transformName(block.label)}`
           );
-        } else if (filter.layer_store[i] === "panchayat_boundaries") {
+        } 
+        else if (filter.layer_store[i] === "panchayat_boundaries") {
           tempLayer = await getVectorLayers(
             filter.layer_store[i],
             `${transformName(district.label)}_${transformName(block.label)}`
           );
-        } else {
+        }
+        else if(filter.layer_store[i] === "restoration"){
+          tempLayer = await getVectorLayers(
+            filter.layer_store[i],
+            `${filter.layer_name[i]}_${transformName(district.label)}_${transformName(block.label)}_vector`
+          );
+        }
+        else {
           tempLayer = await getVectorLayers(
             filter.layer_store[i],
             `${filter.layer_name[i]}_${transformName(district.label)}_${transformName(block.label)}`
