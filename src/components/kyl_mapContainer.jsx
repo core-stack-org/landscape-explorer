@@ -221,8 +221,8 @@ const MapLegend = ({ showMWS, showVillages, currentLayer, mappedAssets, mappedDe
   ];
 
   const rainfallLegendItems = [
-    { color: "#B0E0E6", label: "Semi-arid" },
-    { color: "#87CEFA", label: "Arid" },
+    { color: "#B0E0E6", label: "Arid" },
+    { color: "#87CEFA", label: "Semi-arid" },
     { color: "#1E90FF", label: "Moderate" },
     { color: "#0073E6", label: "High" },
     { color: "#004080", label: "Very high" },
@@ -290,9 +290,9 @@ const MapLegend = ({ showMWS, showVillages, currentLayer, mappedAssets, mappedDe
   ];
 
   const TrendLegendItems = [
-    { color: "#B8860B", label: "Increasing trend of G" },
-    { color: "#FFECB3", label: "Decreasing trend of G" },
-    { color: "#FFD700", label: "No trend of G" },
+    { color: "#B8860B", label: "Positive Trend" },
+    { color: "#FFECB3", label: "Negative Trend" },
+    { color: "#FFD700", label: "No Trend" },
   ];
 
   const CropDegradationItems = [
@@ -687,7 +687,7 @@ const MapLegend = ({ showMWS, showVillages, currentLayer, mappedAssets, mappedDe
               {isDryspellLayerActive && (
                 <div className="space-y-2">
                   <h4 className="text-xs font-medium text-gray-600">
-                    Dryspell Vector
+                    Dry spell Vector
                   </h4>
                   {dryspellLengendItems.map((item, index) => (
                     <div
@@ -869,7 +869,7 @@ const MapLegend = ({ showMWS, showVillages, currentLayer, mappedAssets, mappedDe
               {isTrendLayerActive && (
                 <div className="space-y-2">
                   <h4 className="text-xs font-medium text-gray-600">
-                    Groundwater Trend
+                    Water balance Trend
                   </h4>
                   {TrendLegendItems.map((item, index) => (
                     <div

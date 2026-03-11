@@ -246,14 +246,14 @@
                         }
                     },
                     {
-                        "label": "Minimum one week of dry spell",
+                        "label": "At least one week of dry spell",
                         "value": {
                             "lower": 1,
                             "upper": 999999999
                         }
                     },
                     {
-                        "label": "Minimum two weeks of dry spells",
+                        "label": "At least two weeks of dry spells",
                         "value": {
                             "lower": 2,
                             "upper": 9999999999
@@ -691,7 +691,7 @@
         "Restoration": [
             {
                 "name": "decrease_in_tree_cover",
-                "label": "Reduction in tree cover",
+                "label": "Deforestation",
                 "type": 2,
                 "values": [
                     {
