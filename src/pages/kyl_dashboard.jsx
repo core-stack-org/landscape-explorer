@@ -1240,10 +1240,7 @@ const KYLDashboardPage = () => {
           mapRef.current.addLayer(tempLayer);
         }
         else if (["lcw", "factory_csr", "mining"].includes(filter.layer_store[i])) {
-          const industryLayerName = `${district.label
-            .toLowerCase()
-            .split(" ")
-            .join("_")}_${transformName(block.label)}`;
+          const industryLayerName = `${transformName(district.label)}_${transformName(block.label)}`;
 
           const tempLayer = await getWebGlLayers(
             filter.layer_store[i],
