@@ -154,3 +154,11 @@ html {
 .chart-wrapper canvas {
   font-size: inherit !important;
 }
+
+/* Clamp long card descriptions to ~3 lines for quick scanning */
+.card-description-clamp {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}

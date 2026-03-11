@@ -495,39 +495,59 @@ export default function KYLHomePage() {
                   icon: "☀️",
                 },
               ].map((item, index) => (
-                <div key={index} className="h-full">
-                  <div
-                    onClick={() => {
-                      if (item.link) {
-                        handleNavigate(item.link, item.title);
-                      }
-                    }}
-                    className="cursor-pointer bg-white rounded-2xl shadow-md p-6 sm:p-8 h-full min-h-[220px] flex flex-col justify-start transform transition-all duration-300 hover:shadow-xl hover:-translate-y-1 hover:scale-[1.02]"
-                  >
+                <button
+                  key={index}
+                  type="button"
+                  onClick={() => {
+                    if (item.link) {
+                      handleNavigate(item.link, item.title);
+                    }
+                  }}
+                  className={`w-full h-full text-left rounded-2xl border transition-all duration-300 transform focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 ${
+                    item.link
+                      ? "bg-white border-gray-100 shadow-md hover:shadow-xl hover:-translate-y-1 hover:scale-[1.02]"
+                      : "bg-gray-50 border-dashed border-gray-300 text-gray-400 cursor-default"
+                  }`}
+                >
+                  <div className="flex flex-col h-full p-6 sm:p-8">
                     <div className="flex items-start gap-4">
-                      <div className="bg-yellow-100 text-yellow-500 rounded-full w-12 h-12 sm:w-14 sm:h-14 flex items-center justify-center text-xl sm:text-2xl">
+                      <div
+                        className={`rounded-full w-12 h-12 sm:w-14 sm:h-14 flex items-center justify-center text-xl sm:text-2xl ${
+                          item.link
+                            ? "bg-yellow-100 text-yellow-500"
+                            : "bg-gray-200 text-gray-400"
+                        }`}
+                      >
                         {item.icon}
                       </div>
-                      <div>
-                        <h3 className="text-lg sm:text-xl font-semibold mb-2 text-gray-900">
+                      <div className="flex-1">
+                        <h3
+                          className={`text-lg sm:text-xl font-semibold mb-2 ${
+                            item.link ? "text-gray-900" : "text-gray-500"
+                          }`}
+                        >
                           {item.title}
                         </h3>
-                        <p className="text-sm text-gray-700 mb-3">
+                        <p
+                          className={`text-sm mb-3 card-description-clamp ${
+                            item.link ? "text-gray-700" : "text-gray-400"
+                          }`}
+                        >
                           {item.description}
                         </p>
                         {item.link ? (
-                          <span className="text-purple-700 font-medium text-sm hover:underline">
+                          <span className="inline-flex items-center gap-1 text-purple-700 font-medium text-sm hover:underline">
                             Learn More →
                           </span>
                         ) : (
-                          <span className="text-gray-400 text-sm italic">
-                            Coming soon...
+                          <span className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-gray-500 bg-gray-200/70 px-2 py-1 rounded-full">
+                            Coming soon
                           </span>
                         )}
                       </div>
                     </div>
                   </div>
-                </div>
+                </button>
               ))}
             </div>
           </div>
