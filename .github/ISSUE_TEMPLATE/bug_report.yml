@@ -1,0 +1,85 @@
+name: Bug Report
+description: Report a bug in the Landscape Explorer application
+title: "[Bug]: "
+labels: ["bug"]
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting a bug! Please fill in the details so we can reproduce it.
+
+  - type: dropdown
+    id: page
+    attributes:
+      label: Page / Route
+      description: Where did the bug occur?
+      options:
+        - Homepage (/)
+        - KYL Dashboard (/kyl_dashboard)
+        - Landscape Explorer (/download_layers)
+        - Agrohorticulture (/agrohorticulture)
+        - RWB Dashboard (/rwb)
+        - CC Usage Page (/CCUsagePage)
+        - Plan View (/plan-view)
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: location_selection
+    attributes:
+      label: Selected Location
+      description: What State, District, and Tehsil were selected?
+      placeholder: |
+        State:
+        District:
+        Tehsil:
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Bug Description
+      description: Describe what went wrong.
+      placeholder: Explain the issue clearly.
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to Reproduce
+      placeholder: |
+        1. Go to map page
+        2. Select State, District, Tehsil
+        3. Apply filter
+        4. Observe issue
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected Behavior
+      description: What should have happened?
+  
+  - type: textarea
+    id: filters
+    attributes:
+      label: Filters Applied
+      description: What filters were active on the left panel?
+
+  - type: textarea
+    id: screenshots
+    attributes:
+      label: Screenshots / Logs
+      description: Drag and drop screenshots here.
+
+  - type: dropdown
+    id: browser
+    attributes:
+      label: Browser
+      options:
+        - Chrome
+        - Firefox
+        - Edge
+        - Safari
+        - Other
