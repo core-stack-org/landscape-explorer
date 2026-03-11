@@ -35,6 +35,7 @@ const WaterAvailabilityChart = ({
 }) => {
   const [showImpact, setShowImpact] = useState(false);
   const prevImpactRef = useRef(null);
+  console.log(waterbody)
 
   const extractSeasonYears = (props = {}) => {
     const years = new Set();
@@ -49,6 +50,11 @@ const WaterAvailabilityChart = ({
     return Array.from(years).sort();
   };
 
+  const yearToNumber = (year) => {
+  if (!year) return 0;
+  return Number(year.split("-")[0]); // "24-25" → 24
+};
+
 
   const computedImpactYear = impactPair ?? null;
 
@@ -60,7 +66,7 @@ const WaterAvailabilityChart = ({
   
   // 🔧 Normalize Year Helper — ALWAYS returns "YY-YY"
 const normalizeYear = (iv) => {
-  if (!iv || typeof iv !== "string" || !iv.includes("-")) return "22-23";
+  if (!iv || typeof iv !== "string" || !iv.includes("-")) return null;
 
   let clean = iv.replace(/_/g, "-").trim();
   const parts = clean.split("-");
@@ -83,7 +89,7 @@ const normalizeYear = (iv) => {
     return `${parts[0].slice(2)}-${parts[1].slice(2)}`;
   }
 
-  return "22-23";
+  return null;
 };
 
 const getYearIndex = (year, years) => years.indexOf(year);
@@ -432,11 +438,12 @@ useEffect(() => {
         annotations: isTehsil
           ? {}
           : (() => {
-              const f = water_rej_data?.features?.find(
-                (x) => x.properties?.UID === waterbody?.UID
-              );
+            const f = water_rej_data?.features?.find(
+              (x) => x.id?.toString() === waterbody?.waterbody_id?.toString()
+            );
               const iv = f?.properties?.intervention_year;
-              const interventionYear = normalizeYear(iv);    
+              const interventionYear = normalizeYear(iv);  
+  
               return {
                 interventionLine: {
                   type: "line",
@@ -606,7 +613,7 @@ useEffect(() => {
     </label>
   </div>
 )}
-{showImpact && !hasPostYear && (
+{showImpact && !computedImpactYear && (
   <div className="mx-auto mt-2 text-center text-[clamp(0.55rem,0.6rem,0.8rem)] text-orange-700 bg-orange-50 border border-orange-200 rounded-md px-3 py-2 w-fit">
     No data available for post intervention year.  
     Please wait for next year’s data.
@@ -614,7 +621,7 @@ useEffect(() => {
 )}
   </div>
 
-  {showImpact && hasPostYear &&(
+  {showImpact && computedImpactYear &&(
     <div className="flex flex-col items-start justify-start mt-[0.4rem] whitespace-nowrap">
       <div className="flex items-center mb-[0.2rem]">
         <span

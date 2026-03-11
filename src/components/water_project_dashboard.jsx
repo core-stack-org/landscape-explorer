@@ -18,7 +18,7 @@ import CircularProgress from "@mui/material/CircularProgress";
 import DashboardBasemap from "./dashboard_basemap.jsx";
 import { useGlobalWaterData } from "../store/useGlobalWaterData";
 import { getWaterbodyData } from "../actions/getWaterbodyData";
-import {getRainfallByYear,calculateImpactYear} from "../components/utils/impactYear.js";
+import {getRainfallByYear,calculateImpactYear,normalizeYear} from "../components/utils/impactYear.js";
 import { waterGeoDataAtom, waterMwsDataAtom, zoiFeaturesAtom,selectedWaterbodyForTehsilAtom,tehsilZoiFeaturesAtom,tehsilDroughtDataAtom } from "../store/locationStore.jsx";
 import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
@@ -346,7 +346,7 @@ const WaterProjectDashboard = () => {
         village: props.Village || "NA",
         latitude: Number(props.latitude) || null,
         longitude: Number(props.longitude) || null,
-        waterbody_id:props.id || null,
+        waterbody_id:feature.id || null,
         siltRemoved: Number(props.slit_excavated) || 0,
         areaOred: props.area_ored || 0,
         maxCatchmentArea: props.max_catchment_area || 0,
@@ -405,9 +405,10 @@ const WaterProjectDashboard = () => {
     if (!geoData?.features || !mwsGeoData?.features) return map;
   
     geoData.features.forEach((wb) => {
-      const uid = wb.properties?.UID;
+      const featureId = wb.id;
       const raw = wb.properties?.MWS_UID;
-      if (!uid || !raw) return;
+  
+      if (!featureId || !raw) return;
   
       const wbMwsList = extractMwsUidList(raw);
   
@@ -419,10 +420,12 @@ const WaterProjectDashboard = () => {
   
       const rainfall = getRainfallByYear(mws);
       const ivRaw = wb.properties?.intervention_year;
-      const impact = calculateImpactYear(rainfall, ivRaw);
+      const ivNormalized = normalizeYear(ivRaw);
+  
+      const impact = calculateImpactYear(rainfall, ivNormalized);
   
       if (impact) {
-        map[uid] = impact;
+        map[featureId] = impact;
       }
     });
   
@@ -601,7 +604,7 @@ const WaterProjectDashboard = () => {
         return null;
     }
   };
-
+  const yearToNumber = (year) => Number(year.split("-")[0]);
   const formatInterventionYear = (year) => {
     if (!year) return "—";
   
@@ -656,15 +659,31 @@ const WaterProjectDashboard = () => {
       const waterbody_id = feature.id ?? null; 
 
       // const { preYears, postYears } = getPrePostYears(props, props.intervention_year);
-      const impactPairs = impactYearMap[props.UID];
+      const impactPairs = impactYearMap[feature.id];
 
       let selectedPair = null;
       let maxWater = -Infinity;
       
+      const ivShort = normalizeYear(props.intervention_year?.toString());
+
       if (Array.isArray(impactPairs)) {
         impactPairs.forEach((pair) => {
-          const postYear = pair.post;
-          const water = getTotalWaterAvailability(props, postYear);
+          if (!ivShort) return;
+      
+          const postNum = Number(`20${pair.post.split("-")[0]}`);
+          const ivNumFull = Number(`20${ivShort.split("-")[0]}`);
+      
+          if (postNum <= ivNumFull) return;
+          console.log("ivShort:", ivShort);
+console.log("ivNumFull:", ivNumFull);
+console.log("pair.post:", pair.post);
+console.log("postNum:", postNum);
+console.log("UID:", props.UID);
+console.log("raw intervention:", props.intervention_year);
+console.log("raw intervention:", props.waterbody_name);
+console.log("normalized:", ivShort);
+      
+          const water = getTotalWaterAvailability(props, pair.post);
       
           if (water > maxWater) {
             maxWater = water;
@@ -672,6 +691,7 @@ const WaterProjectDashboard = () => {
           }
         });
       }
+     
       const preYears = selectedPair ? [selectedPair.pre] : [];
       const postYears = selectedPair ? [selectedPair.post] : [];
 
@@ -761,27 +781,25 @@ const WaterProjectDashboard = () => {
   const selectedPair = useMemo(() => {
     if (!activeSelectedWaterbody || !rows?.length) return null;
   
-    const uid =
-      activeSelectedWaterbody.properties?.UID ??
-      activeSelectedWaterbody.UID;
+    const featureId =
+      activeSelectedWaterbody?.waterbody_id ??
+      activeSelectedWaterbody?.id;
   
-    const row = rows.find((r) => r.UID === uid);
+    const row = rows.find((r) => r.waterbody_id === featureId);
   
     return row?.selectedPair ?? null;
   }, [rows, activeSelectedWaterbody]);
 
+
   const selectedInterventionYear = useMemo(() => {
-    if (!activeSelectedWaterbody || !rows?.length) return null;
+    if (!activeSelectedWaterbody) return null;
   
-    const uid =
-      activeSelectedWaterbody.properties?.UID ??
-      activeSelectedWaterbody.UID;
+    const raw =
+      activeSelectedWaterbody.properties?.intervention_year ??
+      activeSelectedWaterbody.intervention_year;
   
-    const row = rows.find((r) => r.UID === uid);
-  
-    return row?.interventionYear ?? null;
-  }, [rows, activeSelectedWaterbody]);
-  
+    return formatInterventionYear(raw);
+  }, [activeSelectedWaterbody]);
   const projectSummaryByInterventionYear = useMemo(() => {
     if (!rows?.length) return {};
   
@@ -842,13 +860,6 @@ const handleWaterbodyClick = (row) => {
   window.scrollTo({ top: 0, behavior: "smooth" });
 };
 
-    
-
-  const TableLoader = () => (
-    <div className="w-full h-[60vh] flex items-center justify-center">
-      <CircularProgress />
-    </div>
-  );
 
   const printReport=()=>{
     window.print();
@@ -1238,7 +1249,6 @@ const hasNonZeroPrecipitation = (row) => {
 
 // PROJECT MODE (GeoJSON)
 if (mwsGeoData?.features?.length) {
-  console.log((mwsGeoData))
   mwsRawData = mwsGeoData.features.map((feature) => ({
     ...feature.properties,
   }));
@@ -1384,8 +1394,7 @@ const mwsSheet = XLSX.utils.json_to_sheet(mwsData, {
   
     saveAs(blob, fileName);
   };
-  
-  return (
+    return (
     <div className={`${isTehsilMode ? "pb-8 w-full" : "mx-6 my-8 bg-white rounded-xl shadow-md p-6"}`}>
   
       {/* HEADER FOR TEHSIL MODE */}
@@ -1450,7 +1459,7 @@ const mwsSheet = XLSX.utils.json_to_sheet(mwsData, {
       </div>
     )}
   
-    {mode === "project" && projectNameParam && !activeSelectedWaterbody && (
+  {mode === "project" && projectNameParam && !waterbodyParam && (
       loadingData ? (
         <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-xl shadow-sm w-full md:max-w-[90%]">
           <CircularProgress size={20} />
