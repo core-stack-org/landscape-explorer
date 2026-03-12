@@ -88,6 +88,37 @@
   background: #7F56D9E5;
 }
 
+/* Landing page: smooth scroll (Lenis), GPU-friendly, trackpad-sync */
+.landing-scroll-container {
+  overflow-y: scroll;
+  overflow-x: hidden;
+  scroll-behavior: auto;
+  scroll-padding-top: 1rem;
+  scroll-padding-bottom: 1.5rem;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: contain;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  touch-action: pan-y;
+  -webkit-font-smoothing: antialiased;
+  scrollbar-gutter: stable;
+}
+@media (prefers-reduced-motion: reduce) {
+  .landing-scroll-container {
+    scroll-behavior: auto;
+  }
+}
+.landing-scroll-content {
+  scroll-margin-top: 0;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+.landing-scroll-content .landing-section {
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+
 /* ---- Fix browser-default font-size inflation inside chart area ---- */
 .chart-wrapper,
 .chart-wrapper * {
