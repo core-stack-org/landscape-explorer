@@ -2278,6 +2278,7 @@ console.log("Current filterSelections:", filterSelections);
     return result;
   }, [selectedMWS, dataJson, villageJson]);
 
+  // this is Mann–Kendall trend statistic (S)
   function calculateTrend(values) {
     let S = 0;
   
@@ -2292,6 +2293,31 @@ console.log("Current filterSelections:", filterSelections);
     if (S < 0) return -1;  // decreasing
     return 0;              // steady
   }
+
+  //This is sen's slope
+  // function calculateTrend(values) {
+  //   const slopes = [];
+  
+  //   for (let i = 0; i < values.length - 1; i++) {
+  //     for (let j = i + 1; j < values.length; j++) {
+  //       slopes.push((values[j] - values[i]) / (j - i));
+  //     }
+  //   }
+  
+  //   // sort slopes
+  //   slopes.sort((a, b) => a - b);
+  
+  //   // median slope
+  //   const mid = Math.floor(slopes.length / 2);
+  //   const senSlope =
+  //     slopes.length % 2
+  //       ? slopes[mid]
+  //       : (slopes[mid - 1] + slopes[mid]) / 2;
+  
+  //   if (senSlope > 0) return 1;   // increasing
+  //   if (senSlope < 0) return -1;  // decreasing
+  //   return 0;                     // steady
+  // }
 
 
   useEffect(() => {
