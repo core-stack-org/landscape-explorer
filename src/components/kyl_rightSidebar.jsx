@@ -160,22 +160,31 @@ const KYLRightSidebar = ({
       console.warn("Waterbodies layer not loaded yet");
       return;
     }
-
-    setLoadingWB(true);
-
-    setTimeout(() => {
-      if (showWB) {
-        mapRef.current.removeLayer(waterbodiesLayerRef.current);
-        setShowWB(false);
-      } else {
-        mapRef.current.removeLayer(boundaryLayerRef.current);
-        mapRef.current.addLayer(waterbodiesLayerRef.current);
-        mapRef.current.addLayer(boundaryLayerRef.current);
-        setShowWB(true);
-      }
-
-      setLoadingWB(false);
-    }, 500);
+  
+    const source = waterbodiesLayerRef.current.getSource();
+  
+    if (!showWB) {
+      setLoadingWB(true);
+  
+      const handleSourceChange = () => {
+        if (source.getState() === "ready") {
+          setLoadingWB(false);
+        }
+      };
+  
+      // attach change listener
+      source.once("change", handleSourceChange);
+  
+      mapRef.current.removeLayer(boundaryLayerRef.current);
+      mapRef.current.addLayer(waterbodiesLayerRef.current);
+      mapRef.current.addLayer(boundaryLayerRef.current);
+  
+      setShowWB(true);
+  
+    } else {
+      mapRef.current.removeLayer(waterbodiesLayerRef.current);
+      setShowWB(false);
+    }
   };
 
   const toggleConnectivity = () => {
