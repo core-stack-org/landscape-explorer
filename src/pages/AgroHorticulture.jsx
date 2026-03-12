@@ -13,6 +13,9 @@ const AgroHorticulture =()=>{
     const [project, setProject] = useState(null);
     const [showPlantationSites, setShowPlantationSites] = useState(false);
     const [accessToken, setAccessToken] = useState(() => sessionStorage.getItem("accessToken"));
+    const [isProjectsLoading, setIsProjectsLoading] = useState(false);
+    const [projectsEmpty, setProjectsEmpty] = useState(false);
+    const [isOpeningDashboard, setIsOpeningDashboard] = useState(false);
     const navigate = useNavigate();
     const location = useLocation();
 
@@ -76,6 +79,8 @@ const AgroHorticulture =()=>{
         if(!organization?.value){
             setProject(null);
             setProjectOptions([]);
+            setProjectsEmpty(false);
+            setIsProjectsLoading(false);
             return;
         };
         setProject(null);
@@ -84,6 +89,7 @@ const AgroHorticulture =()=>{
 
     const handleNavigate =()=>{
         if (!project?.value) return;
+        setIsOpeningDashboard(true);
         const params  = new URLSearchParams(location.search);
         params.set("projectId", project.value);
         navigate(
@@ -93,11 +99,14 @@ const AgroHorticulture =()=>{
             }
         );
         setShowPlantationSites(true);
+        // allow UI to show a short loading feedback even if route is fast
+        setTimeout(() => setIsOpeningDashboard(false), 600);
     };
 
     const loadProjects = async(orgId)=>{
         if (!orgId) {
             setProjectOptions([]);
+            setProjectsEmpty(false);
             return;
         }
         let token = accessToken || sessionStorage.getItem("accessToken");
@@ -106,10 +115,13 @@ const AgroHorticulture =()=>{
             if (!token) {
                 console.warn("No access token: set REACT_APP_WATERBODYREJ_USERNAME and REACT_APP_WATERBODYREJ_PASSWORD in .env and restart the dev server.");
                 setProjectOptions([]);
+                setProjectsEmpty(false);
                 return;
             }
         }
         try {
+            setIsProjectsLoading(true);
+            setProjectsEmpty(false);
             const projects = await fetch (`${process.env.REACT_APP_API_URL}/projects`, {
                 headers: {
                     Authorization: `Bearer ${token}`,
@@ -120,10 +132,14 @@ const AgroHorticulture =()=>{
             if (!projects.ok) {
                 console.warn("Projects API error:", projects.status, projectResult);
                 setProjectOptions([]);
+                setProjectsEmpty(false);
+                setIsProjectsLoading(false);
                 return;
             }
             if (!Array.isArray(projectResult)) {
                 setProjectOptions([]);
+                setProjectsEmpty(false);
+                setIsProjectsLoading(false);
                 return;
             }
             const orgIdNum = Number(orgId);
@@ -134,9 +150,13 @@ const AgroHorticulture =()=>{
                 value: p.id,
             }));
             setProjectOptions(options);
+            setProjectsEmpty(options.length === 0);
+            setIsProjectsLoading(false);
         } catch(error) {
             console.warn("Error while loading projects (check API and network):", error);
             setProjectOptions([]);
+            setProjectsEmpty(false);
+            setIsProjectsLoading(false);
         }
     };
 
@@ -175,6 +195,9 @@ const AgroHorticulture =()=>{
                             <h2 className="text-lg font-semibold text-gray-800 mb-6 text-center">
                                 Select Project
                             </h2>
+                            <p className="text-xs text-gray-500 text-center -mt-4 mb-6">
+                                Choose an organization and project to view plantation sites.
+                            </p>
                         <div className="space-y-6">
                             <div>
                                 <label className="block text-sm font-semibold text-gray-700 mb-2">
@@ -197,13 +220,46 @@ const AgroHorticulture =()=>{
                                 setState={setProject}
                                 handleItemSelect={(setState, e) => setState(e)}
                                 />
+                                {!organization?.value && (
+                                    <p className="mt-2 text-xs text-gray-500">
+                                        Select an organization first.
+                                    </p>
+                                )}
+                                {!!organization?.value && isProjectsLoading && (
+                                    <div className="mt-2 flex items-center gap-2 text-xs text-gray-500">
+                                        <span className="inline-block h-3 w-3 rounded-full border-2 border-gray-300 border-t-purple-600 animate-spin" />
+                                        Loading projects…
+                                    </div>
+                                )}
+                                {!!organization?.value && !isProjectsLoading && projectsEmpty && (
+                                    <p className="mt-2 text-xs text-gray-500">
+                                        No projects found for this organization.
+                                    </p>
+                                )}
                         </div>
-                        <button
-                        className="bg-purple-600 text-white px-4 py-2 rounded-lg w-full disabled:opacity-50 disabled:cursor-not-allowed"
-                        onClick={handleNavigate}
-                        disabled={!project?.value}>
-                            Show Plantation sites
-                        </button>
+                        <div>
+                            <button
+                                className="bg-purple-600 text-white px-4 py-2 rounded-lg w-full disabled:opacity-50 disabled:cursor-not-allowed"
+                                onClick={handleNavigate}
+                                disabled={!organization?.value || !project?.value || isOpeningDashboard}
+                                title={
+                                    !organization?.value
+                                        ? "Select an organization first"
+                                        : !project?.value
+                                        ? "Select a project to continue"
+                                        : undefined
+                                }
+                            >
+                                {isOpeningDashboard ? "Opening dashboard…" : "Show Plantation sites"}
+                            </button>
+                            {(!organization?.value || !project?.value) && (
+                                <p className="mt-2 text-xs text-gray-500 text-center">
+                                    {!organization?.value
+                                        ? "Select an organization to continue."
+                                        : "Select a project to continue."}
+                                </p>
+                            )}
+                        </div>
                         {process.env.NODE_ENV === "development" && organizationOptions.length === 0 && (
                             <p className="mt-3 text-xs text-amber-700 bg-amber-50 rounded p-2">
                                 Dropdowns empty? Set <code className="bg-amber-100 px-1">REACT_APP_API_URL</code>, <code className="bg-amber-100 px-1">REACT_APP_WATERBODYREJ_USERNAME</code> and <code className="bg-amber-100 px-1">REACT_APP_WATERBODYREJ_PASSWORD</code> in <code className="bg-amber-100 px-1">.env</code> (same as production), then restart <code className="bg-amber-100 px-1">npm start</code>.
