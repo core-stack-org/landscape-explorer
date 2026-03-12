@@ -12,6 +12,7 @@ const AgroHorticulture =()=>{
     const [projectOptions, setProjectOptions] = useState([]);
     const [project, setProject] = useState(null);
     const [showPlantationSites, setShowPlantationSites] = useState(false);
+    const [accessToken, setAccessToken] = useState(() => sessionStorage.getItem("accessToken"));
     const navigate = useNavigate();
     const location = useLocation();
 
@@ -55,11 +56,19 @@ const AgroHorticulture =()=>{
                 },
             )
             const data = await respone.json();
+            if (!respone.ok || !data?.access) {
+                console.warn("Login failed:", respone.status, data);
+                setAccessToken(null);
+                sessionStorage.removeItem("accessToken");
+                return null;
+            }
             sessionStorage.setItem("accessToken",data.access);
+            setAccessToken(data.access);
             return data.access;
         }
         catch(error){
             console.warn("Error in fetching token",error)
+            setAccessToken(null);
         }
     };
 
@@ -67,10 +76,11 @@ const AgroHorticulture =()=>{
         if(!organization?.value){
             setProject(null);
             setProjectOptions([]);
+            return;
         };
         setProject(null);
         loadProjects(organization?.value);
-    },[organization]);
+    },[organization, accessToken]);
 
     const handleNavigate =()=>{
         if (!project?.value) return;
@@ -90,11 +100,14 @@ const AgroHorticulture =()=>{
             setProjectOptions([]);
             return;
         }
-        const token = sessionStorage.getItem("accessToken");
+        let token = accessToken || sessionStorage.getItem("accessToken");
         if (!token) {
-            console.warn("No access token: set REACT_APP_WATERBODYREJ_USERNAME and REACT_APP_WATERBODYREJ_PASSWORD in .env and restart the dev server.");
-            setProjectOptions([]);
-            return;
+            token = await fetchToken();
+            if (!token) {
+                console.warn("No access token: set REACT_APP_WATERBODYREJ_USERNAME and REACT_APP_WATERBODYREJ_PASSWORD in .env and restart the dev server.");
+                setProjectOptions([]);
+                return;
+            }
         }
         try {
             const projects = await fetch (`${process.env.REACT_APP_API_URL}/projects`, {
@@ -113,7 +126,10 @@ const AgroHorticulture =()=>{
                 setProjectOptions([]);
                 return;
             }
-            const options = projectResult.filter((p)=>p.organization==orgId).map((p)=>({
+            const orgIdNum = Number(orgId);
+            const options = projectResult
+                .filter((p)=> Number(p.organization) === orgIdNum)
+                .map((p)=>({
                 label: p.name,
                 value: p.id,
             }));

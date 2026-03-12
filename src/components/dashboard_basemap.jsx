@@ -57,6 +57,8 @@
     const pendingPlantationRef = useRef(null);
     const pendingWaterbodyRef = useRef(null);
     const hasUserZoomedRef = useRef(false);
+    const spiderLayerRef = useRef(null);
+    const spiderAnchorRef = useRef(null); // coordinate of current spiderfy anchor
 
     const geojsonReaderRef = useRef(new GeoJSON());
     const lulcLoadedRef = useRef(false);
@@ -267,6 +269,82 @@
       });
     };
 
+    const clearSpiderfy = () => {
+      spiderAnchorRef.current = null;
+      spiderLayerRef.current = null;
+      removeLayersById(["plantation_spider_layer"]);
+    };
+
+    const getPlantationAnchorCoord = (olFeature) => {
+      const geom = olFeature?.getGeometry?.();
+      if (!geom) return null;
+      try {
+        if (geom.getType() === "Polygon" && geom.getInteriorPoint) {
+          return geom.getInteriorPoint().getCoordinates();
+        }
+        if (geom.getType() === "MultiPolygon" && geom.getInteriorPoint) {
+          return geom.getInteriorPoint().getCoordinates();
+        }
+      } catch (_) {
+        // fallthrough
+      }
+      const ex = geom.getExtent();
+      return [(ex[0] + ex[2]) / 2, (ex[1] + ex[3]) / 2];
+    };
+
+    const spiderfyPlantations = (clusteredFeatures, centerCoord) => {
+      const map = mapRef.current;
+      if (!map || !centerCoord || !clusteredFeatures?.length) return;
+
+      // Toggle: clicking same cluster center again closes spiderfy
+      const prev = spiderAnchorRef.current;
+      if (prev && prev[0] === centerCoord[0] && prev[1] === centerCoord[1]) {
+        clearSpiderfy();
+        return;
+      }
+
+      clearSpiderfy();
+      spiderAnchorRef.current = centerCoord;
+
+      // Convert pixel radius to map units (EPSG:4326 degrees)
+      const view = map.getView();
+      const resolution = view.getResolution?.() ?? 1;
+      const pixelRadius = Math.max(22, Math.min(48, 14 + clusteredFeatures.length * 0.35));
+      const radius = pixelRadius * resolution;
+
+      const max = Math.min(clusteredFeatures.length, 24); // cap spiderfy for performance/clarity
+      const slice = clusteredFeatures.slice(0, max);
+      const angleStep = (Math.PI * 2) / Math.max(1, slice.length);
+
+      const spiderFeatures = slice.map((orig, i) => {
+        const a = i * angleStep;
+        const dx = radius * Math.cos(a);
+        const dy = radius * Math.sin(a);
+        const f = new Feature({
+          geometry: new Point([centerCoord[0] + dx, centerCoord[1] + dy]),
+        });
+        f.set("layerType", "plantation");
+        f.set("spiderOriginal", orig);
+        return f;
+      });
+
+      const spiderLayer = new VectorLayer({
+        source: new VectorSource({ features: spiderFeatures }),
+        style: new Style({
+          image: new Icon({
+            src: plantationIcon,
+            anchor: [0.5, 1],
+            scale: 1.1,
+          }),
+        }),
+      });
+      spiderLayer.set("id", "plantation_spider_layer");
+      spiderLayer.setZIndex(50);
+
+      map.addLayer(spiderLayer);
+      spiderLayerRef.current = spiderLayer;
+    };
+
     const removeLayersBySourceParam = (needle) => {
       const m = mapRef.current;
       if (!m) return;
@@ -375,21 +453,65 @@
         if (!popupEl) return;
 
         if (!feature) {
+          clearSpiderfy();
           popupEl.style.display = "none";
           return;
         }
 
-        // Unwrap cluster: if this is a cluster feature, zoom in to expand or use single for popup
+        // If this is a spiderfy marker, unwrap to original plantation feature
+        const spiderOriginal = feature.get?.("spiderOriginal");
+        if (spiderOriginal) {
+          feature = spiderOriginal;
+          clearSpiderfy();
+        }
+
+        // Unwrap cluster: if this is a cluster feature, zoom in or spiderfy to access individuals
         const clusterFeatures = feature.get("features");
         if (clusterFeatures && clusterFeatures.length > 1) {
-          const view = m.getView();
-          const extent = feature.getGeometry().getExtent();
-          view.fit(extent, {
-            padding: [60, 60, 60, 60],
-            maxZoom: view.getZoom() + 2,
-            duration: 300,
-          });
-          return;
+          const isPlantationCluster =
+            clusterFeatures?.[0]?.get?.("layerType") === "plantation";
+
+          // Only handle plantation clusters here; other modes fall through
+          if (isPlantationCluster) {
+            const view = m.getView();
+            const zoom = view.getZoom?.() ?? 0;
+            const center =
+              feature.getGeometry?.().getCoordinates?.() ?? event.coordinate;
+
+            // Compute spread extent from underlying features (their centroid anchors)
+            const coords = clusterFeatures
+              .map((f) => getPlantationAnchorCoord(f))
+              .filter(Boolean);
+
+            if (coords.length) {
+              let ex = [coords[0][0], coords[0][1], coords[0][0], coords[0][1]];
+              coords.forEach(([x, y]) => {
+                ex[0] = Math.min(ex[0], x);
+                ex[1] = Math.min(ex[1], y);
+                ex[2] = Math.max(ex[2], x);
+                ex[3] = Math.max(ex[3], y);
+              });
+
+              const span = Math.max(Math.abs(ex[2] - ex[0]), Math.abs(ex[3] - ex[1]));
+
+              // If we’re already zoomed in OR all points are basically identical → spiderfy
+              if (zoom >= 17 || span < 1e-6) {
+                spiderfyPlantations(clusterFeatures, center);
+              } else {
+                clearSpiderfy();
+                view.fit(ex, {
+                  padding: [70, 70, 70, 70],
+                  maxZoom: 17,
+                  duration: 300,
+                });
+              }
+              return;
+            }
+
+            // Fallback: if no coords, just spiderfy at click point
+            spiderfyPlantations(clusterFeatures, center);
+            return;
+          }
         }
         if (clusterFeatures && clusterFeatures.length === 1) {
           feature = clusterFeatures[0];
