@@ -1211,7 +1211,8 @@ console.log("Current filterSelections:", filterSelections);
         [filter.name]: false,
       }));
       //setFiltersEnabled(true);
-    } else if (currentLayer.length === 0) {
+    } 
+    else if (currentLayer.length === 0) {
       let layerRef = [];
       mapRef.current.removeLayer(mwsLayerRef.current);
       mapRef.current.removeLayer(boundaryLayerRef.current);
