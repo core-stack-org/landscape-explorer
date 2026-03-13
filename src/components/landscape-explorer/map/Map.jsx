@@ -1035,7 +1035,6 @@ const Map = forwardRef(
             remote_sensed_waterbodies: "Remote-Sensed Waterbodies",
             hydrological_boundaries: "Hydrological Boundries",
             clart: "CLART",
-            ccd: "Tree Health CCD (2017-2022)",
             mws_layers: "Hydrological Variables",
             nrega: "NREGA",
             drought: "Drought",

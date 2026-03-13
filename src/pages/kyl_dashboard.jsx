@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useMemo } from "react";
 import { useRecoilState, useRecoilValue } from "recoil";
 import {
   stateDataAtom,
@@ -248,6 +248,7 @@ const KYLDashboardPage = () => {
 
     processSelections(filterSelections.selectedMWSValues, "MWS");
     processSelections(filterSelections.selectedVillageValues, "Village");
+    processSelections(filterSelections.selectedWaterbodyValues, "Waterbody");
 
     // Convert grouped object back to array
     Object.values(groupedSelections).forEach((group) => {
@@ -317,6 +318,8 @@ const KYLDashboardPage = () => {
 
   // Filter selection handlers
   const handleFilterSelection = (name, option, isChecked) => {
+    console.log("Filter Clicked:", name, option, isChecked);
+    console.log("Current filterSelections:", filterSelections);
     const sourceType = determineFilterSource(name);
     option = {
       ...option,
@@ -385,6 +388,34 @@ const KYLDashboardPage = () => {
           ...prev,
           selectedVillageValues: {
             ...prev.selectedVillageValues,
+            [name]: newArray.length > 0 ? newArray : null,
+          },
+        };
+      });
+    } else if (sourceType.name === "Waterbody") {
+      if (!showWB) {
+        toast.error(
+          "Please enable 'Show Waterbodies' to apply waterbody filters.",
+        );
+        return;
+      }
+      setFilterSelections((prev) => {
+        const currentArray = prev.selectedWaterbodyValues?.[name] || [];
+
+        let newArray;
+        if (isChecked) {
+          const exists = currentArray.some(
+            (item) => item.label === option.label,
+          );
+          newArray = exists ? currentArray : [...currentArray, option];
+        } else {
+          newArray = currentArray.filter((item) => item.label !== option.label);
+        }
+
+        return {
+          ...prev,
+          selectedWaterbodyValues: {
+            ...(prev.selectedWaterbodyValues || {}),
             [name]: newArray.length > 0 ? newArray : null,
           },
         };
@@ -709,7 +740,7 @@ const KYLDashboardPage = () => {
     }
 
     // -------------------------
-    // Create UID → coordinate map
+    // UID → coordinate map
     // -------------------------
     const uidToCoord = {};
 
@@ -721,11 +752,15 @@ const KYLDashboardPage = () => {
       uidToCoord[uid.toString().trim()] = coord;
     });
 
+    // -------------------------
+    // Build pairs with side index BEFORE creating features
+    // -------------------------
+    // -------------------------
+    // Build pairs with side index BEFORE creating features
+    // -------------------------
+    const pairMap = {};
     const arrowFeatures = [];
 
-    // -------------------------
-    // Create arrows
-    // -------------------------
     connectivityFeatures.forEach((feature) => {
       const uid = feature.get("uid");
       const downstream = feature.get("downstream");
@@ -747,7 +782,6 @@ const KYLDashboardPage = () => {
 
       arrowFeatures.push(arrowFeature);
     });
-
     const arrowSource = new VectorSource({
       features: arrowFeatures,
     });
@@ -1087,7 +1121,7 @@ const KYLDashboardPage = () => {
               width: 2.0,
             }),
             fill: new Fill({
-              color: "rgba(34, 197, 94, 0.8)", // green fill
+              color: "rgba(34, 197, 94, 1.2)", // green fill
             }),
           });
         }
@@ -1232,10 +1266,7 @@ const KYLDashboardPage = () => {
         if (filter.layer_store[i] === "terrain") {
           tempLayer = await getImageLayer(
             filter.layer_store[i],
-            `${district.label.toLowerCase().split(" ").join("_")}_${block.label
-              .toLowerCase()
-              .split(" ")
-              .join("_")}_${filter.layer_name[i]}`,
+            `${transformName(district.label)}_${transformName(block.label)}_${filter.layer_name[i]}`,
             true,
             filter.rasterStyle,
           );
@@ -1270,10 +1301,7 @@ const KYLDashboardPage = () => {
           layerRef.push(tempLayer);
           mapRef.current.addLayer(tempLayer);
         } else if (filter.layer_store[i] === "nrega_assets") {
-          const nregaLayerName = `${district.label
-            .toLowerCase()
-            .split(" ")
-            .join("_")}_${block.label.toLowerCase().split(" ").join("_")}`;
+          const nregaLayerName = `${transformName(district.label)}_${transformName(block.label)}`;
           tempLayer = await getWebGlLayers(
             filter.layer_store[i],
             nregaLayerName,
@@ -1335,7 +1363,7 @@ const KYLDashboardPage = () => {
               .split(" ")
               .join("_")}`,
           );
-        } else {
+        } else if (filter.layer_store[i] === "restoration") {
           tempLayer = await getVectorLayers(
             filter.layer_store[i],
             `${filter.layer_name[i]}_${district.label
@@ -1404,6 +1432,7 @@ const KYLDashboardPage = () => {
         url: `https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}`,
         maxZoom: 30,
         transition: 500,
+        crossOrigin: "anonymous",
       }),
       preload: 4,
     });
@@ -1499,6 +1528,7 @@ const KYLDashboardPage = () => {
     setFilterSelections({
       selectedMWSValues: {},
       selectedVillageValues: {},
+      selectedWaterbodyValues: {},
     });
 
     setIndicatorType(null);
@@ -1648,7 +1678,8 @@ const KYLDashboardPage = () => {
         geometry: geojson.writeGeometryObject(wbFeature.getGeometry()),
       });
 
-      //  EXTRACT ALL MWS FEATURES FOR THIS WATERBODY (UID match)
+      // 3️⃣ FIND MATCHED MWS FEATURE (IMPORTANT PART)
+      // 3️⃣ EXTRACT ALL MWS FEATURES FOR THIS WATERBODY (UID match)
       let matchedMws = [];
 
       if (mwsLayerRef.current && wbFeature) {
@@ -1656,7 +1687,7 @@ const KYLDashboardPage = () => {
         const raw = props.MWS_UID || props.mws_uid;
 
         if (raw) {
-          // 3.1 Converting UID Strings
+          // 3.1 Convert UID string "12_315970 12_308838..." → ["12_315970","12_308838",...]
           const uidList = raw.split("_").reduce((acc, val, idx, arr) => {
             if (idx % 2 === 0 && arr[idx + 1]) {
               acc.push(`${val}_${arr[idx + 1]}`);
@@ -1676,7 +1707,7 @@ const KYLDashboardPage = () => {
         }
       }
 
-      // SAVE ARRAY OF FULL GEOJSON FEATURES
+      // 4️⃣ SAVE ARRAY OF FULL GEOJSON FEATURES
       if (matchedMws.length > 0) {
         const geojsonWriter = new GeoJSON();
 
@@ -1880,7 +1911,6 @@ const KYLDashboardPage = () => {
 
       if (mwsFilterKeys.length === 0) {
         // Clear village highlights when no MWS filters are active
-        setVillageIdList(new Set());
         return;
       }
 
@@ -1938,7 +1968,7 @@ const KYLDashboardPage = () => {
       setSelectedMWS(resultMWS);
       fetchMWSLayer(resultMWS);
 
-      // Derive villages from matched MWS so Admin Boundary also gets highlighted
+      // Derive villages so Admin Boundary gets highlighted
       let villages = new Set();
       dataJson.forEach((item) => {
         if (resultMWS.includes(item.mws_id)) {
@@ -1952,7 +1982,6 @@ const KYLDashboardPage = () => {
       console.error("Error in MWS filter processing:", error);
     }
   }, [filterSelections.selectedMWSValues, dataJson]);
-
   // ============================================
   // 2. PROCESS MWS PATTERNS - OR within pattern, AND between patterns
   // ============================================
@@ -1966,73 +1995,132 @@ const KYLDashboardPage = () => {
       const mwsFilterKeys = Object.keys(
         filterSelections.selectedMWSValues || {},
       );
-
+      const hasMwsFilters = mwsFilterKeys.some(
+        (key) => filterSelections.selectedMWSValues[key] !== null,
+      );
       const hasMwsPatterns = mwsPatternKeys.some(
         (key) => patternSelections.selectedMWSPatterns[key] !== null,
       );
 
-      const hasMwsFilters = mwsFilterKeys.some(
-        (key) => filterSelections.selectedMWSValues[key] !== null,
-      );
+      // If no patterns exist
+      if (!hasMwsPatterns) {
+        // If filters exist, RECOMPUTE filter results
+        if (hasMwsFilters) {
+          let resultMWS = [];
 
-      let resultMWS = new Set();
+          mwsFilterKeys.forEach((filterName) => {
+            const filterValues = filterSelections.selectedMWSValues[filterName];
+            if (!filterValues) return;
 
-      /* STEP 1: PROCESS PATTERNS */
+            let tempArr = [];
+            const filter = getAllFilters().find((f) => f.name === filterName);
 
-      if (hasMwsPatterns) {
-        mwsPatternKeys.forEach((patternName) => {
-          const pattern = patternSelections.selectedMWSPatterns[patternName];
-          if (!pattern) return;
-
-          let patternMatches = new Set();
-
-          pattern.conditions.forEach((condition) => {
-            dataJson.forEach((item) => {
-              if (!item || !item.mws_id) return;
-
-              let matches = false;
-
-              if (
-                condition.type === 1 &&
-                item[condition.key] === condition.value
-              ) {
-                matches = true;
-              } else if (
-                condition.type === 2 &&
-                item[condition.key] >= condition.value.lower &&
-                item[condition.key] <= condition.value.upper
-              ) {
-                matches = true;
-              } else if (
-                condition.type === 3 &&
-                item[condition.key] != condition.value
-              ) {
-                matches = true;
-              }
-
-              if (matches) {
-                patternMatches.add(item.mws_id);
+            filterValues.forEach((selectedOption) => {
+              if (filter?.type === 2) {
+                dataJson.forEach((item) => {
+                  if (
+                    item &&
+                    typeof item[filterName] !== "undefined" &&
+                    item.mws_id
+                  ) {
+                    const value = Number(item[filterName]);
+                    if (
+                      !isNaN(value) &&
+                      value >= selectedOption.value.lower &&
+                      value <= selectedOption.value.upper
+                    ) {
+                      if (!tempArr.includes(item.mws_id)) {
+                        tempArr.push(item.mws_id);
+                      }
+                    }
+                  }
+                });
+              } else {
+                dataJson.forEach((item) => {
+                  if (
+                    item &&
+                    item[filterName] === selectedOption.value &&
+                    item.mws_id
+                  ) {
+                    if (!tempArr.includes(item.mws_id)) {
+                      tempArr.push(item.mws_id);
+                    }
+                  }
+                });
               }
             });
+
+            if (resultMWS.length > 0) {
+              resultMWS = resultMWS.filter((id) => tempArr.includes(id));
+            } else {
+              resultMWS = tempArr;
+            }
           });
 
-          if (resultMWS.size > 0) {
-            resultMWS = new Set(
-              [...resultMWS].filter((x) => patternMatches.has(x)),
-            );
-          } else {
-            resultMWS = patternMatches;
-          }
-        });
+          setSelectedMWS(resultMWS);
+          fetchMWSLayer(resultMWS);
+          return;
+        } else {
+          // No patterns AND no filters - clear everything
+          setSelectedMWS([]);
+          fetchMWSLayer([]);
+          return;
+        }
       }
 
-      /* ===============================
-        STEP 2: PROCESS FILTERS
-      =============================== */
+      // Patterns exist - process them
+      let resultMWS = new Set();
 
-      let filterResults = [];
+      // Process each pattern (AND between different patterns)
+      mwsPatternKeys.forEach((patternName) => {
+        const pattern = patternSelections.selectedMWSPatterns[patternName];
+        if (!pattern) return;
+        let patternMatches = new Set(); // Items matching ANY condition in THIS pattern (OR)
 
+        // Process conditions within pattern (OR operation)
+        pattern.conditions.forEach((condition) => {
+          dataJson.forEach((item) => {
+            let matches = false;
+
+            if (
+              condition.type === 1 &&
+              item[condition.key] === condition.value
+            ) {
+              matches = true;
+            } else if (
+              condition.type === 2 &&
+              item[condition.key] >= condition.value.lower &&
+              item[condition.key] <= condition.value.upper
+            ) {
+              matches = true;
+            } else if (
+              condition.type === 3 &&
+              item[condition.key] != condition.value
+            ) {
+              matches = true;
+            }
+            if (matches) {
+              patternMatches.add(item.mws_id);
+            }
+          });
+        });
+        // AND operation between different patterns
+        if (resultMWS.size > 0) {
+          // Intersection: keep only items present in both sets
+          resultMWS = new Set(
+            [...resultMWS].filter((x) => patternMatches.has(x)),
+          );
+        } else {
+          // First pattern, initialize with its matches
+          resultMWS = patternMatches;
+        }
+      });
+
+      // Intersect with MWS from filters if they exist
       if (hasMwsFilters) {
+        // Recompute filter results
+        let filterResults = [];
+
         mwsFilterKeys.forEach((filterName) => {
           const filterValues = filterSelections.selectedMWSValues[filterName];
           if (!filterValues) return;
@@ -2071,46 +2159,40 @@ const KYLDashboardPage = () => {
             filterResults = tempArr;
           }
         });
-      }
 
-      /* ===============================
-        STEP 3: FINAL INTERSECTION
-      =============================== */
-
-      let finalMWS = [];
-
-      if (hasMwsPatterns && hasMwsFilters) {
-        finalMWS = [...resultMWS].filter((id) => filterResults.includes(id));
-      } else if (hasMwsPatterns) {
-        finalMWS = [...resultMWS];
-      } else if (hasMwsFilters) {
-        finalMWS = filterResults;
-      } else {
-        finalMWS = [];
-      }
-
-      /* ===============================
-        STEP 4: UPDATE MWS LAYER
-      =============================== */
-      console.log("selectedMWS:", finalMWS);
-      setSelectedMWS(finalMWS);
-      fetchMWSLayer(finalMWS);
-
-      /* ===============================
-        STEP 5: DERIVE VILLAGES (for Admin Boundary highlight)
-      =============================== */
-
-      let villages = new Set();
-
-      dataJson.forEach((item) => {
-        if (finalMWS.includes(item.mws_id)) {
-          if (Array.isArray(item.mws_intersect_villages)) {
-            item.mws_intersect_villages.forEach((v) => villages.add(v));
+        const finalMWS = [...resultMWS].filter((id) =>
+          filterResults.includes(id),
+        );
+        setSelectedMWS(finalMWS);
+        fetchMWSLayer(finalMWS);
+        // Derive villages so Admin Boundary gets highlighted
+        const v1 = new Set();
+        dataJson.forEach((item) => {
+          if (
+            finalMWS.includes(item.mws_id) &&
+            Array.isArray(item.mws_intersect_villages)
+          ) {
+            item.mws_intersect_villages.forEach((v) => v1.add(v));
           }
-        }
-      });
-
-      setVillageIdList(villages);
+        });
+        setVillageIdList(v1);
+      } else {
+        // No filters, just use pattern results
+        const finalMWS = [...resultMWS];
+        setSelectedMWS(finalMWS);
+        fetchMWSLayer(finalMWS);
+        // Derive villages so Admin Boundary gets highlighted
+        const v2 = new Set();
+        dataJson.forEach((item) => {
+          if (
+            finalMWS.includes(item.mws_id) &&
+            Array.isArray(item.mws_intersect_villages)
+          ) {
+            item.mws_intersect_villages.forEach((v) => v2.add(v));
+          }
+        });
+        setVillageIdList(v2);
+      }
     } catch (error) {
       console.error("Error in MWS processing:", error);
     }
@@ -2119,7 +2201,6 @@ const KYLDashboardPage = () => {
     filterSelections.selectedMWSValues,
     dataJson,
   ]);
-
   useEffect(() => {
     try {
       if (!villageJson || !Array.isArray(villageJson)) return;
@@ -2190,6 +2271,7 @@ const KYLDashboardPage = () => {
         }
       });
 
+      // Store filter results in patternVillageList (we'll combine with patterns later)
       setPatternVillageList(resultVillages);
     } catch (error) {
       console.error("Error in village filter processing:", error);
@@ -2226,7 +2308,6 @@ const KYLDashboardPage = () => {
       const hasMwsFilters = mwsFilterKeys.some(
         (key) => filterSelections.selectedMWSValues[key] !== null,
       );
-
       const mwsPatternKeys = Object.keys(
         patternSelections.selectedMWSPatterns || {},
       );
@@ -2244,8 +2325,6 @@ const KYLDashboardPage = () => {
         return;
       }
 
-      // If MWS-level filters/patterns are active, don't touch villageIdList here
-      // — it is managed by the MWS filter/pattern useEffects
       if (!hasVillagePatterns && !hasVillageFilters) {
         return;
       }
@@ -2347,11 +2426,115 @@ const KYLDashboardPage = () => {
     filterSelections.selectedMWSValues,
     patternSelections.selectedMWSPatterns,
   ]);
-
   useEffect(() => {
     fetchAdminLayer([...villageIdList]);
     setFinalVillageList(villageIdList);
   }, [villageIdList]);
+
+  // Build grouped village-MWS intersection data
+  const mwsVillageIntersections = useMemo(() => {
+    if (!selectedMWS || selectedMWS.length === 0 || !dataJson) return [];
+
+    const assignedVillages = new Set();
+    const result = [];
+
+    // First pass: Group villages by MWS and ensure uniqueness
+    dataJson.forEach((mwsItem) => {
+      if (
+        selectedMWS.includes(mwsItem.mws_id) &&
+        Array.isArray(mwsItem.mws_intersect_villages)
+      ) {
+        const villagesInThisMWS = [];
+
+        mwsItem.mws_intersect_villages.forEach((villageId) => {
+          if (!assignedVillages.has(villageId)) {
+            assignedVillages.add(villageId);
+
+            // Basic lookup from villageJson (API data)
+            let vName = "";
+            if (villageJson && Array.isArray(villageJson)) {
+              const v = villageJson.find((v) => v.village_id === villageId);
+              if (v) vName = v.village_name || v.vill_name || v.name || "";
+            }
+
+            villagesInThisMWS.push({ villageId, villageName: vName });
+          }
+        });
+
+        if (villagesInThisMWS.length > 0) {
+          result.push({
+            mwsId: mwsItem.mws_id,
+            villages: villagesInThisMWS,
+          });
+        }
+      }
+    });
+
+    // Second pass: Fallback enrichment from map features (boundaryLayerRef)
+    if (boundaryLayerRef.current) {
+      try {
+        const features = boundaryLayerRef.current.getSource().getFeatures();
+        result.forEach((group) => {
+          group.villages.forEach((v) => {
+            if (!v.villageName) {
+              const f = features.find((feat) => {
+                const props = feat.getProperties();
+                return (props.vill_ID ?? props.village_id) == v.villageId;
+              });
+              if (f) {
+                const props = f.getProperties();
+                v.villageName =
+                  props.vill_name || props.village_name || props.name || "";
+              }
+            }
+          });
+        });
+      } catch (_) {}
+    }
+
+    return result;
+  }, [selectedMWS, dataJson, villageJson]);
+
+  // this is Mann–Kendall trend statistic (S)
+  function calculateTrend(values) {
+    let S = 0;
+
+    for (let i = 0; i < values.length - 1; i++) {
+      for (let j = i + 1; j < values.length; j++) {
+        if (values[j] > values[i]) S++;
+        else if (values[j] < values[i]) S--;
+      }
+    }
+
+    if (S > 0) return 1; // increasing
+    if (S < 0) return -1; // decreasing
+    return 0; // steady
+  }
+
+  //This is sen's slope
+  // function calculateTrend(values) {
+  //   const slopes = [];
+
+  //   for (let i = 0; i < values.length - 1; i++) {
+  //     for (let j = i + 1; j < values.length; j++) {
+  //       slopes.push((values[j] - values[i]) / (j - i));
+  //     }
+  //   }
+
+  //   // sort slopes
+  //   slopes.sort((a, b) => a - b);
+
+  //   // median slope
+  //   const mid = Math.floor(slopes.length / 2);
+  //   const senSlope =
+  //     slopes.length % 2
+  //       ? slopes[mid]
+  //       : (slopes[mid - 1] + slopes[mid]) / 2;
+
+  //   if (senSlope > 0) return 1;   // increasing
+  //   if (senSlope < 0) return -1;  // decreasing
+  //   return 0;                     // steady
+  // }
 
   useEffect(() => {
     if (!waterbodiesLayerRef.current || !mwsLayerRef.current) return;
@@ -2399,6 +2582,71 @@ const KYLDashboardPage = () => {
       };
     }
   }, [selectedMWS, showWB]);
+
+  useEffect(() => {
+    if (!waterbodiesLayerRef.current) return;
+
+    const wbSource = waterbodiesLayerRef.current.getSource();
+    const wbFeatures = wbSource.getFeatures();
+
+    console.log("Waterbody Features:", wbFeatures);
+    console.log("First Waterbody Props:", wbFeatures[0]?.getProperties());
+
+    if (!wbFeatures.length) return;
+
+    const wbFilters = filterSelections.selectedWaterbodyValues || {};
+    const filterKeys = Object.keys(wbFilters).filter((k) => wbFilters[k]);
+
+    if (filterKeys.length === 0) {
+      wbFeatures.forEach((f) => f.setStyle(undefined));
+      return;
+    }
+
+    wbFeatures.forEach((feature) => {
+      const props = feature.getProperties();
+      let matches = true;
+
+      filterKeys.forEach((filterName) => {
+        const selectedOptions = wbFilters[filterName];
+        if (!selectedOptions) return;
+
+        if (filterName === "waterbody_size") {
+          const area = Number(
+            props.area_ored ?? props.AREA_HA ?? props.area ?? props.Area ?? 0,
+          );
+
+          const pass = selectedOptions.some(
+            (opt) => area >= opt.value.lower && area <= opt.value.upper,
+          );
+
+          if (!pass) matches = false;
+        }
+
+        if (filterName === "drainage_line") {
+          const value = Number(props.on_drainage_line ?? 0);
+
+          const pass = selectedOptions.some((opt) => value === opt.value);
+
+          if (!pass) matches = false;
+        }
+
+        if (filterName === "surface_water_trend") {
+          const areas = Object.keys(props)
+            .filter((key) => key.startsWith("area_") && key !== "area_ored")
+            .sort()
+            .map((key) => Number(props[key] ?? 0));
+
+          const trend = calculateTrend(areas);
+
+          const pass = selectedOptions.some((opt) => trend === opt.value);
+
+          if (!pass) matches = false;
+        }
+      });
+
+      feature.setStyle(matches ? undefined : new Style({}));
+    });
+  }, [filterSelections.selectedWaterbodyValues, showWB]);
 
   return (
     <div className="min-h-screenbg-white flex flex-col">
@@ -2476,6 +2724,7 @@ const KYLDashboardPage = () => {
           currentLayer={currentLayer}
           setCurrentLayer={setCurrentLayer}
           mapRef={mapRef}
+          mapElement={mapElement}
           onResetMWS={handleResetMWS}
           selectedMWSProfile={selectedMWSProfile}
           waterbodiesLayerRef={waterbodiesLayerRef}

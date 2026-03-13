@@ -66,7 +66,6 @@
     const [zoiAreaState, setZoiAreaState] = useState(null)
     const [radiusState, setRadiusState] = useState(null);
 
-    console.log(selectedWaterbody)
     useEffect(() => {
       hasUserZoomedRef.current = false;
     }, [selectedWaterbody]);

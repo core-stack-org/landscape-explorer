@@ -36,9 +36,36 @@ const KYLLeftSidebar = ({
 
     const combinedSelectedValues = {
         ...filterSelections.selectedMWSValues,
-        ...filterSelections.selectedVillageValues
+        ...filterSelections.selectedVillageValues,
+        ...filterSelections.selectedWaterbodyValues
     };
 
+    const handleClearAll = () => {
+        // Remove all layers from the map
+        if (currentLayer.length > 0) {
+            currentLayer.forEach(layer => {
+                layer.layerRef.forEach(ref => {
+                    if (mapRef.current) {
+                        mapRef.current.removeLayer(ref);
+                    }
+                });
+            });
+        }
+
+        // Reset all toggle states
+        setToggleStates({});
+
+        // Clear all layers
+        setCurrentLayer([]);
+
+        // Clear all filters
+        setFilterSelections({
+            selectedMWSValues: {},
+            selectedVillageValues: {}
+        });
+    };
+
+    // Reset subcategory when changing main category or tab
     const handleCategoryChange = (category) => {
         setIndicatorType(category);
         setSelectedSubcategory(null);
