@@ -19,6 +19,8 @@ import {
   initializeAnalytics,
 } from "../services/analytics";
 import LandingNavbar from "../components/landing_navbar.jsx";
+import LoadingSpinner from "../components/ui/LoadingSpinner.jsx";
+import toast from "react-hot-toast";
 
 const LandscapeExplorer = () => {
   const [showLeftSidebar, setShowLeftSidebar] = useState(false);
@@ -201,7 +203,7 @@ const LandscapeExplorer = () => {
   // Handle GeoJSON download
   const handleGeoJsonLayers = (layerName) => {
     if (!district || !block) {
-      alert("Please select a district and block first");
+      toast.error("Please select a district and block first.");
       return;
     }
 
@@ -246,7 +248,7 @@ const LandscapeExplorer = () => {
   // Handle KML download
   const handleKMLLayers = (layerName) => {
     if (!district || !block) {
-      alert("Please select a district and block first");
+      toast.error("Please select a district and block first.");
       return;
     }
 
@@ -291,7 +293,7 @@ const LandscapeExplorer = () => {
   // Handle Excel download
   const handleExcelDownload = () => {
     if (!district || !block) {
-      alert("Please select a district and block first");
+      toast.error("Please select a district and block first.");
       return;
     }
 
@@ -321,11 +323,12 @@ const LandscapeExplorer = () => {
         link.remove();
         URL.revokeObjectURL(url);
         setIsLoading(false);
+        toast.success("Excel data downloaded successfully.");
       })
       .catch((error) => {
         console.error("Error downloading Excel:", error);
         setIsLoading(false);
-        alert("Failed to download Excel data. Please try again.");
+        toast.error("Failed to download Excel data. Please try again.");
       });
   };
 
@@ -379,6 +382,16 @@ const LandscapeExplorer = () => {
         )}
 
         <div className="flex-1 relative p-2">
+          {isLoading && (
+            <div className="pointer-events-none absolute inset-0 z-40 flex items-center justify-center bg-white/40 backdrop-blur-[1px]">
+              <div className="flex flex-col items-center gap-3 rounded-xl bg-white/90 px-4 py-3 shadow-md border border-slate-200">
+                <LoadingSpinner size={26} />
+                <p className="text-xs text-slate-700">
+                  Preparing data layers&hellip;
+                </p>
+              </div>
+            </div>
+          )}
           {!showLeftSidebar && (
             <button
               onClick={() => setShowLeftSidebar(true)}
