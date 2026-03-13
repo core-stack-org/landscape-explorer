@@ -830,7 +830,7 @@ console.log("Current filterSelections:", filterSelections);
         }
       },
     });
-
+    arrowLayer.setZIndex(9999);
     arrowLayer.setVisible(false);
     mapRef.current.addLayer(arrowLayer);
     mwsArrowLayerRef.current = arrowLayer;
