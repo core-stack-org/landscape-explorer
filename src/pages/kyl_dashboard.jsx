@@ -1300,7 +1300,7 @@ console.log("Current filterSelections:", filterSelections);
         else if (filter.layer_store[i] === "panchayat_boundaries") {
           tempLayer = await getVectorLayers(
             filter.layer_store[i],
-            `${transformName(district.label)}_${transformName(block.label)}`
+            `${transformName(district.label)}_${transformName(block.label)}_${filter.layer_name[i]}`
           );
         }
         else if(filter.layer_store[i] === "restoration"){
