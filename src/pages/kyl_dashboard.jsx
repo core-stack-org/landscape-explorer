@@ -1211,7 +1211,8 @@ console.log("Current filterSelections:", filterSelections);
         [filter.name]: false,
       }));
       //setFiltersEnabled(true);
-    } else if (currentLayer.length === 0) {
+    } 
+    else if (currentLayer.length === 0) {
       let layerRef = [];
       mapRef.current.removeLayer(mwsLayerRef.current);
       mapRef.current.removeLayer(boundaryLayerRef.current);
@@ -1293,7 +1294,7 @@ console.log("Current filterSelections:", filterSelections);
         else if (filter.layer_store[i] === "drought" || filter.layer_store[i] === "green_credit") {
           tempLayer = await getVectorLayers(
             filter.layer_store[i],
-            `${transformName(district.label)}_${transformName(block.label)}`
+            `${transformName(district.label)}_${transformName(block.label)}_${filter.layer_name[i]}`
           );
         } 
         else if (filter.layer_store[i] === "panchayat_boundaries") {
