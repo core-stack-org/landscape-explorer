@@ -1092,7 +1092,7 @@
   const normalizeMwsFeatures = (features) => {
     if (!features) return [];
 
-    // already OL features
+    // already OL features (array)
     if (
       Array.isArray(features) &&
       features.length &&
@@ -1113,6 +1113,26 @@
           featureProjection: "EPSG:4326",
         }
       );
+    }
+
+    // single OL feature → wrap in array
+    if (typeof features?.getGeometry === "function") {
+      return [features];
+    }
+
+    // single GeoJSON feature → wrap and read
+    if (features?.geometry) {
+      const read = geojsonReaderRef.current.readFeatures(
+        {
+          type: "FeatureCollection",
+          features: [{ type: "Feature", geometry: features.geometry, properties: features.properties || {} }],
+        },
+        {
+          dataProjection: "EPSG:4326",
+          featureProjection: "EPSG:4326",
+        }
+      );
+      return read || [];
     }
 
     return [];
