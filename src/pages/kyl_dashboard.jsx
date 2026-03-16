@@ -1523,7 +1523,7 @@ console.log("Current filterSelections:", filterSelections);
       setState(matchedState)
       setDistrict(matchedDistrict)
       setBlock(matchedTehsil)
-      setHighlightMWS(response.uid)
+      setHighlightMWS(response.mws_id)
     } catch (err) {
       console.log(err)
       toast.custom(
