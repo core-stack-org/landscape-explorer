@@ -840,7 +840,7 @@ const KYLDashboardPage = () => {
         return styles;
       },
     });
-
+    arrowLayer.setZIndex(9999);
     arrowLayer.setVisible(false);
 
     mapRef.current.addLayer(arrowLayer);
@@ -1257,7 +1257,8 @@ const KYLDashboardPage = () => {
         [filter.name]: false,
       }));
       //setFiltersEnabled(true);
-    } else if (currentLayer.length === 0) {
+    } 
+    else if (currentLayer.length === 0) {
       let layerRef = [];
       mapRef.current.removeLayer(mwsLayerRef.current);
       mapRef.current.removeLayer(boundaryLayerRef.current);
@@ -1350,10 +1351,7 @@ const KYLDashboardPage = () => {
         ) {
           tempLayer = await getVectorLayers(
             filter.layer_store[i],
-            `${district.label.toLowerCase().split(" ").join("_")}_${block.label
-              .toLowerCase()
-              .split(" ")
-              .join("_")}_${filter.layer_name[i]}`,
+            `${transformName(district.label)}_${transformName(block.label)}_${filter.layer_name[i]}`
           );
         } else if (filter.layer_store[i] === "panchayat_boundaries") {
           tempLayer = await getVectorLayers(
