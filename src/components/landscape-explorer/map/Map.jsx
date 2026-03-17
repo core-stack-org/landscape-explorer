@@ -920,7 +920,7 @@ const Map = forwardRef(({
           'deforestation': 'Change Detection Deforestation',
           'degradation': 'Change Detection Degradation',
           'urbanization': 'Change Detection Urbanization',
-          'cropintensity': 'Change Detection Crop-Intensity',
+          'cropIntensity': 'Change Detection Crop-Intensity',
           'restoration': 'Change Detection Restoration',
           'soge': 'SOGE',
           'aquifer': 'Aquifer',

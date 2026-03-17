@@ -8,7 +8,7 @@ const yearToNumber = (yy) => {
 };
 
 // convert to YY-YY
-const normalizeYear = (iv) => {
+export const normalizeYear = (iv) => {
   if (!iv || typeof iv !== "string" || !iv.includes("-")) return null;
 
   let clean = iv.replace(/_/g, "-").trim();
@@ -46,7 +46,7 @@ export const getRainfallByYear = (mwsFeature) => {
   return rainfall;
 };
 
-// ✅ FINAL & SAFE impact year logic
+//  FINAL & SAFE impact year logic
 export const calculateImpactYear = (rainfall, ivRaw) => {
   if (!rainfall || !ivRaw) return null;
 
@@ -55,53 +55,45 @@ export const calculateImpactYear = (rainfall, ivRaw) => {
 
   const ivNum = yearToNumber(interventionYear);
 
-  // 🔥 ONLY years that actually exist in rainfall data
+  // extract valid rainfall years
   const years = Object.keys(rainfall)
     .filter((y) => rainfall[y] > 0)
     .sort((a, b) => yearToNumber(a) - yearToNumber(b));
 
+  // correct pre and post separation
   const preYears = years.filter((y) => yearToNumber(y) < ivNum);
   const postYears = years.filter((y) => yearToNumber(y) > ivNum);
+  if (!postYears.length) return null;
 
-  //  NO POST YEAR = NO IMPACT
-  if (!preYears.length || !postYears.length) return null;
-
-  // let minDiff = Infinity;
-  // let result = null;
-
-  // preYears.forEach((pre) => {
-  //   postYears.forEach((post) => {
-  //     const diff = Math.abs(rainfall[pre] - rainfall[post]);
-
-  //     if (diff < minDiff) {
-  //       minDiff = diff;
-  //       result = { pre, post };
-  //     }
-  //   });
-  // });
+  // ❗ if no post year exists → NO IMPACT
+  if (!preYears.length || !postYears.length) {
+    return null;
+  }
 
   const pairs = [];
 
-postYears.forEach((post) => {
-  let bestPre = null;
-  let minDiff = Infinity;
+  postYears.forEach((post) => {
+    let bestPre = null;
+    let minDiff = Infinity;
 
-  preYears.forEach((pre) => {
-    const diff = Math.abs(rainfall[pre] - rainfall[post]);
-    if (diff < minDiff) {
-      minDiff = diff;
-      bestPre = pre;
+    preYears.forEach((pre) => {
+      const diff = Math.abs(rainfall[pre] - rainfall[post]);
+
+      if (diff < minDiff) {
+        minDiff = diff;
+        bestPre = pre;
+      }
+    });
+
+    if (bestPre && yearToNumber(post) > ivNum) {
+      pairs.push({ pre: bestPre, post });
     }
   });
 
-  if (bestPre) {
-    pairs.push({ pre: bestPre, post });
-  }
-});
+  // ❗ final safety
+  const validPairs = pairs.filter(
+    (p) => yearToNumber(p.post) > ivNum
+  );
 
-// agar koi valid pair hi nahi bana
-if (!pairs.length) return null;
-
-return pairs;
-
+  return validPairs.length ? validPairs : null;
 };

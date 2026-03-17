@@ -154,6 +154,15 @@ const layerStyles = (feature, vectorStyle, idx = 0, villageJson, dataJson) => {
                 avg_Res = 4
             }
             break;
+        
+        case 13:
+            // FOR Area Protection
+            avg_Res = feature.values_.Protection
+
+        case 14:
+            // FOR Wide Scale
+            avg_Res = feature.values_["Wide-scale"]
+        
     }
     
     for(tempIdx = 0; tempIdx < vectorStyle.length; ++tempIdx){
