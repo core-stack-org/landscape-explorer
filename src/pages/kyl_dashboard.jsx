@@ -759,228 +759,182 @@ const KYLDashboardPage = () => {
     // Build pairs with side index BEFORE creating features
     // -------------------------
     const pairMap = {};
-    const arrowFeatures = [];
+const arrowFeatures = [];
 
-    connectivityFeatures.forEach((feature) => {
-      const uid = feature.get("uid");
-      const downstream = feature.get("downstream");
+connectivityFeatures.forEach((feature) => {
+  const uid = feature.get("uid");
+  const downstream = feature.get("downstream");
 
-      if (!uid || !downstream) return;
+  if (!uid || !downstream) return;
 
-      const start = uidToCoord[uid.toString().trim()];
-      const end = uidToCoord[downstream.toString().trim()];
+  const start = uidToCoord[uid.toString().trim()];
+  const end = uidToCoord[downstream.toString().trim()];
 
-      if (!start || !end) return;
+  if (!start || !end) return;
 
-      const line = new LineString([start, end]);
+  const key =
+    start[0] < end[0]
+      ? `${start.join(",")}_${end.join(",")}`
+      : `${end.join(",")}_${start.join(",")}`;
 
-      const arrowFeature = new Feature({
-        geometry: line,
-        upstream: uid,
-        downstream: downstream,
+  if (!pairMap[key]) pairMap[key] = 0;
+  const index = pairMap[key]++;
+  const side = index % 2 === 0 ? -1 : 1;
+
+  const dx = end[0] - start[0];
+  const dy = end[1] - start[1];
+  const len = Math.sqrt(dx * dx + dy * dy);
+  if (len < 1e-6) return;
+
+  const ux = dx / len;
+  const uy = dy / len;
+
+  const px = -uy;
+  const py = ux;
+
+  const MAP_OFFSET = 0.0008;
+  const MAP_PULLBACK = 0.0012;
+  const MAP_ARROW_LEN = 0.0014;
+
+  const offStart = [
+    start[0] + px * MAP_OFFSET * side,
+    start[1] + py * MAP_OFFSET * side,
+  ];
+  const offEnd = [
+    end[0] + px * MAP_OFFSET * side,
+    end[1] + py * MAP_OFFSET * side,
+  ];
+  const trimEnd = [
+    offEnd[0] - ux * MAP_PULLBACK,
+    offEnd[1] - uy * MAP_PULLBACK,
+  ];
+
+  const arrowAngle = Math.PI / 5;
+  const angle = Math.atan2(dy, dx);
+
+  const left = [
+    trimEnd[0] - MAP_ARROW_LEN * Math.cos(angle - arrowAngle),
+    trimEnd[1] - MAP_ARROW_LEN * Math.sin(angle - arrowAngle),
+  ];
+  const right = [
+    trimEnd[0] - MAP_ARROW_LEN * Math.cos(angle + arrowAngle),
+    trimEnd[1] - MAP_ARROW_LEN * Math.sin(angle + arrowAngle),
+  ];
+
+  arrowFeatures.push(
+    new Feature({
+      geometry: new LineString([offStart, trimEnd]),
+      featureType: "arrowLine",
+      upstream: uid,
+      downstream,
+    })
+  );
+
+  arrowFeatures.push(
+    new Feature({
+      geometry: new LineString([left, trimEnd, right]),
+      featureType: "arrowHead",
+      upstream: uid,
+      downstream,
+    })
+  );
+
+  arrowFeatures.push(
+    new Feature({
+      geometry: new Point(offStart),
+      featureType: "arrowDot",
+      upstream: uid,
+      downstream,
+    })
+  );
+}); // ← forEach ends here
+
+const arrowSource = new VectorSource({
+  features: arrowFeatures,
+});
+
+const arrowLayer = new VectorLayer({
+  source: arrowSource,
+  style: (feature) => {
+    const featureType = feature.get("featureType");
+    const color = "#FF1493";
+
+    if (featureType === "arrowLine" || featureType === "arrowHead") {
+      return new Style({
+        stroke: new Stroke({ color, width: 1.5 }),
       });
-
-      arrowFeatures.push(arrowFeature);
-    });
-    const arrowSource = new VectorSource({
-      features: arrowFeatures,
-  
-      const key =
-        start[0] < end[0]
-          ? `${start.join(",")}_${end.join(",")}`
-          : `${end.join(",")}_${start.join(",")}`;
-  
-      if (!pairMap[key]) pairMap[key] = 0;
-      const index = pairMap[key]++;
-      const side = index % 2 === 0 ? -1 : 1;
-  
-      // --- Compute offset geometry in map coords (not pixels) ---
-      const dx = end[0] - start[0];
-      const dy = end[1] - start[1];
-      const len = Math.sqrt(dx * dx + dy * dy);
-      if (len < 1e-6) return;
-  
-      const ux = dx / len;
-      const uy = dy / len;
-  
-      // Perpendicular in map coords
-      const px = -uy;
-      const py = ux;
-  
-      // Use a fixed map-unit offset (tune this to your projection/zoom level)
-      const MAP_OFFSET = 0.0008;     // side offset
-      const MAP_PULLBACK = 0.0012;   // distance before centroid
-      const MAP_ARROW_LEN = 0.0014;
-  
-      const offStart = [
-        start[0] + px * MAP_OFFSET * side,
-        start[1] + py * MAP_OFFSET * side,
-      ];
-      const offEnd = [
-        end[0] + px * MAP_OFFSET * side,
-        end[1] + py * MAP_OFFSET * side,
-      ];
-      const trimEnd = [
-        offEnd[0] - ux * MAP_PULLBACK,
-        offEnd[1] - uy * MAP_PULLBACK,
-      ];
-  
-      // Arrow head points
-      const arrowAngle = Math.PI / 5;
-      const angle = Math.atan2(dy, dx);
-  
-      const left = [
-        trimEnd[0] - MAP_ARROW_LEN * Math.cos(angle - arrowAngle),
-        trimEnd[1] - MAP_ARROW_LEN * Math.sin(angle - arrowAngle),
-      ];
-      const right = [
-        trimEnd[0] - MAP_ARROW_LEN * Math.cos(angle + arrowAngle),
-        trimEnd[1] - MAP_ARROW_LEN * Math.sin(angle + arrowAngle),
-      ];
-  
-      // Main line feature
-      arrowFeatures.push(
-        new Feature({
-          geometry: new LineString([offStart, trimEnd]),
-          featureType: "arrowLine",
-          upstream: uid,
-          downstream,
-        })
-      );
-  
-      // Arrow head feature
-      arrowFeatures.push(
-        new Feature({
-          geometry: new LineString([left, trimEnd, right]),
-          featureType: "arrowHead",
-          upstream: uid,
-          downstream,
-        })
-      );
-  
-      // Start dot feature
-      arrowFeatures.push(
-        new Feature({
-          geometry: new Point(offStart),
-          featureType: "arrowDot",
-          upstream: uid,
-          downstream,
-        })
-      );
-    });
-
-    const arrowLayer = new VectorLayer({
-      source: arrowSource,
-      style: (feature) => {
-        const styles = [];
-
-        const geometry = feature.getGeometry();
-        const coords = geometry.getCoordinates();
-
-        // Need at least 2 points
-        if (!coords || coords.length < 2) return styles;
-
-        const start = coords[coords.length - 2];
-        const end = coords[coords.length - 1];
-
-        const dx = end[0] - start[0];
-        const dy = end[1] - start[1];
-        const len = Math.sqrt(dx * dx + dy * dy);
-
-        // Skip zero-length or near-zero edges
-        if (len < 1e-6) return styles;
-
-        const angle = Math.atan2(dy, dx);
-        const color = "#FF1493";
-
-        // Main line
-        styles.push(
-          new Style({
-            stroke: new Stroke({ color, width: 1.5 }),
-          }),
-        );
-
-        // Arrowhead size proportional to edge length, capped
-        const arrowLen = Math.min(len * 0.08, 0.006);
-        const arrowAngle = Math.PI / 6;
-
-        const left = [
-          end[0] - arrowLen * Math.cos(angle - arrowAngle),
-          end[1] - arrowLen * Math.sin(angle - arrowAngle),
-        ];
-        const right = [
-          end[0] - arrowLen * Math.cos(angle + arrowAngle),
-          end[1] - arrowLen * Math.sin(angle + arrowAngle),
-        ];
-
-        styles.push(
-          new Style({
-            geometry: new LineString([left, end, right]),
-            stroke: new Stroke({ color, width: 1.5 }),
-          }),
-        );
-
-        return styles;
-      },
-    });
-    arrowLayer.setZIndex(9999);
-    arrowLayer.setVisible(false);
-
-    mapRef.current.addLayer(arrowLayer);
-    mwsArrowLayerRef.current = arrowLayer;
-  };
-
-  const fetchWaterBodiesLayer = async () => {
-    if (!district || !block || !mapRef.current) return;
-
-    const dist = district.label
-      .toLowerCase()
-      .replace(/\s*\(\s*/g, "_")
-      .replace(/\s*\)\s*/g, "")
-      .replace(/\s+/g, "_");
-
-    const blk = block.label
-      .toLowerCase()
-      .replace(/\s*\(\s*/g, "_")
-      .replace(/\s*\)\s*/g, "")
-      .replace(/\s+/g, "_");
-
-    const layerName = `surface_waterbodies_${dist}_${blk}`;
-
-    // If already loaded, skip
-    if (waterbodiesLayerRef.current) {
-      return;
     }
 
-    // Create vector layer
-    const wbLayer = await getVectorLayers("swb", layerName, true, true);
-
-    wbLayer.setStyle((feature) => {
-      const geom = feature.getGeometry();
-      if (!geom) return null;
-
-      let pointGeom = null;
-
-      if (geom.getType() === "Polygon") {
-        pointGeom = geom.getInteriorPoint();
-      } else if (geom.getType() === "MultiPolygon") {
-        const pts = geom.getInteriorPoints();
-        pointGeom = pts.getPoint(0);
-      }
-
-      return [
-        new Style({
-          geometry: geom,
-          stroke: new Stroke({
-            color: "rgba(246, 252, 83, 0.8)",
-            width: 2,
-          }),
-          fill: new Fill({
-            color: "rgba(246, 252, 83, 0.45)",
-          }),
+    if (featureType === "arrowDot") {
+      return new Style({
+        image: new RegularShape({
+          fill: new Fill({ color }),
+          points: 4,
+          radius: 4,
+          angle: Math.PI / 4,
         }),
-      ];
-    });
+      });
+    }
+
+    return null;
+  },
+});
+
+arrowLayer.setZIndex(9999);
+arrowLayer.setVisible(false);
+mapRef.current.addLayer(arrowLayer);
+mwsArrowLayerRef.current = arrowLayer;
+};
+
+const fetchWaterBodiesLayer = async () => {
+  if (!district || !block || !mapRef.current) return;
+
+  const dist = district.label
+    .toLowerCase()
+    .replace(/\s*\(\s*/g, "_")
+    .replace(/\s*\)\s*/g, "")
+    .replace(/\s+/g, "_");
+
+  const blk = block.label
+    .toLowerCase()
+    .replace(/\s*\(\s*/g, "_")
+    .replace(/\s*\)\s*/g, "")
+    .replace(/\s+/g, "_");
+
+  const layerName = `surface_waterbodies_${dist}_${blk}`;
+
+  if (waterbodiesLayerRef.current) {
+    return;
+  }
+
+  const wbLayer = await getVectorLayers("swb", layerName, true, true);
+
+  wbLayer.setStyle((feature) => {
+    const geom = feature.getGeometry();
+    if (!geom) return null;
+
+    let pointGeom = null;
+
+    if (geom.getType() === "Polygon") {
+      pointGeom = geom.getInteriorPoint();
+    } else if (geom.getType() === "MultiPolygon") {
+      const pts = geom.getInteriorPoints();
+      pointGeom = pts.getPoint(0);
+    }
+
+    return [
+      new Style({
+        geometry: geom,
+        stroke: new Stroke({
+          color: "rgba(246, 252, 83, 0.8)",
+          width: 2,
+        }),
+        fill: new Fill({
+          color: "rgba(246, 252, 83, 0.45)",
+        }),
+      }),
+    ];
+  });
 
     if (!wbLayer) {
       console.warn("Failed loading waterbodies");
