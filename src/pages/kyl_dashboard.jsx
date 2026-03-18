@@ -557,11 +557,11 @@ const KYLDashboardPage = () => {
             setSelectedMWSProfile(feature.getProperties());
             return new Style({
               stroke: new Stroke({
-                color: "#166534",
+                color: "#4a90e2",
                 width: 2.0,
               }),
               fill: new Fill({
-                color: "rgba(34, 197, 94, 0.4)",
+                color: "rgba(74, 144, 226, 0.2)",
               }),
             });
           } else if (
@@ -602,11 +602,11 @@ const KYLDashboardPage = () => {
             setSelectedMWSProfile(feature.getProperties());
             return new Style({
               stroke: new Stroke({
-                color: "#166534",
+                color: "#4a90e2",
                 width: 2.0,
               }),
               fill: new Fill({
-                color: "rgba(34, 197, 94, 0.4)",
+                color: "rgba(74, 144, 226, 0.2)",
               }),
             });
           } else if (
@@ -1117,11 +1117,8 @@ const KYLDashboardPage = () => {
         if (isSelected) {
           return new Style({
             stroke: new Stroke({
-              color: "#166534",
+              color: "#000000",
               width: 2.0,
-            }),
-            fill: new Fill({
-              color: "rgba(34, 197, 94, 1.2)", // green fill
             }),
           });
         }
@@ -1636,7 +1633,7 @@ const KYLDashboardPage = () => {
 
       const map = mapRef.current;
 
-      // 1️⃣ Get clicked waterbody feature
+      // Get clicked waterbody feature
       const wbFeature = map.forEachFeatureAtPixel(
         event.pixel,
         (feature, layer) => {
@@ -1658,7 +1655,7 @@ const KYLDashboardPage = () => {
       const wb_id = props?.UID;
       if (!wb_id) return;
 
-      // 2️⃣ Construct Waterbody GeoJSON (existing logic)
+      // Construct Waterbody GeoJSON (existing logic)
       const geojson = new GeoJSON();
 
       const fullFeature = {
@@ -1678,8 +1675,7 @@ const KYLDashboardPage = () => {
         geometry: geojson.writeGeometryObject(wbFeature.getGeometry()),
       });
 
-      // 3️⃣ FIND MATCHED MWS FEATURE (IMPORTANT PART)
-      // 3️⃣ EXTRACT ALL MWS FEATURES FOR THIS WATERBODY (UID match)
+      //  EXTRACT ALL MWS FEATURES FOR THIS WATERBODY (UID match)
       let matchedMws = [];
 
       if (mwsLayerRef.current && wbFeature) {
@@ -1707,7 +1703,7 @@ const KYLDashboardPage = () => {
         }
       }
 
-      // 4️⃣ SAVE ARRAY OF FULL GEOJSON FEATURES
+      //  SAVE ARRAY OF FULL GEOJSON FEATURES
       if (matchedMws.length > 0) {
         const geojsonWriter = new GeoJSON();
 
@@ -1720,7 +1716,7 @@ const KYLDashboardPage = () => {
 
         localStorage.setItem("matched_mws_features", JSON.stringify(jsonArray));
       } else {
-        console.warn("⚠️ No matching MWS found for clicked WB");
+        console.warn(" No matching MWS found for clicked WB");
       }
     };
     map.on("click", handleWaterbodyClick);
@@ -1751,11 +1747,11 @@ const KYLDashboardPage = () => {
           if (clickedMwsId === feature.values_.uid) {
             return new Style({
               stroke: new Stroke({
-                color: "#166534",
+                color: "#4a90e2",
                 width: 2.0,
               }),
               fill: new Fill({
-                color: "rgba(34, 197, 94, 0.4)",
+                color: "rgba(74, 144, 226, 0.2)",
               }),
             });
           } else if (
