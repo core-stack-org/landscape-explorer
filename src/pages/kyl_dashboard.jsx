@@ -784,6 +784,89 @@ const KYLDashboardPage = () => {
     });
     const arrowSource = new VectorSource({
       features: arrowFeatures,
+  
+      const key =
+        start[0] < end[0]
+          ? `${start.join(",")}_${end.join(",")}`
+          : `${end.join(",")}_${start.join(",")}`;
+  
+      if (!pairMap[key]) pairMap[key] = 0;
+      const index = pairMap[key]++;
+      const side = index % 2 === 0 ? -1 : 1;
+  
+      // --- Compute offset geometry in map coords (not pixels) ---
+      const dx = end[0] - start[0];
+      const dy = end[1] - start[1];
+      const len = Math.sqrt(dx * dx + dy * dy);
+      if (len < 1e-6) return;
+  
+      const ux = dx / len;
+      const uy = dy / len;
+  
+      // Perpendicular in map coords
+      const px = -uy;
+      const py = ux;
+  
+      // Use a fixed map-unit offset (tune this to your projection/zoom level)
+      const MAP_OFFSET = 0.0008;     // side offset
+      const MAP_PULLBACK = 0.0012;   // distance before centroid
+      const MAP_ARROW_LEN = 0.0014;
+  
+      const offStart = [
+        start[0] + px * MAP_OFFSET * side,
+        start[1] + py * MAP_OFFSET * side,
+      ];
+      const offEnd = [
+        end[0] + px * MAP_OFFSET * side,
+        end[1] + py * MAP_OFFSET * side,
+      ];
+      const trimEnd = [
+        offEnd[0] - ux * MAP_PULLBACK,
+        offEnd[1] - uy * MAP_PULLBACK,
+      ];
+  
+      // Arrow head points
+      const arrowAngle = Math.PI / 5;
+      const angle = Math.atan2(dy, dx);
+  
+      const left = [
+        trimEnd[0] - MAP_ARROW_LEN * Math.cos(angle - arrowAngle),
+        trimEnd[1] - MAP_ARROW_LEN * Math.sin(angle - arrowAngle),
+      ];
+      const right = [
+        trimEnd[0] - MAP_ARROW_LEN * Math.cos(angle + arrowAngle),
+        trimEnd[1] - MAP_ARROW_LEN * Math.sin(angle + arrowAngle),
+      ];
+  
+      // Main line feature
+      arrowFeatures.push(
+        new Feature({
+          geometry: new LineString([offStart, trimEnd]),
+          featureType: "arrowLine",
+          upstream: uid,
+          downstream,
+        })
+      );
+  
+      // Arrow head feature
+      arrowFeatures.push(
+        new Feature({
+          geometry: new LineString([left, trimEnd, right]),
+          featureType: "arrowHead",
+          upstream: uid,
+          downstream,
+        })
+      );
+  
+      // Start dot feature
+      arrowFeatures.push(
+        new Feature({
+          geometry: new Point(offStart),
+          featureType: "arrowDot",
+          upstream: uid,
+          downstream,
+        })
+      );
     });
 
     const arrowLayer = new VectorLayer({
@@ -1351,6 +1434,14 @@ const KYLDashboardPage = () => {
             `${transformName(district.label)}_${transformName(block.label)}_${filter.layer_name[i]}`
           );
         } else if (filter.layer_store[i] === "panchayat_boundaries") {
+        } 
+        else if (filter.layer_store[i] === "panchayat_boundaries") {
+          tempLayer = await getVectorLayers(
+            filter.layer_store[i],
+            `${transformName(district.label)}_${transformName(block.label)}_${filter.layer_name[i]}`
+          );
+        }
+        else if(filter.layer_store[i] === "restoration"){
           tempLayer = await getVectorLayers(
             filter.layer_store[i],
             `${district.label.toLowerCase().split(" ").join("_")}_${block.label
@@ -1578,6 +1669,10 @@ const KYLDashboardPage = () => {
       setDistrict(matchedDistrict);
       setBlock(matchedTehsil);
       setHighlightMWS(response.uid);
+      setState(matchedState)
+      setDistrict(matchedDistrict)
+      setBlock(matchedTehsil)
+      setHighlightMWS(response.mws_id)
     } catch (err) {
       console.log(err);
       toast.custom(
