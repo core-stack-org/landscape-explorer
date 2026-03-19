@@ -565,7 +565,7 @@ const KYLDashboardPage = () => {
                 lineDash: [5, 3],
               }),
               fill:new Fill({
-                "rgba(0,0,0,0.05)",
+                  color:"rgba(0,0,0,0.05)",
               }),
             });
           }
