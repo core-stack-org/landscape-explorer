@@ -36,7 +36,7 @@ export const getWaterbodyData = async ({
         parts = [main, alias];
       } else {
         // no parentheses → repeat twice
-        parts = [name];
+        parts = [name, name];
       }
     
       return parts
@@ -54,6 +54,25 @@ export const getWaterbodyData = async ({
   const dist = transformName(district.label);
   
   const blk = transformName(block.label);
+
+  // Wait for vector source features to be loaded before continuing.
+  // This must be declared before first use (no TDZ / ReferenceError).
+  const waitForFeatures = (source, maxWaitMs = 8000) =>
+    new Promise((resolve) => {
+      const start = Date.now();
+      const interval = setInterval(() => {
+        const feats = source.getFeatures();
+        if (feats.length > 0) {
+          clearInterval(interval);
+          resolve(feats);
+          return;
+        }
+        if (Date.now() - start >= maxWaitMs) {
+          clearInterval(interval);
+          resolve([]);
+        }
+      }, 200);
+    });
   
     const yellowWaterbodyStyle = new Style({
       stroke: new Stroke({
@@ -218,14 +237,3 @@ console.log("ZOI matched:", matchedZOI.length);
         
     };
   };
-  
-  const waitForFeatures = (source) =>
-    new Promise((resolve) => {
-      const interval = setInterval(() => {
-        const feats = source.getFeatures();
-        if (feats.length > 0) {
-          clearInterval(interval);
-          resolve(feats);
-        }
-      }, 200);
-    });
