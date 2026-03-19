@@ -560,8 +560,12 @@ const KYLDashboardPage = () => {
           ) {
             return new Style({
               stroke: new Stroke({
-                color: "#254871",
-                width: 1.5,
+                color: "#0a315d",
+                width: 3,
+                lineDash: [5, 3],
+              }),
+              fill:new Fill({
+                "rgba(0,0,0,0.05)",
               }),
             });
           }
