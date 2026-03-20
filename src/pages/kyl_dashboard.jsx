@@ -110,15 +110,15 @@ const KYLDashboardPage = () => {
 
   const addLayerSafe = (layer) => layer && mapRef.current && mapRef.current.addLayer(layer);
 
-  const transformName = (name) => {
-    if (!name) return name;
-    return name
-      .replace(/[()]/g, "") // Remove all parentheses
-      .replace(/[-\s]+/g, "_") // Replace dashes and spaces with "_"
-      .replace(/_+/g, "_") // Collapse multiple underscores to one
-      .replace(/^_|_$/g, "") // Remove leading/trailing underscores
-      .toLowerCase();
-  };
+const transformName = (name) => {
+  if (!name) return name;
+  return name
+    .replace(/[().]/g, "")        // Remove parentheses and dots
+    .replace(/[-\s]+/g, "_")      // Replace dashes and spaces with "_"
+    .replace(/_+/g, "_")          // Collapse multiple underscores
+    .replace(/^_|_$/g, "")        // Remove leading/trailing underscores
+    .toLowerCase();
+};
 
   const handleResetMWS = () => {
     if (!selectedMWSProfile) return; // If no MWS is selected, do nothing
@@ -488,14 +488,7 @@ console.log("Current filterSelections:", filterSelections);
     if (tempMWS.length === 0) {
       try {
         if (mwsLayerRef.current === null) {
-          const layerName = `deltaG_well_depth_${district.label
-            .toLowerCase()
-            .split(" ")
-            .join("_")}_${block.label
-              .toLowerCase()
-              .replace(/\s*\(\s*/g, "_")
-              .replace(/\s*\)\s*/g, "")
-              .replace(/\s+/g, "_")}`;
+          const layerName = `deltaG_well_depth_${transformName(district.label)}_${transformName(block.label)}`;
           const mwsLayer = await getVectorLayers(
             "mws_layers",
             layerName,
@@ -625,17 +618,9 @@ console.log("Current filterSelections:", filterSelections);
     if (!district || !block || !mapRef.current) return;
 
     try {
-      const dist = district.label
-        .toLowerCase()
-        .replace(/\s*\(\s*/g, "_")
-        .replace(/\s*\)\s*/g, "")
-        .replace(/\s+/g, "_");
+      const dist = transformName(district.label);
 
-      const blk = block.label
-        .toLowerCase()
-        .replace(/\s*\(\s*/g, "_")
-        .replace(/\s*\)\s*/g, "")
-        .replace(/\s+/g, "_");
+      const blk = transformName(block.label);
 
       const connectivityLayerName = `${dist}_${blk}_mws_connectivity`;
 
@@ -839,17 +824,9 @@ console.log("Current filterSelections:", filterSelections);
   const fetchWaterBodiesLayer = async () => {
     if (!district || !block || !mapRef.current) return;
 
-    const dist = district.label
-      .toLowerCase()
-      .replace(/\s*\(\s*/g, "_")
-      .replace(/\s*\)\s*/g, "")
-      .replace(/\s+/g, "_");
+    const dist = transformName(district.label);
 
-    const blk = block.label
-      .toLowerCase()
-      .replace(/\s*\(\s*/g, "_")
-      .replace(/\s*\)\s*/g, "")
-      .replace(/\s+/g, "_");
+    const blk = transformName(block.label);
 
     const layerName = `surface_waterbodies_${dist}_${blk}`;
 
@@ -955,28 +932,12 @@ console.log("Current filterSelections:", filterSelections);
     try {
       const boundaryLayer = await getVectorLayers(
         "panchayat_boundaries",
-        `${districtName
-          .toLowerCase()
-          .replace(/\s*\(\s*/g, "_")
-          .replace(/\s*\)\s*/g, "")
-          .replace(/\s+/g, "_")}_${blockName
-            .toLowerCase()
-            .replace(/\s*\(\s*/g, "_")
-            .replace(/\s*\)\s*/g, "")
-            .replace(/\s+/g, "_")}`,
+        `${transformName(district.label)}_${transformName(block.label)}`,
         true,
         true
       );
 
-      const layerName = `deltaG_well_depth_${district.label
-        .toLowerCase()
-        .replace(/\s*\(\s*/g, "_")
-        .replace(/\s*\)\s*/g, "")
-        .replace(/\s+/g, "_")}_${block.label
-          .toLowerCase()
-          .replace(/\s*\(\s*/g, "_")
-          .replace(/\s*\)\s*/g, "")
-          .replace(/\s+/g, "_")}`;
+      const layerName = `deltaG_well_depth_${transformName(district.label)}_${transformName(block.label)}`;
       const mwsLayer = await getVectorLayers(
         "mws_layers",
         layerName,
@@ -1116,7 +1077,7 @@ console.log("Current filterSelections:", filterSelections);
     try {
       setIsLoading(true);
       const response = await fetch(
-        `${process.env.REACT_APP_API_URL}/download_kyl_data/?state=${state.label.toLowerCase().replace(/\s*\(\s*/g, "_").replace(/\s*\)\s*/g, "").replace(/\s+/g, "_")}&district=${district.label.toLowerCase().replace(/\s*\(\s*/g, "_").replace(/\s*\)\s*/g, "").replace(/\s+/g, "_")}&block=${block.label.toLowerCase().replace(/\s*\(\s*/g, "_").replace(/\s*\)\s*/g, "").replace(/\s+/g, "_")}&file_type=json`
+        `${process.env.REACT_APP_API_URL}/download_kyl_data/?state=${transformName(state.label)}&district=${transformName(district.label)}&block=${transformName(block.label)}&file_type=json`
       );
 
       if (!response.ok) {
@@ -1137,20 +1098,7 @@ console.log("Current filterSelections:", filterSelections);
   const fetchVillageJson = async () => {
     try {
       const response = await fetch(
-        `${process.env.REACT_APP_API_URL
-        }/download_kyl_village_data?state=${state.label
-          .toLowerCase()
-          .replace(/\s*\(\s*/g, "_")
-          .replace(/\s*\)\s*/g, "")
-          .replace(/\s+/g, "_")}&district=${district.label
-            .toLowerCase()
-            .replace(/\s*\(\s*/g, "_")
-            .replace(/\s*\)\s*/g, "")
-            .replace(/\s+/g, "_")}&block=${block.label
-              .toLowerCase()
-              .replace(/\s*\(\s*/g, "_")
-              .replace(/\s*\)\s*/g, "")
-              .replace(/\s+/g, "_")}&file_type=json`
+        `${process.env.REACT_APP_API_URL}/download_kyl_village_data?state=${transformName(state.label)}&district=${transformName(district.label)}&block=${transformName(block.label)}&file_type=json`
       );
 
       if (!response.ok) {
