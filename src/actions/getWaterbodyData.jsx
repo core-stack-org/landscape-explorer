@@ -1,6 +1,6 @@
 import getVectorLayers from "./getVectorLayers";
 import GeoJSON from "ol/format/GeoJSON";
-import { Style, Fill, Stroke } from "ol/style";
+import { Style, Stroke } from "ol/style";
 
 export const getWaterbodyData = async ({
     district,
@@ -20,122 +20,68 @@ export const getWaterbodyData = async ({
       return null;
     }
 
-    const transformName = (name) => {
-      if (!name) return "";
-    
-      // Extract base + alias from parentheses
-      const match = name.match(/^(.+?)\s*\((.+?)\)$/);
-    
-      let parts = [];
-    
-      if (match) {
-        const main = match[1];
-        const alias = match[2];
-    
-        parts = [main, alias];
-      } else {
-        // no parentheses → repeat twice
-        parts = [name];
+  const extractMwsUidList = (mwsUidString) => {
+    if (!mwsUidString) return [];
+    return mwsUidString.split("_").reduce((acc, val, idx, arr) => {
+      if (idx % 2 === 0 && arr[idx + 1]) {
+        acc.push(`${val}_${arr[idx + 1]}`);
       }
-    
-      return parts
-        .map((p) =>
-          p
-            .replace(/[^\w\s-]/g, "") // remove special chars
-            .replace(/\s+/g, "_")     // Space
-            .replace(/_+/g, "_")      // collapse _
-            .replace(/^_|_$/g, "")    // trim _
-            .toLowerCase()
-        )
-        .join("_");
-    };
+      return acc;
+    }, []);
+  };
 
-  const dist = transformName(district.label);
-  
-  const blk = transformName(block.label);
-  
-    const yellowWaterbodyStyle = new Style({
-      stroke: new Stroke({
-        color: "yellow", 
-        width: 1.5,
-      }),
+  // ===================== WATERBODY ======================
+
+  const wbLayerName = `surface_waterbodies_${dist}_${blk}`;
+  const wbLayer = await getVectorLayers("swb", wbLayerName, false, true);
+  map.addLayer(wbLayer);
+
+  wbLayer.setStyle(yellowWaterbodyStyle);
+
+  const wbSource = wbLayer.getSource();
+  const view = map.getView();
+  const extent = view.calculateExtent(map.getSize());
+
+  wbSource.loadFeatures(extent, view.getResolution(), view.getProjection());
+  const wbFeatures = await waitForFeatures(wbSource);
+
+  let matchedWaterbody = null;
+
+  if (waterbodyUID) {
+    matchedWaterbody = wbFeatures.find((f) => {
+      const uid = f.get("UID") || f.get("uid");
+      return uid?.toString() === waterbodyUID.toString();
     });
+  }
 
-    const extractMwsUidList = (mwsUidString) => {
-      if (!mwsUidString) return [];
-  
-      return mwsUidString
-        .split("_")
-        .reduce((acc, val, idx, arr) => {
-          // join pairs: 12 + 33823 → 12_33823
-          if (idx % 2 === 0 && arr[idx + 1]) {
-            acc.push(`${val}_${arr[idx + 1]}`);
-          }
-          return acc;
-        }, []);
-    };
-  
-    const wbLayerName = `surface_waterbodies_${dist}_${blk}`;
-    const wbLayer = await getVectorLayers("swb", wbLayerName, false, true);
-    map.addLayer(wbLayer);
-  
-    wbLayer.setStyle(yellowWaterbodyStyle);
-  
-    const wbSource = wbLayer.getSource();
-    const view = map.getView();
-    const extent = view.calculateExtent(map.getSize());
-  
-    wbSource.loadFeatures(extent, view.getResolution(), view.getProjection());
-    const wbFeatures = await waitForFeatures(wbSource);
-  
-    let matchedWaterbody = null;
-  
-    if (waterbodyUID) {
-      matchedWaterbody = wbFeatures.find((f) => {
-        const uid = f.get("UID") || f.get("uid");
-        return uid?.toString() === waterbodyUID.toString();
+  // ===================== MWS ======================
+
+  const mwsLayerName = `deltaG_well_depth_${dist}_${blk}`;
+  const mwsLayer = await getVectorLayers("mws_layers", mwsLayerName, false, true);
+  map.addLayer(mwsLayer);
+
+  const mwsSource = mwsLayer.getSource();
+  mwsSource.loadFeatures(extent, view.getResolution(), view.getProjection());
+  const mwsFeatures = await waitForFeatures(mwsSource);
+
+  let matchedMWS = [];
+
+  if (matchedWaterbody) {
+    const wbMwsUID =
+      matchedWaterbody.get("MWS_UID") ||
+      matchedWaterbody.get("mws_uid");
+
+    if (wbMwsUID) {
+      const mwsUidList = extractMwsUidList(wbMwsUID.toString());
+
+      matchedMWS = mwsFeatures.filter((f) => {
+        const uid = (f.get("uid") || f.get("UID"))?.toString();
+        return uid && mwsUidList.includes(uid.trim());
       });
-  
-      if (!matchedWaterbody) {
-        console.warn(" No waterbody matched UID:", waterbodyUID);
-      }
     }
-  
-    const mwsLayerName = `deltaG_well_depth_${dist}_${blk}`;
-    const mwsLayer = await getVectorLayers(
-      "mws_layers",
-      mwsLayerName,
-      false,
-      true
-    );
-    map.addLayer(mwsLayer);
-  
-    const mwsSource = mwsLayer.getSource();
-    mwsSource.loadFeatures(extent, view.getResolution(), view.getProjection());
-    const mwsFeatures = await waitForFeatures(mwsSource);
-  
-  
-    let matchedMWS = [];
-    
-    if (matchedWaterbody) {
-      const wbMwsUID =
-        matchedWaterbody.get("MWS_UID") ||
-        matchedWaterbody.get("mws_uid");
+  }
 
-      if (wbMwsUID) {
-        // extract list like ["12_308838","12_311076","12_316294"]
-        const mwsUidList = extractMwsUidList(wbMwsUID.toString());
-   
-    
-        matchedMWS = mwsFeatures.filter((f) => {
-          const uid = (f.get("uid") || f.get("UID"))?.toString();
-          return uid && mwsUidList.includes(uid.trim());
-        });
-      }
-    }
-
-// ===================== ZOI FETCH ======================
-const zoiLayerName = `waterbodies_zoi_${dist}_${blk}`;
+  // ===================== ZOI ======================
 
 // Try multiple namespaces — some servers store ZOI differently
 const zoiLayer =
@@ -144,29 +90,29 @@ const zoiLayer =
   null;
   
 
-let rawZoiFeatures = [];
-let matchedZOI = [];
+  let rawZoiFeatures = [];
+  let matchedZOI = [];
 
-if (zoiLayer) {
-  map.addLayer(zoiLayer);
+  if (zoiLayer) {
+    map.addLayer(zoiLayer);
 
-  const zoiSource = zoiLayer.getSource();
-  zoiSource.loadFeatures(extent, view.getResolution(), view.getProjection());
+    const zoiSource = zoiLayer.getSource();
+    zoiSource.loadFeatures(extent, view.getResolution(), view.getProjection());
 
-  rawZoiFeatures = await waitForFeatures(zoiSource);
+    rawZoiFeatures = await waitForFeatures(zoiSource);
 
-  // Match only for selected WB
-  if (matchedWaterbody) {
-    const wbUid =
-      matchedWaterbody.get("UID")?.toString()?.trim() ||
-      matchedWaterbody.get("uid")?.toString()?.trim();
+    if (matchedWaterbody) {
+      const wbUid =
+        matchedWaterbody.get("UID")?.toString()?.trim() ||
+        matchedWaterbody.get("uid")?.toString()?.trim();
 
-    matchedZOI = rawZoiFeatures.filter(f => {
-      const zUid =
-        f.get("UID")?.toString()?.trim() ||
-        f.get("uid")?.toString()?.trim();
-      return zUid === wbUid;
-    });
+      matchedZOI = rawZoiFeatures.filter((f) => {
+        const zUid =
+          f.get("UID")?.toString()?.trim() ||
+          f.get("uid")?.toString()?.trim();
+        return zUid === wbUid;
+      });
+    }
   }
 }
     return {
@@ -176,43 +122,47 @@ if (zoiLayer) {
       waterbody: matchedWaterbody
         ? {
             olFeature: matchedWaterbody,
-            geojson: new GeoJSON().writeFeatureObject(matchedWaterbody, {
-              dataProjection: "EPSG:4326",
-              featureProjection: "EPSG:4326",
-            }),
-          }
-        : null,
-        
-  
-        mws: matchedMWS.length
-        ? matchedMWS.map(f => ({
-            olFeature: f,
-            geojson: new GeoJSON().writeFeatureObject(f, {
-              dataProjection: "EPSG:4326",
-              featureProjection: "EPSG:4326",
-            })
-          }))
-        : [],
+            geojson: geo,
+          };
+        })()
+      : null,
 
-        zoi: matchedZOI.length
-    ? matchedZOI.map(f =>
-        new GeoJSON().writeFeatureObject(f, {
-          dataProjection: "EPSG:4326",
-          featureProjection: "EPSG:4326",
+    mws: matchedMWS.length
+      ? matchedMWS.map((f) => {
+          const geo = new GeoJSON().writeFeatureObject(f, {
+            dataProjection: "EPSG:4326",
+            featureProjection: "EPSG:4326",
+          });
+          delete geo.properties;
+          return {
+            olFeature: f,
+            geojson: geo,
+          };
         })
-      )
-    : [],
-        
-    };
+      : [],
+
+    zoi: matchedZOI.length
+      ? matchedZOI.map((f) => {
+          const geo = new GeoJSON().writeFeatureObject(f, {
+            dataProjection: "EPSG:4326",
+            featureProjection: "EPSG:4326",
+          });
+          delete geo.properties;
+          return geo;
+        })
+      : [],
   };
-  
-  const waitForFeatures = (source) =>
-    new Promise((resolve) => {
-      const interval = setInterval(() => {
-        const feats = source.getFeatures();
-        if (feats.length > 0) {
-          clearInterval(interval);
-          resolve(feats);
-        }
-      }, 200);
-    });
+};
+
+// ===================== WAIT FUNCTION ======================
+
+const waitForFeatures = (source) =>
+  new Promise((resolve) => {
+    const interval = setInterval(() => {
+      const feats = source.getFeatures();
+      if (feats.length > 0) {
+        clearInterval(interval);
+        resolve(feats);
+      }
+    }, 200);
+  });

@@ -43,10 +43,6 @@ import {
   initializeAnalytics,
 } from "../services/analytics";
 import getWebGlLayers from "../actions/getWebGlLayers.js";
-import VectorLayer from "ol/layer/Vector";
-import VectorSource from "ol/source/Vector";
-import Feature from "ol/Feature";
-import LineString from "ol/geom/LineString";
 
 const KYLDashboardPage = () => {
   const mapElement = useRef(null);
@@ -86,6 +82,7 @@ const KYLDashboardPage = () => {
 
   const [indicatorType, setIndicatorType] = useState(null);
   const [showMWS, setShowMWS] = useState(true);
+  const [sidebarResetKey, setSidebarResetKey] = useState(0);
   const [showVillages, setShowVillages] = useState(true);
   const [filtersEnabled, setFiltersEnabled] = useState(false);
 
@@ -106,7 +103,6 @@ const KYLDashboardPage = () => {
 
   const [selectedWaterbodyForTehsil, setSelectedWaterbodyForTehsil] = useRecoilState(selectedWaterbodyForTehsilAtom);
   const [showWB, setShowWB] = useState(false);
-  const [showConnectivity, setShowConnectivity] = useState(false);
 
   const addLayerSafe = (layer) => layer && mapRef.current && mapRef.current.addLayer(layer);
 
@@ -1127,7 +1123,6 @@ console.log("Current filterSelections:", filterSelections);
       setDataJson(result);
 
       setIsLoading(false);
-      setFiltersEnabled(true)
     } catch (e) {
       console.log(e);
       setIsLoading(false);
@@ -1420,28 +1415,17 @@ console.log("Current filterSelections:", filterSelections);
     mapRef.current = map;
   };
 
-  const handleItemSelect = (setter, value) => {
-    setter(value);
-    // Reset everything when location changes
-    if (setter === setState) {
-      if (value) {
-        trackEvent("Location", "select_state", value.label);
-      }
-      setDistrict(null);
-      setBlock(null);
-      resetAllStates();
-    } else if (setter === setDistrict) {
-      if (value) {
-        trackEvent("Location", "select_district", value.label);
-      }
-      setBlock(null);
-      resetAllStates();
-    } else if (setter === setBlock) {
-      trackEvent("Location", "select_tehsil", value.label);
-      resetAllStates();
-    }
-  };
+ const handleItemSelect = (setter, value) => {
+  setter(value);
 
+  if (setter === setState) {
+    setDistrict(null);
+    setBlock(null);
+  } 
+  else if (setter === setDistrict) {
+    setBlock(null);
+  }
+};
   const handlePatternRemoval = (pattern) => {
     const key = pattern.patternName || pattern.name;
 
@@ -1474,6 +1458,7 @@ console.log("Current filterSelections:", filterSelections);
       selectedVillageValues: {},
       selectedWaterbodyValues:{}
     });
+  }
 
     setIndicatorType(null);
     setMappedAssets(false);
@@ -1494,6 +1479,12 @@ console.log("Current filterSelections:", filterSelections);
     }
   };
 
+  // 8️⃣ 🔥 VERY IMPORTANT — Restore default MWS style
+  if (mwsLayerRef.current) {
+    fetchMWSLayer([]);   // This restores default blue style properly
+  }
+  setSidebarResetKey(prev => prev + 1);
+};
   const searchUserLatLong = async () => {
     setIsLoading(true);
     try {
@@ -1793,8 +1784,7 @@ console.log("Current filterSelections:", filterSelections);
 
       setToggleStates({});
       setCurrentLayer([]);
-      fetchWaterBodiesLayer();
-      fetchMWSConnectivityLayers();
+      fetchWaterBodiesLayer()
     }
 
     // Cleanup function
@@ -2448,6 +2438,7 @@ console.log("First Waterbody Props:", wbFeatures[0]?.getProperties());
       <div className="flex h-[calc(100vh-48px)] p-4 gap-4">
         {/* Left Sidebar */}
         <KYLLeftSidebar
+          key={sidebarResetKey}
           indicatorType={indicatorType}
           setIndicatorType={setIndicatorType}
           filterSelections={filterSelections}
