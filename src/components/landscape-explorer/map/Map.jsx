@@ -886,6 +886,16 @@ const Map = forwardRef(({
     });
   }
 
+  const transformName = (name) => {
+  if (!name) return name;
+  return name
+    .replace(/[().]/g, "")        // Remove parentheses and dots
+    .replace(/[-\s]+/g, "_")      // Replace dashes and spaces with "_"
+    .replace(/_+/g, "_")          // Collapse multiple underscores
+    .replace(/^_|_$/g, "")        // Remove leading/trailing underscores
+    .toLowerCase();
+};
+
   // Expose methods to parent component
   useImperativeHandle(ref, () => ({
     toggleLayer: (layerId, isVisible) => {
@@ -1326,9 +1336,9 @@ const Map = forwardRef(({
       // Get admin boundary layer
       let adminLayer = await getVectorLayers(
         "panchayat_boundaries",
-        district.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_') +
+        transformName(district.label) +
         "_" +
-        block.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_'),
+        transformName(block.label),
         true,
         true
       );
@@ -1419,9 +1429,9 @@ const Map = forwardRef(({
       // === Drainage Layer ===
       let DrainageLayer = await getVectorLayers(
         "drainage",
-        district.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_') +
+        transformName(district.label) +
         "_" +
-        block.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_'),
+        transformName(block.label),
         true,
         true,
         "drainage",
@@ -1449,9 +1459,9 @@ const Map = forwardRef(({
       // === Remote Sensed Waterbodies Layer ===
       let RemoteSensedWaterbodiesLayer = await getVectorLayers(
         "swb",
-        "surface_waterbodies_" + district.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_') +
+        "surface_waterbodies_" + transformName(district.label) +
         "_" +
-        block.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_'),
+        transformName(block.label),
         true,
         true,
         "Water_bodies",
@@ -1474,9 +1484,9 @@ const Map = forwardRef(({
       // === MicroWatershed Layer ===
       let MicroWaterShedLayer = await getVectorLayers(
         "mws_layers",
-        "deltaG_well_depth_" + district.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_') +
+        "deltaG_well_depth_" + transformName(district.label) +
         "_" +
-        block.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_'),
+        transformName(block.label),
         true,
         true,
         "Watershed",
@@ -1508,8 +1518,8 @@ const Map = forwardRef(({
       // === CLART Layer ===
       let clartLayer = await getImageLayers(
         "clart",
-        district.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_') + "_" +
-        block.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_') + "_clart",
+        transformName(district.label) + "_" +
+        transformName(block.label) + "_clart",
         true
       );
 
@@ -1527,9 +1537,9 @@ const Map = forwardRef(({
       // === NREGA Layer ===
       let NregaLayer = await getWebGlLayers(
         "nrega_assets",
-        district.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_') +
+        transformName(district.label) +
         "_" +
-        block.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_')
+        transformName(block.label)
       );
 
       if (NregaLayer) {
@@ -1543,9 +1553,9 @@ const Map = forwardRef(({
       // === Drought Layer ===
       let DroughtLayer = await getVectorLayers(
         "drought",
-        district.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_') +
+        transformName(district.label) +
         "_" +
-        block.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_') +
+        transformName(block.label) +
         "_drought",
         true,
         true
@@ -1607,9 +1617,9 @@ const Map = forwardRef(({
       // === Terrain Layer ===
       let TerrainLayer = await getImageLayers(
         "terrain",
-        district.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_') +
+        transformName(district.label) +
         "_" +
-        block.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_') + "_terrain_raster",
+        transformName(block.label) + "_terrain_raster",
         true,
         "Terrain_Style_11_Classes"
       );
@@ -1624,9 +1634,9 @@ const Map = forwardRef(({
       // === Admin Without Metadata Layer ===
       let AdminBoundaryLayer = await getVectorLayers(
         "panchayat_boundaries",
-        district.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_') +
+        transformName(district.label) +
         "_" +
-        block.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_'),
+        transformName(block.label),
         true,
         true
       );
@@ -1641,9 +1651,9 @@ const Map = forwardRef(({
       // === Cropping Intensity Layer ===
       let CroppingIntensityLayer = await getVectorLayers(
         "crop_intensity",
-        district.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_') +
+        transformName(district.label) +
         "_" +
-        block.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_') + "_intensity",
+        transformName(block.label) + "_intensity",
         true,
         true
       );
@@ -1685,9 +1695,9 @@ const Map = forwardRef(({
       // === Terrain Vector Layer ===
       let TerrainVectorLayer = await getVectorLayers(
         "terrain",
-        district.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_') +
+        transformName(district.label) +
         "_" +
-        block.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_') +
+        transformName(block.label) +
         "_cluster",
         true,
         true
@@ -1714,9 +1724,9 @@ const Map = forwardRef(({
       let AfforestationLayer = await getImageLayers(
         "change_detection",
         "change_" +
-        district.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_') +
+        transformName(district.label) +
         "_" +
-        block.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_') + "_Afforestation",
+        transformName(block.label) + "_Afforestation",
         true,
         "afforestation"
       );
@@ -1732,9 +1742,9 @@ const Map = forwardRef(({
       let DeforestationLayer = await getImageLayers(
         "change_detection",
         "change_" +
-        district.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_') +
+        transformName(district.label) +
         "_" +
-        block.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_') + "_Deforestation",
+        transformName(block.label) + "_Deforestation",
         true,
         "	deforestation"
       );
@@ -1750,9 +1760,9 @@ const Map = forwardRef(({
       let DegradationLayer = await getImageLayers(
         "change_detection",
         "change_" +
-        district.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_') +
+        transformName(district.label) +
         "_" +
-        block.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_') + "_Degradation",
+        transformName(block.label) + "_Degradation",
         true,
         "degradation"
       );
@@ -1768,9 +1778,9 @@ const Map = forwardRef(({
       let UrbanizationLayer = await getImageLayers(
         "change_detection",
         "change_" +
-        district.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_') +
+        transformName(district.label) +
         "_" +
-        block.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_') + "_Urbanization",
+        transformName(block.label) + "_Urbanization",
         true,
         "urbanization"
       );
@@ -1786,9 +1796,9 @@ const Map = forwardRef(({
       let CropIntensityLayer = await getImageLayers(
         "change_detection",
         "change_" +
-        district.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_') +
+        transformName(district.label) +
         "_" +
-        block.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_') + "_CropIntensity",
+        transformName(block.label) + "_CropIntensity",
         true,
         "cropintensity"
       );
@@ -1804,9 +1814,9 @@ const Map = forwardRef(({
       let RestorationLayer = await getImageLayers(
         "restoration",
         "restoration_" +
-        district.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_') +
+        transformName(district.label) +
         "_" +
-        block.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_') + "_raster",
+        transformName(block.label) + "_raster",
         true,
         "restoration_style"
       );
@@ -1822,9 +1832,9 @@ const Map = forwardRef(({
       let SOGELayer = await getVectorLayers(
         "soge",
         "soge_vector_" +
-        district.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_') +
+        transformName(district.label) +
         "_" +
-        block.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_'),
+        transformName(block.label),
         true,
         true
       );
@@ -1881,9 +1891,9 @@ const Map = forwardRef(({
       let AquiferLayer = await getVectorLayers(
         "aquifer",
         "aquifer_vector_" +
-        district.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_') +
+        transformName(district.label) +
         "_" +
-        block.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_'),
+        transformName(block.label),
         true,
         true
       );
@@ -2001,9 +2011,9 @@ const Map = forwardRef(({
       let fortnightLayer = await getVectorLayers(
         "mws_layers",
         "deltaG_fortnight_" +
-        district.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_') +
+        transformName(district.label) +
         "_" +
-        block.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_'),
+        transformName(block.label),
         true,
         true
       );
@@ -2206,7 +2216,7 @@ const Map = forwardRef(({
 
       let LulcLayer = await getImageLayers(
         "LULC_level_1",
-        `LULC_${lulcYear1.value}_${district.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_')}_${block.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_')}_level_1`,
+        `LULC_${lulcYear1.value}_${transformName(district.label)}_${transformName(block.label)}_level_1`,
         true,
         ""
       );
@@ -2236,7 +2246,7 @@ const Map = forwardRef(({
 
       let LulcLayer = await getImageLayers(
         "LULC_level_2",
-        `LULC_${lulcYear2.value}_${district.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_')}_${block.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_')}_level_2`,
+        `LULC_${lulcYear2.value}_${transformName(district.label)}_${transformName(block.label)}_level_2`,
         true,
         ""
       );
@@ -2266,7 +2276,7 @@ const Map = forwardRef(({
 
       let LulcLayer = await getImageLayers(
         "LULC_level_3",
-        `LULC_${lulcYear3.value}_${district.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_')}_${block.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_')}_level_3`,
+        `LULC_${lulcYear3.value}_${transformName(district.label)}_${transformName(block.label)}_level_3`,
         true,
         ""
       );
