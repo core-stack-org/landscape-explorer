@@ -1188,7 +1188,7 @@
 
       const [terrainLayer, drainageLayer] = await Promise.all([
         getImageLayer("terrain", terrainKey, true, "Terrain_Style_11_Classes").catch(() => null),
-        getVectorLayers("drainage", drainageKey, true, "drainage").catch(() => null),
+        getVectorLayers("drainage", drainageKey, true, true).catch(() => null),
       ]);
 
       if (terrainLayer) {
@@ -1332,7 +1332,7 @@ if (isTehsil) {
 
   const [terrainLayer, drainageLayer] = await Promise.all([
     getImageLayer("terrain", terrainKey, true, "Terrain_Style_11_Classes").catch(() => null),
-    getVectorLayers("drainage", drainageKey, true, "drainage").catch(() => null),
+    getVectorLayers("drainage", drainageKey, true, true).catch(() => null),
   ]);
 
   // Clip terrain to MultiPolygon
