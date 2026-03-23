@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import Map from "../components/landscape-explorer/map/Map.jsx";
-import LeftSidebar from "../components/landscape-explorer/sidebar/LeftSidebar.jsx";
 import RightSidebar from "../components/landscape-explorer/sidebar/RightSidebar.jsx";
 import { useRecoilState } from "recoil";
 import {
@@ -374,32 +373,10 @@ const LandscapeExplorer = () => {
         <LandingNavbar />
       </div>
       <div className="flex h-[calc(100vh-48px)]">
-        {showLeftSidebar && (
-          <LeftSidebar onClose={() => setShowLeftSidebar(false)} />
-        )}
+
 
         <div className="flex-1 relative p-2">
-          {!showLeftSidebar && (
-            <button
-              onClick={() => setShowLeftSidebar(true)}
-              className="absolute top-4 left-4 z-10 bg-[#EDE9FE] p-2 rounded-md shadow-md text-[#8B5CF6]
-              hover:bg-[#8B5CF6] hover:text-white transition-colors"
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="24"
-                height="24"
-                fill="currentColor"
-                viewBox="0 0 16 16"
-              >
-                <path
-                  fillRule="evenodd"
-                  d="M2.5 12a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5z"
-                />
-              </svg>
-            </button>
-          )}
-
+          
           <Map
             ref={setMapRef}
             isLoading={isLoading}
