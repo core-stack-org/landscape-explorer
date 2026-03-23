@@ -873,6 +873,106 @@ const MapLegend = ({ toggledLayers, lulcYear1, lulcYear2, lulcYear3 }) => {
     </div>
   );
 };
+}
+
+
+const Map = forwardRef(({
+  isLoading,
+  setIsLoading,
+  state,
+  district,
+  block,
+  filterSelections,
+  toggledLayers = {},
+  toggleLayer,
+  showMWS = true,
+  setShowMWS,
+  showVillages = true,
+  setShowVillages,
+  lulcYear1,
+  lulcYear2,
+  lulcYear3
+}, ref) => {
+  const mapElement = useRef(null);
+  const mapRef = useRef(null);
+  const baseLayerRef = useRef(null);
+  const markersLayer = useRef(null);
+
+  // Added flag to prevent recursion
+  const handlingExternalToggle = useRef(false);
+
+  // Layer arrays matching original implementation structure
+  const LayersArray = [
+    { LayerRef: useRef(null), name: "Demographics", isRaster: false },
+    { LayerRef: useRef(null), name: "Drainage", isRaster: false },
+    { LayerRef: useRef(null), name: "Remote-Sensed Waterbodies", isRaster: false },
+    { LayerRef: useRef(null), name: "Hydrological Boundries", isRaster: false },
+    { LayerRef: useRef(null), name: "CLART", isRaster: true },
+    { LayerRef: useRef(null), name: "Hydrological Variables", isRaster: false },
+    { LayerRef: useRef(null), name: "NREGA", isRaster: false },
+    { LayerRef: useRef(null), name: "Drought", isRaster: false },
+    { LayerRef: useRef(null), name: "Terrain", isRaster: true },
+    { LayerRef: useRef(null), name: "Administrative Boundaries", isRaster: false },
+    { LayerRef: useRef(null), name: "Cropping Intensity", isRaster: false },
+    { LayerRef: useRef(null), name: "Terrain Vector", isRaster: false },
+    { LayerRef: useRef(null), name: "Change Detection Afforestation", isRaster: true },
+    { LayerRef: useRef(null), name: "Change Detection Deforestation", isRaster: true },
+    { LayerRef: useRef(null), name: "Change Detection Degradation", isRaster: true },
+    { LayerRef: useRef(null), name: "Change Detection Urbanization", isRaster: true },
+    { LayerRef: useRef(null), name: "Change Detection Crop-Intensity", isRaster: true },
+    { LayerRef: useRef(null), name: "Change Detection Restoration", isRaster: true },
+    { LayerRef: useRef(null), name: "SOGE", isRaster: true },
+    { LayerRef: useRef(null), name: "Aquifer", isRaster: true },
+    { LayerRef: useRef(null), name: "Fortnight Hydrological Variables", isRaster: false },
+    { LayerRef: useRef(null), name: "LULC_1", isRaster: true },
+    { LayerRef: useRef(null), name: "LULC_2", isRaster: true },
+    { LayerRef: useRef(null), name: "LULC_3", isRaster: true },
+  ];
+
+  // Track active layers
+  const [currentLayers, setCurrentLayers] = useState([]);
+  const [bbox, setBBox] = useState(null);
+  const [layerErrors, setLayerErrors] = useState({});
+  const [isLayersFetched, setIsLayersFetched] = useState(false);
+  const [stateData, setStateData] = useState(null);
+  const [isInitialized, setIsInitialized] = useState(false);
+
+  // Color constants from original implementation
+  const terrainClusterColors = ["#324A1C", "#97C76B", "#673A13", "#E5E059"];
+  const drainageColors = [
+    "03045E", "023E8A", "0077B6", "0096C7", "00B4D8", "48CAE4", "90E0EF", "ADE8F4", "CAF0F8",
+  ];
+  let years = ["2017", "2018", "2019", "2020", "2021", "2022"]
+
+  // Helper function to change polygon color (from original)
+  function changePolygonColor(color) {
+    return new Style({
+      fill: new Fill({
+        color: color,
+        opacity: 0.4,
+      }),
+      stroke: new Stroke({
+        color: "transparent",
+        width: 0,
+      }),
+    });
+  }
+
+  const transformName = (name) => {
+  if (!name) return name;
+  return name
+    .replace(/[().]/g, "")        // Remove parentheses and dots
+    .replace(/[-\s]+/g, "_")      // Replace dashes and spaces with "_"
+    .replace(/_+/g, "_")          // Collapse multiple underscores
+    .replace(/^_|_$/g, "")        // Remove leading/trailing underscores
+    .toLowerCase();
+};
+
+  // Expose methods to parent component
+  useImperativeHandle(ref, () => ({
+    toggleLayer: (layerId, isVisible) => {
+      // Set flag to prevent recursion
+      handlingExternalToggle.current = true;
 
 const Map = forwardRef(
   (
@@ -1515,6 +1615,48 @@ const Map = forwardRef(
           }
 
           // Default Black Boundary
+  // Handle location change - fetch all layers
+  const handleLocationChange = async () => {
+    if (!block) return;
+
+    setIsLoading(true);
+    let currentActiveLayers = [];
+
+    try {
+      // Get admin boundary layer
+      let adminLayer = await getVectorLayers(
+        "panchayat_boundaries",
+        transformName(district.label) +
+        "_" +
+        transformName(block.label),
+        true,
+        true
+      );
+      adminLayer.setStyle(function (feature) {
+        if (!feature || !feature.values_) return null;
+
+        let bin = (feature.values_.P_LIT / feature.values_.TOT_P) * 100;
+        if (bin < 46) {
+          return new Style({
+            stroke: new Stroke({
+              color: "#000000",
+              width: 0.5,
+            }),
+            fill: new Fill({
+              color: "#98FB98",
+            })
+          })
+        } else if (bin >= 46 && bin < 59) {
+          return new Style({
+            stroke: new Stroke({
+              color: "#000000",
+              width: 0.5,
+            }),
+            fill: new Fill({
+              color: "#32CD32",
+            })
+          })
+        } else if (bin >= 59 && bin <= 70) {
           return new Style({
             stroke: new Stroke({
               color: "#000000",
@@ -1595,6 +1737,28 @@ const Map = forwardRef(
                 width: 2.0,
               }),
             });
+      // Fetch and configure all other layers following original implementation
+      // === Drainage Layer ===
+      let DrainageLayer = await getVectorLayers(
+        "drainage",
+        transformName(district.label) +
+        "_" +
+        transformName(block.label),
+        true,
+        true,
+        "drainage",
+      );
+
+      if (DrainageLayer) {
+        DrainageLayer.setStyle(function (feature) {
+          if (!feature || !feature.values_) return null;
+
+          let order = feature.values_.ORDER || 1;
+          return new Style({
+            stroke: new Stroke({
+              color: `#${drainageColors[order - 1] || drainageColors[0]}`,
+              width: 2.0,
+            }),
           });
 
           if (LayersArray[1].LayerRef.current != null) {
@@ -1621,6 +1785,23 @@ const Map = forwardRef(
           true,
           true,
           "Water_bodies",
+      // === Remote Sensed Waterbodies Layer ===
+      let RemoteSensedWaterbodiesLayer = await getVectorLayers(
+        "swb",
+        "surface_waterbodies_" + transformName(district.label) +
+        "_" +
+        transformName(block.label),
+        true,
+        true,
+        "Water_bodies",
+      );
+
+      if (RemoteSensedWaterbodiesLayer) {
+        RemoteSensedWaterbodiesLayer.setStyle(
+          new Style({
+            stroke: new Stroke({ color: "#6495ed", width: 5 }),
+            fill: new Fill({ color: "rgba(100, 149, 237, 0.5)" }),
+          })
         );
 
         if (RemoteSensedWaterbodiesLayer) {
@@ -1633,6 +1814,30 @@ const Map = forwardRef(
 
           if (LayersArray[2].LayerRef.current != null) {
             safeRemoveLayer(LayersArray[2].LayerRef.current);
+      // === MicroWatershed Layer ===
+      let MicroWaterShedLayer = await getVectorLayers(
+        "mws_layers",
+        "deltaG_well_depth_" + transformName(district.label) +
+        "_" +
+        transformName(block.label),
+        true,
+        true,
+        "Watershed",
+      );
+
+      if (MicroWaterShedLayer) {
+        MicroWaterShedLayer.setStyle(function (feature) {
+          if (!feature || !feature.values_) return null;
+
+          let bin = feature.values_.Net2018_23;
+          if (bin < -5) {
+            return changePolygonColor("rgba(255, 0, 0, 0.5)"); // red
+          } else if (bin >= -5 && bin < -1) {
+            return changePolygonColor("rgba(255, 255, 0, 0.5)"); // yellow
+          } else if (bin >= -1 && bin <= 1) {
+            return changePolygonColor("rgba(0, 255, 0, 0.5)"); // green
+          } else if (bin > 1) {
+            return changePolygonColor("rgba(0, 0, 255, 0.5)"); // blue
           }
           LayersArray[2].LayerRef.current = RemoteSensedWaterbodiesLayer;
         }
@@ -1703,6 +1908,17 @@ const Map = forwardRef(
             safeRemoveLayer(LayersArray[4].LayerRef.current);
           }
           LayersArray[4].LayerRef.current = clartLayer;
+      // === CLART Layer ===
+      let clartLayer = await getImageLayers(
+        "clart",
+        transformName(district.label) + "_" +
+        transformName(block.label) + "_clart",
+        true
+      );
+
+      if (clartLayer) {
+        if (LayersArray[4].LayerRef.current != null) {
+          safeRemoveLayer(LayersArray[4].LayerRef.current);
         }
         // === Well Depth Layer ===
         let wellDepthLayer = MicroWaterShedLayer;
@@ -1730,6 +1946,21 @@ const Map = forwardRef(
           }
           LayersArray[6].LayerRef.current = NregaLayer;
           currentActiveLayers.push(LayersArray[6].name);
+      // === Well Depth Layer ===
+      let wellDepthLayer = MicroWaterShedLayer;
+      LayersArray[5].LayerRef.current = wellDepthLayer;
+
+      // === NREGA Layer ===
+      let NregaLayer = await getWebGlLayers(
+        "nrega_assets",
+        transformName(district.label) +
+        "_" +
+        transformName(block.label)
+      );
+
+      if (NregaLayer) {
+        if (LayersArray[6].LayerRef.current != null) {
+          safeRemoveLayer(LayersArray[6].LayerRef.current);
         }
 
         // === Drought Layer ===
@@ -1750,6 +1981,16 @@ const Map = forwardRef(
           true,
           true,
         );
+      // === Drought Layer ===
+      let DroughtLayer = await getVectorLayers(
+        "drought",
+        transformName(district.label) +
+        "_" +
+        transformName(block.label) +
+        "_drought",
+        true,
+        true
+      );
 
         if (DroughtLayer) {
           DroughtLayer.setStyle(function (feature) {
@@ -1857,6 +2098,19 @@ const Map = forwardRef(
             safeRemoveLayer(LayersArray[24].LayerRef.current);
           }
           LayersArray[24].LayerRef.current = treeOverallLayer;
+      // === Terrain Layer ===
+      let TerrainLayer = await getImageLayers(
+        "terrain",
+        transformName(district.label) +
+        "_" +
+        transformName(block.label) + "_terrain_raster",
+        true,
+        "Terrain_Style_11_Classes"
+      );
+
+      if (TerrainLayer) {
+        if (LayersArray[8].LayerRef.current != null) {
+          safeRemoveLayer(LayersArray[8].LayerRef.current);
         }
 
         // === Terrain Layer ===
@@ -1883,6 +2137,19 @@ const Map = forwardRef(
             safeRemoveLayer(LayersArray[8].LayerRef.current);
           }
           LayersArray[8].LayerRef.current = TerrainLayer;
+      // === Admin Without Metadata Layer ===
+      let AdminBoundaryLayer = await getVectorLayers(
+        "panchayat_boundaries",
+        transformName(district.label) +
+        "_" +
+        transformName(block.label),
+        true,
+        true
+      );
+
+      if (AdminBoundaryLayer) {
+        if (LayersArray[9].LayerRef.current != null) {
+          safeRemoveLayer(LayersArray[9].LayerRef.current);
         }
 
         // === Admin Without Metadata Layer ===
@@ -1906,6 +2173,28 @@ const Map = forwardRef(
         if (AdminBoundaryLayer) {
           if (LayersArray[9].LayerRef.current != null) {
             safeRemoveLayer(LayersArray[9].LayerRef.current);
+      // === Cropping Intensity Layer ===
+      let CroppingIntensityLayer = await getVectorLayers(
+        "crop_intensity",
+        transformName(district.label) +
+        "_" +
+        transformName(block.label) + "_intensity",
+        true,
+        true
+      );
+
+      if (CroppingIntensityLayer) {
+        CroppingIntensityLayer.setStyle(function (feature) {
+          if (!feature || !feature.values_) return null;
+          let values = feature.values_
+          let avg_crp_inten = (values.cropping_intensity_2017 + values.cropping_intensity_2018 + values.cropping_intensity_2019 + values.cropping_intensity_2020 + values.cropping_intensity_2021 + values.cropping_intensity_2022 + values.cropping_intensity_2023) / 7
+
+          if (avg_crp_inten >= 0 && avg_crp_inten < 1) {
+            return new Style({
+              fill: new Fill({
+                color: "#FF9371",
+              }),
+            });
           }
           LayersArray[9].LayerRef.current = AdminBoundaryLayer;
         }
@@ -2025,6 +2314,27 @@ const Map = forwardRef(
           true,
           "afforestation",
         );
+      // === Terrain Vector Layer ===
+      let TerrainVectorLayer = await getVectorLayers(
+        "terrain",
+        transformName(district.label) +
+        "_" +
+        transformName(block.label) +
+        "_cluster",
+        true,
+        true
+      );
+
+      if (TerrainVectorLayer) {
+        TerrainVectorLayer.setStyle(function (feature) {
+          if (!feature || !feature.values_) return null;
+
+          return new Style({
+            fill: new Fill({
+              color: terrainClusterColors[feature.values_.terrainClu] || "#000000",
+            }),
+          });
+        });
 
         if (AfforestationLayer) {
           if (LayersArray[12].LayerRef.current != null) {
@@ -2058,6 +2368,38 @@ const Map = forwardRef(
             safeRemoveLayer(LayersArray[13].LayerRef.current);
           }
           LayersArray[13].LayerRef.current = DeforestationLayer;
+      // === Afforestation Layer ===
+      let AfforestationLayer = await getImageLayers(
+        "change_detection",
+        "change_" +
+        transformName(district.label) +
+        "_" +
+        transformName(block.label) + "_Afforestation",
+        true,
+        "afforestation"
+      );
+
+      if (AfforestationLayer) {
+        if (LayersArray[12].LayerRef.current != null) {
+          safeRemoveLayer(LayersArray[12].LayerRef.current);
+        }
+        LayersArray[12].LayerRef.current = AfforestationLayer;
+      }
+
+      // === Deforestation Layer ===
+      let DeforestationLayer = await getImageLayers(
+        "change_detection",
+        "change_" +
+        transformName(district.label) +
+        "_" +
+        transformName(block.label) + "_Deforestation",
+        true,
+        "	deforestation"
+      );
+
+      if (DeforestationLayer) {
+        if (LayersArray[13].LayerRef.current != null) {
+          safeRemoveLayer(LayersArray[13].LayerRef.current);
         }
 
         // === Degradation Layer ===
@@ -2085,6 +2427,38 @@ const Map = forwardRef(
             safeRemoveLayer(LayersArray[14].LayerRef.current);
           }
           LayersArray[14].LayerRef.current = DegradationLayer;
+      // === Degradation Layer ===
+      let DegradationLayer = await getImageLayers(
+        "change_detection",
+        "change_" +
+        transformName(district.label) +
+        "_" +
+        transformName(block.label) + "_Degradation",
+        true,
+        "degradation"
+      );
+
+      if (DegradationLayer) {
+        if (LayersArray[14].LayerRef.current != null) {
+          safeRemoveLayer(LayersArray[14].LayerRef.current);
+        }
+        LayersArray[14].LayerRef.current = DegradationLayer;
+      }
+
+      // === Urbanization Layer ===
+      let UrbanizationLayer = await getImageLayers(
+        "change_detection",
+        "change_" +
+        transformName(district.label) +
+        "_" +
+        transformName(block.label) + "_Urbanization",
+        true,
+        "urbanization"
+      );
+
+      if (UrbanizationLayer) {
+        if (LayersArray[15].LayerRef.current != null) {
+          safeRemoveLayer(LayersArray[15].LayerRef.current);
         }
 
         // === Urbanization Layer ===
@@ -2112,6 +2486,38 @@ const Map = forwardRef(
             safeRemoveLayer(LayersArray[15].LayerRef.current);
           }
           LayersArray[15].LayerRef.current = UrbanizationLayer;
+      // === CropIntensity Layer ===
+      let CropIntensityLayer = await getImageLayers(
+        "change_detection",
+        "change_" +
+        transformName(district.label) +
+        "_" +
+        transformName(block.label) + "_CropIntensity",
+        true,
+        "cropintensity"
+      );
+
+      if (CropIntensityLayer) {
+        if (LayersArray[16].LayerRef.current != null) {
+          safeRemoveLayer(LayersArray[16].LayerRef.current);
+        }
+        LayersArray[16].LayerRef.current = CropIntensityLayer;
+      }
+
+      // === Restoration Layer ===
+      let RestorationLayer = await getImageLayers(
+        "restoration",
+        "restoration_" +
+        transformName(district.label) +
+        "_" +
+        transformName(block.label) + "_raster",
+        true,
+        "restoration_style"
+      );
+
+      if (RestorationLayer) {
+        if (LayersArray[17].LayerRef.current != null) {
+          safeRemoveLayer(LayersArray[17].LayerRef.current);
         }
 
         // === CropIntensity Layer ===
@@ -2133,6 +2539,16 @@ const Map = forwardRef(
           true,
           "cropintensity",
         );
+      // === SOGE Layer ===
+      let SOGELayer = await getVectorLayers(
+        "soge",
+        "soge_vector_" +
+        transformName(district.label) +
+        "_" +
+        transformName(block.label),
+        true,
+        true
+      );
 
         if (CropIntensityLayer) {
           if (LayersArray[16].LayerRef.current != null) {
@@ -2227,6 +2643,111 @@ const Map = forwardRef(
           });
           if (LayersArray[18].LayerRef.current != null) {
             safeRemoveLayer(LayersArray[18].LayerRef.current);
+      // === Aquifer Layer ===
+      let AquiferLayer = await getVectorLayers(
+        "aquifer",
+        "aquifer_vector_" +
+        transformName(district.label) +
+        "_" +
+        transformName(block.label),
+        true,
+        true
+      );
+
+      if (AquiferLayer) {
+        AquiferLayer.setStyle(function (feature) {
+          if (!feature || !feature.values_) return null;
+
+          if (feature.values_.Principal_ === "Alluvium") {
+            return new Style({
+              fill: new Fill({
+                color: "#fffdb5",
+              }),
+            });
+          }
+          else if (feature.values_.Principal_ === "Laterite") {
+            return new Style({
+              fill: new Fill({
+                color: "#f3a425",
+              }),
+            });
+          }
+          else if (feature.values_.Principal_ === "Basalt") {
+            return new Style({
+              fill: new Fill({
+                color: "#99ecf1",
+              }),
+            });
+          }
+          else if (feature.values_.Principal_ === "Sandstone") {
+            return new Style({
+              fill: new Fill({
+                color: "#a5f8c5",
+              }),
+            });
+          }
+          else if (feature.values_.Principal_ === "Shale") {
+            return new Style({
+              fill: new Fill({
+                color: "#f57c99",
+              }),
+            });
+          }
+          else if (feature.values_.Principal_ === "Limestone") {
+            return new Style({
+              fill: new Fill({
+                color: "#e8d52e",
+              }),
+            });
+          }
+          else if (feature.values_.Principal_ === "Granite") {
+            return new Style({
+              fill: new Fill({
+                color: "#3c92f2",
+              }),
+            });
+          }
+          else if (feature.values_.Principal_ === "Schist") {
+            return new Style({
+              fill: new Fill({
+                color: "#d5db21",
+              }),
+            });
+          }
+          else if (feature.values_.Principal_ === "Quartzite") {
+            return new Style({
+              fill: new Fill({
+                color: "#cf7ff4",
+              }),
+            });
+          }
+          else if (feature.values_.Principal_ === "Charnockite") {
+            return new Style({
+              fill: new Fill({
+                color: "#f4dbff",
+              }),
+            });
+          }
+          else if (feature.values_.Principal_ === "Khondalite") {
+            return new Style({
+              fill: new Fill({
+                color: "#50c02b",
+              }),
+            });
+          }
+          else if (feature.values_.Principal_ === "Banded Gneissic Complex") {
+            return new Style({
+              fill: new Fill({
+                color: "#ffe1b5",
+              }),
+            });
+          }
+          else if (feature.values_.Principal_ === "Gneiss") {
+            return new Style({
+              fill: new Fill({
+                color: "#e4cff1",
+              }),
+            });
           }
           LayersArray[18].LayerRef.current = SOGELayer;
         }
@@ -2370,6 +2891,20 @@ const Map = forwardRef(
         if (fortnightLayer) {
           fortnightLayer.setStyle(function (feature) {
             return new Style({
+      // === Fortnight Well Depth ===
+      let fortnightLayer = await getVectorLayers(
+        "mws_layers",
+        "deltaG_fortnight_" +
+        transformName(district.label) +
+        "_" +
+        transformName(block.label),
+        true,
+        true
+      );
+
+      if(fortnightLayer){
+        fortnightLayer.setStyle(function (feature) {
+          return new Style({
               stroke: new Stroke({
                 color: "#000000",
                 width: 1.5,
@@ -2585,6 +3120,12 @@ const Map = forwardRef(
             safeRemoveLayer(LayersArray[21].LayerRef.current);
           }
         }
+      let LulcLayer = await getImageLayers(
+        "LULC_level_1",
+        `LULC_${lulcYear1.value}_${transformName(district.label)}_${transformName(block.label)}_level_1`,
+        true,
+        ""
+      );
 
         let LulcLayer = await getImageLayers(
           "LULC_level_1",
@@ -2676,6 +3217,12 @@ const Map = forwardRef(
           true,
           "",
         );
+      let LulcLayer = await getImageLayers(
+        "LULC_level_2",
+        `LULC_${lulcYear2.value}_${transformName(district.label)}_${transformName(block.label)}_level_2`,
+        true,
+        ""
+      );
 
         if (LulcLayer) {
           if (LayersArray[23].LayerRef.current != null) {
@@ -2717,6 +3264,12 @@ const Map = forwardRef(
         getDistrictData();
       }
     }, [state]);
+      let LulcLayer = await getImageLayers(
+        "LULC_level_3",
+        `LULC_${lulcYear3.value}_${transformName(district.label)}_${transformName(block.label)}_level_3`,
+        true,
+        ""
+      );
 
     // When district changes, update block markers
     useEffect(() => {

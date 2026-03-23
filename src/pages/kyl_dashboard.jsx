@@ -144,15 +144,15 @@ const KYLDashboardPage = () => {
   const addLayerSafe = (layer) =>
     layer && mapRef.current && mapRef.current.addLayer(layer);
 
-  const transformName = (name) => {
-    if (!name) return name;
-    return name
-      .replace(/[()]/g, "") // Remove all parentheses
-      .replace(/[-\s]+/g, "_") // Replace dashes and spaces with "_"
-      .replace(/_+/g, "_") // Collapse multiple underscores to one
-      .replace(/^_|_$/g, "") // Remove leading/trailing underscores
-      .toLowerCase();
-  };
+const transformName = (name) => {
+  if (!name) return name;
+  return name
+    .replace(/[().]/g, "")        // Remove parentheses and dots
+    .replace(/[-\s]+/g, "_")      // Replace dashes and spaces with "_"
+    .replace(/_+/g, "_")          // Collapse multiple underscores
+    .replace(/^_|_$/g, "")        // Remove leading/trailing underscores
+    .toLowerCase();
+};
 
   const handleResetMWS = () => {
     if (!selectedMWSProfile) return; // If no MWS is selected, do nothing
@@ -539,6 +539,7 @@ const KYLDashboardPage = () => {
             .replace(/\s*\(\s*/g, "_")
             .replace(/\s*\)\s*/g, "")
             .replace(/\s+/g, "_")}`;
+          const layerName = `deltaG_well_depth_${transformName(district.label)}_${transformName(block.label)}`;
           const mwsLayer = await getVectorLayers(
             "mws_layers",
             layerName,
@@ -669,17 +670,9 @@ const KYLDashboardPage = () => {
     if (!district || !block || !mapRef.current) return;
 
     try {
-      const dist = district.label
-        .toLowerCase()
-        .replace(/\s*\(\s*/g, "_")
-        .replace(/\s*\)\s*/g, "")
-        .replace(/\s+/g, "_");
+      const dist = transformName(district.label);
 
-      const blk = block.label
-        .toLowerCase()
-        .replace(/\s*\(\s*/g, "_")
-        .replace(/\s*\)\s*/g, "")
-        .replace(/\s+/g, "_");
+      const blk = transformName(block.label);
 
       const connectivityLayerName = `${dist}_${blk}_mws_connectivity`;
 
@@ -852,6 +845,9 @@ connectivityFeatures.forEach((feature) => {
 const arrowSource = new VectorSource({
   features: arrowFeatures,
 });
+    const dist = transformName(district.label);
+
+    const blk = transformName(block.label);
 
 const arrowLayer = new VectorLayer({
   source: arrowSource,
@@ -1008,6 +1004,7 @@ const fetchWaterBodiesLayer = async () => {
           .replace(/\s*\)\s*/g, "")
           .replace(/\s+/g, "_")}`,
         true,
+        `${transformName(district.label)}_${transformName(block.label)}`,
         true,
       );
 
@@ -1020,6 +1017,7 @@ const fetchWaterBodiesLayer = async () => {
         .replace(/\s*\(\s*/g, "_")
         .replace(/\s*\)\s*/g, "")
         .replace(/\s+/g, "_")}`;
+      const layerName = `deltaG_well_depth_${transformName(district.label)}_${transformName(block.label)}`;
       const mwsLayer = await getVectorLayers(
         "mws_layers",
         layerName,
@@ -1196,6 +1194,7 @@ const fetchWaterBodiesLayer = async () => {
           .replace(/\s*\(\s*/g, "_")
           .replace(/\s*\)\s*/g, "")
           .replace(/\s+/g, "_")}&file_type=json`,
+        `${process.env.REACT_APP_API_URL}/download_kyl_data/?state=${transformName(state.label)}&district=${transformName(district.label)}&block=${transformName(block.label)}&file_type=json`
       );
 
       if (!response.ok) {
@@ -1231,6 +1230,7 @@ const fetchWaterBodiesLayer = async () => {
           .replace(/\s*\(\s*/g, "_")
           .replace(/\s*\)\s*/g, "")
           .replace(/\s+/g, "_")}&file_type=json`,
+        `${process.env.REACT_APP_API_URL}/download_kyl_village_data?state=${transformName(state.label)}&district=${transformName(district.label)}&block=${transformName(block.label)}&file_type=json`
       );
 
       if (!response.ok) {
