@@ -586,6 +586,13 @@ const CcdSelector = ({
               isDisabled={!isLayersFetched || isLoading}
             />
           )}
+          {layer.hasGeoTiff && (
+            <DownloadButton
+              name="GeoTIFF"
+              onClickEvent={() => onDownload(layer.name, "geotiff", ccdYear.value)}
+              isDisabled={!isLayersFetched || isLoading}
+            />
+          )}
         </div>
       )}
     </div>
@@ -788,11 +795,17 @@ const RightSidebar = ({
       // Use our direct download function
       downloadKml(url, filterName);
     } else if (format === "geotiff") {
-      // Handle GeoTIFF download based on layer
-      if (filterName.includes("lulc")) {
+      // Handle GeoTIFF download based on layer and selected year
+      if (filterName === "ccd") {
+        if (!year) {
+          alert("Please select a CCD year first");
+          return;
+        }
+        handleImageLayerDownload(filterName, year);
+      } else if (filterName.includes("lulc")) {
         handleLulcLayerDownload(filterName);
       } else {
-        handleImageLayerDownload(filterName);
+        handleImageLayerDownload(filterName, year);
       }
     }
   };
@@ -837,7 +850,7 @@ const RightSidebar = ({
   };
 
   // Image layer download handler
-  const handleImageLayerDownload = (layerName) => {
+  const handleImageLayerDownload = (layerName, year = null) => {
     if (!district || !block) {
       alert("Please select a district and block first");
       return;
@@ -865,13 +878,17 @@ const RightSidebar = ({
     } else if (layerName === "tree_overall_ch") {
       url = `https://geoserver.core-stack.org:8443/geoserver/tree_overall_ch/wcs?service=WCS&version=2.0.1&request=GetCoverage&CoverageId=tree_overall_ch:overall_change_raster_${districtFormatted}_${blockFormatted}&format=geotiff&compression=LZW`;
     } else if (layerName === "ccd") {
-      url = `https://geoserver.core-stack.org:8443/geoserver/ccd/wcs?service=WCS&version=2.0.1&request=GetCoverage&CoverageId=ccd:tree_health_ccd_raster_${districtFormatted}_${blockFormatted}&format=geotiff&compression=LZW`;
+      if (!year) {
+        alert("Please select a CCD year first");
+        return;
+      }
+      url = `https://geoserver.core-stack.org:8443/geoserver/ccd/wcs?service=WCS&version=2.0.1&request=GetCoverage&CoverageId=ccd:ccd_raster_${districtFormatted}_${blockFormatted}_${year}&format=geotiff&compression=LZW`;
     } else {
       url = `https://geoserver.core-stack.org:8443/geoserver/change_detection/wcs?service=WCS&version=2.0.1&request=GetCoverage&CoverageId=change_detection:change_${districtFormatted}_${blockFormatted}_${layerName.charAt(0).toUpperCase() + layerName.slice(1)}&format=geotiff&compression=LZW`;
     }
     if (url) {
       // Use our direct geotiff download function
-      downloadGeoTiff(url, layerName);
+      downloadGeoTiff(url, `${layerName}_${year ?? "latest"}`);
     }
   };
 
