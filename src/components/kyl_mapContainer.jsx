@@ -221,8 +221,8 @@ const MapLegend = ({ showMWS, showVillages, currentLayer, mappedAssets, mappedDe
   ];
 
   const rainfallLegendItems = [
-    { color: "#B0E0E6", label: "Arid" },
-    { color: "#87CEFA", label: "Semi-arid" },
+    { color: "#B0E0E6", label: "Semi-arid" },
+    { color: "#87CEFA", label: "Arid" },
     { color: "#1E90FF", label: "Moderate" },
     { color: "#0073E6", label: "High" },
     { color: "#004080", label: "Very high" },
@@ -290,9 +290,9 @@ const MapLegend = ({ showMWS, showVillages, currentLayer, mappedAssets, mappedDe
   ];
 
   const TrendLegendItems = [
-    { color: "#B8860B", label: "Positive Trend" },
-    { color: "#FFECB3", label: "Negative Trend" },
-    { color: "#FFD700", label: "No Trend" },
+    { color: "#B8860B", label: "Increasing trend of G" },
+    { color: "#FFECB3", label: "Decreasing trend of G" },
+    { color: "#FFD700", label: "No trend of G" },
   ];
 
   const CropDegradationItems = [
@@ -347,22 +347,6 @@ const MapLegend = ({ showMWS, showVillages, currentLayer, mappedAssets, mappedDe
     { color: "#ffffff", label: "Areas with no known green credit sites" },
     { color: "#14d11dff", label: "Areas with green credit sites " },
   ];
-
-  const WideScaleRestoration = [
-    { color: "rgba(176, 224, 230, 0.5)", label: "0 - 200 Hectare" },
-    { color: "rgba(135, 206, 250, 0.5)", label: "200 - 600 Hectare" },,
-    { color: "rgba(30, 144, 255, 0.5)", label: "Greater than 600 Hectare" },
-  ];
-
-  const Protection = [
-    { color: "rgba(176, 224, 230, 0.5)", label: "0 - 400 Hectare" },
-    { color: "rgba(135, 206, 250, 0.5)", label: "400 - 800 Hectare" },,
-    { color: "rgba(30, 144, 255, 0.5)", label: "Greater than 800 Hectare" },
-  ];
-
-  const Industry = [
-    { color: "#FF0000", label: "Identified Site" },
-  ]
 
   // Check if LULC layer is active
   const isLulcLayerActive = currentLayer?.some(
@@ -468,19 +452,6 @@ const MapLegend = ({ showMWS, showVillages, currentLayer, mappedAssets, mappedDe
   const isGreenCreditActive = currentLayer?.some(
     (layer) => layer.name === "green_credit" || layer.name.includes("green_credit")
   );
-
-  const isWideScaleActive = currentLayer?.some(
-    (layer) => layer.name === "area_wide_scale_restoration" || layer.name.includes("area_wide_scale_restoration")
-  );
-
-  const isProtectionActive = currentLayer?.some(
-    (layer) => layer.name === "area_protection" || layer.name.includes("area_protection")
-  );
-
-  const isIndustryActive = currentLayer?.some(
-    (layer) => layer.name === "lcw_conflict" || layer.name === "factory_csr" || layer.name === "mining"
-  );
-
   return (
     <div
       className={`absolute bottom-24 left-0 z-10 transition-all duration-300 ${isCollapsed ? "translate-x-2" : "translate-x-6"
@@ -716,7 +687,7 @@ const MapLegend = ({ showMWS, showVillages, currentLayer, mappedAssets, mappedDe
               {isDryspellLayerActive && (
                 <div className="space-y-2">
                   <h4 className="text-xs font-medium text-gray-600">
-                    Dry spell Vector
+                    Dryspell Vector
                   </h4>
                   {dryspellLengendItems.map((item, index) => (
                     <div
@@ -898,7 +869,7 @@ const MapLegend = ({ showMWS, showVillages, currentLayer, mappedAssets, mappedDe
               {isTrendLayerActive && (
                 <div className="space-y-2">
                   <h4 className="text-xs font-medium text-gray-600">
-                    Water balance Trend
+                    Groundwater Trend
                   </h4>
                   {TrendLegendItems.map((item, index) => (
                     <div
@@ -1070,78 +1041,64 @@ const MapLegend = ({ showMWS, showVillages, currentLayer, mappedAssets, mappedDe
                 </div>
               )}
 
-              {/* Wide Scale Restoration Section */}
-              {isWideScaleActive && (
+              {/* Mapped Assets */}
+              {mappedAssets && (
                 <div className="space-y-2">
-                  <h4 className="text-xs font-medium text-gray-600">Wide Scale Restoration</h4>
-                  {WideScaleRestoration.map((item, index) => (
-                    <div
-                      key={`trend-${index}`}
-                      className="flex items-center gap-2"
-                    >
-                      <div
-                        className="w-4 h-4 rounded"
-                        style={{
-                          backgroundColor: item.color,
-                          border: `1px solid rgba(0,0,0,0.2)`,
-                        }}
-                      />
-                      <span className="text-sm text-gray-600">
-                        {item.label}
-                      </span>
-                    </div>
-                  ))}
+                  <h4 className="text-xs font-medium text-gray-600">Mapped Assets</h4>
+                  <div className="flex items-center gap-2">
+                    <img
+                      src={settlementIcon}
+                      alt="Settlement"
+                      className="w-6 h-6"
+                      draggable={false}
+                    />
+                    <span className="text-sm text-gray-600">Settlement</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <img
+                      src={wellIcon}
+                      alt="Settlement"
+                      className="w-6 h-6"
+                      draggable={false}
+                    />
+                    <span className="text-sm text-gray-600">Well</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <img
+                      src={waterbodyIcon}
+                      alt="Settlement"
+                      className="w-6 h-6"
+                      draggable={false}
+                    />
+                    <span className="text-sm text-gray-600">Water Structure</span>
+                  </div>
                 </div>
               )}
 
-              {/* Protection Section */}
-              {isProtectionActive && (
+              {/* Proposed Works */}
+              {mappedDemands && (
                 <div className="space-y-2">
-                  <h4 className="text-xs font-medium text-gray-600">Protection</h4>
-                  {Protection.map((item, index) => (
-                    <div
-                      key={`trend-${index}`}
-                      className="flex items-center gap-2"
-                    >
-                      <div
-                        className="w-4 h-4 rounded"
-                        style={{
-                          backgroundColor: item.color,
-                          border: `1px solid rgba(0,0,0,0.2)`,
-                        }}
-                      />
-                      <span className="text-sm text-gray-600">
-                        {item.label}
-                      </span>
-                    </div>
-                  ))}
+                  <h4 className="text-xs font-medium text-gray-600">Proposed Works</h4>
+                  <div className="flex items-center gap-2">
+                    <img
+                      src={RechargeIcon}
+                      alt="Settlement"
+                      className="w-6 h-6"
+                      draggable={false}
+                    />
+                    <span className="text-sm text-gray-600">Recharge Structure</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <img
+                      src={IrrigationIcon}
+                      alt="Settlement"
+                      className="w-6 h-6"
+                      draggable={false}
+                    />
+                    <span className="text-sm text-gray-600">Irrigation Structure</span>
+                  </div>
                 </div>
               )}
-
-              {/* Industry Section */}
-              {isIndustryActive && (
-                <div className="space-y-2">
-                  <h4 className="text-xs font-medium text-gray-600">Industry</h4>
-                  {Industry.map((item, index) => (
-                    <div
-                      key={`trend-${index}`}
-                      className="flex items-center gap-2"
-                    >
-                      <div
-                        className="w-4 h-4 rounded"
-                        style={{
-                          backgroundColor: item.color,
-                          border: `1px solid rgba(0,0,0,0.2)`,
-                        }}
-                      />
-                      <span className="text-sm text-gray-600">
-                        {item.label}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              )}
-
             </div>
           </div>
         )}
