@@ -40,8 +40,7 @@ const KYLLeftSidebar = ({
 }, []);
     const combinedSelectedValues = {
         ...filterSelections.selectedMWSValues,
-        ...filterSelections.selectedVillageValues,
-        ...filterSelections.selectedWaterbodyValues
+        ...filterSelections.selectedVillageValues
     };
 
     const handleClearAll = () => {
@@ -65,8 +64,7 @@ const KYLLeftSidebar = ({
         // Clear all filters
         setFilterSelections({
             selectedMWSValues: {},
-            selectedVillageValues: {},
-            selectedWaterbodyValues:{}
+            selectedVillageValues: {}
         });
     };
 
