@@ -12,19 +12,9 @@ const KYLMWSProfilePanel = ({ mwsData, onBack, hideBackButton = false }) => {
 
   const [dataString, setDataString] = useState("")
 
-  const transformName = (name) => {
-    if (!name) return name;
-    return name
-      .replace(/[().]/g, "")        // Remove parentheses and dots
-      .replace(/[-\s]+/g, "_")      // Replace dashes and spaces with "_"
-      .replace(/_+/g, "_")          // Collapse multiple underscores
-      .replace(/^_|_$/g, "")        // Remove leading/trailing underscores
-      .toLowerCase();
-  };
-
   const handleReportDownload = (id) => {
     trackEvent("Generate MWS Report", "generate_report", JSON.stringify([state.label, district.label, block.label, id]));
-    window.open(`${process.env.REACT_APP_API_URL}/generate_mws_report/?state=${transformName(state.label)}&district=${transformName(district.label)}&block=${transformName(block.label)}&uid=${id}`, '_blank');
+    window.open(`${process.env.REACT_APP_API_URL}/generate_mws_report/?state=${state.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_')}&district=${district.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_')}&block=${block.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_')}&uid=${id}`, '_blank');
   }
 
   useEffect(() => {
