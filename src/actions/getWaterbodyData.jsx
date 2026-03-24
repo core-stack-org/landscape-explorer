@@ -1,4 +1,5 @@
-import getVectorLayers from "./getVectorLayers";
+// import getVectorLayers from "./getVectorLayers";
+import getWebglVectorLayers from "./getWebGlVectorLayers";
 import GeoJSON from "ol/format/GeoJSON";
 import { Style, Fill, Stroke } from "ol/style";
 
@@ -76,10 +77,11 @@ export const getWaterbodyData = async ({
     };
   
     const wbLayerName = `surface_waterbodies_${dist}_${blk}`;
-    const wbLayer = await getVectorLayers("swb", wbLayerName, false, true);
-    map.addLayer(wbLayer);
+    const wbLayer = await getWebglVectorLayers("swb", wbLayerName, false, true);
+    // map.addLayer(wbLayer);
   
-    wbLayer.setStyle(yellowWaterbodyStyle);
+    // wbLayer.setStyle(yellowWaterbodyStyle);
+   
   
     const wbSource = wbLayer.getSource();
     const view = map.getView();
@@ -102,13 +104,13 @@ export const getWaterbodyData = async ({
     }
   
     const mwsLayerName = `deltaG_well_depth_${dist}_${blk}`;
-    const mwsLayer = await getVectorLayers(
+    const mwsLayer = await getWebglVectorLayers(
       "mws_layers",
       mwsLayerName,
       false,
       true
     );
-    map.addLayer(mwsLayer);
+    // map.addLayer(mwsLayer);
   
     const mwsSource = mwsLayer.getSource();
     mwsSource.loadFeatures(extent, view.getResolution(), view.getProjection());
@@ -139,8 +141,8 @@ const zoiLayerName = `waterbodies_zoi_${dist}_${blk}`;
 
 // Try multiple namespaces — some servers store ZOI differently
 const zoiLayer =
-  (await getVectorLayers("swb", zoiLayerName, false, true)) ||
-  (await getVectorLayers("zoi_layers", zoiLayerName, false, true)) ||
+  (await getWebglVectorLayers("swb", zoiLayerName, false, true)) ||
+  (await getWebglVectorLayers("zoi_layers", zoiLayerName, false, true)) ||
   null;
   
 
@@ -148,7 +150,7 @@ let rawZoiFeatures = [];
 let matchedZOI = [];
 
 if (zoiLayer) {
-  map.addLayer(zoiLayer);
+  // map.addLayer(zoiLayer);
 
   const zoiSource = zoiLayer.getSource();
   zoiSource.loadFeatures(extent, view.getResolution(), view.getProjection());

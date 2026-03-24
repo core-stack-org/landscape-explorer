@@ -560,6 +560,9 @@ console.log("Current filterSelections:", filterSelections);
         
             ["==", ["get", "isFiltered"], 1],
             [102,30,30,1],
+
+            ["==", ["get", "isFiltered"], 0],
+            [0,0,0,0],
         
             [74,144,226,1]
           ],
@@ -584,6 +587,9 @@ console.log("Current filterSelections:", filterSelections);
         
             ["==", ["get", "isFiltered"], 1],
             [255,75,75,0.8],
+
+            ["==", ["get", "isFiltered"], 0],
+            [0,0,0,0],
         
             [85,152,229,0.2]
           ]
@@ -950,6 +956,28 @@ console.log("Current filterSelections:", filterSelections);
     //   true
     // );
     const wbLayer = await getWebGlPolygonLayers("swb", layerName);
+    wbLayer.setStyle({
+      "stroke-color": [
+        "case",
+        ["has", "area_ored"],
+        [246, 252, 83, 0.8],
+        [0,0,0,0]
+      ],
+    
+      "stroke-width": [
+        "case",
+        ["has", "area_ored"],
+        2,
+        0
+      ],
+    
+      "fill-color": [
+        "case",
+        ["has", "area_ored"],
+        [246, 252, 83, 0.45],
+        [0,0,0,0]
+      ]
+    });
 
     // wbLayer.setStyle((feature) => {
     //   const geom = feature.getGeometry();
@@ -1188,7 +1216,8 @@ console.log("Current filterSelections:", filterSelections);
         })
       );
 
-      await fetchMWSLayer(selectedMWS);
+      // await fetchMWSLayer(selectedMWS);
+      await fetchMWSLayer([]);
       setIsLayerLoaded(false)
     } catch (error) {
       console.error("Error loading boundary:", error);
@@ -1995,8 +2024,10 @@ console.log("Current filterSelections:", filterSelections);
       });
       console.log("FINAL FILTERED MWS:", resultMWS);
       console.log("Total MWS Count:", resultMWS.length);
-      setSelectedMWS(resultMWS);
-      updateFilteredMWS(resultMWS);
+      if (JSON.stringify(resultMWS) !== JSON.stringify(selectedMWS)) {
+        setSelectedMWS(resultMWS);
+        updateFilteredMWS(resultMWS);
+      }
     } catch (error) {
       console.error("Error in MWS filter processing:", error);
     }
