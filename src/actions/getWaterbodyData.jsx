@@ -3,22 +3,26 @@ import GeoJSON from "ol/format/GeoJSON";
 import { Style, Stroke } from "ol/style";
 
 export const getWaterbodyData = async ({
-    district,
-    block,
-    map,
-    waterbodyUID = null, 
-  }) => {
-    if (
-      !district?.label ||
-      !block?.label ||
-      !map
-    ) {
-      console.warn("Missing district/block label in getWaterbodyData", {
-        district,
-        block,
-      });
-      return null;
-    }
+  district,
+  block,
+  map,
+  waterbodyUID = null,
+}) => {
+
+  if (!district?.label || !block?.label || !map) {
+    console.warn("Missing district/block label in getWaterbodyData");
+    return null;
+  }
+
+  const dist = district.label.toLowerCase().replace(/\s+/g, "_");
+  const blk = block.label.toLowerCase().replace(/\s+/g, "_");
+
+  const yellowWaterbodyStyle = new Style({
+    stroke: new Stroke({
+      color: "yellow",
+      width: 1.5,
+    }),
+  });
 
   const extractMwsUidList = (mwsUidString) => {
     if (!mwsUidString) return [];
@@ -83,12 +87,12 @@ export const getWaterbodyData = async ({
 
   // ===================== ZOI ======================
 
-// Try multiple namespaces — some servers store ZOI differently
-const zoiLayer =
-  (await getVectorLayers("swb", zoiLayerName, false, true)) ||
-  (await getVectorLayers("zoi_layers", zoiLayerName, false, true)) ||
-  null;
-  
+  const zoiLayerName = `waterbodies_zoi_${dist}_${blk}`;
+
+  const zoiLayer =
+    (await getVectorLayers("swb", zoiLayerName, false, true)) ||
+    (await getVectorLayers("zoi_layers", zoiLayerName, false, true)) ||
+    null;
 
   let rawZoiFeatures = [];
   let matchedZOI = [];
@@ -114,13 +118,21 @@ const zoiLayer =
       });
     }
   }
-}
-    return {
-      wbLayer,
-      wbFeatures,
-  
-      waterbody: matchedWaterbody
-        ? {
+
+  // ===================== FINAL RETURN ======================
+
+  return {
+    wbLayer,
+    wbFeatures,
+
+    waterbody: matchedWaterbody
+      ? (() => {
+          const geo = new GeoJSON().writeFeatureObject(matchedWaterbody, {
+            dataProjection: "EPSG:4326",
+            featureProjection: "EPSG:4326",
+          });
+          delete geo.properties;
+          return {
             olFeature: matchedWaterbody,
             geojson: geo,
           };
