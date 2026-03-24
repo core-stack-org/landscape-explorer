@@ -819,12 +819,18 @@ const Map = forwardRef(({
   setShowVillages,
   lulcYear1,
   lulcYear2,
-  lulcYear3
+  lulcYear3,
+  onViewChange
 }, ref) => {
   const mapElement = useRef(null);
   const mapRef = useRef(null);
   const baseLayerRef = useRef(null);
   const markersLayer = useRef(null);
+  const onViewChangeRef = useRef(onViewChange);
+
+  useEffect(() => {
+    onViewChangeRef.current = onViewChange;
+  }, [onViewChange]);
 
   // Added flag to prevent recursion
   const handlingExternalToggle = useRef(false);
@@ -931,6 +937,7 @@ const Map = forwardRef(({
           'degradation': 'Change Detection Degradation',
           'urbanization': 'Change Detection Urbanization',
           'cropIntensity': 'Change Detection Crop-Intensity',
+          'cropintensity': 'Change Detection Crop-Intensity',
           'restoration': 'Change Detection Restoration',
           'soge': 'SOGE',
           'aquifer': 'Aquifer',
@@ -963,7 +970,25 @@ const Map = forwardRef(({
         });
       }
     },
-    getMap: () => mapRef.current
+    getMap: () => mapRef.current,
+    getViewSnapshot: () => {
+      if (!mapRef.current) return null;
+      const view = mapRef.current.getView();
+      const center = view.getCenter();
+      const zoom = view.getZoom();
+      if (!center || zoom == null) return null;
+      return { center, zoom };
+    },
+    applyView: ({ center, zoom }) => {
+      if (!mapRef.current) return;
+      const view = mapRef.current.getView();
+      if (center && Array.isArray(center) && center.length >= 2) {
+        view.setCenter(center);
+      }
+      if (typeof zoom === "number" && !Number.isNaN(zoom)) {
+        view.setZoom(zoom);
+      }
+    }
   }));
 
   // Get block features (copied from original implementation)
@@ -2307,6 +2332,29 @@ const Map = forwardRef(({
     };
   }, []);
 
+  // Report map viewport for shareable URL (debounced moveend)
+  useEffect(() => {
+    if (!isInitialized || !mapRef.current || !onViewChange) return;
+    const map = mapRef.current;
+    let timeoutId;
+    const handler = () => {
+      clearTimeout(timeoutId);
+      timeoutId = setTimeout(() => {
+        const view = map.getView();
+        const center = view.getCenter();
+        const zoom = view.getZoom();
+        if (center && zoom != null) {
+          onViewChangeRef.current?.({ center, zoom });
+        }
+      }, 400);
+    };
+    map.on("moveend", handler);
+    return () => {
+      if (timeoutId) clearTimeout(timeoutId);
+      map.un("moveend", handler);
+    };
+  }, [isInitialized, onViewChange]);
+
   // When state changes, update district markers
   useEffect(() => {
     if (mapRef.current && state && !district) {
@@ -2371,6 +2419,7 @@ const Map = forwardRef(({
           'degradation': 'Change Detection Degradation',
           'urbanization': 'Change Detection Urbanization',
           'cropintensity': 'Change Detection Crop-Intensity',
+          'cropIntensity': 'Change Detection Crop-Intensity',
           'restoration': 'Change Detection Restoration',
           'soge': 'SOGE',
           'aquifer': 'Aquifer',

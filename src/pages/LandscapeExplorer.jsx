@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
+import { useSearchParams } from "react-router-dom";
 import Map from "../components/landscape-explorer/map/Map.jsx";
 import LeftSidebar from "../components/landscape-explorer/sidebar/LeftSidebar.jsx";
 import RightSidebar from "../components/landscape-explorer/sidebar/RightSidebar.jsx";
@@ -19,8 +20,17 @@ import {
   initializeAnalytics,
 } from "../services/analytics";
 import LandingNavbar from "../components/landing_navbar.jsx";
+import {
+  buildSearchParams,
+  findLocationInStatesData,
+  hasUrlMapParams,
+  lulcYearFromParam,
+  parseViewParams,
+  toggledLayersFromLayersParam,
+} from "../utils/landscapeExplorerUrlState";
 
 const LandscapeExplorer = () => {
+  const [, setSearchParams] = useSearchParams();
   const [showLeftSidebar, setShowLeftSidebar] = useState(false);
   const [showRightSidebar, setShowRightSidebar] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
@@ -38,6 +48,13 @@ const LandscapeExplorer = () => {
 
   // Map ref for accessing map instance from other components
   const mapRef = useRef(null);
+
+  /** Apply map center/zoom from URL after block layers load (OpenLayers fits extent first). */
+  const pendingViewFromUrlRef = useRef(null);
+  const hydratedUrlRef = useRef(false);
+  const [urlSyncReady, setUrlSyncReady] = useState(false);
+  const [mapView, setMapView] = useState(null);
+  const [linkCopied, setLinkCopied] = useState(false);
 
   // Add flag to prevent infinite recursion
   const isUpdatingFromMap = useRef(false);
@@ -343,6 +360,132 @@ const LandscapeExplorer = () => {
     }
   }, [statesData, setStatesData]);
 
+  // Hydrate location, layers, LULC, and view from URL (once when states load)
+  useEffect(() => {
+    if (!statesData || hydratedUrlRef.current) return;
+    const params = new URLSearchParams(window.location.search);
+    if (!hasUrlMapParams(params)) {
+      hydratedUrlRef.current = true;
+      setUrlSyncReady(true);
+      return;
+    }
+    hydratedUrlRef.current = true;
+
+    const stateLabel = params.get("state");
+    const districtLabel = params.get("district");
+    const blockLabel = params.get("block");
+    const found = findLocationInStatesData(
+      statesData,
+      stateLabel,
+      districtLabel,
+      blockLabel
+    );
+    if (found?.state) setState(found.state);
+    if (found?.district) setDistrict(found.district);
+    if (found?.block) {
+      setBlock(found.block);
+      setCanFetchLayers(true);
+      setLayersReady(true);
+    }
+
+    const mergedLayers = toggledLayersFromLayersParam(params.get("layers"));
+    if (mergedLayers) setToggledLayers(mergedLayers);
+
+    const l1 = lulcYearFromParam(params.get("lulc1"));
+    const l2 = lulcYearFromParam(params.get("lulc2"));
+    const l3 = lulcYearFromParam(params.get("lulc3"));
+    if (l1) setLulcYear1(l1);
+    if (l2) setLulcYear2(l2);
+    if (l3) setLulcYear3(l3);
+
+    const parsedView = parseViewParams(params);
+    if (parsedView) {
+      pendingViewFromUrlRef.current = parsedView;
+      setMapView({
+        center: parsedView.center,
+        zoom: parsedView.zoom,
+      });
+    }
+    setUrlSyncReady(true);
+  }, [statesData, setState, setDistrict, setBlock]);
+
+  // Keep the URL in sync with app state (shareable links, refresh)
+  useEffect(() => {
+    if (!urlSyncReady) return;
+    const id = setTimeout(() => {
+      const params = buildSearchParams({
+        state,
+        district,
+        block,
+        toggledLayers,
+        lulcYear1,
+        lulcYear2,
+        lulcYear3,
+        mapView,
+      });
+      setSearchParams(params, { replace: true });
+    }, 450);
+    return () => clearTimeout(id);
+  }, [
+    urlSyncReady,
+    state,
+    district,
+    block,
+    toggledLayers,
+    lulcYear1,
+    lulcYear2,
+    lulcYear3,
+    mapView,
+    setSearchParams,
+  ]);
+
+  // After URL-driven location is set, re-apply saved bbox view (map fits block first)
+  useEffect(() => {
+    if (!block || !pendingViewFromUrlRef.current) return;
+    const view = pendingViewFromUrlRef.current;
+    const timer = setTimeout(() => {
+      mapRef.current?.applyView?.(view);
+      pendingViewFromUrlRef.current = null;
+    }, 2000);
+    return () => clearTimeout(timer);
+  }, [block, state, district]);
+
+  const handleMapViewChange = useCallback(({ center, zoom }) => {
+    setMapView({ center, zoom });
+  }, []);
+
+  const copyShareableLink = useCallback(() => {
+    const liveView = mapRef.current?.getViewSnapshot?.() || mapView;
+    const params = buildSearchParams({
+      state,
+      district,
+      block,
+      toggledLayers,
+      lulcYear1,
+      lulcYear2,
+      lulcYear3,
+      mapView: liveView || undefined,
+    });
+    const url = `${window.location.origin}${window.location.pathname}?${params.toString()}`;
+    if (navigator.clipboard?.writeText) {
+      navigator.clipboard.writeText(url).then(() => {
+        setLinkCopied(true);
+        setTimeout(() => setLinkCopied(false), 2000);
+      });
+    } else {
+      window.prompt("Copy this link:", url);
+    }
+  }, [
+    state,
+    district,
+    block,
+    toggledLayers,
+    lulcYear1,
+    lulcYear2,
+    lulcYear3,
+    mapView,
+  ]);
+
   // Handle map-initiated layer toggle updates
   const handleMapToggle = (layerName, isVisible) => {
     // Set the recursion prevention flag
@@ -417,7 +560,18 @@ const LandscapeExplorer = () => {
             lulcYear1={lulcYear1}
             lulcYear2={lulcYear2}
             lulcYear3={lulcYear3}
+            onViewChange={handleMapViewChange}
           />
+
+          <div className="absolute bottom-4 left-4 z-20 flex items-center gap-2">
+            <button
+              type="button"
+              onClick={copyShareableLink}
+              className="rounded-md bg-white/95 px-3 py-2 text-sm font-medium text-gray-800 shadow-md ring-1 ring-gray-200 hover:bg-gray-50"
+            >
+              {linkCopied ? "Link copied" : "Copy link to this view"}
+            </button>
+          </div>
         </div>
 
         {showRightSidebar && (
