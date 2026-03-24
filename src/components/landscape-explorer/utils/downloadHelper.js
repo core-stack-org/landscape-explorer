@@ -1,104 +1,84 @@
-/**
- * Enhanced download helper functions with direct link approach for reliable downloads
- */
+// ---------- COMMON FILE DOWNLOAD ----------
+const triggerDownload = (blob, filename) => {
+  const objectUrl = URL.createObjectURL(blob);
 
-// -------------------- GEOJSON --------------------
+  const link = document.createElement("a");
+  link.href = objectUrl;
+  link.download = filename;
+
+  document.body.appendChild(link);
+  link.click();
+
+  setTimeout(() => {
+    document.body.removeChild(link);
+    URL.revokeObjectURL(objectUrl);
+  }, 100);
+};
+
+// ---------- GEOJSON ----------
 export const downloadGeoJson = async (url, layerName) => {
   try {
     const response = await fetch(url);
-    if (!response.ok) {
-      throw new Error(`HTTP error! Status: ${response.status}`);
+    if (!response.ok) throw new Error(response.status);
+
+    const json = await response.json();
+
+    if (json.features?.length) {
+      json.features = json.features.map(feature => ({
+        type: "Feature",
+        id: feature.id,
+        geometry: feature.geometry,
+        geometry_name: feature.geometry_name || "the_geom",
+        properties: null
+      }));
     }
 
-    const data = await response.json();
-   // Make properties null ONLY for demographics layer
-    if (layerName === "administrative_boundaries" && data && data.features) {
-      data.features.forEach(feature => {
-        feature.properties = null;
-      });
-    }
+    const blob = new Blob(
+      [JSON.stringify(json, null, 2)],
+      { type: "application/json" }
+    );
 
-    const blob = new Blob([JSON.stringify(data, null, 2)], { 
-  type: 'application/json' 
-});
+    triggerDownload(blob, `${layerName}_features.json`);
 
-    const objectUrl = URL.createObjectURL(blob);
-
-    const link = document.createElement('a');
-    link.href = objectUrl;
-    link.download = `${layerName}_features.json`;
-    document.body.appendChild(link);
-    link.click();
-
-    setTimeout(() => {
-      document.body.removeChild(link);
-      URL.revokeObjectURL(objectUrl);
-    }, 100);
   } catch (error) {
-    console.error('Error downloading GeoJSON:', error);
-    alert('Failed to download GeoJSON.');
+    console.error("GeoJSON download error:", error);
+    alert("Failed to download GeoJSON.");
   }
 };
 
-// -------------------- kml added --------------------
-export const downloadKml = async (url, layerName) => {
-  try {
-    const response = await fetch(url);
-    if (!response.ok) {
-      throw new Error(`HTTP error! Status: ${response.status}`);
-    }
-
-    const text = await response.text();
-    const blob = new Blob([text], {
-      type: 'application/vnd.google-earth.kml+xml'
-    });
-
-    const objectUrl = URL.createObjectURL(blob);
-
-    const link = document.createElement('a');
-    link.href = objectUrl;
-    link.download = `${layerName}_features.kml`;
-    document.body.appendChild(link);
-    link.click();
-
-    setTimeout(() => {
-      document.body.removeChild(link);
-      URL.revokeObjectURL(objectUrl);
-    }, 100);
-  } catch (error) {
-    console.error('Error downloading KML:', error);
-    alert('Failed to download KML.');
-  }
+// ---------- KML ----------
+export const downloadKml = (url, layerName) => {
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `${layerName}_features.kml`;
+  link.click();
 };
 
-// -------------------- GEOTIFF --------------------
+// ---------- GEOTIFF ----------
 export const downloadGeoTiff = (url) => {
-  window.open(url, '_blank');
+  window.open(url, "_blank");
 };
 
-// -------------------- EXCEL --------------------
+// ---------- EXCEL ----------
 export const downloadExcel = async (url, filename) => {
   try {
-    const response = await fetch(url);
-    if (!response.ok) {
-      throw new Error(`HTTP error! Status: ${response.status}`);
-    }
+    const response = await fetch(url, {
+      headers: {
+        "ngrok-skip-browser-warning": "1"
+      }
+    });
+
+    if (!response.ok) throw new Error(response.status);
 
     const buffer = await response.arrayBuffer();
-    const objectUrl = URL.createObjectURL(new Blob([buffer]));
+    const blob = new Blob([buffer]);
 
-    const link = document.createElement('a');
-    link.href = objectUrl;
-    link.download = filename || 'download.xlsx';
-    document.body.appendChild(link);
-    link.click();
+    triggerDownload(blob, filename || "download.xlsx");
 
-    setTimeout(() => {
-      document.body.removeChild(link);
-      URL.revokeObjectURL(objectUrl);
-    }, 100);
+    return true;
   } catch (error) {
-    console.error('Excel download error:', error);
-    alert('Failed to download Excel.');
+    console.error("Excel download error:", error);
+    alert("Failed to download Excel.");
+    return false;
   }
 };
