@@ -1220,7 +1220,7 @@ const transformName = (name) => {
         else if (filter.layer_store[i] === "panchayat_boundaries") {
           tempLayer = await getVectorLayers(
             filter.layer_store[i],
-            `${transformName(district.label)}_${transformName(block.label)}_${filter.layer_name[i]}`
+            `${transformName(district.label)}_${transformName(block.label)}`
           );
         }
         else if(filter.layer_store[i] === "restoration"){
