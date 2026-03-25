@@ -356,6 +356,16 @@ const RightSidebar = ({
 }) => {
   const [selectedCategory, setSelectedCategory] = useState('basic');
   const [isLayersFetched, setIsLayersFetched] = useState(false);
+  const [layerSearch, setLayerSearch] = useState("");
+
+  const matchesLayerSearch = (layer) => {
+    const q = layerSearch.trim().toLowerCase();
+    if (!q) return true;
+    const hay = `${layer?.label || ""} ${layer?.name || ""}`.toLowerCase();
+    return hay.includes(q);
+  };
+
+  const filterLayers = (layers) => layers.filter(matchesLayerSearch);
 
 
   // When category changes, inform the parent
@@ -661,10 +671,22 @@ const RightSidebar = ({
 
           {/* Scrollable container for layers */}
           <div className="flex-1 overflow-y-auto p-3">
+            <div className="mb-3">
+              <input
+                value={layerSearch}
+                onChange={(e) => setLayerSearch(e.target.value)}
+                placeholder="Search layers…"
+                className="w-full border border-gray-200 rounded-md py-2 px-3 text-sm text-gray-800 bg-white focus:outline-none focus:ring-2 focus:ring-[#8B5CF6]/30"
+                aria-label="Search layers"
+              />
+            </div>
+
             {/* Basic Layers */}
             {selectedCategory === 'land' && (
               <div>
-                {landLayersData.map(layer => {
+                {filterLayers(landLayersData).length === 0 ? (
+                  <p className="text-sm text-gray-500 italic">No layers match your search.</p>
+                ) : filterLayers(landLayersData).map(layer => {
                   if(layer.id === "lulc_level_1"){
                     return <LulcSelector 
                       level={layer}
@@ -702,39 +724,45 @@ const RightSidebar = ({
 
             {selectedCategory === 'climate' && (
               <div>
-                {climateLayersData.map(layer => (
-                  <LayerItem 
-                    key={layer.id}
-                    layer={layer}
-                    isSelected={toggledLayers?.[layer.name] || false}
-                    onToggle={handleToggleClick}
-                    onDownload={handleDownloadClick}
-                    isLayersFetched={isLayersFetched}
-                    isLoading={isLoading}
-                  />
-                ))}
+                {filterLayers(climateLayersData).length === 0 ? (
+                  <p className="text-sm text-gray-500 italic">No layers match your search.</p>
+                ) : filterLayers(climateLayersData).map(layer => (
+                    <LayerItem 
+                      key={layer.id}
+                      layer={layer}
+                      isSelected={toggledLayers?.[layer.name] || false}
+                      onToggle={handleToggleClick}
+                      onDownload={handleDownloadClick}
+                      isLayersFetched={isLayersFetched}
+                      isLoading={isLoading}
+                    />
+                  ))}
               </div>
             )}
 
             {selectedCategory === 'hydro' && (
               <div>
-                {hydrologyLayersData.map(layer => (
-                  <LayerItem 
-                    key={layer.id}
-                    layer={layer}
-                    isSelected={toggledLayers?.[layer.name] || false}
-                    onToggle={handleToggleClick}
-                    onDownload={handleDownloadClick}
-                    isLayersFetched={isLayersFetched}
-                    isLoading={isLoading}
-                  />
-                ))}
+                {filterLayers(hydrologyLayersData).length === 0 ? (
+                  <p className="text-sm text-gray-500 italic">No layers match your search.</p>
+                ) : filterLayers(hydrologyLayersData).map(layer => (
+                    <LayerItem 
+                      key={layer.id}
+                      layer={layer}
+                      isSelected={toggledLayers?.[layer.name] || false}
+                      onToggle={handleToggleClick}
+                      onDownload={handleDownloadClick}
+                      isLayersFetched={isLayersFetched}
+                      isLoading={isLoading}
+                    />
+                  ))}
               </div>
             )}
 
             {selectedCategory === 'agri' && (
               <div>
-                {agriLayersData.map(layer => {
+                {filterLayers(agriLayersData).length === 0 ? (
+                  <p className="text-sm text-gray-500 italic">No layers match your search.</p>
+                ) : filterLayers(agriLayersData).map(layer => {
                   if(layer.id === "lulc_level_3"){
                     return <LulcSelector 
                       level={layer}
@@ -762,49 +790,55 @@ const RightSidebar = ({
 
             {selectedCategory === 'restore' && (
               <div>
-                {restorationLayersData.map(layer => (
-                  <LayerItem 
-                    key={layer.id}
-                    layer={layer}
-                    isSelected={toggledLayers?.[layer.name] || false}
-                    onToggle={handleToggleClick}
-                    onDownload={handleDownloadClick}
-                    isLayersFetched={isLayersFetched}
-                    isLoading={isLoading}
-                  />
-                ))}
+                {filterLayers(restorationLayersData).length === 0 ? (
+                  <p className="text-sm text-gray-500 italic">No layers match your search.</p>
+                ) : filterLayers(restorationLayersData).map(layer => (
+                    <LayerItem 
+                      key={layer.id}
+                      layer={layer}
+                      isSelected={toggledLayers?.[layer.name] || false}
+                      onToggle={handleToggleClick}
+                      onDownload={handleDownloadClick}
+                      isLayersFetched={isLayersFetched}
+                      isLoading={isLoading}
+                    />
+                  ))}
               </div>
             )}
 
             {selectedCategory === 'nrega' && (
               <div>
-                {NREGALayerData.map(layer => (
-                  <LayerItem 
-                    key={layer.id}
-                    layer={layer}
-                    isSelected={toggledLayers?.[layer.name] || false}
-                    onToggle={handleToggleClick}
-                    onDownload={handleDownloadClick}
-                    isLayersFetched={isLayersFetched}
-                    isLoading={isLoading}
-                  />
-                ))}
+                {filterLayers(NREGALayerData).length === 0 ? (
+                  <p className="text-sm text-gray-500 italic">No layers match your search.</p>
+                ) : filterLayers(NREGALayerData).map(layer => (
+                    <LayerItem 
+                      key={layer.id}
+                      layer={layer}
+                      isSelected={toggledLayers?.[layer.name] || false}
+                      onToggle={handleToggleClick}
+                      onDownload={handleDownloadClick}
+                      isLayersFetched={isLayersFetched}
+                      isLoading={isLoading}
+                    />
+                  ))}
               </div>
             )}
 
             {selectedCategory === 'social' && (
               <div>
-                {demographicLayerData.map(layer => (
-                  <LayerItem 
-                    key={layer.id}
-                    layer={layer}
-                    isSelected={toggledLayers?.[layer.name] || false}
-                    onToggle={handleToggleClick}
-                    onDownload={handleDownloadClick}
-                    isLayersFetched={isLayersFetched}
-                    isLoading={isLoading}
-                  />
-                ))}
+                {filterLayers(demographicLayerData).length === 0 ? (
+                  <p className="text-sm text-gray-500 italic">No layers match your search.</p>
+                ) : filterLayers(demographicLayerData).map(layer => (
+                    <LayerItem 
+                      key={layer.id}
+                      layer={layer}
+                      isSelected={toggledLayers?.[layer.name] || false}
+                      onToggle={handleToggleClick}
+                      onDownload={handleDownloadClick}
+                      isLayersFetched={isLayersFetched}
+                      isLoading={isLoading}
+                    />
+                  ))}
               </div>
             )}
           </div>
