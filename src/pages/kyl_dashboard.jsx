@@ -730,9 +730,9 @@ console.log("Current filterSelections:", filterSelections);
       const py = ux;
   
       // Use a fixed map-unit offset (tune this to your projection/zoom level)
-      const MAP_OFFSET = len * 0.04; // 4% of line length — adjust as needed
-      const MAP_PULLBACK = len * 0.06;
-      const MAP_ARROW_LEN = len * 0.14;
+      const MAP_OFFSET = 0.0008;     // side offset
+      const MAP_PULLBACK = 0.0012;   // distance before centroid
+      const MAP_ARROW_LEN = 0.0014;
   
       const offStart = [
         start[0] + px * MAP_OFFSET * side,
@@ -748,7 +748,7 @@ console.log("Current filterSelections:", filterSelections);
       ];
   
       // Arrow head points
-      const arrowAngle = Math.PI / 7;
+      const arrowAngle = Math.PI / 5;
       const angle = Math.atan2(dy, dx);
   
       const left = [
