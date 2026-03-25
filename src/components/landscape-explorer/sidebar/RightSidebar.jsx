@@ -635,7 +635,15 @@ const RightSidebar = ({
           isLoading={isLoading}
           canFetchLayers={canFetchLayers}
         />
+        
       </div>
+
+      <p className="text-xs text-gray-400 text-center pb-1">
+        CoRE stack datasets are available under{" "}
+        <a href="https://creativecommons.org/licenses/by/4.0/">
+          CC BY 4.0
+        </a>
+      </p>
 
       {/* Only show category tabs and layers if all location dropdowns are selected */}
       {state && district && block && (
