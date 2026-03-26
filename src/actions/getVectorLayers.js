@@ -4,6 +4,52 @@ import Vector from "ol/source/Vector";
 import VectorLayer from 'ol/layer/Vector';
 import GeoJSON from 'ol/format/GeoJSON';
 
+const LAYER_CACHE_TTL_MS = 5 * 60 * 1000;
+const layerResponseCache = new Map();
+const pendingLayerRequests = new Map();
+
+async function fetchLayerGeoJson(url, layerName, forceRefresh = false) {
+  const now = Date.now();
+  const cachedEntry = layerResponseCache.get(url);
+
+  if (
+    !forceRefresh &&
+    cachedEntry &&
+    now - cachedEntry.timestamp < LAYER_CACHE_TTL_MS
+  ) {
+    return cachedEntry.json;
+  }
+
+  if (!forceRefresh && pendingLayerRequests.has(url)) {
+    return pendingLayerRequests.get(url);
+  }
+
+  const requestPromise = fetch(url)
+    .then((response) => {
+      if (!response.ok) {
+        console.log('Network response was not ok for ' + layerName);
+        return null;
+      }
+      return response.json();
+    })
+    .then((json) => {
+      if (json) {
+        layerResponseCache.set(url, { json, timestamp: Date.now() });
+      }
+      return json;
+    })
+    .catch((error) => {
+      console.log(`Failed to load the "${layerName}" layer. Please check your connection or the map layer details.`, error);
+      return null;
+    })
+    .finally(() => {
+      pendingLayerRequests.delete(url);
+    });
+
+  pendingLayerRequests.set(url, requestPromise);
+  return requestPromise;
+}
+
 const PanchayatBoundariesStyle = (feature, resolution) => {
   let nameStyle;
   try {
@@ -30,7 +76,7 @@ const PanchayatBoundariesStyle = (feature, resolution) => {
   return nameStyle;
 }
 
-export default async function getVectorLayers(layer_store, layer_name, setVisible = true, setActive = true, resource_type = null, plan_id = null, district, block) {
+export default async function getVectorLayers(layer_store, layer_name, setVisible = true, setActive = true, resource_type = null, plan_id = null, district, block, forceRefresh = false) {
 
   let url =
     (plan_id === null ?
@@ -41,16 +87,11 @@ export default async function getVectorLayers(layer_store, layer_name, setVisibl
     url: url,
     format: new GeoJSON(),
     loader: function (extent, resolution, projection) {
-      fetch(url).then(response => {
-        if (!response.ok) {
-          console.log('Network response was not ok for ' + layer_name);
-          return null;
+      fetchLayerGeoJson(url, layer_name, forceRefresh).then((json) => {
+        if (!json) {
+          return;
         }
-        return response.json();
-      }).then(json => {
         vectorSource.addFeatures(vectorSource.getFormat().readFeatures(json));
-      }).catch(error => {
-        console.log(`Failed to load the "${layer_name}" layer. Please check your connection or the map layer details.`, error)
       });
     }
   });
