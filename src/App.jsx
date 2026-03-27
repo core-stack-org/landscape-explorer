@@ -6,6 +6,7 @@ import PlansPage from "./components/plansPage";
 import PlanViewPage from "./components/plan_detailView";
 import AgroHorticulture from "./pages/AgroHorticulture";
 import RWBDashboard from "./pages/RWBDashboard";
+import RegionComparison from "./pages/RegionComparison";
 
 function App() {
   return (
@@ -16,6 +17,7 @@ function App() {
         <Route path="/download_layers" element={<LandscapeExplorer />} />
         <Route path="/agrohorticulture" element={<AgroHorticulture/>}/>
         <Route path="/rwb" element={<RWBDashboard/>}/>
+        <Route path="/region-comparison" element={<RegionComparison />} />
         <Route path="/CCUsagePage" element={<PlansPage />} />
         <Route path="/plan-view" element={<PlanViewPage />} />
 

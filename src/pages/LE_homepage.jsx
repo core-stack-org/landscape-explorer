@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect } from "react";
 import { useNavigate } from "react-router";
 import { useRecoilState } from "recoil";
 import {
@@ -20,9 +20,11 @@ import {
 } from "../services/analytics";
 import Footer from "../components/footer.jsx";
 import LandingNavbar from "../components/landing_navbar.jsx";
+import { useTranslation } from "react-i18next";
 
 export default function KYLHomePage() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   const [statesData, setStatesData] = useRecoilState(stateDataAtom);
   const [state, setState] = useRecoilState(stateAtom);
@@ -67,6 +69,36 @@ export default function KYLHomePage() {
     navigate(path);
   };
 
+  const trackCards = [
+    {
+      key: "jaltol",
+      titleKey: "home.track.jaltol_title",
+      descKey: "home.track.jaltol_desc",
+      icon: "🌾",
+      link: "https://welllabs.org/jaltol/",
+    },
+    {
+      key: "agro",
+      titleKey: "home.track.agro_title",
+      descKey: "home.track.agro_desc",
+      icon: "🌳",
+      link: "/agrohorticulture",
+    },
+    {
+      key: "water",
+      titleKey: "home.track.water_title",
+      descKey: "home.track.water_desc",
+      icon: "💧",
+      link: "/rwb",
+    },
+    {
+      key: "commons",
+      titleKey: "home.track.commons_title",
+      descKey: "home.track.commons_desc",
+      icon: "☀️",
+    },
+  ];
+
   return (
     <div className="font-sans ">
       <LandingNavbar />
@@ -85,40 +117,28 @@ export default function KYLHomePage() {
           <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-8">
             <div className="w-full lg:w-1/2">
               <h2 className="text-3xl md:text-4xl mb-4">
-                <span className="font-bold text-purple-700">Know</span>{" "}
+                <span className="font-bold text-purple-700">{t("home.know.heading_bold")}</span>{" "}
                 <span className="font-normal text-purple-700">
-                  your landscape
+                  {t("home.know.heading_normal")}
                 </span>
               </h2>
 
               <ul className="list-disc list-outside ml-5 text-black text-base md:text-lg space-y-3 font-medium text-justify">
-                <li>
-                  With 20+ geospatial layers, explore your landscape’s
-                  diversity, build evidence-based proposals, and plan
-                  context-sensitive actions.
-                </li>
-                <li>
-                  Quickly access detailed reports on any micro-watershed in the
-                  Tehsil, covering land use, cropping, groundwater, forests, and
-                  socio-economic indicators.
-                </li>
-                <li>
-                  Discover unique patterns in different parts of your
-                  Tehsil/Block with the help of landscape indicators relevant to
-                  the context.
-                </li>
+                <li>{t("home.know.bullet1")}</li>
+                <li>{t("home.know.bullet2")}</li>
+                <li>{t("home.know.bullet3")}</li>
               </ul>
 
               <div className="bg-purple-50 border-l-4 border-purple-500 text-purple-700 p-4 rounded-md mt-8">
                 <p className="text-sm">
-                  Check out the vision and demo{" "}
+                  {t("home.know.visionDemo")}{" "}
                   <a
                     href="https://www.youtube.com/playlist?list=PLZ0pcz8ccRmL3wTPRctaVFomGmgJFmM13"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="underline font-medium hover:text-purple-900"
                   >
-                    here →
+                    {t("home.know.visionDemoLink")}
                   </a>
                 </p>
               </div>
@@ -130,35 +150,38 @@ export default function KYLHomePage() {
                 style={{ overflow: "visible", zIndex: 100 }}
               >
                 <p className="mb-0 text-center font-semibold text-xl md:text-2xl text-gray-800 leading-none">
-                  Select Location
+                  {t("home.know.selectLocation")}
                 </p>
 
                 <div className="space-y-4 mt-5 relative">
-                  {/* State */}
                   <div className="relative z-[9999]">
                     <SelectButton
-                      currVal={state || { label: "Select State" }}
+                      currVal={state}
+                      placeholder={t("home.know.selectState")}
                       stateData={statesData}
+                      translateNamespace="states"
                       handleItemSelect={handleItemSelect}
                       setState={setState}
                     />
                   </div>
 
-                  {/* District */}
                   <div className="relative z-[9998]">
                     <SelectButton
-                      currVal={district || { label: "Select District" }}
-                      stateData={state !== null ? state.district : null}
+                      currVal={district}
+                      placeholder={t("home.know.selectDistrict")}
+                      stateData={state ? state.district : null}
+                      translateNamespace="districts"
                       handleItemSelect={handleItemSelect}
                       setState={setDistrict}
                     />
                   </div>
 
-                  {/* Block */}
                   <div className="relative z-[9997]">
                     <SelectButton
-                      currVal={block || { label: "Select Tehsil" }}
-                      stateData={district !== null ? district.blocks : null}
+                      currVal={block}
+                      placeholder={t("home.know.selectTehsil")}
+                      stateData={district ? district.blocks : null}
+                      translateNamespace="blocks"
                       handleItemSelect={handleItemSelect}
                       setState={setBlock}
                     />
@@ -172,7 +195,7 @@ export default function KYLHomePage() {
                       handleNavigate("/kyl_dashboard", "Know Your Landscape")
                     }
                   >
-                    Know Your Landscape
+                    {t("home.know.knowYourLandscape")}
                   </button>
                   <button
                     className="bg-gray-300 text-black px-4 py-2 rounded-lg w-full sm:w-auto"
@@ -180,22 +203,30 @@ export default function KYLHomePage() {
                       handleNavigate("/download_layers", "Download Layers")
                     }
                   >
-                    Download Layers
+                    {t("home.know.downloadLayers")}
+                  </button>
+                  <button
+                    className="bg-emerald-600 text-white px-4 py-2 rounded-lg w-full sm:w-auto"
+                    onClick={() =>
+                      handleNavigate("/region-comparison", "Region Comparison")
+                    }
+                  >
+                    Region Comparison
                   </button>
                 </div>
               </div>
 
-              {/* Second Card directly below first */}
+              {/* Second Card */}
               <div className="bg-purple-50 border-l-4 border-purple-500 text-purple-700 p-4 rounded-md mt-4 max-w-lg w-full">
                 <p className="text-sm">
-                  Generate data for a specific location?{" "}
+                  {t("home.know.generateData")}{" "}
                   <a
                     href="https://forms.gle/HoyfwBbHU8c29TYb8"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="underline font-medium hover:text-purple-900"
                   >
-                    Let us know here →
+                    {t("home.know.generateDataLink")}
                   </a>
                 </p>
               </div>
@@ -208,28 +239,21 @@ export default function KYLHomePage() {
           <div>
             <div className="w-full lg:w-2/3 mb-10">
               <h2 className="text-3xl md:text-4xl mb-4">
-                <span className="font-bold text-purple-700">Plan</span>{" "}
+                <span className="font-bold text-purple-700">{t("home.plan.heading_bold")}</span>{" "}
                 <span className="font-normal text-purple-700">
-                  for a sustainable tomorrow
+                  {t("home.plan.heading_normal")}
                 </span>
               </h2>
 
               <ul className="list-disc list-outside ml-5 text-black text-base md:text-lg space-y-3 font-medium text-justify">
                 <li>
-                  <b>Identification of the right problems</b> is key to
-                  sustainable Natural Resource Management (NRM). Commons Connect
-                  is a community-focused app enabling landscape stewards to plan
-                  NRM works in a participatorily manner.
+                  <b>{t("home.plan.bullet1_bold")}</b>{t("home.plan.bullet1_rest")}
                 </li>
                 <li>
-                  <b>Assess and raise demands</b>: This tool provides decision
-                  support to identify suitable sites for NRM assets and supports
-                  community reflection on equity in resource ownership and use.
+                  <b>{t("home.plan.bullet2_bold")}</b>{t("home.plan.bullet2_rest")}
                 </li>
                 <li>
-                  <b>Develop Detailed Project Reports (DPRs)</b> in an automated
-                  manner that can be integrated into the GPDP, MGNREGS, and
-                  other processes.
+                  <b>{t("home.plan.bullet3_bold")}</b>{t("home.plan.bullet3_rest")}
                 </li>
               </ul>
             </div>
@@ -250,23 +274,17 @@ export default function KYLHomePage() {
                       className="w-full h-full object-cover"
                     />
                   </div>
-
                   <div className="p-4">
-                    <h3 className="font-bold mb-2 text-sm">
-                      How to do Participatory Planning?
-                    </h3>
-                    <p className="text-xs text-gray-700 mb-2">
-                      View tutorial videos to conduct a rapid PRA and create
-                      DPRs using Commons Connect.
-                    </p>
+                    <h3 className="font-bold mb-2 text-sm">{t("home.plan.card1_title")}</h3>
+                    <p className="text-xs text-gray-700 mb-2">{t("home.plan.card1_desc")}</p>
                     <span className="text-purple-700 text-sm font-semibold underline">
-                      Learn More →
+                      {t("home.plan.learnMore")}
                     </span>
                   </div>
                 </div>
               </a>
 
-              {/* Card 2  */}
+              {/* Card 2 */}
               <a
                 href="https://play.google.com/store/apps/details?id=com.corestack.commonsconnect"
                 target="_blank"
@@ -281,24 +299,19 @@ export default function KYLHomePage() {
                       className="w-full h-full object-cover object-center"
                     />
                   </div>
-
                   <div className="p-4">
-                    <h3 className="font-bold mb-2 text-sm">
-                      Download Commons Connect App
-                    </h3>
-                    <p className="text-xs text-gray-700 mb-2">
-                      An Android app to guide you in a step-by-step manner to
-                      record community demands for NRM assets.
-                    </p>
+                    <h3 className="font-bold mb-2 text-sm">{t("home.plan.card2_title")}</h3>
+                    <p className="text-xs text-gray-700 mb-2">{t("home.plan.card2_desc")}</p>
                     <span className="text-purple-700 text-sm font-semibold underline">
-                      Download Now →
+                      {t("home.plan.downloadNow")}
                     </span>
                   </div>
                 </div>
               </a>
 
-              {/*  Card 3 */}
-              <div onClick={() => navigate("/CCUsagePage")}
+              {/* Card 3 */}
+              <div
+                onClick={() => navigate("/CCUsagePage")}
                 className="cursor-pointer hover:shadow-lg transition duration-200 ease-in-out"
               >
                 <div className="flex flex-col items-center text-center">
@@ -309,17 +322,11 @@ export default function KYLHomePage() {
                       className="absolute inset-0 w-full h-full object-cover"
                     />
                   </div>
-
                   <div className="p-4">
-                    <h3 className="font-bold mb-2 text-sm">
-                      View and Support Plans
-                    </h3>
-                    <p className="text-xs text-gray-700 mb-2">
-                      Explore existing community plans and find opportunities to
-                      support or collaborate with ongoing initiatives.
-                    </p>
+                    <h3 className="font-bold mb-2 text-sm">{t("home.plan.card3_title")}</h3>
+                    <p className="text-xs text-gray-700 mb-2">{t("home.plan.card3_desc")}</p>
                     <span className="text-purple-700 text-sm font-semibold underline">
-                      Learn More →
+                      {t("home.plan.learnMore")}
                     </span>
                   </div>
                 </div>
@@ -331,72 +338,32 @@ export default function KYLHomePage() {
         {/* Track Section */}
         <section className="snap-start backdrop-brightness-90 backdrop-blur-sm bg-white/0 px-4 py-6 md:px-10 md:py-10 rounded-xl mx-2 md:mx-6 mt-6">
           <div>
-            {/* Narrow text container */}
             <div className="w-full lg:w-2/3 mb-10">
               <h2 className="text-2xl md:text-4xl mb-4 text-purple-700">
-                <span className="font-bold">Track and Assess </span>
-                <span className="font-normal">NRM interventions</span>
+                <span className="font-bold">{t("home.track.heading_bold")}</span>
+                <span className="font-normal">{t("home.track.heading_normal")}</span>
               </h2>
               <ul className="list-disc list-outside ml-5 text-black text-base md:text-xl font-medium space-y-5 mb-6 text-justify">
+                <li>{t("home.track.bullet1")}</li>
                 <li>
-                  A suite of dashboards enabling continuous monitoring of
-                  Natural Resource Management (NRM) interventions undertaken in
-                  an area, and ex-post assessment of their impact.
+                  {t("home.track.bullet2_pre")}<b>{t("home.track.bullet2_bold")}</b>{t("home.track.bullet2_post")}
                 </li>
                 <li>
-                  Use <b>Jaltol</b> to monitor changes in cropping patterns in
-                  villages where extensive watershed development programmes have
-                  been undertaken.
+                  {t("home.track.bullet3_pre")}<b>{t("home.track.bullet3_bold")}</b>{t("home.track.bullet3_post")}
                 </li>
                 <li>
-                  Agrohorticulture practitioners can assess the health of tree
-                  plantations over time using the{" "}
-                  <b>Plantation Health Assessment Dashboard</b>.
-                </li>
-                <li>
-                  Track waterbody rejuvenation interventions and their impact on
-                  cropping in nearby areas with the{" "}
-                  <b>WaterBody Rejuvenation Assessment Dashboard</b>.
+                  {t("home.track.bullet4_pre")}<b>{t("home.track.bullet4_bold")}</b>{t("home.track.bullet4_post")}
                 </li>
               </ul>
             </div>
 
-            {/* Full-width cards container */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mt-8">
-              {[
-                {
-                  title: "Jaltol App",
-                  description:
-                    "Monitor changes in cropping patterns and assess the impact of watershed development interventions.",
-                  icon: "🌾",
-                  link: "https://welllabs.org/jaltol/",
-                },
-                {
-                  title: "Agrohorticulture Plantations",
-                  description:
-                    "Track the health and growth of plantations across time using satellite-based monitoring.",
-                  icon: "🌳",
-                  link:"/agrohorticulture"
-                },
-                {
-                  title: "Waterbody Rejuvenation",
-                  description:
-                    "Visualize waterbody interventions and evaluate their effects on water availability and agriculture.",
-                  icon: "💧",
-                  link: "/rwb",
-                },
-                {
-                  title: "Commons Connect Plans",
-                  description:
-                    "Site and landscape level tracking of plans built using Commons Connect",
-                  icon: "☀️",
-                },
-              ].map((item, index) => (
-                <div key={index} className="h-full">
+              {trackCards.map((item) => (
+                <div key={item.key} className="h-full">
                   <div
                     onClick={() => {
                       if (item.link) {
-                        handleNavigate(item.link, item.title);
+                        handleNavigate(item.link, t(item.titleKey));
                       }
                     }}
                     className="cursor-pointer bg-white rounded-2xl shadow-md p-6 sm:p-8 h-full min-h-[220px] flex flex-col justify-start transform transition-all duration-300 hover:shadow-xl hover:-translate-y-1 hover:scale-[1.02]"
@@ -407,18 +374,18 @@ export default function KYLHomePage() {
                       </div>
                       <div>
                         <h3 className="text-lg sm:text-xl font-semibold mb-2 text-gray-900">
-                          {item.title}
+                          {t(item.titleKey)}
                         </h3>
                         <p className="text-sm text-gray-700 mb-3">
-                          {item.description}
+                          {t(item.descKey)}
                         </p>
                         {item.link ? (
                           <span className="text-purple-700 font-medium text-sm hover:underline">
-                            Learn More →
+                            {t("home.track.learnMore")}
                           </span>
                         ) : (
                           <span className="text-gray-400 text-sm italic">
-                            Coming soon...
+                            {t("home.track.comingSoon")}
                           </span>
                         )}
                       </div>
