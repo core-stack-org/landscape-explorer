@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import SelectButton from "../../buttons/select_button";
+import { useTranslation } from "react-i18next";
 import {
   downloadGeoJson,
   downloadKml,
@@ -320,6 +321,7 @@ const DownloadButton = ({
   isDisabled = false,
   className = "",
 }) => {
+  const { t } = useTranslation();
   const handleClick = (e) => {
     if (isDisabled) {
       e.preventDefault();
@@ -331,6 +333,17 @@ const DownloadButton = ({
       onClickEvent();
     }
   };
+
+  const translatedName =
+    name === "GeoJSON"
+      ? t("download.actions.geojson", { defaultValue: "GeoJSON" })
+      : name === "GeoTIFF"
+      ? t("download.actions.geotiff", { defaultValue: "GeoTIFF" })
+      : name === "Style"
+      ? t("download.actions.style", { defaultValue: "Style" })
+      : name === "KML"
+      ? t("download.actions.kml", { defaultValue: "KML" })
+      : name;
 
   const buttonClasses = `px-2 py-1 bg-[#EDE9FE] text-[#8B5CF6] rounded-md text-xs 
     hover:bg-[#DDD6FE] text-center transition-colors duration-200 
@@ -344,7 +357,7 @@ const DownloadButton = ({
       className={buttonClasses}
     >
       <DownloadIcon />
-      <span className="ml-1">{name}</span>
+      <span className="ml-1">{translatedName}</span>
     </a>
   ) : (
     <button
@@ -353,7 +366,7 @@ const DownloadButton = ({
       className={buttonClasses}
     >
       <DownloadIcon />
-      <span className="ml-1">{name}</span>
+      <span className="ml-1">{translatedName}</span>
     </button>
   );
 };
@@ -454,10 +467,13 @@ const LayerItem = ({
   isLayersFetched,
   isLoading,
 }) => {
+  const { t } = useTranslation();
   return (
     <div className="border-b border-gray-200 py-3">
       <div className="flex items-center justify-between">
-        <span className="text-sm font-medium text-gray-700">{layer.label}</span>
+        <span className="text-sm font-medium text-gray-700">
+          {t(`download.layerLabels.${layer.name}`, { defaultValue: layer.label })}
+        </span>
         <button
           onClick={() => {
             onToggle(layer.name);
@@ -518,13 +534,17 @@ const LulcSelector = ({
   isLayersFetched,
   isLoading,
 }) => {
+  const { t } = useTranslation();
   return (
     <div className="bg-white rounded-md shadow-sm p-3 mb-3 border border-gray-100">
-      <h4 className="text-sm font-medium text-gray-700 mb-2">{level.label}</h4>
+      <h4 className="text-sm font-medium text-gray-700 mb-2">
+        {t(`download.layerLabels.${level.id}`, { defaultValue: level.label })}
+      </h4>
 
       <div className="mb-3">
         <SelectButton
-          currVal={lulcYear || { label: "Select Year" }}
+          currVal={lulcYear}
+          placeholder={t("download.selectYear", { defaultValue: "Select Year" })}
           stateData={yearDataLulc}
           handleItemSelect={(setter, value) => setter(value)}
           setState={setLulcYear}
@@ -557,12 +577,16 @@ const CcdSelector = ({
   isLayersFetched,
   isLoading,
 }) => {
+  const { t } = useTranslation();
   return (
     <div className="bg-white rounded-md shadow-sm p-3 mb-3 border border-gray-100">
-      <h4 className="text-sm font-medium text-gray-700 mb-2">{layer.label}</h4>
+      <h4 className="text-sm font-medium text-gray-700 mb-2">
+        {t(`download.layerLabels.${layer.name}`, { defaultValue: layer.label })}
+      </h4>
       <div className="mb-3">
         <SelectButton
-          currVal={ccdYear || { label: "Select Year" }}
+          currVal={ccdYear}
+          placeholder={t("download.selectYear", { defaultValue: "Select Year" })}
           stateData={yearDataCcd}
           handleItemSelect={(setter, value) => setter(value)}
           setState={setCcdYear}
@@ -600,6 +624,7 @@ const CcdSelector = ({
 };
 // Main action buttons
 const ActionButtons = ({ onDownloadExcel, isLoading, canFetchLayers }) => {
+  const { t } = useTranslation();
   return (
     <div className="flex space-x-3 mb-2">
       <button
@@ -614,7 +639,9 @@ const ActionButtons = ({ onDownloadExcel, isLoading, canFetchLayers }) => {
         } rounded text-sm font-medium transition-colors duration-200`}
       >
         <DownloadIcon />
-        <span className="ml-2">Download Excel</span>
+        <span className="ml-2">
+          {t("download.actions.downloadExcel", { defaultValue: "Download Excel" })}
+        </span>
       </button>
     </div>
   );
@@ -643,6 +670,7 @@ const RightSidebar = ({
   lulcYear3,
   setLulcYear3,
 }) => {
+  const { t } = useTranslation();
   const [selectedCategory, setSelectedCategory] = useState("land");
   const [isLayersFetched, setIsLayersFetched] = useState(false);
   const [ccdYear, setCcdYear] = useState(null);
@@ -915,7 +943,9 @@ const RightSidebar = ({
   return (
     <div className="w-[380px] flex flex-col h-full bg-white shadow-md relative">
       <div className="flex justify-between items-center p-4 border-b border-gray-200">
-        <h2 className="font-semibold text-gray-800 text-lg">Filters & Data</h2>
+        <h2 className="font-semibold text-gray-800 text-lg">
+          {t("download.filtersAndData", { defaultValue: "Filters & Data" })}
+        </h2>
         <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
           <ChevronRightIcon />
         </button>
@@ -925,10 +955,14 @@ const RightSidebar = ({
       <div className="p-3 border-b border-gray-200 bg-gray-50">
         <div className="space-y-3">
           <div className="flex items-center gap-2">
-            <label className="text-sm text-gray-600 min-w-[45px]">State</label>
+            <label className="text-sm text-gray-600 min-w-[45px]">
+              {t("kyl.rightSidebar.state")}
+            </label>
             <SelectButton
-              currVal={state || { label: "Select State" }}
+              currVal={state}
+              placeholder={t("home.know.selectState")}
               stateData={statesData}
+              translateNamespace="states"
               handleItemSelect={handleItemSelect}
               setState={setState}
               className="w-full border border-gray-200 rounded-md py-1.5 px-3 text-gray-800 bg-white"
@@ -936,21 +970,27 @@ const RightSidebar = ({
           </div>
           <div className="flex items-center gap-2">
             <label className="text-sm text-gray-600 min-w-[45px]">
-              District
+              {t("kyl.rightSidebar.district")}
             </label>
             <SelectButton
-              currVal={district || { label: "Select District" }}
+              currVal={district}
+              placeholder={t("home.know.selectDistrict")}
               stateData={state ? state.district : null}
+              translateNamespace="districts"
               handleItemSelect={handleItemSelect}
               setState={setDistrict}
               className="w-full border border-gray-200 rounded-md py-1.5 px-3 text-gray-800 bg-white"
             />
           </div>
           <div className="flex items-center gap-2">
-            <label className="text-sm text-gray-600 min-w-[45px]">Tehsil</label>
+            <label className="text-sm text-gray-600 min-w-[45px]">
+              {t("kyl.rightSidebar.tehsil")}
+            </label>
             <SelectButton
-              currVal={block || { label: "Select Block" }}
+              currVal={block}
+              placeholder={t("home.know.selectTehsil")}
               stateData={district ? district.blocks : null}
+              translateNamespace="blocks"
               handleItemSelect={handleItemSelect}
               setState={setBlock}
               className="w-full border border-gray-200 rounded-md py-1.5 px-3 text-gray-800 bg-white"
@@ -970,7 +1010,7 @@ const RightSidebar = ({
       </div>
 
       <p className="text-xs text-gray-400 text-center pb-1">
-        CoRE stack datasets are available under{" "}
+        {t("download.ccBy", { defaultValue: "CoRE stack datasets are available under" })}{" "}
         <a href="https://creativecommons.org/licenses/by/4.0/">
           CC BY 4.0
         </a>
@@ -992,7 +1032,7 @@ const RightSidebar = ({
                   }`}
                   onClick={() => setSelectedCategory(cat.id)}
                 >
-                  {cat.label}
+                  {t(`kyl.categories.${cat.label}`, { defaultValue: cat.label })}
                 </button>
               ))}
             </div>
