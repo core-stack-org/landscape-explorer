@@ -640,6 +640,7 @@
     "sourceColumn": "स्रोत कॉलम",
     "value": "मान",
     "score": "स्कोर",
+    "before": "पहले",
     "notAvailable": "उपलब्ध नहीं",
     "notAvailableShort": "NA",
     "metrics": {
@@ -661,6 +662,18 @@
       "fallbackToMwsUnavailableVillage": "इस ब्लॉक के लिए गांव-स्तरीय डेटा उपलब्ध नहीं है। MWS-आधारित गांव अनुमान दिखाए जा रहे हैं।",
       "selectValidVillages": "कृपया दो मान्य गांव चुनें।",
       "selectDifferentVillages": "कृपया तुलना के लिए दो अलग-अलग गांव चुनें।"
+    },
+    "simulator": {
+      "title": "हस्तक्षेप सिम्युलेटर (What-if मोड)",
+      "subtitle": "गांव A और गांव B के लिए संभावित सुधार समायोजित करें और देखें कि परिणाम व रैंक कैसे बदलते हैं।",
+      "reset": "परिदृश्य रीसेट करें",
+      "confidence": "प्रभाव विश्वसनीयता",
+      "rankShift": "रैंक बदलाव"
+    },
+    "confidence": {
+      "high": "उच्च",
+      "medium": "मध्यम",
+      "low": "निम्न"
     }
   }
 }

@@ -9,6 +9,12 @@ import {
   getVillageName,
 } from "../components/utils/compareMetrics";
 
+const SCENARIO_DEFAULT = {
+  rainfallPct: 0,
+  cropsPct: 0,
+  waterPct: 0,
+};
+
 const transformName = (name) => {
   if (!name) return name;
 
@@ -198,6 +204,119 @@ const hasComparisonSignals = (records) => {
   );
 };
 
+const toNumber = (value) => {
+  if (value === null || value === undefined || value === "") return null;
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : null;
+};
+
+const average = (values) => {
+  if (!values.length) return null;
+  return values.reduce((sum, value) => sum + value, 0) / values.length;
+};
+
+const applyScenarioAdjustments = (
+  villages,
+  villageAId,
+  villageBId,
+  keyMap,
+  scenarioA,
+  scenarioB
+) => {
+  const list = Array.isArray(villages) ? villages : [];
+  if (!list.length) return list;
+
+  const applyMetricChange = (baseValue, percent) => {
+    const value = toNumber(baseValue);
+    if (value === null || !percent) return baseValue;
+    return value * (1 + percent / 100);
+  };
+
+  return list.map((village) => {
+    const villageId = String(village?.village_id);
+    if (villageId !== String(villageAId) && villageId !== String(villageBId)) {
+      return village;
+    }
+
+    const scenario =
+      villageId === String(villageAId) ? scenarioA || SCENARIO_DEFAULT : scenarioB || SCENARIO_DEFAULT;
+
+    const nextVillage = { ...village };
+    if (keyMap.rainfall) {
+      nextVillage[keyMap.rainfall] = applyMetricChange(
+        village[keyMap.rainfall],
+        scenario.rainfallPct
+      );
+    }
+    if (keyMap.crops) {
+      nextVillage[keyMap.crops] = applyMetricChange(
+        village[keyMap.crops],
+        scenario.cropsPct
+      );
+    }
+    if (keyMap.water) {
+      nextVillage[keyMap.water] = applyMetricChange(
+        village[keyMap.water],
+        scenario.waterPct
+      );
+    }
+
+    return nextVillage;
+  });
+};
+
+const buildRankMap = (villages, comparison) => {
+  if (!comparison?.ready || !Array.isArray(villages) || !villages.length) return {};
+
+  const validMetrics = comparison.metrics.filter(
+    (metric) => metric.key && metric.higherIsBetter !== undefined
+  );
+  if (!validMetrics.length) return {};
+
+  const perMetricStats = validMetrics.map((metric) => {
+    const values = villages
+      .map((village) => toNumber(village?.[metric.key]))
+      .filter((value) => value !== null);
+    if (!values.length) return null;
+    return {
+      type: metric.type,
+      key: metric.key,
+      higherIsBetter: metric.higherIsBetter,
+      min: Math.min(...values),
+      max: Math.max(...values),
+    };
+  }).filter(Boolean);
+
+  if (!perMetricStats.length) return {};
+
+  const scoredVillages = villages.map((village) => {
+    const scores = perMetricStats
+      .map((metric) => {
+        const rawValue = toNumber(village?.[metric.key]);
+        if (rawValue === null) return null;
+        if (metric.max === metric.min) return 50;
+        const ratio = (rawValue - metric.min) / (metric.max - metric.min);
+        return metric.higherIsBetter ? ratio * 100 : (1 - ratio) * 100;
+      })
+      .filter((value) => value !== null);
+
+    return {
+      id: String(village?.village_id),
+      score: average(scores),
+    };
+  });
+
+  const ranked = scoredVillages
+    .filter((row) => row.score !== null)
+    .sort((a, b) => b.score - a.score)
+    .map((row, index) => ({ ...row, rank: index + 1 }));
+
+  return ranked.reduce((acc, row) => {
+    acc[row.id] = row.rank;
+    return acc;
+  }, {});
+};
+
 const SelectField = ({ label, value, options, onChange, disabled, placeholder }) => (
   <label className="flex flex-col gap-2">
     <span className="text-sm font-semibold text-slate-700">{label}</span>
@@ -232,6 +351,9 @@ const RegionComparison = () => {
   const [villages, setVillages] = useState([]);
   const [fetchError, setFetchError] = useState("");
   const [fetchNotice, setFetchNotice] = useState("");
+  const [dataSourceMode, setDataSourceMode] = useState("unknown");
+  const [scenarioA, setScenarioA] = useState(SCENARIO_DEFAULT);
+  const [scenarioB, setScenarioB] = useState(SCENARIO_DEFAULT);
 
   const translateLocationLabel = (namespace, label) => {
     const resources = i18n.getResourceBundle(i18n.language, "translation");
@@ -293,6 +415,7 @@ const RegionComparison = () => {
       setLoadingVillages(true);
       setFetchError("");
       setFetchNotice("");
+      setDataSourceMode("unknown");
 
       try {
         const candidateUrls = buildVillageUrls(
@@ -343,11 +466,13 @@ const RegionComparison = () => {
 
         if (resolvedVillages && villageHasMetrics) {
           setVillages(resolvedVillages);
+          setDataSourceMode("village");
           return;
         }
 
         if (!derivedVillages && resolvedVillages) {
           setVillages(resolvedVillages);
+          setDataSourceMode("limited");
           setFetchNotice(
             t("regionComparison.messages.limitedVillageMetrics")
           );
@@ -359,6 +484,7 @@ const RegionComparison = () => {
         }
 
         setVillages(derivedVillages);
+        setDataSourceMode("mws");
         setFetchNotice(
           resolvedVillages && !villageHasMetrics
             ? t("regionComparison.messages.fallbackToMwsMissingMetrics")
@@ -366,6 +492,7 @@ const RegionComparison = () => {
         );
       } catch (error) {
         setVillages([]);
+        setDataSourceMode("unavailable");
         setFetchError(t("regionComparison.messages.fetchError"));
       } finally {
         setLoadingVillages(false);
@@ -429,7 +556,7 @@ const RegionComparison = () => {
     [villageOptions, selectedVillageAId]
   );
 
-  const comparison = useMemo(
+  const beforeComparison = useMemo(
     () =>
       buildVillageComparison({
         villages,
@@ -439,6 +566,89 @@ const RegionComparison = () => {
     [villages, selectedVillageAId, selectedVillageBId]
   );
 
+  const metricKeyMap = useMemo(
+    () => ({
+      rainfall:
+        beforeComparison.metrics?.find((metric) => metric.type === "rainfall")?.key ||
+        null,
+      crops:
+        beforeComparison.metrics?.find((metric) => metric.type === "crops")?.key ||
+        null,
+      water:
+        beforeComparison.metrics?.find((metric) => metric.type === "water")?.key ||
+        null,
+    }),
+    [beforeComparison]
+  );
+
+  const scenarioVillages = useMemo(
+    () =>
+      applyScenarioAdjustments(
+        villages,
+        selectedVillageAId,
+        selectedVillageBId,
+        metricKeyMap,
+        scenarioA,
+        scenarioB
+      ),
+    [villages, selectedVillageAId, selectedVillageBId, metricKeyMap, scenarioA, scenarioB]
+  );
+
+  const afterComparison = useMemo(
+    () =>
+      buildVillageComparison({
+        villages: scenarioVillages,
+        villageAId: selectedVillageAId,
+        villageBId: selectedVillageBId,
+      }),
+    [scenarioVillages, selectedVillageAId, selectedVillageBId]
+  );
+
+  const beforeRanks = useMemo(
+    () => buildRankMap(villages, beforeComparison),
+    [villages, beforeComparison]
+  );
+
+  const afterRanks = useMemo(
+    () => buildRankMap(scenarioVillages, afterComparison),
+    [scenarioVillages, afterComparison]
+  );
+
+  const rankShift = useMemo(() => {
+    const aId = String(selectedVillageAId || "");
+    const bId = String(selectedVillageBId || "");
+    if (!aId || !bId) return null;
+
+    const rankA1 = beforeRanks[aId];
+    const rankB1 = beforeRanks[bId];
+    const rankA2 = afterRanks[aId];
+    const rankB2 = afterRanks[bId];
+    if (!rankA1 || !rankB1 || !rankA2 || !rankB2) return null;
+
+    const movedA = rankA1 - rankA2;
+    const movedB = rankB1 - rankB2;
+    return {
+      rankA1,
+      rankA2,
+      rankB1,
+      rankB2,
+      movedA,
+      movedB,
+    };
+  }, [selectedVillageAId, selectedVillageBId, beforeRanks, afterRanks]);
+
+  const confidenceLevel = useMemo(() => {
+    if (!afterComparison.ready) return t("regionComparison.confidence.low");
+    const missingCount = afterComparison.metrics.filter((m) => !m.key).length;
+    if (dataSourceMode === "village" && missingCount === 0) {
+      return t("regionComparison.confidence.high");
+    }
+    if (dataSourceMode === "mws" || dataSourceMode === "limited" || missingCount > 0) {
+      return t("regionComparison.confidence.medium");
+    }
+    return t("regionComparison.confidence.low");
+  }, [afterComparison, dataSourceMode, t]);
+
   const handleStateChange = (value) => {
     setSelectedStateId(value);
     setSelectedDistrictId("");
@@ -446,6 +656,8 @@ const RegionComparison = () => {
     setSelectedVillageAId("");
     setSelectedVillageBId("");
     setVillages([]);
+    setScenarioA(SCENARIO_DEFAULT);
+    setScenarioB(SCENARIO_DEFAULT);
   };
 
   const handleDistrictChange = (value) => {
@@ -454,12 +666,32 @@ const RegionComparison = () => {
     setSelectedVillageAId("");
     setSelectedVillageBId("");
     setVillages([]);
+    setScenarioA(SCENARIO_DEFAULT);
+    setScenarioB(SCENARIO_DEFAULT);
   };
 
   const handleBlockChange = (value) => {
     setSelectedBlockId(value);
     setSelectedVillageAId("");
     setSelectedVillageBId("");
+    setScenarioA(SCENARIO_DEFAULT);
+    setScenarioB(SCENARIO_DEFAULT);
+  };
+
+  const updateScenario = (target, field, value) => {
+    const parsed = Number(value);
+    const safeValue = Number.isFinite(parsed) ? parsed : 0;
+
+    if (target === "A") {
+      setScenarioA((prev) => ({ ...prev, [field]: safeValue }));
+      return;
+    }
+    setScenarioB((prev) => ({ ...prev, [field]: safeValue }));
+  };
+
+  const resetScenario = () => {
+    setScenarioA(SCENARIO_DEFAULT);
+    setScenarioB(SCENARIO_DEFAULT);
   };
 
   return (
@@ -549,14 +781,155 @@ const RegionComparison = () => {
         </section>
 
         <section className="mt-6 rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-semibold text-slate-900">
+              {t("regionComparison.simulator.title")}
+            </h2>
+            <button
+              type="button"
+              onClick={resetScenario}
+              className="rounded-md border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-100"
+            >
+              {t("regionComparison.simulator.reset")}
+            </button>
+          </div>
+          <p className="mt-1 text-sm text-slate-600">
+            {t("regionComparison.simulator.subtitle")}
+          </p>
+
+          <div className="mt-4 grid gap-4 lg:grid-cols-2">
+            <div className="rounded-lg border border-slate-200 p-4">
+              <p className="text-sm font-semibold text-slate-800">
+                {t("regionComparison.villageA")}
+              </p>
+              <div className="mt-3 space-y-3">
+                <label className="block text-sm text-slate-700">
+                  {t("regionComparison.metrics.rainfall")} (%)
+                  <input
+                    type="range"
+                    min="-30"
+                    max="50"
+                    value={scenarioA.rainfallPct}
+                    onChange={(e) => updateScenario("A", "rainfallPct", e.target.value)}
+                    className="mt-1 w-full"
+                  />
+                  <span className="text-xs text-slate-500">
+                    {scenarioA.rainfallPct > 0 ? "+" : ""}
+                    {scenarioA.rainfallPct}%
+                  </span>
+                </label>
+
+                <label className="block text-sm text-slate-700">
+                  {t("regionComparison.metrics.crops")} (%)
+                  <input
+                    type="range"
+                    min="-30"
+                    max="50"
+                    value={scenarioA.cropsPct}
+                    onChange={(e) => updateScenario("A", "cropsPct", e.target.value)}
+                    className="mt-1 w-full"
+                  />
+                  <span className="text-xs text-slate-500">
+                    {scenarioA.cropsPct > 0 ? "+" : ""}
+                    {scenarioA.cropsPct}%
+                  </span>
+                </label>
+
+                <label className="block text-sm text-slate-700">
+                  {t("regionComparison.metrics.water")} (%)
+                  <input
+                    type="range"
+                    min="-30"
+                    max="50"
+                    value={scenarioA.waterPct}
+                    onChange={(e) => updateScenario("A", "waterPct", e.target.value)}
+                    className="mt-1 w-full"
+                  />
+                  <span className="text-xs text-slate-500">
+                    {scenarioA.waterPct > 0 ? "+" : ""}
+                    {scenarioA.waterPct}%
+                  </span>
+                </label>
+              </div>
+            </div>
+
+            <div className="rounded-lg border border-slate-200 p-4">
+              <p className="text-sm font-semibold text-slate-800">
+                {t("regionComparison.villageB")}
+              </p>
+              <div className="mt-3 space-y-3">
+                <label className="block text-sm text-slate-700">
+                  {t("regionComparison.metrics.rainfall")} (%)
+                  <input
+                    type="range"
+                    min="-30"
+                    max="50"
+                    value={scenarioB.rainfallPct}
+                    onChange={(e) => updateScenario("B", "rainfallPct", e.target.value)}
+                    className="mt-1 w-full"
+                  />
+                  <span className="text-xs text-slate-500">
+                    {scenarioB.rainfallPct > 0 ? "+" : ""}
+                    {scenarioB.rainfallPct}%
+                  </span>
+                </label>
+
+                <label className="block text-sm text-slate-700">
+                  {t("regionComparison.metrics.crops")} (%)
+                  <input
+                    type="range"
+                    min="-30"
+                    max="50"
+                    value={scenarioB.cropsPct}
+                    onChange={(e) => updateScenario("B", "cropsPct", e.target.value)}
+                    className="mt-1 w-full"
+                  />
+                  <span className="text-xs text-slate-500">
+                    {scenarioB.cropsPct > 0 ? "+" : ""}
+                    {scenarioB.cropsPct}%
+                  </span>
+                </label>
+
+                <label className="block text-sm text-slate-700">
+                  {t("regionComparison.metrics.water")} (%)
+                  <input
+                    type="range"
+                    min="-30"
+                    max="50"
+                    value={scenarioB.waterPct}
+                    onChange={(e) => updateScenario("B", "waterPct", e.target.value)}
+                    className="mt-1 w-full"
+                  />
+                  <span className="text-xs text-slate-500">
+                    {scenarioB.waterPct > 0 ? "+" : ""}
+                    {scenarioB.waterPct}%
+                  </span>
+                </label>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section className="mt-6 rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
           <h2 className="text-lg font-semibold text-slate-900">{t("regionComparison.comparisonOutput")}</h2>
 
-          {!comparison.ready ? (
+          {!afterComparison.ready ? (
             <p className="mt-3 text-sm text-slate-600">
-              {t(comparison.reasonKey || "regionComparison.messages.selectValidVillages")}
+              {t(afterComparison.reasonKey || "regionComparison.messages.selectValidVillages")}
             </p>
           ) : (
             <>
+              <div className="mb-3 flex flex-wrap items-center gap-3">
+                <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">
+                  {t("regionComparison.simulator.confidence")}: {confidenceLevel}
+                </span>
+                {rankShift && (
+                  <span className="rounded-full bg-indigo-50 px-3 py-1 text-xs font-semibold text-indigo-700">
+                    {t("regionComparison.simulator.rankShift")}: A {rankShift.rankA1}→{rankShift.rankA2}, B {rankShift.rankB1}→{rankShift.rankB2}
+                  </span>
+                )}
+              </div>
+
               <div className="mt-4 overflow-x-auto">
                 <table className="min-w-full border-collapse text-sm">
                   <thead>
@@ -568,7 +941,12 @@ const RegionComparison = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {comparison.metrics.map((metric) => (
+                    {afterComparison.metrics.map((metric) => {
+                      const beforeMetric = beforeComparison.metrics?.find(
+                        (row) => row.type === metric.type
+                      );
+
+                      return (
                       <tr key={metric.type} className="border-b border-slate-100">
                         <td className="px-2 py-3">
                           <div className="font-medium text-slate-900">
@@ -583,6 +961,9 @@ const RegionComparison = () => {
                             {t("regionComparison.value")}: {formatValue(metric.valueA)} {metric.unit !== "index" ? metric.unit : ""}
                           </div>
                           <div className="text-xs text-slate-500">
+                            {t("regionComparison.before")}: {formatValue(beforeMetric?.valueA ?? null)} {metric.unit !== "index" ? metric.unit : ""}
+                          </div>
+                          <div className="text-xs text-slate-500">
                             {t("regionComparison.score")}: {metric.scoreA === null ? t("regionComparison.notAvailableShort") : metric.scoreA.toFixed(1)}
                           </div>
                         </td>
@@ -591,49 +972,52 @@ const RegionComparison = () => {
                             {t("regionComparison.value")}: {formatValue(metric.valueB)} {metric.unit !== "index" ? metric.unit : ""}
                           </div>
                           <div className="text-xs text-slate-500">
+                            {t("regionComparison.before")}: {formatValue(beforeMetric?.valueB ?? null)} {metric.unit !== "index" ? metric.unit : ""}
+                          </div>
+                          <div className="text-xs text-slate-500">
                             {t("regionComparison.score")}: {metric.scoreB === null ? t("regionComparison.notAvailableShort") : metric.scoreB.toFixed(1)}
                           </div>
                         </td>
                         <td className="px-2 py-3 font-semibold text-emerald-700">
                           {getWinnerText(
                             metric.winnerCode,
-                            comparison.villageAName,
-                            comparison.villageBName
+                            afterComparison.villageAName,
+                            afterComparison.villageBName
                           )}
                         </td>
                       </tr>
-                    ))}
+                    )})}
                   </tbody>
                 </table>
               </div>
 
               <div className="mt-6 rounded-lg bg-slate-900 p-4 text-sm text-white">
                 <p className="text-base font-semibold">
-                  {comparison.villageAName} vs {comparison.villageBName}
+                  {afterComparison.villageAName} vs {afterComparison.villageBName}
                 </p>
                 <ul className="mt-2 space-y-1 text-slate-100">
                   <li>
                     {t("regionComparison.metrics.water")}:{" "}
                     {getWinnerText(
-                      comparison.summary.water,
-                      comparison.villageAName,
-                      comparison.villageBName
+                      afterComparison.summary.water,
+                      afterComparison.villageAName,
+                      afterComparison.villageBName
                     )}
                   </li>
                   <li>
                     {t("regionComparison.metrics.crops")}:{" "}
                     {getWinnerText(
-                      comparison.summary.crops,
-                      comparison.villageAName,
-                      comparison.villageBName
+                      afterComparison.summary.crops,
+                      afterComparison.villageAName,
+                      afterComparison.villageBName
                     )}
                   </li>
                   <li>
                     {t("regionComparison.metrics.rainfall")}:{" "}
                     {getWinnerText(
-                      comparison.summary.rainfall,
-                      comparison.villageAName,
-                      comparison.villageBName
+                      afterComparison.summary.rainfall,
+                      afterComparison.villageAName,
+                      afterComparison.villageBName
                     )}
                   </li>
                 </ul>
