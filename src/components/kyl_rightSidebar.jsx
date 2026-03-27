@@ -19,6 +19,7 @@ import autoTable from 'jspdf-autotable';
 import html2canvas from 'html2canvas';
 import TileLayer from 'ol/layer/Tile';
 import XYZ from 'ol/source/XYZ';
+import { useTranslation } from 'react-i18next';
 
 const KYLRightSidebar = ({
   state,
@@ -65,7 +66,8 @@ const KYLRightSidebar = ({
   const [globalDistrict, setGlobalDistrict] = useRecoilState(districtAtom);
   const [globalBlock, setGlobalBlock] = useRecoilState(blockAtom);
   const [loadingWB, setLoadingWB] = React.useState(false);
-  const [showSelectionPopup, setShowSelectionPopup] = React.useState(false); // Add this line
+  const [showSelectionPopup, setShowSelectionPopup] = React.useState(false);
+  const { t } = useTranslation();
 
 
 
@@ -741,17 +743,19 @@ const KYLRightSidebar = ({
           <button
             className="w-full py-2 px-2 text-indigo-600 bg-indigo-100 rounded-lg text-xs font-medium text-left mb-1"
           >
-            Click on a micro-watershed (blue outline) to view its report.
+            {t('kyl.rightSidebar.mwsHint')}
           </button>
           <div className="bg-white rounded-lg border border-gray-100 p-3">
             <div className="space-y-4">
               <div className="flex items-center gap-3">
                 <label className="text-sm text-gray-600 min-w-[45px]">
-                  State
+                  {t('kyl.rightSidebar.state')}
                 </label>
                 <SelectButton
-                  currVal={state || { label: "Select State" }}
+                  currVal={state}
+                  placeholder={t('home.know.selectState')}
                   stateData={statesData}
+                  translateNamespace="states"
                   handleItemSelect={handleItemSelect}
                   setState={(val) => {
                     setState(val);
@@ -762,11 +766,13 @@ const KYLRightSidebar = ({
               </div>
               <div className="flex items-center gap-3">
                 <label className="text-sm text-gray-600 min-w-[45px]">
-                  District
+                  {t('kyl.rightSidebar.district')}
                 </label>
                 <SelectButton
-                  currVal={district || { label: "Select District" }}
-                  stateData={state !== null ? state.district : null}
+                  currVal={district}
+                  placeholder={t('home.know.selectDistrict')}
+                  stateData={state ? state.district : null}
+                  translateNamespace="districts"
                   handleItemSelect={handleItemSelect}
                   setState={(val) => {
                     setDistrict(val);
@@ -777,11 +783,13 @@ const KYLRightSidebar = ({
               </div>
               <div className="flex items-center gap-3">
                 <label className="text-sm text-gray-600 min-w-[45px]">
-                  Tehsil
+                  {t('kyl.rightSidebar.tehsil')}
                 </label>
                 <SelectButton
-                  currVal={block || { label: "Select Tehsil" }}
-                  stateData={district !== null ? district.blocks : null}
+                  currVal={block}
+                  placeholder={t('home.know.selectTehsil')}
+                  stateData={district ? district.blocks : null}
+                  translateNamespace="blocks"
                   handleItemSelect={handleItemSelect}
                   setState={(val) => {
                     setBlock(val);
@@ -818,7 +826,7 @@ const KYLRightSidebar = ({
                         d="M2.458 12C3.732 7.943 7.523 5 12 5s8.268 2.943 9.542 7c-1.274 4.057-5.065 7-9.542 7s-8.268-2.943-9.542-7z"
                       />
                     </svg>
-                    View Tehsil Report
+                    {t('kyl.rightSidebar.viewTehsilReport')}
                   </button>
                   <button
                     onClick={() => toggleWaterbodies()}
@@ -842,7 +850,7 @@ const KYLRightSidebar = ({
                           <path d="M5 12a7 7 0 0 0 11.6 4.5" />
                           <line x1="3" y1="3" x2="21" y2="21" />
                         </svg>
-                        Hide Waterbodies
+                        {t('kyl.rightSidebar.hideWaterbodies')}
                       </>
                     ) : (
                       <>
@@ -853,7 +861,7 @@ const KYLRightSidebar = ({
                           <path d="M12 2C12 2 7 8 7 12a5 5 0 0 0 10 0c0-4-5-10-5-10z" />
                           <path d="M5 12a7 7 0 0 0 14 0" />
                         </svg>
-                        Show Waterbodies
+                        {t('kyl.rightSidebar.showWaterbodies')}
                       </>
                     )}
                   </button>
@@ -882,7 +890,7 @@ const KYLRightSidebar = ({
                     <line x1="7" y1="12" x2="17" y2="6" />
                     <line x1="7" y1="12" x2="17" y2="18" />
                   </svg>
-                  {showConnectivity ? "Hide MWS Connectivity" : "Show MWS Connectivity"}
+                  {showConnectivity ? t('kyl.rightSidebar.hideConnectivity') : t('kyl.rightSidebar.showConnectivity')}
                 </button>
               </div>
             )}
@@ -890,7 +898,7 @@ const KYLRightSidebar = ({
           <div className="bg-white rounded-lg border border-gray-100 p-3">
             <div className="flex items-center justify-between mb-2">
               <span className="text-sm font-medium">
-                Selected Indicators ({getFormattedSelectedFilters().length})
+                {t('kyl.rightSidebar.selectedIndicators', { count: getFormattedSelectedFilters().length })}
               </span>
               {getFormattedSelectedFilters().length > 0 && (
                 <button
@@ -958,15 +966,15 @@ const KYLRightSidebar = ({
             {getFormattedSelectedFilters().length > 0 && (
               <div className="mt-4 text-xs text-gray-600">
                 {selectedMWS !== null && selectedMWS.length === 0 && selectedVillages !== null && selectedVillages.size === 0
-                  ? "There are no micro-watersheds and villages that matches your selected Filters."
-                  : `The map on the left shows ${selectedMWS.length} micro-watersheds and ${selectedVillages.size} corresponding villages based on your selected filters.`}
+                  ? t('kyl.rightSidebar.noMatchMsg')
+                  : t('kyl.rightSidebar.matchMsg', { mws: selectedMWS.length, villages: selectedVillages.size })}
               </div>
             )}
           </div>
 
           <div className="bg-white rounded-lg border border-gray-100 p-3 mt-2">
             <span className="text-sm font-medium">
-              Selected Patterns ({getFormattedSelectedPatterns().length})
+              {t('kyl.rightSidebar.selectedPatterns', { count: getFormattedSelectedPatterns().length })}
             </span>
             <div className="mt-2 max-h-[150px] overflow-y-auto pr-2">
               <div className="space-y-2">
@@ -1009,13 +1017,13 @@ const KYLRightSidebar = ({
           {clickedWaterbodyId && (
             <div className="p-3 bg-blue-50 border border-blue-200 rounded mt-3">
               <p className="font-semibold text-blue-800">
-                Waterbody Selected: {clickedWaterbodyId}
+                {t('kyl.rightSidebar.waterbodySelected')}: {clickedWaterbodyId}
               </p>
               <button
                 onClick={() => window.open(waterbodyDashboardUrl, "_blank")}
                 className="mt-2 px-3 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
               >
-                Click to View Dashboard →
+                {t('kyl.rightSidebar.viewDashboard')}
               </button>
             </div>
           )}

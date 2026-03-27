@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import KYLIndicatorFilter from './kyl_indicatorFilter';
 import KYLPatternDisplay from './kyl_patternDisplay';
+import { useTranslation } from 'react-i18next';
 
 const KYLLeftSidebar = ({
     indicatorType,
@@ -33,6 +34,7 @@ const KYLLeftSidebar = ({
 
     const [activeTab, setActiveTab] = useState('Filters');
     const [selectedSubcategory, setSelectedSubcategory] = useState(null);
+    const { t } = useTranslation();
 
     const combinedSelectedValues = {
         ...filterSelections.selectedMWSValues,
@@ -65,7 +67,7 @@ const KYLLeftSidebar = ({
                         : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
                     onClick={() => handleTabChange('Patterns')}
                 >
-                    Patterns (Experimental)
+                    {t('kyl.tabs.patterns')}
                 </button>
 
                 <button
@@ -75,7 +77,7 @@ const KYLLeftSidebar = ({
                         : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
                     onClick={() => handleTabChange('Filters')}
                 >
-                    Filters
+                    {t('kyl.tabs.filters')}
                 </button>
             </div>
 
@@ -85,7 +87,7 @@ const KYLLeftSidebar = ({
                     {(Object.keys(filterSelections.selectedMWSValues).length === 0 &&
                       Object.keys(filterSelections.selectedVillageValues).length === 0) && (
                         <button className="w-full py-2 px-2 text-indigo-600 bg-indigo-100 rounded-lg text-xs text-left mb-1">
-                            Select filters from amongst the indicators below
+                            {t('kyl.filters.hint')}
                         </button>
                     )}
 
@@ -100,7 +102,7 @@ const KYLLeftSidebar = ({
                                 onClick={() => setIndicatorType(category)}
                                 disabled={!filtersEnabled}
                             >
-                                {category}
+                                {t(`kyl.categories.${category}`, category)}
                             </button>
                         ))}
                     </div>
@@ -145,7 +147,7 @@ const KYLLeftSidebar = ({
             {activeTab === 'Patterns' && (
                 <>
                     <button className="w-full py-2 px-2 text-indigo-600 bg-indigo-100 rounded-lg text-sm text-left">
-                        Click to Know More About Patterns
+                        {t('kyl.patterns.hint')}
                     </button>
 
                     <div className="flex flex-wrap gap-2 pt-2">
@@ -159,7 +161,7 @@ const KYLLeftSidebar = ({
                                 onClick={() => handleCategoryChange(category)}
                                 disabled={!filtersEnabled}
                             >
-                                {category}
+                                {t(`kyl.categories.${category}`, category)}
                             </button>
                         ))}
                     </div>
@@ -209,7 +211,7 @@ const KYLLeftSidebar = ({
                 onClick={handleClearAll}
                 className="px-3 py-1 text-xs bg-red-500 text-white rounded-md hover:bg-red-600"
             >
-                Clear All
+                {t('kyl.clearAll')}
             </button>
         </div>
 
