@@ -371,5 +371,47 @@
     "filtersAndData": "Filters & Data",
     "selectYear": "Select Year",
     "ccBy": "CoRE stack datasets are available under"
+  },
+  "regionComparison": {
+    "title": "Region Comparison Tool",
+    "subtitle": "Compare two villages on rainfall, crop health, and water status.",
+    "backToHome": "Back to Home",
+    "state": "State",
+    "district": "District",
+    "block": "Block",
+    "villageA": "Village A",
+    "villageB": "Village B",
+    "selectState": "Select State",
+    "selectDistrict": "Select District",
+    "selectBlock": "Select Block",
+    "selectVillageA": "Select Village A",
+    "selectVillageB": "Select Village B",
+    "comparisonOutput": "Comparison Output",
+    "metric": "Metric",
+    "sourceColumn": "Source column",
+    "value": "Value",
+    "score": "Score",
+    "notAvailable": "Not available",
+    "notAvailableShort": "NA",
+    "metrics": {
+      "rainfall": "Rainfall",
+      "crops": "Crop Health",
+      "water": "Water Levels"
+    },
+    "winner": {
+      "title": "Winner",
+      "better": "better",
+      "tie": "Tie",
+      "insufficient": "Insufficient data"
+    },
+    "messages": {
+      "loadingVillageData": "Loading village data...",
+      "fetchError": "Village data could not be loaded for this block. Try another block or check API coverage for this location.",
+      "limitedVillageMetrics": "Village list loaded, but this block has limited rainfall/crop/water fields. Comparison may show insufficient data.",
+      "fallbackToMwsMissingMetrics": "Village list loaded, but metrics were missing. Showing MWS-derived village estimates for comparison.",
+      "fallbackToMwsUnavailableVillage": "Village-level data is unavailable for this block. Showing MWS-derived village estimates.",
+      "selectValidVillages": "Please select two valid villages.",
+      "selectDifferentVillages": "Please select two different villages."
+    }
   }
 }

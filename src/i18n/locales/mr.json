@@ -620,5 +620,47 @@
     "filtersAndData": "फिल्टर आणि डेटा",
     "selectYear": "वर्ष निवडा",
     "ccBy": "CoRE स्टॅक डेटासेट अंतर्गत उपलब्ध आहेत"
+  },
+  "regionComparison": {
+    "title": "प्रदेश तुलना साधन",
+    "subtitle": "पर्जन्य, पीक आरोग्य आणि पाण्याची स्थिती यांच्या आधारे दोन गावांची तुलना करा.",
+    "backToHome": "मुख्यपृष्ठावर परत जा",
+    "state": "राज्य",
+    "district": "जिल्हा",
+    "block": "तालुका",
+    "villageA": "गाव A",
+    "villageB": "गाव B",
+    "selectState": "राज्य निवडा",
+    "selectDistrict": "जिल्हा निवडा",
+    "selectBlock": "तालुका निवडा",
+    "selectVillageA": "गाव A निवडा",
+    "selectVillageB": "गाव B निवडा",
+    "comparisonOutput": "तुलना निकाल",
+    "metric": "मेट्रिक",
+    "sourceColumn": "स्रोत स्तंभ",
+    "value": "मूल्य",
+    "score": "गुण",
+    "notAvailable": "उपलब्ध नाही",
+    "notAvailableShort": "NA",
+    "metrics": {
+      "rainfall": "पर्जन्य",
+      "crops": "पीक आरोग्य",
+      "water": "पाणी पातळी"
+    },
+    "winner": {
+      "title": "विजेता",
+      "better": "चांगले",
+      "tie": "बरोबरी",
+      "insufficient": "अपुरी माहिती"
+    },
+    "messages": {
+      "loadingVillageData": "गावाचा डेटा लोड होत आहे...",
+      "fetchError": "या तालुक्यासाठी गावाचा डेटा लोड झाला नाही. दुसरा तालुका वापरून पहा किंवा या ठिकाणासाठी API कव्हरेज तपासा.",
+      "limitedVillageMetrics": "गावांची यादी लोड झाली, पण या तालुक्यात पर्जन्य/पीक/पाणी यासंबंधित फील्ड मर्यादित आहेत. तुलनेत अपुरी माहिती दिसू शकते.",
+      "fallbackToMwsMissingMetrics": "गावांची यादी लोड झाली, पण मेट्रिक्स उपलब्ध नव्हते. तुलनेसाठी MWS-आधारित गाव अंदाज दाखवले जात आहेत.",
+      "fallbackToMwsUnavailableVillage": "या तालुक्यासाठी गाव-स्तरीय डेटा उपलब्ध नाही. MWS-आधारित गाव अंदाज दाखवले जात आहेत.",
+      "selectValidVillages": "कृपया दोन वैध गावे निवडा.",
+      "selectDifferentVillages": "तुलनेसाठी कृपया दोन वेगळी गावे निवडा."
+    }
   }
 }

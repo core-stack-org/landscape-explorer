@@ -620,5 +620,47 @@
     "filtersAndData": "फ़िल्टर और डेटा",
     "selectYear": "वर्ष चुनें",
     "ccBy": "CoRE स्टैक डेटासेट नीचे उपलब्ध हैं"
+  },
+  "regionComparison": {
+    "title": "क्षेत्र तुलना उपकरण",
+    "subtitle": "वर्षा, फसल स्वास्थ्य और जल स्थिति के आधार पर दो गांवों की तुलना करें।",
+    "backToHome": "होम पर वापस जाएं",
+    "state": "राज्य",
+    "district": "जिला",
+    "block": "ब्लॉक",
+    "villageA": "गांव A",
+    "villageB": "गांव B",
+    "selectState": "राज्य चुनें",
+    "selectDistrict": "जिला चुनें",
+    "selectBlock": "ब्लॉक चुनें",
+    "selectVillageA": "गांव A चुनें",
+    "selectVillageB": "गांव B चुनें",
+    "comparisonOutput": "तुलना परिणाम",
+    "metric": "मापदंड",
+    "sourceColumn": "स्रोत कॉलम",
+    "value": "मान",
+    "score": "स्कोर",
+    "notAvailable": "उपलब्ध नहीं",
+    "notAvailableShort": "NA",
+    "metrics": {
+      "rainfall": "वर्षा",
+      "crops": "फसल स्वास्थ्य",
+      "water": "जल स्तर"
+    },
+    "winner": {
+      "title": "बेहतर",
+      "better": "बेहतर",
+      "tie": "बराबरी",
+      "insufficient": "पर्याप्त डेटा नहीं"
+    },
+    "messages": {
+      "loadingVillageData": "गांव डेटा लोड हो रहा है...",
+      "fetchError": "इस ब्लॉक के लिए गांव डेटा लोड नहीं हो सका। कोई दूसरा ब्लॉक चुनें या इस स्थान के लिए API कवरेज जांचें।",
+      "limitedVillageMetrics": "गांव सूची लोड हो गई, लेकिन इस ब्लॉक में वर्षा/फसल/जल के सीमित फ़ील्ड हैं। तुलना में पर्याप्त डेटा न दिखे।",
+      "fallbackToMwsMissingMetrics": "गांव सूची लोड हो गई, लेकिन मेट्रिक्स नहीं मिले। तुलना के लिए MWS-आधारित अनुमान दिखाए जा रहे हैं।",
+      "fallbackToMwsUnavailableVillage": "इस ब्लॉक के लिए गांव-स्तरीय डेटा उपलब्ध नहीं है। MWS-आधारित गांव अनुमान दिखाए जा रहे हैं।",
+      "selectValidVillages": "कृपया दो मान्य गांव चुनें।",
+      "selectDifferentVillages": "कृपया तुलना के लिए दो अलग-अलग गांव चुनें।"
+    }
   }
 }

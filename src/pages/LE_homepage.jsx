@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect } from "react";
 import { useNavigate } from "react-router";
 import { useRecoilState } from "recoil";
 import {
@@ -204,6 +204,14 @@ export default function KYLHomePage() {
                     }
                   >
                     {t("home.know.downloadLayers")}
+                  </button>
+                  <button
+                    className="bg-emerald-600 text-white px-4 py-2 rounded-lg w-full sm:w-auto"
+                    onClick={() =>
+                      handleNavigate("/region-comparison", "Region Comparison")
+                    }
+                  >
+                    Region Comparison
                   </button>
                 </div>
               </div>
