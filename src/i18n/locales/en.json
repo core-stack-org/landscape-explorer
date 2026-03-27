@@ -391,6 +391,7 @@
     "sourceColumn": "Source column",
     "value": "Value",
     "score": "Score",
+    "before": "Before",
     "notAvailable": "Not available",
     "notAvailableShort": "NA",
     "metrics": {
@@ -412,6 +413,18 @@
       "fallbackToMwsUnavailableVillage": "Village-level data is unavailable for this block. Showing MWS-derived village estimates.",
       "selectValidVillages": "Please select two valid villages.",
       "selectDifferentVillages": "Please select two different villages."
+    },
+    "simulator": {
+      "title": "Intervention Simulator (What-if Mode)",
+      "subtitle": "Adjust hypothetical improvements for Village A and Village B to see how outcomes and rankings change.",
+      "reset": "Reset Scenario",
+      "confidence": "Impact confidence",
+      "rankShift": "Rank shift"
+    },
+    "confidence": {
+      "high": "High",
+      "medium": "Medium",
+      "low": "Low"
     }
   }
 }

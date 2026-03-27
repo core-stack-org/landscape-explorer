@@ -640,6 +640,7 @@
     "sourceColumn": "स्रोत स्तंभ",
     "value": "मूल्य",
     "score": "गुण",
+    "before": "पूर्वी",
     "notAvailable": "उपलब्ध नाही",
     "notAvailableShort": "NA",
     "metrics": {
@@ -661,6 +662,18 @@
       "fallbackToMwsUnavailableVillage": "या तालुक्यासाठी गाव-स्तरीय डेटा उपलब्ध नाही. MWS-आधारित गाव अंदाज दाखवले जात आहेत.",
       "selectValidVillages": "कृपया दोन वैध गावे निवडा.",
       "selectDifferentVillages": "तुलनेसाठी कृपया दोन वेगळी गावे निवडा."
+    },
+    "simulator": {
+      "title": "हस्तक्षेप सिम्युलेटर (What-if मोड)",
+      "subtitle": "गाव A आणि गाव B साठी काल्पनिक सुधारणा समायोजित करा आणि निकाल व क्रमवारी कशी बदलते ते पाहा.",
+      "reset": "परिस्थिती रीसेट करा",
+      "confidence": "परिणाम विश्वासार्हता",
+      "rankShift": "क्रमवारी बदल"
+    },
+    "confidence": {
+      "high": "उच्च",
+      "medium": "मध्यम",
+      "low": "कमी"
     }
   }
 }
