@@ -1716,7 +1716,7 @@ if (!hasProject && (lat == null || lon == null) && props?.geometry) {
                   {selectedPlantation?.Name?.replace(/\s*\(.*?\)\s*/g, "").trim() || "Plantation Site"}
                 </div>
 
-                <div className="text-gray-600">
+                <div className="text-gray-500">
                   <span className="font-medium">Patch Suitability:</span>{" "}
                   {selectedPlantation?.patch_suitability || "NA"}
                 </div>
