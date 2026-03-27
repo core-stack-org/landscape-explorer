@@ -2,9 +2,12 @@ import React, { useState } from "react";
 import newLogo from "../assets/newlogoWhite.png";
 import { useLocation } from "react-router-dom";
 import { Info, ExternalLink } from "lucide-react";
+import { useTranslation } from "react-i18next";
+import LanguageSwitcher from "./LanguageSwitcher";
 
 const LandingNavbar = () => {
   const location = useLocation();
+  const { t } = useTranslation();
   const isDownloadPage = location.pathname === "/download_layers";
   const isHomePage = location.pathname === "/";
   const isKylDashboard = location.pathname === "/kyl_dashboard";
@@ -39,6 +42,8 @@ const LandingNavbar = () => {
           </a>
 
           <div className="flex flex-wrap gap-3 items-center justify-center">
+            <LanguageSwitcher />
+
             {isDownloadPage && (
               <a
                 href="https://docs.google.com/document/d/1jet4EEBbbKgpNrPnuNJJDRuAJUiR2pIMFQp9JTlygAQ/edit?usp=sharing"
@@ -47,7 +52,7 @@ const LandingNavbar = () => {
                 className="flex items-center gap-2 px-4 py-2 rounded-lg bg-purple-50 hover:bg-purple-100 transition-all duration-200 border border-purple-200 group"
               >
                 <span className="text-sm sm:text-base font-medium text-purple-700 group-hover:text-purple-800">
-                  QGIS Documentation
+                  {t("nav.qgisDocs")}
                 </span>
                 <ExternalLink className="h-4 w-4 text-purple-600 group-hover:scale-110 transition-transform" />
               </a>
@@ -62,7 +67,7 @@ const LandingNavbar = () => {
                   className="flex items-center gap-2 px-4 py-2 rounded-lg bg-purple-50 hover:bg-purple-100 transition-all duration-200 border border-purple-200 group"
                 >
                   <span className="text-sm sm:text-base font-medium text-purple-700 group-hover:text-purple-800">
-                    Explore GEE App
+                    {t("nav.exploreGEE")}
                   </span>
                   <ExternalLink className="h-4 w-4 text-purple-600 group-hover:scale-110 transition-transform" />
                 </a>
@@ -74,7 +79,7 @@ const LandingNavbar = () => {
                   className="flex items-center gap-2 px-4 py-2 rounded-lg bg-purple-50 hover:bg-purple-100 transition-all duration-200 border border-purple-200 group"
                 >
                   <span className="text-sm sm:text-base font-medium text-purple-700 group-hover:text-purple-800">
-                    Project Management Dashboard
+                    {t("nav.projectDashboard")}
                   </span>
                   <ExternalLink className="h-4 w-4 text-purple-600 group-hover:scale-110 transition-transform" />
                 </a>
@@ -91,14 +96,14 @@ const LandingNavbar = () => {
                 >
                   <Info className="h-4 w-4 sm:h-5 sm:w-5 text-purple-600 group-hover:scale-110 transition-transform" />
                   <span className="text-sm sm:text-base font-medium text-purple-700 group-hover:text-purple-800">
-                    KYL Indicators
+                    {t("nav.kylIndicators")}
                   </span>
                 </button>
 
                 {showTooltip && (
                   <div className="absolute top-full right-0 mt-2 w-56 bg-white border border-purple-100 rounded-lg shadow-xl p-3 z-50">
                     <p className="text-xs text-gray-600">
-                      Click to learn more about the indicators used in the KYL dashboard
+                      {t("nav.kylIndicatorsTooltip")}
                     </p>
                   </div>
                 )}
