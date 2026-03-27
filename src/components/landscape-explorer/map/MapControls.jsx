@@ -81,16 +81,17 @@ const MapControls = ({
   };
 
   // Count total active layers
-  const totalActiveLayers = 
-    getActiveLayersByCategory('resources').length
+  const totalActiveLayers = Object.values(toggledLayers).filter(Boolean).length;
 
   return (
     <div className="absolute bottom-6 right-6 flex flex-col space-y-2">
       {/* Layer controls button - show active layer count */}
       <button
         onClick={() => setShowLayerControls(!showLayerControls)}
-        className="bg-white rounded-lg shadow-lg p-2 flex items-center justify-center hover:bg-gray-100 relative"
+        className="ui-pressable relative flex items-center justify-center rounded-2xl border border-violet-100 bg-white/95 p-2 shadow-lg backdrop-blur hover:bg-violet-50 focus-visible:ring-0"
         title="Toggle layer controls"
+        aria-expanded={showLayerControls}
+        aria-label="Toggle layer controls"
       >
         <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 6h11M9 12h11M9 18h11M5 6a1 1 0 11-2 0 1 1 0 012 0zM5 12a1 1 0 11-2 0 1 1 0 012 0zM5 18a1 1 0 11-2 0 1 1 0 012 0z" />
@@ -104,7 +105,7 @@ const MapControls = ({
 
       {/* Layer control panel */}
       {showLayerControls && (
-        <div className="bg-white rounded-lg shadow-lg p-3 w-60 max-h-[calc(100vh-150px)] overflow-auto">
+        <div className="ui-fade-in w-60 max-h-[calc(100vh-150px)] overflow-auto rounded-2xl border border-violet-100 bg-white/95 p-3 shadow-lg backdrop-blur">
           <h3 className="font-medium text-gray-700 mb-2">Layer Controls</h3>
           
           {/* Layer category buttons in a wrapped grid */}
@@ -146,7 +147,7 @@ const MapControls = ({
                   type="checkbox"
                   checked={showMWS}
                   onChange={() => setShowMWS(!showMWS)}
-                  className="form-checkbox h-4 w-4 text-blue-600 rounded"
+                  className="h-4 w-4 rounded border-gray-300 text-violet-600 focus:ring-violet-500"
                 />
                 <span className="text-sm text-gray-700">Show Watersheds</span>
               </label>
@@ -155,7 +156,7 @@ const MapControls = ({
                   type="checkbox"
                   checked={showVillages}
                   onChange={() => setShowVillages(!showVillages)}
-                  className="form-checkbox h-4 w-4 text-blue-600 rounded"
+                  className="h-4 w-4 rounded border-gray-300 text-violet-600 focus:ring-violet-500"
                 />
                 <span className="text-sm text-gray-700">Show Boundaries</span>
               </label>
@@ -175,7 +176,7 @@ const MapControls = ({
                       type="checkbox"
                       checked={toggledLayers[layer.id] || false}
                       onChange={(e) => handleToggleClick(layer.id, e.target.checked)}
-                      className="form-checkbox h-4 w-4 text-blue-600 rounded"
+                      className="h-4 w-4 rounded border-gray-300 text-violet-600 focus:ring-violet-500"
                     />
                     <span className="text-sm text-gray-700">{layer.label}</span>
                   </label>
@@ -187,11 +188,12 @@ const MapControls = ({
       )}
 
       {/* Zoom controls */}
-      <div className="bg-white rounded-lg shadow-lg overflow-hidden">
+      <div className="overflow-hidden rounded-2xl border border-violet-100 bg-white/95 shadow-lg backdrop-blur">
         <button
           onClick={handleZoomIn}
-          className="p-2 w-8 h-8 flex items-center justify-center hover:bg-gray-100"
+          className="ui-pressable flex h-10 w-10 items-center justify-center hover:bg-violet-50 focus-visible:ring-0"
           title="Zoom in"
+          aria-label="Zoom in"
         >
           <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
             <path fillRule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clipRule="evenodd" />
@@ -200,8 +202,9 @@ const MapControls = ({
         <div className="border-t border-gray-200"></div>
         <button
           onClick={handleZoomOut}
-          className="p-2 w-8 h-8 flex items-center justify-center hover:bg-gray-100"
+          className="ui-pressable flex h-10 w-10 items-center justify-center hover:bg-violet-50 focus-visible:ring-0"
           title="Zoom out"
+          aria-label="Zoom out"
         >
           <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
             <path fillRule="evenodd" d="M5 10a1 1 0 011-1h8a1 1 0 110 2H6a1 1 0 01-1-1z" clipRule="evenodd" />
@@ -210,8 +213,9 @@ const MapControls = ({
         <div className="border-t border-gray-200"></div>
         <button
           onClick={handleResetView}
-          className="p-2 w-8 h-8 flex items-center justify-center hover:bg-gray-100"
+          className="ui-pressable flex h-10 w-10 items-center justify-center hover:bg-violet-50 focus-visible:ring-0"
           title="Reset view"
+          aria-label="Reset map view"
         >
           <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
             <path fillRule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clipRule="evenodd" />

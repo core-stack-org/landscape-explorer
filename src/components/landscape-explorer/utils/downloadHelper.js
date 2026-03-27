@@ -1,6 +1,7 @@
 /**
  * Enhanced download helper functions with direct link approach for reliable downloads
  */
+import { toast } from "react-hot-toast";
 
 // For GeoJSON, we need to fetch the data and force a download as browsers tend to open JSON files
 export const downloadGeoJson = async (url, layerName) => {
@@ -28,9 +29,12 @@ export const downloadGeoJson = async (url, layerName) => {
       document.body.removeChild(link);
       URL.revokeObjectURL(objectUrl);
     }, 100);
+    toast.success(`${layerName} GeoJSON download started.`);
+    return true;
   } catch (error) {
     console.error('Error downloading GeoJSON:', error);
-    alert('Failed to download GeoJSON. Please try again.');
+    toast.error("Failed to download GeoJSON. Please try again.");
+    return false;
   }
 };
 
@@ -46,12 +50,16 @@ export const downloadKml = (url, layerName) => {
   setTimeout(() => {
     document.body.removeChild(link);
   }, 100);
+  toast.success(`${layerName} KML download started.`);
+  return true;
 };
 
 // For GeoTIFF files, window.open is usually the best approach
 export const downloadGeoTiff = (url, layerName) => {
   // GeoTIFF files are typically served by WCS services that require window.open
   window.open(url);
+  toast.success(`${layerName} GeoTIFF download opened in a new tab.`);
+  return true;
 };
 
 // For Excel downloads, use the direct fetch approach for blob data
@@ -84,10 +92,11 @@ export const downloadExcel = async (url, filename) => {
       URL.revokeObjectURL(objectUrl);
     }, 100);
     
+    toast.success("Excel download started.");
     return true;
   } catch (error) {
     console.error('Excel download error:', error);
-    alert('Failed to download Excel. Please try again.');
+    toast.error("Failed to download Excel. Please try again.");
     return false;
   }
 };

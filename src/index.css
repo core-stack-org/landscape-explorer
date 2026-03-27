@@ -20,6 +20,125 @@
 :root {
   --browser-zoom: 1;
   --inv-zoom: calc(1 / var(--browser-zoom));
+  --motion-duration-fast: 160ms;
+  --motion-duration-base: 220ms;
+  --motion-ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --focus-ring: 0 0 0 3px rgba(139, 92, 246, 0.2);
+}
+
+body {
+  color: #111827;
+  background: linear-gradient(180deg, #faf8ff 0%, #ffffff 24%);
+}
+
+button,
+a,
+input,
+select,
+[role="button"],
+[role="option"],
+.react-select__control {
+  transition:
+    background-color var(--motion-duration-fast) var(--motion-ease),
+    border-color var(--motion-duration-fast) var(--motion-ease),
+    color var(--motion-duration-fast) var(--motion-ease),
+    box-shadow var(--motion-duration-fast) var(--motion-ease),
+    transform var(--motion-duration-fast) var(--motion-ease),
+    opacity var(--motion-duration-fast) var(--motion-ease);
+}
+
+:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.ui-surface {
+  transition:
+    box-shadow var(--motion-duration-base) var(--motion-ease),
+    transform var(--motion-duration-base) var(--motion-ease),
+    border-color var(--motion-duration-fast) var(--motion-ease);
+}
+
+.ui-surface:hover {
+  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.08);
+}
+
+.ui-pressable:hover {
+  transform: translateY(-1px) scale(1.01);
+}
+
+.ui-pressable:active {
+  transform: scale(0.98);
+}
+
+.ui-fade-in {
+  animation: uiFadeIn var(--motion-duration-base) var(--motion-ease);
+}
+
+.ui-slide-in {
+  animation: uiSlideIn var(--motion-duration-base) var(--motion-ease);
+}
+
+.ui-skeleton {
+  position: relative;
+  overflow: hidden;
+  background: #ede9fe;
+}
+
+.ui-skeleton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.7), transparent);
+  animation: uiShimmer 1.4s infinite;
+}
+
+@keyframes uiFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes uiSlideIn {
+  from {
+    opacity: 0;
+    transform: translateX(12px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes uiShimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 1ms !important;
+  }
+
+  .ui-pressable:hover,
+  .ui-pressable:active,
+  .ui-surface:hover {
+    transform: none !important;
+  }
 }
 
 .legend-container {

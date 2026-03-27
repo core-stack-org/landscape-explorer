@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
 import SelectButton from '../../buttons/select_button';
+import Loader from '../../ui/Loader.jsx';
+import { toast } from "react-hot-toast";
 import { 
   downloadGeoJson, 
   downloadKml, 
@@ -125,9 +127,9 @@ const DownloadButton = ({
     }
   };
 
-  const buttonClasses = `px-2 py-1 bg-[#EDE9FE] text-[#8B5CF6] rounded-md text-xs 
-    hover:bg-[#DDD6FE] text-center transition-colors duration-200 
-    flex items-center justify-center ${isDisabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'} ${className}`;
+  const buttonClasses = `ui-pressable inline-flex items-center justify-center rounded-xl border border-violet-100 px-2.5 py-1.5 text-center text-xs font-medium
+    ${isDisabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer hover:border-violet-200 hover:bg-[#DDD6FE]'}
+    bg-[#EDE9FE] text-[#8B5CF6] focus-visible:ring-0 ${className}`;
 
   return href ? (
     <a 
@@ -221,14 +223,16 @@ const handleStyleDownload = (layerName) => {
 const LayerItem = ({ layer, isSelected, onToggle, onDownload, isLayersFetched, isLoading }) => {
   
   return (
-    <div className="border-b border-gray-200 py-3">
-      <div className="flex items-center justify-between">
+    <div className="ui-fade-in border-b border-gray-100 py-3 last:border-b-0">
+      <div className="flex items-center justify-between gap-3">
         <span className="text-sm font-medium text-gray-700">{layer.label}</span>
         <button 
           onClick={() => {
             onToggle(layer.name);
           }}
-          className="text-xs"
+          className="ui-pressable rounded-full focus-visible:ring-0"
+          aria-pressed={isSelected}
+          aria-label={`${isSelected ? "Disable" : "Enable"} ${layer.label}`}
         >
           {isSelected 
             ? <ToggleOnIcon /> 
@@ -238,7 +242,7 @@ const LayerItem = ({ layer, isSelected, onToggle, onDownload, isLayersFetched, i
       
       {/* Download Options */}
       {(layer.hasGeojson || layer.hasKml || layer.hasGeoTiff) && isSelected && (
-        <div className="flex mt-2 space-x-2">
+        <div className="ui-fade-in mt-2 flex flex-wrap gap-2">
           {layer.hasGeojson && (
             <DownloadButton 
               name="GeoJSON"
@@ -279,7 +283,7 @@ const LayerItem = ({ layer, isSelected, onToggle, onDownload, isLayersFetched, i
 // LULC Selection Component
 const LulcSelector = ({ level, lulcYear, setLulcYear, onDownload, isLayersFetched, isLoading }) => {
   return (
-    <div className="bg-white rounded-md shadow-sm p-3 mb-3 border border-gray-100">
+    <div className="ui-surface ui-fade-in mb-3 rounded-2xl border border-gray-100 bg-white p-3 shadow-sm">
       <h4 className="text-sm font-medium text-gray-700 mb-2">{level.label}</h4>
       
       <div className="mb-3">
@@ -312,20 +316,20 @@ const LulcSelector = ({ level, lulcYear, setLulcYear, onDownload, isLayersFetche
 // Main action buttons
 const ActionButtons = ({ onDownloadExcel, isLoading, canFetchLayers }) => {
   return (
-    <div className="flex space-x-3 mb-2">
+    <div className="mb-2 flex space-x-3">
       <button 
         onClick={onDownloadExcel}
         disabled={isLoading || !canFetchLayers}
-        className={`flex items-center justify-center text-gray-700 bg-gray-100 border border-gray-300 py-2 px-4 focus:outline-none w-full ${
+        className={`ui-pressable flex w-full items-center justify-center rounded-xl border py-2.5 px-4 text-sm font-medium focus-visible:ring-0 ${
           !canFetchLayers
-            ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+            ? 'cursor-not-allowed border-gray-200 bg-gray-100 text-gray-400'
             : isLoading 
-              ? 'bg-gray-50 text-gray-400 cursor-not-allowed' 
-              : 'hover:bg-gray-200'
-        } rounded text-sm font-medium transition-colors duration-200`}
+              ? 'cursor-not-allowed border-gray-200 bg-gray-50 text-gray-400' 
+              : 'border-violet-100 bg-violet-50 text-violet-700 hover:bg-violet-100'
+        }`}
       >
-        <DownloadIcon />
-        <span className="ml-2">Download Excel</span>
+        {isLoading ? <Loader inline size="sm" label="" /> : <DownloadIcon />}
+        <span className="ml-2">{isLoading ? "Processing..." : "Download Excel"}</span>
       </button>
     </div>
   );
@@ -354,7 +358,7 @@ const RightSidebar = ({
   lulcYear3,
   setLulcYear3
 }) => {
-  const [selectedCategory, setSelectedCategory] = useState('basic');
+  const [selectedCategory, setSelectedCategory] = useState('land');
   const [isLayersFetched, setIsLayersFetched] = useState(false);
 
 
@@ -377,7 +381,6 @@ const RightSidebar = ({
   // Handle toggle clicklandLayersData
   const handleToggleClick = (filterName) => {
     // If there's a handleLayerToggle prop, call it
-    console.log(filterName)
     if (handleLayerToggle) {
       const currentState = toggledLayers?.[filterName] || false;
       handleLayerToggle(filterName, !currentState);
@@ -386,7 +389,7 @@ const RightSidebar = ({
   // Handle download click with proper URL formatting and direct download
   const handleDownloadClick = (filterName, format) => {
     if (!district || !block) {
-      alert('Please select a district and block first');
+      toast.error("Please select a district and block first.");
       return;
     }
 
@@ -500,7 +503,7 @@ const RightSidebar = ({
   // LULC Layer download handler
   const handleLulcLayerDownload = (level) => {
     if (!district || !block) {
-      alert('Please select a district and block first');
+      toast.error("Please select a district and block first.");
       return;
     }
     
@@ -515,7 +518,7 @@ const RightSidebar = ({
     }
     
     if (!yearValue) {
-      alert('Please select a year first');
+      toast.error("Please select a year first.");
       return;
     }
     
@@ -532,7 +535,7 @@ const RightSidebar = ({
   const handleImageLayerDownload = (layerName) => {
 
     if (!district || !block) {
-      alert('Please select a district and block first');
+      toast.error("Please select a district and block first.");
       return;
     }
     
@@ -561,7 +564,7 @@ const RightSidebar = ({
   // Handle Excel download with enhanced functionality
   const handleLocalExcelDownload = () => {
     if (!state || !district || !block) {
-      alert('Please select a state, district, and block first');
+      toast.error("Please select a state, district, and block first.");
       return;
     }
     
@@ -581,20 +584,26 @@ const RightSidebar = ({
 
 
   return (
-    <div className="w-[380px] flex flex-col h-full bg-white shadow-md relative">
-      <div className="flex justify-between items-center p-4 border-b border-gray-200">
+    <div className="ui-slide-in relative flex h-full w-[380px] flex-col border-l border-violet-100 bg-white/95 shadow-xl backdrop-blur">
+      <div className="flex items-center justify-between border-b border-gray-100 p-4">
         <h2 className="font-semibold text-gray-800 text-lg">Filters & Data</h2>
         <button 
           onClick={onClose}
-          className="text-gray-500 hover:text-gray-700"
+          className="ui-pressable rounded-full p-2 text-gray-500 hover:bg-violet-50 hover:text-gray-700 focus-visible:ring-0"
+          aria-label="Close filters and data panel"
         >
           <ChevronRightIcon />
         </button>
       </div>
       
       {/* Location Selection */}
-      <div className="p-3 border-b border-gray-200 bg-gray-50">
+      <div className="border-b border-gray-100 bg-gradient-to-b from-violet-50 to-white p-3">
         <div className="space-y-3">
+          {!statesData ? (
+            <div className="rounded-2xl border border-violet-100 bg-white p-3">
+              <Loader variant="skeleton" label="Loading locations..." />
+            </div>
+          ) : null}
           <div className="flex items-center gap-2">
             <label className="text-sm text-gray-600 min-w-[45px]">State</label>
             <SelectButton
@@ -602,7 +611,8 @@ const RightSidebar = ({
               stateData={statesData}
               handleItemSelect={handleItemSelect}
               setState={setState}
-              className="w-full border border-gray-200 rounded-md py-1.5 px-3 text-gray-800 bg-white"
+              className="w-full"
+              placeholder="Select State"
             />
           </div>
           <div className="flex items-center gap-2">
@@ -612,7 +622,8 @@ const RightSidebar = ({
               stateData={state !== null ? state.district : null}
               handleItemSelect={handleItemSelect}
               setState={setDistrict}
-              className="w-full border border-gray-200 rounded-md py-1.5 px-3 text-gray-800 bg-white"
+              className="w-full"
+              placeholder="Select District"
             />
           </div>
           <div className="flex items-center gap-2">
@@ -622,14 +633,15 @@ const RightSidebar = ({
               stateData={district !== null ? district.blocks : null}
               handleItemSelect={handleItemSelect}
               setState={setBlock}
-              className="w-full border border-gray-200 rounded-md py-1.5 px-3 text-gray-800 bg-white"
+              className="w-full"
+              placeholder="Select Tehsil"
             />
           </div>
         </div>
       </div>
 
       {/* Action Buttons - only Download Excel */}
-      <div className="px-3 py-1">
+      <div className="px-3 py-2">
         <ActionButtons 
           onDownloadExcel={handleLocalExcelDownload}
           isLoading={isLoading}
@@ -649,17 +661,20 @@ const RightSidebar = ({
       {state && district && block && (
         <>
           {/* Category Tabs as buttons in grid layout */}
-          <div className="px-3 pb-2 pt-0 border-b border-gray-200">
+          <div className="border-b border-gray-100 px-3 pb-2 pt-0">
             <div className="grid grid-cols-2 gap-2">
               {mainCategories.map(cat => (
                 <button
                   key={cat.id}
-                  className={`py-2 px-3 rounded-md text-sm ${
+                  className={`ui-pressable rounded-xl border px-3 py-2 text-sm focus-visible:ring-0 ${
                     selectedCategory === cat.id 
-                      ? 'bg-white border border-gray-300 text-gray-800 font-medium' 
-                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                      ? 'border-violet-200 bg-violet-50 text-violet-700 font-medium shadow-sm' 
+                      : 'border-transparent bg-gray-100 text-gray-600 hover:border-gray-200 hover:bg-gray-50'
                   }`}
-                  onClick={() => setSelectedCategory(cat.id)}
+                  onClick={() => {
+                    setSelectedCategory(cat.id);
+                    toast(`${cat.label} layers selected.`, { icon: "📂" });
+                  }}
                 >
                   {cat.label}
                 </button>

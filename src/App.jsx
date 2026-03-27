@@ -6,10 +6,12 @@ import PlansPage from "./components/plansPage";
 import PlanViewPage from "./components/plan_detailView";
 import AgroHorticulture from "./pages/AgroHorticulture";
 import RWBDashboard from "./pages/RWBDashboard";
+import ToastHandler from "./components/ui/ToastHandler";
 
 function App() {
   return (
     <BrowserRouter>
+      <ToastHandler />
       <Routes>
         <Route path="/" element={<LEHomepage />} />
         <Route path="/kyl_dashboard" element={<KYLDashboardPage />} />

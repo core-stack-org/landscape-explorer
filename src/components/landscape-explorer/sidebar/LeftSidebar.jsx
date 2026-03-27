@@ -44,10 +44,10 @@ const LeftSidebar = ({ onClose }) => {
     return (
       <button 
         onClick={onClickEvent}
-        className={`px-3 py-2 rounded text-sm font-medium transition-colors whitespace-nowrap ${
+        className={`ui-pressable whitespace-nowrap rounded-xl border px-3 py-2 text-sm font-medium focus-visible:ring-0 ${
           isActive 
-            ? 'bg-[#8B5CF6] text-white'
-            : 'bg-[#EDE9FE] text-[#8B5CF6] hover:bg-[#DDD6FE]'
+            ? 'border-violet-500 bg-[#8B5CF6] text-white shadow-md'
+            : 'border-violet-200 bg-[#EDE9FE] text-[#8B5CF6] hover:bg-[#DDD6FE]'
         }`}
       >
         {name}
@@ -56,8 +56,8 @@ const LeftSidebar = ({ onClose }) => {
   };
 
   return (
-    <div className="bg-[#1E1B2E] w-96 h-full overflow-auto flex flex-col">
-      <div className="flex items-center justify-between p-4 border-b border-gray-700">
+    <div className="ui-slide-in flex h-full w-96 flex-col overflow-auto border-r border-[#332E4A] bg-[#1E1B2E]">
+      <div className="flex items-center justify-between border-b border-gray-700 p-4">
         <div className="flex items-center gap-3">
           <img src={landscape_icon} alt="Landscape Explorer" className="w-10 h-10" />
           <div>
@@ -67,7 +67,8 @@ const LeftSidebar = ({ onClose }) => {
         </div>
         <button 
           onClick={onClose}
-          className="text-gray-400 hover:text-white p-2 rounded-full hover:bg-[#332E4A]"
+          className="ui-pressable rounded-full p-2 text-gray-400 hover:bg-[#332E4A] hover:text-white focus-visible:ring-0"
+          aria-label="Close information panel"
         >
           <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
             <path fillRule="evenodd" d="M11.354 1.646a.5.5 0 0 1 0 .708L5.707 8l5.647 5.646a.5.5 0 0 1-.708.708l-6-6a.5.5 0 0 1 0-.708l6-6a.5.5 0 0 1 .708 0z"/>
@@ -87,7 +88,7 @@ const LeftSidebar = ({ onClose }) => {
         ))}
       </div>
 
-      <div className="p-4 bg-[#2A263C] rounded-md mx-3 mt-2">
+      <div className="ui-surface mx-3 mt-2 rounded-2xl bg-[#2A263C] p-4">
         <div className="text-lg font-semibold text-gray-200 mb-3 border-b border-gray-700 pb-2">
           {currSection}
         </div>
@@ -100,14 +101,14 @@ const LeftSidebar = ({ onClose }) => {
               href="https://gitlab.com/corestack.org/corestack" 
               target="_blank" 
               rel="noopener noreferrer" 
-              className="bg-[#8B5CF6] px-3 py-2 rounded-md text-white text-sm hover:bg-[#7C3AED] transition"
+              className="ui-pressable rounded-xl bg-[#8B5CF6] px-3 py-2 text-sm text-white hover:bg-[#7C3AED] focus-visible:ring-0"
             >
               KNOW MORE
             </a>
             {layerDetail[currTab]["style_url"].map((item, index) => (
               <button 
                 key={index}
-                className="bg-[#8B5CF6] px-3 py-2 rounded-md text-white text-sm hover:bg-[#7C3AED] transition"
+                className="ui-pressable rounded-xl bg-[#8B5CF6] px-3 py-2 text-sm text-white hover:bg-[#7C3AED] focus-visible:ring-0"
                 onClick={() => handleLayerStyleDownload(item["url"])}
               >
                 {item["name"]}
@@ -123,39 +124,39 @@ const LeftSidebar = ({ onClose }) => {
             Map Marker's Directory
           </h4>
           <div className="px-3 py-2 overflow-y-auto grid gap-1">
-            <div className="flex items-center p-2 bg-[#332E4A] rounded-md">
+            <div className="ui-surface flex items-center rounded-xl bg-[#332E4A] p-2">
               <img src={well_icon} alt="Well Marker" className="h-8 w-8" />
               <span className="text-gray-300 text-sm pl-2">Well Marker</span>
             </div>
-            <div className="flex items-center p-2 bg-[#332E4A] rounded-md">
+            <div className="ui-surface flex items-center rounded-xl bg-[#332E4A] p-2">
               <img src={livelihood_icon} alt="Livelihood Marker" className="h-8 w-8" />
               <span className="text-gray-300 text-sm pl-2">Livelihood Marker</span>
             </div>
-            <div className="flex items-center p-2 bg-[#332E4A] rounded-md">
+            <div className="ui-surface flex items-center rounded-xl bg-[#332E4A] p-2">
               <img src={settlement_icon} alt="Settlement Marker" className="h-8 w-8" />
               <span className="text-gray-300 text-sm pl-2">Settlement Marker</span>
             </div>
-            <div className="flex items-center p-2 bg-[#332E4A] rounded-md">
+            <div className="ui-surface flex items-center rounded-xl bg-[#332E4A] p-2">
               <img src={waterbodies_icon} alt="Waterbodies Marker" className="h-8 w-8" />
               <span className="text-gray-300 text-sm pl-2">Waterbodies Marker</span>
             </div>
-            <div className="flex items-center p-2 bg-[#332E4A] rounded-md">
+            <div className="ui-surface flex items-center rounded-xl bg-[#332E4A] p-2">
               <img src={tcb_icon} alt="TCB Marker" className="h-8 w-8" />
               <span className="text-gray-300 text-sm pl-2">Trench-Cum-Bund Marker</span>
             </div>
-            <div className="flex items-center p-2 bg-[#332E4A] rounded-md">
+            <div className="ui-surface flex items-center rounded-xl bg-[#332E4A] p-2">
               <img src={land_leveling_icon} alt="Land Leveling Marker" className="h-8 w-8" />
               <span className="text-gray-300 text-sm pl-2">Land Leveling Marker</span>
             </div>
-            <div className="flex items-center p-2 bg-[#332E4A] rounded-md">
+            <div className="ui-surface flex items-center rounded-xl bg-[#332E4A] p-2">
               <img src={farm_pond_icon} alt="Farm Pond Marker" className="h-8 w-8" />
               <span className="text-gray-300 text-sm pl-2">Farm Pond Marker</span>
             </div>
-            <div className="flex items-center p-2 bg-[#332E4A] rounded-md">
+            <div className="ui-surface flex items-center rounded-xl bg-[#332E4A] p-2">
               <img src={check_dam_icon} alt="Check Dam Marker" className="h-8 w-8" />
               <span className="text-gray-300 text-sm pl-2">Check Dam Marker</span>
             </div>
-            <div className="flex items-center p-2 bg-[#332E4A] rounded-md">
+            <div className="ui-surface flex items-center rounded-xl bg-[#332E4A] p-2">
               <img src={boulder_icon} alt="Boulder Marker" className="h-8 w-8" />
               <span className="text-gray-300 text-sm pl-2">Boulder Marker</span>
             </div>
@@ -167,31 +168,31 @@ const LeftSidebar = ({ onClose }) => {
             NREGA Color Coding
           </h4>
           <div className="px-3 py-2 overflow-y-auto grid gap-1">
-            <div className="flex items-center p-2 bg-[#332E4A] rounded-md">
+            <div className="ui-surface flex items-center rounded-xl bg-[#332E4A] p-2">
               <div className="h-6 w-6 rounded-full bg-yellow-500" />
               <span className="text-gray-300 text-sm pl-2">Land Restoration</span>
             </div>
-            <div className="flex items-center p-2 bg-[#332E4A] rounded-md">
+            <div className="ui-surface flex items-center rounded-xl bg-[#332E4A] p-2">
               <div className="h-6 w-6 rounded-full bg-pink-400" />
               <span className="text-gray-300 text-sm pl-2">Off-Farm Livelihood Assets</span>
             </div>
-            <div className="flex items-center p-2 bg-[#332E4A] rounded-md">
+            <div className="ui-surface flex items-center rounded-xl bg-[#332E4A] p-2">
               <div className="h-6 w-6 rounded-full bg-sky-800" />
               <span className="text-gray-300 text-sm pl-2">Irrigation on farms</span>
             </div>
-            <div className="flex items-center p-2 bg-[#332E4A] rounded-md">
+            <div className="ui-surface flex items-center rounded-xl bg-[#332E4A] p-2">
               <div className="h-6 w-6 rounded-full bg-emerald-400" />
               <span className="text-gray-300 text-sm pl-2">Plantations</span>
             </div>
-            <div className="flex items-center p-2 bg-[#332E4A] rounded-md">
+            <div className="ui-surface flex items-center rounded-xl bg-[#332E4A] p-2">
               <div className="h-6 w-6 rounded-full bg-blue-400" />
               <span className="text-gray-300 text-sm pl-2">Soil and Water Conservation</span>
             </div>
-            <div className="flex items-center p-2 bg-[#332E4A] rounded-md">
+            <div className="ui-surface flex items-center rounded-xl bg-[#332E4A] p-2">
               <div className="h-6 w-6 rounded-full bg-gray-600" />
               <span className="text-gray-300 text-sm pl-2">Community Assets</span>
             </div>
-            <div className="flex items-center p-2 bg-[#332E4A] rounded-md">
+            <div className="ui-surface flex items-center rounded-xl bg-[#332E4A] p-2">
               <div className="h-6 w-6 rounded-full bg-zinc-800" />
               <span className="text-gray-300 text-sm pl-2">Unidentified</span>
             </div>

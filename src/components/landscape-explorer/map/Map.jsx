@@ -19,6 +19,8 @@ import getVectorLayers from "../../../actions/getVectorLayers";
 import getWebGlLayers from "../../../actions/getWebGlLayers";
 import getImageLayers from "../../../actions/getImageLayers";
 import getStates from "../../../actions/getStates";
+import { toast } from "react-hot-toast";
+import Loader from "../../ui/Loader.jsx";
 
 // Import asset icons
 import mapMarker from '../../../assets/map_marker.svg';
@@ -807,6 +809,7 @@ const MapLegend = ({ toggledLayers, lulcYear1, lulcYear2, lulcYear3 }) => {
 const Map = forwardRef(({
   isLoading,
   setIsLoading,
+  loadingMessage = "Loading map...",
   state,
   district,
   block,
@@ -864,6 +867,7 @@ const Map = forwardRef(({
   const [isLayersFetched, setIsLayersFetched] = useState(false);
   const [stateData, setStateData] = useState(null);
   const [isInitialized, setIsInitialized] = useState(false);
+  const notifiedLayerErrors = useRef(new Set());
 
   // Color constants from original implementation
   const terrainClusterColors = ["#324A1C", "#97C76B", "#673A13", "#E5E059"];
@@ -2294,6 +2298,14 @@ const Map = forwardRef(({
 
   // Initialize map once
   useEffect(() => {
+    Object.entries(layerErrors).forEach(([layer, error]) => {
+      if (!error || notifiedLayerErrors.current.has(layer)) return;
+      notifiedLayerErrors.current.add(layer);
+      toast.error(`Failed to load ${layer}.`);
+    });
+  }, [layerErrors]);
+
+  useEffect(() => {
     if (!mapRef.current) {
       initializeMap();
       getStatesData(); // Load state markers on init
@@ -2422,20 +2434,16 @@ const Map = forwardRef(({
       />
 
       {isLoading && (
-        <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-30">
-          <div className="bg-white p-4 rounded-lg shadow-lg flex items-center space-x-3">
-            <svg className="animate-spin h-5 w-5 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-            </svg>
-            <span className="text-gray-700">Loading map...</span>
+        <div className="absolute inset-0 flex items-center justify-center bg-slate-950/20 backdrop-blur-[2px]">
+          <div className="ui-fade-in rounded-2xl border border-violet-100 bg-white px-5 py-4 shadow-xl">
+            <Loader label={loadingMessage} size="md" />
           </div>
         </div>
       )}
 
       {/* Layer error notifications */}
       {Object.keys(layerErrors).length > 0 && (
-        <div className="absolute bottom-24 right-6 bg-white p-2 rounded-lg shadow-lg text-sm max-w-xs">
+        <div className="ui-fade-in absolute bottom-24 right-6 max-w-xs rounded-2xl border border-red-100 bg-white p-3 text-sm shadow-lg">
           <div className="text-red-500 font-medium">Some layers failed to load:</div>
           <ul className="text-gray-600 text-xs mt-1">
             {Object.entries(layerErrors).map(([layer, error]) => (

@@ -3,6 +3,7 @@ import Map from "../components/landscape-explorer/map/Map.jsx";
 import LeftSidebar from "../components/landscape-explorer/sidebar/LeftSidebar.jsx";
 import RightSidebar from "../components/landscape-explorer/sidebar/RightSidebar.jsx";
 import { useRecoilState } from "recoil";
+import { toast } from "react-hot-toast";
 import {
   stateDataAtom,
   stateAtom,
@@ -19,11 +20,16 @@ import {
   initializeAnalytics,
 } from "../services/analytics";
 import LandingNavbar from "../components/landing_navbar.jsx";
+import Loader from "../components/ui/Loader.jsx";
+import locations from "../locations.json";
 
 const LandscapeExplorer = () => {
   const [showLeftSidebar, setShowLeftSidebar] = useState(false);
   const [showRightSidebar, setShowRightSidebar] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
+  const [loadingMessage, setLoadingMessage] = useState("Loading map data...");
+  const [isFetchingLocations, setIsFetchingLocations] = useState(false);
+  const pendingFeedbackRef = useRef(null);
 
   // Recoil state
   const [statesData, setStatesData] = useRecoilState(stateDataAtom);
@@ -98,6 +104,7 @@ const LandscapeExplorer = () => {
       // Reset all dependent state values
       if (value) {
         trackEvent("Location", "select_state", value.label);
+        toast.success(`State selected: ${value.label}`);
       }
       setDistrict(null);
       setBlock(null);
@@ -107,6 +114,7 @@ const LandscapeExplorer = () => {
       // Reset block and filters when district changes
       if (value) {
         trackEvent("Location", "select_district", value.label);
+        toast.success(`District selected: ${value.label}`);
       }
       setBlock(null);
       resetAllStates();
@@ -117,19 +125,17 @@ const LandscapeExplorer = () => {
       // When block is selected, enable fetch button and prepare layers automatically
       setCanFetchLayers(true);
       trackEvent("Location", "select_tehsil", value.label);
-      // Auto-prepare layers instead of requiring Fetch Layers button
-      setTimeout(() => {
-        if (mapRef.current && mapRef.current.prepareLayers) {
-          setIsLoading(true);
-          mapRef.current.prepareLayers();
-          setLayersReady(true);
-          setToggledLayers((prev) => ({
-            ...prev,
-            demographics: true,
-          }));
-          setIsLoading(false);
-        }
-      }, 100);
+      toast.success(`Tehsil selected: ${value.label}`);
+      toast("Preparing map layers for the selected area...", {
+        icon: "🗺️",
+      });
+      pendingFeedbackRef.current = "layers";
+      setLoadingMessage("Loading map layers...");
+      setLayersReady(true);
+      setToggledLayers((prev) => ({
+        ...prev,
+        demographics: true,
+      }));
     } else {
       // Standard case for other setters
       setter(value);
@@ -189,6 +195,9 @@ const LandscapeExplorer = () => {
       ...prev,
       [layerName]: isVisible,
     }));
+    toast(isVisible ? `${layerName.replace(/_/g, " ")} enabled` : `${layerName.replace(/_/g, " ")} hidden`, {
+      icon: isVisible ? "✨" : "🫥",
+    });
 
     // Then update the map with a slight delay
     setTimeout(() => {
@@ -201,7 +210,7 @@ const LandscapeExplorer = () => {
   // Handle GeoJSON download
   const handleGeoJsonLayers = (layerName) => {
     if (!district || !block) {
-      alert("Please select a district and block first");
+      toast.error("Please select a district and block first.");
       return;
     }
 
@@ -246,7 +255,7 @@ const LandscapeExplorer = () => {
   // Handle KML download
   const handleKMLLayers = (layerName) => {
     if (!district || !block) {
-      alert("Please select a district and block first");
+      toast.error("Please select a district and block first.");
       return;
     }
 
@@ -291,10 +300,12 @@ const LandscapeExplorer = () => {
   // Handle Excel download
   const handleExcelDownload = () => {
     if (!district || !block) {
-      alert("Please select a district and block first");
+      toast.error("Please select a district and block first.");
       return;
     }
 
+    pendingFeedbackRef.current = "excel";
+    setLoadingMessage("Preparing Excel download...");
     setIsLoading(true);
 
     // Using the exact URL format from the original implementation
@@ -324,8 +335,9 @@ const LandscapeExplorer = () => {
       })
       .catch((error) => {
         console.error("Error downloading Excel:", error);
+        pendingFeedbackRef.current = null;
         setIsLoading(false);
-        alert("Failed to download Excel data. Please try again.");
+        toast.error("Failed to download Excel data. Please try again.");
       });
   };
 
@@ -339,9 +351,38 @@ const LandscapeExplorer = () => {
     initializeAnalytics();
     trackPageView("/download_layers");
     if (statesData === null) {
-      getStates().then((data) => setStatesData(data));
+      setIsFetchingLocations(true);
+      setLoadingMessage("Loading available locations...");
+      pendingFeedbackRef.current = "locations";
+      getStates()
+        .then((data) => {
+          setStatesData(data);
+          if (data === locations) {
+            toast("Using cached MWS-derived location data.", {
+              icon: "⚠️",
+            });
+          }
+        })
+        .catch(() => {
+          toast.error("Failed to load locations.");
+        })
+        .finally(() => {
+          setIsFetchingLocations(false);
+        });
     }
   }, [statesData, setStatesData]);
+
+  useEffect(() => {
+    if (isLoading) return;
+
+    if (pendingFeedbackRef.current === "layers" && block) {
+      toast.success(`Map layers loaded for ${block.label}.`);
+      pendingFeedbackRef.current = null;
+    } else if (pendingFeedbackRef.current === "excel") {
+      toast.success("Excel export is ready.");
+      pendingFeedbackRef.current = null;
+    }
+  }, [isLoading, block]);
 
   // Handle map-initiated layer toggle updates
   const handleMapToggle = (layerName, isVisible) => {
@@ -379,11 +420,16 @@ const LandscapeExplorer = () => {
         )}
 
         <div className="flex-1 relative p-2">
+          {isFetchingLocations && (
+            <div className="absolute inset-x-6 top-6 z-20 rounded-2xl border border-violet-100 bg-white/95 px-4 py-3 shadow-lg backdrop-blur ui-fade-in">
+              <Loader inline label="Loading available locations..." size="sm" />
+            </div>
+          )}
           {!showLeftSidebar && (
             <button
               onClick={() => setShowLeftSidebar(true)}
-              className="absolute top-4 left-4 z-10 bg-[#EDE9FE] p-2 rounded-md shadow-md text-[#8B5CF6]
-              hover:bg-[#8B5CF6] hover:text-white transition-colors"
+              className="ui-pressable absolute top-4 left-4 z-10 rounded-xl border border-violet-100 bg-[#F5F3FF] p-2 text-[#7C3AED] shadow-md hover:bg-[#8B5CF6] hover:text-white focus-visible:ring-0"
+              aria-label="Open information panel"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -404,6 +450,7 @@ const LandscapeExplorer = () => {
             ref={setMapRef}
             isLoading={isLoading}
             setIsLoading={setIsLoading}
+            loadingMessage={loadingMessage}
             state={state}
             district={district}
             block={block}
@@ -450,10 +497,10 @@ const LandscapeExplorer = () => {
         )}
 
         {!showRightSidebar && (
-          <div className="absolute top-20 right-0 z-10 bg-white p-2 px-3 rounded-l-md shadow-md hover:bg-gray-100 transition-colors flex items-center">
+          <div className="ui-slide-in absolute top-20 right-0 z-10 flex items-center rounded-l-2xl border border-r-0 border-violet-100 bg-white/95 p-2 px-3 shadow-lg backdrop-blur hover:bg-violet-50">
             <button
               onClick={() => setShowRightSidebar(true)}
-              className="flex items-center"
+              className="ui-pressable flex items-center rounded-xl focus-visible:ring-0"
               aria-label="Open filters panel"
             >
               <span className="font-medium text-gray-700 mr-2">
