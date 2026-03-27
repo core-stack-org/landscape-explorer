@@ -1664,7 +1664,7 @@ if (!hasProject && (lat == null || lon == null) && props?.geometry) {
         <button
           key={sign}
           className="
-            bg-white border border-gray-300 rounded-md
+            bg-white border border-gray-400 rounded-md
             cursor-pointer hover:bg-gray-100 active:scale-95 transition
             flex items-center justify-center
             text-[clamp(1rem,1.4vw,1.6rem)]
