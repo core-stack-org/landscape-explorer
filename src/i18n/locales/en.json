@@ -421,6 +421,28 @@
       "confidence": "Impact confidence",
       "rankShift": "Rank shift"
     },
+    "ai": {
+      "title": "AI Assistant",
+      "subtitle": "Ask questions in your selected language using the selected location and comparison data.",
+      "placeholder": "Ask a question (example: Which crop is better for this block and why?)",
+      "ask": "Ask Assistant",
+      "asking": "Thinking...",
+      "voice": "Voice Input",
+      "listening": "Listening...",
+      "enterQuestion": "Please enter a question first.",
+      "missingApiKey": "Gemini API key is missing. Add REACT_APP_GEMINI_API_KEY in .env",
+      "requestFailed": "Unable to get response from Gemini. Please try again.",
+      "voiceUnsupported": "Voice input is not supported in this browser.",
+      "voiceError": "Unable to capture voice input. Please try again.",
+      "promptCropLabel": "Crop suggestion",
+      "promptWaterLabel": "Water advice",
+      "promptPlanLabel": "Action plan",
+      "prompts": {
+        "crop": "What crops are suitable in this location based on current rainfall, crop health, and water data?",
+        "water": "What are the key water risks here, and what immediate interventions should be prioritized?",
+        "plan": "Give a short village-level action plan for the next season using this comparison."
+      }
+    },
     "confidence": {
       "high": "High",
       "medium": "Medium",

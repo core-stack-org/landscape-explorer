@@ -8,6 +8,10 @@ import {
   formatValue,
   getVillageName,
 } from "../components/utils/compareMetrics";
+import {
+  askGeminiRegionalAssistant,
+  getSpeechLocale,
+} from "../services/geminiService";
 
 const SCENARIO_DEFAULT = {
   rainfallPct: 0,
@@ -354,6 +358,12 @@ const RegionComparison = () => {
   const [dataSourceMode, setDataSourceMode] = useState("unknown");
   const [scenarioA, setScenarioA] = useState(SCENARIO_DEFAULT);
   const [scenarioB, setScenarioB] = useState(SCENARIO_DEFAULT);
+  const [assistantQuery, setAssistantQuery] = useState("");
+  const [assistantResponse, setAssistantResponse] = useState("");
+  const [typedAssistantResponse, setTypedAssistantResponse] = useState("");
+  const [assistantLoading, setAssistantLoading] = useState(false);
+  const [assistantError, setAssistantError] = useState("");
+  const [isListening, setIsListening] = useState(false);
 
   const translateLocationLabel = (namespace, label) => {
     const resources = i18n.getResourceBundle(i18n.language, "translation");
@@ -694,6 +704,124 @@ const RegionComparison = () => {
     setScenarioB(SCENARIO_DEFAULT);
   };
 
+  const handleVoiceInput = () => {
+    const SpeechRecognition =
+      window.SpeechRecognition || window.webkitSpeechRecognition;
+
+    if (!SpeechRecognition) {
+      setAssistantError(t("regionComparison.ai.voiceUnsupported"));
+      return;
+    }
+
+    const recognition = new SpeechRecognition();
+    recognition.lang = getSpeechLocale(i18n.language);
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
+
+    setAssistantError("");
+    setIsListening(true);
+
+    recognition.onresult = (event) => {
+      const transcript = event?.results?.[0]?.[0]?.transcript || "";
+      if (transcript) {
+        setAssistantQuery((prev) => (prev ? `${prev} ${transcript}` : transcript));
+      }
+    };
+
+    recognition.onerror = () => {
+      setAssistantError(t("regionComparison.ai.voiceError"));
+    };
+
+    recognition.onend = () => {
+      setIsListening(false);
+    };
+
+    recognition.start();
+  };
+
+  const askAssistant = async () => {
+    if (!assistantQuery.trim()) {
+      setAssistantError(t("regionComparison.ai.enterQuestion"));
+      return;
+    }
+
+    setAssistantLoading(true);
+    setAssistantError("");
+    setAssistantResponse("");
+    setTypedAssistantResponse("");
+
+    const context = {
+      location: {
+        state: selectedState?.label || null,
+        district: selectedDistrict?.label || null,
+        block: selectedBlock?.label || null,
+      },
+      selectedVillages: {
+        villageA: afterComparison.villageAName || null,
+        villageB: afterComparison.villageBName || null,
+      },
+      dataSourceMode,
+      scenario: {
+        villageA: scenarioA,
+        villageB: scenarioB,
+      },
+      metrics: afterComparison.metrics?.map((metric) => ({
+        type: metric.type,
+        sourceColumn: metric.key || null,
+        villageAValue: metric.valueA,
+        villageBValue: metric.valueB,
+        villageAScore: metric.scoreA,
+        villageBScore: metric.scoreB,
+        winnerCode: metric.winnerCode,
+      })),
+      summary: afterComparison.summary || null,
+    };
+
+    try {
+      const answer = await askGeminiRegionalAssistant({
+        question: assistantQuery.trim(),
+        languageCode: i18n.language,
+        context,
+      });
+      setAssistantResponse(answer);
+    } catch (error) {
+      const message = String(error?.message || "");
+      if (message.includes("MISSING_GEMINI_KEY")) {
+        setAssistantError(t("regionComparison.ai.missingApiKey"));
+      } else {
+        setAssistantError(t("regionComparison.ai.requestFailed"));
+      }
+    } finally {
+      setAssistantLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (!assistantResponse) {
+      setTypedAssistantResponse("");
+      return;
+    }
+
+    const tokens = assistantResponse.match(/\S+|\s+/g) || [];
+    if (!tokens.length) {
+      setTypedAssistantResponse(assistantResponse);
+      return;
+    }
+
+    let index = 0;
+    setTypedAssistantResponse("");
+
+    const timer = setInterval(() => {
+      index += 1;
+      setTypedAssistantResponse(tokens.slice(0, index).join(""));
+      if (index >= tokens.length) {
+        clearInterval(timer);
+      }
+    }, 45);
+
+    return () => clearInterval(timer);
+  }, [assistantResponse]);
+
   return (
     <div className="min-h-screen bg-slate-50">
       <LandingNavbar />
@@ -908,6 +1036,80 @@ const RegionComparison = () => {
               </div>
             </div>
           </div>
+        </section>
+
+        <section className="mt-6 rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
+          <h2 className="text-lg font-semibold text-slate-900">
+            {t("regionComparison.ai.title")}
+          </h2>
+          <p className="mt-1 text-sm text-slate-600">
+            {t("regionComparison.ai.subtitle")}
+          </p>
+
+          <div className="mt-3 flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={() => setAssistantQuery(t("regionComparison.ai.prompts.crop"))}
+              className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-700 hover:bg-slate-200"
+            >
+              {t("regionComparison.ai.promptCropLabel")}
+            </button>
+            <button
+              type="button"
+              onClick={() => setAssistantQuery(t("regionComparison.ai.prompts.water"))}
+              className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-700 hover:bg-slate-200"
+            >
+              {t("regionComparison.ai.promptWaterLabel")}
+            </button>
+            <button
+              type="button"
+              onClick={() => setAssistantQuery(t("regionComparison.ai.prompts.plan"))}
+              className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-700 hover:bg-slate-200"
+            >
+              {t("regionComparison.ai.promptPlanLabel")}
+            </button>
+          </div>
+
+          <div className="mt-4">
+            <textarea
+              value={assistantQuery}
+              onChange={(e) => setAssistantQuery(e.target.value)}
+              rows={3}
+              placeholder={t("regionComparison.ai.placeholder")}
+              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+            />
+            <div className="mt-2 flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={askAssistant}
+                disabled={assistantLoading}
+                className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:bg-indigo-300"
+              >
+                {assistantLoading
+                  ? t("regionComparison.ai.asking")
+                  : t("regionComparison.ai.ask")}
+              </button>
+              <button
+                type="button"
+                onClick={handleVoiceInput}
+                disabled={isListening}
+                className="rounded-md border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 disabled:cursor-not-allowed disabled:bg-slate-100"
+              >
+                {isListening
+                  ? t("regionComparison.ai.listening")
+                  : t("regionComparison.ai.voice")}
+              </button>
+            </div>
+          </div>
+
+          {assistantError && (
+            <p className="mt-3 text-sm text-red-700">{assistantError}</p>
+          )}
+          {assistantResponse && (
+            <div className="mt-4 whitespace-pre-wrap rounded-lg bg-slate-50 p-3 text-sm text-slate-800">
+              {typedAssistantResponse}
+            </div>
+          )}
         </section>
 
         <section className="mt-6 rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
