@@ -536,6 +536,7 @@
       "selectTehsil": "তহসিল নির্বাচন করুন",
       "knowYourLandscape": "আপনার ভূদৃশ্য জানুন",
       "downloadLayers": "স্তর ডাউনলোড করুন",
+      "futurePrediction": "ভবিষ্যৎ পূর্বাভাস",
       "generateData": "একটি নির্দিষ্ট অবস্থানের জন্য ডেটা তৈরি করুন?",
       "generateDataLink": "এখানে আমাদের জানান →"
     },
@@ -578,6 +579,8 @@
       "water_desc": "জলাশয় হস্তক্ষেপ দৃশ্যমান করুন এবং জলের প্রাপ্যতা ও কৃষিতে তাদের প্রভাব মূল্যায়ন করুন।",
       "commons_title": "Commons Connect পরিকল্পনা",
       "commons_desc": "Commons Connect ব্যবহার করে তৈরি পরিকল্পনার সাইট ও ভূদৃশ্য স্তরের ট্র্যাকিং",
+      "future_predictor_title": "ফিউচার প্রেডিক্টর",
+      "future_predictor_desc": "1-5 বছরের জন্য বৃষ্টিপাতের ধাক্কা, ফসল ফলনের প্রবণতা এবং জল-স্বল্পতার ঝুঁকি সিমুলেট করুন।",
       "learnMore": "আরও জানুন →",
       "comingSoon": "শীঘ্রই আসছে..."
     }
@@ -696,6 +699,73 @@
       "high": "উচ্চ",
       "medium": "মধ্যম",
       "low": "নিম্ন"
+    }
+  },
+  "futurePredictor": {
+    "badge": "ফিউচার প্রেডিক্টর",
+    "title": "জলবায়ু + ফসল ফলন সিমুলেশন",
+    "subtitle": "বেসলাইন মেট্রিকস লাইভ লোকেশন ডেটা থেকে আনা হয়। সিচুয়েশন স্লাইডার বৃষ্টি, ফলন ও জল-স্বল্পতার 1-5 বছরের ফল দেখায়।",
+    "backToHome": "হোমপেজে ফিরে যান",
+    "inputs": {
+      "heading": "অবস্থান + সিচুয়েশন ইনপুট",
+      "selectState": "রাজ্য নির্বাচন করুন",
+      "selectDistrict": "জেলা নির্বাচন করুন",
+      "selectTehsil": "তহসিল নির্বাচন করুন",
+      "crop": "ফসল",
+      "rainfallDrop": "বৃষ্টিপাত কমা",
+      "temperatureRise": "তাপমাত্রা বৃদ্ধি",
+      "timeHorizon": "সময়সীমা",
+      "adaptationReadiness": "খামার অভিযোজন প্রস্তুতি",
+      "waterStorageImprovement": "জল সংরক্ষণ উন্নতি"
+    },
+    "messages": {
+      "loadingStates": "রাজ্য লোড হচ্ছে...",
+      "fetchingBaseline": "লাইভ বেসলাইন ডেটা আনা হচ্ছে...",
+      "fetchError": "এই স্থানের জন্য লাইভ ডেটা এখন আনা যাচ্ছে না।",
+      "selectLocationPrompt": "লাইভ বেসলাইন মেট্রিকস পেতে রাজ্য, জেলা ও তহসিল নির্বাচন করুন।",
+      "liveBaselineLoaded": "লাইভ বেসলাইন লোড হয়েছে ({{count}} রেকর্ড)। সর্বশেষ আপডেট: {{lastUpdated}}"
+    },
+    "cards": {
+      "yieldChange": "ফলন পরিবর্তন",
+      "projectedYield": "প্রত্যাশিত ফলন",
+      "waterScarcityRisk": "জল-স্বল্পতার ঝুঁকি",
+      "baseline": "বেসলাইন"
+    },
+    "risk": {
+      "veryHigh": "অত্যন্ত উচ্চ",
+      "high": "উচ্চ",
+      "moderate": "মাঝারি",
+      "low": "নিম্ন"
+    },
+    "charts": {
+      "yieldLabel": "ফলন (t/ha)",
+      "rainfallLabel": "বৃষ্টিপাত (mm)",
+      "waterScarcityLabel": "জল-স্বল্পতা স্কোর",
+      "rainfallYieldTrend": "বৃষ্টিপাত ও ফলনের প্রবণতা",
+      "waterScarcityTrajectory": "জল-স্বল্পতার প্রবণতা",
+      "yAxisYield": "ফলন (t/ha)",
+      "yAxisRainfall": "বৃষ্টিপাত (mm)",
+      "yAxisScarcity": "স্বল্পতা স্কোর"
+    },
+    "alternatives": {
+      "title": "বিকল্প ফসল সুপারিশ",
+      "yield": "ফলন",
+      "waterRisk": "জল ঝুঁকি",
+      "noBetter": "এই সিচুয়েশনে ভালো বিকল্প নেই। অভিযোজন ও জল সংরক্ষণ ইনপুট বাড়িয়ে আরও সহনশীল বিকল্প আনলক করুন।"
+    },
+    "diagnostics": {
+      "baselineRainfall": "বেসলাইন বৃষ্টিপাত",
+      "baselineDiagnostics": "বেসলাইন ডায়াগনস্টিকস",
+      "doubleCropped": "দ্বৈত ফসল",
+      "yieldSourceKey": "ফলন সোর্স কী",
+      "estimatedFromIndicators": "লাইভ সূচক থেকে অনুমান"
+    },
+    "cropLabels": {
+      "rice": "ধান",
+      "wheat": "গম",
+      "maize": "ভুট্টা",
+      "pulses": "ডাল",
+      "millet": "মিলেট"
     }
   }
 }

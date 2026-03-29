@@ -287,6 +287,7 @@
       "selectTehsil": "Select Tehsil",
       "knowYourLandscape": "Know Your Landscape",
       "downloadLayers": "Download Layers",
+      "futurePrediction": "Future Prediction",
       "generateData": "Generate data for a specific location?",
       "generateDataLink": "Let us know here →"
     },
@@ -329,6 +330,8 @@
       "water_desc": "Visualize waterbody interventions and evaluate their effects on water availability and agriculture.",
       "commons_title": "Commons Connect Plans",
       "commons_desc": "Site and landscape level tracking of plans built using Commons Connect",
+      "future_predictor_title": "Future Predictor",
+      "future_predictor_desc": "Simulate rainfall shocks, crop yield trends, and water scarcity risks for 1-5 year planning.",
       "learnMore": "Learn More →",
       "comingSoon": "Coming soon..."
     }
@@ -447,6 +450,73 @@
       "high": "High",
       "medium": "Medium",
       "low": "Low"
+    }
+  },
+  "futurePredictor": {
+    "badge": "Future Predictor",
+    "title": "Climate + Crop Yield Simulation",
+    "subtitle": "Baseline metrics are fetched from live location data. Scenario sliders project 1-5 year outcomes for rainfall, yield, and water scarcity.",
+    "backToHome": "Back to homepage",
+    "inputs": {
+      "heading": "Location + Scenario Inputs",
+      "selectState": "Select State",
+      "selectDistrict": "Select District",
+      "selectTehsil": "Select Tehsil",
+      "crop": "Crop",
+      "rainfallDrop": "Rainfall drop",
+      "temperatureRise": "Temperature rise",
+      "timeHorizon": "Time horizon",
+      "adaptationReadiness": "Farm adaptation readiness",
+      "waterStorageImprovement": "Water storage improvement"
+    },
+    "messages": {
+      "loadingStates": "Loading states...",
+      "fetchingBaseline": "Fetching live location baseline...",
+      "fetchError": "Unable to fetch live data for this location right now.",
+      "selectLocationPrompt": "Select State, District, and Tehsil to fetch live baseline metrics.",
+      "liveBaselineLoaded": "Live baseline loaded ({{count}} records). Last updated: {{lastUpdated}}"
+    },
+    "cards": {
+      "yieldChange": "Yield change",
+      "projectedYield": "Projected yield",
+      "waterScarcityRisk": "Water scarcity risk",
+      "baseline": "Baseline"
+    },
+    "risk": {
+      "veryHigh": "Very High",
+      "high": "High",
+      "moderate": "Moderate",
+      "low": "Low"
+    },
+    "charts": {
+      "yieldLabel": "Yield (t/ha)",
+      "rainfallLabel": "Rainfall (mm)",
+      "waterScarcityLabel": "Water Scarcity Score",
+      "rainfallYieldTrend": "Rainfall and yield trend",
+      "waterScarcityTrajectory": "Water scarcity trajectory",
+      "yAxisYield": "Yield (t/ha)",
+      "yAxisRainfall": "Rainfall (mm)",
+      "yAxisScarcity": "Scarcity score"
+    },
+    "alternatives": {
+      "title": "Alternative crops recommendation",
+      "yield": "Yield",
+      "waterRisk": "Water risk",
+      "noBetter": "No better alternative under this scenario. Improve adaptation and water storage inputs to unlock resilient options."
+    },
+    "diagnostics": {
+      "baselineRainfall": "Baseline rainfall",
+      "baselineDiagnostics": "Baseline diagnostics",
+      "doubleCropped": "double cropped",
+      "yieldSourceKey": "Yield source key",
+      "estimatedFromIndicators": "estimated from live indicators"
+    },
+    "cropLabels": {
+      "rice": "Rice",
+      "wheat": "Wheat",
+      "maize": "Maize",
+      "pulses": "Pulses",
+      "millet": "Millet"
     }
   }
 }
