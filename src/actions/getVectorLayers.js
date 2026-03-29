@@ -8,6 +8,21 @@ const LAYER_CACHE_TTL_MS = 5 * 60 * 1000;
 const layerResponseCache = new Map();
 const pendingLayerRequests = new Map();
 
+/** Fired on window when a vector WFS request fails (Map listens to show the existing layer error panel). */
+export const VECTOR_LAYER_LOAD_ERROR_EVENT = "landscape-explorer:vector-layer-load-error";
+
+function emitVectorLayerLoadError(layerName, message) {
+  if (typeof window === "undefined") return;
+  window.dispatchEvent(
+    new CustomEvent(VECTOR_LAYER_LOAD_ERROR_EVENT, {
+      detail: {
+        layerName,
+        message: String(message || "Load failed").slice(0, 200),
+      },
+    })
+  );
+}
+
 async function fetchLayerGeoJson(url, layerName, forceRefresh = false) {
   const now = Date.now();
   const cachedEntry = layerResponseCache.get(url);
@@ -28,6 +43,7 @@ async function fetchLayerGeoJson(url, layerName, forceRefresh = false) {
     .then((response) => {
       if (!response.ok) {
         console.log('Network response was not ok for ' + layerName);
+        emitVectorLayerLoadError(layerName, `HTTP ${response.status}`);
         return null;
       }
       return response.json();
@@ -40,6 +56,7 @@ async function fetchLayerGeoJson(url, layerName, forceRefresh = false) {
     })
     .catch((error) => {
       console.log(`Failed to load the "${layerName}" layer. Please check your connection or the map layer details.`, error);
+      emitVectorLayerLoadError(layerName, error?.message || "Network error");
       return null;
     })
     .finally(() => {
@@ -91,7 +108,11 @@ export default async function getVectorLayers(layer_store, layer_name, setVisibl
         if (!json) {
           return;
         }
-        vectorSource.addFeatures(vectorSource.getFormat().readFeatures(json));
+        try {
+          vectorSource.addFeatures(vectorSource.getFormat().readFeatures(json));
+        } catch (err) {
+          emitVectorLayerLoadError(layer_name, err?.message || "Invalid GeoJSON");
+        }
       });
     }
   });

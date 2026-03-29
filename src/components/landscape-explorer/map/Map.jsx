@@ -15,7 +15,7 @@ import MapControls from './MapControls';
 import Feature from 'ol/Feature';
 
 // Import action functions
-import getVectorLayers from "../../../actions/getVectorLayers";
+import getVectorLayers, { VECTOR_LAYER_LOAD_ERROR_EVENT } from "../../../actions/getVectorLayers";
 import getWebGlLayers from "../../../actions/getWebGlLayers";
 import getImageLayers from "../../../actions/getImageLayers";
 import getStates from "../../../actions/getStates";
@@ -864,6 +864,19 @@ const Map = forwardRef(({
   const [isLayersFetched, setIsLayersFetched] = useState(false);
   const [stateData, setStateData] = useState(null);
   const [isInitialized, setIsInitialized] = useState(false);
+
+  useEffect(() => {
+    const handler = (e) => {
+      const { layerName, message } = e.detail || {};
+      if (!layerName) return;
+      setLayerErrors((prev) => ({
+        ...prev,
+        [layerName]: message || "Load failed",
+      }));
+    };
+    window.addEventListener(VECTOR_LAYER_LOAD_ERROR_EVENT, handler);
+    return () => window.removeEventListener(VECTOR_LAYER_LOAD_ERROR_EVENT, handler);
+  }, []);
 
   // Color constants from original implementation
   const terrainClusterColors = ["#324A1C", "#97C76B", "#673A13", "#E5E059"];
@@ -2426,7 +2439,17 @@ const Map = forwardRef(({
       {/* Layer error notifications */}
       {Object.keys(layerErrors).length > 0 && (
         <div className="absolute bottom-24 right-6 bg-white p-2 rounded-lg shadow-lg text-sm max-w-xs">
-          <div className="text-red-500 font-medium">Some layers failed to load:</div>
+          <div className="flex justify-between items-start gap-2">
+            <div className="text-red-500 font-medium">Some layers failed to load:</div>
+            <button
+              type="button"
+              onClick={() => setLayerErrors({})}
+              className="text-gray-400 hover:text-gray-700 text-xs shrink-0 leading-none"
+              aria-label="Dismiss layer errors"
+            >
+              ×
+            </button>
+          </div>
           <ul className="text-gray-600 text-xs mt-1">
             {Object.entries(layerErrors).map(([layer, error]) => (
               <li key={layer}>{layer}: {error ? error.substring(0, 50) : 'Unknown error'}</li>
