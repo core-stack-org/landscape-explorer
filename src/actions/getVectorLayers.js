@@ -8,6 +8,14 @@ const LAYER_CACHE_TTL_MS = 5 * 60 * 1000;
 const layerResponseCache = new Map();
 const pendingLayerRequests = new Map();
 
+function pruneExpiredLayerCache(now = Date.now()) {
+  for (const [key, entry] of layerResponseCache.entries()) {
+    if (now - entry.timestamp >= LAYER_CACHE_TTL_MS) {
+      layerResponseCache.delete(key);
+    }
+  }
+}
+
 /** Fired on window when a vector WFS request fails (Map listens to show the existing layer error panel). */
 export const VECTOR_LAYER_LOAD_ERROR_EVENT = "landscape-explorer:vector-layer-load-error";
 
@@ -25,6 +33,7 @@ function emitVectorLayerLoadError(layerName, message) {
 
 async function fetchLayerGeoJson(url, layerName, forceRefresh = false) {
   const now = Date.now();
+  pruneExpiredLayerCache(now);
   const cachedEntry = layerResponseCache.get(url);
 
   if (
@@ -101,20 +110,31 @@ export default async function getVectorLayers(layer_store, layer_name, setVisibl
       :
       `${process.env.REACT_APP_GEOSERVER_URL}` + layer_store + '/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=' + layer_store + ':' + resource_type + "_" + plan_id + "_" + district + "_" + block + "&outputFormat=application/json&screen=main")
   const vectorSource = new Vector({
-    url: url,
     format: new GeoJSON(),
-    loader: function (extent, resolution, projection) {
-      fetchLayerGeoJson(url, layer_name, forceRefresh).then((json) => {
-        if (!json) {
-          return;
-        }
-        try {
-          vectorSource.addFeatures(vectorSource.getFormat().readFeatures(json));
-        } catch (err) {
-          emitVectorLayerLoadError(layer_name, err?.message || "Invalid GeoJSON");
-        }
-      });
-    }
+    loader: function (extent, resolution, projection, success, failure) {
+      fetchLayerGeoJson(url, layer_name, forceRefresh)
+        .then((json) => {
+          if (!json) {
+            failure();
+            return;
+          }
+          try {
+            const fmt = vectorSource.getFormat();
+            const features = fmt.readFeatures(json, {
+              extent,
+              featureProjection: projection,
+            });
+            vectorSource.addFeatures(features);
+            success(features);
+          } catch (err) {
+            emitVectorLayerLoadError(layer_name, err?.message || "Invalid GeoJSON");
+            failure();
+          }
+        })
+        .catch(() => {
+          failure();
+        });
+    },
   });
 
 
