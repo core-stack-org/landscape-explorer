@@ -7,6 +7,7 @@ import PlanViewPage from "./components/plan_detailView";
 import AgroHorticulture from "./pages/AgroHorticulture";
 import RWBDashboard from "./pages/RWBDashboard";
 import RegionComparison from "./pages/RegionComparison";
+import FuturePredictor from "./pages/FuturePredictor";
 
 function App() {
   return (
@@ -18,6 +19,7 @@ function App() {
         <Route path="/agrohorticulture" element={<AgroHorticulture/>}/>
         <Route path="/rwb" element={<RWBDashboard/>}/>
         <Route path="/region-comparison" element={<RegionComparison />} />
+        <Route path="/future-predictor" element={<FuturePredictor />} />
         <Route path="/CCUsagePage" element={<PlansPage />} />
         <Route path="/plan-view" element={<PlanViewPage />} />
 

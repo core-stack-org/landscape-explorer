@@ -536,6 +536,7 @@
       "selectTehsil": "तहसील चुनें",
       "knowYourLandscape": "अपना परिदृश्य जानें",
       "downloadLayers": "परतें डाउनलोड करें",
+      "futurePrediction": "भविष्य पूर्वानुमान",
       "generateData": "किसी विशिष्ट स्थान के लिए डेटा उत्पन्न करें?",
       "generateDataLink": "हमें यहाँ बताएं →"
     },
@@ -578,6 +579,8 @@
       "water_desc": "जल निकाय हस्तक्षेपों को विज़ुअलाइज़ करें और जल उपलब्धता और कृषि पर उनके प्रभावों का मूल्यांकन करें।",
       "commons_title": "Commons Connect योजनाएं",
       "commons_desc": "Commons Connect का उपयोग करके बनाई गई योजनाओं की साइट और परिदृश्य स्तर की ट्रैकिंग",
+      "future_predictor_title": "फ्यूचर प्रेडिक्टर",
+      "future_predictor_desc": "1-5 वर्षों के लिए वर्षा झटके, फसल उपज रुझान और जल-संकट जोखिम का सिमुलेशन करें।",
       "learnMore": "और जानें →",
       "comingSoon": "जल्द आ रहा है..."
     }
@@ -696,6 +699,73 @@
       "high": "उच्च",
       "medium": "मध्यम",
       "low": "निम्न"
+    }
+  },
+  "futurePredictor": {
+    "badge": "फ्यूचर प्रेडिक्टर",
+    "title": "जलवायु + फसल उपज सिमुलेशन",
+    "subtitle": "बेसलाइन मेट्रिक्स लाइव लोकेशन डेटा से लिए जाते हैं। परिदृश्य स्लाइडर वर्षा, उपज और जल-संकट के 1-5 वर्ष के परिणाम दिखाते हैं।",
+    "backToHome": "होमपेज पर वापस जाएं",
+    "inputs": {
+      "heading": "स्थान + परिदृश्य इनपुट",
+      "selectState": "राज्य चुनें",
+      "selectDistrict": "जिला चुनें",
+      "selectTehsil": "तहसील चुनें",
+      "crop": "फसल",
+      "rainfallDrop": "वर्षा में कमी",
+      "temperatureRise": "तापमान वृद्धि",
+      "timeHorizon": "समय सीमा",
+      "adaptationReadiness": "कृषि अनुकूलन तैयारी",
+      "waterStorageImprovement": "जल भंडारण सुधार"
+    },
+    "messages": {
+      "loadingStates": "राज्य लोड हो रहे हैं...",
+      "fetchingBaseline": "लाइव बेसलाइन डेटा प्राप्त किया जा रहा है...",
+      "fetchError": "इस स्थान के लिए लाइव डेटा अभी प्राप्त नहीं हो सका।",
+      "selectLocationPrompt": "लाइव बेसलाइन मेट्रिक्स लाने के लिए राज्य, जिला और तहसील चुनें।",
+      "liveBaselineLoaded": "लाइव बेसलाइन लोड हो गई ({{count}} रिकॉर्ड)। अंतिम अपडेट: {{lastUpdated}}"
+    },
+    "cards": {
+      "yieldChange": "उपज परिवर्तन",
+      "projectedYield": "अनुमानित उपज",
+      "waterScarcityRisk": "जल-संकट जोखिम",
+      "baseline": "बेसलाइन"
+    },
+    "risk": {
+      "veryHigh": "बहुत उच्च",
+      "high": "उच्च",
+      "moderate": "मध्यम",
+      "low": "निम्न"
+    },
+    "charts": {
+      "yieldLabel": "उपज (टन/हेक्टेयर)",
+      "rainfallLabel": "वर्षा (मिमी)",
+      "waterScarcityLabel": "जल-संकट स्कोर",
+      "rainfallYieldTrend": "वर्षा और उपज रुझान",
+      "waterScarcityTrajectory": "जल-संकट प्रवृत्ति",
+      "yAxisYield": "उपज (टन/हेक्टेयर)",
+      "yAxisRainfall": "वर्षा (मिमी)",
+      "yAxisScarcity": "संकट स्कोर"
+    },
+    "alternatives": {
+      "title": "वैकल्पिक फसल सुझाव",
+      "yield": "उपज",
+      "waterRisk": "जल जोखिम",
+      "noBetter": "इस परिदृश्य में बेहतर विकल्प उपलब्ध नहीं है। बेहतर विकल्प पाने के लिए अनुकूलन और जल भंडारण मान बढ़ाएं।"
+    },
+    "diagnostics": {
+      "baselineRainfall": "बेसलाइन वर्षा",
+      "baselineDiagnostics": "बेसलाइन डायग्नोस्टिक्स",
+      "doubleCropped": "दोहरी फसल",
+      "yieldSourceKey": "उपज स्रोत कुंजी",
+      "estimatedFromIndicators": "लाइव संकेतकों से अनुमानित"
+    },
+    "cropLabels": {
+      "rice": "धान",
+      "wheat": "गेहूं",
+      "maize": "मक्का",
+      "pulses": "दलहन",
+      "millet": "मोटा अनाज"
     }
   }
 }

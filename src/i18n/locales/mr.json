@@ -536,6 +536,7 @@
       "selectTehsil": "तहसील निवडा",
       "knowYourLandscape": "तुमचे परिदृश्य जाणून घ्या",
       "downloadLayers": "स्तर डाउनलोड करा",
+      "futurePrediction": "भविष्य भाकीत",
       "generateData": "विशिष्ट स्थानासाठी डेटा तयार करायचा आहे?",
       "generateDataLink": "येथे आम्हाला कळवा →"
     },
@@ -578,6 +579,8 @@
       "water_desc": "जलाशय हस्तक्षेप दृश्यमान करा आणि पाण्याची उपलब्धता आणि शेतीवर त्यांचे परिणाम मूल्यांकन करा.",
       "commons_title": "Commons Connect योजना",
       "commons_desc": "Commons Connect वापरून तयार केलेल्या योजनांचे साइट आणि परिदृश्य स्तरावरील ट्रॅकिंग",
+      "future_predictor_title": "फ्युचर प्रेडिक्टर",
+      "future_predictor_desc": "1-5 वर्षांसाठी पावसाचे धक्के, पीक उत्पादन कल आणि पाणीटंचाई जोखीम यांचे सिम्युलेशन करा.",
       "learnMore": "अधिक जाणून घ्या →",
       "comingSoon": "लवकरच येत आहे..."
     }
@@ -696,6 +699,73 @@
       "high": "उच्च",
       "medium": "मध्यम",
       "low": "कमी"
+    }
+  },
+  "futurePredictor": {
+    "badge": "फ्युचर प्रेडिक्टर",
+    "title": "हवामान + पीक उत्पादन सिम्युलेशन",
+    "subtitle": "बेसलाइन मेट्रिक्स लाईव्ह स्थानिक डेटामधून घेतले जातात. परिस्थिती स्लायडर्स पाऊस, उत्पादन आणि पाणीटंचाईसाठी 1-5 वर्षांचे परिणाम दर्शवतात.",
+    "backToHome": "मुख्यपृष्ठावर परत जा",
+    "inputs": {
+      "heading": "स्थान + परिस्थिती इनपुट",
+      "selectState": "राज्य निवडा",
+      "selectDistrict": "जिल्हा निवडा",
+      "selectTehsil": "तहसील निवडा",
+      "crop": "पीक",
+      "rainfallDrop": "पावसात घट",
+      "temperatureRise": "तापमान वाढ",
+      "timeHorizon": "कालावधी",
+      "adaptationReadiness": "शेती अनुकूलन तयारी",
+      "waterStorageImprovement": "पाणी साठवण सुधारणा"
+    },
+    "messages": {
+      "loadingStates": "राज्ये लोड होत आहेत...",
+      "fetchingBaseline": "लाईव्ह बेसलाइन डेटा आणला जात आहे...",
+      "fetchError": "या स्थानासाठी लाईव्ह डेटा सध्या मिळू शकला नाही.",
+      "selectLocationPrompt": "लाईव्ह बेसलाइन मेट्रिक्ससाठी राज्य, जिल्हा आणि तहसील निवडा.",
+      "liveBaselineLoaded": "लाईव्ह बेसलाइन लोड झाली ({{count}} नोंदी). शेवटचे अपडेट: {{lastUpdated}}"
+    },
+    "cards": {
+      "yieldChange": "उत्पादन बदल",
+      "projectedYield": "अंदाजित उत्पादन",
+      "waterScarcityRisk": "पाणीटंचाई जोखीम",
+      "baseline": "बेसलाइन"
+    },
+    "risk": {
+      "veryHigh": "अतिशय जास्त",
+      "high": "जास्त",
+      "moderate": "मध्यम",
+      "low": "कमी"
+    },
+    "charts": {
+      "yieldLabel": "उत्पादन (t/ha)",
+      "rainfallLabel": "पाऊस (mm)",
+      "waterScarcityLabel": "पाणीटंचाई गुण",
+      "rainfallYieldTrend": "पाऊस आणि उत्पादन कल",
+      "waterScarcityTrajectory": "पाणीटंचाई प्रवाह",
+      "yAxisYield": "उत्पादन (t/ha)",
+      "yAxisRainfall": "पाऊस (mm)",
+      "yAxisScarcity": "टंचाई गुण"
+    },
+    "alternatives": {
+      "title": "पर्यायी पिकांची शिफारस",
+      "yield": "उत्पादन",
+      "waterRisk": "पाणी जोखीम",
+      "noBetter": "या परिस्थितीत चांगला पर्याय उपलब्ध नाही. अनुकूलन आणि पाणी साठवण इनपुट वाढवून अधिक सक्षम पर्याय मिळवा."
+    },
+    "diagnostics": {
+      "baselineRainfall": "बेसलाइन पाऊस",
+      "baselineDiagnostics": "बेसलाइन निदान",
+      "doubleCropped": "दुहेरी पीक",
+      "yieldSourceKey": "उत्पादन स्रोत की",
+      "estimatedFromIndicators": "लाईव्ह निर्देशकांवरून अंदाज"
+    },
+    "cropLabels": {
+      "rice": "भात",
+      "wheat": "गहू",
+      "maize": "मका",
+      "pulses": "डाळी",
+      "millet": "नाचणी"
     }
   }
 }

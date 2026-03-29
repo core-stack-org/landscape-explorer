@@ -97,6 +97,13 @@ export default function KYLHomePage() {
       descKey: "home.track.commons_desc",
       icon: "☀️",
     },
+    {
+      key: "future_predictor",
+      titleKey: "home.track.future_predictor_title",
+      descKey: "home.track.future_predictor_desc",
+      icon: "🔮",
+      link: "/future-predictor",
+    },
   ];
 
   return (
@@ -188,9 +195,9 @@ export default function KYLHomePage() {
                   </div>
                 </div>
 
-                <div className="flex flex-col sm:flex-row justify-between gap-2 mt-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-3">
                   <button
-                    className="bg-purple-600 text-white px-4 py-2 rounded-lg w-full sm:w-auto"
+                    className="bg-purple-600 text-white px-4 py-2 rounded-lg w-full text-base md:text-lg"
                     onClick={() =>
                       handleNavigate("/kyl_dashboard", "Know Your Landscape")
                     }
@@ -198,7 +205,7 @@ export default function KYLHomePage() {
                     {t("home.know.knowYourLandscape")}
                   </button>
                   <button
-                    className="bg-gray-300 text-black px-4 py-2 rounded-lg w-full sm:w-auto"
+                    className="bg-gray-300 text-black px-4 py-2 rounded-lg w-full text-base md:text-lg"
                     onClick={() =>
                       handleNavigate("/download_layers", "Download Layers")
                     }
@@ -206,12 +213,20 @@ export default function KYLHomePage() {
                     {t("home.know.downloadLayers")}
                   </button>
                   <button
-                    className="bg-emerald-600 text-white px-4 py-2 rounded-lg w-full sm:w-auto"
+                    className="bg-emerald-600 text-white px-4 py-2 rounded-lg w-full text-base md:text-lg"
                     onClick={() =>
                       handleNavigate("/region-comparison", "Region Comparison")
                     }
                   >
                     Region Comparison
+                  </button>
+                  <button
+                    className="bg-blue-700 text-white px-4 py-2 rounded-lg w-full text-base md:text-lg"
+                    onClick={() =>
+                      handleNavigate("/future-predictor", "Future Predictor")
+                    }
+                  >
+                    {t("home.know.futurePrediction")}
                   </button>
                 </div>
               </div>
@@ -357,7 +372,7 @@ export default function KYLHomePage() {
               </ul>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mt-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6 mt-8">
               {trackCards.map((item) => (
                 <div key={item.key} className="h-full">
                   <div
