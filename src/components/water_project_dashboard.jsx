@@ -24,6 +24,8 @@ import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
 import DownloadIcon from "@mui/icons-material/Download";
 
+
+
 const WaterProjectDashboard = () => {
   const [selectedWaterbody, setSelectedWaterbody] = useState(null);
   const [selectedFeature, setSelectedFeature] = useState(null);
@@ -67,6 +69,7 @@ const WaterProjectDashboard = () => {
     const tehsilZoi = useRecoilValue(tehsilZoiFeaturesAtom);
     const zoiFeatures = isTehsilMode ? tehsilZoi : projectZoi;
     const activeSelectedWaterbody = isTehsilMode ? selectedWaterbodyForTehsil : selectedWaterbody;
+    const [tehsilPageLoading, setTehsilPageLoading] = useState(typeParam === "tehsil");
 
     const [view, setView] = useState(
       isTehsilMode ? "map" : typeParam === "tehsil" ? "map" : "table"
@@ -113,6 +116,7 @@ const WaterProjectDashboard = () => {
       if (!districtParam || !blockParam) return;    
     
       const fetchTehsilData = async () => {
+        setTehsilPageLoading(true);
         const result = await getWaterbodyData({
           district: { label: districtParam },
           block: { label: blockParam },
@@ -130,6 +134,7 @@ const WaterProjectDashboard = () => {
           setMwsFromLocalStorage(allGeo);
           localStorage.setItem("matched_mws_features", JSON.stringify(allGeo));
         }
+        setTehsilPageLoading(false);
       };
       fetchTehsilData();
     }, [
@@ -220,16 +225,16 @@ const WaterProjectDashboard = () => {
     }
   }, [location.search]);
 
-  useEffect(() => {
-    if (!loadingData) return;
+  // useEffect(() => {
+  //   if (!loadingData) return;
   
-    const t = setTimeout(() => {
-      setTimeoutReached(true);
-      setLoadingData(false);   // loader off
-    }, 10000); // 10 seconds
+  //   const t = setTimeout(() => {
+  //     setTimeoutReached(true);
+  //     setLoadingData(false);   // loader off
+  //   }, 10000); // 10 seconds
   
-    return () => clearTimeout(t);
-  }, [loadingData]);
+  //   return () => clearTimeout(t);
+  // }, [loadingData]);
   
   const extractMwsUidList = (mwsUidString) => {
     if (!mwsUidString) return [];
@@ -411,13 +416,21 @@ const WaterProjectDashboard = () => {
       if (!featureId || !raw) return;
   
       const wbMwsList = extractMwsUidList(raw);
-  
-      const mws = mwsGeoData.features.find((f) =>
+      const mws = mwsGeoData.features
+      .filter((f) =>
         wbMwsList.includes(f.properties?.uid?.toString().trim())
-      );
+      )
+      .find((f) => {
+        const p = f.properties || {};
+        return Object.keys(p).some((k) => {
+          if (/^precipitation_(kharif|rabi|zaid)_/.test(k)) {
+            return Number(p[k]) > 0;
+          }
+          return false;
+        });
+      });
   
       if (!mws) return;
-  
       const rainfall = getRainfallByYear(mws);
       const ivRaw = wb.properties?.intervention_year;
       const ivNormalized = normalizeYear(ivRaw);
@@ -674,16 +687,7 @@ const WaterProjectDashboard = () => {
           const ivNumFull = Number(`20${ivShort.split("-")[0]}`);
       
           if (postNum <= ivNumFull) return;
-          console.log("ivShort:", ivShort);
-console.log("ivNumFull:", ivNumFull);
-console.log("pair.post:", pair.post);
-console.log("postNum:", postNum);
-console.log("UID:", props.UID);
-console.log("raw intervention:", props.intervention_year);
-console.log("raw intervention:", props.waterbody_name);
-console.log("normalized:", ivShort);
-      
-          const water = getTotalWaterAvailability(props, pair.post);
+          const water = getTotalWaterAvailability(props, pair.post);  
       
           if (water > maxWater) {
             maxWater = water;
@@ -785,11 +789,11 @@ console.log("normalized:", ivShort);
       activeSelectedWaterbody?.waterbody_id ??
       activeSelectedWaterbody?.id;
   
-    const row = rows.find((r) => r.waterbody_id === featureId);
-  
+      const row = rows.find(
+        (r) => r.waterbody_id?.toString() === featureId?.toString()
+      );  
     return row?.selectedPair ?? null;
   }, [rows, activeSelectedWaterbody]);
-
 
   const selectedInterventionYear = useMemo(() => {
     if (!activeSelectedWaterbody) return null;
@@ -1583,6 +1587,7 @@ const mwsSheet = XLSX.utils.json_to_sheet(mwsData, {
   
               <div className="min-h-[320px] bg-white rounded-lg shadow-sm p-2 overflow-visible">
                 <WaterAvailabilityChart
+                  key={selectedPair?.post}
                   isTehsil={isTehsilMode}
                   waterbody={isTehsilMode ? activeSelectedWaterbody.properties.UID: activeSelectedWaterbody }
                   water_rej_data={isTehsilMode ? geoData ? { features: [geoData]} : null : geoData }        
@@ -1607,8 +1612,8 @@ const mwsSheet = XLSX.utils.json_to_sheet(mwsData, {
         </div>
   
         {/* LOADING OVERLAY */}
-        {isTehsilMode && loadingData && !activeSelectedWaterbody && (
-          <div className="fixed inset-0 bg-black/20 flex items-center justify-center z-[9999]">
+        {isTehsilMode && tehsilPageLoading && (
+                        <div className="fixed inset-0 bg-black/20 flex items-center justify-center z-[9999]">
             <div className="bg-white rounded-lg shadow-xl p-6 flex flex-col items-center gap-3">
               <CircularProgress />
               <p className="text-gray-700 font-medium">Loading waterbody data...</p>

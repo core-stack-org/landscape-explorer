@@ -35,7 +35,7 @@ const WaterAvailabilityChart = ({
 }) => {
   const [showImpact, setShowImpact] = useState(false);
   const prevImpactRef = useRef(null);
-  console.log(waterbody)
+
 
   const extractSeasonYears = (props = {}) => {
     const years = new Set();
@@ -49,11 +49,6 @@ const WaterAvailabilityChart = ({
   
     return Array.from(years).sort();
   };
-
-  const yearToNumber = (year) => {
-  if (!year) return 0;
-  return Number(year.split("-")[0]); // "24-25" → 24
-};
 
 
   const computedImpactYear = impactPair ?? null;
@@ -103,7 +98,7 @@ const getYearIndex = (year, years) => years.indexOf(year);
     if (!water_rej_data?.features?.length || !waterbody) return {};
   
     const feature = water_rej_data.features.find(
-      (f) => f.properties?.UID === waterbody.UID
+      (f) => f.id?.toString() === waterbody?.waterbody_id?.toString()
     );
 
     return feature?.properties || {};
@@ -310,7 +305,7 @@ useEffect(() => {
     }));
   
     water_rej_data.features.forEach((feature) => {
-      if (feature.properties.UID === waterbody.UID) {
+      if (feature.id?.toString() === waterbody?.waterbody_id?.toString()){
         const p = feature.properties;
   
         years.forEach((year, i) => {
@@ -402,7 +397,8 @@ useEffect(() => {
           //  only show bars for impact years, set others to 0
           data: years.map((year, i) => {
             const isImpactYear =
-            year === computedImpactYear.pre || year === computedImpactYear.post;
+            year.trim() === computedImpactYear?.pre?.trim() ||
+            year.trim() === computedImpactYear?.post?.trim();
             return isImpactYear ? normalizedData[i][key] ?? 0 : 0;
           }),
           position: "center",
@@ -613,7 +609,7 @@ useEffect(() => {
     </label>
   </div>
 )}
-{showImpact && !computedImpactYear && (
+{showImpact && !hasPostYear && (
   <div className="mx-auto mt-2 text-center text-[clamp(0.55rem,0.6rem,0.8rem)] text-orange-700 bg-orange-50 border border-orange-200 rounded-md px-3 py-2 w-fit">
     No data available for post intervention year.  
     Please wait for next year’s data.

@@ -72,15 +72,16 @@ const KYLRightSidebar = ({
   // Check if both panels are shown
   const showBothPanels = selectedMWSProfile && selectedWaterbodyProfile;
 
-  const handleLocationString = (str) => {
-    if (!str) return '';
-    return str
-      .toLowerCase()
-      .replace(/[()]/g, '') // Remove all brackets (both opening and closing)
-      .replace(/\s+/g, '_') // Replace spaces with underscores
-      .replace(/_+/g, '_') // Replace multiple underscores with single
-      .replace(/^_|_$/g, ''); // Remove leading/trailing underscores
+  const transformName = (name) => {
+    if (!name) return name;
+    return name
+      .replace(/[().]/g, "")        // Remove parentheses and dots
+      .replace(/[-\s]+/g, "_")      // Replace dashes and spaces with "_"
+      .replace(/_+/g, "_")          // Collapse multiple underscores
+      .replace(/^_|_$/g, "")        // Remove leading/trailing underscores
+      .toLowerCase();
   };
+
 
   // Universal back handler - resets both panels
   const handleUniversalBack = () => {
@@ -144,6 +145,15 @@ const KYLRightSidebar = ({
         },
       }));
     }
+    else if (sourceType === "Waterbody") {
+      setFilterSelections((prev) => ({
+        ...prev,
+        selectedWaterbodyValues: {
+          ...prev.selectedWaterbodyValues,
+          [filter.name]: null,
+        },
+      }));
+    }
   };
 
   const toggleWaterbodies = () => {
@@ -151,22 +161,31 @@ const KYLRightSidebar = ({
       console.warn("Waterbodies layer not loaded yet");
       return;
     }
-
-    setLoadingWB(true);
-
-    setTimeout(() => {
-      if (showWB) {
-        mapRef.current.removeLayer(waterbodiesLayerRef.current);
-        setShowWB(false);
-      } else {
-        mapRef.current.removeLayer(boundaryLayerRef.current);
-        mapRef.current.addLayer(waterbodiesLayerRef.current);
-        mapRef.current.addLayer(boundaryLayerRef.current);
-        setShowWB(true);
-      }
-
-      setLoadingWB(false);
-    }, 500);
+  
+    const source = waterbodiesLayerRef.current.getSource();
+  
+    if (!showWB) {
+      setLoadingWB(true);
+  
+      const handleSourceChange = () => {
+        if (source.getState() === "ready") {
+          setLoadingWB(false);
+        }
+      };
+  
+      // attach change listener
+      source.once("change", handleSourceChange);
+  
+      mapRef.current.removeLayer(boundaryLayerRef.current);
+      mapRef.current.addLayer(waterbodiesLayerRef.current);
+      mapRef.current.addLayer(boundaryLayerRef.current);
+  
+      setShowWB(true);
+  
+    } else {
+      mapRef.current.removeLayer(waterbodiesLayerRef.current);
+      setShowWB(false);
+    }
   };
 
   const toggleConnectivity = () => {
@@ -183,7 +202,7 @@ const KYLRightSidebar = ({
   };
 
   const handleTehsilReport = () => {
-    const reportURL = `${process.env.REACT_APP_API_URL}/generate_tehsil_report/?state=${handleLocationString(state?.label)}&district=${handleLocationString(district?.label)}&block=${handleLocationString(block?.label)}`;
+    const reportURL = `${process.env.REACT_APP_API_URL}/generate_tehsil_report/?state=${transformName(state?.label)}&district=${transformName(district?.label)}&block=${transformName(block?.label)}`;
     window.open(reportURL, '_blank', 'noopener,noreferrer');
   };
 
@@ -489,7 +508,7 @@ const KYLRightSidebar = ({
         doc.text(`Page ${i} of ${pageCount}`, pageW / 2, doc.internal.pageSize.height - 8, { align: 'center' });
       }
 
-      const filename = `kyl_report_${handleLocationString(state?.label) || 'report'}_${new Date().toISOString().split('T')[0]}.pdf`;
+      const filename = `kyl_report_${transformName(state?.label) || 'report'}_${new Date().toISOString().split('T')[0]}.pdf`;
       doc.save(filename);
 
     } catch (error) {
@@ -595,7 +614,7 @@ const KYLRightSidebar = ({
                             <td className="px-3 py-2 font-mono text-gray-800">{item.name}</td>
                             <td className="px-3 py-2 text-right">
                               <a
-                                href={`${process.env.REACT_APP_BASEURL}/api/v1/generate_mws_report/?state=${handleLocationString(state?.label)}&district=${handleLocationString(district?.label)}&block=${handleLocationString(block?.label)}&uid=${item.name}`}
+                                href={`${process.env.REACT_APP_BASEURL}/api/v1/generate_mws_report/?state=${transformName(state?.label)}&district=${transformName(district?.label)}&block=${transformName(block?.label)}&uid=${item.name}`}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="text-indigo-600 hover:text-indigo-800 font-medium whitespace-nowrap"
@@ -906,8 +925,11 @@ const KYLRightSidebar = ({
                       </div>
                       <button
                         onClick={() => handleIndicatorRemoval(filter)}
-                        className={`text-gray-400 hover:text-gray-600 ml-2 ${toggleStates[filter.name] ? "invisible" : "visible"
-                          }`}
+                        className={`text-gray-400 hover:text-gray-600 ml-2 ${
+                          toggleStates[filter.name] && filter.layer_store?.[0] !== "waterbody"
+                            ? "invisible"
+                            : "visible"
+                        }`}
                       >
                         <svg
                           className="w-3 h-3"

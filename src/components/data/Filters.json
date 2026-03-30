@@ -246,14 +246,14 @@
                         }
                     },
                     {
-                        "label": "Minimum one week of dry spell",
+                        "label": "At least one week of dry spell",
                         "value": {
                             "lower": 1,
                             "upper": 999999999
                         }
                     },
                     {
-                        "label": "Minimum two weeks of dry spells",
+                        "label": "At least two weeks of dry spells",
                         "value": {
                             "lower": 2,
                             "upper": 9999999999
@@ -490,45 +490,70 @@
             },
             {
                 "name": "soge_class",
-                "label" : "Stage of groundwater extraction",
-                "type" : 1,
-                "values" : [
-                    {"label" : "Safe", "value" : 0},
-                    {"label" : "Semi-Critical", "value" : 1},
-                    {"label" : "Critical", "value" : 2},
-                    {"label" : "Over-exploited", "value" : 3},
-                    {"label" : "Not Assessed", "value" : 4}                      
-                    ],
-                "layer_store" : ["soge"],
-                "layer_name" : ["soge_vector"],
-                "vectorStyle" : [{
-                    "fill" : "rgba(255, 255, 255, 0.5)",
-                    "stroke" : "rgba(255, 255, 255, 1)",
-                    "lower" : 0, "upper" : 0
-                },
-                {
-                    "fill" : "rgba(224, 243, 248, 0.5)",
-                    "stroke" : "rgba(224, 243, 248, 1)",
-                    "lower" : 1, "upper" : 1
-                },
-                {
-                    "fill" : "rgba(69, 117, 180, 0.5)",
-                    "stroke" : "rgba(69, 117, 180, 1)",
-                    "lower" : 2, "upper" : 2
-                },
-                {
-                    "fill" : "rgba(49, 54, 149, 0.5)",
-                    "stroke" : "rgba(49, 54, 149, 1)",
-                    "lower" : 3, "upper" : 3
-                },
-                {
-                    "fill" : "rgba(169, 169, 169, 0.5)",
-                    "stroke" : "rgba(169, 169, 169, 1)",
-                    "lower" : 4, "upper" : 4
-                }
-            ],
-                "rasterStyle" : "",
-                "styleIdx" : 12
+                "label": "Stage of groundwater extraction",
+                "type": 1,
+                "values": [
+                    {
+                        "label": "Safe",
+                        "value": 0
+                    },
+                    {
+                        "label": "Semi-Critical",
+                        "value": 1
+                    },
+                    {
+                        "label": "Critical",
+                        "value": 2
+                    },
+                    {
+                        "label": "Over-exploited",
+                        "value": 3
+                    },
+                    {
+                        "label": "Not Assessed",
+                        "value": 4
+                    }
+                ],
+                "layer_store": [
+                    "soge"
+                ],
+                "layer_name": [
+                    "soge_vector"
+                ],
+                "vectorStyle": [
+                    {
+                        "fill": "rgba(255, 255, 255, 0.5)",
+                        "stroke": "rgba(255, 255, 255, 1)",
+                        "lower": 0,
+                        "upper": 0
+                    },
+                    {
+                        "fill": "rgba(224, 243, 248, 0.5)",
+                        "stroke": "rgba(224, 243, 248, 1)",
+                        "lower": 1,
+                        "upper": 1
+                    },
+                    {
+                        "fill": "rgba(69, 117, 180, 0.5)",
+                        "stroke": "rgba(69, 117, 180, 1)",
+                        "lower": 2,
+                        "upper": 2
+                    },
+                    {
+                        "fill": "rgba(49, 54, 149, 0.5)",
+                        "stroke": "rgba(49, 54, 149, 1)",
+                        "lower": 3,
+                        "upper": 3
+                    },
+                    {
+                        "fill": "rgba(169, 169, 169, 0.5)",
+                        "stroke": "rgba(169, 169, 169, 1)",
+                        "lower": 4,
+                        "upper": 4
+                    }
+                ],
+                "rasterStyle": "",
+                "styleIdx": 12
             },
             {
                 "name": "trend_g",
@@ -666,7 +691,7 @@
         "Restoration": [
             {
                 "name": "decrease_in_tree_cover",
-                "label": "Reduction in tree cover",
+                "label": "Deforestation",
                 "type": 2,
                 "values": [
                     {
@@ -1285,6 +1310,112 @@
                 ],
                 "rasterStyle": "",
                 "styleIdx": 8
+            }
+        ]
+    },
+    "Waterbody": {
+        "Waterbody": [
+            {
+                "name": "waterbody_size",
+                "label": "Size of Waterbody",
+                "type": 2,
+                "values": [
+                    {
+                        "label": "WB < 1 ha",
+                        "value": {
+                            "lower": 0,
+                            "upper": 1
+                        }
+                    },
+                    {
+                        "label": "1 ha < WB < 5 ha",
+                        "value": {
+                            "lower": 1,
+                            "upper": 5
+                        }
+                    },
+                    {
+                        "label": "5 ha < WB < 10 ha",
+                        "value": {
+                            "lower": 5,
+                            "upper": 10
+                        }
+                    },
+                    {
+                        "label": "WB > 10 ha",
+                        "value": {
+                            "lower": 10,
+                            "upper": 999999
+                        }
+                    }
+                ],
+                "layer_store": [
+                    "waterbodies"
+                ],
+                "layer_name": [
+                    "waterbodies"
+                ],
+                "vectorStyle": [
+                    {}
+                ],
+                "rasterStyle": "",
+                "styleIdx": 0
+            },
+            {
+                "name": "surface_water_trend",
+                "label": "Surface Water Trend",
+                "type": 1,
+                "values": [
+                    {
+                        "label": "Positive Trend",
+                        "value": 1
+                    },
+                    {
+                        "label": "Negative Trend",
+                        "value": -1
+                    },
+                    {
+                        "label": "Steady",
+                        "value": 0
+                    }
+                ],
+                "layer_store": [
+                    "waterbodies"
+                ],
+                "layer_name": [
+                    "waterbodies"
+                ],
+                "vectorStyle": [
+                    {}
+                ],
+                "rasterStyle": "",
+                "styleIdx": 1
+            },
+            {
+                "name": "drainage_line",
+                "label": "Drainage Line",
+                "type": 1,
+                "values": [
+                    {
+                        "label": "On drainage line",
+                        "value": 1
+                    },
+                    {
+                        "label": "Off drainage line",
+                        "value": 0
+                    }
+                ],
+                "layer_store": [
+                    "waterbodies"
+                ],
+                "layer_name": [
+                    "waterbodies"
+                ],
+                "vectorStyle": [
+                    {}
+                ],
+                "rasterStyle": "",
+                "styleIdx": 2
             }
         ]
     }

@@ -35,7 +35,7 @@ const CroppingIntensityStackChart = ({
   water_rej_data
 }) => {
   const [showImpact, setShowImpact] = useState(false);
-
+console.log(impactYear)
   const hasValidImpactYears = impactYear?.pre && impactYear?.post;
 
   const wbUID =
