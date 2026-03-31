@@ -21,6 +21,8 @@ const LeftSidebar = ({ onClose }) => {
   const buttonMap = [
     {json_name: "panchayat_boundaries", name: "Administrative Boundaries"},
     {json_name: "drainage_layer", name: "Drainage Layer"},
+    {json_name: "stream_order_raster", name: "Stream Order Raster"},
+    {json_name: "stream_order_vector", name: "Stream Order Vector"},
     {json_name: "mws_layer", name: "Hydrological Variables Layer"},
     {json_name: "nrega_layer", name: "NREGA Layer"},
     {json_name: "terrain_layer", name: "Terrain Layer"},

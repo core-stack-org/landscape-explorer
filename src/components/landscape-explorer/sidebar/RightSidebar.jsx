@@ -161,6 +161,24 @@ const hydrologyLayersData = [
     hasGeoTiff: false,
     hasStyle: true,
   },
+  {
+    id: 6,
+    name: "stream_order_raster",
+    label: "Stream Order Raster",
+    hasGeojson: false,
+    hasKml: false,
+    hasGeoTiff: true,
+    hasStyle: true,
+  },
+  {
+    id: 7,
+    name: "stream_order_vector",
+    label: "Stream Order Vector",
+    hasGeojson: true,
+    hasKml: false,
+    hasGeoTiff: false,
+    hasStyle: true,
+  },
 ];
 
 const agriLayersData = [

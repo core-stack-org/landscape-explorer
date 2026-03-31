@@ -4,9 +4,8 @@ const Footer = () => {
   return (
     <footer className="bg-white shadow-2xl">
       <div className="w-full max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex justify-center items-center">
-        <p className="text-center text-sm sm:text-base md:text-lg font-semibold text-gray-800 leading-relaxed">
-          <span className="font-bold">CoStack</span>: A commoning
-          approach — Tech stacks for communities; 2025
+        <p className="text-center text-base sm:text-lg md:text-xl font-semibold text-gray-800 leading-relaxed">
+          CoRE Stack - Commoning for resilience and equality - Tech stack for communities; 2026
         </p>
       </div>
     </footer>

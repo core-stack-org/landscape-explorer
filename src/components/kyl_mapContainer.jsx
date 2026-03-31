@@ -846,7 +846,7 @@ const MapLegend = ({ showMWS, showVillages, currentLayer, mappedAssets, mappedDe
               {isWaterLayerActive && (
                 <div className="space-y-2">
                   <h4 className="text-xs font-medium text-gray-600">
-                    Water Pixels
+                    Water Availability
                   </h4>
                   {WaterLengendItems.map((item, index) => (
                     <div

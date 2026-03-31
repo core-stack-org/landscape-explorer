@@ -231,6 +231,21 @@ const MapLegend = ({ toggledLayers, lulcYear1, lulcYear2, lulcYear3 }) => {
     { color: "#CAF0F8", label: "8" },
   ];
 
+  const streamOrderItems = [
+    { color: "#F5F6FE", label: "Empty" },
+    { color: "#f7fbff", label: "1" },
+    { color: "#e4eff9", label: "2" },
+    { color: "#d1e2f3", label: "3" },
+    { color: "#bad6eb", label: "4" },
+    { color: "#9ac8e0", label: "5" },
+    { color: "#73b2d8", label: "6" },
+    { color: "#529dcc", label: "7" },
+    { color: "#3585bf", label: "8" },
+    { color: "#1d6cb1", label: "9" },
+    { color: "#08519c", label: "10" },
+    { color: "#08306b", label: "11" },
+  ];
+
   const isTerrainActive = toggledLayers["terrain"];
   const isCLARTActive = toggledLayers["clart"];
   const isCropIntensityActive = toggledLayers["cropIntensity"];
@@ -249,6 +264,8 @@ const MapLegend = ({ toggledLayers, lulcYear1, lulcYear2, lulcYear3 }) => {
   const cropIntenActive = toggledLayers["cropping_intensity"];
   const NREGAActive = toggledLayers["nrega"];
   const DrainageActive = toggledLayers["drainage"];
+  const isStreamOrderRasterActive = toggledLayers["stream_order_raster"];
+  const isStreamOrderVectorActive = toggledLayers["stream_order_vector"];
   const isTreeOverallActive = toggledLayers["tree_overall_ch"];
   const treeHealthCCDActive = toggledLayers["treehealth_ccd"];
   return (
@@ -688,6 +705,53 @@ const MapLegend = ({ toggledLayers, lulcYear1, lulcYear2, lulcYear3 }) => {
                 </div>
               )}
 
+              {/* Stream Order Raster Section */}
+              {isStreamOrderRasterActive && (
+                <div className="space-y-2">
+                  <h4 className="text-xs font-medium text-gray-600">
+                    Stream Order Raster
+                  </h4>
+                  {streamOrderItems.map((item, index) => (
+                    <div
+                      key={`trend-${index}`}
+                      className="flex items-center gap-2"
+                    >
+                      <div
+                        className="w-4 h-4 rounded"
+                        style={{
+                          backgroundColor: item.color,
+                          border: `1px solid rgba(0,0,0,0.2)`,
+                        }}
+                      />
+                      <span className="text-sm text-gray-600">
+                        {item.label}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Stream Order Vector Section */}
+              {isStreamOrderVectorActive && (
+                <div className="space-y-2">
+                  <h4 className="text-xs font-medium text-gray-600">
+                    Stream Order Vector
+                  </h4>
+                  <div className="flex items-center gap-2">
+                    <div
+                      className="w-4 h-4 rounded"
+                      style={{
+                        backgroundColor: "#2563eb",
+                        border: `1px solid rgba(0,0,0,0.2)`,
+                      }}
+                    />
+                    <span className="text-sm text-gray-600">
+                      Stream segments by order (1-11)
+                    </span>
+                  </div>
+                </div>
+              )}
+
               {/* LULC lvl 1 Section */}
               {lulcYear1 !== null && lulcYear1.label !== "None" && (
                 <div className="space-y-2">
@@ -981,6 +1045,8 @@ const Map = forwardRef(
         name: "Tree Health CCD (2017-2022)",
         isRaster: false,
       },
+      { LayerRef: useRef(null), name: "Stream Order Raster", isRaster: true },
+      { LayerRef: useRef(null), name: "Stream Order Vector", isRaster: false },
     ];
 
     // Track active layers
@@ -1068,6 +1134,8 @@ const Map = forwardRef(
             restoration: "Change Detection Restoration",
             soge: "SOGE",
             aquifer: "Aquifer",
+            stream_order_raster: "Stream Order Raster",
+            stream_order_vector: "Stream Order Vector",
             mws_layers_fortnight: "Fortnight Hydrological Variables",
           };
 
@@ -1783,6 +1851,55 @@ const Map = forwardRef(
             safeRemoveLayer(LayersArray[24].LayerRef.current);
           }
           LayersArray[24].LayerRef.current = treeOverallLayer;
+        }
+
+        // === STREAM ORDER RASTER LAYER ===
+        const streamOrderRasterLayerName =
+          "stream_order_" +
+          transformName(district.label) + "_" + transformName(block.label) +
+          "_raster";
+
+        console.log(
+          "Requesting Stream Order Raster layer:",
+          "stream_order:" + streamOrderRasterLayerName,
+        );
+
+        let streamOrderRasterLayer = await getImageLayers(
+          "stream_order",
+          streamOrderRasterLayerName,
+          true,
+        );
+
+        if (streamOrderRasterLayer) {
+          if (LayersArray[26].LayerRef.current != null) {
+            safeRemoveLayer(LayersArray[26].LayerRef.current);
+          }
+          LayersArray[26].LayerRef.current = streamOrderRasterLayer;
+        }
+
+        // === STREAM ORDER VECTOR LAYER ===
+        const streamOrderVectorLayerName =
+          "stream_order_" +
+          transformName(district.label) + "_" + transformName(block.label) +
+          "_vector";
+
+        console.log(
+          "Requesting Stream Order Vector layer:",
+          "stream_order:" + streamOrderVectorLayerName,
+        );
+
+        let streamOrderVectorLayer = await getVectorLayers(
+          "stream_order",
+          streamOrderVectorLayerName,
+          true,
+          true,
+        );
+
+        if (streamOrderVectorLayer) {
+          if (LayersArray[27].LayerRef.current != null) {
+            safeRemoveLayer(LayersArray[27].LayerRef.current);
+          }
+          LayersArray[27].LayerRef.current = streamOrderVectorLayer;
         }
 
         // === Terrain Layer ===
