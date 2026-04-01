@@ -32,85 +32,61 @@ export const WATER_DASHBOARD_CONFIG = {
       },
     },
 
-    // topSectionText: (data) => {
-    //   const rImpact = Number(data.rabiImpact ?? 0);
-    //   const zImpact = Number(data.zaidImpact ?? 0);
-    
-    //   const projectName = data.projectName || "—";
-    //   const year = data.interventionYear || "—";
-    //   const total = data.totalRows || 0;
-    //   const silt = Number(data.totalSiltRemoved || 0).toLocaleString("en-IN");
-    
-    //   let parts = [];
-    
-    //   if (rImpact > 0) {
-    //     parts.push(`the impacted area in the Rabi season has improved by ${rImpact.toFixed(2)} %`);
-    //   }
-    
-    //   if (zImpact > 0) {
-    //     parts.push(`the impacted area in the Zaid season has improved by ${zImpact.toFixed(2)} %`);
-    //   }
-    
-    //   // Nothing positive → show fallback
-    //   if (parts.length === 0) {
-    //     return `Under the project ${projectName}, a total of ${total} waterbodies have been de-silted. The de-silted amount spans ${silt} m³. Click on any waterbody to view its detailed report.`;
-    //   }
-    
-    //   // Join both parts if required
-    //   const impactMessage = parts.join(" and ");
-    //   return `Under the project ${projectName}, a total of ${total} waterbodies have been de-silted. The de-silted amount spans ${silt} m³. After desilting in the intervention year ${year}, ${impactMessage}.`;
-    // },
-    
-    // topSectionText: (data) => {
-    //   const projectName = data.projectName || "—";
-    //   const total = data.totalRows || 0;
-    //   const silt = Number(data.totalSiltRemoved || 0).toLocaleString("en-IN");
-    
-    //   const impactByYear = data.projectImpactByInterventionYear || {};
-    
-    //   // Base intro
-    //   let text =
-    //     `Under the project ${projectName}, a total of ${total} waterbodies have been de-silted. ` +
-    //     `The de-silted amount spans ${silt} m³.`;
-    
-    //   const yearLines = Object.entries(impactByYear)
-    //     .map(([year, val]) => {
-    //       if (!val.totalArea) return null;
-    
-    //       const rabiImpact = val.rabiImpactArea / val.totalArea;
-    //       const zaidImpact = val.zaidImpactArea / val.totalArea;
-    
-    //       const parts = [];
-    
-    //       if (rabiImpact > 0) {
-    //         parts.push(
-    //           `the impacted area in the Rabi season has improved by ${(rabiImpact).toFixed(2)}%`
-    //         );
-    //       }
-    
-    //       if (zaidImpact > 0) {
-    //         parts.push(
-    //           `the impacted area in the Zaid season has improved by ${(zaidImpact).toFixed(2)}%`
-    //         );
-    //       }
-    
-    //       // ❌ agar dono negative → kuch bhi mat dikhao
-    //       if (parts.length === 0) return null;
-    
-    //       return ` After desilting in the intervention year ${year}, ${parts.join(" and ")}.`;
-    //     })
-    //     .filter(Boolean)
-    //     .join("");
-    
-    //   if (!yearLines) {
-    //     return text + " Click on any waterbody to view its detailed report.";
-    //   }
-    
-    //   return text + yearLines;
-    // },
-
+   
     topSectionText: (data) => {
       const projectName = data.projectName || "—";
+
+      if (projectName === "ATECF_MH_AURANGABAD") {
+        return (
+          <>
+          <p className="mb-2">
+            The GDGS Maharashtra project maps waterbodies rejuvenated between 2023 and
+            2026, marking the second phase of implementation following the initial phase from 2016
+            to 2019, with work resuming in 2023. To date, the program has completed three financial
+            years of implementation in the state.
+          </p>
+            <p className="mb-2">
+              According to WRIS data, Maharashtra has a total of 97,062 waterbodies, of which 6000+
+              have been desilted under the scheme. Out of these, 40 waterbodies have been
+              successfully mapped on CoRE Stack using available GPS coordinates for this district. The desilting
+              effort has resulted in the removal of approximately 4,13,593 m³ volume of silt through strong
+              community participation where farmers have carted fertile silt at their own expense.
+              {/* This, in turn, has created an additional water storage capacity of XX litres, equivalent to
+              approximately XX water tankers. */}
+            </p>
+    
+            <p className="mb-2">Post-intervention analysis shows that 40 of the mapped waterbodies now demonstrate
+              year-round water availability. Additionally, 62.5% of waterbodies exhibit an immediate
+              increase in water spread area following rejuvenation, reinforcing the underlying theory of
+              change for rejuvenated waterbodies. There is also an observed 0.84% increase in mean
+              water availability during the Rabi season. While the average size of waterbodies varies
+              across districts.
+               {/* it stands at approximately XX at the state level. */}
+              This project highlights region-specific improvements in water availability,
+              agricultural productivity, and sustainable land use practices.
+            </p>
+
+            <p className="mb-2">
+              Beyond the waterbodies themselves, the intervention has had a notable impact on
+              surrounding agricultural practices. Within the zone of influence, there is a twofold
+              increase in changes to cropping patterns, with more land transitioning to double
+              cropping across Kharif and Rabi seasons.
+            </p>
+
+            <p className="mb-2">
+              From a watershed perspective, 80% of the rejuvenated waterbodies are located within
+              stream orders 2–3. This indicates a strategically sound approach to siting interventions,
+              as these locations are effective in capturing runoff from upper catchments, enhancing
+              groundwater recharge, and reducing surface water loss.
+            </p>
+    
+            <p className="mt-2">
+              Click on any waterbody to explore detailed insights.
+            </p>
+          </>
+        );
+      }
+
       const summaryByYear = data.projectSummaryByInterventionYear || {};
       const years = Object.keys(summaryByYear);
       const yearCount = years.length;
