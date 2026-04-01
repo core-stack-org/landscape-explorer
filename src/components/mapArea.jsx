@@ -1397,6 +1397,7 @@ const MapArea = ({ selectedTehsil }) => {
                 <SelectButton
                   currVal={state === null ? { label: "Select State" } : state}
                   stateData={stateData}
+                  translateNamespace="states"
                   handleItemSelect={handleItemSelect}
                   setState={setState}
                 />
@@ -1407,6 +1408,7 @@ const MapArea = ({ selectedTehsil }) => {
                     district === null ? { label: "Select District" } : district
                   }
                   stateData={state !== null ? state.district : null}
+                  translateNamespace="districts"
                   handleItemSelect={handleItemSelect}
                   setState={setDistrict}
                 />
@@ -1415,6 +1417,7 @@ const MapArea = ({ selectedTehsil }) => {
                 <SelectButton
                   currVal={block === null ? { label: "Select Block" } : block}
                   stateData={district !== null ? district.blocks : null}
+                  translateNamespace="blocks"
                   handleItemSelect={handleItemSelect}
                   setState={setBlock}
                 />
