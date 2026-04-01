@@ -176,26 +176,71 @@ const LandscapeExplorer = () => {
     setCanFetchLayers(false);
   };
 
-  // Handle layer toggle from RightSidebar
-  const handleLayerToggle = (layerName, isVisible) => {
-    // Prevent recursion if the update is coming from the map component
-    if (isUpdatingFromMap.current) {
-      return;
-    }
+  return (
+    <div className="font-sans ">
+      <LandingNavbar />
+      <div
+        className="min-h-screen snap-y snap-mandatory bg-cover bg-center bg-no-repeat pt-8 md:pt-12"
+        style={{
+          backgroundImage: `url(${landingPageBg})`,
+          scrollBehavior: "smooth",
+        }}
+      >
+        {/* Know Section */}
+        <section
+          className="snap-start backdrop-brightness-90 backdrop-blur-sm bg-white/0 px-4 pt-8 pb-6 md:px-10 md:pt-10 md:pb-10 rounded-xl mx-2 md:mx-6 mb-4 md:mb-6"
+          style={{ position: "relative", overflow: "visible", zIndex: 10 }}
+        >
+          <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-8">
+            <div className="w-full lg:w-1/2">
+              <h2 className="text-3xl md:text-4xl mb-4">
+                <span className="font-bold text-purple-700">Know</span>{" "}
+                <span className="font-normal text-purple-700">
+                  your landscape
+                </span>
+              </h2>
 
-    // Update local state immediately
-    setToggledLayers((prev) => ({
-      ...prev,
-      [layerName]: isVisible,
-    }));
+              <ul className="list-disc list-outside ml-5 text-black text-base md:text-lg space-y-3 font-medium text-justify">
+                <li>
+                  With 20+ geospatial layers, explore your landscape’s
+                  diversity, build evidence-based proposals, and plan
+                  context-sensitive actions.
+                </li>
+                <li>
+                  Quickly access detailed reports on any micro-watershed in the
+                  Tehsil, covering land use, cropping, groundwater, forests, and
+                  socio-economic indicators.
+                </li>
+                <li>
+                  Discover unique patterns in different parts of your
+                  Tehsil/Block with the help of landscape indicators relevant to
+                  the context.
+                </li>
+              </ul>
 
-    // Then update the map with a slight delay
-    setTimeout(() => {
-      if (mapRef.current && mapRef.current.toggleLayer) {
-        mapRef.current.toggleLayer(layerName, isVisible);
-      }
-    }, 50);
-  };
+              <div className="bg-purple-50 border-l-4 border-purple-500 text-purple-700 p-4 rounded-md mt-8">
+                <p className="text-sm">
+                  Check out the vision and demo{" "}
+                  <a
+                    href="https://www.youtube.com/playlist?list=PLZ0pcz8ccRmL3wTPRctaVFomGmgJFmM13"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="underline font-medium hover:text-purple-900"
+                  >
+                    here →
+                  </a>
+                </p>
+              </div>
+            </div>
+            <div className="flex flex-col items-end gap-0 ">
+              {/* First Card */}
+              <div
+                className="w-full max-w-lg bg-white/95 backdrop-blur-sm p-6 rounded-2xl shadow-lg border border-gray-100 flex flex-col justify-between relative"
+                style={{ overflow: "visible", zIndex: 100 }}
+              >
+                <p className="mb-0 text-center font-semibold text-xl md:text-2xl text-gray-800 leading-none">
+                  Select Location
+                </p>
 
   // Handle GeoJSON download
   const handleGeoJsonLayers = (layerName) => {
@@ -217,8 +262,25 @@ const LandscapeExplorer = () => {
       .replace(/\s*\)\s*/g, "")
       .replace(/\s+/g, "_");
 
-    // Create download URL based on layer name (following the original implementation's URL format)
-    let downloadUrl = "";
+                <div className="flex flex-col sm:flex-row justify-between gap-2 mt-3">
+                  <button
+                    className="bg-purple-600 text-white px-4 py-2 rounded-lg w-full sm:w-auto"
+                    onClick={() =>
+                      handleNavigate("/kyl_dashboard", "Know Your Landscape")
+                    }
+                  >
+                    Know Your Landscape
+                  </button>
+                  <button
+                    className="bg-gray-300 text-black px-4 py-2 rounded-lg w-full sm:w-auto"
+                    onClick={() =>
+                      handleNavigate("/download_layers", "Download Layers")
+                    }
+                  >
+                    Download Layers
+                  </button>
+                </div>
+              </div>
 
     switch (layerName) {
       case "demographics":
@@ -238,217 +300,230 @@ const LandscapeExplorer = () => {
         downloadUrl = `https://geoserver.core-stack.org:8443/geoserver/${layerName}/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=${layerName}:${districtFormatted}_${blockFormatted}&outputFormat=application/json&screen=main`;
     }
 
-    // Use the imported helper directly
-    downloadHelper.downloadGeoJson(downloadUrl, layerName);
-  };
+        {/* Plan Section */}
+        <section className="snap-start backdrop-brightness-90 backdrop-blur-sm bg-white/0 px-4 py-6 md:px-10 md:py-10 rounded-xl mx-2 md:mx-6 my-6">
+          <div>
+            <div className="w-full lg:w-2/3 mb-10">
+              <h2 className="text-3xl md:text-4xl mb-4">
+                <span className="font-bold text-purple-700">Plan</span>{" "}
+                <span className="font-normal text-purple-700">
+                  for a sustainable tomorrow
+                </span>
+              </h2>
 
-  // Handle KML download
-  const handleKMLLayers = (layerName) => {
-    if (!district || !block) {
-      alert("Please select a district and block first");
-      return;
-    }
+              <ul className="list-disc list-outside ml-5 text-black text-base md:text-lg space-y-3 font-medium text-justify">
+                <li>
+                  <b>Identification of the right problems</b> is key to
+                  sustainable Natural Resource Management (NRM). Commons Connect
+                  is a community-focused app enabling landscape stewards to plan
+                  NRM works in a participatorily manner.
+                </li>
+                <li>
+                  <b>Assess and raise demands</b>: This tool provides decision
+                  support to identify suitable sites for NRM assets and supports
+                  community reflection on equity in resource ownership and use.
+                </li>
+                <li>
+                  <b>Develop Detailed Project Reports (DPRs)</b> in an automated
+                  manner that can be integrated into the GPDP, MGNREGS, and
+                  other processes.
+                </li>
+              </ul>
+            </div>
 
-    console.log(`Downloading KML for ${layerName}`);
-
-    const districtFormatted = district.label
-      .toLowerCase()
-      .replace(/\s*\(\s*/g, "_")
-      .replace(/\s*\)\s*/g, "")
-      .replace(/\s+/g, "_");
-    const blockFormatted = block.label
-      .toLowerCase()
-      .replace(/\s*\(\s*/g, "_")
-      .replace(/\s*\)\s*/g, "")
-      .replace(/\s+/g, "_");
-
-    // Create download URL based on layer name (following original implementation)
-    let downloadUrl = "";
-
-    switch (layerName) {
-      case "demographics":
-        downloadUrl = `https://geoserver.core-stack.org:8443/geoserver/panchayat_boundaries/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=panchayat_boundaries:${districtFormatted}_${blockFormatted}&outputFormat=application/vnd.google-earth.kml+xml&screen=main`;
-        break;
-      case "drainage":
-        downloadUrl = `https://geoserver.core-stack.org:8443/geoserver/drainage/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=drainage:${districtFormatted}_${blockFormatted}&outputFormat=application/vnd.google-earth.kml+xml&screen=main`;
-        break;
-      case "remote_sensed_waterbodies":
-        downloadUrl = `https://geoserver.core-stack.org:8443/geoserver/water_bodies/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=water_bodies:surface_waterbodies_${districtFormatted}_${blockFormatted}&outputFormat=application/vnd.google-earth.kml+xml&screen=main`;
-        break;
-      case "hydrological_boundaries":
-        downloadUrl = `https://geoserver.core-stack.org:8443/geoserver/mws_layers/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=mws_layers:deltaG_well_depth_${districtFormatted}_${blockFormatted}&outputFormat=application/vnd.google-earth.kml+xml&screen=main`;
-        break;
-      // Add other cases as needed
-      default:
-        downloadUrl = `https://geoserver.core-stack.org:8443/geoserver/${layerName}/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=${layerName}:${districtFormatted}_${blockFormatted}&outputFormat=application/vnd.google-earth.kml+xml&screen=main`;
-    }
-
-    // Use the imported helper directly
-    downloadHelper.downloadKml(downloadUrl, layerName);
-  };
-
-  // Handle Excel download
-  const handleExcelDownload = () => {
-    if (!district || !block) {
-      alert("Please select a district and block first");
-      return;
-    }
-
-    setIsLoading(true);
-
-    // Using the exact URL format from the original implementation
-    fetch(
-      `https://geoserver.core-stack.org/api/v1/download_excel_layer?state=${state.label}&district=${district.label}&block=${block.label}`,
-      {
-        method: "GET",
-        headers: {
-          "ngrok-skip-browser-warning": "1",
-          "Content-Type": "blob",
-        },
-      }
-    )
-      .then((response) => response.arrayBuffer())
-      .then((arybuf) => {
-        const url = window.URL.createObjectURL(new Blob([arybuf]));
-        const link = document.createElement("a");
-
-        link.href = url;
-        link.setAttribute("download", `${block.label}_data.xlsx`);
-        document.body.appendChild(link);
-        link.click();
-
-        link.remove();
-        URL.revokeObjectURL(url);
-        setIsLoading(false);
-      })
-      .catch((error) => {
-        console.error("Error downloading Excel:", error);
-        setIsLoading(false);
-        alert("Failed to download Excel data. Please try again.");
-      });
-  };
-
-  // Track category selection for resource layers
-  const handleCategoryChange = (category) => {
-    setActiveResourceCategory(category);
-  };
-
-  // Fetch states data on component mount
-  useEffect(() => {
-    initializeAnalytics();
-    trackPageView("/download_layers");
-    if (statesData === null) {
-      getStates().then((data) => setStatesData(data));
-    }
-  }, [statesData, setStatesData]);
-
-  // Handle map-initiated layer toggle updates
-  const handleMapToggle = (layerName, isVisible) => {
-    // Set the recursion prevention flag
-    isUpdatingFromMap.current = true;
-
-    try {
-      // Special case for setState action - coming from map marker click
-      if (layerName === "setState" && typeof isVisible === "object") {
-        if (isVisible && isVisible.label && isVisible.district) {
-          setState(isVisible);
-          return;
-        }
-      }
-
-      // Update the toggledLayers state
-      setToggledLayers((prev) => ({
-        ...prev,
-        [layerName]: isVisible,
-      }));
-    } finally {
-      // Reset the flag
-      isUpdatingFromMap.current = false;
-    }
-  };
-
-  return (
-    <div className="min-h-screen bg-white flex flex-col">
-      <div className="sticky top-0 z-50 bg-white border-b border-gray-100">
-        <LandingNavbar />
-      </div>
-      <div className="flex h-[calc(100vh-48px)]">
-
-
-        <div className="flex-1 relative p-2">
-          
-          <Map
-            ref={setMapRef}
-            isLoading={isLoading}
-            setIsLoading={setIsLoading}
-            state={state}
-            district={district}
-            block={block}
-            filterSelections={filterSelections}
-            toggledLayers={toggledLayers}
-            toggleLayer={handleMapToggle} // Use handleMapToggle to properly handle map-initiated updates
-            showMWS={showMWS}
-            setShowMWS={setShowMWS}
-            showVillages={showVillages}
-            setShowVillages={setShowVillages}
-            lulcYear1={lulcYear1}
-            lulcYear2={lulcYear2}
-            lulcYear3={lulcYear3}
-          />
-        </div>
-
-        {showRightSidebar && (
-          <RightSidebar
-            state={state}
-            district={district}
-            block={block}
-            setState={setState}
-            setDistrict={setDistrict}
-            setBlock={setBlock}
-            statesData={statesData}
-            handleItemSelect={handleItemSelect}
-            onClose={() => setShowRightSidebar(false)}
-            handleLayerToggle={handleLayerToggle}
-            handleGeoJsonLayers={handleGeoJsonLayers}
-            handleKMLLayers={handleKMLLayers}
-            toggledLayers={toggledLayers}
-            toggleLayer={handleLayerToggle}
-            handleExcelDownload={handleExcelDownload}
-            isLoading={isLoading}
-            canFetchLayers={canFetchLayers}
-            onCategoryChange={handleCategoryChange}
-            lulcYear1={lulcYear1}
-            lulcYear2={lulcYear2}
-            lulcYear3={lulcYear3}
-            setLulcYear1={setLulcYear1}
-            setLulcYear2={setLulcYear2}
-            setLulcYear3={setLulcYear3}
-          />
-        )}
-
-        {!showRightSidebar && (
-          <div className="absolute top-20 right-0 z-10 bg-white p-2 px-3 rounded-l-md shadow-md hover:bg-gray-100 transition-colors flex items-center">
-            <button
-              onClick={() => setShowRightSidebar(true)}
-              className="flex items-center"
-              aria-label="Open filters panel"
-            >
-              <span className="font-medium text-gray-700 mr-2">
-                Filters & Data
-              </span>
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="16"
-                height="16"
-                fill="currentColor"
-                viewBox="0 0 16 16"
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {/* Card 1 */}
+              <a
+                href="https://www.youtube.com/watch?v=ln7wpoW7Eg4&list=PLZ0pcz8ccRmIU8wHzHv-CbDOs4JOqgNHC"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block hover:shadow-lg transition duration-200 ease-in-out"
               >
-                <path
-                  fillRule="evenodd"
-                  d="M11.354 1.646a.5.5 0 0 1 0 .708L5.707 8l5.647 5.646a.5.5 0 0 1-.708.708l-6-6a.5.5 0 0 1 0-.708l6-6a.5.5 0 0 1 .708 0z"
-                />
-              </svg>
-            </button>
+                <div className="flex flex-col items-center text-center cursor-pointer">
+                  <div className="w-full max-w-[420px] aspect-square mx-auto rounded overflow-hidden shadow mb-4 relative">
+                    <img
+                      src={participatoryImg}
+                      alt="Participatory Planning"
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+
+                  <div className="p-4">
+                    <h3 className="font-bold mb-2 text-sm">
+                      How to do Participatory Planning?
+                    </h3>
+                    <p className="text-xs text-gray-700 mb-2">
+                      View tutorial videos to conduct a rapid PRA and create
+                      DPRs using Commons Connect.
+                    </p>
+                    <span className="text-purple-700 text-sm font-semibold underline">
+                      Learn More →
+                    </span>
+                  </div>
+                </div>
+              </a>
+
+              {/* Card 2  */}
+              <a
+                href="https://play.google.com/store/apps/details?id=com.corestack.commonsconnect"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block hover:shadow-lg transition duration-200 ease-in-out"
+              >
+                <div className="flex flex-col items-center text-center cursor-pointer">
+                  <div className="w-full max-w-[420px] aspect-square mx-auto rounded overflow-hidden shadow mb-4 relative">
+                    <img
+                      src={newLogo}
+                      alt="Commons Connect App"
+                      className="w-full h-full object-cover object-center"
+                    />
+                  </div>
+
+                  <div className="p-4">
+                    <h3 className="font-bold mb-2 text-sm">
+                      Download Commons Connect App
+                    </h3>
+                    <p className="text-xs text-gray-700 mb-2">
+                      An Android app to guide you in a step-by-step manner to
+                      record community demands for NRM assets.
+                    </p>
+                    <span className="text-purple-700 text-sm font-semibold underline">
+                      Download Now →
+                    </span>
+                  </div>
+                </div>
+              </a>
+
+              {/*  Card 3 */}
+              <div onClick={() => navigate("/CCUsagePage")}
+                className="cursor-pointer hover:shadow-lg transition duration-200 ease-in-out"
+              >
+                <div className="flex flex-col items-center text-center">
+                  <div className="w-full max-w-[420px] aspect-square mx-auto rounded overflow-hidden shadow mb-4 relative">
+                    <img
+                      src={planAndView}
+                      alt="View and Support Plans"
+                      className="absolute inset-0 w-full h-full object-cover"
+                    />
+                  </div>
+
+                  <div className="p-4">
+                    <h3 className="font-bold mb-2 text-sm">
+                      View and Support Plans
+                    </h3>
+                    <p className="text-xs text-gray-700 mb-2">
+                      Explore existing community plans and find opportunities to
+                      support or collaborate with ongoing initiatives.
+                    </p>
+                    <span className="text-purple-700 text-sm font-semibold underline">
+                      Learn More →
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Track Section */}
+        <section className="snap-start backdrop-brightness-90 backdrop-blur-sm bg-white/0 px-4 py-6 md:px-10 md:py-10 rounded-xl mx-2 md:mx-6 mt-6">
+          <div>
+            {/* Narrow text container */}
+            <div className="w-full lg:w-2/3 mb-10">
+              <h2 className="text-2xl md:text-4xl mb-4 text-purple-700">
+                <span className="font-bold">Track and Assess </span>
+                <span className="font-normal">NRM interventions</span>
+              </h2>
+              <ul className="list-disc list-outside ml-5 text-black text-base md:text-xl font-medium space-y-5 mb-6 text-justify">
+                <li>
+                  A suite of dashboards enabling continuous monitoring of
+                  Natural Resource Management (NRM) interventions undertaken in
+                  an area, and ex-post assessment of their impact.
+                </li>
+                <li>
+                  Use <b>Jaltol</b> to monitor changes in cropping patterns in
+                  villages where extensive watershed development programmes have
+                  been undertaken.
+                </li>
+                <li>
+                  Agrohorticulture practitioners can assess the health of tree
+                  plantations over time using the{" "}
+                  <b>Plantation Health Assessment Dashboard</b>.
+                </li>
+                <li>
+                  Track waterbody rejuvenation interventions and their impact on
+                  cropping in nearby areas with the{" "}
+                  <b>WaterBody Rejuvenation Assessment Dashboard</b>.
+                </li>
+              </ul>
+            </div>
+
+            {/* Full-width cards container */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mt-8">
+              {[
+                {
+                  title: "Jaltol App",
+                  description:
+                    "Monitor changes in cropping patterns and assess the impact of watershed development interventions.",
+                  icon: "🌾",
+                  link: "https://welllabs.org/jaltol/",
+                },
+                {
+                  title: "Agrohorticulture Plantations",
+                  description:
+                    "Track the health and growth of plantations across time using satellite-based monitoring.",
+                  icon: "🌳",
+                  link:"/agrohorticulture"
+                },
+                {
+                  title: "Waterbody Rejuvenation",
+                  description:
+                    "Visualize waterbody interventions and evaluate their effects on water availability and agriculture.",
+                  icon: "💧",
+                  link: "/rwb",
+                },
+                {
+                  title: "Commons Connect Plans",
+                  description:
+                    "Site and landscape level tracking of plans built using Commons Connect",
+                  icon: "☀️",
+                },
+              ].map((item, index) => (
+                <div key={index} className="h-full">
+                  <div
+                    onClick={() => {
+                      if (item.link) {
+                        handleNavigate(item.link, item.title);
+                      }
+                    }}
+                    className="cursor-pointer bg-white rounded-2xl shadow-md p-6 sm:p-8 h-full min-h-[220px] flex flex-col justify-start transform transition-all duration-300 hover:shadow-xl hover:-translate-y-1 hover:scale-[1.02]"
+                  >
+                    <div className="flex items-start gap-4">
+                      <div className="bg-yellow-100 text-yellow-500 rounded-full w-12 h-12 sm:w-14 sm:h-14 flex items-center justify-center text-xl sm:text-2xl">
+                        {item.icon}
+                      </div>
+                      <div>
+                        <h3 className="text-lg sm:text-xl font-semibold mb-2 text-gray-900">
+                          {item.title}
+                        </h3>
+                        <p className="text-sm text-gray-700 mb-3">
+                          {item.description}
+                        </p>
+                        {item.link ? (
+                          <span className="text-purple-700 font-medium text-sm hover:underline">
+                            Learn More →
+                          </span>
+                        ) : (
+                          <span className="text-gray-400 text-sm italic">
+                            Coming soon...
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         )}
       </div>
