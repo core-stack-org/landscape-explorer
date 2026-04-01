@@ -5,19 +5,18 @@ export default async function getImageLayer(layer_store, layer_name, setVisible 
   console.log(layer_store)
   console.log(layer_name)
   console.log(style)
-  const wmsLayer = new ImageLayer({
-    source: new ImageWMS({
-      url: `${process.env.REACT_APP_GEOSERVER_URL}` + 'wms',
-      params: {
-        'LAYERS': layer_store + ':' + layer_name,
-        'STYLES': style
-      },
-      ratio: 1,
-      serverType: 'geoserver',
-      crossOrigin: 'anonymous',
-    }),
-    visible: setVisible,
-    name: layer_name
-  })
-  return wmsLayer;
+    const wmsLayer = new ImageLayer({
+      source: new ImageWMS({
+        url: `${process.env.REACT_APP_GEOSERVER_URL}`+'wms',
+        params: { 
+          'LAYERS': layer_store + ':' + layer_name,
+          'STYLES' : style
+        },
+        ratio: 1,
+        serverType: 'geoserver',
+      }),
+      visible: setVisible,
+      name : layer_name
+    })
+    return wmsLayer;
 }
