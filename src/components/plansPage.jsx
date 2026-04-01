@@ -18,6 +18,7 @@ import PinchZoom from "ol/interaction/PinchZoom";
 import DoubleClickZoom from "ol/interaction/DoubleClickZoom";
 import PlanViewDialog from "../components/plan_detailView.jsx";
 import ArrowPlan from '../assets/arrow_plan.svg';
+import { fetchPlansMetaStats, fetchStewardsMetaStats, fetchStewardsByState } from "../api/plansApi";
 import StewardDetailPage from "./steward_detailPage.jsx";
 import {
   plansAtom,
@@ -35,6 +36,7 @@ import LocationOnIcon from "@mui/icons-material/LocationOn";
 import GroupsOutlinedIcon from "@mui/icons-material/GroupsOutlined";
 import DescriptionOutlinedIcon from "@mui/icons-material/DescriptionOutlined";
 import TaskAltOutlinedIcon from "@mui/icons-material/TaskAltOutlined";
+import StarBorderOutlinedIcon from "@mui/icons-material/StarBorderOutlined";
 
 const STATE_COORDINATES = {
   Jharkhand: [85.2799, 23.6102],
@@ -52,25 +54,89 @@ const STATE_COORDINATES = {
 
 const getPlanMetaStats = async (organizationId = null) => {
   try {
-    const url = organizationId
-      ? `${process.env.REACT_APP_API_URL}/watershed/plans/meta-stats/?organization=${organizationId}`
-      : `${process.env.REACT_APP_API_URL}/watershed/plans/meta-stats/`;
-
-    const response = await fetch(url, {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-        "ngrok-skip-browser-warning": "420",
-        "X-API-Key" : `${process.env.REACT_APP_API_KEY}`
-      },
-    });
-    if (!response.ok) throw new Error("API error");
-
-    return await response.json();
+    const response = await fetchPlansMetaStats(process.env.REACT_APP_API_KEY, organizationId);
+    return response;
   } catch (err) {
     console.error("Meta stats error:", err);
     return null;
   }
+};
+
+const getTehsilIdsFromState = (stateObj) => {
+  if (!stateObj) return [];
+
+  if (Array.isArray(stateObj.tehsil_ids)) {
+    return stateObj.tehsil_ids.filter(Boolean);
+  }
+
+  if (Array.isArray(stateObj.tehsils)) {
+    return stateObj.tehsils.map((t) => t?.id || t?.value || t).filter(Boolean);
+  }
+
+  if (Array.isArray(stateObj.tehsil_list)) {
+    return stateObj.tehsil_list.map((t) => t?.id || t?.value || t).filter(Boolean);
+  }
+
+  // For proposed_blocks structure: district[].blocks[].tehsil_id
+  if (Array.isArray(stateObj.district)) {
+    const ids = stateObj.district.flatMap((district) => {
+      if (!Array.isArray(district.blocks)) return [];
+      return district.blocks
+        .map((block) => block.tehsil_id || block.block_id || block.id || block.value)
+        .filter(Boolean);
+    });
+
+    if (ids.length > 0) {
+      return Array.from(new Set(ids));
+    }
+  }
+
+  if (Array.isArray(stateObj.blocks)) {
+    const ids = stateObj.blocks
+      .map((block) => block.tehsil_id || block.block_id || block.id || block.value)
+      .filter(Boolean);
+    if (ids.length > 0) {
+      return Array.from(new Set(ids));
+    }
+  }
+
+  return [];
+};
+
+const buildMetaStatsFromPlans = (plans = []) => {
+  const totalPlans = Array.isArray(plans) ? plans.length : 0;
+  const facilitatorSet = new Set();
+
+  if (Array.isArray(plans)) {
+    plans.forEach((p) => {
+      if (p.facilitator_id) facilitatorSet.add(String(p.facilitator_id));
+      else if (p.facilitator_name) facilitatorSet.add(String(p.facilitator_name));
+      else if (p.facilitator) facilitatorSet.add(String(p.facilitator));
+    });
+  }
+
+  const dpr_generated = Array.isArray(plans)
+    ? plans.reduce((sum, p) => sum + (Number(p.dpr_generated) || Number(p.dpr_generated_count) || 0), 0)
+    : 0;
+  const dpr_reviewed = Array.isArray(plans)
+    ? plans.reduce((sum, p) => sum + (Number(p.dpr_reviewed) || Number(p.dpr_reviewed_count) || 0), 0)
+    : 0;
+
+  return {
+    summary: {
+      total_plans: totalPlans,
+      dpr_generated,
+      dpr_reviewed,
+    },
+    landscape_stewards: {
+      total_stewards: facilitatorSet.size,
+      active_stewards: facilitatorSet.size,
+      inactive_stewards: 0,
+      avg_completion_rate: 0,
+      top_stewards: [],
+    },
+    state_breakdown: [],
+  };
 };
 
 const PlansPage = () => {
@@ -78,6 +144,7 @@ const PlansPage = () => {
   const [organization, setOrganization] = useState();
   const [organizationOptions, setOrganizationOptions] = useState([]);
   const [metaStats, setMetaStats] = useState(null);
+  const [viewMode, setViewMode] = useState("plans");
   const [selectedPlan, setSelectedPlan] = useState(null);
   const [isStewardModalOpen, setIsStewardModalOpen] = useState(false);
   const [showBubbleLayer, setShowBubbleLayer] = useState(true);
@@ -103,14 +170,66 @@ const PlansPage = () => {
   const [currentStateObj, setCurrentStateObj] = useState(null);
   const [emptyStateType, setEmptyStateType] = useState(null);
 
-  //  Load Meta Stats
+  //  Load Meta Stats (plans or stewards depending on viewMode)
   useEffect(() => {
     const loadMeta = async () => {
-      const stats = await getPlanMetaStats();
-      setMetaStats(stats);
+      setMapLoading(true);
+      try {
+        if (mapRef.current && bubbleLayerRef.current) {
+          mapRef.current.removeLayer(bubbleLayerRef.current);
+          bubbleLayerRef.current = null;
+        }
+
+        let stats = null;
+        const apiKey = process.env.REACT_APP_API_KEY;
+
+        if (viewMode === "plans") {
+          stats = await fetchPlansMetaStats(apiKey, organizationRef.current?.value || null);
+        } else {
+          // Fetch steward data from the correct API endpoint
+          const stewardData = await fetchStewardsMetaStats(apiKey, organizationRef.current?.value || null);
+
+          // Transform top_stewards to ensure plan count is available
+          const transformedTopStewards = (stewardData.top_stewards || []).map(steward => ({
+            ...steward,
+            plans_count: steward.plans_count ?? steward.plan_count ?? steward.total_plans ?? steward.num_plans ?? 0,
+            facilitator_name: steward.facilitator_name ?? steward.name ?? steward.facilitator ?? ''
+          }));
+
+          // Transform the API response to match expected structure
+          stats = {
+            state_breakdown: stewardData.state_level || stewardData.by_organization || stewardData.state_breakdown || [],
+            landscape_stewards: {
+              total_stewards: stewardData.total_stewards || 0,
+              active_stewards: stewardData.active_stewards || stewardData.active || 0,
+              inactive_stewards: stewardData.inactive_stewards || stewardData.inactive || 0,
+              avg_completion_rate: stewardData.avg_completion_rate || stewardData.avgCompletionRate || 0,
+              top_stewards: transformedTopStewards
+            }
+          };
+        }
+
+        setMetaStats(stats);
+
+        if (!stats || !Array.isArray(stats.state_breakdown) || stats.state_breakdown.length === 0) {
+          setNoMapData(true);
+          setShowBubbleLayer(false);
+        } else {
+          setNoMapData(false);
+          setShowBubbleLayer(true);
+        }
+      } catch (err) {
+        console.error("Meta stats fetch error:", err);
+        setNoMapData(true);
+        setShowBubbleLayer(false);
+        setMetaStats(null);
+      } finally {
+        setMapLoading(false);
+      }
     };
+
     loadMeta();
-  }, []);
+  }, [viewMode]);
 
   useEffect(() => {
     fetchOrganizations();
@@ -238,40 +357,67 @@ const PlansPage = () => {
       mapRef.current.removeLayer(bubbleLayerRef.current);
       bubbleLayerRef.current = null;
     }
-      if (
-      !metaStats?.state_breakdown ||
-      !Array.isArray(metaStats.state_breakdown) ||
-      metaStats.state_breakdown.length === 0
-    ) {
+      const stateBreakdown =
+      metaStats?.state_breakdown ||
+      metaStats?.stateBreakdown ||
+      [];
+
+    if (!Array.isArray(stateBreakdown) || stateBreakdown.length === 0) {
       console.warn("⚠ No state data available");
       setNoMapData(true);
       return;
     }
-  
+
     setNoMapData(false);
-  
+
+    const countKey = viewMode === "plans" ? "total_plans" : "steward_count";
     const features = [];
     const getRadius = (count) => 8 + Math.sqrt(count) * 2.2;
-  
-    metaStats.state_breakdown.forEach((s) => {
-      const coords = STATE_COORDINATES[s.state_name];
-      if (!coords) return;
+
+    stateBreakdown.forEach((s) => {
+      // Handle different possible field names for state name
+      const stateName = s.state_name || s.name || s.state;
+      let coords = STATE_COORDINATES[stateName];
+
+      // Fallback to centroid if static mapping doesn't contain the state
+      if (!coords && s.centroid) {
+        const lat = Number(s.centroid.lat || s.centroid.latitude || s.centroid.y);
+        const lon = Number(s.centroid.lon || s.centroid.longitude || s.centroid.x);
+        if (!Number.isNaN(lat) && !Number.isNaN(lon)) {
+          coords = [lon, lat];
+        }
+      }
+
+      if (!coords) {
+        console.warn("No coordinates for state:", stateName);
+        return;
+      }
+
+      const countValue =
+        viewMode === "plans"
+          ? Number(s.total_plans || s.count || s.total || s.plan_count || s.plans_count || 0)
+          : Number(s.steward_count || s.total_stewards || s.count || s.total || s.stewards_count || 0);
+
+      if (countValue <= 0) {
+        console.warn("Zero count for state:", stateName, "- skipping bubble");
+        return;
+      }
   
       const f = new Feature({
         geometry: new Point(coords),
-        name: s.state_name,
-        plans: s.total_plans,
+        name: stateName,
+        count: countValue,
       });
   
       f.setStyle(
         new Style({
           image: new CircleStyle({
-            radius: getRadius(s.total_plans),
-            fill: new Fill({ color: "rgba(0,122,255,0.75)" }),
+            radius: getRadius(countValue),
+            fill: new Fill({ color: viewMode === "plans" ? "rgba(0,122,255,0.75)" : "rgba(34,197,94,0.75)" }),
             stroke: new Stroke({ color: "#fff", width: 2 }),
           }),
           text: new Text({
-            text: String(s.total_plans ?? "--"),
+            text: String(countValue ?? "--"),
             fill: new Fill({ color: "#fff" }),
             font: "bold 14px sans-serif",
           }),
@@ -366,38 +512,58 @@ const PlansPage = () => {
     setMapLoading(false)
   };
 
-   
-
-  const buildMetaStatsFromPlans = (plans) => {
-    const uniqueTehsils = new Set();
-    const uniqueStewards = new Set();
-  
-    plans.forEach((p) => {
-      if (p.tehsil_soi) uniqueTehsils.add(p.tehsil_soi);
-      if (p.facilitator_id) uniqueStewards.add(p.facilitator_id);
-    });
-  
-    return {
-      summary: {
-        total_plans: plans.length,
-        dpr_generated: plans.filter(p => p.is_dpr_generated).length,
-        dpr_reviewed: plans.filter(p => p.is_dpr_approved).length,
-      },
-      commons_connect_operational: {
-        active_tehsils: uniqueTehsils.size,
-      },
-      landscape_stewards: {
-        total_stewards: uniqueStewards.size,
-      },
-    };
+  const refreshPlansMap = () => {
+    setViewMode("plans");
+    setShowBubbleLayer(false);
+    setTimeout(() => setShowBubbleLayer(true), 100);
   };
-  
 
-  const getTehsilIdsFromState = (stateObj) => {
-    return stateObj.district
-      ?.flatMap((d) => d.blocks || [])
-      ?.map((b) => String(b.tehsil_id || b.block_id))
-      ?.filter(Boolean);
+  const refreshStewardsMap = () => {
+    setViewMode("stewards");
+    setShowBubbleLayer(false);
+    setTimeout(() => setShowBubbleLayer(true), 100);
+  };
+
+  const updateDashboardStats = async () => {
+    try {
+      const apiKey = process.env.REACT_APP_API_KEY;
+      const stewardData = await fetchStewardsMetaStats(apiKey, organizationRef.current?.value || null);
+      
+      // DEBUG: Log the raw top_stewards to see field structure
+      console.log("🔍 Raw top_stewards from API:", stewardData.top_stewards?.[0]);
+      
+      // Transform top_stewards to ensure plan_count is available
+      const transformedTopStewards = (stewardData.top_stewards || []).map(steward => ({
+        ...steward,
+        plans_count: steward.plans_count ?? steward.plan_count ?? steward.total_plans ?? steward.num_plans ?? 0,
+        facilitator_name: steward.facilitator_name ?? steward.name ?? steward.facilitator ?? ''
+      }));
+      
+      console.log("✅ Transformed top_stewards:", transformedTopStewards[0]);
+      
+      setMetaStats({
+        state_breakdown: stewardData.state_level || stewardData.state_breakdown || [],
+        landscape_stewards: {
+          total_stewards: stewardData.total_stewards || 0,
+          active_stewards: stewardData.active_stewards || stewardData.active || 0,
+          inactive_stewards: stewardData.inactive_stewards || stewardData.inactive || 0,
+          avg_completion_rate: stewardData.avg_completion_rate || stewardData.avgCompletionRate || 0,
+          top_stewards: transformedTopStewards
+        }
+      });
+    } catch (err) {
+      console.error("Failed to update dashboard stats:", err);
+    }
+  };
+
+  const updatePlansStats = async () => {
+    try {
+      const apiKey = process.env.REACT_APP_API_KEY;
+      const planStats = await fetchPlansMetaStats(apiKey, organizationRef.current?.value || null);
+      setMetaStats(planStats);
+    } catch (err) {
+      console.error("Failed to update plans stats:", err);
+    }
   };
 
   const fetchTehsilPlans = async (stateObj) => {
@@ -774,7 +940,7 @@ const fetchPlansByDistrict = async (districtId) => {
                   onChange={async (selected) => {
                     setOrganization(selected);
                     organizationRef.current = selected;
-                  
+
                     if (!isStateView && selectedDistrict) {
                       // District view
                       await fetchPlansByDistrict(selectedDistrict.value);
@@ -783,9 +949,33 @@ const fetchPlansByDistrict = async (districtId) => {
                       await fetchTehsilPlans(currentStateObj);
                     } else {
                       // State bubble view
-                      const stats = await getPlanMetaStats(selected?.value);
+                      let stats;
+                      if (viewMode === "plans") {
+                        stats = await fetchPlansMetaStats(process.env.REACT_APP_API_KEY, selected?.value);
+                      } else {
+                        // Fetch steward data for organization
+                        const stewardData = await fetchStewardsMetaStats(process.env.REACT_APP_API_KEY, selected?.value);
+
+                        // Transform top_stewards to ensure plan count is available
+                        const transformedTopStewards = (stewardData.top_stewards || []).map(steward => ({
+                          ...steward,
+                          plans_count: steward.plans_count ?? steward.plan_count ?? steward.total_plans ?? steward.num_plans ?? 0,
+                          facilitator_name: steward.facilitator_name ?? steward.name ?? steward.facilitator ?? ''
+                        }));
+
+                        stats = {
+                          state_breakdown: stewardData.state_level || stewardData.by_organization || [],
+                          landscape_stewards: {
+                            total_stewards: stewardData.total_stewards || 0,
+                            inactive_stewards: stewardData.inactive_stewards || 0,
+                            avg_completion_rate: stewardData.avg_completion_rate || 0,
+                            top_stewards: transformedTopStewards
+                          }
+                        };
+                      }
+
                       setMetaStats(stats);
-                      
+
                       if (!stats?.state_breakdown || stats.state_breakdown.length === 0) {
                         setEmptyStateType("org");
                         setShowBubbleLayer(false);
@@ -794,16 +984,14 @@ const fetchPlansByDistrict = async (districtId) => {
                           mapRef.current.removeLayer(bubbleLayerRef.current);
                           bubbleLayerRef.current = null;
                         }
-
                       } else {
                         setEmptyStateType(null);
                         setShowBubbleLayer(true);
                         addStateBubbles();
                       }
-                      
                     }
                   }}
-                  
+
                   options={organizationOptions}
                   placeholder="Filter by organization"
                   components={{
@@ -940,12 +1128,44 @@ const fetchPlansByDistrict = async (districtId) => {
             <div className="w-full flex-1 bg-white rounded-2xl border border-slate-200 shadow-xl overflow-hidden flex flex-col">
 
 
-              {/* BIG PRIMARY METRIC */}
+              {/* VIEW MODE TOGGLE */}
+          <div className="flex justify-end gap-2 mx-6 mt-4">
+            <div className="flex items-center gap-2 bg-white px-2 py-1 rounded-md border border-gray-200 shadow-sm hover:shadow transition-shadow">
+              <span className="text-xs font-medium text-gray-700">
+                {viewMode === "plans" ? "Plans" : "Stewards"}
+              </span>
+              <button
+                onClick={() => {
+                  if (viewMode === "plans") {
+                    refreshStewardsMap();
+                    updateDashboardStats();
+                  } else {
+                    refreshPlansMap();
+                    updatePlansStats();
+                  }
+                }}
+                className={`relative w-9 h-5 rounded-full transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-blue-500 ${
+                  viewMode === "stewards" ? 'bg-blue-600' : 'bg-gray-300'
+                }`}
+                role="switch"
+                aria-checked={viewMode === "stewards"}
+              >
+                <span className="sr-only">Toggle between Plans and Stewards</span>
+                <div
+                  className={`absolute left-0.5 top-0.5 w-4 h-4 rounded-full bg-white shadow-sm transition-transform duration-300 ${
+                    viewMode === "stewards" ? 'transform translate-x-4' : ''
+                  }`}
+                />
+              </button>
+            </div>
+          </div>
+
+          {/* BIG PRIMARY METRIC */}
               <div className="relative mt-4 mx-6 mb-6">
                 <div className="bg-gradient-to-br from-blue-500 via-blue-600 to-indigo-700 
                                 rounded-2xl text-center text-white shadow-xl border border-blue-400/20 p-4">
                   <p className="text-4xl font-bold tracking-tight">
-                    Total Plans : {metaStats?.summary?.total_plans ?? 0}
+                    {viewMode === "plans" ? "Total Plans" : "Total Stewards"} : {viewMode === "plans" ? metaStats?.summary?.total_plans ?? 0 : metaStats?.landscape_stewards?.total_stewards ?? 0}
                   </p>
                   
                 </div>
@@ -967,37 +1187,63 @@ const fetchPlansByDistrict = async (districtId) => {
                   <div className="bg-gradient-to-br from-rose-50 to-rose-100/50 border border-rose-200 rounded-xl p-4 hover:shadow-md transition-shadow">
                     <div className="flex items-center gap-4 mb-2 justify-center p-2">
                     <GroupsOutlinedIcon sx={{ fontSize: 20 }} className="text-rose-600" />
-                      <p className="text-xs font-semibold text-rose-900/70">Active Stewards </p>
+                      <p className="text-xs font-semibold text-rose-900/70">
+                        {viewMode === "plans" ? "Active Stewards" : "Inactive Stewards"}
+                      </p>
                     </div>
                     <p className="text-3xl font-bold text-rose-700 text-center">
-                      {metaStats?.landscape_stewards?.total_stewards ?? 0}
+                      {viewMode === "plans"
+                        ? (metaStats?.landscape_stewards?.total_stewards ?? 0)
+                        : (metaStats?.landscape_stewards?.inactive_stewards ?? 0)
+                      }
                     </p>
                   </div>
 
                   <div className="bg-gradient-to-br from-purple-50 to-purple-100/50 border border-purple-200 rounded-xl p-4 hover:shadow-md transition-shadow mt-4">
                     <div className="flex items-center gap-4 mb-2 justify-center p-2">
                     <DescriptionOutlinedIcon sx={{ fontSize: 20 }} className="text-purple-600" />
-                    <p className="text-xs font-semibold text-purple-900/70">DPRs Submitted</p>
+                    <p className="text-xs font-semibold text-purple-900/70">
+                      {viewMode === "plans" ? "DPRs Submitted" : "Average Completion Rate"}
+                    </p>
                     </div>
                     <p className="text-3xl font-bold text-purple-700 text-center">
-                      {metaStats?.summary?.dpr_generated ?? 0}
+                      {viewMode === "plans"
+                        ? (metaStats?.summary?.dpr_generated ?? 0)
+                        : (metaStats?.landscape_stewards?.avg_completion_rate ?? 0)
+                      }%
                     </p>
                   </div>
 
                   <div className="bg-gradient-to-br from-emerald-50 to-emerald-100/50 border border-emerald-200 rounded-xl p-4 hover:shadow-md transition-shadow mt-4">
                     <div className="flex items-center gap-4 mb-2 justify-center p-2">
                     <TaskAltOutlinedIcon sx={{ fontSize: 20 }} className="text-emerald-600" />
-                    <p className="text-xs font-semibold text-emerald-900/70">DPRs Reviewed</p>
+                    <p className="text-xs font-semibold text-emerald-900/70">
+                      {viewMode === "plans" ? "DPRs Reviewed" : "Top Stewards"}
+                    </p>
                     </div>
                     <p className="text-3xl font-bold text-emerald-700 text-center">
-                      {metaStats?.summary?.dpr_reviewed ?? 0}
+                      {viewMode === "plans"
+                        ? (metaStats?.summary?.dpr_reviewed ?? 0)
+                        : (metaStats?.landscape_stewards?.top_stewards?.length ?? 0)
+                      }
                     </p>
-                  </div>                    
+                  </div>
+                  {(viewMode === "stewards") && (
+                    <div className="bg-gradient-to-br from-yellow-50 to-yellow-100/50 border border-yellow-200 rounded-xl p-4 hover:shadow-md transition-shadow mt-4">
+                      <div className="flex items-center gap-4 mb-2 justify-center p-2">
+                        <StarBorderOutlinedIcon sx={{ fontSize: 20 }} className="text-yellow-600" />
+                        <p className="text-xs font-semibold text-yellow-900/70">Active Stewards</p>
+                      </div>
+                      <p className="text-3xl font-bold text-yellow-700 text-center">
+                        {metaStats?.landscape_stewards?.active_stewards ?? 0}
+                      </p>
+                    </div>
+                  )}
                 </div>
                 
                 {!isStateView && currentStateObj && (
                   <div className="px-6 pb-6 overflow-y-auto scrollbar-thin">
-                    
+
                     <div className="border-t border-slate-200 pt-4">
 
                       {/* SELECTED STATE */}
@@ -1007,30 +1253,59 @@ const fetchPlansByDistrict = async (districtId) => {
 
                       <div className="flex flex-wrap gap-2 mb-4">
                         <span
-                          className="px-3 py-1 text-xs rounded-full 
+                          className="px-3 py-1 text-xs rounded-full
                                     bg-blue-50 text-blue-700 border border-blue-200"
                         >
                           {currentStateObj.label}
                         </span>
                       </div>
 
-                      {/* ACTIVE TEHSILS */}
-                      {activeTehsilNames.length > 0 && (
+                      {viewMode === "plans" ? (
+                        /* ACTIVE TEHSILS - Only show for plans mode */
+                        activeTehsilNames.length > 0 && (
+                          <>
+                            <p className="text-xs font-semibold text-slate-600 mb-2">
+                              Active Tehsils
+                            </p>
+
+                            <div className="flex flex-wrap gap-2 max-h-40 overflow-y-auto">
+                              {activeTehsilNames.map((name, idx) => (
+                                <span
+                                  key={idx}
+                                  className="px-3 py-1 text-xs rounded-full
+                                            bg-blue-50 text-blue-700 border border-blue-200"
+                                >
+                                  {name}
+                                </span>
+                              ))}
+                            </div>
+                          </>
+                        )
+                      ) : (
+                        /* TOP STEWARDS - Only show for stewards mode */
                         <>
                           <p className="text-xs font-semibold text-slate-600 mb-2">
-                            Active Tehsils
+                            Top Stewards
                           </p>
 
-                          <div className="flex flex-wrap gap-2 max-h-40 overflow-y-auto">
-                            {activeTehsilNames.map((name, idx) => (
-                              <span
+                          <div className="space-y-2 max-h-60 overflow-y-auto">
+                            {metaStats?.landscape_stewards?.top_stewards?.slice(0, 10).map((steward, idx) => (
+                              <div
                                 key={idx}
-                                className="px-3 py-1 text-xs rounded-full 
-                                          bg-blue-50 text-blue-700 border border-blue-200"
+                                className="flex justify-between items-center p-3 bg-slate-50 rounded-lg border border-slate-200"
                               >
-                                {name}
-                              </span>
-                            ))}
+                                <span className="text-sm font-medium text-slate-700">
+                                  {steward.facilitator_name || steward.name || `Steward ${idx + 1}`}
+                                </span>
+                                <span className="text-sm text-slate-500">
+                                  {steward.plans_count || steward.total_plans || 0} plans
+                                </span>
+                              </div>
+                            )) || (
+                              <p className="text-sm text-slate-500 italic">
+                                No steward data available
+                              </p>
+                            )}
                           </div>
                         </>
                       )}
