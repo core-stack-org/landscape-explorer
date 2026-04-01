@@ -14,6 +14,7 @@ const AgroHorticulture =()=>{
     const [showPlantationSites, setShowPlantationSites] = useState(false);
     const navigate = useNavigate();
     const location = useLocation();
+    const canNavigateToProject = Boolean(organization?.value && project?.value);
 
     useEffect(()=>{
         const loadOrganization = async()=>{
@@ -63,13 +64,14 @@ const AgroHorticulture =()=>{
         if(!organization?.value){
             setProject(null);
             setProjectOptions([]);
-        };
+            return;
+        }
         setProject(null);
         loadProjects(organization?.value);
     },[organization]);
 
     const handleNavigate =()=>{
-        if(!organization && !project) return;
+        if(!canNavigateToProject) return;
         const params  = new URLSearchParams(location.search);
         params.set("projectId",project.value)
         navigate(
@@ -162,7 +164,9 @@ const AgroHorticulture =()=>{
                                 handleItemSelect={(setState, e) => setState(e)}
                                 />
                         </div>
-                        <button className="bg-purple-600 text-white px-4 py-2 rounded-lg w-full"
+                        <button
+                        className="bg-purple-600 text-white px-4 py-2 rounded-lg w-full disabled:cursor-not-allowed disabled:opacity-50"
+                        disabled={!canNavigateToProject}
                         onClick={handleNavigate}>
                             Show Plantation sites
                         </button>
