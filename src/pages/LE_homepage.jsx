@@ -1,70 +1,370 @@
-import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router";
+import { useState, useEffect, useRef, useCallback } from "react";
+import Map from "../components/landscape-explorer/map/Map.jsx";
+import RightSidebar from "../components/landscape-explorer/sidebar/RightSidebar.jsx";
 import { useRecoilState } from "recoil";
 import {
   stateDataAtom,
   stateAtom,
   districtAtom,
   blockAtom,
-} from "../store/locationStore";
-import SelectButton from "../components/buttons/select_button.jsx";
-import landingPageBg from "../assets/landingpagebg.svg";
-import participatoryImg from "../assets/RevisedPlanningCrop.png";
-import newLogo from "../assets/RevisedLogoCrop.png";
-import planAndView from "../assets/RevisedViewAndSupportCrop.png";
-import getStates from "../actions/getStates";
+  filterSelectionsAtom,
+  yearAtom,
+} from "../store/locationStore.jsx";
+import getStates from "../actions/getStates.js";
+import * as downloadHelper from "../components/landscape-explorer/utils/downloadHelper";
 import {
   trackPageView,
   trackEvent,
   initializeAnalytics,
 } from "../services/analytics";
-import Footer from "../components/footer.jsx";
 import LandingNavbar from "../components/landing_navbar.jsx";
 
-export default function KYLHomePage() {
-  const navigate = useNavigate();
+const LandscapeExplorer = () => {
+  const [showLeftSidebar, setShowLeftSidebar] = useState(false);
+  const [showRightSidebar, setShowRightSidebar] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
 
+  // Recoil state
   const [statesData, setStatesData] = useRecoilState(stateDataAtom);
   const [state, setState] = useRecoilState(stateAtom);
   const [district, setDistrict] = useRecoilState(districtAtom);
   const [block, setBlock] = useRecoilState(blockAtom);
+  const [filterSelections, setFilterSelections] =
+    useRecoilState(filterSelectionsAtom);
+  const [lulcYear1, setLulcYear1] = useState(null);
+  const [lulcYear2, setLulcYear2] = useState(null);
+  const [lulcYear3, setLulcYear3] = useState(null);
 
-  useEffect(() => {
-    initializeAnalytics();
-    trackPageView("/kyl_home");
+  // Map ref for accessing map instance from other components
+  const mapRef = useRef(null);
 
-    const fetchStates = async () => {
-      const data = await getStates();
-      setStatesData(data);
-    };
+  // Add flag to prevent infinite recursion
+  const isUpdatingFromMap = useRef(false);
 
-    fetchStates();
-    setBlock(null);
+  // Track which resource category is active
+  const [activeResourceCategory, setActiveResourceCategory] = useState(null);
+
+  // Set map ref with callback
+  const setMapRef = useCallback((node) => {
+    if (node !== null) {
+      mapRef.current = node;
+    }
   }, []);
 
+  // Layer toggle state - with demographics on by default
+  const [toggledLayers, setToggledLayers] = useState({
+    // Basic layers
+    demographics: true, // Set to true by default
+    drainage: false,
+    remote_sensed_waterbodies: false,
+    hydrological_boundaries: false,
+    clart: false,
+    mws_layers: false,
+    nrega: false,
+    drought: false,
+    terrain: false,
+    administrative_boundaries: false,
+    cropping_intensity: false,
+    terrain_vector: false,
+    terrain_lulc_slope: false,
+    terrain_lulc_plain: false,
+    afforestation: false,
+    deforestation: false,
+    degradation: false,
+    urbanization: false,
+    cropintensity: false,
+    soge: false,
+    aquifer: false,
+  });
+
+  // State for map view settings
+  const [showMWS, setShowMWS] = useState(true);
+  const [showVillages, setShowVillages] = useState(true);
+
+  // Add plans state
+  const [plans, setPlans] = useState([]);
+
+  // Add internal state flag for when layers are ready
+  const [layersReady, setLayersReady] = useState(false);
+
+  // Flag to track if we need to enable the fetch button
+  const [canFetchLayers, setCanFetchLayers] = useState(block !== null);
+
+  // Handle item selection for dropdowns
   const handleItemSelect = (setter, value) => {
+    // Handle the setState case specially if it affects parent component state
     if (setter === setState) {
+      // Reset all dependent state values
       if (value) {
         trackEvent("Location", "select_state", value.label);
       }
-      setter(value);
       setDistrict(null);
       setBlock(null);
+      resetAllStates();
+      setState(value);
     } else if (setter === setDistrict) {
+      // Reset block and filters when district changes
       if (value) {
         trackEvent("Location", "select_district", value.label);
       }
-      setter(value);
       setBlock(null);
-    } else if (setter === setBlock && value) {
+      resetAllStates();
+      setDistrict(value);
+    } else if (setter === setBlock) {
+      resetAllStates();
+      setBlock(value);
+      // When block is selected, enable fetch button and prepare layers automatically
+      setCanFetchLayers(true);
       trackEvent("Location", "select_tehsil", value.label);
+      // Auto-prepare layers instead of requiring Fetch Layers button
+      setTimeout(() => {
+        if (mapRef.current && mapRef.current.prepareLayers) {
+          setIsLoading(true);
+          mapRef.current.prepareLayers();
+          setLayersReady(true);
+          setToggledLayers((prev) => ({
+            ...prev,
+            demographics: true,
+          }));
+          setIsLoading(false);
+        }
+      }, 100);
+    } else {
+      // Standard case for other setters
       setter(value);
     }
   };
 
-  const handleNavigate = (path, buttonName) => {
-    trackEvent("Navigation", "button_click", buttonName);
-    navigate(path);
+  const resetAllStates = () => {
+    // Reset filters
+    setFilterSelections({
+      selectedMWSValues: {},
+      selectedVillageValues: {},
+    });
+
+    setToggledLayers({
+      demographics: true, // Keep demographics on
+      drainage: false,
+      remote_sensed_waterbodies: false,
+      hydrological_boundaries: false,
+      clart: false,
+      mws_layers: false,
+      nrega: false,
+      drought: false,
+      terrain: false,
+      administrative_boundaries: false,
+      cropping_intensity: false,
+      terrain_vector: false,
+      terrain_lulc_slope: false,
+      terrain_lulc_plain: false,
+      settlement: false,
+      water_structure: false,
+      well_structure: false,
+      agri_structure: false,
+      livelihood_structure: false,
+      recharge_structure: false,
+      afforestation: false,
+      deforestation: false,
+      degradation: false,
+      urbanization: false,
+      cropintensity: false,
+      soge: false,
+      aquifer: false,
+    });
+
+    setLayersReady(false);
+    setCanFetchLayers(false);
+  };
+
+  // Handle layer toggle from RightSidebar
+  const handleLayerToggle = (layerName, isVisible) => {
+    // Prevent recursion if the update is coming from the map component
+    if (isUpdatingFromMap.current) {
+      return;
+    }
+
+    // Update local state immediately
+    setToggledLayers((prev) => ({
+      ...prev,
+      [layerName]: isVisible,
+    }));
+
+    // Then update the map with a slight delay
+    setTimeout(() => {
+      if (mapRef.current && mapRef.current.toggleLayer) {
+        mapRef.current.toggleLayer(layerName, isVisible);
+      }
+    }, 50);
+  };
+
+  // Handle GeoJSON download
+  const handleGeoJsonLayers = (layerName) => {
+    if (!district || !block) {
+      alert("Please select a district and block first");
+      return;
+    }
+
+    console.log(`Downloading GeoJSON for ${layerName}`);
+
+    const districtFormatted = district.label
+      .toLowerCase()
+      .replace(/\s*\(\s*/g, "_")
+      .replace(/\s*\)\s*/g, "")
+      .replace(/\s+/g, "_");
+    const blockFormatted = block.label
+      .toLowerCase()
+      .replace(/\s*\(\s*/g, "_")
+      .replace(/\s*\)\s*/g, "")
+      .replace(/\s+/g, "_");
+
+    // Create download URL based on layer name (following the original implementation's URL format)
+    let downloadUrl = "";
+
+    switch (layerName) {
+      case "demographics":
+        downloadUrl = `https://geoserver.core-stack.org:8443/geoserver/panchayat_boundaries/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=panchayat_boundaries:${districtFormatted}_${blockFormatted}&outputFormat=application/json&screen=main`;
+        break;
+      case "drainage":
+        downloadUrl = `https://geoserver.core-stack.org:8443/geoserver/drainage/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=drainage:${districtFormatted}_${blockFormatted}&outputFormat=application/json&screen=main`;
+        break;
+      case "remote_sensed_waterbodies":
+        downloadUrl = `https://geoserver.core-stack.org:8443/geoserver/swb/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=swb:surface_waterbodies_${districtFormatted}_${blockFormatted}&outputFormat=application/json&screen=main`;
+        break;
+      case "hydrological_boundaries":
+        downloadUrl = `https://geoserver.core-stack.org:8443/geoserver/mws_layers/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=mws_layers:deltaG_well_depth_${districtFormatted}_${blockFormatted}&outputFormat=application/json&screen=main`;
+        break;
+      // Add other cases as needed
+      default:
+        downloadUrl = `https://geoserver.core-stack.org:8443/geoserver/${layerName}/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=${layerName}:${districtFormatted}_${blockFormatted}&outputFormat=application/json&screen=main`;
+    }
+
+    // Use the imported helper directly
+    downloadHelper.downloadGeoJson(downloadUrl, layerName);
+  };
+
+  // Handle KML download
+  const handleKMLLayers = (layerName) => {
+    if (!district || !block) {
+      alert("Please select a district and block first");
+      return;
+    }
+
+    console.log(`Downloading KML for ${layerName}`);
+
+    const districtFormatted = district.label
+      .toLowerCase()
+      .replace(/\s*\(\s*/g, "_")
+      .replace(/\s*\)\s*/g, "")
+      .replace(/\s+/g, "_");
+    const blockFormatted = block.label
+      .toLowerCase()
+      .replace(/\s*\(\s*/g, "_")
+      .replace(/\s*\)\s*/g, "")
+      .replace(/\s+/g, "_");
+
+    // Create download URL based on layer name (following original implementation)
+    let downloadUrl = "";
+
+    switch (layerName) {
+      case "demographics":
+        downloadUrl = `https://geoserver.core-stack.org:8443/geoserver/panchayat_boundaries/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=panchayat_boundaries:${districtFormatted}_${blockFormatted}&outputFormat=application/vnd.google-earth.kml+xml&screen=main`;
+        break;
+      case "drainage":
+        downloadUrl = `https://geoserver.core-stack.org:8443/geoserver/drainage/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=drainage:${districtFormatted}_${blockFormatted}&outputFormat=application/vnd.google-earth.kml+xml&screen=main`;
+        break;
+      case "remote_sensed_waterbodies":
+        downloadUrl = `https://geoserver.core-stack.org:8443/geoserver/water_bodies/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=water_bodies:surface_waterbodies_${districtFormatted}_${blockFormatted}&outputFormat=application/vnd.google-earth.kml+xml&screen=main`;
+        break;
+      case "hydrological_boundaries":
+        downloadUrl = `https://geoserver.core-stack.org:8443/geoserver/mws_layers/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=mws_layers:deltaG_well_depth_${districtFormatted}_${blockFormatted}&outputFormat=application/vnd.google-earth.kml+xml&screen=main`;
+        break;
+      // Add other cases as needed
+      default:
+        downloadUrl = `https://geoserver.core-stack.org:8443/geoserver/${layerName}/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=${layerName}:${districtFormatted}_${blockFormatted}&outputFormat=application/vnd.google-earth.kml+xml&screen=main`;
+    }
+
+    // Use the imported helper directly
+    downloadHelper.downloadKml(downloadUrl, layerName);
+  };
+
+  // Handle Excel download
+  const handleExcelDownload = () => {
+    if (!district || !block) {
+      alert("Please select a district and block first");
+      return;
+    }
+
+    setIsLoading(true);
+
+    // Using the exact URL format from the original implementation
+    fetch(
+      `https://geoserver.core-stack.org/api/v1/download_excel_layer?state=${state.label}&district=${district.label}&block=${block.label}`,
+      {
+        method: "GET",
+        headers: {
+          "ngrok-skip-browser-warning": "1",
+          "Content-Type": "blob",
+        },
+      }
+    )
+      .then((response) => response.arrayBuffer())
+      .then((arybuf) => {
+        const url = window.URL.createObjectURL(new Blob([arybuf]));
+        const link = document.createElement("a");
+
+        link.href = url;
+        link.setAttribute("download", `${block.label}_data.xlsx`);
+        document.body.appendChild(link);
+        link.click();
+
+        link.remove();
+        URL.revokeObjectURL(url);
+        setIsLoading(false);
+      })
+      .catch((error) => {
+        console.error("Error downloading Excel:", error);
+        setIsLoading(false);
+        alert("Failed to download Excel data. Please try again.");
+      });
+  };
+
+  // Track category selection for resource layers
+  const handleCategoryChange = (category) => {
+    setActiveResourceCategory(category);
+  };
+
+  // Fetch states data on component mount
+  useEffect(() => {
+    initializeAnalytics();
+    trackPageView("/download_layers");
+    if (statesData === null) {
+      getStates().then((data) => setStatesData(data));
+    }
+  }, [statesData, setStatesData]);
+
+  // Handle map-initiated layer toggle updates
+  const handleMapToggle = (layerName, isVisible) => {
+    // Set the recursion prevention flag
+    isUpdatingFromMap.current = true;
+
+    try {
+      // Special case for setState action - coming from map marker click
+      if (layerName === "setState" && typeof isVisible === "object") {
+        if (isVisible && isVisible.label && isVisible.district) {
+          setState(isVisible);
+          return;
+        }
+      }
+
+      // Update the toggledLayers state
+      setToggledLayers((prev) => ({
+        ...prev,
+        [layerName]: isVisible,
+      }));
+    } finally {
+      // Reset the flag
+      isUpdatingFromMap.current = false;
+    }
   };
 
   return (
@@ -368,10 +668,10 @@ export default function KYLHomePage() {
               </div>
             </div>
           </div>
-        </section>
+        )}
       </div>
-
-      <Footer />
     </div>
   );
-}
+};
+
+export default LandscapeExplorer;
