@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useMemo } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRecoilState, useRecoilValue } from "recoil";
 import {
   stateDataAtom,
@@ -8,7 +8,7 @@ import {
   filterSelectionsAtom,
   yearAtom,
   dataJsonAtom,
-  selectedWaterbodyForTehsilAtom,
+  selectedWaterbodyForTehsilAtom
 } from "../store/locationStore.jsx";
 
 //* OpenLayers imports
@@ -18,8 +18,7 @@ import TileLayer from "ol/layer/Tile";
 import Control from "ol/control/Control.js";
 import { defaults as defaultControls } from "ol/control/defaults.js";
 import { Map, View } from "ol";
-import { Fill, Stroke, Style, RegularShape } from "ol/style.js";
-import Point from "ol/geom/Point";
+import { Fill, Stroke, Style } from "ol/style.js";
 import GeoJSON from "ol/format/GeoJSON";
 
 import LandingNavbar from "../components/landing_navbar.jsx";
@@ -27,21 +26,14 @@ import getStates from "../actions/getStates.js";
 import getVectorLayers from "../actions/getVectorLayers.js";
 import getImageLayer from "../actions/getImageLayers.js";
 import filtersDetails from "../components/data/Filters.json";
-import PatternsData from "../components/data/Patterns.json";
+import PatternsData from '../components/data/Patterns.json';
 
 import KYLLeftSidebar from "../components/kyl_leftSidebar";
 import KYLRightSidebar from "../components/kyl_rightSidebar.jsx";
 import KYLMapContainer from "../components/kyl_mapContainer.jsx";
 import layerStyle from "../components/utils/layerStyle.jsx";
-import {
-  getAllPatternTypes,
-  getSubcategoriesForCategory,
-  getPatternsForSubcategory,
-} from "../components/utils/patternsHelper.js";
-import {
-  handlePatternSelection as handlePatternSelectionLogic,
-  isPatternSelected,
-} from "../components/utils/patternSelectionLogic.js";
+import { getAllPatternTypes, getSubcategoriesForCategory, getPatternsForSubcategory } from '../components/utils/patternsHelper.js';
+import { handlePatternSelection as handlePatternSelectionLogic, isPatternSelected } from '../components/utils/patternSelectionLogic.js';
 
 import { toast, Toaster } from "react-hot-toast";
 import {
@@ -50,10 +42,6 @@ import {
   initializeAnalytics,
 } from "../services/analytics";
 import getWebGlLayers from "../actions/getWebGlLayers.js";
-import VectorLayer from "ol/layer/Vector";
-import VectorSource from "ol/source/Vector";
-import Feature from "ol/Feature";
-import LineString from "ol/geom/LineString";
 
 const KYLDashboardPage = () => {
   const mapElement = useRef(null);
@@ -62,13 +50,10 @@ const KYLDashboardPage = () => {
   const boundaryLayerRef = useRef(null);
   const mwsLayerRef = useRef(null);
   const waterbodiesLayerRef = useRef(null);
-  const mwsConnectivityLayerRef = useRef(null);
-  const mwsCentroidLayerRef = useRef(null);
-  const mwsArrowLayerRef = useRef(null);
 
   const [isLoading, setIsLoading] = useState(false);
   const [islayerLoaded, setIsLayerLoaded] = useState(false);
-  const [highlightMWS, setHighlightMWS] = useState(null);
+  const [highlightMWS, setHighlightMWS] = useState(null)
   const [selectedMWS, setSelectedMWS] = useState([]);
 
   const [dataJson, setDataJson] = useRecoilState(dataJsonAtom);
@@ -80,43 +65,20 @@ const KYLDashboardPage = () => {
   const [toggleStates, setToggleStates] = useState({});
   const [villageIdList, setVillageIdList] = useState(new Set([]));
   const [patternVillageList, setPatternVillageList] = useState(new Set([]));
-  const [finalVillageList, setFinalVillageList] = useState(new Set([]));
+  const [finalVillageList, setFinalVillageList] = useState(new Set([]))
 
   const [statesData, setStatesData] = useRecoilState(stateDataAtom);
   const [state, setState] = useRecoilState(stateAtom);
   const [district, setDistrict] = useRecoilState(districtAtom);
   const [block, setBlock] = useRecoilState(blockAtom);
-  const [filterSelections, setFilterSelections] =
-    useRecoilState(filterSelectionsAtom);
-  const [patternSelections, setPatternSelections] = useState({
-    selectedMWSPatterns: {},
-    selectedVillagePatterns: {},
-  });
-  const handleClearAll = () => {
-    // Clear filters
-    setFilterSelections({
-      selectedMWSValues: {},
-      selectedVillageValues: {},
-    });
+  const [filterSelections, setFilterSelections] = useRecoilState(filterSelectionsAtom);
+  const [patternSelections, setPatternSelections] = useState({ selectedMWSPatterns: {}, selectedVillagePatterns: {} });
 
-    // Clear patterns
-    setPatternSelections({
-      selectedMWSPatterns: {},
-      selectedVillagePatterns: {},
-    });
-
-    // Clear map selections
-    setSelectedMWS([]);
-
-    // Clear village lists
-    setVillageIdList(new Set());
-    setPatternVillageList(new Set());
-    setFinalVillageList(new Set());
-  };
   const lulcYear = useRecoilValue(yearAtom);
 
   const [indicatorType, setIndicatorType] = useState(null);
   const [showMWS, setShowMWS] = useState(true);
+  const [sidebarResetKey, setSidebarResetKey] = useState(0);
   const [showVillages, setShowVillages] = useState(true);
   const [filtersEnabled, setFiltersEnabled] = useState(false);
 
@@ -125,34 +87,30 @@ const KYLDashboardPage = () => {
   const [searchLatLong, setSearchLatLong] = useState(null);
 
   // * Triggers
-  const [filterTrigger, setFilterTrigger] = useState(0);
-  const [patternTrigger, setPatternTrigger] = useState(0);
-  const [villagePatternTrigger, setvillagePatternTrigger] = useState(0);
+  const [filterTrigger, setFilterTrigger] = useState(0)
+  const [patternTrigger, setPatternTrigger] = useState(0)
+  const [villagePatternTrigger, setvillagePatternTrigger] = useState(0)
 
   const [clickedWaterbodyId, setClickedWaterbodyId] = useState(null);
   const [waterbodyDashboardUrl, setWaterbodyDashboardUrl] = useState(null);
-  const [selectedWaterbodyProfile, setSelectedWaterbodyProfile] =
-    useState(null);
+  const [selectedWaterbodyProfile, setSelectedWaterbodyProfile] = useState(null);
 
   const waterbodyClickedRef = useRef(false);
 
-  const [selectedWaterbodyForTehsil, setSelectedWaterbodyForTehsil] =
-    useRecoilState(selectedWaterbodyForTehsilAtom);
+  const [selectedWaterbodyForTehsil, setSelectedWaterbodyForTehsil] = useRecoilState(selectedWaterbodyForTehsilAtom);
   const [showWB, setShowWB] = useState(false);
-  const [showConnectivity, setShowConnectivity] = useState(false);
 
-  const addLayerSafe = (layer) =>
-    layer && mapRef.current && mapRef.current.addLayer(layer);
+  const addLayerSafe = (layer) => layer && mapRef.current && mapRef.current.addLayer(layer);
 
-const transformName = (name) => {
-  if (!name) return name;
-  return name
-    .replace(/[().]/g, "")        // Remove parentheses and dots
-    .replace(/[-\s]+/g, "_")      // Replace dashes and spaces with "_"
-    .replace(/_+/g, "_")          // Collapse multiple underscores
-    .replace(/^_|_$/g, "")        // Remove leading/trailing underscores
-    .toLowerCase();
-};
+  const transformName = (name) => {
+                    if (!name) return name;
+                    return name
+                        .replace(/[()]/g, "") // Remove all parentheses
+                        .replace(/[-\s]+/g, "_") // Replace dashes and spaces with "_"
+                        .replace(/_+/g, "_") // Collapse multiple underscores to one
+                        .replace(/^_|_$/g, "") // Remove leading/trailing underscores
+                        .toLowerCase();
+                };
 
   const handleResetMWS = () => {
     if (!selectedMWSProfile) return; // If no MWS is selected, do nothing
@@ -214,7 +172,7 @@ const transformName = (name) => {
         outerLoop: for (const ind of Object.keys(filtersDetails)) {
           for (const type of Object.keys(filtersDetails[ind])) {
             const found = filtersDetails[ind][type].find(
-              (group) => group.name === name,
+              (group) => group.name === name
             );
             if (found) {
               filterGroup = found;
@@ -248,10 +206,9 @@ const transformName = (name) => {
 
     processSelections(filterSelections.selectedMWSValues, "MWS");
     processSelections(filterSelections.selectedVillageValues, "Village");
-    processSelections(filterSelections.selectedWaterbodyValues, "Waterbody");
 
     // Convert grouped object back to array
-    Object.values(groupedSelections).forEach((group) => {
+    Object.values(groupedSelections).forEach(group => {
       allSelections.push(group);
     });
 
@@ -262,7 +219,7 @@ const transformName = (name) => {
     const allSelections = [];
 
     const processSelections = (selections) => {
-      if (!selections) return;
+      if (!selections) return
       Object.entries(selections).forEach(([name, values]) => {
         if (!values) return;
 
@@ -271,9 +228,7 @@ const transformName = (name) => {
         outerLoop: for (const ind of Object.keys(PatternsData)) {
           for (const x of Object.keys(PatternsData[ind])) {
             for (const y of Object.keys(PatternsData[ind][x])) {
-              const found = PatternsData[ind][x][y].find(
-                (group) => group.Name === name,
-              );
+              const found = PatternsData[ind][x][y].find((group) => group.Name === name);
               if (found) {
                 filterGroup = found;
                 break outerLoop;
@@ -288,24 +243,25 @@ const transformName = (name) => {
             category: filterGroup.Category,
             level: filterGroup.level,
             values: filterGroup.Values,
-            characterstics: filterGroup.Characteristics,
-          });
+            characterstics: filterGroup.Characteristics
+          })
         }
-      });
-    };
+
+      })
+    }
 
     processSelections(patternSelections.selectedMWSPatterns);
     processSelections(patternSelections.selectedVillagePatterns);
 
     return allSelections;
-  };
+  }
 
   const determineFilterSource = (filterName) => {
     for (const topLevelKey of Object.keys(filtersDetails)) {
       if (filtersDetails[topLevelKey]) {
         for (const categoryKey of Object.keys(filtersDetails[topLevelKey])) {
           const found = filtersDetails[topLevelKey][categoryKey].find(
-            (f) => f.name === filterName,
+            (f) => f.name === filterName
           );
           if (found) {
             return { ...found, name: topLevelKey };
@@ -318,8 +274,6 @@ const transformName = (name) => {
 
   // Filter selection handlers
   const handleFilterSelection = (name, option, isChecked) => {
-    console.log("Filter Clicked:", name, option, isChecked);
-    console.log("Current filterSelections:", filterSelections);
     const sourceType = determineFilterSource(name);
     option = {
       ...option,
@@ -338,9 +292,7 @@ const transformName = (name) => {
         let newArray;
         if (isChecked) {
           // Check if option with same label already exists
-          const exists = currentArray.some(
-            (item) => item.label === option.label,
-          );
+          const exists = currentArray.some(item => item.label === option.label);
           if (!exists) {
             // Add to array if it doesn't exist
             newArray = [...currentArray, option];
@@ -350,7 +302,7 @@ const transformName = (name) => {
           }
         } else {
           // Remove from array by filtering out the matching label
-          newArray = currentArray.filter((item) => item.label !== option.label);
+          newArray = currentArray.filter(item => item.label !== option.label);
         }
 
         return {
@@ -369,9 +321,7 @@ const transformName = (name) => {
         let newArray;
         if (isChecked) {
           // Check if option with same label already exists
-          const exists = currentArray.some(
-            (item) => item.label === option.label,
-          );
+          const exists = currentArray.some(item => item.label === option.label);
           if (!exists) {
             // Add to array if it doesn't exist
             newArray = [...currentArray, option];
@@ -381,41 +331,13 @@ const transformName = (name) => {
           }
         } else {
           // Remove from array by filtering out the matching label
-          newArray = currentArray.filter((item) => item.label !== option.label);
+          newArray = currentArray.filter(item => item.label !== option.label);
         }
 
         return {
           ...prev,
           selectedVillageValues: {
             ...prev.selectedVillageValues,
-            [name]: newArray.length > 0 ? newArray : null,
-          },
-        };
-      });
-    } else if (sourceType.name === "Waterbody") {
-      if (!showWB) {
-        toast.error(
-          "Please enable 'Show Waterbodies' to apply waterbody filters.",
-        );
-        return;
-      }
-      setFilterSelections((prev) => {
-        const currentArray = prev.selectedWaterbodyValues?.[name] || [];
-
-        let newArray;
-        if (isChecked) {
-          const exists = currentArray.some(
-            (item) => item.label === option.label,
-          );
-          newArray = exists ? currentArray : [...currentArray, option];
-        } else {
-          newArray = currentArray.filter((item) => item.label !== option.label);
-        }
-
-        return {
-          ...prev,
-          selectedWaterbodyValues: {
-            ...(prev.selectedWaterbodyValues || {}),
             [name]: newArray.length > 0 ? newArray : null,
           },
         };
@@ -429,7 +351,7 @@ const transformName = (name) => {
       pattern,
       isSelected,
       patternSelections,
-      setPatternSelections,
+      setPatternSelections
     );
   };
 
@@ -442,51 +364,50 @@ const transformName = (name) => {
     // Wait for features to be loaded
     const wbFeatures = waterbodiesSource.getFeatures();
     const mwsFeatures = mwsSource.getFeatures();
-
+    
     if (wbFeatures.length === 0 || mwsFeatures.length === 0) {
-      console.warn("Features not loaded yet");
+      console.warn('Features not loaded yet');
       return;
     }
 
     // If no MWS selected, show all waterbodies
     if (!selectedMWS.length) {
-      wbFeatures.forEach((feature) => {
+      wbFeatures.forEach(feature => {
         feature.setStyle(undefined); // Reset to default style
       });
       return;
     }
 
     // Get selected MWS polygons
-    const selectedMWSPolygons = mwsFeatures.filter((feature) => {
-      const uid = feature.get("uid");
+    const selectedMWSPolygons = mwsFeatures.filter(feature => {
+      const uid = feature.get('uid');
       return selectedMWS.includes(uid);
     });
 
     if (selectedMWSPolygons.length === 0) {
-      console.warn("No MWS polygons found for selected UIDs");
+      console.warn('No MWS polygons found for selected UIDs');
       // Show all waterbodies if no valid MWS found
-      wbFeatures.forEach((feature) => {
+      wbFeatures.forEach(feature => {
         feature.setStyle(undefined);
       });
       return;
     }
 
     // Filter waterbodies by intersection
-    wbFeatures.forEach((wbFeature) => {
+    wbFeatures.forEach(wbFeature => {
       const wbGeom = wbFeature.getGeometry();
       if (!wbGeom) return;
 
-      const intersects = selectedMWSPolygons.some((mwsFeature) => {
+      const intersects = selectedMWSPolygons.some(mwsFeature => {
         const mwsGeom = mwsFeature.getGeometry();
         if (!mwsGeom) return false;
 
         // Check if any coordinate of waterbody is inside MWS polygon
-        const coordinates =
-          wbGeom.getType() === "Polygon"
-            ? wbGeom.getCoordinates()[0]
-            : wbGeom.getCoordinates()[0][0];
-
-        return coordinates.some((coord) => mwsGeom.intersectsCoordinate(coord));
+        const coordinates = wbGeom.getType() === 'Polygon' 
+          ? wbGeom.getCoordinates()[0] 
+          : wbGeom.getCoordinates()[0][0];
+        
+        return coordinates.some(coord => mwsGeom.intersectsCoordinate(coord));
       });
 
       if (intersects) {
@@ -495,6 +416,7 @@ const transformName = (name) => {
         wbFeature.setStyle(new Style({})); // Hide waterbody
       }
     });
+
   };
 
   const resetMWSStyle = () => {
@@ -523,7 +445,7 @@ const transformName = (name) => {
         });
       }
     });
-  };
+  }
 
   const fetchMWSLayer = async (tempMWS) => {
     if (!district || !block) return;
@@ -531,12 +453,19 @@ const transformName = (name) => {
     if (tempMWS.length === 0) {
       try {
         if (mwsLayerRef.current === null) {
-          const layerName = `deltaG_well_depth_${transformName(district.label)}_${transformName(block.label)}`;
+          const layerName = `deltaG_well_depth_${district.label
+            .toLowerCase()
+            .split(" ")
+            .join("_")}_${block.label
+              .toLowerCase()
+              .replace(/\s*\(\s*/g, "_")
+              .replace(/\s*\)\s*/g, "")
+              .replace(/\s+/g, "_")}`;
           const mwsLayer = await getVectorLayers(
             "mws_layers",
             layerName,
             true,
-            true,
+            true
           );
           if (mapRef.current) {
             mapRef.current.removeLayer(boundaryLayerRef.current);
@@ -547,20 +476,18 @@ const transformName = (name) => {
         }
         mwsLayerRef.current.setStyle((feature) => {
           if (highlightMWS !== null && feature.values_.uid === highlightMWS) {
-            setSelectedMWSProfile(feature.getProperties());
+            setSelectedMWSProfile(feature.getProperties())
             return new Style({
               stroke: new Stroke({
-                color: "#4a90e2",
+                color: "#166534",
                 width: 2.0,
               }),
               fill: new Fill({
-                color: "rgba(74, 144, 226, 0.2)",
+                color: "rgba(34, 197, 94, 0.4)",
               }),
             });
-          } else if (
-            tempMWS.length > 0 &&
-            tempMWS.includes(feature.values_.uid)
-          ) {
+          }
+          else if (tempMWS.length > 0 && tempMWS.includes(feature.values_.uid)) {
             // Filtered areas - highlight in red
             return new Style({
               stroke: new Stroke({
@@ -586,23 +513,24 @@ const transformName = (name) => {
         });
       } catch (error) {
         console.error("Error fetching MWS layer:", error);
-        toast.error("Please Refresh the Page !");
+        toast.error("Please Refresh the Page !")
       }
     } else {
       try {
         mwsLayerRef.current.setStyle((feature) => {
           if (highlightMWS !== null && feature.values_.uid === highlightMWS) {
-            setSelectedMWSProfile(feature.getProperties());
+            setSelectedMWSProfile(feature.getProperties())
             return new Style({
               stroke: new Stroke({
-                color: "#4a90e2",
+                color: "#166534",
                 width: 2.0,
               }),
               fill: new Fill({
-                color: "rgba(74, 144, 226, 0.2)",
+                color: "rgba(34, 197, 94, 0.4)",
               }),
             });
-          } else if (
+          }
+          else if (
             tempMWS.length > 0 &&
             tempMWS.includes(feature.values_.uid) &&
             currentLayer.length === 0
@@ -617,7 +545,8 @@ const transformName = (name) => {
                 color: "rgba(255, 75, 75, 0.8)",
               }),
             });
-          } else if (
+          }
+          else if (
             tempMWS.length > 0 &&
             tempMWS.includes(feature.values_.uid)
           ) {
@@ -635,270 +564,49 @@ const transformName = (name) => {
     }
   };
 
-  const waitForFeatures = (source, label) => {
-    return new Promise((resolve) => {
-      let attempts = 0;
-
-      const interval = setInterval(() => {
-        const features = source.getFeatures();
-
-        if (features.length > 0) {
-          clearInterval(interval);
-          resolve(features);
-        }
-
-        attempts++;
-
-        if (attempts > 20) {
-          // ~2 seconds max
-          clearInterval(interval);
-          resolve([]);
-        }
-      }, 100);
-    });
-  };
-
-  const fetchMWSConnectivityLayers = async () => {
+  const fetchWaterBodiesLayer = async() => {
     if (!district || !block || !mapRef.current) return;
 
-    try {
-      const dist = transformName(district.label);
+    const dist = district.label
+      .toLowerCase()
+      .replace(/\s*\(\s*/g, "_")
+      .replace(/\s*\)\s*/g, "")
+      .replace(/\s+/g, "_");
 
-      const blk = transformName(block.label);
-
-      const connectivityLayerName = `${dist}_${blk}_mws_connectivity`;
-
-      const connectivityLayer = await getVectorLayers(
-        "mws_connectivity",
-        connectivityLayerName,
-        true,
-        true,
-      );
-
-      mapRef.current.addLayer(connectivityLayer);
-      mwsConnectivityLayerRef.current = connectivityLayer;
-
-      const connectivitySource = connectivityLayer.getSource();
-      await waitForFeatures(connectivitySource, "Connectivity");
-
-      const centroidLayerName = `${dist}_${blk}_mws_centroid`;
-
-      const centroidLayer = await getVectorLayers(
-        "mws_centroid",
-        centroidLayerName,
-        true,
-        true,
-      );
-
-      mapRef.current.addLayer(centroidLayer);
-      mwsCentroidLayerRef.current = centroidLayer;
-
-      const centroidSource = centroidLayer.getSource();
-      await waitForFeatures(centroidSource, "Centroid");
-      generateConnectivityArrows();
-    } catch (error) {
-      console.error("Error fetching connectivity layers:", error);
-    }
-  };
-
-  const generateConnectivityArrows = () => {
-    if (
-      !mwsConnectivityLayerRef.current ||
-      !mwsCentroidLayerRef.current ||
-      !mapRef.current
-    ) {
-      console.warn("Connectivity or centroid layer not ready");
-      return;
-    }
-
-    const connectivityFeatures = mwsConnectivityLayerRef.current
-      .getSource()
-      .getFeatures();
-
-    const centroidFeatures = mwsCentroidLayerRef.current
-      .getSource()
-      .getFeatures();
-
-    if (!connectivityFeatures.length || !centroidFeatures.length) {
-      console.warn("No features found for arrow generation");
-      return;
-    }
-
-    // -------------------------
-    // UID → coordinate map
-    // -------------------------
-    const uidToCoord = {};
-
-    centroidFeatures.forEach((feature) => {
-      const uid = feature.get("uid") || feature.get("UID");
-      if (!uid) return;
-
-      const coord = feature.getGeometry().getCoordinates();
-      uidToCoord[uid.toString().trim()] = coord;
-    });
-
-    // -------------------------
-    // Build pairs with side index BEFORE creating features
-    // -------------------------
-    // -------------------------
-    // Build pairs with side index BEFORE creating features
-    // -------------------------
-    const pairMap = {};
-    const arrowFeatures = [];
-
-  connectivityFeatures.forEach((feature) => {
-    const uid = feature.get("uid");
-    const downstream = feature.get("downstream");
-
-    if (!uid || !downstream) return;
-
-    const start = uidToCoord[uid.toString().trim()];
-    const end = uidToCoord[downstream.toString().trim()];
-
-    if (!start || !end) return;
-
-    const key =
-      start[0] < end[0]
-        ? `${start.join(",")}_${end.join(",")}`
-        : `${end.join(",")}_${start.join(",")}`;
-
-    if (!pairMap[key]) pairMap[key] = 0;
-    const index = pairMap[key]++;
-    const side = index % 2 === 0 ? -1 : 1;
-
-    const dx = end[0] - start[0];
-    const dy = end[1] - start[1];
-    const len = Math.sqrt(dx * dx + dy * dy);
-    if (len < 1e-6) return;
-
-    const ux = dx / len;
-    const uy = dy / len;
-
-    const px = -uy;
-    const py = ux;
-
-    const MAP_OFFSET = 0.0008;
-    const MAP_PULLBACK = 0.0012;
-    const MAP_ARROW_LEN = 0.0014;
-
-    const offStart = [
-      start[0] + px * MAP_OFFSET * side,
-      start[1] + py * MAP_OFFSET * side,
-    ];
-    const offEnd = [
-      end[0] + px * MAP_OFFSET * side,
-      end[1] + py * MAP_OFFSET * side,
-    ];
-    const trimEnd = [
-      offEnd[0] - ux * MAP_PULLBACK,
-      offEnd[1] - uy * MAP_PULLBACK,
-    ];
-
-    const arrowAngle = Math.PI / 5;
-    const angle = Math.atan2(dy, dx);
-
-    const left = [
-      trimEnd[0] - MAP_ARROW_LEN * Math.cos(angle - arrowAngle),
-      trimEnd[1] - MAP_ARROW_LEN * Math.sin(angle - arrowAngle),
-    ];
-    const right = [
-      trimEnd[0] - MAP_ARROW_LEN * Math.cos(angle + arrowAngle),
-      trimEnd[1] - MAP_ARROW_LEN * Math.sin(angle + arrowAngle),
-    ];
-
-    arrowFeatures.push(
-      new Feature({
-        geometry: new LineString([offStart, trimEnd]),
-        featureType: "arrowLine",
-        upstream: uid,
-        downstream,
-      })
-    );
-
-    arrowFeatures.push(
-      new Feature({
-        geometry: new LineString([left, trimEnd, right]),
-        featureType: "arrowHead",
-        upstream: uid,
-        downstream,
-      })
-    );
-
-    arrowFeatures.push(
-      new Feature({
-        geometry: new Point(offStart),
-        featureType: "arrowDot",
-        upstream: uid,
-        downstream,
-      })
-    );
-  });
-
-  const arrowSource = new VectorSource({
-    features: arrowFeatures,
-  });
-
-  const arrowLayer = new VectorLayer({
-    source: arrowSource,
-    style: (feature) => {
-      const featureType = feature.get("featureType");
-      const color = "#FF1493";
-
-      if (featureType === "arrowLine" || featureType === "arrowHead") {
-        return new Style({
-          stroke: new Stroke({ color, width: 1.5 }),
-        });
-      }
-
-      if (featureType === "arrowDot") {
-        return new Style({
-          image: new RegularShape({
-            fill: new Fill({ color }),
-            points: 4,
-            radius: 4,
-            angle: Math.PI / 4,
-          }),
-        });
-      }
-
-      return null;
-    },
-  });
-
-  arrowLayer.setZIndex(9999);
-  arrowLayer.setVisible(false);
-  mapRef.current.addLayer(arrowLayer);
-  mwsArrowLayerRef.current = arrowLayer;
-};
-
-const fetchWaterBodiesLayer = async () => {
-  if (!district || !block || !mapRef.current) return;
-
-    const dist = transformName(district.label);
-
-    const blk = transformName(block.label);
+    const blk = block.label
+      .toLowerCase()
+      .replace(/\s*\(\s*/g, "_")
+      .replace(/\s*\)\s*/g, "")
+      .replace(/\s+/g, "_");
 
     const layerName = `surface_waterbodies_${dist}_${blk}`;
 
+    // If already loaded, skip
     if (waterbodiesLayerRef.current) {
       return;
     }
 
-    const wbLayer = await getVectorLayers("swb", layerName, true, true);
-
+    // Create vector layer
+    const wbLayer = await getVectorLayers(
+      "swb",
+      layerName,
+      true,  
+      true 
+    );
+    
     wbLayer.setStyle((feature) => {
       const geom = feature.getGeometry();
       if (!geom) return null;
-
+    
       let pointGeom = null;
-
+    
       if (geom.getType() === "Polygon") {
         pointGeom = geom.getInteriorPoint();
       } else if (geom.getType() === "MultiPolygon") {
         const pts = geom.getInteriorPoints();
         pointGeom = pts.getPoint(0);
       }
-
+    
       return [
         new Style({
           geometry: geom,
@@ -912,7 +620,7 @@ const fetchWaterBodiesLayer = async () => {
         }),
       ];
     });
-
+    
     if (!wbLayer) {
       console.warn("Failed loading waterbodies");
       return;
@@ -920,7 +628,7 @@ const fetchWaterBodiesLayer = async () => {
 
     // Just store the layer, don't add to map yet
     waterbodiesLayerRef.current = wbLayer;
-  };
+  }
 
   const fetchAdminLayer = async (tempVillages) => {
     if (!district || !block) return;
@@ -975,17 +683,33 @@ const fetchWaterBodiesLayer = async () => {
     try {
       const boundaryLayer = await getVectorLayers(
         "panchayat_boundaries",
-        `${transformName(district.label)}_${transformName(block.label)}`,
+        `${districtName
+          .toLowerCase()
+          .replace(/\s*\(\s*/g, "_")
+          .replace(/\s*\)\s*/g, "")
+          .replace(/\s+/g, "_")}_${blockName
+            .toLowerCase()
+            .replace(/\s*\(\s*/g, "_")
+            .replace(/\s*\)\s*/g, "")
+            .replace(/\s+/g, "_")}`,
         true,
-        true,
+        true
       );
 
-      const layerName = `deltaG_well_depth_${transformName(district.label)}_${transformName(block.label)}`;
+      const layerName = `deltaG_well_depth_${district.label
+        .toLowerCase()
+        .replace(/\s*\(\s*/g, "_")
+        .replace(/\s*\)\s*/g, "")
+        .replace(/\s+/g, "_")}_${block.label
+          .toLowerCase()
+          .replace(/\s*\(\s*/g, "_")
+          .replace(/\s*\)\s*/g, "")
+          .replace(/\s+/g, "_")}`;
       const mwsLayer = await getVectorLayers(
         "mws_layers",
         layerName,
         true,
-        true,
+        true
       );
 
       if (mwsLayerRef.current) {
@@ -1023,11 +747,8 @@ const fetchWaterBodiesLayer = async () => {
                 reject(new Error("Features loading timeout"));
                 toast.custom(
                   (t) => (
-                    <div
-                      className={`${
-                        t.visible ? "animate-enter" : "animate-leave"
-                      } max-w-md w-full bg-white shadow-lg rounded-lg pointer-events-auto flex`}
-                    >
+                    <div className={`${t.visible ? 'animate-enter' : 'animate-leave'
+                      } max-w-md w-full bg-white shadow-lg rounded-lg pointer-events-auto flex`}>
                       <div className="flex-1 w-0 p-4">
                         <div className="flex items-start">
                           <div className="ml-3 flex-1">
@@ -1056,8 +777,8 @@ const fetchWaterBodiesLayer = async () => {
                   ),
                   {
                     duration: 5000,
-                    position: "top-right",
-                  },
+                    position: 'top-right',
+                  }
                 );
                 window.location.reload();
               }
@@ -1096,41 +817,20 @@ const fetchWaterBodiesLayer = async () => {
               }, 50);
             },
           });
-        },
+        }
       );
 
-      boundaryLayer.setStyle((feature) => {
-        const featureName =
-          feature.get("block") ||
-          feature.get("Block") ||
-          feature.get("tehsil") ||
-          feature.get("Tehsil") ||
-          feature.get("block_name") ||
-          null;
-        const isSelected =
-          block &&
-          featureName &&
-          featureName.toLowerCase() === block.label.toLowerCase();
-
-        if (isSelected) {
-          return new Style({
-            stroke: new Stroke({
-              color: "#000000",
-              width: 2.0,
-            }),
-          });
-        }
-
-        return new Style({
+      boundaryLayer.setStyle(
+        new Style({
           stroke: new Stroke({
             color: "#000000",
             width: 1.0,
           }),
-        });
-      });
+        })
+      );
 
-      await fetchMWSLayer(selectedMWS);
-      setIsLayerLoaded(false);
+      await fetchMWSLayer(selectedMWS); 
+      setIsLayerLoaded(false)
     } catch (error) {
       console.error("Error loading boundary:", error);
       setIsLayerLoaded(false);
@@ -1139,12 +839,12 @@ const fetchWaterBodiesLayer = async () => {
       view.setZoom(5);
     }
   };
-
+  
   const fetchDataJson = async () => {
     try {
       setIsLoading(true);
       const response = await fetch(
-        `${process.env.REACT_APP_API_URL}/download_kyl_data/?state=${transformName(state.label)}&district=${transformName(district.label)}&block=${transformName(block.label)}&file_type=json`
+        `${process.env.REACT_APP_API_URL}/download_kyl_data/?state=${state.label.toLowerCase().replace(/\s*\(\s*/g, "_").replace(/\s*\)\s*/g, "").replace(/\s+/g, "_")}&district=${district.label.toLowerCase().replace(/\s*\(\s*/g, "_").replace(/\s*\)\s*/g, "").replace(/\s+/g, "_")}&block=${block.label.toLowerCase().replace(/\s*\(\s*/g, "_").replace(/\s*\)\s*/g, "").replace(/\s+/g, "_")}&file_type=json`
       );
 
       if (!response.ok) {
@@ -1155,7 +855,6 @@ const fetchWaterBodiesLayer = async () => {
       setDataJson(result);
 
       setIsLoading(false);
-      setFiltersEnabled(true);
     } catch (e) {
       console.log(e);
       setIsLoading(false);
@@ -1165,7 +864,20 @@ const fetchWaterBodiesLayer = async () => {
   const fetchVillageJson = async () => {
     try {
       const response = await fetch(
-        `${process.env.REACT_APP_API_URL}/download_kyl_village_data?state=${transformName(state.label)}&district=${transformName(district.label)}&block=${transformName(block.label)}&file_type=json`
+        `${process.env.REACT_APP_API_URL
+        }/download_kyl_village_data?state=${state.label
+          .toLowerCase()
+          .replace(/\s*\(\s*/g, "_")
+          .replace(/\s*\)\s*/g, "")
+          .replace(/\s+/g, "_")}&district=${district.label
+            .toLowerCase()
+            .replace(/\s*\(\s*/g, "_")
+            .replace(/\s*\)\s*/g, "")
+            .replace(/\s+/g, "_")}&block=${block.label
+              .toLowerCase()
+              .replace(/\s*\(\s*/g, "_")
+              .replace(/\s*\)\s*/g, "")
+              .replace(/\s+/g, "_")}&file_type=json`
       );
 
       if (!response.ok) {
@@ -1226,8 +938,7 @@ const fetchWaterBodiesLayer = async () => {
         [filter.name]: false,
       }));
       //setFiltersEnabled(true);
-    } 
-    else if (currentLayer.length === 0) {
+    } else if (currentLayer.length === 0) {
       let layerRef = [];
       mapRef.current.removeLayer(mwsLayerRef.current);
       mapRef.current.removeLayer(boundaryLayerRef.current);
@@ -1236,9 +947,12 @@ const fetchWaterBodiesLayer = async () => {
         if (filter.layer_store[i] === "terrain") {
           tempLayer = await getImageLayer(
             filter.layer_store[i],
-            `${transformName(district.label)}_${transformName(block.label)}_${filter.layer_name[i]}`,
+            `${district.label.toLowerCase().split(" ").join("_")}_${block.label
+              .toLowerCase()
+              .split(" ")
+              .join("_")}_${filter.layer_name[i]}`,
             true,
-            filter.rasterStyle,
+            filter.rasterStyle
           );
           layerRef.push(tempLayer);
           mapRef.current.addLayer(tempLayer);
@@ -1248,11 +962,10 @@ const fetchWaterBodiesLayer = async () => {
         ) {
           tempLayer = await getImageLayer(
             `${filter.layer_store[i]}_${filter.layer_name[i]}`,
-            `LULC_24_25_${transformName(district.label)}_${transformName(block.label)}_${
-              filter.layer_name[i]
+            `LULC_24_25_${transformName(district.label)}_${transformName(block.label)}_${filter.layer_name[i]
             }`,
             true,
-            filter.rasterStyle,
+            filter.rasterStyle
           );
           layerRef.push(tempLayer);
           mapRef.current.addLayer(tempLayer);
@@ -1262,16 +975,18 @@ const fetchWaterBodiesLayer = async () => {
             `change_${district.label
               .toLowerCase()
               .split(" ")
-              .join("_")}_${block.label.toLowerCase().split(" ").join("_")}_${
-              filter.layer_name[i]
+              .join("_")}_${block.label.toLowerCase().split(" ").join("_")}_${filter.layer_name[i]
             }`,
             true,
-            filter.rasterStyle[i],
+            filter.rasterStyle[i]
           );
           layerRef.push(tempLayer);
           mapRef.current.addLayer(tempLayer);
         } else if (filter.layer_store[i] === "nrega_assets") {
-          const nregaLayerName = `${transformName(district.label)}_${transformName(block.label)}`;
+          const nregaLayerName = `${district.label
+            .toLowerCase()
+            .split(" ")
+            .join("_")}_${block.label.toLowerCase().split(" ").join("_")}`;
           tempLayer = await getWebGlLayers(
             filter.layer_store[i],
             nregaLayerName,
@@ -1280,13 +995,12 @@ const fetchWaterBodiesLayer = async () => {
             null,
             null,
             district.label.toLowerCase().split(" ").join("_"),
-            block.label.toLowerCase().split(" ").join("_"),
+            block.label.toLowerCase().split(" ").join("_")
           );
           layerRef.push(tempLayer);
           mapRef.current.addLayer(tempLayer);
-        } else if (
-          ["lcw", "factory_csr", "mining"].includes(filter.layer_store[i])
-        ) {
+        }
+        else if (["lcw", "factory_csr", "mining"].includes(filter.layer_store[i])) {
           const industryLayerName = `${district.label
             .toLowerCase()
             .split(" ")
@@ -1300,51 +1014,45 @@ const fetchWaterBodiesLayer = async () => {
             null,
             null,
             district.label.toLowerCase().split(" ").join("_"),
-            block.label.toLowerCase().split(" ").join("_"),
+            block.label.toLowerCase().split(" ").join("_")
           );
 
           layerRef.push(tempLayer);
           mapRef.current.addLayer(tempLayer);
-        } else if (filter.layer_store[i] === "LULC") {
+        }
+
+        else if (filter.layer_store[i] === "LULC") {
           tempLayer = await getImageLayer(
             `${filter.layer_store[i]}_${filter.layer_name[i]}`,
             `LULC_${lulcYear}_${transformName(district.label)}_${transformName(block.label)}_${filter.layer_name[i]}`,
             true,
-            filter.rasterStyle,
+            filter.rasterStyle
           );
           layerRef.push(tempLayer);
           mapRef.current.addLayer(tempLayer);
-        } else if (
-          filter.layer_store[i] === "drought" ||
-          filter.layer_store[i] === "green_credit"
-        ) {
-          tempLayer = await getVectorLayers(
-            filter.layer_store[i],
-            `${transformName(district.label)}_${transformName(block.label)}_${filter.layer_name[i]}`
-          );
-        } else if (filter.layer_store[i] === "panchayat_boundaries") {
-        } 
-        else if (filter.layer_store[i] === "panchayat_boundaries") {
-          tempLayer = await getVectorLayers(
-            filter.layer_store[i],
-            `${transformName(district.label)}_${transformName(block.label)}`
-          );
-        }
-        else if(filter.layer_store[i] === "restoration"){
+        } else if (filter.layer_store[i] === "drought" || filter.layer_store[i] === "green_credit") {
           tempLayer = await getVectorLayers(
             filter.layer_store[i],
             `${district.label.toLowerCase().split(" ").join("_")}_${block.label
               .toLowerCase()
               .split(" ")
-              .join("_")}`,
+              .join("_")}_${filter.layer_name[i]}`
           );
-        } else if (filter.layer_store[i] === "restoration") {
+        } else if (filter.layer_store[i] === "panchayat_boundaries") {
+          tempLayer = await getVectorLayers(
+            filter.layer_store[i],
+            `${district.label.toLowerCase().split(" ").join("_")}_${block.label
+              .toLowerCase()
+              .split(" ")
+              .join("_")}`
+          );
+        } else {
           tempLayer = await getVectorLayers(
             filter.layer_store[i],
             `${filter.layer_name[i]}_${district.label
               .toLowerCase()
               .split(" ")
-              .join("_")}_${block.label.toLowerCase().split(" ").join("_")}`,
+              .join("_")}_${block.label.toLowerCase().split(" ").join("_")}`
           );
         }
         if (
@@ -1362,7 +1070,7 @@ const fetchWaterBodiesLayer = async () => {
               filter.vectorStyle,
               filter.styleIdx,
               villageJson,
-              dataJson,
+              dataJson
             );
           });
           layerRef.push(tempLayer);
@@ -1407,7 +1115,6 @@ const fetchWaterBodiesLayer = async () => {
         url: `https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}`,
         maxZoom: 30,
         transition: 500,
-        crossOrigin: "anonymous",
       }),
       preload: 4,
     });
@@ -1452,28 +1159,17 @@ const fetchWaterBodiesLayer = async () => {
     mapRef.current = map;
   };
 
-  const handleItemSelect = (setter, value) => {
-    setter(value);
-    // Reset everything when location changes
-    if (setter === setState) {
-      if (value) {
-        trackEvent("Location", "select_state", value.label);
-      }
-      setDistrict(null);
-      setBlock(null);
-      resetAllStates();
-    } else if (setter === setDistrict) {
-      if (value) {
-        trackEvent("Location", "select_district", value.label);
-      }
-      setBlock(null);
-      resetAllStates();
-    } else if (setter === setBlock) {
-      trackEvent("Location", "select_tehsil", value.label);
-      resetAllStates();
-    }
-  };
+ const handleItemSelect = (setter, value) => {
+  setter(value);
 
+  if (setter === setState) {
+    setDistrict(null);
+    setBlock(null);
+  } 
+  else if (setter === setDistrict) {
+    setBlock(null);
+  }
+};
   const handlePatternRemoval = (pattern) => {
     const key = pattern.patternName || pattern.name;
 
@@ -1484,93 +1180,108 @@ const fetchWaterBodiesLayer = async () => {
         selectedVillagePatterns: {
           ...prev.selectedVillagePatterns,
           [key]: null,
-        },
-      }));
-    } else {
+        }
+      }))
+    }
+    else {
       //* MWS Level
       setPatternSelections((prev) => ({
         ...prev,
         selectedMWSPatterns: {
           ...prev.selectedMWSPatterns,
           [key]: null,
-        },
-      }));
+        }
+      }))
     }
-  };
+  }
 
   const resetAllStates = () => {
-    // Reset filters
-    setFilterSelections({
-      selectedMWSValues: {},
-      selectedVillageValues: {},
-      selectedWaterbodyValues: {},
+
+  // 1️⃣ Remove all applied filter layers from map
+  if (currentLayer.length > 0 && mapRef.current) {
+    currentLayer.forEach((layer) => {
+      layer.layerRef.forEach((ref) => {
+        mapRef.current.removeLayer(ref);
+      });
     });
+  }
 
-    setIndicatorType(null);
-    setMappedAssets(false);
-    setMappedDemands(false);
-    setSelectedMWS([]);
-    setVillageIdList(new Set([]));
-    setShowMWS(true);
-    setShowVillages(true);
-    setSelectedMWSProfile(null);
+  // 2️⃣ Reset layer tracking
+  setCurrentLayer([]);
+  setToggleStates({});
 
-    // Reset waterbody state
-    setShowWB(false); // Add this line
+  // 3️⃣ Clear filter selections (UI + logic)
+  setFilterSelections({
+    selectedMWSValues: {},
+    selectedVillageValues: {},
+  });
 
-    // Remove waterbody layer if it exists
-    if (waterbodiesLayerRef.current && mapRef.current) {
-      mapRef.current.removeLayer(waterbodiesLayerRef.current);
-      waterbodiesLayerRef.current = null;
-    }
-  };
+  // 4️⃣ Clear pattern selections
+  setPatternSelections({
+    selectedMWSPatterns: {},
+    selectedVillagePatterns: {},
+  });
 
+  // 5️⃣ Reset indicator tab
+  setIndicatorType(null);
+
+  // 6️⃣ Reset MWS & Village selections
+  setSelectedMWS([]);
+  setVillageIdList(new Set([]));
+  setSelectedMWSProfile(null);
+
+  setShowMWS(true);
+  setShowVillages(true);
+
+  // 7️⃣ Reset waterbody
+  setShowWB(false);
+  if (waterbodiesLayerRef.current && mapRef.current) {
+    mapRef.current.removeLayer(waterbodiesLayerRef.current);
+    waterbodiesLayerRef.current = null;
+  }
+
+  // 8️⃣ 🔥 VERY IMPORTANT — Restore default MWS style
+  if (mwsLayerRef.current) {
+    fetchMWSLayer([]);   // This restores default blue style properly
+  }
+  setSidebarResetKey(prev => prev + 1);
+};
   const searchUserLatLong = async () => {
     setIsLoading(true);
     try {
-      let response = await fetch(
-        `${
-          process.env.REACT_APP_API_URL
-        }/get_mwsid_by_latlon/?latitude=${searchLatLong[0]}&longitude=${searchLatLong[1]}`,
-        {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            "X-API-Key": `${process.env.REACT_APP_API_KEY}`,
-          },
-        },
-      );
-      response = await response.json();
+      let response = await fetch(`${process.env.REACT_APP_API_URL
+        }/get_mwsid_by_latlon/?latitude=${searchLatLong[0]}&longitude=${searchLatLong[1]}`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          "X-API-Key" : `${process.env.REACT_APP_API_KEY}`
+        }
+      }
+      )
+      response = await response.json()
 
       const matchedState = statesData.find(
-        (s) => s.label.trim().toLowerCase() === response.State.toLowerCase(),
+        (s) => s.label.trim().toLowerCase() === response.State.toLowerCase()
       );
 
       const matchedDistrict = matchedState.district.find(
-        (s) => s.label.trim().toLowerCase() === response.District.toLowerCase(),
-      );
+        (s) => s.label.trim().toLowerCase() === response.District.toLowerCase()
+      )
 
       const matchedTehsil = matchedDistrict.blocks.find(
-        (s) => s.label.trim().toLowerCase() === response.Tehsil.toLowerCase(),
-      );
+        (s) => s.label.trim().toLowerCase() === response.Tehsil.toLowerCase()
+      )
 
-      setState(matchedState);
-      setDistrict(matchedDistrict);
-      setBlock(matchedTehsil);
-      setHighlightMWS(response.uid);
       setState(matchedState)
       setDistrict(matchedDistrict)
       setBlock(matchedTehsil)
-      setHighlightMWS(response.mws_id)
+      setHighlightMWS(response.uid)
     } catch (err) {
-      console.log(err);
+      console.log(err)
       toast.custom(
         (t) => (
-          <div
-            className={`${
-              t.visible ? "animate-enter" : "animate-leave"
-            } max-w-md w-full bg-white shadow-lg rounded-lg pointer-events-auto flex`}
-          >
+          <div className={`${t.visible ? 'animate-enter' : 'animate-leave'
+            } max-w-md w-full bg-white shadow-lg rounded-lg pointer-events-auto flex`}>
             <div className="flex-1 w-0 p-4">
               <div className="flex items-start">
                 <div className="ml-3 flex-1">
@@ -1578,8 +1289,7 @@ const fetchWaterBodiesLayer = async () => {
                     Location Request
                   </p>
                   <p className="mt-1 text-sm text-gray-500">
-                    We have not generated maps for this location as yet. Would
-                    you like to submit a request?
+                    We have not generated maps for this location as yet. Would you like to submit a request?
                   </p>
                 </div>
               </div>
@@ -1587,7 +1297,7 @@ const fetchWaterBodiesLayer = async () => {
             <div className="flex border-l border-gray-200">
               <button
                 onClick={() => {
-                  window.open("https://forms.gle/qBkYmmU7AhyKnc4N9", "_blank");
+                  window.open('https://forms.gle/qBkYmmU7AhyKnc4N9', '_blank');
                   toast.dismiss(t.id);
                 }}
                 className="w-full border border-transparent rounded-none rounded-r-lg p-4 flex items-center justify-center text-sm font-medium text-blue-600 hover:text-blue-500 focus:outline-none"
@@ -1599,107 +1309,113 @@ const fetchWaterBodiesLayer = async () => {
         ),
         {
           duration: 5000,
-          position: "top-right",
-        },
+          position: 'top-right',
+        }
       );
       setIsLoading(false);
     }
-  };
+  }
 
   useEffect(() => {
     if (!mapRef.current) return;
     const map = mapRef.current;
-
+  
     const handleWaterbodyClick = (event) => {
       if (!waterbodiesLayerRef.current || !mapRef.current) return;
-
+    
       const map = mapRef.current;
-
-      // Get clicked waterbody feature
+    
+      // 1️⃣ Get clicked waterbody feature
       const wbFeature = map.forEachFeatureAtPixel(
         event.pixel,
         (feature, layer) => {
           if (layer === waterbodiesLayerRef.current) return feature;
         },
-        { hitTolerance: 8 },
+        { hitTolerance: 8 }
       );
-
+    
       if (!wbFeature) {
         setSelectedWaterbodyProfile(null);
         return;
       }
-
+    
       // Stop MWS click handler from firing
       waterbodyClickedRef.current = true;
       setTimeout(() => (waterbodyClickedRef.current = false), 150);
-
+    
       const props = wbFeature.getProperties();
       const wb_id = props?.UID;
       if (!wb_id) return;
-
-      // Construct Waterbody GeoJSON (existing logic)
+    
+      // 2️⃣ Construct Waterbody GeoJSON (existing logic)
       const geojson = new GeoJSON();
-
+    
       const fullFeature = {
         type: "Feature",
         properties: props,
-        geometry: geojson.writeGeometryObject(wbFeature.getGeometry()),
+        geometry: geojson.writeGeometryObject(
+          wbFeature.getGeometry()
+        ),
       };
-
+    
       // Save selected waterbody (unchanged)
       setSelectedWaterbodyForTehsil(fullFeature);
       localStorage.setItem("selectedWaterbody", JSON.stringify(fullFeature));
-
+    
       setSelectedWaterbodyProfile({
         id: wb_id,
         dashboardUrl: `/rwb?type=tehsil&state=${state.label}&district=${district.label}&block=${block.label}&waterbody=${wb_id}`,
         properties: props,
         geometry: geojson.writeGeometryObject(wbFeature.getGeometry()),
       });
+    
+      // 3️⃣ FIND MATCHED MWS FEATURE (IMPORTANT PART)
+ // 3️⃣ EXTRACT ALL MWS FEATURES FOR THIS WATERBODY (UID match)
+ let matchedMws = [];
 
-      //  EXTRACT ALL MWS FEATURES FOR THIS WATERBODY (UID match)
-      let matchedMws = [];
+ if (mwsLayerRef.current && wbFeature) {
+   const props = wbFeature.getProperties();
+   const raw = props.MWS_UID || props.mws_uid;
 
-      if (mwsLayerRef.current && wbFeature) {
-        const props = wbFeature.getProperties();
-        const raw = props.MWS_UID || props.mws_uid;
+   if (raw) {
+     // 3.1 Convert UID string "12_315970 12_308838..." → ["12_315970","12_308838",...]
+     const uidList = raw
+       .split("_")
+       .reduce((acc, val, idx, arr) => {
+         if (idx % 2 === 0 && arr[idx + 1]) {
+           acc.push(`${val}_${arr[idx + 1]}`);
+         }
+         return acc;
+       }, []);
 
-        if (raw) {
-          // 3.1 Convert UID string "12_315970 12_308838..." → ["12_315970","12_308838",...]
-          const uidList = raw.split("_").reduce((acc, val, idx, arr) => {
-            if (idx % 2 === 0 && arr[idx + 1]) {
-              acc.push(`${val}_${arr[idx + 1]}`);
-            }
-            return acc;
-          }, []);
+     // 3.2 Filter REAL MWS GEOJSON FEATURES from mwsGeoData
+     const allMws = mwsLayerRef.current.getSource().getFeatures();
 
-          // 3.2 Filter REAL MWS GEOJSON FEATURES from mwsGeoData
-          const allMws = mwsLayerRef.current.getSource().getFeatures();
+     const matched = allMws.filter((f) => {
+       const uid = f.get("uid")?.toString().trim();
+       return uidList.includes(uid);
+     });
 
-          const matched = allMws.filter((f) => {
-            const uid = f.get("uid")?.toString().trim();
-            return uidList.includes(uid);
-          });
+     matchedMws = matched;
 
-          matchedMws = matched;
-        }
-      }
+   }
+ }
 
-      //  SAVE ARRAY OF FULL GEOJSON FEATURES
-      if (matchedMws.length > 0) {
-        const geojsonWriter = new GeoJSON();
+    // 4️⃣ SAVE ARRAY OF FULL GEOJSON FEATURES
+    if (matchedMws.length > 0) {
+      const geojsonWriter = new GeoJSON();
 
-        const jsonArray = matchedMws.map((m) =>
-          geojsonWriter.writeFeatureObject(m, {
-            dataProjection: "EPSG:4326",
-            featureProjection: "EPSG:4326",
-          }),
-        );
+      const jsonArray = matchedMws.map((m) =>
+        geojsonWriter.writeFeatureObject(m, {
+          dataProjection: "EPSG:4326",
+          featureProjection: "EPSG:4326",
+        })
+      );
 
-        localStorage.setItem("matched_mws_features", JSON.stringify(jsonArray));
-      } else {
-        console.warn(" No matching MWS found for clicked WB");
-      }
+      localStorage.setItem("matched_mws_features", JSON.stringify(jsonArray));
+    } else {
+      console.warn("⚠️ No matching MWS found for clicked WB");
+    }
     };
     map.on("click", handleWaterbodyClick);
     return () => map.un("click", handleWaterbodyClick);
@@ -1709,16 +1425,18 @@ const fetchWaterBodiesLayer = async () => {
     if (!mapRef.current) return;
 
     const handleMapClick = (event) => {
+
       const feature = mapRef.current.forEachFeatureAtPixel(
         event.pixel,
         (feature, layer) => {
           if (layer === mwsLayerRef.current) {
             return feature;
           }
-        },
+        }
       );
       if (feature) {
         const clickedMwsId = feature.get("uid");
+
 
         setSelectedMWSProfile(feature.getProperties());
         if (toastId) {
@@ -1729,11 +1447,11 @@ const fetchWaterBodiesLayer = async () => {
           if (clickedMwsId === feature.values_.uid) {
             return new Style({
               stroke: new Stroke({
-                color: "#4a90e2",
+                color: "#166534",
                 width: 2.0,
               }),
               fill: new Fill({
-                color: "rgba(74, 144, 226, 0.2)",
+                color: "rgba(34, 197, 94, 0.4)",
               }),
             });
           } else if (
@@ -1762,6 +1480,7 @@ const fetchWaterBodiesLayer = async () => {
             });
           }
         });
+
       }
     };
     mapRef.current.on("click", handleMapClick);
@@ -1780,13 +1499,15 @@ const fetchWaterBodiesLayer = async () => {
       mapRef.current.removeLayer(waterbodiesLayerRef.current);
       waterbodiesLayerRef.current = null;
     }
-
+  
     // Reset waterbody UI state
     setShowWB(false);
     setSelectedWaterbodyProfile(null);
     localStorage.removeItem("selectedWaterbody");
     localStorage.removeItem("matched_mws_feature");
+  
   }, [state, district, block]);
+  
 
   useEffect(() => {
     if (mwsLayerRef.current) {
@@ -1805,7 +1526,7 @@ const fetchWaterBodiesLayer = async () => {
 
   useEffect(() => {
     initializeAnalytics();
-    trackPageView("/kyl_dashboard");
+    trackPageView('/kyl_dashboard')
     // Initialize map if not already initialized
     if (!mapRef.current) {
       initializeMap();
@@ -1824,8 +1545,7 @@ const fetchWaterBodiesLayer = async () => {
 
       setToggleStates({});
       setCurrentLayer([]);
-      fetchWaterBodiesLayer();
-      fetchMWSConnectivityLayers();
+      fetchWaterBodiesLayer()
     }
 
     // Cleanup function
@@ -1848,7 +1568,7 @@ const fetchWaterBodiesLayer = async () => {
             let tempLayer = await getImageLayer(
               `LULC_level_3`,
               `LULC_${lulcYear}_${transformName(district.label)}_${transformName(block.label)}_level_3`,
-              true,
+              true
             );
             mapRef.current.addLayer(tempLayer);
             tempArr[i].layerRef[0] = tempLayer;
@@ -1858,7 +1578,7 @@ const fetchWaterBodiesLayer = async () => {
             let tempLayer = await getImageLayer(
               `LULC_level_1`,
               `LULC_${lulcYear}_${transformName(district.label)}_${transformName(block.label)}_level_1`,
-              true,
+              true
             );
             mapRef.current.addLayer(tempLayer);
             tempArr[i].layerRef[0] = tempLayer;
@@ -1872,9 +1592,9 @@ const fetchWaterBodiesLayer = async () => {
 
   useEffect(() => {
     if (searchLatLong !== null) {
-      searchUserLatLong();
+      searchUserLatLong()
     }
-  }, [searchLatLong]);
+  }, [searchLatLong])
 
   useEffect(() => {
     try {
@@ -1883,38 +1603,27 @@ const fetchWaterBodiesLayer = async () => {
         return;
       }
 
-      const mwsFilterKeys = Object.keys(
-        filterSelections.selectedMWSValues || {},
-      );
-
+      const mwsFilterKeys = Object.keys(filterSelections.selectedMWSValues || {});
+      
       if (mwsFilterKeys.length === 0) {
-        // Clear village highlights when no MWS filters are active
         return;
       }
 
       let resultMWS = [];
-
+      
       mwsFilterKeys.forEach((filterName) => {
         const filterValues = filterSelections.selectedMWSValues[filterName];
         if (!filterValues) return;
-
+        
         let tempArr = [];
         const filter = getAllFilters().find((f) => f.name === filterName);
-
+        
         filterValues.forEach((selectedOption) => {
           if (filter?.type === 2) {
             dataJson.forEach((item) => {
-              if (
-                item &&
-                typeof item[filterName] !== "undefined" &&
-                item.mws_id
-              ) {
+              if (item && typeof item[filterName] !== "undefined" && item.mws_id) {
                 const value = Number(item[filterName]);
-                if (
-                  !isNaN(value) &&
-                  value >= selectedOption.value.lower &&
-                  value <= selectedOption.value.upper
-                ) {
+                if (!isNaN(value) && value >= selectedOption.value.lower && value <= selectedOption.value.upper) {
                   if (!tempArr.includes(item.mws_id)) {
                     tempArr.push(item.mws_id);
                   }
@@ -1923,11 +1632,7 @@ const fetchWaterBodiesLayer = async () => {
             });
           } else {
             dataJson.forEach((item) => {
-              if (
-                item &&
-                item[filterName] === selectedOption.value &&
-                item.mws_id
-              ) {
+              if (item && item[filterName] === selectedOption.value && item.mws_id) {
                 if (!tempArr.includes(item.mws_id)) {
                   tempArr.push(item.mws_id);
                 }
@@ -1935,9 +1640,9 @@ const fetchWaterBodiesLayer = async () => {
             });
           }
         });
-
+        
         if (resultMWS.length > 0) {
-          resultMWS = resultMWS.filter((id) => tempArr.includes(id));
+          resultMWS = resultMWS.filter(id => tempArr.includes(id));
         } else {
           resultMWS = tempArr;
         }
@@ -1945,68 +1650,43 @@ const fetchWaterBodiesLayer = async () => {
 
       setSelectedMWS(resultMWS);
       fetchMWSLayer(resultMWS);
-
-      // Derive villages so Admin Boundary gets highlighted
-      let villages = new Set();
-      dataJson.forEach((item) => {
-        if (resultMWS.includes(item.mws_id)) {
-          if (Array.isArray(item.mws_intersect_villages)) {
-            item.mws_intersect_villages.forEach((v) => villages.add(v));
-          }
-        }
-      });
-      setVillageIdList(villages);
+      
     } catch (error) {
       console.error("Error in MWS filter processing:", error);
     }
   }, [filterSelections.selectedMWSValues, dataJson]);
+
   // ============================================
-  // 2. PROCESS MWS PATTERNS - OR within pattern, AND between patterns
-  // ============================================
+// 2. PROCESS MWS PATTERNS - OR within pattern, AND between patterns
+// ============================================
   useEffect(() => {
     try {
       if (!dataJson || !Array.isArray(dataJson)) return;
-
-      const mwsPatternKeys = Object.keys(
-        patternSelections.selectedMWSPatterns || {},
-      );
-      const mwsFilterKeys = Object.keys(
-        filterSelections.selectedMWSValues || {},
-      );
-      const hasMwsFilters = mwsFilterKeys.some(
-        (key) => filterSelections.selectedMWSValues[key] !== null,
-      );
-      const hasMwsPatterns = mwsPatternKeys.some(
-        (key) => patternSelections.selectedMWSPatterns[key] !== null,
-      );
-
+      
+      const mwsPatternKeys = Object.keys(patternSelections.selectedMWSPatterns || {});
+      const mwsFilterKeys = Object.keys(filterSelections.selectedMWSValues || {});
+      const hasMwsFilters = mwsFilterKeys.some(key => filterSelections.selectedMWSValues[key] !== null);
+      const hasMwsPatterns = mwsPatternKeys.some(key => patternSelections.selectedMWSPatterns[key] !== null);
+      
       // If no patterns exist
       if (!hasMwsPatterns) {
         // If filters exist, RECOMPUTE filter results
         if (hasMwsFilters) {
           let resultMWS = [];
-
+          
           mwsFilterKeys.forEach((filterName) => {
             const filterValues = filterSelections.selectedMWSValues[filterName];
             if (!filterValues) return;
-
+            
             let tempArr = [];
             const filter = getAllFilters().find((f) => f.name === filterName);
-
+            
             filterValues.forEach((selectedOption) => {
               if (filter?.type === 2) {
                 dataJson.forEach((item) => {
-                  if (
-                    item &&
-                    typeof item[filterName] !== "undefined" &&
-                    item.mws_id
-                  ) {
+                  if (item && typeof item[filterName] !== "undefined" && item.mws_id) {
                     const value = Number(item[filterName]);
-                    if (
-                      !isNaN(value) &&
-                      value >= selectedOption.value.lower &&
-                      value <= selectedOption.value.upper
-                    ) {
+                    if (!isNaN(value) && value >= selectedOption.value.lower && value <= selectedOption.value.upper) {
                       if (!tempArr.includes(item.mws_id)) {
                         tempArr.push(item.mws_id);
                       }
@@ -2015,11 +1695,7 @@ const fetchWaterBodiesLayer = async () => {
                 });
               } else {
                 dataJson.forEach((item) => {
-                  if (
-                    item &&
-                    item[filterName] === selectedOption.value &&
-                    item.mws_id
-                  ) {
+                  if (item && item[filterName] === selectedOption.value && item.mws_id) {
                     if (!tempArr.includes(item.mws_id)) {
                       tempArr.push(item.mws_id);
                     }
@@ -2027,9 +1703,9 @@ const fetchWaterBodiesLayer = async () => {
                 });
               }
             });
-
+            
             if (resultMWS.length > 0) {
-              resultMWS = resultMWS.filter((id) => tempArr.includes(id));
+              resultMWS = resultMWS.filter(id => tempArr.includes(id));
             } else {
               resultMWS = tempArr;
             }
@@ -2048,33 +1724,23 @@ const fetchWaterBodiesLayer = async () => {
 
       // Patterns exist - process them
       let resultMWS = new Set();
-
+      
       // Process each pattern (AND between different patterns)
       mwsPatternKeys.forEach((patternName) => {
         const pattern = patternSelections.selectedMWSPatterns[patternName];
         if (!pattern) return;
         let patternMatches = new Set(); // Items matching ANY condition in THIS pattern (OR)
-
+        
         // Process conditions within pattern (OR operation)
         pattern.conditions.forEach((condition) => {
           dataJson.forEach((item) => {
             let matches = false;
-
-            if (
-              condition.type === 1 &&
-              item[condition.key] === condition.value
-            ) {
+            
+            if (condition.type === 1 && item[condition.key] === condition.value) {
               matches = true;
-            } else if (
-              condition.type === 2 &&
-              item[condition.key] >= condition.value.lower &&
-              item[condition.key] <= condition.value.upper
-            ) {
+            } else if (condition.type === 2 && item[condition.key] >= condition.value.lower && item[condition.key] <= condition.value.upper) {
               matches = true;
-            } else if (
-              condition.type === 3 &&
-              item[condition.key] != condition.value
-            ) {
+            } else if (condition.type === 3 && item[condition.key] != condition.value) {
               matches = true;
             }
             if (matches) {
@@ -2085,126 +1751,91 @@ const fetchWaterBodiesLayer = async () => {
         // AND operation between different patterns
         if (resultMWS.size > 0) {
           // Intersection: keep only items present in both sets
-          resultMWS = new Set(
-            [...resultMWS].filter((x) => patternMatches.has(x)),
-          );
+          resultMWS = new Set([...resultMWS].filter(x => patternMatches.has(x)));
         } else {
           // First pattern, initialize with its matches
           resultMWS = patternMatches;
         }
       });
-
+      
       // Intersect with MWS from filters if they exist
       if (hasMwsFilters) {
         // Recompute filter results
         let filterResults = [];
-
+        
         mwsFilterKeys.forEach((filterName) => {
           const filterValues = filterSelections.selectedMWSValues[filterName];
           if (!filterValues) return;
-
+          
           let tempArr = [];
           const filter = getAllFilters().find((f) => f.name === filterName);
-
+          
           filterValues.forEach((selectedOption) => {
-            dataJson.forEach((item) => {
-              if (!item || !item.mws_id) return;
-
-              if (filter?.type === 2) {
-                const value = Number(item[filterName]);
-                if (
-                  !isNaN(value) &&
-                  value >= selectedOption.value.lower &&
-                  value <= selectedOption.value.upper
-                ) {
+            if (filter?.type === 2) {
+              dataJson.forEach((item) => {
+                if (item && typeof item[filterName] !== "undefined" && item.mws_id) {
+                  const value = Number(item[filterName]);
+                  if (!isNaN(value) && value >= selectedOption.value.lower && value <= selectedOption.value.upper) {
+                    if (!tempArr.includes(item.mws_id)) {
+                      tempArr.push(item.mws_id);
+                    }
+                  }
+                }
+              });
+            } else {
+              dataJson.forEach((item) => {
+                if (item && item[filterName] === selectedOption.value && item.mws_id) {
                   if (!tempArr.includes(item.mws_id)) {
                     tempArr.push(item.mws_id);
                   }
                 }
-              } else {
-                if (item[filterName] === selectedOption.value) {
-                  if (!tempArr.includes(item.mws_id)) {
-                    tempArr.push(item.mws_id);
-                  }
-                }
-              }
-            });
+              });
+            }
           });
-
+          
           if (filterResults.length > 0) {
-            filterResults = filterResults.filter((id) => tempArr.includes(id));
+            filterResults = filterResults.filter(id => tempArr.includes(id));
           } else {
             filterResults = tempArr;
           }
         });
-
-        const finalMWS = [...resultMWS].filter((id) =>
-          filterResults.includes(id),
-        );
+        
+        // Intersect patterns with filters
+        const finalMWS = [...resultMWS].filter(id => filterResults.includes(id));
         setSelectedMWS(finalMWS);
         fetchMWSLayer(finalMWS);
-        // Derive villages so Admin Boundary gets highlighted
-        const v1 = new Set();
-        dataJson.forEach((item) => {
-          if (
-            finalMWS.includes(item.mws_id) &&
-            Array.isArray(item.mws_intersect_villages)
-          ) {
-            item.mws_intersect_villages.forEach((v) => v1.add(v));
-          }
-        });
-        setVillageIdList(v1);
       } else {
         // No filters, just use pattern results
         const finalMWS = [...resultMWS];
         setSelectedMWS(finalMWS);
         fetchMWSLayer(finalMWS);
-        // Derive villages so Admin Boundary gets highlighted
-        const v2 = new Set();
-        dataJson.forEach((item) => {
-          if (
-            finalMWS.includes(item.mws_id) &&
-            Array.isArray(item.mws_intersect_villages)
-          ) {
-            item.mws_intersect_villages.forEach((v) => v2.add(v));
-          }
-        });
-        setVillageIdList(v2);
       }
+      
     } catch (error) {
-      console.error("Error in MWS processing:", error);
+      console.error("Error in MWS pattern processing:", error);
     }
-  }, [
-    patternSelections.selectedMWSPatterns,
-    filterSelections.selectedMWSValues,
-    dataJson,
-  ]);
+  }, [patternSelections.selectedMWSPatterns, filterSelections.selectedMWSValues, dataJson]);
+
+
   useEffect(() => {
     try {
       if (!villageJson || !Array.isArray(villageJson)) return;
       if (!dataJson || !Array.isArray(dataJson)) return;
-
-      const villageFilterKeys = Object.keys(
-        filterSelections.selectedVillageValues || {},
-      );
-      const hasVillageFilters = villageFilterKeys.some(
-        (key) => filterSelections.selectedVillageValues[key] !== null,
-      );
-
+      
+      const villageFilterKeys = Object.keys(filterSelections.selectedVillageValues || {});
+      const hasVillageFilters = villageFilterKeys.some(key => filterSelections.selectedVillageValues[key] !== null);
+      
       if (!hasVillageFilters) {
-        setPatternVillageList(new Set());
+        setPatternVillageList(new Set()); // Store empty filter results
         return;
       }
 
+      // Get candidate villages from selected MWS (if any)
       let candidateVillages = new Set();
-
       if (selectedMWS.length > 0) {
         dataJson.forEach((mwsItem) => {
-          if (
-            selectedMWS.includes(mwsItem.mws_id) &&
-            Array.isArray(mwsItem.mws_intersect_villages)
-          ) {
-            mwsItem.mws_intersect_villages.forEach((villageId) => {
+          if (selectedMWS.includes(mwsItem.mws_id) && Array.isArray(mwsItem.mws_intersect_villages)) {
+            mwsItem.mws_intersect_villages.forEach(villageId => {
               candidateVillages.add(villageId);
             });
           }
@@ -2212,101 +1843,59 @@ const fetchWaterBodiesLayer = async () => {
       }
 
       let resultVillages = new Set();
-
+      
       villageFilterKeys.forEach((filterName) => {
         const filterValues = filterSelections.selectedVillageValues[filterName];
         if (!filterValues) return;
-
+        
         let tempArr = new Set();
-
+        
         filterValues.forEach((selectedOption) => {
           villageJson.forEach((village) => {
-            if (!village || !village.village_id) return;
-
-            const value = Number(village[filterName]);
-
-            if (
-              !isNaN(value) &&
-              value >= selectedOption.value.lower &&
-              value <= selectedOption.value.upper
-            ) {
-              if (
-                candidateVillages.size === 0 ||
-                candidateVillages.has(village.village_id)
-              ) {
-                tempArr.add(village.village_id);
+            if (village && typeof village[filterName] !== "undefined" && village.village_id) {
+              const value = Number(village[filterName]);
+              if (!isNaN(value) && value >= selectedOption.value.lower && value <= selectedOption.value.upper) {
+                if (candidateVillages.size === 0 || candidateVillages.has(village.village_id)) {
+                  tempArr.add(village.village_id);
+                }
               }
             }
           });
         });
-
+        
         if (resultVillages.size > 0) {
-          resultVillages = new Set(
-            [...resultVillages].filter((x) => tempArr.has(x)),
-          );
+          resultVillages = new Set([...resultVillages].filter(x => tempArr.has(x)));
         } else {
           resultVillages = tempArr;
         }
       });
-
+      
       // Store filter results in patternVillageList (we'll combine with patterns later)
       setPatternVillageList(resultVillages);
+      
     } catch (error) {
       console.error("Error in village filter processing:", error);
     }
-  }, [
-    filterSelections.selectedVillageValues,
-    villageJson,
-    dataJson,
-    selectedMWS,
-  ]);
+  }, [filterSelections.selectedVillageValues, villageJson, selectedMWS, dataJson]);
+
 
   useEffect(() => {
     try {
       if (!villageJson || !Array.isArray(villageJson)) return;
       if (!dataJson || !Array.isArray(dataJson)) return;
-
-      const villagePatternKeys = Object.keys(
-        patternSelections.selectedVillagePatterns || {},
-      );
-      const villageFilterKeys = Object.keys(
-        filterSelections.selectedVillageValues || {},
-      );
-
-      const hasVillagePatterns = villagePatternKeys.some(
-        (key) => patternSelections.selectedVillagePatterns[key] !== null,
-      );
-      const hasVillageFilters = villageFilterKeys.some(
-        (key) => filterSelections.selectedVillageValues[key] !== null,
-      );
-
-      const mwsFilterKeys = Object.keys(
-        filterSelections.selectedMWSValues || {},
-      );
-      const hasMwsFilters = mwsFilterKeys.some(
-        (key) => filterSelections.selectedMWSValues[key] !== null,
-      );
-      const mwsPatternKeys = Object.keys(
-        patternSelections.selectedMWSPatterns || {},
-      );
-      const hasMwsPatterns = mwsPatternKeys.some(
-        (key) => patternSelections.selectedMWSPatterns[key] !== null,
-      );
-
-      if (
-        !hasVillagePatterns &&
-        !hasVillageFilters &&
-        !hasMwsFilters &&
-        !hasMwsPatterns
-      ) {
+      
+      const villagePatternKeys = Object.keys(patternSelections.selectedVillagePatterns || {});
+      const villageFilterKeys = Object.keys(filterSelections.selectedVillageValues || {});
+      
+      const hasVillagePatterns = villagePatternKeys.some(key => patternSelections.selectedVillagePatterns[key] !== null);
+      const hasVillageFilters = villageFilterKeys.some(key => filterSelections.selectedVillageValues[key] !== null);
+      
+      // If neither patterns nor filters exist, clear villages
+      if (!hasVillagePatterns && !hasVillageFilters) {
         setVillageIdList(new Set());
         return;
       }
-
-      if (!hasVillagePatterns && !hasVillageFilters) {
-        return;
-      }
-
+      
       // If only filters exist (no patterns), use filter results directly
       if (!hasVillagePatterns && hasVillageFilters) {
         setVillageIdList(patternVillageList);
@@ -2315,46 +1904,34 @@ const fetchWaterBodiesLayer = async () => {
 
       // Process patterns
       let resultVillages = new Set();
-
+      
       villagePatternKeys.forEach((patternName) => {
         const pattern = patternSelections.selectedVillagePatterns[patternName];
         if (!pattern) return;
-
+        
         let patternMatches = new Set();
-
+        
         pattern.conditions.forEach((condition) => {
           villageJson.forEach((village) => {
             let matches = false;
-
-            if (
-              condition.type === 1 &&
-              village[condition.key] === condition.value
-            ) {
+            
+            if (condition.type === 1 && village[condition.key] === condition.value) {
               matches = true;
-            } else if (
-              condition.type === 2 &&
-              village[condition.key] >= condition.value.lower &&
-              village[condition.key] <= condition.value.upper
-            ) {
+            } else if (condition.type === 2 && village[condition.key] >= condition.value.lower && village[condition.key] <= condition.value.upper) {
               matches = true;
-            } else if (
-              condition.type === 3 &&
-              village[condition.key] != condition.value
-            ) {
+            } else if (condition.type === 3 && village[condition.key] != condition.value) {
               matches = true;
             }
-
+            
             if (matches) {
               patternMatches.add(village.village_id);
             }
           });
         });
-
+        
         // AND operation between different patterns
         if (resultVillages.size > 0) {
-          resultVillages = new Set(
-            [...resultVillages].filter((x) => patternMatches.has(x)),
-          );
+          resultVillages = new Set([...resultVillages].filter(x => patternMatches.has(x)));
         } else {
           resultVillages = patternMatches;
         }
@@ -2364,11 +1941,8 @@ const fetchWaterBodiesLayer = async () => {
       let candidateVillages = new Set();
       if (selectedMWS.length > 0) {
         dataJson.forEach((mwsItem) => {
-          if (
-            selectedMWS.includes(mwsItem.mws_id) &&
-            Array.isArray(mwsItem.mws_intersect_villages)
-          ) {
-            mwsItem.mws_intersect_villages.forEach((villageId) => {
+          if (selectedMWS.includes(mwsItem.mws_id) && Array.isArray(mwsItem.mws_intersect_villages)) {
+            mwsItem.mws_intersect_villages.forEach(villageId => {
               candidateVillages.add(villageId);
             });
           }
@@ -2377,254 +1951,94 @@ const fetchWaterBodiesLayer = async () => {
 
       // Intersect with candidate villages from MWS if they exist
       if (candidateVillages.size > 0) {
-        resultVillages = new Set(
-          [...resultVillages].filter((id) => candidateVillages.has(id)),
-        );
+        resultVillages = new Set([...resultVillages].filter(id => candidateVillages.has(id)));
       }
 
       // CRITICAL FIX: Intersect with villages from filters if they exist
       if (hasVillageFilters && patternVillageList.size > 0) {
-        resultVillages = new Set(
-          [...resultVillages].filter((id) => patternVillageList.has(id)),
-        );
+        resultVillages = new Set([...resultVillages].filter(id => patternVillageList.has(id)));
       }
-
+      
       setVillageIdList(resultVillages);
+      
     } catch (error) {
       console.error("Error in village pattern processing:", error);
     }
-  }, [
-    patternSelections.selectedVillagePatterns,
-    filterSelections.selectedVillageValues,
-    patternVillageList,
-    villagePatternTrigger,
-    selectedMWS,
-    dataJson,
-    villageJson,
-    filterSelections.selectedMWSValues,
-    patternSelections.selectedMWSPatterns,
-  ]);
+  }, [patternSelections.selectedVillagePatterns, filterSelections.selectedVillageValues,patternVillageList,villagePatternTrigger, selectedMWS, dataJson,villageJson]);
+
+
   useEffect(() => {
     fetchAdminLayer([...villageIdList]);
     setFinalVillageList(villageIdList);
   }, [villageIdList]);
 
-  // Build grouped village-MWS intersection data
-  const mwsVillageIntersections = useMemo(() => {
-    if (!selectedMWS || selectedMWS.length === 0 || !dataJson) return [];
-
-    const assignedVillages = new Set();
-    const result = [];
-
-    // First pass: Group villages by MWS and ensure uniqueness
-    dataJson.forEach((mwsItem) => {
-      if (
-        selectedMWS.includes(mwsItem.mws_id) &&
-        Array.isArray(mwsItem.mws_intersect_villages)
-      ) {
-        const villagesInThisMWS = [];
-
-        mwsItem.mws_intersect_villages.forEach((villageId) => {
-          if (!assignedVillages.has(villageId)) {
-            assignedVillages.add(villageId);
-
-            // Basic lookup from villageJson (API data)
-            let vName = "";
-            if (villageJson && Array.isArray(villageJson)) {
-              const v = villageJson.find((v) => v.village_id === villageId);
-              if (v) vName = v.village_name || v.vill_name || v.name || "";
-            }
-
-            villagesInThisMWS.push({ villageId, villageName: vName });
-          }
-        });
-
-        if (villagesInThisMWS.length > 0) {
-          result.push({
-            mwsId: mwsItem.mws_id,
-            villages: villagesInThisMWS,
-          });
-        }
-      }
-    });
-
-    // Second pass: Fallback enrichment from map features (boundaryLayerRef)
-    if (boundaryLayerRef.current) {
-      try {
-        const features = boundaryLayerRef.current.getSource().getFeatures();
-        result.forEach((group) => {
-          group.villages.forEach((v) => {
-            if (!v.villageName) {
-              const f = features.find((feat) => {
-                const props = feat.getProperties();
-                return (props.vill_ID ?? props.village_id) == v.villageId;
-              });
-              if (f) {
-                const props = f.getProperties();
-                v.villageName =
-                  props.vill_name || props.village_name || props.name || "";
-              }
-            }
-          });
-        });
-      } catch (_) {}
-    }
-
-    return result;
-  }, [selectedMWS, dataJson, villageJson]);
-
-  // this is Mann–Kendall trend statistic (S)
-  function calculateTrend(values) {
-    let S = 0;
-
-    for (let i = 0; i < values.length - 1; i++) {
-      for (let j = i + 1; j < values.length; j++) {
-        if (values[j] > values[i]) S++;
-        else if (values[j] < values[i]) S--;
-      }
-    }
-
-    if (S > 0) return 1; // increasing
-    if (S < 0) return -1; // decreasing
-    return 0; // steady
-  }
-
-  //This is sen's slope
-  // function calculateTrend(values) {
-  //   const slopes = [];
-
-  //   for (let i = 0; i < values.length - 1; i++) {
-  //     for (let j = i + 1; j < values.length; j++) {
-  //       slopes.push((values[j] - values[i]) / (j - i));
-  //     }
-  //   }
-
-  //   // sort slopes
-  //   slopes.sort((a, b) => a - b);
-
-  //   // median slope
-  //   const mid = Math.floor(slopes.length / 2);
-  //   const senSlope =
-  //     slopes.length % 2
-  //       ? slopes[mid]
-  //       : (slopes[mid - 1] + slopes[mid]) / 2;
-
-  //   if (senSlope > 0) return 1;   // increasing
-  //   if (senSlope < 0) return -1;  // decreasing
-  //   return 0;                     // steady
-  // }
-
   useEffect(() => {
     if (!waterbodiesLayerRef.current || !mwsLayerRef.current) return;
-
+    
     const waterbodiesSource = waterbodiesLayerRef.current.getSource();
     const mwsSource = mwsLayerRef.current.getSource();
-
+    
     let hasFiltered = false; // Prevent multiple filter calls
-
+    
     const attemptFilter = () => {
       if (hasFiltered) return; // Already filtered, don't do it again
-
+      
       const wbFeatures = waterbodiesSource.getFeatures();
       const mwsFeatures = mwsSource.getFeatures();
-
+      
       const wbReady = wbFeatures.length > 0;
       const mwsReady = mwsFeatures.length > 0;
-
+      
       if (wbReady && mwsReady) {
         hasFiltered = true;
         filterWaterbodiesByMWS();
       }
     };
-
+    
     // Try immediately in case features are already loaded
     attemptFilter();
-
+    
     // If not loaded yet, wait for them
     if (!hasFiltered) {
-      const wbKey = waterbodiesSource.on("change", () => {
-        if (waterbodiesSource.getState() === "ready") {
+      const wbKey = waterbodiesSource.on('change', () => {
+        if (waterbodiesSource.getState() === 'ready') {
           attemptFilter();
         }
       });
-
-      const mwsKey = mwsSource.on("change", () => {
-        if (mwsSource.getState() === "ready") {
+      
+      const mwsKey = mwsSource.on('change', () => {
+        if (mwsSource.getState() === 'ready') {
           attemptFilter();
         }
       });
-
+      
       return () => {
-        waterbodiesSource.un("change", wbKey);
-        mwsSource.un("change", mwsKey);
+        waterbodiesSource.un('change', wbKey);
+        mwsSource.un('change', mwsKey);
       };
     }
   }, [selectedMWS, showWB]);
 
   useEffect(() => {
-    if (!waterbodiesLayerRef.current) return;
+  // Enable filters only when boundary + MWS + data are fully loaded
+  if (
+    !islayerLoaded &&
+    !isLoading &&
+    district &&
+    block
+  ) {
+    setFiltersEnabled(true);
+  } else {
+    setFiltersEnabled(false);
+  }
+}, [islayerLoaded, isLoading, district, block]);
 
-    const wbSource = waterbodiesLayerRef.current.getSource();
-    const wbFeatures = wbSource.getFeatures();
+useEffect(() => {
+  if (district && block) {
+    resetAllStates();
+  }
+}, [district, block]);
 
-    console.log("Waterbody Features:", wbFeatures);
-    console.log("First Waterbody Props:", wbFeatures[0]?.getProperties());
-
-    if (!wbFeatures.length) return;
-
-    const wbFilters = filterSelections.selectedWaterbodyValues || {};
-    const filterKeys = Object.keys(wbFilters).filter((k) => wbFilters[k]);
-
-    if (filterKeys.length === 0) {
-      wbFeatures.forEach((f) => f.setStyle(undefined));
-      return;
-    }
-
-    wbFeatures.forEach((feature) => {
-      const props = feature.getProperties();
-      let matches = true;
-
-      filterKeys.forEach((filterName) => {
-        const selectedOptions = wbFilters[filterName];
-        if (!selectedOptions) return;
-
-        if (filterName === "waterbody_size") {
-          const area = Number(
-            props.area_ored ?? props.AREA_HA ?? props.area ?? props.Area ?? 0,
-          );
-
-          const pass = selectedOptions.some(
-            (opt) => area >= opt.value.lower && area <= opt.value.upper,
-          );
-
-          if (!pass) matches = false;
-        }
-
-        if (filterName === "drainage_line") {
-          const value = Number(props.on_drainage_line ?? 0);
-
-          const pass = selectedOptions.some((opt) => value === opt.value);
-
-          if (!pass) matches = false;
-        }
-
-        if (filterName === "surface_water_trend") {
-          const areas = Object.keys(props)
-            .filter((key) => key.startsWith("area_") && key !== "area_ored")
-            .sort()
-            .map((key) => Number(props[key] ?? 0));
-
-          const trend = calculateTrend(areas);
-
-          const pass = selectedOptions.some((opt) => trend === opt.value);
-
-          if (!pass) matches = false;
-        }
-      });
-
-      feature.setStyle(matches ? undefined : new Style({}));
-    });
-  }, [filterSelections.selectedWaterbodyValues, showWB]);
 
   return (
     <div className="min-h-screenbg-white flex flex-col">
@@ -2635,6 +2049,7 @@ const fetchWaterBodiesLayer = async () => {
       <div className="flex h-[calc(100vh-48px)] p-4 gap-4">
         {/* Left Sidebar */}
         <KYLLeftSidebar
+          key={sidebarResetKey}
           indicatorType={indicatorType}
           setIndicatorType={setIndicatorType}
           filterSelections={filterSelections}
@@ -2655,10 +2070,8 @@ const fetchWaterBodiesLayer = async () => {
           getSubcategoriesForCategory={getSubcategoriesForCategory}
           getPatternsForSubcategory={getPatternsForSubcategory}
           patternSelections={patternSelections}
-          setPatternSelections={setPatternSelections}
           handlePatternSelection={handlePatternSelection}
           isPatternSelected={isPatternSelected}
-          handleClearAll={handleClearAll}
         />
 
         {/* Map Container */}
@@ -2702,10 +2115,9 @@ const fetchWaterBodiesLayer = async () => {
           currentLayer={currentLayer}
           setCurrentLayer={setCurrentLayer}
           mapRef={mapRef}
-          mapElement={mapElement}
           onResetMWS={handleResetMWS}
           selectedMWSProfile={selectedMWSProfile}
-          waterbodiesLayerRef={waterbodiesLayerRef}
+          waterbodiesLayerRef={waterbodiesLayerRef} 
           clickedWaterbodyId={clickedWaterbodyId}
           waterbodyDashboardUrl={waterbodyDashboardUrl}
           selectedWaterbodyProfile={selectedWaterbodyProfile}
@@ -2713,10 +2125,6 @@ const fetchWaterBodiesLayer = async () => {
           setShowWB={setShowWB}
           showWB={showWB}
           boundaryLayerRef={boundaryLayerRef}
-          mwsConnectivityLayerRef={mwsConnectivityLayerRef}
-          showConnectivity={showConnectivity}
-          setShowConnectivity={setShowConnectivity}
-          mwsArrowLayerRef={mwsArrowLayerRef}
         />
       </div>
     </div>

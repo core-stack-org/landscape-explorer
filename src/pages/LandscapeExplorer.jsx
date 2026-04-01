@@ -305,7 +305,7 @@ const LandscapeExplorer = () => {
           "ngrok-skip-browser-warning": "1",
           "Content-Type": "blob",
         },
-      },
+      }
     )
       .then((response) => response.arrayBuffer())
       .then((arybuf) => {
