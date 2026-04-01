@@ -1,4 +1,5 @@
-import getVectorLayers from "./getVectorLayers";
+// import getVectorLayers from "./getVectorLayers";
+import getWebglVectorLayers from "./getWebGlVectorLayers";
 import GeoJSON from "ol/format/GeoJSON";
 import { Style, Stroke } from "ol/style";
 
@@ -58,47 +59,80 @@ export const getWaterbodyData = async ({
     });
   }
 
-  // ===================== MWS ======================
-
-  const mwsLayerName = `deltaG_well_depth_${dist}_${blk}`;
-  const mwsLayer = await getVectorLayers("mws_layers", mwsLayerName, false, true);
-  map.addLayer(mwsLayer);
-
-  const mwsSource = mwsLayer.getSource();
-  mwsSource.loadFeatures(extent, view.getResolution(), view.getProjection());
-  const mwsFeatures = await waitForFeatures(mwsSource);
-
-  let matchedMWS = [];
-
-  if (matchedWaterbody) {
-    const wbMwsUID =
-      matchedWaterbody.get("MWS_UID") ||
-      matchedWaterbody.get("mws_uid");
-
-    if (wbMwsUID) {
-      const mwsUidList = extractMwsUidList(wbMwsUID.toString());
-
-      matchedMWS = mwsFeatures.filter((f) => {
-        const uid = (f.get("uid") || f.get("UID"))?.toString();
-        return uid && mwsUidList.includes(uid.trim());
+    const extractMwsUidList = (mwsUidString) => {
+      if (!mwsUidString) return [];
+  
+      return mwsUidString
+        .split("_")
+        .reduce((acc, val, idx, arr) => {
+          // join pairs: 12 + 33823 → 12_33823
+          if (idx % 2 === 0 && arr[idx + 1]) {
+            acc.push(`${val}_${arr[idx + 1]}`);
+          }
+          return acc;
+        }, []);
+    };
+  
+    const wbLayerName = `surface_waterbodies_${dist}_${blk}`;
+    const wbLayer = await getWebglVectorLayers("swb", wbLayerName, false, true);
+    // map.addLayer(wbLayer);
+  
+    // wbLayer.setStyle(yellowWaterbodyStyle);
+   
+  
+    const wbSource = wbLayer.getSource();
+    const view = map.getView();
+    const extent = view.calculateExtent(map.getSize());
+  
+    wbSource.loadFeatures(extent, view.getResolution(), view.getProjection());
+    const wbFeatures = await waitForFeatures(wbSource);
+  
+    let matchedWaterbody = null;
+  
+    if (waterbodyUID) {
+      matchedWaterbody = wbFeatures.find((f) => {
+        const uid = f.get("UID") || f.get("uid");
+        return uid?.toString() === waterbodyUID.toString();
       });
     }
-  }
+  
+    const mwsLayerName = `deltaG_well_depth_${dist}_${blk}`;
+    const mwsLayer = await getWebglVectorLayers(
+      "mws_layers",
+      mwsLayerName,
+      false,
+      true
+    );
+    // map.addLayer(mwsLayer);
+  
+    const mwsSource = mwsLayer.getSource();
+    mwsSource.loadFeatures(extent, view.getResolution(), view.getProjection());
+    const mwsFeatures = await waitForFeatures(mwsSource);
+  
+  
+    let matchedMWS = [];
+    
+    if (matchedWaterbody) {
+      const wbMwsUID =
+        matchedWaterbody.get("MWS_UID") ||
+        matchedWaterbody.get("mws_uid");
 
   // ===================== ZOI ======================
 
   const zoiLayerName = `waterbodies_zoi_${dist}_${blk}`;
 
-  const zoiLayer =
-    (await getVectorLayers("swb", zoiLayerName, false, true)) ||
-    (await getVectorLayers("zoi_layers", zoiLayerName, false, true)) ||
-    null;
+// Try multiple namespaces — some servers store ZOI differently
+const zoiLayer =
+  (await getWebglVectorLayers("swb", zoiLayerName, false, true)) ||
+  (await getWebglVectorLayers("zoi_layers", zoiLayerName, false, true)) ||
+  null;
+  
 
   let rawZoiFeatures = [];
   let matchedZOI = [];
 
-  if (zoiLayer) {
-    map.addLayer(zoiLayer);
+if (zoiLayer) {
+  // map.addLayer(zoiLayer);
 
     const zoiSource = zoiLayer.getSource();
     zoiSource.loadFeatures(extent, view.getResolution(), view.getProjection());

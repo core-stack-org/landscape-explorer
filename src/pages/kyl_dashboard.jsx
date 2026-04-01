@@ -42,6 +42,11 @@ import {
   initializeAnalytics,
 } from "../services/analytics";
 import getWebGlLayers from "../actions/getWebGlLayers.js";
+import VectorLayer from "ol/layer/Vector";
+import VectorSource from "ol/source/Vector";
+import Feature from "ol/Feature";
+import LineString from "ol/geom/LineString";
+import getWebGlPolygonLayers from "../actions/getWebGlVectorLayers.js";
 
 const KYLDashboardPage = () => {
   const mapElement = useRef(null);
@@ -419,40 +424,79 @@ const KYLDashboardPage = () => {
 
   };
 
-  const resetMWSStyle = () => {
-    mwsLayerRef.current.setStyle((feature) => {
-      if (selectedMWS.length > 0 && selectedMWS.includes(feature.values_.uid)) {
-        // Filtered areas - highlight in red
-        return new Style({
-          stroke: new Stroke({
-            color: "#661E1E",
-            width: 1.0,
-          }),
-          fill: new Fill({
-            color: "rgba(255, 75, 75, 0.8)",
-          }),
-        });
-      } else {
-        // Default display - light yellow
-        return new Style({
-          stroke: new Stroke({
-            color: "#4a90e2",
-            width: 1.0,
-          }),
-          fill: new Fill({
-            color: "rgba(74, 144, 226, 0.2)",
-          }),
-        });
-      }
+  // const resetMWSStyle = () => {
+  //   // mwsLayerRef.current.setStyle((feature) => {
+  //   //   if (selectedMWS.length > 0 && selectedMWS.includes(feature.values_.uid)) {
+  //   //     // Filtered areas - highlight in red
+  //   //     return new Style({
+  //   //       stroke: new Stroke({
+  //   //         color: "#661E1E",
+  //   //         width: 1.0,
+  //   //       }),
+  //   //       fill: new Fill({
+  //   //         color: "rgba(255, 75, 75, 0.8)",
+  //   //       }),
+  //   //     });
+  //   //   } else {
+  //   //     // Default display - light yellow
+  //   //     return new Style({
+  //   //       stroke: new Stroke({
+  //   //         color: "#4a90e2",
+  //   //         width: 1.0,
+  //   //       }),
+  //   //       fill: new Fill({
+  //   //         color: "rgba(74, 144, 226, 0.2)",
+  //   //       }),
+  //   //     });
+  //   //   }
+  //   // });
+  // }
+
+  // const applyMWSStyle = (tempMWS, currentHighlight) => {
+  //   if (!mwsLayerRef.current) return;
+  
+  //   mwsLayerRef.current.updateStyleVariables({
+  //     highlightMWS: currentHighlight ?? -1,
+  //     filteredMWS: tempMWS.length ? tempMWS : [-999]
+  //   });
+  // };
+
+  useEffect(() => {
+    if (!mwsLayerRef.current) return;
+  
+    mwsLayerRef.current.updateStyleVariables({
+      highlightMWS: highlightMWS ?? -1
     });
-  }
+  
+  }, [highlightMWS]);
+
+  const resetMWSStyle = () => {
+    setHighlightMWS(null);
+  };
+
+  const updateFilteredMWS = (filteredIds) => {
+    if (!mwsLayerRef.current) return;
+  
+    const source = mwsLayerRef.current.getSource();
+    const features = source.getFeatures();
+  
+    const idSet = new Set(filteredIds);
+  
+    features.forEach((f) => {
+      const uid = f.get("uid");
+      f.set("isFiltered", idSet.has(uid) ? 1 : 0);
+    });
+  
+    source.changed();
+  };
 
   const fetchMWSLayer = async (tempMWS) => {
-    if (!district || !block) return;
+    console.log("fetchMWSLayer called with MWS IDs:", tempMWS);
+        if (!district || !block) return;
 
-    if (tempMWS.length === 0) {
+    // if (tempMWS.length === 0) {
       try {
-        if (mwsLayerRef.current === null) {
+        if (!mwsLayerRef.current) {
           const layerName = `deltaG_well_depth_${district.label
             .toLowerCase()
             .split(" ")
@@ -461,110 +505,182 @@ const KYLDashboardPage = () => {
               .replace(/\s*\(\s*/g, "_")
               .replace(/\s*\)\s*/g, "")
               .replace(/\s+/g, "_")}`;
-          const mwsLayer = await getVectorLayers(
-            "mws_layers",
-            layerName,
-            true,
-            true
-          );
+        
+          const mwsLayer = await getWebGlPolygonLayers("mws_layers", layerName);
+        
           if (mapRef.current) {
             mapRef.current.removeLayer(boundaryLayerRef.current);
             mapRef.current.addLayer(mwsLayer);
             mapRef.current.addLayer(boundaryLayerRef.current);
           }
+        
           mwsLayerRef.current = mwsLayer;
         }
-        mwsLayerRef.current.setStyle((feature) => {
-          if (highlightMWS !== null && feature.values_.uid === highlightMWS) {
-            setSelectedMWSProfile(feature.getProperties())
-            return new Style({
-              stroke: new Stroke({
-                color: "#166534",
-                width: 2.0,
-              }),
-              fill: new Fill({
-                color: "rgba(34, 197, 94, 0.4)",
-              }),
-            });
-          }
-          else if (tempMWS.length > 0 && tempMWS.includes(feature.values_.uid)) {
-            // Filtered areas - highlight in red
-            return new Style({
-              stroke: new Stroke({
-                color: "#661E1E",
-                width: 1.0,
-              }),
-              fill: new Fill({
-                color: "rgba(255, 75, 75, 0.8)",
-              }),
-            });
-          } else {
-            // Default display - light yellow
-            return new Style({
-              stroke: new Stroke({
-                color: "#4a90e2",
-                width: 1.0,
-              }),
-              fill: new Fill({
-                color: "rgba(85, 152, 229, 0.2)",
-              }),
-            });
-          }
+        mwsLayerRef.current.setStyle({
+          variables: {
+            highlightMWS: -1
+          },
+        
+          "stroke-color": [
+            "case",
+        
+            ["==", ["get", "uid"], ["var", "highlightMWS"]],
+            [22,101,52,1],
+        
+            ["==", ["get", "isFiltered"], 1],
+            [102,30,30,1],
+
+            ["==", ["get", "isFiltered"], 0],
+            [0,0,0,0],
+        
+            [74,144,226,1]
+          ],
+        
+          "stroke-width": [
+            "case",
+        
+            ["==", ["get", "uid"], ["var", "highlightMWS"]],
+            2,
+        
+            ["==", ["get", "isFiltered"], 1],
+            1.5,
+        
+            1
+          ],
+        
+          "fill-color": [
+            "case",
+        
+            ["==", ["get", "uid"], ["var", "highlightMWS"]],
+            [34,197,94,0.4],
+        
+            ["==", ["get", "isFiltered"], 1],
+            [255,75,75,0.8],
+
+            ["==", ["get", "isFiltered"], 0],
+            [0,0,0,0],
+        
+            [85,152,229,0.2]
+          ]
         });
+        
+     
+        // mwsLayerRef.current.setStyle((feature) => {
+        //   if (highlightMWS !== null && feature.values_.uid === highlightMWS) {
+        //     setSelectedMWSProfile(feature.getProperties())
+        //     return new Style({
+        //       stroke: new Stroke({
+        //         color: "#166534",
+        //         width: 2.0,
+        //       }),
+        //       fill: new Fill({
+        //         color: "rgba(34, 197, 94, 0.4)",
+        //       }),
+        //     });
+        //   }
+        //   else if (tempMWS.length > 0 && tempMWS.includes(feature.values_.uid)) {
+        //     // Filtered areas - highlight in red
+        //     return new Style({
+        //       stroke: new Stroke({
+        //         color: "#661E1E",
+        //         width: 1.0,
+        //       }),
+        //       fill: new Fill({
+        //         color: "rgba(255, 75, 75, 0.8)",
+        //       }),
+        //     });
+        //   } else {
+        //     // Default display - light yellow
+        //     return new Style({
+        //       stroke: new Stroke({
+        //         color: "#4a90e2",
+        //         width: 1.0,
+        //       }),
+        //       fill: new Fill({
+        //         color: "rgba(85, 152, 229, 0.2)",
+        //       }),
+        //     });
+        //   }
+        // });
       } catch (error) {
         console.error("Error fetching MWS layer:", error);
         toast.error("Please Refresh the Page !")
       }
-    } else {
-      try {
-        mwsLayerRef.current.setStyle((feature) => {
-          if (highlightMWS !== null && feature.values_.uid === highlightMWS) {
-            setSelectedMWSProfile(feature.getProperties())
-            return new Style({
-              stroke: new Stroke({
-                color: "#166534",
-                width: 2.0,
-              }),
-              fill: new Fill({
-                color: "rgba(34, 197, 94, 0.4)",
-              }),
-            });
-          }
-          else if (
-            tempMWS.length > 0 &&
-            tempMWS.includes(feature.values_.uid) &&
-            currentLayer.length === 0
-          ) {
-            // Filtered areas - highlight in red
-            return new Style({
-              stroke: new Stroke({
-                color: "#661E1E",
-                width: 1.0,
-              }),
-              fill: new Fill({
-                color: "rgba(255, 75, 75, 0.8)",
-              }),
-            });
-          }
-          else if (
-            tempMWS.length > 0 &&
-            tempMWS.includes(feature.values_.uid)
-          ) {
-            return new Style({
-              stroke: new Stroke({
-                color: "#254871",
-                width: 1.5,
-              }),
-            });
-          }
-        });
-      } catch (err) {
-        console.log("Error in setting MWS style :", err);
-      }
-    }
+    // } else {
+    //   try {
+    //     // mwsLayerRef.current.setStyle((feature) => {
+    //     //   if (highlightMWS !== null && feature.values_.uid === highlightMWS) {
+    //     //     setSelectedMWSProfile(feature.getProperties())
+    //     //     return new Style({
+    //     //       stroke: new Stroke({
+    //     //         color: "#166534",
+    //     //         width: 2.0,
+    //     //       }),
+    //     //       fill: new Fill({
+    //     //         color: "rgba(34, 197, 94, 0.4)",
+    //     //       }),
+    //     //     });
+    //     //   }
+    //     //   else if (
+    //     //     tempMWS.length > 0 &&
+    //     //     tempMWS.includes(feature.values_.uid) &&
+    //     //     currentLayer.length === 0
+    //     //   ) {
+    //     //     // Filtered areas - highlight in red
+    //     //     return new Style({
+    //     //       stroke: new Stroke({
+    //     //         color: "#661E1E",
+    //     //         width: 1.0,
+    //     //       }),
+    //     //       fill: new Fill({
+    //     //         color: "rgba(255, 75, 75, 0.8)",
+    //     //       }),
+    //     //     });
+    //     //   }
+    //     //   else if (
+    //     //     tempMWS.length > 0 &&
+    //     //     tempMWS.includes(feature.values_.uid)
+    //     //   ) {
+    //     //     return new Style({
+    //     //       stroke: new Stroke({
+    //     //         color: "#254871",
+    //     //         width: 1.5,
+    //     //       }),
+    //     //     });
+    //     //   }
+    //     // });
+    //   } catch (err) {
+    //     console.log("Error in setting MWS style :", err);
+    //   }
+    // }
   };
 
-  const fetchWaterBodiesLayer = async() => {
+  // Add this new pure-style function (no async, no layer creation)
+
+
+  const waitForFeatures = (source, label) => {
+    return new Promise((resolve) => {
+      let attempts = 0;
+
+      const interval = setInterval(() => {
+        const features = source.getFeatures();
+
+        if (features.length > 0) {
+          clearInterval(interval);
+          resolve(features);
+        }
+
+        attempts++;
+
+        if (attempts > 20) { // ~2 seconds max
+          clearInterval(interval);
+          resolve([]);
+        }
+      }, 100);
+    });
+  };
+
+  const fetchMWSConnectivityLayers = async () => {
     if (!district || !block || !mapRef.current) return;
 
     const dist = district.label
@@ -587,40 +703,63 @@ const KYLDashboardPage = () => {
     }
 
     // Create vector layer
-    const wbLayer = await getVectorLayers(
-      "swb",
-      layerName,
-      true,  
-      true 
-    );
+    // const wbLayer = await getVectorLayers(
+    //   "swb",
+    //   layerName,
+    //   true,
+    //   true
+    // );
+    const wbLayer = await getWebGlPolygonLayers("swb", layerName);
+    wbLayer.setStyle({
+      "stroke-color": [
+        "case",
+        ["has", "area_ored"],
+        [246, 252, 83, 0.8],
+        [0,0,0,0]
+      ],
     
-    wbLayer.setStyle((feature) => {
-      const geom = feature.getGeometry();
-      if (!geom) return null;
+      "stroke-width": [
+        "case",
+        ["has", "area_ored"],
+        2,
+        0
+      ],
     
-      let pointGeom = null;
-    
-      if (geom.getType() === "Polygon") {
-        pointGeom = geom.getInteriorPoint();
-      } else if (geom.getType() === "MultiPolygon") {
-        const pts = geom.getInteriorPoints();
-        pointGeom = pts.getPoint(0);
-      }
-    
-      return [
-        new Style({
-          geometry: geom,
-          stroke: new Stroke({
-            color: "rgba(246, 252, 83, 0.8)",
-            width: 2,
-          }),
-          fill: new Fill({
-            color: "rgba(246, 252, 83, 0.45)",
-          }),
-        }),
-      ];
+      "fill-color": [
+        "case",
+        ["has", "area_ored"],
+        [246, 252, 83, 0.45],
+        [0,0,0,0]
+      ]
     });
-    
+
+    // wbLayer.setStyle((feature) => {
+    //   const geom = feature.getGeometry();
+    //   if (!geom) return null;
+
+    //   let pointGeom = null;
+
+    //   if (geom.getType() === "Polygon") {
+    //     pointGeom = geom.getInteriorPoint();
+    //   } else if (geom.getType() === "MultiPolygon") {
+    //     const pts = geom.getInteriorPoints();
+    //     pointGeom = pts.getPoint(0);
+    //   }
+
+    //   return [
+    //     new Style({
+    //       geometry: geom,
+    //       stroke: new Stroke({
+    //         color: "rgba(246, 252, 83, 0.8)",
+    //         width: 2,
+    //       }),
+    //       fill: new Fill({
+    //         color: "rgba(246, 252, 83, 0.45)",
+    //       }),
+    //     }),
+    //   ];
+    // });
+
     if (!wbLayer) {
       console.warn("Failed loading waterbodies");
       return;
@@ -705,12 +844,14 @@ const KYLDashboardPage = () => {
           .replace(/\s*\(\s*/g, "_")
           .replace(/\s*\)\s*/g, "")
           .replace(/\s+/g, "_")}`;
-      const mwsLayer = await getVectorLayers(
-        "mws_layers",
-        layerName,
-        true,
-        true
-      );
+      // const mwsLayer = await getVectorLayers(
+      //   "mws_layers",
+      //   layerName,
+      //   true,
+      //   true
+      // );
+
+      const mwsLayer = await getWebGlPolygonLayers("mws_layers", layerName);
 
       if (mwsLayerRef.current) {
         mapRef.current.removeLayer(mwsLayerRef.current);
@@ -829,7 +970,8 @@ const KYLDashboardPage = () => {
         })
       );
 
-      await fetchMWSLayer(selectedMWS); 
+      // await fetchMWSLayer(selectedMWS);
+      await fetchMWSLayer([]);
       setIsLayerLoaded(false)
     } catch (error) {
       console.error("Error loading boundary:", error);
@@ -906,32 +1048,32 @@ const KYLDashboardPage = () => {
       if (!existingLayer) {
         mapRef.current.addLayer(boundaryLayerRef.current);
       }
-      mwsLayerRef.current.setStyle((feature) => {
-        if (
-          selectedMWS.length > 0 &&
-          selectedMWS.includes(feature.values_.uid)
-        ) {
-          return new Style({
-            stroke: new Stroke({
-              color: "#661E1E",
-              width: 1.0,
-            }),
-            fill: new Fill({
-              color: "rgba(255, 75, 75, 0.8)",
-            }),
-          });
-        } else {
-          return new Style({
-            stroke: new Stroke({
-              color: "#4a90e2",
-              width: 1.0,
-            }),
-            fill: new Fill({
-              color: "rgba(74, 144, 226, 0.2)",
-            }),
-          });
-        }
-      });
+      // mwsLayerRef.current.setStyle((feature) => {
+      //   if (
+      //     selectedMWS.length > 0 &&
+      //     selectedMWS.includes(feature.values_.uid)
+      //   ) {
+      //     return new Style({
+      //       stroke: new Stroke({
+      //         color: "#661E1E",
+      //         width: 1.0,
+      //       }),
+      //       fill: new Fill({
+      //         color: "rgba(255, 75, 75, 0.8)",
+      //       }),
+      //     });
+      //   } else {
+      //     return new Style({
+      //       stroke: new Stroke({
+      //         color: "#4a90e2",
+      //         width: 1.0,
+      //       }),
+      //       fill: new Fill({
+      //         color: "rgba(74, 144, 226, 0.2)",
+      //       }),
+      //     });
+      //   }
+      // });
       tempArr = currentLayer.filter((item) => item.name !== filter.name);
       setToggleStates((prevStates) => ({
         ...prevStates,
@@ -1041,10 +1183,7 @@ const KYLDashboardPage = () => {
         } else if (filter.layer_store[i] === "panchayat_boundaries") {
           tempLayer = await getVectorLayers(
             filter.layer_store[i],
-            `${district.label.toLowerCase().split(" ").join("_")}_${block.label
-              .toLowerCase()
-              .split(" ")
-              .join("_")}`
+            `${transformName(district.label)}_${transformName(block.label)}_${filter.layer_name[i]}`
           );
         } else {
           tempLayer = await getVectorLayers(
@@ -1077,19 +1216,19 @@ const KYLDashboardPage = () => {
           mapRef.current.addLayer(tempLayer);
         }
       }
-      mwsLayerRef.current.setStyle((feature) => {
-        if (
-          selectedMWS.length > 0 &&
-          selectedMWS.includes(feature.values_.uid)
-        ) {
-          return new Style({
-            stroke: new Stroke({
-              color: "#254871",
-              width: 2.0,
-            }),
-          });
-        }
-      });
+      // mwsLayerRef.current.setStyle((feature) => {
+      //   if (
+      //     selectedMWS.length > 0 &&
+      //     selectedMWS.includes(feature.values_.uid)
+      //   ) {
+      //     return new Style({
+      //       stroke: new Stroke({
+      //         color: "#254871",
+      //         width: 2.0,
+      //       }),
+      //     });
+      //   }
+      // });
       mapRef.current.addLayer(mwsLayerRef.current);
       mapRef.current.addLayer(boundaryLayerRef.current);
       let tempObj = {
@@ -1275,7 +1414,7 @@ const KYLDashboardPage = () => {
       setState(matchedState)
       setDistrict(matchedDistrict)
       setBlock(matchedTehsil)
-      setHighlightMWS(response.uid)
+      setHighlightMWS(response.mws_id)
     } catch (err) {
       console.log(err)
       toast.custom(
@@ -1437,49 +1576,49 @@ const KYLDashboardPage = () => {
       if (feature) {
         const clickedMwsId = feature.get("uid");
 
-
+        setHighlightMWS(clickedMwsId);
         setSelectedMWSProfile(feature.getProperties());
         if (toastId) {
           toast.dismiss(toastId);
           setToastId(null);
         }
-        mwsLayerRef.current.setStyle((feature) => {
-          if (clickedMwsId === feature.values_.uid) {
-            return new Style({
-              stroke: new Stroke({
-                color: "#166534",
-                width: 2.0,
-              }),
-              fill: new Fill({
-                color: "rgba(34, 197, 94, 0.4)",
-              }),
-            });
-          } else if (
-            selectedMWS !== null &&
-            selectedMWS.length > 0 &&
-            selectedMWS.includes(feature.values_.uid)
-          ) {
-            return new Style({
-              stroke: new Stroke({
-                color: "#661E1E",
-                width: 1.0,
-              }),
-              fill: new Fill({
-                color: "rgba(255, 75, 75, 0.8)",
-              }),
-            });
-          } else {
-            return new Style({
-              stroke: new Stroke({
-                color: "#4a90e2",
-                width: 1.0,
-              }),
-              fill: new Fill({
-                color: "rgba(74, 144, 226, 0.2)",
-              }),
-            });
-          }
-        });
+        // mwsLayerRef.current.setStyle((feature) => {
+        //   if (clickedMwsId === feature.values_.uid) {
+        //     return new Style({
+        //       stroke: new Stroke({
+        //         color: "#166534",
+        //         width: 2.0,
+        //       }),
+        //       fill: new Fill({
+        //         color: "rgba(34, 197, 94, 0.4)",
+        //       }),
+        //     });
+        //   } else if (
+        //     selectedMWS !== null &&
+        //     selectedMWS.length > 0 &&
+        //     selectedMWS.includes(feature.values_.uid)
+        //   ) {
+        //     return new Style({
+        //       stroke: new Stroke({
+        //         color: "#661E1E",
+        //         width: 1.0,
+        //       }),
+        //       fill: new Fill({
+        //         color: "rgba(255, 75, 75, 0.8)",
+        //       }),
+        //     });
+        //   } else {
+        //     return new Style({
+        //       stroke: new Stroke({
+        //         color: "#4a90e2",
+        //         width: 1.0,
+        //       }),
+        //       fill: new Fill({
+        //         color: "rgba(74, 144, 226, 0.2)",
+        //       }),
+        //     });
+        //   }
+        // });
 
       }
     };
@@ -1557,6 +1696,12 @@ const KYLDashboardPage = () => {
     };
   }, [block, mapRef.current]);
 
+  // useEffect(() => {
+  //   if (!mwsLayerRef.current) return;
+  
+  //   applyMWSStyle(selectedMWS, highlightMWS);
+  // }, [highlightMWS, selectedMWS]);
+
   useEffect(() => {
     const fetchUpdateLulc = async () => {
       if (currentLayer !== null) {
@@ -1598,6 +1743,7 @@ const KYLDashboardPage = () => {
 
   useEffect(() => {
     try {
+      console.log("Selected MWS Filters:", filterSelections.selectedMWSValues);
       if (!dataJson || !Array.isArray(dataJson)) {
         console.warn("DataJson not loaded");
         return;
@@ -1612,6 +1758,7 @@ const KYLDashboardPage = () => {
       let resultMWS = [];
       
       mwsFilterKeys.forEach((filterName) => {
+        console.log("Processing Filter:", filterName);
         const filterValues = filterSelections.selectedMWSValues[filterName];
         if (!filterValues) return;
         
@@ -1619,6 +1766,7 @@ const KYLDashboardPage = () => {
         const filter = getAllFilters().find((f) => f.name === filterName);
         
         filterValues.forEach((selectedOption) => {
+          console.log("Selected Option:", selectedOption);
           if (filter?.type === 2) {
             dataJson.forEach((item) => {
               if (item && typeof item[filterName] !== "undefined" && item.mws_id) {
@@ -1642,15 +1790,18 @@ const KYLDashboardPage = () => {
         });
         
         if (resultMWS.length > 0) {
+          console.log("Temp MWS IDs for filter:", tempArr);
           resultMWS = resultMWS.filter(id => tempArr.includes(id));
         } else {
           resultMWS = tempArr;
         }
       });
-
-      setSelectedMWS(resultMWS);
-      fetchMWSLayer(resultMWS);
-      
+      console.log("FINAL FILTERED MWS:", resultMWS);
+      console.log("Total MWS Count:", resultMWS.length);
+      if (JSON.stringify(resultMWS) !== JSON.stringify(selectedMWS)) {
+        setSelectedMWS(resultMWS);
+        updateFilteredMWS(resultMWS);
+      }
     } catch (error) {
       console.error("Error in MWS filter processing:", error);
     }
@@ -1717,8 +1868,8 @@ const KYLDashboardPage = () => {
         } else {
           // No patterns AND no filters - clear everything
           setSelectedMWS([]);
-          fetchMWSLayer([]);
-          return;
+          updateFilteredMWS([]);
+                    return;
         }
       }
 
@@ -1803,14 +1954,14 @@ const KYLDashboardPage = () => {
         // Intersect patterns with filters
         const finalMWS = [...resultMWS].filter(id => filterResults.includes(id));
         setSelectedMWS(finalMWS);
-        fetchMWSLayer(finalMWS);
-      } else {
+        updateFilteredMWS(finalMWS);
+            } else {
         // No filters, just use pattern results
         const finalMWS = [...resultMWS];
         setSelectedMWS(finalMWS);
-        fetchMWSLayer(finalMWS);
-      }
-      
+        updateFilteredMWS(finalMWS);
+            }
+
     } catch (error) {
       console.error("Error in MWS pattern processing:", error);
     }
