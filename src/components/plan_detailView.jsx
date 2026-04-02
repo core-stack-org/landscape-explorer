@@ -751,174 +751,7 @@ setLivelihoodData(
         blockNameSafe={blockNameSafe}
         plan={plan}
       />
-      {summary && (
-  <div className="bg-white p-5 rounded shadow mt-6">
-    <h2 className="text-xl font-bold mb-3">Summary</h2>
 
-    <table className="w-full border border-gray-200">
-      <tbody>
-
-        <tr>
-          <td className="border p-3 w-1/3 font-semibold">Plan Name</td>
-          <td className="border p-3">{summary.plan_name || "-"}</td>
-        </tr>
-
-        <tr>
-          <td className="border p-3 font-semibold">Village</td>
-          <td className="border p-3">{summary.village_name || "-"}</td>
-        </tr>
-
-        <tr>
-          <td className="border p-3 font-semibold">Settlements</td>
-          <td className="border p-3">{summary.sections?.settlements ?? 0}</td>
-        </tr>
-
-        <tr>
-          <td className="border p-3 font-semibold">Crops</td>
-          <td className="border p-3">{summary.sections?.crops ?? 0}</td>
-        </tr>
-
-        <tr>
-          <td className="border p-3 font-semibold">Wells</td>
-          <td className="border p-3">{summary.sections?.wells ?? 0}</td>
-        </tr>
-
-        <tr>
-          <td className="border p-3 font-semibold">Waterbodies</td>
-          <td className="border p-3">{summary.sections?.waterbodies ?? 0}</td>
-        </tr>
-
-        <tr>
-          <td className="border p-3 font-semibold">Maintenance (GW)</td>
-          <td className="border p-3">{summary.sections?.maintenance?.gw ?? 0}</td>
-        </tr>
-
-        <tr>
-          <td className="border p-3 font-semibold">Maintenance (Agri)</td>
-          <td className="border p-3">{summary.sections?.maintenance?.agri ?? 0}</td>
-        </tr>
-
-        <tr>
-          <td className="border p-3 font-semibold">Maintenance (SWB)</td>
-          <td className="border p-3">{summary.sections?.maintenance?.swb ?? 0}</td>
-        </tr>
-
-        <tr>
-          <td className="border p-3 font-semibold">Maintenance (SWB_RS)</td>
-          <td className="border p-3">{summary.sections?.maintenance?.swb_rs ?? 0}</td>
-        </tr>
-
-        <tr>
-          <td className="border p-3 font-semibold">NRM Recharge</td>
-          <td className="border p-3">{summary.sections?.nrm_works?.recharge ?? 0}</td>
-        </tr>
-
-        <tr>
-          <td className="border p-3 font-semibold">NRM Irrigation</td>
-          <td className="border p-3">{summary.sections?.nrm_works?.irrigation ?? 0}</td>
-        </tr>
-
-        <tr>
-          <td className="border p-3 font-semibold">Livelihood</td>
-          <td className="border p-3">{summary.sections?.livelihood ?? 0}</td>
-        </tr>
-
-        <tr>
-          <td className="border p-3 font-semibold">Agrohorticulture</td>
-          <td className="border p-3">{summary.sections?.agrohorticulture ?? 0}</td>
-        </tr>
-
-      </tbody>
-    </table>
-  </div>
-)}
-{teamDetails && (
-  <div className="bg-white p-5 rounded shadow mt-4">
-    <h2 className="text-xl font-bold mb-3">Team Details</h2>
-
-    <table className="w-full border border-gray-200">
-      <tbody>
-
-        <tr>
-          <td className="border p-3 font-semibold w-1/3">Organization</td>
-          <td className="border p-3">{teamDetails.organization || "-"}</td>
-        </tr>
-
-        <tr>
-          <td className="border p-3 font-semibold">Project</td>
-          <td className="border p-3">{teamDetails.project || "-"}</td>
-        </tr>
-
-        <tr>
-          <td className="border p-3 font-semibold">Plan</td>
-          <td className="border p-3">{teamDetails.plan || "-"}</td>
-        </tr>
-
-        <tr>
-          <td className="border p-3 font-semibold">Facilitator</td>
-          <td className="border p-3">{teamDetails.facilitator || "-"}</td>
-        </tr>
-
-        <tr>
-          <td className="border p-3 font-semibold">Process</td>
-          <td className="border p-3">{teamDetails.process || "-"}</td>
-        </tr>
-
-      </tbody>
-    </table>
-  </div>
-)}
-{villageBrief && (
-  <div className="bg-white p-5 rounded shadow mt-4">
-    <h2 className="text-xl font-bold mb-3">Village Brief</h2>
-
-    <table className="w-full border border-gray-200">
-      <tbody>
-
-        <tr>
-          <td className="border p-3 font-semibold w-1/3">Village</td>
-          <td className="border p-3">{villageBrief.village_name || "-"}</td>
-        </tr>
-
-        <tr>
-          <td className="border p-3 font-semibold">Gram Panchayat</td>
-          <td className="border p-3">{villageBrief.gram_panchayat || "-"}</td>
-        </tr>
-
-        <tr>
-          <td className="border p-3 font-semibold">Tehsil</td>
-          <td className="border p-3">{villageBrief.tehsil || "-"}</td>
-        </tr>
-
-        <tr>
-          <td className="border p-3 font-semibold">District</td>
-          <td className="border p-3">{villageBrief.district || "-"}</td>
-        </tr>
-
-        <tr>
-          <td className="border p-3 font-semibold">State</td>
-          <td className="border p-3">{villageBrief.state || "-"}</td>
-        </tr>
-
-        <tr>
-          <td className="border p-3 font-semibold">Total Settlements</td>
-          <td className="border p-3">{villageBrief.total_settlements ?? 0}</td>
-        </tr>
-
-        <tr>
-          <td className="border p-3 font-semibold">Latitude</td>
-          <td className="border p-3">{villageBrief.latitude || "-"}</td>
-        </tr>
-
-        <tr>
-          <td className="border p-3 font-semibold">Longitude</td>
-          <td className="border p-3">{villageBrief.longitude || "-"}</td>
-        </tr>
-
-      </tbody>
-    </table>
-  </div>
-)}
       <div style={{ marginTop: 16, display: "flex", flexWrap: "wrap", gap: 20 ,justifyContent:"center"}}>
         <div style={{ display: "flex", alignItems: "center", gap: 8  ,fontWeight:"bold"}}>
           LULC Legends:
@@ -956,6 +789,118 @@ setLivelihoodData(
       </div>
       <br/>
 
+      {summary && (
+  <div className="bg-white p-5 rounded shadow mt-6">
+    <h2 className="text-xl font-bold mb-3">Summary</h2>
+
+    <div className="overflow-x-auto">
+      <table className="w-full border border-gray-200 text-sm">
+        <thead className="bg-gray-100">
+          <tr>
+            <th className="border p-2">Plan Name</th>
+            <th className="border p-2">Village</th>
+            <th className="border p-2">Settlements</th>
+            <th className="border p-2">Crops</th>
+            <th className="border p-2">Wells</th>
+            <th className="border p-2">Waterbodies</th>
+            <th className="border p-2">Maint (GW)</th>
+            <th className="border p-2">Maint (Agri)</th>
+            <th className="border p-2">Maint (SWB)</th>
+            <th className="border p-2">Maint (SWB_RS)</th>
+            <th className="border p-2">NRM Recharge</th>
+            <th className="border p-2">NRM Irrigation</th>
+            <th className="border p-2">Livelihood</th>
+            <th className="border p-2">Agrohorticulture</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          <tr>
+            <td className="border p-2">{summary.plan_name || "-"}</td>
+            <td className="border p-2">{summary.village_name || "-"}</td>
+            <td className="border p-2">{summary.sections?.settlements ?? 0}</td>
+            <td className="border p-2">{summary.sections?.crops ?? 0}</td>
+            <td className="border p-2">{summary.sections?.wells ?? 0}</td>
+            <td className="border p-2">{summary.sections?.waterbodies ?? 0}</td>
+            <td className="border p-2">{summary.sections?.maintenance?.gw ?? 0}</td>
+            <td className="border p-2">{summary.sections?.maintenance?.agri ?? 0}</td>
+            <td className="border p-2">{summary.sections?.maintenance?.swb ?? 0}</td>
+            <td className="border p-2">{summary.sections?.maintenance?.swb_rs ?? 0}</td>
+            <td className="border p-2">{summary.sections?.nrm_works?.recharge ?? 0}</td>
+            <td className="border p-2">{summary.sections?.nrm_works?.irrigation ?? 0}</td>
+            <td className="border p-2">{summary.sections?.livelihood ?? 0}</td>
+            <td className="border p-2">{summary.sections?.agrohorticulture ?? 0}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+)}
+{teamDetails && (
+  <div className="bg-white p-5 rounded shadow mt-4">
+    <h2 className="text-xl font-bold mb-3">Team Details</h2>
+
+    <div className="overflow-x-auto">
+      <table className="w-full border border-gray-200 text-sm">
+        <thead className="bg-gray-100">
+          <tr>
+            <th className="border p-2">Organization</th>
+            <th className="border p-2">Project</th>
+            <th className="border p-2">Plan</th>
+            <th className="border p-2">Facilitator</th>
+            <th className="border p-2">Process</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          <tr>
+            <td className="border p-2">{teamDetails.organization || "-"}</td>
+            <td className="border p-2">{teamDetails.project || "-"}</td>
+            <td className="border p-2">{teamDetails.plan || "-"}</td>
+            <td className="border p-2">{teamDetails.facilitator || "-"}</td>
+            <td className="border p-2">{teamDetails.process || "-"}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+)}
+{villageBrief && (
+  <div className="bg-white p-5 rounded shadow mt-4">
+    <h2 className="text-xl font-bold mb-3">Village Brief</h2>
+
+    <div className="overflow-x-auto">
+      <table className="w-full border border-gray-200 text-sm">
+        <thead className="bg-gray-100">
+          <tr>
+            <th className="border p-2">Village</th>
+            <th className="border p-2">Gram Panchayat</th>
+            <th className="border p-2">Tehsil</th>
+            <th className="border p-2">District</th>
+            <th className="border p-2">State</th>
+            <th className="border p-2">Total Settlements</th>
+            <th className="border p-2">Latitude</th>
+            <th className="border p-2">Longitude</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          <tr>
+            <td className="border p-2">{villageBrief.village_name || "-"}</td>
+            <td className="border p-2">{villageBrief.gram_panchayat || "-"}</td>
+            <td className="border p-2">{villageBrief.tehsil || "-"}</td>
+            <td className="border p-2">{villageBrief.district || "-"}</td>
+            <td className="border p-2">{villageBrief.state || "-"}</td>
+            <td className="border p-2">{villageBrief.total_settlements ?? 0}</td>
+            <td className="border p-2">{villageBrief.latitude || "-"}</td>
+            <td className="border p-2">{villageBrief.longitude || "-"}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+)}
+      
 {/*Base Map + MWS Layer (deltaGWell Depth only boundary) + Settlement layer */}
 
       <MapSection
@@ -967,188 +912,137 @@ setLivelihoodData(
         plan={plan}
       />
 
-     {Array.isArray(settlements) && settlements.map((s, i) => (
-  <div key={i} className="bg-white p-4 rounded shadow mt-4">
-    <h2 className="font-bold text-lg mb-2">Settlement</h2>
+     {Array.isArray(settlements) && settlements.length > 0 && (
+  <div className="bg-white p-4 rounded shadow mt-4">
+    <h2 className="font-bold text-lg mb-2">Settlements</h2>
 
-    <table className="w-full border border-gray-200">
-      <tbody>
+    <div className="overflow-x-auto">
+      <table className="w-full border border-gray-200 text-sm">
+        <thead className="bg-gray-100">
+          <tr>
+            <th className="border p-2">Name</th>
+            <th className="border p-2">Households</th>
+            <th className="border p-2">Type</th>
+            <th className="border p-2">Caste Detail</th>
+            <th className="border p-2">SC</th>
+            <th className="border p-2">ST</th>
+            <th className="border p-2">OBC</th>
+            <th className="border p-2">General</th>
+            <th className="border p-2">Marginal Farmers</th>
+            <th className="border p-2">MGNREGA Applied</th>
+            <th className="border p-2">Job Cards</th>
+            <th className="border p-2">Work Days</th>
+            <th className="border p-2">Past Work</th>
+            <th className="border p-2">Demand</th>
+            <th className="border p-2">Issues</th>
+          </tr>
+        </thead>
 
-        <tr>
-          <td className="border p-3 font-semibold w-1/3">Name</td>
-          <td className="border p-3">{s.settlement_name || "-"}</td>
-        </tr>
-
-        <tr>
-          <td className="border p-3 font-semibold">Households</td>
-          <td className="border p-3">{s.number_of_households ?? 0}</td>
-        </tr>
-
-        <tr>
-          <td className="border p-3 font-semibold">Type</td>
-          <td className="border p-3">{s.settlement_type || "-"}</td>
-        </tr>
-
-        <tr>
-          <td className="border p-3 font-semibold">Caste Detail</td>
-          <td className="border p-3">{s.caste_group_detail || "-"}</td>
-        </tr>
-
-        <tr>
-          <td className="border p-3 font-semibold">SC</td>
-          <td className="border p-3">{s.caste_counts?.sc ?? 0}</td>
-        </tr>
-
-        <tr>
-          <td className="border p-3 font-semibold">ST</td>
-          <td className="border p-3">{s.caste_counts?.st ?? 0}</td>
-        </tr>
-
-        <tr>
-          <td className="border p-3 font-semibold">OBC</td>
-          <td className="border p-3">{s.caste_counts?.obc ?? 0}</td>
-        </tr>
-
-        <tr>
-          <td className="border p-3 font-semibold">General</td>
-          <td className="border p-3">{s.caste_counts?.general ?? 0}</td>
-        </tr>
-
-        <tr>
-          <td className="border p-3 font-semibold">Marginal Farmers</td>
-          <td className="border p-3">{s.marginal_farmers ?? 0}</td>
-        </tr>
-
-        {/* MGNREGA Section */}
-        <tr>
-          <td className="border p-3 font-semibold bg-gray-100">MGNREGA Applied</td>
-          <td className="border p-3">{s.nrega_job_applied ?? 0}</td>
-        </tr>
-
-        <tr>
-          <td className="border p-3 font-semibold bg-gray-100">MGNREGA Job Cards</td>
-          <td className="border p-3">{s.nrega_job_card ?? 0}</td>
-        </tr>
-
-        <tr>
-          <td className="border p-3 font-semibold bg-gray-100">MGNREGA Work Days</td>
-          <td className="border p-3">{s.nrega_work_days ?? 0}</td>
-        </tr>
-
-        <tr>
-          <td className="border p-3 font-semibold bg-gray-100">Past Work</td>
-          <td className="border p-3 whitespace-pre-line">
-            {s.nrega_past_work || "-"}
-          </td>
-        </tr>
-
-        <tr>
-          <td className="border p-3 font-semibold bg-gray-100">Demand</td>
-          <td className="border p-3">{s.nrega_demand || "-"}</td>
-        </tr>
-
-        <tr>
-          <td className="border p-3 font-semibold bg-gray-100">Issues</td>
-          <td className="border p-3">{s.nrega_issues || "-"}</td>
-        </tr>
-
-      </tbody>
-    </table>
+        <tbody>
+          {settlements.map((s, i) => (
+            <tr key={i}>
+              <td className="border p-2">{s.settlement_name || "-"}</td>
+              <td className="border p-2">{s.number_of_households ?? 0}</td>
+              <td className="border p-2">{s.settlement_type || "-"}</td>
+              <td className="border p-2">{s.caste_group_detail || "-"}</td>
+              <td className="border p-2">{s.caste_counts?.sc ?? 0}</td>
+              <td className="border p-2">{s.caste_counts?.st ?? 0}</td>
+              <td className="border p-2">{s.caste_counts?.obc ?? 0}</td>
+              <td className="border p-2">{s.caste_counts?.general ?? 0}</td>
+              <td className="border p-2">{s.marginal_farmers ?? 0}</td>
+              <td className="border p-2">{s.nrega_job_applied ?? 0}</td>
+              <td className="border p-2">{s.nrega_job_card ?? 0}</td>
+              <td className="border p-2">{s.nrega_work_days ?? 0}</td>
+              <td className="border p-2 whitespace-pre-line">
+                {s.nrega_past_work || "-"}
+              </td>
+              <td className="border p-2">{s.nrega_demand || "-"}</td>
+              <td className="border p-2">{s.nrega_issues || "-"}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
   </div>
-))}
-{Array.isArray(crops) && crops.map((c, i) => (
-  <div key={i} className="bg-white p-4 rounded shadow mt-4">
+)}
+
+
+{Array.isArray(crops) && crops.length > 0 && (
+  <div className="bg-white p-4 rounded shadow mt-4">
     <h2 className="font-bold text-lg mb-2">Crops</h2>
 
-    <table className="w-full border border-gray-200">
-      <tbody>
+    <div className="overflow-x-auto">
+      <table className="w-full border border-gray-200 text-sm">
+        <thead className="bg-gray-100">
+          <tr>
+            <th className="border p-2">Settlement</th>
+            <th className="border p-2">Irrigation Source</th>
+            <th className="border p-2">Land Classification</th>
+            <th className="border p-2">Kharif Crops</th>
+            <th className="border p-2">Rabi Crops</th>
+            <th className="border p-2">Zaid Crops</th>
+            <th className="border p-2">Cropping Intensity</th>
+          </tr>
+        </thead>
 
-        <tr>
-          <td className="border p-3 font-semibold w-1/3">Settlement</td>
-          <td className="border p-3">{c.beneficiary_settlement || "-"}</td>
-        </tr>
-
-        <tr>
-          <td className="border p-3 font-semibold">Irrigation Source</td>
-          <td className="border p-3">{c.irrigation_source || "-"}</td>
-        </tr>
-
-        <tr>
-          <td className="border p-3 font-semibold">Land Classification</td>
-          <td className="border p-3">{c.land_classification || "-"}</td>
-        </tr>
-
-        <tr>
-          <td className="border p-3 font-semibold">Kharif Crops</td>
-          <td className="border p-3">
-            {c.kharif_crops || "-"} ({c.kharif_acres ?? 0} acres)
-          </td>
-        </tr>
-
-        <tr>
-          <td className="border p-3 font-semibold">Rabi Crops</td>
-          <td className="border p-3">
-            {c.rabi_crops || "-"} ({c.rabi_acres ?? 0} acres)
-          </td>
-        </tr>
-
-        <tr>
-          <td className="border p-3 font-semibold">Zaid Crops</td>
-          <td className="border p-3">
-            {c.zaid_crops || "None"} ({c.zaid_acres ?? 0} acres)
-          </td>
-        </tr>
-
-        <tr>
-          <td className="border p-3 font-semibold">Cropping Intensity</td>
-          <td className="border p-3">{c.cropping_intensity || "-"}</td>
-        </tr>
-
-      </tbody>
-    </table>
+        <tbody>
+          {crops.map((c, i) => (
+            <tr key={i}>
+              <td className="border p-2">{c.beneficiary_settlement || "-"}</td>
+              <td className="border p-2">{c.irrigation_source || "-"}</td>
+              <td className="border p-2">{c.land_classification || "-"}</td>
+              <td className="border p-2">
+                {c.kharif_crops || "-"} ({c.kharif_acres ?? 0})
+              </td>
+              <td className="border p-2">
+                {c.rabi_crops || "-"} ({c.rabi_acres ?? 0})
+              </td>
+              <td className="border p-2">
+                {c.zaid_crops || "None"} ({c.zaid_acres ?? 0})
+              </td>
+              <td className="border p-2">{c.cropping_intensity || "-"}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
   </div>
-))}
-{Array.isArray(livestock) && livestock.map((l, i) => (
-  <div key={i} className="bg-white p-4 rounded shadow mt-4">
+)}
+
+
+{Array.isArray(livestock) && livestock.length > 0 && (
+  <div className="bg-white p-4 rounded shadow mt-4">
     <h2 className="font-bold text-lg mb-2">Livestock</h2>
 
-    <table className="w-full border border-gray-200">
-      <tbody>
+    <div className="overflow-x-auto">
+      <table className="w-full border border-gray-200 text-sm">
+        <thead className="bg-gray-100">
+          <tr>
+            <th className="border p-2">Settlement</th>
+            <th className="border p-2">Goats</th>
+            <th className="border p-2">Sheep</th>
+            <th className="border p-2">Cattle</th>
+            <th className="border p-2">Piggery</th>
+            <th className="border p-2">Poultry</th>
+          </tr>
+        </thead>
 
-        <tr>
-          <td className="border p-3 font-semibold w-1/3">Settlement</td>
-          <td className="border p-3">{l.settlement_name || "-"}</td>
-        </tr>
-
-        <tr>
-          <td className="border p-3 font-semibold">Goats</td>
-          <td className="border p-3">{l.goats ?? 0}</td>
-        </tr>
-
-        <tr>
-          <td className="border p-3 font-semibold">Sheep</td>
-          <td className="border p-3">{l.sheep ?? 0}</td>
-        </tr>
-
-        <tr>
-          <td className="border p-3 font-semibold">Cattle</td>
-          <td className="border p-3">{l.cattle ?? 0}</td>
-        </tr>
-
-        <tr>
-          <td className="border p-3 font-semibold">Piggery</td>
-          <td className="border p-3">{l.piggery ?? 0}</td>
-        </tr>
-
-        <tr>
-          <td className="border p-3 font-semibold">Poultry</td>
-          <td className="border p-3">{l.poultry ?? 0}</td>
-        </tr>
-
-      </tbody>
-    </table>
+        <tbody>
+          {livestock.map((l, i) => (
+            <tr key={i}>
+              <td className="border p-2">{l.settlement_name || "-"}</td>
+              <td className="border p-2">{l.goats ?? 0}</td>
+              <td className="border p-2">{l.sheep ?? 0}</td>
+              <td className="border p-2">{l.cattle ?? 0}</td>
+              <td className="border p-2">{l.piggery ?? 0}</td>
+              <td className="border p-2">{l.poultry ?? 0}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
   </div>
-))}
+)}
       
       {/* Base Map + Streamorder raster + Well layer */}
 
@@ -1161,83 +1055,7 @@ setLivelihoodData(
         plan={plan}
       />
 
-    {Array.isArray(wells) && wells.map((w, i) => (
-  <div key={i} className="bg-white p-4 rounded shadow mt-4">
-    <h2 className="font-bold text-lg mb-2">Well</h2>
-
-    <table className="w-full border border-gray-200">
-      <tbody>
-
-        <tr>
-          <td className="border p-3 font-semibold w-1/3 bg-gray-50">Settlement</td>
-          <td className="border p-3">{w.beneficiary_settlement || "-"}</td>
-        </tr>
-
-        <tr>
-          <td className="border p-3 font-semibold bg-gray-50">Type</td>
-          <td className="border p-3">{w.well_type || "-"}</td>
-        </tr>
-
-        <tr>
-          <td className="border p-3 font-semibold bg-gray-50">Owner</td>
-          <td className="border p-3">{w.owner || "-"}</td>
-        </tr>
-
-        <tr>
-          <td className="border p-3 font-semibold bg-gray-50">Beneficiary</td>
-          <td className="border p-3">{w.beneficiary_name || "-"}</td>
-        </tr>
-
-        <tr>
-          <td className="border p-3 font-semibold bg-gray-50">Father</td>
-          <td className="border p-3">{w.beneficiary_father_name || "-"}</td>
-        </tr>
-
-        <tr>
-          <td className="border p-3 font-semibold bg-gray-50">Water Availability</td>
-          <td className="border p-3">{w.water_availability || "-"}</td>
-        </tr>
-
-        <tr>
-          <td className="border p-3 font-semibold bg-gray-50">Households</td>
-          <td className="border p-3">{w.households_benefitted ?? 0}</td>
-        </tr>
-
-        <tr>
-          <td className="border p-3 font-semibold bg-gray-50">Caste Uses</td>
-          <td className="border p-3">{w.caste_uses || "-"}</td>
-        </tr>
-
-        <tr>
-          <td className="border p-3 font-semibold bg-gray-50">Usage</td>
-          <td className="border p-3">{w.well_usage || "-"}</td>
-        </tr>
-
-        <tr>
-          <td className="border p-3 font-semibold bg-gray-50">Needs Maintenance</td>
-          <td className="border p-3">{w.need_maintenance || "-"}</td>
-        </tr>
-
-        <tr>
-          <td className="border p-3 font-semibold bg-gray-50">Repair</td>
-          <td className="border p-3">{w.repair_activities || "-"}</td>
-        </tr>
-
-        <tr>
-          <td className="border p-3 font-semibold bg-gray-50">Latitude</td>
-          <td className="border p-3">{w.latitude || "-"}</td>
-        </tr>
-
-        <tr>
-          <td className="border p-3 font-semibold bg-gray-50">Longitude</td>
-          <td className="border p-3">{w.longitude || "-"}</td>
-        </tr>
-
-      </tbody>
-    </table>
-  </div>
-))}
-<div style={{ marginTop: 16, display: "flex", flexWrap: "wrap", gap: 20,justifyContent:"center" }}>
+      <div style={{ marginTop: 16, display: "flex", flexWrap: "wrap", gap: 20,justifyContent:"center" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8  ,fontWeight:"bold"}}>
         Well Demands on Stream Order Raster
         </div>
@@ -1300,6 +1118,54 @@ setLivelihoodData(
       <br/>
 
 
+    {Array.isArray(wells) && wells.length > 0 && (
+  <div className="bg-white p-4 rounded shadow mt-4">
+    <h2 className="font-bold text-lg mb-2">Wells</h2>
+
+    <div className="overflow-x-auto">
+      <table className="w-full border border-gray-200 text-sm">
+        <thead className="bg-gray-100">
+          <tr>
+            <th className="border p-2">Settlement</th>
+            <th className="border p-2">Type</th>
+            <th className="border p-2">Owner</th>
+            <th className="border p-2">Beneficiary</th>
+            <th className="border p-2">Father Name</th>
+            <th className="border p-2">Water Availability</th>
+            <th className="border p-2">Households</th>
+            <th className="border p-2">Caste Uses</th>
+            <th className="border p-2">Usage</th>
+            <th className="border p-2">Needs Maintenance</th>
+            <th className="border p-2">Repair</th>
+            <th className="border p-2">Latitude</th>
+            <th className="border p-2">Longitude</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          {wells.map((w, i) => (
+            <tr key={i}>
+              <td className="border p-2">{w.beneficiary_settlement || "-"}</td>
+              <td className="border p-2">{w.well_type || "-"}</td>
+              <td className="border p-2">{w.owner || "-"}</td>
+              <td className="border p-2">{w.beneficiary_name || "-"}</td>
+              <td className="border p-2">{w.beneficiary_father_name || "-"}</td>
+              <td className="border p-2">{w.water_availability || "-"}</td>
+              <td className="border p-2">{w.households_benefitted ?? 0}</td>
+              <td className="border p-2">{w.caste_uses || "-"}</td>
+              <td className="border p-2">{w.well_usage || "-"}</td>
+              <td className="border p-2">{w.need_maintenance || "-"}</td>
+              <td className="border p-2">{w.repair_activities || "-"}</td>
+              <td className="border p-2">{w.latitude || "-"}</td>
+              <td className="border p-2">{w.longitude || "-"}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  </div>
+)}
+
 {/* Base Map + CLART + Waterstructure */}
       <MapSection
         title="Water Structures Overview"
@@ -1309,86 +1175,7 @@ setLivelihoodData(
         blockNameSafe={blockNameSafe}
         plan={plan}
       />
-      
-
-      {Array.isArray(waterbodies) && waterbodies.map((w, i) => (
-  <div key={i} className="bg-white p-4 rounded shadow mt-4">
-    <h2 className="font-bold text-lg mb-2">Waterbody</h2>
-
-    <table className="w-full border border-gray-200">
-      <tbody>
-
-        <tr>
-          <td className="border p-3 font-semibold w-1/3 bg-gray-50">Settlement</td>
-          <td className="border p-3">{w.beneficiary_settlement || "-"}</td>
-        </tr>
-
-        <tr>
-          <td className="border p-3 font-semibold bg-gray-50">Owner</td>
-          <td className="border p-3">{w.owner || "-"}</td>
-        </tr>
-
-        <tr>
-          <td className="border p-3 font-semibold bg-gray-50">Beneficiary</td>
-          <td className="border p-3">{w.beneficiary_name || "-"}</td>
-        </tr>
-
-        <tr>
-          <td className="border p-3 font-semibold bg-gray-50">Father</td>
-          <td className="border p-3">{w.beneficiary_father_name || "-"}</td>
-        </tr>
-
-        <tr>
-          <td className="border p-3 font-semibold bg-gray-50">Managed By</td>
-          <td className="border p-3">{w.who_manages || "-"}</td>
-        </tr>
-
-        <tr>
-          <td className="border p-3 font-semibold bg-gray-50">Caste Users</td>
-          <td className="border p-3">{w.caste_who_uses || "-"}</td>
-        </tr>
-
-        <tr>
-          <td className="border p-3 font-semibold bg-gray-50">Households Benefitted</td>
-          <td className="border p-3">{w.households_benefitted ?? 0}</td>
-        </tr>
-
-        <tr>
-          <td className="border p-3 font-semibold bg-gray-50">Structure Type</td>
-          <td className="border p-3">{w.water_structure_type || "-"}</td>
-        </tr>
-
-        <tr>
-          <td className="border p-3 font-semibold bg-gray-50">Usage</td>
-          <td className="border p-3">{w.usage || "-"}</td>
-        </tr>
-
-        <tr>
-          <td className="border p-3 font-semibold bg-gray-50">Needs Maintenance</td>
-          <td className="border p-3">{w.need_maintenance || "-"}</td>
-        </tr>
-
-        <tr>
-          <td className="border p-3 font-semibold bg-gray-50">Repair Activities</td>
-          <td className="border p-3">{w.repair_activities || "-"}</td>
-        </tr>
-
-        <tr>
-          <td className="border p-3 font-semibold bg-gray-50">Latitude</td>
-          <td className="border p-3">{w.latitude || "-"}</td>
-        </tr>
-
-        <tr>
-          <td className="border p-3 font-semibold bg-gray-50">Longitude</td>
-          <td className="border p-3">{w.longitude || "-"}</td>
-        </tr>
-
-      </tbody>
-    </table>
-  </div>
-))}
-
-    <div style={{ marginTop: 16, display: "flex", flexWrap: "wrap", gap: 20 ,justifyContent:"center"}}>
+       <div style={{ marginTop: 16, display: "flex", flexWrap: "wrap", gap: 20 ,justifyContent:"center"}}>
         <div style={{ display: "flex", alignItems: "center", gap: 8  ,fontWeight:"bold"}}>
         Water Structures Overview 
         </div>
@@ -1420,6 +1207,56 @@ setLivelihoodData(
       </div>
       <br/>
 
+      
+
+      {Array.isArray(waterbodies) && waterbodies.length > 0 && (
+  <div className="bg-white p-4 rounded shadow mt-4">
+    <h2 className="font-bold text-lg mb-2">Waterbodies</h2>
+
+    <div className="overflow-x-auto">
+      <table className="w-full border border-gray-200 text-sm">
+        <thead className="bg-gray-100">
+          <tr>
+            <th className="border p-2">Settlement</th>
+            <th className="border p-2">Owner</th>
+            <th className="border p-2">Beneficiary</th>
+            <th className="border p-2">Father Name</th>
+            <th className="border p-2">Managed By</th>
+            <th className="border p-2">Caste Users</th>
+            <th className="border p-2">Households</th>
+            <th className="border p-2">Structure Type</th>
+            <th className="border p-2">Usage</th>
+            <th className="border p-2">Needs Maintenance</th>
+            <th className="border p-2">Repair Activities</th>
+            <th className="border p-2">Latitude</th>
+            <th className="border p-2">Longitude</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          {waterbodies.map((w, i) => (
+            <tr key={i}>
+              <td className="border p-2">{w.beneficiary_settlement || "-"}</td>
+              <td className="border p-2">{w.owner || "-"}</td>
+              <td className="border p-2">{w.beneficiary_name || "-"}</td>
+              <td className="border p-2">{w.beneficiary_father_name || "-"}</td>
+              <td className="border p-2">{w.who_manages || "-"}</td>
+              <td className="border p-2">{w.caste_who_uses || "-"}</td>
+              <td className="border p-2">{w.households_benefitted ?? 0}</td>
+              <td className="border p-2">{w.water_structure_type || "-"}</td>
+              <td className="border p-2">{w.usage || "-"}</td>
+              <td className="border p-2">{w.need_maintenance || "-"}</td>
+              <td className="border p-2">{w.repair_activities || "-"}</td>
+              <td className="border p-2">{w.latitude || "-"}</td>
+              <td className="border p-2">{w.longitude || "-"}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  </div>
+)}
+   
 {/*Base Map + Terrain + Irrigation Structure + Recharge Structure */}
       <MapSection
         title="Recharge & Irrigation Structures"
@@ -1430,282 +1267,6 @@ setLivelihoodData(
         plan={plan}
       />
 
-
-      {Array.isArray(nrmWorks) && nrmWorks.map((n, i) => (
-  <div key={i} className="bg-white p-4 rounded shadow mt-4">
-    <h2 className="font-bold text-lg mb-2">
-      NRM Work - {n.work_category}
-    </h2>
-
-    <table className="w-full border border-gray-200">
-      <tbody>
-
-        <tr>
-          <td className="border p-3 font-semibold bg-gray-50">Demand Type</td>
-          <td className="border p-3">{n.demand_type || "-"}</td>
-        </tr>
-
-        <tr>
-          <td className="border p-3 font-semibold bg-gray-50">Work Demand</td>
-          <td className="border p-3">{n.work_demand || "-"}</td>
-        </tr>
-
-        <tr>
-          <td className="border p-3 font-semibold bg-gray-50">Settlement</td>
-          <td className="border p-3">{n.beneficiary_settlement || "-"}</td>
-        </tr>
-
-        <tr>
-          <td className="border p-3 font-semibold bg-gray-50">Beneficiary</td>
-          <td className="border p-3">{n.beneficiary_name || "-"}</td>
-        </tr>
-
-        <tr>
-          <td className="border p-3 font-semibold bg-gray-50">Gender</td>
-          <td className="border p-3">{n.gender || "-"}</td>
-        </tr>
-
-        <tr>
-          <td className="border p-3 font-semibold bg-gray-50">Father Name</td>
-          <td className="border p-3">{n.beneficiary_father_name || "-"}</td>
-        </tr>
-
-        <tr>
-          <td className="border p-3 font-semibold bg-gray-50">Latitude</td>
-          <td className="border p-3">{n.latitude || "-"}</td>
-        </tr>
-
-        <tr>
-          <td className="border p-3 font-semibold bg-gray-50">Longitude</td>
-          <td className="border p-3">{n.longitude || "-"}</td>
-        </tr>
-
-      </tbody>
-    </table>
-  </div>
-))}
-
-
-{Array.isArray(maintenanceGW) && maintenanceGW.map((m, i) => (
-  <div key={i} className="bg-white p-4 rounded shadow mt-4">
-    <h2 className="font-bold text-lg mb-2">
-      GW Maintenance - {m.structure_type}
-    </h2>
-
-    <table className="w-full border border-gray-200">
-      <tbody>
-
-        <tr>
-          <td className="border p-3 font-semibold bg-gray-50">Demand Type</td>
-          <td className="border p-3">{m.demand_type || "-"}</td>
-        </tr>
-
-        <tr>
-          <td className="border p-3 font-semibold bg-gray-50">Structure Type</td>
-          <td className="border p-3">{m.structure_type || "-"}</td>
-        </tr>
-
-        <tr>
-          <td className="border p-3 font-semibold bg-gray-50">Repair Activities</td>
-          <td className="border p-3">{m.repair_activities || "-"}</td>
-        </tr>
-
-        <tr>
-          <td className="border p-3 font-semibold bg-gray-50">Settlement</td>
-          <td className="border p-3">{m.beneficiary_settlement || "-"}</td>
-        </tr>
-
-        <tr>
-          <td className="border p-3 font-semibold bg-gray-50">Beneficiary</td>
-          <td className="border p-3">{m.beneficiary_name || "-"}</td>
-        </tr>
-
-        <tr>
-          <td className="border p-3 font-semibold bg-gray-50">Father Name</td>
-          <td className="border p-3">{m.beneficiary_father_name || "-"}</td>
-        </tr>
-
-        <tr>
-          <td className="border p-3 font-semibold bg-gray-50">Latitude</td>
-          <td className="border p-3">{m.latitude || "-"}</td>
-        </tr>
-
-        <tr>
-          <td className="border p-3 font-semibold bg-gray-50">Longitude</td>
-          <td className="border p-3">{m.longitude || "-"}</td>
-        </tr>
-
-      </tbody>
-    </table>
-  </div>
-))}
-
-
-{Array.isArray(maintenanceAgri) && maintenanceAgri.map((m, i) => (
-  <div key={i} className="bg-white p-4 rounded shadow mt-4">
-    <h2 className="font-bold text-lg mb-2">
-      Agri Maintenance - {m.structure_type}
-    </h2>
-
-    <table className="w-full border border-gray-200">
-      <tbody>
-
-        <tr>
-          <td className="border p-3 font-semibold bg-gray-50">Demand Type</td>
-          <td className="border p-3">{m.demand_type || "-"}</td>
-        </tr>
-
-        <tr>
-          <td className="border p-3 font-semibold bg-gray-50">Structure Type</td>
-          <td className="border p-3">{m.structure_type || "-"}</td>
-        </tr>
-
-        <tr>
-          <td className="border p-3 font-semibold bg-gray-50">Repair Activities</td>
-          <td className="border p-3">{m.repair_activities || "-"}</td>
-        </tr>
-
-        <tr>
-          <td className="border p-3 font-semibold bg-gray-50">Settlement</td>
-          <td className="border p-3">{m.beneficiary_settlement || "-"}</td>
-        </tr>
-
-        <tr>
-          <td className="border p-3 font-semibold bg-gray-50">Beneficiary</td>
-          <td className="border p-3">{m.beneficiary_name || "-"}</td>
-        </tr>
-
-        <tr>
-          <td className="border p-3 font-semibold bg-gray-50">Father Name</td>
-          <td className="border p-3">{m.beneficiary_father_name || "-"}</td>
-        </tr>
-
-        <tr>
-          <td className="border p-3 font-semibold bg-gray-50">Latitude</td>
-          <td className="border p-3">{m.latitude || "-"}</td>
-        </tr>
-
-        <tr>
-          <td className="border p-3 font-semibold bg-gray-50">Longitude</td>
-          <td className="border p-3">{m.longitude || "-"}</td>
-        </tr>
-
-      </tbody>
-    </table>
-  </div>
-))}
-
-
-{Array.isArray(maintenanceSWB) && maintenanceSWB.map((m, i) => (
-  <div key={i} className="bg-white p-4 rounded shadow mt-4">
-    <h2 className="font-bold text-lg mb-2">
-      SWB Maintenance - {m.structure_type}
-    </h2>
-
-    <table className="w-full border border-gray-200">
-      <tbody>
-
-        <tr>
-          <td className="border p-3 font-semibold bg-gray-50">Demand Type</td>
-          <td className="border p-3">{m.demand_type || "-"}</td>
-        </tr>
-
-        <tr>
-          <td className="border p-3 font-semibold bg-gray-50">Structure Type</td>
-          <td className="border p-3">{m.structure_type || "-"}</td>
-        </tr>
-
-        <tr>
-          <td className="border p-3 font-semibold bg-gray-50">Repair Activities</td>
-          <td className="border p-3">{m.repair_activities || "-"}</td>
-        </tr>
-
-        <tr>
-          <td className="border p-3 font-semibold bg-gray-50">Settlement</td>
-          <td className="border p-3">{m.beneficiary_settlement || "-"}</td>
-        </tr>
-
-        <tr>
-          <td className="border p-3 font-semibold bg-gray-50">Beneficiary</td>
-          <td className="border p-3">{m.beneficiary_name || "-"}</td>
-        </tr>
-
-        <tr>
-          <td className="border p-3 font-semibold bg-gray-50">Father Name</td>
-          <td className="border p-3">{m.beneficiary_father_name || "-"}</td>
-        </tr>
-
-        <tr>
-          <td className="border p-3 font-semibold bg-gray-50">Latitude</td>
-          <td className="border p-3">{m.latitude || "-"}</td>
-        </tr>
-
-        <tr>
-          <td className="border p-3 font-semibold bg-gray-50">Longitude</td>
-          <td className="border p-3">{m.longitude || "-"}</td>
-        </tr>
-
-      </tbody>
-    </table>
-  </div>
-))}
-
-
-
-{Array.isArray(maintenanceSWBRS) && maintenanceSWBRS.map((m, i) => (
-  <div key={i} className="bg-white p-4 rounded shadow mt-4">
-    <h2 className="font-bold text-lg mb-2">
-      SWB_RS Maintenance - {m.structure_type}
-    </h2>
-
-    <table className="w-full border border-gray-200">
-      <tbody>
-
-        <tr>
-          <td className="border p-3 font-semibold bg-gray-50">Demand Type</td>
-          <td className="border p-3">{m.demand_type || "-"}</td>
-        </tr>
-
-        <tr>
-          <td className="border p-3 font-semibold bg-gray-50">Structure Type</td>
-          <td className="border p-3">{m.structure_type || "-"}</td>
-        </tr>
-
-        <tr>
-          <td className="border p-3 font-semibold bg-gray-50">Repair Activities</td>
-          <td className="border p-3">{m.repair_activities || "-"}</td>
-        </tr>
-
-        <tr>
-          <td className="border p-3 font-semibold bg-gray-50">Settlement</td>
-          <td className="border p-3">{m.beneficiary_settlement || "-"}</td>
-        </tr>
-
-        <tr>
-          <td className="border p-3 font-semibold bg-gray-50">Beneficiary</td>
-          <td className="border p-3">{m.beneficiary_name || "-"}</td>
-        </tr>
-
-        <tr>
-          <td className="border p-3 font-semibold bg-gray-50">Father Name</td>
-          <td className="border p-3">{m.beneficiary_father_name || "-"}</td>
-        </tr>
-
-        <tr>
-          <td className="border p-3 font-semibold bg-gray-50">Latitude</td>
-          <td className="border p-3">{m.latitude || "-"}</td>
-        </tr>
-
-        <tr>
-          <td className="border p-3 font-semibold bg-gray-50">Longitude</td>
-          <td className="border p-3">{m.longitude || "-"}</td>
-        </tr>
-
-      </tbody>
-    </table>
-  </div>
-))}
-      
       <div style={{ marginTop: 16, display: "flex", flexWrap: "wrap", gap: 20 ,justifyContent:"center"}}>
         <div style={{ display: "flex", alignItems: "center", gap: 8  ,fontWeight:"bold"}}>
         Recharge and Irrigation Structures Overview 
@@ -1768,6 +1329,202 @@ setLivelihoodData(
       </div>
       <br/>
 
+
+
+      {Array.isArray(nrmWorks) && nrmWorks.length > 0 && (
+  <div className="bg-white p-4 rounded shadow mt-4">
+    <h2 className="font-bold text-lg mb-2">NRM Works</h2>
+
+    <div className="overflow-x-auto">
+      <table className="w-full border border-gray-200 text-sm">
+        <thead className="bg-gray-100">
+          <tr>
+            <th className="border p-2">Work Category</th>
+            <th className="border p-2">Demand Type</th>
+            <th className="border p-2">Work Demand</th>
+            <th className="border p-2">Settlement</th>
+            <th className="border p-2">Beneficiary</th>
+            <th className="border p-2">Gender</th>
+            <th className="border p-2">Father Name</th>
+            <th className="border p-2">Latitude</th>
+            <th className="border p-2">Longitude</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          {nrmWorks.map((n, i) => (
+            <tr key={i}>
+              <td className="border p-2">{n.work_category || "-"}</td>
+              <td className="border p-2">{n.demand_type || "-"}</td>
+              <td className="border p-2">{n.work_demand || "-"}</td>
+              <td className="border p-2">{n.beneficiary_settlement || "-"}</td>
+              <td className="border p-2">{n.beneficiary_name || "-"}</td>
+              <td className="border p-2">{n.gender || "-"}</td>
+              <td className="border p-2">{n.beneficiary_father_name || "-"}</td>
+              <td className="border p-2">{n.latitude || "-"}</td>
+              <td className="border p-2">{n.longitude || "-"}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  </div>
+)}
+
+{Array.isArray(maintenanceGW) && maintenanceGW.length > 0 && (
+  <div className="bg-white p-4 rounded shadow mt-4">
+    <h2 className="font-bold text-lg mb-2">GW Maintenance</h2>
+
+    <div className="overflow-x-auto">
+      <table className="w-full border border-gray-200 text-sm">
+        <thead className="bg-gray-100">
+          <tr>
+            <th className="border p-2">Demand Type</th>
+            <th className="border p-2">Structure Type</th>
+            <th className="border p-2">Repair Activities</th>
+            <th className="border p-2">Settlement</th>
+            <th className="border p-2">Beneficiary</th>
+            <th className="border p-2">Father Name</th>
+            <th className="border p-2">Latitude</th>
+            <th className="border p-2">Longitude</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          {maintenanceGW.map((m, i) => (
+            <tr key={i}>
+              <td className="border p-2">{m.demand_type || "-"}</td>
+              <td className="border p-2">{m.structure_type || "-"}</td>
+              <td className="border p-2">{m.repair_activities || "-"}</td>
+              <td className="border p-2">{m.beneficiary_settlement || "-"}</td>
+              <td className="border p-2">{m.beneficiary_name || "-"}</td>
+              <td className="border p-2">{m.beneficiary_father_name || "-"}</td>
+              <td className="border p-2">{m.latitude || "-"}</td>
+              <td className="border p-2">{m.longitude || "-"}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  </div>
+)}
+
+
+{Array.isArray(maintenanceAgri) && maintenanceAgri.length > 0 && (
+  <div className="bg-white p-4 rounded shadow mt-4">
+    <h2 className="font-bold text-lg mb-2">Agri Maintenance</h2>
+
+    <div className="overflow-x-auto">
+      <table className="w-full border border-gray-200 text-sm">
+        <thead className="bg-gray-100">
+          <tr>
+            <th className="border p-2">Demand Type</th>
+            <th className="border p-2">Structure Type</th>
+            <th className="border p-2">Repair Activities</th>
+            <th className="border p-2">Settlement</th>
+            <th className="border p-2">Beneficiary</th>
+            <th className="border p-2">Father Name</th>
+            <th className="border p-2">Latitude</th>
+            <th className="border p-2">Longitude</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          {maintenanceAgri.map((m, i) => (
+            <tr key={i}>
+              <td className="border p-2">{m.demand_type || "-"}</td>
+              <td className="border p-2">{m.structure_type || "-"}</td>
+              <td className="border p-2">{m.repair_activities || "-"}</td>
+              <td className="border p-2">{m.beneficiary_settlement || "-"}</td>
+              <td className="border p-2">{m.beneficiary_name || "-"}</td>
+              <td className="border p-2">{m.beneficiary_father_name || "-"}</td>
+              <td className="border p-2">{m.latitude || "-"}</td>
+              <td className="border p-2">{m.longitude || "-"}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  </div>
+)}
+
+{Array.isArray(maintenanceSWB) && maintenanceSWB.length > 0 && (
+  <div className="bg-white p-4 rounded shadow mt-4">
+    <h2 className="font-bold text-lg mb-2">SWB Maintenance</h2>
+
+    <div className="overflow-x-auto">
+      <table className="w-full border border-gray-200 text-sm">
+        <thead className="bg-gray-100">
+          <tr>
+            <th className="border p-2">Demand Type</th>
+            <th className="border p-2">Structure Type</th>
+            <th className="border p-2">Repair Activities</th>
+            <th className="border p-2">Settlement</th>
+            <th className="border p-2">Beneficiary</th>
+            <th className="border p-2">Father Name</th>
+            <th className="border p-2">Latitude</th>
+            <th className="border p-2">Longitude</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          {maintenanceSWB.map((m, i) => (
+            <tr key={i}>
+              <td className="border p-2">{m.demand_type || "-"}</td>
+              <td className="border p-2">{m.structure_type || "-"}</td>
+              <td className="border p-2">{m.repair_activities || "-"}</td>
+              <td className="border p-2">{m.beneficiary_settlement || "-"}</td>
+              <td className="border p-2">{m.beneficiary_name || "-"}</td>
+              <td className="border p-2">{m.beneficiary_father_name || "-"}</td>
+              <td className="border p-2">{m.latitude || "-"}</td>
+              <td className="border p-2">{m.longitude || "-"}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  </div>
+)}
+
+
+{Array.isArray(maintenanceSWBRS) && maintenanceSWBRS.length > 0 && (
+  <div className="bg-white p-4 rounded shadow mt-4">
+    <h2 className="font-bold text-lg mb-2">SWB_RS Maintenance</h2>
+
+    <div className="overflow-x-auto">
+      <table className="w-full border border-gray-200 text-sm">
+        <thead className="bg-gray-100">
+          <tr>
+            <th className="border p-2">Demand Type</th>
+            <th className="border p-2">Structure Type</th>
+            <th className="border p-2">Repair Activities</th>
+            <th className="border p-2">Settlement</th>
+            <th className="border p-2">Beneficiary</th>
+            <th className="border p-2">Father Name</th>
+            <th className="border p-2">Latitude</th>
+            <th className="border p-2">Longitude</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          {maintenanceSWBRS.map((m, i) => (
+            <tr key={i}>
+              <td className="border p-2">{m.demand_type || "-"}</td>
+              <td className="border p-2">{m.structure_type || "-"}</td>
+              <td className="border p-2">{m.repair_activities || "-"}</td>
+              <td className="border p-2">{m.beneficiary_settlement || "-"}</td>
+              <td className="border p-2">{m.beneficiary_name || "-"}</td>
+              <td className="border p-2">{m.beneficiary_father_name || "-"}</td>
+              <td className="border p-2">{m.latitude || "-"}</td>
+              <td className="border p-2">{m.longitude || "-"}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  </div>
+)}
+      
 {/* Livelihood */}
 
       
@@ -1780,67 +1537,47 @@ setLivelihoodData(
         blockNameSafe={blockNameSafe}
         plan={plan}
       />
-      {Array.isArray(livelihoodData) && livelihoodData.map((l, i) => (
-  <div key={i} className="bg-white p-4 rounded shadow mt-4">
+      {Array.isArray(livelihoodData) && livelihoodData.length > 0 && (
+  <div className="bg-white p-4 rounded shadow mt-4">
     <h2 className="font-bold text-lg mb-2">Livelihood</h2>
 
-    <table className="w-full border border-gray-200">
-      <tbody>
+    <div className="overflow-x-auto">
+      <table className="w-full border border-gray-200 text-sm">
+        <thead className="bg-gray-100">
+          <tr>
+            <th className="border p-2">Work Type</th>
+            <th className="border p-2">Demand Type</th>
+            <th className="border p-2">Work Demand</th>
+            <th className="border p-2">Settlement</th>
+            <th className="border p-2">Beneficiary</th>
+            <th className="border p-2">Father Name</th>
+            <th className="border p-2">Gender</th>
+            <th className="border p-2">Total Acres</th>
+            <th className="border p-2">Latitude</th>
+            <th className="border p-2">Longitude</th>
+          </tr>
+        </thead>
 
-        <tr>
-          <td className="border p-3 font-semibold w-1/3 bg-gray-50">Work Type</td>
-          <td className="border p-3">{l.livelihood_work || "-"}</td>
-        </tr>
-
-        <tr>
-          <td className="border p-3 font-semibold bg-gray-50">Demand Type</td>
-          <td className="border p-3">{l.demand_type || "-"}</td>
-        </tr>
-
-        <tr>
-          <td className="border p-3 font-semibold bg-gray-50">Work Demand</td>
-          <td className="border p-3">{l.work_demand || "-"}</td>
-        </tr>
-
-        <tr>
-          <td className="border p-3 font-semibold bg-gray-50">Settlement</td>
-          <td className="border p-3">{l.beneficiary_settlement || "-"}</td>
-        </tr>
-
-        <tr>
-          <td className="border p-3 font-semibold bg-gray-50">Beneficiary</td>
-          <td className="border p-3">{l.beneficiary_name || "-"}</td>
-        </tr>
-
-        <tr>
-          <td className="border p-3 font-semibold bg-gray-50">Father Name</td>
-          <td className="border p-3">{l.beneficiary_father_name || "-"}</td>
-        </tr>
-
-        <tr>
-          <td className="border p-3 font-semibold bg-gray-50">Gender</td>
-          <td className="border p-3">{l.gender || "-"}</td>
-        </tr>
-
-        <tr>
-          <td className="border p-3 font-semibold bg-gray-50">Total Acres</td>
-          <td className="border p-3">{l.total_acres ?? 0}</td>
-        </tr>
-
-        <tr>
-          <td className="border p-3 font-semibold bg-gray-50">Latitude</td>
-          <td className="border p-3">{l.latitude || "-"}</td>
-        </tr>
-
-        <tr>
-          <td className="border p-3 font-semibold bg-gray-50">Longitude</td>
-          <td className="border p-3">{l.longitude || "-"}</td>
-        </tr>
-
-      </tbody>
-    </table>
+        <tbody>
+          {livelihoodData.map((l, i) => (
+            <tr key={i}>
+              <td className="border p-2">{l.livelihood_work || "-"}</td>
+              <td className="border p-2">{l.demand_type || "-"}</td>
+              <td className="border p-2">{l.work_demand || "-"}</td>
+              <td className="border p-2">{l.beneficiary_settlement || "-"}</td>
+              <td className="border p-2">{l.beneficiary_name || "-"}</td>
+              <td className="border p-2">{l.beneficiary_father_name || "-"}</td>
+              <td className="border p-2">{l.gender || "-"}</td>
+              <td className="border p-2">{l.total_acres ?? 0}</td>
+              <td className="border p-2">{l.latitude || "-"}</td>
+              <td className="border p-2">{l.longitude || "-"}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
   </div>
-))}
+)}
     </div>
   );
 };
