@@ -458,7 +458,7 @@ const PlansPage = () => {
     return allPlans;
   };
 
-const fetchPlansByDistrict = async (districtId) => {
+  const fetchPlansByDistrict = async (districtId) => {
       setMapLoading(true);
       if (bubbleLayerRef.current) {
         mapRef.current.removeLayer(bubbleLayerRef.current);
@@ -513,7 +513,7 @@ const fetchPlansByDistrict = async (districtId) => {
       }
 
       setMapLoading(false);
-    };
+  };
 
   const addPlanDots = (plans) => {
     if (!mapRef.current) return;

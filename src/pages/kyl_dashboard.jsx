@@ -424,43 +424,6 @@ const KYLDashboardPage = () => {
 
   };
 
-  // const resetMWSStyle = () => {
-  //   // mwsLayerRef.current.setStyle((feature) => {
-  //   //   if (selectedMWS.length > 0 && selectedMWS.includes(feature.values_.uid)) {
-  //   //     // Filtered areas - highlight in red
-  //   //     return new Style({
-  //   //       stroke: new Stroke({
-  //   //         color: "#661E1E",
-  //   //         width: 1.0,
-  //   //       }),
-  //   //       fill: new Fill({
-  //   //         color: "rgba(255, 75, 75, 0.8)",
-  //   //       }),
-  //   //     });
-  //   //   } else {
-  //   //     // Default display - light yellow
-  //   //     return new Style({
-  //   //       stroke: new Stroke({
-  //   //         color: "#4a90e2",
-  //   //         width: 1.0,
-  //   //       }),
-  //   //       fill: new Fill({
-  //   //         color: "rgba(74, 144, 226, 0.2)",
-  //   //       }),
-  //   //     });
-  //   //   }
-  //   // });
-  // }
-
-  // const applyMWSStyle = (tempMWS, currentHighlight) => {
-  //   if (!mwsLayerRef.current) return;
-  
-  //   mwsLayerRef.current.updateStyleVariables({
-  //     highlightMWS: currentHighlight ?? -1,
-  //     filteredMWS: tempMWS.length ? tempMWS : [-999]
-  //   });
-  // };
-
   useEffect(() => {
     if (!mwsLayerRef.current) return;
   
@@ -564,123 +527,13 @@ const KYLDashboardPage = () => {
           ]
         });
         
-     
-        // mwsLayerRef.current.setStyle((feature) => {
-        //   if (highlightMWS !== null && feature.values_.uid === highlightMWS) {
-        //     setSelectedMWSProfile(feature.getProperties())
-        //     return new Style({
-        //       stroke: new Stroke({
-        //         color: "#166534",
-        //         width: 2.0,
-        //       }),
-        //       fill: new Fill({
-        //         color: "rgba(34, 197, 94, 0.4)",
-        //       }),
-        //     });
-        //   }
-        //   else if (tempMWS.length > 0 && tempMWS.includes(feature.values_.uid)) {
-        //     // Filtered areas - highlight in red
-        //     return new Style({
-        //       stroke: new Stroke({
-        //         color: "#661E1E",
-        //         width: 1.0,
-        //       }),
-        //       fill: new Fill({
-        //         color: "rgba(255, 75, 75, 0.8)",
-        //       }),
-        //     });
-        //   } else {
-        //     // Default display - light yellow
-        //     return new Style({
-        //       stroke: new Stroke({
-        //         color: "#4a90e2",
-        //         width: 1.0,
-        //       }),
-        //       fill: new Fill({
-        //         color: "rgba(85, 152, 229, 0.2)",
-        //       }),
-        //     });
-        //   }
-        // });
       } catch (error) {
         console.error("Error fetching MWS layer:", error);
         toast.error("Please Refresh the Page !")
       }
-    // } else {
-    //   try {
-    //     // mwsLayerRef.current.setStyle((feature) => {
-    //     //   if (highlightMWS !== null && feature.values_.uid === highlightMWS) {
-    //     //     setSelectedMWSProfile(feature.getProperties())
-    //     //     return new Style({
-    //     //       stroke: new Stroke({
-    //     //         color: "#166534",
-    //     //         width: 2.0,
-    //     //       }),
-    //     //       fill: new Fill({
-    //     //         color: "rgba(34, 197, 94, 0.4)",
-    //     //       }),
-    //     //     });
-    //     //   }
-    //     //   else if (
-    //     //     tempMWS.length > 0 &&
-    //     //     tempMWS.includes(feature.values_.uid) &&
-    //     //     currentLayer.length === 0
-    //     //   ) {
-    //     //     // Filtered areas - highlight in red
-    //     //     return new Style({
-    //     //       stroke: new Stroke({
-    //     //         color: "#661E1E",
-    //     //         width: 1.0,
-    //     //       }),
-    //     //       fill: new Fill({
-    //     //         color: "rgba(255, 75, 75, 0.8)",
-    //     //       }),
-    //     //     });
-    //     //   }
-    //     //   else if (
-    //     //     tempMWS.length > 0 &&
-    //     //     tempMWS.includes(feature.values_.uid)
-    //     //   ) {
-    //     //     return new Style({
-    //     //       stroke: new Stroke({
-    //     //         color: "#254871",
-    //     //         width: 1.5,
-    //     //       }),
-    //     //     });
-    //     //   }
-    //     // });
-    //   } catch (err) {
-    //     console.log("Error in setting MWS style :", err);
-    //   }
-    // }
   };
 
-  // Add this new pure-style function (no async, no layer creation)
-
-
-  const waitForFeatures = (source, label) => {
-    return new Promise((resolve) => {
-      let attempts = 0;
-
-      const interval = setInterval(() => {
-        const features = source.getFeatures();
-
-        if (features.length > 0) {
-          clearInterval(interval);
-          resolve(features);
-        }
-
-        attempts++;
-
-        if (attempts > 20) { // ~2 seconds max
-          clearInterval(interval);
-          resolve([]);
-        }
-      }, 100);
-    });
-  };
-
-  const fetchMWSConnectivityLayers = async () => {
+  const fetchWaterBodiesLayer = async () => {
     if (!district || !block || !mapRef.current) return;
 
     const dist = district.label
@@ -703,12 +556,6 @@ const KYLDashboardPage = () => {
     }
 
     // Create vector layer
-    // const wbLayer = await getVectorLayers(
-    //   "swb",
-    //   layerName,
-    //   true,
-    //   true
-    // );
     const wbLayer = await getWebGlPolygonLayers("swb", layerName);
     wbLayer.setStyle({
       "stroke-color": [
@@ -844,12 +691,6 @@ const KYLDashboardPage = () => {
           .replace(/\s*\(\s*/g, "_")
           .replace(/\s*\)\s*/g, "")
           .replace(/\s+/g, "_")}`;
-      // const mwsLayer = await getVectorLayers(
-      //   "mws_layers",
-      //   layerName,
-      //   true,
-      //   true
-      // );
 
       const mwsLayer = await getWebGlPolygonLayers("mws_layers", layerName);
 

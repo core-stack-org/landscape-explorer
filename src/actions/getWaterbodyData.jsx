@@ -1,63 +1,66 @@
 // import getVectorLayers from "./getVectorLayers";
 import getWebglVectorLayers from "./getWebGlVectorLayers";
 import GeoJSON from "ol/format/GeoJSON";
-import { Style, Stroke } from "ol/style";
+import { Style, Fill, Stroke } from "ol/style";
 
 export const getWaterbodyData = async ({
-  district,
-  block,
-  map,
-  waterbodyUID = null,
-}) => {
+    district,
+    block,
+    map,
+    waterbodyUID = null, 
+  }) => {
+    if (
+      !district?.label ||
+      !block?.label ||
+      !map
+    ) {
+      console.warn("Missing district/block label in getWaterbodyData", {
+        district,
+        block,
+      });
+      return null;
+    }
 
-  if (!district?.label || !block?.label || !map) {
-    console.warn("Missing district/block label in getWaterbodyData");
-    return null;
-  }
-
-  const dist = district.label.toLowerCase().replace(/\s+/g, "_");
-  const blk = block.label.toLowerCase().replace(/\s+/g, "_");
-
-  const yellowWaterbodyStyle = new Style({
-    stroke: new Stroke({
-      color: "yellow",
-      width: 1.5,
-    }),
-  });
-
-  const extractMwsUidList = (mwsUidString) => {
-    if (!mwsUidString) return [];
-    return mwsUidString.split("_").reduce((acc, val, idx, arr) => {
-      if (idx % 2 === 0 && arr[idx + 1]) {
-        acc.push(`${val}_${arr[idx + 1]}`);
+    const transformName = (name) => {
+      if (!name) return "";
+    
+      // Extract base + alias from parentheses
+      const match = name.match(/^(.+?)\s*\((.+?)\)$/);
+    
+      let parts = [];
+    
+      if (match) {
+        const main = match[1];
+        const alias = match[2];
+    
+        parts = [main, alias];
+      } else {
+        // no parentheses → repeat twice
+        parts = [name];
       }
-      return acc;
-    }, []);
-  };
+    
+      return parts
+        .map((p) =>
+          p
+            .replace(/[^\w\s-]/g, "") // remove special chars
+            .replace(/\s+/g, "_")     // Space
+            .replace(/_+/g, "_")      // collapse _
+            .replace(/^_|_$/g, "")    // trim _
+            .toLowerCase()
+        )
+        .join("_");
+    };
 
-  // ===================== WATERBODY ======================
-
-  const wbLayerName = `surface_waterbodies_${dist}_${blk}`;
-  const wbLayer = await getVectorLayers("swb", wbLayerName, false, true);
-  map.addLayer(wbLayer);
-
-  wbLayer.setStyle(yellowWaterbodyStyle);
-
-  const wbSource = wbLayer.getSource();
-  const view = map.getView();
-  const extent = view.calculateExtent(map.getSize());
-
-  wbSource.loadFeatures(extent, view.getResolution(), view.getProjection());
-  const wbFeatures = await waitForFeatures(wbSource);
-
-  let matchedWaterbody = null;
-
-  if (waterbodyUID) {
-    matchedWaterbody = wbFeatures.find((f) => {
-      const uid = f.get("UID") || f.get("uid");
-      return uid?.toString() === waterbodyUID.toString();
+  const dist = transformName(district.label);
+  
+  const blk = transformName(block.label);
+  
+    const yellowWaterbodyStyle = new Style({
+      stroke: new Stroke({
+        color: "yellow", 
+        width: 1.5,
+      }),
     });
-  }
 
     const extractMwsUidList = (mwsUidString) => {
       if (!mwsUidString) return [];
@@ -94,6 +97,10 @@ export const getWaterbodyData = async ({
         const uid = f.get("UID") || f.get("uid");
         return uid?.toString() === waterbodyUID.toString();
       });
+  
+      if (!matchedWaterbody) {
+        console.warn(" No waterbody matched UID:", waterbodyUID);
+      }
     }
   
     const mwsLayerName = `deltaG_well_depth_${dist}_${blk}`;
@@ -117,9 +124,20 @@ export const getWaterbodyData = async ({
         matchedWaterbody.get("MWS_UID") ||
         matchedWaterbody.get("mws_uid");
 
-  // ===================== ZOI ======================
+      if (wbMwsUID) {
+        // extract list like ["12_308838","12_311076","12_316294"]
+        const mwsUidList = extractMwsUidList(wbMwsUID.toString());
+   
+    
+        matchedMWS = mwsFeatures.filter((f) => {
+          const uid = (f.get("uid") || f.get("UID"))?.toString();
+          return uid && mwsUidList.includes(uid.trim());
+        });
+      }
+    }
 
-  const zoiLayerName = `waterbodies_zoi_${dist}_${blk}`;
+// ===================== ZOI FETCH ======================
+const zoiLayerName = `waterbodies_zoi_${dist}_${blk}`;
 
 // Try multiple namespaces — some servers store ZOI differently
 const zoiLayer =
@@ -128,87 +146,75 @@ const zoiLayer =
   null;
   
 
-  let rawZoiFeatures = [];
-  let matchedZOI = [];
+let rawZoiFeatures = [];
+let matchedZOI = [];
 
 if (zoiLayer) {
   // map.addLayer(zoiLayer);
 
-    const zoiSource = zoiLayer.getSource();
-    zoiSource.loadFeatures(extent, view.getResolution(), view.getProjection());
+  const zoiSource = zoiLayer.getSource();
+  zoiSource.loadFeatures(extent, view.getResolution(), view.getProjection());
 
-    rawZoiFeatures = await waitForFeatures(zoiSource);
+  rawZoiFeatures = await waitForFeatures(zoiSource);
 
-    if (matchedWaterbody) {
-      const wbUid =
-        matchedWaterbody.get("UID")?.toString()?.trim() ||
-        matchedWaterbody.get("uid")?.toString()?.trim();
+  // Match only for selected WB
+  if (matchedWaterbody) {
+    const wbUid =
+      matchedWaterbody.get("UID")?.toString()?.trim() ||
+      matchedWaterbody.get("uid")?.toString()?.trim();
 
-      matchedZOI = rawZoiFeatures.filter((f) => {
-        const zUid =
-          f.get("UID")?.toString()?.trim() ||
-          f.get("uid")?.toString()?.trim();
-        return zUid === wbUid;
-      });
-    }
+    matchedZOI = rawZoiFeatures.filter(f => {
+      const zUid =
+        f.get("UID")?.toString()?.trim() ||
+        f.get("uid")?.toString()?.trim();
+      return zUid === wbUid;
+    });
   }
-
-  // ===================== FINAL RETURN ======================
-
-  return {
-    wbLayer,
-    wbFeatures,
-
-    waterbody: matchedWaterbody
-      ? (() => {
-          const geo = new GeoJSON().writeFeatureObject(matchedWaterbody, {
-            dataProjection: "EPSG:4326",
-            featureProjection: "EPSG:4326",
-          });
-          delete geo.properties;
-          return {
+}
+    return {
+      wbLayer,
+      wbFeatures,
+  
+      waterbody: matchedWaterbody
+        ? {
             olFeature: matchedWaterbody,
-            geojson: geo,
-          };
-        })()
-      : null,
-
-    mws: matchedMWS.length
-      ? matchedMWS.map((f) => {
-          const geo = new GeoJSON().writeFeatureObject(f, {
-            dataProjection: "EPSG:4326",
-            featureProjection: "EPSG:4326",
-          });
-          delete geo.properties;
-          return {
+            geojson: new GeoJSON().writeFeatureObject(matchedWaterbody, {
+              dataProjection: "EPSG:4326",
+              featureProjection: "EPSG:4326",
+            }),
+          }
+        : null,
+        
+  
+        mws: matchedMWS.length
+        ? matchedMWS.map(f => ({
             olFeature: f,
-            geojson: geo,
-          };
-        })
-      : [],
+            geojson: new GeoJSON().writeFeatureObject(f, {
+              dataProjection: "EPSG:4326",
+              featureProjection: "EPSG:4326",
+            })
+          }))
+        : [],
 
-    zoi: matchedZOI.length
-      ? matchedZOI.map((f) => {
-          const geo = new GeoJSON().writeFeatureObject(f, {
-            dataProjection: "EPSG:4326",
-            featureProjection: "EPSG:4326",
-          });
-          delete geo.properties;
-          return geo;
+        zoi: matchedZOI.length
+    ? matchedZOI.map(f =>
+        new GeoJSON().writeFeatureObject(f, {
+          dataProjection: "EPSG:4326",
+          featureProjection: "EPSG:4326",
         })
-      : [],
+      )
+    : [],
+        
+    };
   };
-};
-
-// ===================== WAIT FUNCTION ======================
-
-const waitForFeatures = (source) =>
-  new Promise((resolve) => {
-    const interval = setInterval(() => {
-      const feats = source.getFeatures();
-      if (feats.length > 0) {
-        clearInterval(interval);
-        resolve(feats);
-      }
-    }, 200);
-  });
+  
+  const waitForFeatures = (source) =>
+    new Promise((resolve) => {
+      const interval = setInterval(() => {
+        const feats = source.getFeatures();
+        if (feats.length > 0) {
+          clearInterval(interval);
+          resolve(feats);
+        }
+      }, 200);
+    });
