@@ -18,7 +18,7 @@ import TileLayer from "ol/layer/Tile";
 import Control from "ol/control/Control.js";
 import { defaults as defaultControls } from "ol/control/defaults.js";
 import { Map, View } from "ol";
-import { Fill, Stroke, Style, RegularShape } from "ol/style.js";
+import { Fill, Stroke, Style, Circle as CircleStyle } from "ol/style.js";
 import Point from "ol/geom/Point";
 import GeoJSON from "ol/format/GeoJSON";
 
@@ -96,8 +96,6 @@ const KYLDashboardPage = () => {
   const [searchLatLong, setSearchLatLong] = useState(null);
 
   // * Triggers
-  const [filterTrigger, setFilterTrigger] = useState(0)
-  const [patternTrigger, setPatternTrigger] = useState(0)
   const [villagePatternTrigger, setvillagePatternTrigger] = useState(0)
 
   const [clickedWaterbodyId, setClickedWaterbodyId] = useState(null);
@@ -217,6 +215,7 @@ const KYLDashboardPage = () => {
 
     processSelections(filterSelections.selectedMWSValues, "MWS");
     processSelections(filterSelections.selectedVillageValues, "Village");
+    processSelections(filterSelections.selectedWaterbodyValues, "Waterbody");
 
     // Convert grouped object back to array
     Object.values(groupedSelections).forEach(group => {
@@ -353,6 +352,28 @@ const KYLDashboardPage = () => {
           },
         };
       });
+    } else if (sourceType.name === "Waterbody") {
+      if (!showWB) {
+        toast.error("Please enable 'Show Waterbodies' to apply waterbody filters.");
+        return;
+      }
+      setFilterSelections((prev) => {
+        const currentArray = prev.selectedWaterbodyValues?.[name] || [];
+        let newArray;
+        if (isChecked) {
+          const exists = currentArray.some(item => item.label === option.label);
+          newArray = exists ? currentArray : [...currentArray, option];
+        } else {
+          newArray = currentArray.filter(item => item.label !== option.label);
+        }
+        return {
+          ...prev,
+          selectedWaterbodyValues: {
+            ...(prev.selectedWaterbodyValues || {}),
+            [name]: newArray.length > 0 ? newArray : null,
+          },
+        };
+      });
     }
   };
 
@@ -366,68 +387,132 @@ const KYLDashboardPage = () => {
     );
   };
 
-  const filterWaterbodiesByMWS = () => {
-    if (!waterbodiesLayerRef.current || !mwsLayerRef.current) return;
+  const applyWaterbodyFilters = (mwsIds, wbFilters) => {
+    if (!waterbodiesLayerRef.current) return;
 
-    const waterbodiesSource = waterbodiesLayerRef.current.getSource();
-    const mwsSource = mwsLayerRef.current.getSource();
+    const wbSource = waterbodiesLayerRef.current.getSource();
+    const filterKeys = Object.keys(wbFilters || {}).filter(k => wbFilters[k]);
+    const hasMWSFilter = mwsIds.length > 0;
+    const hasAttrFilter = filterKeys.length > 0;
 
-    // Wait for features to be loaded
-    const wbFeatures = waterbodiesSource.getFeatures();
-    const mwsFeatures = mwsSource.getFeatures();
-    
-    if (wbFeatures.length === 0 || mwsFeatures.length === 0) {
-      console.warn('Features not loaded yet');
+    if (!hasMWSFilter && !hasAttrFilter) {
+      waterbodiesLayerRef.current.updateStyleVariables({ wbFilterActive: 0 });
       return;
     }
 
-    // If no MWS selected, show all waterbodies
-    if (!selectedMWS.length) {
-      wbFeatures.forEach(feature => {
-        feature.setStyle(undefined); // Reset to default style
+    const applyToFeatures = (wbFeatures, mwsFeatures) => {
+      if (!wbFeatures.length) return;
+
+      const selectedMWSPolygons = hasMWSFilter
+        ? mwsFeatures.filter(f => mwsIds.includes(f.get('uid')))
+        : [];
+
+      wbFeatures.forEach((feature) => {
+        const props = feature.getProperties();
+        let matches = true;
+
+        // MWS intersection check
+        if (hasMWSFilter) {
+          if (selectedMWSPolygons.length === 0) {
+            matches = false;
+          } else {
+            const wbGeom = feature.getGeometry();
+            if (!wbGeom) {
+              matches = false;
+            } else {
+              const coordinates = wbGeom.getType() === 'Polygon'
+                ? wbGeom.getCoordinates()[0]
+                : wbGeom.getCoordinates()[0]?.[0] ?? [];
+
+              const intersects = selectedMWSPolygons.some(mwsFeature => {
+                const mwsGeom = mwsFeature.getGeometry();
+                if (!mwsGeom) return false;
+                return coordinates.some(coord => mwsGeom.intersectsCoordinate(coord));
+              });
+
+              if (!intersects) matches = false;
+            }
+          }
+        }
+
+        // Attribute filter check
+        if (matches && hasAttrFilter) {
+          filterKeys.forEach((filterName) => {
+            const selectedOptions = wbFilters[filterName];
+            if (!selectedOptions) return;
+
+            if (filterName === "waterbody_size") {
+              const area = Number(
+                props.area_ored ?? props.AREA_HA ?? props.area ?? props.Area ?? 0
+              );
+              const pass = selectedOptions.some(
+                opt => area >= opt.value.lower && area <= opt.value.upper
+              );
+              if (!pass) matches = false;
+            }
+
+            if (filterName === "drainage_line") {
+              const value = Number(props.on_drainage_line ?? 0);
+              const pass = selectedOptions.some(opt => value === opt.value);
+              if (!pass) matches = false;
+            }
+
+            if (filterName === "surface_water_trend") {
+              const areas = Object.keys(props)
+                .filter(key => key.startsWith("area_") && key !== "area_ored")
+                .sort()
+                .map(key => Number(props[key] ?? 0));
+              const trend = calculateTrend(areas);
+              const pass = selectedOptions.some(opt => trend === opt.value);
+              if (!pass) matches = false;
+            }
+          });
+        }
+
+        feature.set("wbMatch", matches ? 1 : 0, true);
       });
-      return;
-    }
 
-    // Get selected MWS polygons
-    const selectedMWSPolygons = mwsFeatures.filter(feature => {
-      const uid = feature.get('uid');
-      return selectedMWS.includes(uid);
-    });
+      wbSource.changed();
+      waterbodiesLayerRef.current.updateStyleVariables({ wbFilterActive: 1 });
+    };
 
-    if (selectedMWSPolygons.length === 0) {
-      console.warn('No MWS polygons found for selected UIDs');
-      // Show all waterbodies if no valid MWS found
-      wbFeatures.forEach(feature => {
-        feature.setStyle(undefined);
-      });
-      return;
-    }
+    // Wait for both WB and MWS sources to have features before applying
+    const waitForBothAndApply = () => {
+      const wbFeatures = wbSource.getFeatures();
+      const mwsSource = mwsLayerRef.current?.getSource();
+      const mwsFeatures = mwsSource ? mwsSource.getFeatures() : [];
 
-    // Filter waterbodies by intersection
-    wbFeatures.forEach(wbFeature => {
-      const wbGeom = wbFeature.getGeometry();
-      if (!wbGeom) return;
+      const wbReady = wbFeatures.length > 0;
+      const mwsReady = !hasMWSFilter || mwsFeatures.length > 0;
 
-      const intersects = selectedMWSPolygons.some(mwsFeature => {
-        const mwsGeom = mwsFeature.getGeometry();
-        if (!mwsGeom) return false;
-
-        // Check if any coordinate of waterbody is inside MWS polygon
-        const coordinates = wbGeom.getType() === 'Polygon' 
-          ? wbGeom.getCoordinates()[0] 
-          : wbGeom.getCoordinates()[0][0];
-        
-        return coordinates.some(coord => mwsGeom.intersectsCoordinate(coord));
-      });
-
-      if (intersects) {
-        wbFeature.setStyle(undefined); // Show waterbody with default style
-      } else {
-        wbFeature.setStyle(new Style({})); // Hide waterbody
+      if (wbReady && mwsReady) {
+        applyToFeatures(wbFeatures, mwsFeatures);
+        return;
       }
-    });
 
+      // Poll every 100ms until both are ready, max 5 seconds
+      let attempts = 0;
+      const maxAttempts = 50;
+
+      const poll = setInterval(() => {
+        attempts++;
+        const wbF = wbSource.getFeatures();
+        const mwsF = mwsSource ? mwsSource.getFeatures() : [];
+
+        const wbOk = wbF.length > 0;
+        const mwsOk = !hasMWSFilter || mwsF.length > 0;
+
+        if (wbOk && mwsOk) {
+          clearInterval(poll);
+          applyToFeatures(wbF, mwsF);
+        } else if (attempts >= maxAttempts) {
+          clearInterval(poll);
+          console.warn("applyWaterbodyFilters: timed out waiting for features");
+        }
+      }, 100);
+    };
+
+    waitForBothAndApply();
   };
 
   useEffect(() => {
@@ -569,7 +654,7 @@ const KYLDashboardPage = () => {
         "mws_connectivity",
         connectivityLayerName,
         true,
-        true,
+        true
       );
 
       mapRef.current.addLayer(connectivityLayer);
@@ -584,7 +669,7 @@ const KYLDashboardPage = () => {
         "mws_centroid",
         centroidLayerName,
         true,
-        true,
+        true
       );
 
       mapRef.current.addLayer(centroidLayer);
@@ -593,6 +678,7 @@ const KYLDashboardPage = () => {
       const centroidSource = centroidLayer.getSource();
       await waitForFeatures(centroidSource, "Centroid");
       generateConnectivityArrows();
+
     } catch (error) {
       console.error("Error fetching connectivity layers:", error);
     }
@@ -608,13 +694,11 @@ const KYLDashboardPage = () => {
       return;
     }
 
-    const connectivityFeatures = mwsConnectivityLayerRef.current
-      .getSource()
-      .getFeatures();
+    const connectivityFeatures =
+      mwsConnectivityLayerRef.current.getSource().getFeatures();
 
-    const centroidFeatures = mwsCentroidLayerRef.current
-      .getSource()
-      .getFeatures();
+    const centroidFeatures =
+      mwsCentroidLayerRef.current.getSource().getFeatures();
 
     if (!connectivityFeatures.length || !centroidFeatures.length) {
       console.warn("No features found for arrow generation");
@@ -633,182 +717,171 @@ const KYLDashboardPage = () => {
       const coord = feature.getGeometry().getCoordinates();
       uidToCoord[uid.toString().trim()] = coord;
     });
-
+  
+    // -------------------------
+    // Build pairs with side index BEFORE creating features
+    // -------------------------
     const pairMap = {};
     const arrowFeatures = [];
+  
+    connectivityFeatures.forEach((feature) => {
+      const uid = feature.get("uid");
+      const downstream = feature.get("downstream");
+      if (!uid || !downstream) return;
 
-  connectivityFeatures.forEach((feature) => {
-    const uid = feature.get("uid");
-    const downstream = feature.get("downstream");
-
-    if (!uid || !downstream) return;
-
-    const start = uidToCoord[uid.toString().trim()];
-    const end = uidToCoord[downstream.toString().trim()];
-
-    if (!start || !end) return;
-
-    const key =
-      start[0] < end[0]
-        ? `${start.join(",")}_${end.join(",")}`
-        : `${end.join(",")}_${start.join(",")}`;
-
-    if (!pairMap[key]) pairMap[key] = 0;
-    const index = pairMap[key]++;
-    const side = index % 2 === 0 ? -1 : 1;
-
-    const dx = end[0] - start[0];
-    const dy = end[1] - start[1];
-    const len = Math.sqrt(dx * dx + dy * dy);
-    if (len < 1e-6) return;
-
-    const ux = dx / len;
-    const uy = dy / len;
-
-    const px = -uy;
-    const py = ux;
-
-    const MAP_OFFSET = 0.0008;
-    const MAP_PULLBACK = 0.0012;
-    const MAP_ARROW_LEN = 0.0014;
-
-    const offStart = [
-      start[0] + px * MAP_OFFSET * side,
-      start[1] + py * MAP_OFFSET * side,
-    ];
-    const offEnd = [
-      end[0] + px * MAP_OFFSET * side,
-      end[1] + py * MAP_OFFSET * side,
-    ];
-    const trimEnd = [
-      offEnd[0] - ux * MAP_PULLBACK,
-      offEnd[1] - uy * MAP_PULLBACK,
-    ];
-
-    const arrowAngle = Math.PI / 5;
-    const angle = Math.atan2(dy, dx);
-
-    const left = [
-      trimEnd[0] - MAP_ARROW_LEN * Math.cos(angle - arrowAngle),
-      trimEnd[1] - MAP_ARROW_LEN * Math.sin(angle - arrowAngle),
-    ];
-    const right = [
-      trimEnd[0] - MAP_ARROW_LEN * Math.cos(angle + arrowAngle),
-      trimEnd[1] - MAP_ARROW_LEN * Math.sin(angle + arrowAngle),
-    ];
-
-    arrowFeatures.push(
-      new Feature({
-        geometry: new LineString([offStart, trimEnd]),
-        featureType: "arrowLine",
-        upstream: uid,
-        downstream,
-      })
-    );
-
-    arrowFeatures.push(
-      new Feature({
-        geometry: new LineString([left, trimEnd, right]),
-        featureType: "arrowHead",
-        upstream: uid,
-        downstream,
-      })
-    );
-
-    arrowFeatures.push(
-      new Feature({
-        geometry: new Point(offStart),
-        featureType: "arrowDot",
-        upstream: uid,
-        downstream,
-      })
-    );
-  });
-
-  const arrowSource = new VectorSource({
-    features: arrowFeatures,
-  });
-
-  const arrowLayer = new VectorLayer({
-    source: arrowSource,
-    style: (feature) => {
-      const featureType = feature.get("featureType");
-      const color = "#FF1493";
-
-      if (featureType === "arrowLine" || featureType === "arrowHead") {
-        return new Style({
-          stroke: new Stroke({ color, width: 1.5 }),
-        });
-      }
-
-      if (featureType === "arrowDot") {
-        return new Style({
-          image: new RegularShape({
-            fill: new Fill({ color }),
-            points: 4,
-            radius: 4,
-            angle: Math.PI / 4,
-          }),
-        });
-      }
-
-      return null;
-    },
-  });
-
-  arrowLayer.setZIndex(9999);
-  arrowLayer.setVisible(false);
-  mapRef.current.addLayer(arrowLayer);
-  mwsArrowLayerRef.current = arrowLayer;
+      const start = uidToCoord[uid.toString().trim()];
+      const end = uidToCoord[downstream.toString().trim()];
+      if (!start || !end) return;
+  
+      const key =
+        start[0] < end[0]
+          ? `${start.join(",")}_${end.join(",")}`
+          : `${end.join(",")}_${start.join(",")}`;
+  
+      if (!pairMap[key]) pairMap[key] = 0;
+      const index = pairMap[key]++;
+      const side = index % 2 === 0 ? -1 : 1;
+  
+      // --- Compute offset geometry in map coords (not pixels) ---
+      const dx = end[0] - start[0];
+      const dy = end[1] - start[1];
+      const len = Math.sqrt(dx * dx + dy * dy);
+      if (len < 1e-6) return;
+  
+      const ux = dx / len;
+      const uy = dy / len;
+  
+      // Perpendicular in map coords
+      const px = -uy;
+      const py = ux;
+  
+      // Use a fixed map-unit offset (tune this to your projection/zoom level)
+      const MAP_OFFSET = len * 0.04; // 4% of line length — adjust as needed
+      const MAP_PULLBACK = len * 0.06;
+      const MAP_ARROW_LEN = len * 0.14;
+  
+      const offStart = [
+        start[0] + px * MAP_OFFSET * side,
+        start[1] + py * MAP_OFFSET * side,
+      ];
+      const offEnd = [
+        end[0] + px * MAP_OFFSET * side,
+        end[1] + py * MAP_OFFSET * side,
+      ];
+      const trimEnd = [
+        offEnd[0] - ux * MAP_PULLBACK,
+        offEnd[1] - uy * MAP_PULLBACK,
+      ];
+  
+      // Arrow head points
+      const arrowAngle = Math.PI / 7;
+      const angle = Math.atan2(dy, dx);
+  
+      const left = [
+        trimEnd[0] - MAP_ARROW_LEN * Math.cos(angle - arrowAngle),
+        trimEnd[1] - MAP_ARROW_LEN * Math.sin(angle - arrowAngle),
+      ];
+      const right = [
+        trimEnd[0] - MAP_ARROW_LEN * Math.cos(angle + arrowAngle),
+        trimEnd[1] - MAP_ARROW_LEN * Math.sin(angle + arrowAngle),
+      ];
+  
+      // Main line feature
+      arrowFeatures.push(
+        new Feature({
+          geometry: new LineString([offStart, trimEnd]),
+          featureType: "arrowLine",
+          upstream: uid,
+          downstream,
+        })
+      );
+  
+      // Arrow head feature
+      arrowFeatures.push(
+        new Feature({
+          geometry: new LineString([left, trimEnd, right]),
+          featureType: "arrowHead",
+          upstream: uid,
+          downstream,
+        })
+      );
+  
+      // Start dot feature
+      arrowFeatures.push(
+        new Feature({
+          geometry: new Point(offStart),
+          featureType: "arrowDot",
+          upstream: uid,
+          downstream,
+        })
+      );
+    });
+  
+    const arrowSource = new VectorSource({ features: arrowFeatures });
+  
+    const arrowLayer = new VectorLayer({
+      source: arrowSource,
+      style: (feature) => {
+        const color = "white";
+        const type = feature.get("featureType");
+  
+        if (type === "arrowLine" || type === "arrowHead") {
+          return new Style({
+            stroke: new Stroke({ color, width: 1.2 }),
+          });
+        }
+        if (type === "arrowDot") {
+          return new Style({
+            image: new CircleStyle({
+              radius: 3,
+              fill: new Fill({ color }),
+              stroke: new Stroke({ color, width: 1 }),
+            }),
+          });
+        }
+      },
+    });
+    arrowLayer.setZIndex(9999);
+    arrowLayer.setVisible(false);
+    mapRef.current.addLayer(arrowLayer);
+    mwsArrowLayerRef.current = arrowLayer;
   };
 
   const fetchWaterBodiesLayer = async () => {
     if (!district || !block || !mapRef.current) return;
+    if (waterbodiesLayerRef.current) return;
 
     const dist = transformName(district.label);
-
     const blk = transformName(block.label);
-
     const layerName = `surface_waterbodies_${dist}_${blk}`;
 
-    // If already loaded, skip
-    if (waterbodiesLayerRef.current) {
-      return;
-    }
-
-    // Create vector layer
     const wbLayer = await getWebGlPolygonLayers("swb", layerName);
+
     wbLayer.setStyle({
+      variables: { wbFilterActive: 0 },
       "stroke-color": [
         "case",
-        ["has", "area_ored"],
-        [246, 252, 83, 0.8],
-        [0,0,0,0]
+        ["all", ["==", ["var", "wbFilterActive"], 1], ["==", ["get", "wbMatch"], 0]],
+        [0, 0, 0, 0],
+        [0, 80, 180, 1]
       ],
-    
       "stroke-width": [
         "case",
-        ["has", "area_ored"],
-        2,
-        0
+        ["all", ["==", ["var", "wbFilterActive"], 1], ["==", ["get", "wbMatch"], 0]],
+        0,
+        2
       ],
-    
       "fill-color": [
         "case",
-        ["has", "area_ored"],
-        [246, 252, 83, 0.45],
-        [0,0,0,0]
+        ["all", ["==", ["var", "wbFilterActive"], 1], ["==", ["get", "wbMatch"], 0]],
+        [0, 0, 0, 0],
+        [30, 120, 220, 0.55]
       ]
     });
 
-    if (!wbLayer) {
-      console.warn("Failed loading waterbodies");
-      return;
-    }
-
-    // Just store the layer, don't add to map yet
+    if (!wbLayer) { console.warn("Failed loading waterbodies"); return; }
     waterbodiesLayerRef.current = wbLayer;
-  }
+  };
 
   const fetchAdminLayer = async (tempVillages) => {
     if (!district || !block) return;
@@ -1316,7 +1389,6 @@ const KYLDashboardPage = () => {
       });
     }
 
-    
     setCurrentLayer([]);
     setToggleStates({});
 
@@ -1324,15 +1396,14 @@ const KYLDashboardPage = () => {
     setFilterSelections({
       selectedMWSValues: {},
       selectedVillageValues: {},
+      selectedWaterbodyValues: {},
     });
-
    
     setPatternSelections({
       selectedMWSPatterns: {},
       selectedVillagePatterns: {},
     });
 
- 
     setIndicatorType(null);
 
     setSelectedMWS([]);
@@ -1348,7 +1419,6 @@ const KYLDashboardPage = () => {
       mapRef.current.removeLayer(waterbodiesLayerRef.current);
       waterbodiesLayerRef.current = null;
     }
-
 
     if (mwsLayerRef.current) {
       fetchMWSLayer([]);   // This restores default blue style properly
@@ -1424,6 +1494,19 @@ const KYLDashboardPage = () => {
       );
       setIsLoading(false);
     }
+  }
+
+  function calculateTrend(values) {
+    let S = 0;
+    for (let i = 0; i < values.length - 1; i++) {
+      for (let j = i + 1; j < values.length; j++) {
+        if (values[j] > values[i]) S++;
+        else if (values[j] < values[i]) S--;
+      }
+    }
+    if (S > 0) return 1;
+    if (S < 0) return -1;
+    return 0;
   }
 
   useEffect(() => {
@@ -2123,51 +2206,12 @@ const KYLDashboardPage = () => {
   }, [villageIdList]);
 
   useEffect(() => {
-    if (!waterbodiesLayerRef.current || !mwsLayerRef.current) return;
-    
-    const waterbodiesSource = waterbodiesLayerRef.current.getSource();
-    const mwsSource = mwsLayerRef.current.getSource();
-    
-    let hasFiltered = false; // Prevent multiple filter calls
-    
-    const attemptFilter = () => {
-      if (hasFiltered) return; // Already filtered, don't do it again
-      
-      const wbFeatures = waterbodiesSource.getFeatures();
-      const mwsFeatures = mwsSource.getFeatures();
-      
-      const wbReady = wbFeatures.length > 0;
-      const mwsReady = mwsFeatures.length > 0;
-      
-      if (wbReady && mwsReady) {
-        hasFiltered = true;
-        filterWaterbodiesByMWS();
-      }
-    };
-    
-    // Try immediately in case features are already loaded
-    attemptFilter();
-    
-    // If not loaded yet, wait for them
-    if (!hasFiltered) {
-      const wbKey = waterbodiesSource.on('change', () => {
-        if (waterbodiesSource.getState() === 'ready') {
-          attemptFilter();
-        }
-      });
-      
-      const mwsKey = mwsSource.on('change', () => {
-        if (mwsSource.getState() === 'ready') {
-          attemptFilter();
-        }
-      });
-      
-      return () => {
-        waterbodiesSource.un('change', wbKey);
-        mwsSource.un('change', mwsKey);
-      };
-    }
-  }, [selectedMWS, showWB]);
+    if (!showWB || !waterbodiesLayerRef.current) return;
+    applyWaterbodyFilters(
+      selectedMWS,
+      filterSelections.selectedWaterbodyValues || {}
+    );
+  }, [selectedMWS, filterSelections.selectedWaterbodyValues, showWB]);
 
   useEffect(() => {
   // Enable filters only when boundary + MWS + data are fully loaded
