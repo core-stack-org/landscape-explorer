@@ -108,6 +108,7 @@ const KYLDashboardPage = () => {
   const [selectedWaterbodyForTehsil, setSelectedWaterbodyForTehsil] = useRecoilState(selectedWaterbodyForTehsilAtom);
   const [showWB, setShowWB] = useState(false);
   const [showConnectivity, setShowConnectivity] = useState(false);
+  const [hasFilters, setHasFilters] = useState(false);
 
   const addLayerSafe = (layer) => layer && mapRef.current && mapRef.current.addLayer(layer);
 
@@ -1978,8 +1979,21 @@ console.log("Current filterSelections:", filterSelections);
       const mwsFilterKeys = Object.keys(filterSelections.selectedMWSValues || {});
 
       if (mwsFilterKeys.length === 0) {
+        setSelectedMWS([]);
+        setHasFilters(false);
+      
+        // 🔥 reset everything to default
+        const source = mwsLayerRef.current?.getSource();
+        if (source) {
+          source.getFeatures().forEach(f => {
+            f.unset("isFiltered");   
+          });
+          source.changed();
+        }
+      
         return;
       }
+
 
       let resultMWS = [];
       
@@ -2092,8 +2106,14 @@ console.log("Current filterSelections:", filterSelections);
         } else {
           // No patterns AND no filters - clear everything
           setSelectedMWS([]);
-          updateFilteredMWS([]);
-                    return;
+          const source = mwsLayerRef.current?.getSource();
+          if (source) {
+            source.getFeatures().forEach(f => {
+              f.unset("isFiltered");
+            });
+            source.changed();
+          }                    
+          return;
         }
       }
 
