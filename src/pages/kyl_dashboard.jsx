@@ -108,6 +108,7 @@ const KYLDashboardPage = () => {
   const [showWB, setShowWB] = useState(false);
   const [showConnectivity, setShowConnectivity] = useState(false);
   const [hasFilters, setHasFilters] = useState(false);
+  const [isVisualizeOn, setIsVisualizeOn] = useState(false);
 
   const addLayerSafe = (layer) => layer && mapRef.current && mapRef.current.addLayer(layer);
 
@@ -565,7 +566,8 @@ const KYLDashboardPage = () => {
         }
         mwsLayerRef.current.setStyle({
           variables: {
-            highlightMWS: -1
+            highlightMWS: -1,
+            isVisualizeOn: false 
           },
         
           "stroke-color": [
@@ -575,7 +577,12 @@ const KYLDashboardPage = () => {
             [22,101,52,1],
         
             ["==", ["get", "isFiltered"], 1],
-            [102,30,30,1],
+            [
+              "case",
+              ["var", "isVisualizeOn"],
+              [37, 72, 113, 1],   //  visualize → blue
+              [102, 30, 30, 1],      //  normal → red
+            ],
 
             ["==", ["get", "isFiltered"], 0],
             [0,0,0,0],
@@ -602,7 +609,12 @@ const KYLDashboardPage = () => {
             [34,197,94,0.4],
         
             ["==", ["get", "isFiltered"], 1],
-            [255,75,75,0.8],
+            [
+              "case",
+              ["var", "isVisualizeOn"],
+              [0,0,0,0],            //  visualize → transparent
+              [255,75,75,0.8]       // normal → red
+            ],
 
             ["==", ["get", "isFiltered"], 0],
             [0,0,0,0],
@@ -884,57 +896,65 @@ const KYLDashboardPage = () => {
   };
 
   const fetchAdminLayer = async (tempVillages) => {
-    if (!district || !block) return;
-
-    if (tempVillages.length === 0) {
-      try {
-        boundaryLayerRef.current.setStyle((feature) => {
-          if (
-            tempVillages.length > 0 &&
-            tempVillages.includes(feature.values_.vill_ID)
-          ) {
-            // Filtered villages - gold
-            return new Style({
-              stroke: new Stroke({
-                color: "#FFD700",
-                width: 2,
-              }),
-            });
-          } else {
-            // Default village boundaries - light gray
-            return new Style({
-              stroke: new Stroke({
-                color: "#000000",
-                width: 1.5,
-              }),
-            });
-          }
-        });
-      } catch (error) {
-        console.error("Error styling admin layer:", error);
-      }
-    } else {
-      boundaryLayerRef.current.setStyle((feature) => {
-        if (
-          tempVillages.length > 0 &&
-          tempVillages.includes(feature.values_.vill_ID)
-        ) {
-          // Filtered villages - gold
-          return new Style({
-            stroke: new Stroke({
-              color: "#FFD700",
-              width: 2,
-            }),
-          });
-        }
-      });
-    }
+    if (!district || !block || !boundaryLayerRef.current) return;
+  
+    const source = boundaryLayerRef.current.getSource();
+    if (!source) return;
+  
+    const selectedSet = new Set(tempVillages);
+    const hasSelection = selectedSet.size > 0;
+  
+    // Only call setStyle when switching between 0 selected ↔ some selected
+    const prevHasSelection = source.getFeatures().some(f => f.get("isSelected") === 1);
+    // if (true) { 
+    //   boundaryLayerRef.current.setStyle({
+    //     "stroke-color": [
+    //       "case",
+      
+    //       // Selected villages → GOLD
+    //       ["==", ["get", "isSelected"], 1],
+    //       [255, 215, 0, 1],
+      
+    //       // Hide others if filter applied
+    //       hasSelection,
+    //       [0, 0, 0, 0],
+      
+    //       // Default → BLACK
+    //       [0, 0, 0, 1]
+    //     ],
+      
+    //     "stroke-width": [
+    //       "case",
+    //       ["==", ["get", "isSelected"], 1],
+    //       2,
+    //       1.2
+    //     ],
+      
+    //     "fill-color": [0, 0, 0, 0]
+    //   });
+    // }
+  
+    source.getFeatures().forEach((feature) => {
+      feature.set(
+        "isSelected",
+        selectedSet.has(feature.get("vill_ID")) ? 1 : 0,
+        true
+      );
+    });
+    
+    
+    boundaryLayerRef.current.updateStyleVariables({
+      hasSelection: selectedSet.size > 0,
+      isVisualizeOn: currentLayer.length > 0
+    });
+    
+    source.changed();
   };
 
   const fetchBoundaryAndZoom = async (districtName, blockName) => {
     setIsLayerLoaded(true);
     try {
-      const boundaryLayer = await getVectorLayers(
+      const boundaryLayer = await getWebGlPolygonLayers(
         "panchayat_boundaries",
         `${transformName(districtName)}_${transformName(blockName)}`,
         true,
@@ -1053,15 +1073,41 @@ const KYLDashboardPage = () => {
         }
       );
 
-      boundaryLayer.setStyle(
-        new Style({
-          stroke: new Stroke({
-            color: "#000000",
-            width: 1.0,
-          }),
-        })
-      );
+      boundaryLayer.setStyle({
+        variables: {
+          hasSelection: false,
+          isVisualizeOn: false 
+        },
+     "stroke-color": [
+  "case",
 
+  // Visualize ON → FULL BLACK 
+  ["var", "isVisualizeOn"],
+  [0, 0, 0, 1],
+
+  //  Selected → GOLD
+  ["==", ["get", "isSelected"], 1],
+  [255, 215, 0, 1],
+
+  // Others
+  ["==", ["get", "isSelected"], 0],
+  [
+    "case",
+    ["var", "hasSelection"],
+    [0, 0, 0, 0],
+    [0, 0, 0, 1]
+  ],
+
+  [0, 0, 0, 1]
+],
+        "stroke-width": [
+          "case",
+          ["==", ["get", "isSelected"], 1],
+          2.0,
+          1.2
+        ],
+        "fill-color": [0, 0, 0, 0]
+      });
       // await fetchMWSLayer(selectedMWS);
       await fetchMWSLayer([]);
       setIsLayerLoaded(false)
@@ -1133,6 +1179,12 @@ const KYLDashboardPage = () => {
         ...prevStates,
         [filter.name]: false,
       }));
+      boundaryLayerRef.current.updateStyleVariables({
+      isVisualizeOn: false
+    });
+    mwsLayerRef.current.updateStyleVariables({
+      isVisualizeOn: false
+    });
       //setFiltersEnabled(true);
     } 
     else if (currentLayer.length === 0) {
@@ -1260,21 +1312,45 @@ const KYLDashboardPage = () => {
           mapRef.current.addLayer(tempLayer);
         }
       }
-      mwsLayerRef.current.setStyle((feature) => {
-        if (
-          selectedMWS.length > 0 &&
-          selectedMWS.includes(feature.values_.uid)
-        ) {
-          return new Style({
-            stroke: new Stroke({
-              color: "#254871",
-              width: 2.0,
-            }),
-          });
-        }
+      boundaryLayerRef.current.updateStyleVariables({
+        isVisualizeOn: true
       });
-      mapRef.current.addLayer(mwsLayerRef.current);
-      mapRef.current.addLayer(boundaryLayerRef.current);
+      mwsLayerRef.current.updateStyleVariables({
+        isVisualizeOn: true
+      });
+      // mwsLayerRef.current.setStyle({
+      //   variables: { highlightMWS: highlightMWS ?? -1 },
+      //   "stroke-color": [
+      //     "case",
+      //     ["==", ["get", "uid"], ["var", "highlightMWS"]], [22, 101, 52, 1],
+      //     ["==", ["get", "isFiltered"], 1], [102, 30, 30, 1],
+      //     ["==", ["get", "isFiltered"], 0], [0, 0, 0, 0],
+      //     [74, 144, 226, 1]
+      //   ],
+      //   "stroke-width": [
+      //     "case",
+      //     ["==", ["get", "uid"], ["var", "highlightMWS"]], 2,
+      //     ["==", ["get", "isFiltered"], 1], 1.5,
+      //     1
+      //   ],
+      //   "fill-color": [
+      //     "case",
+      //     ["==", ["get", "uid"], ["var", "highlightMWS"]], [34, 197, 94, 0.4],
+      //     ["==", ["get", "isFiltered"], 1], [255, 75, 75, 0.8],
+      //     ["==", ["get", "isFiltered"], 0], [0, 0, 0, 0],
+      //     [85, 152, 229, 0.2]
+      //   ]
+      // });
+        // Remove both first (safe reset)
+        mapRef.current.removeLayer(mwsLayerRef.current);
+        mapRef.current.removeLayer(boundaryLayerRef.current);
+
+        // Add in correct order
+        mapRef.current.addLayer(mwsLayerRef.current);      // below
+        mapRef.current.addLayer(boundaryLayerRef.current); // TOP
+
+        // Force always on top
+        boundaryLayerRef.current.setZIndex(9999);
       let tempObj = {
         name: filter.name,
         layerRef: layerRef,
@@ -1518,7 +1594,7 @@ const KYLDashboardPage = () => {
     
       const map = mapRef.current;
     
-      // 1️⃣ Get clicked waterbody feature
+      //  Get clicked waterbody feature
       const wbFeature = map.forEachFeatureAtPixel(
         event.pixel,
         (feature, layer) => {
@@ -1540,7 +1616,7 @@ const KYLDashboardPage = () => {
       const wb_id = props?.UID;
       if (!wb_id) return;
     
-      // 2️⃣ Construct Waterbody GeoJSON (existing logic)
+      // 2 Construct Waterbody GeoJSON (existing logic)
       const geojson = new GeoJSON();
     
       const fullFeature = {
@@ -1562,8 +1638,7 @@ const KYLDashboardPage = () => {
         geometry: geojson.writeGeometryObject(wbFeature.getGeometry()),
       });
     
-      // 3️⃣ FIND MATCHED MWS FEATURE (IMPORTANT PART)
- // 3️⃣ EXTRACT ALL MWS FEATURES FOR THIS WATERBODY (UID match)
+      // 3 FIND MATCHED MWS FEATURE (IMPORTANT PART)
  let matchedMws = [];
 
  if (mwsLayerRef.current && wbFeature) {
@@ -1571,7 +1646,7 @@ const KYLDashboardPage = () => {
    const raw = props.MWS_UID || props.mws_uid;
 
    if (raw) {
-     // 3.1 Convert UID string "12_315970 12_308838..." → ["12_315970","12_308838",...]
+     // Convert UID string "12_315970 12_308838..." → ["12_315970","12_308838",...]
      const uidList = raw
        .split("_")
        .reduce((acc, val, idx, arr) => {
@@ -1581,7 +1656,7 @@ const KYLDashboardPage = () => {
          return acc;
        }, []);
 
-     // 3.2 Filter REAL MWS GEOJSON FEATURES from mwsGeoData
+     //  Filter REAL MWS GEOJSON FEATURES from mwsGeoData
      const allMws = mwsLayerRef.current.getSource().getFeatures();
 
      const matched = allMws.filter((f) => {
@@ -1594,7 +1669,7 @@ const KYLDashboardPage = () => {
    }
  }
 
-    // 4️⃣ SAVE ARRAY OF FULL GEOJSON FEATURES
+    // SAVE ARRAY OF FULL GEOJSON FEATURES
     if (matchedMws.length > 0) {
       const geojsonWriter = new GeoJSON();
 
@@ -1892,12 +1967,12 @@ const KYLDashboardPage = () => {
           });
 
           setSelectedMWS(resultMWS);
-          updateFilteredMWS(resultMWS); // ✅ OLD: highlights MWS boundary
+          updateFilteredMWS(resultMWS); // OLD: highlights MWS boundary
           return;
         } else {
           // No patterns AND no filters - clear everything
           setSelectedMWS([]);
-          // ✅ OLD: reset MWS layer
+          //  OLD: reset MWS layer
           const source = mwsLayerRef.current?.getSource();
           if (source) {
             source.getFeatures().forEach((f) => f.unset("isFiltered"));
@@ -1984,9 +2059,9 @@ const KYLDashboardPage = () => {
 
         const finalMWS = [...resultMWS].filter((id) => filterResults.includes(id));
         setSelectedMWS(finalMWS);
-        updateFilteredMWS(finalMWS); // ✅ OLD: highlights MWS boundary
+        updateFilteredMWS(finalMWS); //  OLD: highlights MWS boundary
 
-        // ✅ NEW: derive villages
+        // NEW: derive villages
         const v1 = new Set();
         dataJson.forEach((item) => {
           if (finalMWS.includes(item.mws_id) && Array.isArray(item.mws_intersect_villages)) {
@@ -1998,9 +2073,9 @@ const KYLDashboardPage = () => {
       } else {
         const finalMWS = [...resultMWS];
         setSelectedMWS(finalMWS);
-        updateFilteredMWS(finalMWS); // ✅ OLD: highlights MWS boundary
+        updateFilteredMWS(finalMWS); // OLD: highlights MWS boundary
 
-        // ✅ NEW: derive villages
+        //  NEW: derive villages
         const v2 = new Set();
         dataJson.forEach((item) => {
           if (finalMWS.includes(item.mws_id) && Array.isArray(item.mws_intersect_villages)) {
