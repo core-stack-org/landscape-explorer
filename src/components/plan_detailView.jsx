@@ -39,15 +39,11 @@ const PlanViewPage = () => {
   const [nrmWorks, setNrmWorks] = useState([]);
  
   const [maintenanceGW, setMaintenanceGW] = useState([]);
-const [maintenanceAgri, setMaintenanceAgri] = useState([]);
-const [maintenanceSWB, setMaintenanceSWB] = useState([]);
-const [maintenanceSWBRS, setMaintenanceSWBRS] = useState([]);
+  const [maintenanceAgri, setMaintenanceAgri] = useState([]);
+  const [maintenanceSWB, setMaintenanceSWB] = useState([]);
+  const [maintenanceSWBRS, setMaintenanceSWBRS] = useState([]);
 
   const [livelihoodData, setLivelihoodData] = useState([]);
-
-  
-  
-
   const districtName = useMemo(
     () => districtLookup[plan?.district_soi] || plan?.district_soi,
     [plan, districtLookup]
