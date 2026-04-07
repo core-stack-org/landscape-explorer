@@ -1,8 +1,9 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState ,useRef} from "react";
 import { useRecoilState } from "recoil";
 import { yearAtom, yearAtomFamily } from "../store/locationStore.jsx";
 
-const YearSlider = ({ currentLayer, sliderId = null,interventionYear }) => {
+const YearSliderWB = ({ currentLayer, sliderId = null,interventionYear }) => {
+    const THUMB_SIZE = 16;
   const yearDataLulc = [
     { label: "2017-2018", value: "17_18" },
     { label: "2018-2019", value: "18_19" },
@@ -14,6 +15,9 @@ const YearSlider = ({ currentLayer, sliderId = null,interventionYear }) => {
     { label: "2024-2025", value: "24_25" },
     { label: "2025-2026", value: "25_26" },
   ];
+  const [sliderWidth, setSliderWidth] = useState(0);
+  const sliderRef = useRef(null);
+  const sliderWrapRef = useRef(null);
 
   useEffect(() => {
     if (!interventionYear) return;
@@ -26,7 +30,31 @@ const YearSlider = ({ currentLayer, sliderId = null,interventionYear }) => {
   
     setYearAtom(normalized);
   }, [interventionYear]);
+
+  useEffect(() => {
+    if (!sliderWrapRef.current) return;
   
+    const updateWidth = () => {
+      setSliderWidth(sliderWrapRef.current.offsetWidth);
+    };
+  
+    updateWidth(); // initial
+  
+    const ro = new ResizeObserver((entries) => {
+      setSliderWidth(entries[0].contentRect.width);
+    });
+  
+    ro.observe(sliderWrapRef.current);
+  
+    return () => ro.disconnect();
+  }, []);
+
+// useEffect(() => {
+//     if (sliderRef.current) {
+//       setSliderWidth(sliderRef.current.offsetWidth);
+//     }
+//   }, []);
+
   const normIntervention = interventionYear
   ? interventionYear.replace("-", "_")
   : null;
@@ -73,6 +101,15 @@ const YearSlider = ({ currentLayer, sliderId = null,interventionYear }) => {
     setYearAtom(yearDataLulc[0].value);
   }, []);
 
+  useEffect(() => {
+    if (!yearValue) return;
+  
+    const index = yearDataLulc.findIndex((y) => y.value === yearValue);
+    if (index !== -1) {
+      setCurrentValue(index);
+    }
+  }, [yearValue]);
+
   const handleSliderChange = (e) => {
     const index = parseInt(e.target.value);
     setCurrentValue(index);
@@ -80,17 +117,23 @@ const YearSlider = ({ currentLayer, sliderId = null,interventionYear }) => {
   };
 
   if (!isLulcLayerActive) return null;
-
+  const getPosPx = (index) => {
+    if (!sliderWidth) return 0;
+  
+    return (index / (yearDataLulc.length - 1)) * sliderWidth;
+  };
 
   return (
-    <div className="w-full max-w-2xl mx-auto">
+    <div className="w-full mx-auto">
       <div className="relative">
         <div className="bg-white bg-opacity-70 rounded-lg px-4 py-2">
-        <div className="flex justify-between items-center text-sm font-medium text-gray-700 mb-1">
-          <span>Year Slider</span>
+                 <div className="flex justify-between items-center mb-4 flex-wrap gap-2">
+           <span className="text-sm font-semibold text-gray-800">
+             Year Slider
+          </span>
           {interventionYear && (
-            <span className="text-gray-900">
-              Intervention year: {interventionYear}
+            <span className="text-xs text-gray-500 bg-gray-100 border border-gray-200 rounded-md px-3 py-1">
+              Intervention: {interventionYear}
             </span>
           )}
         </div>
@@ -109,62 +152,71 @@ const YearSlider = ({ currentLayer, sliderId = null,interventionYear }) => {
               </div>
             )}
 
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-gray-600 min-w-[70px]">
+<div className="flex items-center gap-2">
+                  <span className="text-xs text-gray-600 min-w-[70px]">
                 {yearDataLulc[0].label}
               </span>
 
               {/* Slider */}
-              <input
-                type="range"
-                min={0}
-                max={yearDataLulc.length - 1}
-                value={currentValue}
-                onChange={handleSliderChange}
-                onMouseEnter={() => setShowTooltip(true)}
-                onMouseLeave={() => setShowTooltip(false)}
-                className="flex-grow h-1.5 bg-gray-200 rounded-lg appearance-none cursor-pointer"
-                style={{
-                  "--thumb-color": "#3B82F6",
-                  "--track-color": "#E5E7EB",
-                }}
-              />
+              <div ref={sliderWrapRef} className="flex-grow">
+                <input
+                    type="range"
+                    min={0}
+                    max={yearDataLulc.length - 1}
+                    value={currentValue}
+                    onChange={handleSliderChange}
+                    onMouseEnter={() => setShowTooltip(true)}
+                    onMouseLeave={() => setShowTooltip(false)}
+                    className="w-full h-1.5 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                    style={{
+                    "--thumb-color": "#3B82F6",
+                    "--track-color": "#E5E7EB",
+                    }}
+                />
+                </div>
 
               <span className="text-xs text-gray-600 min-w-[70px] text-right">
                 {yearDataLulc[yearDataLulc.length - 1].label}
               </span>
             </div>
 
-            {/* Year labels */}
-            <div className="relative w-full mt-3 h-10 overflow-visible">
-                      {interventionIndex !== -1 && (
-              <div
-                className="absolute top-0 h-full w-[2px] bg-red-500"
-                style={{
-                  left: `${(interventionIndex / (yearDataLulc.length - 1)) * 100}%`,
-                  transform: "translateX(-1px)",
-                  zIndex: 20,
-                }}
-              />
-            )}
-            {yearDataLulc.map(({ label,value }, index) => {
+        {/* Year labels */}
+        <div className="relative mt-3 h-10 overflow-visible mx-[70px]">
+{/* Intervention line */}
+{interventionIndex !== -1 && (
+  <div
+    className="absolute top-0 h-full w-[2px] bg-red-500"
+    style={{
+      left: `${getPosPx(interventionIndex)}px`,
+      transform: "translateX(-50%)",
+      zIndex: 20,
+    }}
+  />
+)}
 
-              return (
-                <div
-                  key={index}
-                  className="absolute text-[10px] text-gray-700 text-center whitespace-nowrap"
-                  style={{
-                    left: `${(index / (yearDataLulc.length - 1)) * 65 + 15.5}%`,
-                  }}
-                >
-                  {/* Year label */}
-                  {label.split("-")[0]}
-                  <br />
-                  {label.split("-")[1]}
-                </div>
-              );
-            })}
-          </div>
+{/* Year labels */}
+{sliderWidth > 0 &&
+  yearDataLulc.map(({ label }, index) => (
+    <div
+      key={index}
+      className="absolute text-[10px] text-gray-500 whitespace-nowrap"
+      style={{
+        left: `${getPosPx(index)}px`,
+        top: "20px",
+        transform: "translateX(-50%) rotate(-40deg)",
+      }}
+    >
+      {label.replace("-20", "-")}
+    </div>
+  ))}
+
+</div>
+
+<div className="flex items-center gap-4 pt-3">
+           <span className="text-xs text-gray-500">
+             {/* Selected: {yearDataLulc[currentValue].label} */}
+           </span>
+         </div>
 
           </div>
         </div>
@@ -203,5 +255,6 @@ const YearSlider = ({ currentLayer, sliderId = null,interventionYear }) => {
   );
 };
 
-export default YearSlider;
+export default YearSliderWB;
+
 
