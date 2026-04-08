@@ -1,17 +1,17 @@
 import { useState, useEffect } from 'react';
 import DownloadButton from '../../buttons/download_button';
 import SelectButton from '../../buttons/select_button';
-import { 
-  downloadGeoJson, 
-  downloadKml, 
-  downloadGeoTiff, 
-  downloadExcel 
+import {
+  downloadGeoJson,
+  downloadKml,
+  downloadGeoTiff,
+  downloadExcel
 } from '../utils/downloadHelper';
 
 
 const ChevronRightIcon = () => (
   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-    <path fillRule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708z"/>
+    <path fillRule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708z" />
   </svg>
 );
 
@@ -25,8 +25,8 @@ const ToggleOffIcon = () => (
 
 const DownloadIcon = () => (
   <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
-    <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/>
-    <path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/>
+    <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z" />
+    <path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z" />
   </svg>
 );
 
@@ -43,55 +43,55 @@ const mainCategories = [
 
 // Land Layers
 const landLayersData = [
-  { id: 1, name: "terrain", label: "Terrain", hasGeojson: false, hasKml: false, hasGeoTiff: true, hasStyle : true},
-  { id: 2, name: "terrain_vector", label: "Terrain Vector", hasGeojson: true, hasKml: true, hasStyle : true },
-  { id: "lulc_level_1", name:"lulc_level_1", label: "LULC Layer Level 1" },
-  { id: "lulc_level_2", name:"lulc_level_2", label: "LULC Layer Level 2" },
+  { id: 1, name: "terrain", label: "Terrain", hasGeojson: false, hasKml: false, hasGeoTiff: true, hasStyle: true },
+  { id: 2, name: "terrain_vector", label: "Terrain Vector", hasGeojson: true, hasKml: true, hasStyle: true },
+  { id: "lulc_level_1", name: "lulc_level_1", label: "LULC Layer Level 1" },
+  { id: "lulc_level_2", name: "lulc_level_2", label: "LULC Layer Level 2" },
 ]
 
 const climateLayersData = [
-  { id: 1, name: "mws_layers", label: "Hydrological Variables (Precipitation, ET, Groundwater, etc.)", hasGeojson: true, hasKml: true, hasStyle : true },
-  { id: 2, name: "mws_layers_fortnight", label: "Fortnightly Hydrological Variables (Precipitation, ET, Groundwater, etc.)", hasGeojson: true, hasKml: true, hasStyle : false },
-  { 
-    id: 3, 
-    name: "hydrological_boundaries", 
-    label: "Hydrological Boundaries (Precipitation, ET, Groundwater, etc.)", 
-    hasGeojson: true, 
-    hasKml: true, 
-    hasStyle : true 
+  { id: 1, name: "mws_layers", label: "Hydrological Variables (Precipitation, ET, Groundwater, etc.)", hasGeojson: true, hasKml: true, hasStyle: true },
+  { id: 2, name: "mws_layers_fortnight", label: "Fortnightly Hydrological Variables (Precipitation, ET, Groundwater, etc.)", hasGeojson: true, hasKml: true, hasStyle: false },
+  {
+    id: 3,
+    name: "hydrological_boundaries",
+    label: "Hydrological Boundaries (Precipitation, ET, Groundwater, etc.)",
+    hasGeojson: true,
+    hasKml: true,
+    hasStyle: true
   }
 ]
 
 const hydrologyLayersData = [
-  { id: 1, name: "drainage", label: "Drainage", hasGeojson: true, hasKml: true, hasStyle : true},
-  { id: 2, name: "remote_sensed_waterbodies", label: "Remote-Sensed Waterbodies", hasGeojson: true, hasKml: true, hasStyle : false },
-  { id: 3, name: "clart", label: "CLART", hasGeojson: false, hasKml: false, hasGeoTiff: true, hasStyle : true },
-  { id: 4, name: "soge", label: "SOGE", hasGeojson: true, hasKml: false, hasGeoTiff: false, hasStyle : true },
-  { id: 5, name: "aquifer", label: "Aquifer", hasGeojson: true, hasKml: false, hasGeoTiff: false, hasStyle : true },
+  { id: 1, name: "drainage", label: "Drainage", hasGeojson: true, hasKml: true, hasStyle: true },
+  { id: 2, name: "remote_sensed_waterbodies", label: "Remote-Sensed Waterbodies", hasGeojson: true, hasKml: true, hasStyle: false },
+  { id: 3, name: "clart", label: "CLART", hasGeojson: false, hasKml: false, hasGeoTiff: true, hasStyle: true },
+  { id: 4, name: "soge", label: "SOGE", hasGeojson: true, hasKml: false, hasGeoTiff: false, hasStyle: true },
+  { id: 5, name: "aquifer", label: "Aquifer", hasGeojson: true, hasKml: false, hasGeoTiff: false, hasStyle: true },
 ]
 
 const agriLayersData = [
-  { id: "lulc_level_3", name:"lulc_level_3", label: "LULC Layer Level 3" },
-  { id: 1, name: "cropping_intensity", label: "Cropping Intensity", hasGeojson: true, hasKml: true, hasStyle : true },
-  { id: 2, name: "drought", label: "Drought", hasGeojson: true, hasKml: true, hasStyle : true },
+  { id: "lulc_level_3", name: "lulc_level_3", label: "LULC Layer Level 3" },
+  { id: 1, name: "cropping_intensity", label: "Cropping Intensity", hasGeojson: true, hasKml: true, hasStyle: true },
+  { id: 2, name: "drought", label: "Drought", hasGeojson: true, hasKml: true, hasStyle: true },
 ]
 
 const restorationLayersData = [
-  { id: 1, name: "afforestation", label: "Change Detection Afforestation", hasGeojson: false, hasKml: false, hasGeoTiff: true, hasStyle : true },
-  { id: 2, name: "deforestation", label: "Change Detection Deforestation", hasGeojson: false, hasKml: false, hasGeoTiff: true, hasStyle : true },
-  { id: 3, name: "degradation", label: "Change Detection Degradation", hasGeojson: false, hasKml: false, hasGeoTiff: true, hasStyle : true },
-  { id: 4, name: "urbanization", label: "Change Detection Urbanization", hasGeojson: false, hasKml: false, hasGeoTiff: true, hasStyle : true },
-  { id: 5, name: "cropIntensity", label: "Change Detection Crop-Intensity", hasGeojson: false, hasKml: false, hasGeoTiff: true, hasStyle : true },
-  { id: 6, name: "restoration", label: "Change Detection Restoration", hasGeojson: false, hasKml: false, hasGeoTiff: true, hasStyle : true }
+  { id: 1, name: "afforestation", label: "Change Detection Afforestation", hasGeojson: false, hasKml: false, hasGeoTiff: true, hasStyle: true },
+  { id: 2, name: "deforestation", label: "Change Detection Deforestation", hasGeojson: false, hasKml: false, hasGeoTiff: true, hasStyle: true },
+  { id: 3, name: "degradation", label: "Change Detection Degradation", hasGeojson: false, hasKml: false, hasGeoTiff: true, hasStyle: true },
+  { id: 4, name: "urbanization", label: "Change Detection Urbanization", hasGeojson: false, hasKml: false, hasGeoTiff: true, hasStyle: true },
+  { id: 5, name: "cropIntensity", label: "Change Detection Crop-Intensity", hasGeojson: false, hasKml: false, hasGeoTiff: true, hasStyle: true },
+  { id: 6, name: "restoration", label: "Change Detection Restoration", hasGeojson: false, hasKml: false, hasGeoTiff: true, hasStyle: true }
 ]
 
 const NREGALayerData = [
-  { id: 1, name: "nrega", label: "NREGA", hasGeojson: true, hasKml: true, hasStyle : false },
+  { id: 1, name: "nrega", label: "NREGA", hasGeojson: true, hasKml: true, hasStyle: false },
 ]
 
-const demographicLayerData =[
-  { id: 1, name: "administrative_boundaries", label: "Administrative Boundaries", hasGeojson: true, hasKml: true, hasStyle : false },
-  { id: 2, name: "demographics", label: "Socio-Economic", hasGeojson: true, hasKml: true, hasStyle : false },
+const demographicLayerData = [
+  { id: 1, name: "administrative_boundaries", label: "Administrative Boundaries", hasGeojson: true, hasKml: true, hasStyle: false },
+  { id: 2, name: "demographics", label: "Socio-Economic", hasGeojson: true, hasKml: true, hasStyle: false },
 ]
 
 // Years data for LULC
@@ -142,57 +142,57 @@ const handleStyleDownload = (layerName) => {
 
 // Single Layer Item Component
 const LayerItem = ({ layer, isSelected, onToggle, onDownload, isLayersFetched, isLoading }) => {
-  
+
   return (
     <div className="border-b border-gray-200 py-3">
       <div className="flex items-center justify-between">
         <span className="text-sm font-medium text-gray-700">{layer.label}</span>
-        <button 
+        <button
           onClick={() => {
             onToggle(layer.name);
           }}
           className="text-xs"
         >
-          {isSelected 
-            ? <ToggleOnIcon /> 
+          {isSelected
+            ? <ToggleOnIcon />
             : <ToggleOffIcon />}
         </button>
       </div>
-      
+
       {/* Download Options */}
       {(layer.hasGeojson || layer.hasKml || layer.hasGeoTiff) && isSelected && (
         <div className="flex mt-2 space-x-2">
           {layer.hasGeojson && (
-            <DownloadButton 
-  name="GeoJSON"
-  onClick={() => onDownload(layer.name, 'geojson')}
-  disabled={!isLayersFetched || isLoading}
-  className="bg-[#EDE9FE] text-[#8B5CF6] hover:bg-[#DDD6FE]"
-/>
+            <DownloadButton
+              name="GeoJSON"
+              onClick={() => onDownload(layer.name, 'geojson')}
+              disabled={!isLayersFetched || isLoading}
+              className="bg-[#EDE9FE] text-[#8B5CF6] hover:bg-[#DDD6FE]"
+            />
           )}
           {layer.hasKml && (
-            <DownloadButton 
-  name="KML"
-  onClick={() => onDownload(layer.name, 'kml')}
-  disabled={!isLayersFetched || isLoading}
-  className="bg-[#EDE9FE] text-[#8B5CF6] hover:bg-[#DDD6FE]"
-/>
+            <DownloadButton
+              name="KML"
+              onClick={() => onDownload(layer.name, 'kml')}
+              disabled={!isLayersFetched || isLoading}
+              className="bg-[#EDE9FE] text-[#8B5CF6] hover:bg-[#DDD6FE]"
+            />
           )}
           {layer.hasGeoTiff && (
-           <DownloadButton 
-  name="GeoTIFF"
-  onClick={() => onDownload(layer.name, 'geotiff')}
-  disabled={!isLayersFetched || isLoading}
-  className="bg-[#EDE9FE] text-[#8B5CF6] hover:bg-[#DDD6FE]"
-/>
+            <DownloadButton
+              name="GeoTIFF"
+              onClick={() => onDownload(layer.name, 'geotiff')}
+              disabled={!isLayersFetched || isLoading}
+              className="bg-[#EDE9FE] text-[#8B5CF6] hover:bg-[#DDD6FE]"
+            />
           )}
           {layer.hasStyle && (
-            <DownloadButton 
-  name="Style"
-  onClick={() => handleStyleDownload(layer.name)}
-  disabled={!isLayersFetched || isLoading}
-  className="bg-[#EDE9FE] text-[#8B5CF6] hover:bg-[#DDD6FE]"
-/>
+            <DownloadButton
+              name="Style"
+              onClick={() => handleStyleDownload(layer.name)}
+              disabled={!isLayersFetched || isLoading}
+              className="bg-[#EDE9FE] text-[#8B5CF6] hover:bg-[#DDD6FE]"
+            />
           )
           }
         </div>
@@ -206,7 +206,7 @@ const LulcSelector = ({ level, lulcYear, setLulcYear, onDownload, isLayersFetche
   return (
     <div className="bg-white rounded-md shadow-sm p-3 mb-3 border border-gray-100">
       <h4 className="text-sm font-medium text-gray-700 mb-2">{level.label}</h4>
-      
+
       <div className="mb-3">
         <SelectButton
           currVal={lulcYear || { label: "Select Year" }}
@@ -216,19 +216,19 @@ const LulcSelector = ({ level, lulcYear, setLulcYear, onDownload, isLayersFetche
         />
       </div>
       <div className="flex mt-2 space-x-2">
-      <DownloadButton 
-  name="GeoTIFF"
-  onClick={() => onDownload(level.id, 'geotiff')}
-  disabled={!lulcYear || !isLayersFetched || isLoading}
-  className={`${!lulcYear ? 'bg-gray-100 text-gray-400' : ''}`}
-/>
+        <DownloadButton
+          name="GeoTIFF"
+          onClick={() => onDownload(level.id, 'geotiff')}
+          disabled={!lulcYear || !isLayersFetched || isLoading}
+          className={`${!lulcYear ? 'bg-gray-100 text-gray-400' : ''}`}
+        />
 
-      <DownloadButton 
-  name="Style"
-  onClick={() => handleStyleDownload(level.id)}
-  disabled={!isLayersFetched || isLoading}
-  className="bg-[#EDE9FE] text-[#8B5CF6] hover:bg-[#DDD6FE]"
-/>
+        <DownloadButton
+          name="Style"
+          onClick={() => handleStyleDownload(level.id)}
+          disabled={!isLayersFetched || isLoading}
+          className="bg-[#EDE9FE] text-[#8B5CF6] hover:bg-[#DDD6FE]"
+        />
       </div>
     </div>
   );
@@ -238,16 +238,15 @@ const LulcSelector = ({ level, lulcYear, setLulcYear, onDownload, isLayersFetche
 const ActionButtons = ({ onDownloadExcel, isLoading, canFetchLayers }) => {
   return (
     <div className="flex space-x-3 mb-2">
-      <button 
+      <button
         onClick={onDownloadExcel}
         disabled={isLoading || !canFetchLayers}
-        className={`flex items-center justify-center text-gray-700 bg-gray-100 border border-gray-300 py-2 px-4 focus:outline-none w-full ${
-          !canFetchLayers
-            ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-            : isLoading 
-              ? 'bg-gray-50 text-gray-400 cursor-not-allowed' 
-              : 'hover:bg-gray-200'
-        } rounded text-sm font-medium transition-colors duration-200`}
+        className={`flex items-center justify-center text-gray-700 bg-gray-100 border border-gray-300 py-2 px-4 focus:outline-none w-full ${!canFetchLayers
+          ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+          : isLoading
+            ? 'bg-gray-50 text-gray-400 cursor-not-allowed'
+            : 'hover:bg-gray-200'
+          } rounded text-sm font-medium transition-colors duration-200`}
       >
         <DownloadIcon />
         <span className="ml-2">Download Excel</span>
@@ -300,12 +299,12 @@ const RightSidebar = ({
   }, [district, block, canFetchLayers]);
 
   // Handle toggle clicklandLayersData
- const handleToggleClick = (filterName) => {
-  if (!handleLayerToggle) return;
+  const handleToggleClick = (filterName) => {
+    if (!handleLayerToggle) return;
 
-  const currentState = toggledLayers?.[filterName] || false;
-  handleLayerToggle(filterName, !currentState);
-};
+    const currentState = toggledLayers?.[filterName] || false;
+    handleLayerToggle(filterName, !currentState);
+  };
   // Handle download click with proper URL formatting and direct download
   const handleDownloadClick = (filterName, format) => {
     if (!district || !block) {
@@ -318,8 +317,8 @@ const RightSidebar = ({
 
     if (format === 'geojson') {
       let url = '';
-    
-      switch(filterName) {
+
+      switch (filterName) {
         case 'demographics':
           url = `https://geoserver.core-stack.org:8443/geoserver/panchayat_boundaries/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=panchayat_boundaries:${districtFormatted}_${blockFormatted}&outputFormat=application/json&screen=main`;
           break;
@@ -361,17 +360,17 @@ const RightSidebar = ({
           break;
 
 
-          default:
+        default:
           url = `https://geoserver.core-stack.org:8443/geoserver/${filterName}/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=${filterName}:${districtFormatted}_${blockFormatted}&outputFormat=application/json&screen=main`;
       }
 
       // Use our direct download function
       downloadGeoJson(url, filterName);
-    } 
+    }
     else if (format === 'kml') {
       let url = '';
-      
-      switch(filterName) {
+
+      switch (filterName) {
         case 'demographics':
           url = `https://geoserver.core-stack.org:8443/geoserver/panchayat_boundaries/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=panchayat_boundaries:${districtFormatted}_${blockFormatted}&outputFormat=application/vnd.google-earth.kml+xml&screen=main`;
           break;
@@ -418,10 +417,10 @@ const RightSidebar = ({
         default:
           url = `https://geoserver.core-stack.org:8443/geoserver/${filterName}/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=${filterName}:${districtFormatted}_${blockFormatted}&outputFormat=application/vnd.google-earth.kml+xml&screen=main`;
       }
-      
+
       // Use our direct download function
       downloadKml(url, filterName);
-    } 
+    }
     else if (format === 'geotiff') {
       // Handle GeoTIFF download based on layer
       if (filterName.includes('lulc')) {
@@ -438,9 +437,9 @@ const RightSidebar = ({
       alert('Please select a district and block first');
       return;
     }
-    
+
     let yearValue = null;
-    
+
     if (level === 'lulc_level_1') {
       yearValue = lulcYear1?.value;
     } else if (level === 'lulc_level_2') {
@@ -448,17 +447,17 @@ const RightSidebar = ({
     } else if (level === 'lulc_level_3') {
       yearValue = lulcYear3?.value;
     }
-    
+
     if (!yearValue) {
       alert('Please select a year first');
       return;
     }
-    
+
     const districtFormatted = district.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_');
     const blockFormatted = block.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_');
 
     const url = `https://geoserver.core-stack.org:8443/geoserver/LULC_level_${level.split('_').pop()}/wcs?service=WCS&version=2.0.1&request=GetCoverage&CoverageId=LULC_level_${level.split('_').pop()}:LULC_${yearValue}_${districtFormatted}_${blockFormatted}_level_${level.split('_').pop()}&format=geotiff&compression=LZW&tiling=false`;
-    
+
     // Use our direct geotiff download function
     downloadGeoTiff(url, `LULC_${level.split('_').pop()}_${yearValue}`);
   };
@@ -470,21 +469,21 @@ const RightSidebar = ({
       alert('Please select a district and block first');
       return;
     }
-    
+
     const districtFormatted = district.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_');
     const blockFormatted = block.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_');
-    
+
     let url = '';
-    
+
     if (layerName === 'clart') {
       url = `https://geoserver.core-stack.org:8443/geoserver/clart/wcs?service=WCS&version=2.0.1&request=GetCoverage&CoverageId=clart:${districtFormatted}_${blockFormatted}_clart&format=geotiff&compression=LZW`;
     } else if (layerName === 'terrain') {
       url = `https://geoserver.core-stack.org:8443/geoserver/terrain/wcs?service=WCS&version=2.0.1&request=GetCoverage&CoverageId=terrain:${districtFormatted}_${blockFormatted}_terrain_raster&format=geotiff&compression=LZW`;
     }
-    else if(layerName === 'restoration'){
+    else if (layerName === 'restoration') {
       url = `https://geoserver.core-stack.org:8443/geoserver/restoration/wcs?service=WCS&version=2.0.1&request=GetCoverage&CoverageId=restoration:restoration_${districtFormatted}_${blockFormatted}_raster&format=geotiff&compression=LZW`;
     }
-    else{
+    else {
       url = `https://geoserver.core-stack.org:8443/geoserver/change_detection/wcs?service=WCS&version=2.0.1&request=GetCoverage&CoverageId=change_detection:change_${districtFormatted}_${blockFormatted}_${layerName.charAt(0).toUpperCase() + layerName.slice(1)}&format=geotiff&compression=LZW`;
     }
     if (url) {
@@ -494,29 +493,29 @@ const RightSidebar = ({
   };
 
   const handleLocalExcelDownload = () => {
-  if (!state || !district || !block) {
-    alert("Please select a state, district, and block first");
-    return;
-  }
+    if (!state || !district || !block) {
+      alert("Please select a state, district, and block first");
+      return;
+    }
 
-  const url =
-    `https://geoserver.core-stack.org/api/v1/download_excel_layer` +
-    `?state=${state.label}&district=${district.label}&block=${block.label}`;
+    const url =
+      `http://localhost:8000/api/v1/download_excel_layer` +
+      `?state=${state.label}&district=${district.label}&block=${block.label}`;
 
-  downloadExcel(url, `${block.label}_data.xlsx`);
-};
+    downloadExcel(url, `${block.label}_data.xlsx`);
+  };
   return (
     <div className="w-[380px] flex flex-col h-full bg-white shadow-md relative">
       <div className="flex justify-between items-center p-4 border-b border-gray-200">
         <h2 className="font-semibold text-gray-800 text-lg">Filters & Data</h2>
-        <button 
+        <button
           onClick={onClose}
           className="text-gray-500 hover:text-gray-700"
         >
           <ChevronRightIcon />
         </button>
       </div>
-      
+
       {/* Location Selection */}
       <div className="p-3 border-b border-gray-200 bg-gray-50">
         <div className="space-y-3">
@@ -555,12 +554,12 @@ const RightSidebar = ({
 
       {/* Action Buttons - only Download Excel */}
       <div className="px-3 py-1">
-        <ActionButtons 
+        <ActionButtons
           onDownloadExcel={handleLocalExcelDownload}
           isLoading={isLoading}
           canFetchLayers={canFetchLayers}
         />
-        
+
       </div>
 
       <p className="text-xs text-gray-400 text-center pb-1">
@@ -579,11 +578,10 @@ const RightSidebar = ({
               {mainCategories.map(cat => (
                 <button
                   key={cat.id}
-                  className={`py-2 px-3 rounded-md text-sm ${
-                    selectedCategory === cat.id 
-                      ? 'bg-white border border-gray-300 text-gray-800 font-medium' 
-                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                  }`}
+                  className={`py-2 px-3 rounded-md text-sm ${selectedCategory === cat.id
+                    ? 'bg-white border border-gray-300 text-gray-800 font-medium'
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    }`}
                   onClick={() => setSelectedCategory(cat.id)}
                 >
                   {cat.label}
@@ -599,33 +597,33 @@ const RightSidebar = ({
               <div>
                 {landLayersData.map(layer => {
                   if (layer.id === "lulc_level_1") {
-  return (
-    <LulcSelector
-      key={layer.id}
-      level={layer}
-      lulcYear={lulcYear1}
-      setLulcYear={setLulcYear1}
-      onDownload={handleDownloadClick}
-      isLayersFetched={isLayersFetched}
-      isLoading={isLoading}
-    />
-  );
-}
+                    return (
+                      <LulcSelector
+                        key={layer.id}
+                        level={layer}
+                        lulcYear={lulcYear1}
+                        setLulcYear={setLulcYear1}
+                        onDownload={handleDownloadClick}
+                        isLayersFetched={isLayersFetched}
+                        isLoading={isLoading}
+                      />
+                    );
+                  }
                   else if (layer.id === "lulc_level_2") {
-  return (
-    <LulcSelector
-      key={layer.id}
-      level={layer}
-      lulcYear={lulcYear2}
-      setLulcYear={setLulcYear2}
-      onDownload={handleDownloadClick}
-      isLayersFetched={isLayersFetched}
-      isLoading={isLoading}
-    />
-  );
-}
-                  else{
-                    return <LayerItem 
+                    return (
+                      <LulcSelector
+                        key={layer.id}
+                        level={layer}
+                        lulcYear={lulcYear2}
+                        setLulcYear={setLulcYear2}
+                        onDownload={handleDownloadClick}
+                        isLayersFetched={isLayersFetched}
+                        isLoading={isLoading}
+                      />
+                    );
+                  }
+                  else {
+                    return <LayerItem
                       key={layer.id}
                       layer={layer}
                       isSelected={toggledLayers?.[layer.name] || false}
@@ -642,7 +640,7 @@ const RightSidebar = ({
             {selectedCategory === 'climate' && (
               <div>
                 {climateLayersData.map(layer => (
-                  <LayerItem 
+                  <LayerItem
                     key={layer.id}
                     layer={layer}
                     isSelected={toggledLayers?.[layer.name] || false}
@@ -658,7 +656,7 @@ const RightSidebar = ({
             {selectedCategory === 'hydro' && (
               <div>
                 {hydrologyLayersData.map(layer => (
-                  <LayerItem 
+                  <LayerItem
                     key={layer.id}
                     layer={layer}
                     isSelected={toggledLayers?.[layer.name] || false}
@@ -675,20 +673,20 @@ const RightSidebar = ({
               <div>
                 {agriLayersData.map(layer => {
                   if (layer.id === "lulc_level_3") {
-  return (
-    <LulcSelector
-      key={layer.id}
-      level={layer}
-      lulcYear={lulcYear3}
-      setLulcYear={setLulcYear3}
-      onDownload={handleDownloadClick}
-      isLayersFetched={isLayersFetched}
-      isLoading={isLoading}
-    />
-  );
-}
-                  else{
-                   return <LayerItem 
+                    return (
+                      <LulcSelector
+                        key={layer.id}
+                        level={layer}
+                        lulcYear={lulcYear3}
+                        setLulcYear={setLulcYear3}
+                        onDownload={handleDownloadClick}
+                        isLayersFetched={isLayersFetched}
+                        isLoading={isLoading}
+                      />
+                    );
+                  }
+                  else {
+                    return <LayerItem
                       key={layer.id}
                       layer={layer}
                       isSelected={toggledLayers?.[layer.name] || false}
@@ -705,7 +703,7 @@ const RightSidebar = ({
             {selectedCategory === 'restore' && (
               <div>
                 {restorationLayersData.map(layer => (
-                  <LayerItem 
+                  <LayerItem
                     key={layer.id}
                     layer={layer}
                     isSelected={toggledLayers?.[layer.name] || false}
@@ -721,7 +719,7 @@ const RightSidebar = ({
             {selectedCategory === 'nrega' && (
               <div>
                 {NREGALayerData.map(layer => (
-                  <LayerItem 
+                  <LayerItem
                     key={layer.id}
                     layer={layer}
                     isSelected={toggledLayers?.[layer.name] || false}
@@ -737,7 +735,7 @@ const RightSidebar = ({
             {selectedCategory === 'social' && (
               <div>
                 {demographicLayerData.map(layer => (
-                  <LayerItem 
+                  <LayerItem
                     key={layer.id}
                     layer={layer}
                     isSelected={toggledLayers?.[layer.name] || false}
