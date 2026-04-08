@@ -95,9 +95,13 @@ const fetchStewardStats = async (organizationId = null, stateId = null) => {
   return res.json();
 };
 
-const fetchStewardListing = async (stateId, organizationId = null) => {
-  let url = `${process.env.REACT_APP_API_URL}/watershed/plans/steward-listing/?state=${stateId}`;
-  if (organizationId) url += `&organization=${encodeURIComponent(organizationId)}`;
+const fetchStewardListing = async (stateId, organizationId = null, districtId = null) => {
+  const params = new URLSearchParams();
+  if (stateId)        params.append("state",        stateId);
+  if (organizationId) params.append("organization",  organizationId);
+  if (districtId)     params.append("district",      districtId);
+
+  let url = `${process.env.REACT_APP_API_URL}/watershed/plans/steward-listing/?${params.toString()}`;
   const res = await fetch(url, {
     headers: {
       "Content-Type": "application/json",
@@ -468,7 +472,7 @@ const PlansPage = () => {
     }, [viewMode]);
 
     // ── PIN LAYER ───────────────────────────────────────────────
-    const addStateBubbles = (statsData) => {
+    const addStateBubbles = (statsData, mode = viewMode) => {
       const map = mapRef.current;
       if (!map) return;
 
@@ -477,13 +481,12 @@ const PlansPage = () => {
         bubbleLayerRef.current = null;
       }
 
-      // For stewards mode use state_level, for plans mode use state_breakdown
-      const stateData = viewMode === "stewards"
+      const stateData = mode === "stewards"
         ? (statsData?.state_level ?? []).map(s => ({
             ...s,
-            total_plans:  s.steward_count,
-            centroid:     null, // will use name lookup
-            state_name:   s.state_name,
+            total_plans: s.steward_count,
+            centroid:    null,
+            state_name:  s.state_name,
           }))
         : (statsData?.state_breakdown ?? []);
 
@@ -493,12 +496,10 @@ const PlansPage = () => {
         .filter((s) => s.centroid?.lat || s.centroid?.lon ||
           (s.centroid === null && s.state_name))
         .map((s) => {
-          // For stewards mode centroid comes from the plans meta-stats state_breakdown
-          // as a fallback — match by state name
           let coords;
           if (s.centroid?.lat && s.centroid?.lon) {
             coords = [s.centroid.lon, s.centroid.lat];
-          } else if (viewMode === "stewards" && metaStats?.state_breakdown) {
+          } else if (mode === "stewards" && metaStats?.state_breakdown) {
             const match = metaStats.state_breakdown.find(
               (p) => p.state_name === s.state_name
             );
@@ -527,8 +528,8 @@ const PlansPage = () => {
     };
 
     useEffect(() => {
-  if (viewMode === "plans"    && metaStats     && isStateView) addStateBubbles(metaStats);
-  if (viewMode === "stewards" && stewardStats  && isStateView) addStateBubbles(stewardStats);
+      if (viewMode === "plans"    && metaStats    && isStateView) addStateBubbles(metaStats,    "plans");
+      if (viewMode === "stewards" && stewardStats && isStateView) addStateBubbles(stewardStats, "stewards");
     }, [metaStats, stewardStats, isStateView, viewMode]);
 
     const addDistrictPins = async (districtLevel) => {
@@ -755,20 +756,16 @@ const PlansPage = () => {
         } finally {
           setMapLoading(false);
         }
-      } else {
-        // Stewards mode — existing logic
+      }  else {
         setStewardLoading(true);
         setSelectedSteward(null);
         try {
           const data = await fetchStewardListing(
             currentStateRef.current?.state_id,
-            orgRef.current?.value ?? null
+            orgRef.current?.value ?? null,
+            districtData.district_id  // pass district ID directly
           );
-          const filtered = (data.stewards ?? []).filter((s) =>
-            s.plans?.some((p) => p.district_name === districtData.district_name ||
-              districtData.district_name)
-          );
-          setStewardListing(filtered.length > 0 ? filtered : data.stewards ?? []);
+          setStewardListing(data.stewards ?? []);
         } catch (err) {
           console.error("Steward listing failed:", err);
         } finally {
@@ -805,11 +802,11 @@ const PlansPage = () => {
         if (viewMode === "plans") {
           const globalStats = await fetchMetaStats(orgRef.current?.value ?? null);
           setMetaStats(globalStats);
-          addStateBubbles(globalStats);
+          addStateBubbles(globalStats, "plans");
         } else {
           const globalStats = await fetchStewardStats(orgRef.current?.value ?? null);
           setStewardStats(globalStats);
-          addStateBubbles(globalStats);
+          addStateBubbles(globalStats, "stewards");
         }
       } catch (err) {
         console.error("Failed to restore global stats:", err);
@@ -1149,9 +1146,53 @@ const PlansPage = () => {
                 <div className="rounded-xl p-1 flex" style={{ background: P.light }}>
                   {["plans", "stewards"].map((mode) => (
                     <button key={mode}
-                      onClick={() => {
+                      onClick={async () => {
+                        if (mode === viewMode) return;
+
                         setViewMode(mode);
-                        loadStats(orgRef.current?.value ?? null);
+
+                        if (!isStateView) {
+                          if (planLayerRef.current) {
+                            mapRef.current.removeLayer(planLayerRef.current);
+                            planLayerRef.current = null;
+                          }
+                          if (districtLayerRef.current) {
+                            mapRef.current.removeLayer(districtLayerRef.current);
+                            districtLayerRef.current = null;
+                          }
+                          if (bubbleLayerRef.current) {
+                            mapRef.current.removeLayer(bubbleLayerRef.current);
+                            bubbleLayerRef.current = null;
+                          }
+                          setSelectedPlan(null);
+                          setSelectedSteward(null);
+                          setStewardListing([]);
+                          statePlansRef.current      = [];
+                          currentStateRef.current    = null;
+                          currentDistrictRef.current = null;
+                          if (selectedFeatureRef.current) selectedFeatureRef.current = null;
+                          hoveredFeatureRef.current  = null;
+                          setIsStateView(true);
+                          mapRef.current.getView().animate({ center: [78.9, 23.6], zoom: 5, duration: 600 });
+                        }
+
+                        setStatsLoading(true);
+                        try {
+                          if (mode === "plans") {
+                            const data = await fetchMetaStats(orgRef.current?.value ?? null);
+                            setMetaStats(data);
+                            addStateBubbles(data, "plans"); // pass mode explicitly
+                          } else {
+                            const data = await fetchStewardStats(orgRef.current?.value ?? null);
+                            setStewardStats(data);
+                            addStateBubbles(data, "stewards"); // pass mode explicitly
+                          }
+                        } catch (err) {
+                          console.error("Mode switch failed:", err);
+                          setStatsError(true);
+                        } finally {
+                          setStatsLoading(false);
+                        }
                       }}
                       className="flex-1 py-2 text-sm font-semibold rounded-lg transition-all duration-200"
                       style={viewMode === mode
