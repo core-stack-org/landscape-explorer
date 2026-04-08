@@ -32,7 +32,7 @@ const DownloadPage = () => {
     setIsLoading(true);
 
     const url =
-      "https://geoserver.core-stack.org/api/v1/download_excel_layer";
+      "http://localhost:8000/api/v1/download_excel_layer";
 
     await downloadExcel(url, "layer_data.xlsx");
 
