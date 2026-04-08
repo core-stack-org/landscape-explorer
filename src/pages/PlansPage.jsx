@@ -16,6 +16,7 @@ import { Style, Icon, Circle as CircleStyle, Fill, Stroke, Text } from "ol/style
 import LandingNavbar from "../components/landing_navbar.jsx";
 import FilterListIcon from "@mui/icons-material/FilterList";
 import SelectReact from "react-select";
+import StewardDetailPage from "../components/steward_detailPage.jsx";
 
 const P = {
   base:    "oklch(49.6% 0.265 301.924)",
@@ -43,15 +44,14 @@ const transformName = (name) => {
 
 // ── API HELPERS ───────────────────────────────────────────────────────────────
 
-const fetchMetaStats = async (organizationId = null, stateId = null) => {
+const fetchMetaStats = async (organizationId = null, stateId = null, districtId = null) => {
   let url = `${process.env.REACT_APP_API_URL}/watershed/plans/meta-stats/`;
   const params = new URLSearchParams();
   if (organizationId) params.append("organization", organizationId);
-  if (stateId)        params.append("state", stateId);
+  if (stateId)        params.append("state",        stateId);
+  if (districtId)     params.append("district",     districtId);
   if (params.toString()) url += `?${params.toString()}`;
-
   const res = await fetch(url, {
-    method: "GET",
     headers: {
       "Content-Type": "application/json",
       "ngrok-skip-browser-warning": "420",
@@ -76,6 +76,76 @@ const fetchOrganizations = async () => {
   if (!res.ok) throw new Error(`Org fetch error ${res.status}`);
   const data = await res.json();
   return data.map((org) => ({ value: org.id, label: org.name }));
+};
+
+const fetchStewardStats = async (organizationId = null, stateId = null) => {
+  let url = `${process.env.REACT_APP_API_URL}/watershed/plans/steward-meta-stats/`;
+  const params = new URLSearchParams();
+  if (organizationId) params.append("organization", organizationId);
+  if (stateId)        params.append("state", stateId);
+  if (params.toString()) url += `?${params.toString()}`;
+  const res = await fetch(url, {
+    headers: {
+      "Content-Type": "application/json",
+      "ngrok-skip-browser-warning": "420",
+      "X-API-Key": process.env.REACT_APP_API_KEY,
+    },
+  });
+  if (!res.ok) throw new Error(`API error ${res.status}`);
+  return res.json();
+};
+
+const fetchStewardListing = async (stateId, organizationId = null) => {
+  let url = `${process.env.REACT_APP_API_URL}/watershed/plans/steward-listing/?state=${stateId}`;
+  if (organizationId) url += `&organization=${encodeURIComponent(organizationId)}`;
+  const res = await fetch(url, {
+    headers: {
+      "Content-Type": "application/json",
+      "ngrok-skip-browser-warning": "420",
+      "X-API-Key": process.env.REACT_APP_API_KEY,
+    },
+  });
+  if (!res.ok) throw new Error(`API error ${res.status}`);
+  return res.json();
+};
+
+const fetchDistrictCentroid = async (districtName) => {
+  const url = `${process.env.REACT_APP_GEOSERVER_URL}pan_india_asset/ows`;
+  const params = new URLSearchParams({
+    service:      "WFS",
+    version:      "1.0.0",
+    request:      "GetFeature",
+    typeName:     "pan_india_asset:pan_india_district_boundary_dataset",
+    outputFormat: "application/json",
+    CQL_FILTER:   `Name='${districtName}'`,
+  });
+  try {
+    const res  = await fetch(`${url}?${params}`);
+    const data = await res.json();
+    const feature = data.features?.[0];
+    if (!feature) return null;
+
+    if (feature.bbox) {
+      return {
+        lon: (feature.bbox[0] + feature.bbox[2]) / 2,
+        lat: (feature.bbox[1] + feature.bbox[3]) / 2,
+      };
+    }
+
+    const coords = feature.geometry?.coordinates?.[0]?.[0];
+    if (coords) {
+      const lons = coords.map(c => c[0]);
+      const lats = coords.map(c => c[1]);
+      return {
+        lon: (Math.min(...lons) + Math.max(...lons)) / 2,
+        lat: (Math.min(...lats) + Math.max(...lats)) / 2,
+      };
+    }
+    return null;
+  } catch (err) {
+    console.error(`Centroid fetch failed for ${districtName}:`, err);
+    return null;
+  }
 };
 
 // NEW: fetch plans by state (with optional org filter)
@@ -255,6 +325,9 @@ const PlansPage = () => {
     const districtLookupRef = useRef({});
     const tehsilLookupRef   = useRef({});  
     const currentStateRef = useRef(null);
+    const districtLayerRef = useRef(null); // for district pins
+    const statePlansRef       = useRef([]);   // cache plans fetched on state click
+    const currentDistrictRef  = useRef(null); // track selected district
 
     const [viewMode,            setViewMode]            = useState("plans");
     const [metaStats,           setMetaStats]           = useState(null);
@@ -265,6 +338,12 @@ const PlansPage = () => {
     const [isStateView,         setIsStateView]         = useState(true);  
     const [mapLoading,          setMapLoading]          = useState(false); 
     const [selectedPlan,        setSelectedPlan]        = useState(null);
+
+    const [stewardStats,    setStewardStats]    = useState(null);
+    const [stewardListing,  setStewardListing]  = useState([]);
+    const [selectedSteward, setSelectedSteward] = useState(null);
+    const [stewardLoading,  setStewardLoading]  = useState(false);
+    const [stewardModalPlan, setStewardModalPlan] = useState(null);
 
     // ── MAP INIT ────────────────────────────────────────────────
     useEffect(() => {
@@ -310,6 +389,20 @@ const PlansPage = () => {
         return res.json();
     };
 
+    const fetchPlansByDistrict = async (districtId, organizationId = null) => {
+      let url = `${process.env.REACT_APP_API_URL}/watershed/plans/?district=${districtId}&filter_test_plan=true`;
+      if (organizationId) url += `&organization=${encodeURIComponent(organizationId)}`;
+      const res = await fetch(url, {
+        headers: {
+          "Content-Type": "application/json",
+          "ngrok-skip-browser-warning": "420",
+          "X-API-Key": process.env.REACT_APP_API_KEY,
+        },
+      });
+      if (!res.ok) throw new Error(`API error ${res.status}`);
+      return res.json();
+    };
+
     useEffect(() => {
         fetchProposedBlocks()
             .then((states) => {
@@ -350,55 +443,194 @@ const PlansPage = () => {
     }, [metaStats]);
 
     // ── STATS ───────────────────────────────────────────────────
-    const loadStats = async (orgId = null) => {
-        setStatsLoading(true);
-        setStatsError(false);
-        try {
-        const data = await fetchMetaStats(orgId);
-        setMetaStats(data);
-        } catch (err) {
-        console.error("Failed to fetch meta stats:", err);
+    const loadStats = async (orgId = null, stateId = null) => {
+      setStatsLoading(true);
+      setStatsError(false);
+      try {
+        if (viewMode === "plans") {
+          const data = await fetchMetaStats(orgId, stateId);
+          setMetaStats(data);
+        } else {
+          const data = await fetchStewardStats(orgId, stateId);
+          setStewardStats(data);
+        }
+      } catch (err) {
+        console.error("Failed to fetch stats:", err);
         setStatsError(true);
-        } finally {
+      } finally {
         setStatsLoading(false);
-        }
-    };
-
-    useEffect(() => { loadStats(); }, []);
-
-    // ── PIN LAYER ───────────────────────────────────────────────
-    const addStateBubbles = (statsData) => {
-        const map = mapRef.current;
-        if (!map) return;
-
-        if (bubbleLayerRef.current) {
-        map.removeLayer(bubbleLayerRef.current);
-        bubbleLayerRef.current = null;
-        }
-
-        const stateBreakdown = statsData?.state_breakdown ?? [];
-        if (!stateBreakdown.length) return;
-
-        const features = stateBreakdown
-        .filter((s) => s.centroid?.lat && s.centroid?.lon)
-        .map((s) => {
-            const f = new Feature({
-            geometry:  new Point([s.centroid.lon, s.centroid.lat]),
-            stateData: s,
-            });
-            f.setStyle(createPinStyle(s.state_name, s.total_plans));
-            return f;
-        });
-
-        const layer = new VectorLayer({ source: new VectorSource({ features }), zIndex: 10 });
-        layer.set("layerName", "bubbleLayer");
-        bubbleLayerRef.current = layer;
-        map.addLayer(layer);
+      }
     };
 
     useEffect(() => {
-        if (metaStats && isStateView) addStateBubbles(metaStats);
-    }, [metaStats, isStateView]);
+      if (viewMode === "plans") loadStats();
+      else loadStats();
+    }, [viewMode]);
+
+    // ── PIN LAYER ───────────────────────────────────────────────
+    const addStateBubbles = (statsData) => {
+      const map = mapRef.current;
+      if (!map) return;
+
+      if (bubbleLayerRef.current) {
+        map.removeLayer(bubbleLayerRef.current);
+        bubbleLayerRef.current = null;
+      }
+
+      // For stewards mode use state_level, for plans mode use state_breakdown
+      const stateData = viewMode === "stewards"
+        ? (statsData?.state_level ?? []).map(s => ({
+            ...s,
+            total_plans:  s.steward_count,
+            centroid:     null, // will use name lookup
+            state_name:   s.state_name,
+          }))
+        : (statsData?.state_breakdown ?? []);
+
+      if (!stateData.length) return;
+
+      const features = stateData
+        .filter((s) => s.centroid?.lat || s.centroid?.lon ||
+          (s.centroid === null && s.state_name))
+        .map((s) => {
+          // For stewards mode centroid comes from the plans meta-stats state_breakdown
+          // as a fallback — match by state name
+          let coords;
+          if (s.centroid?.lat && s.centroid?.lon) {
+            coords = [s.centroid.lon, s.centroid.lat];
+          } else if (viewMode === "stewards" && metaStats?.state_breakdown) {
+            const match = metaStats.state_breakdown.find(
+              (p) => p.state_name === s.state_name
+            );
+            if (match?.centroid) coords = [match.centroid.lon, match.centroid.lat];
+          }
+          if (!coords) return null;
+
+          const feature = new Feature({
+            geometry:  new Point(coords),
+            stateData: { ...s, state_id: s.state_id },
+          });
+          feature.setStyle(createPinStyle(s.state_name, s.steward_count ?? s.total_plans));
+          return feature;
+        })
+        .filter(Boolean);
+
+      if (!features.length) return;
+
+      const layer = new VectorLayer({
+        source: new VectorSource({ features }),
+        zIndex: 10,
+      });
+      layer.set("layerName", "bubbleLayer");
+      bubbleLayerRef.current = layer;
+      map.addLayer(layer);
+    };
+
+    useEffect(() => {
+  if (viewMode === "plans"    && metaStats     && isStateView) addStateBubbles(metaStats);
+  if (viewMode === "stewards" && stewardStats  && isStateView) addStateBubbles(stewardStats);
+    }, [metaStats, stewardStats, isStateView, viewMode]);
+
+    const addDistrictPins = async (districtLevel) => {
+      const map = mapRef.current;
+      if (!map || !districtLevel?.length) return;
+
+      // Remove existing district layer
+      if (districtLayerRef.current) {
+        map.removeLayer(districtLayerRef.current);
+        districtLayerRef.current = null;
+      }
+
+      // Fetch all centroids in parallel
+      const centroidResults = await Promise.all(
+        districtLevel.map(async (d) => {
+          const centroid = await fetchDistrictCentroid(d.district_name);
+          return { ...d, centroid };
+        })
+      );
+
+      const features = centroidResults
+        .filter((d) => d.centroid)
+        .map((d) => {
+          const feature = new Feature({
+            geometry:     new Point([d.centroid.lon, d.centroid.lat]),
+            districtData: d,
+          });
+          feature.setStyle(createPinStyle(d.district_name, d.steward_count));
+          return feature;
+        });
+
+      if (!features.length) return;
+
+      const layer = new VectorLayer({
+        source: new VectorSource({ features }),
+        zIndex: 10,
+      });
+      layer.set("layerName", "districtLayer");
+      districtLayerRef.current = layer;
+      map.addLayer(layer);
+
+      // Zoom to fit all district pins
+      map.getView().fit(layer.getSource().getExtent(), {
+        padding: [60, 60, 60, 60], duration: 600,
+      });
+    };
+
+    const addPlanDistrictPins = async (plans) => {
+      const map = mapRef.current;
+      if (!map) return;
+
+      if (districtLayerRef.current) {
+        map.removeLayer(districtLayerRef.current);
+        districtLayerRef.current = null;
+      }
+
+      // Group plans by district_soi → count
+      const districtCounts = {};
+      plans.forEach((p) => {
+        if (!p.district_soi) return;
+        if (!districtCounts[p.district_soi]) {
+          districtCounts[p.district_soi] = { count: 0, district_id: p.district_soi };
+        }
+        districtCounts[p.district_soi].count += 1;
+      });
+
+      // Resolve district names from lookup and fetch centroids in parallel
+      const entries = Object.values(districtCounts);
+      const centroidResults = await Promise.all(
+        entries.map(async (entry) => {
+          const districtName = districtLookupRef.current[entry.district_id];
+          if (!districtName) return null;
+          const centroid = await fetchDistrictCentroid(districtName);
+          return centroid ? { ...entry, districtName, centroid } : null;
+        })
+      );
+
+      const features = centroidResults
+        .filter(Boolean)
+        .map((d) => {
+          const feature = new Feature({
+            geometry:     new Point([d.centroid.lon, d.centroid.lat]),
+            districtData: d,
+          });
+          feature.setStyle(createPinStyle(d.districtName, d.count));
+          return feature;
+        });
+
+      if (!features.length) return;
+
+      const layer = new VectorLayer({
+        source: new VectorSource({ features }),
+        zIndex: 10,
+      });
+      layer.set("layerName", "districtLayer");
+      districtLayerRef.current = layer;
+      map.addLayer(layer);
+
+      map.getView().fit(layer.getSource().getExtent(), {
+        padding: [60, 60, 60, 60], duration: 600,
+      });
+    };
 
     // ── PLAN DOTS ───────────────────────────────────────────────
     const addPlanDots = (plans) => {
@@ -441,61 +673,151 @@ const PlansPage = () => {
     // ── STATE CLICK → DRILL DOWN ────────────────────────────────
     const handleStatePinClick = async (stateData) => {
       currentStateRef.current = stateData;
-        setMapLoading(true);
-        // Remove pin layer immediately
-        if (bubbleLayerRef.current) {
-            mapRef.current.removeLayer(bubbleLayerRef.current);
-            bubbleLayerRef.current = null;
-        }
-        try {
-            // Fetch plans + state-filtered stats in parallel
-            const [plans, stateStats] = await Promise.all([
+      setMapLoading(true);
+
+      if (bubbleLayerRef.current) {
+        mapRef.current.removeLayer(bubbleLayerRef.current);
+        bubbleLayerRef.current = null;
+      }
+
+      try {
+        if (viewMode === "plans") {
+          const [plans, stateStats] = await Promise.all([
             fetchPlansByState(stateData.state_id, orgRef.current?.value ?? null),
             fetchMetaStats(orgRef.current?.value ?? null, stateData.state_id),
-            ]);
-            addPlanDots(plans);
-            setMetaStats(stateStats);   // sidebar now reflects this state
-            setIsStateView(false);
-        } catch (err) {
-            console.error("Failed to fetch state data:", err);
-            addStateBubbles(metaStats); // restore pins on failure
-        } finally {
-            setMapLoading(false);
+          ]);
+
+          // Cache plans for district drill-down
+          statePlansRef.current = plans;
+
+          // Remove bubble layer before adding district pins
+          if (bubbleLayerRef.current) {
+            mapRef.current.removeLayer(bubbleLayerRef.current);
+            bubbleLayerRef.current = null;
+          }
+
+          setMetaStats(stateStats);
+          setIsStateView(false);
+          await addPlanDistrictPins(plans);
+        } else {
+          const [stewardData] = await Promise.all([
+            fetchStewardStats(orgRef.current?.value ?? null, stateData.state_id),
+          ]);
+          setStewardStats(stewardData);
+
+          // Remove state bubble layer before adding district pins
+          if (bubbleLayerRef.current) {
+            mapRef.current.removeLayer(bubbleLayerRef.current);
+            bubbleLayerRef.current = null;
+          }
+
+          setIsStateView(false); 
+          await addDistrictPins(stewardData.district_level ?? []);
         }
+        setIsStateView(false);
+      } catch (err) {
+        console.error("State pin click failed:", err);
+        addStateBubbles(metaStats);
+      } finally {
+        setMapLoading(false);
+      }
     };
 
+    const handleDistrictPinClick = async (districtData) => {
+      if (!districtData) return;
+
+      if (viewMode === "plans") {
+        setMapLoading(true);
+        currentDistrictRef.current = districtData;
+
+        // Remove district layer
+        if (districtLayerRef.current) {
+          mapRef.current.removeLayer(districtLayerRef.current);
+          districtLayerRef.current = null;
+        }
+
+        try {
+          const plans = await fetchPlansByDistrict(
+            districtData.district_id,
+            orgRef.current?.value ?? null
+          );
+          addPlanDots(plans);
+
+          // Update sidebar stats for this district
+          const districtStats = await fetchMetaStats(
+            orgRef.current?.value ?? null,
+            null,
+            districtData.district_id  // we need to add district param to fetchMetaStats
+          );
+          setMetaStats(districtStats);
+        } catch (err) {
+          console.error("District plans fetch failed:", err);
+        } finally {
+          setMapLoading(false);
+        }
+      } else {
+        // Stewards mode — existing logic
+        setStewardLoading(true);
+        setSelectedSteward(null);
+        try {
+          const data = await fetchStewardListing(
+            currentStateRef.current?.state_id,
+            orgRef.current?.value ?? null
+          );
+          const filtered = (data.stewards ?? []).filter((s) =>
+            s.plans?.some((p) => p.district_name === districtData.district_name ||
+              districtData.district_name)
+          );
+          setStewardListing(filtered.length > 0 ? filtered : data.stewards ?? []);
+        } catch (err) {
+          console.error("Steward listing failed:", err);
+        } finally {
+          setStewardLoading(false);
+        }
+      }
+    };
     // ── BACK TO STATE VIEW ──────────────────────────────────────
     const handleBackToStateView = async () => {
-      currentStateRef.current = null;
-        const map = mapRef.current;
-        if (!map) return;
-        
-        // Reset dot selection refs
-        if (selectedFeatureRef.current) selectedFeatureRef.current = null;
-        hoveredFeatureRef.current = null;
-        setSelectedPlan(null);
+      const map = mapRef.current;
+      if (!map) return;
 
+      if (planLayerRef.current) {
+        map.removeLayer(planLayerRef.current);
+        planLayerRef.current = null;
+      }
+      if (districtLayerRef.current) {
+        map.removeLayer(districtLayerRef.current);
+        districtLayerRef.current = null;
+      }
 
-        if (planLayerRef.current) {
-            map.removeLayer(planLayerRef.current);
-            planLayerRef.current = null;
+      if (selectedFeatureRef.current) selectedFeatureRef.current = null;
+      hoveredFeatureRef.current  = null;
+      currentDistrictRef.current = null;
+      statePlansRef.current      = [];
+
+      setSelectedPlan(null);
+      setSelectedSteward(null);
+      setStewardListing([]);
+      setIsStateView(true);
+
+      setStatsLoading(true);
+      try {
+        if (viewMode === "plans") {
+          const globalStats = await fetchMetaStats(orgRef.current?.value ?? null);
+          setMetaStats(globalStats);
+          addStateBubbles(globalStats);
+        } else {
+          const globalStats = await fetchStewardStats(orgRef.current?.value ?? null);
+          setStewardStats(globalStats);
+          addStateBubbles(globalStats);
         }
+      } catch (err) {
+        console.error("Failed to restore global stats:", err);
+      } finally {
+        setStatsLoading(false);
+      }
 
-        // Restore global stats
-        setStatsLoading(true);
-        try {
-            const globalStats = await fetchMetaStats(orgRef.current?.value ?? null);
-            setMetaStats(globalStats);
-        } catch (err) {
-            console.error("Failed to restore global stats:", err);
-        } finally {
-            setStatsLoading(false);
-        }
-
-        addStateBubbles(metaStats);
-        setSelectedPlan(null);
-        setIsStateView(true);
-        map.getView().animate({ center: [78.9, 23.6], zoom: 5, duration: 600 });
+      map.getView().animate({ center: [78.9, 23.6], zoom: 5, duration: 600 });
     };
 
     // ── MAP CLICK HANDLER ───────────────────────────────────────
@@ -504,28 +826,31 @@ const PlansPage = () => {
         if (!map) return;
 
         const handleClick = (evt) => {
-            map.forEachFeatureAtPixel(evt.pixel, (feature, layer) => {
+          map.forEachFeatureAtPixel(evt.pixel, (feature, layer) => {
             const layerName = layer?.get("layerName");
 
             if (layerName === "planLayer") {
-                // Reset previously selected dot
-                if (selectedFeatureRef.current && selectedFeatureRef.current !== feature) {
+              // Reset previous selection
+              if (selectedFeatureRef.current && selectedFeatureRef.current !== feature) {
                 selectedFeatureRef.current.setStyle(DOT_DEFAULT());
-                }
-                // Apply selected style
-                feature.setStyle(DOT_SELECTED());
-                selectedFeatureRef.current = feature;
-
-                setSelectedPlan(feature.get("planDetails"));
-                return true;
+              }
+              feature.setStyle(DOT_SELECTED());
+              selectedFeatureRef.current = feature;
+              setSelectedPlan(feature.get("planDetails"));
+              return true;
             }
 
             if (layerName === "bubbleLayer") {
-                const stateData = feature.get("stateData");
-                if (stateData) handleStatePinClick(stateData);
-                return true;
+              const stateData = feature.get("stateData");
+              if (stateData) handleStatePinClick(stateData);
+              return true;
             }
-            });
+
+            if (layerName === "districtLayer") {
+              handleDistrictPinClick(feature.get("districtData"));
+              return true;
+            }
+          });
         };
 
         const handlePointerMove = (evt) => {
@@ -582,6 +907,17 @@ const PlansPage = () => {
         if (!view) return;
         view.animate({ zoom: view.getZoom() + delta, duration: 300 });
     };
+
+    const getStewardOrgId = (facilitatorName) => {
+      // First try the active org filter
+      if (orgRef.current?.value) return orgRef.current.value;
+
+      // Fallback — find org from cached state plans
+      const match = statePlansRef.current?.find(
+        (p) => p.facilitator_name === facilitatorName
+      );
+      return match?.organization ?? null;
+    };
   
 
   const summary  = metaStats?.summary                     ?? {};
@@ -605,8 +941,7 @@ const PlansPage = () => {
           <p className="text-sm mt-2 text-slate-500">
             Landscape stewards from across 1000+ villages are building natural
             resource management plans from the ground-up in consultation with
-            their communities. This dashboard shows the network coverage, and
-            (coming soon) the sustainability potential and impact. Discover
+            their communities. This dashboard shows the network coverage,the sustainability potential and impact. Discover
             partner organizations and the on-ground work of landscape stewards
             in creating detailed project reports for their villages.
           </p>
@@ -682,231 +1017,445 @@ const PlansPage = () => {
           </div>
 
           {/* SIDEBAR */}
-            <div className="w-full lg:w-[35%] h-[50vh] lg:h-full overflow-y-auto flex flex-col gap-4 pr-1">
+          <div className={`w-full lg:w-[35%] h-[50vh] lg:h-full flex flex-col pr-1 ${
+            selectedPlan ? "overflow-hidden" : "overflow-y-auto gap-4"
+          }`}>
             {statsLoading ? <SidebarSkeleton /> : statsError ? (
-                <div className="flex-1 flex items-center justify-center rounded-2xl"
+              <div className="flex-1 flex items-center justify-center rounded-2xl"
                 style={{ border: `1px solid ${P.border}` }}>
                 <p className="text-sm" style={{ color: P.muted }}>Failed to load stats. Please refresh.</p>
-                </div>
+              </div>
             ) : selectedPlan ? (
-                // ── PLAN DETAIL PANEL ──
-                <div className="flex flex-col gap-4">
 
-                {/* HEADER */}
-                <div className="rounded-2xl p-5 text-white shadow-lg relative"
+              // ── PLAN DETAIL PANEL ──────────────────────────────
+              <div className="flex flex-col h-full gap-4">
+                <div className="flex flex-col gap-4 flex-1 overflow-y-auto pr-1">
+
+                  {/* Header */}
+                  <div className="rounded-2xl p-5 text-white shadow-lg relative"
                     style={{ background: `linear-gradient(135deg, ${P.base}, ${P.dark})` }}>
                     <button
-                        onClick={() => {
-                            if (selectedFeatureRef.current) {
-                            selectedFeatureRef.current.setStyle(DOT_DEFAULT());
-                            selectedFeatureRef.current = null;
-                            }
-                            setSelectedPlan(null);
-                        }}
-                        className="absolute top-3 right-3 w-7 h-7 rounded-full flex items-center justify-center
-                                    transition-all hover:bg-white/20"
-                        style={{ color: "white" }}
-                    >
-                        ✕
-                    </button>
+                      onClick={() => {
+                        if (selectedFeatureRef.current) {
+                          selectedFeatureRef.current.setStyle(DOT_DEFAULT());
+                          selectedFeatureRef.current = null;
+                        }
+                        setSelectedPlan(null);
+                      }}
+                      className="absolute top-3 right-3 w-7 h-7 rounded-full flex items-center
+                                justify-center transition-all hover:bg-white/20"
+                      style={{ color: "white" }}
+                    >✕</button>
                     <p className="text-xs font-semibold uppercase tracking-widest mb-1"
-                    style={{ color: "oklch(90% 0.08 301.924)" }}>
-                        Plan Details
-                    </p>
+                      style={{ color: "oklch(90% 0.08 301.924)" }}>Plan Details</p>
                     <p className="text-2xl font-bold tracking-tight pr-8">{selectedPlan.plan}</p>
                     <p className="text-sm mt-1" style={{ color: "oklch(85% 0.08 301.924)" }}>
-                        {selectedPlan.village_name || "--"}
+                      {selectedPlan.village_name || "--"}
                     </p>
-                </div>
+                  </div>
 
-                {/* DETAIL GRID */}
-                <div className="bg-white rounded-2xl p-4 shadow-sm" style={{ border: `1px solid ${P.border}` }}>
+                  {/* Detail grid */}
+                  <div className="bg-white rounded-2xl p-4 shadow-sm"
+                    style={{ border: `1px solid ${P.border}` }}>
                     <div className="grid grid-cols-2 gap-3">
-                    {[
-                        { label: "Organization", value: selectedPlan.organization_name },
-                        { label: "Project",      value: selectedPlan.project_name      },
-                        { label: "Facilitator",  value: selectedPlan.facilitator_name  },
-                        { label: "Gram Panchayat", value: selectedPlan.gram_panchayat  },
-                    ].map(({ label, value }) => (
+                      {[
+                        { label: "Organization",   value: selectedPlan.organization_name },
+                        { label: "Project",        value: selectedPlan.project_name      },
+                        { label: "Gram Panchayat", value: selectedPlan.gram_panchayat    },
+                      ].map(({ label, value }) => (
                         <div key={label} className="rounded-xl p-3"
-                        style={{ background: P.lighter, border: `1px solid ${P.border}` }}>
-                        <p className="text-xs font-medium mb-1" style={{ color: P.muted }}>{label}</p>
-                        <p className="text-sm font-semibold" style={{ color: P.text }}>{value || "--"}</p>
+                          style={{ background: P.lighter, border: `1px solid ${P.border}` }}>
+                          <p className="text-xs font-medium mb-1" style={{ color: P.muted }}>{label}</p>
+                          <p className="text-sm font-semibold" style={{ color: P.text }}>{value || "--"}</p>
                         </div>
-                    ))}
-                    </div>
-                </div>
+                      ))}
 
-                {/* STATUS BADGES */}
-                <div className="bg-white rounded-2xl p-4 shadow-sm" style={{ border: `1px solid ${P.border}` }}>
-                    <p className="text-xs font-semibold uppercase tracking-widest mb-3" style={{ color: P.muted }}>
-                    Status
-                    </p>
+                      {/* Facilitator — clickable to open steward detail */}
+                      {selectedPlan.facilitator_name && (
+                        <div
+                          className="rounded-xl p-3 cursor-pointer hover:shadow-md transition-all duration-200"
+                          style={{ background: P.light, border: `1px solid ${P.base}` }}
+                          onClick={() => setStewardModalPlan({
+                            facilitator_name: selectedPlan.facilitator_name,
+                            organization:     selectedPlan.organization,
+                          })}
+                        >
+                          <p className="text-xs font-medium mb-1" style={{ color: P.muted }}>Facilitator</p>
+                          <div className="flex items-center justify-between">
+                            <p className="text-sm font-semibold" style={{ color: P.base }}>
+                              {selectedPlan.facilitator_name}
+                            </p>
+                            <span className="text-xs font-semibold" style={{ color: P.base }}>↗</span>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Status badges */}
+                  <div className="bg-white rounded-2xl p-4 shadow-sm"
+                    style={{ border: `1px solid ${P.border}` }}>
+                    <p className="text-xs font-semibold uppercase tracking-widest mb-3"
+                      style={{ color: P.muted }}>Status</p>
                     <div className="grid grid-cols-2 gap-3">
-                    {[
+                      {[
                         { label: "Plan",         active: selectedPlan.is_completed    },
-                        { label: "DPR Generated", active: selectedPlan.is_dpr_generated },
-                        { label: "DPR Reviewed",  active: selectedPlan.is_dpr_reviewed  },
-                        { label: "DPR Approved",  active: selectedPlan.is_dpr_approved  },
-                    ].map(({ label, active }) => (
+                        { label: "DPR Reviewed", active: selectedPlan.is_dpr_reviewed },
+                      ].map(({ label, active }) => (
                         <div key={label} className="rounded-xl p-3 flex items-center gap-2"
-                        style={{ background: P.lighter, border: `1px solid ${P.border}` }}>
-                        <span className="text-base">{active ? "✅" : "⏳"}</span>
-                        <div>
+                          style={{ background: P.lighter, border: `1px solid ${P.border}` }}>
+                          <span className="text-base">{active ? "✅" : "⏳"}</span>
+                          <div>
                             <p className="text-xs font-medium" style={{ color: P.muted }}>{label}</p>
                             <p className="text-xs font-semibold"
-                            style={{ color: active ? "oklch(50% 0.18 145)" : P.muted }}>
-                            {active ? "Done" : "Pending"}
+                              style={{ color: active ? "oklch(50% 0.18 145)" : P.muted }}>
+                              {active ? "Done" : "Pending"}
                             </p>
+                          </div>
                         </div>
-                        </div>
-                    ))}
+                      ))}
                     </div>
+                  </div>
                 </div>
 
-                {/* DATES */}
-                <div className="bg-white rounded-2xl p-4 shadow-sm" style={{ border: `1px solid ${P.border}` }}>
-                    <p className="text-xs font-semibold uppercase tracking-widest mb-3" style={{ color: P.muted }}>
-                    Timeline
-                    </p>
-                    <div className="grid grid-cols-2 gap-3">
-                    {[
-                        { label: "Created",      value: selectedPlan.created_at },
-                        { label: "Last Updated", value: selectedPlan.updated_at },
-                    ].map(({ label, value }) => (
-                        <div key={label} className="rounded-xl p-3"
-                        style={{ background: P.lighter, border: `1px solid ${P.border}` }}>
-                        <p className="text-xs font-medium mb-1" style={{ color: P.muted }}>{label}</p>
-                        <p className="text-sm font-semibold" style={{ color: P.text }}>
-                            {value ? new Date(value).toLocaleDateString("en-IN", {
-                            day: "numeric", month: "short", year: "numeric"
-                            }) : "--"}
-                        </p>
-                        </div>
-                    ))}
-                    </div>
-                </div>
-
-                {/* VIEW FULL PLAN */}
+                {/* Pinned button */}
                 <button
-                    onClick={() => {
-                        const districtLabel = transformName(districtLookupRef.current[selectedPlan.district_soi] || "");
-                        const tehsilLabel   = transformName(tehsilLookupRef.current[selectedPlan.tehsil_soi]     || "");
-
-                        navigate("/CCUsagePage/plan-view", {
-                          state: {
-                            plan: {
-                              ...selectedPlan,
-                              district: districtLabel,
-                              block:    tehsilLabel,
-                            },
-                            returnContext: {
-                              stateId:   currentStateRef.current?.state_id   ?? null,
-                              stateName: currentStateRef.current?.state_name ?? null,
-                            },
-                          },
-                        });
-                    }}
-                    className="w-full py-3 rounded-2xl text-white font-semibold text-sm flex-shrink-0
-                                shadow-lg hover:shadow-xl active:scale-[0.98] transition-all duration-200"
-                    style={{ background: `linear-gradient(135deg, ${P.base}, ${P.dark})` }}
+                  onClick={() => {
+                    const districtLabel = transformName(districtLookupRef.current[selectedPlan.district_soi] || "");
+                    const tehsilLabel   = transformName(tehsilLookupRef.current[selectedPlan.tehsil_soi]     || "");
+                    navigate("/CCUsagePage/plan-view", {
+                      state: {
+                        plan: { ...selectedPlan, district: districtLabel, block: tehsilLabel },
+                        returnContext: {
+                          stateId:   currentStateRef.current?.state_id   ?? null,
+                          stateName: currentStateRef.current?.state_name ?? null,
+                        },
+                      },
+                    });
+                  }}
+                  className="w-full py-3 rounded-2xl text-white font-semibold text-sm flex-shrink-0
+                            shadow-lg hover:shadow-xl active:scale-[0.98] transition-all duration-200"
+                  style={{ background: `linear-gradient(135deg, ${P.base}, ${P.dark})` }}
                 >
-                View Full Plan →
+                  View Full Plan →
                 </button>
+              </div>
 
-                </div>
             ) : (
-                // ── STATS PANEL (unchanged) ──
-                <>
+
+              // ── STATS PANEL ────────────────────────────────────
+              <>
                 {/* VIEW MODE TOGGLE */}
                 <div className="rounded-xl p-1 flex" style={{ background: P.light }}>
-                    {["plans", "stewards"].map((mode) => (
-                    <button key={mode} onClick={() => setViewMode(mode)}
-                        className="flex-1 py-2 text-sm font-semibold rounded-lg transition-all duration-200"
-                        style={viewMode === mode
+                  {["plans", "stewards"].map((mode) => (
+                    <button key={mode}
+                      onClick={() => {
+                        setViewMode(mode);
+                        loadStats(orgRef.current?.value ?? null);
+                      }}
+                      className="flex-1 py-2 text-sm font-semibold rounded-lg transition-all duration-200"
+                      style={viewMode === mode
                         ? { background: P.base, color: "#fff", boxShadow: "0 1px 4px rgba(0,0,0,0.15)" }
                         : { color: P.muted }}>
-                        {mode === "plans" ? "Plans" : "Stewards"}
+                      {mode === "plans" ? "Plans" : "Stewards"}
                     </button>
-                    ))}
+                  ))}
                 </div>
 
-                {/* TOTAL PLANS BANNER */}
-                <div className="rounded-2xl p-5 text-white shadow-lg"
-                    style={{ background: `linear-gradient(135deg, ${P.base}, ${P.dark})` }}>
-                    <p className="text-xs font-semibold uppercase tracking-widest mb-1"
-                    style={{ color: "oklch(90% 0.08 301.924)" }}>Total Plans</p>
-                    <p className="text-5xl font-bold tracking-tight">
-                    {(summary.total_plans ?? 0).toLocaleString()}
-                    </p>
-                    <div className="flex gap-4 mt-3 pt-3"
-                    style={{ borderTop: "1px solid oklch(70% 0.12 301.924)" }}>
-                    <div>
-                        <p className="text-xs" style={{ color: "oklch(85% 0.08 301.924)" }}>Completed</p>
-                        <p className="text-lg font-semibold">{(summary.completed_plans ?? 0).toLocaleString()}</p>
+                {viewMode === "stewards" ? (
+                  <>
+                    {/* TOTAL STEWARDS BANNER */}
+                    <div className="rounded-2xl p-5 text-white shadow-lg"
+                      style={{ background: `linear-gradient(135deg, ${P.base}, ${P.dark})` }}>
+                      <p className="text-xs font-semibold uppercase tracking-widest mb-1"
+                        style={{ color: "oklch(90% 0.08 301.924)" }}>Total Stewards</p>
+                      <p className="text-5xl font-bold tracking-tight">
+                        {(stewardStats?.total_stewards ?? 0).toLocaleString()}
+                      </p>
                     </div>
-                    <div className="w-px" style={{ background: "oklch(70% 0.12 301.924)" }} />
-                    <div>
-                        <p className="text-xs" style={{ color: "oklch(85% 0.08 301.924)" }}>In Progress</p>
-                        <p className="text-lg font-semibold">{(summary.in_progress_plans ?? 0).toLocaleString()}</p>
-                    </div>
-                    </div>
-                </div>
 
-                {/* DPR STATUS */}
-                <div className="bg-white rounded-2xl p-4 shadow-sm" style={{ border: `1px solid ${P.border}` }}>
-                    <p className="text-xs font-semibold uppercase tracking-widest mb-3" style={{ color: P.muted }}>
-                    DPR Status
-                    </p>
-                    <div className="grid grid-cols-2 gap-3">
-                    {[
-                        { label: "Generated", value: summary.dpr_generated },
-                        { label: "Reviewed",  value: summary.dpr_reviewed  },
-                    ].map(({ label, value }) => (
-                        <div key={label} className="rounded-xl p-3"
-                        style={{ background: P.lighter, border: `1px solid ${P.border}` }}>
-                        <p className="text-xs font-medium mb-1" style={{ color: P.muted }}>{label}</p>
-                        <p className="text-3xl font-bold" style={{ color: P.base }}>{value ?? "--"}</p>
+                    {/* DPR STATS */}
+                    <div className="bg-white rounded-2xl p-4 shadow-sm"
+                      style={{ border: `1px solid ${P.border}` }}>
+                      <p className="text-xs font-semibold uppercase tracking-widest mb-3"
+                        style={{ color: P.muted }}>DPR Stats</p>
+                      <div className="grid grid-cols-2 gap-3">
+                        {[
+                          { label: "Generated", value: stewardStats?.dpr_stats?.total_dpr_generated },
+                          { label: "Reviewed",  value: stewardStats?.dpr_stats?.total_dpr_reviewed  },
+                        ].map(({ label, value }) => (
+                          <div key={label} className="rounded-xl p-3"
+                            style={{ background: P.lighter, border: `1px solid ${P.border}` }}>
+                            <p className="text-xs font-medium mb-1" style={{ color: P.muted }}>{label}</p>
+                            <p className="text-3xl font-bold" style={{ color: P.base }}>{value ?? "--"}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* PERFORMANCE */}
+                    <div className="bg-white rounded-2xl p-4 shadow-sm"
+                      style={{ border: `1px solid ${P.border}` }}>
+                      <p className="text-xs font-semibold uppercase tracking-widest mb-3"
+                        style={{ color: P.muted }}>Performance</p>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="rounded-xl p-3"
+                          style={{ background: P.lighter, border: `1px solid ${P.border}` }}>
+                          <p className="text-xs font-medium mb-1" style={{ color: P.muted }}>
+                            Avg Plans / Steward
+                          </p>
+                          <p className="text-3xl font-bold" style={{ color: P.dark }}>
+                            {stewardStats?.plans_per_steward?.avg ?? 0}
+                          </p>
                         </div>
-                    ))}
+                      </div>
                     </div>
-                </div>
 
-                {/* COMMONS CONNECT OPERATIONAL */}
-                <div className="bg-white rounded-2xl p-4 shadow-sm" style={{ border: `1px solid ${P.border}` }}>
-                    <p className="text-xs font-semibold uppercase tracking-widest mb-3" style={{ color: P.muted }}>
-                    Commons Connect Operational
-                    </p>
-                    <div className="grid grid-cols-3 gap-3">
-                    {[
-                        { label: "Tehsils",   value: commons.active_tehsils   },
-                        { label: "Districts", value: commons.active_districts  },
-                        { label: "States",    value: commons.active_states     },
-                    ].map(({ label, value }) => (
-                        <StatCard key={label} label={label} value={value} />
-                    ))}
-                    </div>
-                </div>
 
-                {/* LANDSCAPE STEWARDS */}
-                <div className="bg-white rounded-2xl p-4 shadow-sm" style={{ border: `1px solid ${P.border}` }}>
-                    <p className="text-xs font-semibold uppercase tracking-widest mb-3" style={{ color: P.muted }}>
-                    Landscape Stewards
-                    </p>
-                    <div className="rounded-xl p-4 flex items-center justify-between"
-                    style={{ background: P.lighter, border: `1px solid ${P.border}` }}>
-                    <p className="text-sm font-medium" style={{ color: P.text }}>Total Stewards</p>
-                    <p className="text-3xl font-bold" style={{ color: P.base }}>
-                        {(stewards.total_stewards ?? 0).toLocaleString()}
-                    </p>
+                    {/* TOP STEWARDS or STEWARD LISTING */}
+                    <div className="bg-white rounded-2xl p-4 shadow-sm"
+                      style={{ border: `1px solid ${P.border}` }}>
+                      <p className="text-xs font-semibold uppercase tracking-widest mb-3"
+                        style={{ color: P.muted }}>
+                        {stewardListing.length > 0 ? "Stewards" : "Top Stewards"}
+                      </p>
+
+                      {stewardLoading ? (
+                        <div className="flex items-center justify-center h-20">
+                          <div className="w-6 h-6 rounded-full border-2 border-t-transparent animate-spin"
+                            style={{ borderColor: `${P.base} transparent transparent transparent` }} />
+                        </div>
+                      ) : stewardListing.length > 0 ? (
+                        <div className="flex flex-col gap-2 max-h-64 overflow-y-auto pr-1">
+                          {stewardListing.map((s, i) => (
+                          <div key={i} className="flex flex-col gap-1">
+                            <div
+                              className="w-full px-3 py-2.5 rounded-xl flex items-center
+                                        justify-between gap-2 transition-all duration-200 cursor-pointer
+                                        hover:shadow-md"
+                              style={{
+                                background: selectedSteward === s ? P.light : P.lighter,
+                                border: `1px solid ${selectedSteward === s ? P.base : P.border}`,
+                              }}
+                            >
+                              {/* Name + stats — click to expand plans */}
+                              <div className="min-w-0 flex-1"
+                                onClick={() => setSelectedSteward(selectedSteward === s ? null : s)}>
+                                <p className="text-sm font-semibold truncate" style={{ color: P.text }}>
+                                  {s.facilitator_name}
+                                </p>
+                                <p className="text-xs" style={{ color: P.muted }}>
+                                  {s.plan_count} plans · {s.completed_count} completed
+                                </p>
+                              </div>
+
+                              {/* View details button */}
+                              <button
+                                onClick={() => setStewardModalPlan({
+                                  facilitator_name: s.facilitator_name,
+                                  organization:     getStewardOrgId(s.facilitator_name),
+                                })}
+                                className="flex-shrink-0 px-2 py-1 rounded-lg text-xs font-semibold
+                                          transition-all duration-200 hover:shadow-sm cursor-pointer"
+                                style={{
+                                  background: P.base,
+                                  color:      "#fff",
+                                }}
+                              >
+                                View
+                              </button>
+
+                              <span className="text-xs flex-shrink-0 cursor-pointer" style={{ color: P.muted }}
+                                onClick={() => setSelectedSteward(selectedSteward === s ? null : s)}>
+                                {selectedSteward === s ? "▲" : "▼"}
+                              </span>
+                            </div>
+                          </div>
+                        ))}
+                        </div>
+                      ) : (
+                        <div className="flex flex-col gap-2 max-h-64 overflow-y-auto pr-1">
+                          {(stewardStats?.top_stewards ?? []).map((s, i) => (
+                          <div key={i}
+                            className="px-3 py-2.5 rounded-xl flex items-center justify-between cursor-pointer
+                                      hover:shadow-md transition-all duration-200"
+                            style={{ background: P.lighter, border: `1px solid ${P.border}` }}
+                            onClick={() => setStewardModalPlan({
+                              facilitator_name: s.facilitator_name,
+                              organization:     getStewardOrgId(s.facilitator_name),
+                            })}
+                          >
+                            <div className="min-w-0">
+                              <p className="text-sm font-semibold truncate" style={{ color: P.text }}>
+                                {s.facilitator_name}
+                              </p>
+                              <p className="text-xs" style={{ color: P.muted }}>
+                                {s.plan_count} plans · {s.completed_count} completed
+                              </p>
+                            </div>
+                            <span className="text-xs font-bold" style={{ color: P.base }}>#{i + 1}</span>
+                          </div>
+                        ))}
+                        </div>
+                      )}
+
+                      {/* Selected steward detail */}
+                      {selectedSteward && (
+                        <div className="mt-3 pt-3" style={{ borderTop: `1px solid ${P.border}` }}>
+                          <div className="flex items-center justify-between mb-2">
+                            <p className="text-xs font-semibold uppercase tracking-widest"
+                              style={{ color: P.muted }}>
+                              Plans by {selectedSteward.facilitator_name}
+                            </p>
+                            <button onClick={() => setSelectedSteward(null)}
+                              className="text-xs" style={{ color: P.muted }}>✕</button>
+                          </div>
+                          <div className="flex flex-col gap-1.5 max-h-48 overflow-y-auto pr-1">
+                            {(selectedSteward.plans ?? []).map((p, i) => (
+                              <div key={i} className="px-3 py-2 rounded-lg flex items-center justify-between"
+                                style={{ background: P.lighter, border: `1px solid ${P.border}` }}>
+                                <p className="text-xs font-medium truncate" style={{ color: P.text }}>
+                                  {p.plan || p.name}
+                                </p>
+                                <span className="text-xs ml-2 flex-shrink-0 font-semibold"
+                                  style={{ color: p.is_completed ? "oklch(50% 0.18 145)" : P.muted }}>
+                                  {p.is_completed ? "✓" : "⏳"}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
                     </div>
-                </div>
-                </>
+                  </>
+
+                ) : (
+
+                  <>
+                    {/* TOTAL PLANS BANNER */}
+                    <div className="rounded-2xl p-5 text-white shadow-lg"
+                      style={{ background: `linear-gradient(135deg, ${P.base}, ${P.dark})` }}>
+                      <p className="text-xs font-semibold uppercase tracking-widest mb-1"
+                        style={{ color: "oklch(90% 0.08 301.924)" }}>Total Villages</p>
+                      <p className="text-5xl font-bold tracking-tight">
+                        {(summary.total_plans ?? 0).toLocaleString()}
+                      </p>
+                      <div className="flex gap-4 mt-3 pt-3"
+                        style={{ borderTop: "1px solid oklch(70% 0.12 301.924)" }}>
+                        <div>
+                          <p className="text-xs" style={{ color: "oklch(85% 0.08 301.924)" }}>Completed</p>
+                          <p className="text-lg font-semibold">
+                            {(summary.completed_plans ?? 0).toLocaleString()}
+                          </p>
+                        </div>
+                        <div className="w-px" style={{ background: "oklch(70% 0.12 301.924)" }} />
+                        <div>
+                          <p className="text-xs" style={{ color: "oklch(85% 0.08 301.924)" }}>In Progress</p>
+                          <p className="text-lg font-semibold">
+                            {(summary.in_progress_plans ?? 0).toLocaleString()}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* COMMONS CONNECT OPERATIONAL */}
+                    <div className="bg-white rounded-2xl p-4 shadow-sm"
+                      style={{ border: `1px solid ${P.border}` }}>
+                      <p className="text-xs font-semibold uppercase tracking-widest mb-3"
+                        style={{ color: P.muted }}>Commons Connect Footprint</p>
+                      <div className="grid grid-cols-3 gap-3">
+                        {[
+                          { label: "States",    value: commons.active_states     },
+                          { label: "Districts", value: commons.active_districts  },
+                          { label: "Tehsils",   value: commons.active_tehsils   },
+                        ].map(({ label, value }) => (
+                          <StatCard key={label} label={label} value={value} />
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* DPR STATUS */}
+                    <div className="bg-white rounded-2xl p-4 shadow-sm"
+                      style={{ border: `1px solid ${P.border}` }}>
+                      <p className="text-xs font-semibold uppercase tracking-widest mb-3"
+                        style={{ color: P.muted }}>DPR Status</p>
+                      <div className="grid grid-cols-2 gap-3">
+                        {[
+                          { label: "Generated", value: summary.dpr_generated },
+                          { label: "Reviewed",  value: summary.dpr_reviewed  },
+                        ].map(({ label, value }) => (
+                          <div key={label} className="rounded-xl p-3"
+                            style={{ background: P.lighter, border: `1px solid ${P.border}` }}>
+                            <p className="text-xs font-medium mb-1" style={{ color: P.muted }}>{label}</p>
+                            <p className="text-3xl font-bold" style={{ color: P.base }}>{value ?? "--"}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* LANDSCAPE STEWARDS */}
+                    <div className="bg-white rounded-2xl p-4 shadow-sm"
+                      style={{ border: `1px solid ${P.border}` }}>
+                      <p className="text-xs font-semibold uppercase tracking-widest mb-3"
+                        style={{ color: P.muted }}>Landscape Stewards</p>
+                      <div className="rounded-xl p-4 flex items-center justify-between"
+                        style={{ background: P.lighter, border: `1px solid ${P.border}` }}>
+                        <p className="text-sm font-medium" style={{ color: P.text }}>Total Stewards</p>
+                        <p className="text-3xl font-bold" style={{ color: P.base }}>
+                          {(stewards.total_stewards ?? 0).toLocaleString()}
+                        </p>
+                      </div>
+                    </div>
+                  </>
+                )}
+              </>
             )}
-            </div>
+          </div>
 
         </div>
       </div>
+      {stewardModalPlan && (
+        <div
+          className="fixed inset-0 z-[3000] flex items-center justify-center"
+          style={{ background: "rgba(0,0,0,0.45)", backdropFilter: "blur(4px)" }}
+          onClick={() => setStewardModalPlan(null)}
+        >
+          <div
+            className="bg-white rounded-2xl shadow-2xl w-[900px] max-w-[95vw] max-h-[85vh]
+                      overflow-auto relative"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              onClick={() => setStewardModalPlan(null)}
+              className="absolute top-4 right-4 z-10 w-8 h-8 rounded-full flex items-center
+                        justify-center text-lg font-bold transition-all hover:bg-slate-100"
+              style={{ color: P.muted }}
+            >
+              ✕
+            </button>
+
+            {stewardModalPlan.organization ? (
+              <StewardDetailPage
+                plan={stewardModalPlan}
+                onClose={() => setStewardModalPlan(null)}
+              />
+            ) : (
+              <div className="p-10 text-center">
+                <p className="text-sm font-medium" style={{ color: P.muted }}>
+                  Please select an organization filter to view steward details.
+                </p>
+                <button
+                  onClick={() => setStewardModalPlan(null)}
+                  className="mt-4 px-4 py-2 rounded-xl text-sm font-semibold text-white"
+                  style={{ background: P.base }}
+                >
+                  Close
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 };
