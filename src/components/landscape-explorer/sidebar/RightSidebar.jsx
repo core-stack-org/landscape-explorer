@@ -499,7 +499,7 @@ const RightSidebar = ({
     }
 
     const url =
-      `http://localhost:8000/api/v1/download_excel_layer` +
+      `https://geoserver.core-stack.org/api/v1/download_excel_layer` +
       `?state=${state.label}&district=${district.label}&block=${block.label}`;
 
     downloadExcel(url, `${block.label}_data.xlsx`);

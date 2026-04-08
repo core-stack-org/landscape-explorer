@@ -511,7 +511,7 @@ const MapArea = () => {
     setIsDownloading(true);
 
     let response = await fetch(
-      `http://localhost:8000/api/v1/download_excel_layer?state=${state.label}&district=${district.label}&block=${block.label}`,
+      `https://geoserver.core-stack.org/api/v1/download_excel_layer?state=${state.label}&district=${district.label}&block=${block.label}`,
       {
         method: "GET",
         headers: {
