@@ -546,10 +546,7 @@ const KYLDashboardPage = () => {
   };
 
   const fetchMWSLayer = async (tempMWS) => {
-    console.log("fetchMWSLayer called with MWS IDs:", tempMWS);
-        if (!district || !block) return;
-
-    // if (tempMWS.length === 0) {
+    if (!district || !block) return;
       try {
         if (!mwsLayerRef.current) {
           const layerName = `deltaG_well_depth_${transformName(district.label)}_${transformName(block.label)}`;
@@ -902,37 +899,6 @@ const KYLDashboardPage = () => {
     if (!source) return;
   
     const selectedSet = new Set(tempVillages);
-    const hasSelection = selectedSet.size > 0;
-  
-    // Only call setStyle when switching between 0 selected ↔ some selected
-    const prevHasSelection = source.getFeatures().some(f => f.get("isSelected") === 1);
-    // if (true) { 
-    //   boundaryLayerRef.current.setStyle({
-    //     "stroke-color": [
-    //       "case",
-      
-    //       // Selected villages → GOLD
-    //       ["==", ["get", "isSelected"], 1],
-    //       [255, 215, 0, 1],
-      
-    //       // Hide others if filter applied
-    //       hasSelection,
-    //       [0, 0, 0, 0],
-      
-    //       // Default → BLACK
-    //       [0, 0, 0, 1]
-    //     ],
-      
-    //     "stroke-width": [
-    //       "case",
-    //       ["==", ["get", "isSelected"], 1],
-    //       2,
-    //       1.2
-    //     ],
-      
-    //     "fill-color": [0, 0, 0, 0]
-    //   });
-    // }
   
     source.getFeatures().forEach((feature) => {
       feature.set(
@@ -1078,28 +1044,28 @@ const KYLDashboardPage = () => {
           hasSelection: false,
           isVisualizeOn: false 
         },
-     "stroke-color": [
-  "case",
+          "stroke-color": [
+          "case",
 
-  // Visualize ON → FULL BLACK 
-  ["var", "isVisualizeOn"],
-  [0, 0, 0, 1],
+          // Visualize ON → FULL BLACK 
+          ["var", "isVisualizeOn"],
+          [0, 0, 0, 1],
 
-  //  Selected → GOLD
-  ["==", ["get", "isSelected"], 1],
-  [255, 215, 0, 1],
+          //  Selected → GOLD
+          ["==", ["get", "isSelected"], 1],
+          [255, 215, 0, 1],
 
-  // Others
-  ["==", ["get", "isSelected"], 0],
-  [
-    "case",
-    ["var", "hasSelection"],
-    [0, 0, 0, 0],
-    [0, 0, 0, 1]
-  ],
+          // Others
+          ["==", ["get", "isSelected"], 0],
+          [
+            "case",
+            ["var", "hasSelection"],
+            [0, 0, 0, 0],
+            [0, 0, 0, 1]
+          ],
 
-  [0, 0, 0, 1]
-],
+          [0, 0, 0, 1]
+        ],
         "stroke-width": [
           "case",
           ["==", ["get", "isSelected"], 1],
@@ -1108,7 +1074,6 @@ const KYLDashboardPage = () => {
         ],
         "fill-color": [0, 0, 0, 0]
       });
-      // await fetchMWSLayer(selectedMWS);
       await fetchMWSLayer([]);
       setIsLayerLoaded(false)
     } catch (error) {
