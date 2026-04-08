@@ -298,7 +298,7 @@ const LandscapeExplorer = () => {
 
     // Using the exact URL format from the original implementation
     fetch(
-      `http://localhost:8000/api/v1/download_excel_layer?state=${state.label}&district=${district.label}&block=${block.label}`,
+      `https://geoserver.core-stack.org/api/v1/download_excel_layer?state=${state.label}&district=${district.label}&block=${block.label}`,
       {
         method: "GET",
         headers: {

@@ -839,7 +839,7 @@ const KYLRightSidebar = ({
                             <td className="px-3 py-2 font-mono text-gray-800">{item.name}</td>
                             <td className="px-3 py-2 text-right">
                               <a
-                                href={`http://localhost:8000/api/v1/generate_mws_report/?state=${transformName(state?.label)}&district=${transformName(district?.label)}&block=${transformName(block?.label)}&uid=${item.name}`}
+                                href={`https://geoserver.core-stack.org/api/v1/generate_mws_report/?state=${transformName(state?.label)}&district=${transformName(district?.label)}&block=${transformName(block?.label)}&uid=${item.name}`}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="text-indigo-600 hover:text-indigo-800 font-medium whitespace-nowrap"

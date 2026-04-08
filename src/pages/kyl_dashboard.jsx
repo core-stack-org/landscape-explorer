@@ -1116,7 +1116,7 @@ const KYLDashboardPage = () => {
   const fetchDataJson = async () => {
     try {
       setIsLoading(true);
-      const apiUrl = "http://localhost:8000/api/v1";
+      const apiUrl = "https://geoserver.core-stack.org/api/v1";
       const response = await fetch(
         `${apiUrl}/download_kyl_data/?state=${transformName(state.label)}&district=${transformName(district.label)}&block=${transformName(block.label)}&file_type=json`
       );
