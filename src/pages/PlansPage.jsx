@@ -154,7 +154,7 @@ const fetchDistrictCentroid = async (districtName) => {
 
 // NEW: fetch plans by state (with optional org filter)
 const fetchPlansByState = async (stateId, organizationId = null) => {
-  let url = `${process.env.REACT_APP_API_URL}/watershed/plans/?state=${stateId}`;
+  let url = `${process.env.REACT_APP_API_URL}/watershed/plans/?state=${stateId}&filter_test_plan=true`;
   if (organizationId) url += `&organization=${encodeURIComponent(organizationId)}`;
   const res = await fetch(url, {
     method: "GET",
@@ -332,6 +332,8 @@ const PlansPage = () => {
     const districtLayerRef = useRef(null); // for district pins
     const statePlansRef       = useRef([]);   // cache plans fetched on state click
     const currentDistrictRef  = useRef(null); // track selected district
+    const metaStatsRef    = useRef(null);
+    const hasRestoredRef  = useRef(false);
 
     const [viewMode,            setViewMode]            = useState("plans");
     const [metaStats,           setMetaStats]           = useState(null);
@@ -429,13 +431,17 @@ const PlansPage = () => {
     }, []);
 
     useEffect(() => {
+      metaStatsRef.current = metaStats;
+    }, [metaStats]);
+
+    useEffect(() => {
       const ctx = location.state?.returnContext;
       if (!ctx?.stateId) return;
 
-      // Wait for map and metaStats to be ready before restoring
       const tryRestore = setInterval(() => {
-        if (mapRef.current && metaStats) {
+        if (mapRef.current && metaStatsRef.current && !hasRestoredRef.current) {
           clearInterval(tryRestore);
+          hasRestoredRef.current = true;
           handleStatePinClick({
             state_id:   ctx.stateId,
             state_name: ctx.stateName,
@@ -444,7 +450,7 @@ const PlansPage = () => {
       }, 100);
 
       return () => clearInterval(tryRestore);
-    }, [metaStats]);
+    }, []);
 
     // ── STATS ───────────────────────────────────────────────────
     const loadStats = async (orgId = null, stateId = null) => {
