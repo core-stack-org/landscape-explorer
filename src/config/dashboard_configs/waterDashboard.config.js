@@ -175,7 +175,12 @@ export const WATER_DASHBOARD_CONFIG = {
         info: "Gram Panchayat or Village.",
         filter: true,
       },
-
+      {
+        key: "UID",
+        label: "UID",
+        info: "Unique ID of waterbody.",
+        search: true,
+      },
       {
         key: "waterbody",
         label: "Waterbody",
