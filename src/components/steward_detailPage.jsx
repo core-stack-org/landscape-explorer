@@ -139,13 +139,13 @@ const StewardDetailPage = ({ plan, onClose }) => {
         {/* STATS ROW */}
         <div className="grid grid-cols-2 gap-4">
           <StatPill
-            label="Total Villages"
+            label="Total Villages Covered"
             value={stewardData.statistics?.total_plans}
             accent={P.base}
           />
           <StatPill
-            label="DPRs Completed"
-            value={stewardData.statistics?.dpr_completed}
+            label="Planning Completed For"
+            value={stewardData.plans?.filter(p => p.is_completed).length ?? 0}
             accent={P.dark}
           />
         </div>

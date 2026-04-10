@@ -903,10 +903,68 @@ const PlansPage = () => {
     }, [metaStats]);
 
     // ── ORG CHANGE ──────────────────────────────────────────────
-    const handleOrgChange = (selected) => {
-        setOrganization(selected);
-        orgRef.current = selected;
+    const handleOrgChange = async (selected) => {
+      setOrganization(selected);
+      orgRef.current = selected;
+
+      if (!isStateView && currentStateRef.current) {
+        // We're in drill-down — redraw district pins with new org filter
+        setMapLoading(true);
+        try {
+          if (viewModeRef.current === "plans") {
+            // Re-fetch state plans with new org filter
+            const plans = await fetchPlansByState(
+              currentStateRef.current.state_id,
+              selected?.value ?? null
+            );
+            statePlansRef.current = plans;
+
+            // Remove existing district layer and redraw
+            if (districtLayerRef.current) {
+              mapRef.current.removeLayer(districtLayerRef.current);
+              districtLayerRef.current = null;
+            }
+            // Also remove plan dots if we're at plan dot level
+            if (planLayerRef.current) {
+              mapRef.current.removeLayer(planLayerRef.current);
+              planLayerRef.current = null;
+            }
+
+            const [stateStats] = await Promise.all([
+              fetchMetaStats(selected?.value ?? null, currentStateRef.current.state_id),
+            ]);
+            setMetaStats(stateStats);
+            await addPlanDistrictPins(plans);
+
+          } else {
+            // Stewards mode — re-fetch steward stats with new org + state filter
+            const stewardData = await fetchStewardStats(
+              selected?.value ?? null,
+              currentStateRef.current.state_id
+            );
+            setStewardStats(stewardData);
+
+            // Remove existing district layer and redraw
+            if (districtLayerRef.current) {
+              mapRef.current.removeLayer(districtLayerRef.current);
+              districtLayerRef.current = null;
+            }
+            await addDistrictPins(stewardData.district_level ?? []);
+
+            // Also clear steward listing since org changed
+            setStewardListing([]);
+            setSelectedSteward(null);
+          }
+        } catch (err) {
+          console.error("Org change drill-down failed:", err);
+        } finally {
+          setMapLoading(false);
+        }
+
+      } else {
+        // State view — existing behaviour
         loadStats(selected?.value ?? null);
+      }
     };
 
     // ── ZOOM ────────────────────────────────────────────────────
@@ -926,6 +984,8 @@ const PlansPage = () => {
       );
       return match?.organization ?? null;
     };
+
+    const filteredOrgOptions = isStateView ? organizationOptions : viewModeRef.current === "plans" ? (metaStats?.organization_breakdown ?? []).map(o => ({ value: o.organization_id, label: o.organization_name })) : (stewardStats?.by_organization ?? []).map(o => ({ value: o.organization_id, label: o.organization_name }));
   
 
   const summary  = metaStats?.summary                     ?? {};
@@ -946,14 +1006,14 @@ const PlansPage = () => {
           <p className="text-xl mt-1 text-center" style={{ color: P.muted }}>
             Commoning for Resilience and Equality
           </p>
-          <p className="text-sm mt-2 text-slate-500">
+          <p className="text-md mt-2 text-slate-500 text-center">
             Landscape stewards from across 1000+ villages are building natural
             resource management plans from the ground-up in consultation with
-            their communities. This dashboard shows the network coverage,the sustainability potential and impact. Discover
+            their communities. This dashboard shows the network coverage, the sustainability potential and impact. Discover
             partner organizations and the on-ground work of landscape stewards
             in creating detailed project reports for their villages.
           </p>
-          <p className="text-sm mt-2">
+          <p className="text-sm mt-2 text-center">
             <span className="text-slate-500">Drop an email to</span>{" "}
             <a href="mailto:contact@core-stack.org"
               className="hover:underline underline-offset-4" style={{ color: P.base }}>
@@ -1002,7 +1062,7 @@ const PlansPage = () => {
                 <SelectReact
                   value={organization}
                   onChange={handleOrgChange}
-                  options={organizationOptions}
+                  options={filteredOrgOptions}
                   isClearable
                   placeholder="Filter by organization"
                   styles={selectStyles}
@@ -1088,7 +1148,7 @@ const PlansPage = () => {
                             organization:     selectedPlan.organization,
                           })}
                         >
-                          <p className="text-xs font-medium mb-1" style={{ color: P.muted }}>Facilitator</p>
+                          <p className="text-xs font-medium mb-1" style={{ color: P.muted }}>Steward</p>
                           <div className="flex items-center justify-between">
                             <p className="text-sm font-semibold" style={{ color: P.base }}>
                               {selectedPlan.facilitator_name}
@@ -1224,6 +1284,18 @@ const PlansPage = () => {
                       <p className="text-5xl font-bold tracking-tight">
                         {(stewardStats?.total_stewards ?? 0).toLocaleString()}
                       </p>
+                      <div className="flex gap-4 mt-3 pt-3"
+                        style={{ borderTop: "1px solid oklch(70% 0.12 301.924)" }}>
+                        <div>
+                          <p className="text-xs" style={{ color: "oklch(85% 0.08 301.924)" }}>Male</p>
+                          <p className="text-lg font-semibold">--</p>
+                        </div>
+                        <div className="w-px" style={{ background: "oklch(70% 0.12 301.924)" }} />
+                        <div>
+                          <p className="text-xs" style={{ color: "oklch(85% 0.08 301.924)" }}>Female</p>
+                          <p className="text-lg font-semibold">--</p>
+                        </div>
+                      </div>
                     </div>
 
                     {/* DPR STATS */}
@@ -1333,13 +1405,31 @@ const PlansPage = () => {
                         <div className="flex flex-col gap-2 max-h-64 overflow-y-auto pr-1">
                           {(stewardStats?.by_organization ?? []).map((org, i) => (
                             <div key={org.organization_id ?? i}
-                              className="px-3 py-2.5 rounded-xl flex items-center justify-between"
-                              style={{ background: P.lighter, border: `1px solid ${P.border}` }}>
-                              <p className="text-sm font-semibold truncate" style={{ color: P.text }}>
+                              className="px-3 py-2.5 rounded-xl flex items-center justify-between
+                                        cursor-pointer hover:shadow-md transition-all duration-200"
+                              style={{
+                                background: organization?.value === org.organization_id ? P.light : P.lighter,
+                                border: `1px solid ${organization?.value === org.organization_id ? P.base : P.border}`,
+                              }}
+                              onClick={() => {
+                                const selected = {
+                                  value: org.organization_id,
+                                  label: org.organization_name,
+                                };
+                                // If already selected, deselect
+                                if (organization?.value === org.organization_id) {
+                                  handleOrgChange(null);
+                                } else {
+                                  handleOrgChange(selected);
+                                }
+                              }}
+                            >
+                              <p className="text-sm font-semibold truncate"
+                                style={{ color: organization?.value === org.organization_id ? P.base : P.text }}>
                                 {org.organization_name}
                               </p>
                               <div className="flex items-center gap-1.5 flex-shrink-0">
-                                <p className="text-lg font-bold" style={{ color: P.base }}>
+                                <p className="text-lg font-bold" style={{ color: organization?.value === org.organization_id ? P.base : P.base }}>
                                   {org.steward_count}
                                 </p>
                                 <p className="text-xs" style={{ color: P.muted }}>stewards</p>
@@ -1423,29 +1513,39 @@ const PlansPage = () => {
                         ))}
                       </div>
                     </div>
-
-                    {/* DPR STATUS + LANDSCAPE STEWARDS */}
+                    
+                    {/* Demands Overview */}
                     <div className="bg-white rounded-2xl p-4 shadow-sm"
-                      style={{ border: `1px solid ${P.border}` }}>
-                      <p className="text-xs font-semibold uppercase tracking-widest mb-3"
-                        style={{ color: P.muted }}>Overview</p>
-                      <div className="grid grid-cols-2 gap-3">
-                        <div className="rounded-xl p-3"
-                          style={{ background: P.lighter, border: `1px solid ${P.border}` }}>
-                          <p className="text-xs font-medium mb-1" style={{ color: P.muted }}>DPR Reviewed</p>
-                          <p className="text-3xl font-bold" style={{ color: P.base }}>
-                            {summary.dpr_reviewed ?? "--"}
-                          </p>
+                    style={{ border: `1px solid ${P.border}` }}>
+                    <p className="text-xs font-semibold uppercase tracking-widest mb-3"
+                      style={{ color: P.muted }}>Demands</p>
+
+                    {/* Demands Generated — outermost */}
+                    <div className="rounded-xl p-3"
+                      style={{ background: P.lighter, border: `1px solid ${P.border}` }}>
+                      <div className="flex items-center justify-between mb-3">
+                        <p className="text-xs font-semibold" style={{ color: P.text }}>Generated</p>
+                        <p className="text-2xl font-bold" style={{ color: P.base }}>--</p>
+                      </div>
+
+                      {/* Demands Submitted — nested inside */}
+                      <div className="rounded-lg p-3"
+                        style={{ background: "white", border: `1px solid ${P.border}` }}>
+                        <div className="flex items-center justify-between mb-3">
+                          <p className="text-xs font-semibold" style={{ color: P.text }}>Submitted</p>
+                          <p className="text-xl font-bold" style={{ color: P.base }}>--</p>
                         </div>
-                        <div className="rounded-xl p-3"
+
+                        {/* Demands Approved — nested inside Submitted */}
+                        <div className="rounded-lg p-3 flex items-center justify-between"
                           style={{ background: P.lighter, border: `1px solid ${P.border}` }}>
-                          <p className="text-xs font-medium mb-1" style={{ color: P.muted }}>Total Stewards</p>
-                          <p className="text-3xl font-bold" style={{ color: P.base }}>
-                            {(stewards.total_stewards ?? 0).toLocaleString()}
-                          </p>
+                          <p className="text-xs font-semibold" style={{ color: P.text }}>Approved</p>
+                          <p className="text-lg font-bold" style={{ color: P.base }}>--</p>
                         </div>
+
                       </div>
                     </div>
+                  </div>
 
                     {/* PARTNER ORGANIZATIONS */}
                     {(metaStats?.landscape_stewards?.by_organization?.length > 0) && (
