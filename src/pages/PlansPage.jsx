@@ -334,6 +334,7 @@ const PlansPage = () => {
     const currentDistrictRef  = useRef(null); // track selected district
     const metaStatsRef    = useRef(null);
     const hasRestoredRef  = useRef(false);
+    const viewModeRef = useRef("plans");
 
     const [viewMode,            setViewMode]            = useState("plans");
     const [metaStats,           setMetaStats]           = useState(null);
@@ -433,6 +434,10 @@ const PlansPage = () => {
     useEffect(() => {
       metaStatsRef.current = metaStats;
     }, [metaStats]);
+
+    useEffect(() => {
+      viewModeRef.current = viewMode;
+    }, [viewMode]);
 
     useEffect(() => {
       const ctx = location.state?.returnContext;
@@ -688,7 +693,7 @@ const PlansPage = () => {
       }
 
       try {
-        if (viewMode === "plans") {
+        if (viewModeRef.current === "plans") {
           const [plans, stateStats] = await Promise.all([
             fetchPlansByState(stateData.state_id, orgRef.current?.value ?? null),
             fetchMetaStats(orgRef.current?.value ?? null, stateData.state_id),
@@ -733,7 +738,7 @@ const PlansPage = () => {
     const handleDistrictPinClick = async (districtData) => {
       if (!districtData) return;
 
-      if (viewMode === "plans") {
+      if (viewModeRef.current === "plans") {
         setMapLoading(true);
         currentDistrictRef.current = districtData;
 
@@ -805,7 +810,7 @@ const PlansPage = () => {
 
       setStatsLoading(true);
       try {
-        if (viewMode === "plans") {
+        if (viewModeRef.current === "plans") {
           const globalStats = await fetchMetaStats(orgRef.current?.value ?? null);
           setMetaStats(globalStats);
           addStateBubbles(globalStats, "plans");
@@ -1222,38 +1227,46 @@ const PlansPage = () => {
                     </div>
 
                     {/* DPR STATS */}
-                    <div className="bg-white rounded-2xl p-4 shadow-sm"
-                      style={{ border: `1px solid ${P.border}` }}>
-                      <p className="text-xs font-semibold uppercase tracking-widest mb-3"
-                        style={{ color: P.muted }}>DPR Stats</p>
-                      <div className="grid grid-cols-2 gap-3">
-                        {[
-                          { label: "Generated", value: stewardStats?.dpr_stats?.total_dpr_generated },
-                          { label: "Reviewed",  value: stewardStats?.dpr_stats?.total_dpr_reviewed  },
-                        ].map(({ label, value }) => (
-                          <div key={label} className="rounded-xl p-3"
-                            style={{ background: P.lighter, border: `1px solid ${P.border}` }}>
-                            <p className="text-xs font-medium mb-1" style={{ color: P.muted }}>{label}</p>
-                            <p className="text-3xl font-bold" style={{ color: P.base }}>{value ?? "--"}</p>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
+                    <div className="bg-white rounded-2xl p-4 shadow-sm" style={{ border: `1px solid ${P.border}` }}>
+                      <p className="text-xs font-semibold uppercase tracking-widest mb-3" style={{ color: P.muted }}>Progress Report</p>
 
-                    {/* PERFORMANCE */}
-                    <div className="bg-white rounded-2xl p-4 shadow-sm"
-                      style={{ border: `1px solid ${P.border}` }}>
-                      <p className="text-xs font-semibold uppercase tracking-widest mb-3"
-                        style={{ color: P.muted }}>Performance</p>
-                      <div className="grid grid-cols-2 gap-3">
+                      {/* DPRs Reviewed */}
+                      <div className="grid grid-cols-2 gap-3 mb-3">
                         <div className="rounded-xl p-3"
                           style={{ background: P.lighter, border: `1px solid ${P.border}` }}>
-                          <p className="text-xs font-medium mb-1" style={{ color: P.muted }}>
-                            Avg Plans / Steward
+                          <p className="text-xs font-medium mb-1" style={{ color: P.muted }}>Completed Plans</p>
+                          <p className="text-3xl font-bold" style={{ color: P.base }}>
+                            {(summary.completed_plans ?? 0).toLocaleString()}
                           </p>
-                          <p className="text-3xl font-bold" style={{ color: P.dark }}>
-                            {stewardStats?.plans_per_steward?.avg ?? 0}
+                        </div>
+                        <div className="rounded-xl p-3"
+                          style={{ background: P.lighter, border: `1px solid ${P.border}` }}>
+                          <p className="text-xs font-medium mb-1" style={{ color: P.muted }}>DPR Reviewed</p>
+                          <p className="text-3xl font-bold" style={{ color: P.base }}>
+                            {summary.dpr_reviewed ?? "--"}
                           </p>
+                        </div>
+                      </div>
+
+                      {/* Demands */}
+                      <div className="rounded-xl p-3"
+                        style={{ background: P.lighter, border: `1px solid ${P.border}` }}>
+                        <p className="text-xs font-medium mb-3" style={{ color: P.muted }}>Demands Generated</p>
+
+                        <div className="flex flex-col gap-2">
+                          {/* Community */}
+                          <div className="rounded-lg p-3 flex items-center justify-between"
+                            style={{ background: "white", border: `1px solid ${P.border}` }}>
+                            <p className="text-xs font-semibold" style={{ color: P.text }}>Community</p>
+                            <p className="text-sm font-bold" style={{ color: P.base }}>--</p>
+                          </div>
+
+                          {/* Individual */}
+                          <div className="rounded-lg p-3 flex items-center justify-between"
+                            style={{ background: "white", border: `1px solid ${P.border}` }}>
+                            <p className="text-xs font-semibold" style={{ color: P.text }}>Individual</p>
+                            <p className="text-sm font-bold" style={{ color: P.base }}>--</p>
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -1262,10 +1275,12 @@ const PlansPage = () => {
                     {/* TOP STEWARDS or STEWARD LISTING */}
                     <div className="bg-white rounded-2xl p-4 shadow-sm"
                       style={{ border: `1px solid ${P.border}` }}>
-                      <p className="text-xs font-semibold uppercase tracking-widest mb-3"
-                        style={{ color: P.muted }}>
-                        {stewardListing.length > 0 ? "Stewards" : "Top Stewards"}
-                      </p>
+                      <div className="flex items-center justify-between mb-3">
+                        <p className="text-xs font-semibold uppercase tracking-widest"
+                          style={{ color: P.muted }}>
+                          {stewardListing.length > 0 ? "Stewards" : "Stewards by Organization"}
+                        </p>
+                      </div>
 
                       {stewardLoading ? (
                         <div className="flex items-center justify-center h-20">
@@ -1275,74 +1290,62 @@ const PlansPage = () => {
                       ) : stewardListing.length > 0 ? (
                         <div className="flex flex-col gap-2 max-h-64 overflow-y-auto pr-1">
                           {stewardListing.map((s, i) => (
-                          <div key={i} className="flex flex-col gap-1">
-                            <div
-                              className="w-full px-3 py-2.5 rounded-xl flex items-center
-                                        justify-between gap-2 transition-all duration-200 cursor-pointer
-                                        hover:shadow-md"
-                              style={{
-                                background: selectedSteward === s ? P.light : P.lighter,
-                                border: `1px solid ${selectedSteward === s ? P.base : P.border}`,
-                              }}
-                            >
-                              {/* Name + stats — click to expand plans */}
-                              <div className="min-w-0 flex-1"
-                                onClick={() => setSelectedSteward(selectedSteward === s ? null : s)}>
-                                <p className="text-sm font-semibold truncate" style={{ color: P.text }}>
-                                  {s.facilitator_name}
-                                </p>
-                                <p className="text-xs" style={{ color: P.muted }}>
-                                  {s.plan_count} plans · {s.completed_count} completed
-                                </p>
-                              </div>
-
-                              {/* View details button */}
-                              <button
-                                onClick={() => setStewardModalPlan({
-                                  facilitator_name: s.facilitator_name,
-                                  organization:     getStewardOrgId(s.facilitator_name),
-                                })}
-                                className="flex-shrink-0 px-2 py-1 rounded-lg text-xs font-semibold
-                                          transition-all duration-200 hover:shadow-sm cursor-pointer"
+                            <div key={i} className="flex flex-col gap-1">
+                              <div
+                                className="w-full px-3 py-2.5 rounded-xl flex items-center
+                                          justify-between gap-2 transition-all duration-200 cursor-pointer
+                                          hover:shadow-md"
                                 style={{
-                                  background: P.base,
-                                  color:      "#fff",
+                                  background: selectedSteward === s ? P.light : P.lighter,
+                                  border: `1px solid ${selectedSteward === s ? P.base : P.border}`,
                                 }}
                               >
-                                View
-                              </button>
-
-                              <span className="text-xs flex-shrink-0 cursor-pointer" style={{ color: P.muted }}
-                                onClick={() => setSelectedSteward(selectedSteward === s ? null : s)}>
-                                {selectedSteward === s ? "▲" : "▼"}
-                              </span>
+                                <div className="min-w-0 flex-1"
+                                  onClick={() => setSelectedSteward(selectedSteward === s ? null : s)}>
+                                  <p className="text-sm font-semibold truncate" style={{ color: P.text }}>
+                                    {s.facilitator_name}
+                                  </p>
+                                  <p className="text-xs" style={{ color: P.muted }}>
+                                    {s.plan_count} plans · {s.completed_count} completed
+                                  </p>
+                                </div>
+                                <button
+                                  onClick={() => setStewardModalPlan({
+                                    facilitator_name: s.facilitator_name,
+                                    organization:     getStewardOrgId(s.facilitator_name),
+                                  })}
+                                  className="flex-shrink-0 px-2 py-1 rounded-lg text-xs font-semibold
+                                            transition-all duration-200 hover:shadow-sm cursor-pointer"
+                                  style={{ background: P.base, color: "#fff" }}
+                                >
+                                  View
+                                </button>
+                                <span className="text-xs flex-shrink-0 cursor-pointer" style={{ color: P.muted }}
+                                  onClick={() => setSelectedSteward(selectedSteward === s ? null : s)}>
+                                  {selectedSteward === s ? "▲" : "▼"}
+                                </span>
+                              </div>
                             </div>
-                          </div>
-                        ))}
+                          ))}
                         </div>
                       ) : (
+                        // ── BY ORGANIZATION ──────────────────────────────
                         <div className="flex flex-col gap-2 max-h-64 overflow-y-auto pr-1">
-                          {(stewardStats?.top_stewards ?? []).map((s, i) => (
-                          <div key={i}
-                            className="px-3 py-2.5 rounded-xl flex items-center justify-between cursor-pointer
-                                      hover:shadow-md transition-all duration-200"
-                            style={{ background: P.lighter, border: `1px solid ${P.border}` }}
-                            onClick={() => setStewardModalPlan({
-                              facilitator_name: s.facilitator_name,
-                              organization:     getStewardOrgId(s.facilitator_name),
-                            })}
-                          >
-                            <div className="min-w-0">
+                          {(stewardStats?.by_organization ?? []).map((org, i) => (
+                            <div key={org.organization_id ?? i}
+                              className="px-3 py-2.5 rounded-xl flex items-center justify-between"
+                              style={{ background: P.lighter, border: `1px solid ${P.border}` }}>
                               <p className="text-sm font-semibold truncate" style={{ color: P.text }}>
-                                {s.facilitator_name}
+                                {org.organization_name}
                               </p>
-                              <p className="text-xs" style={{ color: P.muted }}>
-                                {s.plan_count} plans · {s.completed_count} completed
-                              </p>
+                              <div className="flex items-center gap-1.5 flex-shrink-0">
+                                <p className="text-lg font-bold" style={{ color: P.base }}>
+                                  {org.steward_count}
+                                </p>
+                                <p className="text-xs" style={{ color: P.muted }}>stewards</p>
+                              </div>
                             </div>
-                            <span className="text-xs font-bold" style={{ color: P.base }}>#{i + 1}</span>
-                          </div>
-                        ))}
+                          ))}
                         </div>
                       )}
 
@@ -1383,7 +1386,7 @@ const PlansPage = () => {
                     <div className="rounded-2xl p-5 text-white shadow-lg"
                       style={{ background: `linear-gradient(135deg, ${P.base}, ${P.dark})` }}>
                       <p className="text-xs font-semibold uppercase tracking-widest mb-1"
-                        style={{ color: "oklch(90% 0.08 301.924)" }}>Total Villages</p>
+                        style={{ color: "oklch(90% 0.08 301.924)" }}>Total Plans</p>
                       <p className="text-5xl font-bold tracking-tight">
                         {(summary.total_plans ?? 0).toLocaleString()}
                       </p>
@@ -1412,8 +1415,8 @@ const PlansPage = () => {
                         style={{ color: P.muted }}>Commons Connect Footprint</p>
                       <div className="grid grid-cols-3 gap-3">
                         {[
-                          { label: "States",    value: commons.active_states     },
-                          { label: "Districts", value: commons.active_districts  },
+                          { label: "States",    value: commons.active_states    },
+                          { label: "Districts", value: commons.active_districts },
                           { label: "Tehsils",   value: commons.active_tehsils   },
                         ].map(({ label, value }) => (
                           <StatCard key={label} label={label} value={value} />
@@ -1421,38 +1424,56 @@ const PlansPage = () => {
                       </div>
                     </div>
 
-                    {/* DPR STATUS */}
+                    {/* DPR STATUS + LANDSCAPE STEWARDS */}
                     <div className="bg-white rounded-2xl p-4 shadow-sm"
                       style={{ border: `1px solid ${P.border}` }}>
                       <p className="text-xs font-semibold uppercase tracking-widest mb-3"
-                        style={{ color: P.muted }}>DPR Status</p>
+                        style={{ color: P.muted }}>Overview</p>
                       <div className="grid grid-cols-2 gap-3">
-                        {[
-                          { label: "Generated", value: summary.dpr_generated },
-                          { label: "Reviewed",  value: summary.dpr_reviewed  },
-                        ].map(({ label, value }) => (
-                          <div key={label} className="rounded-xl p-3"
-                            style={{ background: P.lighter, border: `1px solid ${P.border}` }}>
-                            <p className="text-xs font-medium mb-1" style={{ color: P.muted }}>{label}</p>
-                            <p className="text-3xl font-bold" style={{ color: P.base }}>{value ?? "--"}</p>
-                          </div>
-                        ))}
+                        <div className="rounded-xl p-3"
+                          style={{ background: P.lighter, border: `1px solid ${P.border}` }}>
+                          <p className="text-xs font-medium mb-1" style={{ color: P.muted }}>DPR Reviewed</p>
+                          <p className="text-3xl font-bold" style={{ color: P.base }}>
+                            {summary.dpr_reviewed ?? "--"}
+                          </p>
+                        </div>
+                        <div className="rounded-xl p-3"
+                          style={{ background: P.lighter, border: `1px solid ${P.border}` }}>
+                          <p className="text-xs font-medium mb-1" style={{ color: P.muted }}>Total Stewards</p>
+                          <p className="text-3xl font-bold" style={{ color: P.base }}>
+                            {(stewards.total_stewards ?? 0).toLocaleString()}
+                          </p>
+                        </div>
                       </div>
                     </div>
 
-                    {/* LANDSCAPE STEWARDS */}
-                    <div className="bg-white rounded-2xl p-4 shadow-sm"
-                      style={{ border: `1px solid ${P.border}` }}>
-                      <p className="text-xs font-semibold uppercase tracking-widest mb-3"
-                        style={{ color: P.muted }}>Landscape Stewards</p>
-                      <div className="rounded-xl p-4 flex items-center justify-between"
-                        style={{ background: P.lighter, border: `1px solid ${P.border}` }}>
-                        <p className="text-sm font-medium" style={{ color: P.text }}>Total Stewards</p>
-                        <p className="text-3xl font-bold" style={{ color: P.base }}>
-                          {(stewards.total_stewards ?? 0).toLocaleString()}
-                        </p>
+                    {/* PARTNER ORGANIZATIONS */}
+                    {(metaStats?.landscape_stewards?.by_organization?.length > 0) && (
+                      <div className="bg-white rounded-2xl p-4 shadow-sm"
+                        style={{ border: `1px solid ${P.border}` }}>
+                        <div className="flex items-center justify-between mb-3">
+                          <p className="text-xs font-semibold uppercase tracking-widest"
+                            style={{ color: P.muted }}>
+                            Partner Organizations
+                          </p>
+                        </div>
+                        <div className="flex flex-wrap gap-2 max-h-36 overflow-y-auto pr-1">
+                          {metaStats.landscape_stewards.by_organization.map((org, i) => (
+                            <span
+                              key={org.organization_id ?? i}
+                              className="px-3 py-1.5 rounded-full text-xs font-semibold"
+                              style={{
+                                background: P.lighter,
+                                border:     `1px solid ${P.border}`,
+                                color:      P.text,
+                              }}
+                            >
+                              {org.organization_name}
+                            </span>
+                          ))}
+                        </div>
                       </div>
-                    </div>
+                    )}
                   </>
                 )}
               </>
