@@ -241,53 +241,53 @@ const MapArea = () => {
   // ✅ Effects for initializing map
   useEffect(() => {
 
-  const BaseLayer = new TileLayer({
-    source: new XYZ({
-      url: "https://www.google.cn/maps/vt?lyrs=s@189&gl=cn&x={x}&y={y}&z={z}",
-      maxZoom: 30,
-    }),
-    visible: true,
-  });
-
-  BaseLayerRef.current = BaseLayer;
-
-  const view = new View({
-    center: [99.9, 23.6],
-    zoom: 5,
-    projection: "EPSG:4326",
-  });
-
-  const initialMap = new Map({
-    target: mapElement.current,
-    layers: [BaseLayer],
-    view,
-  });
-
-  mapRef.current = initialMap;
-
-  // ✅ NOW SAFE
-  getStatesData();
-
-  initialMap.on("singleclick", (e) => {
-    initialMap.forEachFeatureAtPixel(e.pixel, (feature, layer) => {
-      if (layer === markersLayer.current) {
-        setState({
-          district: feature.values_.data.disGrp,
-          label: feature.values_.data.state,
-        });
-      }
+    const BaseLayer = new TileLayer({
+      source: new XYZ({
+        url: "https://www.google.cn/maps/vt?lyrs=s@189&gl=cn&x={x}&y={y}&z={z}",
+        maxZoom: 30,
+      }),
+      visible: true,
     });
-  });
 
-  initialMap.on("pointermove", (e) => {
-    const pixel = initialMap.getEventPixel(e.originalEvent);
-    const hit = initialMap.hasFeatureAtPixel(pixel);
-    initialMap.getTarget().style.cursor = hit ? "pointer" : "";
-  });
+    BaseLayerRef.current = BaseLayer;
 
-  return () => initialMap.setTarget(null);
+    const view = new View({
+      center: [99.9, 23.6],
+      zoom: 5,
+      projection: "EPSG:4326",
+    });
 
-}, []);
+    const initialMap = new Map({
+      target: mapElement.current,
+      layers: [BaseLayer],
+      view,
+    });
+
+    mapRef.current = initialMap;
+
+    // ✅ NOW SAFE
+    getStatesData();
+
+    initialMap.on("singleclick", (e) => {
+      initialMap.forEachFeatureAtPixel(e.pixel, (feature, layer) => {
+        if (layer === markersLayer.current) {
+          setState({
+            district: feature.values_.data.disGrp,
+            label: feature.values_.data.state,
+          });
+        }
+      });
+    });
+
+    initialMap.on("pointermove", (e) => {
+      const pixel = initialMap.getEventPixel(e.originalEvent);
+      const hit = initialMap.hasFeatureAtPixel(pixel);
+      initialMap.getTarget().style.cursor = hit ? "pointer" : "";
+    });
+
+    return () => initialMap.setTarget(null);
+
+  }, []);
   // ✅ Split effects to avoid premature block fetch
   useEffect(() => {
     if (state) getDistrictData();
@@ -511,7 +511,7 @@ const MapArea = () => {
     setIsDownloading(true);
 
     let response = await fetch(
-      `https://geoserver.core-stack.org/api/v1/download_excel_layer?state=${state.label}&district=${district.label}&block=${block.label}`,
+      `${process.env.REACT_APP_API_URL}/api/v1/download_excel_layer?state=${state.label}&district=${district.label}&block=${block.label}`,
       {
         method: "GET",
         headers: {
@@ -631,9 +631,9 @@ const MapArea = () => {
       };
 
       const existingLayer = LayersArray[6].LayerRef.current;
-if (!existingLayer) return;
+      if (!existingLayer) return;
 
-const source = existingLayer.getSource();
+      const source = existingLayer.getSource();
 
       // Remove old layer before recreating
       mapRef.current.removeLayer(LayersArray[6].LayerRef.current);
