@@ -13,7 +13,7 @@ import {
 } from "../store/locationStore.jsx";
 import KYLMWSProfilePanel from "./kyl_MWSProfilePanel.jsx";
 import KYLWaterbodyPanel from "./kyl_waterbodypanel.jsx";
-import { useRecoilState } from "recoil";
+import { useRecoilState, useRecoilValue } from "recoil";
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import html2canvas from 'html2canvas';
@@ -61,13 +61,15 @@ const KYLRightSidebar = ({
   baseLayerRef,
   mwsVillageIntersections = [],
   villageJson = [],
+  dataJson = [],
   selectedWaterbodyIds,
 }) => {
   const [globalState, setGlobalState] = useRecoilState(stateAtom);
   const [globalDistrict, setGlobalDistrict] = useRecoilState(districtAtom);
   const [globalBlock, setGlobalBlock] = useRecoilState(blockAtom);
   const [loadingWB, setLoadingWB] = React.useState(false);
-  const [showSelectionPopup, setShowSelectionPopup] = React.useState(false); // Add this line
+  const [showSelectionPopup, setShowSelectionPopup] = React.useState(false);
+  const filterSelections = useRecoilValue(filterSelectionsAtom);
 
 
 
@@ -533,7 +535,8 @@ const KYLRightSidebar = ({
       const { mwsData, villageData } = generateSelectionTableData();
       const selectedFilters = getFormattedSelectedFilters();
 
-      // Identify demographic (Village-level) and Waterbody-level filters
+      // Identify filters by level
+      const mwsFilters = [];
       const villageFilters = [];
       const waterbodyFilters = [];
 
@@ -542,12 +545,26 @@ const KYLRightSidebar = ({
           for (const categoryKey of Object.keys(filtersDetails[topLevelKey] || {})) {
             if (Array.isArray(filtersDetails[topLevelKey][categoryKey]) &&
               filtersDetails[topLevelKey][categoryKey].some(i => i.name === f.name)) {
+              if (topLevelKey === "MWS") mwsFilters.push(f);
               if (topLevelKey === "Village") villageFilters.push(f);
               if (topLevelKey === "Waterbody") waterbodyFilters.push(f);
             }
           }
         }
       });
+
+      const getLabelFromValue = (filterName, value) => {
+        for (const topLevelKey of Object.keys(filtersDetails)) {
+          for (const categoryKey of Object.keys(filtersDetails[topLevelKey] || {})) {
+            const filterObj = filtersDetails[topLevelKey][categoryKey].find(f => f.name === filterName);
+            if (filterObj && filterObj.type === 1) {
+              const match = filterObj.values.find(v => String(v.value) === String(value));
+              return match ? match.label : value;
+            }
+          }
+        }
+        return value;
+      };
 
       // 0 - Selected Filters Sheet
       const sheet0Data = selectedFilters.map((f, i) => ({
@@ -557,9 +574,26 @@ const KYLRightSidebar = ({
       }));
 
       // 1 - Selected MWS Sheet
-      const sheet1Data = mwsData.map(item => ({
-        "MICRO-WATERSHED ID": item.name
-      }));
+      const sheet1Data = mwsData.map(item => {
+        const row = { "MICRO-WATERSHED ID": item.name };
+        if (dataJson && Array.isArray(dataJson)) {
+          const mRecord = dataJson.find(m => String(m.mws_id) === String(item.name));
+          if (mRecord) {
+            mwsFilters.forEach(f => {
+              const baseName = (f.filterName || f.name).toUpperCase();
+              let val = mRecord[f.name];
+              if (val === undefined || val === null) val = "N/A";
+              else {
+                val = getLabelFromValue(f.name, val);
+                if (typeof val === "number") val = Number(val.toFixed(3));
+              }
+
+              row[baseName] = val;
+            });
+          }
+        }
+        return row;
+      });
 
       // 2 - Selected Village Sheet (with indicators if demographic filter selected)
       const sheet2Data = villageData.map(item => {
@@ -571,11 +605,15 @@ const KYLRightSidebar = ({
           const vRecord = villageJson.find(v => String(v.village_id || v.vill_ID) === String(item.villageId));
           if (vRecord) {
             villageFilters.forEach(f => {
-              const colName = (f.filterName || f.name).toUpperCase();
+              const baseName = (f.filterName || f.name).toUpperCase();
               let val = vRecord[f.name];
               if (val === undefined || val === null) val = "N/A";
-              else if (typeof val === "number") val = Number(val.toFixed(3));
-              row[colName] = val;
+              else {
+                val = getLabelFromValue(f.name, val);
+                if (typeof val === "number") val = Number(val.toFixed(3));
+              }
+
+              row[baseName] = val;
             });
           }
         }
@@ -594,9 +632,22 @@ const KYLRightSidebar = ({
               "LONGITUDE": swb.longitude || 0
             };
             waterbodyFilters.forEach(f => {
+              if (f.name === "waterbody_size") return; // Skip only this specific column
+
               const colName = (f.filterName || f.name).toUpperCase();
-              let val = swb[f.name];
+
+              const swbPropertyMap = {
+                "surface_water_trend": "sw_trend",
+                "drainage_line": "on_drainag"
+              };
+              const propKey = swbPropertyMap[f.name] || f.name;
+              let val = swb[propKey];
+
               if (val === undefined || val === null) val = "N/A";
+              else {
+                val = getLabelFromValue(f.name, val);
+                if (typeof val === "number") val = Number(val.toFixed(3));
+              }
               row[colName] = val;
             });
             uniqueSwbs.set(swb.swbId, row);
@@ -638,8 +689,12 @@ const KYLRightSidebar = ({
       const boldStyle = { font: { bold: true } };
       const activeSheets = [
         { sheet: sheet0, name: "Selected Filters", width: [{ wch: 8 }, { wch: 40 }, { wch: 60 }] },
-        { sheet: sheet1, name: "Selected MWS", width: [{ wch: 30 }] }
       ];
+
+      // Add MWS sheet
+      const mWidths = [{ wch: 25 }];
+      mwsFilters.forEach(() => mWidths.push({ wch: 20 }));
+      activeSheets.push({ sheet: sheet1, name: "Selected MWS", width: mWidths });
 
       // Add Village sheet only if demographic filter is selected
       if (villageFilters.length > 0) {
@@ -648,10 +703,12 @@ const KYLRightSidebar = ({
         activeSheets.push({ sheet: sheet2, name: "Selected Villages", width: vWidths });
       }
 
-      // Add Waterbody details sheet only if waterbody filter is selected
-      if (waterbodyFilters.length > 0) {
+      // Add Waterbody details sheet if data exists
+      if (sheet3Data.length > 0) {
         const wbWidths = [{ wch: 25 }, { wch: 40 }, { wch: 18 }, { wch: 18 }];
-        waterbodyFilters.forEach(() => wbWidths.push({ wch: 20 }));
+        waterbodyFilters.forEach(f => {
+          if (f.name !== "waterbody_size") wbWidths.push({ wch: 20 });
+        });
         activeSheets.push({ sheet: sheet3, name: "Selected Waterbodies", width: wbWidths });
       }
 

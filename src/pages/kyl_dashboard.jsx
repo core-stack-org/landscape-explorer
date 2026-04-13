@@ -2373,23 +2373,32 @@ const KYLDashboardPage = () => {
   }, [district, block]);
 
   const mwsVillageIntersections = useMemo(() => {
-    console.log("Calculating mwsVillageIntersections, selected:", selectedMWS?.length, "dataJson available:", !!dataJson);
-    if (!selectedMWS || selectedMWS.length === 0 || !dataJson) return [];
+    const hasWaterbodySelections = selectedWaterbodyIds && selectedWaterbodyIds.size > 0;
+    if ((!selectedMWS || selectedMWS.length === 0) && !hasWaterbodySelections) return [];
+    if (!dataJson) return [];
 
     const result = [];
 
     // Group villages and waterbodies by MWS
     dataJson.forEach((mwsItem) => {
       const mwsId = mwsItem.mws_id || mwsItem.uid;
-      if (selectedMWS.includes(mwsId)) {
+      const isMWSSelected = selectedMWS?.includes(mwsId);
+
+      const swbsInMWS = Array.isArray(mwsItem.mws_intersect_swb) ? mwsItem.mws_intersect_swb : [];
+      const matchedSWBsCount = swbsInMWS.filter(swb => {
+        const id = typeof swb === 'object' ? String(swb.swbId) : String(swb);
+        return selectedWaterbodyIds.has(id);
+      }).length;
+
+      // Include this MWS if it's selected OR it contains matched waterbodies
+      if (isMWSSelected || matchedSWBsCount > 0) {
         const villagesInThisMWS = [];
         const waterbodiesInThisMWS = [];
 
-        // 1. Process Villages
-        if (Array.isArray(mwsItem.mws_intersect_villages)) {
+        // 1. Process Villages (only if MWS is selected)
+        if (isMWSSelected && Array.isArray(mwsItem.mws_intersect_villages)) {
           mwsItem.mws_intersect_villages.forEach((villageId) => {
             const villageIdStr = String(villageId);
-            // Look up from villageJson (API data)
             let vName = '';
             if (villageJson && Array.isArray(villageJson)) {
               const v = villageJson.find(v => String(v.village_id || v.vill_ID) === villageIdStr);
@@ -2400,21 +2409,24 @@ const KYLDashboardPage = () => {
         }
 
         // 2. Process Waterbodies
-        if (Array.isArray(mwsItem.mws_intersect_swb)) {
-          console.log(`Processing ${mwsItem.mws_intersect_swb.length} SWBs for MWS: ${mwsId}`);
-          mwsItem.mws_intersect_swb.forEach((swb) => {
-            // Handle both simple ID strings and objects with names/coords
+        if (swbsInMWS.length > 0) {
+          swbsInMWS.forEach((swb) => {
             const swbIdStr = typeof swb === 'object' ? String(swb.swbId) : String(swb);
-            const swbName = typeof swb === 'object' ? (swb.swbName || '') : '';
-            const lat = typeof swb === 'object' ? (swb.latitude || 0) : 0;
-            const lon = typeof swb === 'object' ? (swb.longitude || 0) : 0;
+            const isMatched = selectedWaterbodyIds.has(swbIdStr);
 
-            waterbodiesInThisMWS.push({
-              swbId: swbIdStr,
-              swbName: swbName,
-              latitude: lat,
-              longitude: lon
-            });
+            // Include if waterbody matches filters OR if parent MWS is selected
+            if (isMatched || isMWSSelected) {
+              const swbName = typeof swb === 'object' ? (swb.swbName || '') : '';
+              const lat = typeof swb === 'object' ? (swb.latitude || 0) : 0;
+              const lon = typeof swb === 'object' ? (swb.longitude || 0) : 0;
+
+              waterbodiesInThisMWS.push({
+                swbId: swbIdStr,
+                swbName: swbName,
+                latitude: lat,
+                longitude: lon
+              });
+            }
           });
         }
 
@@ -2475,7 +2487,7 @@ const KYLDashboardPage = () => {
     }
 
     return result;
-  }, [selectedMWS, dataJson, villageJson, waterbodiesLayerRef.current]);
+  }, [selectedMWS, selectedWaterbodyIds, dataJson, villageJson, waterbodiesLayerRef.current]);
 
 
   return (
@@ -2571,6 +2583,7 @@ const KYLDashboardPage = () => {
           baseLayerRef={baseLayerRef}
           mwsVillageIntersections={mwsVillageIntersections}
           villageJson={villageJson}
+          dataJson={dataJson}
           selectedWaterbodyIds={selectedWaterbodyIds}
         />
       </div>
