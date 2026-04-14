@@ -1287,13 +1287,13 @@ const PlansPage = () => {
                       <div className="flex gap-4 mt-3 pt-3"
                         style={{ borderTop: "1px solid oklch(70% 0.12 301.924)" }}>
                         <div>
-                          <p className="text-xs" style={{ color: "oklch(85% 0.08 301.924)" }}>Male</p>
-                          <p className="text-lg font-semibold">--</p>
+                          <p className="text-xs" style={{ color: "oklch(85% 0.08 301.924)" }}>Female</p>
+                          <p className="text-lg font-semibold">{stewards?.gender_breakdown.female}</p>
                         </div>
                         <div className="w-px" style={{ background: "oklch(70% 0.12 301.924)" }} />
                         <div>
-                          <p className="text-xs" style={{ color: "oklch(85% 0.08 301.924)" }}>Female</p>
-                          <p className="text-lg font-semibold">--</p>
+                          <p className="text-xs" style={{ color: "oklch(85% 0.08 301.924)" }}>Male</p>
+                          <p className="text-lg font-semibold">{stewards?.gender_breakdown.male}</p>
                         </div>
                       </div>
                     </div>
@@ -1330,14 +1330,14 @@ const PlansPage = () => {
                           <div className="rounded-lg p-3 flex items-center justify-between"
                             style={{ background: "white", border: `1px solid ${P.border}` }}>
                             <p className="text-xs font-semibold" style={{ color: P.text }}>Community</p>
-                            <p className="text-sm font-bold" style={{ color: P.base }}>--</p>
+                            <p className="text-sm font-bold" style={{ color: P.base }}>{metaStats.demand_overview.community_demands}</p>
                           </div>
 
                           {/* Individual */}
                           <div className="rounded-lg p-3 flex items-center justify-between"
                             style={{ background: "white", border: `1px solid ${P.border}` }}>
                             <p className="text-xs font-semibold" style={{ color: P.text }}>Individual</p>
-                            <p className="text-sm font-bold" style={{ color: P.base }}>--</p>
+                            <p className="text-sm font-bold" style={{ color: P.base }}>{metaStats.demand_overview.individual_demands}</p>
                           </div>
                         </div>
                       </div>
@@ -1525,7 +1525,7 @@ const PlansPage = () => {
                       style={{ background: P.lighter, border: `1px solid ${P.border}` }}>
                       <div className="flex items-center justify-between mb-3">
                         <p className="text-xs font-semibold" style={{ color: P.text }}>Generated</p>
-                        <p className="text-2xl font-bold" style={{ color: P.base }}>--</p>
+                        <p className="text-2xl font-bold" style={{ color: P.base }}>{metaStats.demand_overview.community_demands + metaStats.demand_overview.individual_demands}</p>
                       </div>
 
                       {/* Demands Submitted — nested inside */}
