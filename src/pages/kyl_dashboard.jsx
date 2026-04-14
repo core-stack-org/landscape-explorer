@@ -544,71 +544,21 @@ const KYLDashboardPage = () => {
 
   const fetchMWSLayer = async (tempMWS) => {
     if (!district || !block) return;
-      try {
-        if (!mwsLayerRef.current) {
-          const layerName = `deltaG_well_depth_${transformName(district.label)}_${transformName(block.label)}`;
-        
-          const mwsLayer = await getWebGlPolygonLayers("mws_layers", layerName);
-        
-          if (mapRef.current) {
-            mapRef.current.removeLayer(boundaryLayerRef.current);
-            mapRef.current.addLayer(mwsLayer);
-            mapRef.current.addLayer(boundaryLayerRef.current);
-          }
-        
-          mwsLayerRef.current = mwsLayer;
-        }
-        mwsLayerRef.current.setStyle({
-          variables: {
-            highlightMWS: -1,
-            isVisualizeOn: false 
-          },
-        
-          "stroke-color": [
-            "case",
-        
-            ["==", ["get", "uid"], ["var", "highlightMWS"]],
-            [22,101,52,1],
-        
-            ["==", ["get", "isFiltered"], 1],
-            [
-              "case",
-              ["var", "isVisualizeOn"],
-              [37, 72, 113, 1],   //  visualize → blue
-              [102, 30, 30, 1],      //  normal → red
-            ],
 
-            ["==", ["get", "isFiltered"], 0],
-            [0,0,0,0],
-        
-            [74,144,226,1]
-          ],
-        
-          "stroke-width": [
-            "case",
-        
-            ["==", ["get", "uid"], ["var", "highlightMWS"]],
-            2,
-        
-            ["==", ["get", "isFiltered"], 1],
-            1.5,
-        
-            1
-          ],
-        
-          "fill-color": [
-            "case",
-        
-            ["==", ["get", "uid"], ["var", "highlightMWS"]],
-            [34,197,94,0.4],
-        
-            ["==", ["get", "isFiltered"], 1],
-            [
-              "case",
-              ["var", "isVisualizeOn"],
-              [0,0,0,0],            //  visualize → transparent
-              [255,75,75,0.8]       // normal → red
-            ],
+    try {
+      if (!mwsLayerRef.current) {
+        const layerName = `deltaG_well_depth_${transformName(district.label)}_${transformName(block.label)}`;
+
+        const mwsLayer = await getWebGlPolygonLayers("mws_layers", layerName);
+
+        if (mapRef.current) {
+          mapRef.current.removeLayer(boundaryLayerRef.current);
+          mapRef.current.addLayer(mwsLayer);
+          mapRef.current.addLayer(boundaryLayerRef.current);
+        }
+
+        mwsLayerRef.current = mwsLayer;
+      }
 
             ["==", ["get", "isFiltered"], 0],
             [0,0,0,0],
@@ -619,7 +569,7 @@ const KYLDashboardPage = () => {
 
     } catch (error) {
       console.error("Error fetching MWS layer:", error);
-      toast.error("Please Refresh the Page !")
+      toast.error("Please Refresh the Page !");
     }
   };
 
@@ -886,12 +836,12 @@ const KYLDashboardPage = () => {
 
   const fetchAdminLayer = async (tempVillages) => {
     if (!district || !block || !boundaryLayerRef.current) return;
-  
+
     const source = boundaryLayerRef.current.getSource();
     if (!source) return;
-  
+
     const selectedSet = new Set(tempVillages);
-  
+
     source.getFeatures().forEach((feature) => {
       feature.set(
         "isSelected",
@@ -899,13 +849,13 @@ const KYLDashboardPage = () => {
         true
       );
     });
-    
-    
+
+
     boundaryLayerRef.current.updateStyleVariables({
       hasSelection: selectedSet.size > 0,
       isVisualizeOn: currentLayer.length > 0
     });
-    
+
     source.changed();
   };
 
@@ -1034,9 +984,9 @@ const KYLDashboardPage = () => {
       boundaryLayer.setStyle({
         variables: {
           hasSelection: false,
-          isVisualizeOn: false 
+          isVisualizeOn: false
         },
-          "stroke-color": [
+        "stroke-color": [
           "case",
 
           // Visualize ON → FULL BLACK 
@@ -1185,11 +1135,11 @@ const KYLDashboardPage = () => {
         [filter.name]: false,
       }));
       boundaryLayerRef.current.updateStyleVariables({
-      isVisualizeOn: false
-    });
-    mwsLayerRef.current.updateStyleVariables({
-      isVisualizeOn: false
-    });
+        isVisualizeOn: false
+      });
+      mwsLayerRef.current.updateStyleVariables({
+        isVisualizeOn: false
+      });
       //setFiltersEnabled(true);
     }
     else if (currentLayer.length === 0) {
@@ -1346,16 +1296,16 @@ const KYLDashboardPage = () => {
       //     [85, 152, 229, 0.2]
       //   ]
       // });
-        // Remove both first (safe reset)
-        mapRef.current.removeLayer(mwsLayerRef.current);
-        mapRef.current.removeLayer(boundaryLayerRef.current);
+      // Remove both first (safe reset)
+      mapRef.current.removeLayer(mwsLayerRef.current);
+      mapRef.current.removeLayer(boundaryLayerRef.current);
 
-        // Add in correct order
-        mapRef.current.addLayer(mwsLayerRef.current);      // below
-        mapRef.current.addLayer(boundaryLayerRef.current); // TOP
+      // Add in correct order
+      mapRef.current.addLayer(mwsLayerRef.current);      // below
+      mapRef.current.addLayer(boundaryLayerRef.current); // TOP
 
-        // Force always on top
-        boundaryLayerRef.current.setZIndex(9999);
+      // Force always on top
+      boundaryLayerRef.current.setZIndex(9999);
       let tempObj = {
         name: filter.name,
         layerRef: layerRef,
@@ -1599,7 +1549,7 @@ const KYLDashboardPage = () => {
       if (!waterbodiesLayerRef.current || !mapRef.current) return;
 
       const map = mapRef.current;
-    
+
       //  Get clicked waterbody feature
       const wbFeature = map.forEachFeatureAtPixel(
         event.pixel,
@@ -1621,7 +1571,7 @@ const KYLDashboardPage = () => {
       const props = wbFeature.getProperties();
       const wb_id = props?.UID;
       if (!wb_id) return;
-    
+
       // 2 Construct Waterbody GeoJSON (existing logic)
       const geojson = new GeoJSON();
 
@@ -1643,27 +1593,27 @@ const KYLDashboardPage = () => {
         properties: props,
         geometry: geojson.writeGeometryObject(wbFeature.getGeometry()),
       });
-    
+
       // 3 FIND MATCHED MWS FEATURE (IMPORTANT PART)
- let matchedMws = [];
+      let matchedMws = [];
 
       if (mwsLayerRef.current && wbFeature) {
         const props = wbFeature.getProperties();
         const raw = props.MWS_UID || props.mws_uid;
 
-   if (raw) {
-     // Convert UID string "12_315970 12_308838..." → ["12_315970","12_308838",...]
-     const uidList = raw
-       .split("_")
-       .reduce((acc, val, idx, arr) => {
-         if (idx % 2 === 0 && arr[idx + 1]) {
-           acc.push(`${val}_${arr[idx + 1]}`);
-         }
-         return acc;
-       }, []);
+        if (raw) {
+          // Convert UID string "12_315970 12_308838..." → ["12_315970","12_308838",...]
+          const uidList = raw
+            .split("_")
+            .reduce((acc, val, idx, arr) => {
+              if (idx % 2 === 0 && arr[idx + 1]) {
+                acc.push(`${val}_${arr[idx + 1]}`);
+              }
+              return acc;
+            }, []);
 
-     //  Filter REAL MWS GEOJSON FEATURES from mwsGeoData
-     const allMws = mwsLayerRef.current.getSource().getFeatures();
+          //  Filter REAL MWS GEOJSON FEATURES from mwsGeoData
+          const allMws = mwsLayerRef.current.getSource().getFeatures();
 
           const matched = allMws.filter((f) => {
             const uid = f.get("uid")?.toString().trim();
@@ -1675,9 +1625,9 @@ const KYLDashboardPage = () => {
         }
       }
 
-    // SAVE ARRAY OF FULL GEOJSON FEATURES
-    if (matchedMws.length > 0) {
-      const geojsonWriter = new GeoJSON();
+      // SAVE ARRAY OF FULL GEOJSON FEATURES
+      if (matchedMws.length > 0) {
+        const geojsonWriter = new GeoJSON();
 
         const jsonArray = matchedMws.map((m) =>
           geojsonWriter.writeFeatureObject(m, {
