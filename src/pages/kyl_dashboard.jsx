@@ -560,6 +560,58 @@ const KYLDashboardPage = () => {
         mwsLayerRef.current = mwsLayer;
       }
 
+      mwsLayerRef.current.setStyle({
+          variables: {
+            highlightMWS: -1,
+            isVisualizeOn: false 
+          },
+        
+          "stroke-color": [
+            "case",
+        
+            ["==", ["get", "uid"], ["var", "highlightMWS"]],
+            [22,101,52,1],
+        
+            ["==", ["get", "isFiltered"], 1],
+            [
+              "case",
+              ["var", "isVisualizeOn"],
+              [37, 72, 113, 1],   //  visualize → blue
+              [102, 30, 30, 1],      //  normal → red
+            ],
+
+            ["==", ["get", "isFiltered"], 0],
+            [0,0,0,0],
+        
+            [74,144,226,1]
+          ],
+        
+          "stroke-width": [
+            "case",
+        
+            ["==", ["get", "uid"], ["var", "highlightMWS"]],
+            2,
+        
+            ["==", ["get", "isFiltered"], 1],
+            1.5,
+        
+            1
+          ],
+        
+          "fill-color": [
+            "case",
+        
+            ["==", ["get", "uid"], ["var", "highlightMWS"]],
+            [34,197,94,0.4],
+        
+            ["==", ["get", "isFiltered"], 1],
+            [
+              "case",
+              ["var", "isVisualizeOn"],
+              [0,0,0,0],            //  visualize → transparent
+              [255,75,75,0.8]       // normal → red
+            ],
+
             ["==", ["get", "isFiltered"], 0],
             [0,0,0,0],
         
