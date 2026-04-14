@@ -798,8 +798,12 @@
                         }
                     }
                 ],
-                "layer_store": ["restoration"],
-                "layer_name": ["restoration"],
+                "layer_store": [
+                    "restoration"
+                ],
+                "layer_name": [
+                    "restoration"
+                ],
                 "vectorStyle": [
                     {
                         "fill": "rgba(176, 224, 230, 0.5)",
@@ -852,8 +856,12 @@
                         }
                     }
                 ],
-                "layer_store": ["restoration"],
-                "layer_name": ["restoration"],
+                "layer_store": [
+                    "restoration"
+                ],
+                "layer_name": [
+                    "restoration"
+                ],
                 "vectorStyle": [
                     {
                         "fill": "rgba(176, 224, 230, 0.5)",
@@ -1315,6 +1323,32 @@
     },
     "Waterbody": {
         "Waterbody": [
+            {
+                "name": "waterbody_type",
+                "label": "Waterbody Type",
+                "type": 1,
+                "values": [
+                    {
+                        "label": "On river",
+                        "value": 1
+                    },
+                    {
+                        "label": "Off river",
+                        "value": 0
+                    }
+                ],
+                "layer_store": [
+                    "waterbodies"
+                ],
+                "layer_name": [
+                    "waterbodies"
+                ],
+                "vectorStyle": [
+                    {}
+                ],
+                "rasterStyle": "",
+                "styleIdx": 2
+            },
             {
                 "name": "waterbody_size",
                 "label": "Size of Waterbody",
