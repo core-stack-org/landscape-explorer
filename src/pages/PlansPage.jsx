@@ -478,8 +478,7 @@ const PlansPage = () => {
     };
 
     useEffect(() => {
-      if (viewMode === "plans") loadStats();
-      else loadStats();
+      loadStats(orgRef.current?.value ?? null);
     }, [viewMode]);
 
     // ── PIN LAYER ───────────────────────────────────────────────
@@ -510,8 +509,8 @@ const PlansPage = () => {
           let coords;
           if (s.centroid?.lat && s.centroid?.lon) {
             coords = [s.centroid.lon, s.centroid.lat];
-          } else if (mode === "stewards" && metaStats?.state_breakdown) {
-            const match = metaStats.state_breakdown.find(
+          } else if (mode === "stewards" && metaStatsRef.current?.state_breakdown) {
+            const match = metaStatsRef.current.state_breakdown.find(
               (p) => p.state_name === s.state_name
             );
             if (match?.centroid) coords = [match.centroid.lon, match.centroid.lat];
@@ -908,50 +907,39 @@ const PlansPage = () => {
       orgRef.current = selected;
 
       if (!isStateView && currentStateRef.current) {
-        // We're in drill-down — redraw district pins with new org filter
         setMapLoading(true);
         try {
           if (viewModeRef.current === "plans") {
-            // Re-fetch state plans with new org filter
             const plans = await fetchPlansByState(
               currentStateRef.current.state_id,
               selected?.value ?? null
             );
             statePlansRef.current = plans;
-
-            // Remove existing district layer and redraw
             if (districtLayerRef.current) {
               mapRef.current.removeLayer(districtLayerRef.current);
               districtLayerRef.current = null;
             }
-            // Also remove plan dots if we're at plan dot level
             if (planLayerRef.current) {
               mapRef.current.removeLayer(planLayerRef.current);
               planLayerRef.current = null;
             }
-
-            const [stateStats] = await Promise.all([
-              fetchMetaStats(selected?.value ?? null, currentStateRef.current.state_id),
-            ]);
+            const stateStats = await fetchMetaStats(
+              selected?.value ?? null,
+              currentStateRef.current.state_id
+            );
             setMetaStats(stateStats);
             await addPlanDistrictPins(plans);
-
           } else {
-            // Stewards mode — re-fetch steward stats with new org + state filter
             const stewardData = await fetchStewardStats(
               selected?.value ?? null,
               currentStateRef.current.state_id
             );
             setStewardStats(stewardData);
-
-            // Remove existing district layer and redraw
             if (districtLayerRef.current) {
               mapRef.current.removeLayer(districtLayerRef.current);
               districtLayerRef.current = null;
             }
             await addDistrictPins(stewardData.district_level ?? []);
-
-            // Also clear steward listing since org changed
             setStewardListing([]);
             setSelectedSteward(null);
           }
@@ -962,8 +950,29 @@ const PlansPage = () => {
         }
 
       } else {
-        // State view — existing behaviour
-        loadStats(selected?.value ?? null);
+        setStatsLoading(true);
+        try {
+          if (viewModeRef.current === "plans") {
+            const data = await fetchMetaStats(selected?.value ?? null);
+            setMetaStats(data); // useEffect handles redraw
+          } else {
+            // Always fetch global plans meta for coordinates
+            // regardless of org filter
+            const [stewardData, plansMeta] = await Promise.all([
+              fetchStewardStats(selected?.value ?? null),
+              fetchMetaStats(null), // global — has ALL states with centroids
+            ]);
+            // Update ref SYNCHRONOUSLY before state update
+            // so useEffect has coordinates ready when it fires
+            metaStatsRef.current = plansMeta;
+            setMetaStats(plansMeta);
+            setStewardStats(stewardData); // useEffect handles redraw
+          }
+        } catch (err) {
+          console.error("Org change failed:", err);
+        } finally {
+          setStatsLoading(false);
+        }
       }
     };
 
@@ -1000,27 +1009,35 @@ const PlansPage = () => {
 
         {/* PAGE HEADER */}
         <div className="max-w-[1800px] mx-auto px-6 pt-6 pb-4">
-          <h1 className="text-2xl lg:text-4xl font-semibold text-center" style={{ color: P.text }}>
-            Landscape Stewardship Network
-          </h1>
-          <p className="text-xl mt-1 text-center" style={{ color: P.muted }}>
-            Commoning for Resilience and Equality
-          </p>
-          <p className="text-md mt-2 text-slate-500 text-center">
-            Landscape stewards from across 1000+ villages are building natural
-            resource management plans from the ground-up in consultation with
-            their communities. This dashboard shows the network coverage, the sustainability potential and impact. Discover
-            partner organizations and the on-ground work of landscape stewards
-            in creating detailed project reports for their villages.
-          </p>
-          <p className="text-sm mt-2 text-center">
-            <span className="text-slate-500">Drop an email to</span>{" "}
+          <div className="flex items-start justify-between">
+            <div className="flex-1">
+              <h1 className="text-2xl lg:text-4xl font-semibold text-center" style={{ color: P.text }}>
+                Landscape Stewardship Network
+              </h1>
+              <p className="text-xl mt-1 text-center" style={{ color: P.muted }}>
+                Commoning for Resilience and Equality
+              </p>
+              <p className="text-md mt-2 text-slate-500 text-center">
+                Landscape stewards from across 1000+ villages are building natural
+                resource management plans from the ground-up in consultation with
+                their communities. This dashboard shows the network coverage, the sustainability potential and impact. Discover
+                partner organizations and the on-ground work of landscape stewards
+                in creating detailed project reports for their villages.
+              </p>
+            </div>
+
+            {/* Contact — top right */}
             <a href="mailto:contact@core-stack.org"
-              className="hover:underline underline-offset-4" style={{ color: P.base }}>
+              className="flex-shrink-0 ml-6 flex items-center gap-1.5 px-3 py-2 rounded-xl
+                        text-xs font-semibold hover:shadow-md transition-all duration-200"
+              style={{
+                background: P.light,
+                color:      P.base,
+                border:     `1px solid ${P.border}`,
+              }}>
               contact@core-stack.org
-            </a>{" "}
-            <span className="text-slate-500">for any further details.</span>
-          </p>
+            </a>
+          </div>
         </div>
 
         {/* MAIN CONTENT */}
@@ -1490,9 +1507,9 @@ const PlansPage = () => {
                         </div>
                         <div className="w-px" style={{ background: "oklch(70% 0.12 301.924)" }} />
                         <div>
-                          <p className="text-xs" style={{ color: "oklch(85% 0.08 301.924)" }}>In Progress</p>
+                          <p className="text-xs" style={{ color: "oklch(85% 0.08 301.924)" }}>DPRs Reviewed</p>
                           <p className="text-lg font-semibold">
-                            {(summary.in_progress_plans ?? 0).toLocaleString()}
+                            {(summary.dpr_reviewed ?? 0).toLocaleString()}
                           </p>
                         </div>
                       </div>
@@ -1518,7 +1535,7 @@ const PlansPage = () => {
                     <div className="bg-white rounded-2xl p-4 shadow-sm"
                     style={{ border: `1px solid ${P.border}` }}>
                     <p className="text-xs font-semibold uppercase tracking-widest mb-3"
-                      style={{ color: P.muted }}>Demands</p>
+                      style={{ color: P.muted }}>NRM and Livelihood Demands</p>
 
                     {/* Demands Generated — outermost */}
                     <div className="rounded-xl p-3"
