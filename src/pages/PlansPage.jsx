@@ -1113,7 +1113,7 @@ const PlansPage = () => {
           }`}>
 
             {/* SIDEBAR LOADING OVERLAY — blocks interaction while map is loading */}
-            {mapLoading && (
+            {(mapLoading || statsLoading) && (
               <div
                 className="absolute inset-0 z-[500] rounded-2xl flex flex-col items-center
                           justify-center gap-3"
