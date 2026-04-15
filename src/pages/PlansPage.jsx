@@ -364,7 +364,12 @@ const PlansPage = () => {
             }),
             }),
         ],
-        view: new View({ center: [78.9, 23.6], zoom: 5, projection: "EPSG:4326" }),
+        view: new View({
+          center: [78.9, 23.6],
+          zoom: 5,
+          projection: "EPSG:4326",
+          maxZoom: 16,  // ← add this
+        }),
         controls: defaultControls({ zoom: false }),
         });
 
@@ -583,7 +588,9 @@ const PlansPage = () => {
 
       // Zoom to fit all district pins
       map.getView().fit(layer.getSource().getExtent(), {
-        padding: [60, 60, 60, 60], duration: 600,
+        padding:  [60, 60, 60, 60],
+        duration: 600,
+        maxZoom:  14,  // ← add this
       });
     };
 
@@ -978,9 +985,11 @@ const PlansPage = () => {
 
     // ── ZOOM ────────────────────────────────────────────────────
     const handleZoom = (delta) => {
-        const view = mapRef.current?.getView();
-        if (!view) return;
-        view.animate({ zoom: view.getZoom() + delta, duration: 300 });
+      const view = mapRef.current?.getView();
+      if (!view) return;
+      const currentZoom = view.getZoom();
+      const newZoom = Math.min(currentZoom + delta, 16); // ← cap at 16
+      view.animate({ zoom: newZoom, duration: 300 });
     };
 
     const getStewardOrgId = (facilitatorName) => {
@@ -1007,37 +1016,34 @@ const PlansPage = () => {
 
       <div className="bg-white rounded-2xl border shadow-xl m-6" style={{ borderColor: P.border }}>
 
-        {/* PAGE HEADER */}
-        <div className="max-w-[1800px] mx-auto px-6 pt-6 pb-4">
-          <div className="flex items-start justify-between">
-            <div className="flex-1">
-              <h1 className="text-2xl lg:text-4xl font-semibold text-center" style={{ color: P.text }}>
-                Landscape Stewardship Network
-              </h1>
-              <p className="text-xl mt-1 text-center" style={{ color: P.muted }}>
-                Commoning for Resilience and Equality
-              </p>
-              <p className="text-md mt-2 text-slate-500 text-center">
-                Landscape stewards from across 1000+ villages are building natural
-                resource management plans from the ground-up in consultation with
-                their communities. This dashboard shows the network coverage, the sustainability potential and impact. Discover
-                partner organizations and the on-ground work of landscape stewards
-                in creating detailed project reports for their villages.
-              </p>
-            </div>
+        <div className="max-w-[1800px] mx-auto px-6 pt-6 pb-4 relative">
 
-            {/* Contact — top right */}
-            <a href="mailto:contact@core-stack.org"
-              className="flex-shrink-0 ml-6 flex items-center gap-1.5 px-3 py-2 rounded-xl
-                        text-xs font-semibold hover:shadow-md transition-all duration-200"
-              style={{
-                background: P.light,
-                color:      P.base,
-                border:     `1px solid ${P.border}`,
-              }}>
-              contact@core-stack.org
-            </a>
-          </div>
+          {/* Contact — absolutely positioned top right */}
+          <a href="mailto:contact@core-stack.org"
+            className="absolute top-5 right-6 flex items-center gap-1.5 px-3 py-2 rounded-xl
+                      text-xs font-semibold hover:shadow-md transition-all duration-200"
+            style={{
+              background: P.light,
+              color:      P.base,
+              border:     `1px solid ${P.border}`,
+            }}>
+            ✉ contact@core-stack.org
+          </a>
+
+          {/* Centered text — unaffected by button */}
+          <h1 className="text-2xl lg:text-4xl font-semibold text-center" style={{ color: P.text }}>
+            Landscape Stewardship Network
+          </h1>
+          <p className="text-xl mt-1 text-center" style={{ color: P.muted }}>
+            Commoning for Resilience and Equality
+          </p>
+          <p className="text-md mt-2 text-slate-500 text-center">
+            Landscape stewards from across 1000+ villages are building natural
+            resource management plans from the ground-up in consultation with
+            their communities. This dashboard shows the network coverage, the sustainability potential and impact. Discover
+            partner organizations and the on-ground work of landscape stewards
+            in creating detailed project reports for their villages.
+          </p>
         </div>
 
         {/* MAIN CONTENT */}
