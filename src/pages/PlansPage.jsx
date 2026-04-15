@@ -1108,9 +1108,26 @@ const PlansPage = () => {
           </div>
 
           {/* SIDEBAR */}
-          <div className={`w-full lg:w-[35%] h-[50vh] lg:h-full flex flex-col pr-1 ${
+         <div className={`w-full lg:w-[35%] h-[50vh] lg:h-full flex flex-col pr-1 relative ${
             selectedPlan ? "overflow-hidden" : "overflow-y-auto gap-4"
           }`}>
+
+            {/* SIDEBAR LOADING OVERLAY — blocks interaction while map is loading */}
+            {mapLoading && (
+              <div
+                className="absolute inset-0 z-[500] rounded-2xl flex flex-col items-center
+                          justify-center gap-3"
+                style={{ background: "rgba(255,255,255,0.85)", backdropFilter: "blur(4px)" }}
+              >
+                <div
+                  className="w-10 h-10 rounded-full border-4 border-t-transparent animate-spin"
+                  style={{ borderColor: `${P.base} transparent transparent transparent` }}
+                />
+                <p className="text-sm font-semibold" style={{ color: P.muted }}>
+                  Loading data...
+                </p>
+              </div>
+            )}
             {statsLoading ? <SidebarSkeleton /> : statsError ? (
               <div className="flex-1 flex items-center justify-center rounded-2xl"
                 style={{ border: `1px solid ${P.border}` }}>
