@@ -1522,6 +1522,16 @@ const fetchWaterBodiesLayer = async () => {
       //setFiltersEnabled(true);
     } 
     else if (currentLayer.length === 0) {
+      const isWBVisualize =
+      filter.name === "waterbody_type" ||
+      filter.name === "waterbody_size" ||
+      filter.name === "drainage_line" ||
+      filter.name === "surface_water_trend";
+  
+    if (isWBVisualize && !showWB) {
+      toast.error("Please enable 'Show Waterbodies' to apply waterbody filters.");
+      return;
+    }
       let layerRef = [];
       mapRef.current.removeLayer(mwsLayerRef.current);
       mapRef.current.removeLayer(boundaryLayerRef.current);
@@ -1707,17 +1717,20 @@ const fetchWaterBodiesLayer = async () => {
         layerRef: layerRef,
       };
       tempArr.push(tempObj);
+      if (isWBVisualizeOn) {
+        setIsWBVisualizeOn(true);
+        if (mwsLayerRef.current) {
+          mwsLayerRef.current.setVisible(false);
+        }
+      }
+      
       setToggleStates((prevStates) => ({
         ...prevStates,
         [filter.name]: true,
       }));
 
-      if (
-        filter.name === "waterbody_type" ||
-        filter.name === "waterbody_size" ||
-        filter.name === "drainage_line" ||
-        filter.name === "surface_water_trend"
-      ) {        setIsWBVisualizeOn(true);
+      if (isWBVisualize) {
+        setIsWBVisualizeOn(true);
         if (mwsLayerRef.current) {
           mwsLayerRef.current.setVisible(false);
         }
