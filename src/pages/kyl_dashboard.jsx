@@ -1699,30 +1699,9 @@ const fetchWaterBodiesLayer = async () => {
           true
         );
       }
-      // mwsLayerRef.current.setStyle({
-      //   variables: { highlightMWS: highlightMWS ?? -1 },
-      //   "stroke-color": [
-      //     "case",
-      //     ["==", ["get", "uid"], ["var", "highlightMWS"]], [22, 101, 52, 1],
-      //     ["==", ["get", "isFiltered"], 1], [102, 30, 30, 1],
-      //     ["==", ["get", "isFiltered"], 0], [0, 0, 0, 0],
-      //     [74, 144, 226, 1]
-      //   ],
-      //   "stroke-width": [
-      //     "case",
-      //     ["==", ["get", "uid"], ["var", "highlightMWS"]], 2,
-      //     ["==", ["get", "isFiltered"], 1], 1.5,
-      //     1
-      //   ],
-      //   "fill-color": [
-      //     "case",
-      //     ["==", ["get", "uid"], ["var", "highlightMWS"]], [34, 197, 94, 0.4],
-      //     ["==", ["get", "isFiltered"], 1], [255, 75, 75, 0.8],
-      //     ["==", ["get", "isFiltered"], 0], [0, 0, 0, 0],
-      //     [85, 152, 229, 0.2]
-      //   ]
-      // });
-        // Remove both first (safe reset)
+      
+      
+      // Remove both first (safe reset)
         mapRef.current.removeLayer(mwsLayerRef.current);
         mapRef.current.removeLayer(boundaryLayerRef.current);
 
