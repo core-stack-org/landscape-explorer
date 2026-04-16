@@ -1023,12 +1023,11 @@ const PlansPage = () => {
             className="absolute top-5 right-6 flex items-center gap-1.5 px-3 py-2 rounded-xl
                       text-xs font-semibold hover:shadow-md transition-all duration-200"
             style={{
-              background: P.light,
               color:      P.base,
               border:     `1px solid ${P.border}`,
             }}>
-            ✉ contact@core-stack.org
-          </a>
+            Contact Us
+            </a>
 
           {/* Centered text — unaffected by button */}
           <h1 className="text-2xl lg:text-4xl font-semibold text-center" style={{ color: P.text }}>

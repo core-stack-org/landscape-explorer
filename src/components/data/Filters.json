@@ -1342,9 +1342,9 @@
                     }
                 ],
                 "layer_store": [
-                    "panchayat_boundaries"
+                    "facilities_proximity"
                 ],
-                "layer_name": [],
+                "layer_name": ["facilities"],
                 "vectorStyle": [
                     {
                         "fill": "rgba(255, 249, 196, 0.5)",
@@ -1382,10 +1382,10 @@
                         }
                     }
                 ],
-                "layer_store": [
-                    "panchayat_boundaries"
+               "layer_store": [
+                    "facilities_proximity"
                 ],
-                "layer_name": [],
+                "layer_name": ["facilities"],
                 "vectorStyle": [
                     {
                         "fill": "rgba(255, 249, 196, 0.5)",
@@ -1431,9 +1431,9 @@
                     }
                 ],
                 "layer_store": [
-                    "panchayat_boundaries"
+                    "facilities_proximity"
                 ],
-                "layer_name": [],
+                "layer_name": ["facilities"],
                 "vectorStyle": [
                     {
                         "fill": "rgba(255, 205, 210, 0.5)",
@@ -1485,9 +1485,9 @@
                     }
                 ],
                 "layer_store": [
-                    "panchayat_boundaries"
+                    "facilities_proximity"
                 ],
-                "layer_name": [],
+                "layer_name": ["facilities"],
                 "vectorStyle": [
                     {
                         "fill": "rgba(255, 205, 210, 0.5)",
@@ -1532,9 +1532,9 @@
                     }
                 ],
                 "layer_store": [
-                    "panchayat_boundaries"
+                    "facilities_proximity"
                 ],
-                "layer_name": [],
+                "layer_name": ["facilities"],
                 "vectorStyle": [
                     {
                         "fill": "rgba(255, 249, 196, 0.5)",
@@ -1573,9 +1573,9 @@
                     }
                 ],
                 "layer_store": [
-                    "panchayat_boundaries"
+                    "facilities_proximity"
                 ],
-                "layer_name": [],
+                "layer_name": ["facilities"],
                 "vectorStyle": [
                     {
                         "fill": "rgba(72, 55, 217, 0.5)",
@@ -1621,9 +1621,9 @@
                     }
                 ],
                 "layer_store": [
-                    "panchayat_boundaries"
+                    "facilities_proximity"
                 ],
-                "layer_name": [],
+                "layer_name": ["facilities"],
                 "vectorStyle": [
                     {
                         "fill": "rgba(200, 230, 201, 0.5)",
@@ -1675,9 +1675,9 @@
                     }
                 ],
                 "layer_store": [
-                    "panchayat_boundaries"
+                    "facilities_proximity"
                 ],
-                "layer_name": [],
+                "layer_name": ["facilities"],
                 "vectorStyle": [
                     {
                         "fill": "rgba(200, 230, 201, 0.5)",
@@ -1729,9 +1729,9 @@
                     }
                 ],
                 "layer_store": [
-                    "panchayat_boundaries"
+                    "facilities_proximity"
                 ],
-                "layer_name": [],
+                "layer_name": ["facilities"],
                 "vectorStyle": [
                     {
                         "fill": "rgba(200, 230, 201, 0.5)",
@@ -1783,9 +1783,9 @@
                     }
                 ],
                 "layer_store": [
-                    "panchayat_boundaries"
+                    "facilities_proximity"
                 ],
-                "layer_name": [],
+                "layer_name": ["facilities"],
                 "vectorStyle": [
                     {
                         "fill": "rgba(200, 230, 201, 0.5)",
@@ -1837,9 +1837,9 @@
                     }
                 ],
                 "layer_store": [
-                    "panchayat_boundaries"
+                    "facilities_proximity"
                 ],
-                "layer_name": [],
+                "layer_name": ["facilities"],
                 "vectorStyle": [
                     {
                         "fill": "rgba(200, 230, 201, 0.5)",
