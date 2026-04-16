@@ -348,6 +348,68 @@ const MapLegend = ({ showMWS, showVillages, currentLayer, mappedAssets, mappedDe
     { color: "#14d11dff", label: "Areas with green credit sites " },
   ];
 
+  const FacEssenEduInfra = [
+    { fill: "rgba(255, 249, 196, 0.5)", stroke: "rgba(255, 249, 196, 1)", label: "Within 2 kms" },
+    { fill: "rgba(255, 193, 7, 0.5)", stroke: "rgba(255, 193, 7, 1)", label: "More than 2 kms" },
+  ];
+
+  const FacHigherEduInfra = [
+    { fill: "rgba(232, 238, 186, 0.5)", stroke: "rgba(232, 238, 186, 1)", label: "Within 3 kms" },
+    { fill: "rgba(137, 151, 10, 0.5)", stroke: "rgba(137, 151, 10, 1)", label: "More than 3 kms" },
+  ];
+
+  const FacEssenHealthInfra = [
+    { fill: "rgba(255, 205, 210, 0.5)", stroke: "rgba(255, 205, 210, 1)", label: "Less than 2 kms" },
+    { fill: "rgba(239, 83, 80, 0.5)", stroke: "rgba(239, 83, 80, 1)", label: "Between 2 to 5 kms" },
+    { fill: "rgba(183, 28, 28, 0.5)", stroke: "rgba(183, 28, 28, 1)", label: "More than 5 kms" },
+  ];
+
+  const FacAdvHealthInfra = [
+    { fill: "rgba(255, 205, 210, 0.5)", stroke: "rgba(255, 205, 210, 1)", label: "<10 kms" },
+    { fill: "rgba(239, 83, 80, 0.5)", stroke: "rgba(239, 83, 80, 1)", label: "10-25 kms" },
+    { fill: "rgba(183, 28, 28, 0.5)", stroke: "rgba(183, 28, 28, 1)", label: ">25 kms" },
+  ];
+
+  const FacPDSItems = [
+    { fill: "rgba(232, 238, 186, 0.5)", stroke: "rgba(232, 238, 186, 1)", label: "Within 2 kms" },
+    { fill: "rgba(137, 151, 10, 0.5)", stroke: "rgba(137, 151, 10, 1)", label: "More than 2 kms" },
+  ];
+
+  const FacFinInclItems = [
+    { fill: "rgba(72, 55, 217, 0.5)", stroke: "rgba(72, 55, 217, 1)", label: "Within 5 kms" },
+    { fill: "rgba(8, 8, 77, 0.5)", stroke: "rgba(8, 8, 77, 1)", label: "More than 5 kms" },
+  ];
+
+  const FacAgriMarketItems = [
+    { fill: "rgba(200, 230, 201, 0.5)", stroke: "rgba(200, 230, 201, 1)", label: "<3 kms" },
+    { fill: "rgba(102, 187, 106, 0.5)", stroke: "rgba(102, 187, 106, 1)", label: "3-10 kms" },
+    { fill: "rgba(46, 125, 50, 0.5)", stroke: "rgba(46, 125, 50, 1)", label: ">10 kms" },
+  ];
+
+  const FacPostHarvestInfra = [
+    { fill: "rgba(200, 230, 201, 0.5)", stroke: "rgba(200, 230, 201, 1)", label: "<5 kms" },
+    { fill: "rgba(102, 187, 106, 0.5)", stroke: "rgba(102, 187, 106, 1)", label: "5-20 kms" },
+    { fill: "rgba(46, 125, 50, 0.5)", stroke: "rgba(46, 125, 50, 1)", label: ">20 kms" },
+  ];
+
+  const FacFarmCooperAccess = [
+    { fill: "rgba(200, 230, 201, 0.5)", stroke: "rgba(200, 230, 201, 1)", label: "<10 kms" },
+    { fill: "rgba(102, 187, 106, 0.5)", stroke: "rgba(102, 187, 106, 1)", label: "10-30 kms" },
+    { fill: "rgba(46, 125, 50, 0.5)", stroke: "rgba(46, 125, 50, 1)", label: ">30 kms" },
+  ];
+
+  const FacLivestockMngmt = [
+    { fill: "rgba(200, 230, 201, 0.5)", stroke: "rgba(200, 230, 201, 1)", label: "<10 kms" },
+    { fill: "rgba(102, 187, 106, 0.5)", stroke: "rgba(102, 187, 106, 1)", label: "10-30 kms" },
+    { fill: "rgba(46, 125, 50, 0.5)", stroke: "rgba(46, 125, 50, 1)", label: ">30 kms" },
+  ];
+
+  const FacAgriSuppInfra = [
+    { fill: "rgba(200, 230, 201, 0.5)", stroke: "rgba(200, 230, 201, 1)", label: "<10 kms" },
+    { fill: "rgba(102, 187, 106, 0.5)", stroke: "rgba(102, 187, 106, 1)", label: "10-50 kms" },
+    { fill: "rgba(46, 125, 50, 0.5)", stroke: "rgba(46, 125, 50, 1)", label: ">50 kms" },
+  ];
+
   // Check if LULC layer is active
   const isLulcLayerActive = currentLayer?.some(
     (layer) =>
@@ -452,6 +514,51 @@ const MapLegend = ({ showMWS, showVillages, currentLayer, mappedAssets, mappedDe
   const isGreenCreditActive = currentLayer?.some(
     (layer) => layer.name === "green_credit" || layer.name.includes("green_credit")
   );
+
+  const isFacEssenEduInfraActive = currentLayer?.some(
+    (layer) => layer.name === "essential_education_infra" || layer.name.includes("fac_essen_edu_infra")
+  );
+
+  const isFacHigherEduInfraActive = currentLayer?.some(
+    (layer) => layer.name === "higher_education_infra" || layer.name.includes("fac_higher_edu_infra")
+  );
+
+  const isFacEssenHealthInfraActive = currentLayer?.some(
+    (layer) => layer.name === "essential_health_services" || layer.name.includes("fac_essen_health_infra")
+  );
+
+  const isFacAdvHealthInfraActive = currentLayer?.some(
+    (layer) => layer.name === "advanced_health_services" || layer.name.includes("fac_adv_health_infra")
+  );
+
+  const isFacPDSActive = currentLayer?.some(
+    (layer) => layer.name === "public_distribution_system" || layer.name.includes("fac_pds")
+  );
+
+  const isFacFinInclActive = currentLayer?.some(
+    (layer) => layer.name === "financial_inclusion" || layer.name.includes("fac_fin_incl")
+  );
+
+  const isFacAgriMarketActive = currentLayer?.some(
+    (layer) => layer.name === "agri_market_access" || layer.name.includes("fac_agri_market")
+  );
+
+  const isFacPostHarvestInfraActive = currentLayer?.some(
+    (layer) => layer.name === "post_harvest_infra" || layer.name.includes("fac_post_harvest_infra")
+  );
+
+  const isFacFarmCooperAccessActive = currentLayer?.some(
+    (layer) => layer.name === "farmer_cooperatives_access" || layer.name.includes("fac_farm_cooper_access")
+  );
+
+  const isFacLivestockMngmtActive = currentLayer?.some(
+    (layer) => layer.name === "livestock_management_centers" || layer.name.includes("fac_livestock_mngmt")
+  );
+
+  const isFacAgriSuppInfraActive = currentLayer?.some(
+    (layer) => layer.name === "agricultural_support_infrastructure" || layer.name.includes("fac_agri_supp_infra")
+  );
+
   return (
     <div
       className={`absolute bottom-24 left-0 z-10 transition-all duration-300 ${isCollapsed ? "translate-x-2" : "translate-x-6"
@@ -1040,6 +1147,141 @@ const MapLegend = ({ showMWS, showVillages, currentLayer, mappedAssets, mappedDe
                   ))}
                 </div>
               )}
+
+              {/* Essential Education Infra Section */}
+              {isFacEssenEduInfraActive && (
+                <div className="space-y-2">
+                  <h4 className="text-xs font-medium text-gray-600">Primary education institutions</h4>
+                  {FacEssenEduInfra.map((item, index) => (
+                    <div key={`fac-edu-${index}`} className="flex items-center gap-2">
+                      <div className="w-4 h-4 rounded" style={{ backgroundColor: item.fill, border: `1px solid ${item.stroke}` }} />
+                      <span className="text-sm text-gray-600">{item.label}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {isFacHigherEduInfraActive && (
+                <div className="space-y-2">
+                  <h4 className="text-xs font-medium text-gray-600">Higher education institutions</h4>
+                  {FacHigherEduInfra.map((item, index) => (
+                    <div key={`fac-hedu-${index}`} className="flex items-center gap-2">
+                      <div className="w-4 h-4 rounded" style={{ backgroundColor: item.fill, border: `1px solid ${item.stroke}` }} />
+                      <span className="text-sm text-gray-600">{item.label}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {isFacEssenHealthInfraActive && (
+                <div className="space-y-2">
+                  <h4 className="text-xs font-medium text-gray-600">Essential health services</h4>
+                  {FacEssenHealthInfra.map((item, index) => (
+                    <div key={`fac-hlth-${index}`} className="flex items-center gap-2">
+                      <div className="w-4 h-4 rounded" style={{ backgroundColor: item.fill, border: `1px solid ${item.stroke}` }} />
+                      <span className="text-sm text-gray-600">{item.label}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {isFacAdvHealthInfraActive && (
+                <div className="space-y-2">
+                  <h4 className="text-xs font-medium text-gray-600">Advanced health services</h4>
+                  {FacAdvHealthInfra.map((item, index) => (
+                    <div key={`fac-ahlth-${index}`} className="flex items-center gap-2">
+                      <div className="w-4 h-4 rounded" style={{ backgroundColor: item.fill, border: `1px solid ${item.stroke}` }} />
+                      <span className="text-sm text-gray-600">{item.label}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {isFacPDSActive && (
+                <div className="space-y-2">
+                  <h4 className="text-xs font-medium text-gray-600">Public distribution system</h4>
+                  {FacPDSItems.map((item, index) => (
+                    <div key={`fac-pds-${index}`} className="flex items-center gap-2">
+                      <div className="w-4 h-4 rounded" style={{ backgroundColor: item.fill, border: `1px solid ${item.stroke}` }} />
+                      <span className="text-sm text-gray-600">{item.label}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {isFacFinInclActive && (
+                <div className="space-y-2">
+                  <h4 className="text-xs font-medium text-gray-600">Access to banks and financial services</h4>
+                  {FacFinInclItems.map((item, index) => (
+                    <div key={`fac-fin-${index}`} className="flex items-center gap-2">
+                      <div className="w-4 h-4 rounded" style={{ backgroundColor: item.fill, border: `1px solid ${item.stroke}` }} />
+                      <span className="text-sm text-gray-600">{item.label}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {isFacAgriMarketActive && (
+                <div className="space-y-2">
+                  <h4 className="text-xs font-medium text-gray-600">Access to mandis</h4>
+                  {FacAgriMarketItems.map((item, index) => (
+                    <div key={`fac-agri-${index}`} className="flex items-center gap-2">
+                      <div className="w-4 h-4 rounded" style={{ backgroundColor: item.fill, border: `1px solid ${item.stroke}` }} />
+                      <span className="text-sm text-gray-600">{item.label}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {isFacPostHarvestInfraActive && (
+                <div className="space-y-2">
+                  <h4 className="text-xs font-medium text-gray-600">Post Agricultural Produce Harvest Support</h4>
+                  {FacPostHarvestInfra.map((item, index) => (
+                    <div key={`fac-post-${index}`} className="flex items-center gap-2">
+                      <div className="w-4 h-4 rounded" style={{ backgroundColor: item.fill, border: `1px solid ${item.stroke}` }} />
+                      <span className="text-sm text-gray-600">{item.label}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {isFacFarmCooperAccessActive && (
+                <div className="space-y-2">
+                  <h4 className="text-xs font-medium text-gray-600">Access to farmer cooperatives</h4>
+                  {FacFarmCooperAccess.map((item, index) => (
+                    <div key={`fac-coop-${index}`} className="flex items-center gap-2">
+                      <div className="w-4 h-4 rounded" style={{ backgroundColor: item.fill, border: `1px solid ${item.stroke}` }} />
+                      <span className="text-sm text-gray-600">{item.label}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {isFacLivestockMngmtActive && (
+                <div className="space-y-2">
+                  <h4 className="text-xs font-medium text-gray-600">Livestock Management Centers</h4>
+                  {FacLivestockMngmt.map((item, index) => (
+                    <div key={`fac-live-${index}`} className="flex items-center gap-2">
+                      <div className="w-4 h-4 rounded" style={{ backgroundColor: item.fill, border: `1px solid ${item.stroke}` }} />
+                      <span className="text-sm text-gray-600">{item.label}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {isFacAgriSuppInfraActive && (
+                <div className="space-y-2">
+                  <h4 className="text-xs font-medium text-gray-600">Agricultural support infrastructure</h4>
+                  {FacAgriSuppInfra.map((item, index) => (
+                    <div key={`fac-supp-${index}`} className="flex items-center gap-2">
+                      <div className="w-4 h-4 rounded" style={{ backgroundColor: item.fill, border: `1px solid ${item.stroke}` }} />
+                      <span className="text-sm text-gray-600">{item.label}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+
 
               {/* Mapped Assets */}
               {mappedAssets && (
