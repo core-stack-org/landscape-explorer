@@ -158,40 +158,52 @@ const layerStyles = (feature, vectorStyle, idx = 0, villageJson, dataJson) => {
         case 13:
             // FOR Area Protection
             avg_Res = feature.values_.Protection
+            break;
 
         case 14:
             // FOR Wide Scale
             avg_Res = feature.values_["Wide-scale"]
+            break;
 
         case 15:
             avg_Res = Math.max(feature.values_["school_primary_distance"], feature.values_["school_upper_primary_distance"],  feature.values_["school_secondary_distance"]) 
+            break;
 
         case 16:
             avg_Res = Math.min(feature.values_["school_higher_secondary_distance"], feature.values_["college_distance"], feature.values_["universities_distance"])
-        
+            break;
+            
         case 17:
             avg_Res = Math.max(feature.values_["health_sub_cen_distance"], feature.values_["health_phc_distance"])
-        
+            break;
+            
         case 18:
             avg_Res = Math.min(feature.values_["health_chc_distance"], feature.values_["health_dis_h_distance"], feature.values_["health_s_t_h_distance"])
+            break;
 
         case 19:
             avg_Res = feature.values_["pds_distance"]
-        
+            break;
+
         case 20:
             avg_Res = Math.max(feature.values_["csc_distance"], feature.values_["bank_mitra_distance"], feature.values_["bank_branch_distance"], feature.values_["bank_atm_distance"])
-    
+            break;
+            
         case 21:
             avg_Res = Math.min(feature.values_["apmc_distance"], feature.values_["agri_industry_markets_trading_distance"])
+            break;
 
         case 22:
             avg_Res = Math.min(feature.values_["agri_industry_storage_warehousing_distance"], feature.values_["agri_industry_distribution_utilities_distance"], feature.values_["agri_industry_agri_processing_distance"], feature.values_["agri_industry_industrial_manufacturing_distance"])
+            break;
 
         case 23:
             avg_Res = feature.values_["agri_industry_co_operatives_societies_distance"]
-        
+            break;
+
         case 24:
             avg_Res = feature.values_["agri_industry_dairy_animal_husbandry_distance"]
+            break;
 
         case 25:
             avg_Res = feature.values_["agri_industry_agri_support_infrastructure_distance"]
