@@ -74,9 +74,9 @@ export default function KYLHomePage() {
           className="snap-start backdrop-brightness-90 backdrop-blur-sm bg-white/0 px-4 pt-8 pb-6 md:px-10 md:pt-10 md:pb-10 rounded-xl mx-2 md:mx-6 mb-4 md:mb-6"
           style={{ position: "relative", overflow: "visible", zIndex: 10 }}
         >
-          <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-8">
+          <div className="flex flex-col lg:flex-row lg:items-stretch gap-8">
             {/* Left: text */}
-            <div className="w-full lg:w-1/2">
+            <div className="w-full lg:w-1/2 flex flex-col justify-between">
               <h2 className="text-3xl md:text-4xl mb-4">
                 <span className="font-bold text-purple-700">Know</span>{" "}
                 <span className="font-normal text-purple-700">your landscape</span>
@@ -111,7 +111,7 @@ export default function KYLHomePage() {
             </div>
 
             {/* Right: selector card */}
-            <div className="flex flex-col items-start gap-0 w-full lg:w-1/2 lg:max-w-lg">
+            <div className="flex flex-col justify-between w-full lg:w-1/2 lg:max-w-lg lg:ml-auto">
               <div
                 className="w-full bg-white/95 backdrop-blur-sm p-6 rounded-2xl shadow-lg border border-gray-100 flex flex-col justify-between relative"
                 style={{ overflow: "visible", zIndex: 100 }}
