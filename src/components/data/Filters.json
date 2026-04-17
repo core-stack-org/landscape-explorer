@@ -1868,6 +1868,32 @@
     "Waterbody": {
         "Waterbody": [
             {
+                "name": "waterbody_type",
+                "label": "Waterbody Type",
+                "type": 1,
+                "values": [
+                    {
+                        "label": "On river",
+                        "value": 1
+                    },
+                    {
+                        "label": "Off river",
+                        "value": 0
+                    }
+                ],
+                "layer_store": [
+                    "waterbodies"
+                ],
+                "layer_name": [
+                    "waterbodies"
+                ],
+                "vectorStyle": [
+                    {}
+                ],
+                "rasterStyle": "",
+                "styleIdx": 2
+            },
+            {
                 "name": "waterbody_size",
                 "label": "Size of Waterbody",
                 "type": 2,

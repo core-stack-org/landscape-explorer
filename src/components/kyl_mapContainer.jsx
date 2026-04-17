@@ -175,6 +175,17 @@ const MapLegend = ({ showMWS, showVillages, currentLayer, mappedAssets, mappedDe
   if (!showMWS && !showVillages && (!currentLayer || currentLayer.length === 0))
     return null;
 
+  const activeWBLayer = currentLayer?.find((layer) =>
+    ["waterbody_type", "waterbody_size", "drainage_line", "surface_water_trend"]
+      .includes(layer.name)
+  );
+  
+  const activeWBType = activeWBLayer?.name;
+
+  const isWaterbodyVisualizeActive = currentLayer?.some(
+    (layer) => layer.name === "waterbody_type"
+  );
+
   const toggleCollapse = () => {
     setIsCollapsed(!isCollapsed);
   };
@@ -1282,6 +1293,114 @@ const MapLegend = ({ showMWS, showVillages, currentLayer, mappedAssets, mappedDe
               )}
 
 
+
+              {activeWBType === "waterbody_type" && (
+                  <div className="space-y-2">
+                  <h4 className="text-xs font-medium text-gray-600">
+                    Waterbody Type
+                  </h4>
+
+                  <div className="flex items-center gap-2">
+                    <div
+                      className="w-4 h-4 rounded"
+                      style={{ backgroundColor: "#87CEFA" }}  
+                    />
+                    <span className="text-sm text-gray-600">On River</span>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <div
+                      className="w-4 h-4 rounded"
+                      style={{ backgroundColor: "#1E90FF" }}   
+                    />
+                    <span className="text-sm text-gray-600">Off River</span>
+                  </div>
+                </div>
+              )}
+
+              {activeWBType === "waterbody_size" && (
+                <div className="space-y-2">
+                  <h4 className="text-xs font-medium text-gray-600">
+                    Waterbody Size
+                  </h4>
+
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 rounded" style={{ backgroundColor: "#BFEFFF" }} />
+                    <span className="text-sm text-gray-600">WB &lt; 1 ha</span>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 rounded" style={{ backgroundColor: "#87CEFA" }} />
+                    <span className="text-sm text-gray-600">WB 1–5 ha</span>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 rounded" style={{ backgroundColor: "#1E90FF" }} />
+                    <span className="text-sm text-gray-600">WB 5–10 ha</span>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 rounded" style={{ backgroundColor: "#0046B4" }} />
+                    <span className="text-sm text-gray-600">WB &gt; 10 ha</span>
+                  </div>
+                </div>
+              )}
+
+              {activeWBType === "surface_water_trend" && (
+                <div className="space-y-2">
+                  <h4 className="text-xs font-medium text-gray-600">
+                    Surface Water Trend
+                  </h4>
+
+                  <div className="flex items-center gap-2">
+                    <div
+                      className="w-4 h-4 rounded"
+                      style={{ backgroundColor: "#22C55E" }}   // green
+                    />
+                    <span className="text-sm text-gray-600">Positive</span>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <div
+                      className="w-4 h-4 rounded"
+                      style={{ backgroundColor: "#EF4444" }}   // red
+                    />
+                    <span className="text-sm text-gray-600">Negative</span>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <div
+                      className="w-4 h-4 rounded"
+                      style={{ backgroundColor: "#9CA3AF" }}   // grey
+                    />
+                    <span className="text-sm text-gray-600">Steady</span>
+                  </div>
+                </div>
+              )}
+
+              {activeWBType === "drainage_line" && (
+                <div className="space-y-2">
+                  <h4 className="text-xs font-medium text-gray-600">
+                    Drainage Line
+                  </h4>
+
+                  <div className="flex items-center gap-2">
+                    <div
+                      className="w-4 h-4 rounded"
+                      style={{ backgroundColor: "#3B82F6" }}
+                    />
+                    <span className="text-sm text-gray-600">On Drainage</span>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <div
+                      className="w-4 h-4 rounded"
+                      style={{ backgroundColor: "#A855F7" }}
+                    />
+                    <span className="text-sm text-gray-600">Off Drainage</span>
+                  </div>
+                </div>
+              )}
 
               {/* Mapped Assets */}
               {mappedAssets && (

@@ -27,6 +27,9 @@ const KYLWaterbodyPanel = ({ waterbody, onBack, hideBackButton = false }) => {
           This waterbody extends over {Number(waterbody?.properties?.area_ored)?.toFixed(2)} hectares
           and is situated {waterbody?.properties?.on_drainage_line === 1 ? "on" : "off"} the drainage line,
           belonging to stream order {waterbody?.properties?.max_stream_order}.
+          {waterbody?.properties?.waterbody_type === "river" && (
+          <> This waterbody falls on <b> {waterbody?.properties?.waterbody_type_name} </b>.</>
+          )}
         </p>
       </div>
       <button className="flex items-center gap-2 text-indigo-600 hover:text-indigo-700 mb-2" onClick={() => window.open(waterbody?.dashboardUrl, "_blank")}>
