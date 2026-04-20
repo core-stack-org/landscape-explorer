@@ -589,7 +589,7 @@ const KYLDashboardPage = () => {
     source.changed();
   };
 
-  const fetchMWSLayer = async (tempMWS) => {
+   const fetchMWSLayer = async (tempMWS) => {
     if (!district || !block) return;
       try {
         if (!mwsLayerRef.current) {
@@ -661,53 +661,17 @@ const KYLDashboardPage = () => {
               [255,75,75,0.8]       // normal → red
             ],
 
-        "stroke-color": [
-          "case",
-
-          ["==", ["get", "uid"], ["var", "highlightMWS"]],
-          [22, 101, 52, 1],
-
-          ["==", ["get", "isFiltered"], 1],
-          [102, 30, 30, 1],
-
-          ["==", ["get", "isFiltered"], 0],
-          [0, 0, 0, 0],
-
-          [74, 144, 226, 1]
-        ],
-
-        "stroke-width": [
-          "case",
-
-          ["==", ["get", "uid"], ["var", "highlightMWS"]],
-          2,
-
-          ["==", ["get", "isFiltered"], 1],
-          1.5,
-
-          1
-        ],
-
-        "fill-color": [
-          "case",
-
-          ["==", ["get", "uid"], ["var", "highlightMWS"]],
-          [34, 197, 94, 0.4],
-
-          ["==", ["get", "isFiltered"], 1],
-          [255, 75, 75, 0.8],
-
-          ["==", ["get", "isFiltered"], 0],
-          [0, 0, 0, 0],
-
-          [85, 152, 229, 0.2]
-        ]
-      });
-
-    } catch (error) {
-      console.error("Error fetching MWS layer:", error);
-      toast.error("Please Refresh the Page !")
-    }
+            ["==", ["get", "isFiltered"], 0],
+            [0,0,0,0],
+        
+            [85,152,229,0.2]
+          ]
+        });
+        
+      } catch (error) {
+        console.error("Error fetching MWS layer:", error);
+        toast.error("Please Refresh the Page !")
+      }
   };
 
   const waitForFeatures = (source, label) => {
@@ -934,148 +898,6 @@ const KYLDashboardPage = () => {
     mapRef.current.addLayer(arrowLayer);
     mwsArrowLayerRef.current = arrowLayer;
   };
-
-//   const fetchWaterBodiesLayer = async () => {
-//     if (!district || !block || !mapRef.current) return;
-//     if (waterbodiesLayerRef.current) return;
-
-//     const dist = transformName(district.label);
-//     const blk = transformName(block.label);
-//     const layerName = `surface_waterbodies_${dist}_${blk}`;
-
-//     const wbLayer = await getWebGlPolygonLayers("swb", layerName);
-
-//     wbLayer.setStyle({
-//       variables: { wbFilterActive: 0 ,isVisualizeOn: false},
-//     "stroke-color": [
-//     "case",
-
-//     //  ON RIVER (visualize ON)
-//     ["all", ["==", ["get", "wbCategory"], "onRiver"], ["var", "isVisualizeOn"]],
-//     [135, 206, 250, 1],
-
-//     //  OFF RIVER
-//     ["all", ["==", ["get", "wbCategory"], "offRiver"], ["var", "isVisualizeOn"]],
-//     [30, 144, 255, 1],
-
-//     ["all", ["==", ["get", "wbTrend"], "positive"], ["var", "isVisualizeOn"]],
-// [34, 197, 94, 1],   // green stroke
-
-// ["all", ["==", ["get", "wbTrend"], "negative"], ["var", "isVisualizeOn"]],
-// [239, 68, 68, 1],   // red stroke
-
-// ["all", ["==", ["get", "wbTrend"], "steady"], ["var", "isVisualizeOn"]],
-// [156, 163, 175, 1], // gray stroke
-    
-//     // 🔵 SIZE COLORS (ONLY WHEN VISUALIZE ON)
-
-//     ["all",
-//       ["==", ["get", "wbSizeCategory"], "small"],
-//       ["var", "isVisualizeOn"]
-//     ],
-//     [191, 239, 255, 0.7] ,
-
-//     ["all",
-//       ["==", ["get", "wbSizeCategory"], "medium"],
-//       ["var", "isVisualizeOn"]
-//     ],
-//     [135, 206, 250, 0.7],
-
-//     ["all",
-//       ["==", ["get", "wbSizeCategory"], "large"],
-//       ["var", "isVisualizeOn"]
-//     ],
-//     [30, 144, 255, 0.7],
-
-//     ["all",
-//       ["==", ["get", "wbSizeCategory"], "veryLarge"],
-//       ["var", "isVisualizeOn"]
-//     ],
-//     [0, 70, 180, 0.7],
-
-//   //  hide ONLY when visualize OFF
-//   ["all",
-//     ["==", ["var", "wbFilterActive"], 1],
-//     ["==", ["get", "wbMatch"], 0],
-//     ["!", ["var", "isVisualizeOn"]]  
-//   ],
-//   [0, 0, 0, 0],
-
-//   // default (yellow)
-//   [246, 252, 83, 0.8]
-// ],
-//       "stroke-width": [
-//         "case",
-//         ["all", ["==", ["var", "wbFilterActive"], 1], ["==", ["get", "wbMatch"], 0]],
-//         0,
-//         2
-//       ],
-// "fill-color": [
-//   "case",
-
-
-  
-
-//   // 🟢 TYPE COLORS (fallback)
-//   ["all", ["==", ["get", "wbCategory"], "onRiver"], ["var", "isVisualizeOn"]],
-//   [135, 206, 250, 0.7],
-
-//   ["all", ["==", ["get", "wbCategory"], "offRiver"], ["var", "isVisualizeOn"]],
-//   [30, 144, 255, 0.7],
-
-//   ["all", ["==", ["get", "wbTrend"], "positive"], ["var", "isVisualizeOn"]],
-// [34, 197, 94, 0.55],
-
-// ["all", ["==", ["get", "wbTrend"], "negative"], ["var", "isVisualizeOn"]],
-// [239, 68, 68, 0.55],
-
-// ["all", ["==", ["get", "wbTrend"], "steady"], ["var", "isVisualizeOn"]],
-// [156, 163, 175, 0.55],
-
-
-//   // 🔵 SIZE COLORS (visualize ON)
-//   ["all",
-//     ["==", ["get", "wbSizeCategory"], "small"],
-//     ["var", "isVisualizeOn"]
-//   ],
-//   [191, 239, 255, 0.7],
-
-//   ["all",
-//     ["==", ["get", "wbSizeCategory"], "medium"],
-//     ["var", "isVisualizeOn"]
-//   ],
-//   [135, 206, 250, 0.7],
-
-//   ["all",
-//     ["==", ["get", "wbSizeCategory"], "large"],
-//     ["var", "isVisualizeOn"]
-//   ],
-//   [30, 144, 255, 0.7],
-
-//   ["all",
-//     ["==", ["get", "wbSizeCategory"], "veryLarge"],
-//     ["var", "isVisualizeOn"]
-//   ],
-//   [0, 70, 180, 0.7],
-
-
-
-//   //  hide when needed
-//   ["all",
-//     ["==", ["var", "wbFilterActive"], 1],
-//     ["==", ["get", "wbMatch"], 0],
-//     ["!", ["var", "isVisualizeOn"]]
-//   ],
-//   [0, 0, 0, 0],
-
-//   // default
-//   [246, 252, 83, 0.45]
-// ]
-//     });
-
-//     if (!wbLayer) { console.warn("Failed loading waterbodies"); return; }
-//     waterbodiesLayerRef.current = wbLayer;
-//   };
 
 const fetchWaterBodiesLayer = async () => {
   if (!district || !block || !mapRef.current) return;
