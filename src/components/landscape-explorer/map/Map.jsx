@@ -886,6 +886,17 @@ const Map = forwardRef(({
     });
   }
 
+  const transformName = (name) => {
+  if (!name) return name;
+  return name
+    .replace(/[()]/g, "")
+              // .replace(/-+/g, "_")
+              .replace(/\s+/g, "_")
+              .replace(/_+/g, "_")
+              .replace(/^_|_$/g, "")
+              .toLowerCase()
+};
+
   // Expose methods to parent component
   useImperativeHandle(ref, () => ({
     toggleLayer: (layerId, isVisible) => {
@@ -920,7 +931,7 @@ const Map = forwardRef(({
           'deforestation': 'Change Detection Deforestation',
           'degradation': 'Change Detection Degradation',
           'urbanization': 'Change Detection Urbanization',
-          'cropintensity': 'Change Detection Crop-Intensity',
+          'cropIntensity': 'Change Detection Crop-Intensity',
           'restoration': 'Change Detection Restoration',
           'soge': 'SOGE',
           'aquifer': 'Aquifer',
@@ -1326,9 +1337,9 @@ const Map = forwardRef(({
       // Get admin boundary layer
       let adminLayer = await getVectorLayers(
         "panchayat_boundaries",
-        district.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_') +
+        transformName(district.label) +
         "_" +
-        block.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_'),
+        transformName(block.label),
         true,
         true
       );
@@ -1419,9 +1430,9 @@ const Map = forwardRef(({
       // === Drainage Layer ===
       let DrainageLayer = await getVectorLayers(
         "drainage",
-        district.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_') +
+        transformName(district.label) +
         "_" +
-        block.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_'),
+        transformName(block.label),
         true,
         true,
         "drainage",
@@ -1449,9 +1460,9 @@ const Map = forwardRef(({
       // === Remote Sensed Waterbodies Layer ===
       let RemoteSensedWaterbodiesLayer = await getVectorLayers(
         "swb",
-        "surface_waterbodies_" + district.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_') +
+        "surface_waterbodies_" + transformName(district.label) +
         "_" +
-        block.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_'),
+        transformName(block.label),
         true,
         true,
         "Water_bodies",
@@ -1474,9 +1485,9 @@ const Map = forwardRef(({
       // === MicroWatershed Layer ===
       let MicroWaterShedLayer = await getVectorLayers(
         "mws_layers",
-        "deltaG_well_depth_" + district.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_') +
+        "deltaG_well_depth_" + transformName(district.label) +
         "_" +
-        block.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_'),
+        transformName(block.label),
         true,
         true,
         "Watershed",
@@ -1505,46 +1516,11 @@ const Map = forwardRef(({
         LayersArray[3].LayerRef.current = MicroWaterShedLayer;
       }
 
-      // === Hydrological Boundaries Layer ===
-let HydrologicalBoundariesLayer = await getVectorLayers(
-  "hydrological_boundaries",
-  district.label.toLowerCase().replace(/\s*\(\s*/g, '_')
-    .replace(/\s*\)\s*/g, '')
-    .replace(/\s+/g, '_') +
-  "_" +
-  block.label.toLowerCase().replace(/\s*\(\s*/g, '_')
-    .replace(/\s*\)\s*/g, '')
-    .replace(/\s+/g, '_'),
-  true,
-  true
-);
-
-if (HydrologicalBoundariesLayer) {
-  HydrologicalBoundariesLayer.setStyle(function (feature) {
-    return new Style({
-      stroke: new Stroke({
-        color: "#000000",
-        width: 1.5,
-      }),
-      fill: new Fill({
-        color: "rgba(0, 0, 255, 0.2)",
-      }),
-    });
-  });
-
-  if (LayersArray[3].LayerRef.current != null) {
-    safeRemoveLayer(LayersArray[3].LayerRef.current);
-  }
-
-  LayersArray[3].LayerRef.current = HydrologicalBoundariesLayer;
-}
-
-
       // === CLART Layer ===
       let clartLayer = await getImageLayers(
         "clart",
-        district.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_') + "_" +
-        block.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_') + "_clart",
+        transformName(district.label) + "_" +
+        transformName(block.label) + "_clart",
         true
       );
 
@@ -1562,9 +1538,9 @@ if (HydrologicalBoundariesLayer) {
       // === NREGA Layer ===
       let NregaLayer = await getWebGlLayers(
         "nrega_assets",
-        district.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_') +
+        transformName(district.label) +
         "_" +
-        block.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_')
+        transformName(block.label)
       );
 
       if (NregaLayer) {
@@ -1578,9 +1554,9 @@ if (HydrologicalBoundariesLayer) {
       // === Drought Layer ===
       let DroughtLayer = await getVectorLayers(
         "drought",
-        district.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_') +
+        transformName(district.label) +
         "_" +
-        block.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_') +
+        transformName(block.label) +
         "_drought",
         true,
         true
@@ -1642,9 +1618,9 @@ if (HydrologicalBoundariesLayer) {
       // === Terrain Layer ===
       let TerrainLayer = await getImageLayers(
         "terrain",
-        district.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_') +
+        transformName(district.label) +
         "_" +
-        block.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_') + "_terrain_raster",
+        transformName(block.label) + "_terrain_raster",
         true,
         "Terrain_Style_11_Classes"
       );
@@ -1659,9 +1635,9 @@ if (HydrologicalBoundariesLayer) {
       // === Admin Without Metadata Layer ===
       let AdminBoundaryLayer = await getVectorLayers(
         "panchayat_boundaries",
-        district.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_') +
+        transformName(district.label) +
         "_" +
-        block.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_'),
+        transformName(block.label),
         true,
         true
       );
@@ -1676,9 +1652,9 @@ if (HydrologicalBoundariesLayer) {
       // === Cropping Intensity Layer ===
       let CroppingIntensityLayer = await getVectorLayers(
         "crop_intensity",
-        district.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_') +
+        transformName(district.label) +
         "_" +
-        block.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_') + "_intensity",
+        transformName(block.label) + "_intensity",
         true,
         true
       );
@@ -1720,9 +1696,9 @@ if (HydrologicalBoundariesLayer) {
       // === Terrain Vector Layer ===
       let TerrainVectorLayer = await getVectorLayers(
         "terrain",
-        district.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_') +
+        transformName(district.label) +
         "_" +
-        block.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_') +
+        transformName(block.label) +
         "_cluster",
         true,
         true
@@ -1749,9 +1725,9 @@ if (HydrologicalBoundariesLayer) {
       let AfforestationLayer = await getImageLayers(
         "change_detection",
         "change_" +
-        district.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_') +
+        transformName(district.label) +
         "_" +
-        block.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_') + "_Afforestation",
+        transformName(block.label) + "_Afforestation",
         true,
         "afforestation"
       );
@@ -1767,9 +1743,9 @@ if (HydrologicalBoundariesLayer) {
       let DeforestationLayer = await getImageLayers(
         "change_detection",
         "change_" +
-        district.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_') +
+        transformName(district.label) +
         "_" +
-        block.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_') + "_Deforestation",
+        transformName(block.label) + "_Deforestation",
         true,
         "	deforestation"
       );
@@ -1785,9 +1761,9 @@ if (HydrologicalBoundariesLayer) {
       let DegradationLayer = await getImageLayers(
         "change_detection",
         "change_" +
-        district.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_') +
+        transformName(district.label) +
         "_" +
-        block.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_') + "_Degradation",
+        transformName(block.label) + "_Degradation",
         true,
         "degradation"
       );
@@ -1803,9 +1779,9 @@ if (HydrologicalBoundariesLayer) {
       let UrbanizationLayer = await getImageLayers(
         "change_detection",
         "change_" +
-        district.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_') +
+        transformName(district.label) +
         "_" +
-        block.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_') + "_Urbanization",
+        transformName(block.label) + "_Urbanization",
         true,
         "urbanization"
       );
@@ -1821,9 +1797,9 @@ if (HydrologicalBoundariesLayer) {
       let CropIntensityLayer = await getImageLayers(
         "change_detection",
         "change_" +
-        district.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_') +
+        transformName(district.label) +
         "_" +
-        block.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_') + "_CropIntensity",
+        transformName(block.label) + "_CropIntensity",
         true,
         "cropintensity"
       );
@@ -1839,9 +1815,9 @@ if (HydrologicalBoundariesLayer) {
       let RestorationLayer = await getImageLayers(
         "restoration",
         "restoration_" +
-        district.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_') +
+        transformName(district.label) +
         "_" +
-        block.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_') + "_raster",
+        transformName(block.label) + "_raster",
         true,
         "restoration_style"
       );
@@ -1857,9 +1833,9 @@ if (HydrologicalBoundariesLayer) {
       let SOGELayer = await getVectorLayers(
         "soge",
         "soge_vector_" +
-        district.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_') +
+        transformName(district.label) +
         "_" +
-        block.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_'),
+        transformName(block.label),
         true,
         true
       );
@@ -1916,9 +1892,9 @@ if (HydrologicalBoundariesLayer) {
       let AquiferLayer = await getVectorLayers(
         "aquifer",
         "aquifer_vector_" +
-        district.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_') +
+        transformName(district.label) +
         "_" +
-        block.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_'),
+        transformName(block.label),
         true,
         true
       );
@@ -2036,9 +2012,9 @@ if (HydrologicalBoundariesLayer) {
       let fortnightLayer = await getVectorLayers(
         "mws_layers",
         "deltaG_fortnight_" +
-        district.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_') +
+        transformName(district.label) +
         "_" +
-        block.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_'),
+        transformName(block.label),
         true,
         true
       );
@@ -2241,7 +2217,7 @@ if (HydrologicalBoundariesLayer) {
 
       let LulcLayer = await getImageLayers(
         "LULC_level_1",
-        `LULC_${lulcYear1.value}_${district.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_')}_${block.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_')}_level_1`,
+        `LULC_${lulcYear1.value}_${transformName(district.label)}_${transformName(block.label)}_level_1`,
         true,
         ""
       );
@@ -2271,7 +2247,7 @@ if (HydrologicalBoundariesLayer) {
 
       let LulcLayer = await getImageLayers(
         "LULC_level_2",
-        `LULC_${lulcYear2.value}_${district.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_')}_${block.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_')}_level_2`,
+        `LULC_${lulcYear2.value}_${transformName(district.label)}_${transformName(block.label)}_level_2`,
         true,
         ""
       );
@@ -2301,7 +2277,7 @@ if (HydrologicalBoundariesLayer) {
 
       let LulcLayer = await getImageLayers(
         "LULC_level_3",
-        `LULC_${lulcYear3.value}_${district.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_')}_${block.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_')}_level_3`,
+        `LULC_${lulcYear3.value}_${transformName(district.label)}_${transformName(block.label)}_level_3`,
         true,
         ""
       );
