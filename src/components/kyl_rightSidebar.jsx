@@ -75,11 +75,12 @@ const KYLRightSidebar = ({
   const transformName = (name) => {
     if (!name) return name;
     return name
-      .replace(/[().]/g, "")        // Remove parentheses and dots
-      .replace(/[-\s]+/g, "_")      // Replace dashes and spaces with "_"
-      .replace(/_+/g, "_")          // Collapse multiple underscores
-      .replace(/^_|_$/g, "")        // Remove leading/trailing underscores
-      .toLowerCase();
+    .replace(/[()]/g, "")
+              // .replace(/-+/g, "_")
+              .replace(/\s+/g, "_")
+              .replace(/_+/g, "_")
+              .replace(/^_|_$/g, "")
+              .toLowerCase()
   };
 
 
