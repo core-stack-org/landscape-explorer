@@ -213,7 +213,6 @@ const KYLRightSidebar = ({
 
 
   // Generate table data for selected MWS and villages
-  // Generate table data for selected MWS and villages
   const generateSelectionTableData = () => {
     const mwsData = [];
     const villageData = [];
@@ -1098,9 +1097,7 @@ const KYLRightSidebar = ({
       </div>
     );
   };
-
-
-
+  
   return (
     <div className="w-[320px] flex flex-col gap-2">
       <SelectionPopup />

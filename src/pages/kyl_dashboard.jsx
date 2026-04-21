@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useMemo } from "react";
 import { useRecoilState, useRecoilValue } from "recoil";
 import {
   stateDataAtom,
@@ -75,6 +75,7 @@ const KYLDashboardPage = () => {
   const [villageIdList, setVillageIdList] = useState(new Set([]));
   const [patternVillageList, setPatternVillageList] = useState(new Set([]));
   const [finalVillageList, setFinalVillageList] = useState(new Set([]))
+  const [selectedWaterbodyIds, setSelectedWaterbodyIds] = useState(new Set([]));
 
   const [statesData, setStatesData] = useRecoilState(stateDataAtom);
   const [state, setState] = useRecoilState(stateAtom);
@@ -909,148 +910,6 @@ const KYLDashboardPage = () => {
     mapRef.current.addLayer(arrowLayer);
     mwsArrowLayerRef.current = arrowLayer;
   };
-
-//   const fetchWaterBodiesLayer = async () => {
-//     if (!district || !block || !mapRef.current) return;
-//     if (waterbodiesLayerRef.current) return;
-
-//     const dist = transformName(district.label);
-//     const blk = transformName(block.label);
-//     const layerName = `surface_waterbodies_${dist}_${blk}`;
-
-//     const wbLayer = await getWebGlPolygonLayers("swb", layerName);
-
-//     wbLayer.setStyle({
-//       variables: { wbFilterActive: 0 ,isVisualizeOn: false},
-//     "stroke-color": [
-//     "case",
-
-//     //  ON RIVER (visualize ON)
-//     ["all", ["==", ["get", "wbCategory"], "onRiver"], ["var", "isVisualizeOn"]],
-//     [135, 206, 250, 1],
-
-//     //  OFF RIVER
-//     ["all", ["==", ["get", "wbCategory"], "offRiver"], ["var", "isVisualizeOn"]],
-//     [30, 144, 255, 1],
-
-//     ["all", ["==", ["get", "wbTrend"], "positive"], ["var", "isVisualizeOn"]],
-// [34, 197, 94, 1],   // green stroke
-
-// ["all", ["==", ["get", "wbTrend"], "negative"], ["var", "isVisualizeOn"]],
-// [239, 68, 68, 1],   // red stroke
-
-// ["all", ["==", ["get", "wbTrend"], "steady"], ["var", "isVisualizeOn"]],
-// [156, 163, 175, 1], // gray stroke
-    
-//     // 🔵 SIZE COLORS (ONLY WHEN VISUALIZE ON)
-
-//     ["all",
-//       ["==", ["get", "wbSizeCategory"], "small"],
-//       ["var", "isVisualizeOn"]
-//     ],
-//     [191, 239, 255, 0.7] ,
-
-//     ["all",
-//       ["==", ["get", "wbSizeCategory"], "medium"],
-//       ["var", "isVisualizeOn"]
-//     ],
-//     [135, 206, 250, 0.7],
-
-//     ["all",
-//       ["==", ["get", "wbSizeCategory"], "large"],
-//       ["var", "isVisualizeOn"]
-//     ],
-//     [30, 144, 255, 0.7],
-
-//     ["all",
-//       ["==", ["get", "wbSizeCategory"], "veryLarge"],
-//       ["var", "isVisualizeOn"]
-//     ],
-//     [0, 70, 180, 0.7],
-
-//   //  hide ONLY when visualize OFF
-//   ["all",
-//     ["==", ["var", "wbFilterActive"], 1],
-//     ["==", ["get", "wbMatch"], 0],
-//     ["!", ["var", "isVisualizeOn"]]  
-//   ],
-//   [0, 0, 0, 0],
-
-//   // default (yellow)
-//   [246, 252, 83, 0.8]
-// ],
-//       "stroke-width": [
-//         "case",
-//         ["all", ["==", ["var", "wbFilterActive"], 1], ["==", ["get", "wbMatch"], 0]],
-//         0,
-//         2
-//       ],
-// "fill-color": [
-//   "case",
-
-
-  
-
-//   // 🟢 TYPE COLORS (fallback)
-//   ["all", ["==", ["get", "wbCategory"], "onRiver"], ["var", "isVisualizeOn"]],
-//   [135, 206, 250, 0.7],
-
-//   ["all", ["==", ["get", "wbCategory"], "offRiver"], ["var", "isVisualizeOn"]],
-//   [30, 144, 255, 0.7],
-
-//   ["all", ["==", ["get", "wbTrend"], "positive"], ["var", "isVisualizeOn"]],
-// [34, 197, 94, 0.55],
-
-// ["all", ["==", ["get", "wbTrend"], "negative"], ["var", "isVisualizeOn"]],
-// [239, 68, 68, 0.55],
-
-// ["all", ["==", ["get", "wbTrend"], "steady"], ["var", "isVisualizeOn"]],
-// [156, 163, 175, 0.55],
-
-
-//   // 🔵 SIZE COLORS (visualize ON)
-//   ["all",
-//     ["==", ["get", "wbSizeCategory"], "small"],
-//     ["var", "isVisualizeOn"]
-//   ],
-//   [191, 239, 255, 0.7],
-
-//   ["all",
-//     ["==", ["get", "wbSizeCategory"], "medium"],
-//     ["var", "isVisualizeOn"]
-//   ],
-//   [135, 206, 250, 0.7],
-
-//   ["all",
-//     ["==", ["get", "wbSizeCategory"], "large"],
-//     ["var", "isVisualizeOn"]
-//   ],
-//   [30, 144, 255, 0.7],
-
-//   ["all",
-//     ["==", ["get", "wbSizeCategory"], "veryLarge"],
-//     ["var", "isVisualizeOn"]
-//   ],
-//   [0, 70, 180, 0.7],
-
-
-
-//   //  hide when needed
-//   ["all",
-//     ["==", ["var", "wbFilterActive"], 1],
-//     ["==", ["get", "wbMatch"], 0],
-//     ["!", ["var", "isVisualizeOn"]]
-//   ],
-//   [0, 0, 0, 0],
-
-//   // default
-//   [246, 252, 83, 0.45]
-// ]
-//     });
-
-//     if (!wbLayer) { console.warn("Failed loading waterbodies"); return; }
-//     waterbodiesLayerRef.current = wbLayer;
-//   };
 
 const fetchWaterBodiesLayer = async () => {
   if (!district || !block || !mapRef.current) return;
@@ -2657,33 +2516,171 @@ const fetchWaterBodiesLayer = async () => {
   }, [villageIdList]);
 
   useEffect(() => {
-    if (!showWB || !waterbodiesLayerRef.current) return;
+    if (!showWB || !waterbodiesLayerRef.current) {
+      setSelectedWaterbodyIds(new Set([]));
+      return;
+    }
     applyWaterbodyFilters(
       selectedMWS,
-      filterSelections.selectedWaterbodyValues || {},
-      isWBVisualizeOn 
+      filterSelections.selectedWaterbodyValues || {}
+      // no isWBVisualizeOn argument
     );
-  }, [selectedMWS, filterSelections.selectedWaterbodyValues, showWB,isWBVisualizeOn ]);
+    const collectMatchedIds = () => {
+      const src = waterbodiesLayerRef.current?.getSource();
+      if (!src) return;
+      const features = src.getFeatures();
+      if (features.length === 0) return;
+      const ids = new Set();
+      features.forEach(f => {
+        if (f.get('wbMatch') === 1) {
+          const p = f.getProperties();
+          const id = String(p.UID ?? p.swb_id ?? p.SWB_UID ?? p.swb_uid ?? p.uid ?? p.id ?? '');
+          if (id) ids.add(id);
+        }
+      });
+      setSelectedWaterbodyIds(ids);
+    };
+    const timer = setTimeout(collectMatchedIds, 600);
+    return () => clearTimeout(timer);
+  }, [selectedMWS, filterSelections.selectedWaterbodyValues, showWB]);
 
   useEffect(() => {
-  // Enable filters only when boundary + MWS + data are fully loaded
-  if (
-    !islayerLoaded &&
-    !isLoading &&
-    district &&
-    block
-  ) {
-    setFiltersEnabled(true);
-  } else {
-    setFiltersEnabled(false);
-  }
-}, [islayerLoaded, isLoading, district, block]);
+    // Enable filters only when boundary + MWS + data are fully loaded
+    if (
+      !islayerLoaded &&
+      !isLoading &&
+      district &&
+      block
+    ) {
+      setFiltersEnabled(true);
+    } else {
+      setFiltersEnabled(false);
+    }
+  }, [islayerLoaded, isLoading, district, block]);
 
-useEffect(() => {
-  if (district && block) {
-    resetAllStates();
-  }
-}, [district, block]);
+  useEffect(() => {
+    if (district && block) {
+      resetAllStates();
+    }
+  }, [district, block]);
+
+  const mwsVillageIntersections = useMemo(() => {
+    const hasWaterbodySelections = selectedWaterbodyIds && selectedWaterbodyIds.size > 0;
+    if ((!selectedMWS || selectedMWS.length === 0) && !hasWaterbodySelections) return [];
+    if (!dataJson) return [];
+
+    const result = [];
+
+    // Group villages and waterbodies by MWS
+    dataJson.forEach((mwsItem) => {
+      const mwsId = mwsItem.mws_id || mwsItem.uid;
+      const isMWSSelected = selectedMWS?.includes(mwsId);
+
+      const swbsInMWS = Array.isArray(mwsItem.mws_intersect_swb) ? mwsItem.mws_intersect_swb : [];
+      const matchedSWBsCount = swbsInMWS.filter(swb => {
+        const id = typeof swb === 'object' ? String(swb.swbId) : String(swb);
+        return selectedWaterbodyIds.has(id);
+      }).length;
+
+      // Include this MWS if it's selected OR it contains matched waterbodies
+      if (isMWSSelected || matchedSWBsCount > 0) {
+        const villagesInThisMWS = [];
+        const waterbodiesInThisMWS = [];
+
+        // 1. Process Villages (only if MWS is selected)
+        if (isMWSSelected && Array.isArray(mwsItem.mws_intersect_villages)) {
+          mwsItem.mws_intersect_villages.forEach((villageId) => {
+            const villageIdStr = String(villageId);
+            let vName = '';
+            if (villageJson && Array.isArray(villageJson)) {
+              const v = villageJson.find(v => String(v.village_id || v.vill_ID) === villageIdStr);
+              if (v) vName = v.village_name || v.vill_name || v.name || '';
+            }
+            villagesInThisMWS.push({ villageId: villageIdStr, villageName: vName });
+          });
+        }
+
+        // 2. Process Waterbodies
+        if (swbsInMWS.length > 0) {
+          swbsInMWS.forEach((swb) => {
+            const swbIdStr = typeof swb === 'object' ? String(swb.swbId) : String(swb);
+            const isMatched = selectedWaterbodyIds.has(swbIdStr);
+
+            // Include if waterbody matches filters OR if parent MWS is selected
+            if (isMatched || isMWSSelected) {
+              const swbName = typeof swb === 'object' ? (swb.swbName || '') : '';
+              const lat = typeof swb === 'object' ? (swb.latitude || 0) : 0;
+              const lon = typeof swb === 'object' ? (swb.longitude || 0) : 0;
+
+              waterbodiesInThisMWS.push({
+                swbId: swbIdStr,
+                swbName: swbName,
+                latitude: lat,
+                longitude: lon
+              });
+            }
+          });
+        }
+
+        if (villagesInThisMWS.length > 0 || waterbodiesInThisMWS.length > 0) {
+          result.push({
+            mwsId: mwsId,
+            villages: villagesInThisMWS,
+            waterbodies: waterbodiesInThisMWS
+          });
+        }
+      }
+    });
+
+    console.log(`Found intersections for ${result.length} MWS items`);
+
+    // 3. Fallback enrichment for villages from map features
+    if (boundaryLayerRef.current) {
+      try {
+        const features = boundaryLayerRef.current.getSource().getFeatures();
+        result.forEach(group => {
+          group.villages.forEach(v => {
+            if (!v.villageName) {
+              const f = features.find(feat => {
+                const props = feat.getProperties();
+                return String(props.vill_ID ?? props.village_id) === v.villageId;
+              });
+              if (f) {
+                const props = f.getProperties();
+                v.villageName = props.vill_name || props.village_name || props.name || '';
+              }
+            }
+          });
+        });
+      } catch (_) { }
+    }
+
+    // 4. Fallback enrichment for waterbodies from map features
+    if (waterbodiesLayerRef.current) {
+      try {
+        const features = waterbodiesLayerRef.current.getSource().getFeatures();
+        result.forEach(group => {
+          group.waterbodies.forEach(swb => {
+            if (!swb.swbName) {
+              const f = features.find(feat => {
+                const props = feat.getProperties();
+                const propsId = String(props.UID ?? props.swb_id ?? props.SWB_UID ?? props.swb_uid ?? props.uid ?? props.id ?? '');
+                return propsId === swb.swbId;
+              });
+              if (f) {
+                const props = f.getProperties();
+                swb.swbName = props.name || props.waterbody_name || props.wb_name || props.swb_name || '';
+                Object.assign(swb, props); // ENRICH FOR HIGHLIGHTING
+              }
+            }
+          });
+        });
+      } catch (_) { }
+    }
+
+    return result;
+  }, [selectedMWS, selectedWaterbodyIds, dataJson, villageJson, waterbodiesLayerRef.current]);
+
 
 
   return (
@@ -2775,6 +2772,11 @@ useEffect(() => {
           showConnectivity={showConnectivity}
           setShowConnectivity={setShowConnectivity}
           mwsArrowLayerRef={mwsArrowLayerRef}
+          baseLayerRef={baseLayerRef}
+          mwsVillageIntersections={mwsVillageIntersections}
+          villageJson={villageJson}
+          dataJson={dataJson}
+          selectedWaterbodyIds={selectedWaterbodyIds}
         />
       </div>
     </div>
