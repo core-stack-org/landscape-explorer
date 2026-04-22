@@ -83,11 +83,11 @@ export default function KYLHomePage() {
               </h2>
               <ul className="list-disc list-outside ml-5 text-black text-base md:text-lg space-y-3 font-medium text-justify">
                 <li>
-                  With 20+ geospatial layers, explore your landscape's diversity,
+                  <b>With 20+ geospatial layers</b>, explore your landscape's diversity,
                   build evidence-based proposals, and plan context-sensitive actions.
                 </li>
                 <li>
-                  Quickly access detailed reports on any micro-watershed in the Tehsil,
+                  Quickly access <b>detailed reports on any micro-watershed in the Tehsil</b>,
                   covering land use, cropping, groundwater, forests, and socio-economic indicators.
                 </li>
                 <li>
@@ -113,7 +113,7 @@ export default function KYLHomePage() {
             {/* Right: selector card */}
             <div className="flex flex-col justify-between w-full lg:w-1/2 lg:max-w-lg lg:ml-auto">
               <div
-                className="w-full bg-white/95 backdrop-blur-sm p-6 rounded-2xl shadow-lg border border-gray-100 flex flex-col justify-between relative"
+                className="w-full flex-1 bg-white/95 backdrop-blur-sm p-6 rounded-2xl shadow-lg border border-gray-100 flex flex-col justify-between relative"
                 style={{ overflow: "visible", zIndex: 100 }}
               >
                 <p className="mb-0 text-left font-semibold text-xl md:text-2xl text-gray-800 leading-none">
@@ -350,7 +350,7 @@ export default function KYLHomePage() {
                 ].map((item, index) => (
                   <div
                     key={index}
-                    className={`group bg-gradient-to-br ${item.accent} rounded-2xl shadow-md p-5 flex flex-col justify-between border border-purple-100 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 h-[260px]`}
+                    className={`group bg-gradient-to-br ${item.accent} rounded-2xl shadow-md p-5 flex flex-col justify-between border border-purple-100 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 min-h-[260px]`}
                   >
                     <div>
                       <div className={`${item.iconBg} rounded-xl w-11 h-11 flex items-center justify-center text-xl mb-3 flex-shrink-0`}>

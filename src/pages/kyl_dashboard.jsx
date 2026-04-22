@@ -39,7 +39,6 @@ import { handlePatternSelection as handlePatternSelectionLogic, isPatternSelecte
 import { toast, Toaster } from "react-hot-toast";
 import {
   trackPageView,
-  trackEvent,
   initializeAnalytics,
 } from "../services/analytics";
 import getWebGlLayers from "../actions/getWebGlLayers.js";
@@ -59,6 +58,7 @@ const KYLDashboardPage = () => {
   const mwsConnectivityLayerRef = useRef(null);
   const mwsCentroidLayerRef = useRef(null);
   const mwsArrowLayerRef = useRef(null);
+  const applyWBFiltersTimerRef = useRef(null);
 
   const [isLoading, setIsLoading] = useState(false);
   const [islayerLoaded, setIsLayerLoaded] = useState(false);
@@ -68,8 +68,6 @@ const KYLDashboardPage = () => {
   const [dataJson, setDataJson] = useRecoilState(dataJsonAtom);
   const [villageJson, setVillageJson] = useState(null);
 
-  const [mappedAssets, setMappedAssets] = useState(false);
-  const [mappedDemands, setMappedDemands] = useState(false);
   const [currentLayer, setCurrentLayer] = useState([]);
   const [toggleStates, setToggleStates] = useState({});
   const [villageIdList, setVillageIdList] = useState(new Set([]));
@@ -119,7 +117,6 @@ const KYLDashboardPage = () => {
     if (!name) return name;
     return name
           .replace(/[()]/g, "")
-              // .replace(/-+/g, "_")
               .replace(/\s+/g, "_")
               .replace(/_+/g, "_")
               .replace(/^_|_$/g, "")
@@ -392,7 +389,7 @@ const KYLDashboardPage = () => {
     );
   };
 
-  const applyWaterbodyFilters = (mwsIds, wbFilters,isVisualizeOn) => {
+  const applyWaterbodyFilters = (mwsIds, wbFilters, isVisualizeOn) => {
     if (!waterbodiesLayerRef.current) return;
 
     const wbSource = waterbodiesLayerRef.current.getSource();
@@ -405,74 +402,70 @@ const KYLDashboardPage = () => {
       return;
     }
 
-    const applyToFeatures = (wbFeatures, mwsFeatures) => {
+    // ─── Build allowed WB ID set from dataJson (O(n) lookup, no geometry math) ───
+    let allowedWBIds = null; // null means no MWS filter — show all
+    if (hasMWSFilter && dataJson) {
+      allowedWBIds = new Set();
+      dataJson.forEach(mwsItem => {
+        if (mwsIds.includes(mwsItem.mws_id)) {
+          const swbs = mwsItem.mws_intersect_swb || [];
+          swbs.forEach(swb => {
+            const id = typeof swb === 'object' ? String(swb.swbId) : String(swb);
+            if (id) allowedWBIds.add(id);
+          });
+        }
+      });
+    }
+
+    const applyToFeatures = (wbFeatures) => {
       if (!wbFeatures.length) return;
-    
-      const selectedMWSPolygons = hasMWSFilter
-        ? mwsFeatures.filter(f => mwsIds.includes(f.get('uid')))
-        : [];
-    
+
       wbFeatures.forEach((feature) => {
         const props = feature.getProperties();
-    
-        // Always compute ALL category properties regardless of active filters
-        const wbCategory = props.waterbody_type === "river" ? "onRiver" : "offRiver";
-        feature.set("wbCategory", wbCategory, true);
-    
-        const area = Number(props.area_ored ?? 0);
-        let wbSizeCategory = null;
-        if (area < 1) wbSizeCategory = "small";
-        else if (area < 5) wbSizeCategory = "medium";
-        else if (area < 10) wbSizeCategory = "large";
-        else wbSizeCategory = "veryLarge";
-        feature.set("wbSizeCategory", wbSizeCategory, true);
-    
-        // Always compute trend
-        const areas = Object.keys(props)
-          .filter(key => key.startsWith("area_") && key !== "area_ored")
-          .sort()
-          .map(key => Number(props[key] ?? 0));
-        const trend = calculateTrend(areas);
-        const wbTrend = trend > 0 ? "positive" : trend < 0 ? "negative" : "steady";
-        feature.set("wbTrend", wbTrend, true);
-    
-        // Always compute drainage
-        const drainageValue = Number(props.on_drainage_line ?? 0);
-        const wbDrainage = drainageValue === 1 ? "onDrainage" : "offDrainage";
-        feature.set("wbDrainage", wbDrainage, true);
-    
+
+        // ── Compute derived props only if not already cached ──
+        if (!feature.get("_propsComputed")) {
+          const wbCategory = props.waterbody_type === "river" ? "onRiver" : "offRiver";
+          feature.set("wbCategory", wbCategory, true);
+
+          const area = Number(props.area_ored ?? 0);
+          const wbSizeCategory =
+            area < 1 ? "small" :
+            area < 5 ? "medium" :
+            area < 10 ? "large" : "veryLarge";
+          feature.set("wbSizeCategory", wbSizeCategory, true);
+
+          const drainageValue = Number(props.on_drainage_line ?? 0);
+          feature.set("wbDrainage", drainageValue === 1 ? "onDrainage" : "offDrainage", true);
+
+          const areas = Object.keys(props)
+            .filter(k => k.startsWith("area_") && k !== "area_ored")
+            .sort()
+            .map(k => Number(props[k] ?? 0));
+          const trend = calculateTrend(areas);
+          feature.set("wbTrend", trend > 0 ? "positive" : trend < 0 ? "negative" : "steady", true);
+
+          feature.set("_propsComputed", true, true);
+        }
+
         let matches = true;
-    
-        // MWS intersection check
+
+        // ── MWS filter: O(1) Set lookup instead of geometry intersection ──
         if (hasMWSFilter) {
-          if (selectedMWSPolygons.length === 0) {
+          const wbId = String(
+            props.UID ?? props.swb_id ?? props.SWB_UID ?? props.swb_uid ?? props.uid ?? props.id ?? ''
+          );
+          if (!allowedWBIds.has(wbId)) {
             matches = false;
-          } else {
-            const wbGeom = feature.getGeometry();
-            if (!wbGeom) {
-              matches = false;
-            } else {
-              const coordinates = wbGeom.getType() === 'Polygon'
-                ? wbGeom.getCoordinates()[0]
-                : wbGeom.getCoordinates()[0]?.[0] ?? [];
-    
-              const intersects = selectedMWSPolygons.some(mwsFeature => {
-                const mwsGeom = mwsFeature.getGeometry();
-                if (!mwsGeom) return false;
-                return coordinates.some(coord => mwsGeom.intersectsCoordinate(coord));
-              });
-    
-              if (!intersects) matches = false;
-            }
           }
         }
-    
-        // Attribute filter check
+
+        // ── Attribute filters ──
         if (matches && hasAttrFilter) {
           filterKeys.forEach((filterName) => {
             const selectedOptions = wbFilters[filterName];
             if (!selectedOptions) return;
-    
+
             if (filterName === "waterbody_type") {
               const isOnRiver = props.waterbody_type === "river";
               const pass = selectedOptions.some(opt => {
@@ -482,7 +475,7 @@ const KYLDashboardPage = () => {
               });
               if (!pass) matches = false;
             }
-    
+
             if (filterName === "waterbody_size") {
               const a = Number(props.area_ored ?? props.AREA_HA ?? props.area ?? props.Area ?? 0);
               const pass = selectedOptions.some(
@@ -490,81 +483,65 @@ const KYLDashboardPage = () => {
               );
               if (!pass) matches = false;
             }
-    
+
             if (filterName === "drainage_line") {
+              const drainageValue = Number(props.on_drainage_line ?? 0);
               const pass = selectedOptions.some(opt => drainageValue === opt.value);
               if (!pass) matches = false;
             }
-    
+
             if (filterName === "surface_water_trend") {
-              const pass = selectedOptions.some(opt => trend === opt.value);
+              const cachedTrend = feature.get("wbTrend");
+              const trendValue =
+                cachedTrend === "positive" ? 1 :
+                cachedTrend === "negative" ? -1 : 0;
+              const pass = selectedOptions.some(opt => trendValue === opt.value);
               if (!pass) matches = false;
             }
           });
         }
-    
+
         if (isVisualizeOn) {
           feature.set("wbMatch", 1, true);
         } else {
           feature.set("wbMatch", matches ? 1 : 0, true);
         }
       });
-    
+
       wbSource.changed();
-      // const activeWBFilter = Object.keys(wbFilters || {}).find(
-      //   key => wbFilters[key]
-      // );
-      
+
       const finalMode =
-      activeWBVisualize === "waterbody_type" ? 1 :
-      activeWBVisualize === "waterbody_size" ? 2 :
-      activeWBVisualize === "surface_water_trend" ? 3 :
-      activeWBVisualize === "drainage_line" ? 4 :
-      0;
-    
-    waterbodiesLayerRef.current.updateStyleVariables({
-      wbFilterActive: isVisualizeOn ? 0 : 1,
-      visualizeMode: finalMode
-    });
+        activeWBVisualize === "waterbody_type" ? 1 :
+        activeWBVisualize === "waterbody_size" ? 2 :
+        activeWBVisualize === "surface_water_trend" ? 3 :
+        activeWBVisualize === "drainage_line" ? 4 : 0;
+
+      waterbodiesLayerRef.current.updateStyleVariables({
+        wbFilterActive: isVisualizeOn ? 0 : 1,
+        visualizeMode: finalMode
+      });
     };
 
-    // Wait for both WB and MWS sources to have features before applying
-    const waitForBothAndApply = () => {
-      const wbFeatures = wbSource.getFeatures();
-      const mwsSource = mwsLayerRef.current?.getSource();
-      const mwsFeatures = mwsSource ? mwsSource.getFeatures() : [];
+    // ─── No more geometry polling needed — just wait for WB features ───
+    const wbFeatures = wbSource.getFeatures();
+    if (wbFeatures.length > 0) {
+      applyToFeatures(wbFeatures);
+      return;
+    }
 
-      const wbReady = wbFeatures.length > 0;
-      const mwsReady = !hasMWSFilter || mwsFeatures.length > 0;
-
-      if (wbReady && mwsReady) {
-        applyToFeatures(wbFeatures, mwsFeatures);
-        return;
+    // If WB features not loaded yet, poll briefly
+    let attempts = 0;
+    const poll = setInterval(() => {
+      attempts++;
+      const wbF = wbSource.getFeatures();
+      if (wbF.length > 0) {
+        clearInterval(poll);
+        applyToFeatures(wbF);
+      } else if (attempts >= 50) {
+        clearInterval(poll);
+        console.warn("applyWaterbodyFilters: timed out waiting for WB features");
       }
-
-      // Poll every 100ms until both are ready, max 5 seconds
-      let attempts = 0;
-      const maxAttempts = 50;
-
-      const poll = setInterval(() => {
-        attempts++;
-        const wbF = wbSource.getFeatures();
-        const mwsF = mwsSource ? mwsSource.getFeatures() : [];
-
-        const wbOk = wbF.length > 0;
-        const mwsOk = !hasMWSFilter || mwsF.length > 0;
-
-        if (wbOk && mwsOk) {
-          clearInterval(poll);
-          applyToFeatures(wbF, mwsF);
-        } else if (attempts >= maxAttempts) {
-          clearInterval(poll);
-          console.warn("applyWaterbodyFilters: timed out waiting for features");
-        }
-      }, 100);
-    };
-
-    waitForBothAndApply();
+    }, 100);
   };
 
   useEffect(() => {
@@ -911,208 +888,170 @@ const KYLDashboardPage = () => {
     mwsArrowLayerRef.current = arrowLayer;
   };
 
-const fetchWaterBodiesLayer = async () => {
-  if (!district || !block || !mapRef.current) return;
-  if (waterbodiesLayerRef.current) return;
+  const fetchWaterBodiesLayer = async () => {
+    if (!district || !block || !mapRef.current) return;
+    if (waterbodiesLayerRef.current) return;
 
-  const dist = transformName(district.label);
-  const blk = transformName(block.label);
-  const layerName = `surface_waterbodies_${dist}_${blk}`;
+    const dist = transformName(district.label);
+    const blk = transformName(block.label);
+    const layerName = `surface_waterbodies_${dist}_${blk}`;
 
-  const wbLayer = await getWebGlPolygonLayers("swb", layerName);
-  if (!wbLayer) { console.warn("Failed loading waterbodies"); return; }
+    const wbLayer = await getWebGlPolygonLayers("swb", layerName);
+    if (!wbLayer) { console.warn("Failed loading waterbodies"); return; }
 
-  wbLayer.setStyle({
-    variables: {
-      wbFilterActive: 0,
-      isVisualizeOn: false,
-      visualizeMode: 0   // 0=none, 1=type, 2=size, 3=trend
-    },
+    wbLayer.setStyle({
+      variables: {
+        wbFilterActive: 0,
+        isVisualizeOn: false,
+        visualizeMode: 0
+      },
 
-    "stroke-color": [
-      "case",
-      // --- MODE 4 : Drainge ----------------------
-      ["all",
-        ["==", ["var", "visualizeMode"], 4],
-        ["var", "isVisualizeOn"],
-        ["==", ["get", "wbDrainage"], "onDrainage"]
+      "stroke-color": [
+        "case",
+        ["all", ["==", ["var", "visualizeMode"], 4], ["var", "isVisualizeOn"], ["==", ["get", "wbDrainage"], "onDrainage"]],
+        [59, 130, 246, 1],
+
+        ["all", ["==", ["var", "visualizeMode"], 4], ["var", "isVisualizeOn"], ["==", ["get", "wbDrainage"], "offDrainage"]],
+        [168, 85, 247, 1],
+
+        ["all", ["==", ["var", "visualizeMode"], 3], ["var", "isVisualizeOn"], ["==", ["get", "wbTrend"], "positive"]],
+        [34, 197, 94, 1],
+
+        ["all", ["==", ["var", "visualizeMode"], 3], ["var", "isVisualizeOn"], ["==", ["get", "wbTrend"], "negative"]],
+        [239, 68, 68, 1],
+
+        ["all", ["==", ["var", "visualizeMode"], 3], ["var", "isVisualizeOn"], ["==", ["get", "wbTrend"], "steady"]],
+        [156, 163, 175, 1],
+
+        ["all", ["==", ["var", "visualizeMode"], 2], ["var", "isVisualizeOn"], ["==", ["get", "wbSizeCategory"], "small"]],
+        [191, 239, 255, 0.7],
+
+        ["all", ["==", ["var", "visualizeMode"], 2], ["var", "isVisualizeOn"], ["==", ["get", "wbSizeCategory"], "medium"]],
+        [135, 206, 250, 0.7],
+
+        ["all", ["==", ["var", "visualizeMode"], 2], ["var", "isVisualizeOn"], ["==", ["get", "wbSizeCategory"], "large"]],
+        [30, 144, 255, 0.7],
+
+        ["all", ["==", ["var", "visualizeMode"], 2], ["var", "isVisualizeOn"], ["==", ["get", "wbSizeCategory"], "veryLarge"]],
+        [0, 70, 180, 0.7],
+
+        ["all", ["==", ["var", "visualizeMode"], 1], ["var", "isVisualizeOn"], ["==", ["get", "wbCategory"], "onRiver"]],
+        [135, 206, 250, 1],
+
+        ["all", ["==", ["var", "visualizeMode"], 1], ["var", "isVisualizeOn"], ["==", ["get", "wbCategory"], "offRiver"]],
+        [30, 144, 255, 1],
+
+        ["all", ["==", ["var", "wbFilterActive"], 1], ["==", ["get", "wbMatch"], 0], ["!", ["var", "isVisualizeOn"]]],
+        [0, 0, 0, 0],
+
+        [246, 252, 83, 0.8]
       ],
-      [59, 130, 246, 1],   // blue
-      
-      ["all",
-        ["==", ["var", "visualizeMode"], 4],
-        ["var", "isVisualizeOn"],
-        ["==", ["get", "wbDrainage"], "offDrainage"]
+
+      "stroke-width": [
+        "case",
+        ["all", ["==", ["var", "wbFilterActive"], 1], ["==", ["get", "wbMatch"], 0]],
+        0,
+        2
       ],
-      [168, 85, 247, 1], 
 
-      // ── MODE 3: TREND ──────────────────────────────
-      ["all", 
-        ["==", ["var", "visualizeMode"], 3],
-        ["var", "isVisualizeOn"],
-                ["==", ["get", "wbTrend"], "positive"]
-      ]  ,    [34, 197, 94, 1],
+      "fill-color": [
+        "case",
+        ["all", ["==", ["var", "visualizeMode"], 4], ["var", "isVisualizeOn"], ["==", ["get", "wbDrainage"], "onDrainage"]],
+        [59, 130, 246, 0.55],
 
-      ["all", 
-        ["==", ["var", "visualizeMode"], 3],
-        ["var", "isVisualizeOn"],
-                ["==", ["get", "wbTrend"], "negative"]
-      ]   ,   [239, 68, 68, 1],
+        ["all", ["==", ["var", "visualizeMode"], 4], ["var", "isVisualizeOn"], ["==", ["get", "wbDrainage"], "offDrainage"]],
+        [168, 85, 247, 0.55],
 
-["all", 
-  ["==", ["var", "visualizeMode"], 3],
-  ["var", "isVisualizeOn"],
-    ["==", ["get", "wbTrend"], "steady"]
-]   ,   [156, 163, 175, 1],
+        ["all", ["==", ["var", "visualizeMode"], 3], ["var", "isVisualizeOn"], ["==", ["get", "wbTrend"], "positive"]],
+        [34, 197, 94, 0.55],
 
-      // ── MODE 2: SIZE ───────────────────────────────
-      ["all", 
-        ["==", ["var", "visualizeMode"], 2],
-        ["var", "isVisualizeOn"],
-        ["==", ["get", "wbSizeCategory"], "small"]
-      ],      [191, 239, 255, 0.7],
+        ["all", ["==", ["var", "visualizeMode"], 3], ["var", "isVisualizeOn"], ["==", ["get", "wbTrend"], "negative"]],
+        [239, 68, 68, 0.55],
 
-      ["all", 
-        ["==", ["var", "visualizeMode"], 2],
-        ["var", "isVisualizeOn"],
-        ["==", ["get", "wbSizeCategory"], "medium"]
-      ],      [135, 206, 250, 0.7],
+        ["all", ["==", ["var", "visualizeMode"], 3], ["var", "isVisualizeOn"], ["==", ["get", "wbTrend"], "steady"]],
+        [156, 163, 175, 0.55],
 
-      ["all", 
-        ["==", ["var", "visualizeMode"], 2],
-        ["var", "isVisualizeOn"],
-        ["==", ["get", "wbSizeCategory"], "large"]
-      ],      [30, 144, 255, 0.7],
+        ["all", ["==", ["var", "visualizeMode"], 2], ["var", "isVisualizeOn"], ["==", ["get", "wbSizeCategory"], "small"]],
+        [191, 239, 255, 0.7],
 
-      ["all", 
-        ["==", ["var", "visualizeMode"], 2],
-        ["var", "isVisualizeOn"],
-        ["==", ["get", "wbSizeCategory"], "veryLarge"]
-      ],      [0, 70, 180, 0.7],
+        ["all", ["==", ["var", "visualizeMode"], 2], ["var", "isVisualizeOn"], ["==", ["get", "wbSizeCategory"], "medium"]],
+        [135, 206, 250, 0.7],
 
-      // ── MODE 1: TYPE ───────────────────────────────
-      ["all", 
-        ["==", ["var", "visualizeMode"], 1],
-        ["var", "isVisualizeOn"],
-        ["==", ["get", "wbCategory"], "onRiver"]
-      ],      [135, 206, 250, 1],
+        ["all", ["==", ["var", "visualizeMode"], 2], ["var", "isVisualizeOn"], ["==", ["get", "wbSizeCategory"], "large"]],
+        [30, 144, 255, 0.7],
 
-      ["all", 
-        ["==", ["var", "visualizeMode"], 1],
-        ["var", "isVisualizeOn"],
-        ["==", ["get", "wbCategory"], "offRiver"]
-      ],      [30, 144, 255, 1],
+        ["all", ["==", ["var", "visualizeMode"], 2], ["var", "isVisualizeOn"], ["==", ["get", "wbSizeCategory"], "veryLarge"]],
+        [0, 70, 180, 0.7],
 
-      // ── FILTER: hide non-matching when visualize OFF
-      ["all",
-        ["==", ["var", "wbFilterActive"], 1],
-        ["==", ["get", "wbMatch"], 0],
-        ["!", ["var", "isVisualizeOn"]]
-      ],
-      [0, 0, 0, 0],
+        ["all", ["==", ["var", "visualizeMode"], 1], ["var", "isVisualizeOn"], ["==", ["get", "wbCategory"], "onRiver"]],
+        [135, 206, 250, 0.7],
 
-      // ── DEFAULT ────────────────────────────────────
-      [246, 252, 83, 0.8]
-    ],
+        ["all", ["==", ["var", "visualizeMode"], 1], ["var", "isVisualizeOn"], ["==", ["get", "wbCategory"], "offRiver"]],
+        [30, 144, 255, 0.7],
 
-    "stroke-width": [
-      "case",
-      ["all", ["==", ["var", "wbFilterActive"], 1], ["==", ["get", "wbMatch"], 0]],
-      0,
-      2
-    ],
+        ["all", ["==", ["var", "wbFilterActive"], 1], ["==", ["get", "wbMatch"], 0], ["!", ["var", "isVisualizeOn"]]],
+        [0, 0, 0, 0],
 
-    "fill-color": [
-      "case",
+        [246, 252, 83, 0.45]
+      ]
+    });
 
+    waterbodiesLayerRef.current = wbLayer;
 
-      ["all",
-        ["==", ["var", "visualizeMode"], 4],
-        ["var", "isVisualizeOn"],
-        ["==", ["get", "wbDrainage"], "onDrainage"]
-      ],
-      [59, 130, 246, 0.55],
-      
-      ["all",
-        ["==", ["var", "visualizeMode"], 4],
-        ["var", "isVisualizeOn"],
-        ["==", ["get", "wbDrainage"], "offDrainage"]
-      ],
-      [168, 85, 247, 0.55],
+    // Precompute all derived properties once after layer loads
+    precomputeWBProperties();
+  };
 
+  const precomputeWBProperties = () => {
+    const src = waterbodiesLayerRef.current?.getSource();
+    if (!src) return;
 
-      // ── MODE 3: TREND ──────────────────────────────
-      ["all",
-        ["==", ["var", "visualizeMode"], 3],
-        ["var", "isVisualizeOn"],  
-        ["==", ["get", "wbTrend"], "positive"]
-      ],      [34, 197, 94, 0.55],
+    const waitAndCompute = () => {
+      const features = src.getFeatures();
+      if (features.length === 0) {
+        setTimeout(waitAndCompute, 200);
+        return;
+      }
 
-      ["all",
-        ["==", ["var", "visualizeMode"], 3],
-        ["var", "isVisualizeOn"],  
-        ["==", ["get", "wbTrend"], "negative"]
-      ],      [239, 68, 68, 0.55],
+      features.forEach(feature => {
+        const props = feature.getProperties();
 
-      ["all",
-        ["==", ["var", "visualizeMode"], 3],
-        ["var", "isVisualizeOn"],   
-        ["==", ["get", "wbTrend"], "steady"]
-      ],      [156, 163, 175, 0.55],
+        // Waterbody type
+        const wbCategory = props.waterbody_type === "river" ? "onRiver" : "offRiver";
+        feature.set("wbCategory", wbCategory, true);
 
-      // ── MODE 2: SIZE ───────────────────────────────
-      ["all", 
-        ["==", ["var", "visualizeMode"], 2],
-        ["var", "isVisualizeOn"],
-        ["==", ["get", "wbSizeCategory"], "small"]
-      ],      [191, 239, 255, 0.7],
+        // Size category
+        const area = Number(props.area_ored ?? 0);
+        const wbSizeCategory =
+          area < 1 ? "small" :
+          area < 5 ? "medium" :
+          area < 10 ? "large" : "veryLarge";
+        feature.set("wbSizeCategory", wbSizeCategory, true);
 
-      ["all", 
-        ["==", ["var", "visualizeMode"], 2],
-        ["var", "isVisualizeOn"],
-        ["==", ["get", "wbSizeCategory"], "medium"]
-      ],      [135, 206, 250, 0.7],
+        // Drainage
+        const drainageValue = Number(props.on_drainage_line ?? 0);
+        const wbDrainage = drainageValue === 1 ? "onDrainage" : "offDrainage";
+        feature.set("wbDrainage", wbDrainage, true);
 
-      ["all", 
-        ["==", ["var", "visualizeMode"], 2],
-        ["var", "isVisualizeOn"],
-        ["==", ["get", "wbSizeCategory"], "large"]
-      ],      [30, 144, 255, 0.7],
+        // Trend (O(n²) — computed once and cached)
+        const areas = Object.keys(props)
+          .filter(k => k.startsWith("area_") && k !== "area_ored")
+          .sort()
+          .map(k => Number(props[k] ?? 0));
+        const trend = calculateTrend(areas);
+        const wbTrend = trend > 0 ? "positive" : trend < 0 ? "negative" : "steady";
+        feature.set("wbTrend", wbTrend, true);
 
-      ["all", 
-        ["==", ["var", "visualizeMode"], 2],
-        ["var", "isVisualizeOn"],
-        ["==", ["get", "wbSizeCategory"], "veryLarge"]
-      ],      [0, 70, 180, 0.7],
+        // Mark as done so applyWaterbodyFilters skips recomputation
+        feature.set("_propsComputed", true, true);
+      });
 
-      // ── MODE 1: TYPE ───────────────────────────────
-      ["all", 
-        ["==", ["var", "visualizeMode"], 1],
-        ["var", "isVisualizeOn"],
-        ["==", ["get", "wbCategory"], "onRiver"]
-      ],      [135, 206, 250, 0.7],
+      src.changed();
+    };
 
-      ["all", 
-        ["==", ["var", "visualizeMode"], 1],
-        ["var", "isVisualizeOn"],
-        ["==", ["get", "wbCategory"], "offRiver"]
-      ],      [30, 144, 255, 0.7],
+    waitAndCompute();
+  };
 
-      // ── FILTER: hide non-matching when visualize OFF
-      ["all",
-        ["==", ["var", "wbFilterActive"], 1],
-        ["==", ["get", "wbMatch"], 0],
-        ["!", ["var", "isVisualizeOn"]]
-      ],
-      [0, 0, 0, 0],
-
-      // ── DEFAULT ────────────────────────────────────
-      [246, 252, 83, 0.45]
-    ]
-  });
-
-  waterbodiesLayerRef.current = wbLayer;
-};
   const fetchAdminLayer = async (tempVillages) => {
     if (!district || !block || !boundaryLayerRef.current) return;
   
@@ -1973,7 +1912,6 @@ const fetchWaterBodiesLayer = async () => {
   
   }, [state, district, block]);
   
-
   useEffect(() => {
     if (mwsLayerRef.current) {
       mwsLayerRef.current.setVisible(showMWS);
@@ -2515,34 +2453,53 @@ const fetchWaterBodiesLayer = async () => {
     setFinalVillageList(villageIdList);
   }, [villageIdList]);
 
+
   useEffect(() => {
     if (!showWB || !waterbodiesLayerRef.current) {
       setSelectedWaterbodyIds(new Set([]));
       return;
     }
-    applyWaterbodyFilters(
-      selectedMWS,
-      filterSelections.selectedWaterbodyValues || {}
-      // no isWBVisualizeOn argument
-    );
-    const collectMatchedIds = () => {
-      const src = waterbodiesLayerRef.current?.getSource();
-      if (!src) return;
-      const features = src.getFeatures();
-      if (features.length === 0) return;
-      const ids = new Set();
-      features.forEach(f => {
-        if (f.get('wbMatch') === 1) {
-          const p = f.getProperties();
-          const id = String(p.UID ?? p.swb_id ?? p.SWB_UID ?? p.swb_uid ?? p.uid ?? p.id ?? '');
-          if (id) ids.add(id);
-        }
-      });
-      setSelectedWaterbodyIds(ids);
+
+    // Clear any pending call
+    if (applyWBFiltersTimerRef.current) {
+      clearTimeout(applyWBFiltersTimerRef.current);
+    }
+
+    // Debounce so rapid filter changes don't stack
+    applyWBFiltersTimerRef.current = setTimeout(() => {
+      applyWaterbodyFilters(
+        selectedMWS,
+        filterSelections.selectedWaterbodyValues || {},
+        isWBVisualizeOn
+      );
+
+      // Collect matched IDs after filters settle
+      const collectMatchedIds = () => {
+        const src = waterbodiesLayerRef.current?.getSource();
+        if (!src) return;
+        const features = src.getFeatures();
+        if (features.length === 0) return;
+        const ids = new Set();
+        features.forEach(f => {
+          if (f.get('wbMatch') === 1) {
+            const p = f.getProperties();
+            const id = String(p.UID ?? p.swb_id ?? p.SWB_UID ?? p.swb_uid ?? p.uid ?? p.id ?? '');
+            if (id) ids.add(id);
+          }
+        });
+        setSelectedWaterbodyIds(ids);
+      };
+
+      setTimeout(collectMatchedIds, 400);
+    }, 150);
+
+    return () => {
+      if (applyWBFiltersTimerRef.current) {
+        clearTimeout(applyWBFiltersTimerRef.current);
+      }
     };
-    const timer = setTimeout(collectMatchedIds, 600);
-    return () => clearTimeout(timer);
-  }, [selectedMWS, filterSelections.selectedWaterbodyValues, showWB]);
+  }, [selectedMWS, filterSelections.selectedWaterbodyValues, showWB, isWBVisualizeOn]);
+
 
   useEffect(() => {
     // Enable filters only when boundary + MWS + data are fully loaded
@@ -2558,11 +2515,13 @@ const fetchWaterBodiesLayer = async () => {
     }
   }, [islayerLoaded, isLoading, district, block]);
 
+
   useEffect(() => {
     if (district && block) {
       resetAllStates();
     }
   }, [district, block]);
+
 
   const mwsVillageIntersections = useMemo(() => {
     const hasWaterbodySelections = selectedWaterbodyIds && selectedWaterbodyIds.size > 0;
@@ -2679,8 +2638,7 @@ const fetchWaterBodiesLayer = async () => {
     }
 
     return result;
-  }, [selectedMWS, selectedWaterbodyIds, dataJson, villageJson, waterbodiesLayerRef.current]);
-
+  }, [selectedMWS, selectedWaterbodyIds, dataJson, villageJson]);
 
 
   return (
@@ -2730,8 +2688,6 @@ const fetchWaterBodiesLayer = async () => {
           boundaryLayerRef={boundaryLayerRef}
           mapRef={mapRef}
           currentLayer={currentLayer}
-          mappedAssets={mappedAssets}
-          mappedDemands={mappedDemands}
           setSearchLatLong={setSearchLatLong}
         />
 

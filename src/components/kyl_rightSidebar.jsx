@@ -3,22 +3,10 @@ import React from "react";
 import SelectButton from "./buttons/select_button";
 import filtersDetails from "../components/data/Filters.json";
 import { ArrowLeft, Loader2, Table } from 'lucide-react';
-import ToggleButton from "./buttons/toggle_button_kyl";
-import {
-  stateDataAtom,
-  stateAtom,
-  districtAtom,
-  blockAtom,
-  filterSelectionsAtom,
-} from "../store/locationStore.jsx";
 import KYLMWSProfilePanel from "./kyl_MWSProfilePanel.jsx";
 import KYLWaterbodyPanel from "./kyl_waterbodypanel.jsx";
-import { useRecoilState, useRecoilValue } from "recoil";
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
-import html2canvas from 'html2canvas';
-import TileLayer from 'ol/layer/Tile';
-import XYZ from 'ol/source/XYZ';
 import XLSX from 'xlsx-js-style';
 
 const KYLRightSidebar = ({
@@ -31,19 +19,16 @@ const KYLRightSidebar = ({
   statesData,
   handleItemSelect,
   setFilterSelections,
-  setPatternSelections,
   getFormattedSelectedFilters,
   getFormattedSelectedPatterns,
   handlePatternRemoval,
   selectedMWS,
   selectedVillages,
-  handleLayerSelection,
   toggleStates,
   setToggleStates,
   currentLayer,
   setCurrentLayer,
   mapRef,
-  mapElement,
   onResetMWS,
   selectedMWSProfile,
   waterbodiesLayerRef,
@@ -54,24 +39,16 @@ const KYLRightSidebar = ({
   setShowWB,
   showWB,
   boundaryLayerRef,
-  mwsConnectivityLayerRef,
   showConnectivity,
   setShowConnectivity,
   mwsArrowLayerRef,
-  baseLayerRef,
   mwsVillageIntersections = [],
   villageJson = [],
   dataJson = [],
   selectedWaterbodyIds,
 }) => {
-  const [globalState, setGlobalState] = useRecoilState(stateAtom);
-  const [globalDistrict, setGlobalDistrict] = useRecoilState(districtAtom);
-  const [globalBlock, setGlobalBlock] = useRecoilState(blockAtom);
   const [loadingWB, setLoadingWB] = React.useState(false);
   const [showSelectionPopup, setShowSelectionPopup] = React.useState(false);
-  const filterSelections = useRecoilValue(filterSelectionsAtom);
-
-
 
   // Check if both panels are shown
   const showBothPanels = selectedMWSProfile && selectedWaterbodyProfile;
@@ -80,7 +57,6 @@ const KYLRightSidebar = ({
     if (!name) return name;
     return name
     .replace(/[()]/g, "")
-              // .replace(/-+/g, "_")
               .replace(/\s+/g, "_")
               .replace(/_+/g, "_")
               .replace(/^_|_$/g, "")
@@ -296,7 +272,6 @@ const KYLRightSidebar = ({
                 const ctx = mapCanvas.getContext('2d');
 
                 // Composite every visible OL canvas in DOM order
-                const mapEl = map.getTargetElement();
                 const viewport = map.getViewport();
                 viewport.querySelectorAll('canvas').forEach((layerCanvas) => {
                   if (layerCanvas.width > 0) {
@@ -1097,7 +1072,7 @@ const KYLRightSidebar = ({
       </div>
     );
   };
-  
+
   return (
     <div className="w-[320px] flex flex-col gap-2">
       <SelectionPopup />
@@ -1152,7 +1127,6 @@ const KYLRightSidebar = ({
                   handleItemSelect={handleItemSelect}
                   setState={(val) => {
                     setState(val);
-                    setGlobalState(val);
                   }}
                   className="w-full border border-gray-200 rounded-md py-1.5 px-3"
                 />
@@ -1167,7 +1141,6 @@ const KYLRightSidebar = ({
                   handleItemSelect={handleItemSelect}
                   setState={(val) => {
                     setDistrict(val);
-                    setGlobalDistrict(val);
                   }}
                   className="w-full border border-gray-200 rounded-md py-1.5 px-3"
                 />
@@ -1182,7 +1155,6 @@ const KYLRightSidebar = ({
                   handleItemSelect={handleItemSelect}
                   setState={(val) => {
                     setBlock(val);
-                    setGlobalBlock(val);
                   }}
                   className="w-full border border-gray-200 rounded-md py-1.5 px-3"
                 />
