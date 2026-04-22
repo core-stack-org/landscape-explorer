@@ -28,7 +28,7 @@ const KYLWaterbodyPanel = ({ waterbody, onBack, hideBackButton = false }) => {
           and is situated {waterbody?.properties?.on_drainage_line === 1 ? "on" : "off"} the drainage line,
           belonging to stream order {waterbody?.properties?.max_stream_order}.
           {waterbody?.properties?.waterbody_type === "river" && (
-          <> This waterbody falls on <b> {waterbody?.properties?.waterbody_type_name} </b>.</>
+          <> This waterbody falls on <b> {waterbody?.properties?.waterbody_type_name} </b> river.</>
           )}
         </p>
       </div>

@@ -1398,6 +1398,8 @@ const mwsSheet = XLSX.utils.json_to_sheet(mwsData, {
   
     saveAs(blob, fileName);
   };
+
+  console.log(activeSelectedWaterbody)
     return (
     <div className={`${isTehsilMode ? "pb-8 w-full" : "mx-6 my-8 bg-white rounded-xl shadow-md p-6"}`}>
   
@@ -1431,9 +1433,47 @@ const mwsSheet = XLSX.utils.json_to_sheet(mwsData, {
           </div>
         </div>
       )}
+
+
+  {isTehsilMode && activeSelectedWaterbody && (
+    <div className="px-6 md:px-10 mt-4">
+      <div className="bg-slate-50 border border-slate-200 border-l-[3px] border-l-blue-600 rounded-md px-4 py-3 text-slate-700 leading-[1.6] text-[clamp(0.70rem,1vw,1rem)]">
+      <span className="font-semibold text-blue-600">
+      Waterbody Insights:
+    </span>{" "}
+        This waterbody extends over{" "}
+        <span className="font-semibold text-blue-600">
+          {Number(
+            activeSelectedWaterbody?.properties?.area_ored ??
+            activeSelectedWaterbody?.areaOred ?? 0
+          ).toFixed(2)} hectares
+        </span>{" "}
+        and is situated on the drainage line, belonging to{" "}
+        <span className="font-semibold text-blue-600">
+          stream order{" "}
+          {activeSelectedWaterbody?.properties?.max_stream_order ??
+            activeSelectedWaterbody?.maxStreamOrder ?? "N/A"}
+        </span>. 
+        {(activeSelectedWaterbody?.properties?.waterbody_type ??
+    activeSelectedWaterbody?.waterbody_type) === "river" ? (
+    <>
+      This waterbody falls on{" "}
+      <span className="font-semibold text-blue-600">
+        {activeSelectedWaterbody?.properties?.waterbody_type_name ??
+          activeSelectedWaterbody?.waterbody_type_name ??
+          "N/A"}
+      </span> river.
+    </>
+  ) : (
+    <>This waterbody does not fall on any river.</>
+  )}.
+        
+      </div>
+    </div>
+  )}
   
   {/* ====================== TOP BUTTONS + SUMMARY ====================== */}
-  <div className="flex flex-col gap-1 mb-6 lg:flex-row lg:items-start lg:justify-between">
+  <div className="flex flex-col gap-1 mb-3 lg:flex-row lg:items-start lg:justify-between">
   
     {mode === "project" && (
       <div className="flex gap-2 flex-shrink-0">
