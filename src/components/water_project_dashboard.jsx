@@ -1465,7 +1465,7 @@ const mwsSheet = XLSX.utils.json_to_sheet(mwsData, {
       </span> river.
     </>
   ) : (
-    <>This waterbody does not fall on any river.</>
+    <> This waterbody does not fall on any river.</>
   )}.
         
       </div>
