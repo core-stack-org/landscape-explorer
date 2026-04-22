@@ -35,10 +35,10 @@ const CHIP_STROKE = "rgba(255, 255, 255, 0.9)";
 const transformName = (name) => {
     if (!name) return name;
     return name
-      .replace(/[().]/g, "")        // Remove parentheses and dots
-      .replace(/[-\s]+/g, "_")      // Replace dashes and spaces with "_"
-      .replace(/_+/g, "_")          // Collapse multiple underscores
-      .replace(/^_|_$/g, "")        // Remove leading/trailing underscores
+      .replace(/[().]/g, "")
+      .replace(/[-\s]+/g, "_")
+      .replace(/_+/g, "_")
+      .replace(/^_|_$/g, "")
       .toLowerCase();
 };
 
@@ -60,22 +60,6 @@ const fetchMetaStats = async (organizationId = null, stateId = null, districtId 
   });
   if (!res.ok) throw new Error(`API error ${res.status}`);
   return res.json();
-};
-
-const fetchOrganizations = async () => {
-  const res = await fetch(
-    `${process.env.REACT_APP_API_URL}/auth/register/available_organizations/?app_type=watershed`,
-    {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-        "ngrok-skip-browser-warning": "420",
-      },
-    }
-  );
-  if (!res.ok) throw new Error(`Org fetch error ${res.status}`);
-  const data = await res.json();
-  return data.map((org) => ({ value: org.id, label: org.name }));
 };
 
 const fetchStewardStats = async (organizationId = null, stateId = null) => {
@@ -152,7 +136,6 @@ const fetchDistrictCentroid = async (districtName) => {
   }
 };
 
-// NEW: fetch plans by state (with optional org filter)
 const fetchPlansByState = async (stateId, organizationId = null) => {
   let url = `${process.env.REACT_APP_API_URL}/watershed/plans/?state=${stateId}&filter_test_plan=true`;
   if (organizationId) url += `&organization=${encodeURIComponent(organizationId)}`;
@@ -243,7 +226,6 @@ const createPinStyle = (stateName, count) => {
   });
 };
 
-// NEW: dot style for individual plan features
 const DOT_DEFAULT  = () => new Style({
   image: new CircleStyle({
     radius: 8,
@@ -322,16 +304,16 @@ const PlansPage = () => {
     const mapElement     = useRef(null);
     const mapRef         = useRef(null);
     const bubbleLayerRef = useRef(null);
-    const planLayerRef   = useRef(null);   
+    const planLayerRef   = useRef(null);
     const orgRef         = useRef(null);
     const hoveredFeatureRef  = useRef(null);
     const selectedFeatureRef = useRef(null);
     const districtLookupRef = useRef({});
-    const tehsilLookupRef   = useRef({});  
+    const tehsilLookupRef   = useRef({});
     const currentStateRef = useRef(null);
-    const districtLayerRef = useRef(null); // for district pins
-    const statePlansRef       = useRef([]);   // cache plans fetched on state click
-    const currentDistrictRef  = useRef(null); // track selected district
+    const districtLayerRef = useRef(null);
+    const statePlansRef       = useRef([]);
+    const currentDistrictRef  = useRef(null);
     const metaStatsRef    = useRef(null);
     const hasRestoredRef  = useRef(false);
     const viewModeRef = useRef("plans");
@@ -342,8 +324,8 @@ const PlansPage = () => {
     const [statsError,          setStatsError]          = useState(false);
     const [organization,        setOrganization]        = useState(null);
     const [organizationOptions, setOrganizationOptions] = useState([]);
-    const [isStateView,         setIsStateView]         = useState(true);  
-    const [mapLoading,          setMapLoading]          = useState(false); 
+    const [isStateView,         setIsStateView]         = useState(true);
+    const [mapLoading,          setMapLoading]          = useState(false);
     const [selectedPlan,        setSelectedPlan]        = useState(null);
 
     const [stewardStats,    setStewardStats]    = useState(null);
@@ -368,7 +350,7 @@ const PlansPage = () => {
           center: [78.9, 23.6],
           zoom: 5,
           projection: "EPSG:4326",
-          maxZoom: 16,  // ← add this
+          maxZoom: 16,
         }),
         controls: defaultControls({ zoom: false }),
         });
@@ -380,13 +362,6 @@ const PlansPage = () => {
 
         mapRef.current = map;
         return () => map.setTarget(null);
-    }, []);
-
-    // ── ORGS ────────────────────────────────────────────────────
-    useEffect(() => {
-        fetchOrganizations()
-        .then(setOrganizationOptions)
-        .catch((err) => console.error("Failed to load orgs:", err));
     }, []);
 
     const fetchProposedBlocks = async () => {
@@ -470,6 +445,15 @@ const PlansPage = () => {
         if (viewMode === "plans") {
           const data = await fetchMetaStats(orgId, stateId);
           setMetaStats(data);
+          // Populate org options from meta-stats (only present when no org filter active)
+          if (data.organization_breakdown) {
+            setOrganizationOptions(
+              data.organization_breakdown.map((o) => ({
+                value: o.organization_id,
+                label: o.organization_name,
+              }))
+            );
+          }
         } else {
           const data = await fetchStewardStats(orgId, stateId);
           setStewardStats(data);
@@ -551,13 +535,11 @@ const PlansPage = () => {
       const map = mapRef.current;
       if (!map || !districtLevel?.length) return;
 
-      // Remove existing district layer
       if (districtLayerRef.current) {
         map.removeLayer(districtLayerRef.current);
         districtLayerRef.current = null;
       }
 
-      // Fetch all centroids in parallel
       const centroidResults = await Promise.all(
         districtLevel.map(async (d) => {
           const centroid = await fetchDistrictCentroid(d.district_name);
@@ -586,11 +568,10 @@ const PlansPage = () => {
       districtLayerRef.current = layer;
       map.addLayer(layer);
 
-      // Zoom to fit all district pins
       map.getView().fit(layer.getSource().getExtent(), {
         padding:  [60, 60, 60, 60],
         duration: 600,
-        maxZoom:  14,  // ← add this
+        maxZoom:  14,
       });
     };
 
@@ -603,7 +584,6 @@ const PlansPage = () => {
         districtLayerRef.current = null;
       }
 
-      // Group plans by district_soi → count
       const districtCounts = {};
       plans.forEach((p) => {
         if (!p.district_soi) return;
@@ -613,7 +593,6 @@ const PlansPage = () => {
         districtCounts[p.district_soi].count += 1;
       });
 
-      // Resolve district names from lookup and fetch centroids in parallel
       const entries = Object.values(districtCounts);
       const centroidResults = await Promise.all(
         entries.map(async (entry) => {
@@ -681,7 +660,6 @@ const PlansPage = () => {
         planLayerRef.current = layer;
         map.addLayer(layer);
 
-        // Zoom to fit all dots
         map.getView().fit(layer.getSource().getExtent(), {
         padding:  [60, 60, 60, 60],
         duration: 600,
@@ -705,10 +683,8 @@ const PlansPage = () => {
             fetchMetaStats(orgRef.current?.value ?? null, stateData.state_id),
           ]);
 
-          // Cache plans for district drill-down
           statePlansRef.current = plans;
 
-          // Remove bubble layer before adding district pins
           if (bubbleLayerRef.current) {
             mapRef.current.removeLayer(bubbleLayerRef.current);
             bubbleLayerRef.current = null;
@@ -718,18 +694,19 @@ const PlansPage = () => {
           setIsStateView(false);
           await addPlanDistrictPins(plans);
         } else {
-          const [stewardData] = await Promise.all([
+          const [stewardData, stateMetaStats] = await Promise.all([
             fetchStewardStats(orgRef.current?.value ?? null, stateData.state_id),
+            fetchMetaStats(orgRef.current?.value ?? null, stateData.state_id),
           ]);
           setStewardStats(stewardData);
+          setMetaStats(stateMetaStats);
 
-          // Remove state bubble layer before adding district pins
           if (bubbleLayerRef.current) {
             mapRef.current.removeLayer(bubbleLayerRef.current);
             bubbleLayerRef.current = null;
           }
 
-          setIsStateView(false); 
+          setIsStateView(false);
           await addDistrictPins(stewardData.district_level ?? []);
         }
         setIsStateView(false);
@@ -748,7 +725,6 @@ const PlansPage = () => {
         setMapLoading(true);
         currentDistrictRef.current = districtData;
 
-        // Remove district layer
         if (districtLayerRef.current) {
           mapRef.current.removeLayer(districtLayerRef.current);
           districtLayerRef.current = null;
@@ -761,11 +737,10 @@ const PlansPage = () => {
           );
           addPlanDots(plans);
 
-          // Update sidebar stats for this district
           const districtStats = await fetchMetaStats(
             orgRef.current?.value ?? null,
             null,
-            districtData.district_id  // we need to add district param to fetchMetaStats
+            districtData.district_id
           );
           setMetaStats(districtStats);
         } catch (err) {
@@ -773,14 +748,14 @@ const PlansPage = () => {
         } finally {
           setMapLoading(false);
         }
-      }  else {
+      } else {
         setStewardLoading(true);
         setSelectedSteward(null);
         try {
           const data = await fetchStewardListing(
             currentStateRef.current?.state_id,
             orgRef.current?.value ?? null,
-            districtData.district_id  // pass district ID directly
+            districtData.district_id
           );
           setStewardListing(data.stewards ?? []);
         } catch (err) {
@@ -790,6 +765,7 @@ const PlansPage = () => {
         }
       }
     };
+
     // ── BACK TO STATE VIEW ──────────────────────────────────────
     const handleBackToStateView = async () => {
       const map = mapRef.current;
@@ -819,11 +795,27 @@ const PlansPage = () => {
         if (viewModeRef.current === "plans") {
           const globalStats = await fetchMetaStats(orgRef.current?.value ?? null);
           setMetaStats(globalStats);
+          // Repopulate org options from fresh global stats
+          if (globalStats.organization_breakdown) {
+            setOrganizationOptions(
+              globalStats.organization_breakdown.map((o) => ({
+                value: o.organization_id,
+                label: o.organization_name,
+              }))
+            );
+          }
           addStateBubbles(globalStats, "plans");
         } else {
-          const globalStats = await fetchStewardStats(orgRef.current?.value ?? null);
-          setStewardStats(globalStats);
-          addStateBubbles(globalStats, "stewards");
+          const [stewardData, orgMeta, globalMeta] = await Promise.all([
+            fetchStewardStats(orgRef.current?.value ?? null),
+            fetchMetaStats(orgRef.current?.value ?? null),         // org-filtered — for display
+            orgRef.current?.value ? fetchMetaStats(null) : Promise.resolve(null), // global — for centroid lookups
+          ]);
+          // metaStatsRef must hold global (all-states) meta so centroid fallback works for every pin
+          metaStatsRef.current = globalMeta ?? orgMeta;
+          setMetaStats(orgMeta);
+          setStewardStats(stewardData);
+          addStateBubbles(stewardData, "stewards");
         }
       } catch (err) {
         console.error("Failed to restore global stats:", err);
@@ -844,7 +836,6 @@ const PlansPage = () => {
             const layerName = layer?.get("layerName");
 
             if (layerName === "planLayer") {
-              // Reset previous selection
               if (selectedFeatureRef.current && selectedFeatureRef.current !== feature) {
                 selectedFeatureRef.current.setStyle(DOT_DEFAULT());
               }
@@ -879,7 +870,6 @@ const PlansPage = () => {
 
             const layerName = hitLayer?.get("layerName");
 
-            // Reset previous hover (only if it's not the selected feature)
             if (
             hoveredFeatureRef.current &&
             hoveredFeatureRef.current !== hitFeature &&
@@ -937,11 +927,12 @@ const PlansPage = () => {
             setMetaStats(stateStats);
             await addPlanDistrictPins(plans);
           } else {
-            const stewardData = await fetchStewardStats(
-              selected?.value ?? null,
-              currentStateRef.current.state_id
-            );
+            const [stewardData, stateOrgMeta] = await Promise.all([
+              fetchStewardStats(selected?.value ?? null, currentStateRef.current.state_id),
+              fetchMetaStats(selected?.value ?? null, currentStateRef.current.state_id),
+            ]);
             setStewardStats(stewardData);
+            setMetaStats(stateOrgMeta);
             if (districtLayerRef.current) {
               mapRef.current.removeLayer(districtLayerRef.current);
               districtLayerRef.current = null;
@@ -961,19 +952,33 @@ const PlansPage = () => {
         try {
           if (viewModeRef.current === "plans") {
             const data = await fetchMetaStats(selected?.value ?? null);
-            setMetaStats(data); // useEffect handles redraw
+            setMetaStats(data);
+            if (data.organization_breakdown) {
+              setOrganizationOptions(
+                data.organization_breakdown.map((o) => ({
+                  value: o.organization_id,
+                  label: o.organization_name,
+                }))
+              );
+            }
           } else {
-            // Always fetch global plans meta for coordinates
-            // regardless of org filter
-            const [stewardData, plansMeta] = await Promise.all([
+            const [stewardData, orgMeta, globalMeta] = await Promise.all([
               fetchStewardStats(selected?.value ?? null),
-              fetchMetaStats(null), // global — has ALL states with centroids
+              fetchMetaStats(selected?.value ?? null),         // org-filtered — for stats display
+              selected?.value ? fetchMetaStats(null) : Promise.resolve(null), // global — for centroid fallback
             ]);
-            // Update ref SYNCHRONOUSLY before state update
-            // so useEffect has coordinates ready when it fires
-            metaStatsRef.current = plansMeta;
-            setMetaStats(plansMeta);
-            setStewardStats(stewardData); // useEffect handles redraw
+            // Keep global (unfiltered) meta in ref so centroid lookups in addStateBubbles still work
+            metaStatsRef.current = globalMeta ?? orgMeta;
+            setMetaStats(orgMeta);
+            if (orgMeta.organization_breakdown) {
+              setOrganizationOptions(
+                orgMeta.organization_breakdown.map((o) => ({
+                  value: o.organization_id,
+                  label: o.organization_name,
+                }))
+              );
+            }
+            setStewardStats(stewardData);
           }
         } catch (err) {
           console.error("Org change failed:", err);
@@ -988,15 +993,12 @@ const PlansPage = () => {
       const view = mapRef.current?.getView();
       if (!view) return;
       const currentZoom = view.getZoom();
-      const newZoom = Math.min(currentZoom + delta, 16); // ← cap at 16
+      const newZoom = Math.min(currentZoom + delta, 16);
       view.animate({ zoom: newZoom, duration: 300 });
     };
 
     const getStewardOrgId = (facilitatorName) => {
-      // First try the active org filter
       if (orgRef.current?.value) return orgRef.current.value;
-
-      // Fallback — find org from cached state plans
       const match = statePlansRef.current?.find(
         (p) => p.facilitator_name === facilitatorName
       );
@@ -1004,7 +1006,7 @@ const PlansPage = () => {
     };
 
     const filteredOrgOptions = isStateView ? organizationOptions : viewModeRef.current === "plans" ? (metaStats?.organization_breakdown ?? []).map(o => ({ value: o.organization_id, label: o.organization_name })) : (stewardStats?.by_organization ?? []).map(o => ({ value: o.organization_id, label: o.organization_name }));
-  
+
 
   const summary  = metaStats?.summary                     ?? {};
   const commons  = metaStats?.commons_connect_operational  ?? {};
@@ -1018,7 +1020,6 @@ const PlansPage = () => {
 
         <div className="max-w-[1800px] mx-auto px-6 pt-6 pb-4 relative">
 
-          {/* Contact — absolutely positioned top right */}
           <a href="mailto:contact@core-stack.org"
             className="absolute top-5 right-6 flex items-center gap-1.5 px-3 py-2 rounded-xl
                       text-xs font-semibold hover:shadow-md transition-all duration-200"
@@ -1029,7 +1030,6 @@ const PlansPage = () => {
             Contact Us
             </a>
 
-          {/* Centered text — unaffected by button */}
           <h1 className="text-2xl lg:text-4xl font-semibold text-center" style={{ color: P.text }}>
             Landscape Stewardship Network
           </h1>
@@ -1053,7 +1053,6 @@ const PlansPage = () => {
             style={{ border: `1px solid ${P.border}` }}>
             <div ref={mapElement} className="w-full h-full" />
 
-            {/* MAP LOADING OVERLAY */}
             {mapLoading && (
               <div className="absolute inset-0 bg-white/60 backdrop-blur-sm flex items-center justify-center z-[999]">
                 <div className="w-10 h-10 rounded-full border-4 border-t-transparent animate-spin"
@@ -1061,7 +1060,6 @@ const PlansPage = () => {
               </div>
             )}
 
-            {/* BACK BUTTON */}
             {!isStateView && (
               <button
                 onClick={handleBackToStateView}
@@ -1074,7 +1072,6 @@ const PlansPage = () => {
               </button>
             )}
 
-            {/* ORGANIZATION DROPDOWN */}
             <div className="absolute top-4 left-1/2 -translate-x-1/2 z-[1000] w-80">
               <div className="relative">
                 <div className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 z-10"
@@ -1092,7 +1089,6 @@ const PlansPage = () => {
               </div>
             </div>
 
-            {/* ZOOM CONTROLS */}
             <div className="absolute top-4 right-4 flex flex-col gap-2 z-[1000]">
               {["+", "–"].map((sign) => (
                 <button key={sign} onClick={() => handleZoom(sign === "+" ? 1 : -1)}
@@ -1111,7 +1107,6 @@ const PlansPage = () => {
             selectedPlan ? "overflow-hidden" : "overflow-y-auto gap-4"
           }`}>
 
-            {/* SIDEBAR LOADING OVERLAY — blocks interaction while map is loading */}
             {(mapLoading || statsLoading) && (
               <div
                 className="absolute inset-0 z-[500] rounded-2xl flex flex-col items-center
@@ -1134,11 +1129,9 @@ const PlansPage = () => {
               </div>
             ) : selectedPlan ? (
 
-              // ── PLAN DETAIL PANEL ──────────────────────────────
               <div className="flex flex-col h-full gap-4">
                 <div className="flex flex-col gap-4 flex-1 overflow-y-auto pr-1">
 
-                  {/* Header */}
                   <div className="rounded-2xl p-5 text-white shadow-lg relative"
                     style={{ background: `linear-gradient(135deg, ${P.base}, ${P.dark})` }}>
                     <button
@@ -1161,7 +1154,6 @@ const PlansPage = () => {
                     </p>
                   </div>
 
-                  {/* Detail grid */}
                   <div className="bg-white rounded-2xl p-4 shadow-sm"
                     style={{ border: `1px solid ${P.border}` }}>
                     <div className="grid grid-cols-2 gap-3">
@@ -1177,7 +1169,6 @@ const PlansPage = () => {
                         </div>
                       ))}
 
-                      {/* Facilitator — clickable to open steward detail */}
                       {selectedPlan.facilitator_name && (
                         <div
                           className="rounded-xl p-3 cursor-pointer hover:shadow-md transition-all duration-200"
@@ -1199,7 +1190,6 @@ const PlansPage = () => {
                     </div>
                   </div>
 
-                  {/* Status badges */}
                   <div className="bg-white rounded-2xl p-4 shadow-sm"
                     style={{ border: `1px solid ${P.border}` }}>
                     <p className="text-xs font-semibold uppercase tracking-widest mb-3"
@@ -1225,7 +1215,6 @@ const PlansPage = () => {
                   </div>
                 </div>
 
-                {/* Pinned button */}
                 <button
                   onClick={() => {
                     const districtLabel = transformName(districtLookupRef.current[selectedPlan.district_soi] || "");
@@ -1250,9 +1239,7 @@ const PlansPage = () => {
 
             ) : (
 
-              // ── STATS PANEL ────────────────────────────────────
               <>
-                {/* VIEW MODE TOGGLE */}
                 <div className="rounded-xl p-1 flex" style={{ background: P.light }}>
                   {["plans", "stewards"].map((mode) => (
                     <button key={mode}
@@ -1261,41 +1248,66 @@ const PlansPage = () => {
 
                         setViewMode(mode);
 
-                        if (!isStateView) {
-                          if (planLayerRef.current) {
-                            mapRef.current.removeLayer(planLayerRef.current);
-                            planLayerRef.current = null;
-                          }
-                          if (districtLayerRef.current) {
-                            mapRef.current.removeLayer(districtLayerRef.current);
-                            districtLayerRef.current = null;
-                          }
-                          if (bubbleLayerRef.current) {
-                            mapRef.current.removeLayer(bubbleLayerRef.current);
-                            bubbleLayerRef.current = null;
-                          }
-                          setSelectedPlan(null);
-                          setSelectedSteward(null);
-                          setStewardListing([]);
-                          statePlansRef.current      = [];
-                          currentStateRef.current    = null;
-                          currentDistrictRef.current = null;
-                          if (selectedFeatureRef.current) selectedFeatureRef.current = null;
-                          hoveredFeatureRef.current  = null;
-                          setIsStateView(true);
-                          mapRef.current.getView().animate({ center: [78.9, 23.6], zoom: 5, duration: 600 });
+                        // Clear all layers and selection state
+                        if (planLayerRef.current) {
+                          mapRef.current.removeLayer(planLayerRef.current);
+                          planLayerRef.current = null;
                         }
+                        if (districtLayerRef.current) {
+                          mapRef.current.removeLayer(districtLayerRef.current);
+                          districtLayerRef.current = null;
+                        }
+                        if (bubbleLayerRef.current) {
+                          mapRef.current.removeLayer(bubbleLayerRef.current);
+                          bubbleLayerRef.current = null;
+                        }
+                        setSelectedPlan(null);
+                        setSelectedSteward(null);
+                        setStewardListing([]);
+                        if (selectedFeatureRef.current) selectedFeatureRef.current = null;
+                        hoveredFeatureRef.current  = null;
+                        // Always reset district — stewards max depth is district level
+                        currentDistrictRef.current = null;
 
                         setStatsLoading(true);
                         try {
-                          if (mode === "plans") {
-                            const data = await fetchMetaStats(orgRef.current?.value ?? null);
-                            setMetaStats(data);
-                            addStateBubbles(data, "plans"); // pass mode explicitly
+                          if (!isStateView && currentStateRef.current) {
+                            // ── Preserve state selection ──────────────────
+                            // Both modes land at district-pin level for the same state
+                            if (mode === "plans") {
+                              const [plans, stateStats] = await Promise.all([
+                                fetchPlansByState(currentStateRef.current.state_id, orgRef.current?.value ?? null),
+                                fetchMetaStats(orgRef.current?.value ?? null, currentStateRef.current.state_id),
+                              ]);
+                              statePlansRef.current = plans;
+                              setMetaStats(stateStats);
+                              await addPlanDistrictPins(plans);
+                            } else {
+                              statePlansRef.current = [];
+                              const [stewardData, stateMetaStats] = await Promise.all([
+                                fetchStewardStats(orgRef.current?.value ?? null, currentStateRef.current.state_id),
+                                fetchMetaStats(orgRef.current?.value ?? null, currentStateRef.current.state_id),
+                              ]);
+                              setStewardStats(stewardData);
+                              setMetaStats(stateMetaStats);
+                              await addDistrictPins(stewardData.district_level ?? []);
+                            }
                           } else {
-                            const data = await fetchStewardStats(orgRef.current?.value ?? null);
-                            setStewardStats(data);
-                            addStateBubbles(data, "stewards"); // pass mode explicitly
+                            // ── Global state view ─────────────────────────
+                            if (mode === "plans") {
+                              const data = await fetchMetaStats(orgRef.current?.value ?? null);
+                              setMetaStats(data);
+                              addStateBubbles(data, "plans");
+                            } else {
+                              const [stewardData, plansMeta] = await Promise.all([
+                                fetchStewardStats(orgRef.current?.value ?? null),
+                                fetchMetaStats(null),
+                              ]);
+                              metaStatsRef.current = plansMeta;
+                              setMetaStats(plansMeta);
+                              setStewardStats(stewardData);
+                              addStateBubbles(stewardData, "stewards");
+                            }
                           }
                         } catch (err) {
                           console.error("Mode switch failed:", err);
@@ -1315,7 +1327,6 @@ const PlansPage = () => {
 
                 {viewMode === "stewards" ? (
                   <>
-                    {/* TOTAL STEWARDS BANNER */}
                     <div className="rounded-2xl p-5 text-white shadow-lg"
                       style={{ background: `linear-gradient(135deg, ${P.base}, ${P.dark})` }}>
                       <p className="text-xs font-semibold uppercase tracking-widest mb-1"
@@ -1327,21 +1338,19 @@ const PlansPage = () => {
                         style={{ borderTop: "1px solid oklch(70% 0.12 301.924)" }}>
                         <div>
                           <p className="text-xs" style={{ color: "oklch(85% 0.08 301.924)" }}>Female</p>
-                          <p className="text-lg font-semibold">{stewards?.gender_breakdown.female}</p>
+                          <p className="text-lg font-semibold">{stewards?.gender_breakdown?.female}</p>
                         </div>
                         <div className="w-px" style={{ background: "oklch(70% 0.12 301.924)" }} />
                         <div>
                           <p className="text-xs" style={{ color: "oklch(85% 0.08 301.924)" }}>Male</p>
-                          <p className="text-lg font-semibold">{stewards?.gender_breakdown.male}</p>
+                          <p className="text-lg font-semibold">{stewards?.gender_breakdown?.male}</p>
                         </div>
                       </div>
                     </div>
 
-                    {/* DPR STATS */}
                     <div className="bg-white rounded-2xl p-4 shadow-sm" style={{ border: `1px solid ${P.border}` }}>
                       <p className="text-xs font-semibold uppercase tracking-widest mb-3" style={{ color: P.muted }}>Progress Report</p>
 
-                      {/* DPRs Reviewed */}
                       <div className="grid grid-cols-2 gap-3 mb-3">
                         <div className="rounded-xl p-3"
                           style={{ background: P.lighter, border: `1px solid ${P.border}` }}>
@@ -1352,38 +1361,34 @@ const PlansPage = () => {
                         </div>
                         <div className="rounded-xl p-3"
                           style={{ background: P.lighter, border: `1px solid ${P.border}` }}>
-                          <p className="text-xs font-medium mb-1" style={{ color: P.muted }}>DPR Reviewed</p>
+                          <p className="text-xs font-medium mb-1" style={{ color: P.muted }}>DPR's Completed</p>
                           <p className="text-3xl font-bold" style={{ color: P.base }}>
                             {summary.dpr_reviewed ?? "--"}
                           </p>
                         </div>
                       </div>
 
-                      {/* Demands */}
                       <div className="rounded-xl p-3"
                         style={{ background: P.lighter, border: `1px solid ${P.border}` }}>
                         <p className="text-xs font-medium mb-3" style={{ color: P.muted }}>Demands Generated</p>
 
                         <div className="flex flex-col gap-2">
-                          {/* Community */}
                           <div className="rounded-lg p-3 flex items-center justify-between"
                             style={{ background: "white", border: `1px solid ${P.border}` }}>
                             <p className="text-xs font-semibold" style={{ color: P.text }}>Community</p>
-                            <p className="text-sm font-bold" style={{ color: P.base }}>{metaStats.demand_overview.community_demands}</p>
+                            <p className="text-sm font-bold" style={{ color: P.base }}>{metaStats?.demand_overview?.community_demands}</p>
                           </div>
 
-                          {/* Individual */}
                           <div className="rounded-lg p-3 flex items-center justify-between"
                             style={{ background: "white", border: `1px solid ${P.border}` }}>
                             <p className="text-xs font-semibold" style={{ color: P.text }}>Individual</p>
-                            <p className="text-sm font-bold" style={{ color: P.base }}>{metaStats.demand_overview.individual_demands}</p>
+                            <p className="text-sm font-bold" style={{ color: P.base }}>{metaStats?.demand_overview?.individual_demands}</p>
                           </div>
                         </div>
                       </div>
                     </div>
 
 
-                    {/* TOP STEWARDS or STEWARD LISTING */}
                     <div className="bg-white rounded-2xl p-4 shadow-sm"
                       style={{ border: `1px solid ${P.border}` }}>
                       <div className="flex items-center justify-between mb-3">
@@ -1423,7 +1428,7 @@ const PlansPage = () => {
                                 <button
                                   onClick={() => setStewardModalPlan({
                                     facilitator_name: s.facilitator_name,
-                                    organization:     getStewardOrgId(s.facilitator_name),
+                                    organization:     s.organization?.id ?? getStewardOrgId(s.facilitator_name),
                                   })}
                                   className="flex-shrink-0 px-2 py-1 rounded-lg text-xs font-semibold
                                             transition-all duration-200 hover:shadow-sm cursor-pointer"
@@ -1440,7 +1445,6 @@ const PlansPage = () => {
                           ))}
                         </div>
                       ) : (
-                        // ── BY ORGANIZATION ──────────────────────────────
                         <div className="flex flex-col gap-2 max-h-64 overflow-y-auto pr-1">
                           {(stewardStats?.by_organization ?? []).map((org, i) => (
                             <div key={org.organization_id ?? i}
@@ -1455,7 +1459,6 @@ const PlansPage = () => {
                                   value: org.organization_id,
                                   label: org.organization_name,
                                 };
-                                // If already selected, deselect
                                 if (organization?.value === org.organization_id) {
                                   handleOrgChange(null);
                                 } else {
@@ -1468,7 +1471,7 @@ const PlansPage = () => {
                                 {org.organization_name}
                               </p>
                               <div className="flex items-center gap-1.5 flex-shrink-0">
-                                <p className="text-lg font-bold" style={{ color: organization?.value === org.organization_id ? P.base : P.base }}>
+                                <p className="text-lg font-bold" style={{ color: P.base }}>
                                   {org.steward_count}
                                 </p>
                                 <p className="text-xs" style={{ color: P.muted }}>stewards</p>
@@ -1478,7 +1481,6 @@ const PlansPage = () => {
                         </div>
                       )}
 
-                      {/* Selected steward detail */}
                       {selectedSteward && (
                         <div className="mt-3 pt-3" style={{ borderTop: `1px solid ${P.border}` }}>
                           <div className="flex items-center justify-between mb-2">
@@ -1511,7 +1513,6 @@ const PlansPage = () => {
                 ) : (
 
                   <>
-                    {/* TOTAL PLANS BANNER */}
                     <div className="rounded-2xl p-5 text-white shadow-lg"
                       style={{ background: `linear-gradient(135deg, ${P.base}, ${P.dark})` }}>
                       <p className="text-xs font-semibold uppercase tracking-widest mb-1"
@@ -1522,14 +1523,14 @@ const PlansPage = () => {
                       <div className="flex gap-4 mt-3 pt-3"
                         style={{ borderTop: "1px solid oklch(70% 0.12 301.924)" }}>
                         <div>
-                          <p className="text-xs" style={{ color: "oklch(85% 0.08 301.924)" }}>Completed</p>
+                          <p className="text-xs" style={{ color: "oklch(85% 0.08 301.924)" }}>Completed Plans</p>
                           <p className="text-lg font-semibold">
                             {(summary.completed_plans ?? 0).toLocaleString()}
                           </p>
                         </div>
                         <div className="w-px" style={{ background: "oklch(70% 0.12 301.924)" }} />
                         <div>
-                          <p className="text-xs" style={{ color: "oklch(85% 0.08 301.924)" }}>DPRs Reviewed</p>
+                          <p className="text-xs" style={{ color: "oklch(85% 0.08 301.924)" }}>DPR's Completed</p>
                           <p className="text-lg font-semibold">
                             {(summary.dpr_reviewed ?? 0).toLocaleString()}
                           </p>
@@ -1537,7 +1538,6 @@ const PlansPage = () => {
                       </div>
                     </div>
 
-                    {/* COMMONS CONNECT OPERATIONAL */}
                     <div className="bg-white rounded-2xl p-4 shadow-sm"
                       style={{ border: `1px solid ${P.border}` }}>
                       <p className="text-xs font-semibold uppercase tracking-widest mb-3"
@@ -1552,22 +1552,21 @@ const PlansPage = () => {
                         ))}
                       </div>
                     </div>
-                    
-                    {/* Demands Overview */}
+
                     <div className="bg-white rounded-2xl p-4 shadow-sm"
                     style={{ border: `1px solid ${P.border}` }}>
                     <p className="text-xs font-semibold uppercase tracking-widest mb-3"
                       style={{ color: P.muted }}>NRM and Livelihood Demands</p>
 
-                    {/* Demands Generated — outermost */}
                     <div className="rounded-xl p-3"
                       style={{ background: P.lighter, border: `1px solid ${P.border}` }}>
                       <div className="flex items-center justify-between mb-3">
                         <p className="text-xs font-semibold" style={{ color: P.text }}>Generated</p>
-                        <p className="text-2xl font-bold" style={{ color: P.base }}>{metaStats.demand_overview.community_demands + metaStats.demand_overview.individual_demands}</p>
+                        <p className="text-2xl font-bold" style={{ color: P.base }}>
+                          {(metaStats?.demand_overview?.community_demands ?? 0) + (metaStats?.demand_overview?.individual_demands ?? 0)}
+                        </p>
                       </div>
 
-                      {/* Demands Submitted — nested inside */}
                       <div className="rounded-lg p-3"
                         style={{ background: "white", border: `1px solid ${P.border}` }}>
                         <div className="flex items-center justify-between mb-3">
@@ -1575,7 +1574,6 @@ const PlansPage = () => {
                           <p className="text-xl font-bold" style={{ color: P.base }}>--</p>
                         </div>
 
-                        {/* Demands Approved — nested inside Submitted */}
                         <div className="rounded-lg p-3 flex items-center justify-between"
                           style={{ background: P.lighter, border: `1px solid ${P.border}` }}>
                           <p className="text-xs font-semibold" style={{ color: P.text }}>Approved</p>
@@ -1586,7 +1584,6 @@ const PlansPage = () => {
                     </div>
                   </div>
 
-                    {/* PARTNER ORGANIZATIONS */}
                     {(metaStats?.landscape_stewards?.by_organization?.length > 0) && (
                       <div className="bg-white rounded-2xl p-4 shadow-sm"
                         style={{ border: `1px solid ${P.border}` }}>
