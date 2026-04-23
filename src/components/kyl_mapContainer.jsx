@@ -1471,6 +1471,7 @@ const MapLegend = ({ showMWS, showVillages, currentLayer, mappedAssets, mappedDe
 // Main Container component
 const KYLMapContainer = ({
   isLoading,
+  isFilterProcessing,  // add this
   statesData,
   mapElement,
   onLocationSelect,
@@ -1481,7 +1482,7 @@ const KYLMapContainer = ({
   mwsLayerRef,
   boundaryLayerRef,
   mapRef,
-  currentLayer, // Add this prop
+  currentLayer,
   setSearchLatLong
 }) => {
   const areMWSLayersAvailable = mwsLayerRef?.current !== null;
@@ -1489,9 +1490,26 @@ const KYLMapContainer = ({
 
   return (
     <div className="flex-1 bg-[#F8F7FF] rounded-lg border border-gray-100 relative overflow-hidden">
+
+      {/* ── Full overlay loader — only on initial layer load ── */}
       {isLoading && (
-        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-20">
-          <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+        <div className="absolute inset-0 z-20 bg-white/60 backdrop-blur-[2px] flex flex-col items-center justify-center gap-3">
+          <div className="w-10 h-10 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+          <span className="text-sm font-medium text-indigo-600 tracking-wide">
+            Loading map layers...
+          </span>
+        </div>
+      )}
+
+      {/* ── Non-blocking filter processing indicator — centered ── */}
+      {isFilterProcessing && !isLoading && (
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20 pointer-events-none">
+          <div className="flex flex-col items-center gap-3 bg-white/90 backdrop-blur-sm px-6 py-5 rounded-2xl shadow-md">
+            <div className="w-10 h-10 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+            <span className="text-xs font-medium text-indigo-600 whitespace-nowrap">
+              Applying filters...
+            </span>
+          </div>
         </div>
       )}
 
@@ -1521,7 +1539,7 @@ const KYLMapContainer = ({
         />
       </div>
 
-      {/* Centered YearSlider */}
+      {/* Year Slider */}
       <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 z-10 w-full max-w-xl px-4">
         <YearSlider currentLayer={currentLayer} />
       </div>

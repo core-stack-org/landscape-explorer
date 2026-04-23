@@ -25,7 +25,8 @@ const KYLLeftSidebar = ({
     getPatternsForSubcategory,
     patternSelections,
     handlePatternSelection,
-    isPatternSelected
+    isPatternSelected,
+    isFilterProcessing
 }) => {
     // State to track active tab (Patterns or Filters)
     const [activeTab, setActiveTab] = useState('Filters');
@@ -34,38 +35,13 @@ const KYLLeftSidebar = ({
     const [selectedSubcategory, setSelectedSubcategory] = useState(null);
 
     useEffect(() => {
-    setActiveTab('Filters');
-    setSelectedSubcategory(null);
-    setIndicatorType(null);   // IMPORTANT
-}, []);
+        setActiveTab('Filters');
+        setSelectedSubcategory(null);
+        setIndicatorType(null);   // IMPORTANT
+    }, []);
     const combinedSelectedValues = {
         ...filterSelections.selectedMWSValues,
         ...filterSelections.selectedVillageValues
-    };
-
-    const handleClearAll = () => {
-        // Remove all layers from the map
-        if (currentLayer.length > 0) {
-            currentLayer.forEach(layer => {
-                layer.layerRef.forEach(ref => {
-                    if (mapRef.current) {
-                        mapRef.current.removeLayer(ref);
-                    }
-                });
-            });
-        }
-
-        // Reset all toggle states
-        setToggleStates({});
-
-        // Clear all layers
-        setCurrentLayer([]);
-
-        // Clear all filters
-        setFilterSelections({
-            selectedMWSValues: {},
-            selectedVillageValues: {}
-        });
     };
 
     // Reset subcategory when changing main category or tab
@@ -80,6 +56,7 @@ const KYLLeftSidebar = ({
         setSelectedSubcategory(null);
     };
 
+    const isDisabled = !filtersEnabled || isFilterProcessing;
 
     return (
         <div className="w-[320px] bg-white rounded-lg border border-gray-100 p-4">
@@ -131,7 +108,7 @@ const KYLLeftSidebar = ({
                                     disabled:hover:bg-gray-100 disabled:pointer-events-none
                                     `}
                                     onClick={() => setIndicatorType(category)}
-                                    disabled={!filtersEnabled}
+                                    disabled={isDisabled}
                                 >
                                     {category}
                                 </button>
@@ -186,7 +163,7 @@ const KYLLeftSidebar = ({
                                                             selectedValue: combinedSelectedValues[filter.name]?.[0]
                                                         }}
                                                         onFilterChange={handleFilterSelection}
-                                                        isDisabled={!filtersEnabled}
+                                                        isDisabled={isDisabled}
                                                         getFormattedSelectedFilters={getFormattedSelectedFilters}
                                                         toggleStates={toggleStates}
                                                         handleLayerSelection={handleLayerSelection}
@@ -223,7 +200,7 @@ const KYLLeftSidebar = ({
                                     disabled:hover:bg-gray-100 disabled:pointer-events-none
                                     `}
                                     onClick={() => handleCategoryChange(category)}
-                                    disabled={!filtersEnabled}
+                                    disabled={isDisabled}
                                 >
                                     {category}
                                 </button>
@@ -257,7 +234,7 @@ const KYLLeftSidebar = ({
                                             key={subcategory}
                                             className="w-full text-left px-4 py-3 bg-white rounded-md border border-gray-200 hover:border-indigo-300 hover:bg-indigo-50 transition-colors text-sm font-medium text-gray-700"
                                             onClick={() => setSelectedSubcategory(subcategory)}
-                                            disabled={!filtersEnabled}
+                                            disabled={isDisabled}
                                         >
                                             {subcategory}
                                         </button>
@@ -303,7 +280,7 @@ const KYLLeftSidebar = ({
                                             <KYLPatternDisplay
                                                 key={pattern.name || index}
                                                 pattern={pattern}
-                                                isDisabled={!filtersEnabled}
+                                                isDisabled={isDisabled}
                                                 isSelected={isPatternSelected && isPatternSelected(pattern.name, patternSelections)}
                                                 onPatternSelect={handlePatternSelection}
                                                 handlePatternRemoval={handlePatternRemoval}

@@ -1511,7 +1511,6 @@ const PlansPage = () => {
                   </>
 
                 ) : (
-
                   <>
                     <div className="rounded-2xl p-5 text-white shadow-lg"
                       style={{ background: `linear-gradient(135deg, ${P.base}, ${P.dark})` }}>
@@ -1537,7 +1536,6 @@ const PlansPage = () => {
                         </div>
                       </div>
                     </div>
-
                     <div className="bg-white rounded-2xl p-4 shadow-sm"
                       style={{ border: `1px solid ${P.border}` }}>
                       <p className="text-xs font-semibold uppercase tracking-widest mb-3"
