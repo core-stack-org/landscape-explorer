@@ -108,7 +108,7 @@ const KYLDashboardPage = () => {
   const [showWB, setShowWB] = useState(false);
   const [showConnectivity, setShowConnectivity] = useState(false);
   const [hasFilters, setHasFilters] = useState(false);
-  const [isVisualizeOn, setIsVisualizeOn] = useState(false);
+  const [selectedWaterbodyIds, setSelectedWaterbodyIds] = useState(new Set([]));
 
   // ─── O(1) index maps — rebuilt only when dataJson/villageJson changes ───
   // Keeps filter effects fast without debounce or chunking overhead
@@ -159,9 +159,7 @@ const KYLDashboardPage = () => {
     });
     return { byId };
   }, [villageJson]);
-
-  // ─────────────────────────────────────────────────────
-
+  
   const addLayerSafe = (layer) => layer && mapRef.current && mapRef.current.addLayer(layer);
 
   const transformName = (name) => {
@@ -1350,9 +1348,6 @@ const KYLDashboardPage = () => {
   // ============================================
   // 1. PROCESS MWS FILTERS
   // ============================================
-  // Index-accelerated: exact-match is O(1) via fieldIndex,
-  // range filters are O(dataJson) once per field.
-  // No debounce — fires immediately on selection change.
   useEffect(() => {
     try {
       if (!dataJson || !Array.isArray(dataJson) || !dataJsonIndex) return;
@@ -1549,8 +1544,6 @@ const KYLDashboardPage = () => {
   // ============================================
   // 3. PROCESS VILLAGE FILTERS
   // ============================================
-  // Uses villageJsonIndex.byId (Map) + dataJsonIndex.mwsToVillages
-  // for fast scoped iteration — no full array scan
   useEffect(() => {
     try {
       if (!villageJsonIndex || !dataJsonIndex) return;
@@ -1605,7 +1598,6 @@ const KYLDashboardPage = () => {
   // ============================================
   // 4. PROCESS VILLAGE PATTERNS
   // ============================================
-  // Uses villageJsonIndex.byId for pattern matching — no villageJson.forEach scan
   useEffect(() => {
     try {
       if (!villageJsonIndex || !dataJsonIndex) return;
@@ -1688,8 +1680,94 @@ const KYLDashboardPage = () => {
   }, [villageIdList]);
 
 
+  // ─── Effect A: Derive selectedWaterbodyIds from dataJsonIndex ───
+  // Runs whenever selectedMWS changes — instant, no layer dependency, no showWB required
+  useEffect(() => {
+    if (!dataJsonIndex) return;
+
+    const hasActiveWBFilters = Object.keys(filterSelections.selectedWaterbodyValues || {})
+      .some(k => filterSelections.selectedWaterbodyValues[k] !== null);
+
+    if (selectedMWS.length === 0 && !hasActiveWBFilters) {
+      setSelectedWaterbodyIds(new Set());
+      return;
+    }
+
+    if (selectedMWS.length > 0 && !hasActiveWBFilters) {
+      // Fast path: pull IDs directly from index, no WB layer needed
+      const ids = new Set();
+      selectedMWS.forEach(mwsId => {
+        (dataJsonIndex.mwsToSWBIds.get(mwsId) || []).forEach(id => ids.add(id));
+      });
+      setSelectedWaterbodyIds(ids);
+      return;
+    }
+
+    // WB attribute filters are active — need to check feature props
+    // Collect from WB layer features that passed applyWaterbodyFilters
+    const src = waterbodiesLayerRef.current?.getSource();
+    if (!src) return;
+
+    const collectFromFeatures = () => {
+      const features = src.getFeatures();
+      if (features.length === 0) return;
+
+      const ids = new Set();
+
+      features.forEach(f => {
+        const p = f.getProperties();
+        const wbId = String(p.UID ?? p.swb_id ?? p.SWB_UID ?? p.swb_uid ?? p.uid ?? p.id ?? '');
+        if (!wbId) return;
+
+        // Must be in an MWS-allowed set if MWS filter is active
+        if (selectedMWS.length > 0) {
+          let inMWS = false;
+          for (const mwsId of selectedMWS) {
+            if ((dataJsonIndex.mwsToSWBIds.get(mwsId) || []).includes(wbId)) {
+              inMWS = true;
+              break;
+            }
+          }
+          if (!inMWS) return;
+        }
+
+        // Must pass WB attribute filters
+        if (f.get('wbMatch') === 1) {
+          ids.add(wbId);
+        }
+      });
+
+      setSelectedWaterbodyIds(ids);
+    };
+
+    const features = src.getFeatures();
+    if (features.length > 0) {
+      collectFromFeatures();
+      return;
+    }
+
+    // Poll if WB features not yet loaded
+    let attempts = 0;
+    const poll = setInterval(() => {
+      attempts++;
+      if (src.getFeatures().length > 0) {
+        clearInterval(poll);
+        collectFromFeatures();
+      } else if (attempts >= 50) {
+        clearInterval(poll);
+      }
+    }, 100);
+
+    return () => clearInterval(poll);
+
+  }, [selectedMWS, filterSelections.selectedWaterbodyValues, dataJsonIndex]);
+
+
+  // ─── Effect B: Apply WB filters to the layer for visual rendering ───
+  // Only runs when WB layer is visible — purely for map display
   useEffect(() => {
     if (!showWB || !waterbodiesLayerRef.current) return;
+
     applyWaterbodyFilters(
       selectedMWS,
       filterSelections.selectedWaterbodyValues || {}
@@ -1800,6 +1878,8 @@ const KYLDashboardPage = () => {
           showConnectivity={showConnectivity}
           setShowConnectivity={setShowConnectivity}
           mwsArrowLayerRef={mwsArrowLayerRef}
+          dataJson={dataJson}
+          selectedWaterbodyIds={selectedWaterbodyIds}
         />
       </div>
     </div>

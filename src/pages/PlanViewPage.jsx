@@ -932,10 +932,8 @@ const PlanViewPage = () => {
             </div>
           </div>
           <div className="flex-shrink-0 flex items-center gap-2 flex-wrap justify-end">
-            <StatusBadge label="Completed"     active={plan.is_completed}     />
-            <StatusBadge label="DPR Generated" active={plan.is_dpr_generated} />
-            <StatusBadge label="DPR Reviewed"  active={plan.is_dpr_reviewed}  />
-            <StatusBadge label="DPR Approved"  active={plan.is_dpr_approved}  />
+            <StatusBadge label="DPR Completed"  active={plan.is_dpr_reviewed}  />
+            <StatusBadge label="DPR Submitted"  active={plan.is_dpr_approved}  />
           </div>
         </div>
       </div>
@@ -1139,7 +1137,7 @@ const PlanViewPage = () => {
                                 <img src={WellIcon} alt="" className="w-5 h-5 flex-shrink-0" />
                                 <div className="min-w-0">
                                 <p className="text-sm font-semibold truncate" style={{ color: P.text }}>
-                                    {w.beneficiary_name || "--"}
+                                    {w.beneficiary_name || w.owner || "--"}
                                 </p>
                                 <p className="text-xs truncate" style={{ color: P.muted }}>
                                     {w.beneficiary_settlement} · {w.well_type}
@@ -1223,7 +1221,7 @@ const PlanViewPage = () => {
                             <img src={WaterStructureIcon} alt="" className="w-5 h-5 flex-shrink-0" />
                             <div className="min-w-0">
                               <p className="text-sm font-semibold truncate" style={{ color: P.text }}>
-                                {w.beneficiary_name || "--"}
+                                {w.beneficiary_name || w.owner || "--"}
                               </p>
                               <p className="text-xs truncate" style={{ color: P.muted }}>
                                 {w.beneficiary_settlement} · {w.water_structure_type}

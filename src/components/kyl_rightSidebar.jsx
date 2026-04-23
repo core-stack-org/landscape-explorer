@@ -2,7 +2,7 @@
 import React from "react";
 import SelectButton from "./buttons/select_button";
 import filtersDetails from "../components/data/Filters.json";
-import { ArrowLeft, Loader2, Table } from 'lucide-react';
+import { ArrowLeft, Loader2, Table, FileText, FileSpreadsheet, X, ChevronRight } from 'lucide-react';
 import KYLMWSProfilePanel from "./kyl_MWSProfilePanel.jsx";
 import KYLWaterbodyPanel from "./kyl_waterbodypanel.jsx";
 import jsPDF from 'jspdf';
@@ -49,59 +49,42 @@ const KYLRightSidebar = ({
 }) => {
   const [loadingWB, setLoadingWB] = React.useState(false);
   const [showSelectionPopup, setShowSelectionPopup] = React.useState(false);
+  const [isDownloading, setIsDownloading] = React.useState(false);
 
-  // Check if both panels are shown
   const showBothPanels = selectedMWSProfile && selectedWaterbodyProfile;
 
   const transformName = (name) => {
     if (!name) return name;
     return name
-    .replace(/[()]/g, "")
-              .replace(/\s+/g, "_")
-              .replace(/_+/g, "_")
-              .replace(/^_|_$/g, "")
-              .toLowerCase()
+      .replace(/[()]/g, "")
+      .replace(/\s+/g, "_")
+      .replace(/_+/g, "_")
+      .replace(/^_|_$/g, "")
+      .toLowerCase();
   };
 
-
-  // Universal back handler - resets both panels
   const handleUniversalBack = () => {
     onResetMWS();
     onResetWaterbody();
   };
 
   const handleIndicatorRemoval = (filter) => {
-    // First, remove the visualization if it exists
     if (toggleStates[filter.name]) {
-      // Find the layer in currentLayer
       const layerToRemove = currentLayer.find((l) => l.name === filter.name);
       if (layerToRemove) {
-        // Remove all associated layers from the map
         layerToRemove.layerRef.forEach((layer) => {
-          if (mapRef.current) {
-            mapRef.current.removeLayer(layer);
-          }
+          if (mapRef.current) mapRef.current.removeLayer(layer);
         });
-
-        // Update currentLayer state by filtering out the removed layer
         setCurrentLayer((prev) => prev.filter((l) => l.name !== filter.name));
       }
     }
+    setToggleStates((prevStates) => ({ ...prevStates, [filter.name]: false }));
 
-    // Reset the toggle state for this filter
-    setToggleStates((prevStates) => ({
-      ...prevStates,
-      [filter.name]: false,
-    }));
-
-    // Then remove the filter selection
     const sourceType = (function () {
       for (const topLevelKey of Object.keys(filtersDetails)) {
         if (filtersDetails[topLevelKey]) {
           for (const categoryKey of Object.keys(filtersDetails[topLevelKey])) {
-            const found = filtersDetails[topLevelKey][categoryKey].find(
-              (f) => f.name === filter.name
-            );
+            const found = filtersDetails[topLevelKey][categoryKey].find((f) => f.name === filter.name);
             if (found) return topLevelKey;
           }
         }
@@ -112,27 +95,17 @@ const KYLRightSidebar = ({
     if (sourceType === "MWS") {
       setFilterSelections((prev) => ({
         ...prev,
-        selectedMWSValues: {
-          ...prev.selectedMWSValues,
-          [filter.name]: null,
-        },
+        selectedMWSValues: { ...prev.selectedMWSValues, [filter.name]: null },
       }));
     } else if (sourceType === "Village") {
       setFilterSelections((prev) => ({
         ...prev,
-        selectedVillageValues: {
-          ...prev.selectedVillageValues,
-          [filter.name]: null,
-        },
+        selectedVillageValues: { ...prev.selectedVillageValues, [filter.name]: null },
       }));
-    }
-    else if (sourceType === "Waterbody") {
+    } else if (sourceType === "Waterbody") {
       setFilterSelections((prev) => ({
         ...prev,
-        selectedWaterbodyValues: {
-          ...prev.selectedWaterbodyValues,
-          [filter.name]: null,
-        },
+        selectedWaterbodyValues: { ...prev.selectedWaterbodyValues, [filter.name]: null },
       }));
     }
   };
@@ -142,27 +115,16 @@ const KYLRightSidebar = ({
       console.warn("Waterbodies layer not loaded yet");
       return;
     }
-
     const source = waterbodiesLayerRef.current.getSource();
-
     if (!showWB) {
       setLoadingWB(true);
-
-      const handleSourceChange = () => {
-        if (source.getState() === "ready") {
-          setLoadingWB(false);
-        }
-      };
-
-      // attach change listener
-      source.once("change", handleSourceChange);
-
+      source.once("change", () => {
+        if (source.getState() === "ready") setLoadingWB(false);
+      });
       mapRef.current.removeLayer(boundaryLayerRef.current);
       mapRef.current.addLayer(waterbodiesLayerRef.current);
       mapRef.current.addLayer(boundaryLayerRef.current);
-
       setShowWB(true);
-
     } else {
       mapRef.current.removeLayer(waterbodiesLayerRef.current);
       setShowWB(false);
@@ -170,15 +132,9 @@ const KYLRightSidebar = ({
   };
 
   const toggleConnectivity = () => {
-    if (!mwsArrowLayerRef?.current) {
-      console.warn("Arrow layer not ready");
-      return;
-    }
-
-    const layer = mwsArrowLayerRef.current;
-
+    if (!mwsArrowLayerRef?.current) { console.warn("Arrow layer not ready"); return; }
     const newVisibility = !showConnectivity;
-    layer.setVisible(newVisibility);
+    mwsArrowLayerRef.current.setVisible(newVisibility);
     setShowConnectivity(newVisibility);
   };
 
@@ -187,36 +143,25 @@ const KYLRightSidebar = ({
     window.open(reportURL, '_blank', 'noopener,noreferrer');
   };
 
-
-  // Generate table data for selected MWS and villages
   const generateSelectionTableData = () => {
     const mwsData = [];
     const villageData = [];
 
-    // Add MWS data
     if (selectedMWS && selectedMWS.length > 0) {
       selectedMWS.forEach((mwsId, index) => {
-        mwsData.push({
-          id: `${mwsId}-${index}`,
-          name: String(mwsId) // Convert to string
-        });
+        mwsData.push({ id: `${mwsId}-${index}`, name: String(mwsId) });
       });
     }
 
-    // Add Village data
     if (selectedVillages && selectedVillages.size > 0) {
       let villageIndex = 0;
       selectedVillages.forEach((villageId) => {
         const villageIdStr = String(villageId);
-
-        // Name lookup from villageJson
         let vName = '';
         if (villageJson && Array.isArray(villageJson)) {
           const v = villageJson.find(v => String(v.village_id) === villageIdStr);
           if (v) vName = v.village_name || v.vill_name || v.name || '';
         }
-
-        // Fallback to boundaryLayer features if name empty
         if (!vName && boundaryLayerRef.current) {
           try {
             const features = boundaryLayerRef.current.getSource().getFeatures();
@@ -228,13 +173,12 @@ const KYLRightSidebar = ({
               const props = f.getProperties();
               vName = props.vill_name || props.village_name || props.name || '';
             }
-          } catch (_) { }
+          } catch (_) {}
         }
-
         villageData.push({
           id: `village-${villageIdStr}-${villageIndex}`,
           villageId: villageIdStr,
-          villageName: vName || 'Unknown Village'
+          villageName: vName || 'Unknown Village',
         });
         villageIndex++;
       });
@@ -243,20 +187,42 @@ const KYLRightSidebar = ({
     return { mwsData, villageData };
   };
 
+  // ─── WB property display resolver — uses cached precomputed props ───
+  const getWBDisplayValue = (filterName, swb) => {
+    if (filterName === "waterbody_type") {
+      const raw = swb.waterbody_type;
+      if (raw === undefined || raw === null) return "N/A";
+      return raw === "river" ? "On River" : "Off River";
+    }
+    if (filterName === "drainage_line") {
+      if (swb.wbDrainage === "onDrainage") return "On Drainage";
+      if (swb.wbDrainage === "offDrainage") return "Off Drainage";
+      const val = Number(swb.on_drainage_line ?? null);
+      if (!isNaN(val)) return val === 1 ? "On Drainage" : "Off Drainage";
+      return "N/A";
+    }
+    if (filterName === "surface_water_trend") {
+      const trend = swb.wbTrend;
+      if (!trend) return "N/A";
+      return trend.charAt(0).toUpperCase() + trend.slice(1);
+    }
+    if (filterName === "waterbody_size") {
+      const area = Number(swb.area_ored ?? swb.AREA_HA ?? 0);
+      if (isNaN(area)) return "N/A";
+      if (area < 1) return "Small (<1 ha)";
+      if (area < 5) return "Medium (1–5 ha)";
+      if (area < 10) return "Large (5–10 ha)";
+      return "Very Large (>10 ha)";
+    }
+    return "N/A";
+  };
 
-  // Add state for loading
-  const [isDownloading, setIsDownloading] = React.useState(false);
-
-  // Updated download function with loading state
-  // Client-side PDF download without API
   const downloadPDF = async () => {
     if (isDownloading) return;
     setIsDownloading(true);
-
     try {
       const { mwsData, villageData } = generateSelectionTableData();
 
-      // ── Capture map using OpenLayers native canvas compositing ──────
       let mapImageData = null;
       try {
         const map = mapRef.current;
@@ -270,20 +236,14 @@ const KYLRightSidebar = ({
                 mapCanvas.width = size[0];
                 mapCanvas.height = size[1];
                 const ctx = mapCanvas.getContext('2d');
-
-                // Composite every visible OL canvas in DOM order
                 const viewport = map.getViewport();
                 viewport.querySelectorAll('canvas').forEach((layerCanvas) => {
                   if (layerCanvas.width > 0) {
                     const parentOpacity = layerCanvas.parentNode.style.opacity;
                     ctx.globalAlpha = parentOpacity !== "" ? parseFloat(parentOpacity) : 1;
-
                     const transform = layerCanvas.style.transform;
                     if (transform) {
-                      const matrix = transform
-                        .match(/^matrix\(([^)]*)\)$/)?.[1]
-                        .split(',')
-                        .map(Number);
+                      const matrix = transform.match(/^matrix\(([^)]*)\)$/)?.[1].split(',').map(Number);
                       if (matrix) ctx.setTransform(...matrix);
                     } else {
                       ctx.setTransform(1, 0, 0, 1, 0, 0);
@@ -291,7 +251,6 @@ const KYLRightSidebar = ({
                     ctx.drawImage(layerCanvas, 0, 0);
                   }
                 });
-
                 ctx.globalAlpha = 1;
                 ctx.setTransform(1, 0, 0, 1, 0, 0);
                 resolve(mapCanvas.toDataURL('image/jpeg', 0.9));
@@ -300,32 +259,27 @@ const KYLRightSidebar = ({
                 resolve(null);
               }
             });
-
             map.renderSync();
           });
         }
       } catch (mapErr) {
         console.warn('Map capture failed:', mapErr);
       }
-      // ────────────────────────────────────────────────────────────────
 
       const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
       const pageW = doc.internal.pageSize.width;
 
-      // ── Title ──────────────────────────────────────────────────────
       doc.setFontSize(18);
       doc.setFont('helvetica', 'bold');
       doc.setTextColor(30, 30, 30);
       doc.text('KYL Dashboard Report', 14, 14);
       doc.setDrawColor(180, 180, 180);
       doc.line(14, 17, pageW - 14, 17);
-
       doc.setFontSize(8);
       doc.setFont('helvetica', 'normal');
       doc.setTextColor(140, 140, 140);
       doc.text(`Generated: ${new Date().toLocaleString()}`, pageW - 14, 14, { align: 'right' });
 
-      // ── Location block ─────────────────────────────────────────────
       let yPos = 23;
       doc.setFillColor(245, 247, 255);
       doc.roundedRect(14, yPos - 3, pageW - 28, 14, 2, 2, 'F');
@@ -339,7 +293,6 @@ const KYLRightSidebar = ({
       doc.text(`Block / Tehsil: ${block?.label || 'N/A'}`, 185, yPos + 4);
       yPos += 18;
 
-      // ── Selected Filters section ───────────────────────────────────
       const selectedFilters = getFormattedSelectedFilters();
       const selectedPatterns = getFormattedSelectedPatterns();
 
@@ -383,7 +336,6 @@ const KYLRightSidebar = ({
         yPos = doc.lastAutoTable.finalY + 4;
       }
 
-      // ── Map screenshot ─────────────────────────────────────────────
       doc.setFontSize(11);
       doc.setFont('helvetica', 'bold');
       doc.setTextColor(30, 30, 30);
@@ -398,14 +350,7 @@ const KYLRightSidebar = ({
         const ratio = Math.min(maxW / imgProps.width, maxH / imgProps.height);
         const imgW = imgProps.width * ratio;
         const imgH = imgProps.height * ratio;
-        if (yPos + imgH > doc.internal.pageSize.height - 15) {
-          doc.addPage();
-          yPos = 20;
-          doc.setFontSize(11);
-          doc.setFont('helvetica', 'bold');
-          doc.text('Map View', 14, yPos);
-          yPos += 6;
-        }
+        if (yPos + imgH > doc.internal.pageSize.height - 15) { doc.addPage(); yPos = 20; }
         doc.addImage(mapImageData, 'JPEG', 14, yPos, imgW, imgH);
         yPos += imgH + 8;
       } else {
@@ -416,10 +361,8 @@ const KYLRightSidebar = ({
         yPos += 12;
       }
 
-      // ── MWS & Villages tables ──────────────────────────────────────
       if (mwsData.length > 0 || villageData.length > 0) {
         if (yPos > doc.internal.pageSize.height - 50) { doc.addPage(); yPos = 20; }
-
         doc.setFontSize(11);
         doc.setFont('helvetica', 'bold');
         doc.setTextColor(30, 30, 30);
@@ -439,10 +382,8 @@ const KYLRightSidebar = ({
             head: [['#', 'Micro-watershed ID', 'Intersecting Villages', 'Intersecting Waterbodies']],
             body: mwsData.map((item, i) => {
               const mwsGroup = mwsVillageIntersections.find(g => g.mwsId === item.name);
-              const villagesStr = mwsGroup
-                ? mwsGroup.villages.map(v => `${v.villageName || 'Unknown'} (${v.villageId})`).join(', ')
-                : 'None';
-              const swbStr = mwsGroup && mwsGroup.waterbodies && mwsGroup.waterbodies.length > 0
+              const villagesStr = mwsGroup ? mwsGroup.villages.map(v => `${v.villageName || 'Unknown'} (${v.villageId})`).join(', ') : 'None';
+              const swbStr = mwsGroup && mwsGroup.waterbodies?.length > 0
                 ? mwsGroup.waterbodies.map(swb => swb.swbName ? `${swb.swbName} (${swb.swbId})` : swb.swbId).join(', ')
                 : 'None';
               return [i + 1, item.name, villagesStr, swbStr];
@@ -450,12 +391,7 @@ const KYLRightSidebar = ({
             theme: 'grid',
             headStyles: { fillColor: [37, 99, 235], fontSize: 9 },
             bodyStyles: { fontSize: 8 },
-            columnStyles: {
-              0: { cellWidth: 12, halign: 'center' },
-              1: { cellWidth: 40 },
-              2: { cellWidth: 70 },
-              3: { cellWidth: 'auto' }
-            },
+            columnStyles: { 0: { cellWidth: 12, halign: 'center' }, 1: { cellWidth: 40 }, 2: { cellWidth: 70 }, 3: { cellWidth: 'auto' } },
             margin: { left: 14, right: 14 },
           });
           yPos = doc.lastAutoTable.finalY + 8;
@@ -474,18 +410,13 @@ const KYLRightSidebar = ({
             theme: 'striped',
             headStyles: { fillColor: [22, 163, 74], fontSize: 9 },
             bodyStyles: { fontSize: 8 },
-            columnStyles: {
-              0: { cellWidth: 15, halign: 'center' },
-              1: { cellWidth: 35 },
-              2: { cellWidth: 'auto' }
-            },
+            columnStyles: { 0: { cellWidth: 15, halign: 'center' }, 1: { cellWidth: 35 }, 2: { cellWidth: 'auto' } },
             margin: { left: 14, right: 14 },
           });
           yPos = doc.lastAutoTable.finalY + 8;
         }
       }
 
-      // Footer on every page
       const pageCount = doc.internal.getNumberOfPages();
       for (let i = 1; i <= pageCount; i++) {
         doc.setPage(i);
@@ -494,9 +425,7 @@ const KYLRightSidebar = ({
         doc.text(`Page ${i} of ${pageCount}`, pageW / 2, doc.internal.pageSize.height - 8, { align: 'center' });
       }
 
-      const filename = `kyl_report_${transformName(state?.label) || 'report'}_${new Date().toISOString().split('T')[0]}.pdf`;
-      doc.save(filename);
-
+      doc.save(`kyl_report_${transformName(state?.label) || 'report'}_${new Date().toISOString().split('T')[0]}.pdf`);
     } catch (error) {
       console.error('PDF generation error:', error);
       alert('Error generating PDF. Please try again.');
@@ -510,7 +439,6 @@ const KYLRightSidebar = ({
       const { mwsData, villageData } = generateSelectionTableData();
       const selectedFilters = getFormattedSelectedFilters();
 
-      // Identify filters by level
       const mwsFilters = [];
       const villageFilters = [];
       const waterbodyFilters = [];
@@ -541,89 +469,68 @@ const KYLRightSidebar = ({
         return value;
       };
 
-      // 0 - Selected Filters Sheet
+      // Sheet 0 — Selected Filters
       const sheet0Data = selectedFilters.map((f, i) => ({
         "S.NO": i + 1,
         "INDICATOR NAME": f.filterName || f.name,
-        "SELECTED VALUES": (f.values || []).join(", ")
+        "SELECTED VALUES": (f.values || []).join(", "),
       }));
 
-      // 1 - Selected MWS Sheet
+      // Sheet 1 — Selected MWS
       const sheet1Data = mwsData.map(item => {
         const row = { "MICRO-WATERSHED ID": item.name };
         if (dataJson && Array.isArray(dataJson)) {
           const mRecord = dataJson.find(m => String(m.mws_id) === String(item.name));
           if (mRecord) {
             mwsFilters.forEach(f => {
-              const baseName = (f.filterName || f.name).toUpperCase();
               let val = mRecord[f.name];
               if (val === undefined || val === null) val = "N/A";
               else {
                 val = getLabelFromValue(f.name, val);
                 if (typeof val === "number") val = Number(val.toFixed(3));
               }
-
-              row[baseName] = val;
+              row[(f.filterName || f.name).toUpperCase()] = val;
             });
           }
         }
         return row;
       });
 
-      // 2 - Selected Village Sheet (with indicators if demographic filter selected)
+      // Sheet 2 — Selected Villages
       const sheet2Data = villageData.map(item => {
-        const row = {
-          "VILLAGE ID": item.villageId,
-          "VILLAGE NAME": item.villageName
-        };
+        const row = { "VILLAGE ID": item.villageId, "VILLAGE NAME": item.villageName };
         if (villageJson && Array.isArray(villageJson)) {
           const vRecord = villageJson.find(v => String(v.village_id || v.vill_ID) === String(item.villageId));
           if (vRecord) {
             villageFilters.forEach(f => {
-              const baseName = (f.filterName || f.name).toUpperCase();
               let val = vRecord[f.name];
               if (val === undefined || val === null) val = "N/A";
               else {
                 val = getLabelFromValue(f.name, val);
                 if (typeof val === "number") val = Number(val.toFixed(3));
               }
-
-              row[baseName] = val;
+              row[(f.filterName || f.name).toUpperCase()] = val;
             });
           }
         }
         return row;
       });
 
+      // Sheet 3 — Selected Waterbodies
+      // Uses getWBDisplayValue for correct resolution of precomputed cached props
+      // selectedWaterbodyIds now populated from dataJsonIndex — works even when showWB is false
       const uniqueSwbs = new Map();
       mwsVillageIntersections.forEach(group => {
         group.waterbodies.forEach(swb => {
-          // Only include selected (matched) waterbodies
           if (!uniqueSwbs.has(swb.swbId) && selectedWaterbodyIds && selectedWaterbodyIds.has(String(swb.swbId))) {
             const row = {
               "SWB ID": swb.swbId,
               "WATERBODY NAME": swb.swbName || "Unknown",
               "LATITUDE": swb.latitude || 0,
-              "LONGITUDE": swb.longitude || 0
+              "LONGITUDE": swb.longitude || 0,
             };
             waterbodyFilters.forEach(f => {
-              if (f.name === "waterbody_size") return; // Skip only this specific column
-
-              const colName = (f.filterName || f.name).toUpperCase();
-
-              const swbPropertyMap = {
-                "surface_water_trend": "sw_trend",
-                "drainage_line": "on_drainag"
-              };
-              const propKey = swbPropertyMap[f.name] || f.name;
-              let val = swb[propKey];
-
-              if (val === undefined || val === null) val = "N/A";
-              else {
-                val = getLabelFromValue(f.name, val);
-                if (typeof val === "number") val = Number(val.toFixed(3));
-              }
-              row[colName] = val;
+              row[(f.filterName || f.name).toUpperCase()] = getWBDisplayValue(f.name, swb);
             });
             uniqueSwbs.set(swb.swbId, row);
           }
@@ -631,90 +538,76 @@ const KYLRightSidebar = ({
       });
       const sheet3Data = Array.from(uniqueSwbs.values());
 
+      // Sheet 4 — MWS-Village Intersections
       const sheet4Data = [];
       mwsVillageIntersections.forEach(group => {
         group.villages.forEach(v => {
-          sheet4Data.push({
-            "MWS ID": group.mwsId,
-            "VILLAGE ID": v.villageId,
-            "VILLAGE NAME": v.villageName
-          });
+          sheet4Data.push({ "MWS ID": group.mwsId, "VILLAGE ID": v.villageId, "VILLAGE NAME": v.villageName });
         });
       });
 
+      // Sheet 5 — MWS-Waterbody Intersections
       const sheet5Data = [];
       mwsVillageIntersections.forEach(group => {
         group.waterbodies.forEach(swb => {
-          sheet5Data.push({
-            "MWS ID": group.mwsId,
-            "SWB ID": swb.swbId,
-            "WATERBODY NAME": swb.swbName
-          });
+          sheet5Data.push({ "MWS ID": group.mwsId, "SWB ID": swb.swbId, "WATERBODY NAME": swb.swbName || "" });
         });
       });
 
       const workbook = XLSX.utils.book_new();
-      const sheet0 = XLSX.utils.json_to_sheet(sheet0Data);
-      const sheet1 = XLSX.utils.json_to_sheet(sheet1Data);
-      const sheet2 = XLSX.utils.json_to_sheet(sheet2Data);
-      const sheet3 = XLSX.utils.json_to_sheet(sheet3Data);
-      const sheet4 = XLSX.utils.json_to_sheet(sheet4Data);
-      const sheet5 = XLSX.utils.json_to_sheet(sheet5Data);
-
       const boldStyle = { font: { bold: true } };
+
       const activeSheets = [
-        { sheet: sheet0, name: "Selected Filters", width: [{ wch: 8 }, { wch: 40 }, { wch: 60 }] },
+        { sheet: XLSX.utils.json_to_sheet(sheet0Data), name: "Selected Filters", width: [{ wch: 8 }, { wch: 40 }, { wch: 60 }] },
       ];
 
-      // Add MWS sheet
       const mWidths = [{ wch: 25 }];
       mwsFilters.forEach(() => mWidths.push({ wch: 20 }));
-      activeSheets.push({ sheet: sheet1, name: "Selected MWS", width: mWidths });
+      activeSheets.push({ sheet: XLSX.utils.json_to_sheet(sheet1Data), name: "Selected MWS", width: mWidths });
 
-      // Add Village sheet only if demographic filter is selected
       if (villageFilters.length > 0) {
         const vWidths = [{ wch: 25 }, { wch: 40 }];
         villageFilters.forEach(() => vWidths.push({ wch: 20 }));
-        activeSheets.push({ sheet: sheet2, name: "Selected Villages", width: vWidths });
+        activeSheets.push({ sheet: XLSX.utils.json_to_sheet(sheet2Data), name: "Selected Villages", width: vWidths });
       }
 
-      // Add Waterbody details sheet if data exists
       if (sheet3Data.length > 0) {
+        // All WB filter columns included — no skip needed since getWBDisplayValue handles all
         const wbWidths = [{ wch: 25 }, { wch: 40 }, { wch: 18 }, { wch: 18 }];
-        waterbodyFilters.forEach(f => {
-          if (f.name !== "waterbody_size") wbWidths.push({ wch: 20 });
-        });
-        activeSheets.push({ sheet: sheet3, name: "Selected Waterbodies", width: wbWidths });
+        waterbodyFilters.forEach(() => wbWidths.push({ wch: 22 }));
+        activeSheets.push({ sheet: XLSX.utils.json_to_sheet(sheet3Data), name: "Selected Waterbodies", width: wbWidths });
       }
 
-      // Intersection sheets are always included for reference
-      activeSheets.push({ sheet: sheet4, name: "MWS-Village Intersects", width: [{ wch: 25 }, { wch: 25 }, { wch: 40 }] });
-      activeSheets.push({ sheet: sheet5, name: "MWS-Waterbody Intersects", width: [{ wch: 25 }, { wch: 25 }, { wch: 40 }] });
+      activeSheets.push({ sheet: XLSX.utils.json_to_sheet(sheet4Data), name: "MWS-Village Intersects", width: [{ wch: 25 }, { wch: 25 }, { wch: 40 }] });
+      activeSheets.push({ sheet: XLSX.utils.json_to_sheet(sheet5Data), name: "MWS-Waterbody Intersects", width: [{ wch: 25 }, { wch: 25 }, { wch: 40 }] });
 
       activeSheets.forEach(({ sheet, name, width }) => {
-        const range = XLSX.utils.decode_range(sheet["!ref"]);
-        for (let C = range.s.c; C <= range.e.c; ++C) {
-          const addr = XLSX.utils.encode_cell({ r: 0, c: C });
-          if (sheet[addr]) sheet[addr].s = boldStyle;
+        if (sheet["!ref"]) {
+          const range = XLSX.utils.decode_range(sheet["!ref"]);
+          for (let C = range.s.c; C <= range.e.c; ++C) {
+            const addr = XLSX.utils.encode_cell({ r: 0, c: C });
+            if (sheet[addr]) sheet[addr].s = boldStyle;
+          }
         }
         sheet["!cols"] = width;
         XLSX.utils.book_append_sheet(workbook, sheet, name);
       });
 
-      const filename = `kyl_selection_report_${new Date().toISOString().split('T')[0]}.xlsx`;
-      XLSX.writeFile(workbook, filename);
+      XLSX.writeFile(workbook, `kyl_selection_report_${new Date().toISOString().split('T')[0]}.xlsx`);
     } catch (error) {
       console.error('Excel generation error:', error);
       alert('Error generating Excel file.');
     }
   };
 
+  // ─── Selection Popup ─────────────────────────────────────────────────────
   const SelectionPopup = () => {
     const [activeTab, setActiveTab] = React.useState('mws');
     if (!showSelectionPopup) return null;
 
     const { mwsData, villageData } = generateSelectionTableData();
-    const seenVillageIds = new Set(); // dedup tracker — villages shown only in their first MWS
+    const seenVillageIds = new Set();
+
     const uniqueSwbs = new Map();
     mwsVillageIntersections.forEach(group => {
       group.waterbodies.forEach(swb => {
@@ -726,21 +619,9 @@ const KYLRightSidebar = ({
     const waterbodyData = Array.from(uniqueSwbs.values());
     const totalItems = mwsData.length + villageData.length + waterbodyData.length;
 
-    const tabClass = (tab) =>
-      `px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${activeTab === tab
-        ? 'bg-indigo-600 text-white shadow-sm'
-        : 'text-gray-600 hover:bg-gray-100'
-      }`;
-
-    // ── Counts for the 5 Excel Sheets ──────────────────────────────
-    const sheet1Count = mwsData.length; // Selected MWS
-    const sheet2Count = villageData.length; // Selected Villages
-    const sheet3Count = waterbodyData.length; // Selected Waterbodies
-    const sheet4Count = mwsVillageIntersections.reduce((acc, curr) => acc + (curr.villages?.length || 0), 0); // MWS-Village Intersects
-    const sheet5Count = mwsVillageIntersections.reduce((acc, curr) => acc + (curr.waterbodies?.length || 0), 0); // MWS-Waterbody Intersects
-
-    // Determine filter-based visibility for Sheet 2 and 3 counts
     const selectedFiltersCount = getFormattedSelectedFilters();
+    const selectedPatternsCount = getFormattedSelectedPatterns();
+
     const hasVillageFilter = selectedFiltersCount.some(f => {
       for (const topKey of Object.keys(filtersDetails)) {
         if (topKey === "Village") {
@@ -751,6 +632,7 @@ const KYLRightSidebar = ({
       }
       return false;
     });
+
     const hasWaterbodyFilter = selectedFiltersCount.some(f => {
       for (const topKey of Object.keys(filtersDetails)) {
         if (topKey === "Waterbody") {
@@ -762,8 +644,7 @@ const KYLRightSidebar = ({
       return false;
     });
 
-    const selectedPatternsCount = getFormattedSelectedPatterns();
-    const hasVillagePattern = selectedPatternsCount.some(p => p.level); // Village-level patterns have a truthy 'level'
+    const hasVillagePattern = selectedPatternsCount.some(p => p.level);
 
     const checkWaterbodyMatch = (swb) => {
       if (!hasWaterbodyFilter) return false;
@@ -771,117 +652,128 @@ const KYLRightSidebar = ({
       return selectedWaterbodyIds.has(String(swb.swbId));
     };
 
+    const sheet1Count = mwsData.length;
+    const sheet2Count = villageData.length;
+    const sheet3Count = waterbodyData.length;
+    const sheet4Count = mwsVillageIntersections.reduce((acc, curr) => acc + (curr.villages?.length || 0), 0);
+    const sheet5Count = mwsVillageIntersections.reduce((acc, curr) => acc + (curr.waterbodies?.length || 0), 0);
+
+    const tabs = [
+      { key: 'mws', label: 'Watersheds', count: mwsData.length, always: true, color: 'blue' },
+      { key: 'villages', label: 'Villages', count: villageData.length, always: false, show: hasVillageFilter, color: 'green' },
+      { key: 'waterbodies', label: 'Waterbodies', count: waterbodyData.length, always: false, show: hasWaterbodyFilter, color: 'cyan' },
+    ];
+
     return (
-      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 animate-fade-in" onClick={() => setShowSelectionPopup(false)}>
-        <div className="bg-white rounded-lg shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col" onClick={(e) => e.stopPropagation()}>
-          {/* Header */}
-          <div className="px-5 py-4 border-b border-gray-200 flex justify-between items-center bg-gray-50 flex-shrink-0">
-            <h3 className="text-lg font-bold text-gray-800">
-              Selection Details <span className="text-gray-500 font-normal ml-2">({totalItems} total)</span>
-            </h3>
-            <div className="flex items-center gap-3">
-              {/* Tab switcher */}
-              <div className="flex gap-1 bg-gray-200 p-1 rounded-lg mr-2">
-                <button className={tabClass('mws')} onClick={() => setActiveTab('mws')}>
-                  MWS ({mwsData.length})
-                </button>
-                {hasVillageFilter && (
-                  <button className={tabClass('villages')} onClick={() => setActiveTab('villages')}>
-                    Selected Villages ({villageData.length})
+      <div
+        className="fixed inset-0 bg-black/60 backdrop-blur-[2px] flex items-center justify-center z-50"
+        onClick={() => setShowSelectionPopup(false)}
+      >
+        <div
+          className="bg-white rounded-xl shadow-2xl w-full max-w-5xl max-h-[92vh] overflow-hidden flex flex-col mx-4"
+          onClick={e => e.stopPropagation()}
+        >
+          {/* ── Header ── */}
+          <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gradient-to-r from-slate-50 to-white flex-shrink-0">
+            <div>
+              <h3 className="text-base font-bold text-gray-800 tracking-tight">Selection Details</h3>
+              <p className="text-xs text-gray-400 mt-0.5">{totalItems} items across {mwsData.length} watersheds</p>
+            </div>
+
+            <div className="flex items-center gap-2">
+              {/* Tabs */}
+              <div className="flex gap-1 bg-gray-100 p-1 rounded-lg">
+                {tabs.filter(t => t.always || t.show).map(tab => (
+                  <button
+                    key={tab.key}
+                    onClick={() => setActiveTab(tab.key)}
+                    className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all duration-150 flex items-center gap-1.5 ${
+                      activeTab === tab.key
+                        ? 'bg-white text-gray-800 shadow-sm'
+                        : 'text-gray-500 hover:text-gray-700'
+                    }`}
+                  >
+                    {tab.label}
+                    <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${
+                      activeTab === tab.key ? 'bg-indigo-600 text-white' : 'bg-gray-200 text-gray-600'
+                    }`}>{tab.count}</span>
                   </button>
-                )}
-                {hasWaterbodyFilter && (
-                  <button className={tabClass('waterbodies')} onClick={() => setActiveTab('waterbodies')}>
-                    Selected Waterbodies ({waterbodyData.length})
-                  </button>
-                )}
+                ))}
               </div>
-              {/* PDF Download Button */}
+
+              {/* Download buttons */}
               <button
                 onClick={downloadPDF}
                 disabled={isDownloading}
-                className={`flex items-center gap-1 px-3 py-1.5 text-sm rounded-md transition-colors ${isDownloading
-                  ? 'text-gray-400 bg-gray-100 cursor-not-allowed'
-                  : 'text-red-600 hover:bg-red-50'
-                  }`}
-                title="Download as PDF"
+                className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border transition-all ${
+                  isDownloading
+                    ? 'border-gray-200 text-gray-400 bg-gray-50 cursor-not-allowed'
+                    : 'border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300'
+                }`}
               >
                 {isDownloading ? (
-                  <>
-                    <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    <span>Generating...</span>
-                  </>
+                  <><Loader2 className="w-3 h-3 animate-spin" /><span>Generating…</span></>
                 ) : (
-                  <>
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                    </svg>
-                    <span>PDF</span>
-                  </>
+                  <><FileText className="w-3 h-3" /><span>PDF</span></>
                 )}
               </button>
 
-              {/* Excel Download Button */}
               <button
                 onClick={downloadExcel}
-                className="flex items-center gap-1 px-3 py-1.5 text-sm rounded-md transition-colors text-green-600 hover:bg-green-50"
-                title="Download as Excel"
+                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border border-emerald-200 text-emerald-600 hover:bg-emerald-50 hover:border-emerald-300 transition-all"
               >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                </svg>
+                <FileSpreadsheet className="w-3 h-3" />
                 <span>Excel</span>
               </button>
 
-              {/* Close Button */}
-              <button onClick={() => setShowSelectionPopup(false)} className="text-gray-400 hover:text-gray-600">
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
+              <button
+                onClick={() => setShowSelectionPopup(false)}
+                className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                <X className="w-4 h-4" />
               </button>
             </div>
           </div>
 
-          {/* Tab Content */}
-          <div className="overflow-y-auto flex-1 p-4">
+          {/* ── Tab Content ── */}
+          <div className="overflow-y-auto flex-1 p-4 bg-gray-50/50">
 
-            {/* ── Tab: MWS ─────────────────────────────────────── */}
+            {/* MWS Tab */}
             {activeTab === 'mws' && (
               mwsData.length > 0 ? (
-                <div className="border border-gray-200 rounded-lg overflow-hidden">
+                <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
                   <table className="w-full text-xs">
-                    <thead className="bg-blue-50 sticky top-0">
-                      <tr>
-                        <th className="text-left px-3 py-2 text-blue-700 font-semibold w-10">#</th>
-                        <th className="text-left px-3 py-2 text-blue-700 font-semibold">Micro-watershed ID</th>
-                        <th className="text-right px-3 py-2 text-blue-700 font-semibold">Report</th>
-                        <th className="text-left px-3 py-2 text-blue-700 font-semibold pl-6">Intersecting Villages</th>
-                        <th className="text-left px-3 py-2 text-blue-700 font-semibold pl-6">Intersecting Waterbodies</th>
+                    <thead>
+                      <tr className="bg-gradient-to-r from-blue-600 to-blue-500 text-white">
+                        <th className="text-left px-4 py-2.5 font-semibold w-8">#</th>
+                        <th className="text-left px-4 py-2.5 font-semibold">Watershed ID</th>
+                        <th className="text-center px-4 py-2.5 font-semibold">Report</th>
+                        <th className="text-left px-4 py-2.5 font-semibold">Intersecting Villages</th>
+                        <th className="text-left px-4 py-2.5 font-semibold">Intersecting Waterbodies</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-100">
                       {mwsData.map((item, i) => {
                         const mwsGroup = mwsVillageIntersections.find(g => g.mwsId === item.name);
                         return (
-                          <tr key={item.id} className="hover:bg-gray-50 align-top">
-                            <td className="px-3 py-2 text-gray-400">{i + 1}</td>
-                            <td className="px-3 py-2 font-mono text-gray-800">{item.name}</td>
-                            <td className="px-3 py-2 text-right">
+                          <tr key={item.id} className="hover:bg-blue-50/30 align-top transition-colors">
+                            <td className="px-4 py-2.5 text-gray-400 font-mono">{i + 1}</td>
+                            <td className="px-4 py-2.5">
+                              <span className="font-mono text-gray-800 bg-gray-100 px-2 py-0.5 rounded text-[11px]">{item.name}</span>
+                            </td>
+                            <td className="px-4 py-2.5 text-center">
                               <a
                                 href={`https://geoserver.core-stack.org/api/v1/generate_mws_report/?state=${transformName(state?.label)}&district=${transformName(district?.label)}&block=${transformName(block?.label)}&uid=${item.name}`}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="text-indigo-600 hover:text-indigo-800 font-medium whitespace-nowrap"
+                                className="inline-flex items-center gap-1 text-indigo-600 hover:text-indigo-800 font-semibold"
                               >
-                                View Report →
+                                View <ChevronRight className="w-3 h-3" />
                               </a>
                             </td>
-                            <td className="px-3 py-2 pl-6">
+                            <td className="px-4 py-2.5">
                               {mwsGroup && mwsGroup.villages.length > 0 ? (
-                                <div className="flex flex-wrap gap-1.5">
+                                <div className="flex flex-wrap gap-1">
                                   {mwsGroup.villages.filter(v => {
                                     const id = String(v.villageId);
                                     if (seenVillageIds.has(id)) return false;
@@ -897,50 +789,66 @@ const KYLRightSidebar = ({
                                         isSelected = selectedVillages.some(sid => String(sid) === villageIdStr);
                                       }
                                     }
-
                                     return (
-                                      <div
+                                      <span
                                         key={v.villageId}
-                                        className={`border rounded px-2 py-0.5 shadow-sm transform transition-all ${isSelected
-                                          ? 'bg-green-600 border-green-700 text-white font-extrabold z-10'
-                                          : 'bg-purple-50 border-purple-100 text-purple-700 font-medium'}`}
-                                        title={`${isSelected ? 'Selected (Matches Filters)' : 'Structural Intersection'} | ID: ${v.villageId}`}
+                                        title={`${isSelected ? 'Matches filter' : 'Intersects'} | ID: ${v.villageId}`}
+                                        className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium border ${
+                                          isSelected
+                                            ? 'bg-emerald-500 border-emerald-600 text-white'
+                                            : 'bg-violet-50 border-violet-200 text-violet-700'
+                                        }`}
                                       >
-                                        <span className="text-[10px]">
-                                          {v.villageName || 'Unknown Village'}
-                                          <span className={`${isSelected ? 'opacity-80' : 'text-purple-400'} ml-1 font-mono text-[9px]`}>({v.villageId})</span>
-                                        </span>
-                                      </div>
+                                        {v.villageName || 'Unknown'}
+                                        <span className="opacity-70 font-mono text-[9px]">({v.villageId})</span>
+                                      </span>
                                     );
                                   })}
                                 </div>
                               ) : (
-                                <span className="text-gray-400 italic text-[10px]">No intersections</span>
+                                <span className="text-gray-300 italic text-[10px]">No intersections</span>
                               )}
                             </td>
-                            <td className="px-3 py-2 pl-6">
-                              {mwsGroup && mwsGroup.waterbodies && mwsGroup.waterbodies.length > 0 ? (
-                                <div className="flex flex-wrap gap-1.5">
-                                  {mwsGroup.waterbodies.map(swb => {
-                                    const isSelected = checkWaterbodyMatch(swb);
-                                    return (
-                                      <div
-                                        key={swb.swbId}
-                                        className={`border rounded px-2 py-0.5 shadow-sm transition-all ${isSelected
-                                          ? 'bg-green-600 border-green-700 text-white font-extrabold z-10'
-                                          : 'bg-blue-50 border-blue-100 text-blue-700 font-medium'}`}
-                                        title={`${isSelected ? 'Selected (Matches Filters)' : 'Intersection Only'} | ID: ${swb.swbId}`}
-                                      >
-                                        <span className="text-[10px]">
-                                          {swb.swbName ? `${swb.swbName} (${swb.swbId})` : swb.swbId}
+                            <td className="px-4 py-2.5">
+                              {(() => {
+                                // Directly read from dataJson — most reliable source,
+                                // doesn't depend on WB layer being loaded or selectedWaterbodyIds timing
+                                const mwsRecord = dataJson?.find(d => d.mws_id === item.name);
+                                const allSwbs = mwsRecord?.mws_intersect_swb || [];
+
+                                if (allSwbs.length === 0) {
+                                  return <span className="text-gray-300 italic text-[10px]">None</span>;
+                                }
+
+                                return (
+                                  <div className="flex flex-wrap gap-1">
+                                    {allSwbs.map(swb => {
+                                      const swbIdStr = typeof swb === 'object' ? String(swb.swbId) : String(swb);
+                                      const swbName = typeof swb === 'object' ? (swb.swbName || '') : '';
+
+                                      // Green if WB filter is active and this WB matched it
+                                      // Blue if just a structural intersection
+                                      const isFilterMatched = hasWaterbodyFilter &&
+                                        selectedWaterbodyIds &&
+                                        selectedWaterbodyIds.has(swbIdStr);
+
+                                      return (
+                                        <span
+                                          key={swbIdStr}
+                                          title={`${isFilterMatched ? 'Matches filter' : 'Structural intersection'} | ID: ${swbIdStr}`}
+                                          className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium border transition-colors ${
+                                            isFilterMatched
+                                              ? 'bg-emerald-500 border-emerald-600 text-white'
+                                              : 'bg-sky-50 border-sky-200 text-sky-700'
+                                          }`}
+                                        >
+                                          {swbName ? `${swbName} (${swbIdStr})` : swbIdStr}
                                         </span>
-                                      </div>
-                                    );
-                                  })}
-                                </div>
-                              ) : (
-                                <span className="text-gray-400 italic text-[10px]">No SWB intersections</span>
-                              )}
+                                      );
+                                    })}
+                                  </div>
+                                );
+                              })()}
                             </td>
                           </tr>
                         );
@@ -949,59 +857,71 @@ const KYLRightSidebar = ({
                   </table>
                 </div>
               ) : (
-                <div className="text-center py-10 text-gray-400 text-sm">No micro-watersheds selected</div>
+                <div className="flex flex-col items-center justify-center py-16 text-gray-400">
+                  <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center mb-3">
+                    <Table className="w-5 h-5" />
+                  </div>
+                  <p className="text-sm font-medium">No micro-watersheds selected</p>
+                  <p className="text-xs mt-1">Apply a filter to see results here</p>
+                </div>
               )
             )}
 
-            {/* ── Tab: Villages (filter-matched) ────────────────── */}
+            {/* Villages Tab */}
             {activeTab === 'villages' && (
               villageData.length > 0 ? (
-                <div className="border border-gray-200 rounded-lg overflow-hidden">
+                <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
                   <table className="w-full text-xs">
-                    <thead className="bg-green-50 sticky top-0">
-                      <tr>
-                        <th className="text-left px-3 py-2 text-green-700 font-semibold w-10">#</th>
-                        <th className="text-left px-3 py-2 text-green-700 font-semibold">Village ID</th>
-                        <th className="text-left px-3 py-2 text-green-700 font-semibold pl-6">Village Name</th>
+                    <thead>
+                      <tr className="bg-gradient-to-r from-emerald-600 to-emerald-500 text-white">
+                        <th className="text-left px-4 py-2.5 font-semibold w-8">#</th>
+                        <th className="text-left px-4 py-2.5 font-semibold">Village ID</th>
+                        <th className="text-left px-4 py-2.5 font-semibold">Village Name</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-100">
                       {villageData.map((item, i) => (
-                        <tr key={item.id} className="hover:bg-gray-50">
-                          <td className="px-3 py-2 text-gray-400">{i + 1}</td>
-                          <td className="px-3 py-2 font-mono text-gray-800">{item.villageId}</td>
-                          <td className="px-3 py-2 text-gray-800 pl-6 font-medium">{item.villageName}</td>
+                        <tr key={item.id} className="hover:bg-emerald-50/30 transition-colors">
+                          <td className="px-4 py-2.5 text-gray-400">{i + 1}</td>
+                          <td className="px-4 py-2.5">
+                            <span className="font-mono text-gray-700 bg-gray-100 px-2 py-0.5 rounded text-[11px]">{item.villageId}</span>
+                          </td>
+                          <td className="px-4 py-2.5 text-gray-800 font-medium">{item.villageName}</td>
                         </tr>
                       ))}
                     </tbody>
                   </table>
                 </div>
               ) : (
-                <div className="text-center py-10 text-gray-400 text-sm">No filter-matched villages found.</div>
+                <div className="flex flex-col items-center justify-center py-16 text-gray-400">
+                  <p className="text-sm font-medium">No filter-matched villages found</p>
+                </div>
               )
             )}
 
-            {/* ── Tab: Waterbodies ────────────────────────────── */}
+            {/* Waterbodies Tab */}
             {activeTab === 'waterbodies' && (
               waterbodyData.length > 0 ? (
-                <div className="border border-gray-200 rounded-lg overflow-hidden">
+                <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
                   <table className="w-full text-xs">
-                    <thead className="bg-cyan-50 sticky top-0">
-                      <tr>
-                        <th className="text-left px-3 py-2 text-cyan-700 font-semibold w-10">#</th>
-                        <th className="text-left px-3 py-2 text-cyan-700 font-semibold">SWB ID</th>
-                        <th className="text-left px-3 py-2 text-cyan-700 font-semibold pl-6">Waterbody Name</th>
-                        <th className="text-left px-3 py-2 text-cyan-700 font-semibold pl-6">Coordinates</th>
+                    <thead>
+                      <tr className="bg-gradient-to-r from-cyan-600 to-cyan-500 text-white">
+                        <th className="text-left px-4 py-2.5 font-semibold w-8">#</th>
+                        <th className="text-left px-4 py-2.5 font-semibold">SWB ID</th>
+                        <th className="text-left px-4 py-2.5 font-semibold">Waterbody Name</th>
+                        <th className="text-left px-4 py-2.5 font-semibold">Coordinates</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-100">
                       {waterbodyData.map((swb, i) => (
-                        <tr key={swb.swbId} className="hover:bg-gray-50">
-                          <td className="px-3 py-2 text-gray-400">{i + 1}</td>
-                          <td className="px-3 py-2 font-mono text-gray-800">{swb.swbId}</td>
-                          <td className="px-3 py-2 text-gray-800 pl-6 font-medium">{swb.swbName || 'Unknown'}</td>
-                          <td className="px-3 py-2 text-gray-500 pl-6 font-mono text-[10px]">
-                            {swb.latitude?.toFixed(4)}, {swb.longitude?.toFixed(4)}
+                        <tr key={swb.swbId} className="hover:bg-cyan-50/30 transition-colors">
+                          <td className="px-4 py-2.5 text-gray-400">{i + 1}</td>
+                          <td className="px-4 py-2.5">
+                            <span className="font-mono text-gray-700 bg-gray-100 px-2 py-0.5 rounded text-[11px]">{swb.swbId}</span>
+                          </td>
+                          <td className="px-4 py-2.5 text-gray-800 font-medium">{swb.swbName || 'Unknown'}</td>
+                          <td className="px-4 py-2.5 font-mono text-gray-400 text-[10px]">
+                            {swb.latitude?.toFixed(5)}, {swb.longitude?.toFixed(5)}
                           </td>
                         </tr>
                       ))}
@@ -1009,61 +929,37 @@ const KYLRightSidebar = ({
                   </table>
                 </div>
               ) : (
-                <div className="text-center py-10 text-gray-400 text-sm font-medium">No waterbodies found in the selection.</div>
+                <div className="flex flex-col items-center justify-center py-16 text-gray-400">
+                  <p className="text-sm font-medium">No waterbodies in selection</p>
+                </div>
               )
             )}
-
           </div>
 
-          {/* Footer with 5 Sheet Counts */}
-          <div className="px-5 py-4 border-t border-gray-200 bg-gray-50 flex justify-between items-center flex-shrink-0">
-            <div className="flex gap-4 items-center">
-              {/* Sheet 1: Selected MWS */}
-              <div className="flex flex-col">
-                <span className="text-[9px] uppercase text-gray-400 font-bold tracking-wider">MWS</span>
-                <span className="text-blue-600 font-bold text-base leading-tight">{sheet1Count}</span>
-              </div>
-
-              {/* Sheet 2: Selected Villages (Conditional) */}
-              {hasVillageFilter && (
-                <>
-                  <div className="w-[1px] bg-gray-200 h-6"></div>
-                  <div className="flex flex-col">
-                    <span className="text-[9px] uppercase text-gray-400 font-bold tracking-wider">Villages</span>
-                    <span className="text-green-600 font-bold text-base leading-tight">{sheet2Count}</span>
+          {/* ── Footer ── */}
+          <div className="px-6 py-3 border-t border-gray-100 bg-white flex justify-between items-center flex-shrink-0">
+            {/* Excel sheet counts */}
+            <div className="flex items-center gap-3">
+              {[
+                { label: "MWS", count: sheet1Count, color: "text-blue-600" },
+                { label: "Villages", count: sheet2Count, color: "text-emerald-600", show: hasVillageFilter },
+                { label: "Waterbodies", count: sheet3Count, color: "text-cyan-600", show: hasWaterbodyFilter },
+                { label: "MWS ∩ Villages", count: sheet4Count, color: "text-violet-600" },
+                { label: "MWS ∩ Waterbodies", count: sheet5Count, color: "text-indigo-600" },
+              ].filter(s => s.show !== false).map((stat, i, arr) => (
+                <React.Fragment key={stat.label}>
+                  <div className="flex flex-col items-center">
+                    <span className="text-[9px] uppercase text-gray-400 font-bold tracking-widest leading-none mb-0.5">{stat.label}</span>
+                    <span className={`${stat.color} font-bold text-base leading-none`}>{stat.count}</span>
                   </div>
-                </>
-              )}
-
-              {/* Sheet 3: Selected Waterbodies (Conditional) */}
-              {hasWaterbodyFilter && (
-                <>
-                  <div className="w-[1px] bg-gray-200 h-6"></div>
-                  <div className="flex flex-col">
-                    <span className="text-[9px] uppercase text-gray-400 font-bold tracking-wider">Waterbodies</span>
-                    <span className="text-cyan-600 font-bold text-base leading-tight">{sheet3Count}</span>
-                  </div>
-                </>
-              )}
-
-              {/* Sheet 4: M-V Intersects */}
-              <div className="w-[1px] bg-gray-200 h-6"></div>
-              <div className="flex flex-col">
-                <span className="text-[9px] uppercase text-gray-400 font-bold tracking-wider">MWS Int. Villages</span>
-                <span className="text-purple-600 font-bold text-base leading-tight">{sheet4Count}</span>
-              </div>
-
-              {/* Sheet 5: M-W Intersects */}
-              <div className="w-[1px] bg-gray-200 h-6"></div>
-              <div className="flex flex-col">
-                <span className="text-[9px] uppercase text-gray-400 font-bold tracking-wider">MWS Int. Waterbodies</span>
-                <span className="text-indigo-600 font-bold text-base leading-tight">{sheet5Count}</span>
-              </div>
+                  {i < arr.length - 1 && <div className="w-px h-6 bg-gray-200" />}
+                </React.Fragment>
+              ))}
             </div>
 
             <button
               onClick={() => setShowSelectionPopup(false)}
-              className="px-8 py-2 bg-indigo-600 text-white text-sm font-bold rounded-lg shadow-md hover:bg-indigo-700 active:transform active:scale-95 transition-all"
+              className="px-6 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold rounded-lg transition-colors shadow-sm"
             >
               Close
             </button>
@@ -1073,154 +969,112 @@ const KYLRightSidebar = ({
     );
   };
 
+  // ─── Shared section header component ─────────────────────────────────────
+  const SectionHeader = ({ title, count, action }) => (
+    <div className="flex items-center justify-between mb-2">
+      <div className="flex items-center gap-2">
+        <span className="text-xs font-semibold text-gray-700">{title}</span>
+        {count !== undefined && (
+          <span className="text-[10px] font-bold bg-indigo-100 text-indigo-600 px-1.5 py-0.5 rounded-full">{count}</span>
+        )}
+      </div>
+      {action}
+    </div>
+  );
+
   return (
     <div className="w-[320px] flex flex-col gap-2">
       <SelectionPopup />
-      {/* Universal Back Button - Shows only when both panels are selected */}
+
+      {/* Universal Back Button */}
       {showBothPanels && (
-        <div className="bg-white rounded-lg border border-gray-100 p-3">
+        <div className="bg-white rounded-xl border border-gray-100 p-3 shadow-sm">
           <button
             onClick={handleUniversalBack}
-            className="flex items-center gap-2 text-gray-700 hover:text-gray-900"
+            className="flex items-center gap-2 text-gray-600 hover:text-gray-900 text-sm font-medium transition-colors"
           >
-            <ArrowLeft className="h-5 w-5" />
-            <span className="text-sm font-medium">Back to Map</span>
+            <ArrowLeft className="h-4 w-4" />
+            Back to Map
           </button>
         </div>
       )}
 
-      {/* MWS Profile Panel - Shows first when both are selected */}
       {selectedMWSProfile && (
-        <KYLMWSProfilePanel
-          mwsData={selectedMWSProfile}
-          onBack={onResetMWS}
-          hideBackButton={showBothPanels}
-        />
+        <KYLMWSProfilePanel mwsData={selectedMWSProfile} onBack={onResetMWS} hideBackButton={showBothPanels} />
       )}
 
-      {/* Waterbody Panel - Shows second when both are selected */}
       {selectedWaterbodyProfile && (
-        <KYLWaterbodyPanel
-          waterbody={selectedWaterbodyProfile}
-          onBack={onResetWaterbody}
-          hideBackButton={showBothPanels}
-        />
+        <KYLWaterbodyPanel waterbody={selectedWaterbodyProfile} onBack={onResetWaterbody} hideBackButton={showBothPanels} />
       )}
 
-      {/* Default view - Shows only when neither MWS nor Waterbody is selected */}
       {!selectedMWSProfile && !selectedWaterbodyProfile && (
-        <div className="bg-white rounded-lg border border-gray-100 p-3">
-          <button
-            className="w-full py-2 px-2 text-indigo-600 bg-indigo-100 rounded-lg text-xs font-medium text-left mb-1"
-          >
-            Click on a micro-watershed (blue outline) to view its report.
-          </button>
-          <div className="bg-white rounded-lg border border-gray-100 p-3">
-            <div className="space-y-4">
-              <div className="flex items-center gap-3">
-                <label className="text-sm text-gray-600 min-w-[45px]">
-                  State
-                </label>
-                <SelectButton
-                  currVal={state || { label: "Select State" }}
-                  stateData={statesData}
-                  handleItemSelect={handleItemSelect}
-                  setState={(val) => {
-                    setState(val);
-                  }}
-                  className="w-full border border-gray-200 rounded-md py-1.5 px-3"
-                />
-              </div>
-              <div className="flex items-center gap-3">
-                <label className="text-sm text-gray-600 min-w-[45px]">
-                  District
-                </label>
-                <SelectButton
-                  currVal={district || { label: "Select District" }}
-                  stateData={state !== null ? state.district : null}
-                  handleItemSelect={handleItemSelect}
-                  setState={(val) => {
-                    setDistrict(val);
-                  }}
-                  className="w-full border border-gray-200 rounded-md py-1.5 px-3"
-                />
-              </div>
-              <div className="flex items-center gap-3">
-                <label className="text-sm text-gray-600 min-w-[45px]">
-                  Tehsil
-                </label>
-                <SelectButton
-                  currVal={block || { label: "Select Tehsil" }}
-                  stateData={district !== null ? district.blocks : null}
-                  handleItemSelect={handleItemSelect}
-                  setState={(val) => {
-                    setBlock(val);
-                  }}
-                  className="w-full border border-gray-200 rounded-md py-1.5 px-3"
-                />
-              </div>
+        <div className="flex flex-col gap-2">
+
+          {/* ── Hint banner ── */}
+          <div className="bg-indigo-50 border border-indigo-100 rounded-xl px-3 py-2">
+            <p className="text-[11px] text-indigo-600 font-medium">
+              Click on a micro-watershed (blue outline) to view its report.
+            </p>
+          </div>
+
+          {/* ── Location selector ── */}
+          <div className="bg-white rounded-xl border border-gray-100 p-4 shadow-sm">
+            <div className="space-y-3">
+              {[
+                { label: "State", val: state, setVal: setState, data: statesData },
+                { label: "District", val: district, setVal: setDistrict, data: state?.district ?? null },
+                { label: "Tehsil", val: block, setVal: setBlock, data: district?.blocks ?? null },
+              ].map(({ label, val, setVal, data }) => (
+                <div key={label} className="flex items-center gap-3">
+                  <label className="text-xs font-medium text-gray-500 w-12 shrink-0">{label}</label>
+                  <SelectButton
+                    currVal={val || { label: `Select ${label}` }}
+                    stateData={data}
+                    handleItemSelect={handleItemSelect}
+                    setState={setVal}
+                    className="w-full"
+                  />
+                </div>
+              ))}
             </div>
+
             {block && (
-              <div className="mt-6 flex flex-col gap-2">
-                <div className="flex gap-2">
+              <div className="mt-4 flex flex-col gap-2">
+                <div className="grid grid-cols-2 gap-2">
                   <button
-                    className="flex-1 flex items-center justify-center gap-1 text-indigo-600 py-2 text-sm hover:bg-indigo-50 rounded-md transition-colors"
                     onClick={handleTehsilReport}
+                    className="flex items-center justify-center gap-1.5 py-2 text-xs font-semibold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 rounded-lg transition-colors border border-indigo-100"
                   >
-                    <svg
-                      className="w-4 h-4"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                      xmlns="http://www.w3.org/2000/svg"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                      />
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M2.458 12C3.732 7.943 7.523 5 12 5s8.268 2.943 9.542 7c-1.274 4.057-5.065 7-9.542 7s-8.268-2.943-9.542-7z"
-                      />
+                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5s8.268 2.943 9.542 7c-1.274 4.057-5.065 7-9.542 7s-8.268-2.943-9.542-7z" />
                     </svg>
-                    View Tehsil Report
+                    Tehsil Report
                   </button>
+
                   <button
-                    onClick={() => toggleWaterbodies()}
+                    onClick={toggleWaterbodies}
                     disabled={loadingWB}
-                    className={`flex-1 flex items-center justify-center gap-1 py-2 text-sm 
-                              rounded-md transition-colors hover:bg-indigo-50 
-                              ${showWB ? "text-red-600" : "text-indigo-600"}`}
+                    className={`flex items-center justify-center gap-1.5 py-2 text-xs font-semibold rounded-lg transition-colors border ${
+                      showWB
+                        ? 'text-red-600 bg-red-50 hover:bg-red-100 border-red-100'
+                        : 'text-indigo-600 bg-indigo-50 hover:bg-indigo-100 border-indigo-100'
+                    }`}
                   >
                     {loadingWB ? (
-                      <>
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                        Loading…
-                      </>
+                      <><Loader2 className="w-3.5 h-3.5 animate-spin" />Loading…</>
                     ) : showWB ? (
                       <>
-                        <svg xmlns="http://www.w3.org/2000/svg"
-                          width="18" height="18" viewBox="0 0 24 24"
-                          fill="none" stroke="currentColor" strokeWidth="2"
-                          strokeLinecap="round" strokeLinejoin="round">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                           <path d="M12 2C12 2 7 8 7 12a5 5 0 0 0 8.6 3.5" />
-                          <path d="M5 12a7 7 0 0 0 11.6 4.5" />
                           <line x1="3" y1="3" x2="21" y2="21" />
                         </svg>
-                        Hide Waterbodies
+                        Hide WBs
                       </>
                     ) : (
                       <>
-                        <svg xmlns="http://www.w3.org/2000/svg"
-                          width="18" height="18" viewBox="0 0 24 24"
-                          fill="none" stroke="currentColor" strokeWidth="2"
-                          strokeLinecap="round" strokeLinejoin="round">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                           <path d="M12 2C12 2 7 8 7 12a5 5 0 0 0 10 0c0-4-5-10-5-10z" />
-                          <path d="M5 12a7 7 0 0 0 14 0" />
                         </svg>
                         Show Waterbodies
                       </>
@@ -1230,160 +1084,127 @@ const KYLRightSidebar = ({
 
                 <button
                   onClick={toggleConnectivity}
-                  className={`w-full flex items-center justify-center gap-1 py-2 text-sm 
-                              rounded-md transition-colors hover:bg-indigo-50
-                              ${showConnectivity ? "text-red-600" : "text-indigo-600"}`}
+                  className={`w-full flex items-center justify-center gap-1.5 py-2 text-xs font-semibold rounded-lg transition-colors border ${
+                    showConnectivity
+                      ? 'text-red-600 bg-red-50 hover:bg-red-100 border-red-100'
+                      : 'text-indigo-600 bg-indigo-50 hover:bg-indigo-100 border-indigo-100'
+                  }`}
                 >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="18"
-                    height="18"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <circle cx="5" cy="12" r="2" />
-                    <circle cx="19" cy="5" r="2" />
-                    <circle cx="19" cy="19" r="2" />
-                    <line x1="7" y1="12" x2="17" y2="6" />
-                    <line x1="7" y1="12" x2="17" y2="18" />
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="5" cy="12" r="2" /><circle cx="19" cy="5" r="2" /><circle cx="19" cy="19" r="2" />
+                    <line x1="7" y1="12" x2="17" y2="6" /><line x1="7" y1="12" x2="17" y2="18" />
                   </svg>
                   {showConnectivity ? "Hide MWS Connectivity" : "Show MWS Connectivity"}
                 </button>
               </div>
             )}
           </div>
-          <div className="bg-white rounded-lg border border-gray-100 p-3">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-medium">
-                Selected Indicators ({getFormattedSelectedFilters().length})
-              </span>
-              {getFormattedSelectedFilters().length > 0 && (
-                <button
-                  onClick={() => setShowSelectionPopup(true)}
-                  className="flex items-center gap-1 px-2 py-1 text-xs text-indigo-600 hover:bg-indigo-50 rounded-md transition-colors"
-                  title="View selected MWS and villages"
-                >
-                  <Table className="w-3 h-3" />
-                  View Selection
-                </button>
-              )}
-            </div>
-            <div className="mt-2 max-h-[150px] overflow-y-auto pr-2">
-              <div className="space-y-2">
-                {getFormattedSelectedFilters().map((filter, index) => (
-                  <div key={index} className="flex items-center justify-between gap-2">
-                    <div className="flex-1 flex items-center bg-gray-50 rounded px-2 py-1.5">
+
+          {/* ── Selected Indicators ── */}
+          <div className="bg-white rounded-xl border border-gray-100 p-4 shadow-sm">
+            <SectionHeader
+              title="Selected Indicators"
+              count={getFormattedSelectedFilters().length}
+              action={
+                getFormattedSelectedFilters().length > 0 && (
+                  <button
+                    onClick={() => setShowSelectionPopup(true)}
+                    className="flex items-center gap-1 px-2 py-1 text-[11px] font-semibold text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors border border-indigo-100"
+                  >
+                    <Table className="w-3 h-3" />
+                    View Selection
+                  </button>
+                )
+              }
+            />
+
+            {getFormattedSelectedFilters().length > 0 ? (
+              <>
+                <div className="max-h-[160px] overflow-y-auto pr-1 space-y-1.5">
+                  {getFormattedSelectedFilters().map((filter, index) => (
+                    <div key={index} className="flex items-start gap-2 bg-gray-50 rounded-lg px-3 py-2 group">
                       <div className="flex-1 min-w-0">
-                        <div className="flex flex-col gap-y-0.5 text-[10px]">
-                          <div className="flex gap-x-1">
-                            <span className="text-gray-900 font-medium">
-                              {filter.filterName}
-                            </span>
-                            <span className="text-gray-400">-</span>
-                          </div>
-                          {filter.values.map((value, valueIndex) => (
-                            <span key={valueIndex} className="text-gray-500 pl-1">
-                              {value}
-                            </span>
+                        <p className="text-[11px] font-semibold text-gray-700 truncate">{filter.filterName}</p>
+                        <div className="flex flex-wrap gap-1 mt-1">
+                          {filter.values.map((value, vi) => (
+                            <span key={vi} className="text-[10px] bg-indigo-100 text-indigo-700 px-1.5 py-0.5 rounded-full font-medium">{value}</span>
                           ))}
                         </div>
                       </div>
                       <button
                         onClick={() => handleIndicatorRemoval(filter)}
-                        className={`text-gray-400 hover:text-gray-600 ml-2 ${toggleStates[filter.name] && filter.layer_store?.[0] !== "waterbody"
-                          ? "invisible"
-                          : "visible"
-                          }`}
+                        className={`text-gray-300 hover:text-red-400 mt-0.5 transition-colors shrink-0 ${
+                          toggleStates[filter.name] && filter.layer_store?.[0] !== "waterbody" ? "invisible" : ""
+                        }`}
                       >
-                        <svg
-                          className="w-3 h-3"
-                          fill="none"
-                          viewBox="0 0 12 12"
-                        >
-                          <path
-                            d="M8.5 3.5l-5 5M3.5 3.5l5 5"
-                            stroke="currentColor"
-                            strokeWidth="1.5"
-                            strokeLinecap="round"
-                          />
-                        </svg>
+                        <X className="w-3.5 h-3.5" />
                       </button>
                     </div>
+                  ))}
+                </div>
 
-                    {/* {filter.name !== "area_wide_scale_restoration" && filter.name !== "area_protection" && 
-                    <ToggleButton
-                      isOn={toggleStates[filter.name]}
-                      toggleSwitch={() => handleLayerSelection(filter)}
-                    />} */}
-                  </div>
-                ))}
-              </div>
-            </div>
-            {getFormattedSelectedFilters().length > 0 && (
-              <div className="mt-4 text-xs text-gray-600">
-                {selectedMWS !== null && selectedMWS.length === 0 && selectedVillages !== null && selectedVillages.size === 0
-                  ? "There are no micro-watersheds and villages that matches your selected Filters."
-                  : `The map on the left shows ${selectedMWS.length} micro-watersheds and ${selectedVillages.size} corresponding villages based on your selected filters.`}
-              </div>
+                <div className="mt-3 pt-3 border-t border-gray-100">
+                  {selectedMWS !== null && selectedMWS.length === 0 && selectedVillages !== null && selectedVillages.size === 0 ? (
+                    <p className="text-[11px] text-amber-600 bg-amber-50 px-3 py-2 rounded-lg border border-amber-100">
+                      No micro-watersheds or villages match the selected filters.
+                    </p>
+                  ) : (
+                    <div className="flex gap-2">
+                      <div className="flex-1 bg-blue-50 border border-blue-100 rounded-lg px-3 py-2 text-center">
+                        <p className="text-lg font-bold text-blue-600 leading-none">{selectedMWS?.length ?? 0}</p>
+                        <p className="text-[10px] text-blue-400 font-medium mt-0.5">Watersheds</p>
+                      </div>
+                      <div className="flex-1 bg-emerald-50 border border-emerald-100 rounded-lg px-3 py-2 text-center">
+                        <p className="text-lg font-bold text-emerald-600 leading-none">{selectedVillages?.size ?? 0}</p>
+                        <p className="text-[10px] text-emerald-400 font-medium mt-0.5">Villages</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </>
+            ) : (
+              <p className="text-[11px] text-gray-400 italic text-center py-3">
+                No indicators selected. Use the left panel to apply filters.
+              </p>
             )}
           </div>
 
-          <div className="bg-white rounded-lg border border-gray-100 p-3 mt-2">
-            <span className="text-sm font-medium">
-              Selected Patterns ({getFormattedSelectedPatterns().length})
-            </span>
-            <div className="mt-2 max-h-[150px] overflow-y-auto pr-2">
-              <div className="space-y-2">
+          {/* ── Selected Patterns ── */}
+          {getFormattedSelectedPatterns().length > 0 && (
+            <div className="bg-white rounded-xl border border-gray-100 p-4 shadow-sm">
+              <SectionHeader title="Selected Patterns" count={getFormattedSelectedPatterns().length} />
+              <div className="max-h-[140px] overflow-y-auto pr-1 space-y-1.5">
                 {getFormattedSelectedPatterns().map((pattern, index) => (
-                  <div key={index} className="flex items-center justify-between gap-2">
-                    <div className="flex-1 flex items-center bg-gray-50 rounded px-2 py-1.5">
-                      <div className="flex-1 min-w-0">
-                        <div className="flex flex-wrap gap-x-1 text-[10px]">
-                          <span className="text-gray-900 font-medium">
-                            {pattern.category}
-                          </span>
-                          <span className="text-gray-400">-</span>
-                        </div>
-                      </div>
-                      <button
-                        onClick={() => handlePatternRemoval(pattern)}
-                        className={`text-gray-400 hover:text-gray-600 ml-2 ${toggleStates[pattern.patternName] ? "invisible" : "visible"
-                          }`}
-                      >
-                        <svg
-                          className="w-3 h-3"
-                          fill="none"
-                          viewBox="0 0 12 12"
-                        >
-                          <path
-                            d="M8.5 3.5l-5 5M3.5 3.5l5 5"
-                            stroke="currentColor"
-                            strokeWidth="1.5"
-                            strokeLinecap="round"
-                          />
-                        </svg>
-                      </button>
+                  <div key={index} className="flex items-center gap-2 bg-gray-50 rounded-lg px-3 py-2">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[11px] font-semibold text-gray-700 truncate">{pattern.category}</p>
+                      {pattern.patternName && pattern.patternName !== pattern.category && (
+                        <p className="text-[10px] text-gray-400 mt-0.5">{pattern.patternName}</p>
+                      )}
                     </div>
+                    <button
+                      onClick={() => handlePatternRemoval(pattern)}
+                      className={`text-gray-300 hover:text-red-400 transition-colors shrink-0 ${
+                        toggleStates[pattern.patternName] ? "invisible" : ""
+                      }`}
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
                   </div>
                 ))}
               </div>
             </div>
-          </div>
+          )}
 
+          {/* ── Clicked Waterbody (legacy) ── */}
           {clickedWaterbodyId && (
-            <div className="p-3 bg-blue-50 border border-blue-200 rounded mt-3">
-              <p className="font-semibold text-blue-800">
-                Waterbody Selected: {clickedWaterbodyId}
-              </p>
+            <div className="bg-sky-50 border border-sky-200 rounded-xl p-3">
+              <p className="text-xs font-semibold text-sky-800 mb-2">Waterbody: {clickedWaterbodyId}</p>
               <button
                 onClick={() => window.open(waterbodyDashboardUrl, "_blank")}
-                className="mt-2 px-3 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                className="w-full py-1.5 bg-sky-600 hover:bg-sky-700 text-white text-xs font-semibold rounded-lg transition-colors"
               >
-                Click to View Dashboard →
+                View Dashboard →
               </button>
             </div>
           )}
@@ -1393,4 +1214,4 @@ const KYLRightSidebar = ({
   );
 };
 
-export default KYLRightSidebar; 
+export default KYLRightSidebar;
