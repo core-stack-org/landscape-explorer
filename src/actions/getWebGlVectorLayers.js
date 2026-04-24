@@ -4,7 +4,7 @@ import WebGLVectorLayer from "ol/layer/WebGLVector.js";
 
 const mwsStyle = {
   "stroke-color": [74,144,226,1],
-  "stroke-width": 1,
+  "stroke-width": 2,
   "fill-color": [85,152,229,0.2],
 };
 
@@ -12,6 +12,24 @@ const waterbodyStyle = {
   "stroke-color": [246, 252, 83, 0.8],
   "stroke-width": 2,
   "fill-color": [246, 252, 83, 0.45],
+};
+
+const drainageStyle = {
+  "stroke-color": [
+    "match",
+    ["get", "ORDER"],
+    1, "#03045E",
+    2, "#023E8A",
+    3, "#0077B6",
+    4, "#0096C7",
+    5, "#00B4D8",
+    6, "#48CAE4",
+    7, "#90E0EF",
+    8, "#ADE8F4",
+    9, "#CAF0F8",
+    "#ffffff99"
+  ],
+  "stroke-width": 2
 };
 
 export default async function getWebGlPolygonLayers(layer_store, layer_name) {
@@ -53,6 +71,8 @@ export default async function getWebGlPolygonLayers(layer_store, layer_name) {
 
   if (layer_store === "swb") {
     style = waterbodyStyle;
+  } else if (layer_store === "drainage") {
+    style = drainageStyle;
   }
 
   const layer = new WebGLVectorLayer({

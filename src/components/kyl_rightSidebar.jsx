@@ -42,10 +42,10 @@ const KYLRightSidebar = ({
   showConnectivity,
   setShowConnectivity,
   mwsArrowLayerRef,
-  mwsVillageIntersections = [],
   villageJson = [],
   dataJson = [],
   selectedWaterbodyIds,
+  mwsDrainageLayerRef
 }) => {
   const [loadingWB, setLoadingWB] = React.useState(false);
   const [showSelectionPopup, setShowSelectionPopup] = React.useState(false);
@@ -53,15 +53,69 @@ const KYLRightSidebar = ({
 
   const showBothPanels = selectedMWSProfile && selectedWaterbodyProfile;
 
-  const transformName = (name) => {
-    if (!name) return name;
-    return name
-      .replace(/[()]/g, "")
-      .replace(/\s+/g, "_")
-      .replace(/_+/g, "_")
-      .replace(/^_|_$/g, "")
-      .toLowerCase();
+   const transformName = (name) => {
+      if (!name) return name;
+      return name
+        .replace(/[()]/g, "")
+        .replace(/\s+/g, "_")
+        .replace(/_+/g, "_")
+        .replace(/^_|_$/g, "")
+        .toLowerCase()
   };
+
+
+  const mwsVillageIntersections = React.useMemo(() => {
+    if (!selectedMWS || selectedMWS.length === 0 || !dataJson || !Array.isArray(dataJson)) return [];
+
+    return selectedMWS.map(mwsId => {
+      const mwsRecord = dataJson.find(d => String(d.mws_id) === String(mwsId));
+      if (!mwsRecord) return { mwsId, villages: [], waterbodies: [] };
+
+      // ── Villages ──
+      const villages = (mwsRecord.mws_intersect_villages || []).map(villageId => {
+        let villageName = '';
+
+        // Try villageJson first
+        if (villageJson && Array.isArray(villageJson)) {
+          const v = villageJson.find(v => String(v.village_id) === String(villageId));
+          if (v) villageName = v.village_name || v.vill_name || v.name || '';
+        }
+
+        // Fall back to boundary layer features
+        if (!villageName && boundaryLayerRef?.current) {
+          try {
+            const f = boundaryLayerRef.current.getSource().getFeatures()
+              .find(feat => {
+                const p = feat.getProperties();
+                return String(p.vill_ID ?? p.village_id) === String(villageId);
+              });
+            if (f) {
+              const p = f.getProperties();
+              villageName = p.vill_name || p.village_name || p.name || '';
+            }
+          } catch (_) {}
+        }
+
+        return { villageId: String(villageId), villageName: villageName || 'Unknown' };
+      });
+
+      // ── Waterbodies ──
+      const waterbodies = (mwsRecord.mws_intersect_swb || []).map(swb => {
+        if (typeof swb === 'object' && swb !== null) {
+          return {
+            swbId:      String(swb.swbId ?? swb.id ?? ''),
+            swbName:    swb.swbName || swb.name || '',
+            latitude:   Number(swb.latitude  ?? swb.lat  ?? 0),
+            longitude:  Number(swb.longitude ?? swb.long ?? swb.lng ?? 0),
+            ...swb,
+          };
+        }
+        return { swbId: String(swb), swbName: '', latitude: 0, longitude: 0 };
+      });
+
+      return { mwsId: String(mwsId), villages, waterbodies };
+    });
+  }, [selectedMWS, dataJson, villageJson, boundaryLayerRef]);
 
   const handleUniversalBack = () => {
     onResetMWS();
@@ -115,12 +169,29 @@ const KYLRightSidebar = ({
       console.warn("Waterbodies layer not loaded yet");
       return;
     }
-    const source = waterbodiesLayerRef.current.getSource();
+
     if (!showWB) {
+      const source = waterbodiesLayerRef.current.getSource();
+
+      // If features are already cached (second+ show), skip the loader entirely
+      if (source.getState() === "ready" && source.getFeatures().length > 0) {
+        mapRef.current.removeLayer(boundaryLayerRef.current);
+        mapRef.current.addLayer(waterbodiesLayerRef.current);
+        mapRef.current.addLayer(boundaryLayerRef.current);
+        setShowWB(true);
+        return;
+      }
+
+      // First show — source still loading
       setLoadingWB(true);
-      source.once("change", () => {
-        if (source.getState() === "ready") setLoadingWB(false);
-      });
+      const onSourceChange = () => {
+        if (source.getState() === "ready") {
+          setLoadingWB(false);
+          source.un("change", onSourceChange); // clean up explicitly
+        }
+      };
+      source.on("change", onSourceChange);
+
       mapRef.current.removeLayer(boundaryLayerRef.current);
       mapRef.current.addLayer(waterbodiesLayerRef.current);
       mapRef.current.addLayer(boundaryLayerRef.current);
@@ -135,6 +206,7 @@ const KYLRightSidebar = ({
     if (!mwsArrowLayerRef?.current) { console.warn("Arrow layer not ready"); return; }
     const newVisibility = !showConnectivity;
     mwsArrowLayerRef.current.setVisible(newVisibility);
+    mwsDrainageLayerRef.current.setVisible(newVisibility)
     setShowConnectivity(newVisibility);
   };
 
@@ -646,12 +718,6 @@ const KYLRightSidebar = ({
 
     const hasVillagePattern = selectedPatternsCount.some(p => p.level);
 
-    const checkWaterbodyMatch = (swb) => {
-      if (!hasWaterbodyFilter) return false;
-      if (!selectedWaterbodyIds || selectedWaterbodyIds.size === 0) return false;
-      return selectedWaterbodyIds.has(String(swb.swbId));
-    };
-
     const sheet1Count = mwsData.length;
     const sheet2Count = villageData.length;
     const sheet3Count = waterbodyData.length;
@@ -744,7 +810,7 @@ const KYLRightSidebar = ({
                 <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
                   <table className="w-full text-xs">
                     <thead>
-                      <tr className="bg-gradient-to-r from-blue-600 to-blue-500 text-white">
+                      <tr className="bg-gradient-to-r from-purple-600 to-purple-500 text-white">
                         <th className="text-left px-4 py-2.5 font-semibold w-8">#</th>
                         <th className="text-left px-4 py-2.5 font-semibold">Watershed ID</th>
                         <th className="text-center px-4 py-2.5 font-semibold">Report</th>
@@ -959,7 +1025,7 @@ const KYLRightSidebar = ({
 
             <button
               onClick={() => setShowSelectionPopup(false)}
-              className="px-6 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold rounded-lg transition-colors shadow-sm"
+              className="px-6 py-2 bg-purple-600 hover:bg-purple-700 text-white text-sm font-semibold rounded-lg transition-colors shadow-sm"
             >
               Close
             </button>
@@ -1069,7 +1135,7 @@ const KYLRightSidebar = ({
                           <path d="M12 2C12 2 7 8 7 12a5 5 0 0 0 8.6 3.5" />
                           <line x1="3" y1="3" x2="21" y2="21" />
                         </svg>
-                        Hide WBs
+                        Hide Waterbodies
                       </>
                     ) : (
                       <>

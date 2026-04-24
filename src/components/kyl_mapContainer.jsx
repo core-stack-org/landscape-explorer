@@ -167,7 +167,7 @@ const MapZoomControls = ({ mapRef }) => {
 };
 
 // Updated MapLegend component
-const MapLegend = ({ showMWS, showVillages, currentLayer, mappedAssets, mappedDemands }) => {
+const MapLegend = ({ showMWS, showVillages, currentLayer }) => {
   // Add state for collapsed status
   const [isCollapsed, setIsCollapsed] = useState(false);
 
@@ -1398,65 +1398,6 @@ const MapLegend = ({ showMWS, showVillages, currentLayer, mappedAssets, mappedDe
                       style={{ backgroundColor: "#A855F7" }}
                     />
                     <span className="text-sm text-gray-600">Off Drainage</span>
-                  </div>
-                </div>
-              )}
-
-              {/* Mapped Assets */}
-              {mappedAssets && (
-                <div className="space-y-2">
-                  <h4 className="text-xs font-medium text-gray-600">Mapped Assets</h4>
-                  <div className="flex items-center gap-2">
-                    <img
-                      src={settlementIcon}
-                      alt="Settlement"
-                      className="w-6 h-6"
-                      draggable={false}
-                    />
-                    <span className="text-sm text-gray-600">Settlement</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <img
-                      src={wellIcon}
-                      alt="Settlement"
-                      className="w-6 h-6"
-                      draggable={false}
-                    />
-                    <span className="text-sm text-gray-600">Well</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <img
-                      src={waterbodyIcon}
-                      alt="Settlement"
-                      className="w-6 h-6"
-                      draggable={false}
-                    />
-                    <span className="text-sm text-gray-600">Water Structure</span>
-                  </div>
-                </div>
-              )}
-
-              {/* Proposed Works */}
-              {mappedDemands && (
-                <div className="space-y-2">
-                  <h4 className="text-xs font-medium text-gray-600">Proposed Works</h4>
-                  <div className="flex items-center gap-2">
-                    <img
-                      src={RechargeIcon}
-                      alt="Settlement"
-                      className="w-6 h-6"
-                      draggable={false}
-                    />
-                    <span className="text-sm text-gray-600">Recharge Structure</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <img
-                      src={IrrigationIcon}
-                      alt="Settlement"
-                      className="w-6 h-6"
-                      draggable={false}
-                    />
-                    <span className="text-sm text-gray-600">Irrigation Structure</span>
                   </div>
                 </div>
               )}
