@@ -173,28 +173,24 @@ const KYLRightSidebar = ({
     if (!showWB) {
       const source = waterbodiesLayerRef.current.getSource();
 
-      // If features are already cached (second+ show), skip the loader entirely
       if (source.getState() === "ready" && source.getFeatures().length > 0) {
-        mapRef.current.removeLayer(boundaryLayerRef.current);
+        waterbodiesLayerRef.current.setZIndex(9998);
         mapRef.current.addLayer(waterbodiesLayerRef.current);
-        mapRef.current.addLayer(boundaryLayerRef.current);
         setShowWB(true);
         return;
       }
 
-      // First show — source still loading
       setLoadingWB(true);
       const onSourceChange = () => {
         if (source.getState() === "ready") {
           setLoadingWB(false);
-          source.un("change", onSourceChange); // clean up explicitly
+          source.un("change", onSourceChange);
         }
       };
       source.on("change", onSourceChange);
 
-      mapRef.current.removeLayer(boundaryLayerRef.current);
+      waterbodiesLayerRef.current.setZIndex(9998);
       mapRef.current.addLayer(waterbodiesLayerRef.current);
-      mapRef.current.addLayer(boundaryLayerRef.current);
       setShowWB(true);
     } else {
       mapRef.current.removeLayer(waterbodiesLayerRef.current);

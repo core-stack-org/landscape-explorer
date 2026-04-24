@@ -207,6 +207,26 @@ const layerStyles = (feature, vectorStyle, idx = 0, villageJson, dataJson) => {
 
         case 25:
             avg_Res = feature.values_["agri_industry_agri_support_infrastructure_distance"]
+            break;
+
+        case 26:
+            for(let i = 0 ; i < dataJson.length; ++i){
+                if(dataJson[i].mws_id === feature.values_.uid){
+                    avg_Res = dataJson[i].avg_rabi_surface_water_mws;
+                    break;
+                }
+            }
+            break;
+
+        case 27:
+            for(let i = 0 ; i < dataJson.length; ++i){
+                if(dataJson[i].mws_id === feature.values_.uid){
+                    avg_Res = dataJson[i].avg_zaid_surface_water_mws;
+                    break;
+                }
+            }
+            break;
+
     }
     
     for(tempIdx = 0; tempIdx < vectorStyle.length; ++tempIdx){

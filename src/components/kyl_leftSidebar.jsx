@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import KYLIndicatorFilter from './kyl_indicatorFilter';
 import KYLPatternDisplay from './kyl_patternDisplay';
+import { ChevronRight, ArrowLeft } from 'lucide-react';
 
 const KYLLeftSidebar = ({
     indicatorType,
@@ -18,7 +19,6 @@ const KYLLeftSidebar = ({
     mapRef,
     filtersEnabled,
     getFormattedSelectedFilters,
-    // Pattern props
     getAllPatternTypes,
     handlePatternRemoval,
     getSubcategoriesForCategory,
@@ -28,26 +28,18 @@ const KYLLeftSidebar = ({
     isPatternSelected,
     isFilterProcessing
 }) => {
-    // State to track active tab (Patterns or Filters)
     const [activeTab, setActiveTab] = useState('Filters');
-    
-    // State to track selected pattern subcategory
     const [selectedSubcategory, setSelectedSubcategory] = useState(null);
 
     useEffect(() => {
         setActiveTab('Filters');
         setSelectedSubcategory(null);
-        setIndicatorType(null);   // IMPORTANT
+        setIndicatorType(null);
     }, []);
+
     const combinedSelectedValues = {
         ...filterSelections.selectedMWSValues,
         ...filterSelections.selectedVillageValues
-    };
-
-    // Reset subcategory when changing main category or tab
-    const handleCategoryChange = (category) => {
-        setIndicatorType(category);
-        setSelectedSubcategory(null);
     };
 
     const handleTabChange = (tab) => {
@@ -58,239 +50,189 @@ const KYLLeftSidebar = ({
 
     const isDisabled = !filtersEnabled || isFilterProcessing;
 
+    // Count active filters per category for badges
+    const getActiveCategoryCount = (category) => {
+        return getAllFilters()
+            .filter(f => f.category === category)
+            .reduce((count, f) => {
+                const mwsVals = filterSelections.selectedMWSValues?.[f.name];
+                const vilVals = filterSelections.selectedVillageValues?.[f.name];
+                const wbVals = filterSelections.selectedWaterbodyValues?.[f.name];
+                if (mwsVals?.length || vilVals?.length || wbVals?.length) return count + 1;
+                return count;
+            }, 0);
+    };
+
+    // ── Determine which "view" to show ──────────────────────────────────────
+    const showCategoryList = !indicatorType;
+    const showFilterList   = !!indicatorType && activeTab === 'Filters';
+    const showSubcatList   = !!indicatorType && activeTab === 'Patterns' && !selectedSubcategory;
+    const showPatternList  = !!indicatorType && activeTab === 'Patterns' && !!selectedSubcategory;
+
     return (
-        <div className="w-[320px] bg-white rounded-lg border border-gray-100 p-4">
-            <div className="space-y-2">
-                {/* Tab Buttons */}
-                <div className="flex gap-2 mb-4">
-                    <button
-                        className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-colors
-                            ${activeTab === 'Patterns'
-                                ? 'bg-indigo-600 text-white'
-                                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}
-                        `}
-                        onClick={() => handleTabChange('Patterns')}
-                    >
-                        Patterns (Experimental)
-                    </button>
-                    <button
-                        className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-colors
-                            ${activeTab === 'Filters'
-                                ? 'bg-indigo-600 text-white'
-                                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}
-                        `}
-                        onClick={() => handleTabChange('Filters')}
-                    >
-                        Filters
-                    </button>
-                </div>
+        <div className="w-[320px] bg-white rounded-xl border border-gray-100 shadow-sm flex flex-col h-full overflow-hidden">
 
-                {/* Filters Tab Content */}
-                {activeTab === 'Filters' && (
-                    <>
-                        {(Object.keys(filterSelections.selectedMWSValues).length === 0 && Object.keys(filterSelections.selectedVillageValues).length === 0) &&
-                            <button
-                                className="w-full py-2 px-2 text-indigo-600 bg-indigo-100 rounded-lg text-xs font-medium text-left mb-1"
-                            >
-                                Select filters from amongst the different indicators shown below
-                            </button>
+            {/* ── Tabs — always visible ───────────────────────────────────── */}
+            <div className="flex gap-2 p-3 pb-0 shrink-0">
+                {['Filters', 'Patterns'].map(tab => (
+                    <button
+                        key={tab}
+                        onClick={() => handleTabChange(tab)}
+                        className={`flex-1 py-2 rounded-lg text-xs font-semibold transition-colors
+                            ${activeTab === tab
+                                ? 'bg-indigo-600 text-white shadow-sm'
+                                : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}
+                    >
+                        {tab === 'Patterns' ? 'Patterns (Beta)' : 'Filters'}
+                    </button>
+                ))}
+            </div>
+
+            {/* ── Breadcrumb header — shown when inside a category ────────── */}
+            {indicatorType && (
+                <div className="flex items-center gap-2 px-3 pt-3 pb-1 shrink-0">
+                    <button
+                        onClick={() => {
+                            setIndicatorType(null);
+                            setSelectedSubcategory(null);
+                        }}
+                        className="flex items-center gap-1 text-indigo-600 hover:text-indigo-800 text-xs font-medium transition-colors"
+                    >
+                        <ArrowLeft className="w-3.5 h-3.5" />
+                        Back
+                    </button>
+                    <span className="text-gray-300">|</span>
+                    <span className="text-xs text-gray-500 font-medium truncate">
+                        {selectedSubcategory
+                            ? <><span className="text-gray-400">{indicatorType}</span> › {selectedSubcategory}</>
+                            : indicatorType
                         }
-                        <div className="flex flex-wrap gap-2 pt-2">
-                            {getAllFilterTypes().map((category) => (
-                                <button
-                                    key={category}
-                                    className={`px-3 py-1.5 rounded-md text-sm border transition-colors
-                                    ${indicatorType === category
-                                        ? 'bg-indigo-50 text-indigo-600 border-indigo-200'
-                                        : 'text-gray-600 border-gray-200 hover:bg-gray-50'}
-                                    disabled:opacity-50 disabled:cursor-not-allowed
-                                    disabled:bg-gray-100 disabled:text-gray-400 disabled:border-gray-200
-                                    disabled:hover:bg-gray-100 disabled:pointer-events-none
-                                    `}
-                                    onClick={() => setIndicatorType(category)}
-                                    disabled={isDisabled}
-                                >
-                                    {category}
-                                </button>
-                            ))}
-                        </div>
+                    </span>
+                    {selectedSubcategory && (
+                        <>
+                            <span className="text-gray-300">|</span>
+                            <button
+                                onClick={() => setSelectedSubcategory(null)}
+                                className="text-indigo-500 hover:text-indigo-700 text-xs font-medium ml-auto shrink-0"
+                            >
+                                Categories
+                            </button>
+                        </>
+                    )}
+                </div>
+            )}
 
-                        {/* {indicatorType && (
-                            <div className="flex justify-end">
-                                <button
-                                    onClick={handleClearAll}
-                                    className="text-xs text-indigo-600 hover:text-indigo-700 underline"
-                                    disabled={!filtersEnabled}
-                                >
-                                    Clear all
-                                </button>
-                            </div>
-                        )} */}
+            <div className="w-full h-px bg-gray-100 mt-2 shrink-0" />
 
-                        {indicatorType && (
-                            <div className="bg-gray-50 rounded-lg p-4 mt-2 relative">
-                                <div className="flex items-center justify-between mb-4 pr-6">
-                                    <h4 className="text-sm font-semibold text-gray-700">
-                                        {indicatorType}
-                                    </h4>
-                                    <button
-                                        onClick={() => setIndicatorType(null)}
-                                        className="text-gray-400 hover:text-gray-600 transition-colors"
-                                    >
-                                        <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none">
-                                            <path
-                                                d="M18 6L6 18M6 6l12 12"
-                                                stroke="currentColor"
-                                                strokeWidth={2}
-                                                strokeLinecap="round"
-                                            />
-                                        </svg>
-                                    </button>
-                                </div>
+            {/* ── Scrollable content area ──────────────────────────────────── */}
+            <div className="flex-1 overflow-y-auto overflow-x-hidden min-h-0 p-3 custom-scrollbar">
 
-                                <div
-                                    className="overflow-y-auto custom-scrollbar"
-                                    style={{ maxHeight: 'calc(90vh - 280px)' }}
-                                >
-                                    <div className="space-y-6">
-                                        {getAllFilters()
-                                            .filter((filter) => filter.category === indicatorType)
-                                            .map((filter) => (
-                                                <div key={filter.name} className="space-y-3">
-                                                    <KYLIndicatorFilter
-                                                        filter={{
-                                                            ...filter,
-                                                            selectedValue: combinedSelectedValues[filter.name]?.[0]
-                                                        }}
-                                                        onFilterChange={handleFilterSelection}
-                                                        isDisabled={isDisabled}
-                                                        getFormattedSelectedFilters={getFormattedSelectedFilters}
-                                                        toggleStates={toggleStates}
-                                                        handleLayerSelection={handleLayerSelection}
-                                                    />
-                                                </div>
-                                            ))}
-                                    </div>
-                                </div>
-                            </div>
+                {/* ── VIEW A: Category list ─────────────────────────────────── */}
+                {showCategoryList && (
+                    <div className="space-y-1.5">
+                        {/* hint */}
+                        {activeTab === 'Filters' &&
+                         Object.keys(filterSelections.selectedMWSValues).length === 0 &&
+                         Object.keys(filterSelections.selectedVillageValues).length === 0 && (
+                            <p className="text-[11px] text-indigo-600 bg-indigo-50 px-3 py-2 rounded-lg mb-3 border border-indigo-100">
+                                Select a category below to apply filters
+                            </p>
                         )}
-                    </>
+                        {activeTab === 'Patterns' && (
+                            <p className="text-[11px] text-indigo-600 bg-indigo-50 px-3 py-2 rounded-lg mb-3 border border-indigo-100">
+                                Select a pattern category to explore
+                            </p>
+                        )}
+
+                        {(activeTab === 'Filters' ? getAllFilterTypes() : (getAllPatternTypes?.() || []))
+                            .map((category) => {
+                                const activeCount = activeTab === 'Filters' ? getActiveCategoryCount(category) : 0;
+                                return (
+                                    <button
+                                        key={category}
+                                        onClick={() => {
+                                            setIndicatorType(category);
+                                            setSelectedSubcategory(null);
+                                        }}
+                                        disabled={isDisabled}
+                                        className={`w-full flex items-center justify-between px-4 py-3 rounded-lg
+                                            border text-sm font-medium transition-all
+                                            ${isDisabled
+                                                ? 'bg-gray-50 text-gray-400 border-gray-100 cursor-not-allowed'
+                                                : 'bg-white text-gray-700 border-gray-200 hover:border-indigo-300 hover:bg-indigo-50 hover:text-indigo-700'
+                                            }`}
+                                    >
+                                        <span>{category}</span>
+                                        <div className="flex items-center gap-2">
+                                            {activeCount > 0 && (
+                                                <span className="text-[10px] font-bold bg-indigo-600 text-white px-1.5 py-0.5 rounded-full leading-none">
+                                                    {activeCount}
+                                                </span>
+                                            )}
+                                            <ChevronRight className="w-4 h-4 text-gray-400" />
+                                        </div>
+                                    </button>
+                                );
+                            })
+                        }
+                    </div>
                 )}
 
-                {/* Patterns Tab Content */}
-                {activeTab === 'Patterns' && (
-                    <>
-                        <button
-                            className="w-full py-2 px-2 text-indigo-600 bg-indigo-100 rounded-lg text-sm font-medium text-left"
-                        >
-                            Click to Know More About Patterns
-                        </button>
-
-                        {/* Main Category Buttons (Agriculture, Livelihood) */}
-                        <div className="flex flex-wrap gap-2 pt-2">
-                            {getAllPatternTypes && getAllPatternTypes().map((category) => (
-                                <button
-                                    key={category}
-                                    className={`px-3 py-1.5 rounded-md text-sm border transition-colors
-                                    ${indicatorType === category
-                                        ? 'bg-indigo-50 text-indigo-600 border-indigo-200'
-                                        : 'text-gray-600 border-gray-200 hover:bg-gray-50'}
-                                    disabled:opacity-50 disabled:cursor-not-allowed
-                                    disabled:bg-gray-100 disabled:text-gray-400 disabled:border-gray-200
-                                    disabled:hover:bg-gray-100 disabled:pointer-events-none
-                                    `}
-                                    onClick={() => handleCategoryChange(category)}
-                                    disabled={isDisabled}
-                                >
-                                    {category}
-                                </button>
-                            ))}
-                        </div>
-
-                        {/* Show subcategories when a main category is selected */}
-                        {indicatorType && !selectedSubcategory && (
-                            <div className="bg-gray-50 rounded-lg p-4 mt-4 relative">
-                                <button
-                                    onClick={() => setIndicatorType(null)}
-                                    className="absolute top-2 right-2 text-gray-400 hover:text-gray-600"
-                                >
-                                    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none">
-                                        <path
-                                            d="M18 6L6 18M6 6l12 12"
-                                            stroke="currentColor"
-                                            strokeWidth={2}
-                                            strokeLinecap="round"
-                                        />
-                                    </svg>
-                                </button>
-
-                                <div className="text-xs font-medium text-gray-600 mb-3">
-                                    Select a subcategory:
+                {/* ── VIEW B: Filter list ───────────────────────────────────── */}
+                {showFilterList && (
+                    <div className="space-y-6">
+                        {getAllFilters()
+                            .filter(f => f.category === indicatorType)
+                            .map(filter => (
+                                <div key={filter.name}>
+                                    <KYLIndicatorFilter
+                                        filter={{
+                                            ...filter,
+                                            selectedValue: combinedSelectedValues[filter.name]?.[0]
+                                        }}
+                                        onFilterChange={handleFilterSelection}
+                                        isDisabled={isDisabled}
+                                        getFormattedSelectedFilters={getFormattedSelectedFilters}
+                                        toggleStates={toggleStates}
+                                        handleLayerSelection={handleLayerSelection}
+                                    />
                                 </div>
+                            ))
+                        }
+                    </div>
+                )}
 
-                                <div className="space-y-2">
-                                    {getSubcategoriesForCategory && getSubcategoriesForCategory(indicatorType).map((subcategory) => (
-                                        <button
-                                            key={subcategory}
-                                            className="w-full text-left px-4 py-3 bg-white rounded-md border border-gray-200 hover:border-indigo-300 hover:bg-indigo-50 transition-colors text-sm font-medium text-gray-700"
-                                            onClick={() => setSelectedSubcategory(subcategory)}
-                                            disabled={isDisabled}
-                                        >
-                                            {subcategory}
-                                        </button>
-                                    ))}
-                                </div>
-                            </div>
-                        )}
+                {/* ── VIEW C: Pattern subcategory list ─────────────────────── */}
+                {showSubcatList && (
+                    <div className="space-y-1.5">
+                        {getSubcategoriesForCategory?.(indicatorType).map(subcategory => (
+                            <button
+                                key={subcategory}
+                                onClick={() => setSelectedSubcategory(subcategory)}
+                                disabled={isDisabled}
+                                className="w-full flex items-center justify-between px-4 py-3 bg-white rounded-lg border border-gray-200 hover:border-indigo-300 hover:bg-indigo-50 transition-all text-sm font-medium text-gray-700 hover:text-indigo-700"
+                            >
+                                <span>{subcategory}</span>
+                                <ChevronRight className="w-4 h-4 text-gray-400" />
+                            </button>
+                        ))}
+                    </div>
+                )}
 
-                        {/* Show patterns when subcategory is selected */}
-                        {indicatorType && selectedSubcategory && (
-                            <div className="bg-gray-50 rounded-lg p-4 mt-4 relative">
-                                <button
-                                    onClick={() => setSelectedSubcategory(null)}
-                                    className="absolute top-2 right-2 text-gray-400 hover:text-gray-600"
-                                    title="Back to subcategories"
-                                >
-                                    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none">
-                                        <path
-                                            d="M15 18l-6-6 6-6"
-                                            stroke="currentColor"
-                                            strokeWidth={2}
-                                            strokeLinecap="round"
-                                            strokeLinejoin="round"
-                                        />
-                                    </svg>
-                                </button>
-
-                                <div className="mb-3">
-                                    <div className="text-sm font-semibold text-gray-800">
-                                        {selectedSubcategory}
-                                    </div>
-                                    <div className="text-xs text-gray-500">
-                                        {indicatorType}
-                                    </div>
-                                </div>
-
-                                <div
-                                    className="overflow-y-auto custom-scrollbar"
-                                    style={{ maxHeight: 'calc(90vh - 320px)' }}
-                                >
-                                    <div className="space-y-4">
-                                        {getPatternsForSubcategory && getPatternsForSubcategory(indicatorType, selectedSubcategory).map((pattern, index) => (
-                                            <KYLPatternDisplay
-                                                key={pattern.name || index}
-                                                pattern={pattern}
-                                                isDisabled={isDisabled}
-                                                isSelected={isPatternSelected && isPatternSelected(pattern.name, patternSelections)}
-                                                onPatternSelect={handlePatternSelection}
-                                                handlePatternRemoval={handlePatternRemoval}
-                                            />
-                                        ))}
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-                    </>
+                {/* ── VIEW D: Pattern list ──────────────────────────────────── */}
+                {showPatternList && (
+                    <div className="space-y-4">
+                        {getPatternsForSubcategory?.(indicatorType, selectedSubcategory).map((pattern, index) => (
+                            <KYLPatternDisplay
+                                key={pattern.name || index}
+                                pattern={pattern}
+                                isDisabled={isDisabled}
+                                isSelected={isPatternSelected?.(pattern.name, patternSelections)}
+                                onPatternSelect={handlePatternSelection}
+                                handlePatternRemoval={handlePatternRemoval}
+                            />
+                        ))}
+                    </div>
                 )}
             </div>
         </div>

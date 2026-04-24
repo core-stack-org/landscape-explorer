@@ -284,10 +284,16 @@ const MapLegend = ({ showMWS, showVillages, currentLayer }) => {
     { color: "#006400", label: "%age literacy level >70" },
   ];
 
-  const WaterLengendItems = [
-    { color: "#74CCF4", label: "Kharif" },
-    { color: "#1ca3ec", label: "Kharif and Rabi" },
-    { color: "#0f5e9c", label: "Kharif, Rabi, Zaid" },
+  const WaterLengendRabiItems = [
+    { color: "#74CCF4", label: "Less than 30%" },
+    { color: "#1ca3ec", label: "Between 30% to 70%" },
+    { color: "#0f5e9c", label: "More than 70%" },
+  ];
+
+  const WaterLengendZaidItems = [
+    { color: "#74CCF4", label: "Less than 25%" },
+    { color: "#1ca3ec", label: "Between 25% to 50%" },
+    { color: "#0f5e9c", label: "More than 50%" },
   ];
 
   const NregaLegendItems = [
@@ -481,11 +487,14 @@ const MapLegend = ({ showMWS, showVillages, currentLayer }) => {
       layer.name.includes("panchayat_boundaries")
   );
 
-  const isWaterLayerActive = currentLayer?.some(
+  const isWaterRabiActive = currentLayer?.some(
     (layer) =>
-      layer.name === "avg_rabi_surface_water_mws" ||
-      layer.name === "avg_zaid_surface_water_mws" ||
-      layer.name.includes("water_bodies")
+      layer.name === "avg_rabi_surface_water_mws"
+  );
+
+  const isWaterZaidActive = currentLayer?.some(
+    (layer) =>
+      layer.name === "avg_zaid_surface_water_mws"
   );
 
   const isNREGALayerActive = currentLayer?.some(
@@ -932,12 +941,36 @@ const MapLegend = ({ showMWS, showVillages, currentLayer }) => {
               )}
 
               {/* Water Pixel Legend Section */}
-              {isWaterLayerActive && (
+              {isWaterRabiActive && (
                 <div className="space-y-2">
                   <h4 className="text-xs font-medium text-gray-600">
                     Water Pixels
                   </h4>
-                  {WaterLengendItems.map((item, index) => (
+                  {WaterLengendRabiItems.map((item, index) => (
+                    <div
+                      key={`water-${index}`}
+                      className="flex items-center gap-2"
+                    >
+                      <div
+                        className="w-4 h-4 rounded"
+                        style={{
+                          backgroundColor: item.color,
+                          border: `1px solid rgba(0,0,0,0.2)`,
+                        }}
+                      />
+                      <span className="text-sm text-gray-600">
+                        {item.label}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {isWaterZaidActive && (
+                <div className="space-y-2">
+                  <h4 className="text-xs font-medium text-gray-600">
+                    Water Pixels
+                  </h4>
+                  {WaterLengendZaidItems.map((item, index) => (
                     <div
                       key={`water-${index}`}
                       className="flex items-center gap-2"

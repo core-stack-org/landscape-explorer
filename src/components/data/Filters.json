@@ -319,21 +319,33 @@
                     }
                 ],
                 "layer_store": [
-                    "swb",
-                    "LULC"
+                    "mws_layers"
                 ],
                 "layer_name": [
-                    "surface_waterbodies",
-                    "level_3"
+                    "deltaG_well_depth"
                 ],
                 "vectorStyle": [
                     {
-                        "fill": "rgba(100, 149, 237, 0.5)",
-                        "stroke": "rgba(100, 149, 237, 1)"
+                        "fill": "rgba(116, 204, 244, 0.5)",
+                        "stroke": "rgba(116, 204, 244, 1)",
+                        "lower": 0,
+                        "upper": 30
+                    },
+                    {
+                        "fill": "rgba(28, 163, 236, 0.5)",
+                        "stroke": "rgba(28, 163, 236, 1)",
+                        "lower": 30,
+                        "upper": 70
+                    },
+                    {
+                        "fill": "rgba(15, 94, 156, 0.5)",
+                        "stroke": "rgba(15, 94, 156, 1)",
+                        "lower": 70,
+                        "upper": 9999999
                     }
                 ],
-                "rasterStyle": "lulc_water_pixels",
-                "styleIdx": 0
+                "rasterStyle": "",
+                "styleIdx": 26
             },
             {
                 "name": "avg_zaid_surface_water_mws",
@@ -363,21 +375,33 @@
                     }
                 ],
                 "layer_store": [
-                    "swb",
-                    "LULC"
+                    "mws_layers"
                 ],
                 "layer_name": [
-                    "surface_waterbodies",
-                    "level_3"
+                    "deltaG_well_depth"
                 ],
                 "vectorStyle": [
                     {
-                        "fill": "rgba(100, 149, 237, 0.5)",
-                        "stroke": "rgba(100, 149, 237, 1)"
+                        "fill": "rgba(116, 204, 244, 0.5)",
+                        "stroke": "rgba(116, 204, 244, 1)",
+                        "lower": 0,
+                        "upper": 25
+                    },
+                    {
+                        "fill": "rgba(28, 163, 236, 0.5)",
+                        "stroke": "rgba(28, 163, 236, 1)",
+                        "lower": 25,
+                        "upper": 50
+                    },
+                    {
+                        "fill": "rgba(15, 94, 156, 0.5)",
+                        "stroke": "rgba(15, 94, 156, 1)",
+                        "lower": 50,
+                        "upper": 9999999
                     }
                 ],
-                "rasterStyle": "lulc_water_pixels",
-                "styleIdx": 0
+                "rasterStyle": "",
+                "styleIdx": 27
             },
             {
                 "name": "aquifer_class",
