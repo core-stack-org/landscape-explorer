@@ -62,13 +62,9 @@ const layerStyles = (feature, vectorStyle, idx = 0, villageJson, dataJson) => {
         
         case 6:
             // PERCENT ST POPULATION
-            console.log(feature.values_.P_ST)
-            console.log(feature.values_.TOT_P)
             if(feature.values_.P_ST !== 0){
                 avg_Res = (feature.values_.P_ST/ feature.values_.TOT_P) * 100;
-                console.log(avg_Res)
             }
-            console.log("---------------------------------")
             break;
         
         case 7:
