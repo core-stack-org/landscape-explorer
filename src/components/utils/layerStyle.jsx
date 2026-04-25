@@ -2,8 +2,8 @@ import { Fill, Stroke, Style} from "ol/style.js";
 
 const layerStyles = (feature, vectorStyle, idx = 0, villageJson, dataJson) => {
     
-    let yearsSetArr = ["2017_2018", "2018_2019", "2019_2020", "2020_2021", "2021_2022", "2022_2023"];
-    let years = ["2017","2018","2019","2020","2021","2022"]
+    let yearsSetArr = ["2017_2018", "2018_2019", "2019_2020", "2020_2021", "2021_2022", "2022_2023", "2023_2024", "2024_2025"];
+    let years = ["2017","2018","2019","2020","2021","2022", "2023", "2024"]
     let tempIdx = 0;
     let avg_Res = 0;
     
@@ -51,6 +51,8 @@ const layerStyles = (feature, vectorStyle, idx = 0, villageJson, dataJson) => {
                 let tempDro = (feature.values_["drlb_"+item].match(/2/g) || []).length + (feature.values_["drlb_"+item].match(/3/g)||[]).length;
                 if(tempDro >= 5){avg_Res++;}
             })
+            console.log(feature.values_.uid)
+            console.log(avg_Res)
             break;
 
         case 5:
@@ -60,8 +62,13 @@ const layerStyles = (feature, vectorStyle, idx = 0, villageJson, dataJson) => {
         
         case 6:
             // PERCENT ST POPULATION
-            if(feature.values_.P_ST !== 0)
+            console.log(feature.values_.P_ST)
+            console.log(feature.values_.TOT_P)
+            if(feature.values_.P_ST !== 0){
                 avg_Res = (feature.values_.P_ST/ feature.values_.TOT_P) * 100;
+                console.log(avg_Res)
+            }
+            console.log("---------------------------------")
             break;
         
         case 7:

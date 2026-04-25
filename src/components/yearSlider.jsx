@@ -3,7 +3,7 @@ import { useRecoilState } from "recoil";
 import { yearAtom, yearAtomFamily } from "../store/locationStore.jsx";
 
 const YearSlider = ({ currentLayer, sliderId = null,interventionYear }) => {
-  const yearDataLulc = [
+  const yearDataLulcFull = [
     { label: "2017-2018", value: "17_18" },
     { label: "2018-2019", value: "18_19" },
     { label: "2019-2020", value: "19_20" },
@@ -14,6 +14,26 @@ const YearSlider = ({ currentLayer, sliderId = null,interventionYear }) => {
     { label: "2024-2025", value: "24_25" },
     { label: "2025-2026", value: "25_26" },
   ];
+
+  // Determine if current layer is avg_double_cropped
+  const isAvgDoubleCropped = (() => {
+    if (!currentLayer) return false;
+    
+    if (typeof currentLayer === "object" && currentLayer.name) {
+      return currentLayer.name === "avg_double_cropped";
+    }
+
+    if (Array.isArray(currentLayer)) {
+      return currentLayer.some(layer => layer.name === "avg_double_cropped");
+    }
+
+    return false;
+  })();
+
+  // Filter year data based on current layer
+  const yearDataLulc = isAvgDoubleCropped 
+    ? yearDataLulcFull.slice(0, 8) // Show only up to 2024-2025
+    : yearDataLulcFull; // Show all years
 
   useEffect(() => {
     if (!interventionYear) return;
@@ -34,8 +54,6 @@ const YearSlider = ({ currentLayer, sliderId = null,interventionYear }) => {
   const interventionIndex = normIntervention
   ? yearDataLulc.findIndex(y => y.value === normIntervention)
   : -1;
-
-
 
   const [currentValue, setCurrentValue] = useState(0);
   const [showTooltip, setShowTooltip] = useState(false);
@@ -71,7 +89,7 @@ const YearSlider = ({ currentLayer, sliderId = null,interventionYear }) => {
 
   useEffect(() => {
     setYearAtom(yearDataLulc[0].value);
-  }, []);
+  }, [yearDataLulc]);
 
   const handleSliderChange = (e) => {
     const index = parseInt(e.target.value);

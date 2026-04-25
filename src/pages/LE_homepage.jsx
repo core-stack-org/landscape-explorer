@@ -57,8 +57,13 @@ export default function KYLHomePage() {
   };
 
   const handleNavigate = (path, buttonName) => {
-    trackEvent("Navigation", "button_click", buttonName);
-    navigate(path);
+    if(buttonName === "Jaltol App"){
+      window.open(path, "_blank", "noopener,noreferrer");
+    }
+    else{
+      trackEvent("Navigation", "button_click", buttonName);
+      navigate(path);
+    }
   };
 
   return (

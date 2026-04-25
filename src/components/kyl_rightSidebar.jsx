@@ -610,7 +610,7 @@ const KYLRightSidebar = ({
       const sheet4Data = [];
       mwsVillageIntersections.forEach(group => {
         group.villages.forEach(v => {
-          sheet4Data.push({ "MWS ID": group.mwsId, "VILLAGE ID": v.villageId, "VILLAGE NAME": v.villageName });
+          sheet4Data.push({ "MICRO-WATERSHED ID": group.mwsId, "VILLAGE ID": v.villageId, "VILLAGE NAME": v.villageName });
         });
       });
 
@@ -618,7 +618,7 @@ const KYLRightSidebar = ({
       const sheet5Data = [];
       mwsVillageIntersections.forEach(group => {
         group.waterbodies.forEach(swb => {
-          sheet5Data.push({ "MWS ID": group.mwsId, "SWB ID": swb.swbId, "WATERBODY NAME": swb.swbName || "" });
+          sheet5Data.push({ "MICRO-WATERSHED ID": group.mwsId, "SWB ID": swb.swbId, "WATERBODY NAME": swb.swbName || "" });
         });
       });
 

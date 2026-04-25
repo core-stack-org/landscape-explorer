@@ -83,7 +83,7 @@ const KYLLeftSidebar = ({
                                 ? 'bg-indigo-600 text-white shadow-sm'
                                 : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}
                     >
-                        {tab === 'Patterns' ? 'Patterns (Beta)' : 'Filters'}
+                        {tab === 'Patterns' ? 'Patterns (Experimental)' : 'Filters'}
                     </button>
                 ))}
             </div>

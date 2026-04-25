@@ -3,13 +3,6 @@ import { useState } from "react";
 import KYLLocationSearchBar from "./kyl_location";
 import YearSlider from "./yearSlider";
 
-//? Icons Imports
-import settlementIcon from "../assets/settlement_icon.svg";
-import wellIcon from "../assets/well_proposed.svg";
-import waterbodyIcon from "../assets/waterbodies_proposed.svg";
-import RechargeIcon from "../assets/recharge_icon.svg"
-import IrrigationIcon from "../assets/irrigation_icon.svg"
-
 // Layer Controls component
 const LayerControls = ({
   showMWS,
@@ -234,8 +227,8 @@ const MapLegend = ({ showMWS, showVillages, currentLayer }) => {
   const rainfallLegendItems = [
     { color: "#B0E0E6", label: "Semi-arid" },
     { color: "#87CEFA", label: "Arid" },
-    { color: "#1E90FF", label: "Moderate" },
-    { color: "#0073E6", label: "High" },
+    { color: "#2b93faff", label: "Moderate" },
+    { color: "#036bd2ff", label: "High" },
     { color: "#004080", label: "Very high" },
   ];
 
@@ -258,16 +251,16 @@ const MapLegend = ({ showMWS, showVillages, currentLayer }) => {
   ];
 
   const populationLengendItems = [
-    { color: "#C08081", label: "Population < 800 " },
-    { color: "#800020", label: "Population between 800 - 2400" },
-    { color: "#5B0E2D", label: "Population between 2400 - 8900" },
-    { color: "#3D000F", label: "Population between > 8900" },
+    { color: "rgba(192, 128, 129, 0.5)", label: "Population < 800 " },
+    { color: "rgba(128, 0, 32, 0.5)", label: "Population between 800 - 2400" },
+    { color: "rgba(91, 14, 45, 0.5)", label: "Population between 2400 - 8900" },
+    { color: "rgba(61, 0, 15, 0.5)", label: "Population between > 8900" },
   ];
 
   const STpopLengendItems = [
-    { color: "#EEEAC5", label: "%age ST population <18" },
-    { color: "#F7DBA5", label: "%age ST population (18-33)" },
-    { color: "#ECB573", label: "%age ST population > 33" },
+    { color: "rgba(238, 234, 197, 0.5)", label: "%age ST population <18" },
+    { color: "rgba(247, 219, 165, 0.5)", label: "%age ST population (18-33)" },
+    { color: "rgba(236, 181, 115, 0.5)", label: "%age ST population > 33" },
   ];
 
   const SCpopLengendItems = [
@@ -307,9 +300,9 @@ const MapLegend = ({ showMWS, showVillages, currentLayer }) => {
   ];
 
   const TrendLegendItems = [
-    { color: "#B8860B", label: "Increasing trend of G" },
-    { color: "#FFECB3", label: "Decreasing trend of G" },
-    { color: "#FFD700", label: "No trend of G" },
+    { color: "#22C55E", label: "Positive Trend" },
+    { color: "#EF4444", label: "Negative Trend" },
+    { color: "#9CA3AF", label: "No Trend" },
   ];
 
   const CropDegradationItems = [
@@ -363,6 +356,30 @@ const MapLegend = ({ showMWS, showVillages, currentLayer }) => {
   const GreenCreditItems = [
     { color: "#ffffff", label: "Areas with no known green credit sites" },
     { color: "#14d11dff", label: "Areas with green credit sites " },
+  ];
+
+  const WideScaleRestoreItems = [
+    { color: "rgba(176, 224, 230, 0.5)", label: "Less than 200 hectares" },
+    { color: "rgba(135, 206, 250, 0.5)", label: "Between 200 to 600 hectares" },
+    { color: "rgba(30, 144, 255, 0.5)", label: "More than 600 hectares" },
+  ];
+
+  const PotentialProtectionItems = [
+    { color: "rgba(176, 224, 230, 0.5)", label: "Less than 400 hectares" },
+    { color: "rgba(135, 206, 250, 0.5)", label: "Between 400 to 800 hectares" },
+    { color: "rgba(30, 144, 255, 0.5)", label: "More than 800 hectares" },
+  ];
+
+  const LandConflictItems = [
+    { color: "#FF0000", label: "Land Conflict" }
+  ];
+
+  const FactoryItems = [
+    { color: "#FF0000", label: "Factory" }
+  ];
+
+  const MiningItems = [
+    { color: "#FF0000", label: "Mine" }
   ];
 
   const FacEssenEduInfra = [
@@ -426,6 +443,7 @@ const MapLegend = ({ showMWS, showVillages, currentLayer }) => {
     { fill: "rgba(102, 187, 106, 0.5)", stroke: "rgba(102, 187, 106, 1)", label: "10-50 kms" },
     { fill: "rgba(46, 125, 50, 0.5)", stroke: "rgba(46, 125, 50, 1)", label: ">50 kms" },
   ];
+
 
   // Check if LULC layer is active
   const isLulcLayerActive = currentLayer?.some(
@@ -578,6 +596,27 @@ const MapLegend = ({ showMWS, showVillages, currentLayer }) => {
   const isFacAgriSuppInfraActive = currentLayer?.some(
     (layer) => layer.name === "agricultural_support_infrastructure" || layer.name.includes("fac_agri_supp_infra")
   );
+
+  const isWideScaleActive = currentLayer?.some(
+    (layer) => layer.name === "area_wide_scale_restoration" || layer.name.includes("area_wide_scale_restoration")
+  );
+
+  const isPotentialProtectionActive = currentLayer?.some(
+    (layer) => layer.name === "area_protection" || layer.name.includes("area_protection")
+  );
+
+  const isLandConflictActive = currentLayer?.some(
+    (layer) => layer.name === "lcw_conflict" || layer.name.includes("lcw_conflict")
+  );
+
+  const isIndustryActive = currentLayer?.some(
+    (layer) => layer.name === "factory_csr" || layer.name.includes("factory_csr")
+  );
+
+  const isMiningActive = currentLayer?.some(
+    (layer) => layer.name === "mining" || layer.name.includes("mining")
+  );
+
 
   return (
     <div
@@ -944,7 +983,7 @@ const MapLegend = ({ showMWS, showVillages, currentLayer }) => {
               {isWaterRabiActive && (
                 <div className="space-y-2">
                   <h4 className="text-xs font-medium text-gray-600">
-                    Water Pixels
+                    Average Water Availability During Rabi
                   </h4>
                   {WaterLengendRabiItems.map((item, index) => (
                     <div
@@ -965,10 +1004,11 @@ const MapLegend = ({ showMWS, showVillages, currentLayer }) => {
                   ))}
                 </div>
               )}
+
               {isWaterZaidActive && (
                 <div className="space-y-2">
                   <h4 className="text-xs font-medium text-gray-600">
-                    Water Pixels
+                    Average Water Availability during Zaid
                   </h4>
                   {WaterLengendZaidItems.map((item, index) => (
                     <div
@@ -1020,7 +1060,7 @@ const MapLegend = ({ showMWS, showVillages, currentLayer }) => {
               {isTrendLayerActive && (
                 <div className="space-y-2">
                   <h4 className="text-xs font-medium text-gray-600">
-                    Groundwater Trend
+                    Water Balance Trend
                   </h4>
                   {TrendLegendItems.map((item, index) => (
                     <div
@@ -1072,7 +1112,7 @@ const MapLegend = ({ showMWS, showVillages, currentLayer }) => {
               {isCropDeforestationActive && (
                 <div className="space-y-2">
                   <h4 className="text-xs font-medium text-gray-600">
-                    Deforestation
+                    Reduction in Tree Cover
                   </h4>
                   {CropDeforestationItems.map((item, index) => (
                     <div
@@ -1098,7 +1138,7 @@ const MapLegend = ({ showMWS, showVillages, currentLayer }) => {
               {isCropAfforestationActive && (
                 <div className="space-y-2">
                   <h4 className="text-xs font-medium text-gray-600">
-                    Afforestation
+                    Increase in tree cover
                   </h4>
                   {CropAfforestationtems.map((item, index) => (
                     <div
@@ -1325,7 +1365,130 @@ const MapLegend = ({ showMWS, showVillages, currentLayer }) => {
                 </div>
               )}
 
+              {isWideScaleActive && (
+                <div className="space-y-2">
+                  <h4 className="text-xs font-medium text-gray-600">
+                    Wide Scale Restoration
+                  </h4>
+                  {WideScaleRestoreItems.map((item, index) => (
+                    <div
+                      key={`stpop-${index}`}
+                      className="flex items-center gap-2"
+                    >
+                      <div
+                        className="w-4 h-4 rounded"
+                        style={{
+                          backgroundColor: item.color,
+                          border: `1px solid rgba(0,0,0,0.2)`,
+                        }}
+                      />
+                      <span className="text-sm text-gray-600">
+                        {item.label}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
 
+              {isPotentialProtectionActive && (
+                <div className="space-y-2">
+                  <h4 className="text-xs font-medium text-gray-600">
+                    Potential for Protection
+                  </h4>
+                  {PotentialProtectionItems.map((item, index) => (
+                    <div
+                      key={`stpop-${index}`}
+                      className="flex items-center gap-2"
+                    >
+                      <div
+                        className="w-4 h-4 rounded"
+                        style={{
+                          backgroundColor: item.color,
+                          border: `1px solid rgba(0,0,0,0.2)`,
+                        }}
+                      />
+                      <span className="text-sm text-gray-600">
+                        {item.label}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {isLandConflictActive && (
+                <div className="space-y-2">
+                  <h4 className="text-xs font-medium text-gray-600">
+                    Land Conflict Points
+                  </h4>
+                  {LandConflictItems.map((item, index) => (
+                    <div
+                      key={`stpop-${index}`}
+                      className="flex items-center gap-2"
+                    >
+                      <div
+                        className="w-4 h-4 rounded"
+                        style={{
+                          backgroundColor: item.color,
+                          border: `1px solid rgba(0,0,0,0.2)`,
+                        }}
+                      />
+                      <span className="text-sm text-gray-600">
+                        {item.label}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {isIndustryActive && (
+                <div className="space-y-2">
+                  <h4 className="text-xs font-medium text-gray-600">
+                    Factory Location Points
+                  </h4>
+                  {FactoryItems.map((item, index) => (
+                    <div
+                      key={`stpop-${index}`}
+                      className="flex items-center gap-2"
+                    >
+                      <div
+                        className="w-4 h-4 rounded"
+                        style={{
+                          backgroundColor: item.color,
+                          border: `1px solid rgba(0,0,0,0.2)`,
+                        }}
+                      />
+                      <span className="text-sm text-gray-600">
+                        {item.label}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {isMiningActive && (
+                <div className="space-y-2">
+                  <h4 className="text-xs font-medium text-gray-600">
+                    Mine Location Points
+                  </h4>
+                  {MiningItems.map((item, index) => (
+                    <div
+                      key={`stpop-${index}`}
+                      className="flex items-center gap-2"
+                    >
+                      <div
+                        className="w-4 h-4 rounded"
+                        style={{
+                          backgroundColor: item.color,
+                          border: `1px solid rgba(0,0,0,0.2)`,
+                        }}
+                      />
+                      <span className="text-sm text-gray-600">
+                        {item.label}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
 
               {activeWBType === "waterbody_type" && (
                   <div className="space-y-2">

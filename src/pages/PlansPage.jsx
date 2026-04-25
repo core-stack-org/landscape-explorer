@@ -1354,17 +1354,15 @@ const PlansPage = () => {
                       <div className="grid grid-cols-2 gap-3 mb-3">
                         <div className="rounded-xl p-3"
                           style={{ background: P.lighter, border: `1px solid ${P.border}` }}>
-                          <p className="text-xs font-medium mb-1" style={{ color: P.muted }}>Completed Plans</p>
+                          <p className="text-xs font-medium mb-1" style={{ color: P.muted }}>DPR Completed</p>
                           <p className="text-3xl font-bold" style={{ color: P.base }}>
-                            {(summary.completed_plans ?? 0).toLocaleString()}
+                            {(summary.dpr_reviewed ?? 0).toLocaleString()}
                           </p>
                         </div>
                         <div className="rounded-xl p-3"
                           style={{ background: P.lighter, border: `1px solid ${P.border}` }}>
-                          <p className="text-xs font-medium mb-1" style={{ color: P.muted }}>DPR's Completed</p>
-                          <p className="text-3xl font-bold" style={{ color: P.base }}>
-                            {summary.dpr_reviewed ?? "--"}
-                          </p>
+                          <p className="text-xs font-medium mb-1" style={{ color: P.muted }}>DPR Submitted</p>
+                          <p className="text-3xl font-bold" style={{ color: P.base }}>--</p>
                         </div>
                       </div>
 
@@ -1511,31 +1509,29 @@ const PlansPage = () => {
                   </>
 
                 ) : (
+
                   <>
                     <div className="rounded-2xl p-5 text-white shadow-lg"
                       style={{ background: `linear-gradient(135deg, ${P.base}, ${P.dark})` }}>
-                      <p className="text-xs font-semibold uppercase tracking-widest mb-1"
-                        style={{ color: "oklch(90% 0.08 301.924)" }}>Total Plans</p>
-                      <p className="text-5xl font-bold tracking-tight">
-                        {(summary.total_plans ?? 0).toLocaleString()}
-                      </p>
-                      <div className="flex gap-4 mt-3 pt-3"
-                        style={{ borderTop: "1px solid oklch(70% 0.12 301.924)" }}>
+                      <div className="flex items-start justify-between gap-4">
                         <div>
-                          <p className="text-xs" style={{ color: "oklch(85% 0.08 301.924)" }}>Completed Plans</p>
-                          <p className="text-lg font-semibold">
-                            {(summary.completed_plans ?? 0).toLocaleString()}
+                          <p className="text-xs font-semibold uppercase tracking-widest mb-1"
+                            style={{ color: "oklch(90% 0.08 301.924)" }}>Total Plans</p>
+                          <p className="text-5xl font-bold tracking-tight">
+                            {(summary.total_plans ?? 0).toLocaleString()}
                           </p>
                         </div>
-                        <div className="w-px" style={{ background: "oklch(70% 0.12 301.924)" }} />
+                        <div className="w-px self-stretch" style={{ background: "oklch(70% 0.12 301.924)" }} />
                         <div>
-                          <p className="text-xs" style={{ color: "oklch(85% 0.08 301.924)" }}>DPR's Completed</p>
-                          <p className="text-lg font-semibold">
-                            {(summary.dpr_reviewed ?? 0).toLocaleString()}
+                          <p className="text-xs font-semibold uppercase tracking-widest mb-1"
+                            style={{ color: "oklch(90% 0.08 301.924)" }}>Total Demands</p>
+                          <p className="text-5xl font-bold tracking-tight">
+                            {((metaStats?.demand_overview?.community_demands ?? 0) + (metaStats?.demand_overview?.individual_demands ?? 0)).toLocaleString()}
                           </p>
                         </div>
                       </div>
                     </div>
+
                     <div className="bg-white rounded-2xl p-4 shadow-sm"
                       style={{ border: `1px solid ${P.border}` }}>
                       <p className="text-xs font-semibold uppercase tracking-widest mb-3"
@@ -1554,31 +1550,52 @@ const PlansPage = () => {
                     <div className="bg-white rounded-2xl p-4 shadow-sm"
                     style={{ border: `1px solid ${P.border}` }}>
                     <p className="text-xs font-semibold uppercase tracking-widest mb-3"
-                      style={{ color: P.muted }}>NRM and Livelihood Demands</p>
+                      style={{ color: P.muted }}>Detailed Project Reports</p>
 
                     <div className="rounded-xl p-3"
                       style={{ background: P.lighter, border: `1px solid ${P.border}` }}>
                       <div className="flex items-center justify-between mb-3">
-                        <p className="text-xs font-semibold" style={{ color: P.text }}>Generated</p>
-                        <p className="text-2xl font-bold" style={{ color: P.base }}>
-                          {(metaStats?.demand_overview?.community_demands ?? 0) + (metaStats?.demand_overview?.individual_demands ?? 0)}
+                        <p className="text-xs font-semibold" style={{ color: P.text }}>DPR Completed</p>
+                        <p className="text-xl font-bold" style={{ color: P.base }}>
+                          {(summary.dpr_reviewed ?? 0).toLocaleString()}
                         </p>
                       </div>
 
                       <div className="rounded-lg p-3"
                         style={{ background: "white", border: `1px solid ${P.border}` }}>
                         <div className="flex items-center justify-between mb-3">
-                          <p className="text-xs font-semibold" style={{ color: P.text }}>Submitted</p>
-                          <p className="text-xl font-bold" style={{ color: P.base }}>--</p>
+                          <p className="text-xs font-semibold" style={{ color: P.text }}>DPR Submitted</p>
+                          <p className="text-lg font-bold" style={{ color: P.base }}>--</p>
                         </div>
 
                         <div className="rounded-lg p-3 flex items-center justify-between"
                           style={{ background: P.lighter, border: `1px solid ${P.border}` }}>
-                          <p className="text-xs font-semibold" style={{ color: P.text }}>Approved</p>
-                          <p className="text-lg font-bold" style={{ color: P.base }}>--</p>
+                          <p className="text-xs font-semibold" style={{ color: P.text }}>DPR Approved</p>
+                          <p className="text-base font-bold" style={{ color: P.base }}>--</p>
                         </div>
-
                       </div>
+
+                    </div>
+                  </div>
+
+                    <div className="bg-white rounded-2xl p-4 shadow-sm"
+                    style={{ border: `1px solid ${P.border}` }}>
+                    <p className="text-xs font-semibold uppercase tracking-widest mb-3"
+                      style={{ color: P.muted }}>NRM and Livelihood Demands</p>
+
+                    <div className="rounded-xl p-3"
+                      style={{ background: P.lighter, border: `1px solid ${P.border}` }}>
+                      <div className="flex items-center justify-between mb-3">
+                        <p className="text-xs font-semibold" style={{ color: P.text }}>Demands Submitted</p>
+                        <p className="text-xl font-bold" style={{ color: P.base }}>--</p>
+                      </div>
+
+                      <div className="rounded-lg p-3 flex items-center justify-between"
+                        style={{ background: "white", border: `1px solid ${P.border}` }}>
+                        <p className="text-xs font-semibold" style={{ color: P.text }}>Demands Approved</p>
+                        <p className="text-lg font-bold" style={{ color: P.base }}>--</p>
+                      </div>
+
                     </div>
                   </div>
 
