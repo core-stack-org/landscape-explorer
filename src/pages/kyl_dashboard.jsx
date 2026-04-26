@@ -111,9 +111,8 @@ const KYLDashboardPage = () => {
   const [selectedWaterbodyIds, setSelectedWaterbodyIds] = useState(new Set([]));
   const [isWBVisualizeOn, setIsWBVisualizeOn] = useState(false);
   const [activeWBVisualize, setActiveWBVisualize] = useState(null);
+  const [selectedWaterbodyData, setSelectedWaterbodyData] = useState([]);
 
-  // ─── O(1) index maps — rebuilt only when dataJson/villageJson changes ───
-  // Keeps filter effects fast without debounce or chunking overhead
 
   const dataJsonIndex = useMemo(() => {
     if (!dataJson || !Array.isArray(dataJson)) return null;
@@ -493,6 +492,56 @@ const KYLDashboardPage = () => {
         }
       });
 
+      if (hasAttrFilter && !hasMWSFilter) {
+        const wbData = [];
+        wbFeatures.forEach(f => {
+          if (f.get('wbMatch') === 1) {
+            const p = f.getProperties();
+            const swbId = String(
+              p.UID ?? p.swb_id ?? p.SWB_UID ?? p.swb_uid ?? p.uid ?? p.id ?? ''
+            );
+            if (swbId) {
+              wbData.push({
+                swbId,
+                swbName:          p.name || p.NAME || p.swb_name || p.SWB_NAME || '',
+                latitude:  (() => {
+                  if (p.latitude ?? p.lat ?? p.centroid_lat) {
+                    return Number(p.latitude ?? p.lat ?? p.centroid_lat);
+                  }
+                  try {
+                    const geom = f.getGeometry();
+                    if (!geom) return 0;
+                    const extent = geom.getExtent();
+                    return (extent[1] + extent[3]) / 2; // center Y = latitude
+                  } catch (_) { return 0; }
+                })(),
+                longitude: (() => {
+                  if (p.longitude ?? p.long ?? p.centroid_long ?? p.lng) {
+                    return Number(p.longitude ?? p.long ?? p.centroid_long ?? p.lng);
+                  }
+                  try {
+                    const geom = f.getGeometry();
+                    if (!geom) return 0;
+                    const extent = geom.getExtent();
+                    return (extent[0] + extent[2]) / 2; // center X = longitude
+                  } catch (_) { return 0; }
+                })(),
+                waterbody_type:   p.waterbody_type,
+                area_ored:        p.area_ored,
+                on_drainage_line: p.on_drainage_line,
+                wbDrainage:       f.get('wbDrainage'),
+                wbTrend:          f.get('wbTrend'),
+                wbSizeCategory:   f.get('wbSizeCategory'),
+                wbCategory:       f.get('wbCategory'),
+              });
+            }
+          }
+        });
+        setSelectedWaterbodyData(wbData);
+      } else if (!hasAttrFilter) {
+        setSelectedWaterbodyData([]);
+      }
+
       wbSource.changed();
 
       const finalMode =
@@ -552,7 +601,7 @@ const KYLDashboardPage = () => {
 
   const resetMWSStyle = () => setHighlightMWS(null);
 
-  // Synchronous — 312 features iterates in <5ms, no chunking needed
+
   const updateFilteredMWS = (filteredIds) => {
     if (!mwsLayerRef.current) return;
     const source = mwsLayerRef.current.getSource();
@@ -1320,6 +1369,8 @@ const KYLDashboardPage = () => {
     }
     if (mwsLayerRef.current) fetchMWSLayer([]);
     setSidebarResetKey(prev => prev + 1);
+    setSelectedWaterbodyIds(new Set([]));
+    setSelectedWaterbodyData([]); 
   };
 
   const searchUserLatLong = async () => {
@@ -2108,6 +2159,7 @@ const KYLDashboardPage = () => {
           mwsArrowLayerRef={mwsArrowLayerRef}
           dataJson={dataJson}
           selectedWaterbodyIds={selectedWaterbodyIds}
+          selectedWaterbodyData={selectedWaterbodyData}
           mwsDrainageLayerRef={mwsDrainageLayerRef}
           villageJson={villageJson}
         />

@@ -45,6 +45,7 @@ const KYLRightSidebar = ({
   villageJson = [],
   dataJson = [],
   selectedWaterbodyIds,
+  selectedWaterbodyData = [],
   mwsDrainageLayerRef
 }) => {
   const [loadingWB, setLoadingWB] = React.useState(false);
@@ -588,6 +589,7 @@ const KYLRightSidebar = ({
       // Uses getWBDisplayValue for correct resolution of precomputed cached props
       // selectedWaterbodyIds now populated from dataJsonIndex — works even when showWB is false
       const uniqueSwbs = new Map();
+      // Primary: from mwsVillageIntersections (when MWS filter is also active)
       mwsVillageIntersections.forEach(group => {
         group.waterbodies.forEach(swb => {
           if (!uniqueSwbs.has(swb.swbId) && selectedWaterbodyIds && selectedWaterbodyIds.has(String(swb.swbId))) {
@@ -604,6 +606,25 @@ const KYLRightSidebar = ({
           }
         });
       });
+
+      // Fallback: WB-only filter active (no MWS selected), read from applyToFeatures output
+      if (uniqueSwbs.size === 0 && selectedWaterbodyData.length > 0) {
+        selectedWaterbodyData.forEach(swb => {
+          if (!uniqueSwbs.has(swb.swbId)) {
+            const row = {
+              "SWB ID": swb.swbId,
+              "WATERBODY NAME": swb.swbName || "Unknown",
+              "LATITUDE": swb.latitude || 0,
+              "LONGITUDE": swb.longitude || 0,
+            };
+            waterbodyFilters.forEach(f => {
+              row[(f.filterName || f.name).toUpperCase()] = getWBDisplayValue(f.name, swb);
+            });
+            uniqueSwbs.set(swb.swbId, row);
+          }
+        });
+      }
+
       const sheet3Data = Array.from(uniqueSwbs.values());
 
       // Sheet 4 — MWS-Village Intersections
@@ -677,6 +698,8 @@ const KYLRightSidebar = ({
     const seenVillageIds = new Set();
 
     const uniqueSwbs = new Map();
+
+    // Primary: from mwsVillageIntersections (when MWS filter is also active)
     mwsVillageIntersections.forEach(group => {
       group.waterbodies.forEach(swb => {
         if (!uniqueSwbs.has(swb.swbId) && selectedWaterbodyIds && selectedWaterbodyIds.has(String(swb.swbId))) {
@@ -684,6 +707,14 @@ const KYLRightSidebar = ({
         }
       });
     });
+
+    // Fallback: WB-only filter active (no MWS selected), read from applyToFeatures output
+    if (uniqueSwbs.size === 0 && selectedWaterbodyData.length > 0) {
+      selectedWaterbodyData.forEach(swb => {
+        if (!uniqueSwbs.has(swb.swbId)) uniqueSwbs.set(swb.swbId, swb);
+      });
+    }
+
     const waterbodyData = Array.from(uniqueSwbs.values());
     const totalItems = mwsData.length + villageData.length + waterbodyData.length;
 
