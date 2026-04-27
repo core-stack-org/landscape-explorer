@@ -1412,14 +1412,14 @@
                 "layer_name": ["facilities"],
                 "vectorStyle": [
                     {
-                        "fill": "rgba(255, 249, 196, 0.5)",
-                        "stroke": "rgba(255, 249, 196, 1)",
+                        "fill": "rgba(232, 238, 186, 0.5)",
+                        "stroke": "rgba(232, 238, 186, 1)",
                         "lower": 0,
                         "upper": 3
                     },
                     {
-                        "fill": "rgba(255, 193, 7, 0.5)",
-                        "stroke": "rgba(255, 193, 7, 1)",
+                        "fill": "rgba(137, 151, 10, 0.5)",
+                        "stroke": "rgba(137, 151, 10, 1)",
                         "lower": 3,
                         "upper": 9999999999
                     }
@@ -1561,14 +1561,14 @@
                 "layer_name": ["facilities"],
                 "vectorStyle": [
                     {
-                        "fill": "rgba(255, 249, 196, 0.5)",
-                        "stroke": "rgba(255, 249, 196, 1)",
+                        "fill": "rgba(232, 238, 186, 0.5)",
+                        "stroke": "rgba(232, 238, 186, 1)",
                         "lower": 0,
                         "upper": 2
                     },
                     {
-                        "fill": "rgba(255, 193, 7, 0.5)",
-                        "stroke": "rgba(255, 193, 7, 1)",
+                        "fill": "rgba(137, 151, 10, 0.5)",
+                        "stroke": "rgba(137, 151, 10, 1)",
                         "lower": 2,
                         "upper": 9999999999
                     }

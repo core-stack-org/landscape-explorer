@@ -169,7 +169,7 @@ const layerStyles = (feature, vectorStyle, idx = 0, villageJson, dataJson) => {
             break;
 
         case 15:
-            avg_Res = Math.max(feature.values_["school_primary_distance"], feature.values_["school_upper_primary_distance"],  feature.values_["school_secondary_distance"]) 
+            avg_Res = Math.max(feature.values_["school_primary_distance"], feature.values_["school_upper_primary_distance"], feature.values_["school_secondary_distance"]) 
             break;
 
         case 16:

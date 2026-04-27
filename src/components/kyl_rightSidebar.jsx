@@ -539,11 +539,33 @@ const KYLRightSidebar = ({
       };
 
       // Sheet 0 — Selected Filters
-      const sheet0Data = selectedFilters.map((f, i) => ({
-        "S.NO": i + 1,
-        "INDICATOR NAME": f.filterName || f.name,
-        "SELECTED VALUES": (f.values || []).join(", "),
-      }));
+      const sheet0Data = [
+        {
+          "S.NO": "",
+          "INDICATOR NAME": "State",
+          "SELECTED VALUES": state?.label || "N/A",
+        },
+        {
+          "S.NO": "",
+          "INDICATOR NAME": "District",
+          "SELECTED VALUES": district?.label || "N/A",
+        },
+        {
+          "S.NO": "",
+          "INDICATOR NAME": "Block / Tehsil",
+          "SELECTED VALUES": block?.label || "N/A",
+        },
+        {
+          "S.NO": "",
+          "INDICATOR NAME": "",
+          "SELECTED VALUES": "",
+        }, // blank separator row
+        ...selectedFilters.map((f, i) => ({
+          "S.NO": i + 1,
+          "INDICATOR NAME": f.filterName || f.name,
+          "SELECTED VALUES": (f.values || []).join(", "),
+        })),
+      ];
 
       // Sheet 1 — Selected MWS
       const sheet1Data = mwsData.map(item => {
@@ -586,8 +608,6 @@ const KYLRightSidebar = ({
       });
 
       // Sheet 3 — Selected Waterbodies
-      // Uses getWBDisplayValue for correct resolution of precomputed cached props
-      // selectedWaterbodyIds now populated from dataJsonIndex — works even when showWB is false
       const uniqueSwbs = new Map();
       // Primary: from mwsVillageIntersections (when MWS filter is also active)
       mwsVillageIntersections.forEach(group => {

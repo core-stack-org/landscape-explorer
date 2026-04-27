@@ -307,7 +307,7 @@ const MapLegend = ({ showMWS, showVillages, currentLayer }) => {
 
   const CropDegradationItems = [
     { color: "#a9a9a9", label: "Crops - Barren" },
-    { color: "#eaa4f0", label: "Crops - Shrubs and Scrubs" },
+    { color: "#4c4ef5", label: "Crops - Shrubs and Scrubs" },
     { color: "#f7fcf5", label: "Double - Single" },
     { color: "#ff4500", label: "Tripple/annual/perennial - Single" },
     { color: "#ffc300", label: "Tripple/annual/perennial - Double" },
@@ -318,7 +318,7 @@ const MapLegend = ({ showMWS, showVillages, currentLayer }) => {
     { color: "#ff0000", label: "Trees - Built Up" },
     { color: "#eee05d", label: "Trees - Crops" },
     { color: "#a9a9a9", label: "Trees - Barren" },
-    { color: "#eaa4f0", label: "Trees - Shrubs and Scrubs" },
+    { color: "#4c4ef5", label: "Trees - Shrubs and Scrubs" },
   ];
 
   const CropAfforestationtems = [
