@@ -747,12 +747,29 @@
                     "Deforestation"
                 ],
                 "vectorStyle": [
-                    {}
+                    {
+                        "fill": "rgba(115, 187, 83, 0.5)",
+                        "stroke": "rgba(115, 187, 83, 1)",
+                        "lower": 0,
+                        "upper": 50
+                    },
+                    {
+                        "fill": "rgba(238, 224, 93, 0.5)",
+                        "stroke": "rgba(238, 224, 93, 1)",
+                        "lower": 50,
+                        "upper": 100
+                    },
+                    {
+                        "fill": "rgba(255, 0, 0, 0.5)",
+                        "stroke": "rgba(255, 0, 0, 1)",
+                        "lower": 100,
+                        "upper": 9999999
+                    }
                 ],
                 "rasterStyle": [
-                    "deforestation"
+                    ""
                 ],
-                "styleIdx": 0
+                "styleIdx": 13
             },
             {
                 "name": "increase_in_tree_cover",
@@ -788,12 +805,29 @@
                     "Afforestation"
                 ],
                 "vectorStyle": [
-                    {}
+                    {
+                        "fill": "rgba(255, 0, 0, 0.5)",
+                        "stroke": "rgba(255, 0, 0, 1)",
+                        "lower": 0,
+                        "upper": 50
+                    },
+                    {
+                        "fill": "rgba(238, 224, 93, 0.5)",
+                        "stroke": "rgba(238, 224, 93, 1)",
+                        "lower": 50,
+                        "upper": 100
+                    },
+                    {
+                        "fill": "rgba(115, 187, 83, 0.5)",
+                        "stroke": "rgba(115, 187, 83, 1)",
+                        "lower": 100,
+                        "upper": 9999999
+                    }
                 ],
                 "rasterStyle": [
-                    "afforestation"
+                    ""
                 ],
-                "styleIdx": 0
+                "styleIdx": 14
             },
             {
                 "name": "area_wide_scale_restoration",
@@ -829,29 +863,12 @@
                     "restoration"
                 ],
                 "vectorStyle": [
-                    {
-                        "fill": "rgba(176, 224, 230, 0.5)",
-                        "stroke": "rgba(176, 224, 230, 1)",
-                        "lower": 0,
-                        "upper": 200
-                    },
-                    {
-                        "fill": "rgba(135, 206, 250, 0.5)",
-                        "stroke": "rgba(135, 206, 250, 1)",
-                        "lower": 200,
-                        "upper": 600
-                    },
-                    {
-                        "fill": "rgba(30, 144, 255, 0.5)",
-                        "stroke": "rgba(30, 144, 255, 1)",
-                        "lower": 600,
-                        "upper": 9999999
-                    }
+                    {}
                 ],
                 "rasterStyle": [
-                    ""
+                    "restoration_style"
                 ],
-                "styleIdx": 14
+                "styleIdx": 0
             },
             {
                 "name": "area_protection",
@@ -887,29 +904,12 @@
                     "restoration"
                 ],
                 "vectorStyle": [
-                    {
-                        "fill": "rgba(176, 224, 230, 0.5)",
-                        "stroke": "rgba(176, 224, 230, 1)",
-                        "lower": 0,
-                        "upper": 400
-                    },
-                    {
-                        "fill": "rgba(135, 206, 250, 0.5)",
-                        "stroke": "rgba(135, 206, 250, 1)",
-                        "lower": 400,
-                        "upper": 800
-                    },
-                    {
-                        "fill": "rgba(30, 144, 255, 0.5)",
-                        "stroke": "rgba(30, 144, 255, 1)",
-                        "lower": 800,
-                        "upper": 9999999
-                    }
+                    {}
                 ],
                 "rasterStyle": [
-                    ""
+                    "restoration_style"
                 ],
-                "styleIdx": 13
+                "styleIdx": 0
             },
             {
                 "name": "green_credit",

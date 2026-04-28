@@ -314,18 +314,15 @@ const MapLegend = ({ showMWS, showVillages, currentLayer }) => {
   ];
 
   const CropDeforestationItems = [
-    { color: "#73bb53", label: "Trees - Trees" },
-    { color: "#ff0000", label: "Trees - Built Up" },
-    { color: "#eee05d", label: "Trees - Crops" },
-    { color: "#a9a9a9", label: "Trees - Barren" },
-    { color: "#4c4ef5", label: "Trees - Shrubs and Scrubs" },
+    { color: "#73bb53", label: "Less than 50 hectares" },
+    { color: "#eee05d", label: "Between 50 to 100 hectares" },
+    { color: "#ff0000", label: "More than 100 hectares" },
   ];
 
   const CropAfforestationtems = [
-    { color: "#ff0000", label: "Built Up - Trees" },
-    { color: "#eee05d", label: "Crops - Trees" },
-    { color: "#a9a9a9", label: "Barren - Trees" },
-    { color: "#eaa4f0", label: "Scrub land - Trees" },
+    { color: "#ff0000", label: "Less than 50 hectares" },
+    { color: "#eee05d", label: "Between 50 to 100 hectares" },
+    { color: "#73bb53", label: "More than 100 hectares" },
   ];
 
   const AquiferItems = [
@@ -359,15 +356,15 @@ const MapLegend = ({ showMWS, showVillages, currentLayer }) => {
   ];
 
   const WideScaleRestoreItems = [
-    { color: "rgba(176, 224, 230, 0.5)", label: "Less than 200 hectares" },
-    { color: "rgba(135, 206, 250, 0.5)", label: "Between 200 to 600 hectares" },
-    { color: "rgba(30, 144, 255, 0.5)", label: "More than 600 hectares" },
+    { color: "#d79b0f", label: "Mosaic Restoration" },
+    { color: "#0f077c", label: "Wide-scale Restoration" },
+    { color: "#4fbc14", label: "Protection" },
   ];
 
   const PotentialProtectionItems = [
-    { color: "rgba(176, 224, 230, 0.5)", label: "Less than 400 hectares" },
-    { color: "rgba(135, 206, 250, 0.5)", label: "Between 400 to 800 hectares" },
-    { color: "rgba(30, 144, 255, 0.5)", label: "More than 800 hectares" },
+    { color: "#d79b0f", label: "Mosaic Restoration" },
+    { color: "#0f077c", label: "Wide-scale Restoration" },
+    { color: "#4fbc14", label: "Protection" },
   ];
 
   const LandConflictItems = [

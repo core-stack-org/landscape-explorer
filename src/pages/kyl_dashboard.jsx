@@ -867,7 +867,7 @@ const KYLDashboardPage = () => {
         ["all", ["==", ["var", "wbFilterActive"], 1], ["==", ["get", "wbMatch"], 0], ["!", ["var", "isVisualizeOn"]]],
         [0, 0, 0, 0],
 
-        [0, 80, 180, 1]
+        [85, 255, 255, 1]
       ],
 
       "stroke-width": [
@@ -915,7 +915,7 @@ const KYLDashboardPage = () => {
         ["all", ["==", ["var", "wbFilterActive"], 1], ["==", ["get", "wbMatch"], 0], ["!", ["var", "isVisualizeOn"]]],
         [0, 0, 0, 0],
 
-        [30, 120, 220, 0.55]
+        [85, 255, 255, 0.45]
       ]
     });
 
@@ -1166,13 +1166,10 @@ const KYLDashboardPage = () => {
           layerRef.push(tempLayer);
           mapRef.current.addLayer(tempLayer);
         } else if (filter.layer_store[i] === "change_detection") {
-          tempLayer = await getImageLayer(
+          tempLayer = await getVectorLayers(
             `${filter.layer_store[i]}`,
-            `change_${transformName(district.label)}_${transformName(block.label)}_${filter.layer_name[i]}`,
-            true, filter.rasterStyle[i]
+            `change_vector_${transformName(district.label)}_${transformName(block.label)}_${filter.layer_name[i]}`,
           );
-          layerRef.push(tempLayer);
-          mapRef.current.addLayer(tempLayer);
         } else if (filter.layer_store[i] === "nrega_assets") {
           const nregaLayerName = `${transformName(district.label)}_${transformName(block.label)}`;
           tempLayer = await getWebGlLayers(
@@ -1208,10 +1205,13 @@ const KYLDashboardPage = () => {
             `${transformName(district.label)}_${transformName(block.label)}`
           );
         } else if (filter.layer_store[i] === "restoration") {
-          tempLayer = await getVectorLayers(
+          tempLayer = await getImageLayer(
             filter.layer_store[i],
-            `${filter.layer_name[i]}_${transformName(district.label)}_${transformName(block.label)}_vector`
+            `${filter.layer_name[i]}_${transformName(district.label)}_${transformName(block.label)}_raster`,
+            true, filter.rasterStyle
           );
+          layerRef.push(tempLayer);
+          mapRef.current.addLayer(tempLayer);
         } else {
           tempLayer = await getVectorLayers(
             filter.layer_store[i],
@@ -1222,7 +1222,7 @@ const KYLDashboardPage = () => {
         if (
           filter.layer_store[i] !== "terrain" &&
           filter.layer_store[i] !== "LULC" &&
-          filter.layer_store[i] !== "change_detection" &&
+          filter.layer_store[i] !== "restoration" &&
           filter.layer_store[i] !== "nrega_assets" &&
           filter.layer_store[i] !== "lcw" &&
           filter.layer_store[i] !== "factory_csr" &&

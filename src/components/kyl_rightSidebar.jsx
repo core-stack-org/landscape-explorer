@@ -672,19 +672,19 @@ const KYLRightSidebar = ({
 
       const mWidths = [{ wch: 25 }];
       mwsFilters.forEach(() => mWidths.push({ wch: 20 }));
-      activeSheets.push({ sheet: XLSX.utils.json_to_sheet(sheet1Data), name: "Selected MWS", width: mWidths });
+      activeSheets.push({ sheet: XLSX.utils.json_to_sheet(sheet1Data), name: "Matching MWS", width: mWidths });
 
       if (villageFilters.length > 0) {
         const vWidths = [{ wch: 25 }, { wch: 40 }];
         villageFilters.forEach(() => vWidths.push({ wch: 20 }));
-        activeSheets.push({ sheet: XLSX.utils.json_to_sheet(sheet2Data), name: "Selected Villages", width: vWidths });
+        activeSheets.push({ sheet: XLSX.utils.json_to_sheet(sheet2Data), name: "Matching Villages", width: vWidths });
       }
 
       if (sheet3Data.length > 0) {
         // All WB filter columns included — no skip needed since getWBDisplayValue handles all
         const wbWidths = [{ wch: 25 }, { wch: 40 }, { wch: 18 }, { wch: 18 }];
         waterbodyFilters.forEach(() => wbWidths.push({ wch: 22 }));
-        activeSheets.push({ sheet: XLSX.utils.json_to_sheet(sheet3Data), name: "Selected Waterbodies", width: wbWidths });
+        activeSheets.push({ sheet: XLSX.utils.json_to_sheet(sheet3Data), name: "Matching Waterbodies", width: wbWidths });
       }
 
       activeSheets.push({ sheet: XLSX.utils.json_to_sheet(sheet4Data), name: "MWS-Village Intersects", width: [{ wch: 25 }, { wch: 25 }, { wch: 40 }] });
@@ -702,7 +702,7 @@ const KYLRightSidebar = ({
         XLSX.utils.book_append_sheet(workbook, sheet, name);
       });
 
-      XLSX.writeFile(workbook, `kyl_selection_report_${new Date().toISOString().split('T')[0]}.xlsx`);
+      XLSX.writeFile(workbook, `kyl_selection_report_${new Date().toISOString().split('T')[0]}_${block}.xlsx`);
     } catch (error) {
       console.error('Excel generation error:', error);
       alert('Error generating Excel file.');

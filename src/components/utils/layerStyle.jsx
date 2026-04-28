@@ -159,14 +159,14 @@ const layerStyles = (feature, vectorStyle, idx = 0, villageJson, dataJson) => {
             break;
         
         case 13:
-            // FOR Area Protection
-            avg_Res = feature.values_.Protection
-            break;
+            // FOR Deforestation
+            avg_Res = feature.values_.total_def
+            break
 
         case 14:
-            // FOR Wide Scale
-            avg_Res = feature.values_["Wide-scale"]
-            break;
+            // FOR Afforestation
+            avg_Res = feature.values_.total_aff
+            break
 
         case 15:
             avg_Res = Math.max(feature.values_["school_primary_distance"], feature.values_["school_upper_primary_distance"], feature.values_["school_secondary_distance"]) 
@@ -228,7 +228,7 @@ const layerStyles = (feature, vectorStyle, idx = 0, villageJson, dataJson) => {
                     break;
                 }
             }
-            break;
+            break;   
 
     }
     
