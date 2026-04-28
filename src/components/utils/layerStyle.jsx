@@ -228,7 +228,17 @@ const layerStyles = (feature, vectorStyle, idx = 0, villageJson, dataJson) => {
                     break;
                 }
             }
-            break;   
+            break;
+        
+        case 28:
+            // FOR Deforestation
+            for(let i = 0 ; i < dataJson.length; ++i){
+                if(dataJson[i].mws_id === feature.values_.uid){
+                    avg_Res = dataJson[i].degradation_land_area;
+                    break;
+                }
+            }
+            break
 
     }
     

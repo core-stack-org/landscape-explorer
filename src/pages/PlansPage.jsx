@@ -226,27 +226,42 @@ const createPinStyle = (stateName, count) => {
   });
 };
 
-const DOT_DEFAULT  = () => new Style({
+// ── PLAN DOT STYLES ──────────────────────────────────────────────────────────
+
+const PLAN_STATUS_COLORS = {
+  in_progress:   { fill: "#FF6FFF", stroke: "#ffffff" }, // magenta
+  dpr_completed: { fill: "#CCFF00", stroke: "#3E5800" }, // chartreuse
+};
+
+const getPlanStatus = (plan) => {
+  if (!plan) return "in_progress";
+  if (plan.is_dpr_reviewed) return "dpr_completed";
+  return "in_progress";
+};
+
+const getFeatureStatus = (feature) => getPlanStatus(feature.get("planDetails"));
+
+const DOT_DEFAULT  = (status = "in_progress") => new Style({
   image: new CircleStyle({
-    radius: 8,
-    fill:   new Fill({ color: "rgba(139, 63, 230, 0.85)" }),
-    stroke: new Stroke({ color: "#ffffff", width: 2 }),
+    radius: 9,
+    fill:   new Fill({ color: PLAN_STATUS_COLORS[status].fill }),
+    stroke: new Stroke({ color: PLAN_STATUS_COLORS[status].stroke, width: 2 }),
   }),
 });
 
-const DOT_HOVERED  = () => new Style({
+const DOT_HOVERED  = (status = "in_progress") => new Style({
   image: new CircleStyle({
-    radius: 11,
-    fill:   new Fill({ color: "rgba(139, 63, 230, 1)" }),
+    radius: 12,
+    fill:   new Fill({ color: PLAN_STATUS_COLORS[status].fill }),
     stroke: new Stroke({ color: "#ffffff", width: 2.5 }),
   }),
 });
 
-const DOT_SELECTED = () => new Style({
+const DOT_SELECTED = (status = "in_progress") => new Style({
   image: new CircleStyle({
-    radius: 11,
-    fill:   new Fill({ color: "rgba(255, 255, 255, 1)" }),
-    stroke: new Stroke({ color: "rgba(139, 63, 230, 1)", width: 3 }),
+    radius: 12,
+    fill:   new Fill({ color: "#ffffff" }),
+    stroke: new Stroke({ color: PLAN_STATUS_COLORS[status].fill, width: 3.5 }),
   }),
 });
 
@@ -333,6 +348,7 @@ const PlansPage = () => {
     const [selectedSteward, setSelectedSteward] = useState(null);
     const [stewardLoading,  setStewardLoading]  = useState(false);
     const [stewardModalPlan, setStewardModalPlan] = useState(null);
+    const [planDotsVisible, setPlanDotsVisible] = useState(false);
 
     // ── MAP INIT ────────────────────────────────────────────────
     useEffect(() => {
@@ -418,6 +434,15 @@ const PlansPage = () => {
     useEffect(() => {
       viewModeRef.current = viewMode;
     }, [viewMode]);
+
+    // ── MAP RESIZE FIX ──────────────────────────────────────────
+    // OL calculates canvas size at init — call updateSize() whenever
+    // loading states clear so the map fills its container correctly.
+    useEffect(() => {
+      if (!mapLoading && !statsLoading && mapRef.current) {
+        setTimeout(() => mapRef.current?.updateSize(), 50);
+      }
+    }, [mapLoading, statsLoading]);
 
     useEffect(() => {
       const ctx = location.state?.returnContext;
@@ -646,7 +671,7 @@ const PlansPage = () => {
             geometry:    new Point([parseFloat(p.longitude), parseFloat(p.latitude)]),
             planDetails: p,
             });
-            f.setStyle(DOT_DEFAULT());
+            f.setStyle(DOT_DEFAULT(getPlanStatus(p)));
             return f;
         });
 
@@ -659,6 +684,7 @@ const PlansPage = () => {
         layer.set("layerName", "planLayer");
         planLayerRef.current = layer;
         map.addLayer(layer);
+        setPlanDotsVisible(true);
 
         map.getView().fit(layer.getSource().getExtent(), {
         padding:  [60, 60, 60, 60],
@@ -751,6 +777,7 @@ const PlansPage = () => {
       } else {
         setStewardLoading(true);
         setSelectedSteward(null);
+        currentDistrictRef.current = districtData;
         try {
           const data = await fetchStewardListing(
             currentStateRef.current?.state_id,
@@ -789,6 +816,7 @@ const PlansPage = () => {
       setSelectedSteward(null);
       setStewardListing([]);
       setIsStateView(true);
+      setPlanDotsVisible(false);
 
       setStatsLoading(true);
       try {
@@ -826,6 +854,45 @@ const PlansPage = () => {
       map.getView().animate({ center: [78.9, 23.6], zoom: 5, duration: 600 });
     };
 
+    // ── BACK TO DISTRICT VIEW ───────────────────────────────────
+    const handleBackToDistrictPins = async () => {
+      const map = mapRef.current;
+      if (!map) return;
+
+      currentDistrictRef.current = null;
+
+      if (viewModeRef.current === "plans") {
+        // Remove plan dots, reset selection
+        if (planLayerRef.current) {
+          map.removeLayer(planLayerRef.current);
+          planLayerRef.current = null;
+        }
+        if (selectedFeatureRef.current) selectedFeatureRef.current = null;
+        hoveredFeatureRef.current = null;
+        setSelectedPlan(null);
+        setPlanDotsVisible(false);
+
+        // Restore state-level stats and re-render district pins from cache
+        setStatsLoading(true);
+        try {
+          const stateStats = await fetchMetaStats(
+            orgRef.current?.value ?? null,
+            currentStateRef.current.state_id
+          );
+          setMetaStats(stateStats);
+          await addPlanDistrictPins(statePlansRef.current);
+        } catch (err) {
+          console.error("Back to district pins failed:", err);
+        } finally {
+          setStatsLoading(false);
+        }
+      } else {
+        // Stewards: just clear the listing, district pins are still on the map
+        setStewardListing([]);
+        setSelectedSteward(null);
+      }
+    };
+
     // ── MAP CLICK HANDLER ───────────────────────────────────────
     useEffect(() => {
         const map = mapRef.current;
@@ -837,9 +904,9 @@ const PlansPage = () => {
 
             if (layerName === "planLayer") {
               if (selectedFeatureRef.current && selectedFeatureRef.current !== feature) {
-                selectedFeatureRef.current.setStyle(DOT_DEFAULT());
+                selectedFeatureRef.current.setStyle(DOT_DEFAULT(getFeatureStatus(selectedFeatureRef.current)));
               }
-              feature.setStyle(DOT_SELECTED());
+              feature.setStyle(DOT_SELECTED(getFeatureStatus(feature)));
               selectedFeatureRef.current = feature;
               setSelectedPlan(feature.get("planDetails"));
               return true;
@@ -875,12 +942,12 @@ const PlansPage = () => {
             hoveredFeatureRef.current !== hitFeature &&
             hoveredFeatureRef.current !== selectedFeatureRef.current
             ) {
-                hoveredFeatureRef.current.setStyle(DOT_DEFAULT());
+                hoveredFeatureRef.current.setStyle(DOT_DEFAULT(getFeatureStatus(hoveredFeatureRef.current)));
                 hoveredFeatureRef.current = null;
             }
 
             if (hitFeature && layerName === "planLayer" && hitFeature !== selectedFeatureRef.current) {
-            hitFeature.setStyle(DOT_HOVERED());
+            hitFeature.setStyle(DOT_HOVERED(getFeatureStatus(hitFeature)));
             hoveredFeatureRef.current = hitFeature;
                 map.getTargetElement().style.cursor = "pointer";
             } else if (hitFeature && layerName === "bubbleLayer") {
@@ -1062,7 +1129,7 @@ const PlansPage = () => {
 
             {!isStateView && (
               <button
-                onClick={handleBackToStateView}
+                onClick={currentDistrictRef.current ? handleBackToDistrictPins : handleBackToStateView}
                 className="absolute top-4 left-4 z-[1000] flex items-center gap-2 px-3 py-2 rounded-xl
                            bg-white/95 backdrop-blur-sm text-sm font-semibold shadow-lg
                            hover:shadow-xl active:scale-95 transition-all duration-200"
@@ -1088,6 +1155,25 @@ const PlansPage = () => {
                 />
               </div>
             </div>
+
+            {/* PLAN STATUS LEGEND */}
+            {planDotsVisible && (
+              <div className="absolute bottom-4 left-4 z-[1000] rounded-xl px-3 py-2.5 flex flex-col gap-1.5"
+                style={{ background: "rgba(255,255,255,0.92)", backdropFilter: "blur(6px)",
+                         border: "1px solid rgba(220,220,220,0.8)", boxShadow: "0 2px 8px rgba(0,0,0,0.15)" }}>
+                <p className="text-xs font-bold uppercase tracking-widest mb-0.5" style={{ color: "#555" }}>Plan Status</p>
+                {[
+                  { color: PLAN_STATUS_COLORS.in_progress.fill,   label: "In Progress"    },
+                  { color: PLAN_STATUS_COLORS.dpr_completed.fill, label: "DPR Completed"  },
+                ].map(({ color, label }) => (
+                  <div key={label} className="flex items-center gap-2">
+                    <div className="w-3.5 h-3.5 rounded-full flex-shrink-0"
+                      style={{ background: color, border: "2px solid rgba(0,0,0,0.15)" }} />
+                    <p className="text-xs font-medium" style={{ color: "#333" }}>{label}</p>
+                  </div>
+                ))}
+              </div>
+            )}
 
             <div className="absolute top-4 right-4 flex flex-col gap-2 z-[1000]">
               {["+", "–"].map((sign) => (
@@ -1137,7 +1223,7 @@ const PlansPage = () => {
                     <button
                       onClick={() => {
                         if (selectedFeatureRef.current) {
-                          selectedFeatureRef.current.setStyle(DOT_DEFAULT());
+                          selectedFeatureRef.current.setStyle(DOT_DEFAULT(getFeatureStatus(selectedFeatureRef.current)));
                           selectedFeatureRef.current = null;
                         }
                         setSelectedPlan(null);
@@ -1197,7 +1283,7 @@ const PlansPage = () => {
                     <div className="grid grid-cols-2 gap-3">
                       {[
                         { label: "Plan",         active: selectedPlan.is_completed    },
-                        { label: "DPR Reviewed", active: selectedPlan.is_dpr_reviewed },
+                        { label: "DPR Completed", active: selectedPlan.is_dpr_reviewed },
                       ].map(({ label, active }) => (
                         <div key={label} className="rounded-xl p-3 flex items-center gap-2"
                           style={{ background: P.lighter, border: `1px solid ${P.border}` }}>
@@ -1219,7 +1305,7 @@ const PlansPage = () => {
                   onClick={() => {
                     const districtLabel = transformName(districtLookupRef.current[selectedPlan.district_soi] || "");
                     const tehsilLabel   = transformName(tehsilLookupRef.current[selectedPlan.tehsil_soi]     || "");
-                    navigate("/CCUsagePage/plan-view", {
+                    navigate(`/CCUsagePage/plan-view?id=${selectedPlan.id}&completed=${!!selectedPlan.is_completed}&dpr_reviewed=${!!selectedPlan.is_dpr_reviewed}&dpr_generated=${!!selectedPlan.is_dpr_generated}&dpr_approved=${!!selectedPlan.is_dpr_approved}`, {
                       state: {
                         plan: { ...selectedPlan, district: districtLabel, block: tehsilLabel },
                         returnContext: {
@@ -1230,8 +1316,15 @@ const PlansPage = () => {
                     });
                   }}
                   className="w-full py-3 rounded-2xl text-white font-semibold text-sm flex-shrink-0
-                            shadow-lg hover:shadow-xl active:scale-[0.98] transition-all duration-200"
-                  style={{ background: `linear-gradient(135deg, ${P.base}, ${P.dark})` }}
+                            shadow-lg transition-all duration-200"
+                  disabled={!selectedPlan.is_dpr_reviewed}
+                  style={{
+                    background: selectedPlan.is_dpr_reviewed
+                      ? `linear-gradient(135deg, ${P.base}, ${P.dark})`
+                      : "oklch(85% 0.04 301.924)",
+                    color: selectedPlan.is_dpr_reviewed ? "#fff" : P.muted,
+                    cursor: selectedPlan.is_dpr_reviewed ? "pointer" : "not-allowed",
+                  }}
                 >
                   View Full Plan →
                 </button>
@@ -1264,6 +1357,7 @@ const PlansPage = () => {
                         setSelectedPlan(null);
                         setSelectedSteward(null);
                         setStewardListing([]);
+                        setPlanDotsVisible(false);
                         if (selectedFeatureRef.current) selectedFeatureRef.current = null;
                         hoveredFeatureRef.current  = null;
                         // Always reset district — stewards max depth is district level

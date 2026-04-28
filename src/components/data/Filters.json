@@ -546,7 +546,7 @@
                 ],
                 "vectorStyle": [
                     {
-                        "fill": "rgba(255, 255, 255, 0.5)",
+                        "fill": "rgba(255, 255, 255, 1)",
                         "stroke": "rgba(255, 255, 255, 1)",
                         "lower": 0,
                         "upper": 0
@@ -695,21 +695,33 @@
                     }
                 ],
                 "layer_store": [
-                    "change_detection",
                     "change_detection"
                 ],
                 "layer_name": [
-                    "CropIntensity",
                     "Degradation"
                 ],
                 "vectorStyle": [
-                    {}
+                    {
+                        "fill": "rgba(115, 187, 83, 0.5)",
+                        "stroke": "rgba(115, 187, 83, 1)",
+                        "lower": 0,
+                        "upper": 30
+                    },
+                    {
+                        "fill": "rgba(238, 224, 93, 0.5)",
+                        "stroke": "rgba(238, 224, 93, 1)",
+                        "lower": 30,
+                        "upper": 90
+                    },
+                    {
+                        "fill": "rgba(255, 0, 0, 0.5)",
+                        "stroke": "rgba(255, 0, 0, 1)",
+                        "lower": 90,
+                        "upper": 9999999
+                    }
                 ],
-                "rasterStyle": [
-                    "cropping_intensity_kyl",
-                    "KYL_Crop_Degradation"
-                ],
-                "styleIdx": 0
+                "rasterStyle": [""],
+                "styleIdx": 28
             }
         ],
         "Restoration": [

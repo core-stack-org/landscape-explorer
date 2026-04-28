@@ -1,9 +1,8 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import LandingNavbar from "../components/landing_navbar.jsx";
 import MapSection from "../components/planMapSection.jsx";
 import getVectorLayers from "../actions/getVectorLayers";
-import getImageLayer from "../actions/getImageLayers";
 import { Fill, Stroke, Style, Icon, Text } from "ol/style";
 import SettlementIcon from "../assets/settlement_icon.svg";
 import WellIcon from "../assets/well_proposed.svg";
@@ -44,59 +43,70 @@ const apiFetch = (url) =>
     return r.json();
   });
 
-
 const fetchSummary      = (id) => apiFetch(`${process.env.REACT_APP_API_URL}/dpr_data/${id}/summary/`);
 const fetchTeamDetails  = (id) => apiFetch(`${process.env.REACT_APP_API_URL}/dpr_data/${id}/team-details/`);
 const fetchVillageBrief = (id) => apiFetch(`${process.env.REACT_APP_API_URL}/dpr_data/${id}/village-brief/`);
 
-// Paginated fetch — loops through all pages
 const fetchAllPages = async (url) => {
   let results = [];
   let nextUrl = url;
   while (nextUrl) {
     const data = await apiFetch(nextUrl);
-    if (Array.isArray(data)) {
-      // Non-paginated fallback
-      results = data;
-      break;
-    }
+    if (Array.isArray(data)) { results = data; break; }
     results = [...results, ...(data.results ?? [])];
     nextUrl = data.next ?? null;
   }
   return results;
 };
 
-const fetchSettlements = (id) =>
-  fetchAllPages(`${process.env.REACT_APP_API_URL}/dpr_data/${id}/settlements/`);
-const fetchCrops = (id) =>
-  fetchAllPages(`${process.env.REACT_APP_API_URL}/dpr_data/${id}/crops/`);
-const fetchLivestock = (id) =>
-  fetchAllPages(`${process.env.REACT_APP_API_URL}/dpr_data/${id}/livestock/`);
-
-const fetchWells = (id) =>
-  fetchAllPages(`${process.env.REACT_APP_API_URL}/dpr_data/${id}/wells/`);
-
-const fetchWaterbodies = (id) =>
-  fetchAllPages(`${process.env.REACT_APP_API_URL}/dpr_data/${id}/waterbodies/`);
-
-const fetchNrmWorks    = (id) =>
-  fetchAllPages(`${process.env.REACT_APP_API_URL}/dpr_data/${id}/nrm-works/`);
-
-const fetchMaintenance = (id, type) =>
-  fetchAllPages(`${process.env.REACT_APP_API_URL}/dpr_data/${id}/maintenance/?type=${type}`);
-
-const fetchLivelihood = (id) =>
-  fetchAllPages(`${process.env.REACT_APP_API_URL}/dpr_data/${id}/livelihood/`);
+const fetchSettlements = (id) => fetchAllPages(`${process.env.REACT_APP_API_URL}/dpr_data/${id}/settlements/`);
+const fetchCrops       = (id) => fetchAllPages(`${process.env.REACT_APP_API_URL}/dpr_data/${id}/crops/`);
+const fetchLivestock   = (id) => fetchAllPages(`${process.env.REACT_APP_API_URL}/dpr_data/${id}/livestock/`);
+const fetchWells       = (id) => fetchAllPages(`${process.env.REACT_APP_API_URL}/dpr_data/${id}/wells/`);
+const fetchWaterbodies = (id) => fetchAllPages(`${process.env.REACT_APP_API_URL}/dpr_data/${id}/waterbodies/`);
+const fetchNrmWorks    = (id) => fetchAllPages(`${process.env.REACT_APP_API_URL}/dpr_data/${id}/nrm-works/`);
+const fetchMaintenance = (id, type) => fetchAllPages(`${process.env.REACT_APP_API_URL}/dpr_data/${id}/maintenance/?type=${type}`);
+const fetchLivelihood  = (id) => fetchAllPages(`${process.env.REACT_APP_API_URL}/dpr_data/${id}/livelihood/`);
 
 // ── SHARED COMPONENTS ─────────────────────────────────────
 
+const toTitleCase = (str) => {
+  if (!str) return str;
+  return str.replace(/\w\S*/g, (word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase());
+};
+
+const transformName = (name) => {
+  return name
+    .replace(/[().]/g, "")
+    .replace(/[-\s]+/g, "_")
+    .replace(/_+/g, "_")
+    .replace(/^_|_$/g, "")
+    .toLowerCase();
+};
+
 const formatUnderscoreText = (text) => {
   if (!text) return "--";
+  // If no underscores, it's plain text — return as-is without splitting
+  if (!text.includes("_")) return text.trim();
+  // Otherwise treat space-separated tokens where each token uses underscores for internal spaces
   return text
-    .split(" ")                          // split multiple items by space
-    .map((item) => item.replace(/_/g, " ").trim())  // replace underscores with spaces in each item
+    .split(" ")
+    .map((item) => item.replace(/_/g, " ").trim())
     .filter(Boolean)
-    .join(", ");                         // join items with comma + space
+    .join(", ");
+};
+
+// ── CROP FORMATTER ────────────────────────────────────────
+// - No name or "NA" → "Not Filled"
+// - Name present but area is 0/null → "CropName (Area not Provided)"
+// - Name + area → "CropName (X ac)"
+const formatCrop = (cropName, acres) => {
+  const nameEmpty = !cropName || cropName.trim().toLowerCase() === "na";
+  const areaEmpty = !acres || Number(acres) === 0;
+
+  if (nameEmpty) return "Not Filled";
+  if (areaEmpty) return `${cropName} (Area not Provided)`;
+  return `${cropName} (${acres} ac)`;
 };
 
 const StatusBadge = ({ label, active }) => (
@@ -143,8 +153,6 @@ const TabSkeleton = () => (
   </div>
 );
 
-// ── SETTLEMENT DATA COMPONENTS ────────────────────────────
-
 const DataRow = ({ label, value }) => (
   <div className="flex justify-between items-start py-2"
     style={{ borderBottom: `1px solid ${P.border}` }}>
@@ -156,28 +164,20 @@ const DataRow = ({ label, value }) => (
 );
 
 const SettlementCard = ({ s, livestockData, cropsData }) => {
-  const livestock = livestockData?.find(
-    (l) => l.settlement_name === s.settlement_name
-  );
-
-  const crops = cropsData?.filter(
-    (c) => c.beneficiary_settlement === s.settlement_name
-  );
+  const livestock = livestockData?.find((l) => l.settlement_name === s.settlement_name);
+  const crops     = cropsData?.filter((c) => c.beneficiary_settlement === s.settlement_name);
 
   return (
     <div className="bg-white rounded-2xl p-5 shadow-sm"
       style={{ border: `1px solid ${P.border}` }}>
 
-      {/* Card header */}
       <div className="flex items-center gap-3 mb-4">
         <div className="w-8 h-8 rounded-full flex items-center justify-center"
           style={{ background: P.light }}>
           <img src={SettlementIcon} alt="" className="w-4 h-4" />
         </div>
         <div>
-          <p className="text-sm font-bold" style={{ color: P.text }}>
-            {s.settlement_name || "--"}
-          </p>
+          <p className="text-sm font-bold" style={{ color: P.text }}>{s.settlement_name || "--"}</p>
           <p className="text-xs" style={{ color: P.muted }}>{s.settlement_type || "--"}</p>
         </div>
       </div>
@@ -185,8 +185,7 @@ const SettlementCard = ({ s, livestockData, cropsData }) => {
       <div className="grid grid-cols-2 gap-x-6">
         {/* Left column — Demographics */}
         <div>
-          <p className="text-xs font-semibold uppercase tracking-widest mb-2"
-            style={{ color: P.muted }}>Demographics</p>
+          <p className="text-xs font-semibold uppercase tracking-widest mb-2" style={{ color: P.muted }}>Demographics</p>
           <DataRow label="Households"       value={s.number_of_households}               />
           <DataRow label="Caste Detail"     value={formatUnderscoreText(s.caste_group_detail)} />
           <DataRow label="SC"               value={s.caste_counts?.sc}                   />
@@ -195,11 +194,9 @@ const SettlementCard = ({ s, livestockData, cropsData }) => {
           <DataRow label="General"          value={s.caste_counts?.general}              />
           <DataRow label="Marginal Farmers" value={s.marginal_farmers}                   />
 
-          {/* Livestock inline */}
           {livestock && (
             <>
-              <p className="text-xs font-semibold uppercase tracking-widest mt-4 mb-2"
-                style={{ color: P.muted }}>Livestock</p>
+              <p className="text-xs font-semibold uppercase tracking-widest mt-4 mb-2" style={{ color: P.muted }}>Livestock</p>
               <DataRow label="Goats"   value={livestock.goats}   />
               <DataRow label="Sheep"   value={livestock.sheep}   />
               <DataRow label="Cattle"  value={livestock.cattle}  />
@@ -211,8 +208,7 @@ const SettlementCard = ({ s, livestockData, cropsData }) => {
 
         {/* Right column — MGNREGA */}
         <div>
-          <p className="text-xs font-semibold uppercase tracking-widest mb-2"
-            style={{ color: P.muted }}>MGNREGA</p>
+          <p className="text-xs font-semibold uppercase tracking-widest mb-2" style={{ color: P.muted }}>MGNREGA</p>
           <DataRow label="Applied"   value={s.nrega_job_applied}                    />
           <DataRow label="Job Cards" value={s.nrega_job_card}                       />
           <DataRow label="Work Days" value={s.nrega_work_days}                      />
@@ -220,19 +216,17 @@ const SettlementCard = ({ s, livestockData, cropsData }) => {
           <DataRow label="Demand"    value={formatUnderscoreText(s.nrega_demand)}   />
           <DataRow label="Issues"    value={formatUnderscoreText(s.nrega_issues)}   />
 
-          {/* Crops inline */}
           {crops?.length > 0 && (
             <>
-              <p className="text-xs font-semibold uppercase tracking-widest mt-4 mb-2"
-                style={{ color: P.muted }}>Crops</p>
+              <p className="text-xs font-semibold uppercase tracking-widest mt-4 mb-2" style={{ color: P.muted }}>Crops</p>
               {crops.map((c, i) => (
                 <div key={i} className="mb-3">
-                  <DataRow label="Irrigation"   value={c.irrigation_source}                        />
-                  <DataRow label="Land Type"    value={c.land_classification}                      />
-                  <DataRow label="Intensity"    value={c.cropping_intensity}                       />
-                  <DataRow label="Kharif"       value={c.kharif_crops ? `${c.kharif_crops} (${c.kharif_acres ?? 0} ac)` : "--"} />
-                  <DataRow label="Rabi"         value={c.rabi_crops   ? `${c.rabi_crops} (${c.rabi_acres ?? 0} ac)`     : "--"} />
-                  <DataRow label="Zaid"         value={c.zaid_crops   ? `${c.zaid_crops} (${c.zaid_acres ?? 0} ac)`     : "--"} />
+                  <DataRow label="Irrigation" value={c.irrigation_source}    />
+                  <DataRow label="Land Type"  value={c.land_classification}  />
+                  <DataRow label="Intensity"  value={c.cropping_intensity}   />
+                  <DataRow label="Kharif"     value={formatCrop(c.kharif_crops, c.kharif_acres)} />
+                  <DataRow label="Rabi"       value={formatCrop(c.rabi_crops,   c.rabi_acres)}   />
+                  <DataRow label="Zaid"       value={formatCrop(c.zaid_crops,   c.zaid_acres)}   />
                   {i < crops.length - 1 && (
                     <div className="my-2 w-full h-px" style={{ background: P.border }} />
                   )}
@@ -249,24 +243,19 @@ const SettlementCard = ({ s, livestockData, cropsData }) => {
 const WellDetailCard = ({ w, onClose }) => (
   <div className="rounded-2xl p-5 shadow-sm relative"
     style={{ border: `1px solid ${P.border}`, background: P.lighter }}>
-    <button
-      onClick={onClose}
+    <button onClick={onClose}
       className="absolute top-3 right-3 w-6 h-6 rounded-full flex items-center
                  justify-center text-xs transition-all hover:bg-white"
-      style={{ color: P.muted }}
-    >
-      ✕
-    </button>
-    <p className="text-xs font-semibold uppercase tracking-widest mb-3"
-      style={{ color: P.muted }}>Well Detail</p>
+      style={{ color: P.muted }}>✕</button>
+    <p className="text-xs font-semibold uppercase tracking-widest mb-3" style={{ color: P.muted }}>Well Detail</p>
     <div className="grid grid-cols-2 gap-x-6">
       <div>
-        <DataRow label="Settlement"   value={w.beneficiary_settlement} />
-        <DataRow label="Well Type"    value={w.well_type}              />
-        <DataRow label="Owner"        value={w.owner}                  />
-        <DataRow label="Beneficiary"  value={w.beneficiary_name}       />
-        <DataRow label="Father Name"  value={w.beneficiary_father_name}/>
-        <DataRow label="Caste Uses"   value={w.caste_uses}             />
+        <DataRow label="Settlement"  value={w.beneficiary_settlement} />
+        <DataRow label="Well Type"   value={w.well_type}              />
+        <DataRow label="Owner"       value={w.owner}                  />
+        <DataRow label="Beneficiary" value={w.beneficiary_name}       />
+        <DataRow label="Father Name" value={w.beneficiary_father_name}/>
+        <DataRow label="Caste Uses"  value={w.caste_uses}             />
       </div>
       <div>
         <DataRow label="Water Availability" value={w.water_availability}   />
@@ -275,8 +264,7 @@ const WellDetailCard = ({ w, onClose }) => (
         <DataRow label="Needs Maintenance"  value={w.need_maintenance}     />
         <DataRow label="Repair Activities"  value={w.repair_activities}    />
         <DataRow label="Coordinates"
-          value={w.latitude && w.longitude
-            ? `${w.latitude}, ${w.longitude}` : "--"} />
+          value={w.latitude && w.longitude ? `${w.latitude}, ${w.longitude}` : "--"} />
       </div>
     </div>
   </div>
@@ -285,24 +273,19 @@ const WellDetailCard = ({ w, onClose }) => (
 const WaterbodyDetailCard = ({ w, onClose }) => (
   <div className="rounded-2xl p-5 shadow-sm relative"
     style={{ border: `1px solid ${P.border}`, background: P.lighter }}>
-    <button
-      onClick={onClose}
+    <button onClick={onClose}
       className="absolute top-3 right-3 w-6 h-6 rounded-full flex items-center
                  justify-center text-xs transition-all hover:bg-white"
-      style={{ color: P.muted }}
-    >
-      ✕
-    </button>
-    <p className="text-xs font-semibold uppercase tracking-widest mb-3"
-      style={{ color: P.muted }}>Waterbody Detail</p>
+      style={{ color: P.muted }}>✕</button>
+    <p className="text-xs font-semibold uppercase tracking-widest mb-3" style={{ color: P.muted }}>Waterbody Detail</p>
     <div className="grid grid-cols-2 gap-x-6">
       <div>
-        <DataRow label="Settlement"        value={w.beneficiary_settlement} />
-        <DataRow label="Owner"             value={w.owner}                  />
-        <DataRow label="Beneficiary"       value={w.beneficiary_name}       />
-        <DataRow label="Father Name"       value={w.beneficiary_father_name}/>
-        <DataRow label="Managed By"        value={w.who_manages}            />
-        <DataRow label="Caste Users"       value={w.caste_who_uses}         />
+        <DataRow label="Settlement"  value={w.beneficiary_settlement} />
+        <DataRow label="Owner"       value={w.owner}                  />
+        <DataRow label="Beneficiary" value={w.beneficiary_name}       />
+        <DataRow label="Father Name" value={w.beneficiary_father_name}/>
+        <DataRow label="Managed By"  value={w.who_manages}            />
+        <DataRow label="Caste Users" value={w.caste_who_uses}         />
       </div>
       <div>
         <DataRow label="Structure Type"    value={w.water_structure_type}   />
@@ -311,8 +294,7 @@ const WaterbodyDetailCard = ({ w, onClose }) => (
         <DataRow label="Needs Maintenance" value={w.need_maintenance}       />
         <DataRow label="Repair Activities" value={w.repair_activities}      />
         <DataRow label="Coordinates"
-          value={w.latitude && w.longitude
-            ? `${w.latitude}, ${w.longitude}` : "--"} />
+          value={w.latitude && w.longitude ? `${w.latitude}, ${w.longitude}` : "--"} />
       </div>
     </div>
   </div>
@@ -325,21 +307,20 @@ const NrmDetailCard = ({ n, onClose }) => (
       className="absolute top-3 right-3 w-6 h-6 rounded-full flex items-center
                  justify-center text-xs transition-all hover:bg-white"
       style={{ color: P.muted }}>✕</button>
-    <p className="text-xs font-semibold uppercase tracking-widest mb-3"
-      style={{ color: P.muted }}>
+    <p className="text-xs font-semibold uppercase tracking-widest mb-3" style={{ color: P.muted }}>
       {n.work_category ?? n.structure_type ?? "Detail"}
     </p>
     <div className="grid grid-cols-2 gap-x-6">
       <div>
-        <DataRow label="Demand Type"   value={n.demand_type             || n.work_demand}  />
-        <DataRow label="Work Demand"   value={n.work_demand             || n.structure_type} />
-        <DataRow label="Settlement"    value={n.beneficiary_settlement}                    />
-        <DataRow label="Beneficiary"   value={n.beneficiary_name}                          />
+        <DataRow label="Demand Type" value={n.demand_type || n.work_demand}      />
+        <DataRow label="Work Demand" value={n.work_demand || n.structure_type}   />
+        <DataRow label="Settlement"  value={n.beneficiary_settlement}            />
+        <DataRow label="Beneficiary" value={n.beneficiary_name}                  />
       </div>
       <div>
-        <DataRow label="Father Name"   value={n.beneficiary_father_name}                   />
-        <DataRow label="Gender"        value={n.gender}                                    />
-        <DataRow label="Repair"        value={n.repair_activities}                         />
+        <DataRow label="Father Name" value={n.beneficiary_father_name}           />
+        <DataRow label="Gender"      value={n.gender}                            />
+        <DataRow label="Repair"      value={n.repair_activities}                 />
         <DataRow label="Coordinates"
           value={n.latitude && n.longitude ? `${n.latitude}, ${n.longitude}` : "--"} />
       </div>
@@ -354,25 +335,23 @@ const LivelihoodDetailCard = ({ l, onClose }) => (
       className="absolute top-3 right-3 w-6 h-6 rounded-full flex items-center
                  justify-center text-xs transition-all hover:bg-white"
       style={{ color: P.muted }}>✕</button>
-    <p className="text-xs font-semibold uppercase tracking-widest mb-3"
-      style={{ color: P.muted }}>
+    <p className="text-xs font-semibold uppercase tracking-widest mb-3" style={{ color: P.muted }}>
       Livelihood Detail
     </p>
     <div className="grid grid-cols-2 gap-x-6">
       <div>
-        <DataRow label="Work Type"    value={l.livelihood_work}          />
-        <DataRow label="Demand Type"  value={l.demand_type}              />
-        <DataRow label="Work Demand"  value={l.work_demand}              />
-        <DataRow label="Settlement"   value={l.beneficiary_settlement}   />
+        <DataRow label="Work Type"   value={l.livelihood_work}        />
+        <DataRow label="Demand Type" value={l.demand_type}            />
+        <DataRow label="Work Demand" value={l.work_demand}            />
+        <DataRow label="Settlement"  value={l.beneficiary_settlement} />
       </div>
       <div>
-        <DataRow label="Beneficiary"  value={l.beneficiary_name}         />
-        <DataRow label="Father Name"  value={l.beneficiary_father_name}  />
-        <DataRow label="Gender"       value={l.gender}                   />
-        <DataRow label="Total Acres"  value={l.total_acres}              />
+        <DataRow label="Beneficiary" value={l.beneficiary_name}        />
+        <DataRow label="Father Name" value={l.beneficiary_father_name} />
+        <DataRow label="Gender"      value={l.gender}                  />
+        <DataRow label="Total Acres" value={l.total_acres}             />
         <DataRow label="Coordinates"
-          value={l.latitude && l.longitude
-            ? `${l.latitude}, ${l.longitude}` : "--"} />
+          value={l.latitude && l.longitude ? `${l.latitude}, ${l.longitude}` : "--"} />
       </div>
     </div>
   </div>
@@ -383,50 +362,83 @@ const LivelihoodDetailCard = ({ l, onClose }) => (
 const PlanViewPage = () => {
   const { state } = useLocation();
   const navigate  = useNavigate();
-  const plan      = state?.plan;
+  const [searchParams] = useSearchParams();
 
-  const [activeTab,      setActiveTab]      = useState("settlement");
-  const [summary,        setSummary]        = useState(null);
-  const [teamDetails,    setTeamDetails]    = useState(null);
-  const [villageBrief,   setVillageBrief]   = useState(null);
-  const [summaryLoading, setSummaryLoading] = useState(true);
-  const [summaryError,   setSummaryError]   = useState(false);
+  const [plan,            setPlan]            = useState(state?.plan ?? null);
+  const [deepLinkLoading, setDeepLinkLoading] = useState(!state?.plan && !!searchParams.get("id"));
 
-  // Settlement tab data
-  const [settlements,      setSettlements]      = useState([]);
-  const [crops,            setCrops]            = useState([]);
-  const [livestock,        setLivestock]        = useState([]);
+  // ── DEEP LINK FETCH ─────────────────────────────────────
+  useEffect(() => {
+    if (state?.plan || !searchParams.get("id")) return;
+    const planId = searchParams.get("id");
+
+    const load = async () => {
+      setDeepLinkLoading(true);
+      try {
+        const [brief, team] = await Promise.all([
+          apiFetch(`${process.env.REACT_APP_API_URL}/dpr_data/${planId}/village-brief/`),
+          apiFetch(`${process.env.REACT_APP_API_URL}/dpr_data/${planId}/team-details/`),
+        ]);
+        setPlan({
+          id:                parseInt(planId),
+          plan:              brief?.village_name ?? `Plan ${planId}`,
+          village_name:      brief?.village_name,
+          gram_panchayat:    brief?.gram_panchayat,
+          district:          transformName(brief?.district ?? ""),
+          block:             transformName(brief?.tehsil   ?? ""),
+          organization_name: team?.organization,
+          project_name:      team?.project,
+          facilitator_name:  team?.facilitator,
+          is_completed:      searchParams.get("completed")    === "true",
+          is_dpr_reviewed:   searchParams.get("dpr_reviewed") === "true",
+          is_dpr_generated:  searchParams.get("dpr_generated") === "true",
+          is_dpr_approved:   searchParams.get("dpr_approved") === "true",
+        });
+      } catch (err) {
+        console.error("Deep link plan fetch failed:", err);
+      } finally {
+        setDeepLinkLoading(false);
+      }
+    };
+    load();
+  }, []);
+
+  const [activeTab,        setActiveTab]        = useState("settlement");
+  const [summary,          setSummary]          = useState(null);
+  const [teamDetails,      setTeamDetails]      = useState(null);
+  const [villageBrief,     setVillageBrief]     = useState(null);
+  const [summaryLoading,   setSummaryLoading]   = useState(true);
+  const [summaryError,     setSummaryError]     = useState(false);
+
+  const [settlements,       setSettlements]       = useState([]);
+  const [crops,             setCrops]             = useState([]);
+  const [livestock,         setLivestock]         = useState([]);
   const [settlementLoading, setSettlementLoading] = useState(false);
 
-  // Well tab data
-    const [wells,        setWells]        = useState([]);
-    const [wellsLoading, setWellsLoading] = useState(false);
-    const [selectedWell, setSelectedWell] = useState(null);
+  const [wells,        setWells]        = useState([]);
+  const [wellsLoading, setWellsLoading] = useState(false);
+  const [selectedWell, setSelectedWell] = useState(null);
 
-  // Waterbodies Data
   const [waterbodies,        setWaterbodies]        = useState([]);
   const [waterbodiesLoading, setWaterbodiesLoading] = useState(false);
   const [selectedWaterbody,  setSelectedWaterbody]  = useState(null);
 
-  // NRM Works
-  const [nrmWorks,          setNrmWorks]          = useState([]);
-  const [maintenanceGW,     setMaintenanceGW]     = useState([]);
-  const [maintenanceAgri,   setMaintenanceAgri]   = useState([]);
-  const [maintenanceSWB,    setMaintenanceSWB]    = useState([]);
-  const [maintenanceSWBRS,  setMaintenanceSWBRS]  = useState([]);
-  const [nrmLoading,        setNrmLoading]        = useState(false);
-  const [selectedNrmWork,   setSelectedNrmWork]   = useState(null);
-  const [worksSubTab,       setWorksSubTab]       = useState("nrm");
+  const [nrmWorks,         setNrmWorks]         = useState([]);
+  const [maintenanceGW,    setMaintenanceGW]    = useState([]);
+  const [maintenanceAgri,  setMaintenanceAgri]  = useState([]);
+  const [maintenanceSWB,   setMaintenanceSWB]   = useState([]);
+  const [maintenanceSWBRS, setMaintenanceSWBRS] = useState([]);
+  const [nrmLoading,       setNrmLoading]       = useState(false);
+  const [selectedNrmWork,  setSelectedNrmWork]  = useState(null);
+  const [worksSubTab,      setWorksSubTab]      = useState("nrm");
 
-  // Livelihood
-  const [livelihood,        setLivelihood]        = useState([]);
-  const [livelihoodLoading, setLivelihoodLoading] = useState(false);
+  const [livelihood,         setLivelihood]         = useState([]);
+  const [livelihoodLoading,  setLivelihoodLoading]  = useState(false);
   const [selectedLivelihood, setSelectedLivelihood] = useState(null);
 
   const districtNameSafe = plan?.district || "";
   const blockNameSafe    = plan?.block    || "";
 
-  // ── FETCH SUMMARY DATA ──────────────────────────────────
   useEffect(() => {
     if (!plan?.id) return;
     const load = async () => {
@@ -451,11 +463,9 @@ const PlanViewPage = () => {
     load();
   }, [plan?.id]);
 
-  // ── FETCH SETTLEMENT TAB DATA ───────────────────────────
   useEffect(() => {
     if (!plan?.id || activeTab !== "settlement") return;
-    if (settlements.length > 0) return; // already loaded
-
+    if (settlements.length > 0) return;
     const load = async () => {
       setSettlementLoading(true);
       try {
@@ -479,17 +489,11 @@ const PlanViewPage = () => {
   useEffect(() => {
     if (!plan?.id || activeTab !== "wells") return;
     if (wells.length > 0) return;
-
     const load = async () => {
-        setWellsLoading(true);
-        try {
-        const data = await fetchWells(plan.id);
-        setWells(data);
-        } catch (err) {
-        console.error("Wells load failed:", err);
-        } finally {
-        setWellsLoading(false);
-        }
+      setWellsLoading(true);
+      try { setWells(await fetchWells(plan.id)); }
+      catch (err) { console.error("Wells load failed:", err); }
+      finally { setWellsLoading(false); }
     };
     load();
   }, [plan?.id, activeTab]);
@@ -497,17 +501,11 @@ const PlanViewPage = () => {
   useEffect(() => {
     if (!plan?.id || activeTab !== "waterbodies") return;
     if (waterbodies.length > 0) return;
-
     const load = async () => {
       setWaterbodiesLoading(true);
-      try {
-        const data = await fetchWaterbodies(plan.id);
-        setWaterbodies(data);
-      } catch (err) {
-        console.error("Waterbodies load failed:", err);
-      } finally {
-        setWaterbodiesLoading(false);
-      }
+      try { setWaterbodies(await fetchWaterbodies(plan.id)); }
+      catch (err) { console.error("Waterbodies load failed:", err); }
+      finally { setWaterbodiesLoading(false); }
     };
     load();
   }, [plan?.id, activeTab]);
@@ -515,7 +513,6 @@ const PlanViewPage = () => {
   useEffect(() => {
     if (!plan?.id || activeTab !== "works") return;
     if (nrmWorks.length > 0) return;
-
     const load = async () => {
       setNrmLoading(true);
       try {
@@ -543,282 +540,124 @@ const PlanViewPage = () => {
   useEffect(() => {
     if (!plan?.id || activeTab !== "livelihood") return;
     if (livelihood.length > 0) return;
-
     const load = async () => {
       setLivelihoodLoading(true);
-      try {
-        const data = await fetchLivelihood(plan.id);
-        setLivelihood(data);
-      } catch (err) {
-        console.error("Livelihood load failed:", err);
-      } finally {
-        setLivelihoodLoading(false);
-      }
+      try { setLivelihood(await fetchLivelihood(plan.id)); }
+      catch (err) { console.error("Livelihood load failed:", err); }
+      finally { setLivelihoodLoading(false); }
     };
     load();
   }, [plan?.id, activeTab]);
 
   // ── MAP LOAD FUNCTIONS ──────────────────────────────────
-  const loadLULC = useCallback(async (map) => {
-    const lulcLayer = await getImageLayer(
-      "LULC_level_3",
-      `LULC_24_25_${districtNameSafe}_${blockNameSafe}_level_3`,
-      true,
-      "lulc_level_3_style"
+  const loadMWS = useCallback(async (map) => {
+    const mwsLayer = await getVectorLayers(
+      "mws_layers",
+      `deltaG_well_depth_${districtNameSafe}_${blockNameSafe}`,
+      true
     );
-    lulcLayer.set("layerName", "lulcLayer");
-    map.addLayer(lulcLayer);
+    mwsLayer.setStyle(new Style({
+      stroke: new Stroke({ color: "#000", width: 2 }),
+      fill:   new Fill({ color: "rgba(0,0,0,0)" }),
+    }));
+    map.addLayer(mwsLayer);
+    return mwsLayer;
   }, [districtNameSafe, blockNameSafe]);
 
-    const loadMWS = useCallback(async (map) => {
-      const mwsLayer = await getVectorLayers(
-        "mws_layers",
-        `deltaG_well_depth_${districtNameSafe}_${blockNameSafe}`,
-        true
-      );
-      mwsLayer.setStyle(new Style({
-        stroke: new Stroke({ color: "#000", width: 2 }),
-        fill:   new Fill({ color: "rgba(0,0,0,0)" }),
-      }));
-      map.addLayer(mwsLayer);
-      return mwsLayer;
-    }, [districtNameSafe, blockNameSafe]);
+  const loadAdminBoundary = useCallback(async (map) => {
+    const layer = await getVectorLayers("panchayat_boundaries", `${districtNameSafe}_${blockNameSafe}`, true);
+    layer.setStyle(new Style({
+      stroke: new Stroke({ color: "#000", width: 2 }),
+      fill:   new Fill({ color: "rgba(0,0,0,0)" }),
+    }));
+    map.addLayer(layer);
 
-    const loadAdminBoundary = useCallback(async (map) => {
-        await loadLULC(map);
-        const layer = await getVectorLayers(
-            "panchayat_boundaries",
-            `${districtNameSafe}_${blockNameSafe}`,
-            true
-        );
-        layer.setStyle(new Style({
-            stroke: new Stroke({ color: "#000", width: 2 }),
-            fill:   new Fill({ color: "rgba(0,0,0,0)" }),
-        }));
-        map.addLayer(layer);
-        layer.getSource().once("change", () => {
+    // Zoom to plan's lat/long if available, otherwise fall back to boundary extent
+    if (plan?.latitude && plan?.longitude) {
+      map.getView().animate({
+        center:   [parseFloat(plan.longitude), parseFloat(plan.latitude)],
+        zoom:     14,
+        duration: 500,
+      });
+    } else {
+      layer.getSource().once("change", () => {
         if (layer.getSource().getState() === "ready") {
-            const view = map.getView();
-            view.fit(layer.getSource().getExtent(), { padding: [30, 30, 30, 30], duration: 400 });
-            setTimeout(() => view.animate({ zoom: view.getZoom() + 1, duration: 300 }), 450);
+          map.getView().fit(layer.getSource().getExtent(), { padding: [30, 30, 30, 30], duration: 500, maxZoom: 14 });
         }
+      });
+    }
+  }, [districtNameSafe, blockNameSafe, plan?.latitude, plan?.longitude]);
+
+  const makeResourceLoader = useCallback((prefix, icon, nameField) => async (map) => {
+    const mwsLayer = await loadMWS(map);
+    const layer = await getVectorLayers("resources", `${prefix}_${plan.id}_${districtNameSafe}_${blockNameSafe}`, true);
+    layer.setStyle((feature) => {
+      if (feature.getGeometry()?.getType() === "Point") {
+        const name = feature.get(nameField) || "";
+        return new Style({
+          image: new Icon({ src: icon, scale: 1.1 }),
+          text: new Text({
+            text: name, font: "bold 11px sans-serif", offsetY: -20,
+            textAlign: "center", textBaseline: "middle",
+            fill:   new Fill({ color: "oklch(28% 0.18 301.924)" }),
+            stroke: new Stroke({ color: "#ffffff", width: 3 }),
+          }),
         });
-    }, [districtNameSafe, blockNameSafe, loadLULC]);
+      }
+      return null;
+    });
+    map.addLayer(layer);
+    layer.getSource().once("change", () => {
+      if (layer.getSource().getState() === "ready") {
+        const features = layer.getSource().getFeatures();
+        if (features.length > 0) {
+          map.getView().fit(layer.getSource().getExtent(), { padding: [60, 60, 60, 60], maxZoom: 16, duration: 500 });
+        } else {
+          const mwsExtent = mwsLayer.getSource().getExtent();
+          if (mwsExtent && !mwsExtent.some(isNaN))
+            map.getView().fit(mwsExtent, { padding: [40, 40, 40, 40], maxZoom: 14, duration: 500 });
+        }
+      }
+    });
+  }, [districtNameSafe, blockNameSafe, plan?.id, loadMWS]);
 
-    const loadSettlement = useCallback(async (map) => {
-        const mwsLayer = await loadMWS(map);
+  const loadSettlement    = useCallback(makeResourceLoader("settlement", SettlementIcon,   "sett_name"),  [makeResourceLoader]);
+  const loadWell          = useCallback(makeResourceLoader("well",       WellIcon,          "Benefici_1"), [makeResourceLoader]);
+  const loadWaterStructure= useCallback(makeResourceLoader("waterbody",  WaterStructureIcon,"wbs_type"),   [makeResourceLoader]);
 
-        const layer = await getVectorLayers(
-            "resources",
-            `settlement_${plan.id}_${districtNameSafe}_${blockNameSafe}`,
-            true
-        );
-        layer.setStyle((feature) => {
-            if (feature.getGeometry()?.getType() === "Point") {
-                const name = feature.get("sett_name") || "";
-                return new Style({
-                image: new Icon({ src: SettlementIcon, scale: 1.1 }),
-                text: new Text({
-                    text:          name,
-                    font:          "bold 11px sans-serif",
-                    offsetY:       -20,
-                    textAlign:     "center",
-                    textBaseline:  "middle",
-                    fill:          new Fill({ color: "oklch(28% 0.18 301.924)" }),
-                    stroke:        new Stroke({ color: "#ffffff", width: 3 }),
-                }),
-                });
-            }
-            return null;
-        });
-
-        map.addLayer(layer);
-
-        // Zoom to settlement features, fallback to MWS extent
-        layer.getSource().once("change", () => {
-            if (layer.getSource().getState() === "ready") {
-            const features = layer.getSource().getFeatures();
-            if (features.length > 0) {
-                const extent = layer.getSource().getExtent();
-                map.getView().fit(extent, {
-                    padding:  [60, 60, 60, 60],
-                    maxZoom:  16,
-                    duration: 500,
-                });
-            } else {
-                // Fallback to MWS extent
-                const mwsExtent = mwsLayer.getSource().getExtent();
-                if (mwsExtent && !mwsExtent.some(isNaN)) {
-                map.getView().fit(mwsExtent, {
-                    padding:  [40, 40, 40, 40],
-                    maxZoom:  14,
-                    duration: 500,
-                });
-                }
-            }
-            }
-        });
-    }, [districtNameSafe, blockNameSafe, plan?.id, loadMWS]);
-
-  const loadWell = useCallback(async (map) => {
-      const mwsLayer = await loadMWS(map);
-      const layer = await getVectorLayers(
-          "resources",
-          `well_${plan.id}_${districtNameSafe}_${blockNameSafe}`,
-          true
-      );
-      layer.setStyle((feature) => {
+  const loadNrmWorks = useCallback(async (map) => {
+    const mwsLayer = await loadMWS(map);
+    const makeLayer = async (prefix, icon) => {
+      const l = await getVectorLayers("works", `${prefix}_${plan.id}_${districtNameSafe}_${blockNameSafe}`, true);
+      l.setStyle((feature) => {
         if (feature.getGeometry()?.getType() === "Point") {
-          console.log(feature.getProperties()); // check exact property names
-          const name = feature.get("Benefici_1") || "";
+          const name = feature.get("work_type") || "";
           return new Style({
-            image: new Icon({ src: WellIcon, scale: 1.1 }),
+            image: new Icon({ src: icon, scale: 1.1 }),
             text: new Text({
-              text:         name,
-              font:         "bold 11px sans-serif",
-              offsetY:      -20,
-              textAlign:    "center",
-              textBaseline: "middle",
-              fill:         new Fill({ color: "oklch(28% 0.18 301.924)" }),
-              stroke:       new Stroke({ color: "#ffffff", width: 3 }),
+              text: name, font: "bold 11px sans-serif", offsetY: -20,
+              textAlign: "center", textBaseline: "middle",
+              fill:   new Fill({ color: "oklch(28% 0.18 301.924)" }),
+              stroke: new Stroke({ color: "#ffffff", width: 3 }),
             }),
           });
         }
         return null;
       });
-      map.addLayer(layer);
-      layer.getSource().once("change", () => {
-          if (layer.getSource().getState() === "ready") {
-          const features = layer.getSource().getFeatures();
-          if (features.length > 0) {
-              map.getView().fit(layer.getSource().getExtent(), {
-              padding: [60, 60, 60, 60], maxZoom: 16, duration: 500,
-              });
-          } else {
-              const mwsExtent = mwsLayer.getSource().getExtent();
-              if (mwsExtent && !mwsExtent.some(isNaN)) {
-              map.getView().fit(mwsExtent, {
-                  padding: [40, 40, 40, 40], maxZoom: 14, duration: 500,
-              });
-              }
-          }
-          }
-      });
-  }, [districtNameSafe, blockNameSafe, plan?.id, loadMWS]);
-
-  const loadWaterStructure = useCallback(async (map) => {
-    const mwsLayer = await loadMWS(map);
-
-    const layer = await getVectorLayers(
-      "resources",
-      `waterbody_${plan.id}_${districtNameSafe}_${blockNameSafe}`,
-      true
-    );
-
-    layer.setStyle((feature) => {
-      if (feature.getGeometry()?.getType() === "Point") {
-        console.log(feature.getProperties()); // check exact property names
-        const name = feature.get("wbs_type") || "";
-        return new Style({
-          image: new Icon({ src: WaterStructureIcon, scale: 1.1 }),
-          text: new Text({
-            text:         name,
-            font:         "bold 11px sans-serif",
-            offsetY:      -20,
-            textAlign:    "center",
-            textBaseline: "middle",
-            fill:         new Fill({ color: "oklch(28% 0.18 301.924)" }),
-            stroke:       new Stroke({ color: "#ffffff", width: 3 }),
-          }),
-        });
-      }
-      return null;
-    });
-
-    map.addLayer(layer);
-
-    layer.getSource().once("change", () => {
-      if (layer.getSource().getState() === "ready") {
-        const features = layer.getSource().getFeatures();
-        if (features.length > 0) {
-          map.getView().fit(layer.getSource().getExtent(), {
-            padding: [60, 60, 60, 60], maxZoom: 16, duration: 500,
-          });
-        } else {
-          const mwsExtent = mwsLayer.getSource().getExtent();
-          if (mwsExtent && !mwsExtent.some(isNaN)) {
-            map.getView().fit(mwsExtent, {
-              padding: [40, 40, 40, 40], maxZoom: 14, duration: 500,
-            });
-          }
-        }
-      }
-    });
-  }, [districtNameSafe, blockNameSafe, plan?.id, loadMWS]);
-
-  const loadNrmWorks = useCallback(async (map) => {
-    const mwsLayer = await loadMWS(map);
-
-    const rechargeLayer = await getVectorLayers(
-      "works",
-      `plan_gw_${plan.id}_${districtNameSafe}_${blockNameSafe}`,
-      true
-    );
-    rechargeLayer.setStyle((feature) => {
-      if (feature.getGeometry()?.getType() === "Point") {
-        const name = feature.get("work_type") || "";
-        return new Style({
-          image: new Icon({ src: RechargeIcon, scale: 1.1 }),
-          text: new Text({
-            text:         name,
-            font:         "bold 11px sans-serif",
-            offsetY:      -20,
-            textAlign:    "center",
-            textBaseline: "middle",
-            fill:         new Fill({ color: "oklch(28% 0.18 301.924)" }),
-            stroke:       new Stroke({ color: "#ffffff", width: 3 }),
-          }),
-        });
-      }
-      return null;
-    });
-    map.addLayer(rechargeLayer);
-
-    const irrigationLayer = await getVectorLayers(
-      "works",
-      `plan_agri_${plan.id}_${districtNameSafe}_${blockNameSafe}`,
-      true
-    );
-    irrigationLayer.setStyle((feature) => {
-      if (feature.getGeometry()?.getType() === "Point") {
-        const name = feature.get("work_type") || "";
-        return new Style({
-          image: new Icon({ src: IrrigationIcon, scale: 1.1 }),
-          text: new Text({
-            text:         name,
-            font:         "bold 11px sans-serif",
-            offsetY:      -20,
-            textAlign:    "center",
-            textBaseline: "middle",
-            fill:         new Fill({ color: "oklch(28% 0.18 301.924)" }),
-            stroke:       new Stroke({ color: "#ffffff", width: 3 }),
-          }),
-        });
-      }
-      return null;
-    });
-    map.addLayer(irrigationLayer);
-
-    // Zoom to combined extent of both layers, fallback to MWS
+      map.addLayer(l);
+      return l;
+    };
+    const [rechargeLayer, irrigationLayer] = await Promise.all([
+      makeLayer("plan_gw",   RechargeIcon),
+      makeLayer("plan_agri", IrrigationIcon),
+    ]);
     const tryZoom = () => {
-      const rFeatures = rechargeLayer.getSource().getFeatures();
-      const iFeatures = irrigationLayer.getSource().getFeatures();
-      const allFeatures = [...rFeatures, ...iFeatures];
-
-      if (allFeatures.length > 0) {
+      const rF = rechargeLayer.getSource().getFeatures();
+      const iF = irrigationLayer.getSource().getFeatures();
+      if ([...rF, ...iF].length > 0) {
         const extents = [
-          ...(rFeatures.length > 0 ? [rechargeLayer.getSource().getExtent()]   : []),
-          ...(iFeatures.length > 0 ? [irrigationLayer.getSource().getExtent()] : []),
+          ...(rF.length > 0 ? [rechargeLayer.getSource().getExtent()]   : []),
+          ...(iF.length > 0 ? [irrigationLayer.getSource().getExtent()] : []),
         ];
         const combined = extents.reduce((acc, curr) => [
           Math.min(acc[0], curr[0]), Math.min(acc[1], curr[1]),
@@ -827,68 +666,61 @@ const PlanViewPage = () => {
         map.getView().fit(combined, { padding: [60, 60, 60, 60], maxZoom: 16, duration: 500 });
       } else {
         const mwsExtent = mwsLayer.getSource().getExtent();
-        if (mwsExtent && !mwsExtent.some(isNaN)) {
+        if (mwsExtent && !mwsExtent.some(isNaN))
           map.getView().fit(mwsExtent, { padding: [40, 40, 40, 40], maxZoom: 14, duration: 500 });
-        }
       }
     };
-
     rechargeLayer.getSource().once("change",   () => { if (rechargeLayer.getSource().getState()   === "ready") tryZoom(); });
     irrigationLayer.getSource().once("change", () => { if (irrigationLayer.getSource().getState() === "ready") tryZoom(); });
     setTimeout(tryZoom, 500);
-
   }, [districtNameSafe, blockNameSafe, plan?.id, loadMWS]);
 
   const loadLivelihood = useCallback(async (map) => {
     const mwsLayer = await loadMWS(map);
-
-    const layer = await getVectorLayers(
-      "works",
-      `livelihood_${plan.id}_${districtNameSafe}_${blockNameSafe}`,
-      true
-    );
-
+    const layer = await getVectorLayers("works", `livelihood_${plan.id}_${districtNameSafe}_${blockNameSafe}`, true);
     layer.setStyle((feature) => {
       if (feature.getGeometry()?.getType() === "Point") {
         const name = feature.get("Livestoc_5") || "";
         return new Style({
           image: new Icon({ src: LivelihoodIcon, scale: 1.1 }),
           text: new Text({
-            text:         name,
-            font:         "bold 11px sans-serif",
-            offsetY:      -20,
-            textAlign:    "center",
-            textBaseline: "middle",
-            fill:         new Fill({ color: "oklch(28% 0.18 301.924)" }),
-            stroke:       new Stroke({ color: "#ffffff", width: 3 }),
+            text: name, font: "bold 11px sans-serif", offsetY: -20,
+            textAlign: "center", textBaseline: "middle",
+            fill:   new Fill({ color: "oklch(28% 0.18 301.924)" }),
+            stroke: new Stroke({ color: "#ffffff", width: 3 }),
           }),
         });
       }
       return null;
     });
-
     map.addLayer(layer);
-
     layer.getSource().once("change", () => {
       if (layer.getSource().getState() === "ready") {
         const features = layer.getSource().getFeatures();
         if (features.length > 0) {
-          map.getView().fit(layer.getSource().getExtent(), {
-            padding: [60, 60, 60, 60], maxZoom: 16, duration: 500,
-          });
+          map.getView().fit(layer.getSource().getExtent(), { padding: [60, 60, 60, 60], maxZoom: 16, duration: 500 });
         } else {
           const mwsExtent = mwsLayer.getSource().getExtent();
-          if (mwsExtent && !mwsExtent.some(isNaN)) {
-            map.getView().fit(mwsExtent, {
-              padding: [40, 40, 40, 40], maxZoom: 14, duration: 500,
-            });
-          }
+          if (mwsExtent && !mwsExtent.some(isNaN))
+            map.getView().fit(mwsExtent, { padding: [40, 40, 40, 40], maxZoom: 14, duration: 500 });
         }
       }
     });
   }, [districtNameSafe, blockNameSafe, plan?.id, loadMWS]);
 
   const loadNothing = useCallback(async () => {}, []);
+
+  if (deepLinkLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center" style={{ background: P.lighter }}>
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-10 h-10 rounded-full border-4 border-t-transparent animate-spin"
+            style={{ borderColor: `${P.base} transparent transparent transparent` }} />
+          <p className="text-sm font-semibold" style={{ color: P.muted }}>Loading plan...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (!plan) {
     return (
@@ -897,9 +729,7 @@ const PlanViewPage = () => {
           <p className="text-lg font-semibold" style={{ color: P.text }}>No plan data found</p>
           <button onClick={() => navigate(-1)}
             className="mt-4 px-4 py-2 rounded-xl text-sm font-semibold text-white"
-            style={{ background: P.base }}>
-            ← Go Back
-          </button>
+            style={{ background: P.base }}>← Go Back</button>
         </div>
       </div>
     );
@@ -918,22 +748,17 @@ const PlanViewPage = () => {
               onClick={() => navigate("/CCUsagePage", { state: { returnContext: state?.returnContext } })}
               className="flex-shrink-0 flex items-center gap-2 px-4 py-2 rounded-xl font-semibold
                          text-sm transition-all duration-200 active:scale-95"
-              style={{ background: "rgba(255,255,255,0.95)", color: P.dark,
-                       boxShadow: "0 2px 12px rgba(0,0,0,0.15)" }}
-            >
-              ← Back
-            </button>
+              style={{ background: "rgba(255,255,255,0.95)", color: P.dark, boxShadow: "0 2px 12px rgba(0,0,0,0.15)" }}
+            >← Back</button>
             <div className="min-w-0">
               <p className="text-xs font-semibold uppercase tracking-widest"
-                style={{ color: "oklch(88% 0.08 301.924)" }}>
-                Resource & Demand Map Report
-              </p>
+                style={{ color: "oklch(88% 0.08 301.924)" }}>Resource & Demand Map Report</p>
               <h1 className="text-lg font-bold text-white truncate">{plan.plan}</h1>
             </div>
           </div>
           <div className="flex-shrink-0 flex items-center gap-2 flex-wrap justify-end">
-            <StatusBadge label="DPR Completed"  active={plan.is_dpr_reviewed}  />
-            <StatusBadge label="DPR Submitted"  active={plan.is_dpr_approved}  />
+            <StatusBadge label="DPR Completed" active={plan.is_dpr_reviewed} />
+            <StatusBadge label="DPR Submitted" active={plan.is_dpr_approved} />
           </div>
         </div>
       </div>
@@ -942,22 +767,19 @@ const PlanViewPage = () => {
 
         {/* ── VILLAGE SUMMARY + MAP ─────────────────────── */}
         <div className="flex flex-col lg:flex-row gap-6">
-
           <div className="bg-white rounded-2xl shadow-sm p-6 flex flex-col gap-5 w-full lg:w-[40%]"
             style={{ border: `1px solid ${P.border}` }}>
-            <p className="text-xs font-semibold uppercase tracking-widest" style={{ color: P.muted }}>
-              Village Summary
-            </p>
+            <p className="text-xs font-semibold uppercase tracking-widest" style={{ color: P.muted }}>Village Summary</p>
             {summaryLoading ? <SummarySkeleton /> : summaryError ? (
               <p className="text-sm" style={{ color: P.muted }}>Failed to load summary.</p>
             ) : (
               <>
                 <div className="grid grid-cols-2 gap-3">
-                  <InfoChip label="Village"        value={villageBrief?.village_name}     />
-                  <InfoChip label="Gram Panchayat" value={villageBrief?.gram_panchayat}   />
-                  <InfoChip label="Tehsil"         value={villageBrief?.tehsil}           />
-                  <InfoChip label="District"       value={villageBrief?.district}         />
-                  <InfoChip label="State"          value={villageBrief?.state}            />
+                  <InfoChip label="Village"        value={toTitleCase(villageBrief?.village_name)}     />
+                  <InfoChip label="Gram Panchayat" value={toTitleCase(villageBrief?.gram_panchayat)}   />
+                  <InfoChip label="Tehsil"         value={toTitleCase(villageBrief?.tehsil)}           />
+                  <InfoChip label="District"       value={toTitleCase(villageBrief?.district)}         />
+                  <InfoChip label="State"          value={toTitleCase(villageBrief?.state)}            />
                   <InfoChip label="Settlements"    value={villageBrief?.total_settlements}/>
                 </div>
                 <div className="w-full h-px" style={{ background: P.border }} />
@@ -969,8 +791,7 @@ const PlanViewPage = () => {
                 </div>
                 <div className="w-full h-px" style={{ background: P.border }} />
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-widest mb-3"
-                    style={{ color: P.muted }}>Data Sections</p>
+                  <p className="text-xs font-semibold uppercase tracking-widest mb-3" style={{ color: P.muted }}>Data Sections</p>
                   <div className="grid grid-cols-3 gap-2">
                     {[
                       { label: "Settlements", value: summary?.sections?.settlements   },
@@ -993,18 +814,10 @@ const PlanViewPage = () => {
               </>
             )}
           </div>
-
           <div className="w-full lg:w-[60%]">
-            <MapSection
-              title="Village Overview"
-              loadLayer={loadAdminBoundary}
-              loadBoundary={loadNothing}
-              districtNameSafe={districtNameSafe}
-              blockNameSafe={blockNameSafe}
-              plan={plan}
-            />
+            <MapSection title="Village Overview" loadLayer={loadAdminBoundary} loadBoundary={loadNothing}
+              districtNameSafe={districtNameSafe} blockNameSafe={blockNameSafe} plan={plan} />
           </div>
-
         </div>
 
         {/* ── TAB BAR ──────────────────────────────────── */}
@@ -1032,200 +845,120 @@ const PlanViewPage = () => {
 
         {/* SETTLEMENT TAB */}
         {activeTab === "settlement" && (
-            <div
-                className="bg-white rounded-2xl shadow-sm p-6"
-                style={{ border: `1px solid ${P.border}` }}
-            >
-                <div className="flex flex-col lg:flex-row gap-6">
-
-                {/* Map */}
-                <div className="w-full lg:w-[50%]">
-                    <MapSection
-                    title="Settlement Overview"
-                    loadLayer={loadSettlement}
-                    loadBoundary={loadNothing}
-                    districtNameSafe={districtNameSafe}
-                    blockNameSafe={blockNameSafe}
-                    plan={plan}
-                    />
-                </div>
-
-                {/* Data */}
-                <div className="w-full lg:w-[50%] flex flex-col gap-4 overflow-y-auto max-h-[600px] pr-1">
-                    {settlementLoading ? (
-                    <TabSkeleton />
-                    ) : (
-                    <>
-                        {settlements.length > 0 && (
-                        <div className="flex flex-col gap-3">
-                            <p className="text-xs font-semibold uppercase tracking-widest"
-                            style={{ color: P.muted }}>
-                            Settlements ({settlements.length})
-                            </p>
-                            {settlements.map((s, i) => (
-                            <SettlementCard
-                                key={s.settlement_id ?? i}
-                                s={s}
-                                livestockData={livestock}
-                                cropsData={crops}
-                            />
-                            ))}
-                        </div>
-                        )}
-
-                        {settlements.length === 0 && (
-                        <div className="flex items-center justify-center h-40 rounded-2xl"
-                            style={{ border: `1px solid ${P.border}` }}>
-                            <p className="text-sm" style={{ color: P.muted }}>No settlement data available</p>
-                        </div>
-                        )}
-                    </>
+          <div className="bg-white rounded-2xl shadow-sm p-6" style={{ border: `1px solid ${P.border}` }}>
+            <div className="flex flex-col lg:flex-row gap-6">
+              <div className="w-full lg:w-[50%]">
+                <MapSection title="Settlement Overview" loadLayer={loadSettlement} loadBoundary={loadNothing}
+                  districtNameSafe={districtNameSafe} blockNameSafe={blockNameSafe} plan={plan} />
+              </div>
+              <div className="w-full lg:w-[50%] flex flex-col gap-4 overflow-y-auto max-h-[600px] pr-1">
+                {settlementLoading ? <TabSkeleton /> : (
+                  <>
+                    {settlements.length > 0 && (
+                      <div className="flex flex-col gap-3">
+                        <p className="text-xs font-semibold uppercase tracking-widest" style={{ color: P.muted }}>
+                          Settlements ({settlements.length})
+                        </p>
+                        {settlements.map((s, i) => (
+                          <SettlementCard key={s.settlement_id ?? i} s={s} livestockData={livestock} cropsData={crops} />
+                        ))}
+                      </div>
                     )}
-                </div>
-
-                </div>
+                    {settlements.length === 0 && (
+                      <div className="flex items-center justify-center h-40 rounded-2xl"
+                        style={{ border: `1px solid ${P.border}` }}>
+                        <p className="text-sm" style={{ color: P.muted }}>No settlement data available</p>
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
             </div>
+          </div>
         )}
+
         {/* WELLS TAB */}
         {activeTab === "wells" && (
-            <div className="bg-white rounded-2xl shadow-sm p-6"
-                style={{ border: `1px solid ${P.border}` }}>
-                <div className="flex flex-col lg:flex-row gap-6">
-
-                {/* Map */}
-                <div className="w-full lg:w-[50%]">
-                    <MapSection
-                    title="Wells Overview"
-                    loadLayer={loadWell}
-                    loadBoundary={loadNothing}
-                    districtNameSafe={districtNameSafe}
-                    blockNameSafe={blockNameSafe}
-                    plan={plan}
-                    />
-                </div>
-
-                {/* List + Detail */}
-                <div className="w-full lg:w-[50%] flex flex-col gap-4">
-
-                    {/* Compact list */}
-                    <div className="overflow-y-auto max-h-[350px] flex flex-col gap-2 pr-1">
-                    {wellsLoading ? (
-                        <TabSkeleton />
-                    ) : wells.length === 0 ? (
-                        <div className="flex items-center justify-center h-40 rounded-2xl"
-                        style={{ border: `1px solid ${P.border}` }}>
-                        <p className="text-sm" style={{ color: P.muted }}>No wells data available</p>
-                        </div>
-                    ) : (
-                        <>
-                        <p className="text-xs font-semibold uppercase tracking-widest flex-shrink-0"
-                            style={{ color: P.muted }}>
-                            Wells ({wells.length})
-                        </p>
-                        {wells.map((w, i) => (
-                            <button
-                            key={w.well_id ?? i}
-                            onClick={() => setSelectedWell(selectedWell?.well_id === w.well_id ? null : w)}
-                            className="w-full text-left px-4 py-3 rounded-xl flex items-center
-                                        justify-between gap-3 transition-all duration-200"
-                            style={{
-                                background: selectedWell?.well_id === w.well_id ? P.light : P.lighter,
-                                border: `1px solid ${selectedWell?.well_id === w.well_id ? P.base : P.border}`,
-                            }}
-                            >
-                            <div className="flex items-center gap-3 min-w-0">
-                                <img src={WellIcon} alt="" className="w-5 h-5 flex-shrink-0" />
-                                <div className="min-w-0">
-                                <p className="text-sm font-semibold truncate" style={{ color: P.text }}>
-                                    {w.beneficiary_name || w.owner || "--"}
-                                </p>
-                                <p className="text-xs truncate" style={{ color: P.muted }}>
-                                    {w.beneficiary_settlement} · {w.well_type}
-                                </p>
-                                </div>
-                            </div>
-                            <span className="text-xs flex-shrink-0" style={{ color: P.muted }}>
-                                {selectedWell?.well_id === w.well_id ? "▲" : "▼"}
-                            </span>
-                            </button>
-                        ))}
-                        </>
-                    )}
+          <div className="bg-white rounded-2xl shadow-sm p-6" style={{ border: `1px solid ${P.border}` }}>
+            <div className="flex flex-col lg:flex-row gap-6">
+              <div className="w-full lg:w-[50%]">
+                <MapSection title="Wells Overview" loadLayer={loadWell} loadBoundary={loadNothing}
+                  districtNameSafe={districtNameSafe} blockNameSafe={blockNameSafe} plan={plan} />
+              </div>
+              <div className="w-full lg:w-[50%] flex flex-col gap-4">
+                <div className="overflow-y-auto max-h-[350px] flex flex-col gap-2 pr-1">
+                  {wellsLoading ? <TabSkeleton /> : wells.length === 0 ? (
+                    <div className="flex items-center justify-center h-40 rounded-2xl"
+                      style={{ border: `1px solid ${P.border}` }}>
+                      <p className="text-sm" style={{ color: P.muted }}>No wells data available</p>
                     </div>
-
-                    {/* Detail panel */}
-                    {selectedWell && (
-                    <WellDetailCard
-                        w={selectedWell}
-                        onClose={() => setSelectedWell(null)}
-                    />
-                    )}
-
+                  ) : (
+                    <>
+                      <p className="text-xs font-semibold uppercase tracking-widest flex-shrink-0" style={{ color: P.muted }}>
+                        Wells ({wells.length})
+                      </p>
+                      {wells.map((w, i) => (
+                        <button key={w.well_id ?? i}
+                          onClick={() => setSelectedWell(selectedWell?.well_id === w.well_id ? null : w)}
+                          className="w-full text-left px-4 py-3 rounded-xl flex items-center justify-between gap-3 transition-all duration-200"
+                          style={{
+                            background: selectedWell?.well_id === w.well_id ? P.light : P.lighter,
+                            border: `1px solid ${selectedWell?.well_id === w.well_id ? P.base : P.border}`,
+                          }}>
+                          <div className="flex items-center gap-3 min-w-0">
+                            <img src={WellIcon} alt="" className="w-5 h-5 flex-shrink-0" />
+                            <div className="min-w-0">
+                              <p className="text-sm font-semibold truncate" style={{ color: P.text }}>{w.beneficiary_name || w.owner || "--"}</p>
+                              <p className="text-xs truncate" style={{ color: P.muted }}>{w.beneficiary_settlement} · {w.well_type}</p>
+                            </div>
+                          </div>
+                          <span className="text-xs flex-shrink-0" style={{ color: P.muted }}>
+                            {selectedWell?.well_id === w.well_id ? "▲" : "▼"}
+                          </span>
+                        </button>
+                      ))}
+                    </>
+                  )}
                 </div>
-                </div>
+                {selectedWell && <WellDetailCard w={selectedWell} onClose={() => setSelectedWell(null)} />}
+              </div>
             </div>
+          </div>
         )}
+
         {/* WATERBODIES TAB */}
         {activeTab === "waterbodies" && (
-          <div className="bg-white rounded-2xl shadow-sm p-6"
-            style={{ border: `1px solid ${P.border}` }}>
+          <div className="bg-white rounded-2xl shadow-sm p-6" style={{ border: `1px solid ${P.border}` }}>
             <div className="flex flex-col lg:flex-row gap-6">
-
-              {/* Map */}
               <div className="w-full lg:w-[50%]">
-                <MapSection
-                  title="Waterbodies Overview"
-                  loadLayer={loadWaterStructure}
-                  loadBoundary={loadNothing}
-                  districtNameSafe={districtNameSafe}
-                  blockNameSafe={blockNameSafe}
-                  plan={plan}
-                />
+                <MapSection title="Waterbodies Overview" loadLayer={loadWaterStructure} loadBoundary={loadNothing}
+                  districtNameSafe={districtNameSafe} blockNameSafe={blockNameSafe} plan={plan} />
               </div>
-
-              {/* List + Detail */}
               <div className="w-full lg:w-[50%] flex flex-col gap-4">
-
-                {/* Compact list */}
                 <div className="overflow-y-auto max-h-[350px] flex flex-col gap-2 pr-1">
-                  {waterbodiesLoading ? (
-                    <TabSkeleton />
-                  ) : waterbodies.length === 0 ? (
+                  {waterbodiesLoading ? <TabSkeleton /> : waterbodies.length === 0 ? (
                     <div className="flex items-center justify-center h-40 rounded-2xl"
                       style={{ border: `1px solid ${P.border}` }}>
                       <p className="text-sm" style={{ color: P.muted }}>No waterbodies data available</p>
                     </div>
                   ) : (
                     <>
-                      <p className="text-xs font-semibold uppercase tracking-widest flex-shrink-0"
-                        style={{ color: P.muted }}>
+                      <p className="text-xs font-semibold uppercase tracking-widest flex-shrink-0" style={{ color: P.muted }}>
                         Waterbodies ({waterbodies.length})
                       </p>
                       {waterbodies.map((w, i) => (
-                        <button
-                          key={w.waterbody_id ?? i}
-                          onClick={() => setSelectedWaterbody(
-                            selectedWaterbody?.waterbody_id === w.waterbody_id ? null : w
-                          )}
-                          className="w-full text-left px-4 py-3 rounded-xl flex items-center
-                                    justify-between gap-3 transition-all duration-200"
+                        <button key={w.waterbody_id ?? i}
+                          onClick={() => setSelectedWaterbody(selectedWaterbody?.waterbody_id === w.waterbody_id ? null : w)}
+                          className="w-full text-left px-4 py-3 rounded-xl flex items-center justify-between gap-3 transition-all duration-200"
                           style={{
-                            background: selectedWaterbody?.waterbody_id === w.waterbody_id
-                              ? P.light : P.lighter,
-                            border: `1px solid ${
-                              selectedWaterbody?.waterbody_id === w.waterbody_id
-                                ? P.base : P.border}`,
-                          }}
-                        >
+                            background: selectedWaterbody?.waterbody_id === w.waterbody_id ? P.light : P.lighter,
+                            border: `1px solid ${selectedWaterbody?.waterbody_id === w.waterbody_id ? P.base : P.border}`,
+                          }}>
                           <div className="flex items-center gap-3 min-w-0">
                             <img src={WaterStructureIcon} alt="" className="w-5 h-5 flex-shrink-0" />
                             <div className="min-w-0">
-                              <p className="text-sm font-semibold truncate" style={{ color: P.text }}>
-                                {w.beneficiary_name || w.owner || "--"}
-                              </p>
-                              <p className="text-xs truncate" style={{ color: P.muted }}>
-                                {w.beneficiary_settlement} · {w.water_structure_type}
-                              </p>
+                              <p className="text-sm font-semibold truncate" style={{ color: P.text }}>{w.beneficiary_name || w.owner || "--"}</p>
+                              <p className="text-xs truncate" style={{ color: P.muted }}>{w.beneficiary_settlement} · {w.water_structure_type}</p>
                             </div>
                           </div>
                           <span className="text-xs flex-shrink-0" style={{ color: P.muted }}>
@@ -1236,15 +969,7 @@ const PlanViewPage = () => {
                     </>
                   )}
                 </div>
-
-                {/* Detail panel */}
-                {selectedWaterbody && (
-                  <WaterbodyDetailCard
-                    w={selectedWaterbody}
-                    onClose={() => setSelectedWaterbody(null)}
-                  />
-                )}
-
+                {selectedWaterbody && <WaterbodyDetailCard w={selectedWaterbody} onClose={() => setSelectedWaterbody(null)} />}
               </div>
             </div>
           </div>
@@ -1252,116 +977,69 @@ const PlanViewPage = () => {
 
         {/* NRM WORK DEMANDS TAB */}
         {activeTab === "works" && (
-          <div className="bg-white rounded-2xl shadow-sm p-6"
-            style={{ border: `1px solid ${P.border}` }}>
+          <div className="bg-white rounded-2xl shadow-sm p-6" style={{ border: `1px solid ${P.border}` }}>
             <div className="flex flex-col gap-6">
-
-              {/* Sub-tab toggle */}
               <div className="flex gap-2 flex-wrap">
                 {[
-                  { id: "nrm",    label: "NRM Works"       },
-                  { id: "gw",     label: "Maintenance GW"  },
-                  { id: "agri",   label: "Maintenance Agri"},
-                  { id: "swb",    label: "Maintenance SWB" },
+                  { id: "nrm",    label: "NRM Works"          },
+                  { id: "gw",     label: "Maintenance GW"     },
+                  { id: "agri",   label: "Maintenance Agri"   },
+                  { id: "swb",    label: "Maintenance SWB"    },
                   { id: "swb_rs", label: "Maintenance SWB RS" },
                 ].map((sub) => (
-                  <button
-                    key={sub.id}
+                  <button key={sub.id}
                     onClick={() => { setWorksSubTab(sub.id); setSelectedNrmWork(null); }}
                     className="px-4 py-2 rounded-xl text-xs font-semibold transition-all duration-200"
                     style={worksSubTab === sub.id
                       ? { background: P.base, color: "#fff", boxShadow: "0 2px 8px rgba(139,63,230,0.25)" }
-                      : { background: P.lighter, color: P.muted, border: `1px solid ${P.border}` }}
-                  >
+                      : { background: P.lighter, color: P.muted, border: `1px solid ${P.border}` }}>
                     {sub.label}
                   </button>
                 ))}
               </div>
-
               <div className="flex flex-col lg:flex-row gap-6">
-
-                {/* Map — only for NRM works sub-tab */}
                 {worksSubTab === "nrm" && (
                   <div className="w-full lg:w-[50%]">
-                    <MapSection
-                      title="NRM Work Demands"
-                      loadLayer={loadNrmWorks}
-                      loadBoundary={loadNothing}
-                      districtNameSafe={districtNameSafe}
-                      blockNameSafe={blockNameSafe}
-                      plan={plan}
-                    />
+                    <MapSection title="NRM Work Demands" loadLayer={loadNrmWorks} loadBoundary={loadNothing}
+                      districtNameSafe={districtNameSafe} blockNameSafe={blockNameSafe} plan={plan} />
                   </div>
                 )}
-
-                {/* List + Detail */}
                 <div className={`flex flex-col gap-4 w-full ${worksSubTab === "nrm" ? "lg:w-[50%]" : ""}`}>
-
                   {nrmLoading ? <TabSkeleton /> : (() => {
-                    const dataMap = {
-                      nrm:    nrmWorks,
-                      gw:     maintenanceGW,
-                      agri:   maintenanceAgri,
-                      swb:    maintenanceSWB,
-                      swb_rs: maintenanceSWBRS,
-                    };
+                    const dataMap = { nrm: nrmWorks, gw: maintenanceGW, agri: maintenanceAgri, swb: maintenanceSWB, swb_rs: maintenanceSWBRS };
                     const items = dataMap[worksSubTab] ?? [];
-
-                    const getIcon = (item) => {
-                      if (worksSubTab === "nrm") {
-                        return item.work_category === "Irrigation Work" ? IrrigationIcon : RechargeIcon;
-                      }
-                      return RechargeIcon;
-                    };
-
-                    const getSubtitle = (item) => {
-                      if (worksSubTab === "nrm")
-                        return `${item.beneficiary_settlement} · ${item.work_category}`;
-                      return `${item.beneficiary_settlement} · ${item.structure_type}`;
-                    };
-
-                    const getTitle = (item) =>
-                      item.beneficiary_name || item.work_demand || "--";
-
-                    const getId = (item, i) =>
-                      item.id ?? `${worksSubTab}-${i}`;
+                    const getIcon = (item) => worksSubTab === "nrm" && item.work_category === "Irrigation Work" ? IrrigationIcon : RechargeIcon;
+                    const getSubtitle = (item) => worksSubTab === "nrm"
+                      ? `${item.beneficiary_settlement} · ${item.work_category}`
+                      : `${item.beneficiary_settlement} · ${item.structure_type}`;
+                    const getTitle = (item) => item.beneficiary_name || item.work_demand || "--";
+                    const getId = (item, i) => item.id ?? `${worksSubTab}-${i}`;
 
                     return items.length === 0 ? (
-                      <div className="flex items-center justify-center h-40 rounded-2xl"
-                        style={{ border: `1px solid ${P.border}` }}>
+                      <div className="flex items-center justify-center h-40 rounded-2xl" style={{ border: `1px solid ${P.border}` }}>
                         <p className="text-sm" style={{ color: P.muted }}>No data available</p>
                       </div>
                     ) : (
                       <>
-                        {/* Compact list */}
                         <div className="overflow-y-auto max-h-[350px] flex flex-col gap-2 pr-1">
-                          <p className="text-xs font-semibold uppercase tracking-widest flex-shrink-0"
-                            style={{ color: P.muted }}>
+                          <p className="text-xs font-semibold uppercase tracking-widest flex-shrink-0" style={{ color: P.muted }}>
                             {items.length} records
                           </p>
                           {items.map((item, i) => (
-                            <button
-                              key={getId(item, i)}
+                            <button key={getId(item, i)}
                               onClick={() => setSelectedNrmWork(
-                                selectedNrmWork && getId(selectedNrmWork, -1) === getId(item, i)
-                                  ? null : item
+                                selectedNrmWork && getId(selectedNrmWork, -1) === getId(item, i) ? null : item
                               )}
-                              className="w-full text-left px-4 py-3 rounded-xl flex items-center
-                                        justify-between gap-3 transition-all duration-200"
+                              className="w-full text-left px-4 py-3 rounded-xl flex items-center justify-between gap-3 transition-all duration-200"
                               style={{
                                 background: selectedNrmWork === item ? P.light : P.lighter,
                                 border: `1px solid ${selectedNrmWork === item ? P.base : P.border}`,
-                              }}
-                            >
+                              }}>
                               <div className="flex items-center gap-3 min-w-0">
                                 <img src={getIcon(item)} alt="" className="w-5 h-5 flex-shrink-0" />
                                 <div className="min-w-0">
-                                  <p className="text-sm font-semibold truncate" style={{ color: P.text }}>
-                                    {getTitle(item)}
-                                  </p>
-                                  <p className="text-xs truncate" style={{ color: P.muted }}>
-                                    {getSubtitle(item)}
-                                  </p>
+                                  <p className="text-sm font-semibold truncate" style={{ color: P.text }}>{getTitle(item)}</p>
+                                  <p className="text-xs truncate" style={{ color: P.muted }}>{getSubtitle(item)}</p>
                                 </div>
                               </div>
                               <span className="text-xs flex-shrink-0" style={{ color: P.muted }}>
@@ -1370,19 +1048,11 @@ const PlanViewPage = () => {
                             </button>
                           ))}
                         </div>
-
-                        {/* Detail panel */}
-                        {selectedNrmWork && (
-                          <NrmDetailCard
-                            n={selectedNrmWork}
-                            onClose={() => setSelectedNrmWork(null)}
-                          />
-                        )}
+                        {selectedNrmWork && <NrmDetailCard n={selectedNrmWork} onClose={() => setSelectedNrmWork(null)} />}
                       </>
                     );
                   })()}
                 </div>
-
               </div>
             </div>
           </div>
@@ -1390,63 +1060,36 @@ const PlanViewPage = () => {
 
         {/* LIVELIHOOD DEMANDS TAB */}
         {activeTab === "livelihood" && (
-          <div className="bg-white rounded-2xl shadow-sm p-6"
-            style={{ border: `1px solid ${P.border}` }}>
+          <div className="bg-white rounded-2xl shadow-sm p-6" style={{ border: `1px solid ${P.border}` }}>
             <div className="flex flex-col lg:flex-row gap-6">
-
-              {/* Map */}
               <div className="w-full lg:w-[50%]">
-                <MapSection
-                  title="Livelihood Demands"
-                  loadLayer={loadLivelihood}
-                  loadBoundary={loadNothing}
-                  districtNameSafe={districtNameSafe}
-                  blockNameSafe={blockNameSafe}
-                  plan={plan}
-                />
+                <MapSection title="Livelihood Demands" loadLayer={loadLivelihood} loadBoundary={loadNothing}
+                  districtNameSafe={districtNameSafe} blockNameSafe={blockNameSafe} plan={plan} />
               </div>
-
-              {/* List + Detail */}
               <div className="w-full lg:w-[50%] flex flex-col gap-4">
-
                 <div className="overflow-y-auto max-h-[350px] flex flex-col gap-2 pr-1">
-                  {livelihoodLoading ? (
-                    <TabSkeleton />
-                  ) : livelihood.length === 0 ? (
-                    <div className="flex items-center justify-center h-40 rounded-2xl"
-                      style={{ border: `1px solid ${P.border}` }}>
-                      <p className="text-sm" style={{ color: P.muted }}>
-                        No livelihood data available
-                      </p>
+                  {livelihoodLoading ? <TabSkeleton /> : livelihood.length === 0 ? (
+                    <div className="flex items-center justify-center h-40 rounded-2xl" style={{ border: `1px solid ${P.border}` }}>
+                      <p className="text-sm" style={{ color: P.muted }}>No livelihood data available</p>
                     </div>
                   ) : (
                     <>
-                      <p className="text-xs font-semibold uppercase tracking-widest flex-shrink-0"
-                        style={{ color: P.muted }}>
+                      <p className="text-xs font-semibold uppercase tracking-widest flex-shrink-0" style={{ color: P.muted }}>
                         Livelihood Demands ({livelihood.length})
                       </p>
                       {livelihood.map((l, i) => (
-                        <button
-                          key={l.id ?? i}
-                          onClick={() => setSelectedLivelihood(
-                            selectedLivelihood === l ? null : l
-                          )}
-                          className="w-full text-left px-4 py-3 rounded-xl flex items-center
-                                    justify-between gap-3 transition-all duration-200"
+                        <button key={l.id ?? i}
+                          onClick={() => setSelectedLivelihood(selectedLivelihood === l ? null : l)}
+                          className="w-full text-left px-4 py-3 rounded-xl flex items-center justify-between gap-3 transition-all duration-200"
                           style={{
                             background: selectedLivelihood === l ? P.light : P.lighter,
                             border: `1px solid ${selectedLivelihood === l ? P.base : P.border}`,
-                          }}
-                        >
+                          }}>
                           <div className="flex items-center gap-3 min-w-0">
                             <img src={LivelihoodIcon} alt="" className="w-5 h-5 flex-shrink-0" />
                             <div className="min-w-0">
-                              <p className="text-sm font-semibold truncate" style={{ color: P.text }}>
-                                {l.beneficiary_name || "--"}
-                              </p>
-                              <p className="text-xs truncate" style={{ color: P.muted }}>
-                                {l.beneficiary_settlement} · {l.livelihood_work}
-                              </p>
+                              <p className="text-sm font-semibold truncate" style={{ color: P.text }}>{l.beneficiary_name || "--"}</p>
+                              <p className="text-xs truncate" style={{ color: P.muted }}>{l.beneficiary_settlement} · {l.livelihood_work}</p>
                             </div>
                           </div>
                           <span className="text-xs flex-shrink-0" style={{ color: P.muted }}>
@@ -1457,15 +1100,7 @@ const PlanViewPage = () => {
                     </>
                   )}
                 </div>
-
-                {/* Detail panel */}
-                {selectedLivelihood && (
-                  <LivelihoodDetailCard
-                    l={selectedLivelihood}
-                    onClose={() => setSelectedLivelihood(null)}
-                  />
-                )}
-
+                {selectedLivelihood && <LivelihoodDetailCard l={selectedLivelihood} onClose={() => setSelectedLivelihood(null)} />}
               </div>
             </div>
           </div>
