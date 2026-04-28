@@ -411,22 +411,6 @@ const PlansPage = () => {
     };
 
     const fetchPlansByDistrict = async (districtId, organizationId = null) => {
-      if (organizationId) {
-        // Org-level endpoint has no district filter — fetch all org plans and filter client-side
-        const res = await fetch(
-          `${process.env.REACT_APP_API_URL}/organizations/${encodeURIComponent(organizationId)}/watershed/plans/?filter_test_plan=true`,
-          {
-            headers: {
-              "Content-Type": "application/json",
-              "ngrok-skip-browser-warning": "420",
-              "X-API-Key": process.env.REACT_APP_API_KEY,
-            },
-          }
-        );
-        if (!res.ok) throw new Error(`API error ${res.status}`);
-        const data = await res.json();
-        return data.filter((p) => p.district_soi === districtId || p.district === districtId);
-      }
       const res = await fetch(
         `${process.env.REACT_APP_API_URL}/watershed/plans/?district=${districtId}&filter_test_plan=true`,
         {
@@ -645,19 +629,27 @@ const PlansPage = () => {
         districtLayerRef.current = null;
       }
 
+      // Build reverse lookup: district_name (lowercase) → district_id from proposedBlocks
+      // This guarantees we use the correct SOI ID for fetchPlansByDistrict
+      const nameToId = Object.fromEntries(
+        Object.entries(districtLookupRef.current).map(([id, name]) => [name.toLowerCase(), Number(id)])
+      );
+
       const centroidResults = await Promise.all(
         districtBreakdown.map(async (d) => {
           const centroid = await fetchDistrictCentroid(d.district_name);
-          return { ...d, centroid };
+          // Prefer reverse-lookup ID; fall back to whatever breakdown provides
+          const district_id = nameToId[d.district_name?.toLowerCase()] ?? d.district_id ?? d.district_soi;
+          return { ...d, centroid, district_id };
         })
       );
 
       const features = centroidResults
-        .filter((d) => d.centroid)
+        .filter((d) => d.centroid && d.district_id)
         .map((d) => {
           const feature = new Feature({
             geometry:     new Point([d.centroid.lon, d.centroid.lat]),
-            districtData: { ...d, district_id: d.district_id },
+            districtData: d,
           });
           feature.setStyle(createPinStyle(d.district_name, d.total_plans));
           return feature;
