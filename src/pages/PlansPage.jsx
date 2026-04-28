@@ -99,27 +99,26 @@ const fetchStewardListing = async (stateId, organizationId = null, districtId = 
 
 const fetchDistrictCentroid = async (districtName) => {
   const url = `${process.env.REACT_APP_GEOSERVER_URL}pan_india_asset/ows`;
-  const params = new URLSearchParams({
-    service:      "WFS",
-    version:      "1.0.0",
-    request:      "GetFeature",
-    typeName:     "pan_india_asset:pan_india_district_boundary_dataset",
-    outputFormat: "application/json",
-    CQL_FILTER:   `Name='${districtName}'`,
-  });
-  try {
+
+  const tryFetch = async (cqlFilter) => {
+    const params = new URLSearchParams({
+      service:      "WFS",
+      version:      "1.0.0",
+      request:      "GetFeature",
+      typeName:     "pan_india_asset:pan_india_district_boundary_dataset",
+      outputFormat: "application/json",
+      CQL_FILTER:   cqlFilter,
+    });
     const res  = await fetch(`${url}?${params}`);
     const data = await res.json();
     const feature = data.features?.[0];
     if (!feature) return null;
-
     if (feature.bbox) {
       return {
         lon: (feature.bbox[0] + feature.bbox[2]) / 2,
         lat: (feature.bbox[1] + feature.bbox[3]) / 2,
       };
     }
-
     const coords = feature.geometry?.coordinates?.[0]?.[0];
     if (coords) {
       const lons = coords.map(c => c[0]);
@@ -130,10 +129,43 @@ const fetchDistrictCentroid = async (districtName) => {
       };
     }
     return null;
-  } catch (err) {
-    console.error(`Centroid fetch failed for ${districtName}:`, err);
-    return null;
+  };
+
+  // Build a list of name variants to try in order
+  const variants = [districtName];
+
+  // "Keonjhar (Kendujhar)" → try "Kendujhar" (inside parens)
+  const insideParens = districtName.match(/\(([^)]+)\)/)?.[1]?.trim();
+  if (insideParens) variants.push(insideParens);
+
+  // "Keonjhar (Kendujhar)" → try "Keonjhar" (before parens)
+  const beforeParens = districtName.replace(/\s*\(.*\)/, "").trim();
+  if (beforeParens && beforeParens !== districtName) variants.push(beforeParens);
+
+  // Try each variant with exact match first
+  for (const name of variants) {
+    try {
+      const result = await tryFetch(`Name='${name}'`);
+      if (result) return result;
+    } catch {}
   }
+
+  // Final fallback: ILIKE wildcard on the longest word in the name
+  const longestWord = districtName
+    .replace(/[()]/g, " ")
+    .split(/\s+/)
+    .filter(Boolean)
+    .sort((a, b) => b.length - a.length)[0];
+
+  if (longestWord && longestWord.length >= 4) {
+    try {
+      const result = await tryFetch(`Name ILIKE '%${longestWord}%'`);
+      if (result) return result;
+    } catch {}
+  }
+
+  console.warn(`Centroid fetch failed for all variants of: ${districtName}`);
+  return null;
 };
 
 const fetchPlansByState = async (stateId, organizationId = null) => {
