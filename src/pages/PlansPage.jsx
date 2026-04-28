@@ -137,16 +137,34 @@ const fetchDistrictCentroid = async (districtName) => {
 };
 
 const fetchPlansByState = async (stateId, organizationId = null) => {
-  let url = `${process.env.REACT_APP_API_URL}/watershed/plans/?state=${stateId}&filter_test_plan=true`;
-  if (organizationId) url += `&organization=${encodeURIComponent(organizationId)}`;
-  const res = await fetch(url, {
-    method: "GET",
-    headers: {
-      "Content-Type": "application/json",
-      "ngrok-skip-browser-warning": "420",
-      "X-API-Key": process.env.REACT_APP_API_KEY,
-    },
-  });
+  if (organizationId) {
+    // Org-level endpoint has no state filter — fetch all org plans and filter client-side
+    const res = await fetch(
+      `${process.env.REACT_APP_API_URL}/organizations/${encodeURIComponent(organizationId)}/watershed/plans/?filter_test_plan=true`,
+      {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          "ngrok-skip-browser-warning": "420",
+          "X-API-Key": process.env.REACT_APP_API_KEY,
+        },
+      }
+    );
+    if (!res.ok) throw new Error(`Plans fetch error ${res.status}`);
+    const data = await res.json();
+    return data.filter((p) => p.state_soi === stateId || p.state === stateId);
+  }
+  const res = await fetch(
+    `${process.env.REACT_APP_API_URL}/watershed/plans/?state=${stateId}&filter_test_plan=true`,
+    {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        "ngrok-skip-browser-warning": "420",
+        "X-API-Key": process.env.REACT_APP_API_KEY,
+      },
+    }
+  );
   if (!res.ok) throw new Error(`Plans fetch error ${res.status}`);
   return res.json();
 };
@@ -393,15 +411,32 @@ const PlansPage = () => {
     };
 
     const fetchPlansByDistrict = async (districtId, organizationId = null) => {
-      let url = `${process.env.REACT_APP_API_URL}/watershed/plans/?district=${districtId}&filter_test_plan=true`;
-      if (organizationId) url += `&organization=${encodeURIComponent(organizationId)}`;
-      const res = await fetch(url, {
-        headers: {
-          "Content-Type": "application/json",
-          "ngrok-skip-browser-warning": "420",
-          "X-API-Key": process.env.REACT_APP_API_KEY,
-        },
-      });
+      if (organizationId) {
+        // Org-level endpoint has no district filter — fetch all org plans and filter client-side
+        const res = await fetch(
+          `${process.env.REACT_APP_API_URL}/organizations/${encodeURIComponent(organizationId)}/watershed/plans/?filter_test_plan=true`,
+          {
+            headers: {
+              "Content-Type": "application/json",
+              "ngrok-skip-browser-warning": "420",
+              "X-API-Key": process.env.REACT_APP_API_KEY,
+            },
+          }
+        );
+        if (!res.ok) throw new Error(`API error ${res.status}`);
+        const data = await res.json();
+        return data.filter((p) => p.district_soi === districtId || p.district === districtId);
+      }
+      const res = await fetch(
+        `${process.env.REACT_APP_API_URL}/watershed/plans/?district=${districtId}&filter_test_plan=true`,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            "ngrok-skip-browser-warning": "420",
+            "X-API-Key": process.env.REACT_APP_API_KEY,
+          },
+        }
+      );
       if (!res.ok) throw new Error(`API error ${res.status}`);
       return res.json();
     };
@@ -600,6 +635,51 @@ const PlansPage = () => {
       });
     };
 
+    // Uses meta-stats district_breakdown — correct for both filtered and unfiltered org
+    const addPlanDistrictPinsFromBreakdown = async (districtBreakdown) => {
+      const map = mapRef.current;
+      if (!map || !districtBreakdown?.length) return;
+
+      if (districtLayerRef.current) {
+        map.removeLayer(districtLayerRef.current);
+        districtLayerRef.current = null;
+      }
+
+      const centroidResults = await Promise.all(
+        districtBreakdown.map(async (d) => {
+          const centroid = await fetchDistrictCentroid(d.district_name);
+          return { ...d, centroid };
+        })
+      );
+
+      const features = centroidResults
+        .filter((d) => d.centroid)
+        .map((d) => {
+          const feature = new Feature({
+            geometry:     new Point([d.centroid.lon, d.centroid.lat]),
+            districtData: { ...d, district_id: d.district_id },
+          });
+          feature.setStyle(createPinStyle(d.district_name, d.total_plans));
+          return feature;
+        });
+
+      if (!features.length) return;
+
+      const layer = new VectorLayer({
+        source: new VectorSource({ features }),
+        zIndex: 10,
+      });
+      layer.set("layerName", "districtLayer");
+      districtLayerRef.current = layer;
+      map.addLayer(layer);
+
+      map.getView().fit(layer.getSource().getExtent(), {
+        padding:  [60, 60, 60, 60],
+        duration: 600,
+        maxZoom:  14,
+      });
+    };
+
     const addPlanDistrictPins = async (plans) => {
       const map = mapRef.current;
       if (!map) return;
@@ -704,21 +784,14 @@ const PlansPage = () => {
 
       try {
         if (viewModeRef.current === "plans") {
-          const [plans, stateStats] = await Promise.all([
-            fetchPlansByState(stateData.state_id, orgRef.current?.value ?? null),
-            fetchMetaStats(orgRef.current?.value ?? null, stateData.state_id),
-          ]);
-
-          statePlansRef.current = plans;
-
-          if (bubbleLayerRef.current) {
-            mapRef.current.removeLayer(bubbleLayerRef.current);
-            bubbleLayerRef.current = null;
-          }
+          const stateStats = await fetchMetaStats(
+            orgRef.current?.value ?? null,
+            stateData.state_id
+          );
 
           setMetaStats(stateStats);
           setIsStateView(false);
-          await addPlanDistrictPins(plans);
+          await addPlanDistrictPinsFromBreakdown(stateStats.district_breakdown ?? []);
         } else {
           const [stewardData, stateMetaStats] = await Promise.all([
             fetchStewardStats(orgRef.current?.value ?? null, stateData.state_id),
@@ -880,7 +953,7 @@ const PlansPage = () => {
             currentStateRef.current.state_id
           );
           setMetaStats(stateStats);
-          await addPlanDistrictPins(statePlansRef.current);
+          await addPlanDistrictPinsFromBreakdown(stateStats.district_breakdown ?? []);
         } catch (err) {
           console.error("Back to district pins failed:", err);
         } finally {
@@ -974,11 +1047,6 @@ const PlansPage = () => {
         setMapLoading(true);
         try {
           if (viewModeRef.current === "plans") {
-            const plans = await fetchPlansByState(
-              currentStateRef.current.state_id,
-              selected?.value ?? null
-            );
-            statePlansRef.current = plans;
             if (districtLayerRef.current) {
               mapRef.current.removeLayer(districtLayerRef.current);
               districtLayerRef.current = null;
@@ -987,12 +1055,17 @@ const PlansPage = () => {
               mapRef.current.removeLayer(planLayerRef.current);
               planLayerRef.current = null;
             }
+            currentDistrictRef.current = null;
+            if (selectedFeatureRef.current) selectedFeatureRef.current = null;
+            hoveredFeatureRef.current = null;
+            setSelectedPlan(null);
+            setPlanDotsVisible(false);
             const stateStats = await fetchMetaStats(
               selected?.value ?? null,
               currentStateRef.current.state_id
             );
             setMetaStats(stateStats);
-            await addPlanDistrictPins(plans);
+            await addPlanDistrictPinsFromBreakdown(stateStats.district_breakdown ?? []);
           } else {
             const [stewardData, stateOrgMeta] = await Promise.all([
               fetchStewardStats(selected?.value ?? null, currentStateRef.current.state_id),
@@ -1369,13 +1442,12 @@ const PlansPage = () => {
                             // ── Preserve state selection ──────────────────
                             // Both modes land at district-pin level for the same state
                             if (mode === "plans") {
-                              const [plans, stateStats] = await Promise.all([
-                                fetchPlansByState(currentStateRef.current.state_id, orgRef.current?.value ?? null),
-                                fetchMetaStats(orgRef.current?.value ?? null, currentStateRef.current.state_id),
-                              ]);
-                              statePlansRef.current = plans;
+                              const stateStats = await fetchMetaStats(
+                                orgRef.current?.value ?? null,
+                                currentStateRef.current.state_id
+                              );
                               setMetaStats(stateStats);
-                              await addPlanDistrictPins(plans);
+                              await addPlanDistrictPinsFromBreakdown(stateStats.district_breakdown ?? []);
                             } else {
                               statePlansRef.current = [];
                               const [stewardData, stateMetaStats] = await Promise.all([
