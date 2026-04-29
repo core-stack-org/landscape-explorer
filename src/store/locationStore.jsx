@@ -42,7 +42,8 @@ export const patternSelectionsAtom = atom({
 
 export const yearAtom = atom({
   key: "yearAtom",
-  default: null,
+  default: "17_18"
+  // default: null,
 });
 
 export const yearAtomFamily = atomFamily({

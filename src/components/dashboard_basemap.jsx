@@ -23,7 +23,8 @@
   import waterbodyIcon from "../assets/waterbodies_proposed.svg";
   import plantationIcon from "../assets/Plantation.svg"
   import LocationOnIcon from "@mui/icons-material/LocationOn";
-  import YearSlider from "./yearSlider";
+  // import YearSlider from "./yearSlider";
+  import YearSliderWB from "./yearSliderWB";
   import { WATER_DASHBOARD_CONFIG } from "../config/dashboard_configs/waterDashboard.config";
 
   const DashboardBasemap = ({
@@ -1886,7 +1887,7 @@ if (!hasProject && (lat == null || lon == null) && props?.geometry) {
                   }}
                   
                 >
-                  <YearSlider
+                  <YearSliderWB
                     currentLayer={{ name: 'lulcWaterrej' }}
                     sliderId="map1"
                     interventionYear={interventionYear}
@@ -1976,7 +1977,7 @@ if (!hasProject && (lat == null || lon == null) && props?.geometry) {
                 }}
                 
               >
-                <YearSlider
+                <YearSliderWB
                 key={`zoi-${interventionYear}`} 
                   currentLayer={{ name: "lulcWaterrej" }}
                   sliderId="map2"
