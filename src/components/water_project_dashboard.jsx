@@ -1453,11 +1453,10 @@ const mwsSheet = XLSX.utils.json_to_sheet(mwsData, {
           stream order{" "}
           {activeSelectedWaterbody?.properties?.max_stream_order ??
             activeSelectedWaterbody?.maxStreamOrder ?? "N/A"}
-        </span>. 
+        </span>.
         {(activeSelectedWaterbody?.properties?.waterbody_type ??
     activeSelectedWaterbody?.waterbody_type) === "river" ? (
-    <>
-      This waterbody falls on{" "}
+    <> This waterbody falls on{" "}
       <span className="font-semibold text-blue-600">
         {activeSelectedWaterbody?.properties?.waterbody_type_name ??
           activeSelectedWaterbody?.waterbody_type_name ??
@@ -1466,8 +1465,8 @@ const mwsSheet = XLSX.utils.json_to_sheet(mwsData, {
     </>
   ) : (
     <> This waterbody does not fall on any river.</>
-  )}.
-        
+  )}
+
       </div>
     </div>
   )}
