@@ -177,7 +177,7 @@ export const WATER_DASHBOARD_CONFIG = {
       },
       {
         key: "UID",
-        label: "UID",
+        label: "Unique ID",
         info: "Unique ID of waterbody.",
         search: true,
       },
