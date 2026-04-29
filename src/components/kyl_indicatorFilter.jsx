@@ -17,13 +17,10 @@ const KYLIndicatorFilter = ({ filter, onFilterChange, isDisabled, getFormattedSe
                 <h3 className="text-sm font-semibold text-gray-900">
                     {filter.label}
                 </h3>
-
-                {filter.category !== "Waterbody" && (
                     <ToggleButton 
                         isOn={toggleStates[filter.name]} 
                         toggleSwitch={() => handleLayerSelection(filter)}
                     />
-                )}
 
             </div>
             <div className="space-y-2 pt-1">

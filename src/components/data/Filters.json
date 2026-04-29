@@ -41,7 +41,7 @@
         "Climate": [
             {
                 "name": "avg_precipitation",
-                "label": "Average rainfall over the years 2017 to 2023",
+                "label": "Average rainfall over the years 2017 to 2024",
                 "type": 2,
                 "values": [
                     {
@@ -100,14 +100,14 @@
                         "upper": 960
                     },
                     {
-                        "fill": "rgba(30, 144, 255, 0.5)",
-                        "stroke": "rgba(30, 144, 255, 1)",
+                        "fill": "rgba(43, 147, 250, 0.5)",
+                        "stroke": "rgba(43, 147, 250, 1)",
                         "lower": 960,
                         "upper": 1200
                     },
                     {
-                        "fill": "rgba(0, 115, 230, 0.5)",
-                        "stroke": "rgba(0, 115, 230, 1)",
+                        "fill": "rgba(3, 107, 210, 0.5)",
+                        "stroke": "rgba(3, 107, 210, 1)",
                         "lower": 1200,
                         "upper": 1620
                     },
@@ -123,7 +123,7 @@
             },
             {
                 "name": "avg_runoff",
-                "label": "Average runoff over the years 2017 to 2023",
+                "label": "Average runoff over the years 2017 to 2024",
                 "type": 2,
                 "values": [
                     {
@@ -179,7 +179,7 @@
             },
             {
                 "name": "drought_category",
-                "label": "Number of drought years since 2017",
+                "label": "Number of drought years from 2017 to 2024",
                 "type": 2,
                 "values": [
                     {
@@ -218,14 +218,14 @@
                         "upper": 0
                     },
                     {
-                        "fill": "rgba(231, 76, 60, 0.5)",
-                        "stroke": "rgba(231, 76, 60, 1)",
+                        "fill": "rgba(235, 152, 78, 0.5)",
+                        "stroke": "rgba(235, 152, 78, 1)",
                         "lower": 1,
                         "upper": 99999
                     },
                     {
-                        "fill": "rgba(235, 152, 78, 0.5)",
-                        "stroke": "rgba(235, 152, 78, 1)",
+                        "fill": "rgba(231, 76, 60, 0.5)",
+                        "stroke": "rgba(231, 76, 60, 1)",
                         "lower": 2,
                         "upper": 99999
                     }
@@ -235,7 +235,7 @@
             },
             {
                 "name": "avg_number_dry_spell",
-                "label": "Average number of weeks of dry spells over the years 2017 to 2023",
+                "label": "Average number of weeks of dry spells over the years 2017 to 2024",
                 "type": 2,
                 "values": [
                     {
@@ -274,15 +274,15 @@
                         "upper": 1
                     },
                     {
-                        "fill": "rgba(139, 69, 19, 0.5)",
-                        "stroke": "rgba(139, 69, 19, 1)",
-                        "lower": 1,
-                        "upper": 999999999
-                    },
-                    {
                         "fill": "rgba(90, 46, 15, 0.5)",
                         "stroke": "rgba(90, 46, 15, 1)",
                         "lower": 2,
+                        "upper": 999999999
+                    },
+                    {
+                        "fill": "rgba(139, 69, 19, 0.5)",
+                        "stroke": "rgba(139, 69, 19, 1)",
+                        "lower": 1,
                         "upper": 999999999
                     }
                 ],
@@ -293,7 +293,7 @@
         "Hydrology": [
             {
                 "name": "avg_rabi_surface_water_mws",
-                "label": "Percentage of average surface water availability during Rabi in micro-watershed",
+                "label": "Percentage of average surface water availability during Rabi from 2017 to 2024",
                 "type": 2,
                 "values": [
                     {
@@ -319,25 +319,37 @@
                     }
                 ],
                 "layer_store": [
-                    "swb",
-                    "LULC"
+                    "mws_layers"
                 ],
                 "layer_name": [
-                    "surface_waterbodies",
-                    "level_3"
+                    "deltaG_well_depth"
                 ],
                 "vectorStyle": [
                     {
-                        "fill": "rgba(100, 149, 237, 0.5)",
-                        "stroke": "rgba(100, 149, 237, 1)"
+                        "fill": "rgba(116, 204, 244, 0.5)",
+                        "stroke": "rgba(116, 204, 244, 1)",
+                        "lower": 0,
+                        "upper": 30
+                    },
+                    {
+                        "fill": "rgba(28, 163, 236, 0.5)",
+                        "stroke": "rgba(28, 163, 236, 1)",
+                        "lower": 30,
+                        "upper": 70
+                    },
+                    {
+                        "fill": "rgba(15, 94, 156, 0.5)",
+                        "stroke": "rgba(15, 94, 156, 1)",
+                        "lower": 70,
+                        "upper": 9999999
                     }
                 ],
-                "rasterStyle": "lulc_water_pixels",
-                "styleIdx": 0
+                "rasterStyle": "",
+                "styleIdx": 26
             },
             {
                 "name": "avg_zaid_surface_water_mws",
-                "label": "Percentage of average surface water availability during Zaid in micro-watershed",
+                "label": "Percentage of average surface water availability during Zaid from 2017 to 2024",
                 "type": 2,
                 "values": [
                     {
@@ -363,21 +375,33 @@
                     }
                 ],
                 "layer_store": [
-                    "swb",
-                    "LULC"
+                    "mws_layers"
                 ],
                 "layer_name": [
-                    "surface_waterbodies",
-                    "level_3"
+                    "deltaG_well_depth"
                 ],
                 "vectorStyle": [
                     {
-                        "fill": "rgba(100, 149, 237, 0.5)",
-                        "stroke": "rgba(100, 149, 237, 1)"
+                        "fill": "rgba(116, 204, 244, 0.5)",
+                        "stroke": "rgba(116, 204, 244, 1)",
+                        "lower": 0,
+                        "upper": 25
+                    },
+                    {
+                        "fill": "rgba(28, 163, 236, 0.5)",
+                        "stroke": "rgba(28, 163, 236, 1)",
+                        "lower": 25,
+                        "upper": 50
+                    },
+                    {
+                        "fill": "rgba(15, 94, 156, 0.5)",
+                        "stroke": "rgba(15, 94, 156, 1)",
+                        "lower": 50,
+                        "upper": 9999999
                     }
                 ],
-                "rasterStyle": "lulc_water_pixels",
-                "styleIdx": 0
+                "rasterStyle": "",
+                "styleIdx": 27
             },
             {
                 "name": "aquifer_class",
@@ -522,14 +546,14 @@
                 ],
                 "vectorStyle": [
                     {
-                        "fill": "rgba(255, 255, 255, 0.5)",
+                        "fill": "rgba(255, 255, 255, 1)",
                         "stroke": "rgba(255, 255, 255, 1)",
                         "lower": 0,
                         "upper": 0
                     },
                     {
-                        "fill": "rgba(224, 243, 248, 0.5)",
-                        "stroke": "rgba(224, 243, 248, 1)",
+                        "fill": "rgba(116, 204, 244,, 0.5)",
+                        "stroke": "rgba(116, 204, 244,, 1)",
                         "lower": 1,
                         "upper": 1
                     },
@@ -557,7 +581,7 @@
             },
             {
                 "name": "trend_g",
-                "label": "Water balance trend over the years 2017 to 2023",
+                "label": "Water balance trend over the years 2017 to 2024",
                 "type": 1,
                 "values": [
                     {
@@ -581,20 +605,20 @@
                 ],
                 "vectorStyle": [
                     {
-                        "fill": "rgba(184, 134, 11, 0.5)",
-                        "stroke": "rgba(184, 134, 11, 1)",
+                        "fill": "rgba(156, 163, 175, 0.5)",
+                        "stroke": "rgba(156, 163, 175, 1)",
                         "lower": 0,
                         "upper": 0
                     },
                     {
-                        "fill": "rgba(255, 236, 179, 0.5)",
-                        "stroke": "rgba(255, 236, 179, 1)",
+                        "fill": "rgba(34, 197, 94, 0.5)",
+                        "stroke": "rgba(34, 197, 94, 1)",
                         "lower": 1,
                         "upper": 1
                     },
                     {
-                        "fill": "rgba(255, 215, 0, 0.5)",
-                        "stroke": "rgba(255, 215, 0, 1)",
+                        "fill": "rgba(239, 68, 68, 0.5)",
+                        "stroke": "rgba(239, 68, 68, 1)",
                         "lower": -1,
                         "upper": -1
                     }
@@ -606,7 +630,7 @@
         "Agriculture": [
             {
                 "name": "avg_double_cropped",
-                "label": "Average percentage of double cropped area over the years 2017 to 2025",
+                "label": "Average percentage of double cropped area over the years 2017 to 2024",
                 "type": 2,
                 "values": [
                     {
@@ -671,21 +695,33 @@
                     }
                 ],
                 "layer_store": [
-                    "change_detection",
                     "change_detection"
                 ],
                 "layer_name": [
-                    "CropIntensity",
                     "Degradation"
                 ],
                 "vectorStyle": [
-                    {}
+                    {
+                        "fill": "rgba(115, 187, 83, 0.5)",
+                        "stroke": "rgba(115, 187, 83, 1)",
+                        "lower": 0,
+                        "upper": 30
+                    },
+                    {
+                        "fill": "rgba(238, 224, 93, 0.5)",
+                        "stroke": "rgba(238, 224, 93, 1)",
+                        "lower": 30,
+                        "upper": 90
+                    },
+                    {
+                        "fill": "rgba(255, 0, 0, 0.5)",
+                        "stroke": "rgba(255, 0, 0, 1)",
+                        "lower": 90,
+                        "upper": 9999999
+                    }
                 ],
-                "rasterStyle": [
-                    "cropping_intensity_kyl",
-                    "KYL_Crop_Degradation"
-                ],
-                "styleIdx": 0
+                "rasterStyle": [""],
+                "styleIdx": 28
             }
         ],
         "Restoration": [
@@ -723,12 +759,29 @@
                     "Deforestation"
                 ],
                 "vectorStyle": [
-                    {}
+                    {
+                        "fill": "rgba(115, 187, 83, 0.5)",
+                        "stroke": "rgba(115, 187, 83, 1)",
+                        "lower": 0,
+                        "upper": 50
+                    },
+                    {
+                        "fill": "rgba(238, 224, 93, 0.5)",
+                        "stroke": "rgba(238, 224, 93, 1)",
+                        "lower": 50,
+                        "upper": 100
+                    },
+                    {
+                        "fill": "rgba(255, 0, 0, 0.5)",
+                        "stroke": "rgba(255, 0, 0, 1)",
+                        "lower": 100,
+                        "upper": 9999999
+                    }
                 ],
                 "rasterStyle": [
-                    "deforestation"
+                    ""
                 ],
-                "styleIdx": 0
+                "styleIdx": 13
             },
             {
                 "name": "increase_in_tree_cover",
@@ -764,12 +817,29 @@
                     "Afforestation"
                 ],
                 "vectorStyle": [
-                    {}
+                    {
+                        "fill": "rgba(255, 0, 0, 0.5)",
+                        "stroke": "rgba(255, 0, 0, 1)",
+                        "lower": 0,
+                        "upper": 50
+                    },
+                    {
+                        "fill": "rgba(238, 224, 93, 0.5)",
+                        "stroke": "rgba(238, 224, 93, 1)",
+                        "lower": 50,
+                        "upper": 100
+                    },
+                    {
+                        "fill": "rgba(115, 187, 83, 0.5)",
+                        "stroke": "rgba(115, 187, 83, 1)",
+                        "lower": 100,
+                        "upper": 9999999
+                    }
                 ],
                 "rasterStyle": [
-                    "afforestation"
+                    ""
                 ],
-                "styleIdx": 0
+                "styleIdx": 14
             },
             {
                 "name": "area_wide_scale_restoration",
@@ -798,32 +868,19 @@
                         }
                     }
                 ],
-                "layer_store": ["restoration"],
-                "layer_name": ["restoration"],
+                "layer_store": [
+                    "restoration"
+                ],
+                "layer_name": [
+                    "restoration"
+                ],
                 "vectorStyle": [
-                    {
-                        "fill": "rgba(176, 224, 230, 0.5)",
-                        "stroke": "rgba(176, 224, 230, 1)",
-                        "lower": 0,
-                        "upper": 200
-                    },
-                    {
-                        "fill": "rgba(135, 206, 250, 0.5)",
-                        "stroke": "rgba(135, 206, 250, 1)",
-                        "lower": 200,
-                        "upper": 600
-                    },
-                    {
-                        "fill": "rgba(30, 144, 255, 0.5)",
-                        "stroke": "rgba(30, 144, 255, 1)",
-                        "lower": 600,
-                        "upper": 9999999
-                    }
+                    {}
                 ],
                 "rasterStyle": [
-                    ""
+                    "restoration_style"
                 ],
-                "styleIdx": 14
+                "styleIdx": 0
             },
             {
                 "name": "area_protection",
@@ -852,32 +909,19 @@
                         }
                     }
                 ],
-                "layer_store": ["restoration"],
-                "layer_name": ["restoration"],
+                "layer_store": [
+                    "restoration"
+                ],
+                "layer_name": [
+                    "restoration"
+                ],
                 "vectorStyle": [
-                    {
-                        "fill": "rgba(176, 224, 230, 0.5)",
-                        "stroke": "rgba(176, 224, 230, 1)",
-                        "lower": 0,
-                        "upper": 400
-                    },
-                    {
-                        "fill": "rgba(135, 206, 250, 0.5)",
-                        "stroke": "rgba(135, 206, 250, 1)",
-                        "lower": 400,
-                        "upper": 800
-                    },
-                    {
-                        "fill": "rgba(30, 144, 255, 0.5)",
-                        "stroke": "rgba(30, 144, 255, 1)",
-                        "lower": 800,
-                        "upper": 9999999
-                    }
+                    {}
                 ],
                 "rasterStyle": [
-                    ""
+                    "restoration_style"
                 ],
-                "styleIdx": 13
+                "styleIdx": 0
             },
             {
                 "name": "green_credit",
@@ -1104,7 +1148,7 @@
                     {
                         "fill": "rgba(128, 0, 32, 0.5)",
                         "stroke": "rgba(128, 0, 32, 1)",
-                        "lower": 100,
+                        "lower": 800,
                         "upper": 2400
                     },
                     {
@@ -1223,7 +1267,7 @@
                         "upper": 5
                     },
                     {
-                        "fill": "rgba((218, 112, 214, 0.5)",
+                        "fill": "rgba(218, 112, 214, 0.5)",
                         "stroke": "rgba(218, 112, 214, 1)",
                         "lower": 5,
                         "upper": 17
@@ -1315,6 +1359,32 @@
     },
     "Waterbody": {
         "Waterbody": [
+            {
+                "name": "waterbody_type",
+                "label": "Waterbody Type",
+                "type": 1,
+                "values": [
+                    {
+                        "label": "On river",
+                        "value": 1
+                    },
+                    {
+                        "label": "Off river",
+                        "value": 0
+                    }
+                ],
+                "layer_store": [
+                    "waterbodies"
+                ],
+                "layer_name": [
+                    "waterbodies"
+                ],
+                "vectorStyle": [
+                    {}
+                ],
+                "rasterStyle": "",
+                "styleIdx": 2
+            },
             {
                 "name": "waterbody_size",
                 "label": "Size of Waterbody",

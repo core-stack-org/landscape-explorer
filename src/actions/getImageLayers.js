@@ -14,7 +14,6 @@ export default async function getImageLayer(layer_store, layer_name, setVisible 
       },
       ratio: 1,
       serverType: 'geoserver',
-      crossOrigin: 'anonymous',
     }),
     visible: setVisible,
     name: layer_name
