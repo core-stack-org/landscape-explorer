@@ -26,7 +26,8 @@ const KYLLeftSidebar = ({
     patternSelections,
     handlePatternSelection,
     isPatternSelected,
-    isFilterProcessing
+    isFilterProcessing,
+    isLayerSelecting,
 }) => {
     const [activeTab, setActiveTab] = useState('Filters');
     const [selectedSubcategory, setSelectedSubcategory] = useState(null);
@@ -71,6 +72,28 @@ const KYLLeftSidebar = ({
 
     return (
         <div className="w-[320px] bg-white rounded-xl border border-gray-100 shadow-sm flex flex-col h-full overflow-hidden">
+
+            {isLayerSelecting && (
+            <div
+                className="absolute inset-0 z-50 flex flex-col items-center justify-center rounded-xl gap-3"
+                style={{
+                background: 'rgba(255,255,255,0.85)',
+                backdropFilter: 'blur(2px)',
+                animation: 'fadeIn 0.15s ease-in-out',
+                }}
+            >
+                <div className="w-8 h-8 border-[3px] border-indigo-200 border-t-indigo-600 rounded-full animate-spin" />
+                <p className="text-xs font-semibold text-indigo-600">Adding layer to map…</p>
+                <p className="text-[10px] text-gray-400">Please wait</p>
+            </div>
+            )}
+
+            <style>{`
+            @keyframes fadeIn {
+                from { opacity: 0; }
+                to   { opacity: 1; }
+            }
+            `}</style>
 
             {/* ── Tabs — always visible ───────────────────────────────────── */}
             <div className="flex gap-2 p-3 pb-0 shrink-0">

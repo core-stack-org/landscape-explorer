@@ -609,42 +609,24 @@ const KYLRightSidebar = ({
 
       // Sheet 3 — Selected Waterbodies
       const uniqueSwbs = new Map();
-      // Primary: from mwsVillageIntersections (when MWS filter is also active)
-      mwsVillageIntersections.forEach(group => {
-        group.waterbodies.forEach(swb => {
-          if (!uniqueSwbs.has(swb.swbId) && selectedWaterbodyIds && selectedWaterbodyIds.has(String(swb.swbId))) {
-            const row = {
-              "SWB ID": swb.swbId,
-              "WATERBODY NAME": swb.swbName || "Unknown",
-              "LATITUDE": swb.latitude || 0,
-              "LONGITUDE": swb.longitude || 0,
-            };
-            waterbodyFilters.forEach(f => {
-              row[(f.filterName || f.name).toUpperCase()] = getWBDisplayValue(f.name, swb);
-            });
-            uniqueSwbs.set(swb.swbId, row);
-          }
-        });
-      });
-
-      // Fallback: WB-only filter active (no MWS selected), read from applyToFeatures output
-      if (uniqueSwbs.size === 0 && selectedWaterbodyData.length > 0) {
-        selectedWaterbodyData.forEach(swb => {
-          if (!uniqueSwbs.has(swb.swbId)) {
-            const row = {
-              "SWB ID": swb.swbId,
-              "WATERBODY NAME": swb.swbName || "Unknown",
-              "LATITUDE": swb.latitude || 0,
-              "LONGITUDE": swb.longitude || 0,
-            };
-            waterbodyFilters.forEach(f => {
-              row[(f.filterName || f.name).toUpperCase()] = getWBDisplayValue(f.name, swb);
-            });
-            uniqueSwbs.set(swb.swbId, row);
-          }
+      if (selectedMWS && selectedMWS.length > 0 && waterbodyFilters.length > 0 && showWB) {
+        mwsVillageIntersections.forEach(group => {
+          group.waterbodies.forEach(swb => {
+            if (!uniqueSwbs.has(swb.swbId) && selectedWaterbodyIds && selectedWaterbodyIds.has(String(swb.swbId))) {
+              const row = {
+                "SWB ID": swb.swbId,
+                "WATERBODY NAME": swb.swbName || "Unknown",
+                "LATITUDE": swb.latitude || 0,
+                "LONGITUDE": swb.longitude || 0,
+              };
+              waterbodyFilters.forEach(f => {
+                row[(f.filterName || f.name).toUpperCase()] = getWBDisplayValue(f.name, swb);
+              });
+              uniqueSwbs.set(swb.swbId, row);
+            }
+          });
         });
       }
-
       const sheet3Data = Array.from(uniqueSwbs.values());
 
       // Sheet 4 — MWS-Village Intersections
@@ -702,7 +684,7 @@ const KYLRightSidebar = ({
         XLSX.utils.book_append_sheet(workbook, sheet, name);
       });
 
-      XLSX.writeFile(workbook, `kyl_selection_report_${new Date().toISOString().split('T')[0]}_${block}.xlsx`);
+      XLSX.writeFile(workbook, `kyl_selection_report_${new Date().toISOString().split('T')[0]}_${transformName(block?.label)}.xlsx`);
     } catch (error) {
       console.error('Excel generation error:', error);
       alert('Error generating Excel file.');
@@ -716,27 +698,6 @@ const KYLRightSidebar = ({
 
     const { mwsData, villageData } = generateSelectionTableData();
     const seenVillageIds = new Set();
-
-    const uniqueSwbs = new Map();
-
-    // Primary: from mwsVillageIntersections (when MWS filter is also active)
-    mwsVillageIntersections.forEach(group => {
-      group.waterbodies.forEach(swb => {
-        if (!uniqueSwbs.has(swb.swbId) && selectedWaterbodyIds && selectedWaterbodyIds.has(String(swb.swbId))) {
-          uniqueSwbs.set(swb.swbId, swb);
-        }
-      });
-    });
-
-    // Fallback: WB-only filter active (no MWS selected), read from applyToFeatures output
-    if (uniqueSwbs.size === 0 && selectedWaterbodyData.length > 0) {
-      selectedWaterbodyData.forEach(swb => {
-        if (!uniqueSwbs.has(swb.swbId)) uniqueSwbs.set(swb.swbId, swb);
-      });
-    }
-
-    const waterbodyData = Array.from(uniqueSwbs.values());
-    const totalItems = mwsData.length + villageData.length + waterbodyData.length;
 
     const selectedFiltersCount = getFormattedSelectedFilters();
     const selectedPatternsCount = getFormattedSelectedPatterns();
@@ -764,6 +725,21 @@ const KYLRightSidebar = ({
     });
 
     const hasVillagePattern = selectedPatternsCount.some(p => p.level);
+
+    const uniqueSwbs = new Map();
+    if (selectedMWS && selectedMWS.length > 0 && hasWaterbodyFilter && showWB) {
+      mwsVillageIntersections.forEach(group => {
+        group.waterbodies.forEach(swb => {
+          if (!uniqueSwbs.has(swb.swbId) && selectedWaterbodyIds && selectedWaterbodyIds.has(String(swb.swbId))) {
+            uniqueSwbs.set(swb.swbId, swb);
+          }
+        });
+      });
+    }
+    const waterbodyData = Array.from(uniqueSwbs.values());
+
+    // totalItems after waterbodyData is declared
+    const totalItems = mwsData.length + villageData.length + waterbodyData.length;
 
     const sheet1Count = mwsData.length;
     const sheet2Count = villageData.length;

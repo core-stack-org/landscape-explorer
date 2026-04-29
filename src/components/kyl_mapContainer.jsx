@@ -114,7 +114,7 @@ const MapZoomControls = ({ mapRef }) => {
   };
 
   return (
-    <div className="absolute right-6 bottom-6 z-10 flex flex-col gap-2">
+    <div className="absolute right-6 top-6 z-10 flex flex-col gap-2">
       <button
         onClick={handleZoomIn}
         className="bg-white p-2 rounded-lg shadow-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all duration-200"
@@ -615,8 +615,7 @@ const MapLegend = ({ showMWS, showVillages, currentLayer }) => {
 
   return (
     <div
-      className={`absolute bottom-24 left-0 z-10 transition-all duration-300 ${isCollapsed ? "translate-x-2" : "translate-x-6"
-        }`}
+      className={`absolute bottom-6 left-0 z-10 transition-all duration-300 ${isCollapsed ? "translate-x-2" : "translate-x-6"}`}
     >
       {/* Collapse toggle button */}
       <button
@@ -647,10 +646,11 @@ const MapLegend = ({ showMWS, showVillages, currentLayer }) => {
 
       {/* Main legend container */}
       <div
-        className={`bg-white rounded-lg shadow-md overflow-hidden transition-all duration-300 ${isCollapsed
+        className={`bg-white rounded-lg shadow-md overflow-hidden transition-opacity duration-300 ${isCollapsed
           ? "w-10 h-48 opacity-80 hover:opacity-100"
-          : "w-72 max-h-[60vh] opacity-100"
+          : "w-72 opacity-100"
           }`}
+        style={!isCollapsed ? { maxHeight: 'calc(100vh - 220px)' } : {}}
       >
         {/* Collapsed state - vertical "Legend" text */}
         {isCollapsed && (
@@ -663,7 +663,7 @@ const MapLegend = ({ showMWS, showVillages, currentLayer }) => {
 
         {/* Expanded state - full legend content */}
         {!isCollapsed && (
-          <div className="p-4 overflow-y-auto max-h-[60vh]">
+          <div className="p-4 overflow-y-auto" style={{ maxHeight: 'calc(100vh - 260px)' }}>
             <h3 className="text-sm font-medium text-gray-700 mb-3">Legend</h3>
             <div className="space-y-4">
               {/* MWS Legend Section */}
@@ -1672,7 +1672,7 @@ const KYLMapContainer = ({
       </div>
 
       {/* Year Slider */}
-      <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 z-10 w-full max-w-xl px-4">
+      <div className="absolute bottom-6 right-16 z-10 w-[420px]">
         <YearSlider currentLayer={currentLayer} />
       </div>
 
