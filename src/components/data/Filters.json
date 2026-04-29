@@ -727,7 +727,7 @@
         "Restoration": [
             {
                 "name": "decrease_in_tree_cover",
-                "label": "Deforestation",
+                "label": "Descrease in tree cover",
                 "type": 2,
                 "values": [
                     {
