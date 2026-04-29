@@ -15,7 +15,7 @@ const KYLMWSProfilePanel = ({ mwsData, onBack, hideBackButton = false }) => {
   const transformName = (name) => {
     if (!name) return name;
     return name
-      .replace(/[()]/g, "")
+          .replace(/[()]/g, "")
               // .replace(/-+/g, "_")
               .replace(/\s+/g, "_")
               .replace(/_+/g, "_")

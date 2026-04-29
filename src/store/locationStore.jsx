@@ -27,6 +27,7 @@ export const filterSelectionsAtom = atom({
   default: {
     selectedMWSValues: {}, // { filterName: [selectedOptions] }
     selectedVillageValues: {}, // { filterName: [selectedOptions] }
+    selectedWaterbodyValues:{}
   },
 });
 

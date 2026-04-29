@@ -19,7 +19,7 @@ export default function TableView({
   const [sortField, setSortField] = useState(null);
   const [sortOrder, setSortOrder] = useState("asc");
   const [searchText, setSearchText] = useState("");
-
+  const [searchMap, setSearchMap] = useState({});
 
   const totalPages = pageSize ? Math.ceil(rows.length / pageSize): 1;
 
@@ -33,20 +33,17 @@ export default function TableView({
   }, [rows, columnFilters]);
 
   const searchedRows = useMemo(() => {
-    if (!searchText) {
-      return filteredRows;
-    }
+    return filteredRows.filter((row) => {
+      return Object.entries(searchMap).every(([key, value]) => {
+        if (!value) return true;
   
-    const term = searchText.toLowerCase();
-  
-    const results = filteredRows.filter(r => {
-      return (
-        r.farmerName?.toLowerCase().includes(term) ||
-        r.waterbody?.toLowerCase().includes(term)
-      );
+        return row[key]
+          ?.toString()
+          .toLowerCase()
+          .includes(value.toLowerCase());
+      });
     });
-      return results;
-  }, [filteredRows, searchText]);
+  }, [filteredRows, searchMap]);
   
   const getSortableValue = (val) => {
     if (!val) return "";
@@ -212,8 +209,13 @@ export default function TableView({
                     <input
                       type="text"
                       placeholder={`Search ${col.label}`}
-                      value={searchText}
-                      onChange={(e) => setSearchText(e.target.value)}
+                      value={searchMap[col.key] || ""}
+                      onChange={(e) =>
+                        setSearchMap((prev) => ({
+                          ...prev,
+                          [col.key]: e.target.value,
+                        }))
+                      }
                       className="border-b border-gray-700 bg-gray-100 text-xs text-gray-700 px-1 py-0.5 w-40 focus:outline-none focus:border-blue-500"
                     />
                   </div>

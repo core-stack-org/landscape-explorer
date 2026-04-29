@@ -24,6 +24,8 @@ import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
 import DownloadIcon from "@mui/icons-material/Download";
 
+
+
 const WaterProjectDashboard = () => {
   const [selectedWaterbody, setSelectedWaterbody] = useState(null);
   const [selectedFeature, setSelectedFeature] = useState(null);
@@ -67,6 +69,7 @@ const WaterProjectDashboard = () => {
     const tehsilZoi = useRecoilValue(tehsilZoiFeaturesAtom);
     const zoiFeatures = isTehsilMode ? tehsilZoi : projectZoi;
     const activeSelectedWaterbody = isTehsilMode ? selectedWaterbodyForTehsil : selectedWaterbody;
+    const [tehsilPageLoading, setTehsilPageLoading] = useState(typeParam === "tehsil");
 
     const [view, setView] = useState(
       isTehsilMode ? "map" : typeParam === "tehsil" ? "map" : "table"
@@ -113,6 +116,7 @@ const WaterProjectDashboard = () => {
       if (!districtParam || !blockParam) return;    
     
       const fetchTehsilData = async () => {
+        setTehsilPageLoading(true);
         const result = await getWaterbodyData({
           district: { label: districtParam },
           block: { label: blockParam },
@@ -130,6 +134,7 @@ const WaterProjectDashboard = () => {
           setMwsFromLocalStorage(allGeo);
           localStorage.setItem("matched_mws_features", JSON.stringify(allGeo));
         }
+        setTehsilPageLoading(false);
       };
       fetchTehsilData();
     }, [
@@ -220,16 +225,16 @@ const WaterProjectDashboard = () => {
     }
   }, [location.search]);
 
-  useEffect(() => {
-    if (!loadingData) return;
+  // useEffect(() => {
+  //   if (!loadingData) return;
   
-    const t = setTimeout(() => {
-      setTimeoutReached(true);
-      setLoadingData(false);   // loader off
-    }, 10000); // 10 seconds
+  //   const t = setTimeout(() => {
+  //     setTimeoutReached(true);
+  //     setLoadingData(false);   // loader off
+  //   }, 10000); // 10 seconds
   
-    return () => clearTimeout(t);
-  }, [loadingData]);
+  //   return () => clearTimeout(t);
+  // }, [loadingData]);
   
   const extractMwsUidList = (mwsUidString) => {
     if (!mwsUidString) return [];
@@ -1393,6 +1398,8 @@ const mwsSheet = XLSX.utils.json_to_sheet(mwsData, {
   
     saveAs(blob, fileName);
   };
+
+  console.log(activeSelectedWaterbody)
     return (
     <div className={`${isTehsilMode ? "pb-8 w-full" : "mx-6 my-8 bg-white rounded-xl shadow-md p-6"}`}>
   
@@ -1426,9 +1433,47 @@ const mwsSheet = XLSX.utils.json_to_sheet(mwsData, {
           </div>
         </div>
       )}
+
+
+  {isTehsilMode && activeSelectedWaterbody && (
+    <div className="px-6 md:px-10 mt-4">
+      <div className="bg-slate-50 border border-slate-200 border-l-[3px] border-l-blue-600 rounded-md px-4 py-3 text-slate-700 leading-[1.6] text-[clamp(0.70rem,1vw,1rem)]">
+      <span className="font-semibold text-blue-600">
+      Waterbody Insights:
+    </span>{" "}
+        This waterbody extends over{" "}
+        <span className="font-semibold text-blue-600">
+          {Number(
+            activeSelectedWaterbody?.properties?.area_ored ??
+            activeSelectedWaterbody?.areaOred ?? 0
+          ).toFixed(2)} hectares
+        </span>{" "}
+        and is situated on the drainage line, belonging to{" "}
+        <span className="font-semibold text-blue-600">
+          stream order{" "}
+          {activeSelectedWaterbody?.properties?.max_stream_order ??
+            activeSelectedWaterbody?.maxStreamOrder ?? "N/A"}
+        </span>. 
+        {(activeSelectedWaterbody?.properties?.waterbody_type ??
+    activeSelectedWaterbody?.waterbody_type) === "river" ? (
+    <>
+      This waterbody falls on{" "}
+      <span className="font-semibold text-blue-600">
+        {activeSelectedWaterbody?.properties?.waterbody_type_name ??
+          activeSelectedWaterbody?.waterbody_type_name ??
+          "N/A"}
+      </span> river.
+    </>
+  ) : (
+    <> This waterbody does not fall on any river.</>
+  )}.
+        
+      </div>
+    </div>
+  )}
   
   {/* ====================== TOP BUTTONS + SUMMARY ====================== */}
-  <div className="flex flex-col gap-1 mb-6 lg:flex-row lg:items-start lg:justify-between">
+  <div className="flex flex-col gap-1 mb-3 lg:flex-row lg:items-start lg:justify-between">
   
     {mode === "project" && (
       <div className="flex gap-2 flex-shrink-0">
@@ -1607,8 +1652,8 @@ const mwsSheet = XLSX.utils.json_to_sheet(mwsData, {
         </div>
   
         {/* LOADING OVERLAY */}
-        {isTehsilMode && loadingData && !activeSelectedWaterbody && (
-          <div className="fixed inset-0 bg-black/20 flex items-center justify-center z-[9999]">
+        {isTehsilMode && tehsilPageLoading && (
+                        <div className="fixed inset-0 bg-black/20 flex items-center justify-center z-[9999]">
             <div className="bg-white rounded-lg shadow-xl p-6 flex flex-col items-center gap-3">
               <CircularProgress />
               <p className="text-gray-700 font-medium">Loading waterbody data...</p>

@@ -1,4 +1,4 @@
-import React, {  useMemo } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import { useLocation } from "react-router";
 import { useRecoilValue } from "recoil";
 import {
@@ -22,6 +22,28 @@ const PlanViewPage = () => {
   const districtLookup = useRecoilValue(districtLookupAtom);
   const blockLookup = useRecoilValue(blockLookupAtom);
 
+  const [summary, setSummary] = useState(null);
+  const [teamDetails, setTeamDetails] = useState(null);
+  const [villageBrief, setVillageBrief] = useState(null);
+
+  const [settlements, setSettlements] = useState([]);
+  const [crops, setCrops] = useState([]);
+  const [livestock, setLivestock] = useState([]);
+
+  
+
+  const [wells, setWells] = useState([]);
+
+  const [waterbodies, setWaterbodies] = useState([]);
+
+  const [nrmWorks, setNrmWorks] = useState([]);
+ 
+  const [maintenanceGW, setMaintenanceGW] = useState([]);
+  const [maintenanceAgri, setMaintenanceAgri] = useState([]);
+  const [maintenanceSWB, setMaintenanceSWB] = useState([]);
+  const [maintenanceSWBRS, setMaintenanceSWBRS] = useState([]);
+
+  const [livelihoodData, setLivelihoodData] = useState([]);
   const districtName = useMemo(
     () => districtLookup[plan?.district_soi] || plan?.district_soi,
     [plan, districtLookup]
@@ -31,6 +53,212 @@ const PlanViewPage = () => {
     () => blockLookup[plan?.tehsil_soi] || plan?.tehsil_soi,
     [plan, blockLookup]
   );
+
+// ✅ ADD HERE 👇
+useEffect(() => {
+  if (!plan?.id) return;
+
+  const fetchData = async () => {
+    try {
+      const [summaryRes, teamRes, villageRes] = await Promise.all([
+        fetch(`${process.env.REACT_APP_API_URL}/dpr_data/${plan.id}/summary/`, {
+          headers: { "X-API-Key": process.env.REACT_APP_API_KEY },
+        }),
+        fetch(`${process.env.REACT_APP_API_URL}/dpr_data/${plan.id}/team-details/`, {
+          headers: { "X-API-Key": process.env.REACT_APP_API_KEY },
+        }),
+        fetch(`${process.env.REACT_APP_API_URL}/dpr_data/${plan.id}/village-brief/`, {
+          headers: { "X-API-Key": process.env.REACT_APP_API_KEY },
+        }),
+      ]);
+
+      const summaryData = await summaryRes.json();
+      const teamData = await teamRes.json();
+      const villageData = await villageRes.json();
+
+      console.log("Summary:", summaryData);
+      console.log("Team:", teamData);
+      console.log("Village:", villageData);
+
+      setSummary(summaryData);
+      setTeamDetails(teamData);
+      setVillageBrief(villageData);
+
+
+
+      const [gwRes, agriRes, swbRes, swbRsRes] = await Promise.all([
+  fetch(`${process.env.REACT_APP_API_URL}/dpr_data/${plan.id}/maintenance/?type=gw`, {
+    headers: { "X-API-Key": process.env.REACT_APP_API_KEY },
+  }),
+  fetch(`${process.env.REACT_APP_API_URL}/dpr_data/${plan.id}/maintenance/?type=agri`, {
+    headers: { "X-API-Key": process.env.REACT_APP_API_KEY },
+  }),
+  fetch(`${process.env.REACT_APP_API_URL}/dpr_data/${plan.id}/maintenance/?type=swb`, {
+    headers: { "X-API-Key": process.env.REACT_APP_API_KEY },
+  }),
+  fetch(`${process.env.REACT_APP_API_URL}/dpr_data/${plan.id}/maintenance/?type=swb_rs`, {
+    headers: { "X-API-Key": process.env.REACT_APP_API_KEY },
+  }),
+]);
+
+const gwData = await gwRes.json();
+const agriData = await agriRes.json();
+const swbData = await swbRes.json();
+const swbRsData = await swbRsRes.json();
+
+console.log("GW Maintenance:", gwData);
+console.log("Agri Maintenance:", agriData);
+console.log("SWB Maintenance:", swbData);
+console.log("SWB_RS Maintenance:", swbRsData);
+
+// ✅ SAFE HANDLING
+setMaintenanceGW(
+  Array.isArray(gwData) ? gwData : gwData.results || gwData.data || []
+);
+
+setMaintenanceAgri(
+  Array.isArray(agriData) ? agriData : agriData.results || agriData.data || []
+);
+
+setMaintenanceSWB(
+  Array.isArray(swbData) ? swbData : swbData.results || swbData.data || []
+);
+
+setMaintenanceSWBRS(
+  Array.isArray(swbRsData) ? swbRsData : swbRsData.results || swbRsData.data || []
+);
+
+
+
+
+const waterRes = await fetch(
+  `${process.env.REACT_APP_API_URL}/dpr_data/${plan.id}/waterbodies/`,
+  {
+    headers: { "X-API-Key": process.env.REACT_APP_API_KEY },
+  }
+);
+
+const waterData = await waterRes.json();
+
+console.log("Waterbodies RAW:", waterData);
+
+// ✅ SAFE HANDLING (important)
+setWaterbodies(
+  Array.isArray(waterData)
+    ? waterData
+    : waterData.results || waterData.data || []
+);
+
+const wellsRes = await fetch(
+  `${process.env.REACT_APP_API_URL}/dpr_data/${plan.id}/wells/`,
+  {
+    headers: { "X-API-Key": process.env.REACT_APP_API_KEY },
+  }
+);
+
+const wellsData = await wellsRes.json();
+
+console.log("Wells RAW:", wellsData);
+
+// ✅ SAFE HANDLING (same pattern)
+setWells(
+  Array.isArray(wellsData)
+    ? wellsData
+    : wellsData.results || wellsData.data || []
+);
+const [settlementRes, cropRes, livestockRes] = await Promise.all([
+  fetch(`${process.env.REACT_APP_API_URL}/dpr_data/${plan.id}/settlements/`, {
+    headers: { "X-API-Key": process.env.REACT_APP_API_KEY },
+  }),
+  fetch(`${process.env.REACT_APP_API_URL}/dpr_data/${plan.id}/crops/`, {
+    headers: { "X-API-Key": process.env.REACT_APP_API_KEY },
+  }),
+  fetch(`${process.env.REACT_APP_API_URL}/dpr_data/${plan.id}/livestock/`, {
+    headers: { "X-API-Key": process.env.REACT_APP_API_KEY },
+  }),
+]);
+
+const settlementData = await settlementRes.json();
+const cropData = await cropRes.json();
+const livestockData = await livestockRes.json();
+
+console.log("Settlements RAW:", settlementData);
+console.log("Crops RAW:", cropData);
+console.log("Livestock RAW:", livestockData);
+
+// ✅ SAFE HANDLING
+setSettlements(
+  Array.isArray(settlementData)
+    ? settlementData
+    : settlementData.results || settlementData.data || []
+);
+
+setCrops(
+  Array.isArray(cropData)
+    ? cropData
+    : cropData.results || cropData.data || []
+);
+
+setLivestock(
+  Array.isArray(livestockData)
+    ? livestockData
+    : livestockData.results || livestockData.data || []
+);
+
+
+// ✅ NRM FETCH
+const nrmRes = await fetch(
+  `${process.env.REACT_APP_API_URL}/dpr_data/${plan.id}/nrm-works/`,
+  {
+    headers: { "X-API-Key": process.env.REACT_APP_API_KEY },
+  }
+);
+
+const nrmData = await nrmRes.json();
+
+console.log("NRM RAW:", nrmData);
+
+// ✅ SAFE HANDLING
+setNrmWorks(
+  Array.isArray(nrmData)
+    ? nrmData
+    : nrmData.results || nrmData.data || []
+);
+
+
+
+
+ 
+  // ✅ LIVELIHOOD FETCH
+const livelihoodRes = await fetch(
+  `${process.env.REACT_APP_API_URL}/dpr_data/${plan.id}/livelihood/`,
+  {
+    headers: { "X-API-Key": process.env.REACT_APP_API_KEY },
+  }
+);
+
+const livelihoodDataRes = await livelihoodRes.json();
+
+console.log("Livelihood RAW:", livelihoodDataRes);
+
+// ✅ SAFE HANDLING
+setLivelihoodData(
+  Array.isArray(livelihoodDataRes)
+    ? livelihoodDataRes
+    : livelihoodDataRes.results || livelihoodDataRes.data || []
+);
+
+
+
+
+
+    } catch (err) {
+      console.error("API ERROR:", err);
+    }
+  };
+
+  fetchData();
+}, [plan]);
 
   if (!plan) return <div className="p-10">No plan data found</div>;
 
@@ -519,6 +747,174 @@ const PlanViewPage = () => {
         blockNameSafe={blockNameSafe}
         plan={plan}
       />
+      {summary && (
+  <div className="bg-white p-5 rounded shadow mt-6">
+    <h2 className="text-xl font-bold mb-3">Summary</h2>
+
+    <table className="w-full border border-gray-200">
+      <tbody>
+
+        <tr>
+          <td className="border p-3 w-1/3 font-semibold">Plan Name</td>
+          <td className="border p-3">{summary.plan_name || "-"}</td>
+        </tr>
+
+        <tr>
+          <td className="border p-3 font-semibold">Village</td>
+          <td className="border p-3">{summary.village_name || "-"}</td>
+        </tr>
+
+        <tr>
+          <td className="border p-3 font-semibold">Settlements</td>
+          <td className="border p-3">{summary.sections?.settlements ?? 0}</td>
+        </tr>
+
+        <tr>
+          <td className="border p-3 font-semibold">Crops</td>
+          <td className="border p-3">{summary.sections?.crops ?? 0}</td>
+        </tr>
+
+        <tr>
+          <td className="border p-3 font-semibold">Wells</td>
+          <td className="border p-3">{summary.sections?.wells ?? 0}</td>
+        </tr>
+
+        <tr>
+          <td className="border p-3 font-semibold">Waterbodies</td>
+          <td className="border p-3">{summary.sections?.waterbodies ?? 0}</td>
+        </tr>
+
+        <tr>
+          <td className="border p-3 font-semibold">Maintenance (GW)</td>
+          <td className="border p-3">{summary.sections?.maintenance?.gw ?? 0}</td>
+        </tr>
+
+        <tr>
+          <td className="border p-3 font-semibold">Maintenance (Agri)</td>
+          <td className="border p-3">{summary.sections?.maintenance?.agri ?? 0}</td>
+        </tr>
+
+        <tr>
+          <td className="border p-3 font-semibold">Maintenance (SWB)</td>
+          <td className="border p-3">{summary.sections?.maintenance?.swb ?? 0}</td>
+        </tr>
+
+        <tr>
+          <td className="border p-3 font-semibold">Maintenance (SWB_RS)</td>
+          <td className="border p-3">{summary.sections?.maintenance?.swb_rs ?? 0}</td>
+        </tr>
+
+        <tr>
+          <td className="border p-3 font-semibold">NRM Recharge</td>
+          <td className="border p-3">{summary.sections?.nrm_works?.recharge ?? 0}</td>
+        </tr>
+
+        <tr>
+          <td className="border p-3 font-semibold">NRM Irrigation</td>
+          <td className="border p-3">{summary.sections?.nrm_works?.irrigation ?? 0}</td>
+        </tr>
+
+        <tr>
+          <td className="border p-3 font-semibold">Livelihood</td>
+          <td className="border p-3">{summary.sections?.livelihood ?? 0}</td>
+        </tr>
+
+        <tr>
+          <td className="border p-3 font-semibold">Agrohorticulture</td>
+          <td className="border p-3">{summary.sections?.agrohorticulture ?? 0}</td>
+        </tr>
+
+      </tbody>
+    </table>
+  </div>
+)}
+{teamDetails && (
+  <div className="bg-white p-5 rounded shadow mt-4">
+    <h2 className="text-xl font-bold mb-3">Team Details</h2>
+
+    <table className="w-full border border-gray-200">
+      <tbody>
+
+        <tr>
+          <td className="border p-3 font-semibold w-1/3">Organization</td>
+          <td className="border p-3">{teamDetails.organization || "-"}</td>
+        </tr>
+
+        <tr>
+          <td className="border p-3 font-semibold">Project</td>
+          <td className="border p-3">{teamDetails.project || "-"}</td>
+        </tr>
+
+        <tr>
+          <td className="border p-3 font-semibold">Plan</td>
+          <td className="border p-3">{teamDetails.plan || "-"}</td>
+        </tr>
+
+        <tr>
+          <td className="border p-3 font-semibold">Facilitator</td>
+          <td className="border p-3">{teamDetails.facilitator || "-"}</td>
+        </tr>
+
+        <tr>
+          <td className="border p-3 font-semibold">Process</td>
+          <td className="border p-3">{teamDetails.process || "-"}</td>
+        </tr>
+
+      </tbody>
+    </table>
+  </div>
+)}
+{villageBrief && (
+  <div className="bg-white p-5 rounded shadow mt-4">
+    <h2 className="text-xl font-bold mb-3">Village Brief</h2>
+
+    <table className="w-full border border-gray-200">
+      <tbody>
+
+        <tr>
+          <td className="border p-3 font-semibold w-1/3">Village</td>
+          <td className="border p-3">{villageBrief.village_name || "-"}</td>
+        </tr>
+
+        <tr>
+          <td className="border p-3 font-semibold">Gram Panchayat</td>
+          <td className="border p-3">{villageBrief.gram_panchayat || "-"}</td>
+        </tr>
+
+        <tr>
+          <td className="border p-3 font-semibold">Tehsil</td>
+          <td className="border p-3">{villageBrief.tehsil || "-"}</td>
+        </tr>
+
+        <tr>
+          <td className="border p-3 font-semibold">District</td>
+          <td className="border p-3">{villageBrief.district || "-"}</td>
+        </tr>
+
+        <tr>
+          <td className="border p-3 font-semibold">State</td>
+          <td className="border p-3">{villageBrief.state || "-"}</td>
+        </tr>
+
+        <tr>
+          <td className="border p-3 font-semibold">Total Settlements</td>
+          <td className="border p-3">{villageBrief.total_settlements ?? 0}</td>
+        </tr>
+
+        <tr>
+          <td className="border p-3 font-semibold">Latitude</td>
+          <td className="border p-3">{villageBrief.latitude || "-"}</td>
+        </tr>
+
+        <tr>
+          <td className="border p-3 font-semibold">Longitude</td>
+          <td className="border p-3">{villageBrief.longitude || "-"}</td>
+        </tr>
+
+      </tbody>
+    </table>
+  </div>
+)}
       <div style={{ marginTop: 16, display: "flex", flexWrap: "wrap", gap: 20 ,justifyContent:"center"}}>
         <div style={{ display: "flex", alignItems: "center", gap: 8  ,fontWeight:"bold"}}>
           LULC Legends:
@@ -567,8 +963,189 @@ const PlanViewPage = () => {
         plan={plan}
       />
 
+     {Array.isArray(settlements) && settlements.map((s, i) => (
+  <div key={i} className="bg-white p-4 rounded shadow mt-4">
+    <h2 className="font-bold text-lg mb-2">Settlement</h2>
 
+    <table className="w-full border border-gray-200">
+      <tbody>
 
+        <tr>
+          <td className="border p-3 font-semibold w-1/3">Name</td>
+          <td className="border p-3">{s.settlement_name || "-"}</td>
+        </tr>
+
+        <tr>
+          <td className="border p-3 font-semibold">Households</td>
+          <td className="border p-3">{s.number_of_households ?? 0}</td>
+        </tr>
+
+        <tr>
+          <td className="border p-3 font-semibold">Type</td>
+          <td className="border p-3">{s.settlement_type || "-"}</td>
+        </tr>
+
+        <tr>
+          <td className="border p-3 font-semibold">Caste Detail</td>
+          <td className="border p-3">{s.caste_group_detail || "-"}</td>
+        </tr>
+
+        <tr>
+          <td className="border p-3 font-semibold">SC</td>
+          <td className="border p-3">{s.caste_counts?.sc ?? 0}</td>
+        </tr>
+
+        <tr>
+          <td className="border p-3 font-semibold">ST</td>
+          <td className="border p-3">{s.caste_counts?.st ?? 0}</td>
+        </tr>
+
+        <tr>
+          <td className="border p-3 font-semibold">OBC</td>
+          <td className="border p-3">{s.caste_counts?.obc ?? 0}</td>
+        </tr>
+
+        <tr>
+          <td className="border p-3 font-semibold">General</td>
+          <td className="border p-3">{s.caste_counts?.general ?? 0}</td>
+        </tr>
+
+        <tr>
+          <td className="border p-3 font-semibold">Marginal Farmers</td>
+          <td className="border p-3">{s.marginal_farmers ?? 0}</td>
+        </tr>
+
+        {/* MGNREGA Section */}
+        <tr>
+          <td className="border p-3 font-semibold bg-gray-100">MGNREGA Applied</td>
+          <td className="border p-3">{s.nrega_job_applied ?? 0}</td>
+        </tr>
+
+        <tr>
+          <td className="border p-3 font-semibold bg-gray-100">MGNREGA Job Cards</td>
+          <td className="border p-3">{s.nrega_job_card ?? 0}</td>
+        </tr>
+
+        <tr>
+          <td className="border p-3 font-semibold bg-gray-100">MGNREGA Work Days</td>
+          <td className="border p-3">{s.nrega_work_days ?? 0}</td>
+        </tr>
+
+        <tr>
+          <td className="border p-3 font-semibold bg-gray-100">Past Work</td>
+          <td className="border p-3 whitespace-pre-line">
+            {s.nrega_past_work || "-"}
+          </td>
+        </tr>
+
+        <tr>
+          <td className="border p-3 font-semibold bg-gray-100">Demand</td>
+          <td className="border p-3">{s.nrega_demand || "-"}</td>
+        </tr>
+
+        <tr>
+          <td className="border p-3 font-semibold bg-gray-100">Issues</td>
+          <td className="border p-3">{s.nrega_issues || "-"}</td>
+        </tr>
+
+      </tbody>
+    </table>
+  </div>
+))}
+{Array.isArray(crops) && crops.map((c, i) => (
+  <div key={i} className="bg-white p-4 rounded shadow mt-4">
+    <h2 className="font-bold text-lg mb-2">Crops</h2>
+
+    <table className="w-full border border-gray-200">
+      <tbody>
+
+        <tr>
+          <td className="border p-3 font-semibold w-1/3">Settlement</td>
+          <td className="border p-3">{c.beneficiary_settlement || "-"}</td>
+        </tr>
+
+        <tr>
+          <td className="border p-3 font-semibold">Irrigation Source</td>
+          <td className="border p-3">{c.irrigation_source || "-"}</td>
+        </tr>
+
+        <tr>
+          <td className="border p-3 font-semibold">Land Classification</td>
+          <td className="border p-3">{c.land_classification || "-"}</td>
+        </tr>
+
+        <tr>
+          <td className="border p-3 font-semibold">Kharif Crops</td>
+          <td className="border p-3">
+            {c.kharif_crops || "-"} ({c.kharif_acres ?? 0} acres)
+          </td>
+        </tr>
+
+        <tr>
+          <td className="border p-3 font-semibold">Rabi Crops</td>
+          <td className="border p-3">
+            {c.rabi_crops || "-"} ({c.rabi_acres ?? 0} acres)
+          </td>
+        </tr>
+
+        <tr>
+          <td className="border p-3 font-semibold">Zaid Crops</td>
+          <td className="border p-3">
+            {c.zaid_crops || "None"} ({c.zaid_acres ?? 0} acres)
+          </td>
+        </tr>
+
+        <tr>
+          <td className="border p-3 font-semibold">Cropping Intensity</td>
+          <td className="border p-3">{c.cropping_intensity || "-"}</td>
+        </tr>
+
+      </tbody>
+    </table>
+  </div>
+))}
+{Array.isArray(livestock) && livestock.map((l, i) => (
+  <div key={i} className="bg-white p-4 rounded shadow mt-4">
+    <h2 className="font-bold text-lg mb-2">Livestock</h2>
+
+    <table className="w-full border border-gray-200">
+      <tbody>
+
+        <tr>
+          <td className="border p-3 font-semibold w-1/3">Settlement</td>
+          <td className="border p-3">{l.settlement_name || "-"}</td>
+        </tr>
+
+        <tr>
+          <td className="border p-3 font-semibold">Goats</td>
+          <td className="border p-3">{l.goats ?? 0}</td>
+        </tr>
+
+        <tr>
+          <td className="border p-3 font-semibold">Sheep</td>
+          <td className="border p-3">{l.sheep ?? 0}</td>
+        </tr>
+
+        <tr>
+          <td className="border p-3 font-semibold">Cattle</td>
+          <td className="border p-3">{l.cattle ?? 0}</td>
+        </tr>
+
+        <tr>
+          <td className="border p-3 font-semibold">Piggery</td>
+          <td className="border p-3">{l.piggery ?? 0}</td>
+        </tr>
+
+        <tr>
+          <td className="border p-3 font-semibold">Poultry</td>
+          <td className="border p-3">{l.poultry ?? 0}</td>
+        </tr>
+
+      </tbody>
+    </table>
+  </div>
+))}
+      
       {/* Base Map + Streamorder raster + Well layer */}
 
       <MapSection
@@ -580,6 +1157,82 @@ const PlanViewPage = () => {
         plan={plan}
       />
 
+    {Array.isArray(wells) && wells.map((w, i) => (
+  <div key={i} className="bg-white p-4 rounded shadow mt-4">
+    <h2 className="font-bold text-lg mb-2">Well</h2>
+
+    <table className="w-full border border-gray-200">
+      <tbody>
+
+        <tr>
+          <td className="border p-3 font-semibold w-1/3 bg-gray-50">Settlement</td>
+          <td className="border p-3">{w.beneficiary_settlement || "-"}</td>
+        </tr>
+
+        <tr>
+          <td className="border p-3 font-semibold bg-gray-50">Type</td>
+          <td className="border p-3">{w.well_type || "-"}</td>
+        </tr>
+
+        <tr>
+          <td className="border p-3 font-semibold bg-gray-50">Owner</td>
+          <td className="border p-3">{w.owner || "-"}</td>
+        </tr>
+
+        <tr>
+          <td className="border p-3 font-semibold bg-gray-50">Beneficiary</td>
+          <td className="border p-3">{w.beneficiary_name || "-"}</td>
+        </tr>
+
+        <tr>
+          <td className="border p-3 font-semibold bg-gray-50">Father</td>
+          <td className="border p-3">{w.beneficiary_father_name || "-"}</td>
+        </tr>
+
+        <tr>
+          <td className="border p-3 font-semibold bg-gray-50">Water Availability</td>
+          <td className="border p-3">{w.water_availability || "-"}</td>
+        </tr>
+
+        <tr>
+          <td className="border p-3 font-semibold bg-gray-50">Households</td>
+          <td className="border p-3">{w.households_benefitted ?? 0}</td>
+        </tr>
+
+        <tr>
+          <td className="border p-3 font-semibold bg-gray-50">Caste Uses</td>
+          <td className="border p-3">{w.caste_uses || "-"}</td>
+        </tr>
+
+        <tr>
+          <td className="border p-3 font-semibold bg-gray-50">Usage</td>
+          <td className="border p-3">{w.well_usage || "-"}</td>
+        </tr>
+
+        <tr>
+          <td className="border p-3 font-semibold bg-gray-50">Needs Maintenance</td>
+          <td className="border p-3">{w.need_maintenance || "-"}</td>
+        </tr>
+
+        <tr>
+          <td className="border p-3 font-semibold bg-gray-50">Repair</td>
+          <td className="border p-3">{w.repair_activities || "-"}</td>
+        </tr>
+
+        <tr>
+          <td className="border p-3 font-semibold bg-gray-50">Latitude</td>
+          <td className="border p-3">{w.latitude || "-"}</td>
+        </tr>
+
+        <tr>
+          <td className="border p-3 font-semibold bg-gray-50">Longitude</td>
+          <td className="border p-3">{w.longitude || "-"}</td>
+        </tr>
+
+      </tbody>
+    </table>
+  </div>
+))}
 <div style={{ marginTop: 16, display: "flex", flexWrap: "wrap", gap: 20,justifyContent:"center" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8  ,fontWeight:"bold"}}>
         Well Demands on Stream Order Raster
@@ -652,6 +1305,84 @@ const PlanViewPage = () => {
         blockNameSafe={blockNameSafe}
         plan={plan}
       />
+      
+
+      {Array.isArray(waterbodies) && waterbodies.map((w, i) => (
+  <div key={i} className="bg-white p-4 rounded shadow mt-4">
+    <h2 className="font-bold text-lg mb-2">Waterbody</h2>
+
+    <table className="w-full border border-gray-200">
+      <tbody>
+
+        <tr>
+          <td className="border p-3 font-semibold w-1/3 bg-gray-50">Settlement</td>
+          <td className="border p-3">{w.beneficiary_settlement || "-"}</td>
+        </tr>
+
+        <tr>
+          <td className="border p-3 font-semibold bg-gray-50">Owner</td>
+          <td className="border p-3">{w.owner || "-"}</td>
+        </tr>
+
+        <tr>
+          <td className="border p-3 font-semibold bg-gray-50">Beneficiary</td>
+          <td className="border p-3">{w.beneficiary_name || "-"}</td>
+        </tr>
+
+        <tr>
+          <td className="border p-3 font-semibold bg-gray-50">Father</td>
+          <td className="border p-3">{w.beneficiary_father_name || "-"}</td>
+        </tr>
+
+        <tr>
+          <td className="border p-3 font-semibold bg-gray-50">Managed By</td>
+          <td className="border p-3">{w.who_manages || "-"}</td>
+        </tr>
+
+        <tr>
+          <td className="border p-3 font-semibold bg-gray-50">Caste Users</td>
+          <td className="border p-3">{w.caste_who_uses || "-"}</td>
+        </tr>
+
+        <tr>
+          <td className="border p-3 font-semibold bg-gray-50">Households Benefitted</td>
+          <td className="border p-3">{w.households_benefitted ?? 0}</td>
+        </tr>
+
+        <tr>
+          <td className="border p-3 font-semibold bg-gray-50">Structure Type</td>
+          <td className="border p-3">{w.water_structure_type || "-"}</td>
+        </tr>
+
+        <tr>
+          <td className="border p-3 font-semibold bg-gray-50">Usage</td>
+          <td className="border p-3">{w.usage || "-"}</td>
+        </tr>
+
+        <tr>
+          <td className="border p-3 font-semibold bg-gray-50">Needs Maintenance</td>
+          <td className="border p-3">{w.need_maintenance || "-"}</td>
+        </tr>
+
+        <tr>
+          <td className="border p-3 font-semibold bg-gray-50">Repair Activities</td>
+          <td className="border p-3">{w.repair_activities || "-"}</td>
+        </tr>
+
+        <tr>
+          <td className="border p-3 font-semibold bg-gray-50">Latitude</td>
+          <td className="border p-3">{w.latitude || "-"}</td>
+        </tr>
+
+        <tr>
+          <td className="border p-3 font-semibold bg-gray-50">Longitude</td>
+          <td className="border p-3">{w.longitude || "-"}</td>
+        </tr>
+
+      </tbody>
+    </table>
+  </div>
+))}
 
     <div style={{ marginTop: 16, display: "flex", flexWrap: "wrap", gap: 20 ,justifyContent:"center"}}>
         <div style={{ display: "flex", alignItems: "center", gap: 8  ,fontWeight:"bold"}}>
@@ -695,6 +1426,282 @@ const PlanViewPage = () => {
         plan={plan}
       />
 
+
+      {Array.isArray(nrmWorks) && nrmWorks.map((n, i) => (
+  <div key={i} className="bg-white p-4 rounded shadow mt-4">
+    <h2 className="font-bold text-lg mb-2">
+      NRM Work - {n.work_category}
+    </h2>
+
+    <table className="w-full border border-gray-200">
+      <tbody>
+
+        <tr>
+          <td className="border p-3 font-semibold bg-gray-50">Demand Type</td>
+          <td className="border p-3">{n.demand_type || "-"}</td>
+        </tr>
+
+        <tr>
+          <td className="border p-3 font-semibold bg-gray-50">Work Demand</td>
+          <td className="border p-3">{n.work_demand || "-"}</td>
+        </tr>
+
+        <tr>
+          <td className="border p-3 font-semibold bg-gray-50">Settlement</td>
+          <td className="border p-3">{n.beneficiary_settlement || "-"}</td>
+        </tr>
+
+        <tr>
+          <td className="border p-3 font-semibold bg-gray-50">Beneficiary</td>
+          <td className="border p-3">{n.beneficiary_name || "-"}</td>
+        </tr>
+
+        <tr>
+          <td className="border p-3 font-semibold bg-gray-50">Gender</td>
+          <td className="border p-3">{n.gender || "-"}</td>
+        </tr>
+
+        <tr>
+          <td className="border p-3 font-semibold bg-gray-50">Father Name</td>
+          <td className="border p-3">{n.beneficiary_father_name || "-"}</td>
+        </tr>
+
+        <tr>
+          <td className="border p-3 font-semibold bg-gray-50">Latitude</td>
+          <td className="border p-3">{n.latitude || "-"}</td>
+        </tr>
+
+        <tr>
+          <td className="border p-3 font-semibold bg-gray-50">Longitude</td>
+          <td className="border p-3">{n.longitude || "-"}</td>
+        </tr>
+
+      </tbody>
+    </table>
+  </div>
+))}
+
+
+{Array.isArray(maintenanceGW) && maintenanceGW.map((m, i) => (
+  <div key={i} className="bg-white p-4 rounded shadow mt-4">
+    <h2 className="font-bold text-lg mb-2">
+      GW Maintenance - {m.structure_type}
+    </h2>
+
+    <table className="w-full border border-gray-200">
+      <tbody>
+
+        <tr>
+          <td className="border p-3 font-semibold bg-gray-50">Demand Type</td>
+          <td className="border p-3">{m.demand_type || "-"}</td>
+        </tr>
+
+        <tr>
+          <td className="border p-3 font-semibold bg-gray-50">Structure Type</td>
+          <td className="border p-3">{m.structure_type || "-"}</td>
+        </tr>
+
+        <tr>
+          <td className="border p-3 font-semibold bg-gray-50">Repair Activities</td>
+          <td className="border p-3">{m.repair_activities || "-"}</td>
+        </tr>
+
+        <tr>
+          <td className="border p-3 font-semibold bg-gray-50">Settlement</td>
+          <td className="border p-3">{m.beneficiary_settlement || "-"}</td>
+        </tr>
+
+        <tr>
+          <td className="border p-3 font-semibold bg-gray-50">Beneficiary</td>
+          <td className="border p-3">{m.beneficiary_name || "-"}</td>
+        </tr>
+
+        <tr>
+          <td className="border p-3 font-semibold bg-gray-50">Father Name</td>
+          <td className="border p-3">{m.beneficiary_father_name || "-"}</td>
+        </tr>
+
+        <tr>
+          <td className="border p-3 font-semibold bg-gray-50">Latitude</td>
+          <td className="border p-3">{m.latitude || "-"}</td>
+        </tr>
+
+        <tr>
+          <td className="border p-3 font-semibold bg-gray-50">Longitude</td>
+          <td className="border p-3">{m.longitude || "-"}</td>
+        </tr>
+
+      </tbody>
+    </table>
+  </div>
+))}
+
+
+{Array.isArray(maintenanceAgri) && maintenanceAgri.map((m, i) => (
+  <div key={i} className="bg-white p-4 rounded shadow mt-4">
+    <h2 className="font-bold text-lg mb-2">
+      Agri Maintenance - {m.structure_type}
+    </h2>
+
+    <table className="w-full border border-gray-200">
+      <tbody>
+
+        <tr>
+          <td className="border p-3 font-semibold bg-gray-50">Demand Type</td>
+          <td className="border p-3">{m.demand_type || "-"}</td>
+        </tr>
+
+        <tr>
+          <td className="border p-3 font-semibold bg-gray-50">Structure Type</td>
+          <td className="border p-3">{m.structure_type || "-"}</td>
+        </tr>
+
+        <tr>
+          <td className="border p-3 font-semibold bg-gray-50">Repair Activities</td>
+          <td className="border p-3">{m.repair_activities || "-"}</td>
+        </tr>
+
+        <tr>
+          <td className="border p-3 font-semibold bg-gray-50">Settlement</td>
+          <td className="border p-3">{m.beneficiary_settlement || "-"}</td>
+        </tr>
+
+        <tr>
+          <td className="border p-3 font-semibold bg-gray-50">Beneficiary</td>
+          <td className="border p-3">{m.beneficiary_name || "-"}</td>
+        </tr>
+
+        <tr>
+          <td className="border p-3 font-semibold bg-gray-50">Father Name</td>
+          <td className="border p-3">{m.beneficiary_father_name || "-"}</td>
+        </tr>
+
+        <tr>
+          <td className="border p-3 font-semibold bg-gray-50">Latitude</td>
+          <td className="border p-3">{m.latitude || "-"}</td>
+        </tr>
+
+        <tr>
+          <td className="border p-3 font-semibold bg-gray-50">Longitude</td>
+          <td className="border p-3">{m.longitude || "-"}</td>
+        </tr>
+
+      </tbody>
+    </table>
+  </div>
+))}
+
+
+{Array.isArray(maintenanceSWB) && maintenanceSWB.map((m, i) => (
+  <div key={i} className="bg-white p-4 rounded shadow mt-4">
+    <h2 className="font-bold text-lg mb-2">
+      SWB Maintenance - {m.structure_type}
+    </h2>
+
+    <table className="w-full border border-gray-200">
+      <tbody>
+
+        <tr>
+          <td className="border p-3 font-semibold bg-gray-50">Demand Type</td>
+          <td className="border p-3">{m.demand_type || "-"}</td>
+        </tr>
+
+        <tr>
+          <td className="border p-3 font-semibold bg-gray-50">Structure Type</td>
+          <td className="border p-3">{m.structure_type || "-"}</td>
+        </tr>
+
+        <tr>
+          <td className="border p-3 font-semibold bg-gray-50">Repair Activities</td>
+          <td className="border p-3">{m.repair_activities || "-"}</td>
+        </tr>
+
+        <tr>
+          <td className="border p-3 font-semibold bg-gray-50">Settlement</td>
+          <td className="border p-3">{m.beneficiary_settlement || "-"}</td>
+        </tr>
+
+        <tr>
+          <td className="border p-3 font-semibold bg-gray-50">Beneficiary</td>
+          <td className="border p-3">{m.beneficiary_name || "-"}</td>
+        </tr>
+
+        <tr>
+          <td className="border p-3 font-semibold bg-gray-50">Father Name</td>
+          <td className="border p-3">{m.beneficiary_father_name || "-"}</td>
+        </tr>
+
+        <tr>
+          <td className="border p-3 font-semibold bg-gray-50">Latitude</td>
+          <td className="border p-3">{m.latitude || "-"}</td>
+        </tr>
+
+        <tr>
+          <td className="border p-3 font-semibold bg-gray-50">Longitude</td>
+          <td className="border p-3">{m.longitude || "-"}</td>
+        </tr>
+
+      </tbody>
+    </table>
+  </div>
+))}
+
+
+
+{Array.isArray(maintenanceSWBRS) && maintenanceSWBRS.map((m, i) => (
+  <div key={i} className="bg-white p-4 rounded shadow mt-4">
+    <h2 className="font-bold text-lg mb-2">
+      SWB_RS Maintenance - {m.structure_type}
+    </h2>
+
+    <table className="w-full border border-gray-200">
+      <tbody>
+
+        <tr>
+          <td className="border p-3 font-semibold bg-gray-50">Demand Type</td>
+          <td className="border p-3">{m.demand_type || "-"}</td>
+        </tr>
+
+        <tr>
+          <td className="border p-3 font-semibold bg-gray-50">Structure Type</td>
+          <td className="border p-3">{m.structure_type || "-"}</td>
+        </tr>
+
+        <tr>
+          <td className="border p-3 font-semibold bg-gray-50">Repair Activities</td>
+          <td className="border p-3">{m.repair_activities || "-"}</td>
+        </tr>
+
+        <tr>
+          <td className="border p-3 font-semibold bg-gray-50">Settlement</td>
+          <td className="border p-3">{m.beneficiary_settlement || "-"}</td>
+        </tr>
+
+        <tr>
+          <td className="border p-3 font-semibold bg-gray-50">Beneficiary</td>
+          <td className="border p-3">{m.beneficiary_name || "-"}</td>
+        </tr>
+
+        <tr>
+          <td className="border p-3 font-semibold bg-gray-50">Father Name</td>
+          <td className="border p-3">{m.beneficiary_father_name || "-"}</td>
+        </tr>
+
+        <tr>
+          <td className="border p-3 font-semibold bg-gray-50">Latitude</td>
+          <td className="border p-3">{m.latitude || "-"}</td>
+        </tr>
+
+        <tr>
+          <td className="border p-3 font-semibold bg-gray-50">Longitude</td>
+          <td className="border p-3">{m.longitude || "-"}</td>
+        </tr>
+
+      </tbody>
+    </table>
+  </div>
+))}
+      
       <div style={{ marginTop: 16, display: "flex", flexWrap: "wrap", gap: 20 ,justifyContent:"center"}}>
         <div style={{ display: "flex", alignItems: "center", gap: 8  ,fontWeight:"bold"}}>
         Recharge and Irrigation Structures Overview 
@@ -759,7 +1766,9 @@ const PlanViewPage = () => {
 
 {/* Livelihood */}
 
-      <MapSection
+      
+
+       <MapSection
         title="Livelihood Structure Overview"
         loadLayer={loadLivelihood}
         loadBoundary={loadBoundary}
@@ -767,6 +1776,67 @@ const PlanViewPage = () => {
         blockNameSafe={blockNameSafe}
         plan={plan}
       />
+      {Array.isArray(livelihoodData) && livelihoodData.map((l, i) => (
+  <div key={i} className="bg-white p-4 rounded shadow mt-4">
+    <h2 className="font-bold text-lg mb-2">Livelihood</h2>
+
+    <table className="w-full border border-gray-200">
+      <tbody>
+
+        <tr>
+          <td className="border p-3 font-semibold w-1/3 bg-gray-50">Work Type</td>
+          <td className="border p-3">{l.livelihood_work || "-"}</td>
+        </tr>
+
+        <tr>
+          <td className="border p-3 font-semibold bg-gray-50">Demand Type</td>
+          <td className="border p-3">{l.demand_type || "-"}</td>
+        </tr>
+
+        <tr>
+          <td className="border p-3 font-semibold bg-gray-50">Work Demand</td>
+          <td className="border p-3">{l.work_demand || "-"}</td>
+        </tr>
+
+        <tr>
+          <td className="border p-3 font-semibold bg-gray-50">Settlement</td>
+          <td className="border p-3">{l.beneficiary_settlement || "-"}</td>
+        </tr>
+
+        <tr>
+          <td className="border p-3 font-semibold bg-gray-50">Beneficiary</td>
+          <td className="border p-3">{l.beneficiary_name || "-"}</td>
+        </tr>
+
+        <tr>
+          <td className="border p-3 font-semibold bg-gray-50">Father Name</td>
+          <td className="border p-3">{l.beneficiary_father_name || "-"}</td>
+        </tr>
+
+        <tr>
+          <td className="border p-3 font-semibold bg-gray-50">Gender</td>
+          <td className="border p-3">{l.gender || "-"}</td>
+        </tr>
+
+        <tr>
+          <td className="border p-3 font-semibold bg-gray-50">Total Acres</td>
+          <td className="border p-3">{l.total_acres ?? 0}</td>
+        </tr>
+
+        <tr>
+          <td className="border p-3 font-semibold bg-gray-50">Latitude</td>
+          <td className="border p-3">{l.latitude || "-"}</td>
+        </tr>
+
+        <tr>
+          <td className="border p-3 font-semibold bg-gray-50">Longitude</td>
+          <td className="border p-3">{l.longitude || "-"}</td>
+        </tr>
+
+      </tbody>
+    </table>
+  </div>
+))}
     </div>
   );
 };

@@ -3,13 +3,6 @@ import { useState } from "react";
 import KYLLocationSearchBar from "./kyl_location";
 import YearSlider from "./yearSlider";
 
-//? Icons Imports
-import settlementIcon from "../assets/settlement_icon.svg";
-import wellIcon from "../assets/well_proposed.svg";
-import waterbodyIcon from "../assets/waterbodies_proposed.svg";
-import RechargeIcon from "../assets/recharge_icon.svg"
-import IrrigationIcon from "../assets/irrigation_icon.svg"
-
 // Layer Controls component
 const LayerControls = ({
   showMWS,
@@ -121,7 +114,7 @@ const MapZoomControls = ({ mapRef }) => {
   };
 
   return (
-    <div className="absolute right-6 bottom-6 z-10 flex flex-col gap-2">
+    <div className="absolute right-6 top-6 z-10 flex flex-col gap-2">
       <button
         onClick={handleZoomIn}
         className="bg-white p-2 rounded-lg shadow-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all duration-200"
@@ -167,13 +160,24 @@ const MapZoomControls = ({ mapRef }) => {
 };
 
 // Updated MapLegend component
-const MapLegend = ({ showMWS, showVillages, currentLayer, mappedAssets, mappedDemands }) => {
+const MapLegend = ({ showMWS, showVillages, currentLayer }) => {
   // Add state for collapsed status
   const [isCollapsed, setIsCollapsed] = useState(false);
 
   // If no layers are shown, don't display legend
   if (!showMWS && !showVillages && (!currentLayer || currentLayer.length === 0))
     return null;
+
+  const activeWBLayer = currentLayer?.find((layer) =>
+    ["waterbody_type", "waterbody_size", "drainage_line", "surface_water_trend"]
+      .includes(layer.name)
+  );
+  
+  const activeWBType = activeWBLayer?.name;
+
+  const isWaterbodyVisualizeActive = currentLayer?.some(
+    (layer) => layer.name === "waterbody_type"
+  );
 
   const toggleCollapse = () => {
     setIsCollapsed(!isCollapsed);
@@ -223,8 +227,8 @@ const MapLegend = ({ showMWS, showVillages, currentLayer, mappedAssets, mappedDe
   const rainfallLegendItems = [
     { color: "#B0E0E6", label: "Semi-arid" },
     { color: "#87CEFA", label: "Arid" },
-    { color: "#1E90FF", label: "Moderate" },
-    { color: "#0073E6", label: "High" },
+    { color: "#2b93faff", label: "Moderate" },
+    { color: "#036bd2ff", label: "High" },
     { color: "#004080", label: "Very high" },
   ];
 
@@ -247,16 +251,16 @@ const MapLegend = ({ showMWS, showVillages, currentLayer, mappedAssets, mappedDe
   ];
 
   const populationLengendItems = [
-    { color: "#C08081", label: "Population < 800 " },
-    { color: "#800020", label: "Population between 800 - 2400" },
-    { color: "#5B0E2D", label: "Population between 2400 - 8900" },
-    { color: "#3D000F", label: "Population between > 8900" },
+    { color: "rgba(192, 128, 129, 0.5)", label: "Population < 800 " },
+    { color: "rgba(128, 0, 32, 0.5)", label: "Population between 800 - 2400" },
+    { color: "rgba(91, 14, 45, 0.5)", label: "Population between 2400 - 8900" },
+    { color: "rgba(61, 0, 15, 0.5)", label: "Population between > 8900" },
   ];
 
   const STpopLengendItems = [
-    { color: "#EEEAC5", label: "%age ST population <18" },
-    { color: "#F7DBA5", label: "%age ST population (18-33)" },
-    { color: "#ECB573", label: "%age ST population > 33" },
+    { color: "rgba(238, 234, 197, 0.5)", label: "%age ST population <18" },
+    { color: "rgba(247, 219, 165, 0.5)", label: "%age ST population (18-33)" },
+    { color: "rgba(236, 181, 115, 0.5)", label: "%age ST population > 33" },
   ];
 
   const SCpopLengendItems = [
@@ -273,10 +277,16 @@ const MapLegend = ({ showMWS, showVillages, currentLayer, mappedAssets, mappedDe
     { color: "#006400", label: "%age literacy level >70" },
   ];
 
-  const WaterLengendItems = [
-    { color: "#74CCF4", label: "Kharif" },
-    { color: "#1ca3ec", label: "Kharif and Rabi" },
-    { color: "#0f5e9c", label: "Kharif, Rabi, Zaid" },
+  const WaterLengendRabiItems = [
+    { color: "#74CCF4", label: "Less than 30%" },
+    { color: "#1ca3ec", label: "Between 30% to 70%" },
+    { color: "#0f5e9c", label: "More than 70%" },
+  ];
+
+  const WaterLengendZaidItems = [
+    { color: "#74CCF4", label: "Less than 25%" },
+    { color: "#1ca3ec", label: "Between 25% to 50%" },
+    { color: "#0f5e9c", label: "More than 50%" },
   ];
 
   const NregaLegendItems = [
@@ -290,32 +300,27 @@ const MapLegend = ({ showMWS, showVillages, currentLayer, mappedAssets, mappedDe
   ];
 
   const TrendLegendItems = [
-    { color: "#B8860B", label: "Increasing trend of G" },
-    { color: "#FFECB3", label: "Decreasing trend of G" },
-    { color: "#FFD700", label: "No trend of G" },
+    { color: "#22C55E", label: "Positive Trend" },
+    { color: "#EF4444", label: "Negative Trend" },
+    { color: "#9CA3AF", label: "No Trend" },
   ];
 
   const CropDegradationItems = [
-    { color: "#a9a9a9", label: "Crops - Barren" },
-    { color: "#eaa4f0", label: "Crops - Shrubs and Scrubs" },
-    { color: "#f7fcf5", label: "Double - Single" },
-    { color: "#ff4500", label: "Tripple/annual/perennial - Single" },
-    { color: "#ffc300", label: "Tripple/annual/perennial - Double" },
+    { color: "#73bb53", label: "Less than 30 hectares" },
+    { color: "#eee05d", label: "Between 30 hectares to 90 hectares" },
+    { color: "#ff0000", label: "More than 90 hectares" },
   ];
 
   const CropDeforestationItems = [
-    { color: "#73bb53", label: "Trees - Trees" },
-    { color: "#ff0000", label: "Trees - Built Up" },
-    { color: "#eee05d", label: "Trees - Crops" },
-    { color: "#a9a9a9", label: "Trees - Barren" },
-    { color: "#eaa4f0", label: "Trees - Shrubs and Scrubs" },
+    { color: "#73bb53", label: "Less than 50 hectares" },
+    { color: "#eee05d", label: "Between 50 to 100 hectares" },
+    { color: "#ff0000", label: "More than 100 hectares" },
   ];
 
   const CropAfforestationtems = [
-    { color: "#ff0000", label: "Built Up - Trees" },
-    { color: "#eee05d", label: "Crops - Trees" },
-    { color: "#a9a9a9", label: "Barren - Trees" },
-    { color: "#eaa4f0", label: "Scrub land - Trees" },
+    { color: "#ff0000", label: "Less than 50 hectares" },
+    { color: "#eee05d", label: "Between 50 to 100 hectares" },
+    { color: "#73bb53", label: "More than 100 hectares" },
   ];
 
   const AquiferItems = [
@@ -348,21 +353,92 @@ const MapLegend = ({ showMWS, showVillages, currentLayer, mappedAssets, mappedDe
     { color: "#14d11dff", label: "Areas with green credit sites " },
   ];
 
-  const WideScaleRestoration = [
-    { color: "rgba(176, 224, 230, 0.5)", label: "0 - 200 Hectare" },
-    { color: "rgba(135, 206, 250, 0.5)", label: "200 - 600 Hectare" },,
-    { color: "rgba(30, 144, 255, 0.5)", label: "Greater than 600 Hectare" },
+  const WideScaleRestoreItems = [
+    { color: "#d79b0f", label: "Mosaic Restoration" },
+    { color: "#0f077c", label: "Wide-scale Restoration" },
+    { color: "#4fbc14", label: "Protection" },
   ];
 
-  const Protection = [
-    { color: "rgba(176, 224, 230, 0.5)", label: "0 - 400 Hectare" },
-    { color: "rgba(135, 206, 250, 0.5)", label: "400 - 800 Hectare" },,
-    { color: "rgba(30, 144, 255, 0.5)", label: "Greater than 800 Hectare" },
+  const PotentialProtectionItems = [
+    { color: "#d79b0f", label: "Mosaic Restoration" },
+    { color: "#0f077c", label: "Wide-scale Restoration" },
+    { color: "#4fbc14", label: "Protection" },
   ];
 
-  const Industry = [
-    { color: "#FF0000", label: "Identified Site" },
-  ]
+  const LandConflictItems = [
+    { color: "#FF0000", label: "Land Conflict" }
+  ];
+
+  const FactoryItems = [
+    { color: "#FF0000", label: "Factory" }
+  ];
+
+  const MiningItems = [
+    { color: "#FF0000", label: "Mine" }
+  ];
+
+  const FacEssenEduInfra = [
+    { fill: "rgba(255, 249, 196, 0.5)", stroke: "rgba(255, 249, 196, 1)", label: "Within 2 kms" },
+    { fill: "rgba(255, 193, 7, 0.5)", stroke: "rgba(255, 193, 7, 1)", label: "More than 2 kms" },
+  ];
+
+  const FacHigherEduInfra = [
+    { fill: "rgba(232, 238, 186, 0.5)", stroke: "rgba(232, 238, 186, 1)", label: "Within 3 kms" },
+    { fill: "rgba(137, 151, 10, 0.5)", stroke: "rgba(137, 151, 10, 1)", label: "More than 3 kms" },
+  ];
+
+  const FacEssenHealthInfra = [
+    { fill: "rgba(255, 205, 210, 0.5)", stroke: "rgba(255, 205, 210, 1)", label: "Less than 2 kms" },
+    { fill: "rgba(239, 83, 80, 0.5)", stroke: "rgba(239, 83, 80, 1)", label: "Between 2 to 5 kms" },
+    { fill: "rgba(183, 28, 28, 0.5)", stroke: "rgba(183, 28, 28, 1)", label: "More than 5 kms" },
+  ];
+
+  const FacAdvHealthInfra = [
+    { fill: "rgba(255, 205, 210, 0.5)", stroke: "rgba(255, 205, 210, 1)", label: "<10 kms" },
+    { fill: "rgba(239, 83, 80, 0.5)", stroke: "rgba(239, 83, 80, 1)", label: "10-25 kms" },
+    { fill: "rgba(183, 28, 28, 0.5)", stroke: "rgba(183, 28, 28, 1)", label: ">25 kms" },
+  ];
+
+  const FacPDSItems = [
+    { fill: "rgba(232, 238, 186, 0.5)", stroke: "rgba(232, 238, 186, 1)", label: "Within 2 kms" },
+    { fill: "rgba(137, 151, 10, 0.5)", stroke: "rgba(137, 151, 10, 1)", label: "More than 2 kms" },
+  ];
+
+  const FacFinInclItems = [
+    { fill: "rgba(72, 55, 217, 0.5)", stroke: "rgba(72, 55, 217, 1)", label: "Within 5 kms" },
+    { fill: "rgba(8, 8, 77, 0.5)", stroke: "rgba(8, 8, 77, 1)", label: "More than 5 kms" },
+  ];
+
+  const FacAgriMarketItems = [
+    { fill: "rgba(200, 230, 201, 0.5)", stroke: "rgba(200, 230, 201, 1)", label: "<3 kms" },
+    { fill: "rgba(102, 187, 106, 0.5)", stroke: "rgba(102, 187, 106, 1)", label: "3-10 kms" },
+    { fill: "rgba(46, 125, 50, 0.5)", stroke: "rgba(46, 125, 50, 1)", label: ">10 kms" },
+  ];
+
+  const FacPostHarvestInfra = [
+    { fill: "rgba(200, 230, 201, 0.5)", stroke: "rgba(200, 230, 201, 1)", label: "<5 kms" },
+    { fill: "rgba(102, 187, 106, 0.5)", stroke: "rgba(102, 187, 106, 1)", label: "5-20 kms" },
+    { fill: "rgba(46, 125, 50, 0.5)", stroke: "rgba(46, 125, 50, 1)", label: ">20 kms" },
+  ];
+
+  const FacFarmCooperAccess = [
+    { fill: "rgba(200, 230, 201, 0.5)", stroke: "rgba(200, 230, 201, 1)", label: "<10 kms" },
+    { fill: "rgba(102, 187, 106, 0.5)", stroke: "rgba(102, 187, 106, 1)", label: "10-30 kms" },
+    { fill: "rgba(46, 125, 50, 0.5)", stroke: "rgba(46, 125, 50, 1)", label: ">30 kms" },
+  ];
+
+  const FacLivestockMngmt = [
+    { fill: "rgba(200, 230, 201, 0.5)", stroke: "rgba(200, 230, 201, 1)", label: "<10 kms" },
+    { fill: "rgba(102, 187, 106, 0.5)", stroke: "rgba(102, 187, 106, 1)", label: "10-30 kms" },
+    { fill: "rgba(46, 125, 50, 0.5)", stroke: "rgba(46, 125, 50, 1)", label: ">30 kms" },
+  ];
+
+  const FacAgriSuppInfra = [
+    { fill: "rgba(200, 230, 201, 0.5)", stroke: "rgba(200, 230, 201, 1)", label: "<10 kms" },
+    { fill: "rgba(102, 187, 106, 0.5)", stroke: "rgba(102, 187, 106, 1)", label: "10-50 kms" },
+    { fill: "rgba(46, 125, 50, 0.5)", stroke: "rgba(46, 125, 50, 1)", label: ">50 kms" },
+  ];
+
 
   // Check if LULC layer is active
   const isLulcLayerActive = currentLayer?.some(
@@ -424,11 +500,14 @@ const MapLegend = ({ showMWS, showVillages, currentLayer, mappedAssets, mappedDe
       layer.name.includes("panchayat_boundaries")
   );
 
-  const isWaterLayerActive = currentLayer?.some(
+  const isWaterRabiActive = currentLayer?.some(
     (layer) =>
-      layer.name === "avg_rabi_surface_water_mws" ||
-      layer.name === "avg_zaid_surface_water_mws" ||
-      layer.name.includes("water_bodies")
+      layer.name === "avg_rabi_surface_water_mws"
+  );
+
+  const isWaterZaidActive = currentLayer?.some(
+    (layer) =>
+      layer.name === "avg_zaid_surface_water_mws"
   );
 
   const isNREGALayerActive = currentLayer?.some(
@@ -469,22 +548,74 @@ const MapLegend = ({ showMWS, showVillages, currentLayer, mappedAssets, mappedDe
     (layer) => layer.name === "green_credit" || layer.name.includes("green_credit")
   );
 
+  const isFacEssenEduInfraActive = currentLayer?.some(
+    (layer) => layer.name === "essential_education_infra" || layer.name.includes("fac_essen_edu_infra")
+  );
+
+  const isFacHigherEduInfraActive = currentLayer?.some(
+    (layer) => layer.name === "higher_education_infra" || layer.name.includes("fac_higher_edu_infra")
+  );
+
+  const isFacEssenHealthInfraActive = currentLayer?.some(
+    (layer) => layer.name === "essential_health_services" || layer.name.includes("fac_essen_health_infra")
+  );
+
+  const isFacAdvHealthInfraActive = currentLayer?.some(
+    (layer) => layer.name === "advanced_health_services" || layer.name.includes("fac_adv_health_infra")
+  );
+
+  const isFacPDSActive = currentLayer?.some(
+    (layer) => layer.name === "public_distribution_system" || layer.name.includes("fac_pds")
+  );
+
+  const isFacFinInclActive = currentLayer?.some(
+    (layer) => layer.name === "financial_inclusion" || layer.name.includes("fac_fin_incl")
+  );
+
+  const isFacAgriMarketActive = currentLayer?.some(
+    (layer) => layer.name === "agri_market_access" || layer.name.includes("fac_agri_market")
+  );
+
+  const isFacPostHarvestInfraActive = currentLayer?.some(
+    (layer) => layer.name === "post_harvest_infra" || layer.name.includes("fac_post_harvest_infra")
+  );
+
+  const isFacFarmCooperAccessActive = currentLayer?.some(
+    (layer) => layer.name === "farmer_cooperatives_access" || layer.name.includes("fac_farm_cooper_access")
+  );
+
+  const isFacLivestockMngmtActive = currentLayer?.some(
+    (layer) => layer.name === "livestock_management_centers" || layer.name.includes("fac_livestock_mngmt")
+  );
+
+  const isFacAgriSuppInfraActive = currentLayer?.some(
+    (layer) => layer.name === "agricultural_support_infrastructure" || layer.name.includes("fac_agri_supp_infra")
+  );
+
   const isWideScaleActive = currentLayer?.some(
     (layer) => layer.name === "area_wide_scale_restoration" || layer.name.includes("area_wide_scale_restoration")
   );
 
-  const isProtectionActive = currentLayer?.some(
+  const isPotentialProtectionActive = currentLayer?.some(
     (layer) => layer.name === "area_protection" || layer.name.includes("area_protection")
   );
 
-  const isIndustryActive = currentLayer?.some(
-    (layer) => layer.name === "lcw_conflict" || layer.name === "factory_csr" || layer.name === "mining"
+  const isLandConflictActive = currentLayer?.some(
+    (layer) => layer.name === "lcw_conflict" || layer.name.includes("lcw_conflict")
   );
+
+  const isIndustryActive = currentLayer?.some(
+    (layer) => layer.name === "factory_csr" || layer.name.includes("factory_csr")
+  );
+
+  const isMiningActive = currentLayer?.some(
+    (layer) => layer.name === "mining" || layer.name.includes("mining")
+  );
+
 
   return (
     <div
-      className={`absolute bottom-24 left-0 z-10 transition-all duration-300 ${isCollapsed ? "translate-x-2" : "translate-x-6"
-        }`}
+      className={`absolute bottom-6 left-0 z-10 transition-all duration-300 ${isCollapsed ? "translate-x-2" : "translate-x-6"}`}
     >
       {/* Collapse toggle button */}
       <button
@@ -515,10 +646,11 @@ const MapLegend = ({ showMWS, showVillages, currentLayer, mappedAssets, mappedDe
 
       {/* Main legend container */}
       <div
-        className={`bg-white rounded-lg shadow-md overflow-hidden transition-all duration-300 ${isCollapsed
+        className={`bg-white rounded-lg shadow-md overflow-hidden transition-opacity duration-300 ${isCollapsed
           ? "w-10 h-48 opacity-80 hover:opacity-100"
-          : "w-72 max-h-[60vh] opacity-100"
+          : "w-72 opacity-100"
           }`}
+        style={!isCollapsed ? { maxHeight: 'calc(100vh - 220px)' } : {}}
       >
         {/* Collapsed state - vertical "Legend" text */}
         {isCollapsed && (
@@ -531,7 +663,7 @@ const MapLegend = ({ showMWS, showVillages, currentLayer, mappedAssets, mappedDe
 
         {/* Expanded state - full legend content */}
         {!isCollapsed && (
-          <div className="p-4 overflow-y-auto max-h-[60vh]">
+          <div className="p-4 overflow-y-auto" style={{ maxHeight: 'calc(100vh - 260px)' }}>
             <h3 className="text-sm font-medium text-gray-700 mb-3">Legend</h3>
             <div className="space-y-4">
               {/* MWS Legend Section */}
@@ -843,12 +975,37 @@ const MapLegend = ({ showMWS, showVillages, currentLayer, mappedAssets, mappedDe
               )}
 
               {/* Water Pixel Legend Section */}
-              {isWaterLayerActive && (
+              {isWaterRabiActive && (
                 <div className="space-y-2">
                   <h4 className="text-xs font-medium text-gray-600">
-                    Water Pixels
+                    Average Water Availability During Rabi
                   </h4>
-                  {WaterLengendItems.map((item, index) => (
+                  {WaterLengendRabiItems.map((item, index) => (
+                    <div
+                      key={`water-${index}`}
+                      className="flex items-center gap-2"
+                    >
+                      <div
+                        className="w-4 h-4 rounded"
+                        style={{
+                          backgroundColor: item.color,
+                          border: `1px solid rgba(0,0,0,0.2)`,
+                        }}
+                      />
+                      <span className="text-sm text-gray-600">
+                        {item.label}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {isWaterZaidActive && (
+                <div className="space-y-2">
+                  <h4 className="text-xs font-medium text-gray-600">
+                    Average Water Availability during Zaid
+                  </h4>
+                  {WaterLengendZaidItems.map((item, index) => (
                     <div
                       key={`water-${index}`}
                       className="flex items-center gap-2"
@@ -898,7 +1055,7 @@ const MapLegend = ({ showMWS, showVillages, currentLayer, mappedAssets, mappedDe
               {isTrendLayerActive && (
                 <div className="space-y-2">
                   <h4 className="text-xs font-medium text-gray-600">
-                    Groundwater Trend
+                    Water Balance Trend
                   </h4>
                   {TrendLegendItems.map((item, index) => (
                     <div
@@ -950,7 +1107,7 @@ const MapLegend = ({ showMWS, showVillages, currentLayer, mappedAssets, mappedDe
               {isCropDeforestationActive && (
                 <div className="space-y-2">
                   <h4 className="text-xs font-medium text-gray-600">
-                    Deforestation
+                    Reduction in Tree Cover
                   </h4>
                   {CropDeforestationItems.map((item, index) => (
                     <div
@@ -976,7 +1133,7 @@ const MapLegend = ({ showMWS, showVillages, currentLayer, mappedAssets, mappedDe
               {isCropAfforestationActive && (
                 <div className="space-y-2">
                   <h4 className="text-xs font-medium text-gray-600">
-                    Afforestation
+                    Increase in tree cover
                   </h4>
                   {CropAfforestationtems.map((item, index) => (
                     <div
@@ -1070,13 +1227,147 @@ const MapLegend = ({ showMWS, showVillages, currentLayer, mappedAssets, mappedDe
                 </div>
               )}
 
-              {/* Wide Scale Restoration Section */}
+              {/* Essential Education Infra Section */}
+              {isFacEssenEduInfraActive && (
+                <div className="space-y-2">
+                  <h4 className="text-xs font-medium text-gray-600">Primary education institutions</h4>
+                  {FacEssenEduInfra.map((item, index) => (
+                    <div key={`fac-edu-${index}`} className="flex items-center gap-2">
+                      <div className="w-4 h-4 rounded" style={{ backgroundColor: item.fill, border: `1px solid ${item.stroke}` }} />
+                      <span className="text-sm text-gray-600">{item.label}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {isFacHigherEduInfraActive && (
+                <div className="space-y-2">
+                  <h4 className="text-xs font-medium text-gray-600">Higher education institutions</h4>
+                  {FacHigherEduInfra.map((item, index) => (
+                    <div key={`fac-hedu-${index}`} className="flex items-center gap-2">
+                      <div className="w-4 h-4 rounded" style={{ backgroundColor: item.fill, border: `1px solid ${item.stroke}` }} />
+                      <span className="text-sm text-gray-600">{item.label}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {isFacEssenHealthInfraActive && (
+                <div className="space-y-2">
+                  <h4 className="text-xs font-medium text-gray-600">Essential health services</h4>
+                  {FacEssenHealthInfra.map((item, index) => (
+                    <div key={`fac-hlth-${index}`} className="flex items-center gap-2">
+                      <div className="w-4 h-4 rounded" style={{ backgroundColor: item.fill, border: `1px solid ${item.stroke}` }} />
+                      <span className="text-sm text-gray-600">{item.label}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {isFacAdvHealthInfraActive && (
+                <div className="space-y-2">
+                  <h4 className="text-xs font-medium text-gray-600">Advanced health services</h4>
+                  {FacAdvHealthInfra.map((item, index) => (
+                    <div key={`fac-ahlth-${index}`} className="flex items-center gap-2">
+                      <div className="w-4 h-4 rounded" style={{ backgroundColor: item.fill, border: `1px solid ${item.stroke}` }} />
+                      <span className="text-sm text-gray-600">{item.label}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {isFacPDSActive && (
+                <div className="space-y-2">
+                  <h4 className="text-xs font-medium text-gray-600">Public distribution system</h4>
+                  {FacPDSItems.map((item, index) => (
+                    <div key={`fac-pds-${index}`} className="flex items-center gap-2">
+                      <div className="w-4 h-4 rounded" style={{ backgroundColor: item.fill, border: `1px solid ${item.stroke}` }} />
+                      <span className="text-sm text-gray-600">{item.label}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {isFacFinInclActive && (
+                <div className="space-y-2">
+                  <h4 className="text-xs font-medium text-gray-600">Access to banks and financial services</h4>
+                  {FacFinInclItems.map((item, index) => (
+                    <div key={`fac-fin-${index}`} className="flex items-center gap-2">
+                      <div className="w-4 h-4 rounded" style={{ backgroundColor: item.fill, border: `1px solid ${item.stroke}` }} />
+                      <span className="text-sm text-gray-600">{item.label}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {isFacAgriMarketActive && (
+                <div className="space-y-2">
+                  <h4 className="text-xs font-medium text-gray-600">Access to mandis</h4>
+                  {FacAgriMarketItems.map((item, index) => (
+                    <div key={`fac-agri-${index}`} className="flex items-center gap-2">
+                      <div className="w-4 h-4 rounded" style={{ backgroundColor: item.fill, border: `1px solid ${item.stroke}` }} />
+                      <span className="text-sm text-gray-600">{item.label}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {isFacPostHarvestInfraActive && (
+                <div className="space-y-2">
+                  <h4 className="text-xs font-medium text-gray-600">Post Agricultural Produce Harvest Support</h4>
+                  {FacPostHarvestInfra.map((item, index) => (
+                    <div key={`fac-post-${index}`} className="flex items-center gap-2">
+                      <div className="w-4 h-4 rounded" style={{ backgroundColor: item.fill, border: `1px solid ${item.stroke}` }} />
+                      <span className="text-sm text-gray-600">{item.label}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {isFacFarmCooperAccessActive && (
+                <div className="space-y-2">
+                  <h4 className="text-xs font-medium text-gray-600">Access to farmer cooperatives</h4>
+                  {FacFarmCooperAccess.map((item, index) => (
+                    <div key={`fac-coop-${index}`} className="flex items-center gap-2">
+                      <div className="w-4 h-4 rounded" style={{ backgroundColor: item.fill, border: `1px solid ${item.stroke}` }} />
+                      <span className="text-sm text-gray-600">{item.label}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {isFacLivestockMngmtActive && (
+                <div className="space-y-2">
+                  <h4 className="text-xs font-medium text-gray-600">Livestock Management Centers</h4>
+                  {FacLivestockMngmt.map((item, index) => (
+                    <div key={`fac-live-${index}`} className="flex items-center gap-2">
+                      <div className="w-4 h-4 rounded" style={{ backgroundColor: item.fill, border: `1px solid ${item.stroke}` }} />
+                      <span className="text-sm text-gray-600">{item.label}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {isFacAgriSuppInfraActive && (
+                <div className="space-y-2">
+                  <h4 className="text-xs font-medium text-gray-600">Agricultural support infrastructure</h4>
+                  {FacAgriSuppInfra.map((item, index) => (
+                    <div key={`fac-supp-${index}`} className="flex items-center gap-2">
+                      <div className="w-4 h-4 rounded" style={{ backgroundColor: item.fill, border: `1px solid ${item.stroke}` }} />
+                      <span className="text-sm text-gray-600">{item.label}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
               {isWideScaleActive && (
                 <div className="space-y-2">
-                  <h4 className="text-xs font-medium text-gray-600">Wide Scale Restoration</h4>
-                  {WideScaleRestoration.map((item, index) => (
+                  <h4 className="text-xs font-medium text-gray-600">
+                    Wide Scale Restoration
+                  </h4>
+                  {WideScaleRestoreItems.map((item, index) => (
                     <div
-                      key={`trend-${index}`}
+                      key={`stpop-${index}`}
                       className="flex items-center gap-2"
                     >
                       <div
@@ -1094,13 +1385,14 @@ const MapLegend = ({ showMWS, showVillages, currentLayer, mappedAssets, mappedDe
                 </div>
               )}
 
-              {/* Protection Section */}
-              {isProtectionActive && (
+              {isPotentialProtectionActive && (
                 <div className="space-y-2">
-                  <h4 className="text-xs font-medium text-gray-600">Protection</h4>
-                  {Protection.map((item, index) => (
+                  <h4 className="text-xs font-medium text-gray-600">
+                    Potential for Protection
+                  </h4>
+                  {PotentialProtectionItems.map((item, index) => (
                     <div
-                      key={`trend-${index}`}
+                      key={`stpop-${index}`}
                       className="flex items-center gap-2"
                     >
                       <div
@@ -1118,13 +1410,39 @@ const MapLegend = ({ showMWS, showVillages, currentLayer, mappedAssets, mappedDe
                 </div>
               )}
 
-              {/* Industry Section */}
+              {isLandConflictActive && (
+                <div className="space-y-2">
+                  <h4 className="text-xs font-medium text-gray-600">
+                    Land Conflict Points
+                  </h4>
+                  {LandConflictItems.map((item, index) => (
+                    <div
+                      key={`stpop-${index}`}
+                      className="flex items-center gap-2"
+                    >
+                      <div
+                        className="w-4 h-4 rounded"
+                        style={{
+                          backgroundColor: item.color,
+                          border: `1px solid rgba(0,0,0,0.2)`,
+                        }}
+                      />
+                      <span className="text-sm text-gray-600">
+                        {item.label}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
               {isIndustryActive && (
                 <div className="space-y-2">
-                  <h4 className="text-xs font-medium text-gray-600">Industry</h4>
-                  {Industry.map((item, index) => (
+                  <h4 className="text-xs font-medium text-gray-600">
+                    Factory Location Points
+                  </h4>
+                  {FactoryItems.map((item, index) => (
                     <div
-                      key={`trend-${index}`}
+                      key={`stpop-${index}`}
                       className="flex items-center gap-2"
                     >
                       <div
@@ -1142,6 +1460,138 @@ const MapLegend = ({ showMWS, showVillages, currentLayer, mappedAssets, mappedDe
                 </div>
               )}
 
+              {isMiningActive && (
+                <div className="space-y-2">
+                  <h4 className="text-xs font-medium text-gray-600">
+                    Mine Location Points
+                  </h4>
+                  {MiningItems.map((item, index) => (
+                    <div
+                      key={`stpop-${index}`}
+                      className="flex items-center gap-2"
+                    >
+                      <div
+                        className="w-4 h-4 rounded"
+                        style={{
+                          backgroundColor: item.color,
+                          border: `1px solid rgba(0,0,0,0.2)`,
+                        }}
+                      />
+                      <span className="text-sm text-gray-600">
+                        {item.label}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {activeWBType === "waterbody_type" && (
+                  <div className="space-y-2">
+                  <h4 className="text-xs font-medium text-gray-600">
+                    Waterbody Type
+                  </h4>
+
+                  <div className="flex items-center gap-2">
+                    <div
+                      className="w-4 h-4 rounded"
+                      style={{ backgroundColor: "#87CEFA" }}  
+                    />
+                    <span className="text-sm text-gray-600">On River</span>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <div
+                      className="w-4 h-4 rounded"
+                      style={{ backgroundColor: "#1E90FF" }}   
+                    />
+                    <span className="text-sm text-gray-600">Off River</span>
+                  </div>
+                </div>
+              )}
+
+              {activeWBType === "waterbody_size" && (
+                <div className="space-y-2">
+                  <h4 className="text-xs font-medium text-gray-600">
+                    Waterbody Size
+                  </h4>
+
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 rounded" style={{ backgroundColor: "#BFEFFF" }} />
+                    <span className="text-sm text-gray-600">WB &lt; 1 ha</span>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 rounded" style={{ backgroundColor: "#87CEFA" }} />
+                    <span className="text-sm text-gray-600">WB 1–5 ha</span>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 rounded" style={{ backgroundColor: "#1E90FF" }} />
+                    <span className="text-sm text-gray-600">WB 5–10 ha</span>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 rounded" style={{ backgroundColor: "#0046B4" }} />
+                    <span className="text-sm text-gray-600">WB &gt; 10 ha</span>
+                  </div>
+                </div>
+              )}
+
+              {activeWBType === "surface_water_trend" && (
+                <div className="space-y-2">
+                  <h4 className="text-xs font-medium text-gray-600">
+                    Surface Water Trend
+                  </h4>
+
+                  <div className="flex items-center gap-2">
+                    <div
+                      className="w-4 h-4 rounded"
+                      style={{ backgroundColor: "#22C55E" }}   // green
+                    />
+                    <span className="text-sm text-gray-600">Positive</span>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <div
+                      className="w-4 h-4 rounded"
+                      style={{ backgroundColor: "#EF4444" }}   // red
+                    />
+                    <span className="text-sm text-gray-600">Negative</span>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <div
+                      className="w-4 h-4 rounded"
+                      style={{ backgroundColor: "#9CA3AF" }}   // grey
+                    />
+                    <span className="text-sm text-gray-600">Steady</span>
+                  </div>
+                </div>
+              )}
+
+              {activeWBType === "drainage_line" && (
+                <div className="space-y-2">
+                  <h4 className="text-xs font-medium text-gray-600">
+                    Drainage Line
+                  </h4>
+
+                  <div className="flex items-center gap-2">
+                    <div
+                      className="w-4 h-4 rounded"
+                      style={{ backgroundColor: "#3B82F6" }}
+                    />
+                    <span className="text-sm text-gray-600">On Drainage</span>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <div
+                      className="w-4 h-4 rounded"
+                      style={{ backgroundColor: "#A855F7" }}
+                    />
+                    <span className="text-sm text-gray-600">Off Drainage</span>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         )}
@@ -1153,6 +1603,7 @@ const MapLegend = ({ showMWS, showVillages, currentLayer, mappedAssets, mappedDe
 // Main Container component
 const KYLMapContainer = ({
   isLoading,
+  isFilterProcessing,  // add this
   statesData,
   mapElement,
   onLocationSelect,
@@ -1163,7 +1614,7 @@ const KYLMapContainer = ({
   mwsLayerRef,
   boundaryLayerRef,
   mapRef,
-  currentLayer, // Add this prop
+  currentLayer,
   setSearchLatLong
 }) => {
   const areMWSLayersAvailable = mwsLayerRef?.current !== null;
@@ -1171,9 +1622,26 @@ const KYLMapContainer = ({
 
   return (
     <div className="flex-1 bg-[#F8F7FF] rounded-lg border border-gray-100 relative overflow-hidden">
+
+      {/* ── Full overlay loader — only on initial layer load ── */}
       {isLoading && (
-        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-20">
-          <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+        <div className="absolute inset-0 z-20 bg-white/60 backdrop-blur-[2px] flex flex-col items-center justify-center gap-3">
+          <div className="w-10 h-10 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+          <span className="text-sm font-medium text-indigo-600 tracking-wide">
+            Loading map layers...
+          </span>
+        </div>
+      )}
+
+      {/* ── Non-blocking filter processing indicator — centered ── */}
+      {isFilterProcessing && !isLoading && (
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20 pointer-events-none">
+          <div className="flex flex-col items-center gap-3 bg-white/90 backdrop-blur-sm px-6 py-5 rounded-2xl shadow-md">
+            <div className="w-10 h-10 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+            <span className="text-xs font-medium text-indigo-600 whitespace-nowrap">
+              Applying filters...
+            </span>
+          </div>
         </div>
       )}
 
@@ -1203,8 +1671,8 @@ const KYLMapContainer = ({
         />
       </div>
 
-      {/* Centered YearSlider */}
-      <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 z-10 w-full max-w-xl px-4">
+      {/* Year Slider */}
+      <div className="absolute bottom-6 right-16 z-10 w-[420px]">
         <YearSlider currentLayer={currentLayer} />
       </div>
 

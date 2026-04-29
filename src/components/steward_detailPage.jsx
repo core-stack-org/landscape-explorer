@@ -1,290 +1,221 @@
-import React,{useEffect,useState} from "react";
-import {
-  Box,
-  Avatar,
-  Typography,
-  Card,
-  Grid,
-  Paper,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-} from "@mui/material";
+import React, { useEffect, useState } from "react";
 
-const StewardDetailPage = ({ plan }) => {
-  console.log(plan)
+const P = {
+  base:    "oklch(60% 0.2 301.924)",
+  light:   "oklch(95% 0.05 301.924)",
+  lighter: "oklch(98% 0.02 301.924)",
+  dark:    "oklch(45% 0.2  301.924)",
+  text:    "oklch(28% 0.18 301.924)",
+  border:  "oklch(90% 0.06 301.924)",
+  muted:   "oklch(65% 0.12 301.924)",
+};
+
+const InfoRow = ({ label, value }) => (
+  <div className="flex items-start justify-between py-2.5"
+    style={{ borderBottom: `1px solid ${P.border}` }}>
+    <p className="text-xs font-semibold uppercase tracking-widest w-2/5 flex-shrink-0"
+      style={{ color: P.muted }}>{label}</p>
+    <p className="text-sm font-medium text-right" style={{ color: P.text }}>
+      {value || "N/A"}
+    </p>
+  </div>
+);
+
+const StatPill = ({ label, value, accent }) => (
+  <div className="flex flex-col items-center justify-center rounded-2xl p-4"
+    style={{ background: P.lighter, border: `1px solid ${P.border}` }}>
+    <p className="text-3xl font-bold" style={{ color: accent ?? P.base }}>{value ?? 0}</p>
+    <p className="text-xs font-semibold mt-1 text-center" style={{ color: P.muted }}>{label}</p>
+  </div>
+);
+
+const StewardDetailPage = ({ plan, onClose }) => {
   const [stewardData, setStewardData] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [loading,     setLoading]     = useState(true);
+  const [error,       setError]       = useState(false);
 
   useEffect(() => {
-    if (!plan) return;
+    if (!plan?.organization || !plan?.facilitator_name) return;
 
-    const organizationId = plan.organization;   
-    const username = plan.facilitator_name;              
-
-    const getStewardDetails = async (organizationId, username) => {
+    const load = async () => {
+      setLoading(true);
+      setError(false);
       try {
-        const url = `${process.env.REACT_APP_API_URL}/organizations/${organizationId}/watershed/plans/steward-details/?facilitator_name=${username}`;
-    // const url = `https://2bb02f703cef.ngrok-free.app/api/v1/organizations/${organizationId}/watershed/plans/steward-details/?facilitator_name=${username}`;
-        const response = await fetch(url, {
-          method: "GET",
+        const url = `${process.env.REACT_APP_API_URL}/organizations/${plan.organization}/watershed/plans/steward-details/?facilitator_name=${encodeURIComponent(plan.facilitator_name)}`;
+        const res = await fetch(url, {
           headers: {
             "Content-Type": "application/json",
             "ngrok-skip-browser-warning": "420",
-            "X-API-Key" : `${process.env.REACT_APP_API_KEY}`,
-            // "X-API-KEY": "siOgP9SO.oUCc1vuWQRPkdjXjPmtIZYADe5eGl3FK",
+            "X-API-Key": process.env.REACT_APP_API_KEY,
           },
         });
-        if (!response.ok) {
-          throw new Error("Failed to fetch steward details");
-        }
-        const data = await response.json();
-        console.log(data)
-        return data;
-     
-       
-      } catch (error) {
-        console.error("Steward Details API Error:", error);
-        return null;
+        if (!res.ok) throw new Error(`API error ${res.status}`);
+        const data = await res.json();
+        setStewardData(data);
+      } catch (err) {
+        console.error("Steward detail fetch failed:", err);
+        setError(true);
+      } finally {
+        setLoading(false);
       }
     };
-    
 
-    const loadSteward = async () => {
-      setLoading(true);
-      const data = await getStewardDetails(organizationId, username);
-      setStewardData(data);
-      setLoading(false);
-    };
-
-    loadSteward();
+    load();
   }, [plan]);
-  
+
+  // ── LOADING ──────────────────────────────────────────────
   if (loading) {
-    return <Typography sx={{ p: 4 }}>Loading steward details...</Typography>;
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="w-10 h-10 rounded-full border-4 border-t-transparent animate-spin"
+          style={{ borderColor: `${P.base} transparent transparent transparent` }} />
+      </div>
+    );
   }
-  
-  if (!stewardData) {
-    return <Typography sx={{ p: 4 }}>No steward data found</Typography>;
+
+  // ── ERROR ─────────────────────────────────────────────────
+  if (error || !stewardData) {
+    return (
+      <div className="flex flex-col items-center justify-center h-64 gap-3">
+        <p className="text-sm font-medium" style={{ color: P.muted }}>
+          Failed to load steward details.
+        </p>
+        <button onClick={onClose}
+          className="px-4 py-2 rounded-xl text-sm font-semibold text-white"
+          style={{ background: P.base }}>
+          Close
+        </button>
+      </div>
+    );
   }
+
+  const locations = stewardData.working_locations ?? {};
+  const states    = (locations.states    ?? []).map(s => s.name).join(", ");
+  const districts = (locations.districts ?? []).map(d => d.name).join(", ");
+  const tehsils   = (locations.tehsils   ?? []).map(t => t.name).join(", ");
+  const projects  = (stewardData.projects ?? []).map(p => p.name).join(", ");
+
   return (
-    <Box sx={{ p: 1, mt: 1 }}>
-      {/* ---------- MAIN CARD ---------- */}
-      <Card
-        elevation={3}
-        sx={{
-          maxWidth: 950,
-          margin: "0 auto",
-          borderRadius: 4,
-          overflow: "hidden",
-          p: 2,
-        }}
-      >
-{/* ---------- BASIC DETAILS SECTION ---------- */}
-<Box 
-  sx={{ 
-    display: "flex", 
-    justifyContent: "space-between", 
-    alignItems: "center",
-    mb: 0 
-  }}
->
-  <Typography variant="h6" fontWeight={700} sx={{ color: "#334155" }}>
-    Basic Details of Steward
-  </Typography>
+    <div className="flex flex-col h-full">
 
-  {/* CLOSE BUTTON */}
-  <Typography
-    sx={{
-      fontSize: "20px",
-      fontWeight: "bold",
-      cursor: "pointer",
-      color: "#475569",
-      "&:hover": { color: "#1e293b" }
-    }}
-    onClick={() => window.closeStewardModal?.()} 
-  >
-    ×
-  </Typography>
-</Box>
+      {/* ── HEADER ─────────────────────────────────────── */}
+      <div className="sticky top-0 z-10 rounded-t-2xl p-6 relative"
+        style={{ background: `linear-gradient(135deg, ${P.base}, ${P.dark})` }}>
 
+        {/* Close button */}
+        <button onClick={onClose}
+          className="absolute top-4 right-4 w-8 h-8 rounded-full flex items-center
+                     justify-center font-bold transition-all hover:bg-white/20"
+          style={{ color: "white" }}>
+          ✕
+        </button>
 
-      <Card
-        elevation={0}
-        sx={{
-          p: 2,
-          borderRadius: 3,
-          border: "1px solid #e2e8f0",
-          background: "#fafafa",
-          mb: 4,
-        }}
-      >
-        <Grid container spacing={4}>
-          
+        <div className="flex items-center gap-5">
           {/* Avatar */}
-          <Grid item xs={12} sm={3} textAlign="center">
-          <Avatar
-  src={stewardData.profile_picture || ""}
-  sx={{
-    width: 150,
-    height: 150,
-    margin: "0 auto",
-    background: "#e2e8f0",
-  }}
-/>
+          <div className="w-16 h-16 rounded-2xl flex items-center justify-center
+                          text-2xl font-bold text-white flex-shrink-0"
+            style={{ background: "rgba(255,255,255,0.2)", backdropFilter: "blur(8px)" }}>
+            {stewardData.first_name?.[0] ?? stewardData.facilitator_name?.[0] ?? "S"}
+          </div>
 
-          </Grid>
+          <div className="min-w-0">
+            <p className="text-xs font-semibold uppercase tracking-widest mb-1"
+              style={{ color: "oklch(88% 0.08 301.924)" }}>
+              Landscape Steward
+            </p>
+            <h2 className="text-xl font-bold text-white truncate">
+              {stewardData.facilitator_name}
+            </h2>
+            <p className="text-sm mt-0.5" style={{ color: "oklch(88% 0.08 301.924)" }}>
+              {stewardData.organization?.name ?? "N/A"}
+            </p>
+          </div>
+        </div>
+      </div>
 
-          {/* DETAILS - Vertical list */}
-          <Grid item xs={12} sm={9}>
-            <Typography variant="h5" fontWeight={700} sx={{ mb: 2 }}>
-            {stewardData.facilitator_name}
-            </Typography>
+      {/* ── BODY ───────────────────────────────────────── */}
+      <div className="flex-1 overflow-y-auto p-6 flex flex-col gap-6">
 
+        {/* STATS ROW */}
+        <div className="grid grid-cols-2 gap-4">
+          <StatPill
+            label="Total Villages Covered"
+            value={stewardData.statistics?.total_plans}
+            accent={P.base}
+          />
+          <StatPill
+            label="Planning Completed For"
+            value={stewardData.plans?.filter(p => p.is_completed).length ?? 0}
+            accent={P.dark}
+          />
+        </div>
 
-            <Typography sx={{ mb: 1 }}>
-              <strong>Organization:</strong>   {stewardData.organization?.name || "N/A"}
+        {/* PERSONAL DETAILS */}
+        <div className="bg-white rounded-2xl p-5 shadow-sm"
+          style={{ border: `1px solid ${P.border}` }}>
+          <p className="text-xs font-semibold uppercase tracking-widest mb-3"
+            style={{ color: P.muted }}>
+            Personal Details
+          </p>
+          <InfoRow label="Gender"            value={stewardData.gender}                    />
+          <InfoRow label="Age"               value={stewardData.age}                       />
+          <InfoRow label="Education"         value={stewardData.education_qualification}   />
+          <InfoRow label="Organization"      value={stewardData.organization?.name}        />
+          <InfoRow label="Projects"          value={projects}                              />
+        </div>
 
-            </Typography>
+        {/* WORKING LOCATIONS */}
+        <div className="bg-white rounded-2xl p-5 shadow-sm"
+          style={{ border: `1px solid ${P.border}` }}>
+          <p className="text-xs font-semibold uppercase tracking-widest mb-3"
+            style={{ color: P.muted }}>
+            Working Locations
+          </p>
+          <InfoRow label="States"    value={states    || "N/A"} />
+          <InfoRow label="Districts" value={districts || "N/A"} />
+          <InfoRow label="Tehsils"   value={tehsils   || "N/A"} />
+        </div>
 
-            <Typography sx={{ mb: 1 }}>
-              <strong>Gender:</strong> {stewardData.gender || "N/A"}
-            </Typography>
+        {/* PLANS */}
+        <div className="bg-white rounded-2xl p-5 shadow-sm"
+          style={{ border: `1px solid ${P.border}` }}>
+          <p className="text-xs font-semibold uppercase tracking-widest mb-3"
+            style={{ color: P.muted }}>
+            Plans ({stewardData.plans?.length ?? 0})
+          </p>
 
-            <Typography sx={{ mb: 1 }}>
-              <strong>Education Qualification:</strong>   {stewardData.education_qualification || "N/A"}
+          <div className="flex flex-col gap-2">
+            {(stewardData.plans ?? []).length === 0 ? (
+              <p className="text-sm" style={{ color: P.muted }}>No plans found.</p>
+            ) : (
+              stewardData.plans.map((p, i) => (
+                <div key={p.id ?? i}
+                  className="flex items-center justify-between px-4 py-3 rounded-xl"
+                  style={{ background: P.lighter, border: `1px solid ${P.border}` }}>
+                  <p className="text-sm font-medium truncate" style={{ color: P.text }}>
+                    {p.name}
+                  </p>
+                  <span
+                    className="text-xs font-semibold ml-3 flex-shrink-0 px-2 py-1 rounded-full"
+                    style={{
+                      background: p.is_completed
+                        ? "oklch(93% 0.08 145)"
+                        : "oklch(95% 0.05 60)",
+                      color: p.is_completed
+                        ? "oklch(38% 0.14 145)"
+                        : "oklch(45% 0.12 60)",
+                    }}
+                  >
+                    {p.is_completed ? "✓ Completed" : "⏳ In Progress"}
+                  </span>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
 
-            </Typography>
-
-            <Typography sx={{ mb: 1 }}>
-              <strong>Years of Experience:</strong> {stewardData.experience || "N/A"}
-            </Typography>
-
-            <Typography sx={{ mb: 1 }}>
-              <strong>State:</strong>   {stewardData.working_locations?.states?.[0]?.name || "N/A"}
-
-            </Typography>
-          </Grid>
-
-        </Grid>
-      </Card>
-
-        {/* ---------- STEWARDSHIP DETAILS ---------- */}
-        <Typography variant="h6" fontWeight={700} sx={{ mb: 1, color: "#334155" }}>
-          Stewardship Details
-        </Typography>
-
-        {/* METRIC CARDS - 2 COLUMNS */}
-        <Grid container spacing={3} sx={{ mb: 3 }}>
-          {/* Total Plans */}
-          <Grid item xs={12} sm={6}>
-            <Paper
-              elevation={0}
-              sx={{
-                p: 2,
-                borderRadius: 3,
-                border: "1px solid #e2e8f0",
-                textAlign: "center",
-              }}
-            >
-              <Typography fontWeight={600} sx={{ mb: 1 }}>
-                No. of Plans Under This Steward
-              </Typography>
-
-              <Typography
-                variant="h3"
-                fontWeight={700}
-                sx={{ color: "#2563eb" }}
-              >
-  {stewardData.statistics?.total_plans ?? 0}
-  </Typography>
-            </Paper>
-          </Grid>
-
-          {/* DPR Generated */}
-          <Grid item xs={12} sm={6}>
-            <Paper
-              elevation={0}
-              sx={{
-                p: 2,
-                borderRadius: 3,
-                border: "1px solid #e2e8f0",
-                textAlign: "center",
-              }}
-            >
-              <Typography fontWeight={600} sx={{ mb: 1 }}>
-                No. of DPR Generated
-              </Typography>
-
-              <Typography
-                variant="h3"
-                fontWeight={700}
-                sx={{ color: "#4f46e5" }}
-              >
-  {stewardData.statistics?.dpr_completed ?? 0}
-  </Typography>
-            </Paper>
-          </Grid>
-        </Grid>
-
-        {/* ---------- TABLE SECTION ---------- */}
-        <Typography
-          fontWeight={700}
-          sx={{ mb: 1, mt: 2, color: "#334155", fontSize: "18px" }}
-        >
-          Plans Summary
-        </Typography>
-
-        <TableContainer
-          component={Paper}
-          elevation={0}
-          sx={{ border: "1px solid #e2e8f0", borderRadius: 2, mt: 1 }}
-        >
-          <Table>
-            <TableHead sx={{ background: "#f1f5f9" }}>
-              <TableRow>
-                <TableCell sx={{ fontWeight: 700 }}>Plan Name</TableCell>
-                <TableCell sx={{ fontWeight: 700 }}>Status</TableCell>
-                {/* <TableCell sx={{ fontWeight: 700 }}>
-                  No. of Demands Approved
-                </TableCell> */}
-              </TableRow>
-            </TableHead>
-
-            <TableBody>
-  {stewardData.plans?.length > 0 ? (
-    stewardData.plans.map((p, index) => (
-      <TableRow key={p.id || index}>
-        <TableCell>{p.name}</TableCell>
-        <TableCell>
-  <Typography
-    sx={{
-      fontWeight: 600,
-      color: p.is_completed ? "#16a34a" : "#dc2626", // green / red
-    }}
-  >
-    {p.is_completed ? "Completed" : "Not Completed"}
-  </Typography>
-</TableCell>
-        {/* <TableCell>--</TableCell> */}
-      </TableRow>
-    ))
-  ) : (
-    <TableRow>
-      <TableCell colSpan={3} align="center">
-        No plans available
-      </TableCell>
-    </TableRow>
-  )}
-</TableBody>
-
-          </Table>
-        </TableContainer>
-      </Card>
-    </Box>
+      </div>
+    </div>
   );
 };
 
