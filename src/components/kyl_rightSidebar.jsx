@@ -46,7 +46,8 @@ const KYLRightSidebar = ({
   dataJson = [],
   selectedWaterbodyIds,
   selectedWaterbodyData = [],
-  mwsDrainageLayerRef
+  mwsDrainageLayerRef,
+  mwsFlagLayerRef
 }) => {
   const [loadingWB, setLoadingWB] = React.useState(false);
   const [showSelectionPopup, setShowSelectionPopup] = React.useState(false);
@@ -212,7 +213,8 @@ const KYLRightSidebar = ({
     if (!mwsArrowLayerRef?.current) { console.warn("Arrow layer not ready"); return; }
     const newVisibility = !showConnectivity;
     mwsArrowLayerRef.current.setVisible(newVisibility);
-    mwsDrainageLayerRef.current.setVisible(newVisibility)
+    mwsDrainageLayerRef.current.setVisible(newVisibility);
+    if (mwsFlagLayerRef.current) mwsFlagLayerRef.current.setVisible(newVisibility);
     setShowConnectivity(newVisibility);
   };
 
