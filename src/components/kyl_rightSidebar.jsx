@@ -260,33 +260,68 @@ const KYLRightSidebar = ({
 
   // ─── WB property display resolver — uses cached precomputed props ───
   const getWBDisplayValue = (filterName, swb) => {
-    if (filterName === "waterbody_type") {
-      const raw = swb.waterbody_type;
-      if (raw === undefined || raw === null) return "N/A";
-      return raw === "river" ? "On River" : "Off River";
-    }
-    if (filterName === "drainage_line") {
-      if (swb.wbDrainage === "onDrainage") return "On Drainage";
-      if (swb.wbDrainage === "offDrainage") return "Off Drainage";
-      const val = Number(swb.on_drainage_line ?? null);
-      if (!isNaN(val)) return val === 1 ? "On Drainage" : "Off Drainage";
-      return "N/A";
-    }
-    if (filterName === "surface_water_trend") {
-      const trend = swb.wbTrend;
-      if (!trend) return "N/A";
-      return trend.charAt(0).toUpperCase() + trend.slice(1);
-    }
-    if (filterName === "waterbody_size") {
-      const area = Number(swb.area_ored ?? swb.AREA_HA ?? 0);
-      if (isNaN(area)) return "N/A";
-      if (area < 1) return "Small (<1 ha)";
-      if (area < 5) return "Medium (1–5 ha)";
-      if (area < 10) return "Large (5–10 ha)";
-      return "Very Large (>10 ha)";
+  if (filterName === "waterbody_type") {
+    const raw = swb.waterbody_type;
+    if (raw === undefined || raw === null) return "N/A";
+    return raw === "river" ? "On River" : "Off River";
+  }
+
+  if (filterName === "drainage_line") {
+    // Use pre-computed if available, else compute from raw
+    if (swb.wbDrainage === "onDrainage") return "On Drainage";
+    if (swb.wbDrainage === "offDrainage") return "Off Drainage";
+    const val = Number(swb.on_drainage_line ?? null);
+    if (!isNaN(val) && swb.on_drainage_line !== null && swb.on_drainage_line !== undefined) {
+      return val === 1 ? "On Drainage" : "Off Drainage";
     }
     return "N/A";
-  };
+  }
+
+  if (filterName === "surface_water_trend") {
+    // Use pre-computed if available
+    if (swb.wbTrend) {
+      return swb.wbTrend.charAt(0).toUpperCase() + swb.wbTrend.slice(1);
+    }
+    // Compute from raw area_ fields using Mann-Kendall
+    const areas = Object.keys(swb)
+      .filter(k => k.startsWith("area_") && k !== "area_ored")
+      .sort()
+      .map(k => Number(swb[k] ?? 0));
+    if (areas.length < 2) return "N/A";
+    let S = 0;
+    for (let i = 0; i < areas.length - 1; i++) {
+      for (let j = i + 1; j < areas.length; j++) {
+        if (areas[j] > areas[i]) S++;
+        else if (areas[j] < areas[i]) S--;
+      }
+    }
+    if (S > 0) return "Positive";
+    if (S < 0) return "Negative";
+    return "Steady";
+  }
+
+  if (filterName === "waterbody_size") {
+    // Use pre-computed if available
+    if (swb.wbSizeCategory) {
+      const map = {
+        small: "Small (<1 ha)",
+        medium: "Medium (1–5 ha)",
+        large: "Large (5–10 ha)",
+        veryLarge: "Very Large (>10 ha)",
+      };
+      return map[swb.wbSizeCategory] || "N/A";
+    }
+    // Compute from raw area
+    const area = Number(swb.area_ored ?? swb.AREA_HA ?? swb.area ?? swb.Area ?? 0);
+    if (isNaN(area)) return "N/A";
+    if (area < 1) return "Small (<1 ha)";
+    if (area < 5) return "Medium (1–5 ha)";
+    if (area < 10) return "Large (5–10 ha)";
+    return "Very Large (>10 ha)";
+  }
+
+  return "N/A";
+};
 
   const downloadPDF = async () => {
     if (isDownloading) return;
@@ -611,24 +646,54 @@ const KYLRightSidebar = ({
 
       // Sheet 3 — Selected Waterbodies
       const uniqueSwbs = new Map();
+
       if (selectedMWS && selectedMWS.length > 0 && waterbodyFilters.length > 0 && showWB) {
+        // MWS + WB filter — intersect from mwsVillageIntersections
         mwsVillageIntersections.forEach(group => {
           group.waterbodies.forEach(swb => {
             if (!uniqueSwbs.has(swb.swbId) && selectedWaterbodyIds && selectedWaterbodyIds.has(String(swb.swbId))) {
+              let enriched = selectedWaterbodyData.find(d => String(d.swbId) === String(swb.swbId));
+              if (!enriched && waterbodiesLayerRef?.current) {
+                try {
+                  const feature = waterbodiesLayerRef.current.getSource().getFeatures().find(f => {
+                    const p = f.getProperties();
+                    return String(p.UID ?? p.swb_id ?? p.SWB_UID ?? p.uid ?? '') === String(swb.swbId);
+                  });
+                  if (feature) enriched = feature.getProperties();
+                } catch (_) {}
+              }
+              enriched = enriched || swb;
               const row = {
                 "SWB ID": swb.swbId,
-                "WATERBODY NAME": swb.swbName || "Unknown",
-                "LATITUDE": swb.latitude || 0,
-                "LONGITUDE": swb.longitude || 0,
+                "WATERBODY NAME": swb.swbName || enriched.swbName || "Unknown",
+                "LATITUDE": swb.latitude || enriched.latitude || 0,
+                "LONGITUDE": swb.longitude || enriched.longitude || 0,
               };
               waterbodyFilters.forEach(f => {
-                row[(f.filterName || f.name).toUpperCase()] = getWBDisplayValue(f.name, swb);
+                row[(f.filterName || f.name).toUpperCase()] = getWBDisplayValue(f.name, enriched);
               });
               uniqueSwbs.set(swb.swbId, row);
             }
           });
         });
+      } else if ((!selectedMWS || selectedMWS.length === 0) && waterbodyFilters.length > 0 && showWB) {
+        // WB-only filter — use selectedWaterbodyData directly (already has all computed props)
+        selectedWaterbodyData.forEach(swb => {
+          if (!uniqueSwbs.has(swb.swbId)) {
+            const row = {
+              "SWB ID": swb.swbId,
+              "WATERBODY NAME": swb.swbName || "Unknown",
+              "LATITUDE": swb.latitude || 0,
+              "LONGITUDE": swb.longitude || 0,
+            };
+            waterbodyFilters.forEach(f => {
+              row[(f.filterName || f.name).toUpperCase()] = getWBDisplayValue(f.name, swb);
+            });
+            uniqueSwbs.set(swb.swbId, row);
+          }
+        });
       }
+
       const sheet3Data = Array.from(uniqueSwbs.values());
 
       // Sheet 4 — MWS-Village Intersections
@@ -729,7 +794,9 @@ const KYLRightSidebar = ({
     const hasVillagePattern = selectedPatternsCount.some(p => p.level);
 
     const uniqueSwbs = new Map();
+
     if (selectedMWS && selectedMWS.length > 0 && hasWaterbodyFilter && showWB) {
+      // MWS + WB filter — intersect from mwsVillageIntersections
       mwsVillageIntersections.forEach(group => {
         group.waterbodies.forEach(swb => {
           if (!uniqueSwbs.has(swb.swbId) && selectedWaterbodyIds && selectedWaterbodyIds.has(String(swb.swbId))) {
@@ -737,7 +804,13 @@ const KYLRightSidebar = ({
           }
         });
       });
+    } else if ((!selectedMWS || selectedMWS.length === 0) && hasWaterbodyFilter && showWB) {
+      // WB-only filter — use selectedWaterbodyData from applyToFeatures
+      selectedWaterbodyData.forEach(swb => {
+        if (!uniqueSwbs.has(swb.swbId)) uniqueSwbs.set(swb.swbId, swb);
+      });
     }
+
     const waterbodyData = Array.from(uniqueSwbs.values());
 
     // totalItems after waterbodyData is declared
