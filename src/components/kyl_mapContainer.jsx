@@ -410,9 +410,9 @@ const MapLegend = ({ showMWS, showVillages, currentLayer }) => {
   ];
 
   const FacAgriMarketItems = [
-    { fill: "rgba(200, 230, 201, 0.5)", stroke: "rgba(200, 230, 201, 1)", label: "<3 kms" },
-    { fill: "rgba(102, 187, 106, 0.5)", stroke: "rgba(102, 187, 106, 1)", label: "3-10 kms" },
-    { fill: "rgba(46, 125, 50, 0.5)", stroke: "rgba(46, 125, 50, 1)", label: ">10 kms" },
+    { fill: "rgba(255, 255, 102, 0.5)", stroke: "rgba(255, 255, 102, 1)", label: "<3 kms" },
+    { fill: "rgba(159, 159, 0, 0.5)", stroke: "rgba(159, 159, 0, 1)", label: "3-10 kms" },
+    { fill: "rgba(98, 98, 0, 0.5)", stroke: "rgba(98, 98, 0, 1)", label: ">10 kms" },
   ];
 
   const FacPostHarvestInfra = [
@@ -422,15 +422,15 @@ const MapLegend = ({ showMWS, showVillages, currentLayer }) => {
   ];
 
   const FacFarmCooperAccess = [
-    { fill: "rgba(200, 230, 201, 0.5)", stroke: "rgba(200, 230, 201, 1)", label: "<10 kms" },
-    { fill: "rgba(102, 187, 106, 0.5)", stroke: "rgba(102, 187, 106, 1)", label: "10-30 kms" },
-    { fill: "rgba(46, 125, 50, 0.5)", stroke: "rgba(46, 125, 50, 1)", label: ">30 kms" },
+    { fill: "rgba(204, 238, 255, 0.5)", stroke: "rgba(204, 238, 255, 1)", label: "<10 kms" },
+    { fill: "rgba(0, 142, 212, 0.5)", stroke: "rgba(0, 142, 212, 1)", label: "10-30 kms" },
+    { fill: "rgba(0, 77, 116, 0.5)", stroke: "rgba(0, 77, 116, 1)", label: ">30 kms" },
   ];
 
   const FacLivestockMngmt = [
-    { fill: "rgba(200, 230, 201, 0.5)", stroke: "rgba(200, 230, 201, 1)", label: "<10 kms" },
-    { fill: "rgba(102, 187, 106, 0.5)", stroke: "rgba(102, 187, 106, 1)", label: "10-30 kms" },
-    { fill: "rgba(46, 125, 50, 0.5)", stroke: "rgba(46, 125, 50, 1)", label: ">30 kms" },
+    { fill: "rgba(255, 170, 85, 0.5)", stroke: "rgba(255, 170, 85, 1)", label: "<10 kms" },
+    { fill: "rgba(170, 85, 0, 0.5)", stroke: "rgba(170, 85, 0, 1)", label: "10-30 kms" },
+    { fill: "rgba(85, 43, 0, 0.5)", stroke: "rgba(85, 43, 0, 1)", label: ">30 kms" },
   ];
 
   const FacAgriSuppInfra = [
