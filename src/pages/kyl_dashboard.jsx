@@ -61,7 +61,6 @@ const KYLDashboardPage = () => {
   const mwsCentroidLayerRef = useRef(null);
   const mwsArrowLayerRef = useRef(null);
   const mwsDrainageLayerRef = useRef(null);
-  const mwsFlagLayerRef = useRef(null);
 
   const [isLoading, setIsLoading] = useState(false);
   const [islayerLoaded, setIsLayerLoaded] = useState(false);
@@ -154,10 +153,6 @@ const KYLDashboardPage = () => {
 
     return { byId, mwsToVillages, mwsToSWBIds, fieldIndex };
   }, [dataJson]);
-  
-  const flagSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 12 12">
-    <circle cx="6" cy="6" r="4" fill="%23f97316" stroke="white" stroke-width="2"/>
-  </svg>`;
 
   const addLayerSafe = (layer) => layer && mapRef.current && mapRef.current.addLayer(layer);
 
@@ -828,34 +823,6 @@ console.log("Current filterSelections:", filterSelections);
     mwsDrainageLayerRef.current.setVisible(false)
     mapRef.current.addLayer(arrowLayer);
     mwsArrowLayerRef.current = arrowLayer;
-
-    const flagDataUrl = `data:image/svg+xml;charset=utf-8,${flagSvg}`;
-
-    const flagFeatures = connectivityFeatures.map(feature => {
-      const f = new Feature({ geometry: feature.getGeometry().clone() });
-      f.set('uid', feature.get('uid') || feature.get('UID'));
-      f.set('downstream', feature.get('downstream'));
-      f.set('upstream', feature.get('upstream'));
-      return f;
-    });
-
-    const flagLayer = new VectorLayer({
-      source: new VectorSource({ features: flagFeatures }),
-      style: new Style({
-        image: new OLIcon({
-          src: flagDataUrl,
-          anchor: [0.5, 0.5],
-          anchorXUnits: 'fraction',
-          anchorYUnits: 'fraction',
-          scale: 1,
-        }),
-      }),
-      zIndex: 10000,
-    });
-
-    flagLayer.setVisible(false);
-    mapRef.current.addLayer(flagLayer);
-    mwsFlagLayerRef.current = flagLayer;
 
   };
 
@@ -2162,7 +2129,6 @@ console.log("Current filterSelections:", filterSelections);
           selectedWaterbodyData={selectedWaterbodyData}
           mwsDrainageLayerRef={mwsDrainageLayerRef}
           villageJson={villageJson}
-          mwsFlagLayerRef={mwsFlagLayerRef}
         />
       </div>
     </div>

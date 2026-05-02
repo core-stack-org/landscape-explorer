@@ -47,7 +47,6 @@ const KYLRightSidebar = ({
   selectedWaterbodyIds,
   selectedWaterbodyData = [],
   mwsDrainageLayerRef,
-  mwsFlagLayerRef
 }) => {
   const [loadingWB, setLoadingWB] = React.useState(false);
   const [showSelectionPopup, setShowSelectionPopup] = React.useState(false);
@@ -214,7 +213,6 @@ const KYLRightSidebar = ({
     const newVisibility = !showConnectivity;
     mwsArrowLayerRef.current.setVisible(newVisibility);
     mwsDrainageLayerRef.current.setVisible(newVisibility);
-    if (mwsFlagLayerRef.current) mwsFlagLayerRef.current.setVisible(newVisibility);
     setShowConnectivity(newVisibility);
   };
 
