@@ -168,6 +168,42 @@ const fetchDistrictCentroid = async (districtName) => {
   return null;
 };
 
+const fetchDprReportStatus = async ({ organizationId = null, stateId = null, districtId = null } = {}) => {
+  const params = new URLSearchParams();
+  if (organizationId) params.append("organization_id", organizationId);
+  if (stateId)        params.append("state_id",        stateId);
+  if (districtId)     params.append("district_id",     districtId);
+  let url = `${process.env.REACT_APP_API_URL}/dpr_data/report-status-summary/`;
+  if (params.toString()) url += `?${params.toString()}`;
+  const res = await fetch(url, {
+    headers: {
+      "Content-Type": "application/json",
+      "ngrok-skip-browser-warning": "420",
+      "X-API-Key": process.env.REACT_APP_API_KEY,
+    },
+  });
+  if (!res.ok) throw new Error(`DPR status error ${res.status}`);
+  return res.json();
+};
+
+const fetchStatusTracking = async ({ organizationId = null, stateId = null, districtId = null } = {}) => {
+  const params = new URLSearchParams();
+  if (organizationId) params.append("organization_id", organizationId);
+  if (stateId)        params.append("state_id",        stateId);
+  if (districtId)     params.append("district_id",     districtId);
+  let url = `${process.env.REACT_APP_API_URL}/dpr_data/status-tracking/`;
+  if (params.toString()) url += `?${params.toString()}`;
+  const res = await fetch(url, {
+    headers: {
+      "Content-Type": "application/json",
+      "ngrok-skip-browser-warning": "420",
+      "X-API-Key": process.env.REACT_APP_API_KEY,
+    },
+  });
+  if (!res.ok) throw new Error(`Status tracking error ${res.status}`);
+  return res.json();
+};
+
 const fetchPlansByState = async (stateId, organizationId = null) => {
   if (organizationId) {
     // Org-level endpoint has no state filter — fetch all org plans and filter client-side
@@ -399,6 +435,8 @@ const PlansPage = () => {
     const [stewardLoading,  setStewardLoading]  = useState(false);
     const [stewardModalPlan, setStewardModalPlan] = useState(null);
     const [planDotsVisible, setPlanDotsVisible] = useState(false);
+    const [dprStatus,       setDprStatus]       = useState(null);
+    const [statusTracking,  setStatusTracking]  = useState(null);
 
     // ── MAP INIT ────────────────────────────────────────────────
     useEffect(() => {
@@ -519,9 +557,14 @@ const PlansPage = () => {
       setStatsError(false);
       try {
         if (viewMode === "plans") {
-          const data = await fetchMetaStats(orgId, stateId);
+          const [data, dprData, trackingData] = await Promise.all([
+            fetchMetaStats(orgId, stateId),
+            fetchDprReportStatus({ organizationId: orgId, stateId }),
+            fetchStatusTracking({ organizationId: orgId, stateId }),
+          ]);
           setMetaStats(data);
-          // Populate org options from meta-stats (only present when no org filter active)
+          setDprStatus(dprData);
+          setStatusTracking(trackingData);
           if (data.organization_breakdown) {
             setOrganizationOptions(
               data.organization_breakdown.map((o) => ({
@@ -808,12 +851,14 @@ const PlansPage = () => {
 
       try {
         if (viewModeRef.current === "plans") {
-          const stateStats = await fetchMetaStats(
-            orgRef.current?.value ?? null,
-            stateData.state_id
-          );
-
+          const [stateStats, dprData, trackingData] = await Promise.all([
+            fetchMetaStats(orgRef.current?.value ?? null, stateData.state_id),
+            fetchDprReportStatus({ organizationId: orgRef.current?.value ?? null, stateId: stateData.state_id }),
+            fetchStatusTracking({ organizationId: orgRef.current?.value ?? null, stateId: stateData.state_id }),
+          ]);
           setMetaStats(stateStats);
+          setDprStatus(dprData);
+          setStatusTracking(trackingData);
           setIsStateView(false);
           await addPlanDistrictPinsFromBreakdown(stateStats.district_breakdown ?? []);
         } else {
@@ -854,18 +899,16 @@ const PlansPage = () => {
         }
 
         try {
-          const plans = await fetchPlansByDistrict(
-            districtData.district_id,
-            orgRef.current?.value ?? null
-          );
+          const [plans, districtStats, dprData, trackingData] = await Promise.all([
+            fetchPlansByDistrict(districtData.district_id, orgRef.current?.value ?? null),
+            fetchMetaStats(orgRef.current?.value ?? null, null, districtData.district_id),
+            fetchDprReportStatus({ organizationId: orgRef.current?.value ?? null, districtId: districtData.district_id }),
+            fetchStatusTracking({ organizationId: orgRef.current?.value ?? null, districtId: districtData.district_id }),
+          ]);
           addPlanDots(plans);
-
-          const districtStats = await fetchMetaStats(
-            orgRef.current?.value ?? null,
-            null,
-            districtData.district_id
-          );
           setMetaStats(districtStats);
+          setDprStatus(dprData);
+          setStatusTracking(trackingData);
         } catch (err) {
           console.error("District plans fetch failed:", err);
         } finally {
@@ -918,9 +961,14 @@ const PlansPage = () => {
       setStatsLoading(true);
       try {
         if (viewModeRef.current === "plans") {
-          const globalStats = await fetchMetaStats(orgRef.current?.value ?? null);
+          const [globalStats, dprData, trackingData] = await Promise.all([
+            fetchMetaStats(orgRef.current?.value ?? null),
+            fetchDprReportStatus({ organizationId: orgRef.current?.value ?? null }),
+            fetchStatusTracking({ organizationId: orgRef.current?.value ?? null }),
+          ]);
           setMetaStats(globalStats);
-          // Repopulate org options from fresh global stats
+          setDprStatus(dprData);
+          setStatusTracking(trackingData);
           if (globalStats.organization_breakdown) {
             setOrganizationOptions(
               globalStats.organization_breakdown.map((o) => ({
@@ -972,11 +1020,14 @@ const PlansPage = () => {
         // Restore state-level stats and re-render district pins from cache
         setStatsLoading(true);
         try {
-          const stateStats = await fetchMetaStats(
-            orgRef.current?.value ?? null,
-            currentStateRef.current.state_id
-          );
+          const [stateStats, dprData, trackingData] = await Promise.all([
+            fetchMetaStats(orgRef.current?.value ?? null, currentStateRef.current.state_id),
+            fetchDprReportStatus({ organizationId: orgRef.current?.value ?? null, stateId: currentStateRef.current.state_id }),
+            fetchStatusTracking({ organizationId: orgRef.current?.value ?? null, stateId: currentStateRef.current.state_id }),
+          ]);
           setMetaStats(stateStats);
+          setDprStatus(dprData);
+          setStatusTracking(trackingData);
           await addPlanDistrictPinsFromBreakdown(stateStats.district_breakdown ?? []);
         } catch (err) {
           console.error("Back to district pins failed:", err);
@@ -1084,11 +1135,14 @@ const PlansPage = () => {
             hoveredFeatureRef.current = null;
             setSelectedPlan(null);
             setPlanDotsVisible(false);
-            const stateStats = await fetchMetaStats(
-              selected?.value ?? null,
-              currentStateRef.current.state_id
-            );
+            const [stateStats, dprData, trackingData] = await Promise.all([
+              fetchMetaStats(selected?.value ?? null, currentStateRef.current.state_id),
+              fetchDprReportStatus({ organizationId: selected?.value ?? null, stateId: currentStateRef.current.state_id }),
+              fetchStatusTracking({ organizationId: selected?.value ?? null, stateId: currentStateRef.current.state_id }),
+            ]);
             setMetaStats(stateStats);
+            setDprStatus(dprData);
+            setStatusTracking(trackingData);
             await addPlanDistrictPinsFromBreakdown(stateStats.district_breakdown ?? []);
           } else {
             const [stewardData, stateOrgMeta] = await Promise.all([
@@ -1115,8 +1169,14 @@ const PlansPage = () => {
         setStatsLoading(true);
         try {
           if (viewModeRef.current === "plans") {
-            const data = await fetchMetaStats(selected?.value ?? null);
+            const [data, dprData, trackingData] = await Promise.all([
+              fetchMetaStats(selected?.value ?? null),
+              fetchDprReportStatus({ organizationId: selected?.value ?? null }),
+              fetchStatusTracking({ organizationId: selected?.value ?? null }),
+            ]);
             setMetaStats(data);
+            setDprStatus(dprData);
+            setStatusTracking(trackingData);
             if (data.organization_breakdown) {
               setOrganizationOptions(
                 data.organization_breakdown.map((o) => ({
@@ -1466,11 +1526,14 @@ const PlansPage = () => {
                             // ── Preserve state selection ──────────────────
                             // Both modes land at district-pin level for the same state
                             if (mode === "plans") {
-                              const stateStats = await fetchMetaStats(
-                                orgRef.current?.value ?? null,
-                                currentStateRef.current.state_id
-                              );
+                              const [stateStats, dprData, trackingData] = await Promise.all([
+                                fetchMetaStats(orgRef.current?.value ?? null, currentStateRef.current.state_id),
+                                fetchDprReportStatus({ organizationId: orgRef.current?.value ?? null, stateId: currentStateRef.current.state_id }),
+                                fetchStatusTracking({ organizationId: orgRef.current?.value ?? null, stateId: currentStateRef.current.state_id }),
+                              ]);
                               setMetaStats(stateStats);
+                              setDprStatus(dprData);
+                              setStatusTracking(trackingData);
                               await addPlanDistrictPinsFromBreakdown(stateStats.district_breakdown ?? []);
                             } else {
                               statePlansRef.current = [];
@@ -1485,8 +1548,14 @@ const PlansPage = () => {
                           } else {
                             // ── Global state view ─────────────────────────
                             if (mode === "plans") {
-                              const data = await fetchMetaStats(orgRef.current?.value ?? null);
+                              const [data, dprData, trackingData] = await Promise.all([
+                                fetchMetaStats(orgRef.current?.value ?? null),
+                                fetchDprReportStatus({ organizationId: orgRef.current?.value ?? null }),
+                                fetchStatusTracking({ organizationId: orgRef.current?.value ?? null }),
+                              ]);
                               setMetaStats(data);
+                              setDprStatus(dprData);
+                              setStatusTracking(trackingData);
                               addStateBubbles(data, "plans");
                             } else {
                               const [stewardData, plansMeta] = await Promise.all([
@@ -1552,7 +1621,9 @@ const PlansPage = () => {
                         <div className="rounded-xl p-3"
                           style={{ background: P.lighter, border: `1px solid ${P.border}` }}>
                           <p className="text-xs font-medium mb-1" style={{ color: P.muted }}>DPR Submitted</p>
-                          <p className="text-3xl font-bold" style={{ color: P.base }}>--</p>
+                          <p className="text-3xl font-bold" style={{ color: P.base }}>
+                            {(dprStatus?.breakdown?.SUBMITTED ?? 0).toLocaleString()}
+                          </p>
                         </div>
                       </div>
 
@@ -1755,13 +1826,17 @@ const PlansPage = () => {
                         style={{ background: "white", border: `1px solid ${P.border}` }}>
                         <div className="flex items-center justify-between mb-3">
                           <p className="text-xs font-semibold" style={{ color: P.text }}>DPR Submitted</p>
-                          <p className="text-lg font-bold" style={{ color: P.base }}>--</p>
+                          <p className="text-lg font-bold" style={{ color: P.base }}>
+                            {(dprStatus?.breakdown?.SUBMITTED ?? 0).toLocaleString()}
+                          </p>
                         </div>
 
                         <div className="rounded-lg p-3 flex items-center justify-between"
                           style={{ background: P.lighter, border: `1px solid ${P.border}` }}>
                           <p className="text-xs font-semibold" style={{ color: P.text }}>DPR Approved</p>
-                          <p className="text-base font-bold" style={{ color: P.base }}>--</p>
+                          <p className="text-base font-bold" style={{ color: P.base }}>
+                            {(dprStatus?.breakdown?.APPROVED ?? 0).toLocaleString()}
+                          </p>
                         </div>
                       </div>
 
@@ -1777,13 +1852,17 @@ const PlansPage = () => {
                       style={{ background: P.lighter, border: `1px solid ${P.border}` }}>
                       <div className="flex items-center justify-between mb-3">
                         <p className="text-xs font-semibold" style={{ color: P.text }}>Demands Submitted</p>
-                        <p className="text-xl font-bold" style={{ color: P.base }}>--</p>
+                        <p className="text-xl font-bold" style={{ color: P.base }}>
+                          {(statusTracking?.totals?.SUBMITTED?.demands ?? 0).toLocaleString()}
+                        </p>
                       </div>
 
                       <div className="rounded-lg p-3 flex items-center justify-between"
                         style={{ background: "white", border: `1px solid ${P.border}` }}>
                         <p className="text-xs font-semibold" style={{ color: P.text }}>Demands Approved</p>
-                        <p className="text-lg font-bold" style={{ color: P.base }}>--</p>
+                        <p className="text-lg font-bold" style={{ color: P.base }}>
+                          {(statusTracking?.totals?.APPROVED?.demands ?? 0).toLocaleString()}
+                        </p>
                       </div>
 
                     </div>
