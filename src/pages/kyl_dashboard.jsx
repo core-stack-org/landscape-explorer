@@ -726,78 +726,84 @@ const KYLDashboardPage = () => {
       console.warn("Connectivity or centroid layer not ready");
       return;
     }
-
+  
     const connectivityFeatures = mwsConnectivityLayerRef.current.getSource().getFeatures();
     const centroidFeatures = mwsCentroidLayerRef.current.getSource().getFeatures();
-
+  
     if (!connectivityFeatures.length || !centroidFeatures.length) {
       console.warn("No features found for arrow generation");
       return;
     }
-
+  
     const uidToCoord = {};
     centroidFeatures.forEach((feature) => {
       const uid = feature.get("uid") || feature.get("UID");
       if (!uid) return;
       uidToCoord[uid.toString().trim()] = feature.getGeometry().getCoordinates();
     });
-
-    const pairMap = {};
-    const arrowFeatures = [];
-
-    connectivityFeatures.forEach((feature) => {
-      const uid = feature.get("uid");
-      const downstream = feature.get("downstream");
-      if (!uid || !downstream) return;
-
-      const start = uidToCoord[uid.toString().trim()];
-      const end = uidToCoord[downstream.toString().trim()];
-      if (!start || !end) return;
-
-      const key =
-        start[0] < end[0]
-          ? `${start.join(",")}_${end.join(",")}`
-          : `${end.join(",")}_${start.join(",")}`;
-
-      if (!pairMap[key]) pairMap[key] = 0;
-      const side = pairMap[key]++ % 2 === 0 ? -1 : 1;
-
-      const dx = end[0] - start[0];
-      const dy = end[1] - start[1];
-      const len = Math.sqrt(dx * dx + dy * dy);
-      if (len < 1e-6) return;
-
-      const ux = dx / len, uy = dy / len;
-      const px = -uy, py = ux;
-
-      const MAP_OFFSET = len * 0.04;
-      const MAP_PULLBACK = len * 0.06;
-      const MAP_ARROW_LEN = len * 0.14;
-
-      const offStart = [start[0] + px * MAP_OFFSET * side, start[1] + py * MAP_OFFSET * side];
-      const offEnd = [end[0] + px * MAP_OFFSET * side, end[1] + py * MAP_OFFSET * side];
-      const trimEnd = [offEnd[0] - ux * MAP_PULLBACK, offEnd[1] - uy * MAP_PULLBACK];
-
-      const arrowAngle = Math.PI / 7;
-      const angle = Math.atan2(dy, dx);
-      const left = [
-        trimEnd[0] - MAP_ARROW_LEN * Math.cos(angle - arrowAngle),
-        trimEnd[1] - MAP_ARROW_LEN * Math.sin(angle - arrowAngle),
-      ];
-      const right = [
-        trimEnd[0] - MAP_ARROW_LEN * Math.cos(angle + arrowAngle),
-        trimEnd[1] - MAP_ARROW_LEN * Math.sin(angle + arrowAngle),
-      ];
-
-      arrowFeatures.push(
-        new Feature({ geometry: new LineString([offStart, trimEnd]), featureType: "arrowLine", upstream: uid, downstream }),
-        new Feature({ geometry: new LineString([left, trimEnd, right]), featureType: "arrowHead", upstream: uid, downstream }),
-        new Feature({ geometry: new Point(offStart), featureType: "arrowDot", upstream: uid, downstream })
-      );
-    });
-
+  
+    let pairMap = {};
+  
+    const buildArrowFeatures = () => {
+      const arrowFeatures = [];
+      const resolution = mapRef.current.getView().getResolution();
+  
+      connectivityFeatures.forEach((feature) => {
+        const uid = feature.get("uid");
+        const downstream = feature.get("downstream");
+        if (!uid || !downstream) return;
+  
+        const start = uidToCoord[uid.toString().trim()];
+        const end = uidToCoord[downstream.toString().trim()];
+        if (!start || !end) return;
+  
+        const key =
+          start[0] < end[0]
+            ? `${start.join(",")}_${end.join(",")}`
+            : `${end.join(",")}_${start.join(",")}`;
+  
+        if (!pairMap[key]) pairMap[key] = 0;
+        const side = pairMap[key]++ % 2 === 0 ? -1 : 1;
+  
+        const dx = end[0] - start[0];
+        const dy = end[1] - start[1];
+        const len = Math.sqrt(dx * dx + dy * dy);
+        if (len < 1e-6) return;
+  
+        const ux = dx / len, uy = dy / len;
+        const px = -uy, py = ux;
+  
+        const MAP_OFFSET = len * 0.04;
+        const MAP_PULLBACK = resolution * 10;
+        const MAP_ARROW_LEN = resolution * 10;
+  
+        const offStart = [start[0] + px * MAP_OFFSET * side, start[1] + py * MAP_OFFSET * side];
+        const offEnd = [end[0] + px * MAP_OFFSET * side, end[1] + py * MAP_OFFSET * side];
+        const trimEnd = [offEnd[0] - ux * MAP_PULLBACK, offEnd[1] - uy * MAP_PULLBACK];
+  
+        const arrowAngle = Math.PI / 7;
+        const angle = Math.atan2(dy, dx);
+        const left = [
+          trimEnd[0] - MAP_ARROW_LEN * Math.cos(angle - arrowAngle),
+          trimEnd[1] - MAP_ARROW_LEN * Math.sin(angle - arrowAngle),
+        ];
+        const right = [
+          trimEnd[0] - MAP_ARROW_LEN * Math.cos(angle + arrowAngle),
+          trimEnd[1] - MAP_ARROW_LEN * Math.sin(angle + arrowAngle),
+        ];
+  
+        arrowFeatures.push(
+          new Feature({ geometry: new LineString([offStart, trimEnd]), featureType: "arrowLine", upstream: uid, downstream }),
+          new Feature({ geometry: new LineString([left, trimEnd, right]), featureType: "arrowHead", upstream: uid, downstream }),
+          new Feature({ geometry: new Point(offStart), featureType: "arrowDot", upstream: uid, downstream })
+        );
+      });
+  
+      return arrowFeatures;
+    };
+  
     const arrowLayer = new VectorLayer({
-      source: new VectorSource({ features: arrowFeatures }),
+      source: new VectorSource({ features: buildArrowFeatures() }),
       style: (feature) => {
         const color = "white";
         const type = feature.get("featureType");
@@ -815,15 +821,21 @@ const KYLDashboardPage = () => {
         }
       },
     });
-
+  
     arrowLayer.setZIndex(9999);
     arrowLayer.setVisible(false);
-    mwsDrainageLayerRef.current.setVisible(false)
+    mwsDrainageLayerRef.current.setVisible(false);
     mapRef.current.addLayer(arrowLayer);
     mwsArrowLayerRef.current = arrowLayer;
-
+  
+    mapRef.current.getView().on("change:resolution", () => {
+      if (!mwsArrowLayerRef.current) return;
+      pairMap = {};  // reset pairing
+      const source = mwsArrowLayerRef.current.getSource();
+      source.clear();
+      source.addFeatures(buildArrowFeatures());
+    });
   };
-
   const fetchWaterBodiesLayer = async () => {
     if (!district || !block || !mapRef.current) return;
     if (waterbodiesLayerRef.current) return;
