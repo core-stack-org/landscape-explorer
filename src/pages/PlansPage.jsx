@@ -586,6 +586,7 @@ const PlansPage = () => {
     };
 
     useEffect(() => {
+      if (!isStateView) return; // mode switch handler fetches correct scoped data
       loadStats(orgRef.current?.value ?? null);
     }, [viewMode]);
 
