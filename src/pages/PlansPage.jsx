@@ -169,10 +169,11 @@ const fetchDistrictCentroid = async (districtName) => {
 };
 
 const fetchDprReportStatus = async ({ organizationId = null, stateId = null, districtId = null } = {}) => {
+  // organization_id must be an integer — skip when UUID org filter is active
+  if (organizationId) return null;
   const params = new URLSearchParams();
-  if (organizationId) params.append("organization_id", organizationId);
-  if (stateId)        params.append("state_id",        stateId);
-  if (districtId)     params.append("district_id",     districtId);
+  if (stateId)    params.append("state_id",    stateId);
+  if (districtId) params.append("district_id", districtId);
   let url = `${process.env.REACT_APP_API_URL}/dpr_data/report-status-summary/`;
   if (params.toString()) url += `?${params.toString()}`;
   const res = await fetch(url, {
@@ -187,10 +188,11 @@ const fetchDprReportStatus = async ({ organizationId = null, stateId = null, dis
 };
 
 const fetchStatusTracking = async ({ organizationId = null, stateId = null, districtId = null } = {}) => {
+  // organization_id must be an integer — skip when UUID org filter is active
+  if (organizationId) return null;
   const params = new URLSearchParams();
-  if (organizationId) params.append("organization_id", organizationId);
-  if (stateId)        params.append("state_id",        stateId);
-  if (districtId)     params.append("district_id",     districtId);
+  if (stateId)    params.append("state_id",    stateId);
+  if (districtId) params.append("district_id", districtId);
   let url = `${process.env.REACT_APP_API_URL}/dpr_data/status-tracking/`;
   if (params.toString()) url += `?${params.toString()}`;
   const res = await fetch(url, {
@@ -573,9 +575,11 @@ const PlansPage = () => {
               }))
             );
           }
+          if (!stateId) addStateBubbles(data, "plans");
         } else {
           const data = await fetchStewardStats(orgId, stateId);
           setStewardStats(data);
+          if (!stateId) addStateBubbles(data, "stewards");
         }
       } catch (err) {
         console.error("Failed to fetch stats:", err);
@@ -1186,13 +1190,13 @@ const PlansPage = () => {
                 }))
               );
             }
+            addStateBubbles(data, "plans");
           } else {
             const [stewardData, orgMeta, globalMeta] = await Promise.all([
               fetchStewardStats(selected?.value ?? null),
-              fetchMetaStats(selected?.value ?? null),         // org-filtered — for stats display
-              selected?.value ? fetchMetaStats(null) : Promise.resolve(null), // global — for centroid fallback
+              fetchMetaStats(selected?.value ?? null),
+              selected?.value ? fetchMetaStats(null) : Promise.resolve(null),
             ]);
-            // Keep global (unfiltered) meta in ref so centroid lookups in addStateBubbles still work
             metaStatsRef.current = globalMeta ?? orgMeta;
             setMetaStats(orgMeta);
             if (orgMeta.organization_breakdown) {
@@ -1204,6 +1208,7 @@ const PlansPage = () => {
               );
             }
             setStewardStats(stewardData);
+            addStateBubbles(stewardData, "stewards");
           }
         } catch (err) {
           console.error("Org change failed:", err);
@@ -1623,7 +1628,7 @@ const PlansPage = () => {
                           style={{ background: P.lighter, border: `1px solid ${P.border}` }}>
                           <p className="text-xs font-medium mb-1" style={{ color: P.muted }}>DPR Submitted</p>
                           <p className="text-3xl font-bold" style={{ color: P.base }}>
-                            {(dprStatus?.breakdown?.SUBMITTED ?? 0).toLocaleString()}
+                            {dprStatus ? (dprStatus.breakdown?.SUBMITTED ?? 0).toLocaleString() : "--"}
                           </p>
                         </div>
                       </div>
@@ -1828,7 +1833,7 @@ const PlansPage = () => {
                         <div className="flex items-center justify-between mb-3">
                           <p className="text-xs font-semibold" style={{ color: P.text }}>DPR Submitted</p>
                           <p className="text-lg font-bold" style={{ color: P.base }}>
-                            {(dprStatus?.breakdown?.SUBMITTED ?? 0).toLocaleString()}
+                            {dprStatus ? (dprStatus.breakdown?.SUBMITTED ?? 0).toLocaleString() : "--"}
                           </p>
                         </div>
 
@@ -1836,7 +1841,7 @@ const PlansPage = () => {
                           style={{ background: P.lighter, border: `1px solid ${P.border}` }}>
                           <p className="text-xs font-semibold" style={{ color: P.text }}>DPR Approved</p>
                           <p className="text-base font-bold" style={{ color: P.base }}>
-                            {(dprStatus?.breakdown?.APPROVED ?? 0).toLocaleString()}
+                            {dprStatus ? (dprStatus.breakdown?.APPROVED ?? 0).toLocaleString() : "--"}
                           </p>
                         </div>
                       </div>
@@ -1854,7 +1859,7 @@ const PlansPage = () => {
                       <div className="flex items-center justify-between mb-3">
                         <p className="text-xs font-semibold" style={{ color: P.text }}>Demands Submitted</p>
                         <p className="text-xl font-bold" style={{ color: P.base }}>
-                          {(statusTracking?.totals?.SUBMITTED?.demands ?? 0).toLocaleString()}
+                          {statusTracking ? (statusTracking.totals?.SUBMITTED?.demands ?? 0).toLocaleString() : "--"}
                         </p>
                       </div>
 
@@ -1862,7 +1867,7 @@ const PlansPage = () => {
                         style={{ background: "white", border: `1px solid ${P.border}` }}>
                         <p className="text-xs font-semibold" style={{ color: P.text }}>Demands Approved</p>
                         <p className="text-lg font-bold" style={{ color: P.base }}>
-                          {(statusTracking?.totals?.APPROVED?.demands ?? 0).toLocaleString()}
+                          {statusTracking ? (statusTracking.totals?.APPROVED?.demands ?? 0).toLocaleString() : "--"}
                         </p>
                       </div>
 
