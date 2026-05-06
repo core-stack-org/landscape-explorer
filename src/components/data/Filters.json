@@ -36,6 +36,129 @@
                     "Terrain_Style_11_Classes"
                 ],
                 "styleIdx": 0
+            },
+            {
+                "name": "area_tree_on_slope",
+                "label": "Percentage of area under trees on slopes",
+                "type": 2,
+                "values": [
+                    {
+                        "label": "Less than 15%",
+                        "value": {
+                            "lower": 0,
+                            "upper": 15
+                        }
+                    },
+                    {
+                        "label": "Between 15% to 30%",
+                        "value": {
+                            "lower": 15,
+                            "upper": 30
+                        }
+                    },
+                    {
+                        "label": "More than 30%",
+                        "value": {
+                            "lower": 30,
+                            "upper": 9999999999
+                        }
+                    }
+                ],
+                "layer_store": [
+                    ""
+                ],
+                "layer_name": [
+                    ""
+                ],
+                "vectorStyle": [
+                    {}
+                ],
+                "rasterStyle": [
+                    ""
+                ],
+                "styleIdx": 0
+            },
+            {
+                "name": "area_shrubs_on_slope",
+                "label": "Percentage of area under shrubs on slopes",
+                "type": 2,
+                "values": [
+                    {
+                        "label": "Less than 10%",
+                        "value": {
+                            "lower": 0,
+                            "upper": 10
+                        }
+                    },
+                    {
+                        "label": "Between 10% to 20%",
+                        "value": {
+                            "lower": 10,
+                            "upper": 20
+                        }
+                    },
+                    {
+                        "label": "More than 20%",
+                        "value": {
+                            "lower": 20,
+                            "upper": 9999999999
+                        }
+                    }
+                ],
+                "layer_store": [
+                    ""
+                ],
+                "layer_name": [
+                    ""
+                ],
+                "vectorStyle": [
+                    {}
+                ],
+                "rasterStyle": [
+                    ""
+                ],
+                "styleIdx": 0
+            },
+            {
+                "name": "area_crops_on_plain",
+                "label": "Percentage of area under crops on plain",
+                "type": 2,
+                "values": [
+                    {
+                        "label": "Less than 15%",
+                        "value": {
+                            "lower": 0,
+                            "upper": 15
+                        }
+                    },
+                    {
+                        "label": "Between 15% to 30%",
+                        "value": {
+                            "lower": 15,
+                            "upper": 30
+                        }
+                    },
+                    {
+                        "label": "More than 30%",
+                        "value": {
+                            "lower": 30,
+                            "upper": 9999999999
+                        }
+                    }
+                ],
+                "layer_store": [
+                    ""
+                ],
+                "layer_name": [
+                    ""
+                ],
+                "vectorStyle": [
+                    {}
+                ],
+                "rasterStyle": [
+                    ""
+                ],
+                "styleIdx": 0
             }
         ],
         "Climate": [

@@ -169,11 +169,10 @@ const fetchDistrictCentroid = async (districtName) => {
 };
 
 const fetchDprReportStatus = async ({ organizationId = null, stateId = null, districtId = null } = {}) => {
-  // organization_id must be an integer — skip when UUID org filter is active
-  if (organizationId) return null;
   const params = new URLSearchParams();
-  if (stateId)    params.append("state_id",    stateId);
-  if (districtId) params.append("district_id", districtId);
+  if (organizationId) params.append("organization_id", organizationId);
+  if (stateId)        params.append("state_id",        stateId);
+  if (districtId)     params.append("district_id",     districtId);
   let url = `${process.env.REACT_APP_API_URL}/dpr_data/report-status-summary/`;
   if (params.toString()) url += `?${params.toString()}`;
   const res = await fetch(url, {
@@ -188,11 +187,10 @@ const fetchDprReportStatus = async ({ organizationId = null, stateId = null, dis
 };
 
 const fetchStatusTracking = async ({ organizationId = null, stateId = null, districtId = null } = {}) => {
-  // organization_id must be an integer — skip when UUID org filter is active
-  if (organizationId) return null;
   const params = new URLSearchParams();
-  if (stateId)    params.append("state_id",    stateId);
-  if (districtId) params.append("district_id", districtId);
+  if (organizationId) params.append("organization_id", organizationId);
+  if (stateId)        params.append("state_id",        stateId);
+  if (districtId)     params.append("district_id",     districtId);
   let url = `${process.env.REACT_APP_API_URL}/dpr_data/status-tracking/`;
   if (params.toString()) url += `?${params.toString()}`;
   const res = await fetch(url, {
@@ -577,8 +575,12 @@ const PlansPage = () => {
           }
           if (!stateId) addStateBubbles(data, "plans");
         } else {
-          const data = await fetchStewardStats(orgId, stateId);
+          const [data, dprData] = await Promise.all([
+            fetchStewardStats(orgId, stateId),
+            fetchDprReportStatus({ organizationId: orgId, stateId }),
+          ]);
           setStewardStats(data);
+          setDprStatus(dprData);
           if (!stateId) addStateBubbles(data, "stewards");
         }
       } catch (err) {
@@ -867,12 +869,14 @@ const PlansPage = () => {
           setIsStateView(false);
           await addPlanDistrictPinsFromBreakdown(stateStats.district_breakdown ?? []);
         } else {
-          const [stewardData, stateMetaStats] = await Promise.all([
+          const [stewardData, stateMetaStats, dprData] = await Promise.all([
             fetchStewardStats(orgRef.current?.value ?? null, stateData.state_id),
             fetchMetaStats(orgRef.current?.value ?? null, stateData.state_id),
+            fetchDprReportStatus({ organizationId: orgRef.current?.value ?? null, stateId: stateData.state_id }),
           ]);
           setStewardStats(stewardData);
           setMetaStats(stateMetaStats);
+          setDprStatus(dprData);
 
           if (bubbleLayerRef.current) {
             mapRef.current.removeLayer(bubbleLayerRef.current);
@@ -984,15 +988,16 @@ const PlansPage = () => {
           }
           addStateBubbles(globalStats, "plans");
         } else {
-          const [stewardData, orgMeta, globalMeta] = await Promise.all([
+          const [stewardData, orgMeta, globalMeta, dprData] = await Promise.all([
             fetchStewardStats(orgRef.current?.value ?? null),
-            fetchMetaStats(orgRef.current?.value ?? null),         // org-filtered — for display
-            orgRef.current?.value ? fetchMetaStats(null) : Promise.resolve(null), // global — for centroid lookups
+            fetchMetaStats(orgRef.current?.value ?? null),
+            orgRef.current?.value ? fetchMetaStats(null) : Promise.resolve(null),
+            fetchDprReportStatus({ organizationId: orgRef.current?.value ?? null }),
           ]);
-          // metaStatsRef must hold global (all-states) meta so centroid fallback works for every pin
           metaStatsRef.current = globalMeta ?? orgMeta;
           setMetaStats(orgMeta);
           setStewardStats(stewardData);
+          setDprStatus(dprData);
           addStateBubbles(stewardData, "stewards");
         }
       } catch (err) {
@@ -1150,12 +1155,14 @@ const PlansPage = () => {
             setStatusTracking(trackingData);
             await addPlanDistrictPinsFromBreakdown(stateStats.district_breakdown ?? []);
           } else {
-            const [stewardData, stateOrgMeta] = await Promise.all([
+            const [stewardData, stateOrgMeta, dprData] = await Promise.all([
               fetchStewardStats(selected?.value ?? null, currentStateRef.current.state_id),
               fetchMetaStats(selected?.value ?? null, currentStateRef.current.state_id),
+              fetchDprReportStatus({ organizationId: selected?.value ?? null, stateId: currentStateRef.current.state_id }),
             ]);
             setStewardStats(stewardData);
             setMetaStats(stateOrgMeta);
+            setDprStatus(dprData);
             if (districtLayerRef.current) {
               mapRef.current.removeLayer(districtLayerRef.current);
               districtLayerRef.current = null;
@@ -1192,10 +1199,11 @@ const PlansPage = () => {
             }
             addStateBubbles(data, "plans");
           } else {
-            const [stewardData, orgMeta, globalMeta] = await Promise.all([
+            const [stewardData, orgMeta, globalMeta, dprData] = await Promise.all([
               fetchStewardStats(selected?.value ?? null),
               fetchMetaStats(selected?.value ?? null),
               selected?.value ? fetchMetaStats(null) : Promise.resolve(null),
+              fetchDprReportStatus({ organizationId: selected?.value ?? null }),
             ]);
             metaStatsRef.current = globalMeta ?? orgMeta;
             setMetaStats(orgMeta);
@@ -1208,6 +1216,7 @@ const PlansPage = () => {
               );
             }
             setStewardStats(stewardData);
+            setDprStatus(dprData);
             addStateBubbles(stewardData, "stewards");
           }
         } catch (err) {
@@ -1543,12 +1552,14 @@ const PlansPage = () => {
                               await addPlanDistrictPinsFromBreakdown(stateStats.district_breakdown ?? []);
                             } else {
                               statePlansRef.current = [];
-                              const [stewardData, stateMetaStats] = await Promise.all([
+                              const [stewardData, stateMetaStats, dprData] = await Promise.all([
                                 fetchStewardStats(orgRef.current?.value ?? null, currentStateRef.current.state_id),
                                 fetchMetaStats(orgRef.current?.value ?? null, currentStateRef.current.state_id),
+                                fetchDprReportStatus({ organizationId: orgRef.current?.value ?? null, stateId: currentStateRef.current.state_id }),
                               ]);
                               setStewardStats(stewardData);
                               setMetaStats(stateMetaStats);
+                              setDprStatus(dprData);
                               await addDistrictPins(stewardData.district_level ?? []);
                             }
                           } else {
@@ -1564,13 +1575,15 @@ const PlansPage = () => {
                               setStatusTracking(trackingData);
                               addStateBubbles(data, "plans");
                             } else {
-                              const [stewardData, plansMeta] = await Promise.all([
+                              const [stewardData, plansMeta, dprData] = await Promise.all([
                                 fetchStewardStats(orgRef.current?.value ?? null),
                                 fetchMetaStats(null),
+                                fetchDprReportStatus({ organizationId: orgRef.current?.value ?? null }),
                               ]);
                               metaStatsRef.current = plansMeta;
                               setMetaStats(plansMeta);
                               setStewardStats(stewardData);
+                              setDprStatus(dprData);
                               addStateBubbles(stewardData, "stewards");
                             }
                           }
@@ -1628,7 +1641,7 @@ const PlansPage = () => {
                           style={{ background: P.lighter, border: `1px solid ${P.border}` }}>
                           <p className="text-xs font-medium mb-1" style={{ color: P.muted }}>DPR Submitted</p>
                           <p className="text-3xl font-bold" style={{ color: P.base }}>
-                            {dprStatus ? (dprStatus.breakdown?.SUBMITTED ?? 0).toLocaleString() : "--"}
+                            {(dprStatus?.breakdown?.SUBMITTED ?? 0).toLocaleString()}
                           </p>
                         </div>
                       </div>
@@ -1818,7 +1831,6 @@ const PlansPage = () => {
                     style={{ border: `1px solid ${P.border}` }}>
                     <p className="text-xs font-semibold uppercase tracking-widest mb-3"
                       style={{ color: P.muted }}>Detailed Project Reports</p>
-
                     <div className="rounded-xl p-3"
                       style={{ background: P.lighter, border: `1px solid ${P.border}` }}>
                       <div className="flex items-center justify-between mb-3">
@@ -1827,25 +1839,20 @@ const PlansPage = () => {
                           {(summary.dpr_reviewed ?? 0).toLocaleString()}
                         </p>
                       </div>
-
                       <div className="rounded-lg p-3"
                         style={{ background: "white", border: `1px solid ${P.border}` }}>
                         <div className="flex items-center justify-between mb-3">
                           <p className="text-xs font-semibold" style={{ color: P.text }}>DPR Submitted</p>
                           <p className="text-lg font-bold" style={{ color: P.base }}>
-                            {dprStatus ? (dprStatus.breakdown?.SUBMITTED ?? 0).toLocaleString() : "--"}
+                            {(dprStatus?.breakdown?.SUBMITTED ?? 0).toLocaleString()}
                           </p>
                         </div>
-
                         <div className="rounded-lg p-3 flex items-center justify-between"
                           style={{ background: P.lighter, border: `1px solid ${P.border}` }}>
                           <p className="text-xs font-semibold" style={{ color: P.text }}>DPR Approved</p>
-                          <p className="text-base font-bold" style={{ color: P.base }}>
-                            {dprStatus ? (dprStatus.breakdown?.APPROVED ?? 0).toLocaleString() : "--"}
-                          </p>
+                          <p className="text-base font-bold" style={{ color: P.base }}>--</p>
                         </div>
                       </div>
-
                     </div>
                   </div>
 
@@ -1853,24 +1860,19 @@ const PlansPage = () => {
                     style={{ border: `1px solid ${P.border}` }}>
                     <p className="text-xs font-semibold uppercase tracking-widest mb-3"
                       style={{ color: P.muted }}>NRM and Livelihood Demands</p>
-
                     <div className="rounded-xl p-3"
                       style={{ background: P.lighter, border: `1px solid ${P.border}` }}>
                       <div className="flex items-center justify-between mb-3">
                         <p className="text-xs font-semibold" style={{ color: P.text }}>Demands Submitted</p>
                         <p className="text-xl font-bold" style={{ color: P.base }}>
-                          {statusTracking ? (statusTracking.totals?.SUBMITTED?.demands ?? 0).toLocaleString() : "--"}
+                          {(statusTracking?.totals?.SUBMITTED?.demands ?? 0).toLocaleString()}
                         </p>
                       </div>
-
                       <div className="rounded-lg p-3 flex items-center justify-between"
                         style={{ background: "white", border: `1px solid ${P.border}` }}>
                         <p className="text-xs font-semibold" style={{ color: P.text }}>Demands Approved</p>
-                        <p className="text-lg font-bold" style={{ color: P.base }}>
-                          {statusTracking ? (statusTracking.totals?.APPROVED?.demands ?? 0).toLocaleString() : "--"}
-                        </p>
+                        <p className="text-lg font-bold" style={{ color: P.base }}>--</p>
                       </div>
-
                     </div>
                   </div>
 
