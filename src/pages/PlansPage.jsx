@@ -1610,7 +1610,10 @@ const PlansPage = () => {
                       <p className="text-xs font-semibold uppercase tracking-widest mb-1"
                         style={{ color: "oklch(90% 0.08 301.924)" }}>Total Stewards</p>
                       <p className="text-5xl font-bold tracking-tight">
-                        {(stewardStats?.total_stewards ?? 0).toLocaleString()}
+                        {isStateView
+                          ? (stewardStats?.total_stewards ?? 0).toLocaleString()
+                          : (stewardStats?.state_level?.[0]?.steward_count ?? 0).toLocaleString()
+                        }
                       </p>
                       <div className="flex gap-4 mt-3 pt-3"
                         style={{ borderTop: "1px solid oklch(70% 0.12 301.924)" }}>

@@ -224,6 +224,22 @@ const MapLegend = ({ showMWS, showVillages, currentLayer }) => {
     { color: "#d73027", label: "Upper Slopes" },
   ];
 
+  const treeOnSlopeItems = [
+    { color: "rgba(85, 255, 85, 0.5)", label: "Less than 15%" },
+    { color: "rgba(0, 170, 0, 0.5)", label: "Between 15% to 30%" },
+    { color: "rgba(0, 85, 0, 0.5)", label: "More than 30%" },
+  ];
+  const shrubOnSlopeItems = [
+    { color: "rgba(170, 170, 0, 0.5)", label: "Less than 10%" },
+    { color: "rgba(85, 85, 0, 0.5)", label: "Between 10% to 20%" },
+    { color: "rgba(42, 42, 0, 0.5)", label: "More than 20%" },
+  ];
+  const cropsOnSlopeItems = [
+    { color: "rgba(85, 255, 85, 0.5)", label: "Less than 15%" },
+    { color: "rgba(0, 170, 0, 0.5)", label: "Between 15% to 30%" },
+    { color: "rgba(0, 85, 0, 0.5)", label: "More than 30%" },
+  ];
+
   const rainfallLegendItems = [
     { color: "#B0E0E6", label: "Semi-arid" },
     { color: "#87CEFA", label: "Arid" },
@@ -612,6 +628,18 @@ const MapLegend = ({ showMWS, showVillages, currentLayer }) => {
     (layer) => layer.name === "mining" || layer.name.includes("mining")
   );
 
+  const isTreeSlopeActive = currentLayer?.some(
+    (layer) => layer.name === "area_tree_on_slope" || layer.name.includes("area_tree_on_slope")
+  );
+
+  const isShrubSlopeActive = currentLayer?.some(
+    (layer) => layer.name === "area_shrubs_on_slope" || layer.name.includes("area_shrubs_on_slope")
+  );
+
+  const isCropPlainActive = currentLayer?.some(
+    (layer) => layer.name === "area_crops_on_plain" || layer.name.includes("area_crops_on_plain")
+  );
+
 
   return (
     <div
@@ -747,6 +775,81 @@ const MapLegend = ({ showMWS, showVillages, currentLayer }) => {
                     Terrain Raster
                   </h4>
                   {terrainLegendItems.map((item, index) => (
+                    <div
+                      key={`terrain-${index}`}
+                      className="flex items-center gap-2"
+                    >
+                      <div
+                        className="w-4 h-4 rounded"
+                        style={{
+                          backgroundColor: item.color,
+                          border: `1px solid rgba(0,0,0,0.2)`,
+                        }}
+                      />
+                      <span className="text-sm text-gray-600">
+                        {item.label}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {isTreeSlopeActive && (
+                <div className="space-y-2">
+                  <h4 className="text-xs font-medium text-gray-600">
+                    Trees on Slope
+                  </h4>
+                  {treeOnSlopeItems.map((item, index) => (
+                    <div
+                      key={`terrain-${index}`}
+                      className="flex items-center gap-2"
+                    >
+                      <div
+                        className="w-4 h-4 rounded"
+                        style={{
+                          backgroundColor: item.color,
+                          border: `1px solid rgba(0,0,0,0.2)`,
+                        }}
+                      />
+                      <span className="text-sm text-gray-600">
+                        {item.label}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {isShrubSlopeActive && (
+                <div className="space-y-2">
+                  <h4 className="text-xs font-medium text-gray-600">
+                    Shrub on Slope
+                  </h4>
+                  {shrubOnSlopeItems.map((item, index) => (
+                    <div
+                      key={`terrain-${index}`}
+                      className="flex items-center gap-2"
+                    >
+                      <div
+                        className="w-4 h-4 rounded"
+                        style={{
+                          backgroundColor: item.color,
+                          border: `1px solid rgba(0,0,0,0.2)`,
+                        }}
+                      />
+                      <span className="text-sm text-gray-600">
+                        {item.label}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {isCropPlainActive && (
+                <div className="space-y-2">
+                  <h4 className="text-xs font-medium text-gray-600">
+                    Crops on Plain
+                  </h4>
+                  {cropsOnSlopeItems.map((item, index) => (
                     <div
                       key={`terrain-${index}`}
                       className="flex items-center gap-2"

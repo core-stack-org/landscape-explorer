@@ -1314,7 +1314,7 @@ const KYLRightSidebar = ({
                     <div className="flex gap-2">
                       <div className="flex-1 bg-blue-50 border border-blue-100 rounded-lg px-3 py-2 text-center">
                         <p className="text-lg font-bold text-blue-600 leading-none">{selectedMWS?.length ?? 0}</p>
-                        <p className="text-[10px] text-blue-400 font-medium mt-0.5">Watersheds</p>
+                        <p className="text-[10px] text-blue-400 font-medium mt-0.5">Micro-Watershed</p>
                       </div>
                       <div className="flex-1 bg-emerald-50 border border-emerald-100 rounded-lg px-3 py-2 text-center">
                         <p className="text-lg font-bold text-emerald-600 leading-none">{selectedVillages?.size ?? 0}</p>

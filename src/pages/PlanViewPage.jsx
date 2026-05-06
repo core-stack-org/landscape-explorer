@@ -565,27 +565,56 @@ const PlanViewPage = () => {
   }, [districtNameSafe, blockNameSafe]);
 
   const loadAdminBoundary = useCallback(async (map) => {
-    const layer = await getVectorLayers("panchayat_boundaries", `${districtNameSafe}_${blockNameSafe}`, true);
+    const lon = plan?.longitude ? parseFloat(plan.longitude) : null;
+    const lat = plan?.latitude  ? parseFloat(plan.latitude)  : null;
+
+    const baseUrl = `${process.env.REACT_APP_GEOSERVER_URL}panchayat_boundaries/ows`;
+    const params = new URLSearchParams({
+      service:      "WFS",
+      version:      "1.0.0",
+      request:      "GetFeature",
+      typeName:     `panchayat_boundaries:${districtNameSafe}_${blockNameSafe}`,
+      outputFormat: "application/json",
+    });
+
+    // If we have coordinates, filter to just the intersecting panchayat polygon
+    if (lon && lat) {
+      params.set("CQL_FILTER", `INTERSECTS(the_geom, POINT(${lon} ${lat}))`);
+    }
+
+    const layer = await getVectorLayers(
+      "panchayat_boundaries",
+      `${districtNameSafe}_${blockNameSafe}`,
+      true
+    );
+
+    // Override the source URL with our filtered request
+    if (lon && lat) {
+      const filteredUrl = `${baseUrl}?${params.toString()}`;
+      layer.getSource().setUrl(filteredUrl);
+      layer.getSource().clear();
+      layer.getSource().refresh();
+    }
+
     layer.setStyle(new Style({
       stroke: new Stroke({ color: "#000", width: 2 }),
       fill:   new Fill({ color: "rgba(0,0,0,0)" }),
     }));
     map.addLayer(layer);
 
-    // Zoom to plan's lat/long if available, otherwise fall back to boundary extent
-    if (plan?.latitude && plan?.longitude) {
-      map.getView().animate({
-        center:   [parseFloat(plan.longitude), parseFloat(plan.latitude)],
-        zoom:     14,
-        duration: 500,
-      });
-    } else {
-      layer.getSource().once("change", () => {
-        if (layer.getSource().getState() === "ready") {
-          map.getView().fit(layer.getSource().getExtent(), { padding: [30, 30, 30, 30], duration: 500, maxZoom: 14 });
+    layer.getSource().once("change", () => {
+      if (layer.getSource().getState() === "ready") {
+        const features = layer.getSource().getFeatures();
+        if (features.length > 0) {
+          map.getView().fit(layer.getSource().getExtent(), {
+            padding: [40, 40, 40, 40], duration: 500, maxZoom: 15,
+          });
+        } else if (lon && lat) {
+          // Fallback: zoom to plan coordinates
+          map.getView().animate({ center: [lon, lat], zoom: 14, duration: 500 });
         }
-      });
-    }
+      }
+    });
   }, [districtNameSafe, blockNameSafe, plan?.latitude, plan?.longitude]);
 
   const makeResourceLoader = useCallback((prefix, icon, nameField) => async (map) => {
