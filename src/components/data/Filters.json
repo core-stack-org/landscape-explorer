@@ -65,18 +65,35 @@
                     }
                 ],
                 "layer_store": [
-                    ""
+                    "mws_layers"
                 ],
                 "layer_name": [
-                    ""
+                    "deltaG_well_depth"
                 ],
                 "vectorStyle": [
-                    {}
+                    {
+                        "fill": "rgba(85, 255, 85, 0.5)",
+                        "stroke": "rgba(85, 255, 85, 1)",
+                        "lower": 0,
+                        "upper": 15
+                    },
+                    {
+                        "fill": "rgba(0, 170, 0, 0.5)",
+                        "stroke": "rgba(0, 170, 0, 1)",
+                        "lower": 15,
+                        "upper": 30
+                    },
+                    {
+                        "fill": "rgba(0, 85, 0, 0.5)",
+                        "stroke": "rgba(0, 85, 0, 1)",
+                        "lower": 30,
+                        "upper": 1000
+                    }
                 ],
                 "rasterStyle": [
                     ""
                 ],
-                "styleIdx": 0
+                "styleIdx": 29
             },
             {
                 "name": "area_shrubs_on_slope",
@@ -106,18 +123,35 @@
                     }
                 ],
                 "layer_store": [
-                    ""
+                    "mws_layers"
                 ],
                 "layer_name": [
-                    ""
+                    "deltaG_well_depth"
                 ],
                 "vectorStyle": [
-                    {}
+                    {
+                        "fill": "rgba(170, 170, 0, 0.5)",
+                        "stroke": "rgba(170, 170, 0, 1)",
+                        "lower": 0,
+                        "upper": 10
+                    },
+                    {
+                        "fill": "rgba(85, 85, 0, 0.5)",
+                        "stroke": "rgba(85, 85, 0, 1)",
+                        "lower": 10,
+                        "upper": 20
+                    },
+                    {
+                        "fill": "rgba(42, 42, 0, 0.5)",
+                        "stroke": "rgba(42, 42, 0, 1)",
+                        "lower": 20,
+                        "upper": 1000
+                    }
                 ],
                 "rasterStyle": [
                     ""
                 ],
-                "styleIdx": 0
+                "styleIdx": 30
             },
             {
                 "name": "area_crops_on_plain",
@@ -147,18 +181,35 @@
                     }
                 ],
                 "layer_store": [
-                    ""
+                    "mws_layers"
                 ],
                 "layer_name": [
-                    ""
+                    "deltaG_well_depth"
                 ],
                 "vectorStyle": [
-                    {}
+                    {
+                        "fill": "rgba(85, 255, 85, 0.5)",
+                        "stroke": "rgba(85, 255, 85, 1)",
+                        "lower": 0,
+                        "upper": 15
+                    },
+                    {
+                        "fill": "rgba(0, 170, 0, 0.5)",
+                        "stroke": "rgba(0, 170, 0, 1)",
+                        "lower": 15,
+                        "upper": 30
+                    },
+                    {
+                        "fill": "rgba(0, 85, 0, 0.5)",
+                        "stroke": "rgba(0, 85, 0, 1)",
+                        "lower": 30,
+                        "upper": 1000
+                    }
                 ],
                 "rasterStyle": [
                     ""
                 ],
-                "styleIdx": 0
+                "styleIdx": 31
             }
         ],
         "Climate": [
