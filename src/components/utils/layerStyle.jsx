@@ -240,6 +240,32 @@ const layerStyles = (feature, vectorStyle, idx = 0, villageJson, dataJson) => {
             }
             break
 
+        case 29:
+            for(let i = 0 ; i < dataJson.length; ++i){
+                if(dataJson[i].mws_id === feature.values_.uid){
+                    avg_Res = dataJson[i].area_tree_on_slope;
+                    break;
+                }
+            }
+            break;
+
+        case 30:
+            for(let i = 0 ; i < dataJson.length; ++i){
+                if(dataJson[i].mws_id === feature.values_.uid){
+                    avg_Res = dataJson[i].area_shrubs_on_slope;
+                    break;
+                }
+            }
+            break;
+        
+        case 31:
+            for(let i = 0 ; i < dataJson.length; ++i){
+                if(dataJson[i].mws_id === feature.values_.uid){
+                    avg_Res = dataJson[i].area_crops_on_plain;
+                    break;
+                }
+            }
+            break;    
     }
     
     for(tempIdx = 0; tempIdx < vectorStyle.length; ++tempIdx){

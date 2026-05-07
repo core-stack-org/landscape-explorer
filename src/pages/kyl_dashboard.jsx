@@ -21,7 +21,6 @@ import { Map, View } from "ol";
 import { Fill, Stroke, Style, Circle as CircleStyle } from "ol/style.js";
 import Point from "ol/geom/Point";
 import GeoJSON from "ol/format/GeoJSON";
-import OLIcon from 'ol/style/Icon';
 
 import LandingNavbar from "../components/landing_navbar.jsx";
 import getStates from "../actions/getStates.js";
@@ -1214,7 +1213,7 @@ console.log("Current filterSelections:", filterSelections);
             );
             layerRef.push(tempLayer);
             mapRef.current.addLayer(tempLayer);
-          } else if (filter.layer_store[i] === "drought" || filter.layer_store[i] === "green_credit") {
+          } else if (filter.layer_store[i] === "drought" || filter.layer_store[i] === "green_credit" || filter.layer_store[i] === "terrain_lulc") {
             tempLayer = await getVectorLayers(
               filter.layer_store[i],
               `${transformName(district.label)}_${transformName(block.label)}_${filter.layer_name[i]}`
