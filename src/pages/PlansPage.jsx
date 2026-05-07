@@ -1853,7 +1853,9 @@ const PlansPage = () => {
                         <div className="rounded-lg p-3 flex items-center justify-between"
                           style={{ background: P.lighter, border: `1px solid ${P.border}` }}>
                           <p className="text-xs font-semibold" style={{ color: P.text }}>DPR Approved</p>
-                          <p className="text-base font-bold" style={{ color: P.base }}>--</p>
+                          <p className="text-base font-bold" style={{ color: P.base }}>
+                            {(dprStatus?.breakdown?.APPROVED ?? 0).toLocaleString()}
+                          </p>
                         </div>
                       </div>
                     </div>
