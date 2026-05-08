@@ -1244,7 +1244,12 @@ const PlansPage = () => {
       return match?.organization ?? null;
     };
 
-    const filteredOrgOptions = isStateView ? organizationOptions : viewModeRef.current === "plans" ? (metaStats?.organization_breakdown ?? []).map(o => ({ value: o.organization_id, label: o.organization_name })) : (stewardStats?.by_organization ?? []).map(o => ({ value: o.organization_id, label: o.organization_name }));
+    const filteredOrgOptions = isStateView
+      ? organizationOptions
+      : (metaStats?.organization_breakdown ?? []).map(o => ({
+          value: o.organization_id,
+          label: o.organization_name,
+        }));
 
 
   const summary  = metaStats?.summary                     ?? {};
@@ -1603,6 +1608,53 @@ const PlansPage = () => {
                   ))}
                 </div>
 
+                {/* ── ACTIVE CONTEXT INDICATOR ─────────────────── */}
+                {(!isStateView || organization) && (
+                  <div className="rounded-xl px-3 py-2.5 flex flex-col gap-1.5"
+                    style={{ background: P.lighter, border: `1px solid ${P.border}` }}>
+                    <p className="text-xs font-semibold uppercase tracking-widest"
+                      style={{ color: P.muted }}>Current View</p>
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      {/* Geographic breadcrumb */}
+                      {currentStateRef.current?.state_name && (
+                        <>
+                          <span className="px-2 py-1 rounded-lg text-xs font-semibold"
+                            style={{ background: P.base, color: "#fff" }}>
+                            {currentStateRef.current.state_name}
+                          </span>
+                          {currentDistrictRef.current?.district_name && (
+                            <>
+                              <span className="text-xs" style={{ color: P.muted }}>›</span>
+                              <span className="px-2 py-1 rounded-lg text-xs font-semibold"
+                                style={{ background: P.dark, color: "#fff" }}>
+                                {currentDistrictRef.current.district_name}
+                              </span>
+                            </>
+                          )}
+                        </>
+                      )}
+                      {/* Org filter */}
+                      {organization && (
+                        <>
+                          {currentStateRef.current?.state_name && (
+                            <span className="text-xs" style={{ color: P.muted }}>·</span>
+                          )}
+                          <div className="flex items-center gap-1 px-2 py-1 rounded-lg"
+                            style={{ background: "white", border: `1px solid ${P.border}` }}>
+                            <span className="text-xs font-semibold" style={{ color: P.text }}>
+                              {organization.label}
+                            </span>
+                            <button
+                              onClick={() => handleOrgChange(null)}
+                              className="ml-0.5 text-xs leading-none hover:opacity-70 transition-opacity"
+                              style={{ color: P.muted }}>×</button>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                )}
+
                 {viewMode === "stewards" ? (
                   <>
                     <div className="rounded-2xl p-5 text-white shadow-lg"
@@ -1675,7 +1727,7 @@ const PlansPage = () => {
                       <div className="flex items-center justify-between mb-3">
                         <p className="text-xs font-semibold uppercase tracking-widest"
                           style={{ color: P.muted }}>
-                          {stewardListing.length > 0 ? "Stewards" : "Stewards by Organization"}
+                          {stewardListing.length > 0 ? "Stewards" : "Partner Organizations"}
                         </p>
                       </div>
 
@@ -1726,38 +1778,19 @@ const PlansPage = () => {
                           ))}
                         </div>
                       ) : (
-                        <div className="flex flex-col gap-2 max-h-64 overflow-y-auto pr-1">
-                          {(stewardStats?.by_organization ?? []).map((org, i) => (
-                            <div key={org.organization_id ?? i}
-                              className="px-3 py-2.5 rounded-xl flex items-center justify-between
-                                        cursor-pointer hover:shadow-md transition-all duration-200"
+                        <div className="flex flex-wrap gap-2 max-h-64 overflow-y-auto pr-1">
+                          {filteredOrgOptions.map((org, i) => (
+                            <span
+                              key={org.value ?? i}
+                              className="px-3 py-1.5 rounded-full text-xs font-semibold"
                               style={{
-                                background: organization?.value === org.organization_id ? P.light : P.lighter,
-                                border: `1px solid ${organization?.value === org.organization_id ? P.base : P.border}`,
-                              }}
-                              onClick={() => {
-                                const selected = {
-                                  value: org.organization_id,
-                                  label: org.organization_name,
-                                };
-                                if (organization?.value === org.organization_id) {
-                                  handleOrgChange(null);
-                                } else {
-                                  handleOrgChange(selected);
-                                }
+                                background: P.lighter,
+                                border:     `1px solid ${P.border}`,
+                                color:      P.text,
                               }}
                             >
-                              <p className="text-sm font-semibold truncate"
-                                style={{ color: organization?.value === org.organization_id ? P.base : P.text }}>
-                                {org.organization_name}
-                              </p>
-                              <div className="flex items-center gap-1.5 flex-shrink-0">
-                                <p className="text-lg font-bold" style={{ color: P.base }}>
-                                  {org.steward_count}
-                                </p>
-                                <p className="text-xs" style={{ color: P.muted }}>stewards</p>
-                              </div>
-                            </div>
+                              {org.label}
+                            </span>
                           ))}
                         </div>
                       )}
@@ -1881,7 +1914,7 @@ const PlansPage = () => {
                     </div>
                   </div>
 
-                    {(metaStats?.landscape_stewards?.by_organization?.length > 0) && (
+                    {(filteredOrgOptions?.length > 0) && (
                       <div className="bg-white rounded-2xl p-4 shadow-sm"
                         style={{ border: `1px solid ${P.border}` }}>
                         <div className="flex items-center justify-between mb-3">
@@ -1891,9 +1924,9 @@ const PlansPage = () => {
                           </p>
                         </div>
                         <div className="flex flex-wrap gap-2 max-h-36 overflow-y-auto pr-1">
-                          {metaStats.landscape_stewards.by_organization.map((org, i) => (
+                          {filteredOrgOptions.map((org, i) => (
                             <span
-                              key={org.organization_id ?? i}
+                              key={org.value ?? i}
                               className="px-3 py-1.5 rounded-full text-xs font-semibold"
                               style={{
                                 background: P.lighter,
@@ -1901,7 +1934,7 @@ const PlansPage = () => {
                                 color:      P.text,
                               }}
                             >
-                              {org.organization_name}
+                              {org.label}
                             </span>
                           ))}
                         </div>
