@@ -36,180 +36,6 @@
                     "Terrain_Style_11_Classes"
                 ],
                 "styleIdx": 0
-            },
-            {
-                "name": "area_tree_on_slope",
-                "label": "Percentage of area under trees on slopes",
-                "type": 2,
-                "values": [
-                    {
-                        "label": "Less than 15%",
-                        "value": {
-                            "lower": 0,
-                            "upper": 15
-                        }
-                    },
-                    {
-                        "label": "Between 15% to 30%",
-                        "value": {
-                            "lower": 15,
-                            "upper": 30
-                        }
-                    },
-                    {
-                        "label": "More than 30%",
-                        "value": {
-                            "lower": 30,
-                            "upper": 9999999999
-                        }
-                    }
-                ],
-                "layer_store": [
-                    "mws_layers"
-                ],
-                "layer_name": [
-                    "deltaG_well_depth"
-                ],
-                "vectorStyle": [
-                    {
-                        "fill": "rgba(85, 255, 85, 0.5)",
-                        "stroke": "rgba(85, 255, 85, 1)",
-                        "lower": 0,
-                        "upper": 15
-                    },
-                    {
-                        "fill": "rgba(0, 170, 0, 0.5)",
-                        "stroke": "rgba(0, 170, 0, 1)",
-                        "lower": 15,
-                        "upper": 30
-                    },
-                    {
-                        "fill": "rgba(0, 85, 0, 0.5)",
-                        "stroke": "rgba(0, 85, 0, 1)",
-                        "lower": 30,
-                        "upper": 1000
-                    }
-                ],
-                "rasterStyle": [
-                    ""
-                ],
-                "styleIdx": 29
-            },
-            {
-                "name": "area_shrubs_on_slope",
-                "label": "Percentage of area under shrubs on slopes",
-                "type": 2,
-                "values": [
-                    {
-                        "label": "Less than 10%",
-                        "value": {
-                            "lower": 0,
-                            "upper": 10
-                        }
-                    },
-                    {
-                        "label": "Between 10% to 20%",
-                        "value": {
-                            "lower": 10,
-                            "upper": 20
-                        }
-                    },
-                    {
-                        "label": "More than 20%",
-                        "value": {
-                            "lower": 20,
-                            "upper": 9999999999
-                        }
-                    }
-                ],
-                "layer_store": [
-                    "mws_layers"
-                ],
-                "layer_name": [
-                    "deltaG_well_depth"
-                ],
-                "vectorStyle": [
-                    {
-                        "fill": "rgba(170, 170, 0, 0.5)",
-                        "stroke": "rgba(170, 170, 0, 1)",
-                        "lower": 0,
-                        "upper": 10
-                    },
-                    {
-                        "fill": "rgba(85, 85, 0, 0.5)",
-                        "stroke": "rgba(85, 85, 0, 1)",
-                        "lower": 10,
-                        "upper": 20
-                    },
-                    {
-                        "fill": "rgba(42, 42, 0, 0.5)",
-                        "stroke": "rgba(42, 42, 0, 1)",
-                        "lower": 20,
-                        "upper": 1000
-                    }
-                ],
-                "rasterStyle": [
-                    ""
-                ],
-                "styleIdx": 30
-            },
-            {
-                "name": "area_crops_on_plain",
-                "label": "Percentage of area under crops on plain",
-                "type": 2,
-                "values": [
-                    {
-                        "label": "Less than 15%",
-                        "value": {
-                            "lower": 0,
-                            "upper": 15
-                        }
-                    },
-                    {
-                        "label": "Between 15% to 30%",
-                        "value": {
-                            "lower": 15,
-                            "upper": 30
-                        }
-                    },
-                    {
-                        "label": "More than 30%",
-                        "value": {
-                            "lower": 30,
-                            "upper": 9999999999
-                        }
-                    }
-                ],
-                "layer_store": [
-                    "mws_layers"
-                ],
-                "layer_name": [
-                    "deltaG_well_depth"
-                ],
-                "vectorStyle": [
-                    {
-                        "fill": "rgba(85, 255, 85, 0.5)",
-                        "stroke": "rgba(85, 255, 85, 1)",
-                        "lower": 0,
-                        "upper": 15
-                    },
-                    {
-                        "fill": "rgba(0, 170, 0, 0.5)",
-                        "stroke": "rgba(0, 170, 0, 1)",
-                        "lower": 15,
-                        "upper": 30
-                    },
-                    {
-                        "fill": "rgba(0, 85, 0, 0.5)",
-                        "stroke": "rgba(0, 85, 0, 1)",
-                        "lower": 30,
-                        "upper": 1000
-                    }
-                ],
-                "rasterStyle": [
-                    ""
-                ],
-                "styleIdx": 31
             }
         ],
         "Climate": [
@@ -392,15 +218,15 @@
                         "upper": 0
                     },
                     {
-                        "fill": "rgba(235, 152, 78, 0.5)",
-                        "stroke": "rgba(235, 152, 78, 1)",
-                        "lower": 1,
-                        "upper": 99999
-                    },
-                    {
                         "fill": "rgba(231, 76, 60, 0.5)",
                         "stroke": "rgba(231, 76, 60, 1)",
                         "lower": 2,
+                        "upper": 99999
+                    },
+                    {
+                        "fill": "rgba(235, 152, 78, 0.5)",
+                        "stroke": "rgba(235, 152, 78, 1)",
+                        "lower": 1,
                         "upper": 99999
                     }
                 ],

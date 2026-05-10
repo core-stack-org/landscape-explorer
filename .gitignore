@@ -4,3 +4,5 @@ build/
 .env.local
 bun.lock
 package-lock.json
+
+src/pages/DemContourMap.jsx
