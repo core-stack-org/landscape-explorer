@@ -19,6 +19,7 @@ import Control from "ol/control/Control.js";
 import { defaults as defaultControls } from "ol/control/defaults.js";
 import { Map, View } from "ol";
 import { Fill, Stroke, Style, Circle as CircleStyle } from "ol/style.js";
+import Icon from "ol/style/Icon";
 import Point from "ol/geom/Point";
 import GeoJSON from "ol/format/GeoJSON";
 
@@ -725,102 +726,132 @@ const KYLDashboardPage = () => {
       console.warn("Connectivity or centroid layer not ready");
       return;
     }
-
+  
     const connectivityFeatures = mwsConnectivityLayerRef.current.getSource().getFeatures();
     const centroidFeatures = mwsCentroidLayerRef.current.getSource().getFeatures();
-
+  
     if (!connectivityFeatures.length || !centroidFeatures.length) {
       console.warn("No features found for arrow generation");
       return;
     }
-
+  
     const uidToCoord = {};
     centroidFeatures.forEach((feature) => {
       const uid = feature.get("uid") || feature.get("UID");
       if (!uid) return;
       uidToCoord[uid.toString().trim()] = feature.getGeometry().getCoordinates();
     });
-
+  
     const pairMap = {};
-    const arrowFeatures = [];
-
+    const features = [];
+  
     connectivityFeatures.forEach((feature) => {
-      const uid = feature.get("uid");
+      const uid        = feature.get("uid");
       const downstream = feature.get("downstream");
       if (!uid || !downstream) return;
-
+  
       const start = uidToCoord[uid.toString().trim()];
-      const end = uidToCoord[downstream.toString().trim()];
+      const end   = uidToCoord[downstream.toString().trim()];
       if (!start || !end) return;
-
+  
       const key =
         start[0] < end[0]
           ? `${start.join(",")}_${end.join(",")}`
           : `${end.join(",")}_${start.join(",")}`;
-
+  
       if (!pairMap[key]) pairMap[key] = 0;
       const side = pairMap[key]++ % 2 === 0 ? -1 : 1;
-
-      const dx = end[0] - start[0];
-      const dy = end[1] - start[1];
+  
+      const dx  = end[0] - start[0];
+      const dy  = end[1] - start[1];
       const len = Math.sqrt(dx * dx + dy * dy);
       if (len < 1e-6) return;
-
-      const ux = dx / len, uy = dy / len;
-      const px = -uy, py = ux;
-
-      const MAP_OFFSET = len * 0.04;
-      const MAP_PULLBACK = len * 0.06;
-      const MAP_ARROW_LEN = len * 0.14;
-
-      const offStart = [start[0] + px * MAP_OFFSET * side, start[1] + py * MAP_OFFSET * side];
-      const offEnd = [end[0] + px * MAP_OFFSET * side, end[1] + py * MAP_OFFSET * side];
-      const trimEnd = [offEnd[0] - ux * MAP_PULLBACK, offEnd[1] - uy * MAP_PULLBACK];
-
-      const arrowAngle = Math.PI / 7;
-      const angle = Math.atan2(dy, dx);
-      const left = [
-        trimEnd[0] - MAP_ARROW_LEN * Math.cos(angle - arrowAngle),
-        trimEnd[1] - MAP_ARROW_LEN * Math.sin(angle - arrowAngle),
+  
+      const px = -(dy / len);
+      const py =   dx / len;
+      const MAP_OFFSET = len * 0.04; // slight perpendicular offset for bidirectional pairs
+  
+      // Store both endpoints in map coords on the feature
+      const offStart = [
+        start[0] + px * MAP_OFFSET * side,
+        start[1] + py * MAP_OFFSET * side,
       ];
-      const right = [
-        trimEnd[0] - MAP_ARROW_LEN * Math.cos(angle + arrowAngle),
-        trimEnd[1] - MAP_ARROW_LEN * Math.sin(angle + arrowAngle),
+      const offEnd = [
+        end[0] + px * MAP_OFFSET * side,
+        end[1] + py * MAP_OFFSET * side,
       ];
-
-      arrowFeatures.push(
-        new Feature({ geometry: new LineString([offStart, trimEnd]), featureType: "arrowLine", upstream: uid, downstream }),
-        new Feature({ geometry: new LineString([left, trimEnd, right]), featureType: "arrowHead", upstream: uid, downstream }),
-        new Feature({ geometry: new Point(offStart), featureType: "arrowDot", upstream: uid, downstream })
+  
+      const f = new Feature({
+        // Geometry is the full line — map coords, zoom-proof
+        geometry:    new LineString([offStart, offEnd]),
+        featureType: "arrow",
+        upstream:    uid,
+        downstream,
+      });
+  
+      // Custom renderer: draws the full arrow (line + head + dot) on canvas in screen px
+      f.setStyle(
+        new Style({
+          renderer: (pixelCoords, state) => {
+            const ctx = state.context;
+  
+            // pixelCoords = [[x1,y1],[x2,y2]] in screen pixels
+            const [[x1, y1], [x2, y2]] = pixelCoords;
+  
+            const angle      = Math.atan2(y2 - y1, x2 - x1);
+            const ARROW_HEAD = 10; // px
+            const ARROW_W    = 6;  // half-width of head
+            const DOT_R      = 3;
+  
+            ctx.save();
+            ctx.strokeStyle = "white";
+            ctx.fillStyle   = "white";
+            ctx.lineWidth   = 1.5;
+            ctx.lineCap     = "round";
+            ctx.lineJoin    = "round";
+  
+            // 1. Shaft line
+            ctx.beginPath();
+            ctx.moveTo(x1, y1);
+            ctx.lineTo(x2, y2);
+            ctx.stroke();
+  
+            // 2. Arrowhead at end (x2, y2)
+            ctx.beginPath();
+            ctx.moveTo(
+              x2 - ARROW_HEAD * Math.cos(angle - Math.PI / 7),
+              y2 - ARROW_HEAD * Math.sin(angle - Math.PI / 7)
+            );
+            ctx.lineTo(x2, y2);
+            ctx.lineTo(
+              x2 - ARROW_HEAD * Math.cos(angle + Math.PI / 7),
+              y2 - ARROW_HEAD * Math.sin(angle + Math.PI / 7)
+            );
+            ctx.stroke();
+  
+            // 3. Dot at start (x1, y1)
+            ctx.beginPath();
+            ctx.arc(x1, y1, DOT_R, 0, Math.PI * 2);
+            ctx.fill();
+  
+            ctx.restore();
+          },
+        })
       );
+  
+      features.push(f);
     });
-
+  
     const arrowLayer = new VectorLayer({
-      source: new VectorSource({ features: arrowFeatures }),
-      style: (feature) => {
-        const color = "white";
-        const type = feature.get("featureType");
-        if (type === "arrowLine" || type === "arrowHead") {
-          return new Style({ stroke: new Stroke({ color, width: 1.2 }) });
-        }
-        if (type === "arrowDot") {
-          return new Style({
-            image: new CircleStyle({
-              radius: 3,
-              fill: new Fill({ color }),
-              stroke: new Stroke({ color, width: 1 }),
-            }),
-          });
-        }
-      },
+      source: new VectorSource({ features }),
     });
-
+  
     arrowLayer.setZIndex(9999);
     arrowLayer.setVisible(false);
-    mwsDrainageLayerRef.current.setVisible(false)
+    mwsDrainageLayerRef.current.setVisible(false);
     mapRef.current.addLayer(arrowLayer);
     mwsArrowLayerRef.current = arrowLayer;
-
+  
   };
 
   const fetchWaterBodiesLayer = async () => {
