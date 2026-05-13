@@ -201,11 +201,16 @@ const KYLRightSidebar = ({
 
   const toggleConnectivity = () => {
     if (!mwsArrowLayerRef?.current) { console.warn("Arrow layer not ready"); return; }
-    const newVisibility = !showConnectivity;
-    mwsArrowLayerRef.current.setVisible(newVisibility);
-    mwsDrainageLayerRef.current.setVisible(newVisibility);
-    setShowConnectivity(newVisibility);
+    setShowConnectivity(prev => !prev);
   };
+  
+  // const toggleConnectivity = () => {
+  //   if (!mwsArrowLayerRef?.current) { console.warn("Arrow layer not ready"); return; }
+  //   const newVisibility = !showConnectivity;
+  //   mwsArrowLayerRef.current.setVisible(newVisibility);
+  //   mwsDrainageLayerRef.current.setVisible(newVisibility);
+  //   setShowConnectivity(newVisibility);
+  // };
 
   const handleTehsilReport = () => {
     const reportURL = `${process.env.REACT_APP_API_URL}/generate_tehsil_report/?state=${transformName(state?.label)}&district=${transformName(district?.label)}&block=${transformName(block?.label)}`;
