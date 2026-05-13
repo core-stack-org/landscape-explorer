@@ -61,6 +61,7 @@ const KYLDashboardPage = () => {
   const mwsCentroidLayerRef = useRef(null);
   const mwsArrowLayerRef = useRef(null);
   const mwsDrainageLayerRef = useRef(null);
+  const topoLevelDataRef = useRef(null);
 
   const [isLoading, setIsLoading] = useState(false);
   const [islayerLoaded, setIsLayerLoaded] = useState(false);
@@ -114,6 +115,7 @@ const KYLDashboardPage = () => {
   const [activeWBVisualize, setActiveWBVisualize] = useState(null);
   const [selectedWaterbodyData, setSelectedWaterbodyData] = useState([]);
   const [isLayerSelecting, setIsLayerSelecting] = useState(false);
+  const showConnectivityRef = useRef(false);
 
 
   const dataJsonIndex = useMemo(() => {
@@ -611,6 +613,27 @@ const KYLDashboardPage = () => {
     mwsLayerRef.current.updateStyleVariables({ highlightMWS: highlightMWS ?? -1 });
   }, [highlightMWS]);
 
+  useEffect(() => {
+    if (!mwsArrowLayerRef.current) return;
+  
+    if (showConnectivity) {
+      mwsArrowLayerRef.current.setVisible(true);
+      if (mwsDrainageLayerRef.current) mwsDrainageLayerRef.current.setVisible(true);
+      if (topoLevelDataRef.current) {
+        const { topoLevel, maxLevel } = topoLevelDataRef.current;
+        applyTopoColorToMWS(topoLevel, maxLevel);
+      }
+    } else {
+      mwsArrowLayerRef.current.setVisible(false);
+      if (mwsDrainageLayerRef.current) mwsDrainageLayerRef.current.setVisible(false);
+      fetchMWSLayer(selectedMWS);
+    }
+  }, [showConnectivity]);
+
+  useEffect(() => {
+    showConnectivityRef.current = showConnectivity;
+  }, [showConnectivity]);
+
   const resetMWSStyle = () => setHighlightMWS(null);
 
 
@@ -622,6 +645,10 @@ const KYLDashboardPage = () => {
       f.set("isFiltered", idSet.has(f.get("uid")) ? 1 : 0, true);
     });
     source.changed();
+    if (showConnectivityRef.current && topoLevelDataRef.current) {
+      const { topoLevel, maxLevel } = topoLevelDataRef.current;
+      applyTopoColorToMWS(topoLevel, maxLevel);
+    }
   };
 
   const fetchMWSLayer = async (tempMWS) => {
@@ -721,6 +748,139 @@ const KYLDashboardPage = () => {
     }
   };
 
+  // const generateConnectivityArrows = () => {
+  //   if (!mwsConnectivityLayerRef.current || !mwsCentroidLayerRef.current || !mapRef.current) {
+  //     console.warn("Connectivity or centroid layer not ready");
+  //     return;
+  //   }
+  
+  //   const connectivityFeatures = mwsConnectivityLayerRef.current.getSource().getFeatures();
+  //   const centroidFeatures = mwsCentroidLayerRef.current.getSource().getFeatures();
+  
+  //   if (!connectivityFeatures.length || !centroidFeatures.length) {
+  //     console.warn("No features found for arrow generation");
+  //     return;
+  //   }
+  
+  //   const uidToCoord = {};
+  //   centroidFeatures.forEach((feature) => {
+  //     const uid = feature.get("uid") || feature.get("UID");
+  //     if (!uid) return;
+  //     uidToCoord[uid.toString().trim()] = feature.getGeometry().getCoordinates();
+  //   });
+  
+  //   const pairMap = {};
+  //   const features = [];
+  
+  //   connectivityFeatures.forEach((feature) => {
+  //     const uid        = feature.get("uid");
+  //     const downstream = feature.get("downstream");
+  //     if (!uid || !downstream) return;
+  
+  //     const start = uidToCoord[uid.toString().trim()];
+  //     const end   = uidToCoord[downstream.toString().trim()];
+  //     if (!start || !end) return;
+  
+  //     const key =
+  //       start[0] < end[0]
+  //         ? `${start.join(",")}_${end.join(",")}`
+  //         : `${end.join(",")}_${start.join(",")}`;
+  
+  //     if (!pairMap[key]) pairMap[key] = 0;
+  //     const side = pairMap[key]++ % 2 === 0 ? -1 : 1;
+  
+  //     const dx  = end[0] - start[0];
+  //     const dy  = end[1] - start[1];
+  //     const len = Math.sqrt(dx * dx + dy * dy);
+  //     if (len < 1e-6) return;
+  
+  //     const px = -(dy / len);
+  //     const py =   dx / len;
+  //     const MAP_OFFSET = len * 0.04; // slight perpendicular offset for bidirectional pairs
+  
+  //     // Store both endpoints in map coords on the feature
+  //     const offStart = [
+  //       start[0] + px * MAP_OFFSET * side,
+  //       start[1] + py * MAP_OFFSET * side,
+  //     ];
+  //     const offEnd = [
+  //       end[0] + px * MAP_OFFSET * side,
+  //       end[1] + py * MAP_OFFSET * side,
+  //     ];
+  
+  //     const f = new Feature({
+  //       // Geometry is the full line — map coords, zoom-proof
+  //       geometry:    new LineString([offStart, offEnd]),
+  //       featureType: "arrow",
+  //       upstream:    uid,
+  //       downstream,
+  //     });
+  
+  //     // Custom renderer: draws the full arrow (line + head + dot) on canvas in screen px
+  //     f.setStyle(
+  //       new Style({
+  //         renderer: (pixelCoords, state) => {
+  //           const ctx = state.context;
+  
+  //           // pixelCoords = [[x1,y1],[x2,y2]] in screen pixels
+  //           const [[x1, y1], [x2, y2]] = pixelCoords;
+  
+  //           const angle      = Math.atan2(y2 - y1, x2 - x1);
+  //           const ARROW_HEAD = 10; // px
+  //           const ARROW_W    = 6;  // half-width of head
+  //           const DOT_R      = 3;
+  
+  //           ctx.save();
+  //           ctx.strokeStyle = "white";
+  //           ctx.fillStyle   = "white";
+  //           ctx.lineWidth   = 1.5;
+  //           ctx.lineCap     = "round";
+  //           ctx.lineJoin    = "round";
+  
+  //           // 1. Shaft line
+  //           ctx.beginPath();
+  //           ctx.moveTo(x1, y1);
+  //           ctx.lineTo(x2, y2);
+  //           ctx.stroke();
+  
+  //           // 2. Arrowhead at end (x2, y2)
+  //           ctx.beginPath();
+  //           ctx.moveTo(
+  //             x2 - ARROW_HEAD * Math.cos(angle - Math.PI / 7),
+  //             y2 - ARROW_HEAD * Math.sin(angle - Math.PI / 7)
+  //           );
+  //           ctx.lineTo(x2, y2);
+  //           ctx.lineTo(
+  //             x2 - ARROW_HEAD * Math.cos(angle + Math.PI / 7),
+  //             y2 - ARROW_HEAD * Math.sin(angle + Math.PI / 7)
+  //           );
+  //           ctx.stroke();
+  
+  //           // 3. Dot at start (x1, y1)
+  //           ctx.beginPath();
+  //           ctx.arc(x1, y1, DOT_R, 0, Math.PI * 2);
+  //           ctx.fill();
+  
+  //           ctx.restore();
+  //         },
+  //       })
+  //     );
+  
+  //     features.push(f);
+  //   });
+  
+  //   const arrowLayer = new VectorLayer({
+  //     source: new VectorSource({ features }),
+  //   });
+  
+  //   arrowLayer.setZIndex(9999);
+  //   arrowLayer.setVisible(false);
+  //   mwsDrainageLayerRef.current.setVisible(false);
+  //   mapRef.current.addLayer(arrowLayer);
+  //   mwsArrowLayerRef.current = arrowLayer;
+  
+  // };
+
   const generateConnectivityArrows = () => {
     if (!mwsConnectivityLayerRef.current || !mwsCentroidLayerRef.current || !mapRef.current) {
       console.warn("Connectivity or centroid layer not ready");
@@ -735,6 +895,7 @@ const KYLDashboardPage = () => {
       return;
     }
   
+    // ── 1. UID → coord map ───────────────────────────────────────────────────
     const uidToCoord = {};
     centroidFeatures.forEach((feature) => {
       const uid = feature.get("uid") || feature.get("UID");
@@ -742,16 +903,81 @@ const KYLDashboardPage = () => {
       uidToCoord[uid.toString().trim()] = feature.getGeometry().getCoordinates();
     });
   
-    const pairMap = {};
+    // ── 2. Build adjacency graph ──────────────────────────────────────────────
+    const inDegree = {};
+    const outEdges = {};
+    const allUids  = new Set();
+  
+    connectivityFeatures.forEach((f) => {
+      const uid = f.get("uid")?.toString().trim();
+      const ds  = f.get("downstream")?.toString().trim();
+      if (!uid || !ds) return;
+      allUids.add(uid);
+      allUids.add(ds);
+      if (!outEdges[uid]) outEdges[uid] = [];
+      if (!inDegree[uid]) inDegree[uid] = 0;
+      if (!inDegree[ds])  inDegree[ds]  = 0;
+      outEdges[uid].push(ds);
+      inDegree[ds] = (inDegree[ds] || 0) + 1;
+    });
+  
+    // ── 3. Kahn's algorithm → topo level per node ────────────────────────────
+    const topoLevel = {};
+    const queue     = [];
+  
+    allUids.forEach((uid) => {
+      if ((inDegree[uid] || 0) === 0) {
+        queue.push(uid);
+        topoLevel[uid] = 0;
+      }
+    });
+  
+    while (queue.length) {
+      const cur = queue.shift();
+      (outEdges[cur] || []).forEach((ds) => {
+        topoLevel[ds] = Math.max(topoLevel[ds] ?? 0, (topoLevel[cur] ?? 0) + 1);
+        inDegree[ds]--;
+        if (inDegree[ds] === 0) queue.push(ds);
+      });
+    }
+  
+    const maxLevel = Math.max(1, ...Object.values(topoLevel));
+  
+    // Store for use by applyTopoColorToMWS
+    topoLevelDataRef.current = { topoLevel, maxLevel };
+  
+    // ── 4. Color helper ───────────────────────────────────────────────────────
+    const levelToColor = (level) => {
+      const t = level / maxLevel;
+      let r, g, b;
+      if (t < 0.5) {
+        const s = t * 2;
+        r = Math.round(34  + (251 - 34)  * s);
+        g = Math.round(197 + (146 - 197) * s);
+        b = Math.round(94  + (0   - 94)  * s);
+      } else {
+        const s = (t - 0.5) * 2;
+        r = Math.round(251 + (239 - 251) * s);
+        g = Math.round(146 + (68  - 146) * s);
+        b = Math.round(0   + (68  - 0)   * s);
+      }
+      return `rgb(${r},${g},${b})`;
+    };
+  
+    // ── 5. Apply topo colors to MWS polygons ─────────────────────────────────
+    applyTopoColorToMWS(topoLevel, maxLevel);
+  
+    // ── 6. Build arrow features ───────────────────────────────────────────────
+    const pairMap  = {};
     const features = [];
   
     connectivityFeatures.forEach((feature) => {
-      const uid        = feature.get("uid");
-      const downstream = feature.get("downstream");
+      const uid        = feature.get("uid")?.toString().trim();
+      const downstream = feature.get("downstream")?.toString().trim();
       if (!uid || !downstream) return;
   
-      const start = uidToCoord[uid.toString().trim()];
-      const end   = uidToCoord[downstream.toString().trim()];
+      const start = uidToCoord[uid];
+      const end   = uidToCoord[downstream];
       if (!start || !end) return;
   
       const key =
@@ -769,67 +995,52 @@ const KYLDashboardPage = () => {
   
       const px = -(dy / len);
       const py =   dx / len;
-      const MAP_OFFSET = len * 0.04; // slight perpendicular offset for bidirectional pairs
+      const MAP_OFFSET = len * 0.04;
   
-      // Store both endpoints in map coords on the feature
-      const offStart = [
-        start[0] + px * MAP_OFFSET * side,
-        start[1] + py * MAP_OFFSET * side,
-      ];
-      const offEnd = [
-        end[0] + px * MAP_OFFSET * side,
-        end[1] + py * MAP_OFFSET * side,
-      ];
+      const offStart = [start[0] + px * MAP_OFFSET * side, start[1] + py * MAP_OFFSET * side];
+      const offEnd   = [end[0]   + px * MAP_OFFSET * side, end[1]   + py * MAP_OFFSET * side];
+  
+      const avgLevel = ((topoLevel[uid] ?? 0) + (topoLevel[downstream] ?? 0)) / 2;
+      const color    = levelToColor(avgLevel);
+  
+      const ARROW_HEAD = 10;
+      const DOT_R      = 3;
   
       const f = new Feature({
-        // Geometry is the full line — map coords, zoom-proof
         geometry:    new LineString([offStart, offEnd]),
         featureType: "arrow",
         upstream:    uid,
         downstream,
+        topoLevel:   topoLevel[uid] ?? 0,
       });
   
-      // Custom renderer: draws the full arrow (line + head + dot) on canvas in screen px
       f.setStyle(
         new Style({
           renderer: (pixelCoords, state) => {
             const ctx = state.context;
-  
-            // pixelCoords = [[x1,y1],[x2,y2]] in screen pixels
             const [[x1, y1], [x2, y2]] = pixelCoords;
-  
-            const angle      = Math.atan2(y2 - y1, x2 - x1);
-            const ARROW_HEAD = 10; // px
-            const ARROW_W    = 6;  // half-width of head
-            const DOT_R      = 3;
+            const angle = Math.atan2(y2 - y1, x2 - x1);
   
             ctx.save();
             ctx.strokeStyle = "white";
             ctx.fillStyle   = "white";
-            ctx.lineWidth   = 1.5;
+            ctx.lineWidth   = 1.8;
             ctx.lineCap     = "round";
             ctx.lineJoin    = "round";
   
-            // 1. Shaft line
             ctx.beginPath();
             ctx.moveTo(x1, y1);
             ctx.lineTo(x2, y2);
             ctx.stroke();
   
-            // 2. Arrowhead at end (x2, y2)
             ctx.beginPath();
-            ctx.moveTo(
-              x2 - ARROW_HEAD * Math.cos(angle - Math.PI / 7),
-              y2 - ARROW_HEAD * Math.sin(angle - Math.PI / 7)
-            );
+            ctx.moveTo(x2 - ARROW_HEAD * Math.cos(angle - Math.PI / 7),
+                       y2 - ARROW_HEAD * Math.sin(angle - Math.PI / 7));
             ctx.lineTo(x2, y2);
-            ctx.lineTo(
-              x2 - ARROW_HEAD * Math.cos(angle + Math.PI / 7),
-              y2 - ARROW_HEAD * Math.sin(angle + Math.PI / 7)
-            );
+            ctx.lineTo(x2 - ARROW_HEAD * Math.cos(angle + Math.PI / 7),
+                       y2 - ARROW_HEAD * Math.sin(angle + Math.PI / 7));
             ctx.stroke();
   
-            // 3. Dot at start (x1, y1)
             ctx.beginPath();
             ctx.arc(x1, y1, DOT_R, 0, Math.PI * 2);
             ctx.fill();
@@ -842,6 +1053,7 @@ const KYLDashboardPage = () => {
       features.push(f);
     });
   
+    // ── 7. Arrow layer ────────────────────────────────────────────────────────
     const arrowLayer = new VectorLayer({
       source: new VectorSource({ features }),
     });
@@ -851,7 +1063,90 @@ const KYLDashboardPage = () => {
     mwsDrainageLayerRef.current.setVisible(false);
     mapRef.current.addLayer(arrowLayer);
     mwsArrowLayerRef.current = arrowLayer;
+  };
+
+  const applyTopoColorToMWS = (topoLevel, maxLevel) => {
+    if (!mwsLayerRef.current) return;
   
+    const mwsSource = mwsLayerRef.current.getSource();
+    const mwsFeatures = mwsSource.getFeatures();
+  
+    if (!mwsFeatures.length) {
+      mwsSource.once("featuresloadend", () => {
+        applyTopoColorToMWS(topoLevel, maxLevel);
+      });
+      return;
+    }
+  
+    mwsFeatures.forEach((feature) => {
+      const uid   = feature.get("uid")?.toString().trim();
+      const level = topoLevel[uid] ?? 0;
+      const norm  = Math.round((level / maxLevel) * 255);
+      feature.set("topoNorm", norm, true);
+    });
+  
+    mwsSource.changed();
+  
+    mwsLayerRef.current.setStyle({
+      variables: {
+        highlightMWS:  -1,
+        isVisualizeOn: false,
+      },
+      "stroke-color": [
+        "case",
+        // 1. Highlighted (clicked) MWS
+        ["==", ["get", "uid"], ["var", "highlightMWS"]],
+        [22, 101, 52, 1],
+        // 2. Filtered (matched) MWS — red stroke
+        ["==", ["get", "isFiltered"], 1],
+        [102, 30, 30, 1],
+        // 3. Unfiltered MWS — hide stroke
+        ["==", ["get", "isFiltered"], 0],
+        [
+          "interpolate", ["linear"], ["get", "topoNorm"],
+          0,   [101, 67,  33,  1],
+          128, [180, 130, 70,  1],
+          255, [34,  139, 34,  1],
+        ],
+        // 4. Default — topo gradient stroke
+        [
+          "interpolate", ["linear"], ["get", "topoNorm"],
+          0,   [101, 67,  33,  1],
+          128, [180, 130, 70,  1],
+          255, [34,  139, 34,  1],
+        ],
+      ],
+      "stroke-width": [
+        "case",
+        ["==", ["get", "uid"], ["var", "highlightMWS"]], 2,
+        ["==", ["get", "isFiltered"], 1], 1.5,
+        0.8,
+      ],
+      "fill-color": [
+        "case",
+        // 1. Highlighted
+        ["==", ["get", "uid"], ["var", "highlightMWS"]],
+        [34, 197, 94, 0.5],
+        // 2. Filtered — red fill
+        ["==", ["get", "isFiltered"], 1],
+        [255, 75, 75, 0.8],
+        // 3. Unfiltered — transparent
+        ["==", ["get", "isFiltered"], 0],
+        [
+          "interpolate", ["linear"], ["get", "topoNorm"],
+          0,   [139, 90,  43,  0.6],
+          128, [188, 143, 80,  0.5],
+          255, [34,  139, 34,  0.55],
+        ],
+        // 4. Default — topo gradient fill
+        [
+          "interpolate", ["linear"], ["get", "topoNorm"],
+          0,   [139, 90,  43,  0.6],
+          128, [188, 143, 80,  0.5],
+          255, [34,  139, 34,  0.55],
+        ],
+      ],
+    });
   };
 
   const fetchWaterBodiesLayer = async () => {
