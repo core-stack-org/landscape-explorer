@@ -1,6 +1,7 @@
 import ToggleButton from "./buttons/toggle_button_kyl";
+import { toast, Toaster } from "react-hot-toast";
 
-const KYLIndicatorFilter = ({ filter, onFilterChange, isDisabled, getFormattedSelectedFilters, toggleStates, handleLayerSelection}) => {
+const KYLIndicatorFilter = ({ filter, onFilterChange, isDisabled, getFormattedSelectedFilters, toggleStates, handleLayerSelection,showConnectivityRef}) => {
     
     const isOptionSelected = (option) => {
         const formattedFilters = getFormattedSelectedFilters();
@@ -19,7 +20,14 @@ const KYLIndicatorFilter = ({ filter, onFilterChange, isDisabled, getFormattedSe
                 </h3>
                     <ToggleButton 
                         isOn={toggleStates[filter.name]} 
-                        toggleSwitch={() => handleLayerSelection(filter)}
+                        toggleSwitch={() => {
+                            if (showConnectivityRef.current) {
+                                toast.error(
+                                    "Please turn off MWS Connectivity before using Visualize."
+                                );
+                                return;
+                            }
+                            handleLayerSelection(filter)}}
                     />
 
             </div>

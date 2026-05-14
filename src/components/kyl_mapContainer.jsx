@@ -160,7 +160,7 @@ const MapZoomControls = ({ mapRef }) => {
 };
 
 // Updated MapLegend component
-const MapLegend = ({ showMWS, showVillages, currentLayer }) => {
+const MapLegend = ({ showMWS, showVillages, currentLayer,showConnectivity }) => {
   // Add state for collapsed status
   const [isCollapsed, setIsCollapsed] = useState(false);
 
@@ -198,6 +198,15 @@ const MapLegend = ({ showMWS, showVillages, currentLayer }) => {
       border: "rgb(0, 0, 0)",
       name: "Village Boundaries",
       type: "village",
+    },
+  ];
+
+  const connectivityLegendItems = [
+    {
+      color: "#FFFFFF",
+      border: "#FFFFFF",
+      name: "MWS Flow Direction",
+      type: "connectivity",
     },
   ];
 
@@ -1695,6 +1704,54 @@ const MapLegend = ({ showMWS, showVillages, currentLayer }) => {
                   </div>
                 </div>
               )}
+
+              {showConnectivity && (
+                <div className="mt-3">
+                  
+                  <h4 className="text-sm font-semibold text-gray-700 mb-2">
+                    MWS Connectivity (Topo Level)
+                  </h4>
+
+                  {/* Gradient Legend */}
+                  <div className="space-y-2">
+
+                    <div>
+                      <div className="flex h-6 rounded overflow-hidden border border-gray-300">
+                        <div className="flex-1 bg-[#8B5A2B]" />
+                        <div className="flex-1 bg-[#B48F50]" />
+                        <div className="flex-1 bg-[#D6C97A]" />
+                        <div className="flex-1 bg-[#A8D36F]" />
+                        <div className="flex-1 bg-[#228B22]" />
+                      </div>
+
+                      <div className="flex justify-between text-[10px] text-gray-600 mt-1">
+                        <span>Low</span>
+                        <span>High</span>
+                      </div>
+                    </div>
+
+                    {/* Arrow Direction */}
+                    <div className="pt-2">
+                      <h4 className="text-xs font-medium text-gray-600 mb-1">
+                        MWS Flow Direction
+                      </h4>
+
+                      <div className="flex items-center gap-2">
+                        {/* Line */}
+                        <div className="w-10 h-[2px] bg-black relative">
+                          <div
+                            className="absolute right-0 top-1/2 -translate-y-1/2 
+                            w-0 h-0 border-t-[4px] border-b-[4px]
+                            border-l-[8px] border-t-transparent
+                            border-b-transparent border-l-black"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         )}
@@ -1718,7 +1775,8 @@ const KYLMapContainer = ({
   boundaryLayerRef,
   mapRef,
   currentLayer,
-  setSearchLatLong
+  setSearchLatLong,
+  showConnectivity,
 }) => {
   const areMWSLayersAvailable = mwsLayerRef?.current !== null;
   const areVillageLayersAvailable = boundaryLayerRef?.current !== null;
@@ -1763,6 +1821,7 @@ const KYLMapContainer = ({
         showMWS={showMWS && areMWSLayersAvailable}
         showVillages={showVillages && areVillageLayersAvailable}
         currentLayer={currentLayer}
+        showConnectivity={showConnectivity}
       />
 
       {/* Search Bar */}
