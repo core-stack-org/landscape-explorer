@@ -28,6 +28,7 @@ const KYLLeftSidebar = ({
     isPatternSelected,
     isFilterProcessing,
     isLayerSelecting,
+    showConnectivityRef,
 }) => {
     const [activeTab, setActiveTab] = useState('Filters');
     const [selectedSubcategory, setSelectedSubcategory] = useState(null);
@@ -218,6 +219,7 @@ const KYLLeftSidebar = ({
                                         getFormattedSelectedFilters={getFormattedSelectedFilters}
                                         toggleStates={toggleStates}
                                         handleLayerSelection={handleLayerSelection}
+                                        showConnectivityRef={showConnectivityRef}
                                     />
                                 </div>
                             ))

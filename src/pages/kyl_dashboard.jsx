@@ -1430,6 +1430,10 @@ const KYLDashboardPage = () => {
   };
 
   const handleLayerSelection = async (filter) => {
+    if (showConnectivityRef.current) {
+      alert("Please turn off MWS Connectivity before using Visualize.");
+      return;
+    }
     setIsLayerSelecting(true);
     await new Promise(resolve => setTimeout(resolve, 0));
 
@@ -1581,6 +1585,10 @@ const KYLDashboardPage = () => {
 
         boundaryLayerRef.current.updateStyleVariables({ isVisualizeOn: true });
         mwsLayerRef.current.updateStyleVariables({ isVisualizeOn: true });
+        if (showConnectivityRef.current && topoLevelDataRef.current) {
+          const { topoLevel, maxLevel } = topoLevelDataRef.current;
+          applyTopoColorToMWS(topoLevel, maxLevel);
+        }
 
         if (waterbodiesLayerRef.current) {
           const visualizeMode =
@@ -2392,6 +2400,7 @@ const KYLDashboardPage = () => {
           handlePatternSelection={handlePatternSelection}
           isPatternSelected={isPatternSelected}
           isLayerSelecting={isLayerSelecting}
+          showConnectivityRef={showConnectivityRef}
         />
 
         {/* Map Container */}
@@ -2408,6 +2417,7 @@ const KYLDashboardPage = () => {
           mapRef={mapRef}
           currentLayer={currentLayer}
           setSearchLatLong={setSearchLatLong}
+          showConnectivity={showConnectivity}
         />
 
         {/* Right Sidebar */}
@@ -2452,6 +2462,8 @@ const KYLDashboardPage = () => {
           selectedWaterbodyData={selectedWaterbodyData}
           mwsDrainageLayerRef={mwsDrainageLayerRef}
           villageJson={villageJson}
+          isLoading={isLoading}
+
         />
       </div>
     </div>
