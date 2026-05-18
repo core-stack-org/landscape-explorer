@@ -774,7 +774,7 @@ const PlanViewPage = () => {
         <div className="max-w-[1800px] mx-auto px-6 py-4 flex items-center justify-between gap-4">
           <div className="flex items-center gap-4 min-w-0">
             <button
-              onClick={() => navigate("/CCUsagePage", { state: { returnContext: state?.returnContext } })}
+              onClick={() => navigate("/landscape-stewardship", { state: { returnContext: state?.returnContext } })}
               className="flex-shrink-0 flex items-center gap-2 px-4 py-2 rounded-xl font-semibold
                          text-sm transition-all duration-200 active:scale-95"
               style={{ background: "rgba(255,255,255,0.95)", color: P.dark, boxShadow: "0 2px 12px rgba(0,0,0,0.15)" }}

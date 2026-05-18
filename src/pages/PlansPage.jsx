@@ -1482,7 +1482,7 @@ const PlansPage = () => {
                   onClick={() => {
                     const districtLabel = transformName(districtLookupRef.current[selectedPlan.district_soi] || "");
                     const tehsilLabel   = transformName(tehsilLookupRef.current[selectedPlan.tehsil_soi]     || "");
-                    navigate(`/CCUsagePage/plan-view?id=${selectedPlan.id}&completed=${!!selectedPlan.is_completed}&dpr_reviewed=${!!selectedPlan.is_dpr_reviewed}&dpr_generated=${!!selectedPlan.is_dpr_generated}&dpr_approved=${!!selectedPlan.is_dpr_approved}`, {
+                    navigate(`/landscape-stewardship/plan-view?id=${selectedPlan.id}&completed=${!!selectedPlan.is_completed}&dpr_reviewed=${!!selectedPlan.is_dpr_reviewed}&dpr_generated=${!!selectedPlan.is_dpr_generated}&dpr_approved=${!!selectedPlan.is_dpr_approved}`, {
                       state: {
                         plan: { ...selectedPlan, district: districtLabel, block: tehsilLabel },
                         returnContext: {

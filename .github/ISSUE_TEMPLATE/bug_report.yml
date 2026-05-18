@@ -20,7 +20,7 @@ body:
         - Landscape Explorer (/download_layers)
         - Agrohorticulture (/agrohorticulture)
         - RWB Dashboard (/rwb)
-        - CC Usage Page (/CCUsagePage)
+        - CC Usage Page (/landscape-stewardship)
         - Plan View (/plan-view)
         - Other
     validations:
