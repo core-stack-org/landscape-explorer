@@ -16,8 +16,8 @@ function App() {
         <Route path="/download_layers" element={<LandscapeExplorer />} />
         <Route path="/agrohorticulture" element={<AgroHorticulture />} />
         <Route path="/rwb" element={<RWBDashboard />} />
-        <Route path="/CCUsagePage" element={<PlansPage />} />
-        <Route path="/CCUsagePage/plan-view" element={<PlanViewPage />} />
+        <Route path="/landscape-stewardship" element={<PlansPage />} />
+        <Route path="/landscape-stewardship/plan-view" element={<PlanViewPage />} />
       </Routes>
     </BrowserRouter>
   );

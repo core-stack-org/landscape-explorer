@@ -217,7 +217,7 @@ export default function KYLHomePage() {
                     </div>
                     <button
                       className="self-start mt-4 px-5 py-2 text-sm font-semibold text-white bg-purple-600 hover:bg-purple-700 rounded-xl transition-colors shadow-sm shadow-purple-200"
-                      onClick={() => handleNavigate("/CCUsagePage", "View Landscape Stewardship Network")}
+                      onClick={() => handleNavigate("/landscape-stewardship", "View Landscape Stewardship Network")}
                     >
                       Learn More →
                     </button>
