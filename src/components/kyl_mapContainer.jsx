@@ -1709,7 +1709,7 @@ const MapLegend = ({ showMWS, showVillages, currentLayer,showConnectivity }) => 
                 <div className="mt-3">
                   
                   <h4 className="text-sm font-semibold text-gray-700 mb-2">
-                    MWS Connectivity (Topo Level)
+                    MWS Drainage Flow
                   </h4>
 
                   {/* Gradient Legend */}
@@ -1725,8 +1725,8 @@ const MapLegend = ({ showMWS, showVillages, currentLayer,showConnectivity }) => 
                       </div>
 
                       <div className="flex justify-between text-[10px] text-gray-600 mt-1">
-                        <span>Low</span>
-                        <span>High</span>
+                        <span>MWS in ridge areas</span>
+                        <span>MWS in valley areas</span>
                       </div>
                     </div>
 

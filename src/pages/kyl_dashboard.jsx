@@ -618,6 +618,7 @@ const KYLDashboardPage = () => {
   
     if (showConnectivity) {
       mwsArrowLayerRef.current.setVisible(true);
+      boundaryLayerRef.current.setVisible(false);
       if (mwsDrainageLayerRef.current) mwsDrainageLayerRef.current.setVisible(true);
       if (topoLevelDataRef.current) {
         const { topoLevel, maxLevel } = topoLevelDataRef.current;
@@ -625,6 +626,7 @@ const KYLDashboardPage = () => {
       }
     } else {
       mwsArrowLayerRef.current.setVisible(false);
+      boundaryLayerRef.current.setVisible(true);
       if (mwsDrainageLayerRef.current) mwsDrainageLayerRef.current.setVisible(false);
       fetchMWSLayer(selectedMWS);
     }
@@ -1102,19 +1104,21 @@ const KYLDashboardPage = () => {
         [102, 30, 30, 1],
         // 3. Unfiltered MWS — hide stroke
         ["==", ["get", "isFiltered"], 0],
-        [
-          "interpolate", ["linear"], ["get", "topoNorm"],
-          0,   [101, 67,  33,  1],
-          128, [180, 130, 70,  1],
-          255, [34,  139, 34,  1],
-        ],
+        [255, 0, 0, 1],
+        // [
+        //   "interpolate", ["linear"], ["get", "topoNorm"],
+        //   0,   [101, 67,  33,  1],
+        //   128, [180, 130, 70,  1],
+        //   255, [34,  139, 34,  1],
+        // ],
         // 4. Default — topo gradient stroke
-        [
-          "interpolate", ["linear"], ["get", "topoNorm"],
-          0,   [101, 67,  33,  1],
-          128, [180, 130, 70,  1],
-          255, [34,  139, 34,  1],
-        ],
+        // [
+        //   "interpolate", ["linear"], ["get", "topoNorm"],
+        //   0,   [101, 67,  33,  1],
+        //   128, [180, 130, 70,  1],
+        //   255, [34,  139, 34,  1],
+        // ],
+        [255, 0, 0, 1],
       ],
       "stroke-width": [
         "case",
