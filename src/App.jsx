@@ -6,6 +6,7 @@ import PlansPage from "./pages/PlansPage";
 import PlanViewPage from "./pages/PlanViewPage";
 import AgroHorticulture from "./pages/AgroHorticulture";
 import RWBDashboard from "./pages/RWBDashboard";
+import DEMContourMap from "./pages/DemContourMap"
 
 function App() {
   return (
@@ -18,6 +19,7 @@ function App() {
         <Route path="/rwb" element={<RWBDashboard />} />
         <Route path="/landscape-stewardship" element={<PlansPage />} />
         <Route path="/landscape-stewardship/plan-view" element={<PlanViewPage />} />
+        <Route path="/DEMContourMap" element={<DEMContourMap/>} />
       </Routes>
     </BrowserRouter>
   );
