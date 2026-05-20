@@ -19,7 +19,7 @@ function App() {
         <Route path="/rwb" element={<RWBDashboard />} />
         <Route path="/landscape-stewardship" element={<PlansPage />} />
         <Route path="/landscape-stewardship/plan-view" element={<PlanViewPage />} />
-        <Route path="/DEMContourMap" element={<DEMContourMap/>} />
+        {/* <Route path="/DEMContourMap" element={<DEMContourMap/>} /> */}
       </Routes>
     </BrowserRouter>
   );
