@@ -1541,7 +1541,7 @@ const KYLDashboardPage = () => {
             );
             layerRef.push(tempLayer);
             mapRef.current.addLayer(tempLayer);
-          } else if (filter.layer_store[i] === "drought" || filter.layer_store[i] === "green_credit" || filter.layer_store[i] === "terrain_lulc") {
+          } else if (filter.layer_store[i] === "drought" || filter.layer_store[i] === "green_credit" || filter.layer_store[i] === "terrain_lulc" || filter.layer_store[i] === "river" || filter.layer_store[i] === "canal") {
             tempLayer = await getVectorLayers(
               filter.layer_store[i],
               `${transformName(district.label)}_${transformName(block.label)}_${filter.layer_name[i]}`
@@ -1566,7 +1566,14 @@ const KYLDashboardPage = () => {
             );
           }
 
-          if (
+          if (filter.layer_store[i] === "river" || filter.layer_store[i] === "canal") {
+            tempLayer.setStyle(new Style({
+              stroke: new Stroke({ color: "rgba(0, 0, 255, 1)", width: 2.5 })
+            }));
+            tempLayer.setZIndex(9998);
+            layerRef.push(tempLayer);
+            mapRef.current.addLayer(tempLayer);
+          } else if (
             filter.layer_store[i] !== "terrain" &&
             filter.layer_store[i] !== "LULC" &&
             filter.layer_store[i] !== "restoration" &&
@@ -1578,6 +1585,7 @@ const KYLDashboardPage = () => {
             tempLayer.setStyle((feature) =>
               layerStyle(feature, filter.vectorStyle, filter.styleIdx, villageJson, dataJson)
             );
+            tempLayer.setZIndex(10); // slightly above base
             layerRef.push(tempLayer);
             mapRef.current.addLayer(tempLayer);
           }

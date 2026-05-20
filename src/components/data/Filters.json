@@ -36,6 +36,67 @@
                     "Terrain_Style_11_Classes"
                 ],
                 "styleIdx": 0
+            },
+            {
+                "name": "relief",
+                "label": "Microwatershed Relief",
+                "type": 2,
+                "values": [
+                    {
+                        "label": "Low Relief (less than 6m)",
+                        "value": { "lower": 0, "upper": 6 }
+                    },
+                    {
+                        "label": "Moderate Relief (between 6m and 110m)",
+                        "value": { "lower": 6, "upper": 110 }
+                    },
+                    {
+                        "label": "High Relief (between 110m and 900m)",
+                        "value": { "lower": 110, "upper": 900 }
+                    },
+                    {
+                        "label": "Extremely High Relief (More than 900m)",
+                        "value": { "lower": 900, "upper": 999999 }
+                    }
+                ],
+                "layer_store": [ "mws_layers" ],
+                "layer_name": [ "deltaG_well_depth" ],
+                "vectorStyle": [
+                    { "fill": "rgba(255, 255, 153, 0.5)", "stroke": "rgba(255, 255, 153, 1)", "lower": 0, "upper": 6 },
+                    { "fill": "rgba(255, 204, 102, 0.5)", "stroke": "rgba(255, 204, 102, 1)", "lower": 6, "upper": 110 },
+                    { "fill": "rgba(255, 102, 0, 0.5)", "stroke": "rgba(255, 102, 0, 1)", "lower": 110, "upper": 900 },
+                    { "fill": "rgba(153, 0, 0, 0.5)", "stroke": "rgba(153, 0, 0, 1)", "lower": 900, "upper": 999999 }
+                ],
+                "rasterStyle": "",
+                "styleIdx": 37
+            },
+            {
+                "name": "relative_mean_elevation",
+                "label": "Relative Mean Elevation",
+                "type": 2,
+                "values": [
+                    {
+                        "label": "Lower Relative Mean Elevation (<-25)",
+                        "value": { "lower": -999999, "upper": -25 }
+                    },
+                    {
+                        "label": "Moderate Relative Mean Elevation (-25 to +25)",
+                        "value": { "lower": -25, "upper": 25 }
+                    },
+                    {
+                        "label": "High Relative Mean Elevation (>+25)",
+                        "value": { "lower": 25, "upper": 999999 }
+                    }
+                ],
+                "layer_store": [ "mws_layers" ],
+                "layer_name": [ "deltaG_well_depth" ],
+                "vectorStyle": [
+                    { "fill": "rgba(255, 153, 153, 0.5)", "stroke": "rgba(255, 153, 153, 1)", "lower": -999999, "upper": -25 },
+                    { "fill": "rgba(255, 255, 153, 0.5)", "stroke": "rgba(255, 255, 153, 1)", "lower": -25, "upper": 25 },
+                    { "fill": "rgba(153, 204, 255, 0.5)", "stroke": "rgba(153, 204, 255, 1)", "lower": 25, "upper": 999999 }
+                ],
+                "rasterStyle": "",
+                "styleIdx": 39
             }
         ],
         "Climate": [
@@ -629,6 +690,64 @@
         ],
         "Agriculture": [
             {
+                "name": "river_available",
+                "label": "River",
+                "type": 1,
+                "values": [
+                    {
+                        "label": "Available",
+                        "value": true
+                    },
+                    {
+                        "label": "Not available",
+                        "value": false
+                    }
+                ],
+                "layer_store": [
+                    "river"
+                ],
+                "layer_name": [
+                    "river_vector"
+                ],
+                "vectorStyle": [
+                    {
+                        "fill": "rgba(43, 147, 250, 0.5)",
+                        "stroke": "rgba(43, 147, 250, 1)"
+                    }
+                ],
+                "rasterStyle": "",
+                "styleIdx": 0
+            },
+            {
+                "name": "canal_available",
+                "label": "Canal",
+                "type": 1,
+                "values": [
+                    {
+                        "label": "Available",
+                        "value": true
+                    },
+                    {
+                        "label": "Not available",
+                        "value": false
+                    }
+                ],
+                "layer_store": [
+                    "canal"
+                ],
+                "layer_name": [
+                    "canal_vector"
+                ],
+                "vectorStyle": [
+                    {
+                        "fill": "rgba(43, 147, 250, 0.5)",
+                        "stroke": "rgba(43, 147, 250, 1)"
+                    }
+                ],
+                "rasterStyle": "",
+                "styleIdx": 0
+            },
+            {
                 "name": "avg_double_cropped",
                 "label": "Average percentage of double cropped area over the years 2017 to 2024",
                 "type": 2,
@@ -722,6 +841,176 @@
                 ],
                 "rasterStyle": [""],
                 "styleIdx": 28
+            }
+        ],
+        "Land-Use": [
+            {
+                "name": "lulc_crop_percent",
+                "label": "Percentage of area with crops",
+                "type": 2,
+                "values": [
+                    {
+                        "label": "Less than 5%",
+                        "value": {
+                            "lower": 0,
+                            "upper": 5
+                        }
+                    },
+                    {
+                        "label": "Between 5-15%",
+                        "value": {
+                            "lower": 5,
+                            "upper": 15
+                        }
+                    },
+                    {
+                        "label": "More than 15%",
+                        "value": {
+                            "lower": 15,
+                            "upper": 999999
+                        }
+                    }
+                ],
+                "layer_store": [
+                    "mws_layers"
+                ],
+                "layer_name": [
+                    "deltaG_well_depth"
+                ],
+                "vectorStyle": [
+                    {
+                        "fill": "rgba(204, 255, 204, 0.5)",
+                        "stroke": "rgba(204, 255, 204, 1)",
+                        "lower": 0,
+                        "upper": 5
+                    },
+                    {
+                        "fill": "rgba(102, 255, 102, 0.5)",
+                        "stroke": "rgba(102, 255, 102, 1)",
+                        "lower": 5,
+                        "upper": 15
+                    },
+                    {
+                        "fill": "rgba(0, 153, 0, 0.5)",
+                        "stroke": "rgba(0, 153, 0, 1)",
+                        "lower": 15,
+                        "upper": 999999
+                    }
+                ],
+                "rasterStyle": "",
+                "styleIdx": 34
+            },
+            {
+                "name": "lulc_forest_percent",
+                "label": "Percentage of area with tree cover",
+                "type": 2,
+                "values": [
+                    {
+                        "label": "Less than 30%",
+                        "value": {
+                            "lower": 0,
+                            "upper": 30
+                        }
+                    },
+                    {
+                        "label": "Between 30-60%",
+                        "value": {
+                            "lower": 30,
+                            "upper": 60
+                        }
+                    },
+                    {
+                        "label": "More than 60%",
+                        "value": {
+                            "lower": 60,
+                            "upper": 999999
+                        }
+                    }
+                ],
+                "layer_store": [
+                    "mws_layers"
+                ],
+                "layer_name": [
+                    "deltaG_well_depth"
+                ],
+                "vectorStyle": [
+                    {
+                        "fill": "rgba(204, 229, 255, 0.5)",
+                        "stroke": "rgba(204, 229, 255, 1)",
+                        "lower": 0,
+                        "upper": 30
+                    },
+                    {
+                        "fill": "rgba(102, 178, 255, 0.5)",
+                        "stroke": "rgba(102, 178, 255, 1)",
+                        "lower": 30,
+                        "upper": 60
+                    },
+                    {
+                        "fill": "rgba(0, 76, 153, 0.5)",
+                        "stroke": "rgba(0, 76, 153, 1)",
+                        "lower": 60,
+                        "upper": 999999
+                    }
+                ],
+                "rasterStyle": "",
+                "styleIdx": 35
+            },
+            {
+                "name": "lulc_shrub_percent",
+                "label": "Percentage of area with shrubs",
+                "type": 2,
+                "values": [
+                    {
+                        "label": "Less than 5%",
+                        "value": {
+                            "lower": 0,
+                            "upper": 5
+                        }
+                    },
+                    {
+                        "label": "Between 5-15%",
+                        "value": {
+                            "lower": 5,
+                            "upper": 15
+                        }
+                    },
+                    {
+                        "label": "More than 15%",
+                        "value": {
+                            "lower": 15,
+                            "upper": 999999
+                        }
+                    }
+                ],
+                "layer_store": [
+                    "mws_layers"
+                ],
+                "layer_name": [
+                    "deltaG_well_depth"
+                ],
+                "vectorStyle": [
+                    {
+                        "fill": "rgba(255, 229, 204, 0.5)",
+                        "stroke": "rgba(255, 229, 204, 1)",
+                        "lower": 0,
+                        "upper": 5
+                    },
+                    {
+                        "fill": "rgba(255, 153, 51, 0.5)",
+                        "stroke": "rgba(255, 153, 51, 1)",
+                        "lower": 5,
+                        "upper": 15
+                    },
+                    {
+                        "fill": "rgba(153, 76, 0, 0.5)",
+                        "stroke": "rgba(153, 76, 0, 1)",
+                        "lower": 15,
+                        "upper": 999999
+                    }
+                ],
+                "rasterStyle": "",
+                "styleIdx": 36
             }
         ],
         "Restoration": [
