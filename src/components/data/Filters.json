@@ -44,28 +44,64 @@
                 "values": [
                     {
                         "label": "Low Relief (less than 6m)",
-                        "value": { "lower": 0, "upper": 6 }
+                        "value": {
+                            "lower": 0,
+                            "upper": 6
+                        }
                     },
                     {
                         "label": "Moderate Relief (between 6m and 110m)",
-                        "value": { "lower": 6, "upper": 110 }
+                        "value": {
+                            "lower": 6,
+                            "upper": 110
+                        }
                     },
                     {
                         "label": "High Relief (between 110m and 900m)",
-                        "value": { "lower": 110, "upper": 900 }
+                        "value": {
+                            "lower": 110,
+                            "upper": 900
+                        }
                     },
                     {
                         "label": "Extremely High Relief (More than 900m)",
-                        "value": { "lower": 900, "upper": 999999 }
+                        "value": {
+                            "lower": 900,
+                            "upper": 999999
+                        }
                     }
                 ],
-                "layer_store": [ "mws_layers" ],
-                "layer_name": [ "deltaG_well_depth" ],
+                "layer_store": [
+                    "mws_layers"
+                ],
+                "layer_name": [
+                    "deltaG_well_depth"
+                ],
                 "vectorStyle": [
-                    { "fill": "rgba(255, 255, 153, 0.5)", "stroke": "rgba(255, 255, 153, 1)", "lower": 0, "upper": 6 },
-                    { "fill": "rgba(255, 204, 102, 0.5)", "stroke": "rgba(255, 204, 102, 1)", "lower": 6, "upper": 110 },
-                    { "fill": "rgba(255, 102, 0, 0.5)", "stroke": "rgba(255, 102, 0, 1)", "lower": 110, "upper": 900 },
-                    { "fill": "rgba(153, 0, 0, 0.5)", "stroke": "rgba(153, 0, 0, 1)", "lower": 900, "upper": 999999 }
+                    {
+                        "fill": "rgba(255, 255, 153, 0.5)",
+                        "stroke": "rgba(255, 255, 153, 1)",
+                        "lower": 0,
+                        "upper": 6
+                    },
+                    {
+                        "fill": "rgba(255, 204, 102, 0.5)",
+                        "stroke": "rgba(255, 204, 102, 1)",
+                        "lower": 6,
+                        "upper": 110
+                    },
+                    {
+                        "fill": "rgba(255, 102, 0, 0.5)",
+                        "stroke": "rgba(255, 102, 0, 1)",
+                        "lower": 110,
+                        "upper": 900
+                    },
+                    {
+                        "fill": "rgba(153, 0, 0, 0.5)",
+                        "stroke": "rgba(153, 0, 0, 1)",
+                        "lower": 900,
+                        "upper": 999999
+                    }
                 ],
                 "rasterStyle": "",
                 "styleIdx": 37
@@ -77,23 +113,51 @@
                 "values": [
                     {
                         "label": "Lower Relative Mean Elevation (<-25)",
-                        "value": { "lower": -999999, "upper": -25 }
+                        "value": {
+                            "lower": -999999,
+                            "upper": -25
+                        }
                     },
                     {
                         "label": "Moderate Relative Mean Elevation (-25 to +25)",
-                        "value": { "lower": -25, "upper": 25 }
+                        "value": {
+                            "lower": -25,
+                            "upper": 25
+                        }
                     },
                     {
                         "label": "High Relative Mean Elevation (>+25)",
-                        "value": { "lower": 25, "upper": 999999 }
+                        "value": {
+                            "lower": 25,
+                            "upper": 999999
+                        }
                     }
                 ],
-                "layer_store": [ "mws_layers" ],
-                "layer_name": [ "deltaG_well_depth" ],
+                "layer_store": [
+                    "mws_layers"
+                ],
+                "layer_name": [
+                    "deltaG_well_depth"
+                ],
                 "vectorStyle": [
-                    { "fill": "rgba(255, 153, 153, 0.5)", "stroke": "rgba(255, 153, 153, 1)", "lower": -999999, "upper": -25 },
-                    { "fill": "rgba(255, 255, 153, 0.5)", "stroke": "rgba(255, 255, 153, 1)", "lower": -25, "upper": 25 },
-                    { "fill": "rgba(153, 204, 255, 0.5)", "stroke": "rgba(153, 204, 255, 1)", "lower": 25, "upper": 999999 }
+                    {
+                        "fill": "rgba(255, 153, 153, 0.5)",
+                        "stroke": "rgba(255, 153, 153, 1)",
+                        "lower": -999999,
+                        "upper": -25
+                    },
+                    {
+                        "fill": "rgba(255, 255, 153, 0.5)",
+                        "stroke": "rgba(255, 255, 153, 1)",
+                        "lower": -25,
+                        "upper": 25
+                    },
+                    {
+                        "fill": "rgba(153, 204, 255, 0.5)",
+                        "stroke": "rgba(153, 204, 255, 1)",
+                        "lower": 25,
+                        "upper": 999999
+                    }
                 ],
                 "rasterStyle": "",
                 "styleIdx": 39
@@ -690,64 +754,6 @@
         ],
         "Agriculture": [
             {
-                "name": "river_available",
-                "label": "River",
-                "type": 1,
-                "values": [
-                    {
-                        "label": "Available",
-                        "value": true
-                    },
-                    {
-                        "label": "Not available",
-                        "value": false
-                    }
-                ],
-                "layer_store": [
-                    "river"
-                ],
-                "layer_name": [
-                    "river_vector"
-                ],
-                "vectorStyle": [
-                    {
-                        "fill": "rgba(43, 147, 250, 0.5)",
-                        "stroke": "rgba(43, 147, 250, 1)"
-                    }
-                ],
-                "rasterStyle": "",
-                "styleIdx": 0
-            },
-            {
-                "name": "canal_available",
-                "label": "Canal",
-                "type": 1,
-                "values": [
-                    {
-                        "label": "Available",
-                        "value": true
-                    },
-                    {
-                        "label": "Not available",
-                        "value": false
-                    }
-                ],
-                "layer_store": [
-                    "canal"
-                ],
-                "layer_name": [
-                    "canal_vector"
-                ],
-                "vectorStyle": [
-                    {
-                        "fill": "rgba(43, 147, 250, 0.5)",
-                        "stroke": "rgba(43, 147, 250, 1)"
-                    }
-                ],
-                "rasterStyle": "",
-                "styleIdx": 0
-            },
-            {
                 "name": "avg_double_cropped",
                 "label": "Average percentage of double cropped area over the years 2017 to 2024",
                 "type": 2,
@@ -839,8 +845,68 @@
                         "upper": 9999999
                     }
                 ],
-                "rasterStyle": [""],
+                "rasterStyle": [
+                    ""
+                ],
                 "styleIdx": 28
+            },
+            {
+                "name": "river_available",
+                "label": "River",
+                "type": 1,
+                "values": [
+                    {
+                        "label": "Available",
+                        "value": true
+                    },
+                    {
+                        "label": "Not available",
+                        "value": false
+                    }
+                ],
+                "layer_store": [
+                    "river"
+                ],
+                "layer_name": [
+                    "river_vector"
+                ],
+                "vectorStyle": [
+                    {
+                        "fill": "rgba(43, 147, 250, 0.5)",
+                        "stroke": "rgba(43, 147, 250, 1)"
+                    }
+                ],
+                "rasterStyle": "",
+                "styleIdx": 0
+            },
+            {
+                "name": "canal_available",
+                "label": "Canal",
+                "type": 1,
+                "values": [
+                    {
+                        "label": "Available",
+                        "value": true
+                    },
+                    {
+                        "label": "Not available",
+                        "value": false
+                    }
+                ],
+                "layer_store": [
+                    "canal"
+                ],
+                "layer_name": [
+                    "canal_vector"
+                ],
+                "vectorStyle": [
+                    {
+                        "fill": "rgba(43, 147, 250, 0.5)",
+                        "stroke": "rgba(43, 147, 250, 1)"
+                    }
+                ],
+                "rasterStyle": "",
+                "styleIdx": 0
             }
         ],
         "Land-Use": [
@@ -1669,7 +1735,9 @@
                 "layer_store": [
                     "facilities_proximity"
                 ],
-                "layer_name": ["facilities"],
+                "layer_name": [
+                    "facilities"
+                ],
                 "vectorStyle": [
                     {
                         "fill": "rgba(255, 249, 196, 0.5)",
@@ -1707,10 +1775,12 @@
                         }
                     }
                 ],
-               "layer_store": [
+                "layer_store": [
                     "facilities_proximity"
                 ],
-                "layer_name": ["facilities"],
+                "layer_name": [
+                    "facilities"
+                ],
                 "vectorStyle": [
                     {
                         "fill": "rgba(232, 238, 186, 0.5)",
@@ -1758,7 +1828,9 @@
                 "layer_store": [
                     "facilities_proximity"
                 ],
-                "layer_name": ["facilities"],
+                "layer_name": [
+                    "facilities"
+                ],
                 "vectorStyle": [
                     {
                         "fill": "rgba(255, 205, 210, 0.5)",
@@ -1812,7 +1884,9 @@
                 "layer_store": [
                     "facilities_proximity"
                 ],
-                "layer_name": ["facilities"],
+                "layer_name": [
+                    "facilities"
+                ],
                 "vectorStyle": [
                     {
                         "fill": "rgba(255, 205, 210, 0.5)",
@@ -1859,7 +1933,9 @@
                 "layer_store": [
                     "facilities_proximity"
                 ],
-                "layer_name": ["facilities"],
+                "layer_name": [
+                    "facilities"
+                ],
                 "vectorStyle": [
                     {
                         "fill": "rgba(232, 238, 186, 0.5)",
@@ -1900,7 +1976,9 @@
                 "layer_store": [
                     "facilities_proximity"
                 ],
-                "layer_name": ["facilities"],
+                "layer_name": [
+                    "facilities"
+                ],
                 "vectorStyle": [
                     {
                         "fill": "rgba(72, 55, 217, 0.5)",
@@ -1948,7 +2026,9 @@
                 "layer_store": [
                     "facilities_proximity"
                 ],
-                "layer_name": ["facilities"],
+                "layer_name": [
+                    "facilities"
+                ],
                 "vectorStyle": [
                     {
                         "fill": "rgba(255, 255, 102, 0.5)",
@@ -2002,7 +2082,9 @@
                 "layer_store": [
                     "facilities_proximity"
                 ],
-                "layer_name": ["facilities"],
+                "layer_name": [
+                    "facilities"
+                ],
                 "vectorStyle": [
                     {
                         "fill": "rgba(200, 230, 201, 0.5)",
@@ -2056,7 +2138,9 @@
                 "layer_store": [
                     "facilities_proximity"
                 ],
-                "layer_name": ["facilities"],
+                "layer_name": [
+                    "facilities"
+                ],
                 "vectorStyle": [
                     {
                         "fill": "rgba(204, 238, 255, 0.5)",
@@ -2110,7 +2194,9 @@
                 "layer_store": [
                     "facilities_proximity"
                 ],
-                "layer_name": ["facilities"],
+                "layer_name": [
+                    "facilities"
+                ],
                 "vectorStyle": [
                     {
                         "fill": "rgba(255, 170, 85, 0.5)",
@@ -2164,7 +2250,9 @@
                 "layer_store": [
                     "facilities_proximity"
                 ],
-                "layer_name": ["facilities"],
+                "layer_name": [
+                    "facilities"
+                ],
                 "vectorStyle": [
                     {
                         "fill": "rgba(200, 230, 201, 0.5)",
