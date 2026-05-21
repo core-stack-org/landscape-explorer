@@ -226,9 +226,9 @@ const MapLegend = ({ showMWS, showVillages, currentLayer, showConnectivity }) =>
   ];
 
   const lulcForestPercentItems = [
-    { color: "#cce5ff", label: "Less than 30%" },
-    { color: "#66b2ff", label: "Between 30-60%" },
-    { color: "#004c99", label: "More than 60%" },
+    { color: "#BFE8F5", label: "Less than 30%" },
+    { color: "#48B5DC", label: "Between 30-60%" },
+    { color: "#2596BE", label: "More than 60%" },
   ];
 
   const lulcShrubPercentItems = [
@@ -252,16 +252,16 @@ const MapLegend = ({ showMWS, showVillages, currentLayer, showConnectivity }) =>
   ];
 
   const reliefLegendItems = [
-    { color: "#ffff99", label: "Low Relief (less than 6m)" },
-    { color: "#ffcc66", label: "Moderate Relief (between 6m and 110m)" },
-    { color: "#ff6600", label: "High Relief (between 110m and 900m)" },
-    { color: "#990000", label: "Extremely High Relief (More than 900m)" },
+    { color: "#e0e0e0", label: "Low Relief (less than 6m)" },
+    { color: "#bdbdbd", label: "Moderate Relief (between 6m and 110m)" },
+    { color: "#757575", label: "High Relief (between 110m and 900m)" },
+    { color: "#424242", label: "Extremely High Relief (More than 900m)" },
   ];
 
   const relMeanElevLegendItems = [
-    { color: "#ff9999", label: "Lower Relative Mean Elevation (<-25)" },
-    { color: "#ffff99", label: "Moderate Relative Mean Elevation (-25 to +25)" },
-    { color: "#99ccff", label: "High Relative Mean Elevation (>+25)" },
+    { color: "#F4D03F", label: "Lower Relative Mean Elevation (<-25)" },
+    { color: "#EB984E", label: "Moderate Relative Mean Elevation (-25 to +25)" },
+    { color: "#E74C3C", label: "High Relative Mean Elevation (>+25)" },
   ];
 
   const treeOnSlopeItems = [
@@ -509,9 +509,9 @@ const MapLegend = ({ showMWS, showVillages, currentLayer, showConnectivity }) =>
   const isLulcLayerActive = currentLayer?.some(
     (layer) =>
       (layer.name === "avg_double_cropped" ||
-      layer.name === "built_up_area" ||
-      layer.name.includes("LULC") ||
-      layer.name.includes("lulc")) &&
+        layer.name === "built_up_area" ||
+        layer.name.includes("LULC") ||
+        layer.name.includes("lulc")) &&
       !isExcludedLulc(layer.name)
   );
 
