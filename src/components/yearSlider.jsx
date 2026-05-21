@@ -35,19 +35,31 @@ const YearSlider = ({ currentLayer, sliderId = null, interventionYear }) => {
 
   const isLulcLayerActive = (() => {
     if (!currentLayer) return false;
+
+    const isExcludedLulc = (name) => {
+      if (!name) return false;
+      return (
+        name === "lulc_crop_percent" ||
+        name === "lulc_forest_percent" ||
+        name === "lulc_shrub_percent"
+      );
+    };
+
     if (typeof currentLayer === "object" && currentLayer.name)
       return (
-        currentLayer.name === "avg_double_cropped" ||
+        (currentLayer.name === "avg_double_cropped" ||
         currentLayer.name.includes("LULC") ||
-        currentLayer.name.includes("lulc")
+        currentLayer.name.includes("lulc")) &&
+        !isExcludedLulc(currentLayer.name)
       );
     if (Array.isArray(currentLayer))
       return currentLayer.some(
         (l) =>
-          l.name === "avg_double_cropped" ||
+          (l.name === "avg_double_cropped" ||
           l.name === "built_up_area" ||
           l.name.includes("LULC") ||
-          l.name.includes("lulc")
+          l.name.includes("lulc")) &&
+          !isExcludedLulc(l.name)
       );
     return false;
   })();
@@ -184,8 +196,8 @@ const YearSlider = ({ currentLayer, sliderId = null, interventionYear }) => {
                     background: isIntervention
                       ? "#f87171"
                       : isActive
-                      ? "#6366f1"
-                      : "#d1d5db",
+                        ? "#6366f1"
+                        : "#d1d5db",
                   }}
                 />
                 {/* Label */}
@@ -195,8 +207,8 @@ const YearSlider = ({ currentLayer, sliderId = null, interventionYear }) => {
                     color: isIntervention
                       ? "#ef4444"
                       : isActive
-                      ? "#6366f1"
-                      : "#9ca3af",
+                        ? "#6366f1"
+                        : "#9ca3af",
                     fontWeight: isActive ? 700 : 500,
                   }}
                 >

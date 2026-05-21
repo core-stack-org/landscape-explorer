@@ -266,6 +266,80 @@ const layerStyles = (feature, vectorStyle, idx = 0, villageJson, dataJson) => {
                 }
             }
             break;    
+
+        case 32:
+            for(let i = 0 ; i < dataJson.length; ++i){
+                if(dataJson[i].mws_id === feature.values_.uid){
+                    let val = dataJson[i].river_available;
+                    avg_Res = (val == 1 || val === 'true' || val === true) ? 1 : 0;
+                    break;
+                }
+            }
+            break;
+
+        case 33:
+            for(let i = 0 ; i < dataJson.length; ++i){
+                if(dataJson[i].mws_id === feature.values_.uid){
+                    let val = dataJson[i].canal_available;
+                    avg_Res = (val == 1 || val === 'true' || val === true) ? 1 : 0;
+                    break;
+                }
+            }
+            break;
+
+        case 34:
+            for(let i = 0 ; i < dataJson.length; ++i){
+                if(dataJson[i].mws_id === feature.values_.uid){
+                    avg_Res = dataJson[i].lulc_crop_percent;
+                    break;
+                }
+            }
+            break;
+
+        case 35:
+            for(let i = 0 ; i < dataJson.length; ++i){
+                if(dataJson[i].mws_id === feature.values_.uid){
+                    avg_Res = dataJson[i].lulc_forest_percent;
+                    break;
+                }
+            }
+            break;
+
+        case 36:
+            for(let i = 0 ; i < dataJson.length; ++i){
+                if(dataJson[i].mws_id === feature.values_.uid){
+                    avg_Res = dataJson[i].lulc_shrub_percent;
+                    break;
+                }
+            }
+            break;
+
+        case 37:
+            for(let i = 0 ; i < dataJson.length; ++i){
+                if(dataJson[i].mws_id === feature.values_.uid){
+                    avg_Res = dataJson[i].relief;
+                    break;
+                }
+            }
+            break;
+
+        case 38:
+            for(let i = 0 ; i < dataJson.length; ++i){
+                if(dataJson[i].mws_id === feature.values_.uid){
+                    avg_Res = dataJson[i].mean_elevation;
+                    break;
+                }
+            }
+            break;
+
+        case 39:
+            for(let i = 0 ; i < dataJson.length; ++i){
+                if(dataJson[i].mws_id === feature.values_.uid){
+                    avg_Res = dataJson[i].relative_mean_elevation;
+                    break;
+                }
+            }
+            break;
     }
     
     for(tempIdx = 0; tempIdx < vectorStyle.length; ++tempIdx){

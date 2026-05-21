@@ -15,6 +15,7 @@ import {
 import "ol/ol.css";
 import XYZ from "ol/source/XYZ";
 import TileLayer from "ol/layer/Tile";
+import TileWMS     from 'ol/source/TileWMS.js';
 import Control from "ol/control/Control.js";
 import { defaults as defaultControls } from "ol/control/defaults.js";
 import { Map, View } from "ol";
@@ -155,6 +156,18 @@ const KYLDashboardPage = () => {
 
     return { byId, mwsToVillages, mwsToSWBIds, fieldIndex };
   }, [dataJson]);
+
+  // ─── Contour interval based on zoom resolution ───────────────────────────────
+  const getContourInterval = (resolution) => {
+    if (resolution < 0.00005)  return 10;   // zoom 15+  → 10m  (street level)
+    if (resolution < 0.0001)   return 20;   // zoom 14   → 20m
+    if (resolution < 0.0002)   return 25;   // zoom 13   → 25m
+    if (resolution < 0.0005)   return 50;   // zoom 12   → 50m  ← tehsil (was 10m)
+    if (resolution < 0.001)    return 100;  // zoom 11   → 100m
+    if (resolution < 0.003)    return 200;  // zoom 9-10 → 200m
+    if (resolution < 0.008)    return 300;  // zoom 7-8  → 300m
+    return 500;                             // zoom < 7  → 500m (overview)
+  };
 
   const addLayerSafe = (layer) => layer && mapRef.current && mapRef.current.addLayer(layer);
 
@@ -750,139 +763,6 @@ const KYLDashboardPage = () => {
     }
   };
 
-  // const generateConnectivityArrows = () => {
-  //   if (!mwsConnectivityLayerRef.current || !mwsCentroidLayerRef.current || !mapRef.current) {
-  //     console.warn("Connectivity or centroid layer not ready");
-  //     return;
-  //   }
-  
-  //   const connectivityFeatures = mwsConnectivityLayerRef.current.getSource().getFeatures();
-  //   const centroidFeatures = mwsCentroidLayerRef.current.getSource().getFeatures();
-  
-  //   if (!connectivityFeatures.length || !centroidFeatures.length) {
-  //     console.warn("No features found for arrow generation");
-  //     return;
-  //   }
-  
-  //   const uidToCoord = {};
-  //   centroidFeatures.forEach((feature) => {
-  //     const uid = feature.get("uid") || feature.get("UID");
-  //     if (!uid) return;
-  //     uidToCoord[uid.toString().trim()] = feature.getGeometry().getCoordinates();
-  //   });
-  
-  //   const pairMap = {};
-  //   const features = [];
-  
-  //   connectivityFeatures.forEach((feature) => {
-  //     const uid        = feature.get("uid");
-  //     const downstream = feature.get("downstream");
-  //     if (!uid || !downstream) return;
-  
-  //     const start = uidToCoord[uid.toString().trim()];
-  //     const end   = uidToCoord[downstream.toString().trim()];
-  //     if (!start || !end) return;
-  
-  //     const key =
-  //       start[0] < end[0]
-  //         ? `${start.join(",")}_${end.join(",")}`
-  //         : `${end.join(",")}_${start.join(",")}`;
-  
-  //     if (!pairMap[key]) pairMap[key] = 0;
-  //     const side = pairMap[key]++ % 2 === 0 ? -1 : 1;
-  
-  //     const dx  = end[0] - start[0];
-  //     const dy  = end[1] - start[1];
-  //     const len = Math.sqrt(dx * dx + dy * dy);
-  //     if (len < 1e-6) return;
-  
-  //     const px = -(dy / len);
-  //     const py =   dx / len;
-  //     const MAP_OFFSET = len * 0.04; // slight perpendicular offset for bidirectional pairs
-  
-  //     // Store both endpoints in map coords on the feature
-  //     const offStart = [
-  //       start[0] + px * MAP_OFFSET * side,
-  //       start[1] + py * MAP_OFFSET * side,
-  //     ];
-  //     const offEnd = [
-  //       end[0] + px * MAP_OFFSET * side,
-  //       end[1] + py * MAP_OFFSET * side,
-  //     ];
-  
-  //     const f = new Feature({
-  //       // Geometry is the full line — map coords, zoom-proof
-  //       geometry:    new LineString([offStart, offEnd]),
-  //       featureType: "arrow",
-  //       upstream:    uid,
-  //       downstream,
-  //     });
-  
-  //     // Custom renderer: draws the full arrow (line + head + dot) on canvas in screen px
-  //     f.setStyle(
-  //       new Style({
-  //         renderer: (pixelCoords, state) => {
-  //           const ctx = state.context;
-  
-  //           // pixelCoords = [[x1,y1],[x2,y2]] in screen pixels
-  //           const [[x1, y1], [x2, y2]] = pixelCoords;
-  
-  //           const angle      = Math.atan2(y2 - y1, x2 - x1);
-  //           const ARROW_HEAD = 10; // px
-  //           const ARROW_W    = 6;  // half-width of head
-  //           const DOT_R      = 3;
-  
-  //           ctx.save();
-  //           ctx.strokeStyle = "white";
-  //           ctx.fillStyle   = "white";
-  //           ctx.lineWidth   = 1.5;
-  //           ctx.lineCap     = "round";
-  //           ctx.lineJoin    = "round";
-  
-  //           // 1. Shaft line
-  //           ctx.beginPath();
-  //           ctx.moveTo(x1, y1);
-  //           ctx.lineTo(x2, y2);
-  //           ctx.stroke();
-  
-  //           // 2. Arrowhead at end (x2, y2)
-  //           ctx.beginPath();
-  //           ctx.moveTo(
-  //             x2 - ARROW_HEAD * Math.cos(angle - Math.PI / 7),
-  //             y2 - ARROW_HEAD * Math.sin(angle - Math.PI / 7)
-  //           );
-  //           ctx.lineTo(x2, y2);
-  //           ctx.lineTo(
-  //             x2 - ARROW_HEAD * Math.cos(angle + Math.PI / 7),
-  //             y2 - ARROW_HEAD * Math.sin(angle + Math.PI / 7)
-  //           );
-  //           ctx.stroke();
-  
-  //           // 3. Dot at start (x1, y1)
-  //           ctx.beginPath();
-  //           ctx.arc(x1, y1, DOT_R, 0, Math.PI * 2);
-  //           ctx.fill();
-  
-  //           ctx.restore();
-  //         },
-  //       })
-  //     );
-  
-  //     features.push(f);
-  //   });
-  
-  //   const arrowLayer = new VectorLayer({
-  //     source: new VectorSource({ features }),
-  //   });
-  
-  //   arrowLayer.setZIndex(9999);
-  //   arrowLayer.setVisible(false);
-  //   mwsDrainageLayerRef.current.setVisible(false);
-  //   mapRef.current.addLayer(arrowLayer);
-  //   mwsArrowLayerRef.current = arrowLayer;
-  
-  // };
-
   const generateConnectivityArrows = () => {
     if (!mwsConnectivityLayerRef.current || !mwsCentroidLayerRef.current || !mapRef.current) {
       console.warn("Connectivity or centroid layer not ready");
@@ -1468,6 +1348,7 @@ const KYLDashboardPage = () => {
 
         boundaryLayerRef.current.updateStyleVariables({ isVisualizeOn: false });
         mwsLayerRef.current.updateStyleVariables({ isVisualizeOn: false });
+        setShowMWS(true)
 
         if (waterbodiesLayerRef.current) {
           waterbodiesLayerRef.current.updateStyleVariables({
@@ -1508,14 +1389,6 @@ const KYLDashboardPage = () => {
             );
             layerRef.push(tempLayer);
             mapRef.current.addLayer(tempLayer);
-          } else if (filter.layer_store[i] === "LULC" && filter.rasterStyle === "lulc_water_pixels") {
-            tempLayer = await getImageLayer(
-              `${filter.layer_store[i]}_${filter.layer_name[i]}`,
-              `LULC_24_25_${transformName(district.label)}_${transformName(block.label)}_${filter.layer_name[i]}`,
-              true, filter.rasterStyle
-            );
-            layerRef.push(tempLayer);
-            mapRef.current.addLayer(tempLayer);
           } else if (filter.layer_store[i] === "change_detection") {
             tempLayer = await getVectorLayers(
               `${filter.layer_store[i]}`,
@@ -1545,7 +1418,7 @@ const KYLDashboardPage = () => {
             );
             layerRef.push(tempLayer);
             mapRef.current.addLayer(tempLayer);
-          } else if (filter.layer_store[i] === "drought" || filter.layer_store[i] === "green_credit" || filter.layer_store[i] === "terrain_lulc") {
+          } else if (filter.layer_store[i] === "drought" || filter.layer_store[i] === "green_credit" || filter.layer_store[i] === "terrain_lulc" || filter.layer_store[i] === "river" || filter.layer_store[i] === "canal") {
             tempLayer = await getVectorLayers(
               filter.layer_store[i],
               `${transformName(district.label)}_${transformName(block.label)}_${filter.layer_name[i]}`
@@ -1563,6 +1436,50 @@ const KYLDashboardPage = () => {
             );
             layerRef.push(tempLayer);
             mapRef.current.addLayer(tempLayer);
+          } else if (filter.name === "relative_mean_elevation"){
+            const view = mapRef.current.getView();
+
+            tempLayer = await getImageLayer(
+              filter.layer_store[i],
+              `${transformName(district.label)}_${transformName(block.label)}_${filter.layer_name[i]}`,
+              true, filter.rasterStyle
+            )
+
+            const contourSource = new TileWMS({
+              url       : `${process.env.REACT_APP_GEOSERVER_URL}` + 'wms',
+              params    : {
+                LAYERS     : `${filter.layer_store[i]}:${transformName(district.label)}_${transformName(block.label)}_${filter.layer_name[i]}`,
+                STYLES     : 'dem_contours',
+                TILED      : true,
+                TRANSPARENT: true,
+                FORMAT     : 'image/png',
+                ENV        : `interval:${getContourInterval(view.getResolution())}`,
+              },
+              serverType: 'geoserver',
+            });
+
+            const contourLayer = new TileLayer({
+              source: contourSource,
+              opacity: 0.9,
+              zIndex : 2,
+            });
+
+            layerRef.push(tempLayer)
+            layerRef.push(contourLayer)
+            mapRef.current.addLayer(tempLayer);
+            mapRef.current.addLayer(contourLayer);
+            let lastInterval = getContourInterval(view.getResolution());
+            mapRef.current.on('moveend', () => {
+              const interval = getContourInterval(view.getResolution());
+              if (interval !== lastInterval) {
+                lastInterval = interval;
+                contourSource.updateParams({ ENV: `interval:${interval}` });
+              }
+              const res = mapRef.current.getView().getResolution();
+              console.log('resolution:', res, '→ interval:', getContourInterval(res));
+            });
+
+            
           } else {
             tempLayer = await getVectorLayers(
               filter.layer_store[i],
@@ -1570,18 +1487,27 @@ const KYLDashboardPage = () => {
             );
           }
 
-          if (
+          if (filter.layer_store[i] === "river" || filter.layer_store[i] === "canal") {
+            tempLayer.setStyle(new Style({
+              stroke: new Stroke({ color: "rgba(0, 0, 255, 1)", width: 2.5 })
+            }));
+            tempLayer.setZIndex(9998);
+            layerRef.push(tempLayer);
+            mapRef.current.addLayer(tempLayer);
+          } else if (
             filter.layer_store[i] !== "terrain" &&
             filter.layer_store[i] !== "LULC" &&
             filter.layer_store[i] !== "restoration" &&
             filter.layer_store[i] !== "nrega_assets" &&
             filter.layer_store[i] !== "lcw" &&
             filter.layer_store[i] !== "factory_csr" &&
-            filter.layer_store[i] !== "mining"
+            filter.layer_store[i] !== "mining" & 
+            filter.layer_store[i] !== "dem"
           ) {
             tempLayer.setStyle((feature) =>
               layerStyle(feature, filter.vectorStyle, filter.styleIdx, villageJson, dataJson)
             );
+            tempLayer.setZIndex(10); // slightly above base
             layerRef.push(tempLayer);
             mapRef.current.addLayer(tempLayer);
           }
@@ -1612,6 +1538,7 @@ const KYLDashboardPage = () => {
         mapRef.current.removeLayer(mwsLayerRef.current);
         mapRef.current.removeLayer(boundaryLayerRef.current);
         mapRef.current.addLayer(mwsLayerRef.current);
+        setShowMWS(false)
         mapRef.current.addLayer(boundaryLayerRef.current);
         boundaryLayerRef.current.setZIndex(9999);
 

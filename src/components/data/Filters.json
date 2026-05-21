@@ -1,6 +1,6 @@
 {
     "MWS": {
-        "Land": [
+        "Terrain": [
             {
                 "name": "terrainCluster_ID",
                 "label": "Terrain Type",
@@ -36,6 +36,278 @@
                     "Terrain_Style_11_Classes"
                 ],
                 "styleIdx": 0
+            },
+            {
+                "name": "relief",
+                "label": "Microwatershed Relief",
+                "type": 2,
+                "values": [
+                    {
+                        "label": "Low Relief (less than 6m)",
+                        "value": {
+                            "lower": 0,
+                            "upper": 6
+                        }
+                    },
+                    {
+                        "label": "Moderate Relief (between 6m and 110m)",
+                        "value": {
+                            "lower": 6,
+                            "upper": 110
+                        }
+                    },
+                    {
+                        "label": "High Relief (between 110m and 900m)",
+                        "value": {
+                            "lower": 110,
+                            "upper": 900
+                        }
+                    },
+                    {
+                        "label": "Extremely High Relief (More than 900m)",
+                        "value": {
+                            "lower": 900,
+                            "upper": 999999
+                        }
+                    }
+                ],
+                "layer_store": [
+                    "mws_layers"
+                ],
+                "layer_name": [
+                    "deltaG_well_depth"
+                ],
+                "vectorStyle": [
+                    {
+                        "fill": "rgba(224, 224, 224, 0.5)",
+                        "stroke": "rgba(224, 224, 224, 1)",
+                        "lower": 0,
+                        "upper": 6
+                    },
+                    {
+                        "fill": "rgba(189, 189, 189, 0.5)",
+                        "stroke": "rgba(189, 189, 189, 1)",
+                        "lower": 6,
+                        "upper": 110
+                    },
+                    {
+                        "fill": "rgba(117, 117, 117, 0.5)",
+                        "stroke": "rgba(117, 117, 117, 1)",
+                        "lower": 110,
+                        "upper": 900
+                    },
+                    {
+                        "fill": "rgba(66, 66, 66, 0.5)",
+                        "stroke": "rgba(66, 66, 66, 1)",
+                        "lower": 900,
+                        "upper": 999999
+                    }
+                ],
+                "rasterStyle": "",
+                "styleIdx": 37
+            },
+            {
+                "name": "relative_mean_elevation",
+                "label": "Relative Mean Elevation",
+                "type": 2,
+                "values": [
+                    {
+                        "label": "Lower Relative Mean Elevation (<-25)",
+                        "value": {
+                            "lower": -999999,
+                            "upper": -25
+                        }
+                    },
+                    {
+                        "label": "Moderate Relative Mean Elevation (-25 to +25)",
+                        "value": {
+                            "lower": -25,
+                            "upper": 25
+                        }
+                    },
+                    {
+                        "label": "High Relative Mean Elevation (>+25)",
+                        "value": {
+                            "lower": 25,
+                            "upper": 999999
+                        }
+                    }
+                ],
+                "layer_store": ["dem"],
+                "layer_name": ["dem_raster"],
+                "vectorStyle": [],
+                "rasterStyle": "dem_grayscale",
+                "styleIdx": 0
+            }
+        ],
+        "Land-Use": [
+            {
+                "name": "lulc_crop_percent",
+                "label": "Percentage of area with crops",
+                "type": 2,
+                "values": [
+                    {
+                        "label": "Less than 5%",
+                        "value": {
+                            "lower": 0,
+                            "upper": 5
+                        }
+                    },
+                    {
+                        "label": "Between 5-15%",
+                        "value": {
+                            "lower": 5,
+                            "upper": 15
+                        }
+                    },
+                    {
+                        "label": "More than 15%",
+                        "value": {
+                            "lower": 15,
+                            "upper": 999999
+                        }
+                    }
+                ],
+                "layer_store": [
+                    "mws_layers"
+                ],
+                "layer_name": [
+                    "deltaG_well_depth"
+                ],
+                "vectorStyle": [
+                    {
+                        "fill": "rgba(204, 255, 204, 0.5)",
+                        "stroke": "rgba(204, 255, 204, 1)",
+                        "lower": 0,
+                        "upper": 5
+                    },
+                    {
+                        "fill": "rgba(102, 255, 102, 0.5)",
+                        "stroke": "rgba(102, 255, 102, 1)",
+                        "lower": 5,
+                        "upper": 15
+                    },
+                    {
+                        "fill": "rgba(0, 153, 0, 0.5)",
+                        "stroke": "rgba(0, 153, 0, 1)",
+                        "lower": 15,
+                        "upper": 999999
+                    }
+                ],
+                "rasterStyle": "",
+                "styleIdx": 34
+            },
+            {
+                "name": "lulc_forest_percent",
+                "label": "Percentage of area with tree cover",
+                "type": 2,
+                "values": [
+                    {
+                        "label": "Less than 30%",
+                        "value": {
+                            "lower": 0,
+                            "upper": 30
+                        }
+                    },
+                    {
+                        "label": "Between 30-60%",
+                        "value": {
+                            "lower": 30,
+                            "upper": 60
+                        }
+                    },
+                    {
+                        "label": "More than 60%",
+                        "value": {
+                            "lower": 60,
+                            "upper": 999999
+                        }
+                    }
+                ],
+                "layer_store": [
+                    "mws_layers"
+                ],
+                "layer_name": [
+                    "deltaG_well_depth"
+                ],
+                "vectorStyle": [
+                    {
+                        "fill": "rgba(191, 232, 245, 0.5)",
+                        "stroke": "rgba(191, 232, 245, 1)",
+                        "lower": 0,
+                        "upper": 30
+                    },
+                    {
+                        "fill": "rgba(72, 181, 220, 0.5)",
+                        "stroke": "rgba(72, 181, 220, 1)",
+                        "lower": 30,
+                        "upper": 60
+                    },
+                    {
+                        "fill": "rgba(37, 150, 190, 0.5)",
+                        "stroke": "rgba(37, 150, 190, 1)",
+                        "lower": 60,
+                        "upper": 999999
+                    }
+                ],
+                "rasterStyle": "",
+                "styleIdx": 35
+            },
+            {
+                "name": "lulc_shrub_percent",
+                "label": "Percentage of area with shrubs",
+                "type": 2,
+                "values": [
+                    {
+                        "label": "Less than 5%",
+                        "value": {
+                            "lower": 0,
+                            "upper": 5
+                        }
+                    },
+                    {
+                        "label": "Between 5-15%",
+                        "value": {
+                            "lower": 5,
+                            "upper": 15
+                        }
+                    },
+                    {
+                        "label": "More than 15%",
+                        "value": {
+                            "lower": 15,
+                            "upper": 999999
+                        }
+                    }
+                ],
+                "layer_store": [
+                    "mws_layers"
+                ],
+                "layer_name": [
+                    "deltaG_well_depth"
+                ],
+                "vectorStyle": [
+                    {
+                        "fill": "rgba(255, 229, 204, 0.5)",
+                        "stroke": "rgba(255, 229, 204, 1)",
+                        "lower": 0,
+                        "upper": 5
+                    },
+                    {
+                        "fill": "rgba(255, 153, 51, 0.5)",
+                        "stroke": "rgba(255, 153, 51, 1)",
+                        "lower": 5,
+                        "upper": 15
+                    },
+                    {
+                        "fill": "rgba(153, 76, 0, 0.5)",
+                        "stroke": "rgba(153, 76, 0, 1)",
+                        "lower": 15,
+                        "upper": 999999
+                    }
+                ],
+                "rasterStyle": "",
+                "styleIdx": 36
             }
         ],
         "Climate": [
@@ -720,8 +992,68 @@
                         "upper": 9999999
                     }
                 ],
-                "rasterStyle": [""],
+                "rasterStyle": [
+                    ""
+                ],
                 "styleIdx": 28
+            },
+            {
+                "name": "river_available",
+                "label": "River",
+                "type": 1,
+                "values": [
+                    {
+                        "label": "Available",
+                        "value": true
+                    },
+                    {
+                        "label": "Not available",
+                        "value": false
+                    }
+                ],
+                "layer_store": [
+                    "river"
+                ],
+                "layer_name": [
+                    "river_vector"
+                ],
+                "vectorStyle": [
+                    {
+                        "fill": "rgba(43, 147, 250, 0.5)",
+                        "stroke": "rgba(43, 147, 250, 1)"
+                    }
+                ],
+                "rasterStyle": "",
+                "styleIdx": 0
+            },
+            {
+                "name": "canal_available",
+                "label": "Canal",
+                "type": 1,
+                "values": [
+                    {
+                        "label": "Available",
+                        "value": true
+                    },
+                    {
+                        "label": "Not available",
+                        "value": false
+                    }
+                ],
+                "layer_store": [
+                    "canal"
+                ],
+                "layer_name": [
+                    "canal_vector"
+                ],
+                "vectorStyle": [
+                    {
+                        "fill": "rgba(43, 147, 250, 0.5)",
+                        "stroke": "rgba(43, 147, 250, 1)"
+                    }
+                ],
+                "rasterStyle": "",
+                "styleIdx": 0
             }
         ],
         "Restoration": [
@@ -1042,63 +1374,139 @@
             }
         ]
     },
-    "Village": {
-        "NREGA": [
+    "Waterbody": {
+        "Waterbody": [
             {
-                "name": "total_assets",
-                "label": "Total number of NREGA works",
+                "name": "waterbody_type",
+                "label": "Waterbody Type",
+                "type": 1,
+                "values": [
+                    {
+                        "label": "On river",
+                        "value": 1
+                    },
+                    {
+                        "label": "Off river",
+                        "value": 0
+                    }
+                ],
+                "layer_store": [
+                    "waterbodies"
+                ],
+                "layer_name": [
+                    "waterbodies"
+                ],
+                "vectorStyle": [
+                    {}
+                ],
+                "rasterStyle": "",
+                "styleIdx": 2
+            },
+            {
+                "name": "waterbody_size",
+                "label": "Size of Waterbody",
                 "type": 2,
                 "values": [
                     {
-                        "label": "Less than 100",
+                        "label": "WB < 1 ha",
                         "value": {
                             "lower": 0,
-                            "upper": 100
+                            "upper": 1
                         }
                     },
                     {
-                        "label": "Between 100 to 300",
+                        "label": "1 ha < WB < 5 ha",
                         "value": {
-                            "lower": 100,
-                            "upper": 300
+                            "lower": 1,
+                            "upper": 5
                         }
                     },
                     {
-                        "label": "More than 300",
+                        "label": "5 ha < WB < 10 ha",
                         "value": {
-                            "lower": 300,
-                            "upper": 999999999
+                            "lower": 5,
+                            "upper": 10
+                        }
+                    },
+                    {
+                        "label": "WB > 10 ha",
+                        "value": {
+                            "lower": 10,
+                            "upper": 999999
                         }
                     }
                 ],
                 "layer_store": [
-                    "nrega_assets"
+                    "waterbodies"
                 ],
-                "layer_name": [],
+                "layer_name": [
+                    "waterbodies"
+                ],
                 "vectorStyle": [
-                    {
-                        "fill": "rgba(135, 206, 235, 0.5)",
-                        "stroke": "rgba(135, 206, 235, 1)",
-                        "lower": 0,
-                        "upper": 100
-                    },
-                    {
-                        "fill": "rgba(65, 105, 225, 0.5)",
-                        "stroke": "rgba(65, 105, 225, 1)",
-                        "lower": 100,
-                        "upper": 300
-                    },
-                    {
-                        "fill": "rgba(0, 0, 128, 0.5)",
-                        "stroke": "rgba(0, 0, 128, 1)",
-                        "lower": 300,
-                        "upper": 999999999
-                    }
+                    {}
                 ],
                 "rasterStyle": "",
-                "styleIdx": 9
+                "styleIdx": 0
+            },
+            {
+                "name": "surface_water_trend",
+                "label": "Surface Water Trend",
+                "type": 1,
+                "values": [
+                    {
+                        "label": "Positive Trend",
+                        "value": 1
+                    },
+                    {
+                        "label": "Negative Trend",
+                        "value": -1
+                    },
+                    {
+                        "label": "Steady",
+                        "value": 0
+                    }
+                ],
+                "layer_store": [
+                    "waterbodies"
+                ],
+                "layer_name": [
+                    "waterbodies"
+                ],
+                "vectorStyle": [
+                    {}
+                ],
+                "rasterStyle": "",
+                "styleIdx": 1
+            },
+            {
+                "name": "drainage_line",
+                "label": "Drainage Line",
+                "type": 1,
+                "values": [
+                    {
+                        "label": "On drainage line",
+                        "value": 1
+                    },
+                    {
+                        "label": "Off drainage line",
+                        "value": 0
+                    }
+                ],
+                "layer_store": [
+                    "waterbodies"
+                ],
+                "layer_name": [
+                    "waterbodies"
+                ],
+                "vectorStyle": [
+                    {}
+                ],
+                "rasterStyle": "",
+                "styleIdx": 2
             }
-        ],
+        ]
+    },
+    "Village": {
         "Demographic": [
             {
                 "name": "total_population",
@@ -1380,7 +1788,9 @@
                 "layer_store": [
                     "facilities_proximity"
                 ],
-                "layer_name": ["facilities"],
+                "layer_name": [
+                    "facilities"
+                ],
                 "vectorStyle": [
                     {
                         "fill": "rgba(255, 249, 196, 0.5)",
@@ -1418,10 +1828,12 @@
                         }
                     }
                 ],
-               "layer_store": [
+                "layer_store": [
                     "facilities_proximity"
                 ],
-                "layer_name": ["facilities"],
+                "layer_name": [
+                    "facilities"
+                ],
                 "vectorStyle": [
                     {
                         "fill": "rgba(232, 238, 186, 0.5)",
@@ -1469,7 +1881,9 @@
                 "layer_store": [
                     "facilities_proximity"
                 ],
-                "layer_name": ["facilities"],
+                "layer_name": [
+                    "facilities"
+                ],
                 "vectorStyle": [
                     {
                         "fill": "rgba(255, 205, 210, 0.5)",
@@ -1523,7 +1937,9 @@
                 "layer_store": [
                     "facilities_proximity"
                 ],
-                "layer_name": ["facilities"],
+                "layer_name": [
+                    "facilities"
+                ],
                 "vectorStyle": [
                     {
                         "fill": "rgba(255, 205, 210, 0.5)",
@@ -1570,7 +1986,9 @@
                 "layer_store": [
                     "facilities_proximity"
                 ],
-                "layer_name": ["facilities"],
+                "layer_name": [
+                    "facilities"
+                ],
                 "vectorStyle": [
                     {
                         "fill": "rgba(232, 238, 186, 0.5)",
@@ -1611,7 +2029,9 @@
                 "layer_store": [
                     "facilities_proximity"
                 ],
-                "layer_name": ["facilities"],
+                "layer_name": [
+                    "facilities"
+                ],
                 "vectorStyle": [
                     {
                         "fill": "rgba(72, 55, 217, 0.5)",
@@ -1659,7 +2079,9 @@
                 "layer_store": [
                     "facilities_proximity"
                 ],
-                "layer_name": ["facilities"],
+                "layer_name": [
+                    "facilities"
+                ],
                 "vectorStyle": [
                     {
                         "fill": "rgba(255, 255, 102, 0.5)",
@@ -1713,7 +2135,9 @@
                 "layer_store": [
                     "facilities_proximity"
                 ],
-                "layer_name": ["facilities"],
+                "layer_name": [
+                    "facilities"
+                ],
                 "vectorStyle": [
                     {
                         "fill": "rgba(200, 230, 201, 0.5)",
@@ -1767,7 +2191,9 @@
                 "layer_store": [
                     "facilities_proximity"
                 ],
-                "layer_name": ["facilities"],
+                "layer_name": [
+                    "facilities"
+                ],
                 "vectorStyle": [
                     {
                         "fill": "rgba(204, 238, 255, 0.5)",
@@ -1821,7 +2247,9 @@
                 "layer_store": [
                     "facilities_proximity"
                 ],
-                "layer_name": ["facilities"],
+                "layer_name": [
+                    "facilities"
+                ],
                 "vectorStyle": [
                     {
                         "fill": "rgba(255, 170, 85, 0.5)",
@@ -1875,7 +2303,9 @@
                 "layer_store": [
                     "facilities_proximity"
                 ],
-                "layer_name": ["facilities"],
+                "layer_name": [
+                    "facilities"
+                ],
                 "vectorStyle": [
                     {
                         "fill": "rgba(200, 230, 201, 0.5)",
@@ -1899,137 +2329,61 @@
                 "rasterStyle": "",
                 "styleIdx": 25
             }
-        ]
-    },
-    "Waterbody": {
-        "Waterbody": [
+        ],
+        "NREGA": [
             {
-                "name": "waterbody_type",
-                "label": "Waterbody Type",
-                "type": 1,
-                "values": [
-                    {
-                        "label": "On river",
-                        "value": 1
-                    },
-                    {
-                        "label": "Off river",
-                        "value": 0
-                    }
-                ],
-                "layer_store": [
-                    "waterbodies"
-                ],
-                "layer_name": [
-                    "waterbodies"
-                ],
-                "vectorStyle": [
-                    {}
-                ],
-                "rasterStyle": "",
-                "styleIdx": 2
-            },
-            {
-                "name": "waterbody_size",
-                "label": "Size of Waterbody",
+                "name": "total_assets",
+                "label": "Total number of NREGA works",
                 "type": 2,
                 "values": [
                     {
-                        "label": "WB < 1 ha",
+                        "label": "Less than 100",
                         "value": {
                             "lower": 0,
-                            "upper": 1
+                            "upper": 100
                         }
                     },
                     {
-                        "label": "1 ha < WB < 5 ha",
+                        "label": "Between 100 to 300",
                         "value": {
-                            "lower": 1,
-                            "upper": 5
+                            "lower": 100,
+                            "upper": 300
                         }
                     },
                     {
-                        "label": "5 ha < WB < 10 ha",
+                        "label": "More than 300",
                         "value": {
-                            "lower": 5,
-                            "upper": 10
-                        }
-                    },
-                    {
-                        "label": "WB > 10 ha",
-                        "value": {
-                            "lower": 10,
-                            "upper": 999999
+                            "lower": 300,
+                            "upper": 999999999
                         }
                     }
                 ],
                 "layer_store": [
-                    "waterbodies"
+                    "nrega_assets"
                 ],
-                "layer_name": [
-                    "waterbodies"
-                ],
+                "layer_name": [],
                 "vectorStyle": [
-                    {}
-                ],
-                "rasterStyle": "",
-                "styleIdx": 0
-            },
-            {
-                "name": "surface_water_trend",
-                "label": "Surface Water Trend",
-                "type": 1,
-                "values": [
                     {
-                        "label": "Positive Trend",
-                        "value": 1
+                        "fill": "rgba(135, 206, 235, 0.5)",
+                        "stroke": "rgba(135, 206, 235, 1)",
+                        "lower": 0,
+                        "upper": 100
                     },
                     {
-                        "label": "Negative Trend",
-                        "value": -1
+                        "fill": "rgba(65, 105, 225, 0.5)",
+                        "stroke": "rgba(65, 105, 225, 1)",
+                        "lower": 100,
+                        "upper": 300
                     },
                     {
-                        "label": "Steady",
-                        "value": 0
+                        "fill": "rgba(0, 0, 128, 0.5)",
+                        "stroke": "rgba(0, 0, 128, 1)",
+                        "lower": 300,
+                        "upper": 999999999
                     }
                 ],
-                "layer_store": [
-                    "waterbodies"
-                ],
-                "layer_name": [
-                    "waterbodies"
-                ],
-                "vectorStyle": [
-                    {}
-                ],
                 "rasterStyle": "",
-                "styleIdx": 1
-            },
-            {
-                "name": "drainage_line",
-                "label": "Drainage Line",
-                "type": 1,
-                "values": [
-                    {
-                        "label": "On drainage line",
-                        "value": 1
-                    },
-                    {
-                        "label": "Off drainage line",
-                        "value": 0
-                    }
-                ],
-                "layer_store": [
-                    "waterbodies"
-                ],
-                "layer_name": [
-                    "waterbodies"
-                ],
-                "vectorStyle": [
-                    {}
-                ],
-                "rasterStyle": "",
-                "styleIdx": 2
+                "styleIdx": 9
             }
         ]
     }
