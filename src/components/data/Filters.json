@@ -133,34 +133,11 @@
                         }
                     }
                 ],
-                "layer_store": [
-                    "mws_layers"
-                ],
-                "layer_name": [
-                    "deltaG_well_depth"
-                ],
-                "vectorStyle": [
-                    {
-                        "fill": "rgba(244, 208, 63, 0.5)",
-                        "stroke": "rgba(244, 208, 63, 1)",
-                        "lower": -999999,
-                        "upper": -25
-                    },
-                    {
-                        "fill": "rgba(231, 76, 60, 0.5)",
-                        "stroke": "rgba(231, 76, 60, 1)",
-                        "lower": -25,
-                        "upper": 25
-                    },
-                    {
-                        "fill": "rgba(235, 152, 78, 0.5)",
-                        "stroke": "rgba(235, 152, 78, 1)",
-                        "lower": 25,
-                        "upper": 999999
-                    }
-                ],
-                "rasterStyle": "",
-                "styleIdx": 39
+                "layer_store": ["dem"],
+                "layer_name": ["dem_raster"],
+                "vectorStyle": [],
+                "rasterStyle": "dem_grayscale",
+                "styleIdx": 0
             }
         ],
         "Land-Use": [

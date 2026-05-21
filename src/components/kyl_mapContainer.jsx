@@ -201,15 +201,6 @@ const MapLegend = ({ showMWS, showVillages, currentLayer, showConnectivity }) =>
     },
   ];
 
-  const connectivityLegendItems = [
-    {
-      color: "#FFFFFF",
-      border: "#FFFFFF",
-      name: "MWS Flow Direction",
-      type: "connectivity",
-    },
-  ];
-
   const lulcLegendItems = [
     { color: "#A9A9A9", label: "Barren Lands" },
     { color: "#c6e46d", label: "Single Kharif" },
@@ -258,11 +249,41 @@ const MapLegend = ({ showMWS, showVillages, currentLayer, showConnectivity }) =>
     { color: "#424242", label: "Extremely High Relief (More than 900m)" },
   ];
 
-  const relMeanElevLegendItems = [
-    { color: "#F4D03F", label: "Lower Relative Mean Elevation (<-25)" },
-    { color: "#EB984E", label: "Moderate Relative Mean Elevation (-25 to +25)" },
-    { color: "#E74C3C", label: "High Relative Mean Elevation (>+25)" },
+  const DEM_STOPS = [
+    { elev: 0,   color: "#0d0030" },
+    { elev: 50,  color: "#1a0f6e" },
+    { elev: 100, color: "#1746a0" },
+    { elev: 150, color: "#1a72c0" },
+    { elev: 200, color: "#2191c0" },
+    { elev: 250, color: "#1aab9e" },
+    { elev: 300, color: "#16a085" },
+    { elev: 340, color: "#1cb870" },
+    { elev: 380, color: "#27ae60" },
+    { elev: 410, color: "#5ab836" },
+    { elev: 440, color: "#95c623" },
+    { elev: 470, color: "#d4d400" },
+    { elev: 500, color: "#f1c40f" },
+    { elev: 530, color: "#e09a30" },
+    { elev: 560, color: "#d4845a" },
+    { elev: 590, color: "#b0623a" },
+    { elev: 620, color: "#8b5e3c" },
+    { elev: 660, color: "#c4a882" },
+    { elev: 700, color: "#f5f0e8" },
   ];
+ 
+  const DEM_MIN    = 0;
+  const DEM_MAX    = 700;
+  const GRADIENT_H = 160; // px — height of the colour bar
+ 
+  // Build CSS gradient bottom (low) → top (high)
+  const gradientStops = DEM_STOPS.map(({ elev, color }) => {
+    const pct = (((elev - DEM_MIN) / (DEM_MAX - DEM_MIN)) * 100).toFixed(1);
+    return `${color} ${pct}%`;
+  }).join(", ");
+  const elevGradient = `linear-gradient(to top, ${gradientStops})`;
+ 
+  // Ticks shown beside the bar
+  const DEM_TICKS = [0, 100, 200, 300, 400, 500, 600, 700];
 
   const treeOnSlopeItems = [
     { color: "rgba(85, 255, 85, 0.5)", label: "Less than 15%" },
@@ -965,27 +986,78 @@ const MapLegend = ({ showMWS, showVillages, currentLayer, showConnectivity }) =>
               )}
 
               {isRelMeanElevLayerActive && (
-                <div className="space-y-2">
-                  <h4 className="text-xs font-medium text-gray-600">
-                    Relative Mean Elevation
+                <div>
+                  <h4 className="text-xs font-medium text-gray-600 mb-2">
+                    Elevation (m)
                   </h4>
-                  {relMeanElevLegendItems.map((item, index) => (
+ 
+                  <div className="flex gap-2">
+                    {/* Gradient bar */}
                     <div
-                      key={`relmeanelev-${index}`}
-                      className="flex items-center gap-2"
+                      style={{
+                        width: 18,
+                        height: GRADIENT_H,
+                        background: elevGradient,
+                        borderRadius: 4,
+                        border: "1px solid #d1d5db",
+                        flexShrink: 0,
+                      }}
+                    />
+ 
+                    {/* Tick marks + labels */}
+                    <div
+                      style={{
+                        position: "relative",
+                        height: GRADIENT_H,
+                        flex: 1,
+                      }}
                     >
-                      <div
-                        className="w-4 h-4 rounded"
-                        style={{
-                          backgroundColor: item.color,
-                          border: `1px solid rgba(0,0,0,0.2)`,
-                        }}
-                      />
-                      <span className="text-sm text-gray-600">
-                        {item.label}
-                      </span>
+                      {DEM_TICKS.map((elev) => {
+                        const pct =
+                          (elev - DEM_MIN) / (DEM_MAX - DEM_MIN);
+                        const bottomPx = pct * GRADIENT_H;
+                        return (
+                          <div
+                            key={elev}
+                            style={{
+                              position  : "absolute",
+                              bottom    : bottomPx - 6,
+                              left      : 0,
+                              display   : "flex",
+                              alignItems: "center",
+                              gap       : 4,
+                            }}
+                          >
+                            {/* Tick line */}
+                            <div
+                              style={{
+                                width     : 5,
+                                height    : 1,
+                                background: "#9ca3af",
+                              }}
+                            />
+                            <span className="text-xs text-gray-500">
+                              {elev}
+                            </span>
+                          </div>
+                        );
+                      })}
                     </div>
-                  ))}
+                  </div>
+ 
+                  {/* Contour line note */}
+                  <div className="flex items-center gap-2 mt-2">
+                    <div
+                      style={{
+                        width     : 20,
+                        height    : 2,
+                        background: "#8B4513",
+                        borderRadius: 1,
+                        flexShrink: 0,
+                      }}
+                    />
+                    <span className="text-xs text-gray-500">Contour lines</span>
+                  </div>
                 </div>
               )}
 
