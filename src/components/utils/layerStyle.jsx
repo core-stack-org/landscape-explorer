@@ -173,7 +173,7 @@ const layerStyles = (feature, vectorStyle, idx = 0, villageJson, dataJson) => {
             break;
 
         case 16:
-            avg_Res = Math.max(feature.values_["school_higher_secondary_distance"], feature.values_["college_distance"], feature.values_["universities_distance"])
+            avg_Res = Math.min(feature.values_["school_higher_secondary_distance"], feature.values_["college_distance"], feature.values_["universities_distance"])
             break;
             
         case 17:
@@ -181,7 +181,7 @@ const layerStyles = (feature, vectorStyle, idx = 0, villageJson, dataJson) => {
             break;
             
         case 18:
-            avg_Res = Math.max(feature.values_["health_chc_distance"], feature.values_["health_dis_h_distance"], feature.values_["health_s_t_h_distance"])
+            avg_Res = Math.min(feature.values_["health_chc_distance"], feature.values_["health_dis_h_distance"], feature.values_["health_s_t_h_distance"])
             break;
 
         case 19:
@@ -193,11 +193,11 @@ const layerStyles = (feature, vectorStyle, idx = 0, villageJson, dataJson) => {
             break;
             
         case 21:
-            avg_Res = Math.max(feature.values_["apmc_distance"], feature.values_["agri_industry_markets_trading_distance"])
+            avg_Res = Math.min(feature.values_["apmc_distance"], feature.values_["agri_industry_markets_trading_distance"])
             break;
 
         case 22:
-            avg_Res = Math.max(feature.values_["agri_industry_storage_warehousing_distance"], feature.values_["agri_industry_distribution_utilities_distance"], feature.values_["agri_industry_agri_processing_distance"], feature.values_["agri_industry_industrial_manufacturing_distance"])
+            avg_Res = Math.min(feature.values_["agri_industry_storage_warehousing_distance"], feature.values_["agri_industry_distribution_utilities_distance"], feature.values_["agri_industry_agri_processing_distance"], feature.values_["agri_industry_industrial_manufacturing_distance"])
             break;
 
         case 23:

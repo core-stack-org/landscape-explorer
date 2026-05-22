@@ -588,7 +588,7 @@ const PlanViewPage = () => {
         zIndex: 5,
       });
       layer.setStyle(new Style({
-        stroke: new Stroke({ color: "#000", width: 2 }),
+        stroke: new Stroke({ color: "rgba(255, 255, 0, 1)", width: 2 }),
         fill:   new Fill({ color: "rgba(0,0,0,0.05)" }),
       }));
       map.addLayer(layer);
@@ -623,7 +623,7 @@ const PlanViewPage = () => {
     layer.getSource().refresh();
 
     layer.setStyle(new Style({
-      stroke: new Stroke({ color: "#000", width: 2 }),
+      stroke: new Stroke({ color: "rgba(255, 255, 0, 1)", width: 2 }),
       fill:   new Fill({ color: "rgba(0,0,0,0)" }),
     }));
     map.addLayer(layer);

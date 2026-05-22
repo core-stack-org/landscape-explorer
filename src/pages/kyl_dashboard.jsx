@@ -20,8 +20,6 @@ import Control from "ol/control/Control.js";
 import { defaults as defaultControls } from "ol/control/defaults.js";
 import { Map, View } from "ol";
 import { Fill, Stroke, Style, Circle as CircleStyle } from "ol/style.js";
-import Icon from "ol/style/Icon";
-import Point from "ol/geom/Point";
 import GeoJSON from "ol/format/GeoJSON";
 
 import LandingNavbar from "../components/landing_navbar.jsx";

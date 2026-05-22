@@ -3,20 +3,47 @@ import KYLIndicatorFilter from './kyl_indicatorFilter';
 import KYLPatternDisplay from './kyl_patternDisplay';
 import { ChevronRight, ArrowLeft } from 'lucide-react';
 
+// Filter section mapping - maps each filter to its section
+const FILTER_SECTION_MAP = {
+    // MWS Section Filters
+    'terrainCluster_ID': 'MWS',
+    'lulc_crop_percent': 'MWS',
+    'avg_precipitation': 'MWS',
+    'avg_runoff': 'MWS',
+    'drought_category': 'MWS',
+    'avg_number_dry_spell': 'MWS',
+    'avg_rabi_surface_water_mws': 'MWS',
+    'avg_double_cropped': 'MWS',
+    'decrease_in_tree_cover': 'MWS',
+    'increase_in_tree_cover': 'MWS',
+    'area_wide_scale_restoration': 'MWS',
+    'area_protection': 'MWS',
+    'green_credit': 'MWS',
+    'lcw_conflict': 'MWS',
+
+    // Waterbody Section Filters
+    'waterbody_type': 'Waterbody',
+
+    // Village Section Filters
+    'total_population': 'Village',
+    'essential_education_infra': 'Village',
+    'total_assets': 'Village',
+};
+
+// Function to get filter section
+const getFilterSection = (filterName) => {
+    return FILTER_SECTION_MAP[filterName] || 'Other';
+};
+
 const KYLLeftSidebar = ({
     indicatorType,
     setIndicatorType,
     filterSelections,
-    setFilterSelections,
     getAllFilterTypes,
     getAllFilters,
     handleFilterSelection,
     toggleStates,
-    setToggleStates,
     handleLayerSelection,
-    currentLayer,
-    setCurrentLayer,
-    mapRef,
     filtersEnabled,
     getFormattedSelectedFilters,
     getAllPatternTypes,
@@ -41,7 +68,8 @@ const KYLLeftSidebar = ({
 
     const combinedSelectedValues = {
         ...filterSelections.selectedMWSValues,
-        ...filterSelections.selectedVillageValues
+        ...filterSelections.selectedVillageValues,
+        ...filterSelections.selectedWaterbodyValues,
     };
 
     const handleTabChange = (tab) => {
@@ -63,6 +91,61 @@ const KYLLeftSidebar = ({
                 if (mwsVals?.length || vilVals?.length || wbVals?.length) return count + 1;
                 return count;
             }, 0);
+    };
+
+    // Get category section mapping
+    const getCategorySection = (category) => {
+        const filters = getAllFilters().filter(f => f.category === category);
+        if (filters.length === 0) return 'Other';
+        
+        const section = getFilterSection(filters[0].name);
+        return section || 'Other';
+    };
+
+    // Group categories by section (MWS, Waterbody, Village)
+    const getCategoriesBySection = () => {
+        const categories = getAllFilterTypes();
+        const grouped = {
+            'MWS': [],
+            'Waterbody': [],
+            'Village': [],
+            'Other': []
+        };
+
+        categories.forEach(category => {
+            const section = getCategorySection(category);
+            if (grouped[section]) {
+                grouped[section].push(category);
+            } else {
+                grouped[section].push(category);
+            }
+        });
+
+        // Filter out empty sections
+        return Object.entries(grouped).filter(([_, categories]) => categories.length > 0);
+    };
+
+    // Group filters by section (MWS, Waterbody, Village)
+    const getFiltersBySection = () => {
+        const filters = getAllFilters().filter(f => f.category === indicatorType);
+        const grouped = {
+            'MWS': [],
+            'Waterbody': [],
+            'Village': [],
+            'Other': []
+        };
+
+        filters.forEach(filter => {
+            const section = getFilterSection(filter.name) || 'Other';
+            if (grouped[section]) {
+                grouped[section].push(filter);
+            } else {
+                grouped[section].push(filter);
+            }
+        });
+
+        // Filter out empty sections
+        return Object.entries(grouped).filter(([_, filters]) => filters.length > 0);
     };
 
     // ── Determine which "view" to show ──────────────────────────────────────
@@ -151,9 +234,9 @@ const KYLLeftSidebar = ({
             {/* ── Scrollable content area ──────────────────────────────────── */}
             <div className="flex-1 overflow-y-auto overflow-x-hidden min-h-0 p-3 custom-scrollbar">
 
-                {/* ── VIEW A: Category list ─────────────────────────────────── */}
+                {/* ── VIEW A: Category list WITH SECTION HEADINGS ──────────────────────── */}
                 {showCategoryList && (
-                    <div className="space-y-1.5">
+                    <div className="space-y-6">
                         {/* hint */}
                         {activeTab === 'Filters' &&
                          Object.keys(filterSelections.selectedMWSValues).length === 0 &&
@@ -168,62 +251,111 @@ const KYLLeftSidebar = ({
                             </p>
                         )}
 
-                        {(activeTab === 'Filters' ? getAllFilterTypes() : (getAllPatternTypes?.() || []))
-                            .map((category) => {
-                                const activeCount = activeTab === 'Filters' ? getActiveCategoryCount(category) : 0;
-                                return (
-                                    <button
-                                        key={category}
-                                        onClick={() => {
-                                            setIndicatorType(category);
-                                            setSelectedSubcategory(null);
-                                        }}
-                                        disabled={isDisabled}
-                                        className={`w-full flex items-center justify-between px-4 py-3 rounded-lg
-                                            border text-sm font-medium transition-all
-                                            ${isDisabled
-                                                ? 'bg-gray-50 text-gray-400 border-gray-100 cursor-not-allowed'
-                                                : 'bg-white text-gray-700 border-gray-200 hover:border-indigo-300 hover:bg-indigo-50 hover:text-indigo-700'
-                                            }`}
-                                    >
-                                        <span>{category}</span>
-                                        <div className="flex items-center gap-2">
-                                            {activeCount > 0 && (
-                                                <span className="text-[10px] font-bold bg-indigo-600 text-white px-1.5 py-0.5 rounded-full leading-none">
-                                                    {activeCount}
-                                                </span>
-                                            )}
-                                            <ChevronRight className="w-4 h-4 text-gray-400" />
-                                        </div>
-                                    </button>
-                                );
-                            })
-                        }
+                        {activeTab === 'Filters' ? (
+                            // Filters Tab - Show with section headings
+                            getCategoriesBySection().map(([section, categories]) => (
+                                <div key={section}>
+                                    {/* ── SECTION HEADING ──────────────────────────────────── */}
+                                    <div className="mb-4 flex items-center gap-3">
+                                        <h3 className="text-xs font-bold uppercase tracking-widest text-gray-600">
+                                            {section}
+                                        </h3>
+                                        <div className="flex-1 h-px bg-gradient-to-r from-gray-200 to-transparent" />
+                                    </div>
+
+                                    {/* ── CATEGORIES UNDER SECTION ───────────────────────── */}
+                                    <div className="space-y-1.5 ml-1">
+                                        {categories.map((category) => {
+                                            const activeCount = getActiveCategoryCount(category);
+                                            return (
+                                                <button
+                                                    key={category}
+                                                    onClick={() => {
+                                                        setIndicatorType(category);
+                                                        setSelectedSubcategory(null);
+                                                    }}
+                                                    disabled={isDisabled}
+                                                    className={`w-full flex items-center justify-between px-4 py-3 rounded-lg
+                                                        border text-sm font-medium transition-all
+                                                        ${isDisabled
+                                                            ? 'bg-gray-50 text-gray-400 border-gray-100 cursor-not-allowed'
+                                                            : 'bg-white text-gray-700 border-gray-200 hover:border-indigo-300 hover:bg-indigo-50 hover:text-indigo-700'
+                                                        }`}
+                                                >
+                                                    <span>{category}</span>
+                                                    <div className="flex items-center gap-2">
+                                                        {activeCount > 0 && (
+                                                            <span className="text-[10px] font-bold bg-indigo-600 text-white px-1.5 py-0.5 rounded-full leading-none">
+                                                                {activeCount}
+                                                            </span>
+                                                        )}
+                                                        <ChevronRight className="w-4 h-4 text-gray-400" />
+                                                    </div>
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+                            ))
+                        ) : (
+                            // Patterns Tab - Show without section headings
+                            (getAllPatternTypes?.() || []).map((category) => (
+                                <button
+                                    key={category}
+                                    onClick={() => {
+                                        setIndicatorType(category);
+                                        setSelectedSubcategory(null);
+                                    }}
+                                    disabled={isDisabled}
+                                    className={`w-full flex items-center justify-between px-4 py-3 rounded-lg
+                                        border text-sm font-medium transition-all
+                                        ${isDisabled
+                                            ? 'bg-gray-50 text-gray-400 border-gray-100 cursor-not-allowed'
+                                            : 'bg-white text-gray-700 border-gray-200 hover:border-indigo-300 hover:bg-indigo-50 hover:text-indigo-700'
+                                        }`}
+                                >
+                                    <span>{category}</span>
+                                    <ChevronRight className="w-4 h-4 text-gray-400" />
+                                </button>
+                            ))
+                        )}
                     </div>
                 )}
 
-                {/* ── VIEW B: Filter list ───────────────────────────────────── */}
+                {/* ── VIEW B: Filter list WITH SECTION HEADINGS ──────────────────────── */}
                 {showFilterList && (
                     <div className="space-y-6">
-                        {getAllFilters()
-                            .filter(f => f.category === indicatorType)
-                            .map(filter => (
-                                <div key={filter.name}>
-                                    <KYLIndicatorFilter
-                                        filter={{
-                                            ...filter,
-                                            selectedValue: combinedSelectedValues[filter.name]?.[0]
-                                        }}
-                                        onFilterChange={handleFilterSelection}
-                                        isDisabled={isDisabled}
-                                        getFormattedSelectedFilters={getFormattedSelectedFilters}
-                                        toggleStates={toggleStates}
-                                        handleLayerSelection={handleLayerSelection}
-                                        showConnectivityRef={showConnectivityRef}
-                                    />
+                        {getFiltersBySection().map(([section, filters]) => (
+                            <div key={section}>
+                                {/* ── SECTION HEADING ──────────────────────────────────── */}
+                                <div className="mb-4 flex items-center gap-3">
+                                    <h3 className="text-xs font-bold uppercase tracking-widest text-gray-600">
+                                        {section}
+                                    </h3>
+                                    <div className="flex-1 h-px bg-gradient-to-r from-gray-200 to-transparent" />
                                 </div>
-                            ))
-                        }
+
+                                {/* ── FILTERS UNDER SECTION ───────────────────────────── */}
+                                <div className="space-y-6 ml-1">
+                                    {filters.map(filter => (
+                                        <div key={filter.name}>
+                                            <KYLIndicatorFilter
+                                                filter={{
+                                                    ...filter,
+                                                    selectedValue: combinedSelectedValues[filter.name]?.[0]
+                                                }}
+                                                onFilterChange={handleFilterSelection}
+                                                isDisabled={isDisabled}
+                                                getFormattedSelectedFilters={getFormattedSelectedFilters}
+                                                toggleStates={toggleStates}
+                                                handleLayerSelection={handleLayerSelection}
+                                                showConnectivityRef={showConnectivityRef}
+                                            />
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        ))}
                     </div>
                 )}
 
