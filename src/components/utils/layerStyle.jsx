@@ -173,7 +173,7 @@ const layerStyles = (feature, vectorStyle, idx = 0, villageJson, dataJson) => {
             break;
 
         case 16:
-            avg_Res = Math.max(feature.values_["school_higher_secondary_distance"], feature.values_["college_distance"], feature.values_["universities_distance"])
+            avg_Res = Math.min(feature.values_["school_higher_secondary_distance"], feature.values_["college_distance"], feature.values_["universities_distance"])
             break;
             
         case 17:
@@ -181,7 +181,7 @@ const layerStyles = (feature, vectorStyle, idx = 0, villageJson, dataJson) => {
             break;
             
         case 18:
-            avg_Res = Math.max(feature.values_["health_chc_distance"], feature.values_["health_dis_h_distance"], feature.values_["health_s_t_h_distance"])
+            avg_Res = Math.min(feature.values_["health_chc_distance"], feature.values_["health_dis_h_distance"], feature.values_["health_s_t_h_distance"])
             break;
 
         case 19:
@@ -193,11 +193,11 @@ const layerStyles = (feature, vectorStyle, idx = 0, villageJson, dataJson) => {
             break;
             
         case 21:
-            avg_Res = Math.max(feature.values_["apmc_distance"], feature.values_["agri_industry_markets_trading_distance"])
+            avg_Res = Math.min(feature.values_["apmc_distance"], feature.values_["agri_industry_markets_trading_distance"])
             break;
 
         case 22:
-            avg_Res = Math.max(feature.values_["agri_industry_storage_warehousing_distance"], feature.values_["agri_industry_distribution_utilities_distance"], feature.values_["agri_industry_agri_processing_distance"], feature.values_["agri_industry_industrial_manufacturing_distance"])
+            avg_Res = Math.min(feature.values_["agri_industry_storage_warehousing_distance"], feature.values_["agri_industry_distribution_utilities_distance"], feature.values_["agri_industry_agri_processing_distance"], feature.values_["agri_industry_industrial_manufacturing_distance"])
             break;
 
         case 23:
@@ -266,6 +266,80 @@ const layerStyles = (feature, vectorStyle, idx = 0, villageJson, dataJson) => {
                 }
             }
             break;    
+
+        case 32:
+            for(let i = 0 ; i < dataJson.length; ++i){
+                if(dataJson[i].mws_id === feature.values_.uid){
+                    let val = dataJson[i].river_available;
+                    avg_Res = (val == 1 || val === 'true' || val === true) ? 1 : 0;
+                    break;
+                }
+            }
+            break;
+
+        case 33:
+            for(let i = 0 ; i < dataJson.length; ++i){
+                if(dataJson[i].mws_id === feature.values_.uid){
+                    let val = dataJson[i].canal_available;
+                    avg_Res = (val == 1 || val === 'true' || val === true) ? 1 : 0;
+                    break;
+                }
+            }
+            break;
+
+        case 34:
+            for(let i = 0 ; i < dataJson.length; ++i){
+                if(dataJson[i].mws_id === feature.values_.uid){
+                    avg_Res = dataJson[i].lulc_crop_percent;
+                    break;
+                }
+            }
+            break;
+
+        case 35:
+            for(let i = 0 ; i < dataJson.length; ++i){
+                if(dataJson[i].mws_id === feature.values_.uid){
+                    avg_Res = dataJson[i].lulc_forest_percent;
+                    break;
+                }
+            }
+            break;
+
+        case 36:
+            for(let i = 0 ; i < dataJson.length; ++i){
+                if(dataJson[i].mws_id === feature.values_.uid){
+                    avg_Res = dataJson[i].lulc_shrub_percent;
+                    break;
+                }
+            }
+            break;
+
+        case 37:
+            for(let i = 0 ; i < dataJson.length; ++i){
+                if(dataJson[i].mws_id === feature.values_.uid){
+                    avg_Res = dataJson[i].relief;
+                    break;
+                }
+            }
+            break;
+
+        case 38:
+            for(let i = 0 ; i < dataJson.length; ++i){
+                if(dataJson[i].mws_id === feature.values_.uid){
+                    avg_Res = dataJson[i].mean_elevation;
+                    break;
+                }
+            }
+            break;
+
+        case 39:
+            for(let i = 0 ; i < dataJson.length; ++i){
+                if(dataJson[i].mws_id === feature.values_.uid){
+                    avg_Res = dataJson[i].relative_mean_elevation;
+                    break;
+                }
+            }
+            break;
     }
     
     for(tempIdx = 0; tempIdx < vectorStyle.length; ++tempIdx){
