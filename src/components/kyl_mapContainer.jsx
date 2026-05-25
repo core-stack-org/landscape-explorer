@@ -203,11 +203,11 @@ const MapLegend = ({ showMWS, showVillages, currentLayer }) => {
 
   const lulcLegendItems = [
     { color: "#A9A9A9", label: "Barren Lands" },
-    { color: "#c6e46d", label: "Single Kharif" },
-    { color: "#eee05d", label: "Single Non-Kharif" },
-    { color: "#f9b249", label: "Double Cropping" },
-    { color: "#fb5139", label: "Triple Cropping" },
-    { color: "#4c4ef5", label: "Shrubs and Scrubs" },
+    { color: "#D9F0A3", label: "Single Kharif" },
+    { color: "#A6D96A", label: "Single Non-Kharif" },
+    { color: "#4DAF4A", label: "Double Cropping" },
+    { color: "#006D2C", label: "Triple Cropping" },
+    { color: "#A18F60", label: "Shrubs and Scrubs" },
   ];
 
   const terrainLegendItems = [
