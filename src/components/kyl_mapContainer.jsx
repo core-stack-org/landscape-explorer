@@ -202,39 +202,39 @@ const MapLegend = ({ showMWS, showVillages, currentLayer, showConnectivity }) =>
   ];
 
   const lulcLegendItems = [
-    { color: "#A9A9A9", label: "Barren Lands" },
-    { color: "#D9F0A3", label: "Single Kharif" },
-    { color: "#A6D96A", label: "Single Non-Kharif" },
-    { color: "#4DAF4A", label: "Double Cropping" },
-    { color: "#006D2C", label: "Triple Cropping" },
-    { color: "#A18F60", label: "Shrubs and Scrubs" },
-  ];
+  { color: "#A9A9A9", label: "Barren Lands" },
+  { color: "#F0F4A3", label: "Single Kharif" },
+  { color: "#D6E96B", label: "Single Non-Kharif" },
+  { color: "#B7D43A", label: "Double Cropping" },
+  { color: "#7FAF2E", label: "Triple Cropping" },
+  { color: "#8C7A4F", label: "Shrubs and Scrubs" },
+];
 
   const lulcCropPercentItems = [
-    { color: "#7FC64B", label: "Crop" },
-    { color: "#1B7837", label: "Trees" },
-    { color: "#A18F60", label: "Shrubs" },
-    { color: "#a9a9a9", label: "Barren" },
-    { color: "#D73027", label: "Built-up" },
-    { color: "#2B83BA", label: "Water" },
+    { color: "#F0F4A3", label: "Crop" },
+    { color: "#1B5E20", label: "Trees" },
+    { color: "#8C7A4F", label: "Shrubs" },
+    { color: "#A9A9A9", label: "Barren" },
+    { color: "#C94C4C", label: "Built-up" },
+    { color: "#74CCF4", label: "Water" },
   ];
 
   const lulcForestPercentItems = [
-    { color: "#7FC64B", label: "Crop" },
-    { color: "#1B7837", label: "Trees" },
-    { color: "#A18F60", label: "Shrubs" },
-    { color: "#a9a9a9", label: "Barren" },
-    { color: "#D73027", label: "Built-up" },
-    { color: "#2B83BA", label: "Water" },
+    { color: "#F0F4A3", label: "Crop" },
+    { color: "#1B5E20", label: "Trees" },
+    { color: "#8C7A4F", label: "Shrubs" },
+    { color: "#A9A9A9", label: "Barren" },
+    { color: "#C94C4C", label: "Built-up" },
+    { color: "#74CCF4", label: "Water" },
   ];
 
   const lulcShrubPercentItems = [
-    { color: "#7FC64B", label: "Crop" },
-    { color: "#1B7837", label: "Trees" },
-    { color: "#A18F60", label: "Shrubs" },
-    { color: "#a9a9a9", label: "Barren" },
-    { color: "#D73027", label: "Built-up" },
-    { color: "#2B83BA", label: "Water" },
+    { color: "#F0F4A3", label: "Crop" },
+    { color: "#1B5E20", label: "Trees" },
+    { color: "#8C7A4F", label: "Shrubs" },
+    { color: "#A9A9A9", label: "Barren" },
+    { color: "#C94C4C", label: "Built-up" },
+    { color: "#74CCF4", label: "Water" },
   ];
 
   const terrainLegendItems = [
@@ -871,7 +871,7 @@ const MapLegend = ({ showMWS, showVillages, currentLayer, showConnectivity }) =>
               {isLulcCropPercentActive && (
                 <div className="space-y-2">
                   <h4 className="text-xs font-medium text-gray-600">
-                   Area with crops
+                   Land Use Land Cover
                   </h4>
                   {lulcCropPercentItems.map((item, index) => (
                     <div
@@ -896,7 +896,7 @@ const MapLegend = ({ showMWS, showVillages, currentLayer, showConnectivity }) =>
               {isLulcForestPercentActive && (
                 <div className="space-y-2">
                   <h4 className="text-xs font-medium text-gray-600">
-                    Area with tree cover
+                    Land Use Land Cover
                   </h4>
                   {lulcForestPercentItems.map((item, index) => (
                     <div
@@ -921,7 +921,7 @@ const MapLegend = ({ showMWS, showVillages, currentLayer, showConnectivity }) =>
               {isLulcShrubPercentActive && (
                 <div className="space-y-2">
                   <h4 className="text-xs font-medium text-gray-600">
-                    Area with shrubs
+                    Land Use Land Cover
                   </h4>
                   {lulcShrubPercentItems.map((item, index) => (
                     <div

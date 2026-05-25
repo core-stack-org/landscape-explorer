@@ -77,9 +77,21 @@ const YearSlider = ({ currentLayer, sliderId = null, interventionYear }) => {
   })();
 
   useEffect(() => {
-    setYearAtom(yearDataLulc[0].value);
-    setCurrentValue(0);
-  }, [yearDataLulc.length]);
+    // Find index of current selected year from recoil atom
+    const existingIndex = yearDataLulc.findIndex(
+      (item) => item.value === yearValue
+    );
+
+    // If atom already has a valid year, use it
+    if (existingIndex !== -1) {
+      setCurrentValue(existingIndex);
+    } else {
+      // fallback to latest year
+      const latestIndex = yearDataLulc.length - 1;
+      setCurrentValue(latestIndex);
+      setYearAtom(yearDataLulc[latestIndex].value);
+    }
+  }, [yearDataLulc, yearValue]);
 
   useEffect(() => {
     if (!interventionYear) return;

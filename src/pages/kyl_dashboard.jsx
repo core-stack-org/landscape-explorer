@@ -97,8 +97,6 @@ const KYLDashboardPage = () => {
   const [searchLatLong, setSearchLatLong] = useState(null);
 
   // * Triggers
-  const [villagePatternTrigger, setvillagePatternTrigger] = useState(0);
-
   const [clickedWaterbodyId, setClickedWaterbodyId] = useState(null);
   const [waterbodyDashboardUrl, setWaterbodyDashboardUrl] = useState(null);
   const [selectedWaterbodyProfile, setSelectedWaterbodyProfile] = useState(null);
@@ -2321,7 +2319,6 @@ const KYLDashboardPage = () => {
     patternSelections.selectedVillagePatterns,
     filterSelections.selectedVillageValues,  // restored — production includes this
     patternVillageList,
-    villagePatternTrigger,
     selectedMWS,
     dataJson,
     villageJson,
