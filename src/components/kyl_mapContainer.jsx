@@ -160,7 +160,7 @@ const MapZoomControls = ({ mapRef }) => {
 };
 
 // Updated MapLegend component
-const MapLegend = ({ showMWS, showVillages, currentLayer }) => {
+const MapLegend = ({ showMWS, showVillages, currentLayer, showConnectivity }) => {
   // Add state for collapsed status
   const [isCollapsed, setIsCollapsed] = useState(false);
 
@@ -172,7 +172,7 @@ const MapLegend = ({ showMWS, showVillages, currentLayer }) => {
     ["waterbody_type", "waterbody_size", "drainage_line", "surface_water_trend"]
       .includes(layer.name)
   );
-  
+
   const activeWBType = activeWBLayer?.name;
 
   const isWaterbodyVisualizeActive = currentLayer?.some(
@@ -202,12 +202,39 @@ const MapLegend = ({ showMWS, showVillages, currentLayer }) => {
   ];
 
   const lulcLegendItems = [
-    { color: "#A9A9A9", label: "Barren Lands" },
-    { color: "#D9F0A3", label: "Single Kharif" },
-    { color: "#A6D96A", label: "Single Non-Kharif" },
-    { color: "#4DAF4A", label: "Double Cropping" },
-    { color: "#006D2C", label: "Triple Cropping" },
-    { color: "#A18F60", label: "Shrubs and Scrubs" },
+  { color: "#A9A9A9", label: "Barren Lands" },
+  { color: "#F0F4A3", label: "Single Kharif" },
+  { color: "#D6E96B", label: "Single Non-Kharif" },
+  { color: "#B7D43A", label: "Double Cropping" },
+  { color: "#7FAF2E", label: "Triple Cropping" },
+  { color: "#8C7A4F", label: "Shrubs and Scrubs" },
+];
+
+  const lulcCropPercentItems = [
+    { color: "#F0F4A3", label: "Crop" },
+    { color: "#1B5E20", label: "Trees" },
+    { color: "#8C7A4F", label: "Shrubs" },
+    { color: "#A9A9A9", label: "Barren" },
+    { color: "#C94C4C", label: "Built-up" },
+    { color: "#74CCF4", label: "Water" },
+  ];
+
+  const lulcForestPercentItems = [
+    { color: "#F0F4A3", label: "Crop" },
+    { color: "#1B5E20", label: "Trees" },
+    { color: "#8C7A4F", label: "Shrubs" },
+    { color: "#A9A9A9", label: "Barren" },
+    { color: "#C94C4C", label: "Built-up" },
+    { color: "#74CCF4", label: "Water" },
+  ];
+
+  const lulcShrubPercentItems = [
+    { color: "#F0F4A3", label: "Crop" },
+    { color: "#1B5E20", label: "Trees" },
+    { color: "#8C7A4F", label: "Shrubs" },
+    { color: "#A9A9A9", label: "Barren" },
+    { color: "#C94C4C", label: "Built-up" },
+    { color: "#74CCF4", label: "Water" },
   ];
 
   const terrainLegendItems = [
@@ -223,6 +250,49 @@ const MapLegend = ({ showMWS, showVillages, currentLayer }) => {
     { color: "#f46d43", label: "Flat tops" },
     { color: "#d73027", label: "Upper Slopes" },
   ];
+
+  const reliefLegendItems = [
+    { color: "#D9F0D3", label: "Low Relief (less than 6m)" },
+    { color: "#A6D96A", label: "Moderate Relief (between 6m and 110m)" },
+    { color: "#FDAE61", label: "High Relief (between 110m and 900m)" },
+    { color: "#D73027", label: "Extremely High Relief (More than 900m)" },
+  ];
+
+  const DEM_STOPS = [
+    { elev: 0,   color: "#0d0030" },
+    { elev: 50,  color: "#1a0f6e" },
+    { elev: 100, color: "#1746a0" },
+    { elev: 150, color: "#1a72c0" },
+    { elev: 200, color: "#2191c0" },
+    { elev: 250, color: "#1aab9e" },
+    { elev: 300, color: "#16a085" },
+    { elev: 340, color: "#1cb870" },
+    { elev: 380, color: "#27ae60" },
+    { elev: 410, color: "#5ab836" },
+    { elev: 440, color: "#95c623" },
+    { elev: 470, color: "#d4d400" },
+    { elev: 500, color: "#f1c40f" },
+    { elev: 530, color: "#e09a30" },
+    { elev: 560, color: "#d4845a" },
+    { elev: 590, color: "#b0623a" },
+    { elev: 620, color: "#8b5e3c" },
+    { elev: 660, color: "#c4a882" },
+    { elev: 700, color: "#f5f0e8" },
+  ];
+ 
+  const DEM_MIN    = 0;
+  const DEM_MAX    = 700;
+  const GRADIENT_H = 160; // px — height of the colour bar
+ 
+  // Build CSS gradient bottom (low) → top (high)
+  const gradientStops = DEM_STOPS.map(({ elev, color }) => {
+    const pct = (((elev - DEM_MIN) / (DEM_MAX - DEM_MIN)) * 100).toFixed(1);
+    return `${color} ${pct}%`;
+  }).join(", ");
+  const elevGradient = `linear-gradient(to top, ${gradientStops})`;
+ 
+  // Ticks shown beside the bar
+  const DEM_TICKS = [0, 100, 200, 300, 400, 500, 600, 700];
 
   const treeOnSlopeItems = [
     { color: "rgba(85, 255, 85, 0.5)", label: "Less than 15%" },
@@ -456,19 +526,49 @@ const MapLegend = ({ showMWS, showVillages, currentLayer }) => {
   ];
 
 
+  const isExcludedLulc = (name) => {
+    if (!name) return false;
+    return (
+      name === "lulc_crop_percent" ||
+      name === "lulc_forest_percent" ||
+      name === "lulc_shrub_percent"
+    );
+  };
+
   // Check if LULC layer is active
   const isLulcLayerActive = currentLayer?.some(
     (layer) =>
-      layer.name === "avg_double_cropped" ||
-      layer.name === "built_up_area" ||
-      layer.name.includes("LULC") ||
-      layer.name.includes("lulc")
+      (layer.name === "avg_double_cropped" ||
+        layer.name === "built_up_area" ||
+        layer.name.includes("LULC") ||
+        layer.name.includes("lulc")) &&
+      !isExcludedLulc(layer.name)
+  );
+
+  const isLulcCropPercentActive = currentLayer?.some(
+    (layer) => layer.name === "lulc_crop_percent"
+  );
+
+  const isLulcForestPercentActive = currentLayer?.some(
+    (layer) => layer.name === "lulc_forest_percent"
+  );
+
+  const isLulcShrubPercentActive = currentLayer?.some(
+    (layer) => layer.name === "lulc_shrub_percent"
   );
 
   // Check if Terrain layer is active
   const isTerrainLayerActive = currentLayer?.some(
     (layer) =>
       layer.name === "terrainCluster_ID" || layer.name.includes("terrain")
+  );
+
+  const isReliefLayerActive = currentLayer?.some(
+    (layer) => layer.name === "relief" || layer.name.includes("relief")
+  );
+
+  const isRelMeanElevLayerActive = currentLayer?.some(
+    (layer) => layer.name === "relative_mean_elevation" || layer.name.includes("relative_mean_elevation")
   );
 
   const isRainfallLayerActive = currentLayer?.some(
@@ -768,6 +868,81 @@ const MapLegend = ({ showMWS, showVillages, currentLayer }) => {
                 </div>
               )}
 
+              {isLulcCropPercentActive && (
+                <div className="space-y-2">
+                  <h4 className="text-xs font-medium text-gray-600">
+                   Land Use Land Cover
+                  </h4>
+                  {lulcCropPercentItems.map((item, index) => (
+                    <div
+                      key={`lulc-crop-${index}`}
+                      className="flex items-center gap-2"
+                    >
+                      <div
+                        className="w-4 h-4 rounded"
+                        style={{
+                          backgroundColor: item.color,
+                          border: `1px solid rgba(0,0,0,0.2)`,
+                        }}
+                      />
+                      <span className="text-sm text-gray-600">
+                        {item.label}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {isLulcForestPercentActive && (
+                <div className="space-y-2">
+                  <h4 className="text-xs font-medium text-gray-600">
+                    Land Use Land Cover
+                  </h4>
+                  {lulcForestPercentItems.map((item, index) => (
+                    <div
+                      key={`lulc-forest-${index}`}
+                      className="flex items-center gap-2"
+                    >
+                      <div
+                        className="w-4 h-4 rounded"
+                        style={{
+                          backgroundColor: item.color,
+                          border: `1px solid rgba(0,0,0,0.2)`,
+                        }}
+                      />
+                      <span className="text-sm text-gray-600">
+                        {item.label}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {isLulcShrubPercentActive && (
+                <div className="space-y-2">
+                  <h4 className="text-xs font-medium text-gray-600">
+                    Land Use Land Cover
+                  </h4>
+                  {lulcShrubPercentItems.map((item, index) => (
+                    <div
+                      key={`lulc-shrub-${index}`}
+                      className="flex items-center gap-2"
+                    >
+                      <div
+                        className="w-4 h-4 rounded"
+                        style={{
+                          backgroundColor: item.color,
+                          border: `1px solid rgba(0,0,0,0.2)`,
+                        }}
+                      />
+                      <span className="text-sm text-gray-600">
+                        {item.label}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
               {/* Terrain Legend Section */}
               {isTerrainLayerActive && (
                 <div className="space-y-2">
@@ -791,6 +966,107 @@ const MapLegend = ({ showMWS, showVillages, currentLayer }) => {
                       </span>
                     </div>
                   ))}
+                </div>
+              )}
+
+              {isReliefLayerActive && (
+                <div className="space-y-2">
+                  <h4 className="text-xs font-medium text-gray-600">
+                    Microwatershed Relief
+                  </h4>
+                  {reliefLegendItems.map((item, index) => (
+                    <div
+                      key={`relief-${index}`}
+                      className="flex items-center gap-2"
+                    >
+                      <div
+                        className="w-4 h-4 rounded"
+                        style={{
+                          backgroundColor: item.color,
+                          border: `1px solid rgba(0,0,0,0.2)`,
+                        }}
+                      />
+                      <span className="text-sm text-gray-600">
+                        {item.label}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {isRelMeanElevLayerActive && (
+                <div>
+                  <h4 className="text-xs font-medium text-gray-600 mb-2">
+                    Elevation (m)
+                  </h4>
+ 
+                  <div className="flex gap-2">
+                    {/* Gradient bar */}
+                    <div
+                      style={{
+                        width: 18,
+                        height: GRADIENT_H,
+                        background: elevGradient,
+                        borderRadius: 4,
+                        border: "1px solid #d1d5db",
+                        flexShrink: 0,
+                      }}
+                    />
+ 
+                    {/* Tick marks + labels */}
+                    <div
+                      style={{
+                        position: "relative",
+                        height: GRADIENT_H,
+                        flex: 1,
+                      }}
+                    >
+                      {DEM_TICKS.map((elev) => {
+                        const pct =
+                          (elev - DEM_MIN) / (DEM_MAX - DEM_MIN);
+                        const bottomPx = pct * GRADIENT_H;
+                        return (
+                          <div
+                            key={elev}
+                            style={{
+                              position  : "absolute",
+                              bottom    : bottomPx - 6,
+                              left      : 0,
+                              display   : "flex",
+                              alignItems: "center",
+                              gap       : 4,
+                            }}
+                          >
+                            {/* Tick line */}
+                            <div
+                              style={{
+                                width     : 5,
+                                height    : 1,
+                                background: "#9ca3af",
+                              }}
+                            />
+                            <span className="text-xs text-gray-500">
+                              {elev}
+                            </span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+ 
+                  {/* Contour line note */}
+                  <div className="flex items-center gap-2 mt-2">
+                    <div
+                      style={{
+                        width     : 20,
+                        height    : 2,
+                        background: "#8B4513",
+                        borderRadius: 1,
+                        flexShrink: 0,
+                      }}
+                    />
+                    <span className="text-xs text-gray-500">Contour lines</span>
+                  </div>
                 </div>
               )}
 
@@ -1589,7 +1865,7 @@ const MapLegend = ({ showMWS, showVillages, currentLayer }) => {
               )}
 
               {activeWBType === "waterbody_type" && (
-                  <div className="space-y-2">
+                <div className="space-y-2">
                   <h4 className="text-xs font-medium text-gray-600">
                     Waterbody Type
                   </h4>
@@ -1597,7 +1873,7 @@ const MapLegend = ({ showMWS, showVillages, currentLayer }) => {
                   <div className="flex items-center gap-2">
                     <div
                       className="w-4 h-4 rounded"
-                      style={{ backgroundColor: "#87CEFA" }}  
+                      style={{ backgroundColor: "#87CEFA" }}
                     />
                     <span className="text-sm text-gray-600">On River</span>
                   </div>
@@ -1605,7 +1881,7 @@ const MapLegend = ({ showMWS, showVillages, currentLayer }) => {
                   <div className="flex items-center gap-2">
                     <div
                       className="w-4 h-4 rounded"
-                      style={{ backgroundColor: "#1E90FF" }}   
+                      style={{ backgroundColor: "#1E90FF" }}
                     />
                     <span className="text-sm text-gray-600">Off River</span>
                   </div>
@@ -1695,6 +1971,54 @@ const MapLegend = ({ showMWS, showVillages, currentLayer }) => {
                   </div>
                 </div>
               )}
+
+              {showConnectivity && (
+                <div className="mt-3">
+
+                  <h4 className="text-sm font-semibold text-gray-700 mb-2">
+                    MWS Drainage Flow
+                  </h4>
+
+                  {/* Gradient Legend */}
+                  <div className="space-y-2">
+
+                    <div>
+                      <div className="flex h-6 rounded overflow-hidden border border-gray-300">
+                        <div className="flex-1 bg-[#8B5A2B]" />
+                        <div className="flex-1 bg-[#B48F50]" />
+                        <div className="flex-1 bg-[#D6C97A]" />
+                        <div className="flex-1 bg-[#A8D36F]" />
+                        <div className="flex-1 bg-[#228B22]" />
+                      </div>
+
+                      <div className="flex justify-between text-[10px] text-gray-600 mt-1">
+                        <span>MWS in ridge areas</span>
+                        <span>MWS in valley areas</span>
+                      </div>
+                    </div>
+
+                    {/* Arrow Direction */}
+                    <div className="pt-2">
+                      <h4 className="text-xs font-medium text-gray-600 mb-1">
+                        MWS Flow Direction
+                      </h4>
+
+                      <div className="flex items-center gap-2">
+                        {/* Line */}
+                        <div className="w-10 h-[2px] bg-black relative">
+                          <div
+                            className="absolute right-0 top-1/2 -translate-y-1/2 
+                            w-0 h-0 border-t-[4px] border-b-[4px]
+                            border-l-[8px] border-t-transparent
+                            border-b-transparent border-l-black"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         )}
@@ -1718,7 +2042,8 @@ const KYLMapContainer = ({
   boundaryLayerRef,
   mapRef,
   currentLayer,
-  setSearchLatLong
+  setSearchLatLong,
+  showConnectivity,
 }) => {
   const areMWSLayersAvailable = mwsLayerRef?.current !== null;
   const areVillageLayersAvailable = boundaryLayerRef?.current !== null;
@@ -1763,6 +2088,7 @@ const KYLMapContainer = ({
         showMWS={showMWS && areMWSLayersAvailable}
         showVillages={showVillages && areVillageLayersAvailable}
         currentLayer={currentLayer}
+        showConnectivity={showConnectivity}
       />
 
       {/* Search Bar */}
