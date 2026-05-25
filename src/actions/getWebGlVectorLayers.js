@@ -3,9 +3,9 @@ import GeoJSON from "ol/format/GeoJSON";
 import WebGLVectorLayer from "ol/layer/WebGLVector.js";
 
 const mwsStyle = {
-  "stroke-color": [74,144,226,1],
+  "stroke-color": [74, 144, 226, 1],
   "stroke-width": 2,
-  "fill-color": [85,152,229,0.2],
+  "fill-color": [85, 152, 229, 0.2],
 };
 
 const waterbodyStyle = {
@@ -32,8 +32,10 @@ const drainageStyle = {
   "stroke-width": 2
 };
 
-export default async function getWebGlPolygonLayers(layer_store, layer_name) {
-
+export default async function getWebGlPolygonLayers(
+  layer_store,
+  layer_name
+) {
   const url =
     `${process.env.REACT_APP_GEOSERVER_URL}` +
     layer_store +
@@ -43,30 +45,21 @@ export default async function getWebGlPolygonLayers(layer_store, layer_name) {
     layer_name +
     "&outputFormat=application/json&screen=main";
 
+  const response = await fetch(url);
+
+  if (!response.ok) {
+    throw new Error(`Failed loading layer: ${layer_name}`);
+  }
+
+  const json = await response.json();
+
+  const features = new GeoJSON().readFeatures(json);
+
   const vectorSource = new Vector({
-    format: new GeoJSON(),
-    loader: async function () {
-      try {
-        const response = await fetch(url);
-
-        if (!response.ok) {
-          throw new Error("Network response was not ok");
-        }
-
-        const json = await response.json();
-
-        const features = vectorSource
-          .getFormat()
-          .readFeatures(json);
-
-        vectorSource.addFeatures(features);
-
-      } catch (error) {
-        console.error("Failed loading layer:", layer_name, error);
-      }
-    },
+    features,
   });
 
+  // Preserve your style selection logic
   let style = mwsStyle;
 
   if (layer_store === "swb") {
@@ -75,11 +68,9 @@ export default async function getWebGlPolygonLayers(layer_store, layer_name) {
     style = drainageStyle;
   }
 
-  const layer = new WebGLVectorLayer({
+  return new WebGLVectorLayer({
     source: vectorSource,
-    style: style,
+    style,
     renderBuffer: 200,
   });
-
-  return layer;
 }

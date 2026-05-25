@@ -958,11 +958,12 @@ const KYLDashboardPage = () => {
 
   const fetchBoundaryAndZoom = async (districtName, blockName) => {
     setIsLayerLoaded(true);
+
     try {
+      // Create layers (already fully loaded now)
       const boundaryLayer = await getWebGlPolygonLayers(
         "panchayat_boundaries",
-        `${transformName(districtName)}_${transformName(blockName)}`,
-        true, true
+        `${transformName(districtName)}_${transformName(blockName)}`
       );
 
       const mwsLayer = await getWebGlPolygonLayers(
@@ -970,107 +971,166 @@ const KYLDashboardPage = () => {
         `deltaG_well_depth_${transformName(district.label)}_${transformName(block.label)}`
       );
 
-      if (mwsLayerRef.current) mapRef.current.removeLayer(mwsLayerRef.current);
-      if (boundaryLayerRef.current) mapRef.current.removeLayer(boundaryLayerRef.current);
+      // Remove old layers safely
+      if (mwsLayerRef.current) {
+        mapRef.current.removeLayer(mwsLayerRef.current);
+      }
 
+      if (boundaryLayerRef.current) {
+        mapRef.current.removeLayer(boundaryLayerRef.current);
+      }
+
+      // Initial invisible state for fade animation
       boundaryLayer.setOpacity(0);
+
+      // Add layers
       addLayerSafe(mwsLayer);
       addLayerSafe(boundaryLayer);
-      boundaryLayerRef.current = boundaryLayer;
+
+      // Store refs
       mwsLayerRef.current = mwsLayer;
+      boundaryLayerRef.current = boundaryLayer;
 
+      // Source is already loaded
       const vectorSource = boundaryLayer.getSource();
+      const extent = vectorSource.getExtent();
 
-      await new Promise((resolve, reject) => {
-        const checkFeatures = () => {
-          if (vectorSource.getFeatures().length > 0) {
-            resolve();
-          } else {
-            vectorSource.once("featuresloadend", () => {
-              if (vectorSource.getFeatures().length > 0) resolve();
-              else reject(new Error("No features loaded"));
-            });
+      // Configure boundary styling
+      boundaryLayer.setStyle({
+        variables: {
+          hasSelection: false,
+          isVisualizeOn: false,
+        },
 
-            setTimeout(() => {
-              if (vectorSource.getFeatures().length > 0) {
-                resolve();
-              } else {
-                reject(new Error("Features loading timeout"));
-                toast.custom(
-                  (t) => (
-                    <div className={`${t.visible ? "animate-enter" : "animate-leave"} max-w-md w-full bg-white shadow-lg rounded-lg pointer-events-auto flex`}>
-                      <div className="flex-1 w-0 p-4">
-                        <div className="flex items-start">
-                          <div className="ml-3 flex-1">
-                            <p className="text-sm font-medium text-gray-900">Network Error !</p>
-                            <p className="mt-1 text-sm text-gray-500">Please Refresh the page !</p>
-                          </div>
-                        </div>
-                      </div>
-                      <div className="flex border-l border-gray-200">
-                        <button
-                          type="button"
-                          onClick={() => { toast.dismiss(t.id); window.location.reload(); }}
-                          className="w-full border border-transparent rounded-none rounded-r-lg p-4 flex items-center justify-center text-sm font-medium text-blue-600 hover:text-blue-500 focus:outline-none"
-                        >
-                          Reload
-                        </button>
-                      </div>
-                    </div>
-                  ),
-                  { duration: 5000, position: "top-right" }
-                );
-                window.location.reload();
-              }
-            }, 4000);
-          }
-        };
-        checkFeatures();
+        "stroke-color": [
+          "case",
+          ["var", "isVisualizeOn"],
+          [0, 0, 0, 1],
+
+          ["==", ["get", "isSelected"], 1],
+          [255, 215, 0, 1],
+
+          ["==", ["get", "isSelected"], 0],
+          [
+            "case",
+            ["var", "hasSelection"],
+            [0, 0, 0, 0],
+            [0, 0, 0, 1],
+          ],
+
+          [0, 0, 0, 1],
+        ],
+
+        "stroke-width": [
+          "case",
+          ["==", ["get", "isSelected"], 1],
+          2.0,
+          1.2,
+        ],
+
+        "fill-color": [0, 0, 0, 0],
       });
 
-      const extent = vectorSource.getExtent();
       const view = mapRef.current.getView();
+
+      // Stop ongoing animations
       view.cancelAnimations();
 
-      view.animate({ zoom: Math.max(view.getZoom() - 0.5, 5), duration: 200 }, () => {
+      // Small zoom-out effect before fit
+      await new Promise((resolve) => {
+        view.animate(
+          {
+            zoom: Math.max(view.getZoom() - 0.5, 5),
+            duration: 200,
+          },
+          resolve
+        );
+      });
+
+      // Fit to extent
+      await new Promise((resolve) => {
         view.fit(extent, {
           padding: [50, 50, 50, 50],
           duration: 1000,
           maxZoom: 15,
-          easing: (t) => t === 1 ? 1 : 1 - Math.pow(2, -10 * t),
-          callback: () => {
-            let opacity = 0;
-            const interval = setInterval(() => {
-              opacity += 0.1;
-              boundaryLayer.setOpacity(opacity);
-              if (opacity >= 1) clearInterval(interval);
-            }, 50);
-          },
+
+          easing: (t) =>
+            t === 1 ? 1 : 1 - Math.pow(2, -10 * t),
+
+          callback: resolve,
         });
       });
 
-      boundaryLayer.setStyle({
-        variables: { hasSelection: false, isVisualizeOn: false },
-        "stroke-color": [
-          "case",
-          ["var", "isVisualizeOn"], [0, 0, 0, 1],
-          ["==", ["get", "isSelected"], 1], [255, 215, 0, 1],
-          ["==", ["get", "isSelected"], 0],
-          ["case", ["var", "hasSelection"], [0, 0, 0, 0], [0, 0, 0, 1]],
-          [0, 0, 0, 1],
-        ],
-        "stroke-width": ["case", ["==", ["get", "isSelected"], 1], 2.0, 1.2],
-        "fill-color": [0, 0, 0, 0],
-      });
+      // Smooth fade-in animation
+      let opacity = 0;
 
+      const fadeInterval = setInterval(() => {
+        opacity += 0.1;
+
+        boundaryLayer.setOpacity(Math.min(opacity, 1));
+
+        if (opacity >= 1) {
+          clearInterval(fadeInterval);
+        }
+      }, 50);
+
+      // Load dependent data
       await fetchMWSLayer([]);
-      setIsLayerLoaded(false);
+
     } catch (error) {
       console.error("Error loading boundary:", error);
-      setIsLayerLoaded(false);
+
+      toast.custom(
+        (t) => (
+          <div
+            className={`${
+              t.visible ? "animate-enter" : "animate-leave"
+            } max-w-md w-full bg-white shadow-lg rounded-lg pointer-events-auto flex`}
+          >
+            <div className="flex-1 w-0 p-4">
+              <div className="flex items-start">
+                <div className="ml-3 flex-1">
+                  <p className="text-sm font-medium text-gray-900">
+                    Network Error!
+                  </p>
+
+                  <p className="mt-1 text-sm text-gray-500">
+                    Unable to load map data. Please refresh the page.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex border-l border-gray-200">
+              <button
+                type="button"
+                onClick={() => {
+                  toast.dismiss(t.id);
+                  window.location.reload();
+                }}
+                className="w-full border border-transparent rounded-none rounded-r-lg p-4 flex items-center justify-center text-sm font-medium text-blue-600 hover:text-blue-500 focus:outline-none"
+              >
+                Reload
+              </button>
+            </div>
+          </div>
+        ),
+        {
+          duration: 10000,
+          position: "top-right",
+        }
+      );
+
+      // Reset map view
       const view = mapRef.current.getView();
+
+      view.cancelAnimations();
+
       view.setCenter([78.9, 23.6]);
       view.setZoom(5);
+
+    } finally {
+      setIsLayerLoaded(false);
     }
   };
 
@@ -1578,15 +1638,42 @@ const KYLDashboardPage = () => {
     trackPageView('/kyl_dashboard');
     if (!mapRef.current) { initializeMap(); return; }
     if (district && block) {
-      const view = mapRef.current.getView();
-      view.cancelAnimations();
-      fetchBoundaryAndZoom(district.label, block.label);
-      fetchDataJson();
-      fetchVillageJson();
-      setToggleStates({});
-      setCurrentLayer([]);
-      fetchWaterBodiesLayer();
-      fetchMWSConnectivityLayers();
+      try{
+        const view = mapRef.current.getView();
+        view.cancelAnimations();
+        fetchBoundaryAndZoom(district.label, block.label);
+        fetchDataJson();
+        fetchVillageJson();
+        setToggleStates({});
+        setCurrentLayer([]);
+        fetchWaterBodiesLayer();
+        fetchMWSConnectivityLayers();
+      } catch(err){
+        toast.custom(
+          (t) => (
+            <div className={`${t.visible ? "animate-enter" : "animate-leave"} max-w-md w-full bg-white shadow-lg rounded-lg pointer-events-auto flex`}>
+              <div className="flex-1 w-0 p-4">
+                <div className="flex items-start">
+                  <div className="ml-3 flex-1">
+                    <p className="text-sm font-medium text-gray-900">Network Error !</p>
+                    <p className="mt-1 text-sm text-gray-500">Not able to load data , Please Refresh the Page !</p>
+                  </div>
+                </div>
+              </div>
+              <div className="flex border-l border-gray-200">
+                <button
+                  type="button"
+                  onClick={() => { toast.dismiss(t.id); window.location.reload(); }}
+                  className="w-full border border-transparent rounded-none rounded-r-lg p-4 flex items-center justify-center text-sm font-medium text-blue-600 hover:text-blue-500 focus:outline-none"
+                >
+                  Reload
+                </button>
+              </div>
+            </div>
+          ),
+          { duration: 10000, position: "top-right" }
+        );
+      }
     }
     return () => { if (mapRef.current) mapRef.current.getView().cancelAnimations(); };
   }, [block, mapRef.current]);
@@ -1991,9 +2078,6 @@ const KYLDashboardPage = () => {
 
     const hasActiveWBFilters = Object.keys(filterSelections.selectedWaterbodyValues || {})
       .some(k => filterSelections.selectedWaterbodyValues[k] !== null);
-
-    // When WB filters active, selectedWaterbodyIds is set inside applyToFeatures
-    // with correct timing after wbMatch is stamped — don't touch it here
     if (hasActiveWBFilters) return;
 
     if (selectedMWS.length === 0) {
