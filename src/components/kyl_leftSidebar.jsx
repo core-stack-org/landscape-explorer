@@ -327,14 +327,6 @@ const KYLLeftSidebar = ({
                     <div className="space-y-6">
                         {getFiltersBySection().map(([section, filters]) => (
                             <div key={section}>
-                                {/* ── SECTION HEADING ──────────────────────────────────── */}
-                                <div className="mb-4 flex items-center gap-3">
-                                    <h3 className="text-xs font-bold uppercase tracking-widest text-gray-600">
-                                        {section}
-                                    </h3>
-                                    <div className="flex-1 h-px bg-gradient-to-r from-gray-200 to-transparent" />
-                                </div>
-
                                 {/* ── FILTERS UNDER SECTION ───────────────────────────── */}
                                 <div className="space-y-6 ml-1">
                                     {filters.map(filter => (

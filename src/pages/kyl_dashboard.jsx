@@ -1946,7 +1946,7 @@ const KYLDashboardPage = () => {
       if (currentLayer !== null) {
         let tempArr = currentLayer;
         for (let i = 0; i < tempArr.length; ++i) {
-          if (tempArr[i].name === "avg_double_cropped") {
+          if (tempArr[i].name === "avg_double_cropped" || tempArr[i].name === "lulc_crop_percent" || tempArr[i].name === "lulc_forest_percent" || tempArr[i].name === "lulc_shrub_percent") {
             mapRef.current.removeLayer(tempArr[i].layerRef[0]);
             const tempLayer = await getImageLayer(
               `LULC_level_3`,

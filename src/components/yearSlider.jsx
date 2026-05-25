@@ -15,16 +15,28 @@ const YearSlider = ({ currentLayer, sliderId = null, interventionYear }) => {
     { label: "2025-26", value: "25_26" },
   ];
 
-  const isAvgDoubleCropped = (() => {
+  const isKYlDashboard = (() => {
+    const validLayerNames = [
+      "avg_double_cropped",
+      "lulc_crop_percent",
+      "lulc_forest_percent",
+      "lulc_shrub_percent",
+    ];
+
     if (!currentLayer) return false;
-    if (typeof currentLayer === "object" && currentLayer.name)
-      return currentLayer.name === "avg_double_cropped";
-    if (Array.isArray(currentLayer))
-      return currentLayer.some((l) => l.name === "avg_double_cropped");
+
+    if (typeof currentLayer === "object" && currentLayer.name) {
+      return validLayerNames.includes(currentLayer.name);
+    }
+
+    if (Array.isArray(currentLayer)) {
+      return currentLayer.some((l) => validLayerNames.includes(l.name));
+    }
+
     return false;
   })();
 
-  const yearDataLulc = isAvgDoubleCropped
+  const yearDataLulc = isKYlDashboard
     ? yearDataLulcFull.slice(0, 8)
     : yearDataLulcFull;
 
@@ -49,8 +61,8 @@ const YearSlider = ({ currentLayer, sliderId = null, interventionYear }) => {
       return (
         (currentLayer.name === "avg_double_cropped" ||
         currentLayer.name.includes("LULC") ||
-        currentLayer.name.includes("lulc")) &&
-        !isExcludedLulc(currentLayer.name)
+        currentLayer.name.includes("lulc")) 
+        //&& !isExcludedLulc(currentLayer.name)
       );
     if (Array.isArray(currentLayer))
       return currentLayer.some(
@@ -58,8 +70,8 @@ const YearSlider = ({ currentLayer, sliderId = null, interventionYear }) => {
           (l.name === "avg_double_cropped" ||
           l.name === "built_up_area" ||
           l.name.includes("LULC") ||
-          l.name.includes("lulc")) &&
-          !isExcludedLulc(l.name)
+          l.name.includes("lulc")) 
+          //&& !isExcludedLulc(l.name)
       );
     return false;
   })();

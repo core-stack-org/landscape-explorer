@@ -79,25 +79,25 @@
                 ],
                 "vectorStyle": [
                     {
-                        "fill": "rgba(224, 224, 224, 0.5)",
+                        "fill": "rgba(217, 240, 211, 0.8)",
                         "stroke": "rgba(224, 224, 224, 1)",
                         "lower": 0,
                         "upper": 6
                     },
                     {
-                        "fill": "rgba(189, 189, 189, 0.5)",
+                        "fill": "rgba(166, 217, 106, 0.8)",
                         "stroke": "rgba(189, 189, 189, 1)",
                         "lower": 6,
                         "upper": 110
                     },
                     {
-                        "fill": "rgba(117, 117, 117, 0.5)",
+                        "fill": "rgba(253, 174, 97, 0.8)",
                         "stroke": "rgba(117, 117, 117, 1)",
                         "lower": 110,
                         "upper": 900
                     },
                     {
-                        "fill": "rgba(66, 66, 66, 0.5)",
+                        "fill": "rgba(215, 48, 39, 0.8)",
                         "stroke": "rgba(66, 66, 66, 1)",
                         "lower": 900,
                         "upper": 999999
@@ -169,33 +169,14 @@
                     }
                 ],
                 "layer_store": [
-                    "mws_layers"
+                    "LULC"
                 ],
                 "layer_name": [
-                    "deltaG_well_depth"
+                    "level_3"
                 ],
-                "vectorStyle": [
-                    {
-                        "fill": "rgba(204, 255, 204, 0.5)",
-                        "stroke": "rgba(204, 255, 204, 1)",
-                        "lower": 0,
-                        "upper": 5
-                    },
-                    {
-                        "fill": "rgba(102, 255, 102, 0.5)",
-                        "stroke": "rgba(102, 255, 102, 1)",
-                        "lower": 5,
-                        "upper": 15
-                    },
-                    {
-                        "fill": "rgba(0, 153, 0, 0.5)",
-                        "stroke": "rgba(0, 153, 0, 1)",
-                        "lower": 15,
-                        "upper": 999999
-                    }
-                ],
-                "rasterStyle": "",
-                "styleIdx": 34
+                "vectorStyle": [],
+                "rasterStyle": "lulc_land_use_KYL",
+                "styleIdx": 0
             },
             {
                 "name": "lulc_forest_percent",
@@ -225,33 +206,14 @@
                     }
                 ],
                 "layer_store": [
-                    "mws_layers"
+                    "LULC"
                 ],
                 "layer_name": [
-                    "deltaG_well_depth"
+                    "level_3"
                 ],
-                "vectorStyle": [
-                    {
-                        "fill": "rgba(191, 232, 245, 0.5)",
-                        "stroke": "rgba(191, 232, 245, 1)",
-                        "lower": 0,
-                        "upper": 30
-                    },
-                    {
-                        "fill": "rgba(72, 181, 220, 0.5)",
-                        "stroke": "rgba(72, 181, 220, 1)",
-                        "lower": 30,
-                        "upper": 60
-                    },
-                    {
-                        "fill": "rgba(37, 150, 190, 0.5)",
-                        "stroke": "rgba(37, 150, 190, 1)",
-                        "lower": 60,
-                        "upper": 999999
-                    }
-                ],
-                "rasterStyle": "",
-                "styleIdx": 35
+                "vectorStyle": [],
+                "rasterStyle": "lulc_land_use_KYL",
+                "styleIdx": 0
             },
             {
                 "name": "lulc_shrub_percent",
@@ -281,33 +243,14 @@
                     }
                 ],
                 "layer_store": [
-                    "mws_layers"
+                    "LULC"
                 ],
                 "layer_name": [
-                    "deltaG_well_depth"
+                    "level_3"
                 ],
-                "vectorStyle": [
-                    {
-                        "fill": "rgba(255, 229, 204, 0.5)",
-                        "stroke": "rgba(255, 229, 204, 1)",
-                        "lower": 0,
-                        "upper": 5
-                    },
-                    {
-                        "fill": "rgba(255, 153, 51, 0.5)",
-                        "stroke": "rgba(255, 153, 51, 1)",
-                        "lower": 5,
-                        "upper": 15
-                    },
-                    {
-                        "fill": "rgba(153, 76, 0, 0.5)",
-                        "stroke": "rgba(153, 76, 0, 1)",
-                        "lower": 15,
-                        "upper": 999999
-                    }
-                ],
-                "rasterStyle": "",
-                "styleIdx": 36
+                "vectorStyle": [],
+                "rasterStyle": "lulc_land_use_KYL",
+                "styleIdx": 0
             }
         ],
         "Climate": [
@@ -360,31 +303,31 @@
                 ],
                 "vectorStyle": [
                     {
-                        "fill": "rgba(176, 224, 230, 0.5)",
+                        "fill": "rgba(176, 224, 230, 0.8)",
                         "stroke": "rgba(176, 224, 230, 1)",
                         "lower": 0,
                         "upper": 740
                     },
                     {
-                        "fill": "rgba(135, 206, 250, 0.5)",
+                        "fill": "rgba(135, 206, 250, 0.8)",
                         "stroke": "rgba(135, 206, 250, 1)",
                         "lower": 740,
                         "upper": 960
                     },
                     {
-                        "fill": "rgba(43, 147, 250, 0.5)",
+                        "fill": "rgba(43, 147, 250, 0.8)",
                         "stroke": "rgba(43, 147, 250, 1)",
                         "lower": 960,
                         "upper": 1200
                     },
                     {
-                        "fill": "rgba(3, 107, 210, 0.5)",
+                        "fill": "rgba(3, 107, 210, 0.8)",
                         "stroke": "rgba(3, 107, 210, 1)",
                         "lower": 1200,
                         "upper": 1620
                     },
                     {
-                        "fill": "rgba(0, 64, 128, 0.5)",
+                        "fill": "rgba(0, 64, 128, 0.8)",
                         "stroke": "rgba(0, 64, 128, 1)",
                         "lower": 1620,
                         "upper": 9999999999
@@ -428,19 +371,19 @@
                 ],
                 "vectorStyle": [
                     {
-                        "fill": "rgba(128, 229, 230, 0.5)",
+                        "fill": "rgba(128, 229, 230, 0.8)",
                         "stroke": "rgba(128, 229, 230, 1)",
                         "lower": 0,
                         "upper": 100
                     },
                     {
-                        "fill": "rgba(0, 206, 209, 0.5)",
+                        "fill": "rgba(0, 206, 209, 0.8)",
                         "stroke": "rgba(0, 206, 209, 1)",
                         "lower": 100,
                         "upper": 300
                     },
                     {
-                        "fill": "rgba(0, 138, 140, 0.5)",
+                        "fill": "rgba(0, 138, 140, 0.8)",
                         "stroke": "rgba(0, 138, 140, 1)",
                         "lower": 300,
                         "upper": 9999999999
@@ -484,19 +427,19 @@
                 ],
                 "vectorStyle": [
                     {
-                        "fill": "rgba(244, 208, 63, 0.5)",
+                        "fill": "rgba(244, 208, 63, 0.8)",
                         "stroke": "rgba(244, 208, 63, 1)",
                         "lower": 0,
                         "upper": 0
                     },
                     {
-                        "fill": "rgba(231, 76, 60, 0.5)",
+                        "fill": "rgba(231, 76, 60, 0.8)",
                         "stroke": "rgba(231, 76, 60, 1)",
                         "lower": 2,
                         "upper": 99999
                     },
                     {
-                        "fill": "rgba(235, 152, 78, 0.5)",
+                        "fill": "rgba(235, 152, 78, 0.8)",
                         "stroke": "rgba(235, 152, 78, 1)",
                         "lower": 1,
                         "upper": 99999
@@ -540,19 +483,19 @@
                 ],
                 "vectorStyle": [
                     {
-                        "fill": "rgba(210, 180, 140, 0.5)",
+                        "fill": "rgba(210, 180, 140, 0.8)",
                         "stroke": "rgba(210, 180, 140, 1)",
                         "lower": 0,
                         "upper": 1
                     },
                     {
-                        "fill": "rgba(90, 46, 15, 0.5)",
+                        "fill": "rgba(90, 46, 15, 0.8)",
                         "stroke": "rgba(90, 46, 15, 1)",
                         "lower": 2,
                         "upper": 999999999
                     },
                     {
-                        "fill": "rgba(139, 69, 19, 0.5)",
+                        "fill": "rgba(139, 69, 19, 0.8)",
                         "stroke": "rgba(139, 69, 19, 1)",
                         "lower": 1,
                         "upper": 999999999
@@ -598,19 +541,19 @@
                 ],
                 "vectorStyle": [
                     {
-                        "fill": "rgba(116, 204, 244, 0.5)",
+                        "fill": "rgba(116, 204, 244, 0.8)",
                         "stroke": "rgba(116, 204, 244, 1)",
                         "lower": 0,
                         "upper": 30
                     },
                     {
-                        "fill": "rgba(28, 163, 236, 0.5)",
+                        "fill": "rgba(28, 163, 236, 0.8)",
                         "stroke": "rgba(28, 163, 236, 1)",
                         "lower": 30,
                         "upper": 70
                     },
                     {
-                        "fill": "rgba(15, 94, 156, 0.5)",
+                        "fill": "rgba(15, 94, 156, 0.8)",
                         "stroke": "rgba(15, 94, 156, 1)",
                         "lower": 70,
                         "upper": 9999999
@@ -654,19 +597,19 @@
                 ],
                 "vectorStyle": [
                     {
-                        "fill": "rgba(116, 204, 244, 0.5)",
+                        "fill": "rgba(116, 204, 244, 0.8)",
                         "stroke": "rgba(116, 204, 244, 1)",
                         "lower": 0,
                         "upper": 25
                     },
                     {
-                        "fill": "rgba(28, 163, 236, 0.5)",
+                        "fill": "rgba(28, 163, 236, 0.8)",
                         "stroke": "rgba(28, 163, 236, 1)",
                         "lower": 25,
                         "upper": 50
                     },
                     {
-                        "fill": "rgba(15, 94, 156, 0.5)",
+                        "fill": "rgba(15, 94, 156, 0.8)",
                         "stroke": "rgba(15, 94, 156, 1)",
                         "lower": 50,
                         "upper": 9999999
@@ -697,85 +640,85 @@
                 ],
                 "vectorStyle": [
                     {
-                        "fill": "rgba(255, 253, 181, 0.5)",
+                        "fill": "rgba(255, 253, 181, 0.8)",
                         "stroke": "rgba(255, 253, 181, 1)",
                         "lower": 0,
                         "upper": 0
                     },
                     {
-                        "fill": "rgba(243, 164, 37, 0.5)",
+                        "fill": "rgba(243, 164, 37, 0.8)",
                         "stroke": "rgba(243, 164, 37, 1)",
                         "lower": 1,
                         "upper": 1
                     },
                     {
-                        "fill": "rgba(153, 236, 241, 0.5)",
+                        "fill": "rgba(153, 236, 241, 0.8)",
                         "stroke": "rgba(153, 236, 241, 1)",
                         "lower": 2,
                         "upper": 2
                     },
                     {
-                        "fill": "rgba(165, 248, 197, 0.5)",
+                        "fill": "rgba(165, 248, 197, 0.8)",
                         "stroke": "rgba(165, 248, 197, 1)",
                         "lower": 3,
                         "upper": 3
                     },
                     {
-                        "fill": "rgba(245, 124, 153, 0.5)",
+                        "fill": "rgba(245, 124, 153, 0.8)",
                         "stroke": "rgba(245, 124, 153, 1)",
                         "lower": 4,
                         "upper": 4
                     },
                     {
-                        "fill": "rgba(232, 213, 46, 0.5)",
+                        "fill": "rgba(232, 213, 46, 0.8)",
                         "stroke": "rgba(232, 213, 46, 1)",
                         "lower": 5,
                         "upper": 5
                     },
                     {
-                        "fill": "rgba(60, 146, 242, 0.5)",
+                        "fill": "rgba(60, 146, 242, 0.8)",
                         "stroke": "rgba(60, 146, 242, 1)",
                         "lower": 6,
                         "upper": 6
                     },
                     {
-                        "fill": "rgba(213, 219, 33, 0.5)",
+                        "fill": "rgba(213, 219, 33, 0.8)",
                         "stroke": "rgba(213, 219, 33, 1)",
                         "lower": 7,
                         "upper": 7
                     },
                     {
-                        "fill": "rgba(207, 127, 244, 0.5)",
+                        "fill": "rgba(207, 127, 244, 0.8)",
                         "stroke": "rgba(207, 127, 244, 1)",
                         "lower": 8,
                         "upper": 8
                     },
                     {
-                        "fill": "rgba(244, 219, 255, 0.5)",
+                        "fill": "rgba(244, 219, 255, 0.8)",
                         "stroke": "rgba(244, 219, 255, 1)",
                         "lower": 9,
                         "upper": 9
                     },
                     {
-                        "fill": "rgba(80, 192, 43, 0.5)",
+                        "fill": "rgba(80, 192, 43, 0.8)",
                         "stroke": "rgba(80, 192, 43, 1)",
                         "lower": 10,
                         "upper": 10
                     },
                     {
-                        "fill": "rgba(255, 225, 181, 0.5)",
+                        "fill": "rgba(255, 225, 181, 0.8)",
                         "stroke": "rgba(255, 225, 181, 1)",
                         "lower": 11,
                         "upper": 11
                     },
                     {
-                        "fill": "rgba(228, 207, 241, 0.5)",
+                        "fill": "rgba(228, 207, 241, 0.8)",
                         "stroke": "rgba(228, 207, 241, 1)",
                         "lower": 12,
                         "upper": 12
                     },
                     {
-                        "fill": "rgba(87, 210, 255, 0.5)",
+                        "fill": "rgba(87, 210, 255, 0.8)",
                         "stroke": "rgba(87, 210, 255, 1)",
                         "lower": 13,
                         "upper": 13
@@ -824,25 +767,25 @@
                         "upper": 0
                     },
                     {
-                        "fill": "rgba(116, 204, 244,, 0.5)",
+                        "fill": "rgba(116, 204, 244,, 0.8)",
                         "stroke": "rgba(116, 204, 244,, 1)",
                         "lower": 1,
                         "upper": 1
                     },
                     {
-                        "fill": "rgba(69, 117, 180, 0.5)",
+                        "fill": "rgba(69, 117, 180, 0.8)",
                         "stroke": "rgba(69, 117, 180, 1)",
                         "lower": 2,
                         "upper": 2
                     },
                     {
-                        "fill": "rgba(49, 54, 149, 0.5)",
+                        "fill": "rgba(49, 54, 149, 0.8)",
                         "stroke": "rgba(49, 54, 149, 1)",
                         "lower": 3,
                         "upper": 3
                     },
                     {
-                        "fill": "rgba(169, 169, 169, 0.5)",
+                        "fill": "rgba(169, 169, 169, 0.8)",
                         "stroke": "rgba(169, 169, 169, 1)",
                         "lower": 4,
                         "upper": 4
@@ -877,19 +820,19 @@
                 ],
                 "vectorStyle": [
                     {
-                        "fill": "rgba(156, 163, 175, 0.5)",
+                        "fill": "rgba(156, 163, 175, 0.8)",
                         "stroke": "rgba(156, 163, 175, 1)",
                         "lower": 0,
                         "upper": 0
                     },
                     {
-                        "fill": "rgba(34, 197, 94, 0.5)",
+                        "fill": "rgba(34, 197, 94, 0.8)",
                         "stroke": "rgba(34, 197, 94, 1)",
                         "lower": 1,
                         "upper": 1
                     },
                     {
-                        "fill": "rgba(239, 68, 68, 0.5)",
+                        "fill": "rgba(239, 68, 68, 0.8)",
                         "stroke": "rgba(239, 68, 68, 1)",
                         "lower": -1,
                         "upper": -1
@@ -974,19 +917,19 @@
                 ],
                 "vectorStyle": [
                     {
-                        "fill": "rgba(115, 187, 83, 0.5)",
+                        "fill": "rgba(115, 187, 83, 0.8)",
                         "stroke": "rgba(115, 187, 83, 1)",
                         "lower": 0,
                         "upper": 30
                     },
                     {
-                        "fill": "rgba(238, 224, 93, 0.5)",
+                        "fill": "rgba(238, 224, 93, 0.8)",
                         "stroke": "rgba(238, 224, 93, 1)",
                         "lower": 30,
                         "upper": 90
                     },
                     {
-                        "fill": "rgba(255, 0, 0, 0.5)",
+                        "fill": "rgba(255, 0, 0, 0.8)",
                         "stroke": "rgba(255, 0, 0, 1)",
                         "lower": 90,
                         "upper": 9999999
@@ -1003,11 +946,11 @@
                 "type": 1,
                 "values": [
                     {
-                        "label": "Available",
+                        "label": "Present",
                         "value": true
                     },
                     {
-                        "label": "Not available",
+                        "label": "Absent",
                         "value": false
                     }
                 ],
@@ -1019,7 +962,7 @@
                 ],
                 "vectorStyle": [
                     {
-                        "fill": "rgba(43, 147, 250, 0.5)",
+                        "fill": "rgba(43, 147, 250, 0.8)",
                         "stroke": "rgba(43, 147, 250, 1)"
                     }
                 ],
@@ -1032,11 +975,11 @@
                 "type": 1,
                 "values": [
                     {
-                        "label": "Available",
+                        "label": "Present",
                         "value": true
                     },
                     {
-                        "label": "Not available",
+                        "label": "Absent",
                         "value": false
                     }
                 ],
@@ -1048,7 +991,7 @@
                 ],
                 "vectorStyle": [
                     {
-                        "fill": "rgba(43, 147, 250, 0.5)",
+                        "fill": "rgba(43, 147, 250, 0.8)",
                         "stroke": "rgba(43, 147, 250, 1)"
                     }
                 ],
@@ -1092,19 +1035,19 @@
                 ],
                 "vectorStyle": [
                     {
-                        "fill": "rgba(115, 187, 83, 0.5)",
+                        "fill": "rgba(115, 187, 83, 0.8)",
                         "stroke": "rgba(115, 187, 83, 1)",
                         "lower": 0,
                         "upper": 50
                     },
                     {
-                        "fill": "rgba(238, 224, 93, 0.5)",
+                        "fill": "rgba(238, 224, 93, 0.8)",
                         "stroke": "rgba(238, 224, 93, 1)",
                         "lower": 50,
                         "upper": 100
                     },
                     {
-                        "fill": "rgba(255, 0, 0, 0.5)",
+                        "fill": "rgba(255, 0, 0, 0.8)",
                         "stroke": "rgba(255, 0, 0, 1)",
                         "lower": 100,
                         "upper": 9999999
@@ -1150,19 +1093,19 @@
                 ],
                 "vectorStyle": [
                     {
-                        "fill": "rgba(255, 0, 0, 0.5)",
+                        "fill": "rgba(255, 0, 0, 0.8)",
                         "stroke": "rgba(255, 0, 0, 1)",
                         "lower": 0,
                         "upper": 50
                     },
                     {
-                        "fill": "rgba(238, 224, 93, 0.5)",
+                        "fill": "rgba(238, 224, 93, 0.8)",
                         "stroke": "rgba(238, 224, 93, 1)",
                         "lower": 50,
                         "upper": 100
                     },
                     {
-                        "fill": "rgba(115, 187, 83, 0.5)",
+                        "fill": "rgba(115, 187, 83, 0.8)",
                         "stroke": "rgba(115, 187, 83, 1)",
                         "lower": 100,
                         "upper": 9999999
@@ -1548,25 +1491,25 @@
                 "layer_name": [],
                 "vectorStyle": [
                     {
-                        "fill": "rgba(192, 128, 129, 0.5)",
+                        "fill": "rgba(192, 128, 129, 0.8)",
                         "stroke": "rgba(192, 128, 129, 1)",
                         "lower": 0,
                         "upper": 800
                     },
                     {
-                        "fill": "rgba(128, 0, 32, 0.5)",
+                        "fill": "rgba(128, 0, 32, 0.8)",
                         "stroke": "rgba(128, 0, 32, 1)",
                         "lower": 800,
                         "upper": 2400
                     },
                     {
-                        "fill": "rgba(91, 14, 45, 0.5)",
+                        "fill": "rgba(91, 14, 45, 0.8)",
                         "stroke": "rgba(91, 14, 45, 1)",
                         "lower": 2400,
                         "upper": 8900
                     },
                     {
-                        "fill": "rgba(61, 0, 15, 0.5)",
+                        "fill": "rgba(61, 0, 15, 0.8)",
                         "stroke": "rgba(61, 0, 15, 1)",
                         "lower": 8900,
                         "upper": 9999999999
@@ -1608,19 +1551,19 @@
                 "layer_name": [],
                 "vectorStyle": [
                     {
-                        "fill": "rgba(238, 234, 197, 0.5)",
+                        "fill": "rgba(238, 234, 197, 0.8)",
                         "stroke": "rgba(238, 234, 197, 1)",
                         "lower": 0,
                         "upper": 18
                     },
                     {
-                        "fill": "rgba(247, 219, 165, 0.5)",
+                        "fill": "rgba(247, 219, 165, 0.8)",
                         "stroke": "rgba(247, 219, 165, 1)",
                         "lower": 18,
                         "upper": 33
                     },
                     {
-                        "fill": "rgba(236, 181, 115, 0.5)",
+                        "fill": "rgba(236, 181, 115, 0.8)",
                         "stroke": "rgba(236, 181, 115, 1)",
                         "lower": 33,
                         "upper": 999999999
@@ -1669,25 +1612,25 @@
                 "layer_name": [],
                 "vectorStyle": [
                     {
-                        "fill": "rgba(230, 230, 250, 0.5)",
+                        "fill": "rgba(230, 230, 250, 0.8)",
                         "stroke": "rgba(230, 230, 250, 1)",
                         "lower": 0,
                         "upper": 5
                     },
                     {
-                        "fill": "rgba(218, 112, 214, 0.5)",
+                        "fill": "rgba(218, 112, 214, 0.8)",
                         "stroke": "rgba(218, 112, 214, 1)",
                         "lower": 5,
                         "upper": 17
                     },
                     {
-                        "fill": "rgba(120, 81, 169, 0.5)",
+                        "fill": "rgba(120, 81, 169, 0.8)",
                         "stroke": "rgba(120, 81, 169, 1)",
                         "lower": 17,
                         "upper": 37
                     },
                     {
-                        "fill": "rgba(75, 0, 130, 0.5)",
+                        "fill": "rgba(75, 0, 130, 0.8)",
                         "stroke": "rgba(75, 0, 130, 1)",
                         "lower": 37,
                         "upper": 100
@@ -1736,25 +1679,25 @@
                 "layer_name": [],
                 "vectorStyle": [
                     {
-                        "fill": "rgba(152, 251, 152, 0.5)",
+                        "fill": "rgba(152, 251, 152, 0.8)",
                         "stroke": "rgba(152, 251, 152, 1)",
                         "lower": 0,
                         "upper": 46
                     },
                     {
-                        "fill": "rgba(50, 205, 50, 0.5)",
+                        "fill": "rgba(50, 205, 50, 0.8)",
                         "stroke": "rgba((50, 205, 50, 1)",
                         "lower": 46,
                         "upper": 59
                     },
                     {
-                        "fill": "rgba(34, 139, 34, 0.5)",
+                        "fill": "rgba(34, 139, 34, 0.8)",
                         "stroke": "rgba(34, 139, 34, 1)",
                         "lower": 59,
                         "upper": 70
                     },
                     {
-                        "fill": "rgba(0, 100, 0, 0.5)",
+                        "fill": "rgba(0, 100, 0, 0.8)",
                         "stroke": "rgba(0, 100, 0, 1)",
                         "lower": 70,
                         "upper": 999999999
@@ -1793,13 +1736,13 @@
                 ],
                 "vectorStyle": [
                     {
-                        "fill": "rgba(255, 249, 196, 0.5)",
+                        "fill": "rgba(255, 249, 196, 0.8)",
                         "stroke": "rgba(255, 249, 196, 1)",
                         "lower": 0,
                         "upper": 2
                     },
                     {
-                        "fill": "rgba(255, 193, 7, 0.5)",
+                        "fill": "rgba(255, 193, 7, 0.8)",
                         "stroke": "rgba(255, 193, 7, 1)",
                         "lower": 2,
                         "upper": 9999999999
@@ -1836,13 +1779,13 @@
                 ],
                 "vectorStyle": [
                     {
-                        "fill": "rgba(232, 238, 186, 0.5)",
+                        "fill": "rgba(232, 238, 186, 0.8)",
                         "stroke": "rgba(232, 238, 186, 1)",
                         "lower": 0,
                         "upper": 3
                     },
                     {
-                        "fill": "rgba(137, 151, 10, 0.5)",
+                        "fill": "rgba(137, 151, 10, 0.8)",
                         "stroke": "rgba(137, 151, 10, 1)",
                         "lower": 3,
                         "upper": 9999999999
@@ -1886,19 +1829,19 @@
                 ],
                 "vectorStyle": [
                     {
-                        "fill": "rgba(255, 205, 210, 0.5)",
+                        "fill": "rgba(255, 205, 210, 0.8)",
                         "stroke": "rgba(255, 205, 210, 1)",
                         "lower": 0,
                         "upper": 2
                     },
                     {
-                        "fill": "rgba(239, 83, 80, 0.5)",
+                        "fill": "rgba(239, 83, 80, 0.8)",
                         "stroke": "rgba(239, 83, 80, 1)",
                         "lower": 2,
                         "upper": 5
                     },
                     {
-                        "fill": "rgba(183, 28, 28, 0.5)",
+                        "fill": "rgba(183, 28, 28, 0.8)",
                         "stroke": "rgba(183, 28, 28, 1)",
                         "lower": 5,
                         "upper": 9999999999
@@ -1942,19 +1885,19 @@
                 ],
                 "vectorStyle": [
                     {
-                        "fill": "rgba(255, 205, 210, 0.5)",
+                        "fill": "rgba(255, 205, 210, 0.8)",
                         "stroke": "rgba(255, 205, 210, 1)",
                         "lower": 0,
                         "upper": 10
                     },
                     {
-                        "fill": "rgba(239, 83, 80, 0.5)",
+                        "fill": "rgba(239, 83, 80, 0.8)",
                         "stroke": "rgba(239, 83, 80, 1)",
                         "lower": 10,
                         "upper": 25
                     },
                     {
-                        "fill": "rgba(183, 28, 28, 0.5)",
+                        "fill": "rgba(183, 28, 28, 0.8)",
                         "stroke": "rgba(183, 28, 28, 1)",
                         "lower": 25,
                         "upper": 9999999999
@@ -1991,13 +1934,13 @@
                 ],
                 "vectorStyle": [
                     {
-                        "fill": "rgba(232, 238, 186, 0.5)",
+                        "fill": "rgba(232, 238, 186, 0.8)",
                         "stroke": "rgba(232, 238, 186, 1)",
                         "lower": 0,
                         "upper": 2
                     },
                     {
-                        "fill": "rgba(137, 151, 10, 0.5)",
+                        "fill": "rgba(137, 151, 10, 0.8)",
                         "stroke": "rgba(137, 151, 10, 1)",
                         "lower": 2,
                         "upper": 9999999999
@@ -2034,13 +1977,13 @@
                 ],
                 "vectorStyle": [
                     {
-                        "fill": "rgba(72, 55, 217, 0.5)",
+                        "fill": "rgba(72, 55, 217, 0.8)",
                         "stroke": "rgba(72, 55, 217, 1)",
                         "lower": 0,
                         "upper": 5
                     },
                     {
-                        "fill": "rgba(8, 8, 77, 0.5)",
+                        "fill": "rgba(8, 8, 77, 0.8)",
                         "stroke": "rgba(8, 8, 77, 1)",
                         "lower": 5,
                         "upper": 9999999999
@@ -2084,19 +2027,19 @@
                 ],
                 "vectorStyle": [
                     {
-                        "fill": "rgba(255, 255, 102, 0.5)",
+                        "fill": "rgba(255, 255, 102, 0.8)",
                         "stroke": "rgba(255, 255, 102, 1)",
                         "lower": 0,
                         "upper": 3
                     },
                     {
-                        "fill": "rgba(159, 159, 0, 0.5)",
+                        "fill": "rgba(159, 159, 0, 0.8)",
                         "stroke": "rgba(159, 159, 0, 1)",
                         "lower": 3,
                         "upper": 10
                     },
                     {
-                        "fill": "rgba(98, 98, 0, 0.5)",
+                        "fill": "rgba(98, 98, 0, 0.8)",
                         "stroke": "rgba(98, 98, 0, 1)",
                         "lower": 10,
                         "upper": 9999999999
@@ -2140,19 +2083,19 @@
                 ],
                 "vectorStyle": [
                     {
-                        "fill": "rgba(200, 230, 201, 0.5)",
+                        "fill": "rgba(200, 230, 201, 0.8)",
                         "stroke": "rgba(200, 230, 201, 1)",
                         "lower": 0,
                         "upper": 5
                     },
                     {
-                        "fill": "rgba(102, 187, 106, 0.5)",
+                        "fill": "rgba(102, 187, 106, 0.8)",
                         "stroke": "rgba(102, 187, 106, 1)",
                         "lower": 5,
                         "upper": 20
                     },
                     {
-                        "fill": "rgba(46, 125, 50, 0.5)",
+                        "fill": "rgba(46, 125, 50, 0.8)",
                         "stroke": "rgba(46, 125, 50, 1)",
                         "lower": 20,
                         "upper": 9999999999
@@ -2196,19 +2139,19 @@
                 ],
                 "vectorStyle": [
                     {
-                        "fill": "rgba(204, 238, 255, 0.5)",
+                        "fill": "rgba(204, 238, 255, 0.8)",
                         "stroke": "rgba(204, 238, 255, 1)",
                         "lower": 0,
                         "upper": 10
                     },
                     {
-                        "fill": "rgba(0, 142, 212, 0.5)",
+                        "fill": "rgba(0, 142, 212, 0.8)",
                         "stroke": "rgba(0, 142, 212, 1)",
                         "lower": 10,
                         "upper": 30
                     },
                     {
-                        "fill": "rgba(0, 77, 116, 0.5)",
+                        "fill": "rgba(0, 77, 116, 0.8)",
                         "stroke": "rgba(0, 77, 116, 1)",
                         "lower": 30,
                         "upper": 9999999999
@@ -2252,19 +2195,19 @@
                 ],
                 "vectorStyle": [
                     {
-                        "fill": "rgba(255, 170, 85, 0.5)",
+                        "fill": "rgba(255, 170, 85, 0.8)",
                         "stroke": "rgba(255, 170, 85, 1)",
                         "lower": 0,
                         "upper": 10
                     },
                     {
-                        "fill": "rgba(170, 85, 0, 0.5)",
+                        "fill": "rgba(170, 85, 0, 0.8)",
                         "stroke": "rgba(170, 85, 0, 1)",
                         "lower": 10,
                         "upper": 30
                     },
                     {
-                        "fill": "rgba(85, 43, 0, 0.5)",
+                        "fill": "rgba(85, 43, 0, 0.8)",
                         "stroke": "rgba(85, 43, 0, 1)",
                         "lower": 30,
                         "upper": 9999999999
@@ -2308,19 +2251,19 @@
                 ],
                 "vectorStyle": [
                     {
-                        "fill": "rgba(200, 230, 201, 0.5)",
+                        "fill": "rgba(200, 230, 201, 0.8)",
                         "stroke": "rgba(200, 230, 201, 1)",
                         "lower": 0,
                         "upper": 10
                     },
                     {
-                        "fill": "rgba(102, 187, 106, 0.5)",
+                        "fill": "rgba(102, 187, 106, 0.8)",
                         "stroke": "rgba(102, 187, 106, 1)",
                         "lower": 10,
                         "upper": 50
                     },
                     {
-                        "fill": "rgba(46, 125, 50, 0.5",
+                        "fill": "rgba(46, 125, 50, 0.8",
                         "stroke": "rgba(46, 125, 50, 1)",
                         "lower": 50,
                         "upper": 9999999999
@@ -2364,19 +2307,19 @@
                 "layer_name": [],
                 "vectorStyle": [
                     {
-                        "fill": "rgba(135, 206, 235, 0.5)",
+                        "fill": "rgba(135, 206, 235, 0.8)",
                         "stroke": "rgba(135, 206, 235, 1)",
                         "lower": 0,
                         "upper": 100
                     },
                     {
-                        "fill": "rgba(65, 105, 225, 0.5)",
+                        "fill": "rgba(65, 105, 225, 0.8)",
                         "stroke": "rgba(65, 105, 225, 1)",
                         "lower": 100,
                         "upper": 300
                     },
                     {
-                        "fill": "rgba(0, 0, 128, 0.5)",
+                        "fill": "rgba(0, 0, 128, 0.8)",
                         "stroke": "rgba(0, 0, 128, 1)",
                         "lower": 300,
                         "upper": 999999999

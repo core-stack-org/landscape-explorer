@@ -211,21 +211,30 @@ const MapLegend = ({ showMWS, showVillages, currentLayer, showConnectivity }) =>
   ];
 
   const lulcCropPercentItems = [
-    { color: "#ccffcc", label: "Less than 5%" },
-    { color: "#66ff66", label: "Between 5-15%" },
-    { color: "#009900", label: "More than 15%" },
+    { color: "#7FC64B", label: "Crop" },
+    { color: "#1B7837", label: "Trees" },
+    { color: "#A18F60", label: "Shrubs" },
+    { color: "#a9a9a9", label: "Barren" },
+    { color: "#D73027", label: "Built-up" },
+    { color: "#2B83BA", label: "Water" },
   ];
 
   const lulcForestPercentItems = [
-    { color: "#BFE8F5", label: "Less than 30%" },
-    { color: "#48B5DC", label: "Between 30-60%" },
-    { color: "#2596BE", label: "More than 60%" },
+    { color: "#7FC64B", label: "Crop" },
+    { color: "#1B7837", label: "Trees" },
+    { color: "#A18F60", label: "Shrubs" },
+    { color: "#a9a9a9", label: "Barren" },
+    { color: "#D73027", label: "Built-up" },
+    { color: "#2B83BA", label: "Water" },
   ];
 
   const lulcShrubPercentItems = [
-    { color: "#ffe5cc", label: "Less than 5%" },
-    { color: "#ff9933", label: "Between 5-15%" },
-    { color: "#994c00", label: "More than 15%" },
+    { color: "#7FC64B", label: "Crop" },
+    { color: "#1B7837", label: "Trees" },
+    { color: "#A18F60", label: "Shrubs" },
+    { color: "#a9a9a9", label: "Barren" },
+    { color: "#D73027", label: "Built-up" },
+    { color: "#2B83BA", label: "Water" },
   ];
 
   const terrainLegendItems = [
@@ -243,10 +252,10 @@ const MapLegend = ({ showMWS, showVillages, currentLayer, showConnectivity }) =>
   ];
 
   const reliefLegendItems = [
-    { color: "#e0e0e0", label: "Low Relief (less than 6m)" },
-    { color: "#bdbdbd", label: "Moderate Relief (between 6m and 110m)" },
-    { color: "#757575", label: "High Relief (between 110m and 900m)" },
-    { color: "#424242", label: "Extremely High Relief (More than 900m)" },
+    { color: "#D9F0D3", label: "Low Relief (less than 6m)" },
+    { color: "#A6D96A", label: "Moderate Relief (between 6m and 110m)" },
+    { color: "#FDAE61", label: "High Relief (between 110m and 900m)" },
+    { color: "#D73027", label: "Extremely High Relief (More than 900m)" },
   ];
 
   const DEM_STOPS = [
@@ -862,7 +871,7 @@ const MapLegend = ({ showMWS, showVillages, currentLayer, showConnectivity }) =>
               {isLulcCropPercentActive && (
                 <div className="space-y-2">
                   <h4 className="text-xs font-medium text-gray-600">
-                    Percentage of area with crops
+                   Area with crops
                   </h4>
                   {lulcCropPercentItems.map((item, index) => (
                     <div
@@ -887,7 +896,7 @@ const MapLegend = ({ showMWS, showVillages, currentLayer, showConnectivity }) =>
               {isLulcForestPercentActive && (
                 <div className="space-y-2">
                   <h4 className="text-xs font-medium text-gray-600">
-                    Percentage of area with tree cover
+                    Area with tree cover
                   </h4>
                   {lulcForestPercentItems.map((item, index) => (
                     <div
@@ -912,7 +921,7 @@ const MapLegend = ({ showMWS, showVillages, currentLayer, showConnectivity }) =>
               {isLulcShrubPercentActive && (
                 <div className="space-y-2">
                   <h4 className="text-xs font-medium text-gray-600">
-                    Percentage of area with shrubs
+                    Area with shrubs
                   </h4>
                   {lulcShrubPercentItems.map((item, index) => (
                     <div
