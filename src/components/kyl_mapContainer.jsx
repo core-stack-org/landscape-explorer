@@ -997,7 +997,7 @@ const MapLegend = ({ showMWS, showVillages, currentLayer, showConnectivity }) =>
               {isRelMeanElevLayerActive && (
                 <div>
                   <h4 className="text-xs font-medium text-gray-600 mb-2">
-                    Elevation (m)
+                    Absolute Elevation (m)
                   </h4>
  
                   <div className="flex gap-2">
