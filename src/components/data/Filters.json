@@ -845,7 +845,7 @@
         "Agriculture": [
             {
                 "name": "avg_double_cropped",
-                "label": "Average percentage of double cropped area over the years 2017 to 2024",
+                "label": "Average percentage of double cropped area over the years 2017 to 2025",
                 "type": 2,
                 "values": [
                     {
