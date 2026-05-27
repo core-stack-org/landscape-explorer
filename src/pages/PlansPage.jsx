@@ -1275,7 +1275,7 @@ const PlansPage = () => {
             </a>
 
           <h1 className="text-2xl lg:text-4xl font-semibold text-center" style={{ color: P.text }}>
-            India Landscape Stewardship Network
+            India's Landscape Stewardship Network
           </h1>
           <p className="text-xl mt-1 text-center" style={{ color: P.muted }}>
             Commoning for Resilience and Equality
