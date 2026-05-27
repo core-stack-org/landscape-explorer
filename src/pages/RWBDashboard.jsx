@@ -15,6 +15,7 @@ const RWBDashboard =()=>{
     const location = useLocation();
     const params = new URLSearchParams(location.search);
     const isTehsilMode = params.get("type") === "tehsil";
+    const ORG_DASHBOARD_URL =  process.env.REACT_APP_ORG_DASHBOARD_URL;
 
 
     useEffect(()=>{
@@ -151,38 +152,79 @@ const RWBDashboard =()=>{
                             </ul>
                         </div>
                         </div>
-                        <div className="w-[420px] bg-white rounded-xl shadow-lg p-6">
-                            <h2 className="text-lg font-semibold text-gray-800 mb-6 text-center">
+                        <div className="w-[640px] bg-white rounded-2xl shadow-xl p-8">
+                        <h2 className="text-2xl font-semibold text-gray-800 mb-10 text-center">
                                 Select Project
                             </h2>
-                        <div className="space-y-6">
-                            <div>
-                                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                                Select Organization
-                                </label>
-                                <SelectButton
-                                stateData={organizationOptions}
-                                currVal={organization}
-                                setState={setOrganization}
-                                handleItemSelect={(setState, e) => setState(e)}
-                                />
-                            </div>
-                        <div>
-                                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                                Select Project
-                                </label>
-                                <SelectButton
-                                stateData={organization?.value ? projectOptions : null}
-                                currVal={project}
-                                setState={setProject}
-                                handleItemSelect={(setState, e) => setState(e)}
-                                />
-                        </div>
-                        <button className="bg-purple-600 text-white px-4 py-2 rounded-lg w-full"
-                        onClick={handleNavigate}>
-                            Show Waterbodies
-                        </button>
-                    </div>
+                            <div className="space-y-8">
+
+{/* ORGANIZATION */}
+<div>
+  <label className="block text-sm font-semibold text-gray-700 mb-2">
+    Select Organization
+  </label>
+
+  <div className="flex items-center gap-4">
+    <div className="flex-1">
+      <SelectButton
+        stateData={organizationOptions}
+        currVal={organization}
+        setState={setOrganization}
+        handleItemSelect={(setState, e) => setState(e)}
+      />
+    </div>
+
+    <button
+      className="
+            w-[190px]
+        bg-purple-600 hover:bg-purple-700
+        text-white font-medium
+        py-2 rounded-xl
+        whitespace-nowrap transition-colors
+        flex items-center justify-center
+      "
+      onClick={() => {
+        window.open(ORG_DASHBOARD_URL, "_blank");
+      }}
+    >
+      Org Dashboard
+    </button>
+  </div>
+</div>
+
+{/* PROJECT */}
+<div>
+  <label className="block text-sm font-semibold text-gray-700 mb-2">
+    Select Project
+  </label>
+
+  <div className="flex items-center gap-3">
+    <div className="flex-1">
+      <SelectButton
+        stateData={organization?.value ? projectOptions : null}
+        currVal={project}
+        setState={setProject}
+        handleItemSelect={(setState, e) => setState(e)}
+      />
+    </div>
+
+    <button
+      className="
+        w-[190px]
+        bg-purple-600 hover:bg-purple-700
+        text-white font-medium
+        py-2 rounded-xl
+        whitespace-nowrap transition-colors
+        flex items-center justify-center
+      "
+      onClick={handleNavigate}
+    >
+      Project Dashboard
+    </button>
+  </div>
+</div>
+
+                        </div>  
                 </div>
             </div>
                 </div>
