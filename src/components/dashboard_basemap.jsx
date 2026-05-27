@@ -1890,7 +1890,7 @@ if (!hasProject && (lat == null || lon == null) && props?.geometry) {
                   <YearSliderWB
                     currentLayer={{ name: 'lulcWaterrej' }}
                     sliderId="map1"
-                    interventionYear={interventionYear}
+                    interventionYear={projectName && projectId ? interventionYear : null}
                   />
                 </div>
               </div>
@@ -1981,7 +1981,7 @@ if (!hasProject && (lat == null || lon == null) && props?.geometry) {
                 key={`zoi-${interventionYear}`} 
                   currentLayer={{ name: "lulcWaterrej" }}
                   sliderId="map2"
-                  interventionYear={interventionYear}
+                  interventionYear={projectName && projectId ? interventionYear : null}
                 />
               </div>
             </div>
