@@ -171,26 +171,35 @@ const RWBDashboard =()=>{
         currVal={organization}
         setState={setOrganization}
         handleItemSelect={(setState, e) => setState(e)}
+        isClearable={true}
       />
     </div>
 
     <button
-      className="
-            w-[190px]
-        bg-purple-600 hover:bg-purple-700
-        text-white font-medium
-        py-2 rounded-xl
-        whitespace-nowrap transition-colors
-        flex items-center justify-center
-      "
-      onClick={() => {
-        window.open(ORG_DASHBOARD_URL, "_blank");
-      }}
-    >
-      Org Dashboard
-    </button>
+  disabled={!organization}
+  className={`
+    w-[190px]
+    text-white font-medium
+    py-2 rounded-xl
+    whitespace-nowrap transition-colors
+    flex items-center justify-center
+
+    ${
+      organization
+        ? "bg-purple-600 hover:bg-purple-700 cursor-pointer"
+        : "bg-gray-300 cursor-not-allowed"
+    }
+  `}
+  onClick={() => {
+    if (!organization) return;
+    navigate("/dashboard/waterbody");
+  }}
+>
+  Org Dashboard
+</button>
   </div>
 </div>
+
 
 {/* PROJECT */}
 <div>
@@ -205,22 +214,32 @@ const RWBDashboard =()=>{
         currVal={project}
         setState={setProject}
         handleItemSelect={(setState, e) => setState(e)}
+        isClearable={true}
       />
     </div>
 
     <button
-      className="
-        w-[190px]
-        bg-purple-600 hover:bg-purple-700
-        text-white font-medium
-        py-2 rounded-xl
-        whitespace-nowrap transition-colors
-        flex items-center justify-center
-      "
-      onClick={handleNavigate}
-    >
-      Project Dashboard
-    </button>
+  disabled={!project}
+  className={`
+    w-[190px]
+    text-white font-medium
+    py-2 rounded-xl
+    whitespace-nowrap transition-colors
+    flex items-center justify-center
+
+    ${
+      project
+        ? "bg-purple-600 hover:bg-purple-700 cursor-pointer"
+        : "bg-gray-300 cursor-not-allowed"
+    }
+  `}
+  onClick={() => {
+    if (!project) return;
+    handleNavigate();
+  }}
+>
+  Project Dashboard
+</button>
   </div>
 </div>
 
