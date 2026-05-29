@@ -26,14 +26,18 @@ const EmbedDashboard = () => {
   }
 
   return (
-    <div className="min-h-screen flex flex-col">
-  
+    <div
+    className="min-h-screen flex flex-col bg-white"
+    style={{ colorScheme: "light" }}
+    >  
       {/* HEADER */}
       <LandingNavbar />
   
       {/* DASHBOARD */}
-      <div className="flex-1">
-        <iframe
+      <div
+        className="flex-1 overflow-hidden bg-white"
+        style={{ colorScheme: "light" }}
+    >        <iframe
           src={dashboardUrl}
           title={dashboardType}
           width="100%"
@@ -41,6 +45,8 @@ const EmbedDashboard = () => {
           style={{
             border: "none",
             minHeight: "calc(100vh - 140px)",
+            colorScheme: "light",
+            backgroundColor: "white",
           }}
           allowFullScreen
         />
