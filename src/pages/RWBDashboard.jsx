@@ -97,14 +97,17 @@ const RWBDashboard =()=>{
         const params  = new URLSearchParams(location.search);
         params.set("type", "project");                 
         params.set("projectId", project.value);       
-        params.set("project_name", project.label); 
-        navigate(
-            {
-                pathname:location.pathname,
-                search:params.toString(),
-            }
-        );
-        setShowWaterbodies(true);
+        params.set("project_name", project.label);
+        const url = `${location.pathname}?${params.toString()}`;
+
+        window.open(url, "_blank"); 
+        // navigate(
+        //     {
+        //         pathname:location.pathname,
+        //         search:params.toString(),
+        //     }
+        // );
+        // setShowWaterbodies(true);
     };
 
     const loadProjects = async(orgId)=>{
@@ -192,7 +195,9 @@ const RWBDashboard =()=>{
   `}
   onClick={() => {
     if (!organization) return;
-    navigate("/dashboard/waterbody");
+    window.open("/dashboard/waterbody", "_blank");
+
+    // navigate("/dashboard/waterbody");
   }}
 >
   Org Dashboard
