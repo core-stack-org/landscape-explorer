@@ -10,7 +10,6 @@ const EmbedDashboard = () => {
 
     waterbody:
       process.env.REACT_APP_ORG_DASHBOARD_URL,
-
     
   };
 
@@ -45,6 +44,7 @@ const EmbedDashboard = () => {
           style={{
             border: "none",
             minHeight: "calc(100vh - 140px)",
+            overflow:"hidden",
             colorScheme: "light",
             backgroundColor: "white",
           }}
