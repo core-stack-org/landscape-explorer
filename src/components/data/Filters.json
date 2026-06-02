@@ -112,23 +112,23 @@
                 "type": 2,
                 "values": [
                     {
-                        "label": "Lower Relative Mean Elevation (<-25)",
+                        "label": "Lower Relative Mean Elevation (<-100)",
                         "value": {
                             "lower": -999999,
-                            "upper": -25
+                            "upper": -100
                         }
                     },
                     {
-                        "label": "Moderate Relative Mean Elevation (-25 to +25)",
+                        "label": "Moderate Relative Mean Elevation (-100 to +100)",
                         "value": {
-                            "lower": -25,
-                            "upper": 25
+                            "lower": -100,
+                            "upper": 100
                         }
                     },
                     {
-                        "label": "High Relative Mean Elevation (>+25)",
+                        "label": "High Relative Mean Elevation (>+100)",
                         "value": {
-                            "lower": 25,
+                            "lower": 100,
                             "upper": 999999
                         }
                     }
