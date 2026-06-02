@@ -15,11 +15,11 @@ import {
 import "ol/ol.css";
 import XYZ from "ol/source/XYZ";
 import TileLayer from "ol/layer/Tile";
+import TileWMS     from 'ol/source/TileWMS.js';
 import Control from "ol/control/Control.js";
 import { defaults as defaultControls } from "ol/control/defaults.js";
 import { Map, View } from "ol";
 import { Fill, Stroke, Style, Circle as CircleStyle } from "ol/style.js";
-import Point from "ol/geom/Point";
 import GeoJSON from "ol/format/GeoJSON";
 
 import LandingNavbar from "../components/landing_navbar.jsx";
@@ -60,6 +60,7 @@ const KYLDashboardPage = () => {
   const mwsCentroidLayerRef = useRef(null);
   const mwsArrowLayerRef = useRef(null);
   const mwsDrainageLayerRef = useRef(null);
+  const topoLevelDataRef = useRef(null);
 
   const [isLoading, setIsLoading] = useState(false);
   const [islayerLoaded, setIsLayerLoaded] = useState(false);
@@ -96,8 +97,6 @@ const KYLDashboardPage = () => {
   const [searchLatLong, setSearchLatLong] = useState(null);
 
   // * Triggers
-  const [villagePatternTrigger, setvillagePatternTrigger] = useState(0);
-
   const [clickedWaterbodyId, setClickedWaterbodyId] = useState(null);
   const [waterbodyDashboardUrl, setWaterbodyDashboardUrl] = useState(null);
   const [selectedWaterbodyProfile, setSelectedWaterbodyProfile] = useState(null);
@@ -113,6 +112,7 @@ const KYLDashboardPage = () => {
   const [activeWBVisualize, setActiveWBVisualize] = useState(null);
   const [selectedWaterbodyData, setSelectedWaterbodyData] = useState([]);
   const [isLayerSelecting, setIsLayerSelecting] = useState(false);
+  const showConnectivityRef = useRef(false);
 
 
   const dataJsonIndex = useMemo(() => {
@@ -152,6 +152,18 @@ const KYLDashboardPage = () => {
 
     return { byId, mwsToVillages, mwsToSWBIds, fieldIndex };
   }, [dataJson]);
+
+  // ─── Contour interval based on zoom resolution ───────────────────────────────
+  const getContourInterval = (resolution) => {
+    if (resolution < 0.00005)  return 10;   // zoom 15+  → 10m  (street level)
+    if (resolution < 0.0001)   return 20;   // zoom 14   → 20m
+    if (resolution < 0.0002)   return 25;   // zoom 13   → 25m
+    if (resolution < 0.0005)   return 50;   // zoom 12   → 50m  ← tehsil (was 10m)
+    if (resolution < 0.001)    return 100;  // zoom 11   → 100m
+    if (resolution < 0.003)    return 200;  // zoom 9-10 → 200m
+    if (resolution < 0.008)    return 300;  // zoom 7-8  → 300m
+    return 500;                             // zoom < 7  → 500m (overview)
+  };
 
   const addLayerSafe = (layer) => layer && mapRef.current && mapRef.current.addLayer(layer);
 
@@ -612,6 +624,29 @@ console.log("Current filterSelections:", filterSelections);
     mwsLayerRef.current.updateStyleVariables({ highlightMWS: highlightMWS ?? -1 });
   }, [highlightMWS]);
 
+  useEffect(() => {
+    if (!mwsArrowLayerRef.current) return;
+  
+    if (showConnectivity) {
+      mwsArrowLayerRef.current.setVisible(true);
+      boundaryLayerRef.current.setVisible(false);
+      if (mwsDrainageLayerRef.current) mwsDrainageLayerRef.current.setVisible(true);
+      if (topoLevelDataRef.current) {
+        const { topoLevel, maxLevel } = topoLevelDataRef.current;
+        applyTopoColorToMWS(topoLevel, maxLevel);
+      }
+    } else {
+      mwsArrowLayerRef.current.setVisible(false);
+      boundaryLayerRef.current.setVisible(true);
+      if (mwsDrainageLayerRef.current) mwsDrainageLayerRef.current.setVisible(false);
+      fetchMWSLayer(selectedMWS);
+    }
+  }, [showConnectivity]);
+
+  useEffect(() => {
+    showConnectivityRef.current = showConnectivity;
+  }, [showConnectivity]);
+
   const resetMWSStyle = () => setHighlightMWS(null);
 
 
@@ -623,6 +658,10 @@ console.log("Current filterSelections:", filterSelections);
       f.set("isFiltered", idSet.has(f.get("uid")) ? 1 : 0, true);
     });
     source.changed();
+    if (showConnectivityRef.current && topoLevelDataRef.current) {
+      const { topoLevel, maxLevel } = topoLevelDataRef.current;
+      applyTopoColorToMWS(topoLevel, maxLevel);
+    }
   };
 
   const fetchMWSLayer = async (tempMWS) => {
@@ -727,102 +766,269 @@ console.log("Current filterSelections:", filterSelections);
       console.warn("Connectivity or centroid layer not ready");
       return;
     }
-
+  
     const connectivityFeatures = mwsConnectivityLayerRef.current.getSource().getFeatures();
     const centroidFeatures = mwsCentroidLayerRef.current.getSource().getFeatures();
-
+  
     if (!connectivityFeatures.length || !centroidFeatures.length) {
       console.warn("No features found for arrow generation");
       return;
     }
-
+  
+    // ── 1. UID → coord map ───────────────────────────────────────────────────
     const uidToCoord = {};
     centroidFeatures.forEach((feature) => {
       const uid = feature.get("uid") || feature.get("UID");
       if (!uid) return;
       uidToCoord[uid.toString().trim()] = feature.getGeometry().getCoordinates();
     });
-
-    const pairMap = {};
-    const arrowFeatures = [];
-
+  
+    // ── 2. Build adjacency graph ──────────────────────────────────────────────
+    const inDegree = {};
+    const outEdges = {};
+    const allUids  = new Set();
+  
+    connectivityFeatures.forEach((f) => {
+      const uid = f.get("uid")?.toString().trim();
+      const ds  = f.get("downstream")?.toString().trim();
+      if (!uid || !ds) return;
+      allUids.add(uid);
+      allUids.add(ds);
+      if (!outEdges[uid]) outEdges[uid] = [];
+      if (!inDegree[uid]) inDegree[uid] = 0;
+      if (!inDegree[ds])  inDegree[ds]  = 0;
+      outEdges[uid].push(ds);
+      inDegree[ds] = (inDegree[ds] || 0) + 1;
+    });
+  
+    // ── 3. Kahn's algorithm → topo level per node ────────────────────────────
+    const topoLevel = {};
+    const queue     = [];
+  
+    allUids.forEach((uid) => {
+      if ((inDegree[uid] || 0) === 0) {
+        queue.push(uid);
+        topoLevel[uid] = 0;
+      }
+    });
+  
+    while (queue.length) {
+      const cur = queue.shift();
+      (outEdges[cur] || []).forEach((ds) => {
+        topoLevel[ds] = Math.max(topoLevel[ds] ?? 0, (topoLevel[cur] ?? 0) + 1);
+        inDegree[ds]--;
+        if (inDegree[ds] === 0) queue.push(ds);
+      });
+    }
+  
+    const maxLevel = Math.max(1, ...Object.values(topoLevel));
+  
+    // Store for use by applyTopoColorToMWS
+    topoLevelDataRef.current = { topoLevel, maxLevel };
+  
+    // ── 4. Color helper ───────────────────────────────────────────────────────
+    const levelToColor = (level) => {
+      const t = level / maxLevel;
+      let r, g, b;
+      if (t < 0.5) {
+        const s = t * 2;
+        r = Math.round(34  + (251 - 34)  * s);
+        g = Math.round(197 + (146 - 197) * s);
+        b = Math.round(94  + (0   - 94)  * s);
+      } else {
+        const s = (t - 0.5) * 2;
+        r = Math.round(251 + (239 - 251) * s);
+        g = Math.round(146 + (68  - 146) * s);
+        b = Math.round(0   + (68  - 0)   * s);
+      }
+      return `rgb(${r},${g},${b})`;
+    };
+  
+    // ── 5. Apply topo colors to MWS polygons ─────────────────────────────────
+    applyTopoColorToMWS(topoLevel, maxLevel);
+  
+    // ── 6. Build arrow features ───────────────────────────────────────────────
+    const pairMap  = {};
+    const features = [];
+  
     connectivityFeatures.forEach((feature) => {
-      const uid = feature.get("uid");
-      const downstream = feature.get("downstream");
+      const uid        = feature.get("uid")?.toString().trim();
+      const downstream = feature.get("downstream")?.toString().trim();
       if (!uid || !downstream) return;
-
-      const start = uidToCoord[uid.toString().trim()];
-      const end = uidToCoord[downstream.toString().trim()];
+  
+      const start = uidToCoord[uid];
+      const end   = uidToCoord[downstream];
       if (!start || !end) return;
-
+  
       const key =
         start[0] < end[0]
           ? `${start.join(",")}_${end.join(",")}`
           : `${end.join(",")}_${start.join(",")}`;
-
+  
       if (!pairMap[key]) pairMap[key] = 0;
       const side = pairMap[key]++ % 2 === 0 ? -1 : 1;
-
-      const dx = end[0] - start[0];
-      const dy = end[1] - start[1];
+  
+      const dx  = end[0] - start[0];
+      const dy  = end[1] - start[1];
       const len = Math.sqrt(dx * dx + dy * dy);
       if (len < 1e-6) return;
-
-      const ux = dx / len, uy = dy / len;
-      const px = -uy, py = ux;
-
+  
+      const px = -(dy / len);
+      const py =   dx / len;
       const MAP_OFFSET = len * 0.04;
-      const MAP_PULLBACK = len * 0.06;
-      const MAP_ARROW_LEN = len * 0.14;
-
+  
       const offStart = [start[0] + px * MAP_OFFSET * side, start[1] + py * MAP_OFFSET * side];
-      const offEnd = [end[0] + px * MAP_OFFSET * side, end[1] + py * MAP_OFFSET * side];
-      const trimEnd = [offEnd[0] - ux * MAP_PULLBACK, offEnd[1] - uy * MAP_PULLBACK];
-
-      const arrowAngle = Math.PI / 7;
-      const angle = Math.atan2(dy, dx);
-      const left = [
-        trimEnd[0] - MAP_ARROW_LEN * Math.cos(angle - arrowAngle),
-        trimEnd[1] - MAP_ARROW_LEN * Math.sin(angle - arrowAngle),
-      ];
-      const right = [
-        trimEnd[0] - MAP_ARROW_LEN * Math.cos(angle + arrowAngle),
-        trimEnd[1] - MAP_ARROW_LEN * Math.sin(angle + arrowAngle),
-      ];
-
-      arrowFeatures.push(
-        new Feature({ geometry: new LineString([offStart, trimEnd]), featureType: "arrowLine", upstream: uid, downstream }),
-        new Feature({ geometry: new LineString([left, trimEnd, right]), featureType: "arrowHead", upstream: uid, downstream }),
-        new Feature({ geometry: new Point(offStart), featureType: "arrowDot", upstream: uid, downstream })
+      const offEnd   = [end[0]   + px * MAP_OFFSET * side, end[1]   + py * MAP_OFFSET * side];
+  
+      const avgLevel = ((topoLevel[uid] ?? 0) + (topoLevel[downstream] ?? 0)) / 2;
+      const color    = levelToColor(avgLevel);
+  
+      const ARROW_HEAD = 10;
+      const DOT_R      = 3;
+  
+      const f = new Feature({
+        geometry:    new LineString([offStart, offEnd]),
+        featureType: "arrow",
+        upstream:    uid,
+        downstream,
+        topoLevel:   topoLevel[uid] ?? 0,
+      });
+  
+      f.setStyle(
+        new Style({
+          renderer: (pixelCoords, state) => {
+            const ctx = state.context;
+            const [[x1, y1], [x2, y2]] = pixelCoords;
+            const angle = Math.atan2(y2 - y1, x2 - x1);
+  
+            ctx.save();
+            ctx.strokeStyle = "white";
+            ctx.fillStyle   = "white";
+            ctx.lineWidth   = 1.8;
+            ctx.lineCap     = "round";
+            ctx.lineJoin    = "round";
+  
+            ctx.beginPath();
+            ctx.moveTo(x1, y1);
+            ctx.lineTo(x2, y2);
+            ctx.stroke();
+  
+            ctx.beginPath();
+            ctx.moveTo(x2 - ARROW_HEAD * Math.cos(angle - Math.PI / 7),
+                       y2 - ARROW_HEAD * Math.sin(angle - Math.PI / 7));
+            ctx.lineTo(x2, y2);
+            ctx.lineTo(x2 - ARROW_HEAD * Math.cos(angle + Math.PI / 7),
+                       y2 - ARROW_HEAD * Math.sin(angle + Math.PI / 7));
+            ctx.stroke();
+  
+            ctx.beginPath();
+            ctx.arc(x1, y1, DOT_R, 0, Math.PI * 2);
+            ctx.fill();
+  
+            ctx.restore();
+          },
+        })
       );
+  
+      features.push(f);
     });
-
+  
+    // ── 7. Arrow layer ────────────────────────────────────────────────────────
     const arrowLayer = new VectorLayer({
-      source: new VectorSource({ features: arrowFeatures }),
-      style: (feature) => {
-        const color = "white";
-        const type = feature.get("featureType");
-        if (type === "arrowLine" || type === "arrowHead") {
-          return new Style({ stroke: new Stroke({ color, width: 1.2 }) });
-        }
-        if (type === "arrowDot") {
-          return new Style({
-            image: new CircleStyle({
-              radius: 3,
-              fill: new Fill({ color }),
-              stroke: new Stroke({ color, width: 1 }),
-            }),
-          });
-        }
-      },
+      source: new VectorSource({ features }),
     });
-
+  
     arrowLayer.setZIndex(9999);
     arrowLayer.setVisible(false);
-    mwsDrainageLayerRef.current.setVisible(false)
+    mwsDrainageLayerRef.current.setVisible(false);
     mapRef.current.addLayer(arrowLayer);
     mwsArrowLayerRef.current = arrowLayer;
+  };
 
+  const applyTopoColorToMWS = (topoLevel, maxLevel) => {
+    if (!mwsLayerRef.current) return;
+  
+    const mwsSource = mwsLayerRef.current.getSource();
+    const mwsFeatures = mwsSource.getFeatures();
+  
+    if (!mwsFeatures.length) {
+      mwsSource.once("featuresloadend", () => {
+        applyTopoColorToMWS(topoLevel, maxLevel);
+      });
+      return;
+    }
+  
+    mwsFeatures.forEach((feature) => {
+      const uid   = feature.get("uid")?.toString().trim();
+      const level = topoLevel[uid] ?? 0;
+      const norm  = Math.round((level / maxLevel) * 255);
+      feature.set("topoNorm", norm, true);
+    });
+  
+    mwsSource.changed();
+  
+    mwsLayerRef.current.setStyle({
+      variables: {
+        highlightMWS:  -1,
+        isVisualizeOn: false,
+      },
+      "stroke-color": [
+        "case",
+        // 1. Highlighted (clicked) MWS
+        ["==", ["get", "uid"], ["var", "highlightMWS"]],
+        [22, 101, 52, 1],
+        // 2. Filtered (matched) MWS — red stroke
+        ["==", ["get", "isFiltered"], 1],
+        [102, 30, 30, 1],
+        // 3. Unfiltered MWS — hide stroke
+        ["==", ["get", "isFiltered"], 0],
+        [255, 0, 0, 1],
+        // [
+        //   "interpolate", ["linear"], ["get", "topoNorm"],
+        //   0,   [101, 67,  33,  1],
+        //   128, [180, 130, 70,  1],
+        //   255, [34,  139, 34,  1],
+        // ],
+        // 4. Default — topo gradient stroke
+        // [
+        //   "interpolate", ["linear"], ["get", "topoNorm"],
+        //   0,   [101, 67,  33,  1],
+        //   128, [180, 130, 70,  1],
+        //   255, [34,  139, 34,  1],
+        // ],
+        [255, 0, 0, 1],
+      ],
+      "stroke-width": [
+        "case",
+        ["==", ["get", "uid"], ["var", "highlightMWS"]], 2,
+        ["==", ["get", "isFiltered"], 1], 1.5,
+        0.8,
+      ],
+      "fill-color": [
+        "case",
+        // 1. Highlighted
+        ["==", ["get", "uid"], ["var", "highlightMWS"]],
+        [34, 197, 94, 0.5],
+        // 2. Filtered — red fill
+        ["==", ["get", "isFiltered"], 1],
+        [255, 75, 75, 0.8],
+        // 3. Unfiltered — transparent
+        ["==", ["get", "isFiltered"], 0],
+        [
+          "interpolate", ["linear"], ["get", "topoNorm"],
+          0,   [139, 90,  43,  0.6],
+          128, [188, 143, 80,  0.5],
+          255, [34,  139, 34,  0.55],
+        ],
+        // 4. Default — topo gradient fill
+        [
+          "interpolate", ["linear"], ["get", "topoNorm"],
+          0,   [139, 90,  43,  0.6],
+          128, [188, 143, 80,  0.5],
+          255, [34,  139, 34,  0.55],
+        ],
+      ],
+    });
   };
 
   const fetchWaterBodiesLayer = async () => {
@@ -1166,6 +1372,10 @@ console.log("Current filterSelections:", filterSelections);
   };
 
   const handleLayerSelection = async (filter) => {
+    if (showConnectivityRef.current) {
+      alert("Please turn off MWS Connectivity before using Visualize.");
+      return;
+    }
     setIsLayerSelecting(true);
     await new Promise(resolve => setTimeout(resolve, 0));
 
@@ -1196,6 +1406,7 @@ console.log("Current filterSelections:", filterSelections);
 
         boundaryLayerRef.current.updateStyleVariables({ isVisualizeOn: false });
         mwsLayerRef.current.updateStyleVariables({ isVisualizeOn: false });
+        setShowMWS(true)
 
         if (waterbodiesLayerRef.current) {
           waterbodiesLayerRef.current.updateStyleVariables({
@@ -1236,14 +1447,6 @@ console.log("Current filterSelections:", filterSelections);
             );
             layerRef.push(tempLayer);
             mapRef.current.addLayer(tempLayer);
-          } else if (filter.layer_store[i] === "LULC" && filter.rasterStyle === "lulc_water_pixels") {
-            tempLayer = await getImageLayer(
-              `${filter.layer_store[i]}_${filter.layer_name[i]}`,
-              `LULC_24_25_${transformName(district.label)}_${transformName(block.label)}_${filter.layer_name[i]}`,
-              true, filter.rasterStyle
-            );
-            layerRef.push(tempLayer);
-            mapRef.current.addLayer(tempLayer);
           } else if (filter.layer_store[i] === "change_detection") {
             tempLayer = await getVectorLayers(
               `${filter.layer_store[i]}`,
@@ -1273,7 +1476,7 @@ console.log("Current filterSelections:", filterSelections);
             );
             layerRef.push(tempLayer);
             mapRef.current.addLayer(tempLayer);
-          } else if (filter.layer_store[i] === "drought" || filter.layer_store[i] === "green_credit" || filter.layer_store[i] === "terrain_lulc") {
+          } else if (filter.layer_store[i] === "drought" || filter.layer_store[i] === "green_credit" || filter.layer_store[i] === "terrain_lulc" || filter.layer_store[i] === "river" || filter.layer_store[i] === "canal") {
             tempLayer = await getVectorLayers(
               filter.layer_store[i],
               `${transformName(district.label)}_${transformName(block.label)}_${filter.layer_name[i]}`
@@ -1291,6 +1494,50 @@ console.log("Current filterSelections:", filterSelections);
             );
             layerRef.push(tempLayer);
             mapRef.current.addLayer(tempLayer);
+          } else if (filter.name === "relative_mean_elevation"){
+            const view = mapRef.current.getView();
+
+            tempLayer = await getImageLayer(
+              filter.layer_store[i],
+              `${transformName(district.label)}_${transformName(block.label)}_${filter.layer_name[i]}`,
+              true, filter.rasterStyle
+            )
+
+            const contourSource = new TileWMS({
+              url       : `${process.env.REACT_APP_GEOSERVER_URL}` + 'wms',
+              params    : {
+                LAYERS     : `${filter.layer_store[i]}:${transformName(district.label)}_${transformName(block.label)}_${filter.layer_name[i]}`,
+                STYLES     : 'dem_contours',
+                TILED      : true,
+                TRANSPARENT: true,
+                FORMAT     : 'image/png',
+                ENV        : `interval:${getContourInterval(view.getResolution())}`,
+              },
+              serverType: 'geoserver',
+            });
+
+            const contourLayer = new TileLayer({
+              source: contourSource,
+              opacity: 0.9,
+              zIndex : 2,
+            });
+
+            layerRef.push(tempLayer)
+            layerRef.push(contourLayer)
+            mapRef.current.addLayer(tempLayer);
+            mapRef.current.addLayer(contourLayer);
+            let lastInterval = getContourInterval(view.getResolution());
+            mapRef.current.on('moveend', () => {
+              const interval = getContourInterval(view.getResolution());
+              if (interval !== lastInterval) {
+                lastInterval = interval;
+                contourSource.updateParams({ ENV: `interval:${interval}` });
+              }
+              const res = mapRef.current.getView().getResolution();
+              console.log('resolution:', res, '→ interval:', getContourInterval(res));
+            });
+
+            
           } else {
             tempLayer = await getVectorLayers(
               filter.layer_store[i],
@@ -1298,18 +1545,27 @@ console.log("Current filterSelections:", filterSelections);
             );
           }
 
-          if (
+          if (filter.layer_store[i] === "river" || filter.layer_store[i] === "canal") {
+            tempLayer.setStyle(new Style({
+              stroke: new Stroke({ color: "rgba(0, 0, 255, 1)", width: 2.5 })
+            }));
+            tempLayer.setZIndex(9998);
+            layerRef.push(tempLayer);
+            mapRef.current.addLayer(tempLayer);
+          } else if (
             filter.layer_store[i] !== "terrain" &&
             filter.layer_store[i] !== "LULC" &&
             filter.layer_store[i] !== "restoration" &&
             filter.layer_store[i] !== "nrega_assets" &&
             filter.layer_store[i] !== "lcw" &&
             filter.layer_store[i] !== "factory_csr" &&
-            filter.layer_store[i] !== "mining"
+            filter.layer_store[i] !== "mining" & 
+            filter.layer_store[i] !== "dem"
           ) {
             tempLayer.setStyle((feature) =>
               layerStyle(feature, filter.vectorStyle, filter.styleIdx, villageJson, dataJson)
             );
+            tempLayer.setZIndex(10); // slightly above base
             layerRef.push(tempLayer);
             mapRef.current.addLayer(tempLayer);
           }
@@ -1317,6 +1573,10 @@ console.log("Current filterSelections:", filterSelections);
 
         boundaryLayerRef.current.updateStyleVariables({ isVisualizeOn: true });
         mwsLayerRef.current.updateStyleVariables({ isVisualizeOn: true });
+        if (showConnectivityRef.current && topoLevelDataRef.current) {
+          const { topoLevel, maxLevel } = topoLevelDataRef.current;
+          applyTopoColorToMWS(topoLevel, maxLevel);
+        }
 
         if (waterbodiesLayerRef.current) {
           const visualizeMode =
@@ -1336,6 +1596,7 @@ console.log("Current filterSelections:", filterSelections);
         mapRef.current.removeLayer(mwsLayerRef.current);
         mapRef.current.removeLayer(boundaryLayerRef.current);
         mapRef.current.addLayer(mwsLayerRef.current);
+        setShowMWS(false)
         mapRef.current.addLayer(boundaryLayerRef.current);
         boundaryLayerRef.current.setZIndex(9999);
 
@@ -1685,7 +1946,7 @@ console.log("Current filterSelections:", filterSelections);
       if (currentLayer !== null) {
         let tempArr = currentLayer;
         for (let i = 0; i < tempArr.length; ++i) {
-          if (tempArr[i].name === "avg_double_cropped") {
+          if (tempArr[i].name === "avg_double_cropped" || tempArr[i].name === "lulc_crop_percent" || tempArr[i].name === "lulc_forest_percent" || tempArr[i].name === "lulc_shrub_percent") {
             mapRef.current.removeLayer(tempArr[i].layerRef[0]);
             const tempLayer = await getImageLayer(
               `LULC_level_3`,
@@ -2060,7 +2321,6 @@ console.log("Current filterSelections:", filterSelections);
     patternSelections.selectedVillagePatterns,
     filterSelections.selectedVillageValues,  // restored — production includes this
     patternVillageList,
-    villagePatternTrigger,
     selectedMWS,
     dataJson,
     villageJson,
@@ -2152,6 +2412,7 @@ console.log("Current filterSelections:", filterSelections);
           handlePatternSelection={handlePatternSelection}
           isPatternSelected={isPatternSelected}
           isLayerSelecting={isLayerSelecting}
+          showConnectivityRef={showConnectivityRef}
         />
 
         {/* Map Container */}
@@ -2168,6 +2429,7 @@ console.log("Current filterSelections:", filterSelections);
           mapRef={mapRef}
           currentLayer={currentLayer}
           setSearchLatLong={setSearchLatLong}
+          showConnectivity={showConnectivity}
         />
 
         {/* Right Sidebar */}
@@ -2212,6 +2474,8 @@ console.log("Current filterSelections:", filterSelections);
           selectedWaterbodyData={selectedWaterbodyData}
           mwsDrainageLayerRef={mwsDrainageLayerRef}
           villageJson={villageJson}
+          isLoading={isLoading}
+
         />
       </div>
     </div>

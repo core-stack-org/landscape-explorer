@@ -13,7 +13,6 @@ const YearSliderWB = ({ currentLayer, sliderId = null,interventionYear }) => {
     { label: "2022-2023", value: "22_23" },
     { label: "2023-2024", value: "23_24" },
     { label: "2024-2025", value: "24_25" },
-    { label: "2025-2026", value: "25_26" },
   ];
   const [sliderWidth, setSliderWidth] = useState(0);
   const sliderRef = useRef(null);
@@ -65,7 +64,9 @@ const YearSliderWB = ({ currentLayer, sliderId = null,interventionYear }) => {
 
 
 
-  const [currentValue, setCurrentValue] = useState(0);
+  const [currentValue, setCurrentValue] = useState(
+    yearDataLulc.length - 1
+  );
   const [showTooltip, setShowTooltip] = useState(false);
 
   const [yearValue, setYearAtom] = useRecoilState(
@@ -98,7 +99,7 @@ const YearSliderWB = ({ currentLayer, sliderId = null,interventionYear }) => {
   })();
 
   useEffect(() => {
-    setYearAtom(yearDataLulc[0].value);
+    setYearAtom(yearDataLulc[yearDataLulc.length - 1].value);
   }, []);
 
   useEffect(() => {

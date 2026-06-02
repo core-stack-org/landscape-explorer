@@ -47,6 +47,7 @@ const KYLRightSidebar = ({
   selectedWaterbodyIds,
   selectedWaterbodyData = [],
   mwsDrainageLayerRef,
+  isLoading,
 }) => {
   const [loadingWB, setLoadingWB] = React.useState(false);
   const [showSelectionPopup, setShowSelectionPopup] = React.useState(false);
@@ -210,11 +211,16 @@ const KYLRightSidebar = ({
 
   const toggleConnectivity = () => {
     if (!mwsArrowLayerRef?.current) { console.warn("Arrow layer not ready"); return; }
-    const newVisibility = !showConnectivity;
-    mwsArrowLayerRef.current.setVisible(newVisibility);
-    mwsDrainageLayerRef.current.setVisible(newVisibility);
-    setShowConnectivity(newVisibility);
+    setShowConnectivity(prev => !prev);
   };
+  
+  // const toggleConnectivity = () => {
+  //   if (!mwsArrowLayerRef?.current) { console.warn("Arrow layer not ready"); return; }
+  //   const newVisibility = !showConnectivity;
+  //   mwsArrowLayerRef.current.setVisible(newVisibility);
+  //   mwsDrainageLayerRef.current.setVisible(newVisibility);
+  //   setShowConnectivity(newVisibility);
+  // };
 
   const handleTehsilReport = () => {
     const reportURL = `${process.env.REACT_APP_API_URL}/generate_tehsil_report/?state=${transformName(state?.label)}&district=${transformName(district?.label)}&block=${transformName(block?.label)}`;
@@ -1212,10 +1218,15 @@ const KYLRightSidebar = ({
             {block && (
               <div className="mt-4 flex flex-col gap-2">
                 <div className="grid grid-cols-2 gap-2">
-                  <button
-                    onClick={handleTehsilReport}
-                    className="flex items-center justify-center gap-1.5 py-2 text-xs font-semibold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 rounded-lg transition-colors border border-indigo-100"
-                  >
+              <button
+                onClick={handleTehsilReport}
+                disabled={isLoading || !mwsArrowLayerRef?.current}
+                className={`flex items-center justify-center gap-1.5 py-2 text-xs font-semibold rounded-lg transition-colors border ${
+                  (isLoading || !mwsArrowLayerRef?.current)
+                    ? 'opacity-50 cursor-not-allowed pointer-events-none bg-gray-100 text-gray-400 border-gray-200'
+                    : 'text-indigo-600 bg-indigo-50 hover:bg-indigo-100 border-indigo-100'
+                }`}
+              >
                     <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5s8.268 2.943 9.542 7c-1.274 4.057-5.065 7-9.542 7s-8.268-2.943-9.542-7z" />
@@ -1225,11 +1236,13 @@ const KYLRightSidebar = ({
 
                   <button
                     onClick={toggleWaterbodies}
-                    disabled={loadingWB}
+                    disabled={isLoading || !mwsArrowLayerRef?.current}
                     className={`flex items-center justify-center gap-1.5 py-2 text-xs font-semibold rounded-lg transition-colors border ${
-                      showWB
-                        ? 'text-red-600 bg-red-50 hover:bg-red-100 border-red-100'
-                        : 'text-indigo-600 bg-indigo-50 hover:bg-indigo-100 border-indigo-100'
+                      (isLoading || !mwsArrowLayerRef?.current)
+                        ? 'opacity-50 cursor-not-allowed pointer-events-none bg-gray-100 text-gray-400 border-gray-200'
+                        : showWB
+                          ? 'text-red-600 bg-red-50 hover:bg-red-100 border-red-100'
+                          : 'text-indigo-600 bg-indigo-50 hover:bg-indigo-100 border-indigo-100'
                     }`}
                   >
                     {loadingWB ? (
@@ -1255,10 +1268,13 @@ const KYLRightSidebar = ({
 
                 <button
                   onClick={toggleConnectivity}
+                  disabled={isLoading || !mwsArrowLayerRef?.current}
                   className={`w-full flex items-center justify-center gap-1.5 py-2 text-xs font-semibold rounded-lg transition-colors border ${
-                    showConnectivity
-                      ? 'text-red-600 bg-red-50 hover:bg-red-100 border-red-100'
-                      : 'text-indigo-600 bg-indigo-50 hover:bg-indigo-100 border-indigo-100'
+                    (isLoading || !mwsArrowLayerRef?.current)
+                      ? 'opacity-50 cursor-not-allowed pointer-events-none bg-gray-100 text-gray-400 border-gray-200'
+                      : showConnectivity
+                        ? 'text-red-600 bg-red-50 hover:bg-red-100 border-red-100'
+                        : 'text-indigo-600 bg-indigo-50 hover:bg-indigo-100 border-indigo-100'
                   }`}
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

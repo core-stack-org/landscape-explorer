@@ -1,6 +1,6 @@
 {
     "MWS": {
-        "Land": [
+        "Terrain": [
             {
                 "name": "terrainCluster_ID",
                 "label": "Terrain Type",
@@ -35,6 +35,108 @@
                 "rasterStyle": [
                     "Terrain_Style_11_Classes"
                 ],
+                "styleIdx": 0
+            },
+            {
+                "name": "relief",
+                "label": "Microwatershed Relief",
+                "type": 2,
+                "values": [
+                    {
+                        "label": "Low Relief (less than 6m)",
+                        "value": {
+                            "lower": 0,
+                            "upper": 6
+                        }
+                    },
+                    {
+                        "label": "Moderate Relief (between 6m and 110m)",
+                        "value": {
+                            "lower": 6,
+                            "upper": 110
+                        }
+                    },
+                    {
+                        "label": "High Relief (between 110m and 900m)",
+                        "value": {
+                            "lower": 110,
+                            "upper": 900
+                        }
+                    },
+                    {
+                        "label": "Extremely High Relief (More than 900m)",
+                        "value": {
+                            "lower": 900,
+                            "upper": 999999
+                        }
+                    }
+                ],
+                "layer_store": [
+                    "mws_layers"
+                ],
+                "layer_name": [
+                    "deltaG_well_depth"
+                ],
+                "vectorStyle": [
+                    {
+                        "fill": "rgba(217, 240, 211, 0.8)",
+                        "stroke": "rgba(224, 224, 224, 1)",
+                        "lower": 0,
+                        "upper": 6
+                    },
+                    {
+                        "fill": "rgba(166, 217, 106, 0.8)",
+                        "stroke": "rgba(189, 189, 189, 1)",
+                        "lower": 6,
+                        "upper": 110
+                    },
+                    {
+                        "fill": "rgba(253, 174, 97, 0.8)",
+                        "stroke": "rgba(117, 117, 117, 1)",
+                        "lower": 110,
+                        "upper": 900
+                    },
+                    {
+                        "fill": "rgba(215, 48, 39, 0.8)",
+                        "stroke": "rgba(66, 66, 66, 1)",
+                        "lower": 900,
+                        "upper": 999999
+                    }
+                ],
+                "rasterStyle": "",
+                "styleIdx": 37
+            },
+            {
+                "name": "relative_mean_elevation",
+                "label": "Relative Mean Elevation",
+                "type": 2,
+                "values": [
+                    {
+                        "label": "Lower Relative Mean Elevation (<-100)",
+                        "value": {
+                            "lower": -999999,
+                            "upper": -100
+                        }
+                    },
+                    {
+                        "label": "Moderate Relative Mean Elevation (-100 to +100)",
+                        "value": {
+                            "lower": -100,
+                            "upper": 100
+                        }
+                    },
+                    {
+                        "label": "High Relative Mean Elevation (>+100)",
+                        "value": {
+                            "lower": 100,
+                            "upper": 999999
+                        }
+                    }
+                ],
+                "layer_store": ["dem"],
+                "layer_name": ["dem_raster"],
+                "vectorStyle": [],
+                "rasterStyle": "dem_grayscale",
                 "styleIdx": 0
             }
         ],
@@ -88,31 +190,31 @@
                 ],
                 "vectorStyle": [
                     {
-                        "fill": "rgba(176, 224, 230, 0.5)",
+                        "fill": "rgba(176, 224, 230, 0.8)",
                         "stroke": "rgba(176, 224, 230, 1)",
                         "lower": 0,
                         "upper": 740
                     },
                     {
-                        "fill": "rgba(135, 206, 250, 0.5)",
+                        "fill": "rgba(135, 206, 250, 0.8)",
                         "stroke": "rgba(135, 206, 250, 1)",
                         "lower": 740,
                         "upper": 960
                     },
                     {
-                        "fill": "rgba(43, 147, 250, 0.5)",
+                        "fill": "rgba(43, 147, 250, 0.8)",
                         "stroke": "rgba(43, 147, 250, 1)",
                         "lower": 960,
                         "upper": 1200
                     },
                     {
-                        "fill": "rgba(3, 107, 210, 0.5)",
+                        "fill": "rgba(3, 107, 210, 0.8)",
                         "stroke": "rgba(3, 107, 210, 1)",
                         "lower": 1200,
                         "upper": 1620
                     },
                     {
-                        "fill": "rgba(0, 64, 128, 0.5)",
+                        "fill": "rgba(0, 64, 128, 0.8)",
                         "stroke": "rgba(0, 64, 128, 1)",
                         "lower": 1620,
                         "upper": 9999999999
@@ -156,19 +258,19 @@
                 ],
                 "vectorStyle": [
                     {
-                        "fill": "rgba(128, 229, 230, 0.5)",
+                        "fill": "rgba(128, 229, 230, 0.8)",
                         "stroke": "rgba(128, 229, 230, 1)",
                         "lower": 0,
                         "upper": 100
                     },
                     {
-                        "fill": "rgba(0, 206, 209, 0.5)",
+                        "fill": "rgba(0, 206, 209, 0.8)",
                         "stroke": "rgba(0, 206, 209, 1)",
                         "lower": 100,
                         "upper": 300
                     },
                     {
-                        "fill": "rgba(0, 138, 140, 0.5)",
+                        "fill": "rgba(0, 138, 140, 0.8)",
                         "stroke": "rgba(0, 138, 140, 1)",
                         "lower": 300,
                         "upper": 9999999999
@@ -212,19 +314,19 @@
                 ],
                 "vectorStyle": [
                     {
-                        "fill": "rgba(244, 208, 63, 0.5)",
+                        "fill": "rgba(244, 208, 63, 0.8)",
                         "stroke": "rgba(244, 208, 63, 1)",
                         "lower": 0,
                         "upper": 0
                     },
                     {
-                        "fill": "rgba(231, 76, 60, 0.5)",
+                        "fill": "rgba(231, 76, 60, 0.8)",
                         "stroke": "rgba(231, 76, 60, 1)",
                         "lower": 2,
                         "upper": 99999
                     },
                     {
-                        "fill": "rgba(235, 152, 78, 0.5)",
+                        "fill": "rgba(235, 152, 78, 0.8)",
                         "stroke": "rgba(235, 152, 78, 1)",
                         "lower": 1,
                         "upper": 99999
@@ -268,19 +370,19 @@
                 ],
                 "vectorStyle": [
                     {
-                        "fill": "rgba(210, 180, 140, 0.5)",
+                        "fill": "rgba(210, 180, 140, 0.8)",
                         "stroke": "rgba(210, 180, 140, 1)",
                         "lower": 0,
                         "upper": 1
                     },
                     {
-                        "fill": "rgba(90, 46, 15, 0.5)",
+                        "fill": "rgba(90, 46, 15, 0.8)",
                         "stroke": "rgba(90, 46, 15, 1)",
                         "lower": 2,
                         "upper": 999999999
                     },
                     {
-                        "fill": "rgba(139, 69, 19, 0.5)",
+                        "fill": "rgba(139, 69, 19, 0.8)",
                         "stroke": "rgba(139, 69, 19, 1)",
                         "lower": 1,
                         "upper": 999999999
@@ -326,19 +428,19 @@
                 ],
                 "vectorStyle": [
                     {
-                        "fill": "rgba(116, 204, 244, 0.5)",
+                        "fill": "rgba(116, 204, 244, 0.8)",
                         "stroke": "rgba(116, 204, 244, 1)",
                         "lower": 0,
                         "upper": 30
                     },
                     {
-                        "fill": "rgba(28, 163, 236, 0.5)",
+                        "fill": "rgba(28, 163, 236, 0.8)",
                         "stroke": "rgba(28, 163, 236, 1)",
                         "lower": 30,
                         "upper": 70
                     },
                     {
-                        "fill": "rgba(15, 94, 156, 0.5)",
+                        "fill": "rgba(15, 94, 156, 0.8)",
                         "stroke": "rgba(15, 94, 156, 1)",
                         "lower": 70,
                         "upper": 9999999
@@ -382,19 +484,19 @@
                 ],
                 "vectorStyle": [
                     {
-                        "fill": "rgba(116, 204, 244, 0.5)",
+                        "fill": "rgba(116, 204, 244, 0.8)",
                         "stroke": "rgba(116, 204, 244, 1)",
                         "lower": 0,
                         "upper": 25
                     },
                     {
-                        "fill": "rgba(28, 163, 236, 0.5)",
+                        "fill": "rgba(28, 163, 236, 0.8)",
                         "stroke": "rgba(28, 163, 236, 1)",
                         "lower": 25,
                         "upper": 50
                     },
                     {
-                        "fill": "rgba(15, 94, 156, 0.5)",
+                        "fill": "rgba(15, 94, 156, 0.8)",
                         "stroke": "rgba(15, 94, 156, 1)",
                         "lower": 50,
                         "upper": 9999999
@@ -425,85 +527,85 @@
                 ],
                 "vectorStyle": [
                     {
-                        "fill": "rgba(255, 253, 181, 0.5)",
+                        "fill": "rgba(255, 253, 181, 0.8)",
                         "stroke": "rgba(255, 253, 181, 1)",
                         "lower": 0,
                         "upper": 0
                     },
                     {
-                        "fill": "rgba(243, 164, 37, 0.5)",
+                        "fill": "rgba(243, 164, 37, 0.8)",
                         "stroke": "rgba(243, 164, 37, 1)",
                         "lower": 1,
                         "upper": 1
                     },
                     {
-                        "fill": "rgba(153, 236, 241, 0.5)",
+                        "fill": "rgba(153, 236, 241, 0.8)",
                         "stroke": "rgba(153, 236, 241, 1)",
                         "lower": 2,
                         "upper": 2
                     },
                     {
-                        "fill": "rgba(165, 248, 197, 0.5)",
+                        "fill": "rgba(165, 248, 197, 0.8)",
                         "stroke": "rgba(165, 248, 197, 1)",
                         "lower": 3,
                         "upper": 3
                     },
                     {
-                        "fill": "rgba(245, 124, 153, 0.5)",
+                        "fill": "rgba(245, 124, 153, 0.8)",
                         "stroke": "rgba(245, 124, 153, 1)",
                         "lower": 4,
                         "upper": 4
                     },
                     {
-                        "fill": "rgba(232, 213, 46, 0.5)",
+                        "fill": "rgba(232, 213, 46, 0.8)",
                         "stroke": "rgba(232, 213, 46, 1)",
                         "lower": 5,
                         "upper": 5
                     },
                     {
-                        "fill": "rgba(60, 146, 242, 0.5)",
+                        "fill": "rgba(60, 146, 242, 0.8)",
                         "stroke": "rgba(60, 146, 242, 1)",
                         "lower": 6,
                         "upper": 6
                     },
                     {
-                        "fill": "rgba(213, 219, 33, 0.5)",
+                        "fill": "rgba(213, 219, 33, 0.8)",
                         "stroke": "rgba(213, 219, 33, 1)",
                         "lower": 7,
                         "upper": 7
                     },
                     {
-                        "fill": "rgba(207, 127, 244, 0.5)",
+                        "fill": "rgba(207, 127, 244, 0.8)",
                         "stroke": "rgba(207, 127, 244, 1)",
                         "lower": 8,
                         "upper": 8
                     },
                     {
-                        "fill": "rgba(244, 219, 255, 0.5)",
+                        "fill": "rgba(244, 219, 255, 0.8)",
                         "stroke": "rgba(244, 219, 255, 1)",
                         "lower": 9,
                         "upper": 9
                     },
                     {
-                        "fill": "rgba(80, 192, 43, 0.5)",
+                        "fill": "rgba(80, 192, 43, 0.8)",
                         "stroke": "rgba(80, 192, 43, 1)",
                         "lower": 10,
                         "upper": 10
                     },
                     {
-                        "fill": "rgba(255, 225, 181, 0.5)",
+                        "fill": "rgba(255, 225, 181, 0.8)",
                         "stroke": "rgba(255, 225, 181, 1)",
                         "lower": 11,
                         "upper": 11
                     },
                     {
-                        "fill": "rgba(228, 207, 241, 0.5)",
+                        "fill": "rgba(228, 207, 241, 0.8)",
                         "stroke": "rgba(228, 207, 241, 1)",
                         "lower": 12,
                         "upper": 12
                     },
                     {
-                        "fill": "rgba(87, 210, 255, 0.5)",
+                        "fill": "rgba(87, 210, 255, 0.8)",
                         "stroke": "rgba(87, 210, 255, 1)",
                         "lower": 13,
                         "upper": 13
@@ -552,25 +654,25 @@
                         "upper": 0
                     },
                     {
-                        "fill": "rgba(116, 204, 244,, 0.5)",
+                        "fill": "rgba(116, 204, 244,, 0.8)",
                         "stroke": "rgba(116, 204, 244,, 1)",
                         "lower": 1,
                         "upper": 1
                     },
                     {
-                        "fill": "rgba(69, 117, 180, 0.5)",
+                        "fill": "rgba(69, 117, 180, 0.8)",
                         "stroke": "rgba(69, 117, 180, 1)",
                         "lower": 2,
                         "upper": 2
                     },
                     {
-                        "fill": "rgba(49, 54, 149, 0.5)",
+                        "fill": "rgba(49, 54, 149, 0.8)",
                         "stroke": "rgba(49, 54, 149, 1)",
                         "lower": 3,
                         "upper": 3
                     },
                     {
-                        "fill": "rgba(169, 169, 169, 0.5)",
+                        "fill": "rgba(169, 169, 169, 0.8)",
                         "stroke": "rgba(169, 169, 169, 1)",
                         "lower": 4,
                         "upper": 4
@@ -605,19 +707,19 @@
                 ],
                 "vectorStyle": [
                     {
-                        "fill": "rgba(156, 163, 175, 0.5)",
+                        "fill": "rgba(156, 163, 175, 0.8)",
                         "stroke": "rgba(156, 163, 175, 1)",
                         "lower": 0,
                         "upper": 0
                     },
                     {
-                        "fill": "rgba(34, 197, 94, 0.5)",
+                        "fill": "rgba(34, 197, 94, 0.8)",
                         "stroke": "rgba(34, 197, 94, 1)",
                         "lower": 1,
                         "upper": 1
                     },
                     {
-                        "fill": "rgba(239, 68, 68, 0.5)",
+                        "fill": "rgba(239, 68, 68, 0.8)",
                         "stroke": "rgba(239, 68, 68, 1)",
                         "lower": -1,
                         "upper": -1
@@ -630,7 +732,7 @@
         "Agriculture": [
             {
                 "name": "avg_double_cropped",
-                "label": "Average percentage of double cropped area over the years 2017 to 2024",
+                "label": "Average percentage of double cropped area over the years 2017 to 2025",
                 "type": 2,
                 "values": [
                     {
@@ -702,26 +804,86 @@
                 ],
                 "vectorStyle": [
                     {
-                        "fill": "rgba(115, 187, 83, 0.5)",
+                        "fill": "rgba(115, 187, 83, 0.8)",
                         "stroke": "rgba(115, 187, 83, 1)",
                         "lower": 0,
                         "upper": 30
                     },
                     {
-                        "fill": "rgba(238, 224, 93, 0.5)",
+                        "fill": "rgba(238, 224, 93, 0.8)",
                         "stroke": "rgba(238, 224, 93, 1)",
                         "lower": 30,
                         "upper": 90
                     },
                     {
-                        "fill": "rgba(255, 0, 0, 0.5)",
+                        "fill": "rgba(255, 0, 0, 0.8)",
                         "stroke": "rgba(255, 0, 0, 1)",
                         "lower": 90,
                         "upper": 9999999
                     }
                 ],
-                "rasterStyle": [""],
+                "rasterStyle": [
+                    ""
+                ],
                 "styleIdx": 28
+            },
+            {
+                "name": "river_available",
+                "label": "River",
+                "type": 1,
+                "values": [
+                    {
+                        "label": "Present",
+                        "value": true
+                    },
+                    {
+                        "label": "Absent",
+                        "value": false
+                    }
+                ],
+                "layer_store": [
+                    "river"
+                ],
+                "layer_name": [
+                    "river_vector"
+                ],
+                "vectorStyle": [
+                    {
+                        "fill": "rgba(43, 147, 250, 0.8)",
+                        "stroke": "rgba(43, 147, 250, 1)"
+                    }
+                ],
+                "rasterStyle": "",
+                "styleIdx": 0
+            },
+            {
+                "name": "canal_available",
+                "label": "Canal",
+                "type": 1,
+                "values": [
+                    {
+                        "label": "Present",
+                        "value": true
+                    },
+                    {
+                        "label": "Absent",
+                        "value": false
+                    }
+                ],
+                "layer_store": [
+                    "canal"
+                ],
+                "layer_name": [
+                    "canal_vector"
+                ],
+                "vectorStyle": [
+                    {
+                        "fill": "rgba(43, 147, 250, 0.8)",
+                        "stroke": "rgba(43, 147, 250, 1)"
+                    }
+                ],
+                "rasterStyle": "",
+                "styleIdx": 0
             }
         ],
         "Restoration": [
@@ -760,19 +922,19 @@
                 ],
                 "vectorStyle": [
                     {
-                        "fill": "rgba(115, 187, 83, 0.5)",
+                        "fill": "rgba(115, 187, 83, 0.8)",
                         "stroke": "rgba(115, 187, 83, 1)",
                         "lower": 0,
                         "upper": 50
                     },
                     {
-                        "fill": "rgba(238, 224, 93, 0.5)",
+                        "fill": "rgba(238, 224, 93, 0.8)",
                         "stroke": "rgba(238, 224, 93, 1)",
                         "lower": 50,
                         "upper": 100
                     },
                     {
-                        "fill": "rgba(255, 0, 0, 0.5)",
+                        "fill": "rgba(255, 0, 0, 0.8)",
                         "stroke": "rgba(255, 0, 0, 1)",
                         "lower": 100,
                         "upper": 9999999
@@ -818,19 +980,19 @@
                 ],
                 "vectorStyle": [
                     {
-                        "fill": "rgba(255, 0, 0, 0.5)",
+                        "fill": "rgba(255, 0, 0, 0.8)",
                         "stroke": "rgba(255, 0, 0, 1)",
                         "lower": 0,
                         "upper": 50
                     },
                     {
-                        "fill": "rgba(238, 224, 93, 0.5)",
+                        "fill": "rgba(238, 224, 93, 0.8)",
                         "stroke": "rgba(238, 224, 93, 1)",
                         "lower": 50,
                         "upper": 100
                     },
                     {
-                        "fill": "rgba(115, 187, 83, 0.5)",
+                        "fill": "rgba(115, 187, 83, 0.8)",
                         "stroke": "rgba(115, 187, 83, 1)",
                         "lower": 100,
                         "upper": 9999999
@@ -1042,865 +1204,6 @@
             }
         ]
     },
-    "Village": {
-        "NREGA": [
-            {
-                "name": "total_assets",
-                "label": "Total number of NREGA works",
-                "type": 2,
-                "values": [
-                    {
-                        "label": "Less than 100",
-                        "value": {
-                            "lower": 0,
-                            "upper": 100
-                        }
-                    },
-                    {
-                        "label": "Between 100 to 300",
-                        "value": {
-                            "lower": 100,
-                            "upper": 300
-                        }
-                    },
-                    {
-                        "label": "More than 300",
-                        "value": {
-                            "lower": 300,
-                            "upper": 999999999
-                        }
-                    }
-                ],
-                "layer_store": [
-                    "nrega_assets"
-                ],
-                "layer_name": [],
-                "vectorStyle": [
-                    {
-                        "fill": "rgba(135, 206, 235, 0.5)",
-                        "stroke": "rgba(135, 206, 235, 1)",
-                        "lower": 0,
-                        "upper": 100
-                    },
-                    {
-                        "fill": "rgba(65, 105, 225, 0.5)",
-                        "stroke": "rgba(65, 105, 225, 1)",
-                        "lower": 100,
-                        "upper": 300
-                    },
-                    {
-                        "fill": "rgba(0, 0, 128, 0.5)",
-                        "stroke": "rgba(0, 0, 128, 1)",
-                        "lower": 300,
-                        "upper": 999999999
-                    }
-                ],
-                "rasterStyle": "",
-                "styleIdx": 9
-            }
-        ],
-        "Demographic": [
-            {
-                "name": "total_population",
-                "label": "Total Population",
-                "type": 2,
-                "values": [
-                    {
-                        "label": "Less than 800",
-                        "value": {
-                            "lower": 0,
-                            "upper": 800
-                        }
-                    },
-                    {
-                        "label": "Between 800 to 2400",
-                        "value": {
-                            "lower": 800,
-                            "upper": 2400
-                        }
-                    },
-                    {
-                        "label": "Between 2400 - 8900",
-                        "value": {
-                            "lower": 2400,
-                            "upper": 8900
-                        }
-                    },
-                    {
-                        "label": "More than 8900",
-                        "value": {
-                            "lower": 8900,
-                            "upper": 9999999999
-                        }
-                    }
-                ],
-                "layer_store": [
-                    "panchayat_boundaries"
-                ],
-                "layer_name": [],
-                "vectorStyle": [
-                    {
-                        "fill": "rgba(192, 128, 129, 0.5)",
-                        "stroke": "rgba(192, 128, 129, 1)",
-                        "lower": 0,
-                        "upper": 800
-                    },
-                    {
-                        "fill": "rgba(128, 0, 32, 0.5)",
-                        "stroke": "rgba(128, 0, 32, 1)",
-                        "lower": 800,
-                        "upper": 2400
-                    },
-                    {
-                        "fill": "rgba(91, 14, 45, 0.5)",
-                        "stroke": "rgba(91, 14, 45, 1)",
-                        "lower": 2400,
-                        "upper": 8900
-                    },
-                    {
-                        "fill": "rgba(61, 0, 15, 0.5)",
-                        "stroke": "rgba(61, 0, 15, 1)",
-                        "lower": 8900,
-                        "upper": 9999999999
-                    }
-                ],
-                "rasterStyle": "",
-                "styleIdx": 5
-            },
-            {
-                "name": "percent_st_population",
-                "label": "Percentage ST population",
-                "type": 2,
-                "values": [
-                    {
-                        "label": "Less than 18%",
-                        "value": {
-                            "lower": 0,
-                            "upper": 18
-                        }
-                    },
-                    {
-                        "label": "Between 18% to 33%",
-                        "value": {
-                            "lower": 18,
-                            "upper": 33
-                        }
-                    },
-                    {
-                        "label": "More than 33%",
-                        "value": {
-                            "lower": 33,
-                            "upper": 999999999
-                        }
-                    }
-                ],
-                "layer_store": [
-                    "panchayat_boundaries"
-                ],
-                "layer_name": [],
-                "vectorStyle": [
-                    {
-                        "fill": "rgba(238, 234, 197, 0.5)",
-                        "stroke": "rgba(238, 234, 197, 1)",
-                        "lower": 0,
-                        "upper": 18
-                    },
-                    {
-                        "fill": "rgba(247, 219, 165, 0.5)",
-                        "stroke": "rgba(247, 219, 165, 1)",
-                        "lower": 18,
-                        "upper": 33
-                    },
-                    {
-                        "fill": "rgba(236, 181, 115, 0.5)",
-                        "stroke": "rgba(236, 181, 115, 1)",
-                        "lower": 33,
-                        "upper": 999999999
-                    }
-                ],
-                "rasterStyle": "",
-                "styleIdx": 6
-            },
-            {
-                "name": "percent_sc_population",
-                "label": "Percentage SC population",
-                "type": 2,
-                "values": [
-                    {
-                        "label": "Less than 5%",
-                        "value": {
-                            "lower": 0,
-                            "upper": 5
-                        }
-                    },
-                    {
-                        "label": "Between 5% to 17%",
-                        "value": {
-                            "lower": 5,
-                            "upper": 17
-                        }
-                    },
-                    {
-                        "label": "Between 17% to 37%",
-                        "value": {
-                            "lower": 17,
-                            "upper": 37
-                        }
-                    },
-                    {
-                        "label": "More than 37%",
-                        "value": {
-                            "lower": 37,
-                            "upper": 100
-                        }
-                    }
-                ],
-                "layer_store": [
-                    "panchayat_boundaries"
-                ],
-                "layer_name": [],
-                "vectorStyle": [
-                    {
-                        "fill": "rgba(230, 230, 250, 0.5)",
-                        "stroke": "rgba(230, 230, 250, 1)",
-                        "lower": 0,
-                        "upper": 5
-                    },
-                    {
-                        "fill": "rgba(218, 112, 214, 0.5)",
-                        "stroke": "rgba(218, 112, 214, 1)",
-                        "lower": 5,
-                        "upper": 17
-                    },
-                    {
-                        "fill": "rgba(120, 81, 169, 0.5)",
-                        "stroke": "rgba(120, 81, 169, 1)",
-                        "lower": 17,
-                        "upper": 37
-                    },
-                    {
-                        "fill": "rgba(75, 0, 130, 0.5)",
-                        "stroke": "rgba(75, 0, 130, 1)",
-                        "lower": 37,
-                        "upper": 100
-                    }
-                ],
-                "rasterStyle": "",
-                "styleIdx": 7
-            },
-            {
-                "name": "literacy_level",
-                "label": "Percentage literacy levels",
-                "type": 2,
-                "values": [
-                    {
-                        "label": "Less than 46%",
-                        "value": {
-                            "lower": 0,
-                            "upper": 46
-                        }
-                    },
-                    {
-                        "label": "Between 46% to 59%",
-                        "value": {
-                            "lower": 46,
-                            "upper": 59
-                        }
-                    },
-                    {
-                        "label": "Between 59% to 70%",
-                        "value": {
-                            "lower": 59,
-                            "upper": 70
-                        }
-                    },
-                    {
-                        "label": "More than 70%",
-                        "value": {
-                            "lower": 70,
-                            "upper": 999999999
-                        }
-                    }
-                ],
-                "layer_store": [
-                    "panchayat_boundaries"
-                ],
-                "layer_name": [],
-                "vectorStyle": [
-                    {
-                        "fill": "rgba(152, 251, 152, 0.5)",
-                        "stroke": "rgba(152, 251, 152, 1)",
-                        "lower": 0,
-                        "upper": 46
-                    },
-                    {
-                        "fill": "rgba(50, 205, 50, 0.5)",
-                        "stroke": "rgba((50, 205, 50, 1)",
-                        "lower": 46,
-                        "upper": 59
-                    },
-                    {
-                        "fill": "rgba(34, 139, 34, 0.5)",
-                        "stroke": "rgba(34, 139, 34, 1)",
-                        "lower": 59,
-                        "upper": 70
-                    },
-                    {
-                        "fill": "rgba(0, 100, 0, 0.5)",
-                        "stroke": "rgba(0, 100, 0, 1)",
-                        "lower": 70,
-                        "upper": 999999999
-                    }
-                ],
-                "rasterStyle": "",
-                "styleIdx": 8
-            }
-        ],
-        "Facilities": [
-            {
-                "name": "essential_education_infra",
-                "label": "Primary education institutions",
-                "type": 2,
-                "values": [
-                    {
-                        "label": "Within 2 kms",
-                        "value": {
-                            "lower": 0,
-                            "upper": 2
-                        }
-                    },
-                    {
-                        "label": "More than 2 kms",
-                        "value": {
-                            "lower": 2,
-                            "upper": 9999999999
-                        }
-                    }
-                ],
-                "layer_store": [
-                    "facilities_proximity"
-                ],
-                "layer_name": ["facilities"],
-                "vectorStyle": [
-                    {
-                        "fill": "rgba(255, 249, 196, 0.5)",
-                        "stroke": "rgba(255, 249, 196, 1)",
-                        "lower": 0,
-                        "upper": 2
-                    },
-                    {
-                        "fill": "rgba(255, 193, 7, 0.5)",
-                        "stroke": "rgba(255, 193, 7, 1)",
-                        "lower": 2,
-                        "upper": 9999999999
-                    }
-                ],
-                "rasterStyle": "",
-                "styleIdx": 15
-            },
-            {
-                "name": "higher_education_infra",
-                "label": "Higher education institutions",
-                "type": 2,
-                "values": [
-                    {
-                        "label": "Within 3 kms",
-                        "value": {
-                            "lower": 0,
-                            "upper": 3
-                        }
-                    },
-                    {
-                        "label": "More than 3 kms",
-                        "value": {
-                            "lower": 3,
-                            "upper": 9999999999
-                        }
-                    }
-                ],
-               "layer_store": [
-                    "facilities_proximity"
-                ],
-                "layer_name": ["facilities"],
-                "vectorStyle": [
-                    {
-                        "fill": "rgba(232, 238, 186, 0.5)",
-                        "stroke": "rgba(232, 238, 186, 1)",
-                        "lower": 0,
-                        "upper": 3
-                    },
-                    {
-                        "fill": "rgba(137, 151, 10, 0.5)",
-                        "stroke": "rgba(137, 151, 10, 1)",
-                        "lower": 3,
-                        "upper": 9999999999
-                    }
-                ],
-                "rasterStyle": "",
-                "styleIdx": 16
-            },
-            {
-                "name": "essential_health_services",
-                "label": "Essential health services",
-                "type": 2,
-                "values": [
-                    {
-                        "label": "Less than 2 kms",
-                        "value": {
-                            "lower": 0,
-                            "upper": 2
-                        }
-                    },
-                    {
-                        "label": "Between 2 to 5 kms",
-                        "value": {
-                            "lower": 2,
-                            "upper": 5
-                        }
-                    },
-                    {
-                        "label": "More than 5 kms",
-                        "value": {
-                            "lower": 5,
-                            "upper": 9999999999
-                        }
-                    }
-                ],
-                "layer_store": [
-                    "facilities_proximity"
-                ],
-                "layer_name": ["facilities"],
-                "vectorStyle": [
-                    {
-                        "fill": "rgba(255, 205, 210, 0.5)",
-                        "stroke": "rgba(255, 205, 210, 1)",
-                        "lower": 0,
-                        "upper": 2
-                    },
-                    {
-                        "fill": "rgba(239, 83, 80, 0.5)",
-                        "stroke": "rgba(239, 83, 80, 1)",
-                        "lower": 2,
-                        "upper": 5
-                    },
-                    {
-                        "fill": "rgba(183, 28, 28, 0.5)",
-                        "stroke": "rgba(183, 28, 28, 1)",
-                        "lower": 5,
-                        "upper": 9999999999
-                    }
-                ],
-                "rasterStyle": "",
-                "styleIdx": 17
-            },
-            {
-                "name": "advanced_health_services",
-                "label": "Advanced health services",
-                "type": 2,
-                "values": [
-                    {
-                        "label": "<10 kms",
-                        "value": {
-                            "lower": 0,
-                            "upper": 10
-                        }
-                    },
-                    {
-                        "label": "10-25 kms",
-                        "value": {
-                            "lower": 10,
-                            "upper": 25
-                        }
-                    },
-                    {
-                        "label": ">25 kms",
-                        "value": {
-                            "lower": 25,
-                            "upper": 9999999999
-                        }
-                    }
-                ],
-                "layer_store": [
-                    "facilities_proximity"
-                ],
-                "layer_name": ["facilities"],
-                "vectorStyle": [
-                    {
-                        "fill": "rgba(255, 205, 210, 0.5)",
-                        "stroke": "rgba(255, 205, 210, 1)",
-                        "lower": 0,
-                        "upper": 10
-                    },
-                    {
-                        "fill": "rgba(239, 83, 80, 0.5)",
-                        "stroke": "rgba(239, 83, 80, 1)",
-                        "lower": 10,
-                        "upper": 25
-                    },
-                    {
-                        "fill": "rgba(183, 28, 28, 0.5)",
-                        "stroke": "rgba(183, 28, 28, 1)",
-                        "lower": 25,
-                        "upper": 9999999999
-                    }
-                ],
-                "rasterStyle": "",
-                "styleIdx": 18
-            },
-            {
-                "name": "public_distribution_system",
-                "label": "Public distribution system",
-                "type": 2,
-                "values": [
-                    {
-                        "label": "Within 2 kms",
-                        "value": {
-                            "lower": 0,
-                            "upper": 2
-                        }
-                    },
-                    {
-                        "label": "More than 2 kms",
-                        "value": {
-                            "lower": 2,
-                            "upper": 9999999999
-                        }
-                    }
-                ],
-                "layer_store": [
-                    "facilities_proximity"
-                ],
-                "layer_name": ["facilities"],
-                "vectorStyle": [
-                    {
-                        "fill": "rgba(232, 238, 186, 0.5)",
-                        "stroke": "rgba(232, 238, 186, 1)",
-                        "lower": 0,
-                        "upper": 2
-                    },
-                    {
-                        "fill": "rgba(137, 151, 10, 0.5)",
-                        "stroke": "rgba(137, 151, 10, 1)",
-                        "lower": 2,
-                        "upper": 9999999999
-                    }
-                ],
-                "rasterStyle": "",
-                "styleIdx": 19
-            },
-            {
-                "name": "financial_inclusion",
-                "label": "Access to banks and financial services",
-                "type": 2,
-                "values": [
-                    {
-                        "label": "Within 5 kms",
-                        "value": {
-                            "lower": 0,
-                            "upper": 5
-                        }
-                    },
-                    {
-                        "label": "More than 5 kms",
-                        "value": {
-                            "lower": 5,
-                            "upper": 9999999999
-                        }
-                    }
-                ],
-                "layer_store": [
-                    "facilities_proximity"
-                ],
-                "layer_name": ["facilities"],
-                "vectorStyle": [
-                    {
-                        "fill": "rgba(72, 55, 217, 0.5)",
-                        "stroke": "rgba(72, 55, 217, 1)",
-                        "lower": 0,
-                        "upper": 5
-                    },
-                    {
-                        "fill": "rgba(8, 8, 77, 0.5)",
-                        "stroke": "rgba(8, 8, 77, 1)",
-                        "lower": 5,
-                        "upper": 9999999999
-                    }
-                ],
-                "rasterStyle": "",
-                "styleIdx": 20
-            },
-            {
-                "name": "agri_market_access",
-                "label": "Access to mandis",
-                "type": 2,
-                "values": [
-                    {
-                        "label": "<3 kms",
-                        "value": {
-                            "lower": 0,
-                            "upper": 3
-                        }
-                    },
-                    {
-                        "label": "3-10 kms",
-                        "value": {
-                            "lower": 3,
-                            "upper": 10
-                        }
-                    },
-                    {
-                        "label": ">10 kms",
-                        "value": {
-                            "lower": 10,
-                            "upper": 9999999999
-                        }
-                    }
-                ],
-                "layer_store": [
-                    "facilities_proximity"
-                ],
-                "layer_name": ["facilities"],
-                "vectorStyle": [
-                    {
-                        "fill": "rgba(255, 255, 102, 0.5)",
-                        "stroke": "rgba(255, 255, 102, 1)",
-                        "lower": 0,
-                        "upper": 3
-                    },
-                    {
-                        "fill": "rgba(159, 159, 0, 0.5)",
-                        "stroke": "rgba(159, 159, 0, 1)",
-                        "lower": 3,
-                        "upper": 10
-                    },
-                    {
-                        "fill": "rgba(98, 98, 0, 0.5)",
-                        "stroke": "rgba(98, 98, 0, 1)",
-                        "lower": 10,
-                        "upper": 9999999999
-                    }
-                ],
-                "rasterStyle": "",
-                "styleIdx": 21
-            },
-            {
-                "name": "post_harvest_infra",
-                "label": "Post Agricultural Produce Harvest Support",
-                "type": 2,
-                "values": [
-                    {
-                        "label": "<5 kms",
-                        "value": {
-                            "lower": 0,
-                            "upper": 5
-                        }
-                    },
-                    {
-                        "label": "5-20 kms",
-                        "value": {
-                            "lower": 5,
-                            "upper": 20
-                        }
-                    },
-                    {
-                        "label": ">20 kms",
-                        "value": {
-                            "lower": 20,
-                            "upper": 9999999999
-                        }
-                    }
-                ],
-                "layer_store": [
-                    "facilities_proximity"
-                ],
-                "layer_name": ["facilities"],
-                "vectorStyle": [
-                    {
-                        "fill": "rgba(200, 230, 201, 0.5)",
-                        "stroke": "rgba(200, 230, 201, 1)",
-                        "lower": 0,
-                        "upper": 5
-                    },
-                    {
-                        "fill": "rgba(102, 187, 106, 0.5)",
-                        "stroke": "rgba(102, 187, 106, 1)",
-                        "lower": 5,
-                        "upper": 20
-                    },
-                    {
-                        "fill": "rgba(46, 125, 50, 0.5)",
-                        "stroke": "rgba(46, 125, 50, 1)",
-                        "lower": 20,
-                        "upper": 9999999999
-                    }
-                ],
-                "rasterStyle": "",
-                "styleIdx": 22
-            },
-            {
-                "name": "farmer_cooperatives_access",
-                "label": "Access to farmer cooperatives",
-                "type": 2,
-                "values": [
-                    {
-                        "label": "<10 kms",
-                        "value": {
-                            "lower": 0,
-                            "upper": 10
-                        }
-                    },
-                    {
-                        "label": "10-30 kms",
-                        "value": {
-                            "lower": 10,
-                            "upper": 30
-                        }
-                    },
-                    {
-                        "label": ">30 kms",
-                        "value": {
-                            "lower": 30,
-                            "upper": 9999999999
-                        }
-                    }
-                ],
-                "layer_store": [
-                    "facilities_proximity"
-                ],
-                "layer_name": ["facilities"],
-                "vectorStyle": [
-                    {
-                        "fill": "rgba(204, 238, 255, 0.5)",
-                        "stroke": "rgba(204, 238, 255, 1)",
-                        "lower": 0,
-                        "upper": 10
-                    },
-                    {
-                        "fill": "rgba(0, 142, 212, 0.5)",
-                        "stroke": "rgba(0, 142, 212, 1)",
-                        "lower": 10,
-                        "upper": 30
-                    },
-                    {
-                        "fill": "rgba(0, 77, 116, 0.5)",
-                        "stroke": "rgba(0, 77, 116, 1)",
-                        "lower": 30,
-                        "upper": 9999999999
-                    }
-                ],
-                "rasterStyle": "",
-                "styleIdx": 23
-            },
-            {
-                "name": "livestock_management_centers",
-                "label": "Livestock Management Centers",
-                "type": 2,
-                "values": [
-                    {
-                        "label": "<10 kms",
-                        "value": {
-                            "lower": 0,
-                            "upper": 10
-                        }
-                    },
-                    {
-                        "label": "10-30 kms",
-                        "value": {
-                            "lower": 10,
-                            "upper": 30
-                        }
-                    },
-                    {
-                        "label": ">30 kms",
-                        "value": {
-                            "lower": 30,
-                            "upper": 9999999999
-                        }
-                    }
-                ],
-                "layer_store": [
-                    "facilities_proximity"
-                ],
-                "layer_name": ["facilities"],
-                "vectorStyle": [
-                    {
-                        "fill": "rgba(255, 170, 85, 0.5)",
-                        "stroke": "rgba(255, 170, 85, 1)",
-                        "lower": 0,
-                        "upper": 10
-                    },
-                    {
-                        "fill": "rgba(170, 85, 0, 0.5)",
-                        "stroke": "rgba(170, 85, 0, 1)",
-                        "lower": 10,
-                        "upper": 30
-                    },
-                    {
-                        "fill": "rgba(85, 43, 0, 0.5)",
-                        "stroke": "rgba(85, 43, 0, 1)",
-                        "lower": 30,
-                        "upper": 9999999999
-                    }
-                ],
-                "rasterStyle": "",
-                "styleIdx": 24
-            },
-            {
-                "name": "agricultural_support_infrastructure",
-                "label": "Agricultural support infrastructure",
-                "type": 2,
-                "values": [
-                    {
-                        "label": "<10 kms",
-                        "value": {
-                            "lower": 0,
-                            "upper": 10
-                        }
-                    },
-                    {
-                        "label": "10-50 kms",
-                        "value": {
-                            "lower": 10,
-                            "upper": 50
-                        }
-                    },
-                    {
-                        "label": ">50 kms",
-                        "value": {
-                            "lower": 50,
-                            "upper": 9999999999
-                        }
-                    }
-                ],
-                "layer_store": [
-                    "facilities_proximity"
-                ],
-                "layer_name": ["facilities"],
-                "vectorStyle": [
-                    {
-                        "fill": "rgba(200, 230, 201, 0.5)",
-                        "stroke": "rgba(200, 230, 201, 1)",
-                        "lower": 0,
-                        "upper": 10
-                    },
-                    {
-                        "fill": "rgba(102, 187, 106, 0.5)",
-                        "stroke": "rgba(102, 187, 106, 1)",
-                        "lower": 10,
-                        "upper": 50
-                    },
-                    {
-                        "fill": "rgba(46, 125, 50, 0.5",
-                        "stroke": "rgba(46, 125, 50, 1)",
-                        "lower": 50,
-                        "upper": 9999999999
-                    }
-                ],
-                "rasterStyle": "",
-                "styleIdx": 25
-            }
-        ]
-    },
     "Waterbody": {
         "Waterbody": [
             {
@@ -2030,6 +1333,887 @@
                 ],
                 "rasterStyle": "",
                 "styleIdx": 2
+            }
+        ]
+    },
+    "Village": {
+        "Demographic": [
+            {
+                "name": "total_population",
+                "label": "Total Population",
+                "type": 2,
+                "values": [
+                    {
+                        "label": "Less than 800",
+                        "value": {
+                            "lower": 0,
+                            "upper": 800
+                        }
+                    },
+                    {
+                        "label": "Between 800 to 2400",
+                        "value": {
+                            "lower": 800,
+                            "upper": 2400
+                        }
+                    },
+                    {
+                        "label": "Between 2400 - 8900",
+                        "value": {
+                            "lower": 2400,
+                            "upper": 8900
+                        }
+                    },
+                    {
+                        "label": "More than 8900",
+                        "value": {
+                            "lower": 8900,
+                            "upper": 9999999999
+                        }
+                    }
+                ],
+                "layer_store": [
+                    "panchayat_boundaries"
+                ],
+                "layer_name": [],
+                "vectorStyle": [
+                    {
+                        "fill": "rgba(192, 128, 129, 0.8)",
+                        "stroke": "rgba(192, 128, 129, 1)",
+                        "lower": 0,
+                        "upper": 800
+                    },
+                    {
+                        "fill": "rgba(128, 0, 32, 0.8)",
+                        "stroke": "rgba(128, 0, 32, 1)",
+                        "lower": 800,
+                        "upper": 2400
+                    },
+                    {
+                        "fill": "rgba(91, 14, 45, 0.8)",
+                        "stroke": "rgba(91, 14, 45, 1)",
+                        "lower": 2400,
+                        "upper": 8900
+                    },
+                    {
+                        "fill": "rgba(61, 0, 15, 0.8)",
+                        "stroke": "rgba(61, 0, 15, 1)",
+                        "lower": 8900,
+                        "upper": 9999999999
+                    }
+                ],
+                "rasterStyle": "",
+                "styleIdx": 5
+            },
+            {
+                "name": "percent_st_population",
+                "label": "Percentage ST population",
+                "type": 2,
+                "values": [
+                    {
+                        "label": "Less than 18%",
+                        "value": {
+                            "lower": 0,
+                            "upper": 18
+                        }
+                    },
+                    {
+                        "label": "Between 18% to 33%",
+                        "value": {
+                            "lower": 18,
+                            "upper": 33
+                        }
+                    },
+                    {
+                        "label": "More than 33%",
+                        "value": {
+                            "lower": 33,
+                            "upper": 999999999
+                        }
+                    }
+                ],
+                "layer_store": [
+                    "panchayat_boundaries"
+                ],
+                "layer_name": [],
+                "vectorStyle": [
+                    {
+                        "fill": "rgba(238, 234, 197, 0.8)",
+                        "stroke": "rgba(238, 234, 197, 1)",
+                        "lower": 0,
+                        "upper": 18
+                    },
+                    {
+                        "fill": "rgba(247, 219, 165, 0.8)",
+                        "stroke": "rgba(247, 219, 165, 1)",
+                        "lower": 18,
+                        "upper": 33
+                    },
+                    {
+                        "fill": "rgba(236, 181, 115, 0.8)",
+                        "stroke": "rgba(236, 181, 115, 1)",
+                        "lower": 33,
+                        "upper": 999999999
+                    }
+                ],
+                "rasterStyle": "",
+                "styleIdx": 6
+            },
+            {
+                "name": "percent_sc_population",
+                "label": "Percentage SC population",
+                "type": 2,
+                "values": [
+                    {
+                        "label": "Less than 5%",
+                        "value": {
+                            "lower": 0,
+                            "upper": 5
+                        }
+                    },
+                    {
+                        "label": "Between 5% to 17%",
+                        "value": {
+                            "lower": 5,
+                            "upper": 17
+                        }
+                    },
+                    {
+                        "label": "Between 17% to 37%",
+                        "value": {
+                            "lower": 17,
+                            "upper": 37
+                        }
+                    },
+                    {
+                        "label": "More than 37%",
+                        "value": {
+                            "lower": 37,
+                            "upper": 100
+                        }
+                    }
+                ],
+                "layer_store": [
+                    "panchayat_boundaries"
+                ],
+                "layer_name": [],
+                "vectorStyle": [
+                    {
+                        "fill": "rgba(230, 230, 250, 0.8)",
+                        "stroke": "rgba(230, 230, 250, 1)",
+                        "lower": 0,
+                        "upper": 5
+                    },
+                    {
+                        "fill": "rgba(218, 112, 214, 0.8)",
+                        "stroke": "rgba(218, 112, 214, 1)",
+                        "lower": 5,
+                        "upper": 17
+                    },
+                    {
+                        "fill": "rgba(120, 81, 169, 0.8)",
+                        "stroke": "rgba(120, 81, 169, 1)",
+                        "lower": 17,
+                        "upper": 37
+                    },
+                    {
+                        "fill": "rgba(75, 0, 130, 0.8)",
+                        "stroke": "rgba(75, 0, 130, 1)",
+                        "lower": 37,
+                        "upper": 100
+                    }
+                ],
+                "rasterStyle": "",
+                "styleIdx": 7
+            },
+            {
+                "name": "literacy_level",
+                "label": "Percentage literacy levels",
+                "type": 2,
+                "values": [
+                    {
+                        "label": "Less than 46%",
+                        "value": {
+                            "lower": 0,
+                            "upper": 46
+                        }
+                    },
+                    {
+                        "label": "Between 46% to 59%",
+                        "value": {
+                            "lower": 46,
+                            "upper": 59
+                        }
+                    },
+                    {
+                        "label": "Between 59% to 70%",
+                        "value": {
+                            "lower": 59,
+                            "upper": 70
+                        }
+                    },
+                    {
+                        "label": "More than 70%",
+                        "value": {
+                            "lower": 70,
+                            "upper": 999999999
+                        }
+                    }
+                ],
+                "layer_store": [
+                    "panchayat_boundaries"
+                ],
+                "layer_name": [],
+                "vectorStyle": [
+                    {
+                        "fill": "rgba(152, 251, 152, 0.8)",
+                        "stroke": "rgba(152, 251, 152, 1)",
+                        "lower": 0,
+                        "upper": 46
+                    },
+                    {
+                        "fill": "rgba(50, 205, 50, 0.8)",
+                        "stroke": "rgba((50, 205, 50, 1)",
+                        "lower": 46,
+                        "upper": 59
+                    },
+                    {
+                        "fill": "rgba(34, 139, 34, 0.8)",
+                        "stroke": "rgba(34, 139, 34, 1)",
+                        "lower": 59,
+                        "upper": 70
+                    },
+                    {
+                        "fill": "rgba(0, 100, 0, 0.8)",
+                        "stroke": "rgba(0, 100, 0, 1)",
+                        "lower": 70,
+                        "upper": 999999999
+                    }
+                ],
+                "rasterStyle": "",
+                "styleIdx": 8
+            }
+        ],
+        "Facilities": [
+            {
+                "name": "essential_education_infra",
+                "label": "Primary education institutions",
+                "type": 2,
+                "values": [
+                    {
+                        "label": "Within 2 kms",
+                        "value": {
+                            "lower": 0,
+                            "upper": 2
+                        }
+                    },
+                    {
+                        "label": "More than 2 kms",
+                        "value": {
+                            "lower": 2,
+                            "upper": 9999999999
+                        }
+                    }
+                ],
+                "layer_store": [
+                    "facilities_proximity"
+                ],
+                "layer_name": [
+                    "facilities"
+                ],
+                "vectorStyle": [
+                    {
+                        "fill": "rgba(255, 249, 196, 0.8)",
+                        "stroke": "rgba(255, 249, 196, 1)",
+                        "lower": 0,
+                        "upper": 2
+                    },
+                    {
+                        "fill": "rgba(255, 193, 7, 0.8)",
+                        "stroke": "rgba(255, 193, 7, 1)",
+                        "lower": 2,
+                        "upper": 9999999999
+                    }
+                ],
+                "rasterStyle": "",
+                "styleIdx": 15
+            },
+            {
+                "name": "higher_education_infra",
+                "label": "Higher education institutions",
+                "type": 2,
+                "values": [
+                    {
+                        "label": "Within 3 kms",
+                        "value": {
+                            "lower": 0,
+                            "upper": 3
+                        }
+                    },
+                    {
+                        "label": "More than 3 kms",
+                        "value": {
+                            "lower": 3,
+                            "upper": 9999999999
+                        }
+                    }
+                ],
+                "layer_store": [
+                    "facilities_proximity"
+                ],
+                "layer_name": [
+                    "facilities"
+                ],
+                "vectorStyle": [
+                    {
+                        "fill": "rgba(232, 238, 186, 0.8)",
+                        "stroke": "rgba(232, 238, 186, 1)",
+                        "lower": 0,
+                        "upper": 3
+                    },
+                    {
+                        "fill": "rgba(137, 151, 10, 0.8)",
+                        "stroke": "rgba(137, 151, 10, 1)",
+                        "lower": 3,
+                        "upper": 9999999999
+                    }
+                ],
+                "rasterStyle": "",
+                "styleIdx": 16
+            },
+            {
+                "name": "essential_health_services",
+                "label": "Essential health services",
+                "type": 2,
+                "values": [
+                    {
+                        "label": "Less than 2 kms",
+                        "value": {
+                            "lower": 0,
+                            "upper": 2
+                        }
+                    },
+                    {
+                        "label": "Between 2 to 5 kms",
+                        "value": {
+                            "lower": 2,
+                            "upper": 5
+                        }
+                    },
+                    {
+                        "label": "More than 5 kms",
+                        "value": {
+                            "lower": 5,
+                            "upper": 9999999999
+                        }
+                    }
+                ],
+                "layer_store": [
+                    "facilities_proximity"
+                ],
+                "layer_name": [
+                    "facilities"
+                ],
+                "vectorStyle": [
+                    {
+                        "fill": "rgba(255, 205, 210, 0.8)",
+                        "stroke": "rgba(255, 205, 210, 1)",
+                        "lower": 0,
+                        "upper": 2
+                    },
+                    {
+                        "fill": "rgba(239, 83, 80, 0.8)",
+                        "stroke": "rgba(239, 83, 80, 1)",
+                        "lower": 2,
+                        "upper": 5
+                    },
+                    {
+                        "fill": "rgba(183, 28, 28, 0.8)",
+                        "stroke": "rgba(183, 28, 28, 1)",
+                        "lower": 5,
+                        "upper": 9999999999
+                    }
+                ],
+                "rasterStyle": "",
+                "styleIdx": 17
+            },
+            {
+                "name": "advanced_health_services",
+                "label": "Advanced health services",
+                "type": 2,
+                "values": [
+                    {
+                        "label": "<10 kms",
+                        "value": {
+                            "lower": 0,
+                            "upper": 10
+                        }
+                    },
+                    {
+                        "label": "10-25 kms",
+                        "value": {
+                            "lower": 10,
+                            "upper": 25
+                        }
+                    },
+                    {
+                        "label": ">25 kms",
+                        "value": {
+                            "lower": 25,
+                            "upper": 9999999999
+                        }
+                    }
+                ],
+                "layer_store": [
+                    "facilities_proximity"
+                ],
+                "layer_name": [
+                    "facilities"
+                ],
+                "vectorStyle": [
+                    {
+                        "fill": "rgba(255, 205, 210, 0.8)",
+                        "stroke": "rgba(255, 205, 210, 1)",
+                        "lower": 0,
+                        "upper": 10
+                    },
+                    {
+                        "fill": "rgba(239, 83, 80, 0.8)",
+                        "stroke": "rgba(239, 83, 80, 1)",
+                        "lower": 10,
+                        "upper": 25
+                    },
+                    {
+                        "fill": "rgba(183, 28, 28, 0.8)",
+                        "stroke": "rgba(183, 28, 28, 1)",
+                        "lower": 25,
+                        "upper": 9999999999
+                    }
+                ],
+                "rasterStyle": "",
+                "styleIdx": 18
+            },
+            {
+                "name": "public_distribution_system",
+                "label": "Public distribution system",
+                "type": 2,
+                "values": [
+                    {
+                        "label": "Within 2 kms",
+                        "value": {
+                            "lower": 0,
+                            "upper": 2
+                        }
+                    },
+                    {
+                        "label": "More than 2 kms",
+                        "value": {
+                            "lower": 2,
+                            "upper": 9999999999
+                        }
+                    }
+                ],
+                "layer_store": [
+                    "facilities_proximity"
+                ],
+                "layer_name": [
+                    "facilities"
+                ],
+                "vectorStyle": [
+                    {
+                        "fill": "rgba(232, 238, 186, 0.8)",
+                        "stroke": "rgba(232, 238, 186, 1)",
+                        "lower": 0,
+                        "upper": 2
+                    },
+                    {
+                        "fill": "rgba(137, 151, 10, 0.8)",
+                        "stroke": "rgba(137, 151, 10, 1)",
+                        "lower": 2,
+                        "upper": 9999999999
+                    }
+                ],
+                "rasterStyle": "",
+                "styleIdx": 19
+            },
+            {
+                "name": "financial_inclusion",
+                "label": "Access to banks and financial services",
+                "type": 2,
+                "values": [
+                    {
+                        "label": "Within 5 kms",
+                        "value": {
+                            "lower": 0,
+                            "upper": 5
+                        }
+                    },
+                    {
+                        "label": "More than 5 kms",
+                        "value": {
+                            "lower": 5,
+                            "upper": 9999999999
+                        }
+                    }
+                ],
+                "layer_store": [
+                    "facilities_proximity"
+                ],
+                "layer_name": [
+                    "facilities"
+                ],
+                "vectorStyle": [
+                    {
+                        "fill": "rgba(72, 55, 217, 0.8)",
+                        "stroke": "rgba(72, 55, 217, 1)",
+                        "lower": 0,
+                        "upper": 5
+                    },
+                    {
+                        "fill": "rgba(8, 8, 77, 0.8)",
+                        "stroke": "rgba(8, 8, 77, 1)",
+                        "lower": 5,
+                        "upper": 9999999999
+                    }
+                ],
+                "rasterStyle": "",
+                "styleIdx": 20
+            },
+            {
+                "name": "agri_market_access",
+                "label": "Access to mandis",
+                "type": 2,
+                "values": [
+                    {
+                        "label": "<3 kms",
+                        "value": {
+                            "lower": 0,
+                            "upper": 3
+                        }
+                    },
+                    {
+                        "label": "3-10 kms",
+                        "value": {
+                            "lower": 3,
+                            "upper": 10
+                        }
+                    },
+                    {
+                        "label": ">10 kms",
+                        "value": {
+                            "lower": 10,
+                            "upper": 9999999999
+                        }
+                    }
+                ],
+                "layer_store": [
+                    "facilities_proximity"
+                ],
+                "layer_name": [
+                    "facilities"
+                ],
+                "vectorStyle": [
+                    {
+                        "fill": "rgba(255, 255, 102, 0.8)",
+                        "stroke": "rgba(255, 255, 102, 1)",
+                        "lower": 0,
+                        "upper": 3
+                    },
+                    {
+                        "fill": "rgba(159, 159, 0, 0.8)",
+                        "stroke": "rgba(159, 159, 0, 1)",
+                        "lower": 3,
+                        "upper": 10
+                    },
+                    {
+                        "fill": "rgba(98, 98, 0, 0.8)",
+                        "stroke": "rgba(98, 98, 0, 1)",
+                        "lower": 10,
+                        "upper": 9999999999
+                    }
+                ],
+                "rasterStyle": "",
+                "styleIdx": 21
+            },
+            {
+                "name": "post_harvest_infra",
+                "label": "Post Agricultural Produce Harvest Support",
+                "type": 2,
+                "values": [
+                    {
+                        "label": "<5 kms",
+                        "value": {
+                            "lower": 0,
+                            "upper": 5
+                        }
+                    },
+                    {
+                        "label": "5-20 kms",
+                        "value": {
+                            "lower": 5,
+                            "upper": 20
+                        }
+                    },
+                    {
+                        "label": ">20 kms",
+                        "value": {
+                            "lower": 20,
+                            "upper": 9999999999
+                        }
+                    }
+                ],
+                "layer_store": [
+                    "facilities_proximity"
+                ],
+                "layer_name": [
+                    "facilities"
+                ],
+                "vectorStyle": [
+                    {
+                        "fill": "rgba(200, 230, 201, 0.8)",
+                        "stroke": "rgba(200, 230, 201, 1)",
+                        "lower": 0,
+                        "upper": 5
+                    },
+                    {
+                        "fill": "rgba(102, 187, 106, 0.8)",
+                        "stroke": "rgba(102, 187, 106, 1)",
+                        "lower": 5,
+                        "upper": 20
+                    },
+                    {
+                        "fill": "rgba(46, 125, 50, 0.8)",
+                        "stroke": "rgba(46, 125, 50, 1)",
+                        "lower": 20,
+                        "upper": 9999999999
+                    }
+                ],
+                "rasterStyle": "",
+                "styleIdx": 22
+            },
+            {
+                "name": "farmer_cooperatives_access",
+                "label": "Access to farmer cooperatives",
+                "type": 2,
+                "values": [
+                    {
+                        "label": "<10 kms",
+                        "value": {
+                            "lower": 0,
+                            "upper": 10
+                        }
+                    },
+                    {
+                        "label": "10-30 kms",
+                        "value": {
+                            "lower": 10,
+                            "upper": 30
+                        }
+                    },
+                    {
+                        "label": ">30 kms",
+                        "value": {
+                            "lower": 30,
+                            "upper": 9999999999
+                        }
+                    }
+                ],
+                "layer_store": [
+                    "facilities_proximity"
+                ],
+                "layer_name": [
+                    "facilities"
+                ],
+                "vectorStyle": [
+                    {
+                        "fill": "rgba(204, 238, 255, 0.8)",
+                        "stroke": "rgba(204, 238, 255, 1)",
+                        "lower": 0,
+                        "upper": 10
+                    },
+                    {
+                        "fill": "rgba(0, 142, 212, 0.8)",
+                        "stroke": "rgba(0, 142, 212, 1)",
+                        "lower": 10,
+                        "upper": 30
+                    },
+                    {
+                        "fill": "rgba(0, 77, 116, 0.8)",
+                        "stroke": "rgba(0, 77, 116, 1)",
+                        "lower": 30,
+                        "upper": 9999999999
+                    }
+                ],
+                "rasterStyle": "",
+                "styleIdx": 23
+            },
+            {
+                "name": "livestock_management_centers",
+                "label": "Livestock Management Centers",
+                "type": 2,
+                "values": [
+                    {
+                        "label": "<10 kms",
+                        "value": {
+                            "lower": 0,
+                            "upper": 10
+                        }
+                    },
+                    {
+                        "label": "10-30 kms",
+                        "value": {
+                            "lower": 10,
+                            "upper": 30
+                        }
+                    },
+                    {
+                        "label": ">30 kms",
+                        "value": {
+                            "lower": 30,
+                            "upper": 9999999999
+                        }
+                    }
+                ],
+                "layer_store": [
+                    "facilities_proximity"
+                ],
+                "layer_name": [
+                    "facilities"
+                ],
+                "vectorStyle": [
+                    {
+                        "fill": "rgba(255, 170, 85, 0.8)",
+                        "stroke": "rgba(255, 170, 85, 1)",
+                        "lower": 0,
+                        "upper": 10
+                    },
+                    {
+                        "fill": "rgba(170, 85, 0, 0.8)",
+                        "stroke": "rgba(170, 85, 0, 1)",
+                        "lower": 10,
+                        "upper": 30
+                    },
+                    {
+                        "fill": "rgba(85, 43, 0, 0.8)",
+                        "stroke": "rgba(85, 43, 0, 1)",
+                        "lower": 30,
+                        "upper": 9999999999
+                    }
+                ],
+                "rasterStyle": "",
+                "styleIdx": 24
+            },
+            {
+                "name": "agricultural_support_infrastructure",
+                "label": "Agricultural support infrastructure",
+                "type": 2,
+                "values": [
+                    {
+                        "label": "<10 kms",
+                        "value": {
+                            "lower": 0,
+                            "upper": 10
+                        }
+                    },
+                    {
+                        "label": "10-50 kms",
+                        "value": {
+                            "lower": 10,
+                            "upper": 50
+                        }
+                    },
+                    {
+                        "label": ">50 kms",
+                        "value": {
+                            "lower": 50,
+                            "upper": 9999999999
+                        }
+                    }
+                ],
+                "layer_store": [
+                    "facilities_proximity"
+                ],
+                "layer_name": [
+                    "facilities"
+                ],
+                "vectorStyle": [
+                    {
+                        "fill": "rgba(200, 230, 201, 0.8)",
+                        "stroke": "rgba(200, 230, 201, 1)",
+                        "lower": 0,
+                        "upper": 10
+                    },
+                    {
+                        "fill": "rgba(102, 187, 106, 0.8)",
+                        "stroke": "rgba(102, 187, 106, 1)",
+                        "lower": 10,
+                        "upper": 50
+                    },
+                    {
+                        "fill": "rgba(46, 125, 50, 0.8",
+                        "stroke": "rgba(46, 125, 50, 1)",
+                        "lower": 50,
+                        "upper": 9999999999
+                    }
+                ],
+                "rasterStyle": "",
+                "styleIdx": 25
+            }
+        ],
+        "NREGA": [
+            {
+                "name": "total_assets",
+                "label": "Total number of NREGA works",
+                "type": 2,
+                "values": [
+                    {
+                        "label": "Less than 100",
+                        "value": {
+                            "lower": 0,
+                            "upper": 100
+                        }
+                    },
+                    {
+                        "label": "Between 100 to 300",
+                        "value": {
+                            "lower": 100,
+                            "upper": 300
+                        }
+                    },
+                    {
+                        "label": "More than 300",
+                        "value": {
+                            "lower": 300,
+                            "upper": 999999999
+                        }
+                    }
+                ],
+                "layer_store": [
+                    "nrega_assets"
+                ],
+                "layer_name": [],
+                "vectorStyle": [
+                    {
+                        "fill": "rgba(135, 206, 235, 0.8)",
+                        "stroke": "rgba(135, 206, 235, 1)",
+                        "lower": 0,
+                        "upper": 100
+                    },
+                    {
+                        "fill": "rgba(65, 105, 225, 0.8)",
+                        "stroke": "rgba(65, 105, 225, 1)",
+                        "lower": 100,
+                        "upper": 300
+                    },
+                    {
+                        "fill": "rgba(0, 0, 128, 0.8)",
+                        "stroke": "rgba(0, 0, 128, 1)",
+                        "lower": 300,
+                        "upper": 999999999
+                    }
+                ],
+                "rasterStyle": "",
+                "styleIdx": 9
             }
         ]
     }
