@@ -4,6 +4,10 @@ import LandingNavbar from "../components/landing_navbar.jsx";
 import MapSection from "../components/planMapSection.jsx";
 import getVectorLayers from "../actions/getVectorLayers";
 import { Fill, Stroke, Style, Icon, Text } from "ol/style";
+import Feature from "ol/Feature";
+import Polygon from "ol/geom/Polygon";
+import { Vector as VectorLayer } from "ol/layer";
+import { Vector as VectorSource } from "ol/source";
 import SettlementIcon from "../assets/settlement_icon.svg";
 import WellIcon from "../assets/well_proposed.svg";
 import WaterStructureIcon from "../assets/waterbodies_proposed.svg";
@@ -568,6 +572,34 @@ const PlanViewPage = () => {
     const lon = plan?.longitude ? parseFloat(plan.longitude) : null;
     const lat = plan?.latitude  ? parseFloat(plan.latitude)  : null;
 
+    const addBoundingBox = () => {
+      // ~1km bounding box around the plan coordinates
+      const delta = 0.009;
+      const ring = [
+        [lon - delta, lat - delta],
+        [lon + delta, lat - delta],
+        [lon + delta, lat + delta],
+        [lon - delta, lat + delta],
+        [lon - delta, lat - delta],
+      ];
+      const feature = new Feature({ geometry: new Polygon([ring]) });
+      const layer = new VectorLayer({
+        source: new VectorSource({ features: [feature] }),
+        zIndex: 5,
+      });
+      layer.setStyle(new Style({
+        stroke: new Stroke({ color: "rgba(255, 255, 0, 1)", width: 2 }),
+        fill:   new Fill({ color: "rgba(0,0,0,0.05)" }),
+      }));
+      map.addLayer(layer);
+      map.getView().fit(layer.getSource().getExtent(), {
+        padding: [40, 40, 40, 40], duration: 500, maxZoom: 15,
+      });
+    };
+
+    // No coordinates — nothing useful to show
+    if (!lon || !lat) return;
+
     const baseUrl = `${process.env.REACT_APP_GEOSERVER_URL}panchayat_boundaries/ows`;
     const params = new URLSearchParams({
       service:      "WFS",
@@ -575,12 +607,8 @@ const PlanViewPage = () => {
       request:      "GetFeature",
       typeName:     `panchayat_boundaries:${districtNameSafe}_${blockNameSafe}`,
       outputFormat: "application/json",
+      CQL_FILTER:   `INTERSECTS(the_geom, POINT(${lon} ${lat}))`,
     });
-
-    // If we have coordinates, filter to just the intersecting panchayat polygon
-    if (lon && lat) {
-      params.set("CQL_FILTER", `INTERSECTS(the_geom, POINT(${lon} ${lat}))`);
-    }
 
     const layer = await getVectorLayers(
       "panchayat_boundaries",
@@ -588,31 +616,30 @@ const PlanViewPage = () => {
       true
     );
 
-    // Override the source URL with our filtered request
-    if (lon && lat) {
-      const filteredUrl = `${baseUrl}?${params.toString()}`;
-      layer.getSource().setUrl(filteredUrl);
-      layer.getSource().clear();
-      layer.getSource().refresh();
-    }
+    // Override the source with the spatially filtered request
+    const filteredUrl = `${baseUrl}?${params.toString()}`;
+    layer.getSource().setUrl(filteredUrl);
+    layer.getSource().clear();
+    layer.getSource().refresh();
 
     layer.setStyle(new Style({
-      stroke: new Stroke({ color: "#000", width: 2 }),
+      stroke: new Stroke({ color: "rgba(255, 255, 0, 1)", width: 2 }),
       fill:   new Fill({ color: "rgba(0,0,0,0)" }),
     }));
     map.addLayer(layer);
 
     layer.getSource().once("change", () => {
-      if (layer.getSource().getState() === "ready") {
-        const features = layer.getSource().getFeatures();
-        if (features.length > 0) {
-          map.getView().fit(layer.getSource().getExtent(), {
-            padding: [40, 40, 40, 40], duration: 500, maxZoom: 15,
-          });
-        } else if (lon && lat) {
-          // Fallback: zoom to plan coordinates
-          map.getView().animate({ center: [lon, lat], zoom: 14, duration: 500 });
-        }
+      if (layer.getSource().getState() !== "ready") return;
+      const features = layer.getSource().getFeatures();
+      if (features.length > 0) {
+        // GeoServer returned a real boundary — fit to it
+        map.getView().fit(layer.getSource().getExtent(), {
+          padding: [40, 40, 40, 40], duration: 500, maxZoom: 15,
+        });
+      } else {
+        // Empty geometry returned — remove the empty layer and draw a bounding box
+        map.removeLayer(layer);
+        addBoundingBox();
       }
     });
   }, [districtNameSafe, blockNameSafe, plan?.latitude, plan?.longitude]);
@@ -774,7 +801,7 @@ const PlanViewPage = () => {
         <div className="max-w-[1800px] mx-auto px-6 py-4 flex items-center justify-between gap-4">
           <div className="flex items-center gap-4 min-w-0">
             <button
-              onClick={() => navigate("/landscape-stewardship", { state: { returnContext: state?.returnContext } })}
+              onClick={() => navigate("/CCUsagePage", { state: { returnContext: state?.returnContext } })}
               className="flex-shrink-0 flex items-center gap-2 px-4 py-2 rounded-xl font-semibold
                          text-sm transition-all duration-200 active:scale-95"
               style={{ background: "rgba(255,255,255,0.95)", color: P.dark, boxShadow: "0 2px 12px rgba(0,0,0,0.15)" }}

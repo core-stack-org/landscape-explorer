@@ -15,16 +15,28 @@ const YearSlider = ({ currentLayer, sliderId = null, interventionYear }) => {
     { label: "2025-26", value: "25_26" },
   ];
 
-  const isAvgDoubleCropped = (() => {
+  const isKYlDashboard = (() => {
+    const validLayerNames = [
+      "avg_double_cropped",
+      "lulc_crop_percent",
+      "lulc_forest_percent",
+      "lulc_shrub_percent",
+    ];
+
     if (!currentLayer) return false;
-    if (typeof currentLayer === "object" && currentLayer.name)
-      return currentLayer.name === "avg_double_cropped";
-    if (Array.isArray(currentLayer))
-      return currentLayer.some((l) => l.name === "avg_double_cropped");
+
+    if (typeof currentLayer === "object" && currentLayer.name) {
+      return validLayerNames.includes(currentLayer.name);
+    }
+
+    if (Array.isArray(currentLayer)) {
+      return currentLayer.some((l) => validLayerNames.includes(l.name));
+    }
+
     return false;
   })();
 
-  const yearDataLulc = isAvgDoubleCropped
+  const yearDataLulc = isKYlDashboard
     ? yearDataLulcFull.slice(0, 8)
     : yearDataLulcFull;
 
@@ -35,27 +47,51 @@ const YearSlider = ({ currentLayer, sliderId = null, interventionYear }) => {
 
   const isLulcLayerActive = (() => {
     if (!currentLayer) return false;
+
+    const isExcludedLulc = (name) => {
+      if (!name) return false;
+      return (
+        name === "lulc_crop_percent" ||
+        name === "lulc_forest_percent" ||
+        name === "lulc_shrub_percent"
+      );
+    };
+
     if (typeof currentLayer === "object" && currentLayer.name)
       return (
-        currentLayer.name === "avg_double_cropped" ||
+        (currentLayer.name === "avg_double_cropped" ||
         currentLayer.name.includes("LULC") ||
-        currentLayer.name.includes("lulc")
+        currentLayer.name.includes("lulc")) 
+        //&& !isExcludedLulc(currentLayer.name)
       );
     if (Array.isArray(currentLayer))
       return currentLayer.some(
         (l) =>
-          l.name === "avg_double_cropped" ||
+          (l.name === "avg_double_cropped" ||
           l.name === "built_up_area" ||
           l.name.includes("LULC") ||
-          l.name.includes("lulc")
+          l.name.includes("lulc")) 
+          //&& !isExcludedLulc(l.name)
       );
     return false;
   })();
 
   useEffect(() => {
-    setYearAtom(yearDataLulc[0].value);
-    setCurrentValue(0);
-  }, [yearDataLulc.length]);
+    // Find index of current selected year from recoil atom
+    const existingIndex = yearDataLulc.findIndex(
+      (item) => item.value === yearValue
+    );
+
+    // If atom already has a valid year, use it
+    if (existingIndex !== -1) {
+      setCurrentValue(existingIndex);
+    } else {
+      // fallback to latest year
+      const latestIndex = yearDataLulc.length - 1;
+      setCurrentValue(latestIndex);
+      setYearAtom(yearDataLulc[latestIndex].value);
+    }
+  }, [yearDataLulc, yearValue]);
 
   useEffect(() => {
     if (!interventionYear) return;
@@ -184,8 +220,8 @@ const YearSlider = ({ currentLayer, sliderId = null, interventionYear }) => {
                     background: isIntervention
                       ? "#f87171"
                       : isActive
-                      ? "#6366f1"
-                      : "#d1d5db",
+                        ? "#6366f1"
+                        : "#d1d5db",
                   }}
                 />
                 {/* Label */}
@@ -195,8 +231,8 @@ const YearSlider = ({ currentLayer, sliderId = null, interventionYear }) => {
                     color: isIntervention
                       ? "#ef4444"
                       : isActive
-                      ? "#6366f1"
-                      : "#9ca3af",
+                        ? "#6366f1"
+                        : "#9ca3af",
                     fontWeight: isActive ? 700 : 500,
                   }}
                 >
