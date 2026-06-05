@@ -987,44 +987,23 @@ const KYLDashboardPage = () => {
         highlightMWS: highlightMWS ?? -1,
       },
   
-      // ───────────── BORDER ─────────────
       "stroke-color": [
         "case",
-  
         // selected MWS
         ["==", ["get", "uid"], ["var", "highlightMWS"]],
         [22, 101, 52, 1],
-  
         // ALL boundaries red
         [255, 0, 0, 1],
       ],
-  
       "stroke-width": [
-        "case",
-  
-        ["==", ["get", "uid"], ["var", "highlightMWS"]],
-        2.5,
-  
-        1.2,
+        "case", ["==", ["get", "uid"], ["var", "highlightMWS"]], 2.5, 1.2,
       ],
   
       // ───────────── TOPO FILL ─────────────
-      "fill-color": [
-        "interpolate",
-        ["linear"],
-        ["get", "topoNorm"],
-  
-        // low topo → green
-        0,
-        [34, 197, 94, 0.55],
-  
-        // medium topo → yellow
-        128,
-        [251, 191, 36, 0.55],
-  
-        // high topo → red
-        255,
-        [239, 68, 68, 0.55],
+      "fill-color": [ "interpolate",["linear"],["get", "topoNorm"],
+          0, [34, 197, 94, 0.55],
+        128, [251, 191, 36, 0.55],
+        255, [239, 68, 68, 0.55],
       ],
     });
   };
