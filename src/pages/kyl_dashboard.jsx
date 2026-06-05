@@ -715,34 +715,7 @@ const KYLDashboardPage = () => {
         }
         mwsLayerRef.current = mwsLayer;
       }
-      // mwsLayerRef.current.setStyle({
-      //   variables: {
-      //     highlightMWS: -1,
-      //     isVisualizeOn: false,
-      //   },
-      //   "stroke-color": [
-      //     "case",
-      //     ["==", ["get", "uid"], ["var", "highlightMWS"]], [22, 101, 52, 1],
-      //     ["==", ["get", "isFiltered"], 1],
-      //     ["case", ["var", "isVisualizeOn"], [37, 72, 113, 1], [102, 30, 30, 1]],
-      //     ["==", ["get", "isFiltered"], 0], [0, 0, 0, 0],
-      //     [74, 144, 226, 1],
-      //   ],
-      //   "stroke-width": [
-      //     "case",
-      //     ["==", ["get", "uid"], ["var", "highlightMWS"]], 2,
-      //     ["==", ["get", "isFiltered"], 1], 1.5,
-      //     1,
-      //   ],
-      //   "fill-color": [
-      //     "case",
-      //     ["==", ["get", "uid"], ["var", "highlightMWS"]], [34, 197, 94, 0.4],
-      //     ["==", ["get", "isFiltered"], 1],
-      //     ["case", ["var", "isVisualizeOn"], [0, 0, 0, 0], [255, 75, 75, 0.8]],
-      //     ["==", ["get", "isFiltered"], 0], [0, 0, 0, 0],
-      //     [85, 152, 229, 0.2],
-      //   ],
-      // });
+    
     } catch (error) {
       console.error("Error fetching MWS layer:", error);
       toast.error("Please Refresh the Page !");
@@ -982,85 +955,6 @@ const KYLDashboardPage = () => {
     mapRef.current.addLayer(arrowLayer);
     mwsArrowLayerRef.current = arrowLayer;
   };
-
-  // const applyTopoColorToMWS = (topoLevel, maxLevel) => {
-  //   if (!mwsLayerRef.current) return;
-  
-  //   const mwsSource = mwsLayerRef.current.getSource();
-  //   const mwsFeatures = mwsSource.getFeatures();
-  
-  //   if (!mwsFeatures.length) {
-  //     mwsSource.once("featuresloadend", () => {
-  //       applyTopoColorToMWS(topoLevel, maxLevel);
-  //     });
-  //     return;
-  //   }
-  
-  //   mwsFeatures.forEach((feature) => {
-  //     const uid   = feature.get("uid")?.toString().trim();
-  //     const level = topoLevel[uid] ?? 0;
-  //     const norm  = Math.round((level / maxLevel) * 255);
-  //     feature.set("topoNorm", norm, true);
-  //   });
-  
-  //   mwsSource.changed();
-  //   const isConnectivityOn = showConnectivityRef.current;
-  //   mwsLayerRef.current.setStyle({
-  //     variables: {
-  //       highlightMWS: -1,
-  //       isVisualizeOn: false,
-  //     },
-    
-  //     "stroke-color": [
-  //       "case",
-    
-  //       // highlighted
-  //       ["==", ["get", "uid"], ["var", "highlightMWS"]],
-  //       [22, 101, 52, 1],
-    
-  //       // filtered
-  //       ["==", ["get", "isFiltered"], 1],
-  //       [0, 0, 0, 1],
-    
-  //       // connectivity ON → red
-  //       isConnectivityOn,
-  //       [255, 0, 0, 1],
-    
-  //       // default normal blue
-  //       [74, 144, 226, 1],
-  //     ],
-    
-  //     "stroke-width": [
-  //       "case",
-  //       ["==", ["get", "uid"], ["var", "highlightMWS"]], 2.5,
-  //       ["==", ["get", "isFiltered"], 1], 1.8,
-  //       1.2,
-  //     ],
-    
-  //     "fill-color": [
-  //       "case",
-    
-  //       // highlighted
-  //       ["==", ["get", "uid"], ["var", "highlightMWS"]],
-  //       [34, 197, 94, 0.4],
-    
-  //       // connectivity ON → topo gradient
-  //       isConnectivityOn,
-  //       [
-  //         "interpolate",
-  //         ["linear"],
-  //         ["get", "topoNorm"],
-    
-  //         0,   [34, 197, 94, 0.55],
-  //         128, [251, 191, 36, 0.55],
-  //         255, [239, 68, 68, 0.55],
-  //       ],
-    
-  //       // default blue transparent
-  //       [85, 152, 229, 0.2],
-  //     ],
-  //   });
-  // };
 
   const applyTopoColorToMWS = (topoLevel, maxLevel) => {
     if (!mwsLayerRef.current) return;
