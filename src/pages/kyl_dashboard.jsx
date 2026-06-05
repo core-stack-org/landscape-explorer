@@ -655,13 +655,16 @@ const KYLDashboardPage = () => {
     const idSet = new Set(filteredIds);
     source.getFeatures().forEach((f) => {
       f.set("isFiltered", idSet.has(f.get("uid")) ? 1 : 0, true);
-    });
+      f.set("hasFilters", filteredIds.length > 0 ? 1 : 0, true);
+        });
     source.changed();
     if (showConnectivityRef.current && topoLevelDataRef.current) {
       const { topoLevel, maxLevel } = topoLevelDataRef.current;
       applyTopoColorToMWS(topoLevel, maxLevel);
     }
   };
+
+  
 
   const applyDefaultMWSStyle = () => {
     if (!mwsLayerRef.current) return;
@@ -672,33 +675,54 @@ const KYLDashboardPage = () => {
       },
   
       // NORMAL BLUE BORDER
-      "stroke-color": [
-        "case",
+"stroke-color": [
+  "case",
+
+  ["==", ["get", "uid"], ["var", "highlightMWS"]],
+  [22, 101, 52, 1],
+
+  // matched MWS
+  ["==", ["get", "isFiltered"], 1],
+  [127, 29, 29, 1], // dark mehroon
+
+  // hide unmatched when filters active
+  ["==", ["get", "hasFilters"], 1],
+  [0, 0, 0, 0],
+
+  // normal MWS
+  [74, 144, 226, 1],
+],
   
-        ["==", ["get", "uid"], ["var", "highlightMWS"]],
-        [22, 101, 52, 1],
-  
-        [74, 144, 226, 1],
-      ],
-  
-      "stroke-width": [
-        "case",
-  
-        ["==", ["get", "uid"], ["var", "highlightMWS"]],
-        2.5,
-  
-        1.2,
-      ],
+"stroke-width": [
+  "case",
+
+  ["==", ["get", "uid"], ["var", "highlightMWS"]],
+  2.5,
+
+  ["==", ["get", "isFiltered"], 1],
+  1.8,
+
+  ["==", ["get", "hasFilters"], 1],
+  0,
+
+  1.2,
+],
   
       // NORMAL LIGHT BLUE FILL
-      "fill-color": [
-        "case",
-  
-        ["==", ["get", "uid"], ["var", "highlightMWS"]],
-        [34, 197, 94, 0.4],
-  
-        [85, 152, 229, 0.15],
-      ],
+     "fill-color": [
+  "case",
+
+  ["==", ["get", "uid"], ["var", "highlightMWS"]],
+  [34, 197, 94, 0.4],
+
+  ["==", ["get", "isFiltered"], 1],
+  [239, 68, 68, 0.55],
+
+  ["==", ["get", "hasFilters"], 1],
+  [0, 0, 0, 0],
+
+  [85, 152, 229, 0.15],
+],
     });
   };
 
@@ -1207,7 +1231,7 @@ if (boundaryLayerRef.current) {
           [0, 0, 0, 1],
 
           ["==", ["get", "isSelected"], 1],
-          [255, 215, 0, 1],
+          [255, 225, 0, 1],
 
           ["==", ["get", "isSelected"], 0],
           [
