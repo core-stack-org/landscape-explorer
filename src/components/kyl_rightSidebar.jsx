@@ -202,6 +202,11 @@ const KYLRightSidebar = ({
   };
 
   const toggleConnectivity = () => {
+    if (currentLayer.length > 0) {
+      alert("Please turn off the other layer before enabling MWS Connectivity.");
+      return;
+    }
+
     if (!mwsArrowLayerRef?.current) { console.warn("Arrow layer not ready"); return; }
     setShowConnectivity(prev => !prev);
   };
