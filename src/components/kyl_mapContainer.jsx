@@ -1990,10 +1990,10 @@ const MapLegend = ({ showMWS, showVillages, currentLayer, showConnectivity }) =>
                         <div className="flex-1 bg-[#A8D36F]" />
                         <div className="flex-1 bg-[#228B22]" />
                       </div>
-
                       <div className="flex justify-between text-[10px] text-gray-600 mt-1">
-                        <span>MWS in ridge areas</span>
-                        <span>MWS in valley areas</span>
+                        <span>Rank order 1</span>
+                        <span>Rank order N</span>
+                        
                       </div>
                     </div>
 

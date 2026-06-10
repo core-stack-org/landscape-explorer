@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import Select from 'react-select';
 
-const SelectButton = ({ stateData, handleItemSelect, setState, currVal }) => {
+const SelectButton = ({ stateData, handleItemSelect, setState, currVal, isClearable }) => {
   // ---------- sort by label, keeping original untouched ----------
   const sortedOptions = useMemo(() => {
     if (!stateData) return [];
@@ -38,6 +38,7 @@ const SelectButton = ({ stateData, handleItemSelect, setState, currVal }) => {
         value={currVal}
         onChange={(e) => handleItemSelect(setState, e)}
         isDisabled={!stateData}
+        isClearable={isClearable}
       />
     </div>
   );
