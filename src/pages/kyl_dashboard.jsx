@@ -639,7 +639,8 @@ console.log("Current filterSelections:", filterSelections);
       mwsArrowLayerRef.current.setVisible(false);
       boundaryLayerRef.current.setVisible(true);
       if (mwsDrainageLayerRef.current) mwsDrainageLayerRef.current.setVisible(false);
-      fetchMWSLayer(selectedMWS);
+      applyDefaultMWSStyle();
+      // fetchMWSLayer(selectedMWS);
     }
   }, [showConnectivity]);
 
@@ -656,12 +657,75 @@ console.log("Current filterSelections:", filterSelections);
     const idSet = new Set(filteredIds);
     source.getFeatures().forEach((f) => {
       f.set("isFiltered", idSet.has(f.get("uid")) ? 1 : 0, true);
-    });
+      f.set("hasFilters", filteredIds.length > 0 ? 1 : 0, true);
+        });
     source.changed();
     if (showConnectivityRef.current && topoLevelDataRef.current) {
       const { topoLevel, maxLevel } = topoLevelDataRef.current;
       applyTopoColorToMWS(topoLevel, maxLevel);
     }
+  };
+
+  
+
+  const applyDefaultMWSStyle = () => {
+    if (!mwsLayerRef.current) return;
+  
+    mwsLayerRef.current.setStyle({
+      variables: {
+        highlightMWS: highlightMWS ?? -1,
+      },
+  
+      // NORMAL BLUE BORDER
+"stroke-color": [
+  "case",
+
+  ["==", ["get", "uid"], ["var", "highlightMWS"]],
+  [22, 101, 52, 1],
+
+  // matched MWS
+  ["==", ["get", "isFiltered"], 1],
+  [127, 29, 29, 1], // dark mehroon
+
+  // hide unmatched when filters active
+  ["==", ["get", "hasFilters"], 1],
+  [0, 0, 0, 0],
+
+  // normal MWS
+  [74, 144, 226, 1],
+],
+  
+"stroke-width": [
+  "case",
+
+  ["==", ["get", "uid"], ["var", "highlightMWS"]],
+  2.5,
+
+  ["==", ["get", "isFiltered"], 1],
+  1.8,
+
+  ["==", ["get", "hasFilters"], 1],
+  0,
+
+  1.2,
+],
+  
+      // NORMAL LIGHT BLUE FILL
+     "fill-color": [
+  "case",
+
+  ["==", ["get", "uid"], ["var", "highlightMWS"]],
+  [34, 197, 94, 0.4],
+
+  ["==", ["get", "isFiltered"], 1],
+  [239, 68, 68, 0.55],
+
+  ["==", ["get", "hasFilters"], 1],
+  [0, 0, 0, 0],
+
+  [85, 152, 229, 0.15],
+],
+    });
   };
 
   const fetchMWSLayer = async (tempMWS) => {
@@ -677,34 +741,7 @@ console.log("Current filterSelections:", filterSelections);
         }
         mwsLayerRef.current = mwsLayer;
       }
-      mwsLayerRef.current.setStyle({
-        variables: {
-          highlightMWS: -1,
-          isVisualizeOn: false,
-        },
-        "stroke-color": [
-          "case",
-          ["==", ["get", "uid"], ["var", "highlightMWS"]], [22, 101, 52, 1],
-          ["==", ["get", "isFiltered"], 1],
-          ["case", ["var", "isVisualizeOn"], [37, 72, 113, 1], [102, 30, 30, 1]],
-          ["==", ["get", "isFiltered"], 0], [0, 0, 0, 0],
-          [74, 144, 226, 1],
-        ],
-        "stroke-width": [
-          "case",
-          ["==", ["get", "uid"], ["var", "highlightMWS"]], 2,
-          ["==", ["get", "isFiltered"], 1], 1.5,
-          1,
-        ],
-        "fill-color": [
-          "case",
-          ["==", ["get", "uid"], ["var", "highlightMWS"]], [34, 197, 94, 0.4],
-          ["==", ["get", "isFiltered"], 1],
-          ["case", ["var", "isVisualizeOn"], [0, 0, 0, 0], [255, 75, 75, 0.8]],
-          ["==", ["get", "isFiltered"], 0], [0, 0, 0, 0],
-          [85, 152, 229, 0.2],
-        ],
-      });
+    
     } catch (error) {
       console.error("Error fetching MWS layer:", error);
       toast.error("Please Refresh the Page !");
@@ -845,7 +882,7 @@ console.log("Current filterSelections:", filterSelections);
     };
   
     // ── 5. Apply topo colors to MWS polygons ─────────────────────────────────
-    applyTopoColorToMWS(topoLevel, maxLevel);
+    // applyTopoColorToMWS(topoLevel, maxLevel);
   
     // ── 6. Build arrow features ───────────────────────────────────────────────
     const pairMap  = {};
@@ -958,75 +995,41 @@ console.log("Current filterSelections:", filterSelections);
       return;
     }
   
+    // store topo value
     mwsFeatures.forEach((feature) => {
-      const uid   = feature.get("uid")?.toString().trim();
+      const uid = feature.get("uid")?.toString().trim();
       const level = topoLevel[uid] ?? 0;
-      const norm  = Math.round((level / maxLevel) * 255);
+  
+      const norm = Math.round((level / maxLevel) * 255);
+  
       feature.set("topoNorm", norm, true);
     });
   
     mwsSource.changed();
   
+    // APPLY STYLE
     mwsLayerRef.current.setStyle({
       variables: {
-        highlightMWS:  -1,
-        isVisualizeOn: false,
+        highlightMWS: highlightMWS ?? -1,
       },
+  
       "stroke-color": [
         "case",
-        // 1. Highlighted (clicked) MWS
+        // selected MWS
         ["==", ["get", "uid"], ["var", "highlightMWS"]],
         [22, 101, 52, 1],
-        // 2. Filtered (matched) MWS — red stroke
-        ["==", ["get", "isFiltered"], 1],
-        [102, 30, 30, 1],
-        // 3. Unfiltered MWS — hide stroke
-        ["==", ["get", "isFiltered"], 0],
-        [255, 0, 0, 1],
-        // [
-        //   "interpolate", ["linear"], ["get", "topoNorm"],
-        //   0,   [101, 67,  33,  1],
-        //   128, [180, 130, 70,  1],
-        //   255, [34,  139, 34,  1],
-        // ],
-        // 4. Default — topo gradient stroke
-        // [
-        //   "interpolate", ["linear"], ["get", "topoNorm"],
-        //   0,   [101, 67,  33,  1],
-        //   128, [180, 130, 70,  1],
-        //   255, [34,  139, 34,  1],
-        // ],
+        // ALL boundaries red
         [255, 0, 0, 1],
       ],
       "stroke-width": [
-        "case",
-        ["==", ["get", "uid"], ["var", "highlightMWS"]], 2,
-        ["==", ["get", "isFiltered"], 1], 1.5,
-        0.8,
+        "case", ["==", ["get", "uid"], ["var", "highlightMWS"]], 2.5, 1.2,
       ],
-      "fill-color": [
-        "case",
-        // 1. Highlighted
-        ["==", ["get", "uid"], ["var", "highlightMWS"]],
-        [34, 197, 94, 0.5],
-        // 2. Filtered — red fill
-        ["==", ["get", "isFiltered"], 1],
-        [255, 75, 75, 0.8],
-        // 3. Unfiltered — transparent
-        ["==", ["get", "isFiltered"], 0],
-        [
-          "interpolate", ["linear"], ["get", "topoNorm"],
-          0,   [139, 90,  43,  0.6],
-          128, [188, 143, 80,  0.5],
-          255, [34,  139, 34,  0.55],
-        ],
-        // 4. Default — topo gradient fill
-        [
-          "interpolate", ["linear"], ["get", "topoNorm"],
-          0,   [139, 90,  43,  0.6],
-          128, [188, 143, 80,  0.5],
-          255, [34,  139, 34,  0.55],
-        ],
+  
+      // ───────────── TOPO FILL ─────────────
+      "fill-color": [ "interpolate",["linear"],["get", "topoNorm"],
+          0, [34, 197, 94, 0.55],
+        128, [251, 191, 36, 0.55],
+        255, [239, 68, 68, 0.55],
       ],
     });
   };
@@ -1166,6 +1169,20 @@ console.log("Current filterSelections:", filterSelections);
 
   const fetchBoundaryAndZoom = async (districtName, blockName) => {
     setIsLayerLoaded(true);
+    // RESET CONNECTIVITY ON LOCATION CHANGE
+setShowConnectivity(false);
+
+if (mwsArrowLayerRef.current) {
+  mwsArrowLayerRef.current.setVisible(false);
+}
+
+if (mwsDrainageLayerRef.current) {
+  mwsDrainageLayerRef.current.setVisible(false);
+}
+
+if (boundaryLayerRef.current) {
+  boundaryLayerRef.current.setVisible(true);
+}
 
     try {
       // Create layers (already fully loaded now)
@@ -1216,7 +1233,7 @@ console.log("Current filterSelections:", filterSelections);
           [0, 0, 0, 1],
 
           ["==", ["get", "isSelected"], 1],
-          [255, 215, 0, 1],
+          [255, 225, 0, 1],
 
           ["==", ["get", "isSelected"], 0],
           [
@@ -1284,6 +1301,7 @@ console.log("Current filterSelections:", filterSelections);
 
       // Load dependent data
       await fetchMWSLayer([]);
+      applyDefaultMWSStyle();
 
     } catch (error) {
       console.error("Error loading boundary:", error);
@@ -2475,6 +2493,7 @@ console.log("Current filterSelections:", filterSelections);
           mwsDrainageLayerRef={mwsDrainageLayerRef}
           villageJson={villageJson}
           isLoading={isLoading}
+          mwsLayerRef={mwsLayerRef}
 
         />
       </div>

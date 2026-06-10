@@ -842,8 +842,9 @@ const handleWaterbodyClick = (row) => {
 
   if (projectIdParam) params.set("projectId", projectIdParam);
   if (projectNameParam) params.set("project_name", projectNameParam);
-
+ params.set("UID", row.UID);
   params.set("waterbody", row.waterbody_id);
+  
 
   const feature = geoData.features.find(
     (f) => f.id === row.waterbody_id

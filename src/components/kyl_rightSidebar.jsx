@@ -48,6 +48,7 @@ const KYLRightSidebar = ({
   selectedWaterbodyData = [],
   mwsDrainageLayerRef,
   isLoading,
+  mwsLayerRef
 }) => {
   const [loadingWB, setLoadingWB] = React.useState(false);
   const [showSelectionPopup, setShowSelectionPopup] = React.useState(false);
@@ -210,6 +211,11 @@ const KYLRightSidebar = ({
   };
 
   const toggleConnectivity = () => {
+    if (currentLayer.length > 0) {
+      alert("Please turn off the other layer before enabling MWS Connectivity.");
+      return;
+    }
+
     if (!mwsArrowLayerRef?.current) { console.warn("Arrow layer not ready"); return; }
     setShowConnectivity(prev => !prev);
   };
@@ -1220,9 +1226,9 @@ const KYLRightSidebar = ({
                 <div className="grid grid-cols-2 gap-2">
               <button
                 onClick={handleTehsilReport}
-                disabled={isLoading || !mwsArrowLayerRef?.current}
+                disabled={isLoading || !mwsLayerRef?.current}
                 className={`flex items-center justify-center gap-1.5 py-2 text-xs font-semibold rounded-lg transition-colors border ${
-                  (isLoading || !mwsArrowLayerRef?.current)
+                  (isLoading || !mwsLayerRef?.current)
                     ? 'opacity-50 cursor-not-allowed pointer-events-none bg-gray-100 text-gray-400 border-gray-200'
                     : 'text-indigo-600 bg-indigo-50 hover:bg-indigo-100 border-indigo-100'
                 }`}
@@ -1236,9 +1242,9 @@ const KYLRightSidebar = ({
 
                   <button
                     onClick={toggleWaterbodies}
-                    disabled={isLoading || !mwsArrowLayerRef?.current}
+                    disabled={isLoading || !mwsLayerRef?.current}
                     className={`flex items-center justify-center gap-1.5 py-2 text-xs font-semibold rounded-lg transition-colors border ${
-                      (isLoading || !mwsArrowLayerRef?.current)
+                      (isLoading || !mwsLayerRef?.current)
                         ? 'opacity-50 cursor-not-allowed pointer-events-none bg-gray-100 text-gray-400 border-gray-200'
                         : showWB
                           ? 'text-red-600 bg-red-50 hover:bg-red-100 border-red-100'
@@ -1268,9 +1274,9 @@ const KYLRightSidebar = ({
 
                 <button
                   onClick={toggleConnectivity}
-                  disabled={isLoading || !mwsArrowLayerRef?.current}
+                  disabled={isLoading || !mwsLayerRef?.current}
                   className={`w-full flex items-center justify-center gap-1.5 py-2 text-xs font-semibold rounded-lg transition-colors border ${
-                    (isLoading || !mwsArrowLayerRef?.current)
+                    (isLoading || !mwsLayerRef?.current)
                       ? 'opacity-50 cursor-not-allowed pointer-events-none bg-gray-100 text-gray-400 border-gray-200'
                       : showConnectivity
                         ? 'text-red-600 bg-red-50 hover:bg-red-100 border-red-100'
