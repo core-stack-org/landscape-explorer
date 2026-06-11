@@ -716,10 +716,31 @@ const KYLRightSidebar = ({
       const sheet3Data = Array.from(uniqueSwbs.values());
 
       // Sheet 4 — MWS-Village Intersections
+      const hasVillagePattern = getFormattedSelectedPatterns().some(p => p.level);
+
       const sheet4Data = [];
       mwsVillageIntersections.forEach(group => {
         group.villages.forEach(v => {
-          sheet4Data.push({ "MICRO-WATERSHED ID": group.mwsId, "VILLAGE ID": v.villageId, "VILLAGE NAME": v.villageName });
+          const villageIdStr = String(v.villageId);
+
+          let isSelected = false;
+          if (villageFilters.length > 0 || hasVillagePattern) {
+            if (selectedVillages instanceof Set) {
+              isSelected =
+                selectedVillages.has(villageIdStr) ||
+                selectedVillages.has(Number(v.villageId));
+            } else if (Array.isArray(selectedVillages)) {
+              isSelected = selectedVillages.some(sid => String(sid) === villageIdStr);
+            }
+          }
+
+          if (!isSelected) return; // skip non-matching villages
+
+          sheet4Data.push({
+            "MICRO-WATERSHED ID": group.mwsId,
+            "VILLAGE ID": villageIdStr,
+            "VILLAGE NAME": v.villageName,
+          });
         });
       });
 
@@ -727,7 +748,20 @@ const KYLRightSidebar = ({
       const sheet5Data = [];
       mwsVillageIntersections.forEach(group => {
         group.waterbodies.forEach(swb => {
-          sheet5Data.push({ "MICRO-WATERSHED ID": group.mwsId, "SWB ID": swb.swbId, "WATERBODY NAME": swb.swbName || "" });
+          const swbIdStr = String(swb.swbId);
+
+          const isFilterMatched =
+            waterbodyFilters.length > 0 &&
+            selectedWaterbodyIds &&
+            selectedWaterbodyIds.has(swbIdStr);
+
+          if (!isFilterMatched) return;
+
+          sheet5Data.push({
+            "MICRO-WATERSHED ID": group.mwsId,
+            "SWB ID": swbIdStr,
+            "WATERBODY NAME": swb.swbName || "",
+          });
         });
       });
 
@@ -758,12 +792,28 @@ const KYLRightSidebar = ({
       activeSheets.push({ sheet: XLSX.utils.json_to_sheet(sheet4Data), name: "MWS-Village Intersects", width: [{ wch: 25 }, { wch: 25 }, { wch: 40 }] });
       activeSheets.push({ sheet: XLSX.utils.json_to_sheet(sheet5Data), name: "MWS-Waterbody Intersects", width: [{ wch: 25 }, { wch: 25 }, { wch: 40 }] });
 
-      activeSheets.forEach(({ sheet, name, width }) => {
+      const greenStyle = {
+        fill: { patternType: "solid", fgColor: { rgb: "10B981" } }, // emerald-500
+        font: { color: { rgb: "FFFFFF" }, bold: true },
+      };
+
+      activeSheets.forEach(({ sheet, name, width, highlightRows }) => {
         if (sheet["!ref"]) {
           const range = XLSX.utils.decode_range(sheet["!ref"]);
           for (let C = range.s.c; C <= range.e.c; ++C) {
             const addr = XLSX.utils.encode_cell({ r: 0, c: C });
             if (sheet[addr]) sheet[addr].s = boldStyle;
+          }
+
+          // Highlight filter-matched waterbody rows in green
+          if (highlightRows && highlightRows.length > 0) {
+            highlightRows.forEach(dataRowIdx => {
+              const r = dataRowIdx + 1; // +1 because row 0 is the header
+              for (let C = range.s.c; C <= range.e.c; ++C) {
+                const addr = XLSX.utils.encode_cell({ r, c: C });
+                if (sheet[addr]) sheet[addr].s = greenStyle;
+              }
+            });
           }
         }
         sheet["!cols"] = width;
