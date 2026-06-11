@@ -708,9 +708,8 @@ const KYLRightSidebar = ({
 
       // Sheet 4 — MWS-Village Intersections
       const hasVillagePattern = getFormattedSelectedPatterns().some(p => p.level);
-      const sheet4Data = [];
-      const sheet4MatchedRows = [];
 
+      const sheet4Data = [];
       mwsVillageIntersections.forEach(group => {
         group.villages.forEach(v => {
           const villageIdStr = String(v.villageId);
@@ -726,7 +725,7 @@ const KYLRightSidebar = ({
             }
           }
 
-          if (isSelected) sheet4MatchedRows.push(sheet4Data.length);
+          if (!isSelected) return; // skip non-matching villages
 
           sheet4Data.push({
             "MICRO-WATERSHED ID": group.mwsId,
@@ -738,17 +737,16 @@ const KYLRightSidebar = ({
 
       // Sheet 5 — MWS-Waterbody Intersections
       const sheet5Data = [];
-      const sheet5MatchedRows = []; // 0-based data row indices that should be green
-
       mwsVillageIntersections.forEach(group => {
         group.waterbodies.forEach(swb => {
           const swbIdStr = String(swb.swbId);
+
           const isFilterMatched =
             waterbodyFilters.length > 0 &&
             selectedWaterbodyIds &&
             selectedWaterbodyIds.has(swbIdStr);
 
-          if (isFilterMatched) sheet5MatchedRows.push(sheet5Data.length);
+          if (!isFilterMatched) return;
 
           sheet5Data.push({
             "MICRO-WATERSHED ID": group.mwsId,
@@ -782,18 +780,8 @@ const KYLRightSidebar = ({
         activeSheets.push({ sheet: XLSX.utils.json_to_sheet(sheet3Data), name: "Matching Waterbodies", width: wbWidths });
       }
 
-      activeSheets.push({
-        sheet: XLSX.utils.json_to_sheet(sheet4Data),
-        name: "MWS-Village Intersects",
-        width: [{ wch: 25 }, { wch: 25 }, { wch: 40 }],
-        highlightRows: sheet4MatchedRows,
-      });
-      activeSheets.push({
-        sheet: XLSX.utils.json_to_sheet(sheet5Data),
-        name: "MWS-Waterbody Intersects",
-        width: [{ wch: 25 }, { wch: 25 }, { wch: 40 }],
-        highlightRows: sheet5MatchedRows,
-      });
+      activeSheets.push({ sheet: XLSX.utils.json_to_sheet(sheet4Data), name: "MWS-Village Intersects", width: [{ wch: 25 }, { wch: 25 }, { wch: 40 }] });
+      activeSheets.push({ sheet: XLSX.utils.json_to_sheet(sheet5Data), name: "MWS-Waterbody Intersects", width: [{ wch: 25 }, { wch: 25 }, { wch: 40 }] });
 
       const greenStyle = {
         fill: { patternType: "solid", fgColor: { rgb: "10B981" } }, // emerald-500
