@@ -1909,7 +1909,9 @@ const PlansPage = () => {
                       <div className="rounded-lg p-3 flex items-center justify-between"
                         style={{ background: "white", border: `1px solid ${P.border}` }}>
                         <p className="text-xs font-semibold" style={{ color: P.text }}>Demands Approved</p>
-                        <p className="text-lg font-bold" style={{ color: P.base }}>--</p>
+                        <p className="text-lg font-bold" style={{ color: P.base }}>
+                          {(statusTracking?.totals?.APPROVED?.demands ?? 0).toLocaleString()}
+                        </p>
                       </div>
                     </div>
                   </div>
