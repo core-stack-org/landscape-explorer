@@ -729,6 +729,119 @@
                 "styleIdx": 10
             }
         ],
+        "Land-Use": [
+            {
+                "name": "lulc_crop_percent",
+                "label": "Percentage of area with crops",
+                "type": 2,
+                "values": [
+                    {
+                        "label": "Less than 30%",
+                        "value": {
+                            "lower": 0,
+                            "upper": 30
+                        }
+                    },
+                    {
+                        "label": "Between 30-60%",
+                        "value": {
+                            "lower": 30,
+                            "upper": 60
+                        }
+                    },
+                    {
+                        "label": "More than 60%",
+                        "value": {
+                            "lower": 60,
+                            "upper": 999999
+                        }
+                    }
+                ],
+                "layer_store": [
+                    "LULC"
+                ],
+                "layer_name": [
+                    "level_3"
+                ],
+                "vectorStyle": [],
+                "rasterStyle": "lulc_land_use_KYL",
+                "styleIdx": 0
+            },
+            {
+                "name": "lulc_forest_percent",
+                "label": "Percentage of area with tree cover",
+                "type": 2,
+                "values": [
+                    {
+                        "label": "Less than 25%",
+                        "value": {
+                            "lower": 0,
+                            "upper": 25
+                        }
+                    },
+                    {
+                        "label": "Between 25-50%",
+                        "value": {
+                            "lower": 25,
+                            "upper": 50
+                        }
+                    },
+                    {
+                        "label": "More than 50%",
+                        "value": {
+                            "lower": 50,
+                            "upper": 999999
+                        }
+                    }
+                ],
+                "layer_store": [
+                    "LULC"
+                ],
+                "layer_name": [
+                    "level_3"
+                ],
+                "vectorStyle": [],
+                "rasterStyle": "lulc_land_use_KYL",
+                "styleIdx": 0
+            },
+            {
+                "name": "lulc_shrub_percent",
+                "label": "Percentage of area with shrubs",
+                "type": 2,
+                "values": [
+                    {
+                        "label": "Less than 5%",
+                        "value": {
+                            "lower": 0,
+                            "upper": 5
+                        }
+                    },
+                    {
+                        "label": "Between 5-15%",
+                        "value": {
+                            "lower": 5,
+                            "upper": 15
+                        }
+                    },
+                    {
+                        "label": "More than 15%",
+                        "value": {
+                            "lower": 15,
+                            "upper": 999999
+                        }
+                    }
+                ],
+                "layer_store": [
+                    "LULC"
+                ],
+                "layer_name": [
+                    "level_3"
+                ],
+                "vectorStyle": [],
+                "rasterStyle": "lulc_land_use_KYL",
+                "styleIdx": 0
+            }
+        ],
         "Agriculture": [
             {
                 "name": "avg_double_cropped",
