@@ -1974,17 +1974,8 @@ console.log("Current filterSelections:", filterSelections);
             const tempLayer = await getImageLayer(
               `LULC_level_3`,
               `LULC_${lulcYear}_${transformName(district.label)}_${transformName(block.label)}_level_3`,
-              true
-            );
-            mapRef.current.addLayer(tempLayer);
-            tempArr[i].layerRef[0] = tempLayer;
-          }
-          if (tempArr[i].name === "built_up_area") {
-            mapRef.current.removeLayer(tempArr[i].layerRef[0]);
-            const tempLayer = await getImageLayer(
-              `LULC_level_1`,
-              `LULC_${lulcYear}_${transformName(district.label)}_${transformName(block.label)}_level_1`,
-              true
+              true,
+              "lulc_land_use_KYL"
             );
             mapRef.current.addLayer(tempLayer);
             tempArr[i].layerRef[0] = tempLayer;
