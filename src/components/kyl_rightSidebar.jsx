@@ -1,4 +1,8 @@
 // src/components/kyl_rightSidebar.jsx
+import KML from 'ol/format/KML';
+import GeoJSON from 'ol/format/GeoJSON';
+import { Style, Stroke, Fill } from 'ol/style';
+
 import React from "react";
 import SelectButton from "./buttons/select_button";
 import filtersDetails from "../components/data/Filters.json";
@@ -53,19 +57,137 @@ const KYLRightSidebar = ({
   const [loadingWB, setLoadingWB] = React.useState(false);
   const [showSelectionPopup, setShowSelectionPopup] = React.useState(false);
   const [isDownloading, setIsDownloading] = React.useState(false);
+  const [isExportingGeo, setIsExportingGeo] = React.useState(false);
+  const [geoExportFormat, setGeoExportFormat] = React.useState(null);
 
   const showBothPanels = selectedMWSProfile && selectedWaterbodyProfile;
 
-   const transformName = (name) => {
-      if (!name) return name;
-      return name
-        .replace(/[()]/g, "")
-        .replace(/\s+/g, "_")
-        .replace(/_+/g, "_")
-        .replace(/^_|_$/g, "")
-        .toLowerCase()
+  const transformName = (name) => {
+    if (!name) return name;
+    return name
+      .replace(/[()]/g, "")
+      .replace(/\s+/g, "_")
+      .replace(/_+/g, "_")
+      .replace(/^_|_$/g, "")
+      .toLowerCase()
   };
 
+  const exportBoundaries = async (format) => {
+    setIsExportingGeo(true);
+    setGeoExportFormat(format);
+
+    // Yield to UI so loader renders
+    await new Promise(r => setTimeout(r, 50));
+
+    try {
+      const features = [];
+
+      // ── Collect filtered MWS features ──
+      if (mwsLayerRef?.current) {
+        const mwsSource = mwsLayerRef.current.getSource();
+        mwsSource.getFeatures().forEach(f => {
+          if (f.get('isFiltered') === 1) {
+            const clone = f.clone();
+            clone.set('_layer', 'MWS', true);
+            clone.set('mws_id', f.get('uid'), true);
+
+            // Apply maroon style for KML
+            clone.setStyle(new Style({
+              stroke: new Stroke({ color: 'rgba(127,29,29,1)', width: 1.8 }),
+              fill: new Fill({ color: 'rgba(239,68,68,0.55)' }),
+            }));
+
+            // Strip heavy/internal props
+            clone.unset('geometry_name', true);
+            features.push(clone);
+          }
+        });
+      }
+
+      // ── Collect selected village features ──
+      if (boundaryLayerRef?.current) {
+        const vilSource = boundaryLayerRef.current.getSource();
+        vilSource.getFeatures().forEach(f => {
+          if (f.get('isSelected') === 1) {
+            const clone = f.clone();
+            clone.set('_layer', 'Village', true);
+
+            clone.setStyle(new Style({
+              stroke: new Stroke({ color: 'rgba(255,225,0,1)', width: 2 }),
+              fill: new Fill({ color: 'rgba(255,225,0,0.15)' }),
+            }));
+
+            clone.unset('geometry_name', true);
+            features.push(clone);
+          }
+        });
+      }
+
+      if (features.length === 0) {
+        alert('No highlighted boundaries to export.');
+        return;
+      }
+
+      let output, mimeType, extension;
+
+      if (format === 'kml') {
+        const kmlFormat = new KML({ writeStyles: true });
+        output = kmlFormat.writeFeatures(features, {
+          dataProjection: 'EPSG:4326',
+          featureProjection: 'EPSG:4326',
+        });
+        mimeType = 'application/vnd.google-earth.kml+xml';
+        extension = 'kml';
+      } else {
+        const geojsonFormat = new GeoJSON();
+        const geojsonObj = JSON.parse(
+          geojsonFormat.writeFeatures(features, {
+            dataProjection: 'EPSG:4326',
+            featureProjection: 'EPSG:4326',
+          })
+        );
+
+        // Embed style hints in properties for GeoJSON
+        geojsonObj.features.forEach(f => {
+          if (f.properties._layer === 'MWS') {
+            f.properties['stroke'] = '#7f1d1d';
+            f.properties['stroke-width'] = 1.8;
+            f.properties['stroke-opacity'] = 1;
+            f.properties['fill'] = '#ef4444';
+            f.properties['fill-opacity'] = 0.55;
+          } else if (f.properties._layer === 'Village') {
+            f.properties['stroke'] = '#ffe100';
+            f.properties['stroke-width'] = 2;
+            f.properties['stroke-opacity'] = 1;
+            f.properties['fill'] = '#ffe100';
+            f.properties['fill-opacity'] = 0.15;
+          }
+        });
+
+        output = JSON.stringify(geojsonObj, null, 2);
+        mimeType = 'application/geo+json';
+        extension = 'geojson';
+      }
+
+      // Trigger download
+      const blob = new Blob([output], { type: mimeType });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `kyl_boundaries_${transformName(block?.label) || 'export'}_${new Date().toISOString().split('T')[0]}.${extension}`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+
+    } catch (err) {
+      console.error('Boundary export error:', err);
+      alert('Error exporting boundaries. Please try again.');
+    } finally {
+      setIsExportingGeo(false);
+      setGeoExportFormat(null);
+    }
+  };
 
   const mwsVillageIntersections = React.useMemo(() => {
     if (!selectedMWS || selectedMWS.length === 0 || !dataJson || !Array.isArray(dataJson)) return [];
@@ -211,14 +333,6 @@ const KYLRightSidebar = ({
     setShowConnectivity(prev => !prev);
   };
   
-  // const toggleConnectivity = () => {
-  //   if (!mwsArrowLayerRef?.current) { console.warn("Arrow layer not ready"); return; }
-  //   const newVisibility = !showConnectivity;
-  //   mwsArrowLayerRef.current.setVisible(newVisibility);
-  //   mwsDrainageLayerRef.current.setVisible(newVisibility);
-  //   setShowConnectivity(newVisibility);
-  // };
-
   const handleTehsilReport = () => {
     const reportURL = `${process.env.REACT_APP_API_URL}/generate_tehsil_report/?state=${transformName(state?.label)}&district=${transformName(district?.label)}&block=${transformName(block?.label)}`;
     window.open(reportURL, '_blank', 'noopener,noreferrer');
@@ -925,7 +1039,7 @@ const KYLRightSidebar = ({
                 ))}
               </div>
 
-              {/* Download buttons */}
+              {/* Download buttons — replace the existing PDF + Excel block */}
               <button
                 onClick={downloadPDF}
                 disabled={isDownloading}
@@ -949,6 +1063,48 @@ const KYLRightSidebar = ({
                 <FileSpreadsheet className="w-3 h-3" />
                 <span>Excel</span>
               </button>
+
+              {/* GeoJSON / KML export */}
+              <div className="relative group">
+                <button
+                  disabled={isExportingGeo}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border transition-all ${
+                    isExportingGeo
+                      ? 'border-gray-200 text-gray-400 bg-gray-50 cursor-not-allowed'
+                      : 'border-amber-200 text-amber-600 hover:bg-amber-50 hover:border-amber-300'
+                  }`}
+                >
+                  {isExportingGeo ? (
+                    <><Loader2 className="w-3 h-3 animate-spin" /><span>{geoExportFormat === 'kml' ? 'KML…' : 'GeoJSON…'}</span></>
+                  ) : (
+                    <>
+                      <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+                        <circle cx="12" cy="10" r="3" />
+                      </svg>
+                      <span>Geo ▾</span>
+                    </>
+                  )}
+                </button>
+
+                {/* Dropdown */}
+                {!isExportingGeo && (
+                  <div className="absolute right-0 top-full mt-1 bg-white rounded-lg shadow-lg border border-gray-200 py-1 w-32 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50">
+                    <button
+                      onClick={() => exportBoundaries('geojson')}
+                      className="w-full text-left px-3 py-1.5 text-xs text-gray-700 hover:bg-amber-50 hover:text-amber-700 transition-colors"
+                    >
+                      GeoJSON
+                    </button>
+                    <button
+                      onClick={() => exportBoundaries('kml')}
+                      className="w-full text-left px-3 py-1.5 text-xs text-gray-700 hover:bg-amber-50 hover:text-amber-700 transition-colors"
+                    >
+                      KML (Google Earth)
+                    </button>
+                  </div>
+                )}
+              </div>
 
               <button
                 onClick={() => setShowSelectionPopup(false)}
