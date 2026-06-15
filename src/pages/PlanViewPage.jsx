@@ -113,6 +113,125 @@ const formatCrop = (cropName, acres) => {
   return `${cropName} (${acres} ac)`;
 };
 
+// ── EXPORT HELPERS ────────────────────────────────────────
+const convertToGeoJSON = (features, type) => {
+  const geoFeatures = features
+    .filter(f => f.latitude && f.longitude)
+    .map(f => ({
+      type: "Feature",
+      geometry: { type: "Point", coordinates: [parseFloat(f.longitude), parseFloat(f.latitude)] },
+      properties: f,
+    }));
+  return {
+    type: "FeatureCollection",
+    features: geoFeatures,
+  };
+};
+
+const convertToKML = (features, type) => {
+  const featureKML = features
+    .filter(f => f.latitude && f.longitude)
+    .map(f => {
+      const props = Object.entries(f)
+        .filter(([_, v]) => v != null)
+        .map(([k, v]) => `<Data name="${k}"><value>${v}</value></Data>`)
+        .join("");
+      return `
+    <Placemark>
+      <name>${f.name || f.settlement_name || f.beneficiary_name || "Feature"}</name>
+      <ExtendedData>${props}</ExtendedData>
+      <Point>
+        <coordinates>${f.longitude},${f.latitude},0</coordinates>
+      </Point>
+    </Placemark>`;
+    })
+    .join("");
+
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2">
+  <Document>
+    <name>${type} Data</name>
+    <Style id="pin">
+      <IconStyle>
+        <Icon><href>http://maps.google.com/mapfiles/ms/icons/red-dot.png</href></Icon>
+      </IconStyle>
+    </Style>
+    ${featureKML}
+  </Document>
+</kml>`;
+};
+
+const downloadFile = (content, filename, mimeType) => {
+  const blob = new Blob([content], { type: mimeType });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+};
+
+const ExportButton = ({ data, filename, disabled }) => {
+  const [isOpen, setIsOpen] = useState(false);
+
+  const handleExport = (format) => {
+    let content, mimeType, ext;
+    if (format === "geojson") {
+      content = JSON.stringify(convertToGeoJSON(data), null, 2);
+      mimeType = "application/json";
+      ext = "geojson";
+    } else {
+      content = convertToKML(data, filename);
+      mimeType = "application/vnd.google-earth.kml+xml";
+      ext = "kml";
+    }
+    downloadFile(content, `${filename}.${ext}`, mimeType);
+    setIsOpen(false);
+  };
+
+  return (
+    <div className="relative">
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        disabled={disabled}
+        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200"
+        style={{
+          background: disabled ? P.lighter : P.base,
+          color: disabled ? P.muted : "#fff",
+          cursor: disabled ? "not-allowed" : "pointer",
+          opacity: disabled ? 0.5 : 1,
+        }}
+      >
+        <span>⤓</span>
+        Export
+      </button>
+      {isOpen && !disabled && (
+        <div
+          className="absolute right-0 top-full mt-2 rounded-lg shadow-lg z-10 overflow-hidden"
+          style={{ background: "#fff", border: `1px solid ${P.border}` }}
+        >
+          <button
+            onClick={() => handleExport("geojson")}
+            className="w-full text-left px-4 py-2 text-xs font-semibold hover:bg-opacity-80 transition-all"
+            style={{ background: P.lighter, color: P.text }}
+          >
+            GeoJSON
+          </button>
+          <button
+            onClick={() => handleExport("kml")}
+            className="w-full text-left px-4 py-2 text-xs font-semibold border-t transition-all hover:bg-opacity-80"
+            style={{ background: P.lighter, color: P.text, borderColor: P.border }}
+          >
+            KML
+          </button>
+        </div>
+      )}
+    </div>
+  );
+};
+
 const StatusBadge = ({ label, active }) => (
   <div
     className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold"
@@ -588,7 +707,7 @@ const PlanViewPage = () => {
         zIndex: 5,
       });
       layer.setStyle(new Style({
-        stroke: new Stroke({ color: "rgba(255, 255, 0, 1)", width: 2 }),
+        stroke: new Stroke({ color: "#000", width: 2 }),
         fill:   new Fill({ color: "rgba(0,0,0,0.05)" }),
       }));
       map.addLayer(layer);
@@ -623,7 +742,7 @@ const PlanViewPage = () => {
     layer.getSource().refresh();
 
     layer.setStyle(new Style({
-      stroke: new Stroke({ color: "rgba(255, 255, 0, 1)", width: 2 }),
+      stroke: new Stroke({ color: "#000", width: 2 }),
       fill:   new Fill({ color: "rgba(0,0,0,0)" }),
     }));
     map.addLayer(layer);
@@ -912,9 +1031,12 @@ const PlanViewPage = () => {
                   <>
                     {settlements.length > 0 && (
                       <div className="flex flex-col gap-3">
-                        <p className="text-xs font-semibold uppercase tracking-widest" style={{ color: P.muted }}>
-                          Settlements ({settlements.length})
-                        </p>
+                        <div className="flex items-center justify-between gap-3">
+                          <p className="text-xs font-semibold uppercase tracking-widest" style={{ color: P.muted }}>
+                            Settlements ({settlements.length})
+                          </p>
+                          <ExportButton data={settlements} filename="settlements" disabled={settlements.length === 0} />
+                        </div>
                         {settlements.map((s, i) => (
                           <SettlementCard key={s.settlement_id ?? i} s={s} livestockData={livestock} cropsData={crops} />
                         ))}
@@ -950,9 +1072,12 @@ const PlanViewPage = () => {
                     </div>
                   ) : (
                     <>
-                      <p className="text-xs font-semibold uppercase tracking-widest flex-shrink-0" style={{ color: P.muted }}>
-                        Wells ({wells.length})
-                      </p>
+                      <div className="flex items-center justify-between gap-3 flex-shrink-0">
+                        <p className="text-xs font-semibold uppercase tracking-widest" style={{ color: P.muted }}>
+                          Wells ({wells.length})
+                        </p>
+                        <ExportButton data={wells} filename="wells" disabled={wells.length === 0} />
+                      </div>
                       {wells.map((w, i) => (
                         <button key={w.well_id ?? i}
                           onClick={() => setSelectedWell(selectedWell?.well_id === w.well_id ? null : w)}
@@ -999,9 +1124,12 @@ const PlanViewPage = () => {
                     </div>
                   ) : (
                     <>
-                      <p className="text-xs font-semibold uppercase tracking-widest flex-shrink-0" style={{ color: P.muted }}>
-                        Waterbodies ({waterbodies.length})
-                      </p>
+                      <div className="flex items-center justify-between gap-3 flex-shrink-0">
+                        <p className="text-xs font-semibold uppercase tracking-widest" style={{ color: P.muted }}>
+                          Waterbodies ({waterbodies.length})
+                        </p>
+                        <ExportButton data={waterbodies} filename="waterbodies" disabled={waterbodies.length === 0} />
+                      </div>
                       {waterbodies.map((w, i) => (
                         <button key={w.waterbody_id ?? i}
                           onClick={() => setSelectedWaterbody(selectedWaterbody?.waterbody_id === w.waterbody_id ? null : w)}
@@ -1078,9 +1206,12 @@ const PlanViewPage = () => {
                     ) : (
                       <>
                         <div className="overflow-y-auto max-h-[350px] flex flex-col gap-2 pr-1">
-                          <p className="text-xs font-semibold uppercase tracking-widest flex-shrink-0" style={{ color: P.muted }}>
-                            {items.length} records
-                          </p>
+                          <div className="flex items-center justify-between gap-3 flex-shrink-0">
+                            <p className="text-xs font-semibold uppercase tracking-widest" style={{ color: P.muted }}>
+                              {items.length} records
+                            </p>
+                            <ExportButton data={items} filename={`works-${worksSubTab}`} disabled={items.length === 0} />
+                          </div>
                           {items.map((item, i) => (
                             <button key={getId(item, i)}
                               onClick={() => setSelectedNrmWork(
@@ -1130,9 +1261,12 @@ const PlanViewPage = () => {
                     </div>
                   ) : (
                     <>
-                      <p className="text-xs font-semibold uppercase tracking-widest flex-shrink-0" style={{ color: P.muted }}>
-                        Livelihood Demands ({livelihood.length})
-                      </p>
+                      <div className="flex items-center justify-between gap-3 flex-shrink-0">
+                        <p className="text-xs font-semibold uppercase tracking-widest" style={{ color: P.muted }}>
+                          Livelihood Demands ({livelihood.length})
+                        </p>
+                        <ExportButton data={livelihood} filename="livelihood" disabled={livelihood.length === 0} />
+                      </div>
                       {livelihood.map((l, i) => (
                         <button key={l.id ?? i}
                           onClick={() => setSelectedLivelihood(selectedLivelihood === l ? null : l)}
