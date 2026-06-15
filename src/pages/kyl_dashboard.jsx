@@ -655,10 +655,16 @@ console.log("Current filterSelections:", filterSelections);
     if (!mwsLayerRef.current) return;
     const source = mwsLayerRef.current.getSource();
     const idSet = new Set(filteredIds);
+    const hasAnyFilters = filteredIds.length > 0;
+
     source.getFeatures().forEach((f) => {
       f.set("isFiltered", idSet.has(f.get("uid")) ? 1 : 0, true);
-      f.set("hasFilters", filteredIds.length > 0 ? 1 : 0, true);
-        });
+      if (hasAnyFilters) {
+        f.set("hasFilters", 1, true);
+      } else {
+        f.unset("hasFilters");  // Clear the property entirely
+      }
+    });
     source.changed();
     if (showConnectivityRef.current && topoLevelDataRef.current) {
       const { topoLevel, maxLevel } = topoLevelDataRef.current;
@@ -667,64 +673,63 @@ console.log("Current filterSelections:", filterSelections);
   };
 
   
-
   const applyDefaultMWSStyle = () => {
     if (!mwsLayerRef.current) return;
-  
+    
     mwsLayerRef.current.setStyle({
       variables: {
         highlightMWS: highlightMWS ?? -1,
       },
   
       // NORMAL BLUE BORDER
-"stroke-color": [
-  "case",
+      "stroke-color": [
+        "case",
 
-  ["==", ["get", "uid"], ["var", "highlightMWS"]],
-  [22, 101, 52, 1],
+        ["==", ["get", "uid"], ["var", "highlightMWS"]],
+        [22, 101, 52, 1],
 
-  // matched MWS
-  ["==", ["get", "isFiltered"], 1],
-  [127, 29, 29, 1], // dark mehroon
+        // matched MWS
+        ["==", ["get", "isFiltered"], 1],
+        [127, 29, 29, 1], // dark mehroon
 
-  // hide unmatched when filters active
-  ["==", ["get", "hasFilters"], 1],
-  [0, 0, 0, 0],
+        // hide unmatched when filters active
+        ["==", ["get", "hasFilters"], 1],
+        [0, 0, 0, 0],
 
-  // normal MWS
-  [74, 144, 226, 1],
-],
+        // normal MWS
+        [74, 144, 226, 1],
+      ],
   
-"stroke-width": [
-  "case",
+      "stroke-width": [
+        "case",
 
-  ["==", ["get", "uid"], ["var", "highlightMWS"]],
-  2.5,
+        ["==", ["get", "uid"], ["var", "highlightMWS"]],
+        2.5,
 
-  ["==", ["get", "isFiltered"], 1],
-  1.8,
+        ["==", ["get", "isFiltered"], 1],
+        1.8,
 
-  ["==", ["get", "hasFilters"], 1],
-  0,
+        ["==", ["get", "hasFilters"], 1],
+        0,
 
-  1.2,
-],
+        1.2,
+      ],
   
       // NORMAL LIGHT BLUE FILL
-     "fill-color": [
-  "case",
+      "fill-color": [
+        "case",
 
-  ["==", ["get", "uid"], ["var", "highlightMWS"]],
-  [34, 197, 94, 0.4],
+        ["==", ["get", "uid"], ["var", "highlightMWS"]],
+        [34, 197, 94, 0.4],
 
-  ["==", ["get", "isFiltered"], 1],
-  [239, 68, 68, 0.55],
+        ["==", ["get", "isFiltered"], 1],
+        [239, 68, 68, 0.55],
 
-  ["==", ["get", "hasFilters"], 1],
-  [0, 0, 0, 0],
+        ["==", ["get", "hasFilters"], 1],
+        [0, 0, 0, 0],
 
-  [85, 152, 229, 0.15],
-],
+        [85, 152, 229, 0.15],
+      ],
     });
   };
 
@@ -1170,19 +1175,19 @@ console.log("Current filterSelections:", filterSelections);
   const fetchBoundaryAndZoom = async (districtName, blockName) => {
     setIsLayerLoaded(true);
     // RESET CONNECTIVITY ON LOCATION CHANGE
-setShowConnectivity(false);
+    setShowConnectivity(false);
 
-if (mwsArrowLayerRef.current) {
-  mwsArrowLayerRef.current.setVisible(false);
-}
+    if (mwsArrowLayerRef.current) {
+      mwsArrowLayerRef.current.setVisible(false);
+    }
 
-if (mwsDrainageLayerRef.current) {
-  mwsDrainageLayerRef.current.setVisible(false);
-}
+    if (mwsDrainageLayerRef.current) {
+      mwsDrainageLayerRef.current.setVisible(false);
+    }
 
-if (boundaryLayerRef.current) {
-  boundaryLayerRef.current.setVisible(true);
-}
+    if (boundaryLayerRef.current) {
+      boundaryLayerRef.current.setVisible(true);
+    }
 
     try {
       // Create layers (already fully loaded now)
@@ -2008,9 +2013,13 @@ if (boundaryLayerRef.current) {
       if (activeKeys.length === 0) {
         setSelectedMWS([]);
         setHasFilters(false);
+        applyDefaultMWSStyle()
         const source = mwsLayerRef.current?.getSource();
         if (source) {
-          source.getFeatures().forEach((f) => f.unset("isFiltered"));
+          source.getFeatures().forEach((f) => {
+            f.unset("isFiltered");
+            f.unset("hasFilters");
+          });
           source.changed();
         }
         return;

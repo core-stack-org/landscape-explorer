@@ -1344,6 +1344,7 @@ const Map = forwardRef(({
         true
       );
       adminLayer.setStyle(function (feature) {
+        console.log(feature)
         if (!feature || !feature.values_) return null;
 
         let bin = (feature.values_.P_LIT / feature.values_.TOT_P) * 100;
@@ -1385,6 +1386,13 @@ const Map = forwardRef(({
             }),
             fill: new Fill({
               color: "#006400",
+            })
+          })
+        } else {
+          return new Style({
+            stroke: new Stroke({
+              color: "#000000",
+              width: 3,
             })
           })
         }
