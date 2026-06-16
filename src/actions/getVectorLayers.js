@@ -41,18 +41,35 @@ export default async function getVectorLayers(layer_store, layer_name, setVisibl
     url: url,
     format: new GeoJSON(),
     loader: function (extent, resolution, projection) {
-      fetch(url).then(response => {
-        if (!response.ok) {
-          console.log('Network response was not ok for ' + layer_name);
-          return null;
-        }
-        return response.json();
-      }).then(json => {
-        vectorSource.addFeatures(vectorSource.getFormat().readFeatures(json));
-      }).catch(error => {
-        console.log(`Failed to load the "${layer_name}" layer. Please check your connection or the map layer details.`, error)
-      });
-    }
+      fetch(url)
+        .then((response) => {
+          if (!response.ok) {
+            console.log("Network response was not ok for " + layer_name);
+            return null;
+          }
+          return response.json();
+        })
+        .then((json) => {
+          if (json == null) return;
+          try {
+            const features = vectorSource.getFormat().readFeatures(json);
+            if (features?.length) {
+              vectorSource.addFeatures(features);
+            }
+          } catch (e) {
+            console.log(
+              `Failed to parse GeoJSON for "${layer_name}" layer.`,
+              e
+            );
+          }
+        })
+        .catch((error) => {
+          console.log(
+            `Failed to load the "${layer_name}" layer. Please check your connection or the map layer details.`,
+            error
+          );
+        });
+    },
   });
 
 
@@ -65,19 +82,19 @@ export default async function getVectorLayers(layer_store, layer_name, setVisibl
 
   if (layer_store === "panchayat_boundaries") {
     wmsLayer.setStyle(PanchayatBoundariesStyle);
+  } else {
+    wmsLayer.setStyle(() => {
+      return new Style({
+        stroke: new Stroke({
+          color: "black",
+          width: 1.2,
+        }),
+        fill: new Fill({
+          color: "rgba(0, 0, 255, 0.25)",
+        }),
+      });
+    });
   }
 
-  wmsLayer.setStyle((feature) => {
-    return new Style({
-      stroke: new Stroke({
-        color: "black",
-        width: 1.2,
-      }),
-      fill: new Fill({
-        color: "rgba(0, 0, 255, 0.25)", 
-      }),
-    });
-  });
-  
   return wmsLayer;
 }
