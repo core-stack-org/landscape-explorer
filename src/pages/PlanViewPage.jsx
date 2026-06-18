@@ -115,7 +115,7 @@ const formatCrop = (cropName, acres) => {
 };
 
 // ── EXPORT HELPERS ────────────────────────────────────────
-const convertToGeoJSON = (features, type) => {
+const convertToGeoJSON = (features, type, attribution) => {
   const geoFeatures = features
     .filter(f => f.latitude && f.longitude)
     .map(f => ({
@@ -125,11 +125,19 @@ const convertToGeoJSON = (features, type) => {
     }));
   return {
     type: "FeatureCollection",
+    ...(attribution ? {
+      metadata: {
+        collected_by: attribution.organization || "Unknown",
+        project:      attribution.project || undefined,
+        facilitator:  attribution.facilitator || undefined,
+        attribution:  `Data collected by ${attribution.organization || "Unknown Organization"}`,
+      },
+    } : {}),
     features: geoFeatures,
   };
 };
 
-const convertToKML = (features, type) => {
+const convertToKML = (features, type, attribution) => {
   const featureKML = features
     .filter(f => f.latitude && f.longitude)
     .map(f => {
@@ -148,10 +156,19 @@ const convertToKML = (features, type) => {
     })
     .join("");
 
+  const orgName     = attribution?.organization || "Unknown Organization";
+  const description  = attribution
+    ? `Data collected by ${orgName}` +
+      (attribution.project     ? ` as part of project "${attribution.project}"` : "") +
+      (attribution.facilitator ? `, facilitated by ${attribution.facilitator}` : "") + "."
+    : "";
+
   return `<?xml version="1.0" encoding="UTF-8"?>
 <kml xmlns="http://www.opengis.net/kml/2.2">
   <Document>
     <name>${type} Data</name>
+    ${description ? `<description>${description}</description>` : ""}
+    ${attribution ? `<atom:author xmlns:atom="http://www.w3.org/2005/Atom"><atom:name>${orgName}</atom:name></atom:author>` : ""}
     <Style id="pin">
       <IconStyle>
         <Icon><href>http://maps.google.com/mapfiles/ms/icons/red-dot.png</href></Icon>
@@ -174,17 +191,17 @@ const downloadFile = (content, filename, mimeType) => {
   URL.revokeObjectURL(url);
 };
 
-const ExportButton = ({ data, filename, disabled }) => {
+const ExportButton = ({ data, filename, disabled, attribution }) => {
   const [isOpen, setIsOpen] = useState(false);
 
   const handleExport = (format) => {
     let content, mimeType, ext;
     if (format === "geojson") {
-      content = JSON.stringify(convertToGeoJSON(data), null, 2);
+      content = JSON.stringify(convertToGeoJSON(data, filename, attribution), null, 2);
       mimeType = "application/json";
       ext = "geojson";
     } else {
-      content = convertToKML(data, filename);
+      content = convertToKML(data, filename, attribution);
       mimeType = "application/vnd.google-earth.kml+xml";
       ext = "kml";
     }
@@ -211,8 +228,18 @@ const ExportButton = ({ data, filename, disabled }) => {
       {isOpen && !disabled && (
         <div
           className="absolute right-0 top-full mt-2 rounded-lg shadow-lg z-10 overflow-hidden"
-          style={{ background: "#fff", border: `1px solid ${P.border}` }}
+          style={{ background: "#fff", border: `1px solid ${P.border}`, minWidth: "180px" }}
         >
+          {attribution?.organization && (
+            <div className="px-4 py-2" style={{ borderBottom: `1px solid ${P.border}`, background: P.lighter }}>
+              <p className="text-[10px] font-semibold uppercase tracking-widest" style={{ color: P.muted }}>
+                Collected by
+              </p>
+              <p className="text-xs font-semibold truncate" style={{ color: P.text }}>
+                {attribution.organization}
+              </p>
+            </div>
+          )}
           <button
             onClick={() => handleExport("geojson")}
             className="w-full text-left px-4 py-2 text-xs font-semibold hover:bg-opacity-80 transition-all"
@@ -562,6 +589,24 @@ const PlanViewPage = () => {
 
   const districtNameSafe = plan?.district || "";
   const blockNameSafe    = plan?.block    || "";
+
+  // Attribution metadata embedded into exported GeoJSON/KML files,
+  // crediting the organization that collected the underlying data.
+  const exportAttribution = {
+    organization: teamDetails?.organization || plan?.organization_name || "",
+    project:      teamDetails?.project      || plan?.project_name      || "",
+    facilitator:  teamDetails?.facilitator  || plan?.facilitator_name  || "",
+  };
+
+  // Year shown in the "DPR Supported by..." footer. Prefers an explicit
+  // year/date field from the API if present, otherwise falls back to
+  // the current year.
+  const dprYear =
+    teamDetails?.year ||
+    villageBrief?.year ||
+    (teamDetails?.created_at && new Date(teamDetails.created_at).getFullYear()) ||
+    (plan?.created_at && new Date(plan.created_at).getFullYear()) ||
+    new Date().getFullYear();
 
   useEffect(() => {
     if (!plan?.id) return;
@@ -1136,7 +1181,7 @@ const PlanViewPage = () => {
                           <p className="text-xs font-semibold uppercase tracking-widest" style={{ color: P.muted }}>
                             Settlements ({settlements.length})
                           </p>
-                          <ExportButton data={settlements} filename="settlements" disabled={settlements.length === 0} />
+                          <ExportButton data={settlements} filename="settlements" disabled={settlements.length === 0} attribution={exportAttribution} />
                         </div>
                         {settlements.map((s, i) => (
                           <SettlementCard key={s.settlement_id ?? i} s={s} livestockData={livestock} cropsData={crops} />
@@ -1177,7 +1222,7 @@ const PlanViewPage = () => {
                         <p className="text-xs font-semibold uppercase tracking-widest" style={{ color: P.muted }}>
                           Wells ({wells.length})
                         </p>
-                        <ExportButton data={wells} filename="wells" disabled={wells.length === 0} />
+                        <ExportButton data={wells} filename="wells" disabled={wells.length === 0} attribution={exportAttribution} />
                       </div>
                       {wells.map((w, i) => (
                         <button key={w.well_id ?? i}
@@ -1229,7 +1274,7 @@ const PlanViewPage = () => {
                         <p className="text-xs font-semibold uppercase tracking-widest" style={{ color: P.muted }}>
                           Waterbodies ({waterbodies.length})
                         </p>
-                        <ExportButton data={waterbodies} filename="waterbodies" disabled={waterbodies.length === 0} />
+                        <ExportButton data={waterbodies} filename="waterbodies" disabled={waterbodies.length === 0} attribution={exportAttribution} />
                       </div>
                       {waterbodies.map((w, i) => (
                         <button key={w.waterbody_id ?? i}
@@ -1311,7 +1356,7 @@ const PlanViewPage = () => {
                             <p className="text-xs font-semibold uppercase tracking-widest" style={{ color: P.muted }}>
                               {items.length} records
                             </p>
-                            <ExportButton data={items} filename={`works-${worksSubTab}`} disabled={items.length === 0} />
+                            <ExportButton data={items} filename={`works-${worksSubTab}`} disabled={items.length === 0} attribution={exportAttribution} />
                           </div>
                           {items.map((item, i) => (
                             <button key={getId(item, i)}
@@ -1366,7 +1411,7 @@ const PlanViewPage = () => {
                         <p className="text-xs font-semibold uppercase tracking-widest" style={{ color: P.muted }}>
                           Livelihood Demands ({livelihood.length})
                         </p>
-                        <ExportButton data={livelihood} filename="livelihood" disabled={livelihood.length === 0} />
+                        <ExportButton data={livelihood} filename="livelihood" disabled={livelihood.length === 0} attribution={exportAttribution} />
                       </div>
                       {livelihood.map((l, i) => (
                         <button key={l.id ?? i}
@@ -1394,6 +1439,16 @@ const PlanViewPage = () => {
                 {selectedLivelihood && <LivelihoodDetailCard l={selectedLivelihood} onClose={() => setSelectedLivelihood(null)} />}
               </div>
             </div>
+          </div>
+        )}
+
+        {/* ── DPR ATTRIBUTION FOOTER ─────────────────────── */}
+        {exportAttribution.organization && (
+          <div className="flex items-center justify-center py-6 px-6 rounded-2xl"
+            style={{ background: `linear-gradient(135deg, ${P.base}, ${P.dark})`, boxShadow: "0 4px 16px rgba(139,63,230,0.2)" }}>
+            <p className="text-sm font-semibold tracking-wide text-center" style={{ color: "#fff" }}>
+              DPR Supported by <span style={{ fontWeight: 800 }}>{exportAttribution.organization}</span> in {dprYear}
+            </p>
           </div>
         )}
       </div>
