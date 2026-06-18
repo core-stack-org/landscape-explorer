@@ -123,6 +123,32 @@ const KYLRightSidebar = ({
         });
       }
 
+      // ── Collect filtered waterbody features ──
+      if (showWB && waterbodiesLayerRef?.current) {
+        const wbSource = waterbodiesLayerRef.current.getSource();
+        wbSource.getFeatures().forEach(f => {
+          if (f.get('wbMatch') !== 1) return;
+
+          // If WB filters active, only export those in selectedWaterbodyIds
+          const p = f.getProperties();
+          const wbId = String(p.UID ?? p.swb_id ?? p.SWB_UID ?? p.swb_uid ?? p.uid ?? p.id ?? '');
+          if (selectedWaterbodyIds && selectedWaterbodyIds.size > 0 && !selectedWaterbodyIds.has(wbId)) return;
+
+          const clone = f.clone();
+          clone.set('_layer', 'Waterbody', true);
+          clone.set('swb_id', wbId, true);
+          clone.set('swb_name', p.name || p.NAME || p.swb_name || p.SWB_NAME || '', true);
+
+          clone.setStyle(new Style({
+            stroke: new Stroke({ color: 'rgba(85,255,255,1)', width: 2 }),
+            fill: new Fill({ color: 'rgba(85,255,255,0.45)' }),
+          }));
+
+          clone.unset('geometry_name', true);
+          features.push(clone);
+        });
+      }
+
       if (features.length === 0) {
         alert('No highlighted boundaries to export.');
         return;
@@ -161,6 +187,12 @@ const KYLRightSidebar = ({
             f.properties['stroke-opacity'] = 1;
             f.properties['fill'] = '#ffe100';
             f.properties['fill-opacity'] = 0.15;
+          } else if (f.properties._layer === 'Waterbody') {
+            f.properties['stroke'] = '#55ffff';
+            f.properties['stroke-width'] = 2;
+            f.properties['stroke-opacity'] = 1;
+            f.properties['fill'] = '#55ffff';
+            f.properties['fill-opacity'] = 0.45;
           }
         });
 

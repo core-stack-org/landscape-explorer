@@ -8,6 +8,7 @@ import Feature from "ol/Feature";
 import Polygon from "ol/geom/Polygon";
 import { Vector as VectorLayer } from "ol/layer";
 import { Vector as VectorSource } from "ol/source";
+import Overlay from "ol/Overlay";
 import SettlementIcon from "../assets/settlement_icon.svg";
 import WellIcon from "../assets/well_proposed.svg";
 import WaterStructureIcon from "../assets/waterbodies_proposed.svg";
@@ -691,6 +692,95 @@ const PlanViewPage = () => {
     const lon = plan?.longitude ? parseFloat(plan.longitude) : null;
     const lat = plan?.latitude  ? parseFloat(plan.latitude)  : null;
 
+    // Shared reference so the click handler always knows which layer
+    // (real GeoServer boundary OR bounding-box fallback) is currently active.
+    const activeLayerRef = { current: null };
+
+    // ── VILLAGE REPORT POPUP (OL Overlay) ────────────────
+    const popupContainer = document.createElement("div");
+    popupContainer.style.position = "absolute";
+    popupContainer.style.transform = "translate(-50%, -100%)";
+    popupContainer.style.pointerEvents = "auto";
+    popupContainer.style.display = "none";
+
+    const popupCard = document.createElement("div");
+    popupCard.style.background = "#fff";
+    popupCard.style.border = `1px solid ${P.border}`;
+    popupCard.style.borderRadius = "12px";
+    popupCard.style.boxShadow = "0 4px 16px rgba(0,0,0,0.18)";
+    popupCard.style.padding = "14px 16px";
+    popupCard.style.minWidth = "200px";
+    popupCard.style.marginBottom = "12px";
+    popupContainer.appendChild(popupCard);
+
+    const popupOverlay = new Overlay({
+      element: popupContainer,
+      positioning: "bottom-center",
+      stopEvent: true,
+    });
+    map.addOverlay(popupOverlay);
+
+    const closePopup = () => {
+      popupContainer.style.display = "none";
+      popupOverlay.setPosition(undefined);
+    };
+
+    const showPopupForFeature = (feature, coordinate) => {
+      const props = feature.getProperties();
+      const villageId   = props.vill_ID;
+      const stateVal    = (props.state    || "").toLowerCase();
+      const districtVal = (props.district || "").toLowerCase();
+      const blockVal    = (props.tehsil   || "").toLowerCase();
+      const villageName = props.vill_name || "Village";
+
+      popupCard.innerHTML = `
+        <div style="display:flex; flex-direction:column; gap:12px;">
+          <div>
+            <p style="color:${P.muted}; font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:0.05em; margin:0 0 4px 0;">Village</p>
+            <p style="color:${P.text}; font-size:14px; font-weight:700; margin:0;">${villageName}</p>
+          </div>
+          <button id="village-report-btn" style="
+            background:${P.base}; color:#fff; border:none;
+            padding:8px 14px; border-radius:8px; font-size:13px;
+            font-weight:600; cursor:pointer; white-space:nowrap;
+          ">View Village Report</button>
+        </div>
+      `;
+
+      popupContainer.style.display = "block";
+      popupOverlay.setPosition(coordinate);
+
+      const btn = popupCard.querySelector("#village-report-btn");
+      if (btn) {
+        btn.onclick = () => {
+          const reportUrl = `http://127.0.0.1:8000/api/v1/generate_village_report/?state=${stateVal}&district=${districtVal}&block=${blockVal}&villageId=${villageId}`;
+          window.open(reportUrl, "_blank");
+          closePopup();
+        };
+      }
+    };
+
+    // Single click handler registered once; checks activeLayerRef each time
+    // so it works whether the active layer is the real boundary or the
+    // bounding-box fallback (or gets swapped after the fact).
+    map.on("click", (e) => {
+      const targetLayer = activeLayerRef.current;
+      if (!targetLayer) { closePopup(); return; }
+
+      let clickedFeature = null;
+      map.forEachFeatureAtPixel(
+        e.pixel,
+        (feature) => { clickedFeature = feature; return true; },
+        { layerFilter: (l) => l === targetLayer }
+      );
+
+      if (clickedFeature) {
+        showPopupForFeature(clickedFeature, e.coordinate);
+      } else {
+        closePopup();
+      }
+    });
+
     const addBoundingBox = () => {
       // ~1km bounding box around the plan coordinates
       const delta = 0.009;
@@ -701,17 +791,27 @@ const PlanViewPage = () => {
         [lon - delta, lat + delta],
         [lon - delta, lat - delta],
       ];
-      const feature = new Feature({ geometry: new Polygon([ring]) });
-      const layer = new VectorLayer({
+      const feature = new Feature({
+        geometry: new Polygon([ring]),
+        // Carry through whatever village metadata we have so the popup
+        // still has something useful to show on the fallback box.
+        vill_ID:  plan?.id ?? "",
+        state:    plan?.state ?? "",
+        district: plan?.district ?? "",
+        tehsil:   plan?.block ?? "",
+        vill_name: plan?.village_name || plan?.plan || "Village",
+      });
+      const bboxLayer = new VectorLayer({
         source: new VectorSource({ features: [feature] }),
         zIndex: 5,
       });
-      layer.setStyle(new Style({
-        stroke: new Stroke({ color: "#000", width: 2 }),
-        fill:   new Fill({ color: "rgba(0,0,0,0.05)" }),
+      bboxLayer.setStyle(new Style({
+        stroke: new Stroke({ color: "#FFCC00", width: 2 }),
+        fill:   new Fill({ color: "rgba(255, 255, 0, 0.15)" }),
       }));
-      map.addLayer(layer);
-      map.getView().fit(layer.getSource().getExtent(), {
+      map.addLayer(bboxLayer);
+      activeLayerRef.current = bboxLayer;
+      map.getView().fit(bboxLayer.getSource().getExtent(), {
         padding: [40, 40, 40, 40], duration: 500, maxZoom: 15,
       });
     };
@@ -742,10 +842,11 @@ const PlanViewPage = () => {
     layer.getSource().refresh();
 
     layer.setStyle(new Style({
-      stroke: new Stroke({ color: "#000", width: 2 }),
-      fill:   new Fill({ color: "rgba(0,0,0,0)" }),
+      stroke: new Stroke({ color: "#FFCC00", width: 2 }),
+      fill:   new Fill({ color: "rgba(255, 255, 0, 0.15)" }),
     }));
     map.addLayer(layer);
+    activeLayerRef.current = layer;
 
     layer.getSource().once("change", () => {
       if (layer.getSource().getState() !== "ready") return;
@@ -761,7 +862,7 @@ const PlanViewPage = () => {
         addBoundingBox();
       }
     });
-  }, [districtNameSafe, blockNameSafe, plan?.latitude, plan?.longitude]);
+  }, [districtNameSafe, blockNameSafe, plan?.latitude, plan?.longitude, plan?.id, plan?.state, plan?.village_name, plan?.plan]);
 
   const makeResourceLoader = useCallback((prefix, icon, nameField) => async (map) => {
     const mwsLayer = await loadMWS(map);
@@ -920,7 +1021,7 @@ const PlanViewPage = () => {
         <div className="max-w-[1800px] mx-auto px-6 py-4 flex items-center justify-between gap-4">
           <div className="flex items-center gap-4 min-w-0">
             <button
-              onClick={() => navigate("/landscape-stewardship", { state: { returnContext: state?.returnContext } })}
+              onClick={() => navigate("/CCUsagePage", { state: { returnContext: state?.returnContext } })}
               className="flex-shrink-0 flex items-center gap-2 px-4 py-2 rounded-xl font-semibold
                          text-sm transition-all duration-200 active:scale-95"
               style={{ background: "rgba(255,255,255,0.95)", color: P.dark, boxShadow: "0 2px 12px rgba(0,0,0,0.15)" }}
