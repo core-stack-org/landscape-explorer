@@ -76,7 +76,6 @@ const KYLRightSidebar = ({
     setIsExportingGeo(true);
     setGeoExportFormat(format);
 
-    // Yield to UI so loader renders
     await new Promise(r => setTimeout(r, 50));
 
     try {
@@ -88,16 +87,16 @@ const KYLRightSidebar = ({
         mwsSource.getFeatures().forEach(f => {
           if (f.get('isFiltered') === 1) {
             const clone = f.clone();
-            clone.set('_layer', 'MWS', true);
+            clone.set('_layer', 'Micro-watershed', true);
+            clone.set('feature_type', 'Micro-watershed', true);
             clone.set('mws_id', f.get('uid'), true);
+            clone.set('name', `Micro-watershed: ${f.get('uid') || 'Unknown'}`, true);
 
-            // Apply maroon style for KML
             clone.setStyle(new Style({
               stroke: new Stroke({ color: 'rgba(127,29,29,1)', width: 1.8 }),
               fill: new Fill({ color: 'rgba(239,68,68,0.55)' }),
             }));
 
-            // Strip heavy/internal props
             clone.unset('geometry_name', true);
             features.push(clone);
           }
@@ -109,8 +108,14 @@ const KYLRightSidebar = ({
         const vilSource = boundaryLayerRef.current.getSource();
         vilSource.getFeatures().forEach(f => {
           if (f.get('isSelected') === 1) {
+            const p = f.getProperties();
+            const vName = p.vill_name || p.village_name || p.name || 'Unknown';
+            const vId = p.vill_ID || p.village_id || '';
+
             const clone = f.clone();
             clone.set('_layer', 'Village', true);
+            clone.set('feature_type', 'Village', true);
+            clone.set('name', `Village: ${vName}${vId ? ` (${vId})` : ''}`, true);
 
             clone.setStyle(new Style({
               stroke: new Stroke({ color: 'rgba(255,225,0,1)', width: 2 }),
@@ -129,15 +134,18 @@ const KYLRightSidebar = ({
         wbSource.getFeatures().forEach(f => {
           if (f.get('wbMatch') !== 1) return;
 
-          // If WB filters active, only export those in selectedWaterbodyIds
           const p = f.getProperties();
           const wbId = String(p.UID ?? p.swb_id ?? p.SWB_UID ?? p.swb_uid ?? p.uid ?? p.id ?? '');
           if (selectedWaterbodyIds && selectedWaterbodyIds.size > 0 && !selectedWaterbodyIds.has(wbId)) return;
 
+          const wName = p.name || p.NAME || p.swb_name || p.SWB_NAME || 'Unknown';
+
           const clone = f.clone();
           clone.set('_layer', 'Waterbody', true);
+          clone.set('feature_type', 'Waterbody', true);
           clone.set('swb_id', wbId, true);
-          clone.set('swb_name', p.name || p.NAME || p.swb_name || p.SWB_NAME || '', true);
+          clone.set('swb_name', wName, true);
+          clone.set('name', `Waterbody: ${wName}${wbId ? ` (${wbId})` : ''}`, true);
 
           clone.setStyle(new Style({
             stroke: new Stroke({ color: 'rgba(85,255,255,1)', width: 2 }),
@@ -162,6 +170,10 @@ const KYLRightSidebar = ({
           dataProjection: 'EPSG:4326',
           featureProjection: 'EPSG:4326',
         });
+        output = output.replace(
+          '<Document>',
+          `<Document><name>KYL Boundaries — ${block?.label || 'Export'}</name>`
+        );
         mimeType = 'application/vnd.google-earth.kml+xml';
         extension = 'kml';
       } else {
@@ -173,9 +185,10 @@ const KYLRightSidebar = ({
           })
         );
 
-        // Embed style hints in properties for GeoJSON
+        geojsonObj.name = `KYL Boundaries — ${block?.label || 'Export'}`;
+
         geojsonObj.features.forEach(f => {
-          if (f.properties._layer === 'MWS') {
+          if (f.properties._layer === 'Micro-watershed') {
             f.properties['stroke'] = '#7f1d1d';
             f.properties['stroke-width'] = 1.8;
             f.properties['stroke-opacity'] = 1;
@@ -201,7 +214,6 @@ const KYLRightSidebar = ({
         extension = 'geojson';
       }
 
-      // Trigger download
       const blob = new Blob([output], { type: mimeType });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
