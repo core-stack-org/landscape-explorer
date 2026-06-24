@@ -1,26 +1,3 @@
-/**
- * layerErrorBus.js
- *
- * Lightweight pub/sub bridge between non-React helper functions
- * (getVectorLayers, getImageLayer, etc.) and the React component tree.
- *
- * Why a custom EventTarget instead of a state manager or direct toast calls?
- *   - Helper functions have no access to React context or Recoil atoms.
- *   - We don't want to import react-hot-toast directly into map utilities
- *     (keeps helpers framework-agnostic and testable in isolation).
- *   - EventTarget is natively available — zero extra dependencies.
- *
- * Usage in a helper:
- *   import { emitLayerError, LAYER_ERROR_TYPES } from './layerErrorBus';
- *   emitLayerError({ type: LAYER_ERROR_TYPES.FETCH_FAILED, layerName: 'mws_boundary', ... });
- *
- * Usage in React:
- *   import { useLayerErrors } from '../hooks/useLayerErrors';
- *   const { errors, dismiss, retry } = useLayerErrors();
- */
-
-// ─── Error type constants ────────────────────────────────────────────────────
-
 export const LAYER_ERROR_TYPES = {
   /** WFS/WMS fetch returned a non-2xx status */
   FETCH_FAILED: 'FETCH_FAILED',
@@ -36,35 +13,56 @@ export const LAYER_ERROR_TYPES = {
   CONFIG_ERROR: 'CONFIG_ERROR',
 };
 
-// ─── Resolution hints ────────────────────────────────────────────────────────
-// Shown to the user alongside the error.  Keeps troubleshooting knowledge
-// close to the error taxonomy rather than scattered across components.
 
 export const RESOLUTION_HINTS = {
-  [LAYER_ERROR_TYPES.FETCH_FAILED]: (layerName, status) =>
-    `GeoServer returned HTTP ${status} for layer "${layerName}". ` +
-    `Check that the layer exists in the correct workspace and the WFS/WMS service is enabled.`,
+  [LAYER_ERROR_TYPES.FETCH_FAILED]: () =>
+    `This layer hasn't been generated for this location yet.`,
 
-  [LAYER_ERROR_TYPES.NETWORK_ERROR]: (layerName) =>
-    `Could not reach the server while loading "${layerName}". ` +
-    `Verify your network connection and that REACT_APP_GEOSERVER_URL is reachable.`,
+  [LAYER_ERROR_TYPES.NETWORK_ERROR]: () =>
+    `Couldn't reach the server. Check your internet connection and try again.`,
 
-  [LAYER_ERROR_TYPES.PARSE_ERROR]: (layerName) =>
-    `GeoServer returned unexpected data for "${layerName}". ` +
-    `The layer may be empty, misconfigured, or returning an OGC exception.`,
+  [LAYER_ERROR_TYPES.PARSE_ERROR]: () =>
+    `This layer isn't available for this location yet.`,
 
-  [LAYER_ERROR_TYPES.IMAGE_LOAD_ERROR]: (layerName) =>
-    `WMS image tile failed for "${layerName}". ` +
-    `GeoServer may be restarting or the layer style contains an error.`,
+  [LAYER_ERROR_TYPES.IMAGE_LOAD_ERROR]: () =>
+    `This layer hasn't been generated for this location yet.`,
 
-  [LAYER_ERROR_TYPES.API_ERROR]: (endpoint, status) =>
-    `API call to "${endpoint}" failed with HTTP ${status}. ` +
-    `Falling back to cached data — some information may be outdated.`,
+  [LAYER_ERROR_TYPES.API_ERROR]: () =>
+    `Some data couldn't be loaded. You can keep using the dashboard normally.`,
 
-  [LAYER_ERROR_TYPES.CONFIG_ERROR]: (variable) =>
-    `Environment variable "${variable}" is missing or empty. ` +
-    `Check your .env file and restart the dev server.`,
+  [LAYER_ERROR_TYPES.CONFIG_ERROR]: () =>
+    `Something's misconfigured on our end. Please contact support.`,
 };
+
+export const LAYER_DISPLAY_NAMES = {
+  terrain:              'Terrain',
+  LULC:                 'Land Use / Land Cover',
+  restoration:          'Restoration',
+  drought:              'Drought',
+  green_credit:         'Green Credit',
+  terrain_lulc:         'Terrain LULC',
+  river:                'River',
+  canal:                'Canal',
+  panchayat_boundaries: 'Village Boundaries',
+  mws_layers:           'Microwatershed Boundaries',
+  swb:                  'Surface Waterbodies',
+  drainage:             'Drainage',
+  nrega_assets:         'NREGA Assets',
+  lcw:                  'Land Conflict Watch',
+  factory_csr:          'Factory CSR',
+  mining:               'Mining',
+  change_detection:     'Change Detection',
+  mws_connectivity:     'MWS Connectivity',
+  mws_centroid:         'MWS Centroid',
+};
+
+export function getFriendlyLayerName(store) {
+  if (!store) return 'This layer';
+  const baseKey = Object.keys(LAYER_DISPLAY_NAMES).find((key) =>
+    store.toLowerCase().startsWith(key.toLowerCase())
+  );
+  return baseKey ? LAYER_DISPLAY_NAMES[baseKey] : 'This layer';
+}
 
 // ─── The bus itself ──────────────────────────────────────────────────────────
 
@@ -115,7 +113,6 @@ export const layerErrorBus = new LayerErrorBus();
  * @param {LayerErrorPayload} payload
  */
 export function emitLayerError(payload) {
-  // Always log a structured entry — useful even when the UI suppresses it.
   console.error('[LayerError]', {
     type: payload.type,
     layer: payload.layerName,

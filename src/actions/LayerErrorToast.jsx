@@ -1,55 +1,46 @@
-import React from 'react';
-import { LAYER_ERROR_TYPES, RESOLUTION_HINTS } from './layerErrorBus';
-
-// ─── Type → display metadata ─────────────────────────────────────────────────
+import { LAYER_ERROR_TYPES, RESOLUTION_HINTS, getFriendlyLayerName } from './layerErrorBus';
 
 const TYPE_META = {
-  [LAYER_ERROR_TYPES.FETCH_FAILED]:    { label: 'Fetch failed',    color: '#C0392B', bg: '#FDEDEC' },
-  [LAYER_ERROR_TYPES.NETWORK_ERROR]:   { label: 'Network error',   color: '#C0392B', bg: '#FDEDEC' },
-  [LAYER_ERROR_TYPES.PARSE_ERROR]:     { label: 'Parse error',     color: '#D35400', bg: '#FEF5EC' },
-  [LAYER_ERROR_TYPES.IMAGE_LOAD_ERROR]:{ label: 'Tile error',      color: '#7D3C98', bg: '#F5EEF8' },
-  [LAYER_ERROR_TYPES.API_ERROR]:       { label: 'API error',       color: '#1A5276', bg: '#EAF2FF' },
-  [LAYER_ERROR_TYPES.CONFIG_ERROR]:    { label: 'Config error',    color: '#1E8449', bg: '#EAFAF1' },
+  [LAYER_ERROR_TYPES.FETCH_FAILED]:     { label: 'Not available',    color: '#B91C1C', bg: '#FEF2F2' },
+  [LAYER_ERROR_TYPES.NETWORK_ERROR]:    { label: 'Connection issue', color: '#B91C1C', bg: '#FEF2F2' },
+  [LAYER_ERROR_TYPES.PARSE_ERROR]:      { label: 'Not available',    color: '#B91C1C', bg: '#FEF2F2' },
+  [LAYER_ERROR_TYPES.IMAGE_LOAD_ERROR]: { label: 'Not available',    color: '#B91C1C', bg: '#FEF2F2' },
+  [LAYER_ERROR_TYPES.API_ERROR]:        { label: 'Data unavailable', color: '#B91C1C', bg: '#FEF2F2' },
+  [LAYER_ERROR_TYPES.CONFIG_ERROR]:     { label: 'System issue',     color: '#B91C1C', bg: '#FEF2F2' },
 };
 
 function resolveHint(error) {
   const hintFn = RESOLUTION_HINTS[error.type];
-  if (!hintFn) return `An unexpected error occurred loading "${error.layerName}".`;
-
-  switch (error.type) {
-    case LAYER_ERROR_TYPES.FETCH_FAILED:
-    case LAYER_ERROR_TYPES.IMAGE_LOAD_ERROR:
-      return hintFn(error.layerName, error.httpStatus);
-    case LAYER_ERROR_TYPES.API_ERROR:
-      return hintFn(error.layerName, error.httpStatus);
-    case LAYER_ERROR_TYPES.CONFIG_ERROR:
-      return hintFn(error.layerName);
-    default:
-      return hintFn(error.layerName);
-  }
+  if (!hintFn) return `${getFriendlyLayerName(error.store)} isn't available right now.`;
+  return hintFn();
 }
 
-// ─── Styles (plain objects — no CSS-in-JS dependency) ────────────────────────
-
 const styles = {
+  backdrop: {
+    position: 'absolute',
+    inset: 0,
+    background: 'rgba(0,0,0,0.15)',
+    zIndex: 999,
+  },
   container: {
     position: 'absolute',
-    bottom: '24px',
-    right: '16px',
+    top: '50%',
+    left: '50%',
+    transform: 'translate(-50%, -50%)',
     zIndex: 1000,
     display: 'flex',
     flexDirection: 'column',
     gap: '8px',
-    maxWidth: '360px',
-    width: '100%',
-    pointerEvents: 'none', // let clicks pass through to the map
+    maxWidth: '380px',
+    width: '90%',
+    pointerEvents: 'none',
   },
   toast: {
     background: '#FFFFFF',
-    border: '1px solid #E0E0E0',
-    borderRadius: '8px',
-    padding: '12px 14px',
-    boxShadow: '0 2px 8px rgba(0,0,0,0.10)',
+    border: '1px solid #FCA5A5',
+    borderRadius: '10px',
+    padding: '14px 16px',
+    boxShadow: '0 8px 24px rgba(185,28,28,0.18), 0 2px 6px rgba(0,0,0,0.08)',
     pointerEvents: 'auto',
     fontSize: '13px',
     lineHeight: '1.5',
@@ -97,13 +88,13 @@ const styles = {
     justifyContent: 'flex-end',
   },
   retryBtn: {
-    padding: '3px 10px',
-    borderRadius: '4px',
-    border: '1px solid #1A73E8',
+    padding: '4px 12px',
+    borderRadius: '6px',
+    border: '1px solid #B91C1C',
     background: 'transparent',
-    color: '#1A73E8',
+    color: '#B91C1C',
     fontSize: '12px',
-    fontWeight: '500',
+    fontWeight: '600',
     cursor: 'pointer',
   },
   retryingBtn: {
@@ -119,7 +110,7 @@ const styles = {
     background: 'none',
     border: 'none',
     cursor: 'pointer',
-    color: '#888',
+    color: '#9CA3AF',
     fontSize: '16px',
     lineHeight: '1',
     padding: '0 2px',
@@ -131,25 +122,33 @@ const styles = {
 export default function LayerErrorToast({ errors = [], onDismiss, onRetry }) {
   if (!errors.length) return null;
 
+  const handleBackdropClick = () => {
+    const latest = errors[errors.length - 1];
+    if (latest) onDismiss(latest.id);
+  };
+
   return (
-    <div style={styles.container} role="region" aria-label="Map layer errors" aria-live="polite">
-      {errors.map((error) => {
+    <>
+      <div style={styles.backdrop} onClick={handleBackdropClick} />
+      <div style={styles.container} role="region" aria-label="Map layer errors" aria-live="polite">
+        {errors.map((error) => {
         const meta = TYPE_META[error.type] || TYPE_META[LAYER_ERROR_TYPES.FETCH_FAILED];
         const hint = resolveHint(error);
+        const friendlyName = getFriendlyLayerName(error.store);
 
         return (
           <div key={error.id} style={styles.toast} role="alert">
             <div style={styles.header}>
               <div style={styles.badgeRow}>
                 <span style={styles.badge(meta)}>{meta.label}</span>
-                <span style={styles.layerName} title={error.layerName}>
-                  {error.layerName}
+                <span style={styles.layerName} title={friendlyName}>
+                  {friendlyName}
                 </span>
               </div>
               <button
                 style={styles.dismissBtn}
                 onClick={() => onDismiss(error.id)}
-                aria-label={`Dismiss error for ${error.layerName}`}
+                aria-label={`Dismiss error for ${friendlyName}`}
               >
                 ×
               </button>
@@ -177,7 +176,8 @@ export default function LayerErrorToast({ errors = [], onDismiss, onRetry }) {
             </div>
           </div>
         );
-      })}
-    </div>
+        })}
+      </div>
+    </>
   );
 }
