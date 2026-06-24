@@ -67,8 +67,22 @@ const DISABLED_REASON_META = {
     border:  'border-amber-200',
     iconCls: 'text-amber-500',
     textCls: 'text-amber-800',
-    label:   'No MWS data for this block',
-    detail:  'Attribute data hasn\'t been generated here yet. Filters are unavailable.',
+    label:   'Oops. Data not yet generated for this location yet',
+    detail: (
+        <>
+        Request data for the location via this form{' '}
+        <a
+            href="https://docs.google.com/forms/d/e/1FAIpQLSesYshZg_HmNc0FgF-JSBye-AeN6mdyrhF2cjGmqLYeD7WgZA/viewform"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="underline font-medium hover:opacity-70"
+            onClick={(e) => e.stopPropagation()}
+        >
+            here
+        </a>
+        .
+        </>
+    )
   },
   network: {
     Icon:    WifiOff,
@@ -76,7 +90,7 @@ const DISABLED_REASON_META = {
     border:  'border-red-200',
     iconCls: 'text-red-500',
     textCls: 'text-red-800',
-    label:   'Data failed to load',
+    label:   'Data taking time to load ?',
     detail:  'Use the Retry button in the error notification to reload MWS data.',
   },
   parse: {
@@ -115,7 +129,7 @@ const VILLAGE_REASON_META = {
     border:  'border-red-200',
     iconCls: 'text-red-500',
     textCls: 'text-red-800',
-    label:   'Village data failed to load',
+    label:   'Data taking time to load ?',
     detail:  'Use the Retry button in the error notification to reload.',
   },
   parse: {

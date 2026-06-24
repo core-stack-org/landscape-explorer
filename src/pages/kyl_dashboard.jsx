@@ -1189,6 +1189,8 @@ const KYLDashboardPage = () => {
     }
   
     setIsLayerLoaded(true);
+
+    let zoomStarted = false;
     // RESET CONNECTIVITY ON LOCATION CHANGE
     setShowConnectivity(false);
 
@@ -1448,7 +1450,7 @@ const KYLDashboardPage = () => {
 
   const fetchDataJson = async () => {
     if (!process.env.REACT_APP_API_URL) {
-      emitLayerError({ type: LAYER_ERROR_TYPES.CONFIG_ERROR, layerName: 'REACT_APP_API_URL' });
+      console.error('[fetchDataJson] REACT_APP_API_URL is not set');
       return;
     }
   
@@ -1459,7 +1461,6 @@ const KYLDashboardPage = () => {
       `&block=${transformName(block.label)}` +
       `&file_type=json`;
   
-    // Clear previous error at the start of every fresh attempt
     setDataJsonError(null);
     setIsLoading(true);
   
@@ -1468,90 +1469,20 @@ const KYLDashboardPage = () => {
       try {
         response = await fetch(endpoint);
       } catch (networkError) {
-        emitLayerError({
-          type: LAYER_ERROR_TYPES.NETWORK_ERROR,
-          layerName: '/download_kyl_data/',
-          originalError: networkError,
-          retryFn: fetchDataJson,
-        });
+        // Console log for debugging — no emitLayerError, no toast.
+        // The sidebar banner (FiltersDisabledBanner) is the single source
+        // of truth for telling the user MWS data failed to load.
+        console.error('[fetchDataJson] Network error:', networkError);
         setDataJson(null);
         setDataJsonError('network');
-  
-        toast.custom(
-          (t) => (
-            <div className={`${t.visible ? 'animate-enter' : 'animate-leave'} max-w-md w-full bg-white shadow-lg rounded-lg pointer-events-auto flex`}>
-              <div className="flex-1 w-0 p-4">
-                <div className="flex items-start">
-                  <div className="ml-3 flex-1">
-                    <p className="text-sm font-medium text-gray-900">MWS data unavailable</p>
-                    <p className="mt-1 text-sm text-gray-500">
-                      Could not reach the server. Filters and pattern matching
-                      won't work until data loads.
-                    </p>
-                  </div>
-                </div>
-              </div>
-              <div className="flex border-l border-gray-200">
-                <button
-                  type="button"
-                  onClick={() => { toast.dismiss(t.id); fetchDataJson(); }}
-                  className="w-full border border-transparent rounded-none rounded-r-lg p-4 flex items-center justify-center text-sm font-medium text-indigo-600 hover:text-indigo-500 focus:outline-none"
-                >
-                  Retry
-                </button>
-              </div>
-            </div>
-          ),
-          { duration: 8000, position: 'top-right' }
-        );
         return;
       }
   
       if (!response.ok) {
         const is404 = response.status === 404;
-        emitLayerError({
-          type: LAYER_ERROR_TYPES.API_ERROR,
-          layerName: '/download_kyl_data/',
-          httpStatus: response.status,
-          originalError: new Error(`HTTP ${response.status}`),
-          retryFn: is404 ? undefined : fetchDataJson,
-        });
+        console.error(`[fetchDataJson] HTTP ${response.status} from ${endpoint}`);
         setDataJson(null);
         setDataJsonError(is404 ? 'not_found' : 'network');
-  
-        toast.custom(
-          (t) => (
-            <div className={`${t.visible ? 'animate-enter' : 'animate-leave'} max-w-md w-full bg-white shadow-lg rounded-lg pointer-events-auto flex`}>
-              <div className="flex-1 w-0 p-4">
-                <div className="flex items-start">
-                  <div className="ml-3 flex-1">
-                    <p className="text-sm font-medium text-gray-900">
-                      {is404 ? 'No data for this block' : 'MWS data unavailable'}
-                    </p>
-                    <p className="mt-1 text-sm text-gray-500">
-                      {is404
-                        ? "MWS attribute data hasn't been generated for this block yet. Filters are disabled."
-                        : `Server returned an error (HTTP ${response.status}). Filters are disabled until data loads.`
-                      }
-                    </p>
-                  </div>
-                </div>
-              </div>
-              {!is404 && (
-                <div className="flex border-l border-gray-200">
-                  <button
-                    type="button"
-                    onClick={() => { toast.dismiss(t.id); fetchDataJson(); }}
-                    className="w-full border border-transparent rounded-none rounded-r-lg p-4 flex items-center justify-center text-sm font-medium text-indigo-600 hover:text-indigo-500 focus:outline-none"
-                  >
-                    Retry
-                  </button>
-                </div>
-              )}
-            </div>
-          ),
-          { duration: 8000, position: 'top-right' }
-        );
         return;
       }
   
@@ -1559,22 +1490,12 @@ const KYLDashboardPage = () => {
       try {
         result = await response.json();
       } catch (parseError) {
-        emitLayerError({
-          type: LAYER_ERROR_TYPES.PARSE_ERROR,
-          layerName: '/download_kyl_data/',
-          originalError: parseError,
-          retryFn: fetchDataJson,
-        });
+        console.error('[fetchDataJson] Parse error:', parseError);
         setDataJson(null);
         setDataJsonError('parse');
-        toast.error('MWS data response was malformed. Filters are disabled.', {
-          duration: 8000,
-          position: 'top-right',
-        });
         return;
       }
   
-      // Success — clear any previous error and set data
       setDataJsonError(null);
       setDataJson(result);
   
@@ -1584,146 +1505,49 @@ const KYLDashboardPage = () => {
   };
 
   const fetchVillageJson = async () => {
-    // ── Config guard ───────────────────────────────────────────────────────────
     if (!process.env.REACT_APP_API_URL) {
-      emitLayerError({
-        type: LAYER_ERROR_TYPES.CONFIG_ERROR,
-        layerName: 'REACT_APP_API_URL',
-      });
+      console.error('[fetchVillageJson] REACT_APP_API_URL is not set');
       return;
     }
   
     const endpoint =
-      `${process.env.REACT_APP_API_URL}/download_kyl_village_data` +
+      `${process.env.REACT_APP_API_URL}/download_kyl_village_dataa` +
       `?state=${transformName(state.label)}` +
       `&district=${transformName(district.label)}` +
       `&block=${transformName(block.label)}` +
       `&file_type=json`;
   
-    // Clear any previous error at the start of each fresh attempt
     setVillageJsonError(null);
   
-    // ── 1. Network fetch ───────────────────────────────────────────────────────
     let response;
     try {
       response = await fetch(endpoint);
     } catch (networkError) {
-      emitLayerError({
-        type: LAYER_ERROR_TYPES.NETWORK_ERROR,
-        layerName: '/download_kyl_village_data',
-        originalError: networkError,
-        retryFn: fetchVillageJson,
-      });
+      // VillageFiltersBanner handles the message — no emitLayerError, no toast.
+      console.error('[fetchVillageJson] Network error:', networkError);
       setVillageJson(null);
       setVillageJsonError('network');
-  
-      // Toast here because a network failure is unexpected — the user should
-      // know village filters won't work even though MWS filters still will.
-      toast.custom(
-        (t) => (
-          <div className={`${t.visible ? 'animate-enter' : 'animate-leave'} max-w-md w-full bg-white shadow-lg rounded-lg pointer-events-auto flex`}>
-            <div className="flex-1 w-0 p-4">
-              <div className="flex items-start">
-                <div className="ml-3 flex-1">
-                  <p className="text-sm font-medium text-gray-900">
-                    Village data unavailable
-                  </p>
-                  <p className="mt-1 text-sm text-gray-500">
-                    Could not reach the server. Village filters are disabled —
-                    MWS filters are unaffected.
-                  </p>
-                </div>
-              </div>
-            </div>
-            <div className="flex border-l border-gray-200">
-              <button
-                type="button"
-                onClick={() => { toast.dismiss(t.id); fetchVillageJson(); }}
-                className="w-full border border-transparent rounded-none rounded-r-lg p-4 flex items-center justify-center text-sm font-medium text-indigo-600 hover:text-indigo-500 focus:outline-none"
-              >
-                Retry
-              </button>
-            </div>
-          </div>
-        ),
-        { duration: 8000, position: 'top-right' }
-      );
       return;
     }
   
-    // ── 2. HTTP status check ───────────────────────────────────────────────────
     if (!response.ok) {
       const is404 = response.status === 404;
-  
-      emitLayerError({
-        type: LAYER_ERROR_TYPES.API_ERROR,
-        layerName: '/download_kyl_village_data',
-        httpStatus: response.status,
-        originalError: new Error(`HTTP ${response.status}`),
-        retryFn: is404 ? undefined : fetchVillageJson,
-      });
-  
+      console.error(`[fetchVillageJson] HTTP ${response.status} from ${endpoint}`);
       setVillageJson(null);
       setVillageJsonError(is404 ? 'not_found' : 'network');
-  
-      // No toast for 404 — village data simply not generated yet, not an error
-      // the user can act on. The sidebar banner handles the in-context message.
-      if (!is404) {
-        toast.custom(
-          (t) => (
-            <div className={`${t.visible ? 'animate-enter' : 'animate-leave'} max-w-md w-full bg-white shadow-lg rounded-lg pointer-events-auto flex`}>
-              <div className="flex-1 w-0 p-4">
-                <div className="flex items-start">
-                  <div className="ml-3 flex-1">
-                    <p className="text-sm font-medium text-gray-900">
-                      Village data unavailable
-                    </p>
-                    <p className="mt-1 text-sm text-gray-500">
-                      Server returned HTTP {response.status}. Village filters
-                      are disabled — MWS filters are unaffected.
-                    </p>
-                  </div>
-                </div>
-              </div>
-              <div className="flex border-l border-gray-200">
-                <button
-                  type="button"
-                  onClick={() => { toast.dismiss(t.id); fetchVillageJson(); }}
-                  className="w-full border border-transparent rounded-none rounded-r-lg p-4 flex items-center justify-center text-sm font-medium text-indigo-600 hover:text-indigo-500 focus:outline-none"
-                >
-                  Retry
-                </button>
-              </div>
-            </div>
-          ),
-          { duration: 8000, position: 'top-right' }
-        );
-      }
       return;
     }
   
-    // ── 3. Parse ───────────────────────────────────────────────────────────────
     let result;
     try {
       result = await response.json();
     } catch (parseError) {
-      emitLayerError({
-        type: LAYER_ERROR_TYPES.PARSE_ERROR,
-        layerName: '/download_kyl_village_data',
-        originalError: parseError,
-        retryFn: fetchVillageJson,
-      });
+      console.error('[fetchVillageJson] Parse error:', parseError);
       setVillageJson(null);
       setVillageJsonError('parse');
-  
-      toast.error(
-        'Village data response was malformed. Village filters are disabled.',
-        { duration: 8000, position: 'top-right' }
-      );
       return;
     }
   
-    // ── 4. Success ─────────────────────────────────────────────────────────────
     setVillageJsonError(null);
     setVillageJson(result);
   };
