@@ -1511,7 +1511,7 @@ const KYLDashboardPage = () => {
     }
   
     const endpoint =
-      `${process.env.REACT_APP_API_URL}/download_kyl_village_dataa` +
+      `${process.env.REACT_APP_API_URL}/download_kyl_village_data` +
       `?state=${transformName(state.label)}` +
       `&district=${transformName(district.label)}` +
       `&block=${transformName(block.label)}` +
