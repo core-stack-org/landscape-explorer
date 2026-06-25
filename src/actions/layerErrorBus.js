@@ -54,6 +54,7 @@ export const LAYER_DISPLAY_NAMES = {
   change_detection:     'Change Detection',
   mws_connectivity:     'MWS Connectivity',
   mws_centroid:         'MWS Centroid',
+  facilities_proximity : 'Facilities Layer'
 };
 
 export function getFriendlyLayerName(store) {
