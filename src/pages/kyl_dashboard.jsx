@@ -2694,9 +2694,15 @@ console.log("Current filterSelections:", filterSelections);
         if (!hasMwsFilters && !hasMwsPatterns) {
           // No selections at any level — clear villages
           setVillageIdList(new Set());
+        } else {
+          // Village filters/patterns were cleared — restore villages to the
+          // full MWS intersect set instead of leaving the stale filtered list
+          const villages = new Set();
+          selectedMWS.forEach(mwsId => {
+            (dataJsonIndex?.mwsToVillages.get(mwsId) || []).forEach(v => villages.add(v));
+          });
+          setVillageIdList(villages);
         }
-        // If MWS filters/patterns are active, leave villageIdList alone —
-        // Effect 1 already derived and set the correct villages from selectedMWS
         return;
       }
 
@@ -2758,6 +2764,7 @@ console.log("Current filterSelections:", filterSelections);
     selectedMWS,
     dataJson,
     villageJson,
+    dataJsonIndex,
   ]);
 
 
