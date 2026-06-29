@@ -1234,15 +1234,21 @@
             {
                 "name": "lcw_conflict",
                 "label": "Land Conflicts",
-                "type": 1,
+                "type": 2,
                 "values": [
                     {
                         "label": "Areas with one or more conflicts",
-                        "value": 1
+                        "value": {
+                            "lower": 1,
+                            "upper": 9999
+                        }
                     },
                     {
                         "label": "Areas with no known conflicts",
-                        "value": 0
+                        "value": {
+                            "lower": -9999,
+                            "upper": 0
+                        }
                     }
                 ],
                 "layer_store": [
@@ -1262,15 +1268,21 @@
             {
                 "name": "factory_csr",
                 "label": "Industry",
-                "type": 1,
+                "type": 2,
                 "values": [
                     {
                         "label": "Areas with industries",
-                        "value": 1
+                        "value": {
+                            "lower": 1,
+                            "upper": 9999
+                        }
                     },
                     {
                         "label": "Areas with no known industries",
-                        "value": 0
+                        "value": {
+                            "lower": -9999,
+                            "upper": 0
+                        }
                     }
                 ],
                 "layer_store": [
@@ -1290,15 +1302,21 @@
             {
                 "name": "mining",
                 "label": "Mining",
-                "type": 1,
+                "type": 2,
                 "values": [
                     {
                         "label": "Areas with mining sites",
-                        "value": 1
+                        "value": {
+                            "lower": 1,
+                            "upper": 9999
+                        }
                     },
                     {
                         "label": "Areas with no known mining sites",
-                        "value": 0
+                        "value": {
+                            "lower": -9999,
+                            "upper": 0
+                        }
                     }
                 ],
                 "layer_store": [
