@@ -49,6 +49,11 @@ import Feature from "ol/Feature";
 import LineString from "ol/geom/LineString";
 import getWebGlPolygonLayers from "../actions/getWebGlVectorLayers.js";
 
+import { LayerLoadError } from "../actions/getWebGlVectorLayers.js";
+import { layerErrorBus, emitLayerError, LAYER_ERROR_TYPES } from "../actions/layerErrorBus.js";
+import { useLayerErrors } from '../actions/useLayerErrors';
+import LayerErrorToast from '../actions/LayerErrorToast';
+
 const KYLDashboardPage = () => {
   const mapElement = useRef(null);
   const mapRef = useRef(null);
@@ -114,6 +119,13 @@ const KYLDashboardPage = () => {
   const [selectedWaterbodyData, setSelectedWaterbodyData] = useState([]);
   const [isLayerSelecting, setIsLayerSelecting] = useState(false);
   const showConnectivityRef = useRef(false);
+
+
+  const [dataJsonError, setDataJsonError] = useState(null);
+  const [villageJsonError, setVillageJsonError] = useState(null);
+  const INDIA_CENTER = [78.9, 23.6];
+  const INDIA_ZOOM   = 5;
+  const { errors: layerErrors, dismiss: dismissLayerError, retry: retryLayerError } = useLayerErrors();
 
 
   const dataJsonIndex = useMemo(() => {
@@ -673,7 +685,6 @@ const KYLDashboardPage = () => {
     }
   };
 
-  
   const applyDefaultMWSStyle = () => {
     if (!mwsLayerRef.current) return;
     
@@ -700,7 +711,7 @@ const KYLDashboardPage = () => {
         // normal MWS
         [74, 144, 226, 1],
       ],
-  
+        
       "stroke-width": [
         "case",
 
@@ -1174,7 +1185,15 @@ const KYLDashboardPage = () => {
   };
 
   const fetchBoundaryAndZoom = async (districtName, blockName) => {
+    // ── Guard: map must be initialised ────────────────────────────────────────
+    if (!mapRef.current) {
+      console.warn("[fetchBoundaryAndZoom] map not ready, skipping");
+      return;
+    }
+  
     setIsLayerLoaded(true);
+
+    let zoomStarted = false;
     // RESET CONNECTIVITY ON LOCATION CHANGE
     setShowConnectivity(false);
 
@@ -1191,252 +1210,435 @@ const KYLDashboardPage = () => {
     }
 
     try {
-      // Create layers (already fully loaded now)
-      const boundaryLayer = await getWebGlPolygonLayers(
-        "panchayat_boundaries",
-        `${transformName(districtName)}_${transformName(blockName)}`
-      );
-
-      const mwsLayer = await getWebGlPolygonLayers(
-        "mws_layers",
-        `deltaG_well_depth_${transformName(district.label)}_${transformName(block.label)}`
-      );
-
-      // Remove old layers safely
-      if (mwsLayerRef.current) {
-        mapRef.current.removeLayer(mwsLayerRef.current);
-      }
-
-      if (boundaryLayerRef.current) {
-        mapRef.current.removeLayer(boundaryLayerRef.current);
-      }
-
-      // Initial invisible state for fade animation
+      // ── 1. Fetch layers ──────────────────────────────────────────────────────
+      const [boundaryLayer, mwsLayer] = await Promise.all([
+        getWebGlPolygonLayers(
+          "panchayat_boundaries",
+          `${transformName(districtName)}_${transformName(blockName)}`
+        ),
+        getWebGlPolygonLayers(
+          "mws_layers",
+          `deltaG_well_depth_${transformName(district.label)}_${transformName(block.label)}`
+        ),
+      ]);
+  
+      // ── 2. Swap layers on the map ────────────────────────────────────────────
+      if (mwsLayerRef.current)      mapRef.current.removeLayer(mwsLayerRef.current);
+      if (boundaryLayerRef.current) mapRef.current.removeLayer(boundaryLayerRef.current);
+  
       boundaryLayer.setOpacity(0);
-
-      // Add layers
       addLayerSafe(mwsLayer);
       addLayerSafe(boundaryLayer);
-
-      // Store refs
-      mwsLayerRef.current = mwsLayer;
+  
+      mwsLayerRef.current      = mwsLayer;
       boundaryLayerRef.current = boundaryLayer;
-
-      // Source is already loaded
-      const vectorSource = boundaryLayer.getSource();
-      const extent = vectorSource.getExtent();
-
-      // Configure boundary styling
+  
+      // ── 3. Style boundary ────────────────────────────────────────────────────
       boundaryLayer.setStyle({
-        variables: {
-          hasSelection: false,
-          isVisualizeOn: false,
-        },
-
+        variables: { hasSelection: false, isVisualizeOn: false },
         "stroke-color": [
           "case",
-          ["var", "isVisualizeOn"],
-          [0, 0, 0, 1],
-
-          ["==", ["get", "isSelected"], 1],
-          [255, 225, 0, 1],
-
-          ["==", ["get", "isSelected"], 0],
-          [
-            "case",
-            ["var", "hasSelection"],
-            [0, 0, 0, 0],
-            [0, 0, 0, 1],
+          ["var", "isVisualizeOn"],       [0, 0, 0, 1],
+          ["==", ["get", "isSelected"], 1], [255, 225, 0, 1],
+          ["==", ["get", "isSelected"], 0], [
+            "case", ["var", "hasSelection"], [0, 0, 0, 0], [0, 0, 0, 1],
           ],
-
           [0, 0, 0, 1],
         ],
-
-        "stroke-width": [
-          "case",
-          ["==", ["get", "isSelected"], 1],
-          2.0,
-          1.2,
-        ],
-
+        "stroke-width": ["case", ["==", ["get", "isSelected"], 1], 2.0, 1.2],
         "fill-color": [0, 0, 0, 0],
       });
-
-      const view = mapRef.current.getView();
-
-      // Stop ongoing animations
+  
+      // ── 4. Zoom animation ────────────────────────────────────────────────────
+      const vectorSource = boundaryLayer.getSource();
+      const extent       = vectorSource.getExtent();
+      const view         = mapRef.current.getView();
+  
       view.cancelAnimations();
-
-      // Small zoom-out effect before fit
-      await new Promise((resolve) => {
-        view.animate(
-          {
-            zoom: Math.max(view.getZoom() - 0.5, 5),
-            duration: 200,
-          },
-          resolve
-        );
-      });
-
-      // Fit to extent
-      await new Promise((resolve) => {
+      zoomStarted = true;
+  
+      // Brief zoom-out for visual context
+      await new Promise((resolve) =>
+        view.animate({ zoom: Math.max(view.getZoom() - 0.5, 5), duration: 200 }, resolve)
+      );
+  
+      // Fit to boundary extent
+      await new Promise((resolve) =>
         view.fit(extent, {
-          padding: [50, 50, 50, 50],
+          padding:  [50, 50, 50, 50],
           duration: 1000,
-          maxZoom: 15,
-
-          easing: (t) =>
-            t === 1 ? 1 : 1 - Math.pow(2, -10 * t),
-
+          maxZoom:  15,
+          easing:   (t) => (t === 1 ? 1 : 1 - Math.pow(2, -10 * t)),
           callback: resolve,
-        });
-      });
-
-      // Smooth fade-in animation
+        })
+      );
+  
+      // ── 5. Fade-in ───────────────────────────────────────────────────────────
       let opacity = 0;
-
       const fadeInterval = setInterval(() => {
         opacity += 0.1;
-
         boundaryLayer.setOpacity(Math.min(opacity, 1));
-
-        if (opacity >= 1) {
-          clearInterval(fadeInterval);
-        }
+        if (opacity >= 1) clearInterval(fadeInterval);
       }, 50);
-
-      // Load dependent data
-      await fetchMWSLayer([]);
-      applyDefaultMWSStyle();
-
+  
+      // ── 6. Dependent data ────────────────────────────────────────────────────
+      await Promise.allSettled([
+        fetchMWSLayer([]),
+        applyDefaultMWSStyle(),   // synchronous but wrapped for uniformity
+      ]);
+  
     } catch (error) {
-      console.error("Error loading boundary:", error);
+      // ── Differentiated recovery ──────────────────────────────────────────────
+  
+      if (error instanceof LayerLoadError) {
+        console.error('[fetchBoundaryAndZoom] Layer load failed:', {
+          layer:  error.layerName,
+          type:   error.layerErrorType,
+          status: error.httpStatus,
+        });
 
-      toast.custom(
-        (t) => (
-          <div
-            className={`${
-              t.visible ? "animate-enter" : "animate-leave"
-            } max-w-md w-full bg-white shadow-lg rounded-lg pointer-events-auto flex`}
-          >
-            <div className="flex-1 w-0 p-4">
-              <div className="flex items-start">
-                <div className="ml-3 flex-1">
-                  <p className="text-sm font-medium text-gray-900">
-                    Network Error!
-                  </p>
+        const locationLabel = `${districtName} › ${blockName}`;
 
-                  <p className="mt-1 text-sm text-gray-500">
-                    Unable to load map data. Please refresh the page.
-                  </p>
+        const isLayerMissing = error.layerErrorType === LAYER_ERROR_TYPES.FETCH_FAILED;
+      
+        toast.custom(
+          (t) => (
+            <div
+              className={`${t.visible ? 'animate-enter' : 'animate-leave'} max-w-md w-full bg-white shadow-lg rounded-lg pointer-events-auto flex`}
+            >
+              <div className="flex-1 w-0 p-4">
+                <div className="flex items-start gap-3">
+                  {/* Icon column */}
+                  <div className={`mt-0.5 shrink-0 w-8 h-8 rounded-full flex items-center justify-center
+                    ${isLayerMissing ? 'bg-amber-100' : 'bg-red-100'}`}
+                  >
+                    {/* Inline SVG — no extra import needed */}
+                    <svg
+                      className={`w-4 h-4 ${isLayerMissing ? 'text-amber-600' : 'text-red-600'}`}
+                      fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round"
+                        d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"
+                      />
+                    </svg>
+                  </div>
+      
+                  {/* Text column */}
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-gray-900">
+                      {isLayerMissing
+                        ? 'Map data not available'
+                        : 'Failed to load map data'
+                      }
+                    </p>
+                    <p className="mt-1 text-xs text-gray-500 leading-relaxed">
+                      {isLayerMissing
+                        ? <>Map layers for <span className="font-medium text-gray-700">{locationLabel}</span> haven't been generated yet.</>
+                        : <>Could not load layers for <span className="font-medium text-gray-700">{locationLabel}</span>. This may be a temporary server issue.</>
+                      }
+                    </p>
+                    {/* Support email — always shown so users have an escalation path */}
+                    <p className="mt-2 text-[11px] text-gray-400">
+                      If this keeps happening, contact{' '}
+                      <a
+                        href={`mailto:support@core-stack.org?subject=Map%20layer%20missing%3A%20${encodeURIComponent(locationLabel)}&body=The%20map%20layer%20for%20${encodeURIComponent(locationLabel)}%20failed%20to%20load%20(${error.layerErrorType}).`}
+                        className="text-indigo-500 hover:text-indigo-700 underline"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        support@core-stack.org
+                      </a>
+                    </p>
+                  </div>
                 </div>
               </div>
+      
+              {/* Action buttons */}
+              <div className="flex flex-col border-l border-gray-200">
+                {/* Retry — only useful for transient failures, not missing layers */}
+                {!isLayerMissing && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      toast.dismiss(t.id);
+                      fetchBoundaryAndZoom(districtName, blockName);
+                    }}
+                    className="flex-1 border-b border-gray-200 px-4 py-3 flex items-center justify-center text-xs font-semibold text-indigo-600 hover:text-indigo-500 hover:bg-indigo-50 transition-colors"
+                  >
+                    Retry
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={() => toast.dismiss(t.id)}
+                  className="flex-1 px-4 py-3 flex items-center justify-center text-xs font-medium text-gray-500 hover:text-gray-700 hover:bg-gray-50 transition-colors"
+                >
+                  Dismiss
+                </button>
+              </div>
             </div>
-
-            <div className="flex border-l border-gray-200">
-              <button
-                type="button"
-                onClick={() => {
-                  toast.dismiss(t.id);
-                  window.location.reload();
-                }}
-                className="w-full border border-transparent rounded-none rounded-r-lg p-4 flex items-center justify-center text-sm font-medium text-blue-600 hover:text-blue-500 focus:outline-none"
-              >
-                Reload
-              </button>
-            </div>
-          </div>
-        ),
-        {
-          duration: 10000,
-          position: "top-right",
+          ),
+          { duration: isLayerMissing ? 15000 : 10000, position: 'top-right' }
+        );
+      
+        if (!zoomStarted) {
+          resetMapToIndia();
         }
-      );
-
-      // Reset map view
-      const view = mapRef.current.getView();
-
-      view.cancelAnimations();
-
-      view.setCenter([78.9, 23.6]);
-      view.setZoom(5);
-
+      } else {
+        console.error("[fetchBoundaryAndZoom] Unexpected error:", error);
+  
+        toast.custom(
+          (t) => (
+            <div
+              className={`${t.visible ? "animate-enter" : "animate-leave"} max-w-md w-full bg-white shadow-lg rounded-lg pointer-events-auto flex`}
+            >
+              <div className="flex-1 w-0 p-4">
+                <div className="flex items-start">
+                  <div className="ml-3 flex-1">
+                    <p className="text-sm font-medium text-gray-900">
+                      Something went wrong
+                    </p>
+                    <p className="mt-1 text-sm text-gray-500">
+                      The map couldn't load this location. Try selecting the
+                      block again, or refresh if the problem persists.
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <div className="flex border-l border-gray-200">
+                <button
+                  type="button"
+                  onClick={() => {
+                    toast.dismiss(t.id);
+                    // Retry the whole operation — user explicitly asked for it
+                    fetchBoundaryAndZoom(districtName, blockName);
+                  }}
+                  className="w-full border border-transparent rounded-none rounded-r-lg p-4 flex items-center justify-center text-sm font-medium text-indigo-600 hover:text-indigo-500 focus:outline-none"
+                >
+                  Retry
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    toast.dismiss(t.id);
+                    window.location.reload();
+                  }}
+                  className="border border-transparent rounded-none rounded-r-lg p-4 flex items-center justify-center text-sm font-medium text-gray-500 hover:text-gray-400 focus:outline-none"
+                >
+                  Reload
+                </button>
+              </div>
+            </div>
+          ),
+          { duration: 10000, position: "top-right" }
+        );
+  
+        if (!zoomStarted) {
+          resetMapToIndia();
+        }
+      }
+  
     } finally {
       setIsLayerLoaded(false);
     }
   };
+  
+  // ── Helper: reset map to India overview ─────────────────────────────────────
+  // Extracted so both catch branches can call it without duplication.
+  function resetMapToIndia() {
+    if (!mapRef.current) return;
+    const view = mapRef.current.getView();
+    view.cancelAnimations();
+    view.animate({ center: INDIA_CENTER, zoom: INDIA_ZOOM, duration: 400 });
+  }
 
   const fetchDataJson = async () => {
+    if (!process.env.REACT_APP_API_URL) {
+      console.error('[fetchDataJson] REACT_APP_API_URL is not set');
+      return;
+    }
+  
+    const endpoint =
+      `${process.env.REACT_APP_API_URL}/download_kyl_data/` +
+      `?state=${transformName(state.label)}` +
+      `&district=${transformName(district.label)}` +
+      `&block=${transformName(block.label)}` +
+      `&file_type=json`;
+  
+    setDataJsonError(null);
+    setIsLoading(true);
+  
     try {
-      setIsLoading(true);
-      const response = await fetch(
-        `${process.env.REACT_APP_API_URL}/download_kyl_data/?state=${transformName(state.label)}&district=${transformName(district.label)}&block=${transformName(block.label)}&file_type=json`
-      );
-      if (!response.ok) throw new Error("Network response was not ok");
-      const result = await response.json();
+      let response;
+      try {
+        response = await fetch(endpoint);
+      } catch (networkError) {
+        // Console log for debugging — no emitLayerError, no toast.
+        // The sidebar banner (FiltersDisabledBanner) is the single source
+        // of truth for telling the user MWS data failed to load.
+        console.error('[fetchDataJson] Network error:', networkError);
+        setDataJson(null);
+        setDataJsonError('network');
+        return;
+      }
+  
+      if (!response.ok) {
+        const is404 = response.status === 404;
+        console.error(`[fetchDataJson] HTTP ${response.status} from ${endpoint}`);
+        setDataJson(null);
+        setDataJsonError(is404 ? 'not_found' : 'network');
+        return;
+      }
+  
+      let result;
+      try {
+        result = await response.json();
+      } catch (parseError) {
+        console.error('[fetchDataJson] Parse error:', parseError);
+        setDataJson(null);
+        setDataJsonError('parse');
+        return;
+      }
+  
+      setDataJsonError(null);
       setDataJson(result);
-      setIsLoading(false);
-    } catch (e) {
-      console.log(e);
+  
+    } finally {
       setIsLoading(false);
     }
   };
 
   const fetchVillageJson = async () => {
-    try {
-      const response = await fetch(
-        `${process.env.REACT_APP_API_URL}/download_kyl_village_data?state=${transformName(state.label)}&district=${transformName(district.label)}&block=${transformName(block.label)}&file_type=json`
-      );
-      if (!response.ok) throw new Error("Network response was not ok");
-      const result = await response.json();
-      setVillageJson(result);
-    } catch (e) {
-      console.log(e);
+    if (!process.env.REACT_APP_API_URL) {
+      console.error('[fetchVillageJson] REACT_APP_API_URL is not set');
+      return;
     }
+  
+    const endpoint =
+      `${process.env.REACT_APP_API_URL}/download_kyl_village_data` +
+      `?state=${transformName(state.label)}` +
+      `&district=${transformName(district.label)}` +
+      `&block=${transformName(block.label)}` +
+      `&file_type=json`;
+  
+    setVillageJsonError(null);
+  
+    let response;
+    try {
+      response = await fetch(endpoint);
+    } catch (networkError) {
+      // VillageFiltersBanner handles the message — no emitLayerError, no toast.
+      console.error('[fetchVillageJson] Network error:', networkError);
+      setVillageJson(null);
+      setVillageJsonError('network');
+      return;
+    }
+  
+    if (!response.ok) {
+      const is404 = response.status === 404;
+      console.error(`[fetchVillageJson] HTTP ${response.status} from ${endpoint}`);
+      setVillageJson(null);
+      setVillageJsonError(is404 ? 'not_found' : 'network');
+      return;
+    }
+  
+    let result;
+    try {
+      result = await response.json();
+    } catch (parseError) {
+      console.error('[fetchVillageJson] Parse error:', parseError);
+      setVillageJson(null);
+      setVillageJsonError('parse');
+      return;
+    }
+  
+    setVillageJsonError(null);
+    setVillageJson(result);
   };
+
+  function watchForImageLoadError(layerName, onError, timeoutMs = 8000) {
+    let settled = false;
+  
+    const unsubscribe = layerErrorBus.subscribe((payload) => {
+      if (settled) return;
+      if (
+        payload.type      === LAYER_ERROR_TYPES.IMAGE_LOAD_ERROR &&
+        payload.layerName === layerName
+      ) {
+        settled = true;
+        unsubscribe();
+        onError(payload);
+      }
+    });
+  
+    // Auto-cancel after timeout — prevents memory leaks if the layer loads fine
+    const timer = setTimeout(() => {
+      if (!settled) {
+        settled = true;
+        unsubscribe();
+      }
+    }, timeoutMs);
+  
+    // Return a cancel function for the success path
+    return () => {
+      if (!settled) {
+        settled = true;
+        clearTimeout(timer);
+        unsubscribe();
+      }
+    };
+  }
 
   const handleLayerSelection = async (filter) => {
     if (showConnectivityRef.current) {
       alert("Please turn off MWS Connectivity before using Visualize.");
       return;
     }
+  
     setIsLayerSelecting(true);
     await new Promise(resolve => setTimeout(resolve, 0));
-
+  
     const startTime = Date.now();
+
+    const addedLayersThisCall = [];
+  
+    let coreLayersRemoved = false;
+  
     try {
       let checkIfPresent = currentLayer.find((f) => f.name === filter.name);
-      let checkIfInMap = mapRef.current.getLayers().getArray();
-      let existingLayer = checkIfInMap.find((layer) => layer.ol_uid === boundaryLayerRef.current.ol_uid);
-      let tempArr = currentLayer;
-      let len = filter.layer_store.length;
-
+      let checkIfInMap   = mapRef.current.getLayers().getArray();
+      let existingLayer  = checkIfInMap.find((layer) => layer.ol_uid === boundaryLayerRef.current.ol_uid);
+      let tempArr        = currentLayer;
+      let len            = filter.layer_store.length;
+  
+      // ── BRANCH A: layer already on — toggle it off ──────────────────────────
       if (checkIfPresent) {
-        checkIfPresent.layerRef.map((item) => mapRef.current.removeLayer(item));
+        checkIfPresent.layerRef.forEach((item) => mapRef.current.removeLayer(item));
         if (!existingLayer) mapRef.current.addLayer(boundaryLayerRef.current);
+  
         tempArr = currentLayer.filter((item) => item.name !== filter.name);
         setToggleStates((prevStates) => ({ ...prevStates, [filter.name]: false }));
-
-        if (
+  
+        const isWBVisualize =
           filter.name === "waterbody_type" ||
           filter.name === "waterbody_size" ||
           filter.name === "drainage_line" ||
-          filter.name === "surface_water_trend"
-        ) {
+          filter.name === "surface_water_trend";
+  
+        if (isWBVisualize) {
           setIsWBVisualizeOn(false);
           setActiveWBVisualize(null);
           if (mwsLayerRef.current) mwsLayerRef.current.setVisible(true);
         }
-
+  
         boundaryLayerRef.current.updateStyleVariables({ isVisualizeOn: false });
         mwsLayerRef.current.updateStyleVariables({ isVisualizeOn: false });
-        setShowMWS(true)
-
+        setShowMWS(true);
+  
         if (waterbodiesLayerRef.current) {
           waterbodiesLayerRef.current.updateStyleVariables({
             isVisualizeOn: false,
             wbFilterActive: 1,
-            visualizeMode: 0
+            visualizeMode: 0,
           });
           applyWaterbodyFilters(
             selectedMWS,
@@ -1444,25 +1646,30 @@ const KYLDashboardPage = () => {
             false
           );
         }
-
+  
+      // ── BRANCH B: no layer on — add new layer ───────────────────────────────
       } else if (currentLayer.length === 0) {
         const isWBVisualize =
           filter.name === "waterbody_type" ||
           filter.name === "waterbody_size" ||
           filter.name === "drainage_line" ||
           filter.name === "surface_water_trend";
-
+  
         if (isWBVisualize && !showWB) {
           toast.error("Please enable 'Show Waterbodies' to apply waterbody filters.");
           return;
         }
-
-        let layerRef = [];
+  
+        // Remove core layers before the loop — track this so catch can restore
         mapRef.current.removeLayer(mwsLayerRef.current);
         mapRef.current.removeLayer(boundaryLayerRef.current);
-
+        coreLayersRemoved = true;
+  
+        let layerRef = [];
+  
         for (let i = 0; i < len; ++i) {
           let tempLayer;
+  
           if (filter.layer_store[i] === "terrain") {
             tempLayer = await getImageLayer(
               filter.layer_store[i],
@@ -1471,27 +1678,62 @@ const KYLDashboardPage = () => {
             );
             layerRef.push(tempLayer);
             mapRef.current.addLayer(tempLayer);
+            addedLayersThisCall.push(tempLayer);
+
+            const cancelWatch = watchForImageLoadError(
+              `${transformName(district.label)}_${transformName(block.label)}_${filter.layer_name[i]}`,
+              () => {
+                // Remove the failed layer from the map
+                try { mapRef.current.removeLayer(tempLayer); } catch (_) {}
+          
+                // Restore core layers if they were removed (they were, for this branch)
+                try {
+                  if (!mapRef.current.getLayers().getArray().includes(mwsLayerRef.current)) {
+                    mapRef.current.addLayer(mwsLayerRef.current);
+                  }
+                  if (!mapRef.current.getLayers().getArray().includes(boundaryLayerRef.current)) {
+                    mapRef.current.addLayer(boundaryLayerRef.current);
+                  }
+                  boundaryLayerRef.current.setZIndex(9999);
+                  boundaryLayerRef.current.updateStyleVariables({ isVisualizeOn: false });
+                  mwsLayerRef.current.updateStyleVariables({ isVisualizeOn: false });
+                  setShowMWS(true);
+                } catch (_) {}
+          
+                // Reset toggle and currentLayer so the user can retry
+                setToggleStates(prev => ({ ...prev, [filter.name]: false }));
+                setCurrentLayer(prev => prev.filter(l => l.name !== filter.name));
+              }
+            );
+            layerRef._cancelImageWatch = cancelWatch;
           } else if (filter.layer_store[i] === "change_detection") {
             tempLayer = await getVectorLayers(
               `${filter.layer_store[i]}`,
-              `change_vector_${transformName(district.label)}_${transformName(block.label)}_${filter.layer_name[i]}`,
+              `change_vector_${transformName(district.label)}_${transformName(block.label)}_${filter.layer_name[i]}`
             );
+  
           } else if (filter.layer_store[i] === "nrega_assets") {
-            const nregaLayerName = `${transformName(district.label)}_${transformName(block.label)}`;
             tempLayer = await getWebGlLayers(
-              filter.layer_store[i], nregaLayerName, true, true, null, null,
+              filter.layer_store[i],
+              `${transformName(district.label)}_${transformName(block.label)}`,
+              true, true, null, null,
               transformName(district.label), transformName(block.label)
             );
             layerRef.push(tempLayer);
             mapRef.current.addLayer(tempLayer);
+            addedLayersThisCall.push(tempLayer);
+  
           } else if (["lcw", "factory_csr", "mining"].includes(filter.layer_store[i])) {
-            const industryLayerName = `${transformName(district.label)}_${transformName(block.label)}`;
-            const tempLayer = await getWebGlLayers(
-              filter.layer_store[i], industryLayerName, true, true, null, null,
+            tempLayer = await getWebGlLayers(
+              filter.layer_store[i],
+              `${transformName(district.label)}_${transformName(block.label)}`,
+              true, true, null, null,
               transformName(district.label), transformName(block.label)
             );
             layerRef.push(tempLayer);
             mapRef.current.addLayer(tempLayer);
+            addedLayersThisCall.push(tempLayer);
+  
           } else if (filter.layer_store[i] === "LULC") {
             tempLayer = await getImageLayer(
               `${filter.layer_store[i]}_${filter.layer_name[i]}`,
@@ -1500,16 +1742,46 @@ const KYLDashboardPage = () => {
             );
             layerRef.push(tempLayer);
             mapRef.current.addLayer(tempLayer);
-          } else if (filter.layer_store[i] === "drought" || filter.layer_store[i] === "green_credit" || filter.layer_store[i] === "terrain_lulc" || filter.layer_store[i] === "river" || filter.layer_store[i] === "canal") {
+            addedLayersThisCall.push(tempLayer);
+          
+            watchForImageLoadError(
+              `LULC_${lulcYear}_${transformName(district.label)}_${transformName(block.label)}_${filter.layer_name[i]}`,
+              () => {
+                try { mapRef.current.removeLayer(tempLayer); } catch (_) {}
+                try {
+                  if (!mapRef.current.getLayers().getArray().includes(mwsLayerRef.current)) {
+                    mapRef.current.addLayer(mwsLayerRef.current);
+                  }
+                  if (!mapRef.current.getLayers().getArray().includes(boundaryLayerRef.current)) {
+                    mapRef.current.addLayer(boundaryLayerRef.current);
+                  }
+                  boundaryLayerRef.current.setZIndex(9999);
+                  boundaryLayerRef.current.updateStyleVariables({ isVisualizeOn: false });
+                  mwsLayerRef.current.updateStyleVariables({ isVisualizeOn: false });
+                  setShowMWS(true);
+                } catch (_) {}
+                setToggleStates(prev => ({ ...prev, [filter.name]: false }));
+                setCurrentLayer(prev => prev.filter(l => l.name !== filter.name));
+              }
+            );
+          } else if (
+            filter.layer_store[i] === "drought" ||
+            filter.layer_store[i] === "green_credit" ||
+            filter.layer_store[i] === "terrain_lulc" ||
+            filter.layer_store[i] === "river" ||
+            filter.layer_store[i] === "canal"
+          ) {
             tempLayer = await getVectorLayers(
               filter.layer_store[i],
               `${transformName(district.label)}_${transformName(block.label)}_${filter.layer_name[i]}`
             );
+  
           } else if (filter.layer_store[i] === "panchayat_boundaries") {
             tempLayer = await getVectorLayers(
               filter.layer_store[i],
               `${transformName(district.label)}_${transformName(block.label)}`
             );
+  
           } else if (filter.layer_store[i] === "restoration") {
             tempLayer = await getImageLayer(
               filter.layer_store[i],
@@ -1518,38 +1790,58 @@ const KYLDashboardPage = () => {
             );
             layerRef.push(tempLayer);
             mapRef.current.addLayer(tempLayer);
-          } else if (filter.name === "relative_mean_elevation"){
+            addedLayersThisCall.push(tempLayer);
+          
+            watchForImageLoadError(
+              `${filter.layer_name[i]}_${transformName(district.label)}_${transformName(block.label)}_raster`,
+              () => {
+                try { mapRef.current.removeLayer(tempLayer); } catch (_) {}
+                try {
+                  if (!mapRef.current.getLayers().getArray().includes(mwsLayerRef.current)) {
+                    mapRef.current.addLayer(mwsLayerRef.current);
+                  }
+                  if (!mapRef.current.getLayers().getArray().includes(boundaryLayerRef.current)) {
+                    mapRef.current.addLayer(boundaryLayerRef.current);
+                  }
+                  boundaryLayerRef.current.setZIndex(9999);
+                  boundaryLayerRef.current.updateStyleVariables({ isVisualizeOn: false });
+                  mwsLayerRef.current.updateStyleVariables({ isVisualizeOn: false });
+                  setShowMWS(true);
+                } catch (_) {}
+                setToggleStates(prev => ({ ...prev, [filter.name]: false }));
+                setCurrentLayer(prev => prev.filter(l => l.name !== filter.name));
+              }
+            );
+          } else if (filter.name === "relative_mean_elevation") {
             const view = mapRef.current.getView();
-
+  
             tempLayer = await getImageLayer(
               filter.layer_store[i],
               `${transformName(district.label)}_${transformName(block.label)}_${filter.layer_name[i]}`,
               true, filter.rasterStyle
-            )
-
+            );
+  
             const contourSource = new TileWMS({
-              url       : `${process.env.REACT_APP_GEOSERVER_URL}` + 'wms',
-              params    : {
-                LAYERS     : `${filter.layer_store[i]}:${transformName(district.label)}_${transformName(block.label)}_${filter.layer_name[i]}`,
-                STYLES     : 'dem_contours',
-                TILED      : true,
+              url: `${process.env.REACT_APP_GEOSERVER_URL}wms`,
+              params: {
+                LAYERS:      `${filter.layer_store[i]}:${transformName(district.label)}_${transformName(block.label)}_${filter.layer_name[i]}`,
+                STYLES:      'dem_contours',
+                TILED:       true,
                 TRANSPARENT: true,
-                FORMAT     : 'image/png',
-                ENV        : `interval:${getContourInterval(view.getResolution())}`,
+                FORMAT:      'image/png',
+                ENV:         `interval:${getContourInterval(view.getResolution())}`,
               },
               serverType: 'geoserver',
             });
-
-            const contourLayer = new TileLayer({
-              source: contourSource,
-              opacity: 0.9,
-              zIndex : 2,
-            });
-
-            layerRef.push(tempLayer)
-            layerRef.push(contourLayer)
+  
+            const contourLayer = new TileLayer({ source: contourSource, opacity: 0.9, zIndex: 2 });
+  
+            layerRef.push(tempLayer);
+            layerRef.push(contourLayer);
             mapRef.current.addLayer(tempLayer);
             mapRef.current.addLayer(contourLayer);
+            addedLayersThisCall.push(tempLayer, contourLayer);
+  
             let lastInterval = getContourInterval(view.getResolution());
             mapRef.current.on('moveend', () => {
               const interval = getContourInterval(view.getResolution());
@@ -1557,25 +1849,25 @@ const KYLDashboardPage = () => {
                 lastInterval = interval;
                 contourSource.updateParams({ ENV: `interval:${interval}` });
               }
-              const res = mapRef.current.getView().getResolution();
-              console.log('resolution:', res, '→ interval:', getContourInterval(res));
             });
-
-            
+  
           } else {
             tempLayer = await getVectorLayers(
               filter.layer_store[i],
               `${filter.layer_name[i]}_${transformName(district.label)}_${transformName(block.label)}`
             );
           }
-
+  
+          // ── Post-loop: style + add to map for vector/unstyled layers ─────────
           if (filter.layer_store[i] === "river" || filter.layer_store[i] === "canal") {
             tempLayer.setStyle(new Style({
-              stroke: new Stroke({ color: "rgba(0, 0, 255, 1)", width: 2.5 })
+              stroke: new Stroke({ color: "rgba(0, 0, 255, 1)", width: 2.5 }),
             }));
             tempLayer.setZIndex(9998);
             layerRef.push(tempLayer);
             mapRef.current.addLayer(tempLayer);
+            addedLayersThisCall.push(tempLayer);
+  
           } else if (
             filter.layer_store[i] !== "terrain" &&
             filter.layer_store[i] !== "LULC" &&
@@ -1583,113 +1875,222 @@ const KYLDashboardPage = () => {
             filter.layer_store[i] !== "nrega_assets" &&
             filter.layer_store[i] !== "lcw" &&
             filter.layer_store[i] !== "factory_csr" &&
-            filter.layer_store[i] !== "mining" & 
+            filter.layer_store[i] !== "mining" &&
             filter.layer_store[i] !== "dem"
           ) {
             tempLayer.setStyle((feature) =>
               layerStyle(feature, filter.vectorStyle, filter.styleIdx, villageJson, dataJson)
             );
-            tempLayer.setZIndex(10); // slightly above base
+            tempLayer.setZIndex(10);
             layerRef.push(tempLayer);
             mapRef.current.addLayer(tempLayer);
+            addedLayersThisCall.push(tempLayer);
           }
         }
-
+  
+        // ── Restore core layers above the new visualize layer ─────────────────
         boundaryLayerRef.current.updateStyleVariables({ isVisualizeOn: true });
         mwsLayerRef.current.updateStyleVariables({ isVisualizeOn: true });
+  
         if (showConnectivityRef.current && topoLevelDataRef.current) {
           const { topoLevel, maxLevel } = topoLevelDataRef.current;
           applyTopoColorToMWS(topoLevel, maxLevel);
         }
-
+  
         if (waterbodiesLayerRef.current) {
           const visualizeMode =
-            filter.name === "waterbody_type" ? 1 :
-            filter.name === "waterbody_size" ? 2 :
-            filter.name === "surface_water_trend" ? 3 :
-            filter.name === "drainage_line" ? 4 : 0;
-
+            filter.name === "waterbody_type"        ? 1 :
+            filter.name === "waterbody_size"         ? 2 :
+            filter.name === "surface_water_trend"    ? 3 :
+            filter.name === "drainage_line"          ? 4 : 0;
+  
           waterbodiesLayerRef.current.updateStyleVariables({
             isVisualizeOn: true,
             wbFilterActive: 0,
-            visualizeMode
+            visualizeMode,
           });
           applyWaterbodyFilters(selectedMWS, filterSelections.selectedWaterbodyValues || {}, true);
         }
-
+  
         mapRef.current.removeLayer(mwsLayerRef.current);
         mapRef.current.removeLayer(boundaryLayerRef.current);
         mapRef.current.addLayer(mwsLayerRef.current);
-        setShowMWS(false)
+        setShowMWS(false);
         mapRef.current.addLayer(boundaryLayerRef.current);
         boundaryLayerRef.current.setZIndex(9999);
-
-        tempArr.push({ name: filter.name, layerRef });
+        coreLayersRemoved = false;  // restored successfully
+  
+        tempArr = [...currentLayer, { name: filter.name, layerRef }];
         setToggleStates((prevStates) => ({ ...prevStates, [filter.name]: true }));
-
+  
         if (isWBVisualize) {
           setIsWBVisualizeOn(true);
           setActiveWBVisualize(filter.name);
           if (mwsLayerRef.current) mwsLayerRef.current.setVisible(false);
         }
-
+  
+      // ── BRANCH C: another layer already on ─────────────────────────────────
       } else {
-        toast.error("Please Turn off previous layer before turning on new one !");
+        toast.error("Please turn off the current layer before turning on a new one.");
+        return;
       }
-
+  
       setCurrentLayer(tempArr);
+  
+    } catch (error) {
+      addedLayersThisCall.forEach((layer) => {
+        try { mapRef.current.removeLayer(layer); } catch (_) {}
+      });
+  
+      if (coreLayersRemoved) {
+        try {
+          // Add in correct z-order: mws below boundary
+          if (mwsLayerRef.current)      mapRef.current.addLayer(mwsLayerRef.current);
+          if (boundaryLayerRef.current) mapRef.current.addLayer(boundaryLayerRef.current);
+          boundaryLayerRef.current.setZIndex(9999);
+  
+          // Reset visualize state flags that were set before the error
+          boundaryLayerRef.current.updateStyleVariables({ isVisualizeOn: false });
+          mwsLayerRef.current.updateStyleVariables({ isVisualizeOn: false });
+          setShowMWS(true);
+        } catch (restoreError) {
+          console.error('[handleLayerSelection] Failed to restore core layers:', restoreError);
+        }
+      }
+  
+      // Reset the toggle state for this filter — it was never successfully added
+      setToggleStates((prevStates) => ({ ...prevStates, [filter.name]: false }));
+
+      console.error('[handleLayerSelection] Unexpected error adding layer:', {
+        filter: filter.name,
+        error,
+      });
+  
+      toast.custom(
+        (t) => (
+          <div className={`${t.visible ? 'animate-enter' : 'animate-leave'} max-w-md w-full bg-white shadow-lg rounded-lg pointer-events-auto flex`}>
+            <div className="flex-1 w-0 p-4">
+              <div className="flex items-start gap-3">
+                <div className="mt-0.5 shrink-0 w-8 h-8 rounded-full bg-red-100 flex items-center justify-center">
+                  <svg className="w-4 h-4 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round"
+                      d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+                  </svg>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-gray-900">
+                    Layer failed to load
+                  </p>
+                  <p className="mt-1 text-xs text-gray-500 leading-relaxed">
+                    Could not add <span className="font-medium text-gray-700">{filter.name}</span> to the map.
+                    Your existing map view has been restored.
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div className="flex flex-col border-l border-gray-200">
+              <button
+                type="button"
+                onClick={() => { toast.dismiss(t.id); handleLayerSelection(filter); }}
+                className="flex-1 border-b border-gray-200 px-4 py-3 flex items-center justify-center text-xs font-semibold text-indigo-600 hover:text-indigo-500 hover:bg-indigo-50 transition-colors"
+              >
+                Retry
+              </button>
+              <button
+                type="button"
+                onClick={() => toast.dismiss(t.id)}
+                className="flex-1 px-4 py-3 flex items-center justify-center text-xs font-medium text-gray-500 hover:text-gray-700 hover:bg-gray-50 transition-colors"
+              >
+                Dismiss
+              </button>
+            </div>
+          </div>
+        ),
+        { duration: 10000, position: 'top-right' }
+      );
+  
     } finally {
-      // Ensure loader shows for at least 400ms to avoid a flash
-      const elapsed = Date.now() - startTime;
+      const elapsed   = Date.now() - startTime;
       const remaining = Math.max(0, 400 - elapsed);
       await new Promise(resolve => setTimeout(resolve, remaining));
       setIsLayerSelecting(false);
     }
   };
 
-  const initializeMap = async () => {
-    const baseLayer = new TileLayer({
-      source: new XYZ({
-        url: `https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}`,
-        maxZoom: 30,
-        transition: 500,
-      }),
-      preload: 4,
-    });
-    baseLayerRef.current = baseLayer;
-
-    class GoogleLogoControl extends Control {
-      constructor() {
-        const element = document.createElement("div");
-        element.style.pointerEvents = "none";
-        element.style.position = "absolute";
-        element.style.bottom = "5px";
-        element.style.left = "5px";
-        element.style.background = "#f2f2f27f";
-        element.style.fontSize = "10px";
-        element.style.padding = "5px";
-        element.innerHTML = "&copy; Google Satellite Hybrid contributors";
-        super({ element });
+  const initializeMap = () => {
+    // Guard: element must be in the DOM
+    if (!mapElement.current) return;
+  
+    const doInit = () => {
+      // Don't double-initialise if a previous ResizeObserver callback already ran
+      if (mapRef.current) return;
+  
+      const baseLayer = new TileLayer({
+        source: new XYZ({
+          url: `https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}`,
+          maxZoom: 30,
+          transition: 500,
+        }),
+        preload: 4,
+      });
+      baseLayerRef.current = baseLayer;
+  
+      class GoogleLogoControl extends Control {
+        constructor() {
+          const element = document.createElement('div');
+          element.style.pointerEvents = 'none';
+          element.style.position      = 'absolute';
+          element.style.bottom        = '5px';
+          element.style.left          = '5px';
+          element.style.background    = '#f2f2f27f';
+          element.style.fontSize      = '10px';
+          element.style.padding       = '5px';
+          element.innerHTML = '&copy; Google Satellite Hybrid contributors';
+          super({ element });
+        }
       }
+  
+      const map = new Map({
+        target: mapElement.current,
+        layers: [baseLayer],
+        controls: defaultControls().extend([new GoogleLogoControl()]),
+        view: new View({
+          center: [78.9, 23.6],
+          zoom: 5,
+          projection: 'EPSG:4326',
+          constrainResolution: true,
+          smoothExtentConstraint: true,
+          smoothResolutionConstraint: true,
+        }),
+        loadTilesWhileAnimating: true,
+        loadTilesWhileInteracting: true,
+      });
+  
+      mapRef.current = map;
+    };
+  
+    const { offsetWidth, offsetHeight } = mapElement.current;
+  
+    if (offsetWidth > 0 && offsetHeight > 0) {
+      // Container already has dimensions (e.g. hot-reload, subsequent renders)
+      doInit();
+      return;
     }
-
-    const map = new Map({
-      target: mapElement.current,
-      layers: [baseLayer],
-      controls: defaultControls().extend([new GoogleLogoControl()]),
-      view: new View({
-        center: [78.9, 23.6],
-        zoom: 5,
-        projection: "EPSG:4326",
-        constrainResolution: true,
-        smoothExtentConstraint: true,
-        smoothResolutionConstraint: true,
-      }),
-      loadTilesWhileAnimating: true,
-      loadTilesWhileInteracting: true,
+  
+    // Container is 0×0 — wait for the first layout pass that gives it size
+    const observer = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        const { width, height } = entry.contentRect;
+        if (width > 0 && height > 0) {
+          observer.disconnect();
+          doInit();
+          break;
+        }
+      }
     });
-
-    mapRef.current = map;
+  
+    observer.observe(mapElement.current);
+    return () => observer.disconnect();
   };
 
   const handleItemSelect = (setter, value) => {
@@ -1719,6 +2120,8 @@ const KYLDashboardPage = () => {
         layer.layerRef.forEach((ref) => mapRef.current.removeLayer(ref));
       });
     }
+    setDataJsonError(null);
+    setVillageJsonError(null);
     setCurrentLayer([]);
     setToggleStates({});
     setFilterSelections({
@@ -2011,9 +2414,18 @@ useEffect(() => {
   useEffect(() => {
     initializeAnalytics();
     trackPageView('/kyl_dashboard');
-    if (!mapRef.current) { initializeMap(); return; }
+  
+    if (!mapRef.current) {
+      const cleanup = initializeMap();
+      // If initializeMap returned a ResizeObserver cleanup, use it
+      return () => {
+        cleanup?.();
+        if (mapRef.current) mapRef.current.getView().cancelAnimations();
+      };
+    }
+  
     if (district && block) {
-      try{
+      try {
         const view = mapRef.current.getView();
         view.cancelAnimations();
         fetchBoundaryAndZoom(district.label, block.label);
@@ -2023,7 +2435,7 @@ useEffect(() => {
         setCurrentLayer([]);
         fetchWaterBodiesLayer();
         fetchMWSConnectivityLayers();
-      } catch(err){
+      } catch (err) {
         toast.custom(
           (t) => (
             <div className={`${t.visible ? "animate-enter" : "animate-leave"} max-w-md w-full bg-white shadow-lg rounded-lg pointer-events-auto flex`}>
@@ -2050,7 +2462,10 @@ useEffect(() => {
         );
       }
     }
-    return () => { if (mapRef.current) mapRef.current.getView().cancelAnimations(); };
+  
+    return () => {
+      if (mapRef.current) mapRef.current.getView().cancelAnimations();
+    };
   }, [block, mapRef.current]);
 
   useEffect(() => {
@@ -2279,6 +2694,7 @@ useEffect(() => {
     }
   }, [patternSelections.selectedMWSPatterns, filterSelections.selectedMWSValues, dataJson]);
 
+
   // ============================================
   // 3. PROCESS VILLAGE FILTERS
   // ============================================
@@ -2473,12 +2889,14 @@ useEffect(() => {
 
 
   useEffect(() => {
-    if (!islayerLoaded && !isLoading && district && block) {
-      setFiltersEnabled(true);
-    } else {
-      setFiltersEnabled(false);
-    }
-  }, [islayerLoaded, isLoading, district, block]);
+    const loadingDone  = !islayerLoaded && !isLoading;
+    const locationSet  = Boolean(district && block);
+    const dataReady    = Boolean(dataJson && Array.isArray(dataJson));
+    const dataFailed   = dataJsonError !== null;
+  
+    setFiltersEnabled(loadingDone && locationSet && dataReady && !dataFailed);
+  
+  }, [islayerLoaded, isLoading, district, block, dataJson, dataJsonError]);
 
 
   useEffect(() => {
@@ -2510,6 +2928,19 @@ useEffect(() => {
           setCurrentLayer={setCurrentLayer}
           mapRef={mapRef}
           filtersEnabled={filtersEnabled}
+          filtersDisabledReason={
+            dataJsonError === 'not_found' ? 'No MWS data available for this block.' :
+            dataJsonError === 'network'   ? 'MWS data failed to load — use Retry in the error notification.' :
+            dataJsonError === 'parse'     ? 'MWS data response was malformed — try refreshing.' :
+            islayerLoaded                 ? 'Map is still loading...' :
+            null
+          }
+          villageFiltersDisabledReason={
+            villageJsonError === 'not_found' ? 'No village data for this block.' :
+            villageJsonError === 'network'   ? 'Village data failed to load — use Retry.' :
+            villageJsonError === 'parse'     ? 'Village data response was malformed.' :
+            null
+          }
           getFormattedSelectedFilters={getFormattedSelectedFilters}
           getAllPatternTypes={getAllPatternTypes}
           handlePatternRemoval={handlePatternRemoval}
@@ -2523,23 +2954,30 @@ useEffect(() => {
         />
 
         {/* Map Container */}
-        <KYLMapContainer
-          isLoading={islayerLoaded || isLoading}
-          statesData={statesData}
-          mapElement={mapElement}
-          showMWS={showMWS}
-          setShowMWS={setShowMWS}
-          showVillages={showVillages}
-          setShowVillages={setShowVillages}
-          mwsLayerRef={mwsLayerRef}
-          boundaryLayerRef={boundaryLayerRef}
-          mapRef={mapRef}
-          currentLayer={currentLayer}
-          setSearchLatLong={setSearchLatLong}
-          showConnectivity={showConnectivity}
+        <div className="relative flex-1 h-full flex flex-col">
+          <KYLMapContainer
+            isLoading={islayerLoaded || isLoading}
+            statesData={statesData}
+            mapElement={mapElement}
+            showMWS={showMWS}
+            setShowMWS={setShowMWS}
+            showVillages={showVillages}
+            setShowVillages={setShowVillages}
+            mwsLayerRef={mwsLayerRef}
+            boundaryLayerRef={boundaryLayerRef}
+            mapRef={mapRef}
+            currentLayer={currentLayer}
+            setSearchLatLong={setSearchLatLong}
+            showConnectivity={showConnectivity}
           selectionMode={selectionMode}
           setSelectionMode={setSelectionMode}
-        />
+          />
+          <LayerErrorToast
+            errors={layerErrors}
+            onDismiss={dismissLayerError}
+            onRetry={retryLayerError}
+          />
+        </div>
 
         {/* Right Sidebar */}
         <KYLRightSidebar

@@ -2052,7 +2052,7 @@ const KYLMapContainer = ({
   const areVillageLayersAvailable = boundaryLayerRef?.current !== null;
 
   return (
-    <div className="flex-1 bg-[#F8F7FF] rounded-lg border border-gray-100 relative overflow-hidden">
+    <div className="flex-1 h-full bg-[#F8F7FF] rounded-lg border border-gray-100 relative overflow-hidden">
 
       {/* ── Full overlay loader — only on initial layer load ── */}
       {isLoading && (
