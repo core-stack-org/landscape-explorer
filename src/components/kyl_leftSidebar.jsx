@@ -52,6 +52,24 @@ const FILTER_SECTION_MAP = {
   'livestock_management_centers': 'Village',
   'agricultural_support_infrastructure':    'Village',
   'total_assets':                 'Village',
+  'road_connectivity' : 'Village',
+  'electricity_supply' : 'Village',
+  'housing_quality' : 'Village',
+  'maternal_and_child_health_service_access' : 'Village',
+  'water_and_sanitation_infrastructure' : 'Village',
+  'access_to_formal_banking_services' : 'Village',
+  'coverage_across_PDS_NFSA_BPL_and_Pension' : 'Village',
+  'institutionalization_strength' : 'Village',
+  'civic_infrastructure' : 'Village',
+  'farm_employment' : 'Village',
+  'forest-based_livelihood' : 'Village',
+  'alternate_farming' : 'Village',
+  'fisheries_adoption' : 'Village',
+  'cottage_industry' : 'Village',
+  'livestock_management_service_quality' : 'Village',
+  'common_pasture_access' : 'Village',
+  'watershed_infrastructure_and_modern_irrigation' : 'Village'
+ 
 };
 
 const getFilterSection = (filterName) => FILTER_SECTION_MAP[filterName] || 'Other';

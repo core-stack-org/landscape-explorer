@@ -1181,7 +1181,7 @@ const PlanViewPage = () => {
                           <p className="text-xs font-semibold uppercase tracking-widest" style={{ color: P.muted }}>
                             Settlements ({settlements.length})
                           </p>
-                          <ExportButton data={settlements} filename="settlements" disabled={settlements.length === 0} attribution={exportAttribution} />
+                          {/* <ExportButton data={settlements} filename="settlements" disabled={settlements.length === 0} attribution={exportAttribution} /> */}
                         </div>
                         {settlements.map((s, i) => (
                           <SettlementCard key={s.settlement_id ?? i} s={s} livestockData={livestock} cropsData={crops} />
@@ -1222,7 +1222,7 @@ const PlanViewPage = () => {
                         <p className="text-xs font-semibold uppercase tracking-widest" style={{ color: P.muted }}>
                           Wells ({wells.length})
                         </p>
-                        <ExportButton data={wells} filename="wells" disabled={wells.length === 0} attribution={exportAttribution} />
+                        {/* <ExportButton data={wells} filename="wells" disabled={wells.length === 0} attribution={exportAttribution} /> */}
                       </div>
                       {wells.map((w, i) => (
                         <button key={w.well_id ?? i}
@@ -1274,7 +1274,7 @@ const PlanViewPage = () => {
                         <p className="text-xs font-semibold uppercase tracking-widest" style={{ color: P.muted }}>
                           Waterbodies ({waterbodies.length})
                         </p>
-                        <ExportButton data={waterbodies} filename="waterbodies" disabled={waterbodies.length === 0} attribution={exportAttribution} />
+                        {/* <ExportButton data={waterbodies} filename="waterbodies" disabled={waterbodies.length === 0} attribution={exportAttribution} /> */}
                       </div>
                       {waterbodies.map((w, i) => (
                         <button key={w.waterbody_id ?? i}
@@ -1356,7 +1356,7 @@ const PlanViewPage = () => {
                             <p className="text-xs font-semibold uppercase tracking-widest" style={{ color: P.muted }}>
                               {items.length} records
                             </p>
-                            <ExportButton data={items} filename={`works-${worksSubTab}`} disabled={items.length === 0} attribution={exportAttribution} />
+                            {/* <ExportButton data={items} filename={`works-${worksSubTab}`} disabled={items.length === 0} attribution={exportAttribution} /> */}
                           </div>
                           {items.map((item, i) => (
                             <button key={getId(item, i)}
@@ -1411,7 +1411,7 @@ const PlanViewPage = () => {
                         <p className="text-xs font-semibold uppercase tracking-widest" style={{ color: P.muted }}>
                           Livelihood Demands ({livelihood.length})
                         </p>
-                        <ExportButton data={livelihood} filename="livelihood" disabled={livelihood.length === 0} attribution={exportAttribution} />
+                        {/* <ExportButton data={livelihood} filename="livelihood" disabled={livelihood.length === 0} attribution={exportAttribution} /> */}
                       </div>
                       {livelihood.map((l, i) => (
                         <button key={l.id ?? i}
