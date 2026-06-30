@@ -1187,10 +1187,23 @@
       const terrainKey = `${projectName.toLowerCase()}_${projectId}_terrain_raster`;
       const drainageKey = `${projectName.toLowerCase()}_${projectId}`;
 
-      const [terrainLayer, drainageLayer] = await Promise.all([
-        getImageLayer("terrain", terrainKey, true, "Terrain_Style_11_Classes").catch(() => null),
-        getVectorLayers("drainage", drainageKey, true, "drainage").catch(() => null),
-      ]);
+      // const [terrainLayer, drainageLayer] = await Promise.all([
+      //   getImageLayer("terrain", terrainKey, true, "Terrain_Style_11_Classes").catch(() => null),
+      //   getVectorLayers("drainage", drainageKey, true, "drainage").catch(() => null),
+      // ]);
+      const terrainLayer = getImageLayer(
+        "terrain",
+        terrainKey,
+        true,
+        "Terrain_Style_11_Classes"
+      );
+
+      const drainageLayer = await getVectorLayers(
+        "drainage",
+        drainageKey,
+        true,
+        "drainage"
+      ).catch(() => null);
 
       if (terrainLayer) {
         terrainLayer.setZIndex(1);
