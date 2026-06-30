@@ -1546,6 +1546,7 @@ const KYLRightSidebar = ({
               </div>
             )}
           </div>
+          {mwsLayerRef?.current && (
           <div className="bg-white rounded-xl border border-gray-200 p-3 shadow-sm">
   <p className="text-[11px] font-semibold text-gray-600 uppercase tracking-wide mb-2">
     Selection Mode
@@ -1553,7 +1554,10 @@ const KYLRightSidebar = ({
 
   <div className="flex rounded-lg bg-gray-100 p-1">
     <button
-      onClick={() => setSelectionMode("single")}
+      onClick={() => {
+        onResetMWS();
+        setSelectionMode("single");
+      }}
       className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-md text-sm font-medium transition-all ${
         selectionMode === "single"
           ? "bg-white text-blue-600 shadow-sm"
@@ -1565,7 +1569,10 @@ const KYLRightSidebar = ({
     </button>
 
     <button
-      onClick={() => setSelectionMode("multi")}
+      onClick={() => {
+        onResetMWS();
+        setSelectionMode("multi");
+      }}
       className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-md text-sm font-medium transition-all ${
         selectionMode === "multi"
           ? "bg-white text-emerald-600 shadow-sm"
@@ -1583,6 +1590,7 @@ const KYLRightSidebar = ({
       : "Select multiple Micro-Watersheds by clicking on the map."}
   </p>
 </div>
+          )}
 
           {/* ── Selected Indicators ── */}
           <div className="bg-white rounded-xl border border-gray-100 p-4 shadow-sm">

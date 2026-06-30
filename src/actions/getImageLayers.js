@@ -31,6 +31,22 @@ export default function getImageLayer(layer_store, layer_name, setVisible = fals
     ratio: 1,
     serverType: 'geoserver',
   });
+  console.log("WMS Request", {
+  url: `${geoserverUrl}wms`,
+  layer: `${layer_store}:${layer_name}`,
+  style,
+});
+source.on("imageloadstart", () => {
+  console.log("START", layer_name);
+});
+
+source.on("imageloadend", () => {
+  console.log("SUCCESS", layer_name);
+});
+
+source.on("imageloaderror", (e) => {
+  console.log("ERROR", layer_name, e);
+});
 
   // OL fires this when the WMS image request returns a non-2xx status,
   // the response is not a valid image, or the network request fails entirely.

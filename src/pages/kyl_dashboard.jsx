@@ -127,6 +127,11 @@ const KYLDashboardPage = () => {
   const INDIA_ZOOM   = 5;
   const { errors: layerErrors, dismiss: dismissLayerError, retry: retryLayerError } = useLayerErrors();
 
+  useEffect(() => {
+      console.log("Mode changed:", selectionMode);
+
+  handleResetMWS();
+}, [selectionMode]);
 
   const dataJsonIndex = useMemo(() => {
     if (!dataJson || !Array.isArray(dataJson)) return null;
@@ -192,6 +197,8 @@ const KYLDashboardPage = () => {
 
   const handleResetMWS = () => {
     // if (!selectedMWSProfile) return;
+      console.log("RESET CALLED");
+
     setSelectedMWSProfile(null);
      setSelectedMWS([]);
        setHighlightMWS(null);
@@ -661,7 +668,20 @@ const KYLDashboardPage = () => {
     showConnectivityRef.current = showConnectivity;
   }, [showConnectivity]);
 
-  const resetMWSStyle = () => setHighlightMWS(null);
+  // const resetMWSStyle = () => setHighlightMWS(null);
+  const resetMWSStyle = () => {
+  if (!mwsLayerRef.current) return;
+
+  const features = mwsLayerRef.current.getSource().getFeatures();
+
+  features.forEach((feature) => {
+    feature.set("isSelected", 0, true);
+  });
+
+  mwsLayerRef.current.getSource().changed();
+
+  setHighlightMWS(null);
+};
 
 
   const updateFilteredMWS = (filteredIds) => {

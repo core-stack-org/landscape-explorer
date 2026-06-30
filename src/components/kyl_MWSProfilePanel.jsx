@@ -138,12 +138,20 @@ const KYLMWSProfilePanel = ({ mwsData, onBack, hideBackButton = false ,  selecti
 
         </div>
 
-        <button
-          onClick={() => handleReportDownload(uid)}
-          className="text-sm font-medium text-indigo-600 hover:text-indigo-700"
-        >
-          View Report
-        </button>
+       <button
+      className="flex items-center gap-2 text-indigo-600 hover:text-indigo-700 mb-2"
+      onClick={() => handleReportDownload(mwsData?.uid)}
+    >
+      <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={2}
+          d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+        />
+      </svg>
+      <span className="text-sm">View Profile</span>
+    </button>
 
       </div>
 
