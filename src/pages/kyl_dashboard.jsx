@@ -119,6 +119,7 @@ const KYLDashboardPage = () => {
   const [selectedWaterbodyData, setSelectedWaterbodyData] = useState([]);
   const [isLayerSelecting, setIsLayerSelecting] = useState(false);
   const showConnectivityRef = useRef(false);
+  const [manualSelectedMWS, setManualSelectedMWS] = useState([]);
 
 
   const [dataJsonError, setDataJsonError] = useState(null);
@@ -201,6 +202,7 @@ const KYLDashboardPage = () => {
 
     setSelectedMWSProfile(null);
      setSelectedMWS([]);
+     setManualSelectedMWS([]);
        setHighlightMWS(null);
     if (mwsLayerRef.current) resetMWSStyle();
     if (toastId) {
@@ -328,6 +330,10 @@ const KYLDashboardPage = () => {
   };
 
   const handleFilterSelection = (name, option, isChecked) => {
+      setSelectedMWS([]);
+  setSelectedMWSProfile(null);
+  resetMWSStyle();
+  setHighlightMWS(null);
     const sourceType = determineFilterSource(name);
     option = {
       ...option,
@@ -2384,6 +2390,10 @@ useEffect(() => {
       }
 
   updateSelectedMWSStyle(updated);
+   setManualSelectedMWS(updated);  
+      if (updated.length === 0) {
+      setSelectedMWSProfile(null);   
+    }
 
   console.log("Selected MWS:", updated);
 
@@ -2521,6 +2531,7 @@ useEffect(() => {
   useEffect(() => {
     try {
       if (!dataJson || !Array.isArray(dataJson) || !dataJsonIndex) return;
+          setManualSelectedMWS([]); 
 
       const mwsFilterKeys = Object.keys(filterSelections.selectedMWSValues || {});
       const activeKeys = mwsFilterKeys.filter(k => filterSelections.selectedMWSValues[k]);
@@ -3045,6 +3056,7 @@ useEffect(() => {
           mwsLayerRef={mwsLayerRef}
            selectionMode={selectionMode}
           setSelectionMode={setSelectionMode}
+          manualSelectedMWS={manualSelectedMWS} 
 
         />
       </div>

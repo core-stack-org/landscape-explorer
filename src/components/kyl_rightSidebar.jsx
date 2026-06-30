@@ -55,6 +55,7 @@ const KYLRightSidebar = ({
   mwsLayerRef,
    selectionMode,
   setSelectionMode,
+  manualSelectedMWS
 }) => {
   const [loadingWB, setLoadingWB] = React.useState(false);
   const [showSelectionPopup, setShowSelectionPopup] = React.useState(false);
@@ -1429,14 +1430,15 @@ const KYLRightSidebar = ({
         <KYLMWSProfilePanel mwsData={selectedMWSProfile} onBack={onResetMWS} hideBackButton={showBothPanels} />
       )} */}
 {(selectionMode === "single" && selectedMWSProfile) ||
- (selectionMode === "multi" && selectedMWS.length > 0) ? (
+ (selectionMode === "multi" && manualSelectedMWS.length > 0) ? (
 
 <KYLMWSProfilePanel
     mwsData={selectedMWSProfile}
     onBack={onResetMWS}
     hideBackButton={showBothPanels}
     selectionMode={selectionMode}
-    selectedMWS={selectedMWS}
+    // selectedMWS={selectedMWS}
+    selectedMWS={manualSelectedMWS}
 />
 
 ) : null}
