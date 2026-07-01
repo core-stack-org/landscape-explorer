@@ -6,7 +6,7 @@ import { Style, Stroke, Fill } from 'ol/style';
 import React from "react";
 import SelectButton from "./buttons/select_button";
 import filtersDetails from "../components/data/Filters.json";
-import { ArrowLeft, Loader2, Table, FileText, FileSpreadsheet, X, ChevronRight } from 'lucide-react';
+import { ArrowLeft, Loader2, Table, FileText, FileSpreadsheet, X, ChevronRight, CheckCircle2,Layers3 } from 'lucide-react';
 import KYLMWSProfilePanel from "./kyl_MWSProfilePanel.jsx";
 import KYLWaterbodyPanel from "./kyl_waterbodypanel.jsx";
 import jsPDF from 'jspdf';
@@ -52,7 +52,11 @@ const KYLRightSidebar = ({
   selectedWaterbodyData = [],
   mwsDrainageLayerRef,
   isLoading,
-  mwsLayerRef
+  mwsLayerRef,
+   selectionMode,
+  setSelectionMode,
+  manualSelectedMWS,
+  onResetMWSSelection, 
 }) => {
   const [loadingWB, setLoadingWB] = React.useState(false);
   const [showSelectionPopup, setShowSelectionPopup] = React.useState(false);
@@ -1406,6 +1410,10 @@ const KYLRightSidebar = ({
     </div>
   );
 
+  console.log("selectedMWSProfile:", selectedMWSProfile);
+console.log("manualSelectedMWS:", manualSelectedMWS);
+console.log("selectionMode:", selectionMode);
+
   return (
     <div className="w-[320px] flex flex-col gap-2">
       <SelectionPopup />
@@ -1423,10 +1431,25 @@ const KYLRightSidebar = ({
         </div>
       )}
 
-      {selectedMWSProfile && (
+      {/* {selectedMWSProfile && (
         <KYLMWSProfilePanel mwsData={selectedMWSProfile} onBack={onResetMWS} hideBackButton={showBothPanels} />
-      )}
+      )} */}
+{/* {(selectionMode === "single" && selectedMWSProfile) ||
+ (selectionMode === "multi" && manualSelectedMWS.length > 0) ? ( */}
+{selectedMWSProfile ? (
+<KYLMWSProfilePanel
+    mwsData={selectedMWSProfile}
+    onBack={onResetMWS}
+    hideBackButton={showBothPanels}
+    selectionMode={selectionMode}
+    // selectedMWS={selectedMWS}
+    selectedMWS={manualSelectedMWS}
+    setSelectionMode={setSelectionMode}
+    onResetMWS={onResetMWS}
+    onResetSelection={onResetMWSSelection} 
+/>
 
+) : null}
       {selectedWaterbodyProfile && (
         <KYLWaterbodyPanel waterbody={selectedWaterbodyProfile} onBack={onResetWaterbody} hideBackButton={showBothPanels} />
       )}
@@ -1533,6 +1556,7 @@ const KYLRightSidebar = ({
               </div>
             )}
           </div>
+
 
           {/* ── Selected Indicators ── */}
           <div className="bg-white rounded-xl border border-gray-100 p-4 shadow-sm">

@@ -71,6 +71,7 @@ const KYLDashboardPage = () => {
   const [islayerLoaded, setIsLayerLoaded] = useState(false);
   const [highlightMWS, setHighlightMWS] = useState(null);
   const [selectedMWS, setSelectedMWS] = useState([]);
+  const [selectionMode, setSelectionMode] = useState("single");
 
   const [dataJson, setDataJson] = useRecoilState(dataJsonAtom);
   const [villageJson, setVillageJson] = useState(null);
@@ -118,6 +119,7 @@ const KYLDashboardPage = () => {
   const [selectedWaterbodyData, setSelectedWaterbodyData] = useState([]);
   const [isLayerSelecting, setIsLayerSelecting] = useState(false);
   const showConnectivityRef = useRef(false);
+  const [manualSelectedMWS, setManualSelectedMWS] = useState([]);
 
 
   const [dataJsonError, setDataJsonError] = useState(null);
@@ -126,6 +128,10 @@ const KYLDashboardPage = () => {
   const INDIA_ZOOM   = 5;
   const { errors: layerErrors, dismiss: dismissLayerError, retry: retryLayerError } = useLayerErrors();
 
+useEffect(() => {
+  console.log("Mode changed:", selectionMode);
+  handleResetMWSSelection(); 
+}, [selectionMode]);
 
   const dataJsonIndex = useMemo(() => {
     if (!dataJson || !Array.isArray(dataJson)) return null;
@@ -189,15 +195,37 @@ const KYLDashboardPage = () => {
       .toLowerCase()
   };
 
+  // const handleResetMWS = () => {
+  //   // if (!selectedMWSProfile) return;
+
+  //   setSelectedMWSProfile(null);
+  //    setSelectedMWS([]);
+  //    setManualSelectedMWS([]);
+  //      setHighlightMWS(null);
+  //   if (mwsLayerRef.current) resetMWSStyle();
+  //   if (toastId) {
+  //     toast.dismiss(toastId);
+  //     setToastId(null);
+  //   }
+  // };
+
+
   const handleResetMWS = () => {
-    if (!selectedMWSProfile) return;
-    setSelectedMWSProfile(null);
-    if (mwsLayerRef.current) resetMWSStyle();
-    if (toastId) {
-      toast.dismiss(toastId);
-      setToastId(null);
-    }
-  };
+  setSelectedMWSProfile(null);
+  handleResetMWSSelection();
+};
+
+const handleResetMWSSelection = () => {
+  setSelectedMWS([]);
+  setManualSelectedMWS([]);
+  setHighlightMWS(null);
+  if (mwsLayerRef.current) resetMWSStyle();
+  if (toastId) {
+    toast.dismiss(toastId);
+    setToastId(null);
+  }
+};
+
 
   const getAllFilterTypes = () => {
     const types = new Set();
@@ -318,6 +346,10 @@ const KYLDashboardPage = () => {
   };
 
   const handleFilterSelection = (name, option, isChecked) => {
+      setSelectedMWS([]);
+  setSelectedMWSProfile(null);
+  resetMWSStyle();
+  setHighlightMWS(null);
     const sourceType = determineFilterSource(name);
     option = {
       ...option,
@@ -658,7 +690,20 @@ const KYLDashboardPage = () => {
     showConnectivityRef.current = showConnectivity;
   }, [showConnectivity]);
 
-  const resetMWSStyle = () => setHighlightMWS(null);
+  // const resetMWSStyle = () => setHighlightMWS(null);
+  const resetMWSStyle = () => {
+  if (!mwsLayerRef.current) return;
+
+  const features = mwsLayerRef.current.getSource().getFeatures();
+
+  features.forEach((feature) => {
+    feature.set("isSelected", 0, true);
+  });
+
+  mwsLayerRef.current.getSource().changed();
+
+  setHighlightMWS(null);
+};
 
 
   const updateFilteredMWS = (filteredIds) => {
@@ -694,8 +739,8 @@ const KYLDashboardPage = () => {
       "stroke-color": [
         "case",
 
-        ["==", ["get", "uid"], ["var", "highlightMWS"]],
-        [22, 101, 52, 1],
+          ["==", ["get", "isSelected"], 1],
+          [22, 101, 52, 1],
 
         // matched MWS
         ["==", ["get", "isFiltered"], 1],
@@ -712,7 +757,7 @@ const KYLDashboardPage = () => {
       "stroke-width": [
         "case",
 
-        ["==", ["get", "uid"], ["var", "highlightMWS"]],
+        ["==", ["get", "isSelected"], 1],
         2.5,
 
         ["==", ["get", "isFiltered"], 1],
@@ -728,7 +773,7 @@ const KYLDashboardPage = () => {
       "fill-color": [
         "case",
 
-        ["==", ["get", "uid"], ["var", "highlightMWS"]],
+        ["==", ["get", "isSelected"], 1],
         [34, 197, 94, 0.4],
 
         ["==", ["get", "isFiltered"], 1],
@@ -2281,25 +2326,117 @@ const KYLDashboardPage = () => {
     return () => map.un("click", handleWaterbodyClick);
   }, [mapRef.current, state, district, block]);
 
-  useEffect(() => {
-    if (!mapRef.current) return;
+  // useEffect(() => {
+  //   if (!mapRef.current) return;
 
-    const handleMapClick = (event) => {
-      const feature = mapRef.current.forEachFeatureAtPixel(
-        event.pixel,
-        (feature, layer) => { if (layer === mwsLayerRef.current) return feature; }
-      );
-      if (feature) {
-        setHighlightMWS(feature.get("uid"));
-        setSelectedMWSProfile(feature.getProperties());
-        if (toastId) { toast.dismiss(toastId); setToastId(null); }
+  //   const handleMapClick = (event) => {
+  //     const feature = mapRef.current.forEachFeatureAtPixel(
+  //       event.pixel,
+  //       (feature, layer) => { if (layer === mwsLayerRef.current) return feature; }
+  //     );
+  //     if (feature) {
+  //       setHighlightMWS(feature.get("uid"));
+  //       setSelectedMWSProfile(feature.getProperties());
+  //       if (toastId) { toast.dismiss(toastId); setToastId(null); }
+  //     }
+  //   };
+
+  //   mapRef.current.on("click", handleMapClick);
+  //   return () => { if (mapRef.current) mapRef.current.un("click", handleMapClick); };
+  // }, [mapRef.current, selectedMWS]);
+
+const updateSelectedMWSStyle = (selectedIds) => {
+  if (!mwsLayerRef.current) return;
+
+  const features = mwsLayerRef.current.getSource().getFeatures();
+
+  features.forEach((feature) => {
+    const uid = feature.get("uid");
+
+    feature.set(
+      "isSelected",
+      selectedIds.includes(uid) ? 1 : 0,
+      true
+    );
+    console.log(
+  uid,
+  feature.get("isSelected")
+);
+  });
+
+  mwsLayerRef.current.getSource().changed();
+  // applyDefaultMWSStyle();
+};
+
+useEffect(() => {
+  if (!mapRef.current) return;
+
+  const handleMapClick = (event) => {
+    console.log("Map clicked");
+    const feature = mapRef.current.forEachFeatureAtPixel(
+      event.pixel,
+      (feature, layer) => {
+        if (layer === mwsLayerRef.current) return feature;
       }
-    };
+    );
 
-    mapRef.current.on("click", handleMapClick);
-    return () => { if (mapRef.current) mapRef.current.un("click", handleMapClick); };
-  }, [mapRef.current, selectedMWS]);
+    if (!feature) return;
 
+    const uid = feature.get("uid");
+
+    if (selectionMode === "single") {
+      // Existing behaviour
+      setHighlightMWS(uid);
+      updateSelectedMWSStyle([uid]);
+      setSelectedMWS([uid]);
+      setSelectedMWSProfile(feature.getProperties());
+    } else {
+      // Multi-select
+    setSelectedMWS((prev) => {
+      let updated;
+
+      if (selectionMode === "single") {
+        updated = [uid];
+      } else {
+        if (prev.includes(uid)) {
+          updated = prev.filter((id) => id !== uid);
+        } else {
+          updated = [...prev, uid];
+        }
+      }
+
+  updateSelectedMWSStyle(updated);
+   setManualSelectedMWS(updated);  
+      if (updated.length === 0) {
+      setSelectedMWSProfile(null);   
+    }
+
+  console.log("Selected MWS:", updated);
+
+  return updated;
+});
+
+      // Temporary: keep last clicked highlighted
+      setHighlightMWS(uid);
+
+      setSelectedMWSProfile(feature.getProperties());
+    }
+
+    if (toastId) {
+      toast.dismiss(toastId);
+      setToastId(null);
+    }
+  };
+
+  mapRef.current.on("click", handleMapClick);
+
+  return () => {
+    if (mapRef.current) {
+      mapRef.current.un("click", handleMapClick);
+    }
+  };
+}, [selectionMode, toastId,mapRef.current, selectedMWS]);
+  
   useEffect(() => {
     if (mapRef.current && waterbodiesLayerRef.current) {
       mapRef.current.removeLayer(waterbodiesLayerRef.current);
@@ -2410,6 +2547,7 @@ const KYLDashboardPage = () => {
   useEffect(() => {
     try {
       if (!dataJson || !Array.isArray(dataJson) || !dataJsonIndex) return;
+          setManualSelectedMWS([]); 
 
       const mwsFilterKeys = Object.keys(filterSelections.selectedMWSValues || {});
       const activeKeys = mwsFilterKeys.filter(k => filterSelections.selectedMWSValues[k]);
@@ -2885,6 +3023,8 @@ const KYLDashboardPage = () => {
             currentLayer={currentLayer}
             setSearchLatLong={setSearchLatLong}
             showConnectivity={showConnectivity}
+          selectionMode={selectionMode}
+          setSelectionMode={setSelectionMode}
           />
           <LayerErrorToast
             errors={layerErrors}
@@ -2937,6 +3077,10 @@ const KYLDashboardPage = () => {
           villageJson={villageJson}
           isLoading={isLoading}
           mwsLayerRef={mwsLayerRef}
+           selectionMode={selectionMode}
+          setSelectionMode={setSelectionMode}
+          manualSelectedMWS={manualSelectedMWS} 
+          onResetMWSSelection={handleResetMWSSelection}
 
         />
       </div>
