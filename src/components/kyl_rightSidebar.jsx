@@ -1410,10 +1410,6 @@ const KYLRightSidebar = ({
     </div>
   );
 
-  console.log("selectedMWSProfile:", selectedMWSProfile);
-console.log("manualSelectedMWS:", manualSelectedMWS);
-console.log("selectionMode:", selectionMode);
-
   return (
     <div className="w-[320px] flex flex-col gap-2">
       <SelectionPopup />
