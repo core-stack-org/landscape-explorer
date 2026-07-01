@@ -55,7 +55,8 @@ const KYLRightSidebar = ({
   mwsLayerRef,
    selectionMode,
   setSelectionMode,
-  manualSelectedMWS
+  manualSelectedMWS,
+  onResetMWSSelection, 
 }) => {
   const [loadingWB, setLoadingWB] = React.useState(false);
   const [showSelectionPopup, setShowSelectionPopup] = React.useState(false);
@@ -1409,6 +1410,10 @@ const KYLRightSidebar = ({
     </div>
   );
 
+  console.log("selectedMWSProfile:", selectedMWSProfile);
+console.log("manualSelectedMWS:", manualSelectedMWS);
+console.log("selectionMode:", selectionMode);
+
   return (
     <div className="w-[320px] flex flex-col gap-2">
       <SelectionPopup />
@@ -1429,9 +1434,9 @@ const KYLRightSidebar = ({
       {/* {selectedMWSProfile && (
         <KYLMWSProfilePanel mwsData={selectedMWSProfile} onBack={onResetMWS} hideBackButton={showBothPanels} />
       )} */}
-{(selectionMode === "single" && selectedMWSProfile) ||
- (selectionMode === "multi" && manualSelectedMWS.length > 0) ? (
-
+{/* {(selectionMode === "single" && selectedMWSProfile) ||
+ (selectionMode === "multi" && manualSelectedMWS.length > 0) ? ( */}
+{selectedMWSProfile ? (
 <KYLMWSProfilePanel
     mwsData={selectedMWSProfile}
     onBack={onResetMWS}
@@ -1439,6 +1444,9 @@ const KYLRightSidebar = ({
     selectionMode={selectionMode}
     // selectedMWS={selectedMWS}
     selectedMWS={manualSelectedMWS}
+    setSelectionMode={setSelectionMode}
+    onResetMWS={onResetMWS}
+    onResetSelection={onResetMWSSelection} 
 />
 
 ) : null}
@@ -1548,51 +1556,7 @@ const KYLRightSidebar = ({
               </div>
             )}
           </div>
-          {mwsLayerRef?.current && (
-          <div className="bg-white rounded-xl border border-gray-200 p-3 shadow-sm">
-  <p className="text-[11px] font-semibold text-gray-600 uppercase tracking-wide mb-2">
-    Selection Mode
-  </p>
 
-  <div className="flex rounded-lg bg-gray-100 p-1">
-    <button
-      onClick={() => {
-        onResetMWS();
-        setSelectionMode("single");
-      }}
-      className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-md text-sm font-medium transition-all ${
-        selectionMode === "single"
-          ? "bg-white text-blue-600 shadow-sm"
-          : "text-gray-500 hover:text-gray-700"
-      }`}
-    >
-      <CheckCircle2 className="w-4 h-4" />
-      Single
-    </button>
-
-    <button
-      onClick={() => {
-        onResetMWS();
-        setSelectionMode("multi");
-      }}
-      className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-md text-sm font-medium transition-all ${
-        selectionMode === "multi"
-          ? "bg-white text-emerald-600 shadow-sm"
-          : "text-gray-500 hover:text-gray-700"
-      }`}
-    >
-      <Layers3 className="w-4 h-4" />
-      Multi
-    </button>
-  </div>
-
-  <p className="text-[10px] text-gray-400 mt-2">
-    {selectionMode === "single"
-      ? "Only one Micro-Watershed can be selected."
-      : "Select multiple Micro-Watersheds by clicking on the map."}
-  </p>
-</div>
-          )}
 
           {/* ── Selected Indicators ── */}
           <div className="bg-white rounded-xl border border-gray-100 p-4 shadow-sm">

@@ -128,10 +128,9 @@ const KYLDashboardPage = () => {
   const INDIA_ZOOM   = 5;
   const { errors: layerErrors, dismiss: dismissLayerError, retry: retryLayerError } = useLayerErrors();
 
-  useEffect(() => {
-      console.log("Mode changed:", selectionMode);
-
-  handleResetMWS();
+useEffect(() => {
+  console.log("Mode changed:", selectionMode);
+  handleResetMWSSelection(); 
 }, [selectionMode]);
 
   const dataJsonIndex = useMemo(() => {
@@ -196,20 +195,37 @@ const KYLDashboardPage = () => {
       .toLowerCase()
   };
 
-  const handleResetMWS = () => {
-    // if (!selectedMWSProfile) return;
-      console.log("RESET CALLED");
+  // const handleResetMWS = () => {
+  //   // if (!selectedMWSProfile) return;
 
-    setSelectedMWSProfile(null);
-     setSelectedMWS([]);
-     setManualSelectedMWS([]);
-       setHighlightMWS(null);
-    if (mwsLayerRef.current) resetMWSStyle();
-    if (toastId) {
-      toast.dismiss(toastId);
-      setToastId(null);
-    }
-  };
+  //   setSelectedMWSProfile(null);
+  //    setSelectedMWS([]);
+  //    setManualSelectedMWS([]);
+  //      setHighlightMWS(null);
+  //   if (mwsLayerRef.current) resetMWSStyle();
+  //   if (toastId) {
+  //     toast.dismiss(toastId);
+  //     setToastId(null);
+  //   }
+  // };
+
+
+  const handleResetMWS = () => {
+  setSelectedMWSProfile(null);
+  handleResetMWSSelection();
+};
+
+const handleResetMWSSelection = () => {
+  setSelectedMWS([]);
+  setManualSelectedMWS([]);
+  setHighlightMWS(null);
+  if (mwsLayerRef.current) resetMWSStyle();
+  if (toastId) {
+    toast.dismiss(toastId);
+    setToastId(null);
+  }
+};
+
 
   const getAllFilterTypes = () => {
     const types = new Set();
@@ -3057,6 +3073,7 @@ useEffect(() => {
            selectionMode={selectionMode}
           setSelectionMode={setSelectionMode}
           manualSelectedMWS={manualSelectedMWS} 
+          onResetMWSSelection={handleResetMWSSelection}
 
         />
       </div>

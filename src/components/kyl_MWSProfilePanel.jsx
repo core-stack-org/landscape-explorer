@@ -2,9 +2,10 @@ import { ArrowLeft } from 'lucide-react';
 import { stateAtom, districtAtom, blockAtom, dataJsonAtom } from '../store/locationStore.jsx';
 import { useRecoilValue } from 'recoil';
 import { useEffect, useState } from 'react';
-import { trackEvent } from "../services/analytics.js"
+import { trackEvent } from "../services/analytics.js";
+import { CheckCircle2, Layers3 } from "lucide-react";
 
-const KYLMWSProfilePanel = ({ mwsData, onBack, hideBackButton = false ,  selectionMode = "single",
+const KYLMWSProfilePanel = ({ mwsData, onBack, hideBackButton = false ,  selectionMode = "single", setSelectionMode, onResetMWS,onResetSelection, 
   selectedMWS = [],}) => {
   const state = useRecoilValue(stateAtom);
   const district = useRecoilValue(districtAtom);
@@ -12,6 +13,7 @@ const KYLMWSProfilePanel = ({ mwsData, onBack, hideBackButton = false ,  selecti
   const dataJson = useRecoilValue(dataJsonAtom)
 
   const [dataString, setDataString] = useState("")
+  console.log("onResetMWS =>", onResetMWS);
 
   const transformName = (name) => {
     if (!name) return name;
@@ -47,8 +49,51 @@ const KYLMWSProfilePanel = ({ mwsData, onBack, hideBackButton = false ,  selecti
 
   return (
     <div className="bg-white rounded-lg border border-gray-100 p-3">
+                 <div className="bg-white rounded-xl border border-gray-200 p-3 shadow-sm">
+        <p className="text-[11px] font-semibold text-gray-600 uppercase tracking-wide mb-2">
+          Selection Mode
+        </p>
+      
+        <div className="flex rounded-lg bg-gray-100 p-1">
+          <button
+            onClick={() => {
+              onResetSelection();
+              setSelectionMode("single");
+            }}
+            className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-md text-sm font-medium transition-all ${
+              selectionMode === "single"
+                ? "bg-white text-blue-600 shadow-sm"
+                : "text-gray-500 hover:text-gray-700"
+            }`}
+          >
+            <CheckCircle2 className="w-4 h-4" />
+            Single
+          </button>
+      
+          <button
+            onClick={() => {
+             onResetSelection();
+              setSelectionMode("multi");
+            }}
+            className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-md text-sm font-medium transition-all ${
+              selectionMode === "multi"
+                ? "bg-white text-emerald-600 shadow-sm"
+                : "text-gray-500 hover:text-gray-700"
+            }`}
+          >
+            <Layers3 className="w-4 h-4" />
+            Multi
+          </button>
+        </div>
+      
+        <p className="text-[10px] text-gray-400 mt-2">
+          {selectionMode === "single"
+            ? "Only one Micro-Watershed can be selected."
+            : "Select multiple Micro-Watersheds by clicking on the map."}
+        </p>
+         </div>
       {!hideBackButton && (
-        <div className="flex items-center gap-2 mb-4">
+        <div className="flex items-center gap-2 mb-4 mt-4">
           <button 
             onClick={onBack}
             className="hover:bg-gray-100 p-1 rounded-full"
@@ -59,9 +104,14 @@ const KYLMWSProfilePanel = ({ mwsData, onBack, hideBackButton = false ,  selecti
         </div>
       )}
       
+      
       {hideBackButton && (
         <h2 className="text-lg font-medium mb-4">Micro watershed profile</h2>
       )}
+
+               
+     
+                
 
 {selectionMode === "single" ? (
   <>
