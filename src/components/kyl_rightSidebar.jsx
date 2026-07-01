@@ -71,6 +71,7 @@ const KYLRightSidebar = ({
   const [plans, setPlans] = React.useState([]);
   const [showPlans, setShowPlans] = React.useState(false);
   const [plansLoading, setPlansLoading] = React.useState(false);
+  const [selectedPlanProfile, setSelectedPlanProfile] = React.useState(null);
   const plansLayerRef = React.useRef(null);
 
   const showBothPanels = selectedMWSProfile && selectedWaterbodyProfile;
@@ -555,14 +556,15 @@ React.useEffect(() => {
 
     if (!plan) return;
 
-    navigate(
-      `/landscape-stewardship/plan-view?id=${plan.id}&completed=${!!plan.is_completed}&dpr_reviewed=${!!plan.is_dpr_reviewed}&dpr_generated=${!!plan.is_dpr_generated}&dpr_approved=${!!plan.is_dpr_approved}`,
-      {
-        state: {
-          plan,
-        },
-      }
-    );
+    setSelectedPlanProfile(plan);
+    // navigate(
+    //   `/landscape-stewardship/plan-view?id=${plan.id}&completed=${!!plan.is_completed}&dpr_reviewed=${!!plan.is_dpr_reviewed}&dpr_generated=${!!plan.is_dpr_generated}&dpr_approved=${!!plan.is_dpr_approved}`,
+    //   {
+    //     state: {
+    //       plan,
+    //     },
+    //   }
+    // );
   };
 
   mapRef.current.on("pointermove", handlePointerMove);
@@ -1644,10 +1646,6 @@ const DOT_SELECTED = (status = "in_progress") => new Style({
     </div>
   );
 
-  console.log("selectedMWSProfile:", selectedMWSProfile);
-console.log("manualSelectedMWS:", manualSelectedMWS);
-console.log("selectionMode:", selectionMode);
-
   return (
     <div className="w-[320px] flex flex-col gap-2">
       <SelectionPopup />
@@ -1688,8 +1686,84 @@ console.log("selectionMode:", selectionMode);
         <KYLWaterbodyPanel waterbody={selectedWaterbodyProfile} onBack={onResetWaterbody} hideBackButton={showBothPanels} />
       )}
 
-      {!selectedMWSProfile && !selectedWaterbodyProfile && (
-        <div className="flex flex-col gap-2">
+      {selectedPlanProfile && (
+        <div className="bg-white rounded-xl border border-gray-100 p-4 shadow-sm">
+
+          {/* Header */}
+          <div className="flex items-start gap-3 mb-5">
+
+            <button
+              onClick={() => setSelectedPlanProfile(null)}
+              className="mt-1 rounded-full p-1 hover:bg-gray-100 transition"
+            >
+              <ArrowLeft className="w-5 h-5 text-gray-600" />
+            </button>
+
+       <div className="flex-1 flex items-center gap-2">
+
+        {/* <span className="text-[11px] uppercase tracking-[0.18em] font-bold text-indigo-600 whitespace-nowrap">
+          Plan Overview
+        </span>
+
+        <span className="text-gray-300">|</span> */}
+
+        <h2 className="text-lg text-indigo-600 truncate">
+          {selectedPlanProfile.plan}
+        </h2>
+
+      </div>
+
+          </div>
+
+          {/* Information Card */}
+          <div className="rounded-xl border border-gray-200 bg-gray-50 divide-y">
+
+            <div className="flex justify-between items-center px-4 py-3">
+              <span className="text-sm text-gray-500">Village</span>
+              <span className="text-sm font-semibold text-gray-800">
+                {selectedPlanProfile.village_name || "--"}
+              </span>
+            </div>
+
+            <div className="flex justify-between items-center px-4 py-3">
+              <span className="text-sm text-gray-500">Steward</span>
+              <span className="text-sm font-semibold text-gray-800">
+                {selectedPlanProfile.facilitator_name || "--"}
+              </span>
+            </div>
+
+            <div className="flex justify-between items-center px-4 py-3">
+              <span className="text-sm text-gray-500">Organization</span>
+              <span className="text-sm font-semibold text-gray-800">
+                {selectedPlanProfile.organization_name || "--"}
+              </span>
+            </div>
+
+          </div>
+
+          {/* View DPR Button */}
+          <button
+            className="w-full mt-5 py-3 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-semibold transition"
+            onClick={() => {
+              navigate(
+                `/landscape-stewardship/plan-view?id=${selectedPlanProfile.id}&completed=${!!selectedPlanProfile.is_completed}&dpr_reviewed=${!!selectedPlanProfile.is_dpr_reviewed}&dpr_generated=${!!selectedPlanProfile.is_dpr_generated}&dpr_approved=${!!selectedPlanProfile.is_dpr_approved}`,
+                {
+                  state: {
+                    plan: selectedPlanProfile,
+                  },
+                  
+                }
+              );
+            }}
+          >
+            View DPR →
+          </button>
+
+        </div>
+      )}
+
+      {!selectedMWSProfile && !selectedWaterbodyProfile && !selectedPlanProfile && (
+          <div className="flex flex-col gap-2">
 
           {/* ── Hint banner ── */}
           <div className="bg-indigo-50 border border-indigo-100 rounded-xl px-3 py-2">
