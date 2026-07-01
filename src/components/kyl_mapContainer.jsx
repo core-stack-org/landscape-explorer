@@ -2,6 +2,7 @@
 import { useState } from "react";
 import KYLLocationSearchBar from "./kyl_location";
 import YearSlider from "./yearSlider";
+import SelectionModeToggle from "./SelectionModeToggle";
 
 // Layer Controls component
 const LayerControls = ({
@@ -2044,6 +2045,8 @@ const KYLMapContainer = ({
   currentLayer,
   setSearchLatLong,
   showConnectivity,
+   selectionMode,
+  setSelectionMode,
 }) => {
   const areMWSLayersAvailable = mwsLayerRef?.current !== null;
   const areVillageLayersAvailable = boundaryLayerRef?.current !== null;
@@ -2092,13 +2095,15 @@ const KYLMapContainer = ({
       />
 
       {/* Search Bar */}
-      <div className="absolute top-6 left-1/2 transform -translate-x-1/2 z-10">
-        <KYLLocationSearchBar
-          statesData={statesData}
-          onLocationSelect={onLocationSelect}
-          setSearchLatLong={setSearchLatLong}
-        />
-      </div>
+     <div className="absolute top-6 left-1/2 -translate-x-1/2 z-10 flex items-center gap-2">
+  <KYLLocationSearchBar
+    statesData={statesData}
+    onLocationSelect={onLocationSelect}
+    setSearchLatLong={setSearchLatLong}
+  />
+
+
+</div>
 
       {/* Year Slider */}
       <div className="absolute bottom-6 right-16 z-10 w-[420px]">

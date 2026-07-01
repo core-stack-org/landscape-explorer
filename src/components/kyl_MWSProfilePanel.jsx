@@ -2,15 +2,18 @@ import { ArrowLeft } from 'lucide-react';
 import { stateAtom, districtAtom, blockAtom, dataJsonAtom } from '../store/locationStore.jsx';
 import { useRecoilValue } from 'recoil';
 import { useEffect, useState } from 'react';
-import { trackEvent } from "../services/analytics.js"
+import { trackEvent } from "../services/analytics.js";
+import { CheckCircle2, Layers3 } from "lucide-react";
 
-const KYLMWSProfilePanel = ({ mwsData, onBack, hideBackButton = false }) => {
+const KYLMWSProfilePanel = ({ mwsData, onBack, hideBackButton = false ,  selectionMode = "single", setSelectionMode, onResetMWS,onResetSelection, 
+  selectedMWS = [],}) => {
   const state = useRecoilValue(stateAtom);
   const district = useRecoilValue(districtAtom);
   const block = useRecoilValue(blockAtom);
   const dataJson = useRecoilValue(dataJsonAtom)
 
   const [dataString, setDataString] = useState("")
+  console.log("onResetMWS =>", onResetMWS);
 
   const transformName = (name) => {
     if (!name) return name;
@@ -46,8 +49,51 @@ const KYLMWSProfilePanel = ({ mwsData, onBack, hideBackButton = false }) => {
 
   return (
     <div className="bg-white rounded-lg border border-gray-100 p-3">
+                 <div className="bg-white rounded-xl border border-gray-200 p-3 shadow-sm">
+        <p className="text-[11px] font-semibold text-gray-600 uppercase tracking-wide mb-2">
+          Selection Mode
+        </p>
+      
+        <div className="flex rounded-lg bg-gray-100 p-1">
+          <button
+            onClick={() => {
+              onResetSelection();
+              setSelectionMode("single");
+            }}
+            className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-md text-sm font-medium transition-all ${
+              selectionMode === "single"
+                ? "bg-white text-blue-600 shadow-sm"
+                : "text-gray-500 hover:text-gray-700"
+            }`}
+          >
+            <CheckCircle2 className="w-4 h-4" />
+            Single
+          </button>
+      
+          <button
+            onClick={() => {
+             onResetSelection();
+              setSelectionMode("multi");
+            }}
+            className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-md text-sm font-medium transition-all ${
+              selectionMode === "multi"
+                ? "bg-white text-emerald-600 shadow-sm"
+                : "text-gray-500 hover:text-gray-700"
+            }`}
+          >
+            <Layers3 className="w-4 h-4" />
+            Multi
+          </button>
+        </div>
+      
+        <p className="text-[10px] text-gray-400 mt-2">
+          {selectionMode === "single"
+            ? "Only one Micro-Watershed can be selected."
+            : "Select multiple Micro-Watersheds by clicking on the map."}
+        </p>
+         </div>
       {!hideBackButton && (
-        <div className="flex items-center gap-2 mb-4">
+        <div className="flex items-center gap-2 mb-4 mt-4">
           <button 
             onClick={onBack}
             className="hover:bg-gray-100 p-1 rounded-full"
@@ -58,30 +104,113 @@ const KYLMWSProfilePanel = ({ mwsData, onBack, hideBackButton = false }) => {
         </div>
       )}
       
+      
       {hideBackButton && (
         <h2 className="text-lg font-medium mb-4">Micro watershed profile</h2>
       )}
 
-      <div className="space-y-2 mb-4">
-        <p className="text-sm text-gray-600">
-          Micro watershed Id: {mwsData?.uid || '--'}
-        </p>
+               
+     
+                
+
+{selectionMode === "single" ? (
+  <>
+    <div className="space-y-2 mb-4">
+      <p className="text-sm text-gray-600">
+        Micro watershed Id: {mwsData?.uid || "--"}
+      </p>
+    </div>
+
+    <div className="mb-4">
+      <h3 className="font-medium mb-2">Overview</h3>
+      <p className="text-sm text-gray-600">
+        {dataString}
+      </p>
+      <p className="text-sm text-gray-600 mt-2">
+        Read report for more details.
+      </p>
+    </div>
+
+    <button
+      className="flex items-center gap-2 text-indigo-600 hover:text-indigo-700 mb-2"
+      onClick={() => handleReportDownload(mwsData?.uid)}
+    >
+      <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={2}
+          d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+        />
+      </svg>
+      <span className="text-sm">View Micro-Watershed Profile</span>
+    </button>
+  </>
+) : (
+<div className="space-y-5">
+
+  {/* Overview */}
+  <div>
+    <h3 className="font-medium text-gray-900 mb-2">
+      Overview
+    </h3>
+
+    <p className="text-sm text-gray-600 leading-6">
+      The selected <strong>{selectedMWS.length}</strong>{" "}
+      micro watersheds are available for review.
+      Click on any micro watershed below to open its detailed report.
+    </p>
+  </div>
+
+  <hr />
+
+  {/* Selected MWS List */}
+  <div className="space-y-3 max-h-[320px] overflow-y-auto">
+
+    {selectedMWS.map((uid, index) => (
+
+      <div
+        key={uid}
+        className="flex items-center justify-between rounded-lg border border-gray-200 px-4 py-3 hover:border-indigo-300 hover:bg-indigo-50 transition"
+      >
+
+        <div className="flex items-center gap-3">
+
+          <div className="w-7 h-7 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center text-xs font-semibold">
+            {index + 1}
+          </div>
+
+          <div>
+            <p className="text-sm font-medium text-gray-800">
+              {uid}
+            </p>
+          </div>
+
+        </div>
+
+       <button
+      className="flex items-center gap-2 text-indigo-600 hover:text-indigo-700 mb-2"
+      onClick={() => handleReportDownload(mwsData?.uid)}
+    >
+      <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={2}
+          d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+        />
+      </svg>
+      <span className="text-sm">View Profile</span>
+    </button>
+
       </div>
 
-      <div className="mb-4">
-        <h3 className="font-medium mb-2">Overview</h3>
-        <p className="text-sm text-gray-600">
-          {dataString}
-        </p>
-        <p className="text-sm text-gray-600 mt-2"> Read report for more details.</p>
-      </div>
+    ))}
 
-      <button className="flex items-center gap-2 text-indigo-600 hover:text-indigo-700 mb-2" onClick={() => handleReportDownload(mwsData?.uid)}>
-        <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-        </svg>
-        <span className="text-sm">View Micro-Watershed Profile </span>
-      </button>
+  </div>
+
+</div>
+)}
     </div>
   );
 };
