@@ -17,6 +17,7 @@ import LandingNavbar from "../components/landing_navbar.jsx";
 import FilterListIcon from "@mui/icons-material/FilterList";
 import SelectReact from "react-select";
 import StewardDetailPage from "../components/steward_detailPage.jsx";
+import { useSearchParams } from "react-router-dom";
 
 const P = {
   base:    "oklch(49.6% 0.265 301.924)",
@@ -437,6 +438,7 @@ const PlansPage = () => {
     const [planDotsVisible, setPlanDotsVisible] = useState(false);
     const [dprStatus,       setDprStatus]       = useState(null);
     const [statusTracking,  setStatusTracking]  = useState(null);
+    const [searchParams, setSearchParams] = useSearchParams();
 
     // ── MAP INIT ────────────────────────────────────────────────
     useEffect(() => {
@@ -467,6 +469,8 @@ const PlansPage = () => {
         mapRef.current = map;
         return () => map.setTarget(null);
     }, []);
+
+
 
     const fetchProposedBlocks = async () => {
         const res = await fetch(`${process.env.REACT_APP_API_URL}/proposed_blocks/`, {
@@ -533,25 +537,64 @@ const PlansPage = () => {
       }
     }, [mapLoading, statsLoading]);
 
-    useEffect(() => {
-      const ctx = location.state?.returnContext;
-      if (!ctx?.stateId) return;
+    // useEffect(() => {
+    //   const ctx = location.state?.returnContext;
+    //   if (!ctx?.stateId) return;
 
-      const tryRestore = setInterval(() => {
-        if (mapRef.current && metaStatsRef.current && !hasRestoredRef.current) {
-          clearInterval(tryRestore);
-          hasRestoredRef.current = true;
-          handleStatePinClick({
-            state_id:   ctx.stateId,
-            state_name: ctx.stateName,
-          });
-        }
-      }, 100);
+    //   const tryRestore = setInterval(() => {
+    //     if (mapRef.current && metaStatsRef.current && !hasRestoredRef.current) {
+    //       clearInterval(tryRestore);
+    //       hasRestoredRef.current = true;
+    //       handleStatePinClick({
+    //         state_id:   ctx.stateId,
+    //         state_name: ctx.stateName,
+    //       }).then(() => {
+    //     if (ctx.districtId) {
+    //       handleDistrictPinClick({
+    //         district_id: ctx.districtId,
+    //         district_name: ctx.districtName,
+    //       });
+    //     }
+    //   });
+    //     }
+    //   }, 100);
 
-      return () => clearInterval(tryRestore);
-    }, []);
+    //   return () => clearInterval(tryRestore);
+    // }, []);
 
     // ── STATS ───────────────────────────────────────────────────
+   
+   useEffect(() => {
+  const stateId = searchParams.get("state");
+  const stateName = searchParams.get("stateName");
+  const districtId = searchParams.get("district");
+  const districtName = searchParams.get("districtName");
+
+  if (!stateId) return;
+
+  const tryRestore = setInterval(() => {
+    if (mapRef.current && metaStatsRef.current && !hasRestoredRef.current) {
+      clearInterval(tryRestore);
+      hasRestoredRef.current = true;
+      handleStatePinClick({
+        state_id: stateId,
+        state_name: stateName,
+      }).then(() => {
+        if (districtId) {
+          handleDistrictPinClick({
+            district_id: districtId,
+            district_name: districtName,
+          });
+        }
+      });
+    }
+  }, 100);
+
+  return () => clearInterval(tryRestore);
+}, []);
+
+
+
     const loadStats = async (orgId = null, stateId = null) => {
       setStatsLoading(true);
       setStatsError(false);
@@ -850,6 +893,10 @@ const PlansPage = () => {
     const handleStatePinClick = async (stateData) => {
       currentStateRef.current = stateData;
       setMapLoading(true);
+       setSearchParams({
+    state: stateData.state_id,
+    stateName: stateData.state_name,
+  }, { replace: true });
 
       if (bubbleLayerRef.current) {
         mapRef.current.removeLayer(bubbleLayerRef.current);
@@ -897,6 +944,13 @@ const PlansPage = () => {
 
     const handleDistrictPinClick = async (districtData) => {
       if (!districtData) return;
+
+      setSearchParams((prev) => {
+    const params = new URLSearchParams(prev);
+    params.set("district", districtData.district_id);
+    params.set("districtName", districtData.district_name);
+    return params;
+  }, { replace: true });
 
       if (viewModeRef.current === "plans") {
         setMapLoading(true);
@@ -946,6 +1000,7 @@ const PlansPage = () => {
     const handleBackToStateView = async () => {
       const map = mapRef.current;
       if (!map) return;
+      setSearchParams({}, { replace: true });
 
       if (planLayerRef.current) {
         map.removeLayer(planLayerRef.current);
@@ -1014,6 +1069,12 @@ const PlansPage = () => {
       const map = mapRef.current;
       if (!map) return;
 
+        setSearchParams((prev) => {
+        const params = new URLSearchParams(prev);
+        params.delete("district");
+        params.delete("districtName");
+        return params;
+      }, { replace: true });
       currentDistrictRef.current = null;
 
       if (viewModeRef.current === "plans") {
@@ -1479,19 +1540,52 @@ const PlansPage = () => {
                 </div>
 
                 <button
-                  onClick={() => {
-                    const districtLabel = transformName(districtLookupRef.current[selectedPlan.district_soi] || "");
-                    const tehsilLabel   = transformName(tehsilLookupRef.current[selectedPlan.tehsil_soi]     || "");
-                    navigate(`/landscape-stewardship/plan-view?id=${selectedPlan.id}&completed=${!!selectedPlan.is_completed}&dpr_reviewed=${!!selectedPlan.is_dpr_reviewed}&dpr_generated=${!!selectedPlan.is_dpr_generated}&dpr_approved=${!!selectedPlan.is_dpr_approved}`, {
-                      state: {
-                        plan: { ...selectedPlan, district: districtLabel, block: tehsilLabel },
-                        returnContext: {
-                          stateId:   currentStateRef.current?.state_id   ?? null,
-                          stateName: currentStateRef.current?.state_name ?? null,
-                        },
-                      },
-                    });
-                  }}
+                onClick={() => {
+                  const districtLabel = transformName(
+                    districtLookupRef.current[selectedPlan.district_soi] || ""
+                  );
+
+                  const tehsilLabel = transformName(
+                    tehsilLookupRef.current[selectedPlan.tehsil_soi] || ""
+                  );
+
+                  const navigationData = {
+                    plan: {
+                      ...selectedPlan,
+                      district: districtLabel,
+                      block: tehsilLabel,
+                    },
+                    returnContext: {
+                      stateId: currentStateRef.current?.state_id ?? null,
+                      stateName: currentStateRef.current?.state_name ?? null,
+                      districtId: currentDistrictRef.current?.district_id ?? null,
+                      districtName: currentDistrictRef.current?.district_name ?? null,
+                    },
+                  };
+
+                  sessionStorage.setItem(
+                    "planNavigationData",
+                    JSON.stringify(navigationData)
+                  );
+
+                  window.open(
+                  `/landscape-stewardship/plan-view?id=${selectedPlan.id}&completed=${!!selectedPlan.is_completed}&dpr_reviewed=${!!selectedPlan.is_dpr_reviewed}&dpr_generated=${!!selectedPlan.is_dpr_generated}&dpr_approved=${!!selectedPlan.is_dpr_approved}&stateId=${currentStateRef.current?.state_id ?? ""}&stateName=${encodeURIComponent(currentStateRef.current?.state_name ?? "")}&districtId=${currentDistrictRef.current?.district_id ?? ""}&districtName=${encodeURIComponent(currentDistrictRef.current?.district_name ?? "")}`,
+                  "_blank"
+                );
+                }}
+                  // onClick={() => {
+                  //   const districtLabel = transformName(districtLookupRef.current[selectedPlan.district_soi] || "");
+                  //   const tehsilLabel   = transformName(tehsilLookupRef.current[selectedPlan.tehsil_soi]     || "");
+                  //   navigate(`/landscape-stewardship/plan-view?id=${selectedPlan.id}&completed=${!!selectedPlan.is_completed}&dpr_reviewed=${!!selectedPlan.is_dpr_reviewed}&dpr_generated=${!!selectedPlan.is_dpr_generated}&dpr_approved=${!!selectedPlan.is_dpr_approved}`, {
+                  //     state: {
+                  //       plan: { ...selectedPlan, district: districtLabel, block: tehsilLabel },
+                  //       returnContext: {
+                  //         stateId:   currentStateRef.current?.state_id   ?? null,
+                  //         stateName: currentStateRef.current?.state_name ?? null,
+                  //       },
+                  //     },
+                  //   });
+                  // }}
                   className="w-full py-3 rounded-2xl text-white font-semibold text-sm flex-shrink-0
                             shadow-lg transition-all duration-200"
                   disabled={!selectedPlan.is_dpr_reviewed}

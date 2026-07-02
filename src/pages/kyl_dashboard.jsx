@@ -120,6 +120,7 @@ const KYLDashboardPage = () => {
   const [isLayerSelecting, setIsLayerSelecting] = useState(false);
   const showConnectivityRef = useRef(false);
   const [manualSelectedMWS, setManualSelectedMWS] = useState([]);
+  const [showPlans, setShowPlans] = useState(false);
 
 
   const [dataJsonError, setDataJsonError] = useState(null);
@@ -2410,9 +2411,6 @@ useEffect(() => {
       if (updated.length === 0) {
       setSelectedMWSProfile(null);   
     }
-
-  console.log("Selected MWS:", updated);
-
   return updated;
 });
 
@@ -3023,6 +3021,8 @@ useEffect(() => {
             currentLayer={currentLayer}
             setSearchLatLong={setSearchLatLong}
             showConnectivity={showConnectivity}
+            showPlans={showPlans} 
+            setShowPlans={setShowPlans}
           selectionMode={selectionMode}
           setSelectionMode={setSelectionMode}
           />
@@ -3081,6 +3081,8 @@ useEffect(() => {
           setSelectionMode={setSelectionMode}
           manualSelectedMWS={manualSelectedMWS} 
           onResetMWSSelection={handleResetMWSSelection}
+          showPlans={showPlans}
+          setShowPlans={setShowPlans}
 
         />
       </div>

@@ -62,6 +62,8 @@ const KYLRightSidebar = ({
   setSelectionMode,
   manualSelectedMWS,
   onResetMWSSelection, 
+  showPlans,
+  setShowPlans,
 }) => {
   const [loadingWB, setLoadingWB] = React.useState(false);
   const [showSelectionPopup, setShowSelectionPopup] = React.useState(false);
@@ -69,7 +71,7 @@ const KYLRightSidebar = ({
   const [isExportingGeo, setIsExportingGeo] = React.useState(false);
   const [geoExportFormat, setGeoExportFormat] = React.useState(null);
   const [plans, setPlans] = React.useState([]);
-  const [showPlans, setShowPlans] = React.useState(false);
+  
   const [plansLoading, setPlansLoading] = React.useState(false);
   const [selectedPlanProfile, setSelectedPlanProfile] = React.useState(null);
   const plansLayerRef = React.useRef(null);
@@ -557,14 +559,6 @@ React.useEffect(() => {
     if (!plan) return;
 
     setSelectedPlanProfile(plan);
-    // navigate(
-    //   `/landscape-stewardship/plan-view?id=${plan.id}&completed=${!!plan.is_completed}&dpr_reviewed=${!!plan.is_dpr_reviewed}&dpr_generated=${!!plan.is_dpr_generated}&dpr_approved=${!!plan.is_dpr_approved}`,
-    //   {
-    //     state: {
-    //       plan,
-    //     },
-    //   }
-    // );
   };
 
   mapRef.current.on("pointermove", handlePointerMove);
@@ -1743,20 +1737,48 @@ const DOT_SELECTED = (status = "in_progress") => new Style({
 
           {/* View DPR Button */}
           <button
-            className="w-full mt-5 py-3 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-semibold transition"
+            className="flex items-center gap-2 text-indigo-600 hover:text-indigo-700 mb-2 text-sm mt-4"
             onClick={() => {
-              navigate(
-                `/landscape-stewardship/plan-view?id=${selectedPlanProfile.id}&completed=${!!selectedPlanProfile.is_completed}&dpr_reviewed=${!!selectedPlanProfile.is_dpr_reviewed}&dpr_generated=${!!selectedPlanProfile.is_dpr_generated}&dpr_approved=${!!selectedPlanProfile.is_dpr_approved}`,
-                {
-                  state: {
-                    plan: selectedPlanProfile,
-                  },
-                  
-                }
-              );
+              const url = `/landscape-stewardship/plan-view?id=${selectedPlanProfile.id}&completed=${!!selectedPlanProfile.is_completed}&dpr_reviewed=${!!selectedPlanProfile.is_dpr_reviewed}&dpr_generated=${!!selectedPlanProfile.is_dpr_generated}&dpr_approved=${!!selectedPlanProfile.is_dpr_approved}`;
+              const planData = {
+                  ...selectedPlanProfile,
+                  district: district.label,
+                  block: block.label,
+                };
+
+                sessionStorage.setItem(
+                  "selectedPlan",
+                  JSON.stringify(planData)
+                );
+              window.open(url, "_blank", "noopener,noreferrer");
             }}
+            // onClick={() => {
+            //   navigate(
+            //     `/landscape-stewardship/plan-view?id=${selectedPlanProfile.id}&completed=${!!selectedPlanProfile.is_completed}&dpr_reviewed=${!!selectedPlanProfile.is_dpr_reviewed}&dpr_generated=${!!selectedPlanProfile.is_dpr_generated}&dpr_approved=${!!selectedPlanProfile.is_dpr_approved}`,
+            //     {
+            //       state: {
+            //         plan: selectedPlanProfile,
+            //       },
+                  
+            //     }
+            //   );
+            // }}
           >
-            View DPR →
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M5 12h14" />
+              <path d="M13 5l7 7-7 7" />
+            </svg>
+             View DPR 
           </button>
 
         </div>
