@@ -1739,19 +1739,17 @@ const DOT_SELECTED = (status = "in_progress") => new Style({
           <button
             className="flex items-center gap-2 text-indigo-600 hover:text-indigo-700 mb-2 text-sm mt-4"
             onClick={() => {
-              const url = `/landscape-stewardship/plan-view?id=${selectedPlanProfile.id}&completed=${!!selectedPlanProfile.is_completed}&dpr_reviewed=${!!selectedPlanProfile.is_dpr_reviewed}&dpr_generated=${!!selectedPlanProfile.is_dpr_generated}&dpr_approved=${!!selectedPlanProfile.is_dpr_approved}`;
-              const planData = {
-                  ...selectedPlanProfile,
-                  district: district.label,
-                  block: block.label,
-                };
-
-                sessionStorage.setItem(
-                  "selectedPlan",
-                  JSON.stringify(planData)
-                );
-              window.open(url, "_blank", "noopener,noreferrer");
-            }}
+    window.open(
+      `/landscape-stewardship/plan-view?id=${selectedPlanProfile.id}` +
+      `&completed=${!!selectedPlanProfile.is_completed}` +
+      `&dpr_reviewed=${!!selectedPlanProfile.is_dpr_reviewed}` +
+      `&dpr_generated=${!!selectedPlanProfile.is_dpr_generated}` +
+      `&dpr_approved=${!!selectedPlanProfile.is_dpr_approved}` +
+      `&stateId=${encodeURIComponent(state?.state_id ?? "")}&stateName=${encodeURIComponent(state?.label ?? "")}` +
+      `&districtId=${encodeURIComponent(district?.district_id ?? "")}&districtName=${encodeURIComponent(district?.label ?? "")}`,
+      "_blank"
+    );
+  }}
             // onClick={() => {
             //   navigate(
             //     `/landscape-stewardship/plan-view?id=${selectedPlanProfile.id}&completed=${!!selectedPlanProfile.is_completed}&dpr_reviewed=${!!selectedPlanProfile.is_dpr_reviewed}&dpr_generated=${!!selectedPlanProfile.is_dpr_generated}&dpr_approved=${!!selectedPlanProfile.is_dpr_approved}`,
