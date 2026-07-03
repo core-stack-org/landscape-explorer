@@ -128,11 +128,6 @@ const KYLDashboardPage = () => {
   const INDIA_ZOOM   = 5;
   const { errors: layerErrors, dismiss: dismissLayerError, retry: retryLayerError } = useLayerErrors();
 
-useEffect(() => {
-  console.log("Mode changed:", selectionMode);
-  handleResetMWSSelection(); 
-}, [selectionMode]);
-
   const dataJsonIndex = useMemo(() => {
     if (!dataJson || !Array.isArray(dataJson)) return null;
 
@@ -427,12 +422,18 @@ const handleResetMWSSelection = () => {
 
   // ─── WB filters: ID-based lookup via dataJsonIndex, no geometry ───
   const applyWaterbodyFilters = (mwsIds, wbFilters, isVisualizeOn) => {
-    if (!waterbodiesLayerRef.current) return;
+  if (!waterbodiesLayerRef.current) return;
 
-    const wbSource = waterbodiesLayerRef.current.getSource();
-    const filterKeys = Object.keys(wbFilters || {}).filter(k => wbFilters[k]);
-    const hasMWSFilter = mwsIds.length > 0;
-    const hasAttrFilter = filterKeys.length > 0;
+  const wbSource = waterbodiesLayerRef.current.getSource();
+  const filterKeys = Object.keys(wbFilters || {}).filter(k => wbFilters[k]);
+
+  // A MWS-level filter is "active" even if it currently matches 0 MWS —
+  // in that case waterbodies should show NONE, not fall back to showing all.
+  const mwsFilterKeys = Object.keys(filterSelections.selectedMWSValues || {});
+  const isMWSFilterSelected = mwsFilterKeys.some(k => filterSelections.selectedMWSValues[k]);
+
+  const hasMWSFilter = mwsIds.length > 0 || isMWSFilterSelected;
+  const hasAttrFilter = filterKeys.length > 0;
 
     if (!hasMWSFilter && !hasAttrFilter && !isVisualizeOn) {
       waterbodiesLayerRef.current.updateStyleVariables({ wbFilterActive: 0 });
@@ -2358,10 +2359,6 @@ const updateSelectedMWSStyle = (selectedIds) => {
       selectedIds.includes(uid) ? 1 : 0,
       true
     );
-    console.log(
-  uid,
-  feature.get("isSelected")
-);
   });
 
   mwsLayerRef.current.getSource().changed();
@@ -2372,7 +2369,6 @@ useEffect(() => {
   if (!mapRef.current) return;
 
   const handleMapClick = (event) => {
-    console.log("Map clicked");
     const feature = mapRef.current.forEachFeatureAtPixel(
       event.pixel,
       (feature, layer) => {
@@ -2384,41 +2380,19 @@ useEffect(() => {
 
     const uid = feature.get("uid");
 
-    if (selectionMode === "single") {
-      // Existing behaviour
-      setHighlightMWS(uid);
-      updateSelectedMWSStyle([uid]);
-      setSelectedMWS([uid]);
-      setSelectedMWSProfile(feature.getProperties());
+    // base toggle strictly on manualSelectedMWS — selectedMWS stays
+    // purely filter-driven and must never be touched here
+    const updated = manualSelectedMWS.includes(uid)
+      ? manualSelectedMWS.filter((id) => id !== uid)
+      : [...manualSelectedMWS, uid];
+
+    updateSelectedMWSStyle(updated);
+    setManualSelectedMWS(updated);
+    setHighlightMWS(uid);
+
+    if (updated.length === 0) {
+      setSelectedMWSProfile(null);
     } else {
-      // Multi-select
-    setSelectedMWS((prev) => {
-      let updated;
-
-      if (selectionMode === "single") {
-        updated = [uid];
-      } else {
-        if (prev.includes(uid)) {
-          updated = prev.filter((id) => id !== uid);
-        } else {
-          updated = [...prev, uid];
-        }
-      }
-
-  updateSelectedMWSStyle(updated);
-   setManualSelectedMWS(updated);  
-      if (updated.length === 0) {
-      setSelectedMWSProfile(null);   
-    }
-
-  console.log("Selected MWS:", updated);
-
-  return updated;
-});
-
-      // Temporary: keep last clicked highlighted
-      setHighlightMWS(uid);
-
       setSelectedMWSProfile(feature.getProperties());
     }
 
@@ -2435,9 +2409,10 @@ useEffect(() => {
       mapRef.current.un("click", handleMapClick);
     }
   };
-}, [selectionMode, toastId,mapRef.current, selectedMWS]);
-  
-  useEffect(() => {
+}, [toastId, mapRef.current, manualSelectedMWS]);
+
+ 
+useEffect(() => {
     if (mapRef.current && waterbodiesLayerRef.current) {
       mapRef.current.removeLayer(waterbodiesLayerRef.current);
       waterbodiesLayerRef.current = null;

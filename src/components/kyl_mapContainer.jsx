@@ -2,7 +2,6 @@
 import { useState } from "react";
 import KYLLocationSearchBar from "./kyl_location";
 import YearSlider from "./yearSlider";
-import SelectionModeToggle from "./SelectionModeToggle";
 
 // Layer Controls component
 const LayerControls = ({

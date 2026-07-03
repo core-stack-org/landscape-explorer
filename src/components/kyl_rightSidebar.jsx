@@ -3,7 +3,7 @@ import KML from 'ol/format/KML';
 import GeoJSON from 'ol/format/GeoJSON';
 import { Style, Stroke, Fill } from 'ol/style';
 
-import React from "react";
+import React,{useEffect} from "react";
 import SelectButton from "./buttons/select_button";
 import filtersDetails from "../components/data/Filters.json";
 import { ArrowLeft, Loader2, Table, FileText, FileSpreadsheet, X, ChevronRight, CheckCircle2,Layers3 } from 'lucide-react';
@@ -236,6 +236,107 @@ const KYLRightSidebar = ({
       setGeoExportFormat(null);
     }
   };
+
+  const allSelectedMWSIds = React.useMemo(() => {
+  const ids = new Set();
+  (selectedMWS || []).forEach(id => ids.add(String(id)));
+  (manualSelectedMWS || []).forEach(id => ids.add(String(id)));
+  return Array.from(ids);
+}, [selectedMWS, manualSelectedMWS]);
+
+useEffect(() => {
+  if (
+    !manualSelectedMWS?.length ||
+    !dataJson?.length
+  )
+    return;
+
+  const manualSelectionDetails = manualSelectedMWS.map((mwsId) => {
+    const mwsRecord = dataJson.find(
+      (item) => String(item.mws_id) === String(mwsId)
+    );
+
+    if (!mwsRecord) {
+      return {
+        mwsId,
+        villages: [],
+        waterbodies: [],
+      };
+    }
+
+    // Villages
+    const villages = (mwsRecord.mws_intersect_villages || []).map((villageId) => {
+      const village = villageJson.find(
+        (v) => String(v.village_id) === String(villageId)
+      );
+
+      return {
+        villageId,
+        villageName:
+          village?.village_name ||
+          village?.vill_name ||
+          village?.name ||
+          "Unknown",
+      };
+    });
+
+    // Waterbodies
+    const waterbodies = (mwsRecord.mws_intersect_swb || []).map((swb) => ({
+      swbId: swb?.swbId ?? swb?.id ?? swb,
+      swbName: swb?.swbName ?? swb?.name ?? "",
+    }));
+
+    return {
+      mwsId,
+      villages,
+      waterbodies,
+    };
+  });
+}, [manualSelectedMWS, selectionMode, dataJson, villageJson]);
+
+const manualSelectionDetails = React.useMemo(() => {
+  if (!manualSelectedMWS?.length || !dataJson?.length) return [];
+
+  return manualSelectedMWS.map((mwsId) => {
+    const mwsRecord = dataJson.find(
+      (item) => String(item.mws_id) === String(mwsId)
+    );
+
+    if (!mwsRecord) {
+      return {
+        mwsId,
+        villages: [],
+        waterbodies: [],
+      };
+    }
+
+    const villages = (mwsRecord.mws_intersect_villages || []).map((villageId) => {
+      const village = villageJson.find(
+        (v) => String(v.village_id) === String(villageId)
+      );
+
+      return {
+        villageId: String(villageId),
+        villageName:
+          village?.village_name ||
+          village?.vill_name ||
+          village?.name ||
+          "Unknown",
+      };
+    });
+
+    const waterbodies = (mwsRecord.mws_intersect_swb || []).map((swb) => ({
+      swbId: String(swb?.swbId ?? swb?.id ?? swb),
+      swbName: swb?.swbName ?? swb?.name ?? "",
+    }));
+
+    return {
+      mwsId: String(mwsId),
+      villages,
+      waterbodies,
+    };
+  });
+}, [manualSelectedMWS, dataJson, villageJson]);
 
   const mwsVillageIntersections = React.useMemo(() => {
     if (!selectedMWS || selectedMWS.length === 0 || !dataJson || !Array.isArray(dataJson)) return [];
@@ -1203,11 +1304,25 @@ const KYLRightSidebar = ({
                               {mwsGroup && mwsGroup.villages.length > 0 ? (
                                 <div className="flex flex-wrap gap-1">
                                   {mwsGroup.villages.filter(v => {
+                                    const manualGroup = manualSelectionDetails.find(
+                                      m => String(m.mwsId) === String(item.name)
+                                    );
+
+                                    const isManualVillage = manualGroup?.villages?.some(
+                                      mv => String(mv.villageId) === String(v.villageId)
+                                    );
                                     const id = String(v.villageId);
                                     if (seenVillageIds.has(id)) return false;
                                     seenVillageIds.add(id);
                                     return true;
                                   }).map(v => {
+                                    const manualGroup = manualSelectionDetails.find(
+                                        m => String(m.mwsId) === String(item.name)
+                                    );
+
+                                    const isManualVillage = manualGroup?.villages?.some(
+                                        mv => String(mv.villageId) === String(v.villageId)
+                                    );
                                     const villageIdStr = String(v.villageId);
                                     let isSelected = false;
                                     if (hasVillageFilter || hasVillagePattern) {
@@ -1221,11 +1336,13 @@ const KYLRightSidebar = ({
                                       <span
                                         key={v.villageId}
                                         title={`${isSelected ? 'Matches filter' : 'Intersects'} | ID: ${v.villageId}`}
-                                        className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium border ${
-                                          isSelected
-                                            ? 'bg-emerald-500 border-emerald-600 text-white'
-                                            : 'bg-violet-50 border-violet-200 text-violet-700'
-                                        }`}
+                                       className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium border ${
+                                        isManualVillage
+                                          ? "bg-orange-500 border-orange-600 text-white"
+                                          : isSelected
+                                          ? "bg-emerald-500 border-emerald-600 text-white"
+                                          : "bg-violet-50 border-violet-200 text-violet-700"
+                                      }`}
                                       >
                                         {v.villageName || 'Unknown'}
                                         <span className="opacity-70 font-mono text-[9px]">({v.villageId})</span>
@@ -1251,9 +1368,16 @@ const KYLRightSidebar = ({
                                 return (
                                   <div className="flex flex-wrap gap-1">
                                     {allSwbs.map(swb => {
+                                      const manualGroup = manualSelectionDetails.find(
+                                        m => String(m.mwsId) === String(item.name)
+                                      );
+
+                                     
                                       const swbIdStr = typeof swb === 'object' ? String(swb.swbId) : String(swb);
                                       const swbName = typeof swb === 'object' ? (swb.swbName || '') : '';
-
+                                       const isManualWaterbody = manualGroup?.waterbodies?.some(
+                                        wb => String(wb.swbId) === swbIdStr
+                                      );
                                       // Green if WB filter is active and this WB matched it
                                       // Blue if just a structural intersection
                                       const isFilterMatched = hasWaterbodyFilter &&
@@ -1265,9 +1389,11 @@ const KYLRightSidebar = ({
                                           key={swbIdStr}
                                           title={`${isFilterMatched ? 'Matches filter' : 'Structural intersection'} | ID: ${swbIdStr}`}
                                           className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium border transition-colors ${
-                                            isFilterMatched
-                                              ? 'bg-emerald-500 border-emerald-600 text-white'
-                                              : 'bg-sky-50 border-sky-200 text-sky-700'
+                                            isManualWaterbody
+                                              ? "bg-orange-500 border-orange-600 text-white"
+                                              : isFilterMatched
+                                              ? "bg-emerald-500 border-emerald-600 text-white"
+                                              : "bg-sky-50 border-sky-200 text-sky-700"
                                           }`}
                                         >
                                           {swbName ? `${swbName} (${swbIdStr})` : swbIdStr}
@@ -1410,10 +1536,6 @@ const KYLRightSidebar = ({
     </div>
   );
 
-  console.log("selectedMWSProfile:", selectedMWSProfile);
-console.log("manualSelectedMWS:", manualSelectedMWS);
-console.log("selectionMode:", selectionMode);
-
   return (
     <div className="w-[320px] flex flex-col gap-2">
       <SelectionPopup />
@@ -1447,6 +1569,7 @@ console.log("selectionMode:", selectionMode);
     setSelectionMode={setSelectionMode}
     onResetMWS={onResetMWS}
     onResetSelection={onResetMWSSelection} 
+    onOpenSelection={() => setShowSelectionPopup(true)}
 />
 
 ) : null}
