@@ -7,9 +7,6 @@ import Point from "ol/geom/Point";
 import VectorLayer from "ol/layer/Vector";
 import VectorSource from "ol/source/Vector";
 import { useNavigate } from "react-router-dom";
-import React from "react";
-import { Style, Stroke, Fill } from 'ol/style';
-
 import React,{useEffect} from "react";
 import SelectButton from "./buttons/select_button";
 import filtersDetails from "../components/data/Filters.json";
@@ -410,6 +407,7 @@ const manualSelectionDetails = React.useMemo(() => {
   const handleUniversalBack = () => {
     onResetMWS();
     onResetWaterbody();
+    setSelectedPlanProfile(null);
   };
 
   const handleIndicatorRemoval = (filter) => {
@@ -1796,7 +1794,10 @@ const DOT_SELECTED = (status = "in_progress") => new Style({
 {selectedMWSProfile ? (
 <KYLMWSProfilePanel
     mwsData={selectedMWSProfile}
-    onBack={onResetMWS}
+     onBack={() => {
+      onResetMWS();
+      setSelectedPlanProfile(null);
+    }}
     hideBackButton={showBothPanels}
     selectionMode={selectionMode}
     // selectedMWS={selectedMWS}
@@ -1817,30 +1818,12 @@ const DOT_SELECTED = (status = "in_progress") => new Style({
 
           {/* Header */}
           <div className="flex items-start gap-3 mb-5">
-
-            <button
-              onClick={() => setSelectedPlanProfile(null)}
-              className="mt-1 rounded-full p-1 hover:bg-gray-100 transition"
-            >
-              <ArrowLeft className="w-5 h-5 text-gray-600" />
-            </button>
-
-       <div className="flex-1 flex items-center gap-2">
-
-        {/* <span className="text-[11px] uppercase tracking-[0.18em] font-bold text-indigo-600 whitespace-nowrap">
-          Plan Overview
-        </span>
-
-        <span className="text-gray-300">|</span> */}
-
-        <h2 className="text-lg text-indigo-600 truncate">
-          {selectedPlanProfile.plan}
-        </h2>
-
-      </div>
-
+            <div className="flex-1 flex items-center gap-2">
+              <h2 className="text-lg text-indigo-600 truncate">
+                {selectedPlanProfile.plan}
+              </h2>
+            </div>
           </div>
-
           {/* Information Card */}
           <div className="rounded-xl border border-gray-200 bg-gray-50 divide-y">
 

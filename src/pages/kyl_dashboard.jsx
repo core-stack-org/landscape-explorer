@@ -129,9 +129,7 @@ const KYLDashboardPage = () => {
   const INDIA_ZOOM   = 5;
   const { errors: layerErrors, dismiss: dismissLayerError, retry: retryLayerError } = useLayerErrors();
 
-useEffect(() => {
-  handleResetMWSSelection(); 
-}, [selectionMode]);
+
 
   const dataJsonIndex = useMemo(() => {
     if (!dataJson || !Array.isArray(dataJson)) return null;
@@ -195,11 +193,15 @@ useEffect(() => {
       .toLowerCase()
   };
 
-
-
-  const handleResetMWS = () => {
+const handleResetMWS = () => {
     setSelectedMWSProfile(null);
-    handleResetMWSSelection();
+    setManualSelectedMWS([]);
+    setHighlightMWS(null);
+    if (mwsLayerRef.current) resetMWSStyle();
+    if (toastId) {
+      toast.dismiss(toastId);
+      setToastId(null);
+    }
   };
 
   const handleResetMWSSelection = () => {
@@ -212,7 +214,6 @@ useEffect(() => {
       setToastId(null);
     }
   };
-
 
   const getAllFilterTypes = () => {
     const types = new Set();
@@ -2320,13 +2321,13 @@ useEffect(() => {
   }, [mapRef.current, state, district, block]);
 
 
-  const updateSelectedMWSStyle = (selectedIds) => {
-    if (!mwsLayerRef.current) return;
+const updateSelectedMWSStyle = (selectedIds) => {
+  if (!mwsLayerRef.current) return;
 
-    const features = mwsLayerRef.current.getSource().getFeatures();
+  const features = mwsLayerRef.current.getSource().getFeatures();
 
-    features.forEach((feature) => {
-      const uid = feature.get("uid");
+  features.forEach((feature) => {
+    const uid = feature.get("uid");
     feature.set(
       "isSelected",
       selectedIds.includes(uid) ? 1 : 0,
@@ -2334,19 +2335,10 @@ useEffect(() => {
     );
   });
 
-      feature.set(
-        "isSelected",
-        selectedIds.includes(uid) ? 1 : 0,
-        true
-      );
-    });
+  mwsLayerRef.current.getSource().changed();
+  // applyDefaultMWSStyle();
+};
 
-    mwsLayerRef.current.getSource().changed();
-    // applyDefaultMWSStyle();
-  };
-
-  useEffect(() => {
-    if (!mapRef.current) return;
 useEffect(() => {
   if (!mapRef.current) return;
 
@@ -2358,91 +2350,43 @@ useEffect(() => {
       }
     );
 
-    const handleMapClick = (event) => {
-      const feature = mapRef.current.forEachFeatureAtPixel(
-        event.pixel,
-        (feature, layer) => {
-          if (layer === mwsLayerRef.current) return feature;
-        }
-      );
+    if (!feature) return;
 
-      if (!feature) return;
+    const uid = feature.get("uid");
 
-      const uid = feature.get("uid");
+    setManualSelectedMWS((prev) => {
+      const updated = prev.includes(uid)
+        ? prev.filter((id) => id !== uid)
+        : [...prev, uid];
 
-      if (selectionMode === "single") {
-        // Existing behaviour
-        setHighlightMWS(uid);
-        updateSelectedMWSStyle([uid]);
-        setSelectedMWS([uid]);
-        setSelectedMWSProfile(feature.getProperties());
+      updateSelectedMWSStyle(updated);
+
+      if (updated.length === 0) {
+        setSelectedMWSProfile(null);
+        setHighlightMWS(null);
       } else {
-        // Multi-select
-      setSelectedMWS((prev) => {
-        let updated;
-
-        if (selectionMode === "single") {
-          updated = [uid];
-        } else {
-          if (prev.includes(uid)) {
-            updated = prev.filter((id) => id !== uid);
-          } else {
-            updated = [...prev, uid];
-          }
-        }
-
-    updateSelectedMWSStyle(updated);
-    setManualSelectedMWS(updated);  
-        if (updated.length === 0) {
-        setSelectedMWSProfile(null);   
-      }
-
-    return updated;
-  });
-
-        // Temporary: keep last clicked highlighted
-        setHighlightMWS(uid);
-
         setSelectedMWSProfile(feature.getProperties());
+        setHighlightMWS(uid);
       }
-    // base toggle strictly on manualSelectedMWS — selectedMWS stays
-    // purely filter-driven and must never be touched here
-    const updated = manualSelectedMWS.includes(uid)
-      ? manualSelectedMWS.filter((id) => id !== uid)
-      : [...manualSelectedMWS, uid];
 
-    updateSelectedMWSStyle(updated);
-    setManualSelectedMWS(updated);
-    setHighlightMWS(uid);
+      return updated;
+    });
 
-    if (updated.length === 0) {
-      setSelectedMWSProfile(null);
-    } else {
-      setSelectedMWSProfile(feature.getProperties());
+    if (toastId) {
+      toast.dismiss(toastId);
+      setToastId(null);
     }
+  };
 
-      if (toastId) {
-        toast.dismiss(toastId);
-        setToastId(null);
-      }
-    };
+  mapRef.current.on("click", handleMapClick);
 
-    mapRef.current.on("click", handleMapClick);
-
-    return () => {
-      if (mapRef.current) {
-        mapRef.current.un("click", handleMapClick);
-      }
-    };
-  }, [selectionMode, toastId,mapRef.current, selectedMWS]);
-    
-  useEffect(() => {
   return () => {
     if (mapRef.current) {
       mapRef.current.un("click", handleMapClick);
     }
   };
-}, [toastId, mapRef.current, manualSelectedMWS]);
+}, [toastId, mapRef.current]);
+
 
  
 useEffect(() => {
