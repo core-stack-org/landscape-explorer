@@ -130,7 +130,6 @@ const KYLDashboardPage = () => {
   const { errors: layerErrors, dismiss: dismissLayerError, retry: retryLayerError } = useLayerErrors();
 
 useEffect(() => {
-  console.log("Mode changed:", selectionMode);
   handleResetMWSSelection(); 
 }, [selectionMode]);
 
@@ -196,36 +195,23 @@ useEffect(() => {
       .toLowerCase()
   };
 
-  // const handleResetMWS = () => {
-  //   // if (!selectedMWSProfile) return;
-
-  //   setSelectedMWSProfile(null);
-  //    setSelectedMWS([]);
-  //    setManualSelectedMWS([]);
-  //      setHighlightMWS(null);
-  //   if (mwsLayerRef.current) resetMWSStyle();
-  //   if (toastId) {
-  //     toast.dismiss(toastId);
-  //     setToastId(null);
-  //   }
-  // };
 
 
   const handleResetMWS = () => {
-  setSelectedMWSProfile(null);
-  handleResetMWSSelection();
-};
+    setSelectedMWSProfile(null);
+    handleResetMWSSelection();
+  };
 
-const handleResetMWSSelection = () => {
-  setSelectedMWS([]);
-  setManualSelectedMWS([]);
-  setHighlightMWS(null);
-  if (mwsLayerRef.current) resetMWSStyle();
-  if (toastId) {
-    toast.dismiss(toastId);
-    setToastId(null);
-  }
-};
+  const handleResetMWSSelection = () => {
+    setSelectedMWS([]);
+    setManualSelectedMWS([]);
+    setHighlightMWS(null);
+    if (mwsLayerRef.current) resetMWSStyle();
+    if (toastId) {
+      toast.dismiss(toastId);
+      setToastId(null);
+    }
+  };
 
 
   const getAllFilterTypes = () => {
@@ -347,10 +333,10 @@ const handleResetMWSSelection = () => {
   };
 
   const handleFilterSelection = (name, option, isChecked) => {
-      setSelectedMWS([]);
-  setSelectedMWSProfile(null);
-  resetMWSStyle();
-  setHighlightMWS(null);
+    setSelectedMWS([]);
+    setSelectedMWSProfile(null);
+    resetMWSStyle();
+    setHighlightMWS(null);
     const sourceType = determineFilterSource(name);
     option = {
       ...option,
@@ -2327,114 +2313,92 @@ const handleResetMWSSelection = () => {
     return () => map.un("click", handleWaterbodyClick);
   }, [mapRef.current, state, district, block]);
 
-  // useEffect(() => {
-  //   if (!mapRef.current) return;
 
-  //   const handleMapClick = (event) => {
-  //     const feature = mapRef.current.forEachFeatureAtPixel(
-  //       event.pixel,
-  //       (feature, layer) => { if (layer === mwsLayerRef.current) return feature; }
-  //     );
-  //     if (feature) {
-  //       setHighlightMWS(feature.get("uid"));
-  //       setSelectedMWSProfile(feature.getProperties());
-  //       if (toastId) { toast.dismiss(toastId); setToastId(null); }
-  //     }
-  //   };
+  const updateSelectedMWSStyle = (selectedIds) => {
+    if (!mwsLayerRef.current) return;
 
-  //   mapRef.current.on("click", handleMapClick);
-  //   return () => { if (mapRef.current) mapRef.current.un("click", handleMapClick); };
-  // }, [mapRef.current, selectedMWS]);
+    const features = mwsLayerRef.current.getSource().getFeatures();
 
-const updateSelectedMWSStyle = (selectedIds) => {
-  if (!mwsLayerRef.current) return;
+    features.forEach((feature) => {
+      const uid = feature.get("uid");
 
-  const features = mwsLayerRef.current.getSource().getFeatures();
+      feature.set(
+        "isSelected",
+        selectedIds.includes(uid) ? 1 : 0,
+        true
+      );
+    });
 
-  features.forEach((feature) => {
-    const uid = feature.get("uid");
+    mwsLayerRef.current.getSource().changed();
+    // applyDefaultMWSStyle();
+  };
 
-    feature.set(
-      "isSelected",
-      selectedIds.includes(uid) ? 1 : 0,
-      true
-    );
-    console.log(
-  uid,
-  feature.get("isSelected")
-);
-  });
+  useEffect(() => {
+    if (!mapRef.current) return;
 
-  mwsLayerRef.current.getSource().changed();
-  // applyDefaultMWSStyle();
-};
+    const handleMapClick = (event) => {
+      const feature = mapRef.current.forEachFeatureAtPixel(
+        event.pixel,
+        (feature, layer) => {
+          if (layer === mwsLayerRef.current) return feature;
+        }
+      );
 
-useEffect(() => {
-  if (!mapRef.current) return;
+      if (!feature) return;
 
-  const handleMapClick = (event) => {
-    console.log("Map clicked");
-    const feature = mapRef.current.forEachFeatureAtPixel(
-      event.pixel,
-      (feature, layer) => {
-        if (layer === mwsLayerRef.current) return feature;
-      }
-    );
-
-    if (!feature) return;
-
-    const uid = feature.get("uid");
-
-    if (selectionMode === "single") {
-      // Existing behaviour
-      setHighlightMWS(uid);
-      updateSelectedMWSStyle([uid]);
-      setSelectedMWS([uid]);
-      setSelectedMWSProfile(feature.getProperties());
-    } else {
-      // Multi-select
-    setSelectedMWS((prev) => {
-      let updated;
+      const uid = feature.get("uid");
 
       if (selectionMode === "single") {
-        updated = [uid];
+        // Existing behaviour
+        setHighlightMWS(uid);
+        updateSelectedMWSStyle([uid]);
+        setSelectedMWS([uid]);
+        setSelectedMWSProfile(feature.getProperties());
       } else {
-        if (prev.includes(uid)) {
-          updated = prev.filter((id) => id !== uid);
+        // Multi-select
+      setSelectedMWS((prev) => {
+        let updated;
+
+        if (selectionMode === "single") {
+          updated = [uid];
         } else {
-          updated = [...prev, uid];
+          if (prev.includes(uid)) {
+            updated = prev.filter((id) => id !== uid);
+          } else {
+            updated = [...prev, uid];
+          }
         }
+
+    updateSelectedMWSStyle(updated);
+    setManualSelectedMWS(updated);  
+        if (updated.length === 0) {
+        setSelectedMWSProfile(null);   
       }
 
-  updateSelectedMWSStyle(updated);
-   setManualSelectedMWS(updated);  
-      if (updated.length === 0) {
-      setSelectedMWSProfile(null);   
-    }
-  return updated;
-});
+    return updated;
+  });
 
-      // Temporary: keep last clicked highlighted
-      setHighlightMWS(uid);
+        // Temporary: keep last clicked highlighted
+        setHighlightMWS(uid);
 
-      setSelectedMWSProfile(feature.getProperties());
-    }
+        setSelectedMWSProfile(feature.getProperties());
+      }
 
-    if (toastId) {
-      toast.dismiss(toastId);
-      setToastId(null);
-    }
-  };
+      if (toastId) {
+        toast.dismiss(toastId);
+        setToastId(null);
+      }
+    };
 
-  mapRef.current.on("click", handleMapClick);
+    mapRef.current.on("click", handleMapClick);
 
-  return () => {
-    if (mapRef.current) {
-      mapRef.current.un("click", handleMapClick);
-    }
-  };
-}, [selectionMode, toastId,mapRef.current, selectedMWS]);
-  
+    return () => {
+      if (mapRef.current) {
+        mapRef.current.un("click", handleMapClick);
+      }
+    };
+  }, [selectionMode, toastId,mapRef.current, selectedMWS]);
+    
   useEffect(() => {
     if (mapRef.current && waterbodiesLayerRef.current) {
       mapRef.current.removeLayer(waterbodiesLayerRef.current);
@@ -2772,15 +2736,28 @@ useEffect(() => {
       villageFilterKeys.forEach(filterName => {
         const filterValues = filterSelections.selectedVillageValues[filterName];
         if (!filterValues) return;
-
+        console.log(filterName)
+        const filter = getAllFilters().find((f) => f.name === filterName);
         const tempArr = new Set();
         filterValues.forEach(selectedOption => {
           villageJson.forEach(village => {
-            if (village && typeof village[filterName] !== 'undefined' && village.village_id) {
-              const value = Number(village[filterName]);
-              if (!isNaN(value) && value >= selectedOption.value.lower && value <= selectedOption.value.upper) {
-                if (candidateVillages.size === 0 || candidateVillages.has(village.village_id)) {
-                  tempArr.add(village.village_id);
+            if (filter?.type === 2) {
+              if (village && typeof village[filterName] !== 'undefined' && village.village_id) {
+                const value = Number(village[filterName]);
+                if (!isNaN(value) && value >= selectedOption.value.lower && value <= selectedOption.value.upper) {
+                  if (candidateVillages.size === 0 || candidateVillages.has(village.village_id)) {
+                    tempArr.add(village.village_id);
+                  }
+                }
+              }
+            }
+            else{
+               if (village && typeof village[filterName] !== 'undefined' && village.village_id) {
+                const value = Number(village[filterName]);
+                if (!isNaN(value) && value == selectedOption.value) {
+                  if (candidateVillages.size === 0 || candidateVillages.has(village.village_id)) {
+                    tempArr.add(village.village_id);
+                  }
                 }
               }
             }

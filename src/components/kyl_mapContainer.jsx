@@ -539,6 +539,12 @@ const MapLegend = ({ showMWS, showVillages, currentLayer, showConnectivity,showP
     { fill: "rgba(46, 125, 50, 0.5)", stroke: "rgba(46, 125, 50, 1)", label: ">50 kms" },
   ];
 
+  const AntyodayaData = [
+    { fill: "rgba(220, 20, 60, 0.8)", stroke: "rgba(139, 0, 0, 1)", label: "Low/Poor" },
+    { fill: "rgba(255, 215, 0, 0.8)", stroke: "rgba(218, 165, 32, 1)", label: "Moderate" },
+    { fill: "rgba(144, 238, 144, 0.8)", stroke: "rgba(34, 139, 34, 1)", label: "High/Strong" },
+  ];
+
 
   const isExcludedLulc = (name) => {
     if (!name) return false;
@@ -752,6 +758,10 @@ const MapLegend = ({ showMWS, showVillages, currentLayer, showConnectivity,showP
 
   const isCropPlainActive = currentLayer?.some(
     (layer) => layer.name === "area_crops_on_plain" || layer.name.includes("area_crops_on_plain")
+  );
+
+  const isAntyodayaActive = currentLayer?.some(
+    (layer) => layer.name.includes("road_connectivity") || layer.name.includes("electricity_supply") || layer.name.includes("housing_quality") || layer.name.includes("maternal_and_child_health_service_access") || layer.name.includes("water_and_sanitation_infrastructure") || layer.name.includes("access_to_formal_banking_services") || layer.name.includes("coverage_across_PDS_NFSA_BPL_and_Pension") || layer.name.includes("institutionalization_strength") || layer.name.includes("civic_infrastructure") || layer.name.includes("farm_employment") || layer.name.includes("forest-based_livelihood") || layer.name.includes("alternate_farming") || layer.name.includes("fisheries_adoption") || layer.name.includes("cottage_industry") || layer.name.includes("livestock_management_service_quality") || layer.name.includes("livestock_management_centers") || layer.name.includes("common_pasture_access") || layer.name.includes("watershed_infrastructure_and_modern_irrigation") || layer.name.includes("agricultural_support_infrastructure") || layer.name.includes("post_harvest_infra") || layer.name.includes("agri_market_access") || layer.name.includes("farmer_cooperatives_access") || layer.name.includes("organic_farming_adoption")
   );
 
 
@@ -1900,6 +1910,18 @@ const MapLegend = ({ showMWS, showVillages, currentLayer, showConnectivity,showP
                       <span className="text-sm text-gray-600">
                         {item.label}
                       </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {isAntyodayaActive && (
+                <div className="space-y-2">
+                  <h4 className="text-xs font-medium text-gray-600">Antyodaya Legend</h4>
+                  {AntyodayaData.map((item, index) => (
+                    <div key={`fac-live-${index}`} className="flex items-center gap-2">
+                      <div className="w-4 h-4 rounded" style={{ backgroundColor: item.fill, border: `1px solid ${item.stroke}` }} />
+                      <span className="text-sm text-gray-600">{item.label}</span>
                     </div>
                   ))}
                 </div>

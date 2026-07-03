@@ -1002,7 +1002,7 @@
         "Restoration": [
             {
                 "name": "decrease_in_tree_cover",
-                "label": "Reduction in tree cover",
+                "label": "Descrease in tree cover",
                 "type": 2,
                 "values": [
                     {
@@ -1813,6 +1813,268 @@
                 "styleIdx": 16
             },
             {
+                "name": "public_distribution_system",
+                "label": "Public distribution system",
+                "type": 2,
+                "values": [
+                    {
+                        "label": "Within 2 kms",
+                        "value": {
+                            "lower": 0,
+                            "upper": 2
+                        }
+                    },
+                    {
+                        "label": "More than 2 kms",
+                        "value": {
+                            "lower": 2,
+                            "upper": 9999999999
+                        }
+                    }
+                ],
+                "layer_store": [
+                    "facilities_proximity"
+                ],
+                "layer_name": [
+                    "facilities"
+                ],
+                "vectorStyle": [
+                    {
+                        "fill": "rgba(232, 238, 186, 0.8)",
+                        "stroke": "rgba(232, 238, 186, 1)",
+                        "lower": 0,
+                        "upper": 2
+                    },
+                    {
+                        "fill": "rgba(137, 151, 10, 0.8)",
+                        "stroke": "rgba(137, 151, 10, 1)",
+                        "lower": 2,
+                        "upper": 9999999999
+                    }
+                ],
+                "rasterStyle": "",
+                "styleIdx": 19
+            }
+        ],
+        "Basic Infrastructure" : [
+            {
+                "name": "road_connectivity",
+                "label": "Road Connectivity",
+                "type": 1,
+                "values": [
+                    {
+                        "label": "Poor",
+                        "value": 0
+                    },
+                    {
+                        "label": "Moderate",
+                        "value": 1
+                    },
+                    {
+                        "label": "Strong",
+                        "value": 2
+                    }
+                ],
+                "layer_store": ["antyodaya_2020"],
+                "layer_name": ["antyodaya20"],
+                "vectorStyle": [
+                {
+                    "fill": "rgba(220, 20, 60, 0.8)",
+                    "stroke": "rgba(139, 0, 0, 1)",
+                    "lower": 0,
+                    "upper": 0.33
+                },
+                {
+                    "fill": "rgba(255, 215, 0, 0.8)",
+                    "stroke": "rgba(218, 165, 32, 1)",
+                    "lower": 0.330001,
+                    "upper": 0.66
+                },
+                {
+                    "fill": "rgba(144, 238, 144, 0.8)",
+                    "stroke": "rgba(34, 139, 34, 1)",
+                    "lower": 0.660001,
+                    "upper": 1
+                }
+            ],
+                "rasterStyle": [],
+                "styleIdx": 40
+            },
+            {
+                "name": "electricity_supply",
+                "label": "Electricity Supply",
+                "type": 1,
+                "values": [
+                    {
+                        "label": "Poor",
+                        "value": 0
+                    },
+                    {
+                        "label": "Moderate",
+                        "value": 1
+                    },
+                    {
+                        "label": "Strong",
+                        "value": 2
+                    }
+                ],
+                "layer_store": ["antyodaya_2020"],
+                "layer_name": ["antyodaya20"],
+                "vectorStyle": [
+                    {
+                        "fill": "rgba(220, 20, 60, 0.8)",
+                        "stroke": "rgba(139, 0, 0, 1)",
+                        "lower": 0,
+                        "upper": 0.33
+                    },
+                    {
+                        "fill": "rgba(255, 215, 0, 0.8)",
+                        "stroke": "rgba(218, 165, 32, 1)",
+                        "lower": 0.330001,
+                        "upper": 0.66
+                    },
+                    {
+                        "fill": "rgba(144, 238, 144, 0.8)",
+                        "stroke": "rgba(34, 139, 34, 1)",
+                        "lower": 0.660001,
+                        "upper": 1
+                    }
+                ],
+                "rasterStyle": [],
+                "styleIdx": 41
+            },
+            {
+                "name": "housing_quality",
+                "label": "Housing Quality",
+                "type": 1,
+                "values": [
+                    {
+                        "label": "Poor",
+                        "value": 0
+                    },
+                    {
+                        "label": "Moderate",
+                        "value": 1
+                    },
+                    {
+                        "label": "Strong",
+                        "value": 2
+                    }
+                ],
+                "layer_store": ["antyodaya_2020"],
+                "layer_name": ["antyodaya20"],
+                "vectorStyle": [
+                    {
+                        "fill": "rgba(220, 20, 60, 0.8)",
+                        "stroke": "rgba(139, 0, 0, 1)",
+                        "lower": 0,
+                        "upper": 0.33
+                    },
+                    {
+                        "fill": "rgba(255, 215, 0, 0.8)",
+                        "stroke": "rgba(218, 165, 32, 1)",
+                        "lower": 0.330001,
+                        "upper": 0.66
+                    },
+                    {
+                        "fill": "rgba(144, 238, 144, 0.8)",
+                        "stroke": "rgba(34, 139, 34, 1)",
+                        "lower": 0.660001,
+                        "upper": 1
+                    }
+                ],
+                "rasterStyle": [],
+                "styleIdx": 42
+            }
+        ],
+        "Health and Sanitation" : [
+            {
+                "name": "maternal_and_child_health_service_access",
+                "label": "Maternal and Child Health Service Access",
+                "type": 1,
+                "values": [
+                    {
+                        "label": "Poor",
+                        "value": 0
+                    },
+                    {
+                        "label": "Moderate",
+                        "value": 1
+                    },
+                    {
+                        "label": "Strong",
+                        "value": 2
+                    }
+                ],
+                "layer_store": ["antyodaya_2020"],
+                "layer_name": ["antyodaya20"],
+                "vectorStyle": [
+                    {
+                        "fill": "rgba(220, 20, 60, 0.8)",
+                        "stroke": "rgba(139, 0, 0, 1)",
+                        "lower": 0,
+                        "upper": 0.33
+                    },
+                    {
+                        "fill": "rgba(255, 215, 0, 0.8)",
+                        "stroke": "rgba(218, 165, 32, 1)",
+                        "lower": 0.330001,
+                        "upper": 0.66
+                    },
+                    {
+                        "fill": "rgba(144, 238, 144, 0.8)",
+                        "stroke": "rgba(34, 139, 34, 1)",
+                        "lower": 0.660001,
+                        "upper": 1
+                    }
+                ],
+                "rasterStyle": [],
+                "styleIdx": 43
+            },
+            {
+                "name": "water_and_sanitation_infrastructure",
+                "label": "Water and Sanitation Infrastructure",
+                "type": 1,
+                "values": [
+                    {
+                        "label": "Poor",
+                        "value": 0
+                    },
+                    {
+                        "label": "Moderate",
+                        "value": 1
+                    },
+                    {
+                        "label": "Strong",
+                        "value": 2
+                    }
+                ],
+                "layer_store": ["antyodaya_2020"],
+                "layer_name": ["antyodaya20"],
+                "vectorStyle": [
+                    {
+                        "fill": "rgba(220, 20, 60, 0.8)",
+                        "stroke": "rgba(139, 0, 0, 1)",
+                        "lower": 0,
+                        "upper": 0.33
+                    },
+                    {
+                        "fill": "rgba(255, 215, 0, 0.8)",
+                        "stroke": "rgba(218, 165, 32, 1)",
+                        "lower": 0.330001,
+                        "upper": 0.66
+                    },
+                    {
+                        "fill": "rgba(144, 238, 144, 0.8)",
+                        "stroke": "rgba(34, 139, 34, 1)",
+                        "lower": 0.660001,
+                        "upper": 1
+                    }
+                ],
+                "rasterStyle": [],
+                "styleIdx": 44
+            },
+            {
                 "name": "essential_health_services",
                 "label": "Essential health services",
                 "type": 2,
@@ -1923,49 +2185,51 @@
                 ],
                 "rasterStyle": "",
                 "styleIdx": 18
-            },
+            }
+        ],
+        "Financial Inclusion" : [
             {
-                "name": "public_distribution_system",
-                "label": "Public distribution system",
-                "type": 2,
+                "name": "access_to_formal_banking_services",
+                "label": "Access to formal banking services",
+                "type": 1,
                 "values": [
                     {
-                        "label": "Within 2 kms",
-                        "value": {
-                            "lower": 0,
-                            "upper": 2
-                        }
+                        "label": "Poor",
+                        "value": 0
                     },
                     {
-                        "label": "More than 2 kms",
-                        "value": {
-                            "lower": 2,
-                            "upper": 9999999999
-                        }
+                        "label": "Moderate",
+                        "value": 1
+                    },
+                    {
+                        "label": "High",
+                        "value": 2
                     }
                 ],
-                "layer_store": [
-                    "facilities_proximity"
-                ],
-                "layer_name": [
-                    "facilities"
-                ],
+                "layer_store": ["antyodaya_2020"],
+                "layer_name": ["antyodaya20"],
                 "vectorStyle": [
                     {
-                        "fill": "rgba(232, 238, 186, 0.8)",
-                        "stroke": "rgba(232, 238, 186, 1)",
+                        "fill": "rgba(220, 20, 60, 0.8)",
+                        "stroke": "rgba(139, 0, 0, 1)",
                         "lower": 0,
-                        "upper": 2
+                        "upper": 0.33
                     },
                     {
-                        "fill": "rgba(137, 151, 10, 0.8)",
-                        "stroke": "rgba(137, 151, 10, 1)",
-                        "lower": 2,
-                        "upper": 9999999999
+                        "fill": "rgba(255, 215, 0, 0.8)",
+                        "stroke": "rgba(218, 165, 32, 1)",
+                        "lower": 0.330001,
+                        "upper": 0.66
+                    },
+                    {
+                        "fill": "rgba(144, 238, 144, 0.8)",
+                        "stroke": "rgba(34, 139, 34, 1)",
+                        "lower": 0.660001,
+                        "upper": 1
                     }
                 ],
-                "rasterStyle": "",
-                "styleIdx": 19
+                "rasterStyle": [],
+                "styleIdx": 45
             },
             {
                 "name": "financial_inclusion",
@@ -2009,30 +2273,395 @@
                 ],
                 "rasterStyle": "",
                 "styleIdx": 20
+            }
+        ],
+        "Welfare inclusion" : [
+            {
+                "name": "coverage_across_PDS_NFSA_BPL_and_Pension",
+                "label": "Coverage across PDS, NFSA, BPL and Pension",
+                "type": 1,
+                "values": [
+                    {
+                        "label": "Poor",
+                        "value": 0
+                    },
+                    {
+                        "label": "Moderate",
+                        "value": 1
+                    },
+                    {
+                        "label": "Strong",
+                        "value": 2
+                    }
+                ],
+                "layer_store": ["antyodaya_2020"],
+                "layer_name": ["antyodaya20"],
+                "vectorStyle": [
+                    {
+                        "fill": "rgba(220, 20, 60, 0.8)",
+                        "stroke": "rgba(139, 0, 0, 1)",
+                        "lower": 0,
+                        "upper": 0.33
+                    },
+                    {
+                        "fill": "rgba(255, 215, 0, 0.8)",
+                        "stroke": "rgba(218, 165, 32, 1)",
+                        "lower": 0.330001,
+                        "upper": 0.66
+                    },
+                    {
+                        "fill": "rgba(144, 238, 144, 0.8)",
+                        "stroke": "rgba(34, 139, 34, 1)",
+                        "lower": 0.660001,
+                        "upper": 1
+                    }
+                ],
+                "rasterStyle": [],
+                "styleIdx": 46
+            }
+        ],
+        "Community Institutions and Governance" : [
+            {
+                "name": "institutionalization_strength",
+                "label": "Institutionalization Strength",
+                "type": 1,
+                "values": [
+                    {
+                        "label": "Poor",
+                        "value": 0
+                    },
+                    {
+                        "label": "Moderate",
+                        "value": 1
+                    },
+                    {
+                        "label": "Strong",
+                        "value": 2
+                    }
+                ],
+                "layer_store": ["antyodaya_2020"],
+                "layer_name": ["antyodaya20"],
+                "vectorStyle": [
+                    {
+                        "fill": "rgba(220, 20, 60, 0.8)",
+                        "stroke": "rgba(139, 0, 0, 1)",
+                        "lower": 0,
+                        "upper": 0.33
+                    },
+                    {
+                        "fill": "rgba(255, 215, 0, 0.8)",
+                        "stroke": "rgba(218, 165, 32, 1)",
+                        "lower": 0.330001,
+                        "upper": 0.66
+                    },
+                    {
+                        "fill": "rgba(144, 238, 144, 0.8)",
+                        "stroke": "rgba(34, 139, 34, 1)",
+                        "lower": 0.660001,
+                        "upper": 1
+                    }
+                ],
+                "rasterStyle": [],
+                "styleIdx": 47
             },
             {
-                "name": "agri_market_access",
-                "label": "Access to mandis",
+                "name": "civic_infrastructure",
+                "label": "Civic Infrastructure",
+                "type": 1,
+                "values": [
+                    {
+                        "label": "Poor",
+                        "value": 0
+                    },
+                    {
+                        "label": "Moderate",
+                        "value": 1
+                    },
+                    {
+                        "label": "Strong",
+                        "value": 2
+                    }
+                ],
+                "layer_store": ["antyodaya_2020"],
+                "layer_name": ["antyodaya20"],
+                "vectorStyle": [
+                    {
+                        "fill": "rgba(220, 20, 60, 0.8)",
+                        "stroke": "rgba(139, 0, 0, 1)",
+                        "lower": 0,
+                        "upper": 0.33
+                    },
+                    {
+                        "fill": "rgba(255, 215, 0, 0.8)",
+                        "stroke": "rgba(218, 165, 32, 1)",
+                        "lower": 0.330001,
+                        "upper": 0.66
+                    },
+                    {
+                        "fill": "rgba(144, 238, 144, 0.8)",
+                        "stroke": "rgba(34, 139, 34, 1)",
+                        "lower": 0.660001,
+                        "upper": 1
+                    }
+                ],
+                "rasterStyle": [],
+                "styleIdx": 48
+            }
+        ],
+        "Livelihood Diversification" : [
+            {
+                "name": "farm_employment",
+                "label": "Farm Employment",
+                "type": 1,
+                "values": [
+                    {
+                        "label": "Low",
+                        "value": 0
+                    },
+                    {
+                        "label": "Moderate",
+                        "value": 1
+                    },
+                    {
+                        "label": "High",
+                        "value": 2
+                    }
+                ],
+                "layer_store": ["antyodaya_2020"],
+                "layer_name": ["antyodaya20"],
+                "vectorStyle": [
+                    {
+                        "fill": "rgba(220, 20, 60, 0.8)",
+                        "stroke": "rgba(139, 0, 0, 1)",
+                        "lower": 0,
+                        "upper": 0.33
+                    },
+                    {
+                        "fill": "rgba(255, 215, 0, 0.8)",
+                        "stroke": "rgba(218, 165, 32, 1)",
+                        "lower": 0.330001,
+                        "upper": 0.66
+                    },
+                    {
+                        "fill": "rgba(144, 238, 144, 0.8)",
+                        "stroke": "rgba(34, 139, 34, 1)",
+                        "lower": 0.660001,
+                        "upper": 1
+                    }
+                ],
+                "rasterStyle": [],
+                "styleIdx": 49
+            },
+            {
+                "name": "forest-based_livelihood",
+                "label": "Forest-based Livelihood",
+                "type": 1,
+                "values": [
+                    {
+                        "label": "Low",
+                        "value": 0
+                    },
+                    {
+                        "label": "High",
+                        "value": 1
+                    }
+                ],
+                "layer_store": ["antyodaya_2020"],
+                "layer_name": ["antyodaya20"],
+                "vectorStyle": [
+                    {
+                        "fill": "rgba(220, 20, 60, 0.8)",
+                        "stroke": "rgba(139, 0, 0, 1)",
+                        "lower": 0,
+                        "upper": 0.5
+                    },
+                    {
+                        "fill": "rgba(144, 238, 144, 0.8)",
+                        "stroke": "rgba(34, 139, 34, 1)",
+                        "lower": 0.5,
+                        "upper": 1
+                    }
+                ],
+                "rasterStyle": [],
+                "styleIdx": 50
+            },
+            {
+                "name": "alternate_farming",
+                "label": "Alternate Farming",
+                "type": 1,
+                "values": [
+                    {
+                        "label": "Low",
+                        "value": 0
+                    },
+                    {
+                        "label": "High",
+                        "value": 1
+                    }
+                ],
+                "layer_store": ["antyodaya_2020"],
+                "layer_name": ["antyodaya20"],
+                "vectorStyle": [
+                    {
+                        "fill": "rgba(220, 20, 60, 0.8)",
+                        "stroke": "rgba(139, 0, 0, 1)",
+                        "lower": 0,
+                        "upper": 0.5
+                    },
+                    {
+                        "fill": "rgba(144, 238, 144, 0.8)",
+                        "stroke": "rgba(34, 139, 34, 1)",
+                        "lower": 0.5,
+                        "upper": 1
+                    }
+                ],
+                "rasterStyle": [],
+                "styleIdx": 51
+            },
+            {
+                "name": "fisheries_adoption",
+                "label": "Fisheries Adoption",
+                "type": 1,
+                "values": [
+                    {
+                        "label": "Low",
+                        "value": 0
+                    },
+                    {
+                        "label": "Moderate",
+                        "value": 1
+                    },
+                    {
+                        "label": "High",
+                        "value": 2
+                    }
+                ],
+                "layer_store": ["antyodaya_2020"],
+                "layer_name": ["antyodaya20"],
+                "vectorStyle": [
+                    {
+                        "fill": "rgba(220, 20, 60, 0.8)",
+                        "stroke": "rgba(139, 0, 0, 1)",
+                        "lower": 0,
+                        "upper": 0.33
+                    },
+                    {
+                        "fill": "rgba(255, 215, 0, 0.8)",
+                        "stroke": "rgba(218, 165, 32, 1)",
+                        "lower": 0.330001,
+                        "upper": 0.66
+                    },
+                    {
+                        "fill": "rgba(144, 238, 144, 0.8)",
+                        "stroke": "rgba(34, 139, 34, 1)",
+                        "lower": 0.660001,
+                        "upper": 1
+                    }
+                ],
+                "rasterStyle": [],
+                "styleIdx": 52
+            },
+            {
+                "name": "cottage_industry",
+                "label": "Cottage Industry",
+                "type": 1,
+                "values": [
+                    {
+                        "label": "Low",
+                        "value": 0
+                    },
+                    {
+                        "label": "High",
+                        "value": 1
+                    }
+                ],
+                "layer_store": ["antyodaya_2020"],
+                "layer_name": ["antyodaya20"],
+                "vectorStyle": [
+                    {
+                        "fill": "rgba(220, 20, 60, 0.8)",
+                        "stroke": "rgba(139, 0, 0, 1)",
+                        "lower": 0,
+                        "upper": 0.5
+                    },
+                    {
+                        "fill": "rgba(144, 238, 144, 0.8)",
+                        "stroke": "rgba(34, 139, 34, 1)",
+                        "lower": 0.5,
+                        "upper": 1
+                    }
+                ],
+                "rasterStyle": [],
+                "styleIdx": 53
+            }
+        ],
+        "Livestock and Dairy Support" : [
+            {
+                "name": "livestock_management_service_quality",
+                "label": "Livestock Management Service Quality",
+                "type": 1,
+                "values": [
+                    {
+                        "label": "Low",
+                        "value": 0
+                    },
+                    {
+                        "label": "Moderate",
+                        "value": 1
+                    },
+                    {
+                        "label": "High",
+                        "value": 2
+                    }
+                ],
+                "layer_store": ["antyodaya_2020"],
+                "layer_name": ["antyodaya20"],
+                "vectorStyle": [
+                    {
+                        "fill": "rgba(220, 20, 60, 0.8)",
+                        "stroke": "rgba(139, 0, 0, 1)",
+                        "lower": 0,
+                        "upper": 0.33
+                    },
+                    {
+                        "fill": "rgba(255, 215, 0, 0.8)",
+                        "stroke": "rgba(218, 165, 32, 1)",
+                        "lower": 0.330001,
+                        "upper": 0.66
+                    },
+                    {
+                        "fill": "rgba(144, 238, 144, 0.8)",
+                        "stroke": "rgba(34, 139, 34, 1)",
+                        "lower": 0.660001,
+                        "upper": 1
+                    }
+                ],
+                "rasterStyle": [],
+                "styleIdx": 54
+            },
+            {
+                "name": "livestock_management_centers",
+                "label": "Livestock Management Centers (Dairy and Animal Husbandry)",
                 "type": 2,
                 "values": [
                     {
-                        "label": "<3 kms",
+                        "label": "<10 kms",
                         "value": {
                             "lower": 0,
-                            "upper": 3
-                        }
-                    },
-                    {
-                        "label": "3-10 kms",
-                        "value": {
-                            "lower": 3,
                             "upper": 10
                         }
                     },
                     {
-                        "label": ">10 kms",
+                        "label": "10-30 kms",
                         "value": {
                             "lower": 10,
+                            "upper": 30
+                        }
+                    },
+                    {
+                        "label": ">30 kms",
+                        "value": {
+                            "lower": 30,
                             "upper": 9999999999
                         }
                     }
@@ -2045,26 +2674,162 @@
                 ],
                 "vectorStyle": [
                     {
-                        "fill": "rgba(255, 255, 102, 0.8)",
-                        "stroke": "rgba(255, 255, 102, 1)",
+                        "fill": "rgba(255, 170, 85, 0.8)",
+                        "stroke": "rgba(255, 170, 85, 1)",
                         "lower": 0,
-                        "upper": 3
-                    },
-                    {
-                        "fill": "rgba(159, 159, 0, 0.8)",
-                        "stroke": "rgba(159, 159, 0, 1)",
-                        "lower": 3,
                         "upper": 10
                     },
                     {
-                        "fill": "rgba(98, 98, 0, 0.8)",
-                        "stroke": "rgba(98, 98, 0, 1)",
+                        "fill": "rgba(170, 85, 0, 0.8)",
+                        "stroke": "rgba(170, 85, 0, 1)",
                         "lower": 10,
+                        "upper": 30
+                    },
+                    {
+                        "fill": "rgba(85, 43, 0, 0.8)",
+                        "stroke": "rgba(85, 43, 0, 1)",
+                        "lower": 30,
                         "upper": 9999999999
                     }
                 ],
                 "rasterStyle": "",
-                "styleIdx": 21
+                "styleIdx": 24
+            },
+            {
+                "name": "common_pasture_access",
+                "label": "Common Pasture Access",
+                "type": 1,
+                "values": [
+                    {
+                        "label": "Low",
+                        "value": 0
+                    },
+                    {
+                        "label": "High",
+                        "value": 1
+                    }
+                ],
+                "layer_store": ["antyodaya_2020"],
+                "layer_name": ["antyodaya20"],
+                "vectorStyle": [
+                    {
+                        "fill": "rgba(220, 20, 60, 0.8)",
+                        "stroke": "rgba(139, 0, 0, 1)",
+                        "lower": 0,
+                        "upper": 0.5
+                    },
+                    {
+                        "fill": "rgba(144, 238, 144, 0.8)",
+                        "stroke": "rgba(34, 139, 34, 1)",
+                        "lower": 0.5,
+                        "upper": 1
+                    }
+                ],
+                "rasterStyle": [],
+                "styleIdx": 55
+            }
+        ],
+        "Irrigation Infrastructure" : [
+            {
+                "name": "watershed_infrastructure_and_modern_irrigation",
+                "label": "Watershed Infrastructure and Modern Irrigation",
+                "type": 1,
+                "values": [
+                    {
+                        "label": "Low",
+                        "value": 0
+                    },
+                    {
+                        "label": "Moderate",
+                        "value": 1
+                    },
+                    {
+                        "label": "High",
+                        "value": 2
+                    }
+                ],
+                "layer_store": ["antyodaya_2020"],
+                "layer_name": ["antyodaya20"],
+                "vectorStyle": [
+                    {
+                        "fill": "rgba(220, 20, 60, 0.8)",
+                        "stroke": "rgba(139, 0, 0, 1)",
+                        "lower": 0,
+                        "upper": 0.33
+                    },
+                    {
+                        "fill": "rgba(255, 215, 0, 0.8)",
+                        "stroke": "rgba(218, 165, 32, 1)",
+                        "lower": 0.330001,
+                        "upper": 0.66
+                    },
+                    {
+                        "fill": "rgba(144, 238, 144, 0.8)",
+                        "stroke": "rgba(34, 139, 34, 1)",
+                        "lower": 0.660001,
+                        "upper": 1
+                    }
+                ],
+                "rasterStyle": [],
+                "styleIdx": 56
+            }
+        ],
+        "Agricultural Support Services and Market Access" : [
+            {
+                "name": "agricultural_support_infrastructure",
+                "label": "Agricultural support infrastructure",
+                "type": 2,
+                "values": [
+                    {
+                        "label": "<10 kms",
+                        "value": {
+                            "lower": 0,
+                            "upper": 10
+                        }
+                    },
+                    {
+                        "label": "10-50 kms",
+                        "value": {
+                            "lower": 10,
+                            "upper": 50
+                        }
+                    },
+                    {
+                        "label": ">50 kms",
+                        "value": {
+                            "lower": 50,
+                            "upper": 9999999999
+                        }
+                    }
+                ],
+                "layer_store": [
+                    "facilities_proximity"
+                ],
+                "layer_name": [
+                    "facilities"
+                ],
+                "vectorStyle": [
+                    {
+                        "fill": "rgba(200, 230, 201, 0.8)",
+                        "stroke": "rgba(200, 230, 201, 1)",
+                        "lower": 0,
+                        "upper": 10
+                    },
+                    {
+                        "fill": "rgba(102, 187, 106, 0.8)",
+                        "stroke": "rgba(102, 187, 106, 1)",
+                        "lower": 10,
+                        "upper": 50
+                    },
+                    {
+                        "fill": "rgba(46, 125, 50, 0.8",
+                        "stroke": "rgba(46, 125, 50, 1)",
+                        "lower": 50,
+                        "upper": 9999999999
+                    }
+                ],
+                "rasterStyle": "",
+                "styleIdx": 25
             },
             {
                 "name": "post_harvest_infra",
@@ -2123,6 +2888,62 @@
                 "styleIdx": 22
             },
             {
+                "name": "agri_market_access",
+                "label": "Access to mandis",
+                "type": 2,
+                "values": [
+                    {
+                        "label": "<3 kms",
+                        "value": {
+                            "lower": 0,
+                            "upper": 3
+                        }
+                    },
+                    {
+                        "label": "3-10 kms",
+                        "value": {
+                            "lower": 3,
+                            "upper": 10
+                        }
+                    },
+                    {
+                        "label": ">10 kms",
+                        "value": {
+                            "lower": 10,
+                            "upper": 9999999999
+                        }
+                    }
+                ],
+                "layer_store": [
+                    "facilities_proximity"
+                ],
+                "layer_name": [
+                    "facilities"
+                ],
+                "vectorStyle": [
+                    {
+                        "fill": "rgba(255, 255, 102, 0.8)",
+                        "stroke": "rgba(255, 255, 102, 1)",
+                        "lower": 0,
+                        "upper": 3
+                    },
+                    {
+                        "fill": "rgba(159, 159, 0, 0.8)",
+                        "stroke": "rgba(159, 159, 0, 1)",
+                        "lower": 3,
+                        "upper": 10
+                    },
+                    {
+                        "fill": "rgba(98, 98, 0, 0.8)",
+                        "stroke": "rgba(98, 98, 0, 1)",
+                        "lower": 10,
+                        "upper": 9999999999
+                    }
+                ],
+                "rasterStyle": "",
+                "styleIdx": 21
+            },
+            {
                 "name": "farmer_cooperatives_access",
                 "label": "Access to farmer cooperatives",
                 "type": 2,
@@ -2177,124 +2998,55 @@
                 ],
                 "rasterStyle": "",
                 "styleIdx": 23
-            },
-            {
-                "name": "livestock_management_centers",
-                "label": "Livestock Management Centers",
-                "type": 2,
-                "values": [
-                    {
-                        "label": "<10 kms",
-                        "value": {
-                            "lower": 0,
-                            "upper": 10
-                        }
-                    },
-                    {
-                        "label": "10-30 kms",
-                        "value": {
-                            "lower": 10,
-                            "upper": 30
-                        }
-                    },
-                    {
-                        "label": ">30 kms",
-                        "value": {
-                            "lower": 30,
-                            "upper": 9999999999
-                        }
-                    }
-                ],
-                "layer_store": [
-                    "facilities_proximity"
-                ],
-                "layer_name": [
-                    "facilities"
-                ],
-                "vectorStyle": [
-                    {
-                        "fill": "rgba(255, 170, 85, 0.8)",
-                        "stroke": "rgba(255, 170, 85, 1)",
-                        "lower": 0,
-                        "upper": 10
-                    },
-                    {
-                        "fill": "rgba(170, 85, 0, 0.8)",
-                        "stroke": "rgba(170, 85, 0, 1)",
-                        "lower": 10,
-                        "upper": 30
-                    },
-                    {
-                        "fill": "rgba(85, 43, 0, 0.8)",
-                        "stroke": "rgba(85, 43, 0, 1)",
-                        "lower": 30,
-                        "upper": 9999999999
-                    }
-                ],
-                "rasterStyle": "",
-                "styleIdx": 24
-            },
-            {
-                "name": "agricultural_support_infrastructure",
-                "label": "Agricultural support infrastructure",
-                "type": 2,
-                "values": [
-                    {
-                        "label": "<10 kms",
-                        "value": {
-                            "lower": 0,
-                            "upper": 10
-                        }
-                    },
-                    {
-                        "label": "10-50 kms",
-                        "value": {
-                            "lower": 10,
-                            "upper": 50
-                        }
-                    },
-                    {
-                        "label": ">50 kms",
-                        "value": {
-                            "lower": 50,
-                            "upper": 9999999999
-                        }
-                    }
-                ],
-                "layer_store": [
-                    "facilities_proximity"
-                ],
-                "layer_name": [
-                    "facilities"
-                ],
-                "vectorStyle": [
-                    {
-                        "fill": "rgba(200, 230, 201, 0.8)",
-                        "stroke": "rgba(200, 230, 201, 1)",
-                        "lower": 0,
-                        "upper": 10
-                    },
-                    {
-                        "fill": "rgba(102, 187, 106, 0.8)",
-                        "stroke": "rgba(102, 187, 106, 1)",
-                        "lower": 10,
-                        "upper": 50
-                    },
-                    {
-                        "fill": "rgba(46, 125, 50, 0.8",
-                        "stroke": "rgba(46, 125, 50, 1)",
-                        "lower": 50,
-                        "upper": 9999999999
-                    }
-                ],
-                "rasterStyle": "",
-                "styleIdx": 25
             }
         ],
-        "NREGA": [
+        "Ecological and Climate Resilience" : [
+            {
+                "name": "organic_farming_adoption",
+                "label": "Organic Farming Adoption",
+                "type": 1,
+                "values": [
+                    {
+                        "label": "Low",
+                        "value": 0
+                    },
+                    {
+                        "label": "Moderate",
+                        "value": 1
+                    },
+                    {
+                        "label": "High",
+                        "value": 2
+                    }
+                ],
+                "layer_store": ["antyodaya_2020"],
+                "layer_name": ["antyodaya20"],
+                "vectorStyle": [
+                    {
+                        "fill": "rgba(220, 20, 60, 0.8)",
+                        "stroke": "rgba(139, 0, 0, 1)",
+                        "lower": 0,
+                        "upper": 0.33
+                    },
+                    {
+                        "fill": "rgba(255, 215, 0, 0.8)",
+                        "stroke": "rgba(218, 165, 32, 1)",
+                        "lower": 0.330001,
+                        "upper": 0.66
+                    },
+                    {
+                        "fill": "rgba(144, 238, 144, 0.8)",
+                        "stroke": "rgba(34, 139, 34, 1)",
+                        "lower": 0.660001,
+                        "upper": 1
+                    }
+                ],
+                "rasterStyle": [],
+                "styleIdx": 57
+            },
             {
                 "name": "total_assets",
-                "label": "Total number of NREGA works",
+                "label": "Total number of NREGA works during 2016-24",
                 "type": 2,
                 "values": [
                     {
