@@ -1338,7 +1338,8 @@ const manualSelectionDetails = React.useMemo(() => {
                                         title={`${isSelected ? 'Matches filter' : 'Intersects'} | ID: ${v.villageId}`}
                                        className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium border ${
                                         isManualVillage
-                                          ? "bg-orange-500 border-orange-600 text-white"
+                                          ? "bg-emerald-500 border-emerald-600 text-white"
+                                          // ? "bg-green-300 border-green-600 text-green-700"
                                           : isSelected
                                           ? "bg-emerald-500 border-emerald-600 text-white"
                                           : "bg-violet-50 border-violet-200 text-violet-700"
@@ -1390,7 +1391,8 @@ const manualSelectionDetails = React.useMemo(() => {
                                           title={`${isFilterMatched ? 'Matches filter' : 'Structural intersection'} | ID: ${swbIdStr}`}
                                           className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium border transition-colors ${
                                             isManualWaterbody
-                                              ? "bg-orange-500 border-orange-600 text-white"
+                                              // ? "bg-green-300 border-green-600 text-green-700"
+                                              ? "bg-emerald-500 border-emerald-600 text-white"
                                               : isFilterMatched
                                               ? "bg-emerald-500 border-emerald-600 text-white"
                                               : "bg-sky-50 border-sky-200 text-sky-700"
