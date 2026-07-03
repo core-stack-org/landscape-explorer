@@ -414,12 +414,18 @@ useEffect(() => {
 
   // ─── WB filters: ID-based lookup via dataJsonIndex, no geometry ───
   const applyWaterbodyFilters = (mwsIds, wbFilters, isVisualizeOn) => {
-    if (!waterbodiesLayerRef.current) return;
+  if (!waterbodiesLayerRef.current) return;
 
-    const wbSource = waterbodiesLayerRef.current.getSource();
-    const filterKeys = Object.keys(wbFilters || {}).filter(k => wbFilters[k]);
-    const hasMWSFilter = mwsIds.length > 0;
-    const hasAttrFilter = filterKeys.length > 0;
+  const wbSource = waterbodiesLayerRef.current.getSource();
+  const filterKeys = Object.keys(wbFilters || {}).filter(k => wbFilters[k]);
+
+  // A MWS-level filter is "active" even if it currently matches 0 MWS —
+  // in that case waterbodies should show NONE, not fall back to showing all.
+  const mwsFilterKeys = Object.keys(filterSelections.selectedMWSValues || {});
+  const isMWSFilterSelected = mwsFilterKeys.some(k => filterSelections.selectedMWSValues[k]);
+
+  const hasMWSFilter = mwsIds.length > 0 || isMWSFilterSelected;
+  const hasAttrFilter = filterKeys.length > 0;
 
     if (!hasMWSFilter && !hasAttrFilter && !isVisualizeOn) {
       waterbodiesLayerRef.current.updateStyleVariables({ wbFilterActive: 0 });
@@ -2321,6 +2327,12 @@ useEffect(() => {
 
     features.forEach((feature) => {
       const uid = feature.get("uid");
+    feature.set(
+      "isSelected",
+      selectedIds.includes(uid) ? 1 : 0,
+      true
+    );
+  });
 
       feature.set(
         "isSelected",
@@ -2335,6 +2347,16 @@ useEffect(() => {
 
   useEffect(() => {
     if (!mapRef.current) return;
+useEffect(() => {
+  if (!mapRef.current) return;
+
+  const handleMapClick = (event) => {
+    const feature = mapRef.current.forEachFeatureAtPixel(
+      event.pixel,
+      (feature, layer) => {
+        if (layer === mwsLayerRef.current) return feature;
+      }
+    );
 
     const handleMapClick = (event) => {
       const feature = mapRef.current.forEachFeatureAtPixel(
@@ -2383,6 +2405,21 @@ useEffect(() => {
 
         setSelectedMWSProfile(feature.getProperties());
       }
+    // base toggle strictly on manualSelectedMWS — selectedMWS stays
+    // purely filter-driven and must never be touched here
+    const updated = manualSelectedMWS.includes(uid)
+      ? manualSelectedMWS.filter((id) => id !== uid)
+      : [...manualSelectedMWS, uid];
+
+    updateSelectedMWSStyle(updated);
+    setManualSelectedMWS(updated);
+    setHighlightMWS(uid);
+
+    if (updated.length === 0) {
+      setSelectedMWSProfile(null);
+    } else {
+      setSelectedMWSProfile(feature.getProperties());
+    }
 
       if (toastId) {
         toast.dismiss(toastId);
@@ -2400,6 +2437,15 @@ useEffect(() => {
   }, [selectionMode, toastId,mapRef.current, selectedMWS]);
     
   useEffect(() => {
+  return () => {
+    if (mapRef.current) {
+      mapRef.current.un("click", handleMapClick);
+    }
+  };
+}, [toastId, mapRef.current, manualSelectedMWS]);
+
+ 
+useEffect(() => {
     if (mapRef.current && waterbodiesLayerRef.current) {
       mapRef.current.removeLayer(waterbodiesLayerRef.current);
       waterbodiesLayerRef.current = null;
