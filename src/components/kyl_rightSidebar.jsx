@@ -1,6 +1,13 @@
 // src/components/kyl_rightSidebar.jsx
 import KML from 'ol/format/KML';
 import GeoJSON from 'ol/format/GeoJSON';
+import { Style, Stroke, Fill, Circle as CircleStyle } from "ol/style";
+import Feature from "ol/Feature";
+import Point from "ol/geom/Point";
+import VectorLayer from "ol/layer/Vector";
+import VectorSource from "ol/source/Vector";
+import { useNavigate } from "react-router-dom";
+import React from "react";
 import { Style, Stroke, Fill } from 'ol/style';
 
 import React,{useEffect} from "react";
@@ -12,6 +19,7 @@ import KYLWaterbodyPanel from "./kyl_waterbodypanel.jsx";
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import XLSX from 'xlsx-js-style';
+
 
 const KYLRightSidebar = ({
   state,
@@ -57,14 +65,22 @@ const KYLRightSidebar = ({
   setSelectionMode,
   manualSelectedMWS,
   onResetMWSSelection, 
+  showPlans,
+  setShowPlans,
 }) => {
   const [loadingWB, setLoadingWB] = React.useState(false);
   const [showSelectionPopup, setShowSelectionPopup] = React.useState(false);
   const [isDownloading, setIsDownloading] = React.useState(false);
   const [isExportingGeo, setIsExportingGeo] = React.useState(false);
   const [geoExportFormat, setGeoExportFormat] = React.useState(null);
+  const [plans, setPlans] = React.useState([]);
+  
+  const [plansLoading, setPlansLoading] = React.useState(false);
+  const [selectedPlanProfile, setSelectedPlanProfile] = React.useState(null);
+  const plansLayerRef = React.useRef(null);
 
   const showBothPanels = selectedMWSProfile && selectedWaterbodyProfile;
+  const navigate = useNavigate();
 
   const transformName = (name) => {
     if (!name) return name;
@@ -481,6 +497,223 @@ const manualSelectionDetails = React.useMemo(() => {
     if (!mwsArrowLayerRef?.current) { console.warn("Arrow layer not ready"); return; }
     setShowConnectivity(prev => !prev);
   };
+
+  const fetchPlansByTehsil = async (block) => {
+  const res = await fetch(
+    `${process.env.REACT_APP_API_URL}/watershed/plans/?tehsil=${block}&filter_test_plan=true`,
+    {
+      headers: {
+        "Content-Type": "application/json",
+        "ngrok-skip-browser-warning": "1",
+        "X-API-Key": process.env.REACT_APP_API_KEY,
+      },
+    }
+  );
+
+  if (!res.ok) {
+    throw new Error(`API Error ${res.status}`);
+  }
+
+  return res.json();
+};
+
+  const handlePlansClick = async () => {
+    try {
+      // Hide plans if already visible
+      if (showPlans) {
+        if (plansLayerRef.current) {
+          mapRef.current.removeLayer(plansLayerRef.current);
+        }
+        setShowPlans(false);
+        return;
+      }
+
+      // Plans already fetched, just show them again
+      if (plans.length > 0) {
+        showPlansOnMap(plans);
+        setShowPlans(true);
+        return;
+      }
+
+      // Fetch plans first time
+      setPlansLoading(true);
+
+      const response = await fetchPlansByTehsil(block.block_id);
+
+      setPlans(response);
+
+      showPlansOnMap(response);
+
+      setShowPlans(true);
+    } catch (err) {
+      console.error("Error fetching plans:", err);
+    } finally {
+      setPlansLoading(false);
+    }
+  };
+
+const showPlansOnMap = (plansData) => {
+  if (!mapRef.current) return;
+
+  // Remove previous plans layer
+  if (plansLayerRef.current) {
+    mapRef.current.removeLayer(plansLayerRef.current);
+    plansLayerRef.current = null;
+  }
+
+  const features = plansData
+    .filter(
+      (plan) =>
+        plan.latitude !== null &&
+        plan.longitude !== null &&
+        plan.latitude !== undefined &&
+        plan.longitude !== undefined
+    )
+    .map((plan) => {
+      const feature = new Feature({
+        geometry: new Point([
+          Number(plan.longitude),
+          Number(plan.latitude),
+        ]),
+      });
+
+      feature.set("plan", plan);
+      feature.set("planDetails", plan);
+
+  const status = getPlanStatus(plan);
+
+    feature.setStyle(DOT_DEFAULT(status));
+
+      return feature;
+    });
+
+  const layer = new VectorLayer({
+    source: new VectorSource({
+      features,
+    }),
+    zIndex: 9999,
+  });
+
+  plansLayerRef.current = layer;
+
+  mapRef.current.addLayer(layer);
+
+  if (features.length > 0) {
+    mapRef.current.getView().fit(
+      layer.getSource().getExtent(),
+      {
+        padding: [40, 40, 40, 40],
+        duration: 500,
+        maxZoom: 16,
+      }
+    );
+  }
+};
+
+React.useEffect(() => {
+  if (!mapRef.current) return;
+
+  let hoveredFeature = null;
+
+  const handlePointerMove = (evt) => {
+    if (!showPlans || !plansLayerRef.current) return;
+
+    const feature = mapRef.current.forEachFeatureAtPixel(
+      evt.pixel,
+      (feature, layer) => {
+        if (layer === plansLayerRef.current) {
+          return feature;
+        }
+      }
+    );
+
+    // Restore previous hovered feature
+    if (hoveredFeature && hoveredFeature !== feature) {
+      const status = getFeatureStatus(hoveredFeature);
+      hoveredFeature.setStyle(DOT_DEFAULT(status));
+      hoveredFeature = null;
+    }
+
+    // Apply hover style
+    if (feature && feature !== hoveredFeature) {
+      const status = getFeatureStatus(feature);
+      feature.setStyle(DOT_HOVERED(status));
+      hoveredFeature = feature;
+    }
+
+    mapRef.current.getTargetElement().style.cursor = feature ? "pointer" : "";
+  };
+
+  const handlePlanClick = (evt) => {
+    if (!showPlans || !plansLayerRef.current) return;
+
+    const feature = mapRef.current.forEachFeatureAtPixel(
+      evt.pixel,
+      (feature, layer) => {
+        if (layer === plansLayerRef.current) {
+          return feature;
+        }
+      }
+    );
+
+    if (!feature) return;
+
+    const plan = feature.get("planDetails");
+
+    if (!plan) return;
+
+    setSelectedPlanProfile(plan);
+  };
+
+  mapRef.current.on("pointermove", handlePointerMove);
+  mapRef.current.on("singleclick", handlePlanClick);
+
+  return () => {
+    if (mapRef.current) {
+      mapRef.current.un("pointermove", handlePointerMove);
+      mapRef.current.un("singleclick", handlePlanClick);
+    }
+  };
+}, [showPlans, navigate]);
+
+// ── PLAN DOT STYLES ──────────────────────────────────────────────────────────
+
+const PLAN_STATUS_COLORS = {
+  in_progress:   { fill: "#FF6FFF", stroke: "#ffffff" }, // magenta
+  dpr_completed: { fill: "#CCFF00", stroke: "#3E5800" }, // chartreuse
+};
+
+const getPlanStatus = (plan) => {
+  if (!plan) return "in_progress";
+  if (plan.is_dpr_reviewed) return "dpr_completed";
+  return "in_progress";
+};
+
+const getFeatureStatus = (feature) => getPlanStatus(feature.get("planDetails"));
+
+const DOT_DEFAULT  = (status = "in_progress") => new Style({
+  image: new CircleStyle({
+    radius: 9,
+    fill:   new Fill({ color: PLAN_STATUS_COLORS[status].fill }),
+    stroke: new Stroke({ color: PLAN_STATUS_COLORS[status].stroke, width: 2 }),
+  }),
+});
+
+const DOT_HOVERED  = (status = "in_progress") => new Style({
+  image: new CircleStyle({
+    radius: 12,
+    fill:   new Fill({ color: PLAN_STATUS_COLORS[status].fill }),
+    stroke: new Stroke({ color: "#ffffff", width: 2.5 }),
+  }),
+});
+
+const DOT_SELECTED = (status = "in_progress") => new Style({
+  image: new CircleStyle({
+    radius: 12,
+    fill:   new Fill({ color: "#ffffff" }),
+    stroke: new Stroke({ color: PLAN_STATUS_COLORS[status].fill, width: 3.5 }),
+  }),
+});
   
   const handleTehsilReport = () => {
     const reportURL = `${process.env.REACT_APP_API_URL}/generate_tehsil_report/?state=${transformName(state?.label)}&district=${transformName(district?.label)}&block=${transformName(block?.label)}`;
@@ -1579,8 +1812,110 @@ const manualSelectionDetails = React.useMemo(() => {
         <KYLWaterbodyPanel waterbody={selectedWaterbodyProfile} onBack={onResetWaterbody} hideBackButton={showBothPanels} />
       )}
 
-      {!selectedMWSProfile && !selectedWaterbodyProfile && (
-        <div className="flex flex-col gap-2">
+      {selectedPlanProfile && (
+        <div className="bg-white rounded-xl border border-gray-100 p-4 shadow-sm">
+
+          {/* Header */}
+          <div className="flex items-start gap-3 mb-5">
+
+            <button
+              onClick={() => setSelectedPlanProfile(null)}
+              className="mt-1 rounded-full p-1 hover:bg-gray-100 transition"
+            >
+              <ArrowLeft className="w-5 h-5 text-gray-600" />
+            </button>
+
+       <div className="flex-1 flex items-center gap-2">
+
+        {/* <span className="text-[11px] uppercase tracking-[0.18em] font-bold text-indigo-600 whitespace-nowrap">
+          Plan Overview
+        </span>
+
+        <span className="text-gray-300">|</span> */}
+
+        <h2 className="text-lg text-indigo-600 truncate">
+          {selectedPlanProfile.plan}
+        </h2>
+
+      </div>
+
+          </div>
+
+          {/* Information Card */}
+          <div className="rounded-xl border border-gray-200 bg-gray-50 divide-y">
+
+            <div className="flex justify-between items-center px-4 py-3">
+              <span className="text-sm text-gray-500">Village</span>
+              <span className="text-sm font-semibold text-gray-800">
+                {selectedPlanProfile.village_name || "--"}
+              </span>
+            </div>
+
+            <div className="flex justify-between items-center px-4 py-3">
+              <span className="text-sm text-gray-500">Steward</span>
+              <span className="text-sm font-semibold text-gray-800">
+                {selectedPlanProfile.facilitator_name || "--"}
+              </span>
+            </div>
+
+            <div className="flex justify-between items-center px-4 py-3">
+              <span className="text-sm text-gray-500">Organization</span>
+              <span className="text-sm font-semibold text-gray-800">
+                {selectedPlanProfile.organization_name || "--"}
+              </span>
+            </div>
+
+          </div>
+
+          {/* View DPR Button */}
+          <button
+            className="flex items-center gap-2 text-indigo-600 hover:text-indigo-700 mb-2 text-sm mt-4"
+            onClick={() => {
+    window.open(
+      `/landscape-stewardship/plan-view?id=${selectedPlanProfile.id}` +
+      `&completed=${!!selectedPlanProfile.is_completed}` +
+      `&dpr_reviewed=${!!selectedPlanProfile.is_dpr_reviewed}` +
+      `&dpr_generated=${!!selectedPlanProfile.is_dpr_generated}` +
+      `&dpr_approved=${!!selectedPlanProfile.is_dpr_approved}` +
+      `&stateId=${encodeURIComponent(state?.state_id ?? "")}&stateName=${encodeURIComponent(state?.label ?? "")}` +
+      `&districtId=${encodeURIComponent(district?.district_id ?? "")}&districtName=${encodeURIComponent(district?.label ?? "")}`,
+      "_blank"
+    );
+  }}
+            // onClick={() => {
+            //   navigate(
+            //     `/landscape-stewardship/plan-view?id=${selectedPlanProfile.id}&completed=${!!selectedPlanProfile.is_completed}&dpr_reviewed=${!!selectedPlanProfile.is_dpr_reviewed}&dpr_generated=${!!selectedPlanProfile.is_dpr_generated}&dpr_approved=${!!selectedPlanProfile.is_dpr_approved}`,
+            //     {
+            //       state: {
+            //         plan: selectedPlanProfile,
+            //       },
+                  
+            //     }
+            //   );
+            // }}
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M5 12h14" />
+              <path d="M13 5l7 7-7 7" />
+            </svg>
+             View DPR 
+          </button>
+
+        </div>
+      )}
+
+      {!selectedMWSProfile && !selectedWaterbodyProfile && !selectedPlanProfile && (
+          <div className="flex flex-col gap-2">
 
           {/* ── Hint banner ── */}
           <div className="bg-indigo-50 border border-indigo-100 rounded-xl px-3 py-2">
@@ -1612,8 +1947,8 @@ const manualSelectionDetails = React.useMemo(() => {
 
             {block && (
               <div className="mt-4 flex flex-col gap-2">
-                <div className="grid grid-cols-2 gap-2">
-              <button
+                <div className="flex flex-col gap-2">
+                <button
                 onClick={handleTehsilReport}
                 disabled={isLoading || !mwsLayerRef?.current}
                 className={`flex items-center justify-center gap-1.5 py-2 text-xs font-semibold rounded-lg transition-colors border ${
@@ -1628,6 +1963,7 @@ const manualSelectionDetails = React.useMemo(() => {
                     </svg>
                     Tehsil Report
                   </button>
+                <div className="grid grid-cols-2 gap-2">
 
                   <button
                     onClick={toggleWaterbodies}
@@ -1659,6 +1995,54 @@ const manualSelectionDetails = React.useMemo(() => {
                       </>
                     )}
                   </button>
+
+                  <button
+                  onClick={handlePlansClick}
+                    disabled={isLoading || !mwsLayerRef?.current}
+                    className={`flex items-center justify-center gap-1.5 py-2 text-xs font-semibold rounded-lg transition-colors border ${
+                      (isLoading || !mwsLayerRef?.current)
+                        ? "opacity-50 cursor-not-allowed pointer-events-none bg-gray-100 text-gray-400 border-gray-200"
+                        : showPlans
+                          ? "text-red-600 bg-red-50 hover:bg-red-100 border-red-100"
+                          : "text-indigo-600 bg-indigo-50 hover:bg-indigo-100 border-indigo-100"
+                    }`}
+                  >
+                   {showPlans ? (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width="14"
+    height="14"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <path d="M18 6 6 18" />
+    <path d="m6 6 12 12" />
+  </svg>
+                      ) : (
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          width="14"
+                          height="14"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        >
+                          <path d="M12 2C8 2 5 5 5 9c0 5 7 13 7 13s7-8 7-13c0-4-3-7-7-7z" />
+                          <circle cx="12" cy="9" r="2.5" />
+                        </svg>
+                      )}
+
+                    {showPlans ? "Hide Plans" : "Plans"}
+                    </button>
+
+                  </div>
                 </div>
 
                 <button

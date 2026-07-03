@@ -515,12 +515,23 @@ const PlanViewPage = () => {
   const navigate  = useNavigate();
   const [searchParams] = useSearchParams();
 
-  const [plan,            setPlan]            = useState(state?.plan ?? null);
-  const [deepLinkLoading, setDeepLinkLoading] = useState(!state?.plan && !!searchParams.get("id"));
+  // const [plan,            setPlan]            = useState(state?.plan ?? null);
+  // const [deepLinkLoading, setDeepLinkLoading] = useState(!state?.plan && !!searchParams.get("id"));
+   const storedState = JSON.parse(
+      sessionStorage.getItem("planNavigationData") || "null"
+    );
+  const navigationState = state || storedState;
+  const [plan, setPlan] = useState(navigationState?.plan ?? null);
 
+  const [deepLinkLoading, setDeepLinkLoading] = useState(
+    !navigationState?.plan && !!searchParams.get("id")
+  );
+
+ 
   // ── DEEP LINK FETCH ─────────────────────────────────────
   useEffect(() => {
-    if (state?.plan || !searchParams.get("id")) return;
+    // if (state?.plan || !searchParams.get("id")) return;
+     if (navigationState?.plan || !searchParams.get("id")) return;
     const planId = searchParams.get("id");
 
     const load = async () => {
@@ -535,6 +546,9 @@ const PlanViewPage = () => {
           plan:              brief?.village_name ?? `Plan ${planId}`,
           village_name:      brief?.village_name,
           gram_panchayat:    brief?.gram_panchayat,
+           latitude: brief?.latitude,
+          longitude: brief?.longitude,
+          state: brief?.state,
           district:          transformName(brief?.district ?? ""),
           block:             transformName(brief?.tehsil   ?? ""),
           organization_name: team?.organization,
@@ -733,7 +747,9 @@ const PlanViewPage = () => {
     return mwsLayer;
   }, [districtNameSafe, blockNameSafe]);
 
+
   const loadAdminBoundary = useCallback(async (map) => {
+
     const lon = plan?.longitude ? parseFloat(plan.longitude) : null;
     const lat = plan?.latitude  ? parseFloat(plan.latitude)  : null;
 
@@ -1066,9 +1082,15 @@ const PlanViewPage = () => {
         <div className="max-w-[1800px] mx-auto px-6 py-4 flex items-center justify-between gap-4">
           <div className="flex items-center gap-4 min-w-0">
             <button
-              onClick={() => navigate("/landscape-stewardship", { state: { returnContext: state?.returnContext } })}
+              onClick={() => {
+                const stateId      = searchParams.get("stateId");
+                const stateName    = searchParams.get("stateName");
+                const districtId   = searchParams.get("districtId");
+                const districtName = searchParams.get("districtName");
+                navigate(`/landscape-stewardship?state=${stateId}&stateName=${stateName}&district=${districtId}&districtName=${districtName}`);
+              }}
               className="flex-shrink-0 flex items-center gap-2 px-4 py-2 rounded-xl font-semibold
-                         text-sm transition-all duration-200 active:scale-95"
+                        text-sm transition-all duration-200 active:scale-95"
               style={{ background: "rgba(255,255,255,0.95)", color: P.dark, boxShadow: "0 2px 12px rgba(0,0,0,0.15)" }}
             >← Back</button>
             <div className="min-w-0">
