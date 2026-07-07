@@ -278,20 +278,49 @@ useEffect(() => {
     }
 
     // Villages
-    const villages = (mwsRecord.mws_intersect_villages || []).map((villageId) => {
-      const village = villageJson.find(
-        (v) => String(v.village_id) === String(villageId)
-      );
+    // const villages = (mwsRecord.mws_intersect_villages || []).map((villageId) => {
+    //   const village = villageJson.find(
+    //     (v) => String(v.village_id) === String(villageId)
+    //   );
 
-      return {
-        villageId,
-        villageName:
-          village?.village_name ||
-          village?.vill_name ||
-          village?.name ||
-          "Unknown",
-      };
-    });
+    //   return {
+    //     villageId,
+    //     villageName:
+    //       village?.village_name ||
+    //       village?.vill_name ||
+    //       village?.name ||
+    //       "Unknown",
+    //   };
+    // });
+    const villages = (mwsRecord.mws_intersect_villages || []).map((villageId) => {
+  let villageName = '';
+
+  // Try villageJson first
+  const village = villageJson.find(
+    (v) => String(v.village_id) === String(villageId)
+  );
+  if (village) villageName = village.village_name || village.vill_name || village.name || '';
+
+  // Fallback to boundary layer features
+  if (!villageName && boundaryLayerRef?.current) {
+    try {
+      const f = boundaryLayerRef.current.getSource().getFeatures()
+        .find(feat => {
+          const p = feat.getProperties();
+          return String(p.vill_ID ?? p.village_id) === String(villageId);
+        });
+      if (f) {
+        const p = f.getProperties();
+        villageName = p.vill_name || p.village_name || p.name || '';
+      }
+    } catch (_) {}
+  }
+
+  return {
+    villageId: String(villageId),
+    villageName: villageName || "Unknown",
+  };
+});
 
     // Waterbodies
     const waterbodies = (mwsRecord.mws_intersect_swb || []).map((swb) => ({
@@ -323,20 +352,49 @@ const manualSelectionDetails = React.useMemo(() => {
       };
     }
 
-    const villages = (mwsRecord.mws_intersect_villages || []).map((villageId) => {
-      const village = villageJson.find(
-        (v) => String(v.village_id) === String(villageId)
-      );
+const villages = (mwsRecord.mws_intersect_villages || []).map((villageId) => {
+  let villageName = "";
 
-      return {
-        villageId: String(villageId),
-        villageName:
-          village?.village_name ||
-          village?.vill_name ||
-          village?.name ||
-          "Unknown",
-      };
-    });
+  // Try villageJson
+  const village = villageJson.find(
+    (v) => String(v.village_id) === String(villageId)
+  );
+
+  if (village) {
+    villageName =
+      village.village_name ||
+      village.vill_name ||
+      village.name ||
+      "";
+  }
+
+  // Fallback to boundary layer
+  if (!villageName && boundaryLayerRef?.current) {
+    try {
+      const feature = boundaryLayerRef.current
+        .getSource()
+        .getFeatures()
+        .find((feat) => {
+          const p = feat.getProperties();
+          return String(p.vill_ID ?? p.village_id) === String(villageId);
+        });
+
+      if (feature) {
+        const p = feature.getProperties();
+        villageName =
+          p.vill_name ||
+          p.village_name ||
+          p.name ||
+          "";
+      }
+    } catch (_) {}
+  }
+
+  return {
+    villageId: String(villageId),
+    villageName: villageName || "Unknown",
+  };
+});
 
     const waterbodies = (mwsRecord.mws_intersect_swb || []).map((swb) => ({
       swbId: String(swb?.swbId ?? swb?.id ?? swb),
@@ -761,6 +819,28 @@ const DOT_SELECTED = (status = "in_progress") => new Style({
 
     return { mwsData, villageData };
   };
+
+  const displayVillages = React.useMemo(() => {
+  // Manual MWS selection
+  if (manualSelectedMWS?.length > 0) {
+    return [
+      ...new Map(
+        manualSelectionDetails
+          .flatMap((mws) => mws.villages)
+          .map((v) => [v.villageId, v])
+      ).values(),
+    ];
+  }
+
+  // Filter selection
+  const { villageData } = generateSelectionTableData();
+  return villageData;
+}, [
+  manualSelectedMWS,
+  manualSelectionDetails,
+  selectedVillages,
+  villageJson,
+]);
 
   // ─── WB property display resolver — uses cached precomputed props ───
   const getWBDisplayValue = (filterName, swb) => {
@@ -1312,6 +1392,7 @@ const DOT_SELECTED = (status = "in_progress") => new Style({
     }
   };
 
+
   // ─── Selection Popup ─────────────────────────────────────────────────────
   const SelectionPopup = () => {
     const [activeTab, setActiveTab] = React.useState('mws');
@@ -1322,6 +1403,7 @@ const DOT_SELECTED = (status = "in_progress") => new Style({
 
     const selectedFiltersCount = getFormattedSelectedFilters();
     const selectedPatternsCount = getFormattedSelectedPatterns();
+
 
     const hasVillageFilter = selectedFiltersCount.some(f => {
       for (const topKey of Object.keys(filtersDetails)) {
@@ -1381,6 +1463,12 @@ const DOT_SELECTED = (status = "in_progress") => new Style({
       { key: 'villages', label: 'Villages', count: villageData.length, always: false, show: hasVillageFilter, color: 'green' },
       { key: 'waterbodies', label: 'Waterbodies', count: waterbodyData.length, always: false, show: hasWaterbodyFilter, color: 'cyan' },
     ];
+
+    const currentMwsData = manualSelectedMWS?.length > 0 ? manualSelectionDetails.map((m) => ({
+        id: m.mwsId,
+        name: m.mwsId,
+      }))
+    : mwsData;
 
     return (
       <div
@@ -1500,7 +1588,8 @@ const DOT_SELECTED = (status = "in_progress") => new Style({
 
             {/* MWS Tab */}
             {activeTab === 'mws' && (
-              mwsData.length > 0 ? (
+              
+              currentMwsData.length > 0 ? (
                 <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
                   <table className="w-full text-xs">
                     <thead>
@@ -1513,13 +1602,22 @@ const DOT_SELECTED = (status = "in_progress") => new Style({
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-100">
-                      {mwsData.map((item, i) => {
+                      {currentMwsData.map((item, i) => {
                         const mwsGroup = mwsVillageIntersections.find(g => g.mwsId === item.name);
                         return (
                           <tr key={item.id} className="hover:bg-blue-50/30 align-top transition-colors">
                             <td className="px-4 py-2.5 text-gray-400 font-mono">{i + 1}</td>
                             <td className="px-4 py-2.5">
-                              <span className="font-mono text-gray-800 bg-gray-100 px-2 py-0.5 rounded text-[11px]">{item.name}</span>
+                              {/* <span className="font-mono text-gray-800 bg-gray-100 px-2 py-0.5 rounded text-[11px]">{item.name}</span> */}
+                              <span
+                                className={`font-mono px-2 py-0.5 rounded text-[11px] ${
+                                  manualSelectedMWS?.length > 0
+                                    ? "bg-emerald-500 text-white"
+                                    : "bg-gray-100 text-gray-800"
+                                }`}
+                              >
+                                {item.name}
+                              </span>
                             </td>
                             <td className="px-4 py-2.5 text-center">
                               <a
@@ -1542,6 +1640,7 @@ const DOT_SELECTED = (status = "in_progress") => new Style({
                                     const isManualVillage = manualGroup?.villages?.some(
                                       mv => String(mv.villageId) === String(v.villageId)
                                     );
+                                    
                                     const id = String(v.villageId);
                                     if (seenVillageIds.has(id)) return false;
                                     seenVillageIds.add(id);
@@ -1809,6 +1908,30 @@ const DOT_SELECTED = (status = "in_progress") => new Style({
 />
 
 ) : null}
+{displayVillages.length > 0 && (
+  <div className="bg-white rounded-xl border border-gray-100 p-4 shadow-sm">
+    <div className="flex items-center justify-between mb-3">
+      <h3 className="text-sm font-semibold text-gray-800">
+        Selected Villages
+      </h3>
+      <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 text-xs font-semibold">
+        {displayVillages.length}
+      </span>
+    </div>
+    <div className="max-h-44 overflow-y-auto pr-1 flex flex-wrap gap-1.5">
+      {displayVillages.map((village) => (
+        <span
+          key={village.villageId}
+          title={village.villageName}
+          className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium bg-emerald-50 border border-emerald-100 text-emerald-700 max-w-full"
+        >
+          <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 shrink-0"></span>
+          <span className="truncate">{village.villageName}</span>
+        </span>
+      ))}
+    </div>
+  </div>
+)}
       {selectedWaterbodyProfile && (
         <KYLWaterbodyPanel waterbody={selectedWaterbodyProfile} onBack={onResetWaterbody} hideBackButton={showBothPanels} />
       )}
@@ -2118,6 +2241,33 @@ const DOT_SELECTED = (status = "in_progress") => new Style({
               </p>
             )}
           </div>
+
+          {/* ── Selected Villages ── */}
+{displayVillages.length > 0 && (
+  <div className="bg-white rounded-xl border border-gray-100 p-4 shadow-sm">
+    <div className="flex items-center justify-between mb-3">
+      <h3 className="text-sm font-semibold text-gray-800">
+        Selected Villages
+      </h3>
+
+      <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 text-xs font-semibold">
+        {displayVillages.length}
+      </span>
+    </div>
+
+    <div className="max-h-44 overflow-y-auto pr-1 flex flex-wrap gap-1.5">
+      {displayVillages.map((village) => (
+        <span
+          key={village.villageId}
+          title={village.villageName}
+          className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[9px] font-medium bg-emerald-50 border border-emerald-100 text-emerald-700 max-w-full"
+        >
+                    <span className="truncate">{village.villageName}</span>
+        </span>
+      ))}
+    </div>
+  </div>
+)}
 
           {/* ── Selected Patterns ── */}
           {getFormattedSelectedPatterns().length > 0 && (
