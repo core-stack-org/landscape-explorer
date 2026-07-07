@@ -332,6 +332,10 @@ useEffect(() => {
   };
 
   const handleFilterSelection = (name, option, isChecked) => {
+     if (showConnectivityRef.current) {
+      toast.error("Please turn off MWS Connectivity before applying filters.");
+      return;
+    }
     setSelectedMWS([]);
     setSelectedMWSProfile(null);
     resetMWSStyle();

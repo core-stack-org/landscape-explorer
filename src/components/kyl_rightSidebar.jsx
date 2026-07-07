@@ -371,10 +371,13 @@ const KYLRightSidebar = ({
     }
   };
 
-  const toggleConnectivity = () => {
-    if (currentLayer.length > 0) {
-      alert("Please turn off the other layer before enabling MWS Connectivity.");
-      return;
+const toggleConnectivity = () => {
+    if (!showConnectivity) {
+      const hasActiveFilters = getFormattedSelectedFilters().length > 0;
+      if (currentLayer.length > 0 || hasActiveFilters) {
+        alert("Please turn off the active filters/layer before enabling MWS Connectivity.");
+        return;
+      }
     }
 
     if (!mwsArrowLayerRef?.current) { console.warn("Arrow layer not ready"); return; }
