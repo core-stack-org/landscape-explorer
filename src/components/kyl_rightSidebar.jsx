@@ -1908,30 +1908,7 @@ const DOT_SELECTED = (status = "in_progress") => new Style({
 />
 
 ) : null}
-{displayVillages.length > 0 && (
-  <div className="bg-white rounded-xl border border-gray-100 p-4 shadow-sm">
-    <div className="flex items-center justify-between mb-3">
-      <h3 className="text-sm font-semibold text-gray-800">
-        Selected Villages
-      </h3>
-      <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 text-xs font-semibold">
-        {displayVillages.length}
-      </span>
-    </div>
-    <div className="max-h-44 overflow-y-auto pr-1 flex flex-wrap gap-1.5">
-      {displayVillages.map((village) => (
-        <span
-          key={village.villageId}
-          title={village.villageName}
-          className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium bg-emerald-50 border border-emerald-100 text-emerald-700 max-w-full"
-        >
-          <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 shrink-0"></span>
-          <span className="truncate">{village.villageName}</span>
-        </span>
-      ))}
-    </div>
-  </div>
-)}
+
       {selectedWaterbodyProfile && (
         <KYLWaterbodyPanel waterbody={selectedWaterbodyProfile} onBack={onResetWaterbody} hideBackButton={showBothPanels} />
       )}
