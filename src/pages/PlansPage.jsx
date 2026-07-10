@@ -17,6 +17,7 @@ import LandingNavbar from "../components/landing_navbar.jsx";
 import FilterListIcon from "@mui/icons-material/FilterList";
 import SelectReact from "react-select";
 import StewardDetailPage from "../components/steward_detailPage.jsx";
+import { useMap, useMapsLibrary } from "@vis.gl/react-google-maps";
 
 const P = {
   base:    "oklch(49.6% 0.265 301.924)",
@@ -437,6 +438,8 @@ const PlansPage = () => {
     const [planDotsVisible, setPlanDotsVisible] = useState(false);
     const [dprStatus,       setDprStatus]       = useState(null);
     const [statusTracking,  setStatusTracking]  = useState(null);
+    const [selectedVillage, setSelectedVillage] = useState(null);
+    const [villageOptions, setVillageOptions] = useState([]);
 
     // ── MAP INIT ────────────────────────────────────────────────
     useEffect(() => {
@@ -1244,6 +1247,18 @@ const PlansPage = () => {
       return match?.organization ?? null;
     };
 
+    const handleVillageChange = (selected) => {
+      setSelectedVillage(selected);
+      if (!selected) return;
+
+      const village = selected.value;
+      const plan = statePlansRef.current?.find((p) => p.village === village);
+      if (!plan) return;
+
+      const orgId = getStewardOrgId(plan.facilitator_name);
+      handleOrgChange({ value: orgId, label: plan.facilitator_name });
+    };
+
     const filteredOrgOptions = isStateView
       ? organizationOptions
       : (metaStats?.organization_breakdown ?? []).map(o => ({
@@ -1316,22 +1331,45 @@ const PlansPage = () => {
               </button>
             )}
 
-            <div className="absolute top-4 left-1/2 -translate-x-1/2 z-[1000] w-80">
-              <div className="relative">
-                <div className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 z-10"
-                  style={{ color: P.muted }}>
-                  <FilterListIcon style={{ fontSize: 18 }} />
-                </div>
-                <SelectReact
-                  value={organization}
-                  onChange={handleOrgChange}
-                  options={filteredOrgOptions}
-                  isClearable
-                  placeholder="Filter by organization"
-                  styles={selectStyles}
-                />
+         <div className="absolute top-4 left-1/2 -translate-x-1/2 z-[1000] flex gap-3 w-[650px]">
+            {/* Organization Filter */}
+            <div className="relative flex-1">
+              <div
+                className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 z-10"
+                style={{ color: P.muted }}
+              >
+                <FilterListIcon style={{ fontSize: 18 }} />
               </div>
+
+              <SelectReact
+                value={organization}
+                onChange={handleOrgChange}
+                options={filteredOrgOptions}
+                isClearable
+                placeholder="Filter by organization"
+                styles={selectStyles}
+              />
             </div>
+
+            {/* Village Filter */}
+            <div className="relative flex-1">
+              <div
+                className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 z-10"
+                style={{ color: P.muted }}
+              >
+                <FilterListIcon style={{ fontSize: 18 }} />
+              </div>
+
+              <SelectReact
+                value={selectedVillage}
+                onChange={handleVillageChange}
+                options={villageOptions}
+                isClearable
+                placeholder="Filter by village"
+                styles={selectStyles}
+              />
+            </div>
+          </div>
 
             {/* PLAN STATUS LEGEND */}
             {planDotsVisible && (
