@@ -468,7 +468,7 @@ const PlansPage = () => {
       );
     };
 
-    const handleVillageSuggestionSelect = (placeId, description) => {
+const handleVillageSuggestionSelect = (placeId, description) => {
       setVillageSearchText(description);
       setVillageSuggestions([]);
       placesServiceRef.current?.getDetails(
@@ -488,7 +488,6 @@ const PlansPage = () => {
           const districtName = components.find((c) => c.types.includes("administrative_area_level_2"))?.long_name;
           const searchTerm    = (place?.name || description.split(",")[0] || "").toLowerCase();
 
-          // 👇 NEW — clear state bubbles and district pins, we're drilling in
           if (bubbleLayerRef.current) {
             mapRef.current.removeLayer(bubbleLayerRef.current);
             bubbleLayerRef.current = null;
@@ -498,6 +497,7 @@ const PlansPage = () => {
             districtLayerRef.current = null;
           }
           setIsStateView(false);
+          setMapLoading(true);
 
           try {
             // 1️⃣ Try district-level match first (more specific)
@@ -507,8 +507,17 @@ const PlansPage = () => {
               );
               const districtId = nameToId[districtName.toLowerCase()];
               if (districtId) {
-                const plans = await fetchPlansByDistrict(districtId, orgRef.current?.value ?? null);
+                currentDistrictRef.current = { district_id: districtId, district_name: districtName };
+                const [plans, districtStats, dprData, trackingData] = await Promise.all([
+                  fetchPlansByDistrict(districtId, orgRef.current?.value ?? null),
+                  fetchMetaStats(orgRef.current?.value ?? null, null, districtId),
+                  fetchDprReportStatus({ organizationId: orgRef.current?.value ?? null, districtId }),
+                  fetchStatusTracking({ organizationId: orgRef.current?.value ?? null, districtId }),
+                ]);
                 addPlanDots(plans);
+                setMetaStats(districtStats);
+                setDprStatus(dprData);
+                setStatusTracking(trackingData);
                 return;
               }
             }
@@ -519,16 +528,27 @@ const PlansPage = () => {
                 (s) => s.state_name?.toLowerCase() === stateName.toLowerCase()
               );
               if (matchedState) {
-                const plans = await fetchPlansByState(matchedState.state_id, orgRef.current?.value ?? null);
+                currentStateRef.current = { state_id: matchedState.state_id, state_name: matchedState.state_name };
+                const [plans, stateStats, dprData, trackingData] = await Promise.all([
+                  fetchPlansByState(matchedState.state_id, orgRef.current?.value ?? null),
+                  fetchMetaStats(orgRef.current?.value ?? null, matchedState.state_id),
+                  fetchDprReportStatus({ organizationId: orgRef.current?.value ?? null, stateId: matchedState.state_id }),
+                  fetchStatusTracking({ organizationId: orgRef.current?.value ?? null, stateId: matchedState.state_id }),
+                ]);
                 const matchedPlans = plans.filter((p) =>
                   p.village_name?.toLowerCase().includes(searchTerm) ||
                   p.village?.toLowerCase().includes(searchTerm)
                 );
                 addPlanDots(matchedPlans.length ? matchedPlans : plans);
+                setMetaStats(stateStats);
+                setDprStatus(dprData);
+                setStatusTracking(trackingData);
               }
             }
           } catch (err) {
             console.error("Village plans fetch failed:", err);
+          } finally {
+            setMapLoading(false);
           }
         }
       );
