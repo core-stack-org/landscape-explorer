@@ -441,6 +441,99 @@ const PlansPage = () => {
     const [selectedVillage, setSelectedVillage] = useState(null);
     const [villageOptions, setVillageOptions] = useState([]);
 
+    //  NEW — village search via Google Places Autocomplete
+    const placesLib = useMapsLibrary("places");
+    const autocompleteServiceRef = useRef(null);
+    const placesServiceRef        = useRef(null);
+
+    const [villageSearchText, setVillageSearchText]   = useState("");
+    const [villageSuggestions, setVillageSuggestions] = useState([]);
+
+    useEffect(() => {
+      if (!placesLib) return;
+      autocompleteServiceRef.current = new placesLib.AutocompleteService();
+      // PlacesService needs a map or a div — a detached div works fine, nothing renders
+      placesServiceRef.current = new placesLib.PlacesService(document.createElement("div"));
+    }, [placesLib]);
+
+    const handleVillageInputChange = (text) => {
+      setVillageSearchText(text);
+      if (!text.trim() || !autocompleteServiceRef.current) {
+        setVillageSuggestions([]);
+        return;
+      }
+      autocompleteServiceRef.current.getPlacePredictions(
+        { input: text, componentRestrictions: { country: "in" } },
+        (predictions) => setVillageSuggestions(predictions || [])
+      );
+    };
+
+    const handleVillageSuggestionSelect = (placeId, description) => {
+      setVillageSearchText(description);
+      setVillageSuggestions([]);
+      placesServiceRef.current?.getDetails(
+        { placeId, fields: ["geometry", "address_components", "name"] },
+        async (place) => {
+          const loc = place?.geometry?.location;
+          if (loc) {
+            mapRef.current?.getView().animate({
+              center: [loc.lng(), loc.lat()],
+              zoom: 14,
+              duration: 700,
+            });
+          }
+
+          const components  = place?.address_components ?? [];
+          const stateName    = components.find((c) => c.types.includes("administrative_area_level_1"))?.long_name;
+          const districtName = components.find((c) => c.types.includes("administrative_area_level_2"))?.long_name;
+          const searchTerm    = (place?.name || description.split(",")[0] || "").toLowerCase();
+
+          // 👇 NEW — clear state bubbles and district pins, we're drilling in
+          if (bubbleLayerRef.current) {
+            mapRef.current.removeLayer(bubbleLayerRef.current);
+            bubbleLayerRef.current = null;
+          }
+          if (districtLayerRef.current) {
+            mapRef.current.removeLayer(districtLayerRef.current);
+            districtLayerRef.current = null;
+          }
+          setIsStateView(false);
+
+          try {
+            // 1️⃣ Try district-level match first (more specific)
+            if (districtName) {
+              const nameToId = Object.fromEntries(
+                Object.entries(districtLookupRef.current).map(([id, name]) => [name.toLowerCase(), Number(id)])
+              );
+              const districtId = nameToId[districtName.toLowerCase()];
+              if (districtId) {
+                const plans = await fetchPlansByDistrict(districtId, orgRef.current?.value ?? null);
+                addPlanDots(plans);
+                return;
+              }
+            }
+
+            // 2️⃣ Fall back to state-level, filtered by village name
+            if (stateName && metaStatsRef.current?.state_breakdown) {
+              const matchedState = metaStatsRef.current.state_breakdown.find(
+                (s) => s.state_name?.toLowerCase() === stateName.toLowerCase()
+              );
+              if (matchedState) {
+                const plans = await fetchPlansByState(matchedState.state_id, orgRef.current?.value ?? null);
+                const matchedPlans = plans.filter((p) =>
+                  p.village_name?.toLowerCase().includes(searchTerm) ||
+                  p.village?.toLowerCase().includes(searchTerm)
+                );
+                addPlanDots(matchedPlans.length ? matchedPlans : plans);
+              }
+            }
+          } catch (err) {
+            console.error("Village plans fetch failed:", err);
+          }
+        }
+      );
+    };
+
     // ── MAP INIT ────────────────────────────────────────────────
     useEffect(() => {
         const map = new Map({
@@ -1351,7 +1444,7 @@ const PlansPage = () => {
               />
             </div>
 
-            {/* Village Filter */}
+              {/* Village Search */}
             <div className="relative flex-1">
               <div
                 className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 z-10"
@@ -1360,14 +1453,39 @@ const PlansPage = () => {
                 <FilterListIcon style={{ fontSize: 18 }} />
               </div>
 
-              <SelectReact
-                value={selectedVillage}
-                onChange={handleVillageChange}
-                options={villageOptions}
-                isClearable
-                placeholder="Filter by village"
-                styles={selectStyles}
+              <input
+                type="text"
+                value={villageSearchText}
+                onChange={(e) => handleVillageInputChange(e.target.value)}
+                placeholder="Search village name..."
+                className="w-full pl-9 pr-3 rounded-xl text-sm outline-none"
+                style={{
+                  minHeight: "42px",
+                  border: "1px solid rgba(220, 200, 240, 0.8)",
+                  boxShadow: "0 8px 24px rgba(0,0,0,0.10)",
+                  backgroundColor: "rgba(255,255,255,0.97)",
+                  backdropFilter: "blur(6px)",
+                  color: P.text,
+                }}
               />
+
+              {villageSuggestions.length > 0 && (
+                <div
+                  className="absolute top-full left-0 right-0 mt-1 rounded-xl overflow-hidden z-20"
+                  style={{ background: "white", boxShadow: "0 8px 24px rgba(0,0,0,0.12)" }}
+                >
+                  {villageSuggestions.map((s) => (
+                    <div
+                      key={s.place_id}
+                      onClick={() => handleVillageSuggestionSelect(s.place_id, s.description)}
+                      className="px-3 py-2 text-sm cursor-pointer hover:bg-gray-50"
+                      style={{ color: P.text, borderBottom: `1px solid ${P.border}` }}
+                    >
+                      {s.description}
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
 
