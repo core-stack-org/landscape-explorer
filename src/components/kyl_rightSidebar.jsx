@@ -16,6 +16,7 @@ import KYLWaterbodyPanel from "./kyl_waterbodypanel.jsx";
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import XLSX from 'xlsx-js-style';
+import toast from 'react-hot-toast';
 
 
 const KYLRightSidebar = ({
@@ -544,10 +545,13 @@ const villages = (mwsRecord.mws_intersect_villages || []).map((villageId) => {
     }
   };
 
-  const toggleConnectivity = () => {
-    if (currentLayer.length > 0) {
-      alert("Please turn off the other layer before enabling MWS Connectivity.");
-      return;
+const toggleConnectivity = () => {
+    if (!showConnectivity) {
+      const hasActiveFilters = getFormattedSelectedFilters().length > 0;
+      if (currentLayer.length > 0 || hasActiveFilters) {
+        toast.error("Please turn off the active filters/layer before enabling MWS Connectivity.");
+        return;
+      }
     }
 
     if (!mwsArrowLayerRef?.current) { console.warn("Arrow layer not ready"); return; }

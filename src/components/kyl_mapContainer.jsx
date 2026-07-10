@@ -2046,11 +2046,15 @@ const MapLegend = ({ showMWS, showVillages, currentLayer, showConnectivity,showP
 
                     <div>
                       <div className="flex h-6 rounded overflow-hidden border border-gray-300">
-                        <div className="flex-1 bg-[#8B5A2B]" />
-                        <div className="flex-1 bg-[#B48F50]" />
-                        <div className="flex-1 bg-[#D6C97A]" />
-                        <div className="flex-1 bg-[#A8D36F]" />
                         <div className="flex-1 bg-[#228B22]" />
+                        <div className="flex-1 bg-[#A8D36F]" />
+                        <div className="flex-1 bg-[#D6C97A]" />
+                        <div className="flex-1 bg-[#B48F50]" />
+                        <div className="flex-1 bg-[#8B5A2B]" />
+                        
+                        
+                        
+                        
                       </div>
                       <div className="flex justify-between text-[10px] text-gray-600 mt-1">
                         <span>Rank order 1</span>
