@@ -18,6 +18,7 @@ import FilterListIcon from "@mui/icons-material/FilterList";
 import SelectReact from "react-select";
 import StewardDetailPage from "../components/steward_detailPage.jsx";
 import { useSearchParams } from "react-router-dom";
+import { useMap, useMapsLibrary } from "@vis.gl/react-google-maps";
 
 const P = {
   base:    "oklch(49.6% 0.265 301.924)",
@@ -439,6 +440,121 @@ const PlansPage = () => {
     const [dprStatus,       setDprStatus]       = useState(null);
     const [statusTracking,  setStatusTracking]  = useState(null);
     const [searchParams, setSearchParams] = useSearchParams();
+    const [selectedVillage, setSelectedVillage] = useState(null);
+    const [villageOptions, setVillageOptions] = useState([]);
+
+    //  NEW — village search via Google Places Autocomplete
+    const placesLib = useMapsLibrary("places");
+    const autocompleteServiceRef = useRef(null);
+    const placesServiceRef        = useRef(null);
+
+    const [villageSearchText, setVillageSearchText]   = useState("");
+    const [villageSuggestions, setVillageSuggestions] = useState([]);
+
+    useEffect(() => {
+      if (!placesLib) return;
+      autocompleteServiceRef.current = new placesLib.AutocompleteService();
+      // PlacesService needs a map or a div — a detached div works fine, nothing renders
+      placesServiceRef.current = new placesLib.PlacesService(document.createElement("div"));
+    }, [placesLib]);
+
+    const handleVillageInputChange = (text) => {
+      setVillageSearchText(text);
+      if (!text.trim() || !autocompleteServiceRef.current) {
+        setVillageSuggestions([]);
+        return;
+      }
+      autocompleteServiceRef.current.getPlacePredictions(
+        { input: text, componentRestrictions: { country: "in" } },
+        (predictions) => setVillageSuggestions(predictions || [])
+      );
+    };
+
+const handleVillageSuggestionSelect = (placeId, description) => {
+      setVillageSearchText(description);
+      setVillageSuggestions([]);
+      placesServiceRef.current?.getDetails(
+        { placeId, fields: ["geometry", "address_components", "name"] },
+        async (place) => {
+          const loc = place?.geometry?.location;
+          if (loc) {
+            mapRef.current?.getView().animate({
+              center: [loc.lng(), loc.lat()],
+              zoom: 14,
+              duration: 700,
+            });
+          }
+
+          const components  = place?.address_components ?? [];
+          const stateName    = components.find((c) => c.types.includes("administrative_area_level_1"))?.long_name;
+          const districtName = components.find((c) => c.types.includes("administrative_area_level_2"))?.long_name;
+          const searchTerm    = (place?.name || description.split(",")[0] || "").toLowerCase();
+
+          if (bubbleLayerRef.current) {
+            mapRef.current.removeLayer(bubbleLayerRef.current);
+            bubbleLayerRef.current = null;
+          }
+          if (districtLayerRef.current) {
+            mapRef.current.removeLayer(districtLayerRef.current);
+            districtLayerRef.current = null;
+          }
+          setIsStateView(false);
+          setMapLoading(true);
+
+          try {
+            // 1️⃣ Try district-level match first (more specific)
+            if (districtName) {
+              const nameToId = Object.fromEntries(
+                Object.entries(districtLookupRef.current).map(([id, name]) => [name.toLowerCase(), Number(id)])
+              );
+              const districtId = nameToId[districtName.toLowerCase()];
+              if (districtId) {
+                currentDistrictRef.current = { district_id: districtId, district_name: districtName };
+                const [plans, districtStats, dprData, trackingData] = await Promise.all([
+                  fetchPlansByDistrict(districtId, orgRef.current?.value ?? null),
+                  fetchMetaStats(orgRef.current?.value ?? null, null, districtId),
+                  fetchDprReportStatus({ organizationId: orgRef.current?.value ?? null, districtId }),
+                  fetchStatusTracking({ organizationId: orgRef.current?.value ?? null, districtId }),
+                ]);
+                addPlanDots(plans);
+                setMetaStats(districtStats);
+                setDprStatus(dprData);
+                setStatusTracking(trackingData);
+                return;
+              }
+            }
+
+            // 2️⃣ Fall back to state-level, filtered by village name
+            if (stateName && metaStatsRef.current?.state_breakdown) {
+              const matchedState = metaStatsRef.current.state_breakdown.find(
+                (s) => s.state_name?.toLowerCase() === stateName.toLowerCase()
+              );
+              if (matchedState) {
+                currentStateRef.current = { state_id: matchedState.state_id, state_name: matchedState.state_name };
+                const [plans, stateStats, dprData, trackingData] = await Promise.all([
+                  fetchPlansByState(matchedState.state_id, orgRef.current?.value ?? null),
+                  fetchMetaStats(orgRef.current?.value ?? null, matchedState.state_id),
+                  fetchDprReportStatus({ organizationId: orgRef.current?.value ?? null, stateId: matchedState.state_id }),
+                  fetchStatusTracking({ organizationId: orgRef.current?.value ?? null, stateId: matchedState.state_id }),
+                ]);
+                const matchedPlans = plans.filter((p) =>
+                  p.village_name?.toLowerCase().includes(searchTerm) ||
+                  p.village?.toLowerCase().includes(searchTerm)
+                );
+                addPlanDots(matchedPlans.length ? matchedPlans : plans);
+                setMetaStats(stateStats);
+                setDprStatus(dprData);
+                setStatusTracking(trackingData);
+              }
+            }
+          } catch (err) {
+            console.error("Village plans fetch failed:", err);
+          } finally {
+            setMapLoading(false);
+          }
+        }
+      );
+    };
 
     // ── MAP INIT ────────────────────────────────────────────────
     useEffect(() => {
@@ -1305,6 +1421,18 @@ const PlansPage = () => {
       return match?.organization ?? null;
     };
 
+    const handleVillageChange = (selected) => {
+      setSelectedVillage(selected);
+      if (!selected) return;
+
+      const village = selected.value;
+      const plan = statePlansRef.current?.find((p) => p.village === village);
+      if (!plan) return;
+
+      const orgId = getStewardOrgId(plan.facilitator_name);
+      handleOrgChange({ value: orgId, label: plan.facilitator_name });
+    };
+
     const filteredOrgOptions = isStateView
       ? organizationOptions
       : (metaStats?.organization_breakdown ?? []).map(o => ({
@@ -1377,22 +1505,70 @@ const PlansPage = () => {
               </button>
             )}
 
-            <div className="absolute top-4 left-1/2 -translate-x-1/2 z-[1000] w-80">
-              <div className="relative">
-                <div className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 z-10"
-                  style={{ color: P.muted }}>
-                  <FilterListIcon style={{ fontSize: 18 }} />
-                </div>
-                <SelectReact
-                  value={organization}
-                  onChange={handleOrgChange}
-                  options={filteredOrgOptions}
-                  isClearable
-                  placeholder="Filter by organization"
-                  styles={selectStyles}
-                />
+         <div className="absolute top-4 left-1/2 -translate-x-1/2 z-[1000] flex gap-3 w-[650px]">
+            {/* Organization Filter */}
+            <div className="relative flex-1">
+              <div
+                className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 z-10"
+                style={{ color: P.muted }}
+              >
+                <FilterListIcon style={{ fontSize: 18 }} />
               </div>
+
+              <SelectReact
+                value={organization}
+                onChange={handleOrgChange}
+                options={filteredOrgOptions}
+                isClearable
+                placeholder="Filter by organization"
+                styles={selectStyles}
+              />
             </div>
+
+              {/* Village Search */}
+            <div className="relative flex-1">
+              <div
+                className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 z-10"
+                style={{ color: P.muted }}
+              >
+                <FilterListIcon style={{ fontSize: 18 }} />
+              </div>
+
+              <input
+                type="text"
+                value={villageSearchText}
+                onChange={(e) => handleVillageInputChange(e.target.value)}
+                placeholder="Search village name..."
+                className="w-full pl-9 pr-3 rounded-xl text-sm outline-none"
+                style={{
+                  minHeight: "42px",
+                  border: "1px solid rgba(220, 200, 240, 0.8)",
+                  boxShadow: "0 8px 24px rgba(0,0,0,0.10)",
+                  backgroundColor: "rgba(255,255,255,0.97)",
+                  backdropFilter: "blur(6px)",
+                  color: P.text,
+                }}
+              />
+
+              {villageSuggestions.length > 0 && (
+                <div
+                  className="absolute top-full left-0 right-0 mt-1 rounded-xl overflow-hidden z-20"
+                  style={{ background: "white", boxShadow: "0 8px 24px rgba(0,0,0,0.12)" }}
+                >
+                  {villageSuggestions.map((s) => (
+                    <div
+                      key={s.place_id}
+                      onClick={() => handleVillageSuggestionSelect(s.place_id, s.description)}
+                      className="px-3 py-2 text-sm cursor-pointer hover:bg-gray-50"
+                      style={{ color: P.text, borderBottom: `1px solid ${P.border}` }}
+                    >
+                      {s.description}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
 
             {/* PLAN STATUS LEGEND */}
             {planDotsVisible && (
