@@ -138,8 +138,8 @@ const KYLMWSProfilePanel = ({ mwsData, onBack, hideBackButton = false, onResetMW
           </div>
 
           <div>
-            <p className="text-sm font-medium text-gray-800">
-              {uid}
+           <p className="text-sm font-medium text-gray-800">
+              {typeof uid === 'object' ? (uid.name ?? uid.id ?? 'Unknown') : uid}
             </p>
           </div>
 

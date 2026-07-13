@@ -338,7 +338,7 @@ const handleResetMWS = () => {
       toast.error("Please turn off MWS Connectivity before applying filters.");
       return;
     }
-    setSelectedMWS([]);
+    // setSelectedMWS([]);
     setSelectedMWSProfile(null);
     resetMWSStyle();
     setHighlightMWS(null);

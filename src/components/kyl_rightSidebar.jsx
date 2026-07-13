@@ -411,9 +411,9 @@ const villages = (mwsRecord.mws_intersect_villages || []).map((villageId) => {
 }, [manualSelectedMWS, dataJson, villageJson]);
 
   const mwsVillageIntersections = React.useMemo(() => {
-    if (!selectedMWS || selectedMWS.length === 0 || !dataJson || !Array.isArray(dataJson)) return [];
+    if (!allSelectedMWSIds || allSelectedMWSIds.length === 0 || !dataJson || !Array.isArray(dataJson)) return [];
 
-    return selectedMWS.map(mwsId => {
+    return allSelectedMWSIds.map(mwsId => {
       const mwsRecord = dataJson.find(d => String(d.mws_id) === String(mwsId));
       if (!mwsRecord) return { mwsId, villages: [], waterbodies: [] };
 
@@ -461,7 +461,7 @@ const villages = (mwsRecord.mws_intersect_villages || []).map((villageId) => {
 
       return { mwsId: String(mwsId), villages, waterbodies };
     });
-  }, [selectedMWS, dataJson, villageJson, boundaryLayerRef]);
+  }, [allSelectedMWSIds, dataJson, villageJson, boundaryLayerRef]);
 
   const handleUniversalBack = () => {
     onResetMWS();
@@ -784,8 +784,8 @@ const DOT_SELECTED = (status = "in_progress") => new Style({
     const mwsData = [];
     const villageData = [];
 
-    if (selectedMWS && selectedMWS.length > 0) {
-      selectedMWS.forEach((mwsId, index) => {
+    if (allSelectedMWSIds && allSelectedMWSIds.length > 0) {
+      allSelectedMWSIds.forEach((mwsId, index) => {
         mwsData.push({ id: `${mwsId}-${index}`, name: String(mwsId) });
       });
     }
@@ -1404,6 +1404,8 @@ const DOT_SELECTED = (status = "in_progress") => new Style({
 
     const { mwsData, villageData } = generateSelectionTableData();
     const seenVillageIds = new Set();
+    const mwsCount = manualSelectedMWS?.length > 0 ? manualSelectedMWS.length : mwsData.length;
+
 
     const selectedFiltersCount = getFormattedSelectedFilters();
     const selectedPatternsCount = getFormattedSelectedPatterns();
@@ -1456,17 +1458,64 @@ const DOT_SELECTED = (status = "in_progress") => new Style({
     // totalItems after waterbodyData is declared
     const totalItems = mwsData.length + villageData.length + waterbodyData.length;
 
-    const sheet1Count = mwsData.length;
+    const sheet1Count = mwsCount;
     const sheet2Count = villageData.length;
     const sheet3Count = waterbodyData.length;
-    const sheet4Count = mwsVillageIntersections.reduce((acc, curr) => acc + (curr.villages?.length || 0), 0);
-    const sheet5Count = mwsVillageIntersections.reduce((acc, curr) => acc + (curr.waterbodies?.length || 0), 0);
+    // const sheet4Count = mwsVillageIntersections.reduce((acc, curr) => acc + (curr.villages?.length || 0), 0);
+    // const sheet5Count = mwsVillageIntersections.reduce((acc, curr) => acc + (curr.waterbodies?.length || 0), 0);
+    const sheet4Count =
+  manualSelectedMWS?.length > 0
+    ? manualSelectionDetails.reduce(
+        (acc, curr) => acc + (curr.villages?.length || 0),
+        0
+      )
+    : mwsVillageIntersections.reduce(
+        (acc, curr) => acc + (curr.villages?.length || 0),
+        0
+      );
+
+const sheet5Count =
+  manualSelectedMWS?.length > 0
+    ? manualSelectionDetails.reduce(
+        (acc, curr) => acc + (curr.waterbodies?.length || 0),
+        0
+      )
+    : mwsVillageIntersections.reduce(
+        (acc, curr) => acc + (curr.waterbodies?.length || 0),
+        0
+      );
+
+    // const tabs = [
+    //   { key: 'mws', label: 'Watersheds', count: mwsCount, always: true, color: 'blue' },
+    //   { key: 'villages', label: 'Villages', count: villageData.length, always: false, show: hasVillageFilter, color: 'green' },
+    //   { key: 'waterbodies', label: 'Waterbodies', count: waterbodyData.length, always: false, show: hasWaterbodyFilter, color: 'cyan' },
+    // ];
 
     const tabs = [
-      { key: 'mws', label: 'Watersheds', count: mwsData.length, always: true, color: 'blue' },
-      { key: 'villages', label: 'Villages', count: villageData.length, always: false, show: hasVillageFilter, color: 'green' },
-      { key: 'waterbodies', label: 'Waterbodies', count: waterbodyData.length, always: false, show: hasWaterbodyFilter, color: 'cyan' },
-    ];
+  {
+    key: "mws",
+    label: "Watersheds",
+    count: mwsCount,
+    always: true,
+    color: "blue",
+  },
+  {
+    key: "villages",
+    label: "Villages",
+    count: manualSelectedMWS?.length > 0 ? sheet4Count : villageData.length,
+    always: false,
+    show: hasVillageFilter,
+    color: "green",
+  },
+  {
+    key: "waterbodies",
+    label: "Waterbodies",
+    count: manualSelectedMWS?.length > 0 ? sheet5Count : waterbodyData.length,
+    always: false,
+    show: hasWaterbodyFilter,
+    color: "cyan",
+  },
+];
 
     const currentMwsData = manualSelectedMWS?.length > 0 ? manualSelectionDetails.map((m) => ({
         id: m.mwsId,
@@ -1487,7 +1536,7 @@ const DOT_SELECTED = (status = "in_progress") => new Style({
           <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gradient-to-r from-slate-50 to-white flex-shrink-0">
             <div>
               <h3 className="text-base font-bold text-gray-800 tracking-tight">Selection Details</h3>
-              <p className="text-xs text-gray-400 mt-0.5">{totalItems} items across {mwsData.length} watersheds</p>
+              <p className="text-xs text-gray-400 mt-0.5">{totalItems} items across {mwsCount} watersheds</p>
             </div>
 
             <div className="flex items-center gap-2">
