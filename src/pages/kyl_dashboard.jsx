@@ -120,6 +120,7 @@ const KYLDashboardPage = () => {
   const [isLayerSelecting, setIsLayerSelecting] = useState(false);
   const showConnectivityRef = useRef(false);
   const [manualSelectedMWS, setManualSelectedMWS] = useState([]);
+  const [showPlans, setShowPlans] = useState(false);
 
 
   const [dataJsonError, setDataJsonError] = useState(null);
@@ -128,9 +129,7 @@ const KYLDashboardPage = () => {
   const INDIA_ZOOM   = 5;
   const { errors: layerErrors, dismiss: dismissLayerError, retry: retryLayerError } = useLayerErrors();
 
-useEffect(() => {
-  handleResetMWSSelection(); 
-}, [selectionMode]);
+
 
   const dataJsonIndex = useMemo(() => {
     if (!dataJson || !Array.isArray(dataJson)) return null;
@@ -194,11 +193,15 @@ useEffect(() => {
       .toLowerCase()
   };
 
-
-
-  const handleResetMWS = () => {
+const handleResetMWS = () => {
     setSelectedMWSProfile(null);
-    handleResetMWSSelection();
+    setManualSelectedMWS([]);
+    setHighlightMWS(null);
+    if (mwsLayerRef.current) resetMWSStyle();
+    if (toastId) {
+      toast.dismiss(toastId);
+      setToastId(null);
+    }
   };
 
   const handleResetMWSSelection = () => {
@@ -211,7 +214,6 @@ useEffect(() => {
       setToastId(null);
     }
   };
-
 
   const getAllFilterTypes = () => {
     const types = new Set();
@@ -417,12 +419,18 @@ useEffect(() => {
 
   // ─── WB filters: ID-based lookup via dataJsonIndex, no geometry ───
   const applyWaterbodyFilters = (mwsIds, wbFilters, isVisualizeOn) => {
-    if (!waterbodiesLayerRef.current) return;
+  if (!waterbodiesLayerRef.current) return;
 
-    const wbSource = waterbodiesLayerRef.current.getSource();
-    const filterKeys = Object.keys(wbFilters || {}).filter(k => wbFilters[k]);
-    const hasMWSFilter = mwsIds.length > 0;
-    const hasAttrFilter = filterKeys.length > 0;
+  const wbSource = waterbodiesLayerRef.current.getSource();
+  const filterKeys = Object.keys(wbFilters || {}).filter(k => wbFilters[k]);
+
+  // A MWS-level filter is "active" even if it currently matches 0 MWS —
+  // in that case waterbodies should show NONE, not fall back to showing all.
+  const mwsFilterKeys = Object.keys(filterSelections.selectedMWSValues || {});
+  const isMWSFilterSelected = mwsFilterKeys.some(k => filterSelections.selectedMWSValues[k]);
+
+  const hasMWSFilter = mwsIds.length > 0 || isMWSFilterSelected;
+  const hasAttrFilter = filterKeys.length > 0;
 
     if (!hasMWSFilter && !hasAttrFilter && !isVisualizeOn) {
       waterbodiesLayerRef.current.updateStyleVariables({ wbFilterActive: 0 });
@@ -2317,92 +2325,75 @@ useEffect(() => {
   }, [mapRef.current, state, district, block]);
 
 
-  const updateSelectedMWSStyle = (selectedIds) => {
-    if (!mwsLayerRef.current) return;
+const updateSelectedMWSStyle = (selectedIds) => {
+  if (!mwsLayerRef.current) return;
 
-    const features = mwsLayerRef.current.getSource().getFeatures();
+  const features = mwsLayerRef.current.getSource().getFeatures();
 
-    features.forEach((feature) => {
-      const uid = feature.get("uid");
-
-      feature.set(
-        "isSelected",
-        selectedIds.includes(uid) ? 1 : 0,
-        true
-      );
-    });
-
-    mwsLayerRef.current.getSource().changed();
-    // applyDefaultMWSStyle();
-  };
-
-  useEffect(() => {
-    if (!mapRef.current) return;
-
-    const handleMapClick = (event) => {
-      const feature = mapRef.current.forEachFeatureAtPixel(
-        event.pixel,
-        (feature, layer) => {
-          if (layer === mwsLayerRef.current) return feature;
-        }
-      );
-
-      if (!feature) return;
-
-      const uid = feature.get("uid");
-
-      if (selectionMode === "single") {
-        // Existing behaviour
-        setHighlightMWS(uid);
-        updateSelectedMWSStyle([uid]);
-        setSelectedMWS([uid]);
-        setSelectedMWSProfile(feature.getProperties());
-      } else {
-        // Multi-select
-      setSelectedMWS((prev) => {
-        let updated;
-
-        if (selectionMode === "single") {
-          updated = [uid];
-        } else {
-          if (prev.includes(uid)) {
-            updated = prev.filter((id) => id !== uid);
-          } else {
-            updated = [...prev, uid];
-          }
-        }
-
-    updateSelectedMWSStyle(updated);
-    setManualSelectedMWS(updated);  
-        if (updated.length === 0) {
-        setSelectedMWSProfile(null);   
-      }
-
-    return updated;
+  features.forEach((feature) => {
+    const uid = feature.get("uid");
+    feature.set(
+      "isSelected",
+      selectedIds.includes(uid) ? 1 : 0,
+      true
+    );
   });
 
-        // Temporary: keep last clicked highlighted
-        setHighlightMWS(uid);
+  mwsLayerRef.current.getSource().changed();
+  // applyDefaultMWSStyle();
+};
 
+useEffect(() => {
+  if (!mapRef.current) return;
+
+  const handleMapClick = (event) => {
+    const feature = mapRef.current.forEachFeatureAtPixel(
+      event.pixel,
+      (feature, layer) => {
+        if (layer === mwsLayerRef.current) return feature;
+      }
+    );
+
+    if (!feature) return;
+
+    const uid = feature.get("uid");
+
+    setManualSelectedMWS((prev) => {
+      const updated = prev.includes(uid)
+        ? prev.filter((id) => id !== uid)
+        : [...prev, uid];
+
+      updateSelectedMWSStyle(updated);
+
+      if (updated.length === 0) {
+        setSelectedMWSProfile(null);
+        setHighlightMWS(null);
+      } else {
         setSelectedMWSProfile(feature.getProperties());
+        setHighlightMWS(uid);
       }
 
-      if (toastId) {
-        toast.dismiss(toastId);
-        setToastId(null);
-      }
-    };
+      return updated;
+    });
 
-    mapRef.current.on("click", handleMapClick);
+    if (toastId) {
+      toast.dismiss(toastId);
+      setToastId(null);
+    }
+  };
 
-    return () => {
-      if (mapRef.current) {
-        mapRef.current.un("click", handleMapClick);
-      }
-    };
-  }, [selectionMode, toastId,mapRef.current, selectedMWS]);
-    
-  useEffect(() => {
+  mapRef.current.on("click", handleMapClick);
+
+  return () => {
+    if (mapRef.current) {
+      mapRef.current.un("click", handleMapClick);
+    }
+  };
+}, [toastId, mapRef.current]);
+
+
+ 
+useEffect(() => {
     if (mapRef.current && waterbodiesLayerRef.current) {
       mapRef.current.removeLayer(waterbodiesLayerRef.current);
       waterbodiesLayerRef.current = null;
@@ -3001,6 +2992,8 @@ useEffect(() => {
             currentLayer={currentLayer}
             setSearchLatLong={setSearchLatLong}
             showConnectivity={showConnectivity}
+            showPlans={showPlans} 
+            setShowPlans={setShowPlans}
           selectionMode={selectionMode}
           setSelectionMode={setSelectionMode}
           />
@@ -3059,6 +3052,8 @@ useEffect(() => {
           setSelectionMode={setSelectionMode}
           manualSelectedMWS={manualSelectedMWS} 
           onResetMWSSelection={handleResetMWSSelection}
+          showPlans={showPlans}
+          setShowPlans={setShowPlans}
 
         />
       </div>

@@ -6,31 +6,31 @@ import { ChevronRight, ArrowLeft, AlertCircle, WifiOff, FileX, Loader2 } from 'l
 // ─── Filter section mapping ───────────────────────────────────────────────────
 
 const FILTER_SECTION_MAP = {
-  'terrainCluster_ID':            'MWS',
-  'relief':                       'MWS',
-  'relative_mean_elevation' :     'MWS',
-  'lulc_crop_percent':            'MWS',
-  'avg_precipitation':            'MWS',
-  'avg_runoff':                   'MWS',
-  'drought_category':             'MWS',
-  'avg_number_dry_spell':         'MWS',
-  'avg_rabi_surface_water_mws':   'MWS',
-  'avg_zaid_surface_water_mws':   'MWS',
-  'aquifer_class':                'MWS',
-  'soge_class':                   'MWS',
-  'trend_g':                      'MWS',
-  'avg_double_cropped':           'MWS',
-  'degradation_land_area':        'MWS',
-  'river_available':              'MWS',
-  'canal_available':              'MWS',
-  'decrease_in_tree_cover':       'MWS',
-  'increase_in_tree_cover':       'MWS',
-  'area_wide_scale_restoration':  'MWS',
-  'area_protection':              'MWS',
-  'green_credit':                 'MWS',
-  'lcw_conflict':                 'MWS',
-  'factory_csr':                  'MWS',
-  'mining':                       'MWS',
+  'terrainCluster_ID':            'Micro watershed',
+  'relief':                       'Micro watershed',
+  'relative_mean_elevation' :     'Micro watershedWS',
+  'lulc_crop_percent':            'Micro watershed',
+  'avg_precipitation':            'Micro watershed',
+  'avg_runoff':                   'Micro watershed',
+  'drought_category':             'Micro watershed',
+  'avg_number_dry_spell':         'Micro watershed',
+  'avg_rabi_surface_water_mws':   'Micro watershed',
+  'avg_zaid_surface_water_mws':   'Micro watershed',
+  'aquifer_class':                'Micro watershed',
+  'soge_class':                   'Micro watershed',
+  'trend_g':                      'Micro watershed',
+  'avg_double_cropped':           'Micro watershed',
+  'degradation_land_area':        'Micro watershed',
+  'river_available':              'Micro watershed',
+  'canal_available':              'Micro watershed',
+  'decrease_in_tree_cover':       'Micro watershed',
+  'increase_in_tree_cover':       'Micro watershed',
+  'area_wide_scale_restoration':  'Micro watershed',
+  'area_protection':              'Micro watershed',
+  'green_credit':                 'Micro watershed',
+  'lcw_conflict':                 'Micro watershed',
+  'factory_csr':                  'Micro watershed',
+  'mining':                       'Micro watershed',
 
   'waterbody_type':               'Waterbody',
   'waterbody_size':               'Waterbody',
@@ -295,7 +295,7 @@ const KYLLeftSidebar = ({
 
   const getCategoriesBySection = () => {
     const categories = getAllFilterTypes();
-    const grouped = { MWS: [], Waterbody: [], Village: [], Other: [] };
+    const grouped = { 'Micro watershed': [], Waterbody: [], Village: [], Other: [] };
     categories.forEach(category => {
       const section = getCategorySection(category);
       (grouped[section] ?? grouped.Other).push(category);
@@ -305,7 +305,7 @@ const KYLLeftSidebar = ({
 
   const getFiltersBySection = () => {
     const filters = getAllFilters().filter(f => f.category === indicatorType);
-    const grouped = { MWS: [], Waterbody: [], Village: [], Other: [] };
+    const grouped = { 'Micro watershed': [], Waterbody: [], Village: [], Other: [] };
     filters.forEach(filter => {
       const section = getFilterSection(filter.name) || 'Other';
       (grouped[section] ?? grouped.Other).push(filter);

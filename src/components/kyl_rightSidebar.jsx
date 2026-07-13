@@ -1,9 +1,13 @@
 // src/components/kyl_rightSidebar.jsx
 import KML from 'ol/format/KML';
 import GeoJSON from 'ol/format/GeoJSON';
-import { Style, Stroke, Fill } from 'ol/style';
-
-import React from "react";
+import { Style, Stroke, Fill, Circle as CircleStyle } from "ol/style";
+import Feature from "ol/Feature";
+import Point from "ol/geom/Point";
+import VectorLayer from "ol/layer/Vector";
+import VectorSource from "ol/source/Vector";
+import { useNavigate } from "react-router-dom";
+import React,{useEffect} from "react";
 import SelectButton from "./buttons/select_button";
 import filtersDetails from "../components/data/Filters.json";
 import { ArrowLeft, Loader2, Table, FileText, FileSpreadsheet, X, ChevronRight, CheckCircle2,Layers3 } from 'lucide-react';
@@ -13,6 +17,7 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import XLSX from 'xlsx-js-style';
 import toast from 'react-hot-toast';
+
 
 const KYLRightSidebar = ({
   state,
@@ -58,14 +63,22 @@ const KYLRightSidebar = ({
   setSelectionMode,
   manualSelectedMWS,
   onResetMWSSelection, 
+  showPlans,
+  setShowPlans,
 }) => {
   const [loadingWB, setLoadingWB] = React.useState(false);
   const [showSelectionPopup, setShowSelectionPopup] = React.useState(false);
   const [isDownloading, setIsDownloading] = React.useState(false);
   const [isExportingGeo, setIsExportingGeo] = React.useState(false);
   const [geoExportFormat, setGeoExportFormat] = React.useState(null);
+  const [plans, setPlans] = React.useState([]);
+  
+  const [plansLoading, setPlansLoading] = React.useState(false);
+  const [selectedPlanProfile, setSelectedPlanProfile] = React.useState(null);
+  const plansLayerRef = React.useRef(null);
 
   const showBothPanels = selectedMWSProfile && selectedWaterbodyProfile;
+  const navigate = useNavigate();
 
   const transformName = (name) => {
     if (!name) return name;
@@ -238,6 +251,165 @@ const KYLRightSidebar = ({
     }
   };
 
+  const allSelectedMWSIds = React.useMemo(() => {
+  const ids = new Set();
+  (selectedMWS || []).forEach(id => ids.add(String(id)));
+  (manualSelectedMWS || []).forEach(id => ids.add(String(id)));
+  return Array.from(ids);
+}, [selectedMWS, manualSelectedMWS]);
+
+useEffect(() => {
+  if (
+    !manualSelectedMWS?.length ||
+    !dataJson?.length
+  )
+    return;
+
+  const manualSelectionDetails = manualSelectedMWS.map((mwsId) => {
+    const mwsRecord = dataJson.find(
+      (item) => String(item.mws_id) === String(mwsId)
+    );
+
+    if (!mwsRecord) {
+      return {
+        mwsId,
+        villages: [],
+        waterbodies: [],
+      };
+    }
+
+    // Villages
+    // const villages = (mwsRecord.mws_intersect_villages || []).map((villageId) => {
+    //   const village = villageJson.find(
+    //     (v) => String(v.village_id) === String(villageId)
+    //   );
+
+    //   return {
+    //     villageId,
+    //     villageName:
+    //       village?.village_name ||
+    //       village?.vill_name ||
+    //       village?.name ||
+    //       "Unknown",
+    //   };
+    // });
+    const villages = (mwsRecord.mws_intersect_villages || []).map((villageId) => {
+  let villageName = '';
+
+  // Try villageJson first
+  const village = villageJson.find(
+    (v) => String(v.village_id) === String(villageId)
+  );
+  if (village) villageName = village.village_name || village.vill_name || village.name || '';
+
+  // Fallback to boundary layer features
+  if (!villageName && boundaryLayerRef?.current) {
+    try {
+      const f = boundaryLayerRef.current.getSource().getFeatures()
+        .find(feat => {
+          const p = feat.getProperties();
+          return String(p.vill_ID ?? p.village_id) === String(villageId);
+        });
+      if (f) {
+        const p = f.getProperties();
+        villageName = p.vill_name || p.village_name || p.name || '';
+      }
+    } catch (_) {}
+  }
+
+  return {
+    villageId: String(villageId),
+    villageName: villageName || "Unknown",
+  };
+});
+
+    // Waterbodies
+    const waterbodies = (mwsRecord.mws_intersect_swb || []).map((swb) => ({
+      swbId: swb?.swbId ?? swb?.id ?? swb,
+      swbName: swb?.swbName ?? swb?.name ?? "",
+    }));
+
+    return {
+      mwsId,
+      villages,
+      waterbodies,
+    };
+  });
+}, [manualSelectedMWS, selectionMode, dataJson, villageJson]);
+
+const manualSelectionDetails = React.useMemo(() => {
+  if (!manualSelectedMWS?.length || !dataJson?.length) return [];
+
+  return manualSelectedMWS.map((mwsId) => {
+    const mwsRecord = dataJson.find(
+      (item) => String(item.mws_id) === String(mwsId)
+    );
+
+    if (!mwsRecord) {
+      return {
+        mwsId,
+        villages: [],
+        waterbodies: [],
+      };
+    }
+
+const villages = (mwsRecord.mws_intersect_villages || []).map((villageId) => {
+  let villageName = "";
+
+  // Try villageJson
+  const village = villageJson.find(
+    (v) => String(v.village_id) === String(villageId)
+  );
+
+  if (village) {
+    villageName =
+      village.village_name ||
+      village.vill_name ||
+      village.name ||
+      "";
+  }
+
+  // Fallback to boundary layer
+  if (!villageName && boundaryLayerRef?.current) {
+    try {
+      const feature = boundaryLayerRef.current
+        .getSource()
+        .getFeatures()
+        .find((feat) => {
+          const p = feat.getProperties();
+          return String(p.vill_ID ?? p.village_id) === String(villageId);
+        });
+
+      if (feature) {
+        const p = feature.getProperties();
+        villageName =
+          p.vill_name ||
+          p.village_name ||
+          p.name ||
+          "";
+      }
+    } catch (_) {}
+  }
+
+  return {
+    villageId: String(villageId),
+    villageName: villageName || "Unknown",
+  };
+});
+
+    const waterbodies = (mwsRecord.mws_intersect_swb || []).map((swb) => ({
+      swbId: String(swb?.swbId ?? swb?.id ?? swb),
+      swbName: swb?.swbName ?? swb?.name ?? "",
+    }));
+
+    return {
+      mwsId: String(mwsId),
+      villages,
+      waterbodies,
+    };
+  });
+}, [manualSelectedMWS, dataJson, villageJson]);
+
   const mwsVillageIntersections = React.useMemo(() => {
     if (!selectedMWS || selectedMWS.length === 0 || !dataJson || !Array.isArray(dataJson)) return [];
 
@@ -294,6 +466,7 @@ const KYLRightSidebar = ({
   const handleUniversalBack = () => {
     onResetMWS();
     onResetWaterbody();
+    setSelectedPlanProfile(null);
   };
 
   const handleIndicatorRemoval = (filter) => {
@@ -384,6 +557,223 @@ const toggleConnectivity = () => {
     if (!mwsArrowLayerRef?.current) { console.warn("Arrow layer not ready"); return; }
     setShowConnectivity(prev => !prev);
   };
+
+  const fetchPlansByTehsil = async (block) => {
+  const res = await fetch(
+    `${process.env.REACT_APP_API_URL}/watershed/plans/?tehsil=${block}&filter_test_plan=true`,
+    {
+      headers: {
+        "Content-Type": "application/json",
+        "ngrok-skip-browser-warning": "1",
+        "X-API-Key": process.env.REACT_APP_API_KEY,
+      },
+    }
+  );
+
+  if (!res.ok) {
+    throw new Error(`API Error ${res.status}`);
+  }
+
+  return res.json();
+};
+
+  const handlePlansClick = async () => {
+    try {
+      // Hide plans if already visible
+      if (showPlans) {
+        if (plansLayerRef.current) {
+          mapRef.current.removeLayer(plansLayerRef.current);
+        }
+        setShowPlans(false);
+        return;
+      }
+
+      // Plans already fetched, just show them again
+      if (plans.length > 0) {
+        showPlansOnMap(plans);
+        setShowPlans(true);
+        return;
+      }
+
+      // Fetch plans first time
+      setPlansLoading(true);
+
+      const response = await fetchPlansByTehsil(block.block_id);
+
+      setPlans(response);
+
+      showPlansOnMap(response);
+
+      setShowPlans(true);
+    } catch (err) {
+      console.error("Error fetching plans:", err);
+    } finally {
+      setPlansLoading(false);
+    }
+  };
+
+const showPlansOnMap = (plansData) => {
+  if (!mapRef.current) return;
+
+  // Remove previous plans layer
+  if (plansLayerRef.current) {
+    mapRef.current.removeLayer(plansLayerRef.current);
+    plansLayerRef.current = null;
+  }
+
+  const features = plansData
+    .filter(
+      (plan) =>
+        plan.latitude !== null &&
+        plan.longitude !== null &&
+        plan.latitude !== undefined &&
+        plan.longitude !== undefined
+    )
+    .map((plan) => {
+      const feature = new Feature({
+        geometry: new Point([
+          Number(plan.longitude),
+          Number(plan.latitude),
+        ]),
+      });
+
+      feature.set("plan", plan);
+      feature.set("planDetails", plan);
+
+  const status = getPlanStatus(plan);
+
+    feature.setStyle(DOT_DEFAULT(status));
+
+      return feature;
+    });
+
+  const layer = new VectorLayer({
+    source: new VectorSource({
+      features,
+    }),
+    zIndex: 9999,
+  });
+
+  plansLayerRef.current = layer;
+
+  mapRef.current.addLayer(layer);
+
+  if (features.length > 0) {
+    mapRef.current.getView().fit(
+      layer.getSource().getExtent(),
+      {
+        padding: [40, 40, 40, 40],
+        duration: 500,
+        maxZoom: 16,
+      }
+    );
+  }
+};
+
+React.useEffect(() => {
+  if (!mapRef.current) return;
+
+  let hoveredFeature = null;
+
+  const handlePointerMove = (evt) => {
+    if (!showPlans || !plansLayerRef.current) return;
+
+    const feature = mapRef.current.forEachFeatureAtPixel(
+      evt.pixel,
+      (feature, layer) => {
+        if (layer === plansLayerRef.current) {
+          return feature;
+        }
+      }
+    );
+
+    // Restore previous hovered feature
+    if (hoveredFeature && hoveredFeature !== feature) {
+      const status = getFeatureStatus(hoveredFeature);
+      hoveredFeature.setStyle(DOT_DEFAULT(status));
+      hoveredFeature = null;
+    }
+
+    // Apply hover style
+    if (feature && feature !== hoveredFeature) {
+      const status = getFeatureStatus(feature);
+      feature.setStyle(DOT_HOVERED(status));
+      hoveredFeature = feature;
+    }
+
+    mapRef.current.getTargetElement().style.cursor = feature ? "pointer" : "";
+  };
+
+  const handlePlanClick = (evt) => {
+    if (!showPlans || !plansLayerRef.current) return;
+
+    const feature = mapRef.current.forEachFeatureAtPixel(
+      evt.pixel,
+      (feature, layer) => {
+        if (layer === plansLayerRef.current) {
+          return feature;
+        }
+      }
+    );
+
+    if (!feature) return;
+
+    const plan = feature.get("planDetails");
+
+    if (!plan) return;
+
+    setSelectedPlanProfile(plan);
+  };
+
+  mapRef.current.on("pointermove", handlePointerMove);
+  mapRef.current.on("singleclick", handlePlanClick);
+
+  return () => {
+    if (mapRef.current) {
+      mapRef.current.un("pointermove", handlePointerMove);
+      mapRef.current.un("singleclick", handlePlanClick);
+    }
+  };
+}, [showPlans, navigate]);
+
+// ── PLAN DOT STYLES ──────────────────────────────────────────────────────────
+
+const PLAN_STATUS_COLORS = {
+  in_progress:   { fill: "#FF6FFF", stroke: "#ffffff" }, // magenta
+  dpr_completed: { fill: "#CCFF00", stroke: "#3E5800" }, // chartreuse
+};
+
+const getPlanStatus = (plan) => {
+  if (!plan) return "in_progress";
+  if (plan.is_dpr_reviewed) return "dpr_completed";
+  return "in_progress";
+};
+
+const getFeatureStatus = (feature) => getPlanStatus(feature.get("planDetails"));
+
+const DOT_DEFAULT  = (status = "in_progress") => new Style({
+  image: new CircleStyle({
+    radius: 9,
+    fill:   new Fill({ color: PLAN_STATUS_COLORS[status].fill }),
+    stroke: new Stroke({ color: PLAN_STATUS_COLORS[status].stroke, width: 2 }),
+  }),
+});
+
+const DOT_HOVERED  = (status = "in_progress") => new Style({
+  image: new CircleStyle({
+    radius: 12,
+    fill:   new Fill({ color: PLAN_STATUS_COLORS[status].fill }),
+    stroke: new Stroke({ color: "#ffffff", width: 2.5 }),
+  }),
+});
+
+const DOT_SELECTED = (status = "in_progress") => new Style({
+  image: new CircleStyle({
+    radius: 12,
+    fill:   new Fill({ color: "#ffffff" }),
+    stroke: new Stroke({ color: PLAN_STATUS_COLORS[status].fill, width: 3.5 }),
+  }),
+});
   
   const handleTehsilReport = () => {
     const reportURL = `${process.env.REACT_APP_API_URL}/generate_tehsil_report/?state=${transformName(state?.label)}&district=${transformName(district?.label)}&block=${transformName(block?.label)}`;
@@ -433,6 +823,28 @@ const toggleConnectivity = () => {
 
     return { mwsData, villageData };
   };
+
+  const displayVillages = React.useMemo(() => {
+  // Manual MWS selection
+  if (manualSelectedMWS?.length > 0) {
+    return [
+      ...new Map(
+        manualSelectionDetails
+          .flatMap((mws) => mws.villages)
+          .map((v) => [v.villageId, v])
+      ).values(),
+    ];
+  }
+
+  // Filter selection
+  const { villageData } = generateSelectionTableData();
+  return villageData;
+}, [
+  manualSelectedMWS,
+  manualSelectionDetails,
+  selectedVillages,
+  villageJson,
+]);
 
   // ─── WB property display resolver — uses cached precomputed props ───
   const getWBDisplayValue = (filterName, swb) => {
@@ -984,6 +1396,7 @@ const toggleConnectivity = () => {
     }
   };
 
+
   // ─── Selection Popup ─────────────────────────────────────────────────────
   const SelectionPopup = () => {
     const [activeTab, setActiveTab] = React.useState('mws');
@@ -994,6 +1407,7 @@ const toggleConnectivity = () => {
 
     const selectedFiltersCount = getFormattedSelectedFilters();
     const selectedPatternsCount = getFormattedSelectedPatterns();
+
 
     const hasVillageFilter = selectedFiltersCount.some(f => {
       for (const topKey of Object.keys(filtersDetails)) {
@@ -1053,6 +1467,12 @@ const toggleConnectivity = () => {
       { key: 'villages', label: 'Villages', count: villageData.length, always: false, show: hasVillageFilter, color: 'green' },
       { key: 'waterbodies', label: 'Waterbodies', count: waterbodyData.length, always: false, show: hasWaterbodyFilter, color: 'cyan' },
     ];
+
+    const currentMwsData = manualSelectedMWS?.length > 0 ? manualSelectionDetails.map((m) => ({
+        id: m.mwsId,
+        name: m.mwsId,
+      }))
+    : mwsData;
 
     return (
       <div
@@ -1172,7 +1592,8 @@ const toggleConnectivity = () => {
 
             {/* MWS Tab */}
             {activeTab === 'mws' && (
-              mwsData.length > 0 ? (
+              
+              currentMwsData.length > 0 ? (
                 <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
                   <table className="w-full text-xs">
                     <thead>
@@ -1185,13 +1606,22 @@ const toggleConnectivity = () => {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-100">
-                      {mwsData.map((item, i) => {
+                      {currentMwsData.map((item, i) => {
                         const mwsGroup = mwsVillageIntersections.find(g => g.mwsId === item.name);
                         return (
                           <tr key={item.id} className="hover:bg-blue-50/30 align-top transition-colors">
                             <td className="px-4 py-2.5 text-gray-400 font-mono">{i + 1}</td>
                             <td className="px-4 py-2.5">
-                              <span className="font-mono text-gray-800 bg-gray-100 px-2 py-0.5 rounded text-[11px]">{item.name}</span>
+                              {/* <span className="font-mono text-gray-800 bg-gray-100 px-2 py-0.5 rounded text-[11px]">{item.name}</span> */}
+                              <span
+                                className={`font-mono px-2 py-0.5 rounded text-[11px] ${
+                                  manualSelectedMWS?.length > 0
+                                    ? "bg-emerald-500 text-white"
+                                    : "bg-gray-100 text-gray-800"
+                                }`}
+                              >
+                                {item.name}
+                              </span>
                             </td>
                             <td className="px-4 py-2.5 text-center">
                               <a
@@ -1207,11 +1637,26 @@ const toggleConnectivity = () => {
                               {mwsGroup && mwsGroup.villages.length > 0 ? (
                                 <div className="flex flex-wrap gap-1">
                                   {mwsGroup.villages.filter(v => {
+                                    const manualGroup = manualSelectionDetails.find(
+                                      m => String(m.mwsId) === String(item.name)
+                                    );
+
+                                    const isManualVillage = manualGroup?.villages?.some(
+                                      mv => String(mv.villageId) === String(v.villageId)
+                                    );
+                                    
                                     const id = String(v.villageId);
                                     if (seenVillageIds.has(id)) return false;
                                     seenVillageIds.add(id);
                                     return true;
                                   }).map(v => {
+                                    const manualGroup = manualSelectionDetails.find(
+                                        m => String(m.mwsId) === String(item.name)
+                                    );
+
+                                    const isManualVillage = manualGroup?.villages?.some(
+                                        mv => String(mv.villageId) === String(v.villageId)
+                                    );
                                     const villageIdStr = String(v.villageId);
                                     let isSelected = false;
                                     if (hasVillageFilter || hasVillagePattern) {
@@ -1225,11 +1670,14 @@ const toggleConnectivity = () => {
                                       <span
                                         key={v.villageId}
                                         title={`${isSelected ? 'Matches filter' : 'Intersects'} | ID: ${v.villageId}`}
-                                        className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium border ${
-                                          isSelected
-                                            ? 'bg-emerald-500 border-emerald-600 text-white'
-                                            : 'bg-violet-50 border-violet-200 text-violet-700'
-                                        }`}
+                                       className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium border ${
+                                        isManualVillage
+                                          ? "bg-emerald-500 border-emerald-600 text-white"
+                                          // ? "bg-green-300 border-green-600 text-green-700"
+                                          : isSelected
+                                          ? "bg-emerald-500 border-emerald-600 text-white"
+                                          : "bg-violet-50 border-violet-200 text-violet-700"
+                                      }`}
                                       >
                                         {v.villageName || 'Unknown'}
                                         <span className="opacity-70 font-mono text-[9px]">({v.villageId})</span>
@@ -1255,9 +1703,16 @@ const toggleConnectivity = () => {
                                 return (
                                   <div className="flex flex-wrap gap-1">
                                     {allSwbs.map(swb => {
+                                      const manualGroup = manualSelectionDetails.find(
+                                        m => String(m.mwsId) === String(item.name)
+                                      );
+
+                                     
                                       const swbIdStr = typeof swb === 'object' ? String(swb.swbId) : String(swb);
                                       const swbName = typeof swb === 'object' ? (swb.swbName || '') : '';
-
+                                       const isManualWaterbody = manualGroup?.waterbodies?.some(
+                                        wb => String(wb.swbId) === swbIdStr
+                                      );
                                       // Green if WB filter is active and this WB matched it
                                       // Blue if just a structural intersection
                                       const isFilterMatched = hasWaterbodyFilter &&
@@ -1269,9 +1724,12 @@ const toggleConnectivity = () => {
                                           key={swbIdStr}
                                           title={`${isFilterMatched ? 'Matches filter' : 'Structural intersection'} | ID: ${swbIdStr}`}
                                           className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium border transition-colors ${
-                                            isFilterMatched
-                                              ? 'bg-emerald-500 border-emerald-600 text-white'
-                                              : 'bg-sky-50 border-sky-200 text-sky-700'
+                                            isManualWaterbody
+                                              // ? "bg-green-300 border-green-600 text-green-700"
+                                              ? "bg-emerald-500 border-emerald-600 text-white"
+                                              : isFilterMatched
+                                              ? "bg-emerald-500 border-emerald-600 text-white"
+                                              : "bg-sky-50 border-sky-200 text-sky-700"
                                           }`}
                                         >
                                           {swbName ? `${swbName} (${swbIdStr})` : swbIdStr}
@@ -1439,7 +1897,10 @@ const toggleConnectivity = () => {
 {selectedMWSProfile ? (
 <KYLMWSProfilePanel
     mwsData={selectedMWSProfile}
-    onBack={onResetMWS}
+     onBack={() => {
+      onResetMWS();
+      setSelectedPlanProfile(null);
+    }}
     hideBackButton={showBothPanels}
     selectionMode={selectionMode}
     // selectedMWS={selectedMWS}
@@ -1447,15 +1908,101 @@ const toggleConnectivity = () => {
     setSelectionMode={setSelectionMode}
     onResetMWS={onResetMWS}
     onResetSelection={onResetMWSSelection} 
+    onOpenSelection={() => setShowSelectionPopup(true)}
 />
 
 ) : null}
+
       {selectedWaterbodyProfile && (
         <KYLWaterbodyPanel waterbody={selectedWaterbodyProfile} onBack={onResetWaterbody} hideBackButton={showBothPanels} />
       )}
 
-      {!selectedMWSProfile && !selectedWaterbodyProfile && (
-        <div className="flex flex-col gap-2">
+      {selectedPlanProfile && (
+        <div className="bg-white rounded-xl border border-gray-100 p-4 shadow-sm">
+
+          {/* Header */}
+          <div className="flex items-start gap-3 mb-5">
+            <div className="flex-1 flex items-center gap-2">
+              <h2 className="text-lg text-indigo-600 truncate">
+                {selectedPlanProfile.plan}
+              </h2>
+            </div>
+          </div>
+          {/* Information Card */}
+          <div className="rounded-xl border border-gray-200 bg-gray-50 divide-y">
+
+            <div className="flex justify-between items-center px-4 py-3">
+              <span className="text-sm text-gray-500">Village</span>
+              <span className="text-sm font-semibold text-gray-800">
+                {selectedPlanProfile.village_name || "--"}
+              </span>
+            </div>
+
+            <div className="flex justify-between items-center px-4 py-3">
+              <span className="text-sm text-gray-500">Steward</span>
+              <span className="text-sm font-semibold text-gray-800">
+                {selectedPlanProfile.facilitator_name || "--"}
+              </span>
+            </div>
+
+            <div className="flex justify-between items-center px-4 py-3">
+              <span className="text-sm text-gray-500">Organization</span>
+              <span className="text-sm font-semibold text-gray-800">
+                {selectedPlanProfile.organization_name || "--"}
+              </span>
+            </div>
+
+          </div>
+
+          {/* View DPR Button */}
+          <button
+            className="flex items-center gap-2 text-indigo-600 hover:text-indigo-700 mb-2 text-sm mt-4"
+            onClick={() => {
+    window.open(
+      `/landscape-stewardship/plan-view?id=${selectedPlanProfile.id}` +
+      `&completed=${!!selectedPlanProfile.is_completed}` +
+      `&dpr_reviewed=${!!selectedPlanProfile.is_dpr_reviewed}` +
+      `&dpr_generated=${!!selectedPlanProfile.is_dpr_generated}` +
+      `&dpr_approved=${!!selectedPlanProfile.is_dpr_approved}` +
+      `&stateId=${encodeURIComponent(state?.state_id ?? "")}&stateName=${encodeURIComponent(state?.label ?? "")}` +
+      `&districtId=${encodeURIComponent(district?.district_id ?? "")}&districtName=${encodeURIComponent(district?.label ?? "")}`,
+      "_blank"
+    );
+  }}
+            // onClick={() => {
+            //   navigate(
+            //     `/landscape-stewardship/plan-view?id=${selectedPlanProfile.id}&completed=${!!selectedPlanProfile.is_completed}&dpr_reviewed=${!!selectedPlanProfile.is_dpr_reviewed}&dpr_generated=${!!selectedPlanProfile.is_dpr_generated}&dpr_approved=${!!selectedPlanProfile.is_dpr_approved}`,
+            //     {
+            //       state: {
+            //         plan: selectedPlanProfile,
+            //       },
+                  
+            //     }
+            //   );
+            // }}
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M5 12h14" />
+              <path d="M13 5l7 7-7 7" />
+            </svg>
+             View DPR 
+          </button>
+
+        </div>
+      )}
+
+      {!selectedMWSProfile && !selectedWaterbodyProfile && !selectedPlanProfile && (
+          <div className="flex flex-col gap-2">
 
           {/* ── Hint banner ── */}
           <div className="bg-indigo-50 border border-indigo-100 rounded-xl px-3 py-2">
@@ -1487,8 +2034,8 @@ const toggleConnectivity = () => {
 
             {block && (
               <div className="mt-4 flex flex-col gap-2">
-                <div className="grid grid-cols-2 gap-2">
-              <button
+                <div className="flex flex-col gap-2">
+                <button
                 onClick={handleTehsilReport}
                 disabled={isLoading || !mwsLayerRef?.current}
                 className={`flex items-center justify-center gap-1.5 py-2 text-xs font-semibold rounded-lg transition-colors border ${
@@ -1503,6 +2050,7 @@ const toggleConnectivity = () => {
                     </svg>
                     Tehsil Report
                   </button>
+                <div className="grid grid-cols-2 gap-2">
 
                   <button
                     onClick={toggleWaterbodies}
@@ -1534,6 +2082,54 @@ const toggleConnectivity = () => {
                       </>
                     )}
                   </button>
+
+                  <button
+                  onClick={handlePlansClick}
+                    disabled={isLoading || !mwsLayerRef?.current}
+                    className={`flex items-center justify-center gap-1.5 py-2 text-xs font-semibold rounded-lg transition-colors border ${
+                      (isLoading || !mwsLayerRef?.current)
+                        ? "opacity-50 cursor-not-allowed pointer-events-none bg-gray-100 text-gray-400 border-gray-200"
+                        : showPlans
+                          ? "text-red-600 bg-red-50 hover:bg-red-100 border-red-100"
+                          : "text-indigo-600 bg-indigo-50 hover:bg-indigo-100 border-indigo-100"
+                    }`}
+                  >
+                   {showPlans ? (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width="14"
+    height="14"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <path d="M18 6 6 18" />
+    <path d="m6 6 12 12" />
+  </svg>
+                      ) : (
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          width="14"
+                          height="14"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        >
+                          <path d="M12 2C8 2 5 5 5 9c0 5 7 13 7 13s7-8 7-13c0-4-3-7-7-7z" />
+                          <circle cx="12" cy="9" r="2.5" />
+                        </svg>
+                      )}
+
+                    {showPlans ? "Hide Plans" : "Plans"}
+                    </button>
+
+                  </div>
                 </div>
 
                 <button
@@ -1626,6 +2222,33 @@ const toggleConnectivity = () => {
               </p>
             )}
           </div>
+
+          {/* ── Selected Villages ── */}
+{displayVillages.length > 0 && (
+  <div className="bg-white rounded-xl border border-gray-100 p-4 shadow-sm">
+    <div className="flex items-center justify-between mb-3">
+      <h3 className="text-sm font-semibold text-gray-800">
+        Selected Villages
+      </h3>
+
+      <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 text-xs font-semibold">
+        {displayVillages.length}
+      </span>
+    </div>
+
+    <div className="max-h-44 overflow-y-auto pr-1 flex flex-wrap gap-1.5">
+      {displayVillages.map((village) => (
+        <span
+          key={village.villageId}
+          title={village.villageName}
+          className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[9px] font-medium bg-emerald-50 border border-emerald-100 text-emerald-700 max-w-full"
+        >
+                    <span className="truncate">{village.villageName}</span>
+        </span>
+      ))}
+    </div>
+  </div>
+)}
 
           {/* ── Selected Patterns ── */}
           {getFormattedSelectedPatterns().length > 0 && (
