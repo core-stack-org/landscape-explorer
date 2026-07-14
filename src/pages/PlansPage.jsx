@@ -1505,70 +1505,22 @@ const handleVillageSuggestionSelect = (placeId, description) => {
               </button>
             )}
 
-         <div className="absolute top-4 left-1/2 -translate-x-1/2 z-[1000] flex gap-3 w-[650px]">
-            {/* Organization Filter */}
-            <div className="relative flex-1">
-              <div
-                className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 z-10"
-                style={{ color: P.muted }}
-              >
-                <FilterListIcon style={{ fontSize: 18 }} />
-              </div>
-
-              <SelectReact
-                value={organization}
-                onChange={handleOrgChange}
-                options={filteredOrgOptions}
-                isClearable
-                placeholder="Filter by organization"
-                styles={selectStyles}
-              />
-            </div>
-
-              {/* Village Search */}
-            <div className="relative flex-1">
-              <div
-                className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 z-10"
-                style={{ color: P.muted }}
-              >
-                <FilterListIcon style={{ fontSize: 18 }} />
-              </div>
-
-              <input
-                type="text"
-                value={villageSearchText}
-                onChange={(e) => handleVillageInputChange(e.target.value)}
-                placeholder="Search village name..."
-                className="w-full pl-9 pr-3 rounded-xl text-sm outline-none"
-                style={{
-                  minHeight: "42px",
-                  border: "1px solid rgba(220, 200, 240, 0.8)",
-                  boxShadow: "0 8px 24px rgba(0,0,0,0.10)",
-                  backgroundColor: "rgba(255,255,255,0.97)",
-                  backdropFilter: "blur(6px)",
-                  color: P.text,
-                }}
-              />
-
-              {villageSuggestions.length > 0 && (
-                <div
-                  className="absolute top-full left-0 right-0 mt-1 rounded-xl overflow-hidden z-20"
-                  style={{ background: "white", boxShadow: "0 8px 24px rgba(0,0,0,0.12)" }}
-                >
-                  {villageSuggestions.map((s) => (
-                    <div
-                      key={s.place_id}
-                      onClick={() => handleVillageSuggestionSelect(s.place_id, s.description)}
-                      className="px-3 py-2 text-sm cursor-pointer hover:bg-gray-50"
-                      style={{ color: P.text, borderBottom: `1px solid ${P.border}` }}
-                    >
-                      {s.description}
-                    </div>
-                  ))}
+              <div className="absolute top-4 left-1/2 -translate-x-1/2 z-[1000] w-80">
+              <div className="relative">
+                <div className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 z-10"
+                  style={{ color: P.muted }}>
+                  <FilterListIcon style={{ fontSize: 18 }} />
                 </div>
-              )}
+                <SelectReact
+                  value={organization}
+                  onChange={handleOrgChange}
+                  options={filteredOrgOptions}
+                  isClearable
+                  placeholder="Filter by organization"
+                  styles={selectStyles}
+                />
+              </div>
             </div>
-          </div>
 
             {/* PLAN STATUS LEGEND */}
             {planDotsVisible && (

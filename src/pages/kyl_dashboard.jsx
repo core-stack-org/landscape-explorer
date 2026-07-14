@@ -53,6 +53,7 @@ import { LayerLoadError } from "../actions/getWebGlVectorLayers.js";
 import { layerErrorBus, emitLayerError, LAYER_ERROR_TYPES } from "../actions/layerErrorBus.js";
 import { useLayerErrors } from '../actions/useLayerErrors';
 import LayerErrorToast from '../actions/LayerErrorToast';
+import Overlay from "ol/Overlay";
 
 const KYLDashboardPage = () => {
   const mapElement = useRef(null);
@@ -66,6 +67,7 @@ const KYLDashboardPage = () => {
   const mwsArrowLayerRef = useRef(null);
   const mwsDrainageLayerRef = useRef(null);
   const topoLevelDataRef = useRef(null);
+  const villageTooltipRef = useRef(null);
 
   const [isLoading, setIsLoading] = useState(false);
   const [islayerLoaded, setIsLayerLoaded] = useState(false);
@@ -2107,6 +2109,28 @@ const handleResetMWS = () => {
       });
   
       mapRef.current = map;
+      const tooltip = document.createElement("div");
+
+tooltip.style.cssText = `
+  background: rgba(0,0,0,0.8);
+  color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+  pointer-events: none;
+  display: none;
+`;
+
+const overlay = new Overlay({
+  element: tooltip,
+  offset: [10, 0],
+  positioning: "center-left",
+});
+
+map.addOverlay(overlay);
+villageTooltipRef.current = overlay;
     };
   
     const { offsetWidth, offsetHeight } = mapElement.current;
@@ -2132,6 +2156,55 @@ const handleResetMWS = () => {
     observer.observe(mapElement.current);
     return () => observer.disconnect();
   };
+
+  useEffect(() => {
+  if (!mapRef.current || !boundaryLayerRef.current || !villageTooltipRef.current)
+    return;
+
+  const map = mapRef.current;
+
+  const handlePointerMove = (evt) => {
+    let villageFeature = null;
+
+    map.forEachFeatureAtPixel(
+      evt.pixel,
+      (feature, layer) => {
+        if (layer === boundaryLayerRef.current) {
+          villageFeature = feature;
+          return true;
+        }
+      }
+    );
+
+    const overlay = villageTooltipRef.current;
+    const tooltip = overlay.getElement();
+
+    if (villageFeature) {
+      const props = villageFeature.getProperties();
+
+      tooltip.innerHTML =
+        props.vill_name ||
+        props.village_name ||
+        props.name ||
+        "Unknown";
+
+      tooltip.style.display = "block";
+      overlay.setPosition(evt.coordinate);
+
+      map.getTargetElement().style.cursor = "pointer";
+    } else {
+      tooltip.style.display = "none";
+      overlay.setPosition(undefined);
+      map.getTargetElement().style.cursor = "";
+    }
+  };
+
+  map.on("pointermove", handlePointerMove);
+
+  return () => {
+    map.un("pointermove", handlePointerMove);
+  };
+}, [boundaryLayerRef.current]);
 
   const handleItemSelect = (setter, value) => {
     setter(value);
