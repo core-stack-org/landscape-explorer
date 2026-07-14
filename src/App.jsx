@@ -7,13 +7,16 @@ import PlanViewPage from "./pages/PlanViewPage";
 import AgroHorticulture from "./pages/AgroHorticulture";
 import RWBDashboard from "./pages/RWBDashboard";
 import EmbedDashboard from "./components/embed_dashboards";
+import { Toaster } from "react-hot-toast";
 
 //import DEMContourMap from "./pages/DemContourMap"
 
 function App() {
   return (
     <BrowserRouter>
+    <Toaster position="top-right" />
       <Routes>
+        
         <Route path="/" element={<LEHomepage />} />
         <Route path="/kyl_dashboard" element={<KYLDashboardPage />} />
         <Route path="/download_layers" element={<LandscapeExplorer />} />
