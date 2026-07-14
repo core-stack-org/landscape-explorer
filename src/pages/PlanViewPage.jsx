@@ -1691,7 +1691,7 @@ const PlanViewPage = () => {
                   }}
                   className="px-4 py-2 rounded-xl border"
                 >
-                  Cancel
+                  Close
                 </button>
 
                 <button
