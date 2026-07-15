@@ -1288,7 +1288,7 @@ const handleResetMWS = () => {
           [0, 0, 0, 1],
         ],
         "stroke-width": ["case", ["==", ["get", "isSelected"], 1], 2.0, 1.2],
-        "fill-color": [0, 0, 0, 0],
+        "fill-color": [255, 255, 0, 0.01],
       });
   
       // ── 4. Zoom animation ────────────────────────────────────────────────────
@@ -2157,24 +2157,15 @@ villageTooltipRef.current = overlay;
     return () => observer.disconnect();
   };
 
-  useEffect(() => {
+useEffect(() => {
   if (!mapRef.current || !boundaryLayerRef.current || !villageTooltipRef.current)
     return;
 
   const map = mapRef.current;
 
   const handlePointerMove = (evt) => {
-    let villageFeature = null;
-
-    map.forEachFeatureAtPixel(
-      evt.pixel,
-      (feature, layer) => {
-        if (layer === boundaryLayerRef.current) {
-          villageFeature = feature;
-          return true;
-        }
-      }
-    );
+    const source = boundaryLayerRef.current.getSource();
+    const villageFeature = source.getFeaturesAtCoordinate(evt.coordinate)[0] || null;
 
     const overlay = villageTooltipRef.current;
     const tooltip = overlay.getElement();
