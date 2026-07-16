@@ -1685,7 +1685,15 @@ const sheet5Count =
                             <td className="px-4 py-2.5">
                               {mwsGroup && mwsGroup.villages.length > 0 ? (
                                 <div className="flex flex-wrap gap-1">
-                                  {mwsGroup.villages.filter(v => {
+                                  {
+                                    (
+                                      manualSelectedMWS?.length > 0
+                                        ? (manualSelectionDetails.find(
+                                            m => String(m.mwsId) === String(item.name)
+                                          )?.villages || [])
+                                        : mwsGroup.villages
+                                    )
+                                    .filter(v => {
                                     const manualGroup = manualSelectionDetails.find(
                                       m => String(m.mwsId) === String(item.name)
                                     );
@@ -1720,10 +1728,7 @@ const sheet5Count =
                                         key={v.villageId}
                                         title={`${isSelected ? 'Matches filter' : 'Intersects'} | ID: ${v.villageId}`}
                                        className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium border ${
-                                        isManualVillage
-                                          ? "bg-emerald-500 border-emerald-600 text-white"
-                                          // ? "bg-green-300 border-green-600 text-green-700"
-                                          : isSelected
+                                        isSelected
                                           ? "bg-emerald-500 border-emerald-600 text-white"
                                           : "bg-violet-50 border-violet-200 text-violet-700"
                                       }`}
@@ -1773,10 +1778,7 @@ const sheet5Count =
                                           key={swbIdStr}
                                           title={`${isFilterMatched ? 'Matches filter' : 'Structural intersection'} | ID: ${swbIdStr}`}
                                           className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium border transition-colors ${
-                                            isManualWaterbody
-                                              // ? "bg-green-300 border-green-600 text-green-700"
-                                              ? "bg-emerald-500 border-emerald-600 text-white"
-                                              : isFilterMatched
+                                            isFilterMatched
                                               ? "bg-emerald-500 border-emerald-600 text-white"
                                               : "bg-sky-50 border-sky-200 text-sky-700"
                                           }`}

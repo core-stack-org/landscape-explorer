@@ -746,9 +746,12 @@ const handleResetMWS = () => {
         ["==", ["get", "isFiltered"], 1],
         [127, 29, 29, 1], // dark mehroon
 
-        // hide unmatched when filters active
+        // // hide unmatched when filters active
+        // ["==", ["get", "hasFilters"], 1],
+        // [0, 0, 0, 0],
+
         ["==", ["get", "hasFilters"], 1],
-        [0, 0, 0, 0],
+        [74, 144, 226, 1],
 
         // normal MWS
         [74, 144, 226, 1],
@@ -763,8 +766,8 @@ const handleResetMWS = () => {
         ["==", ["get", "isFiltered"], 1],
         1.8,
 
-        ["==", ["get", "hasFilters"], 1],
-        0,
+      ["==", ["get", "hasFilters"], 1],
+      1.2,
 
         1.2,
       ],
@@ -779,8 +782,8 @@ const handleResetMWS = () => {
         ["==", ["get", "isFiltered"], 1],
         [239, 68, 68, 0.55],
 
-        ["==", ["get", "hasFilters"], 1],
-        [0, 0, 0, 0],
+       ["==", ["get", "hasFilters"], 1],
+        [85, 152, 229, 0.08],
 
         [85, 152, 229, 0.15],
       ],
@@ -954,6 +957,14 @@ const handleResetMWS = () => {
   
       const start = uidToCoord[uid];
       const end   = uidToCoord[downstream];
+      if (!start || !end) {
+        console.log("Missing centroid", {
+          uid,
+          downstream,
+          start,
+          end,
+        });
+      }
       if (!start || !end) return;
   
       const key =
@@ -2410,13 +2421,11 @@ const updateSelectedMWSStyle = (selectedIds) => {
 useEffect(() => {
   if (!mapRef.current) return;
 
-  const handleMapClick = (event) => {
-    const feature = mapRef.current.forEachFeatureAtPixel(
-      event.pixel,
-      (feature, layer) => {
-        if (layer === mwsLayerRef.current) return feature;
-      }
-    );
+const handleMapClick = (event) => {
+    const mwsSource = mwsLayerRef.current?.getSource();
+    const feature = mwsSource
+      ? mwsSource.getFeaturesAtCoordinate(event.coordinate)[0]
+      : undefined;
 
     if (!feature) return;
 
