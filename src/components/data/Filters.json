@@ -1002,7 +1002,7 @@
         "Restoration": [
             {
                 "name": "decrease_in_tree_cover",
-                "label": "Descrease in tree cover",
+                "label": "Reduction in tree cover",
                 "type": 2,
                 "values": [
                     {
