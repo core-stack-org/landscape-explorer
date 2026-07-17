@@ -1,6 +1,13 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import { toLonLat } from "ol/proj";
 import Map from "../components/landscape-explorer/map/Map.jsx";
 import RightSidebar from "../components/landscape-explorer/sidebar/RightSidebar.jsx";
+import GeoLibreWorkspace from "../components/geolibre/GeoLibreWorkspace.jsx";
+import {
+  buildGeoLibreProject,
+  downloadGeoLibreProject,
+  selectedGeoLibreLayerIds,
+} from "../components/geolibre/geolibreProject";
 import { useRecoilState } from "recoil";
 import {
   stateDataAtom,
@@ -8,10 +15,8 @@ import {
   districtAtom,
   blockAtom,
   filterSelectionsAtom,
-  yearAtom,
 } from "../store/locationStore.jsx";
 import getStates from "../actions/getStates.js";
-import * as downloadHelper from "../components/landscape-explorer/utils/downloadHelper";
 import {
   trackPageView,
   trackEvent,
@@ -20,9 +25,9 @@ import {
 import LandingNavbar from "../components/landing_navbar.jsx";
 
 const LandscapeExplorer = () => {
-  const [showLeftSidebar, setShowLeftSidebar] = useState(false);
   const [showRightSidebar, setShowRightSidebar] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
+  const [geoLibreProject, setGeoLibreProject] = useState(null);
 
   // Recoil state
   const [statesData, setStatesData] = useRecoilState(stateDataAtom);
@@ -40,9 +45,6 @@ const LandscapeExplorer = () => {
 
   // Add flag to prevent infinite recursion
   const isUpdatingFromMap = useRef(false);
-
-  // Track which resource category is active
-  const [activeResourceCategory, setActiveResourceCategory] = useState(null);
 
   // Set map ref with callback
   const setMapRef = useCallback((node) => {
@@ -81,12 +83,6 @@ const LandscapeExplorer = () => {
   const [showMWS, setShowMWS] = useState(true);
   const [showVillages, setShowVillages] = useState(true);
 
-  // Add plans state
-  const [plans, setPlans] = useState([]);
-
-  // Add internal state flag for when layers are ready
-  const [layersReady, setLayersReady] = useState(false);
-
   // Flag to track if we need to enable the fetch button
   const [canFetchLayers, setCanFetchLayers] = useState(block !== null);
 
@@ -121,7 +117,6 @@ const LandscapeExplorer = () => {
         if (mapRef.current && mapRef.current.prepareLayers) {
           setIsLoading(true);
           mapRef.current.prepareLayers();
-          setLayersReady(true);
           setToggledLayers((prev) => ({
             ...prev,
             demographics: true,
@@ -172,7 +167,6 @@ const LandscapeExplorer = () => {
       aquifer: false,
     });
 
-    setLayersReady(false);
     setCanFetchLayers(false);
   };
 
@@ -197,141 +191,68 @@ const LandscapeExplorer = () => {
     }, 50);
   };
 
-  // Handle GeoJSON download
-  const handleGeoJsonLayers = (layerName) => {
-    if (!district || !block) {
-      alert("Please select a district and block first");
-      return;
-    }
+  const geoLibreYears = useMemo(
+    () => ({
+      lulc_level_1: lulcYear1?.value,
+      lulc_level_2: lulcYear2?.value,
+      lulc_level_3: lulcYear3?.value,
+    }),
+    [lulcYear1, lulcYear2, lulcYear3]
+  );
 
-    console.log(`Downloading GeoJSON for ${layerName}`);
+  const geoLibreLayerIds = useMemo(
+    () =>
+      selectedGeoLibreLayerIds({
+        toggledLayers,
+        years: geoLibreYears,
+      }),
+    [geoLibreYears, toggledLayers]
+  );
 
-    const districtFormatted = district.label
-      .toLowerCase()
-      .replace(/\s*\(\s*/g, "_")
-      .replace(/\s*\)\s*/g, "")
-      .replace(/\s+/g, "_");
-    const blockFormatted = block.label
-      .toLowerCase()
-      .replace(/\s*\(\s*/g, "_")
-      .replace(/\s*\)\s*/g, "")
-      .replace(/\s+/g, "_");
+  const getCurrentMapView = () => {
+    const view = mapRef.current?.getMap?.()?.getView?.();
+    const projectedCenter = view?.getCenter?.();
+    if (!view || !projectedCenter) return undefined;
 
-    // Create download URL based on layer name (following the original implementation's URL format)
-    let downloadUrl = "";
-
-    switch (layerName) {
-      case "demographics":
-        downloadUrl = `https://geoserver.core-stack.org:8443/geoserver/panchayat_boundaries/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=panchayat_boundaries:${districtFormatted}_${blockFormatted}&outputFormat=application/json&screen=main`;
-        break;
-      case "drainage":
-        downloadUrl = `https://geoserver.core-stack.org:8443/geoserver/drainage/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=drainage:${districtFormatted}_${blockFormatted}&outputFormat=application/json&screen=main`;
-        break;
-      case "remote_sensed_waterbodies":
-        downloadUrl = `https://geoserver.core-stack.org:8443/geoserver/swb/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=swb:surface_waterbodies_${districtFormatted}_${blockFormatted}&outputFormat=application/json&screen=main`;
-        break;
-      case "hydrological_boundaries":
-        downloadUrl = `https://geoserver.core-stack.org:8443/geoserver/mws_layers/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=mws_layers:deltaG_well_depth_${districtFormatted}_${blockFormatted}&outputFormat=application/json&screen=main`;
-        break;
-      // Add other cases as needed
-      default:
-        downloadUrl = `https://geoserver.core-stack.org:8443/geoserver/${layerName}/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=${layerName}:${districtFormatted}_${blockFormatted}&outputFormat=application/json&screen=main`;
-    }
-
-    // Use the imported helper directly
-    downloadHelper.downloadGeoJson(downloadUrl, layerName);
+    return {
+      center: toLonLat(projectedCenter),
+      zoom: view.getZoom(),
+      bearing: ((view.getRotation() || 0) * 180) / Math.PI,
+      pitch: 0,
+    };
   };
 
-  // Handle KML download
-  const handleKMLLayers = (layerName) => {
-    if (!district || !block) {
-      alert("Please select a district and block first");
-      return;
+  const createGeoLibreProject = () =>
+    buildGeoLibreProject({
+      state: state?.label,
+      district: district?.label,
+      tehsil: block?.label,
+      selectedLayerIds: geoLibreLayerIds,
+      years: geoLibreYears,
+      mapView: getCurrentMapView(),
+    });
+
+  const handleOpenGeoLibre = () => {
+    try {
+      const project = createGeoLibreProject();
+      setGeoLibreProject(project);
+      trackEvent("GeoLibre", "open_workspace", block.label);
+    } catch (error) {
+      alert(error.message);
     }
-
-    console.log(`Downloading KML for ${layerName}`);
-
-    const districtFormatted = district.label
-      .toLowerCase()
-      .replace(/\s*\(\s*/g, "_")
-      .replace(/\s*\)\s*/g, "")
-      .replace(/\s+/g, "_");
-    const blockFormatted = block.label
-      .toLowerCase()
-      .replace(/\s*\(\s*/g, "_")
-      .replace(/\s*\)\s*/g, "")
-      .replace(/\s+/g, "_");
-
-    // Create download URL based on layer name (following original implementation)
-    let downloadUrl = "";
-
-    switch (layerName) {
-      case "demographics":
-        downloadUrl = `https://geoserver.core-stack.org:8443/geoserver/panchayat_boundaries/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=panchayat_boundaries:${districtFormatted}_${blockFormatted}&outputFormat=application/vnd.google-earth.kml+xml&screen=main`;
-        break;
-      case "drainage":
-        downloadUrl = `https://geoserver.core-stack.org:8443/geoserver/drainage/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=drainage:${districtFormatted}_${blockFormatted}&outputFormat=application/vnd.google-earth.kml+xml&screen=main`;
-        break;
-      case "remote_sensed_waterbodies":
-        downloadUrl = `https://geoserver.core-stack.org:8443/geoserver/water_bodies/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=water_bodies:surface_waterbodies_${districtFormatted}_${blockFormatted}&outputFormat=application/vnd.google-earth.kml+xml&screen=main`;
-        break;
-      case "hydrological_boundaries":
-        downloadUrl = `https://geoserver.core-stack.org:8443/geoserver/mws_layers/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=mws_layers:deltaG_well_depth_${districtFormatted}_${blockFormatted}&outputFormat=application/vnd.google-earth.kml+xml&screen=main`;
-        break;
-      // Add other cases as needed
-      default:
-        downloadUrl = `https://geoserver.core-stack.org:8443/geoserver/${layerName}/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=${layerName}:${districtFormatted}_${blockFormatted}&outputFormat=application/vnd.google-earth.kml+xml&screen=main`;
-    }
-
-    // Use the imported helper directly
-    downloadHelper.downloadKml(downloadUrl, layerName);
   };
 
-  // Handle Excel download
-  const handleExcelDownload = () => {
-    if (!district || !block) {
-      alert("Please select a district and block first");
-      return;
+  const handleDownloadGeoLibre = () => {
+    try {
+      const project = createGeoLibreProject();
+      downloadGeoLibreProject(project);
+      trackEvent("GeoLibre", "download_project", block.label);
+    } catch (error) {
+      alert(error.message);
     }
-
-    setIsLoading(true);
-
-    // Using the exact URL format from the original implementation
-    fetch(
-      `https://geoserver.core-stack.org/api/v1/download_excel_layer?state=${state.label}&district=${district.label}&block=${block.label}`,
-      {
-        method: "GET",
-        headers: {
-          "ngrok-skip-browser-warning": "1",
-          "Content-Type": "blob",
-        },
-      }
-    )
-      .then((response) => response.arrayBuffer())
-      .then((arybuf) => {
-        const url = window.URL.createObjectURL(new Blob([arybuf]));
-        const link = document.createElement("a");
-
-        link.href = url;
-        link.setAttribute("download", `${block.label}_data.xlsx`);
-        document.body.appendChild(link);
-        link.click();
-
-        link.remove();
-        URL.revokeObjectURL(url);
-        setIsLoading(false);
-      })
-      .catch((error) => {
-        console.error("Error downloading Excel:", error);
-        setIsLoading(false);
-        alert("Failed to download Excel data. Please try again.");
-      });
   };
 
-  // Track category selection for resource layers
-  const handleCategoryChange = (category) => {
-    setActiveResourceCategory(category);
-  };
+  const closeGeoLibre = useCallback(() => setGeoLibreProject(null), []);
 
   // Fetch states data on component mount
   useEffect(() => {
@@ -409,20 +330,19 @@ const LandscapeExplorer = () => {
             handleItemSelect={handleItemSelect}
             onClose={() => setShowRightSidebar(false)}
             handleLayerToggle={handleLayerToggle}
-            handleGeoJsonLayers={handleGeoJsonLayers}
-            handleKMLLayers={handleKMLLayers}
             toggledLayers={toggledLayers}
             toggleLayer={handleLayerToggle}
-            handleExcelDownload={handleExcelDownload}
             isLoading={isLoading}
             canFetchLayers={canFetchLayers}
-            onCategoryChange={handleCategoryChange}
             lulcYear1={lulcYear1}
             lulcYear2={lulcYear2}
             lulcYear3={lulcYear3}
             setLulcYear1={setLulcYear1}
             setLulcYear2={setLulcYear2}
             setLulcYear3={setLulcYear3}
+            onOpenGeoLibre={handleOpenGeoLibre}
+            onDownloadGeoLibre={handleDownloadGeoLibre}
+            selectedGeoLibreLayerCount={geoLibreLayerIds.length}
           />
         )}
 
@@ -452,6 +372,11 @@ const LandscapeExplorer = () => {
           </div>
         )}
       </div>
+      <GeoLibreWorkspace
+        project={geoLibreProject}
+        onClose={closeGeoLibre}
+        onDownload={() => downloadGeoLibreProject(geoLibreProject)}
+      />
     </div>
   );
 };
