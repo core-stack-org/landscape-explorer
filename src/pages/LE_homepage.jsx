@@ -18,6 +18,15 @@ import {
 } from "../services/analytics";
 import Footer from "../components/footer.jsx";
 import LandingNavbar from "../components/landing_navbar.jsx";
+import GeoLibreWorkspace from "../components/geolibre/GeoLibreWorkspace.jsx";
+import {
+  buildGeoLibreProject,
+  downloadGeoLibreProject,
+} from "../components/geolibre/geolibreProject";
+import {
+  DEFAULT_GEOLIBRE_LULC_YEARS,
+  getAllGeoLibreLayerIds,
+} from "../config/geolibreLayers";
 
 export default function KYLHomePage() {
   const navigate = useNavigate();
@@ -26,6 +35,7 @@ export default function KYLHomePage() {
   const [state, setState] = useRecoilState(stateAtom);
   const [district, setDistrict] = useRecoilState(districtAtom);
   const [block, setBlock] = useRecoilState(blockAtom);
+  const [geoLibreProject, setGeoLibreProject] = useState(null);
 
   useEffect(() => {
     initializeAnalytics();
@@ -38,7 +48,7 @@ export default function KYLHomePage() {
 
     fetchStates();
     setBlock(null);
-  }, []);
+  }, [setBlock, setStatesData]);
 
   const handleItemSelect = (setter, value) => {
     if (setter === setState) {
@@ -63,6 +73,35 @@ export default function KYLHomePage() {
     else{
       trackEvent("Navigation", "button_click", buttonName);
       navigate(path);
+    }
+  };
+
+  const createGeoLibreProject = () =>
+    buildGeoLibreProject({
+      state: state?.label,
+      district: district?.label,
+      tehsil: block?.label,
+      selectedLayerIds: getAllGeoLibreLayerIds(),
+      years: DEFAULT_GEOLIBRE_LULC_YEARS,
+    });
+
+  const handleOpenGeoLibre = () => {
+    try {
+      const project = createGeoLibreProject();
+      setGeoLibreProject(project);
+      trackEvent("GeoLibre", "open_workspace_home", block.label);
+    } catch (error) {
+      alert(error.message);
+    }
+  };
+
+  const handleDownloadGeoLibre = () => {
+    try {
+      const project = createGeoLibreProject();
+      downloadGeoLibreProject(project);
+      trackEvent("GeoLibre", "download_project_home", block.label);
+    } catch (error) {
+      alert(error.message);
     }
   };
 
@@ -151,19 +190,32 @@ export default function KYLHomePage() {
                   </div>
                 </div>
 
-                <div className="flex flex-col sm:flex-row justify-center gap-2 mt-3">
-                  {/* ← changed from blue-600 to purple-600 */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-3">
                   <button
-                    className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg w-full sm:w-auto text-base font-medium transition-colors"
+                    className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg w-full text-base font-medium transition-colors"
                     onClick={() => handleNavigate("/kyl_dashboard", "Know Your Landscape")}
                   >
                     Know Your Landscape
                   </button>
                   <button
-                    className="bg-purple-100 hover:bg-purple-200 text-purple-800 px-4 py-2 rounded-lg w-full sm:w-auto text-base font-medium transition-colors"
+                    className="bg-purple-700 hover:bg-purple-800 text-white px-4 py-2 rounded-lg w-full text-base font-medium transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed"
+                    onClick={handleOpenGeoLibre}
+                    disabled={!state || !district || !block}
+                  >
+                    Open GeoLibre
+                  </button>
+                  <button
+                    className="bg-purple-100 hover:bg-purple-200 text-purple-800 px-4 py-2 rounded-lg w-full text-sm font-medium transition-colors"
                     onClick={() => handleNavigate("/download_layers", "Download Layers")}
                   >
-                    Download Layers
+                    Choose Layers
+                  </button>
+                  <button
+                    className="bg-white hover:bg-purple-50 border border-purple-300 text-purple-800 px-4 py-2 rounded-lg w-full text-sm font-medium transition-colors disabled:text-gray-400 disabled:border-gray-200 disabled:cursor-not-allowed"
+                    onClick={handleDownloadGeoLibre}
+                    disabled={!state || !district || !block}
+                  >
+                    Download GeoLibre JSON
                   </button>
                 </div>
               </div>
@@ -391,6 +443,11 @@ export default function KYLHomePage() {
 
       </div>
       <Footer />
+      <GeoLibreWorkspace
+        project={geoLibreProject}
+        onClose={() => setGeoLibreProject(null)}
+        onDownload={() => downloadGeoLibreProject(geoLibreProject)}
+      />
     </div>
   );
 }
