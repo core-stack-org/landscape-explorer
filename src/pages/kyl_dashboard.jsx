@@ -53,6 +53,7 @@ import { LayerLoadError } from "../actions/getWebGlVectorLayers.js";
 import { layerErrorBus, emitLayerError, LAYER_ERROR_TYPES } from "../actions/layerErrorBus.js";
 import { useLayerErrors } from '../actions/useLayerErrors';
 import LayerErrorToast from '../actions/LayerErrorToast';
+import Overlay from "ol/Overlay";
 
 const KYLDashboardPage = () => {
   const mapElement = useRef(null);
@@ -66,11 +67,13 @@ const KYLDashboardPage = () => {
   const mwsArrowLayerRef = useRef(null);
   const mwsDrainageLayerRef = useRef(null);
   const topoLevelDataRef = useRef(null);
+  const villageTooltipRef = useRef(null);
 
   const [isLoading, setIsLoading] = useState(false);
   const [islayerLoaded, setIsLayerLoaded] = useState(false);
   const [highlightMWS, setHighlightMWS] = useState(null);
   const [selectedMWS, setSelectedMWS] = useState([]);
+  const [selectionMode, setSelectionMode] = useState("single");
 
   const [dataJson, setDataJson] = useRecoilState(dataJsonAtom);
   const [villageJson, setVillageJson] = useState(null);
@@ -118,6 +121,8 @@ const KYLDashboardPage = () => {
   const [selectedWaterbodyData, setSelectedWaterbodyData] = useState([]);
   const [isLayerSelecting, setIsLayerSelecting] = useState(false);
   const showConnectivityRef = useRef(false);
+  const [manualSelectedMWS, setManualSelectedMWS] = useState([]);
+  const [showPlans, setShowPlans] = useState(false);
 
 
   const [dataJsonError, setDataJsonError] = useState(null);
@@ -125,6 +130,7 @@ const KYLDashboardPage = () => {
   const INDIA_CENTER = [78.9, 23.6];
   const INDIA_ZOOM   = 5;
   const { errors: layerErrors, dismiss: dismissLayerError, retry: retryLayerError } = useLayerErrors();
+
 
 
   const dataJsonIndex = useMemo(() => {
@@ -189,9 +195,21 @@ const KYLDashboardPage = () => {
       .toLowerCase()
   };
 
-  const handleResetMWS = () => {
-    if (!selectedMWSProfile) return;
+const handleResetMWS = () => {
     setSelectedMWSProfile(null);
+    setManualSelectedMWS([]);
+    setHighlightMWS(null);
+    if (mwsLayerRef.current) resetMWSStyle();
+    if (toastId) {
+      toast.dismiss(toastId);
+      setToastId(null);
+    }
+  };
+
+  const handleResetMWSSelection = () => {
+    setSelectedMWS([]);
+    setManualSelectedMWS([]);
+    setHighlightMWS(null);
     if (mwsLayerRef.current) resetMWSStyle();
     if (toastId) {
       toast.dismiss(toastId);
@@ -318,6 +336,14 @@ const KYLDashboardPage = () => {
   };
 
   const handleFilterSelection = (name, option, isChecked) => {
+     if (showConnectivityRef.current) {
+      toast.error("Please turn off MWS Connectivity before applying filters.");
+      return;
+    }
+    // setSelectedMWS([]);
+    setSelectedMWSProfile(null);
+    resetMWSStyle();
+    setHighlightMWS(null);
     const sourceType = determineFilterSource(name);
     option = {
       ...option,
@@ -395,12 +421,18 @@ const KYLDashboardPage = () => {
 
   // ─── WB filters: ID-based lookup via dataJsonIndex, no geometry ───
   const applyWaterbodyFilters = (mwsIds, wbFilters, isVisualizeOn) => {
-    if (!waterbodiesLayerRef.current) return;
+  if (!waterbodiesLayerRef.current) return;
 
-    const wbSource = waterbodiesLayerRef.current.getSource();
-    const filterKeys = Object.keys(wbFilters || {}).filter(k => wbFilters[k]);
-    const hasMWSFilter = mwsIds.length > 0;
-    const hasAttrFilter = filterKeys.length > 0;
+  const wbSource = waterbodiesLayerRef.current.getSource();
+  const filterKeys = Object.keys(wbFilters || {}).filter(k => wbFilters[k]);
+
+  // A MWS-level filter is "active" even if it currently matches 0 MWS —
+  // in that case waterbodies should show NONE, not fall back to showing all.
+  const mwsFilterKeys = Object.keys(filterSelections.selectedMWSValues || {});
+  const isMWSFilterSelected = mwsFilterKeys.some(k => filterSelections.selectedMWSValues[k]);
+
+  const hasMWSFilter = mwsIds.length > 0 || isMWSFilterSelected;
+  const hasAttrFilter = filterKeys.length > 0;
 
     if (!hasMWSFilter && !hasAttrFilter && !isVisualizeOn) {
       waterbodiesLayerRef.current.updateStyleVariables({ wbFilterActive: 0 });
@@ -658,7 +690,20 @@ const KYLDashboardPage = () => {
     showConnectivityRef.current = showConnectivity;
   }, [showConnectivity]);
 
-  const resetMWSStyle = () => setHighlightMWS(null);
+  // const resetMWSStyle = () => setHighlightMWS(null);
+  const resetMWSStyle = () => {
+  if (!mwsLayerRef.current) return;
+
+  const features = mwsLayerRef.current.getSource().getFeatures();
+
+  features.forEach((feature) => {
+    feature.set("isSelected", 0, true);
+  });
+
+  mwsLayerRef.current.getSource().changed();
+
+  setHighlightMWS(null);
+};
 
 
   const updateFilteredMWS = (filteredIds) => {
@@ -694,16 +739,19 @@ const KYLDashboardPage = () => {
       "stroke-color": [
         "case",
 
-        ["==", ["get", "uid"], ["var", "highlightMWS"]],
-        [22, 101, 52, 1],
+          ["==", ["get", "isSelected"], 1],
+          [22, 101, 52, 1],
 
         // matched MWS
         ["==", ["get", "isFiltered"], 1],
         [127, 29, 29, 1], // dark mehroon
 
-        // hide unmatched when filters active
+        // // hide unmatched when filters active
+        // ["==", ["get", "hasFilters"], 1],
+        // [0, 0, 0, 0],
+
         ["==", ["get", "hasFilters"], 1],
-        [0, 0, 0, 0],
+        [74, 144, 226, 1],
 
         // normal MWS
         [74, 144, 226, 1],
@@ -712,14 +760,14 @@ const KYLDashboardPage = () => {
       "stroke-width": [
         "case",
 
-        ["==", ["get", "uid"], ["var", "highlightMWS"]],
+        ["==", ["get", "isSelected"], 1],
         2.5,
 
         ["==", ["get", "isFiltered"], 1],
         1.8,
 
-        ["==", ["get", "hasFilters"], 1],
-        0,
+      ["==", ["get", "hasFilters"], 1],
+      1.2,
 
         1.2,
       ],
@@ -728,14 +776,14 @@ const KYLDashboardPage = () => {
       "fill-color": [
         "case",
 
-        ["==", ["get", "uid"], ["var", "highlightMWS"]],
+        ["==", ["get", "isSelected"], 1],
         [34, 197, 94, 0.4],
 
         ["==", ["get", "isFiltered"], 1],
         [239, 68, 68, 0.55],
 
-        ["==", ["get", "hasFilters"], 1],
-        [0, 0, 0, 0],
+       ["==", ["get", "hasFilters"], 1],
+        [85, 152, 229, 0.08],
 
         [85, 152, 229, 0.15],
       ],
@@ -909,6 +957,14 @@ const KYLDashboardPage = () => {
   
       const start = uidToCoord[uid];
       const end   = uidToCoord[downstream];
+      if (!start || !end) {
+        console.log("Missing centroid", {
+          uid,
+          downstream,
+          start,
+          end,
+        });
+      }
       if (!start || !end) return;
   
       const key =
@@ -1243,7 +1299,7 @@ const KYLDashboardPage = () => {
           [0, 0, 0, 1],
         ],
         "stroke-width": ["case", ["==", ["get", "isSelected"], 1], 2.0, 1.2],
-        "fill-color": [0, 0, 0, 0],
+        "fill-color": [255, 255, 0, 0.01],
       });
   
       // ── 4. Zoom animation ────────────────────────────────────────────────────
@@ -2064,6 +2120,28 @@ const KYLDashboardPage = () => {
       });
   
       mapRef.current = map;
+      const tooltip = document.createElement("div");
+
+tooltip.style.cssText = `
+  background: rgba(0,0,0,0.8);
+  color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+  pointer-events: none;
+  display: none;
+`;
+
+const overlay = new Overlay({
+  element: tooltip,
+  offset: [10, 0],
+  positioning: "center-left",
+});
+
+map.addOverlay(overlay);
+villageTooltipRef.current = overlay;
     };
   
     const { offsetWidth, offsetHeight } = mapElement.current;
@@ -2089,6 +2167,46 @@ const KYLDashboardPage = () => {
     observer.observe(mapElement.current);
     return () => observer.disconnect();
   };
+
+useEffect(() => {
+  if (!mapRef.current || !boundaryLayerRef.current || !villageTooltipRef.current)
+    return;
+
+  const map = mapRef.current;
+
+  const handlePointerMove = (evt) => {
+    const source = boundaryLayerRef.current.getSource();
+    const villageFeature = source.getFeaturesAtCoordinate(evt.coordinate)[0] || null;
+
+    const overlay = villageTooltipRef.current;
+    const tooltip = overlay.getElement();
+
+    if (villageFeature) {
+      const props = villageFeature.getProperties();
+
+      tooltip.innerHTML =
+        props.vill_name ||
+        props.village_name ||
+        props.name ||
+        "Unknown";
+
+      tooltip.style.display = "block";
+      overlay.setPosition(evt.coordinate);
+
+      map.getTargetElement().style.cursor = "pointer";
+    } else {
+      tooltip.style.display = "none";
+      overlay.setPosition(undefined);
+      map.getTargetElement().style.cursor = "";
+    }
+  };
+
+  map.on("pointermove", handlePointerMove);
+
+  return () => {
+    map.un("pointermove", handlePointerMove);
+  };
+}, [boundaryLayerRef.current]);
 
   const handleItemSelect = (setter, value) => {
     setter(value);
@@ -2281,26 +2399,74 @@ const KYLDashboardPage = () => {
     return () => map.un("click", handleWaterbodyClick);
   }, [mapRef.current, state, district, block]);
 
-  useEffect(() => {
-    if (!mapRef.current) return;
 
-    const handleMapClick = (event) => {
-      const feature = mapRef.current.forEachFeatureAtPixel(
-        event.pixel,
-        (feature, layer) => { if (layer === mwsLayerRef.current) return feature; }
-      );
-      if (feature) {
-        setHighlightMWS(feature.get("uid"));
+const updateSelectedMWSStyle = (selectedIds) => {
+  if (!mwsLayerRef.current) return;
+
+  const features = mwsLayerRef.current.getSource().getFeatures();
+
+  features.forEach((feature) => {
+    const uid = feature.get("uid");
+    feature.set(
+      "isSelected",
+      selectedIds.includes(uid) ? 1 : 0,
+      true
+    );
+  });
+
+  mwsLayerRef.current.getSource().changed();
+  // applyDefaultMWSStyle();
+};
+
+useEffect(() => {
+  if (!mapRef.current) return;
+
+const handleMapClick = (event) => {
+    const mwsSource = mwsLayerRef.current?.getSource();
+    const feature = mwsSource
+      ? mwsSource.getFeaturesAtCoordinate(event.coordinate)[0]
+      : undefined;
+
+    if (!feature) return;
+
+    const uid = feature.get("uid");
+
+    setManualSelectedMWS((prev) => {
+      const updated = prev.includes(uid)
+        ? prev.filter((id) => id !== uid)
+        : [...prev, uid];
+
+      updateSelectedMWSStyle(updated);
+
+      if (updated.length === 0) {
+        setSelectedMWSProfile(null);
+        setHighlightMWS(null);
+      } else {
         setSelectedMWSProfile(feature.getProperties());
-        if (toastId) { toast.dismiss(toastId); setToastId(null); }
+        setHighlightMWS(uid);
       }
-    };
 
-    mapRef.current.on("click", handleMapClick);
-    return () => { if (mapRef.current) mapRef.current.un("click", handleMapClick); };
-  }, [mapRef.current, selectedMWS]);
+      return updated;
+    });
 
-  useEffect(() => {
+    if (toastId) {
+      toast.dismiss(toastId);
+      setToastId(null);
+    }
+  };
+
+  mapRef.current.on("click", handleMapClick);
+
+  return () => {
+    if (mapRef.current) {
+      mapRef.current.un("click", handleMapClick);
+    }
+  };
+}, [toastId, mapRef.current]);
+
+
+ 
+useEffect(() => {
     if (mapRef.current && waterbodiesLayerRef.current) {
       mapRef.current.removeLayer(waterbodiesLayerRef.current);
       waterbodiesLayerRef.current = null;
@@ -2410,6 +2576,7 @@ const KYLDashboardPage = () => {
   useEffect(() => {
     try {
       if (!dataJson || !Array.isArray(dataJson) || !dataJsonIndex) return;
+          setManualSelectedMWS([]); 
 
       const mwsFilterKeys = Object.keys(filterSelections.selectedMWSValues || {});
       const activeKeys = mwsFilterKeys.filter(k => filterSelections.selectedMWSValues[k]);
@@ -2636,15 +2803,28 @@ const KYLDashboardPage = () => {
       villageFilterKeys.forEach(filterName => {
         const filterValues = filterSelections.selectedVillageValues[filterName];
         if (!filterValues) return;
-
+        console.log(filterName)
+        const filter = getAllFilters().find((f) => f.name === filterName);
         const tempArr = new Set();
         filterValues.forEach(selectedOption => {
           villageJson.forEach(village => {
-            if (village && typeof village[filterName] !== 'undefined' && village.village_id) {
-              const value = Number(village[filterName]);
-              if (!isNaN(value) && value >= selectedOption.value.lower && value <= selectedOption.value.upper) {
-                if (candidateVillages.size === 0 || candidateVillages.has(village.village_id)) {
-                  tempArr.add(village.village_id);
+            if (filter?.type === 2) {
+              if (village && typeof village[filterName] !== 'undefined' && village.village_id) {
+                const value = Number(village[filterName]);
+                if (!isNaN(value) && value >= selectedOption.value.lower && value <= selectedOption.value.upper) {
+                  if (candidateVillages.size === 0 || candidateVillages.has(village.village_id)) {
+                    tempArr.add(village.village_id);
+                  }
+                }
+              }
+            }
+            else{
+               if (village && typeof village[filterName] !== 'undefined' && village.village_id) {
+                const value = Number(village[filterName]);
+                if (!isNaN(value) && value == selectedOption.value) {
+                  if (candidateVillages.size === 0 || candidateVillages.has(village.village_id)) {
+                    tempArr.add(village.village_id);
+                  }
                 }
               }
             }
@@ -2885,6 +3065,10 @@ const KYLDashboardPage = () => {
             currentLayer={currentLayer}
             setSearchLatLong={setSearchLatLong}
             showConnectivity={showConnectivity}
+            showPlans={showPlans} 
+            setShowPlans={setShowPlans}
+          selectionMode={selectionMode}
+          setSelectionMode={setSelectionMode}
           />
           <LayerErrorToast
             errors={layerErrors}
@@ -2937,6 +3121,12 @@ const KYLDashboardPage = () => {
           villageJson={villageJson}
           isLoading={isLoading}
           mwsLayerRef={mwsLayerRef}
+           selectionMode={selectionMode}
+          setSelectionMode={setSelectionMode}
+          manualSelectedMWS={manualSelectedMWS} 
+          onResetMWSSelection={handleResetMWSSelection}
+          showPlans={showPlans}
+          setShowPlans={setShowPlans}
 
         />
       </div>

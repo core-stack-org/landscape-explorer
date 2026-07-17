@@ -340,6 +340,78 @@ const layerStyles = (feature, vectorStyle, idx = 0, villageJson, dataJson) => {
                 }
             }
             break;
+
+        case 40:
+            avg_Res = feature.values_["road_connectivity_cat_value"]
+            break;
+
+        case 41:
+            avg_Res = feature.values_["electrification_rate_feat_value"]
+            break;
+        
+        case 42:
+            avg_Res = feature.values_["housing_quality_cat_value"]
+            break;
+        
+        case 43:
+            avg_Res = feature.values_["maternal_child_health_cat_value"]
+            break;
+
+        case 44:
+            avg_Res = feature.values_["water_sanitation_cat_value"]
+            break;
+
+        case 45:
+            avg_Res = feature.values_["bank_feat_value"]
+            break;
+        
+        case 46:
+            avg_Res = feature.values_["pds_util_feat_value"]
+            break;
+        
+        case 47:
+            avg_Res = feature.values_["institutionalization_cat_value"]
+            break;
+        
+        case 48:
+            avg_Res = feature.values_["civic_infrastructure_cat_value"]
+            break;
+        
+        case 49:
+            avg_Res = feature.values_["farm_employment_feat_value"]
+            break;
+        
+        case 50:
+            avg_Res = feature.values_["livelihoods_forest_resources_cat_value"]
+            break;
+        
+        case 51:
+            avg_Res = feature.values_["alternative_farming_feat_value"]
+            break;
+
+        case 52:
+            avg_Res = feature.values_["livelihoods_fisheries_cat_value"]
+            break;
+        
+        case 53:
+            avg_Res = feature.values_["livelihoods_cottage_traditional_industry_cat_value"]
+            break;
+        
+        case 54:
+            avg_Res = feature.values_["livestock_veterinary_cat_value"]
+            break;
+        
+        case 55:
+            avg_Res = feature.values_["common_pastures_feat_value"]
+            break;
+        
+        case 56:
+            avg_Res = feature.values_["agriculture_irrigation_watershed_cat_value"]
+            break;
+        
+        case 57:
+            avg_Res = feature.values_["agriculture_organic_farming_cat_value"]
+            break;
     }
     
     for(tempIdx = 0; tempIdx < vectorStyle.length; ++tempIdx){

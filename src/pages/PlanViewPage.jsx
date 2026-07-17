@@ -15,6 +15,8 @@ import WaterStructureIcon from "../assets/waterbodies_proposed.svg";
 import RechargeIcon from "../assets/recharge_icon.svg";
 import IrrigationIcon from "../assets/irrigation_icon.svg";
 import LivelihoodIcon from "../assets/livelihood_proposed.svg";
+import { toast, Toaster } from "react-hot-toast";
+import Select from "react-select";
 
 const P = {
   base:    "oklch(60% 0.2 301.924)",
@@ -515,12 +517,33 @@ const PlanViewPage = () => {
   const navigate  = useNavigate();
   const [searchParams] = useSearchParams();
 
-  const [plan,            setPlan]            = useState(state?.plan ?? null);
-  const [deepLinkLoading, setDeepLinkLoading] = useState(!state?.plan && !!searchParams.get("id"));
+  // const [plan,            setPlan]            = useState(state?.plan ?? null);
+  // const [deepLinkLoading, setDeepLinkLoading] = useState(!state?.plan && !!searchParams.get("id"));
+  const [showEmailModal, setShowEmailModal] = useState(false);
+  const [email, setEmail] = useState(""); 
+  const [sending, setSending] = useState(false);
+  const [emailError, setEmailError] = useState("");
+  const [language, setLanguage] = useState("en");
 
+   const storedState = JSON.parse(
+      sessionStorage.getItem("planNavigationData") || "null"
+    );
+  const navigationState = state || storedState;
+  const [plan, setPlan] = useState(navigationState?.plan ?? null);
+
+  const [deepLinkLoading, setDeepLinkLoading] = useState(
+    !navigationState?.plan && !!searchParams.get("id")
+  );
+
+  const languageOptions = [
+  { value: "en", label: "English" },
+  { value: "hi", label: "हिन्दी" },
+];
+ 
   // ── DEEP LINK FETCH ─────────────────────────────────────
   useEffect(() => {
-    if (state?.plan || !searchParams.get("id")) return;
+    // if (state?.plan || !searchParams.get("id")) return;
+     if (navigationState?.plan || !searchParams.get("id")) return;
     const planId = searchParams.get("id");
 
     const load = async () => {
@@ -535,6 +558,9 @@ const PlanViewPage = () => {
           plan:              brief?.village_name ?? `Plan ${planId}`,
           village_name:      brief?.village_name,
           gram_panchayat:    brief?.gram_panchayat,
+           latitude: brief?.latitude,
+          longitude: brief?.longitude,
+          state: brief?.state,
           district:          transformName(brief?.district ?? ""),
           block:             transformName(brief?.tehsil   ?? ""),
           organization_name: team?.organization,
@@ -589,6 +615,7 @@ const PlanViewPage = () => {
 
   const districtNameSafe = plan?.district || "";
   const blockNameSafe    = plan?.block    || "";
+  
 
   // Attribution metadata embedded into exported GeoJSON/KML files,
   // crediting the organization that collected the underlying data.
@@ -733,7 +760,9 @@ const PlanViewPage = () => {
     return mwsLayer;
   }, [districtNameSafe, blockNameSafe]);
 
+
   const loadAdminBoundary = useCallback(async (map) => {
+
     const lon = plan?.longitude ? parseFloat(plan.longitude) : null;
     const lat = plan?.latitude  ? parseFloat(plan.latitude)  : null;
 
@@ -1031,6 +1060,62 @@ const PlanViewPage = () => {
 
   const loadNothing = useCallback(async () => {}, []);
 
+  const validateEmail = (value) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    if (!value.trim()) {
+      return "Email is required.";
+    }
+
+    if (!emailRegex.test(value)) {
+      return "Please enter a valid email address.";
+    }
+
+    return "";
+  };
+
+  const handleSendDPR = async () => {
+    const error = validateEmail(email);
+      if (error) {
+        setEmailError(error);
+        return;
+      }
+      setEmailError("");
+      setSending(true);
+  try {
+    const response = await fetch(
+      `${process.env.REACT_APP_API_URL}/generate_dpr/`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-API-Key": process.env.REACT_APP_API_KEY,
+          "ngrok-skip-browser-warning": "420",
+        },
+        body: JSON.stringify({
+          plan_id: String(plan.id),
+          email_id: email,
+          language,
+        }),
+      }
+    );
+
+    const data = await response.json();
+    if (!response.ok) {
+      throw new Error(data.message || "Failed to generate DPR");
+    }
+   toast.success(
+    "Your DPR request has been submitted successfully. The report will be sent to your email shortly."
+    );
+
+  } catch (err) {
+    console.error(err);
+      toast.error(err.message || "Something went wrong.");  
+    } finally {
+    setSending(false);
+  }
+  };
+
   if (deepLinkLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ background: P.lighter }}>
@@ -1066,9 +1151,15 @@ const PlanViewPage = () => {
         <div className="max-w-[1800px] mx-auto px-6 py-4 flex items-center justify-between gap-4">
           <div className="flex items-center gap-4 min-w-0">
             <button
-              onClick={() => navigate("/landscape-stewardship", { state: { returnContext: state?.returnContext } })}
+              onClick={() => {
+                const stateId      = searchParams.get("stateId");
+                const stateName    = searchParams.get("stateName");
+                const districtId   = searchParams.get("districtId");
+                const districtName = searchParams.get("districtName");
+                navigate(`/landscape-stewardship?state=${stateId}&stateName=${stateName}&district=${districtId}&districtName=${districtName}`);
+              }}
               className="flex-shrink-0 flex items-center gap-2 px-4 py-2 rounded-xl font-semibold
-                         text-sm transition-all duration-200 active:scale-95"
+                        text-sm transition-all duration-200 active:scale-95"
               style={{ background: "rgba(255,255,255,0.95)", color: P.dark, boxShadow: "0 2px 12px rgba(0,0,0,0.15)" }}
             >← Back</button>
             <div className="min-w-0">
@@ -1080,6 +1171,33 @@ const PlanViewPage = () => {
           <div className="flex-shrink-0 flex items-center gap-2 flex-wrap justify-end">
             <StatusBadge label="DPR Completed" active={plan.is_dpr_reviewed} />
             <StatusBadge label="DPR Submitted" active={plan.is_dpr_approved} />
+          <button
+              onClick={() => setShowEmailModal(true)}
+              className="flex items-center gap-2 px-2.5 py-1 rounded-full text-sm font-semibold transition-all duration-200 hover:shadow-md hover:-translate-y-[1px]"
+              style={{
+                background: "#FFFFFF",
+                color: P.base,
+                border: `1px solid ${P.border}`,
+              }}
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                <polyline points="7 10 12 15 17 10" />
+                <line x1="12" y1="15" x2="12" y2="3" />
+              </svg>
+
+              <span>Download DPR</span>
+            </button>
           </div>
         </div>
       </div>
@@ -1437,6 +1555,153 @@ const PlanViewPage = () => {
                   )}
                 </div>
                 {selectedLivelihood && <LivelihoodDetailCard l={selectedLivelihood} onClose={() => setSelectedLivelihood(null)} />}
+              </div>
+            </div>
+          </div>
+        )}
+        {showEmailModal && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40">
+            <div
+              className="bg-white rounded-2xl shadow-xl p-6 w-[460px]"
+              style={{ border: `1px solid ${P.border}` }}
+            >
+              <h2
+                className="text-xl font-bold mb-2"
+                style={{ color: P.text }}
+              >
+                Download DPR
+              </h2>
+
+              <p
+                className="text-sm mb-5"
+                style={{ color: P.muted }}
+              >
+                Enter your email address. The generated DPR will be sent to this email.
+              </p>
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                  if (emailError) {
+                    setEmailError(validateEmail(e.target.value));
+                  }
+                }}
+                placeholder="Enter your email"
+                className="w-full px-4 py-3 rounded-xl outline-none transition-all"
+                style={{
+                  border: `1px solid ${P.border}`,
+                }}
+              />
+              {emailError && (
+                <p
+                  className="text-sm mt-2"
+                  style={{ color: "#dc2626" }}
+                >
+                  {emailError}
+                </p>
+              )}
+  <div className="mt-5">
+  <label
+    className="block text-sm font-semibold mb-2"
+    style={{ color: P.text }}
+  >
+    Language
+  </label>
+
+  <Select
+    options={languageOptions}
+    value={languageOptions.find(
+      (option) => option.value === language
+    )}
+    onChange={(option) => setLanguage(option.value)}
+    isSearchable={false}
+    menuPortalTarget={document.body}
+    menuPosition="fixed"
+    styles={{
+      control: (base, state) => ({
+        ...base,
+        minHeight: 48,
+        borderRadius: 12,
+        borderColor: state.isFocused ? P.base : P.border,
+        boxShadow: state.isFocused
+          ? `0 0 0 3px ${P.light}`
+          : "none",
+        "&:hover": {
+          borderColor: P.base,
+        },
+      }),
+
+      valueContainer: (base) => ({
+        ...base,
+        padding: "2px 10px",
+      }),
+
+      singleValue: (base) => ({
+        ...base,
+        color: P.text,
+        fontWeight: 500,
+      }),
+
+      placeholder: (base) => ({
+        ...base,
+        color: P.muted,
+      }),
+
+      indicatorSeparator: () => ({
+        display: "none",
+      }),
+
+      dropdownIndicator: (base) => ({
+        ...base,
+        color: P.muted,
+      }),
+
+      menu: (base) => ({
+        ...base,
+        borderRadius: 12,
+        overflow: "hidden",
+      }),
+
+      menuPortal: (base) => ({
+        ...base,
+        zIndex: 9999,
+      }),
+
+      option: (base, state) => ({
+        ...base,
+        cursor: "pointer",
+        backgroundColor: state.isSelected
+          ? P.base
+          : state.isFocused
+          ? P.light
+          : "#fff",
+        color: state.isSelected ? "#fff" : P.text,
+      }),
+    }}
+  />
+</div>
+
+              <div className="flex justify-end gap-3 mt-6">
+                <button
+                  onClick={() => {
+                    setShowEmailModal(false);
+                    setEmail("");
+                    setEmailError("");
+                  }}
+                  className="px-4 py-2 rounded-xl border"
+                >
+                  Close
+                </button>
+
+                <button
+                  onClick={handleSendDPR}
+                  disabled={sending}
+                  className="px-5 py-2 rounded-xl text-white disabled:opacity-50"
+                  style={{ background: P.base }}
+                >
+                  {sending ? "Sending..." : "Send DPR"}
+                </button>
               </div>
             </div>
           </div>
