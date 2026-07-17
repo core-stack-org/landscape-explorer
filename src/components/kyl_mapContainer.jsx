@@ -2,7 +2,6 @@
 import { useState } from "react";
 import KYLLocationSearchBar from "./kyl_location";
 import YearSlider from "./yearSlider";
-import SelectionModeToggle from "./SelectionModeToggle";
 
 // Layer Controls component
 const LayerControls = ({
@@ -161,12 +160,12 @@ const MapZoomControls = ({ mapRef }) => {
 };
 
 // Updated MapLegend component
-const MapLegend = ({ showMWS, showVillages, currentLayer, showConnectivity }) => {
+const MapLegend = ({ showMWS, showVillages, currentLayer, showConnectivity,showPlans,setShowPlans }) => {
   // Add state for collapsed status
   const [isCollapsed, setIsCollapsed] = useState(false);
 
   // If no layers are shown, don't display legend
-  if (!showMWS && !showVillages && (!currentLayer || currentLayer.length === 0))
+  if (!showMWS && !showVillages && !showPlans && (!currentLayer || currentLayer.length === 0))
     return null;
 
   const activeWBLayer = currentLayer?.find((layer) =>
@@ -201,6 +200,19 @@ const MapLegend = ({ showMWS, showVillages, currentLayer, showConnectivity }) =>
       type: "village",
     },
   ];
+
+  const planLegendItems = [
+  {
+    color: "#FF6FFF",
+    border: "#ffffff",
+    name: "In Progress",
+  },
+  {
+    color: "#CCFF00",
+    border: "#3E5800",
+    name: "DPR Reviewed",
+  },
+];
 
   const lulcLegendItems = [
   { color: "#A9A9A9", label: "Barren Lands" },
@@ -852,6 +864,33 @@ const MapLegend = ({ showMWS, showVillages, currentLayer, showConnectivity }) =>
                   ))}
                 </div>
               )}
+
+              {/* Plans Legend Section */}
+{showPlans && (
+  <div className="space-y-2">
+    <h4 className="text-xs font-medium text-gray-600">
+      Plans
+    </h4>
+
+    {planLegendItems.map((item, index) => (
+      <div
+        key={`plan-${index}`}
+        className="flex items-center gap-2"
+      >
+        <div
+          className="w-4 h-4 rounded-full"
+          style={{
+            backgroundColor: item.color,
+            border: `2px solid ${item.border}`,
+          }}
+        />
+        <span className="text-sm text-gray-600">
+          {item.name}
+        </span>
+      </div>
+    ))}
+  </div>
+)}
 
               {/* LULC Legend Section */}
               {isLulcLayerActive && (
@@ -2007,11 +2046,15 @@ const MapLegend = ({ showMWS, showVillages, currentLayer, showConnectivity }) =>
 
                     <div>
                       <div className="flex h-6 rounded overflow-hidden border border-gray-300">
-                        <div className="flex-1 bg-[#8B5A2B]" />
-                        <div className="flex-1 bg-[#B48F50]" />
-                        <div className="flex-1 bg-[#D6C97A]" />
-                        <div className="flex-1 bg-[#A8D36F]" />
                         <div className="flex-1 bg-[#228B22]" />
+                        <div className="flex-1 bg-[#A8D36F]" />
+                        <div className="flex-1 bg-[#D6C97A]" />
+                        <div className="flex-1 bg-[#B48F50]" />
+                        <div className="flex-1 bg-[#8B5A2B]" />
+                        
+                        
+                        
+                        
                       </div>
                       <div className="flex justify-between text-[10px] text-gray-600 mt-1">
                         <span>Rank order 1</span>
@@ -2067,6 +2110,7 @@ const KYLMapContainer = ({
   currentLayer,
   setSearchLatLong,
   showConnectivity,
+  showPlans,
    selectionMode,
   setSelectionMode,
 }) => {
@@ -2114,6 +2158,7 @@ const KYLMapContainer = ({
         showVillages={showVillages && areVillageLayersAvailable}
         currentLayer={currentLayer}
         showConnectivity={showConnectivity}
+        showPlans={showPlans}
       />
 
       {/* Search Bar */}

@@ -53,6 +53,7 @@ import { LayerLoadError } from "../actions/getWebGlVectorLayers.js";
 import { layerErrorBus, emitLayerError, LAYER_ERROR_TYPES } from "../actions/layerErrorBus.js";
 import { useLayerErrors } from '../actions/useLayerErrors';
 import LayerErrorToast from '../actions/LayerErrorToast';
+import Overlay from "ol/Overlay";
 
 const KYLDashboardPage = () => {
   const mapElement = useRef(null);
@@ -66,6 +67,7 @@ const KYLDashboardPage = () => {
   const mwsArrowLayerRef = useRef(null);
   const mwsDrainageLayerRef = useRef(null);
   const topoLevelDataRef = useRef(null);
+  const villageTooltipRef = useRef(null);
 
   const [isLoading, setIsLoading] = useState(false);
   const [islayerLoaded, setIsLayerLoaded] = useState(false);
@@ -120,6 +122,7 @@ const KYLDashboardPage = () => {
   const [isLayerSelecting, setIsLayerSelecting] = useState(false);
   const showConnectivityRef = useRef(false);
   const [manualSelectedMWS, setManualSelectedMWS] = useState([]);
+  const [showPlans, setShowPlans] = useState(false);
 
 
   const [dataJsonError, setDataJsonError] = useState(null);
@@ -128,9 +131,7 @@ const KYLDashboardPage = () => {
   const INDIA_ZOOM   = 5;
   const { errors: layerErrors, dismiss: dismissLayerError, retry: retryLayerError } = useLayerErrors();
 
-useEffect(() => {
-  handleResetMWSSelection(); 
-}, [selectionMode]);
+
 
   const dataJsonIndex = useMemo(() => {
     if (!dataJson || !Array.isArray(dataJson)) return null;
@@ -194,11 +195,15 @@ useEffect(() => {
       .toLowerCase()
   };
 
-
-
-  const handleResetMWS = () => {
+const handleResetMWS = () => {
     setSelectedMWSProfile(null);
-    handleResetMWSSelection();
+    setManualSelectedMWS([]);
+    setHighlightMWS(null);
+    if (mwsLayerRef.current) resetMWSStyle();
+    if (toastId) {
+      toast.dismiss(toastId);
+      setToastId(null);
+    }
   };
 
   const handleResetMWSSelection = () => {
@@ -211,7 +216,6 @@ useEffect(() => {
       setToastId(null);
     }
   };
-
 
   const getAllFilterTypes = () => {
     const types = new Set();
@@ -332,7 +336,11 @@ useEffect(() => {
   };
 
   const handleFilterSelection = (name, option, isChecked) => {
-    setSelectedMWS([]);
+     if (showConnectivityRef.current) {
+      toast.error("Please turn off MWS Connectivity before applying filters.");
+      return;
+    }
+    // setSelectedMWS([]);
     setSelectedMWSProfile(null);
     resetMWSStyle();
     setHighlightMWS(null);
@@ -413,12 +421,18 @@ useEffect(() => {
 
   // ─── WB filters: ID-based lookup via dataJsonIndex, no geometry ───
   const applyWaterbodyFilters = (mwsIds, wbFilters, isVisualizeOn) => {
-    if (!waterbodiesLayerRef.current) return;
+  if (!waterbodiesLayerRef.current) return;
 
-    const wbSource = waterbodiesLayerRef.current.getSource();
-    const filterKeys = Object.keys(wbFilters || {}).filter(k => wbFilters[k]);
-    const hasMWSFilter = mwsIds.length > 0;
-    const hasAttrFilter = filterKeys.length > 0;
+  const wbSource = waterbodiesLayerRef.current.getSource();
+  const filterKeys = Object.keys(wbFilters || {}).filter(k => wbFilters[k]);
+
+  // A MWS-level filter is "active" even if it currently matches 0 MWS —
+  // in that case waterbodies should show NONE, not fall back to showing all.
+  const mwsFilterKeys = Object.keys(filterSelections.selectedMWSValues || {});
+  const isMWSFilterSelected = mwsFilterKeys.some(k => filterSelections.selectedMWSValues[k]);
+
+  const hasMWSFilter = mwsIds.length > 0 || isMWSFilterSelected;
+  const hasAttrFilter = filterKeys.length > 0;
 
     if (!hasMWSFilter && !hasAttrFilter && !isVisualizeOn) {
       waterbodiesLayerRef.current.updateStyleVariables({ wbFilterActive: 0 });
@@ -732,9 +746,12 @@ useEffect(() => {
         ["==", ["get", "isFiltered"], 1],
         [127, 29, 29, 1], // dark mehroon
 
-        // hide unmatched when filters active
+        // // hide unmatched when filters active
+        // ["==", ["get", "hasFilters"], 1],
+        // [0, 0, 0, 0],
+
         ["==", ["get", "hasFilters"], 1],
-        [0, 0, 0, 0],
+        [74, 144, 226, 1],
 
         // normal MWS
         [74, 144, 226, 1],
@@ -749,8 +766,8 @@ useEffect(() => {
         ["==", ["get", "isFiltered"], 1],
         1.8,
 
-        ["==", ["get", "hasFilters"], 1],
-        0,
+      ["==", ["get", "hasFilters"], 1],
+      1.2,
 
         1.2,
       ],
@@ -765,8 +782,8 @@ useEffect(() => {
         ["==", ["get", "isFiltered"], 1],
         [239, 68, 68, 0.55],
 
-        ["==", ["get", "hasFilters"], 1],
-        [0, 0, 0, 0],
+       ["==", ["get", "hasFilters"], 1],
+        [85, 152, 229, 0.08],
 
         [85, 152, 229, 0.15],
       ],
@@ -940,6 +957,14 @@ useEffect(() => {
   
       const start = uidToCoord[uid];
       const end   = uidToCoord[downstream];
+      if (!start || !end) {
+        console.log("Missing centroid", {
+          uid,
+          downstream,
+          start,
+          end,
+        });
+      }
       if (!start || !end) return;
   
       const key =
@@ -1274,7 +1299,7 @@ useEffect(() => {
           [0, 0, 0, 1],
         ],
         "stroke-width": ["case", ["==", ["get", "isSelected"], 1], 2.0, 1.2],
-        "fill-color": [0, 0, 0, 0],
+        "fill-color": [255, 255, 0, 0.01],
       });
   
       // ── 4. Zoom animation ────────────────────────────────────────────────────
@@ -2095,6 +2120,28 @@ useEffect(() => {
       });
   
       mapRef.current = map;
+      const tooltip = document.createElement("div");
+
+tooltip.style.cssText = `
+  background: rgba(0,0,0,0.8);
+  color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+  pointer-events: none;
+  display: none;
+`;
+
+const overlay = new Overlay({
+  element: tooltip,
+  offset: [10, 0],
+  positioning: "center-left",
+});
+
+map.addOverlay(overlay);
+villageTooltipRef.current = overlay;
     };
   
     const { offsetWidth, offsetHeight } = mapElement.current;
@@ -2120,6 +2167,46 @@ useEffect(() => {
     observer.observe(mapElement.current);
     return () => observer.disconnect();
   };
+
+useEffect(() => {
+  if (!mapRef.current || !boundaryLayerRef.current || !villageTooltipRef.current)
+    return;
+
+  const map = mapRef.current;
+
+  const handlePointerMove = (evt) => {
+    const source = boundaryLayerRef.current.getSource();
+    const villageFeature = source.getFeaturesAtCoordinate(evt.coordinate)[0] || null;
+
+    const overlay = villageTooltipRef.current;
+    const tooltip = overlay.getElement();
+
+    if (villageFeature) {
+      const props = villageFeature.getProperties();
+
+      tooltip.innerHTML =
+        props.vill_name ||
+        props.village_name ||
+        props.name ||
+        "Unknown";
+
+      tooltip.style.display = "block";
+      overlay.setPosition(evt.coordinate);
+
+      map.getTargetElement().style.cursor = "pointer";
+    } else {
+      tooltip.style.display = "none";
+      overlay.setPosition(undefined);
+      map.getTargetElement().style.cursor = "";
+    }
+  };
+
+  map.on("pointermove", handlePointerMove);
+
+  return () => {
+    map.un("pointermove", handlePointerMove);
+  };
+}, [boundaryLayerRef.current]);
 
   const handleItemSelect = (setter, value) => {
     setter(value);
@@ -2313,92 +2400,73 @@ useEffect(() => {
   }, [mapRef.current, state, district, block]);
 
 
-  const updateSelectedMWSStyle = (selectedIds) => {
-    if (!mwsLayerRef.current) return;
+const updateSelectedMWSStyle = (selectedIds) => {
+  if (!mwsLayerRef.current) return;
 
-    const features = mwsLayerRef.current.getSource().getFeatures();
+  const features = mwsLayerRef.current.getSource().getFeatures();
 
-    features.forEach((feature) => {
-      const uid = feature.get("uid");
-
-      feature.set(
-        "isSelected",
-        selectedIds.includes(uid) ? 1 : 0,
-        true
-      );
-    });
-
-    mwsLayerRef.current.getSource().changed();
-    // applyDefaultMWSStyle();
-  };
-
-  useEffect(() => {
-    if (!mapRef.current) return;
-
-    const handleMapClick = (event) => {
-      const feature = mapRef.current.forEachFeatureAtPixel(
-        event.pixel,
-        (feature, layer) => {
-          if (layer === mwsLayerRef.current) return feature;
-        }
-      );
-
-      if (!feature) return;
-
-      const uid = feature.get("uid");
-
-      if (selectionMode === "single") {
-        // Existing behaviour
-        setHighlightMWS(uid);
-        updateSelectedMWSStyle([uid]);
-        setSelectedMWS([uid]);
-        setSelectedMWSProfile(feature.getProperties());
-      } else {
-        // Multi-select
-      setSelectedMWS((prev) => {
-        let updated;
-
-        if (selectionMode === "single") {
-          updated = [uid];
-        } else {
-          if (prev.includes(uid)) {
-            updated = prev.filter((id) => id !== uid);
-          } else {
-            updated = [...prev, uid];
-          }
-        }
-
-    updateSelectedMWSStyle(updated);
-    setManualSelectedMWS(updated);  
-        if (updated.length === 0) {
-        setSelectedMWSProfile(null);   
-      }
-
-    return updated;
+  features.forEach((feature) => {
+    const uid = feature.get("uid");
+    feature.set(
+      "isSelected",
+      selectedIds.includes(uid) ? 1 : 0,
+      true
+    );
   });
 
-        // Temporary: keep last clicked highlighted
-        setHighlightMWS(uid);
+  mwsLayerRef.current.getSource().changed();
+  // applyDefaultMWSStyle();
+};
 
+useEffect(() => {
+  if (!mapRef.current) return;
+
+const handleMapClick = (event) => {
+    const mwsSource = mwsLayerRef.current?.getSource();
+    const feature = mwsSource
+      ? mwsSource.getFeaturesAtCoordinate(event.coordinate)[0]
+      : undefined;
+
+    if (!feature) return;
+
+    const uid = feature.get("uid");
+
+    setManualSelectedMWS((prev) => {
+      const updated = prev.includes(uid)
+        ? prev.filter((id) => id !== uid)
+        : [...prev, uid];
+
+      updateSelectedMWSStyle(updated);
+
+      if (updated.length === 0) {
+        setSelectedMWSProfile(null);
+        setHighlightMWS(null);
+      } else {
         setSelectedMWSProfile(feature.getProperties());
+        setHighlightMWS(uid);
       }
 
-      if (toastId) {
-        toast.dismiss(toastId);
-        setToastId(null);
-      }
-    };
+      return updated;
+    });
 
-    mapRef.current.on("click", handleMapClick);
+    if (toastId) {
+      toast.dismiss(toastId);
+      setToastId(null);
+    }
+  };
 
-    return () => {
-      if (mapRef.current) {
-        mapRef.current.un("click", handleMapClick);
-      }
-    };
-  }, [selectionMode, toastId,mapRef.current, selectedMWS]);
-    
-  useEffect(() => {
+  mapRef.current.on("click", handleMapClick);
+
+  return () => {
+    if (mapRef.current) {
+      mapRef.current.un("click", handleMapClick);
+    }
+  };
+}, [toastId, mapRef.current]);
+
+
+ 
+useEffect(() => {
     if (mapRef.current && waterbodiesLayerRef.current) {
       mapRef.current.removeLayer(waterbodiesLayerRef.current);
       waterbodiesLayerRef.current = null;
@@ -2997,6 +3065,8 @@ useEffect(() => {
             currentLayer={currentLayer}
             setSearchLatLong={setSearchLatLong}
             showConnectivity={showConnectivity}
+            showPlans={showPlans} 
+            setShowPlans={setShowPlans}
           selectionMode={selectionMode}
           setSelectionMode={setSelectionMode}
           />
@@ -3055,6 +3125,8 @@ useEffect(() => {
           setSelectionMode={setSelectionMode}
           manualSelectedMWS={manualSelectedMWS} 
           onResetMWSSelection={handleResetMWSSelection}
+          showPlans={showPlans}
+          setShowPlans={setShowPlans}
 
         />
       </div>
