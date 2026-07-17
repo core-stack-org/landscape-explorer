@@ -160,12 +160,12 @@ const MapZoomControls = ({ mapRef }) => {
 };
 
 // Updated MapLegend component
-const MapLegend = ({ showMWS, showVillages, currentLayer, showConnectivity }) => {
+const MapLegend = ({ showMWS, showVillages, currentLayer, showConnectivity,showPlans,setShowPlans }) => {
   // Add state for collapsed status
   const [isCollapsed, setIsCollapsed] = useState(false);
 
   // If no layers are shown, don't display legend
-  if (!showMWS && !showVillages && (!currentLayer || currentLayer.length === 0))
+  if (!showMWS && !showVillages && !showPlans && (!currentLayer || currentLayer.length === 0))
     return null;
 
   const activeWBLayer = currentLayer?.find((layer) =>
@@ -200,6 +200,19 @@ const MapLegend = ({ showMWS, showVillages, currentLayer, showConnectivity }) =>
       type: "village",
     },
   ];
+
+  const planLegendItems = [
+  {
+    color: "#FF6FFF",
+    border: "#ffffff",
+    name: "In Progress",
+  },
+  {
+    color: "#CCFF00",
+    border: "#3E5800",
+    name: "DPR Reviewed",
+  },
+];
 
   const lulcLegendItems = [
   { color: "#A9A9A9", label: "Barren Lands" },
@@ -525,6 +538,12 @@ const MapLegend = ({ showMWS, showVillages, currentLayer, showConnectivity }) =>
     { fill: "rgba(46, 125, 50, 0.5)", stroke: "rgba(46, 125, 50, 1)", label: ">50 kms" },
   ];
 
+  const AntyodayaData = [
+    { fill: "rgba(220, 20, 60, 0.8)", stroke: "rgba(139, 0, 0, 1)", label: "Low/Poor" },
+    { fill: "rgba(255, 215, 0, 0.8)", stroke: "rgba(218, 165, 32, 1)", label: "Moderate" },
+    { fill: "rgba(144, 238, 144, 0.8)", stroke: "rgba(34, 139, 34, 1)", label: "High/Strong" },
+  ];
+
 
   const isExcludedLulc = (name) => {
     if (!name) return false;
@@ -740,6 +759,10 @@ const MapLegend = ({ showMWS, showVillages, currentLayer, showConnectivity }) =>
     (layer) => layer.name === "area_crops_on_plain" || layer.name.includes("area_crops_on_plain")
   );
 
+  const isAntyodayaActive = currentLayer?.some(
+    (layer) => layer.name.includes("road_connectivity") || layer.name.includes("electricity_supply") || layer.name.includes("housing_quality") || layer.name.includes("maternal_and_child_health_service_access") || layer.name.includes("water_and_sanitation_infrastructure") || layer.name.includes("access_to_formal_banking_services") || layer.name.includes("coverage_across_PDS_NFSA_BPL_and_Pension") || layer.name.includes("institutionalization_strength") || layer.name.includes("civic_infrastructure") || layer.name.includes("farm_employment") || layer.name.includes("forest-based_livelihood") || layer.name.includes("alternate_farming") || layer.name.includes("fisheries_adoption") || layer.name.includes("cottage_industry") || layer.name.includes("livestock_management_service_quality") || layer.name.includes("livestock_management_centers") || layer.name.includes("common_pasture_access") || layer.name.includes("watershed_infrastructure_and_modern_irrigation") || layer.name.includes("agricultural_support_infrastructure") || layer.name.includes("post_harvest_infra") || layer.name.includes("agri_market_access") || layer.name.includes("farmer_cooperatives_access") || layer.name.includes("organic_farming_adoption")
+  );
+
 
   return (
     <div
@@ -841,6 +864,33 @@ const MapLegend = ({ showMWS, showVillages, currentLayer, showConnectivity }) =>
                   ))}
                 </div>
               )}
+
+              {/* Plans Legend Section */}
+{showPlans && (
+  <div className="space-y-2">
+    <h4 className="text-xs font-medium text-gray-600">
+      Plans
+    </h4>
+
+    {planLegendItems.map((item, index) => (
+      <div
+        key={`plan-${index}`}
+        className="flex items-center gap-2"
+      >
+        <div
+          className="w-4 h-4 rounded-full"
+          style={{
+            backgroundColor: item.color,
+            border: `2px solid ${item.border}`,
+          }}
+        />
+        <span className="text-sm text-gray-600">
+          {item.name}
+        </span>
+      </div>
+    ))}
+  </div>
+)}
 
               {/* LULC Legend Section */}
               {isLulcLayerActive && (
@@ -1864,6 +1914,18 @@ const MapLegend = ({ showMWS, showVillages, currentLayer, showConnectivity }) =>
                 </div>
               )}
 
+              {isAntyodayaActive && (
+                <div className="space-y-2">
+                  <h4 className="text-xs font-medium text-gray-600">Antyodaya Legend</h4>
+                  {AntyodayaData.map((item, index) => (
+                    <div key={`fac-live-${index}`} className="flex items-center gap-2">
+                      <div className="w-4 h-4 rounded" style={{ backgroundColor: item.fill, border: `1px solid ${item.stroke}` }} />
+                      <span className="text-sm text-gray-600">{item.label}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
               {activeWBType === "waterbody_type" && (
                 <div className="space-y-2">
                   <h4 className="text-xs font-medium text-gray-600">
@@ -1984,11 +2046,15 @@ const MapLegend = ({ showMWS, showVillages, currentLayer, showConnectivity }) =>
 
                     <div>
                       <div className="flex h-6 rounded overflow-hidden border border-gray-300">
-                        <div className="flex-1 bg-[#8B5A2B]" />
-                        <div className="flex-1 bg-[#B48F50]" />
-                        <div className="flex-1 bg-[#D6C97A]" />
-                        <div className="flex-1 bg-[#A8D36F]" />
                         <div className="flex-1 bg-[#228B22]" />
+                        <div className="flex-1 bg-[#A8D36F]" />
+                        <div className="flex-1 bg-[#D6C97A]" />
+                        <div className="flex-1 bg-[#B48F50]" />
+                        <div className="flex-1 bg-[#8B5A2B]" />
+                        
+                        
+                        
+                        
                       </div>
                       <div className="flex justify-between text-[10px] text-gray-600 mt-1">
                         <span>Rank order 1</span>
@@ -2044,6 +2110,9 @@ const KYLMapContainer = ({
   currentLayer,
   setSearchLatLong,
   showConnectivity,
+  showPlans,
+   selectionMode,
+  setSelectionMode,
 }) => {
   const areMWSLayersAvailable = mwsLayerRef?.current !== null;
   const areVillageLayersAvailable = boundaryLayerRef?.current !== null;
@@ -2089,16 +2158,19 @@ const KYLMapContainer = ({
         showVillages={showVillages && areVillageLayersAvailable}
         currentLayer={currentLayer}
         showConnectivity={showConnectivity}
+        showPlans={showPlans}
       />
 
       {/* Search Bar */}
-      <div className="absolute top-6 left-1/2 transform -translate-x-1/2 z-10">
-        <KYLLocationSearchBar
-          statesData={statesData}
-          onLocationSelect={onLocationSelect}
-          setSearchLatLong={setSearchLatLong}
-        />
-      </div>
+     <div className="absolute top-6 left-1/2 -translate-x-1/2 z-10 flex items-center gap-2">
+  <KYLLocationSearchBar
+    statesData={statesData}
+    onLocationSelect={onLocationSelect}
+    setSearchLatLong={setSearchLatLong}
+  />
+
+
+</div>
 
       {/* Year Slider */}
       <div className="absolute bottom-6 right-16 z-10 w-[420px]">

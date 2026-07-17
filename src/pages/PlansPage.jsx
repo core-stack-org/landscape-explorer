@@ -17,6 +17,8 @@ import LandingNavbar from "../components/landing_navbar.jsx";
 import FilterListIcon from "@mui/icons-material/FilterList";
 import SelectReact from "react-select";
 import StewardDetailPage from "../components/steward_detailPage.jsx";
+import { useSearchParams } from "react-router-dom";
+import { useMap, useMapsLibrary } from "@vis.gl/react-google-maps";
 
 const P = {
   base:    "oklch(49.6% 0.265 301.924)",
@@ -437,6 +439,122 @@ const PlansPage = () => {
     const [planDotsVisible, setPlanDotsVisible] = useState(false);
     const [dprStatus,       setDprStatus]       = useState(null);
     const [statusTracking,  setStatusTracking]  = useState(null);
+    const [searchParams, setSearchParams] = useSearchParams();
+    const [selectedVillage, setSelectedVillage] = useState(null);
+    const [villageOptions, setVillageOptions] = useState([]);
+
+    //  NEW — village search via Google Places Autocomplete
+    const placesLib = useMapsLibrary("places");
+    const autocompleteServiceRef = useRef(null);
+    const placesServiceRef        = useRef(null);
+
+    const [villageSearchText, setVillageSearchText]   = useState("");
+    const [villageSuggestions, setVillageSuggestions] = useState([]);
+
+    useEffect(() => {
+      if (!placesLib) return;
+      autocompleteServiceRef.current = new placesLib.AutocompleteService();
+      // PlacesService needs a map or a div — a detached div works fine, nothing renders
+      placesServiceRef.current = new placesLib.PlacesService(document.createElement("div"));
+    }, [placesLib]);
+
+    const handleVillageInputChange = (text) => {
+      setVillageSearchText(text);
+      if (!text.trim() || !autocompleteServiceRef.current) {
+        setVillageSuggestions([]);
+        return;
+      }
+      autocompleteServiceRef.current.getPlacePredictions(
+        { input: text, componentRestrictions: { country: "in" } },
+        (predictions) => setVillageSuggestions(predictions || [])
+      );
+    };
+
+const handleVillageSuggestionSelect = (placeId, description) => {
+      setVillageSearchText(description);
+      setVillageSuggestions([]);
+      placesServiceRef.current?.getDetails(
+        { placeId, fields: ["geometry", "address_components", "name"] },
+        async (place) => {
+          const loc = place?.geometry?.location;
+          if (loc) {
+            mapRef.current?.getView().animate({
+              center: [loc.lng(), loc.lat()],
+              zoom: 14,
+              duration: 700,
+            });
+          }
+
+          const components  = place?.address_components ?? [];
+          const stateName    = components.find((c) => c.types.includes("administrative_area_level_1"))?.long_name;
+          const districtName = components.find((c) => c.types.includes("administrative_area_level_2"))?.long_name;
+          const searchTerm    = (place?.name || description.split(",")[0] || "").toLowerCase();
+
+          if (bubbleLayerRef.current) {
+            mapRef.current.removeLayer(bubbleLayerRef.current);
+            bubbleLayerRef.current = null;
+          }
+          if (districtLayerRef.current) {
+            mapRef.current.removeLayer(districtLayerRef.current);
+            districtLayerRef.current = null;
+          }
+          setIsStateView(false);
+          setMapLoading(true);
+
+          try {
+            // 1️⃣ Try district-level match first (more specific)
+            if (districtName) {
+              const nameToId = Object.fromEntries(
+                Object.entries(districtLookupRef.current).map(([id, name]) => [name.toLowerCase(), Number(id)])
+              );
+              const districtId = nameToId[districtName.toLowerCase()];
+              if (districtId) {
+                currentDistrictRef.current = { district_id: districtId, district_name: districtName };
+                const [plans, districtStats, dprData, trackingData] = await Promise.all([
+                  fetchPlansByDistrict(districtId, orgRef.current?.value ?? null),
+                  fetchMetaStats(orgRef.current?.value ?? null, null, districtId),
+                  fetchDprReportStatus({ organizationId: orgRef.current?.value ?? null, districtId }),
+                  fetchStatusTracking({ organizationId: orgRef.current?.value ?? null, districtId }),
+                ]);
+                addPlanDots(plans);
+                setMetaStats(districtStats);
+                setDprStatus(dprData);
+                setStatusTracking(trackingData);
+                return;
+              }
+            }
+
+            // 2️⃣ Fall back to state-level, filtered by village name
+            if (stateName && metaStatsRef.current?.state_breakdown) {
+              const matchedState = metaStatsRef.current.state_breakdown.find(
+                (s) => s.state_name?.toLowerCase() === stateName.toLowerCase()
+              );
+              if (matchedState) {
+                currentStateRef.current = { state_id: matchedState.state_id, state_name: matchedState.state_name };
+                const [plans, stateStats, dprData, trackingData] = await Promise.all([
+                  fetchPlansByState(matchedState.state_id, orgRef.current?.value ?? null),
+                  fetchMetaStats(orgRef.current?.value ?? null, matchedState.state_id),
+                  fetchDprReportStatus({ organizationId: orgRef.current?.value ?? null, stateId: matchedState.state_id }),
+                  fetchStatusTracking({ organizationId: orgRef.current?.value ?? null, stateId: matchedState.state_id }),
+                ]);
+                const matchedPlans = plans.filter((p) =>
+                  p.village_name?.toLowerCase().includes(searchTerm) ||
+                  p.village?.toLowerCase().includes(searchTerm)
+                );
+                addPlanDots(matchedPlans.length ? matchedPlans : plans);
+                setMetaStats(stateStats);
+                setDprStatus(dprData);
+                setStatusTracking(trackingData);
+              }
+            }
+          } catch (err) {
+            console.error("Village plans fetch failed:", err);
+          } finally {
+            setMapLoading(false);
+          }
+        }
+      );
+    };
 
     // ── MAP INIT ────────────────────────────────────────────────
     useEffect(() => {
@@ -467,6 +585,8 @@ const PlansPage = () => {
         mapRef.current = map;
         return () => map.setTarget(null);
     }, []);
+
+
 
     const fetchProposedBlocks = async () => {
         const res = await fetch(`${process.env.REACT_APP_API_URL}/proposed_blocks/`, {
@@ -533,25 +653,64 @@ const PlansPage = () => {
       }
     }, [mapLoading, statsLoading]);
 
-    useEffect(() => {
-      const ctx = location.state?.returnContext;
-      if (!ctx?.stateId) return;
+    // useEffect(() => {
+    //   const ctx = location.state?.returnContext;
+    //   if (!ctx?.stateId) return;
 
-      const tryRestore = setInterval(() => {
-        if (mapRef.current && metaStatsRef.current && !hasRestoredRef.current) {
-          clearInterval(tryRestore);
-          hasRestoredRef.current = true;
-          handleStatePinClick({
-            state_id:   ctx.stateId,
-            state_name: ctx.stateName,
-          });
-        }
-      }, 100);
+    //   const tryRestore = setInterval(() => {
+    //     if (mapRef.current && metaStatsRef.current && !hasRestoredRef.current) {
+    //       clearInterval(tryRestore);
+    //       hasRestoredRef.current = true;
+    //       handleStatePinClick({
+    //         state_id:   ctx.stateId,
+    //         state_name: ctx.stateName,
+    //       }).then(() => {
+    //     if (ctx.districtId) {
+    //       handleDistrictPinClick({
+    //         district_id: ctx.districtId,
+    //         district_name: ctx.districtName,
+    //       });
+    //     }
+    //   });
+    //     }
+    //   }, 100);
 
-      return () => clearInterval(tryRestore);
-    }, []);
+    //   return () => clearInterval(tryRestore);
+    // }, []);
 
     // ── STATS ───────────────────────────────────────────────────
+   
+   useEffect(() => {
+  const stateId = searchParams.get("state");
+  const stateName = searchParams.get("stateName");
+  const districtId = searchParams.get("district");
+  const districtName = searchParams.get("districtName");
+
+  if (!stateId) return;
+
+  const tryRestore = setInterval(() => {
+    if (mapRef.current && metaStatsRef.current && !hasRestoredRef.current) {
+      clearInterval(tryRestore);
+      hasRestoredRef.current = true;
+      handleStatePinClick({
+        state_id: stateId,
+        state_name: stateName,
+      }).then(() => {
+        if (districtId) {
+          handleDistrictPinClick({
+            district_id: districtId,
+            district_name: districtName,
+          });
+        }
+      });
+    }
+  }, 100);
+
+  return () => clearInterval(tryRestore);
+}, []);
+
+
+
     const loadStats = async (orgId = null, stateId = null) => {
       setStatsLoading(true);
       setStatsError(false);
@@ -850,6 +1009,10 @@ const PlansPage = () => {
     const handleStatePinClick = async (stateData) => {
       currentStateRef.current = stateData;
       setMapLoading(true);
+       setSearchParams({
+    state: stateData.state_id,
+    stateName: stateData.state_name,
+  }, { replace: true });
 
       if (bubbleLayerRef.current) {
         mapRef.current.removeLayer(bubbleLayerRef.current);
@@ -897,6 +1060,13 @@ const PlansPage = () => {
 
     const handleDistrictPinClick = async (districtData) => {
       if (!districtData) return;
+
+      setSearchParams((prev) => {
+    const params = new URLSearchParams(prev);
+    params.set("district", districtData.district_id);
+    params.set("districtName", districtData.district_name);
+    return params;
+  }, { replace: true });
 
       if (viewModeRef.current === "plans") {
         setMapLoading(true);
@@ -946,6 +1116,7 @@ const PlansPage = () => {
     const handleBackToStateView = async () => {
       const map = mapRef.current;
       if (!map) return;
+      setSearchParams({}, { replace: true });
 
       if (planLayerRef.current) {
         map.removeLayer(planLayerRef.current);
@@ -1014,6 +1185,12 @@ const PlansPage = () => {
       const map = mapRef.current;
       if (!map) return;
 
+        setSearchParams((prev) => {
+        const params = new URLSearchParams(prev);
+        params.delete("district");
+        params.delete("districtName");
+        return params;
+      }, { replace: true });
       currentDistrictRef.current = null;
 
       if (viewModeRef.current === "plans") {
@@ -1244,6 +1421,18 @@ const PlansPage = () => {
       return match?.organization ?? null;
     };
 
+    const handleVillageChange = (selected) => {
+      setSelectedVillage(selected);
+      if (!selected) return;
+
+      const village = selected.value;
+      const plan = statePlansRef.current?.find((p) => p.village === village);
+      if (!plan) return;
+
+      const orgId = getStewardOrgId(plan.facilitator_name);
+      handleOrgChange({ value: orgId, label: plan.facilitator_name });
+    };
+
     const filteredOrgOptions = isStateView
       ? organizationOptions
       : (metaStats?.organization_breakdown ?? []).map(o => ({
@@ -1316,7 +1505,7 @@ const PlansPage = () => {
               </button>
             )}
 
-            <div className="absolute top-4 left-1/2 -translate-x-1/2 z-[1000] w-80">
+              <div className="absolute top-4 left-1/2 -translate-x-1/2 z-[1000] w-80">
               <div className="relative">
                 <div className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 z-10"
                   style={{ color: P.muted }}>
@@ -1479,19 +1668,52 @@ const PlansPage = () => {
                 </div>
 
                 <button
-                  onClick={() => {
-                    const districtLabel = transformName(districtLookupRef.current[selectedPlan.district_soi] || "");
-                    const tehsilLabel   = transformName(tehsilLookupRef.current[selectedPlan.tehsil_soi]     || "");
-                    navigate(`/landscape-stewardship/plan-view?id=${selectedPlan.id}&completed=${!!selectedPlan.is_completed}&dpr_reviewed=${!!selectedPlan.is_dpr_reviewed}&dpr_generated=${!!selectedPlan.is_dpr_generated}&dpr_approved=${!!selectedPlan.is_dpr_approved}`, {
-                      state: {
-                        plan: { ...selectedPlan, district: districtLabel, block: tehsilLabel },
-                        returnContext: {
-                          stateId:   currentStateRef.current?.state_id   ?? null,
-                          stateName: currentStateRef.current?.state_name ?? null,
-                        },
-                      },
-                    });
-                  }}
+                onClick={() => {
+                  const districtLabel = transformName(
+                    districtLookupRef.current[selectedPlan.district_soi] || ""
+                  );
+
+                  const tehsilLabel = transformName(
+                    tehsilLookupRef.current[selectedPlan.tehsil_soi] || ""
+                  );
+
+                  const navigationData = {
+                    plan: {
+                      ...selectedPlan,
+                      district: districtLabel,
+                      block: tehsilLabel,
+                    },
+                    returnContext: {
+                      stateId: currentStateRef.current?.state_id ?? null,
+                      stateName: currentStateRef.current?.state_name ?? null,
+                      districtId: currentDistrictRef.current?.district_id ?? null,
+                      districtName: currentDistrictRef.current?.district_name ?? null,
+                    },
+                  };
+
+                  sessionStorage.setItem(
+                    "planNavigationData",
+                    JSON.stringify(navigationData)
+                  );
+
+                  window.open(
+                  `/landscape-stewardship/plan-view?id=${selectedPlan.id}&completed=${!!selectedPlan.is_completed}&dpr_reviewed=${!!selectedPlan.is_dpr_reviewed}&dpr_generated=${!!selectedPlan.is_dpr_generated}&dpr_approved=${!!selectedPlan.is_dpr_approved}&stateId=${currentStateRef.current?.state_id ?? ""}&stateName=${encodeURIComponent(currentStateRef.current?.state_name ?? "")}&districtId=${currentDistrictRef.current?.district_id ?? ""}&districtName=${encodeURIComponent(currentDistrictRef.current?.district_name ?? "")}`,
+                  "_blank"
+                );
+                }}
+                  // onClick={() => {
+                  //   const districtLabel = transformName(districtLookupRef.current[selectedPlan.district_soi] || "");
+                  //   const tehsilLabel   = transformName(tehsilLookupRef.current[selectedPlan.tehsil_soi]     || "");
+                  //   navigate(`/landscape-stewardship/plan-view?id=${selectedPlan.id}&completed=${!!selectedPlan.is_completed}&dpr_reviewed=${!!selectedPlan.is_dpr_reviewed}&dpr_generated=${!!selectedPlan.is_dpr_generated}&dpr_approved=${!!selectedPlan.is_dpr_approved}`, {
+                  //     state: {
+                  //       plan: { ...selectedPlan, district: districtLabel, block: tehsilLabel },
+                  //       returnContext: {
+                  //         stateId:   currentStateRef.current?.state_id   ?? null,
+                  //         stateName: currentStateRef.current?.state_name ?? null,
+                  //       },
+                  //     },
+                  //   });
+                  // }}
                   className="w-full py-3 rounded-2xl text-white font-semibold text-sm flex-shrink-0
                             shadow-lg transition-all duration-200"
                   disabled={!selectedPlan.is_dpr_reviewed}

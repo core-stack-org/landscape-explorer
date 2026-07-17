@@ -1192,18 +1192,18 @@
       //   getVectorLayers("drainage", drainageKey, true, "drainage").catch(() => null),
       // ]);
       const terrainLayer = getImageLayer(
-        "terrain",
-        terrainKey,
-        true,
-        "Terrain_Style_11_Classes"
-      );
+  "terrain",
+  terrainKey,
+  true,
+  "Terrain_Style_11_Classes"
+);
 
-      const drainageLayer = await getVectorLayers(
-        "drainage",
-        drainageKey,
-        true,
-        "drainage"
-      ).catch(() => null);
+const drainageLayer = await getVectorLayers(
+  "drainage",
+  drainageKey,
+  true,
+  "drainage"
+).catch(() => null);
 
       if (terrainLayer) {
         terrainLayer.setZIndex(1);
