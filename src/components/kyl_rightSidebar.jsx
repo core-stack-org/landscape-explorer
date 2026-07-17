@@ -337,6 +337,19 @@ useEffect(() => {
   });
 }, [manualSelectedMWS, selectionMode, dataJson, villageJson]);
 
+
+useEffect(() => {
+  if (plansLayerRef.current && mapRef.current) {
+    mapRef.current.removeLayer(plansLayerRef.current);
+    plansLayerRef.current = null;
+  }
+
+  setPlans([]);
+  setSelectedPlanProfile(null);
+  setShowPlans(false);
+}, [state, district, block]);
+
+
 const manualSelectionDetails = React.useMemo(() => {
   if (!manualSelectedMWS?.length || !dataJson?.length) return [];
 
@@ -2006,48 +2019,39 @@ const sheet5Count =
           </div>
 
           {/* View DPR Button */}
-          <button
-            className="flex items-center gap-2 text-indigo-600 hover:text-indigo-700 mb-2 text-sm mt-4"
-            onClick={() => {
-    window.open(
-      `/landscape-stewardship/plan-view?id=${selectedPlanProfile.id}` +
-      `&completed=${!!selectedPlanProfile.is_completed}` +
-      `&dpr_reviewed=${!!selectedPlanProfile.is_dpr_reviewed}` +
-      `&dpr_generated=${!!selectedPlanProfile.is_dpr_generated}` +
-      `&dpr_approved=${!!selectedPlanProfile.is_dpr_approved}` +
-      `&stateId=${encodeURIComponent(state?.state_id ?? "")}&stateName=${encodeURIComponent(state?.label ?? "")}` +
-      `&districtId=${encodeURIComponent(district?.district_id ?? "")}&districtName=${encodeURIComponent(district?.label ?? "")}`,
-      "_blank"
-    );
-  }}
-            // onClick={() => {
-            //   navigate(
-            //     `/landscape-stewardship/plan-view?id=${selectedPlanProfile.id}&completed=${!!selectedPlanProfile.is_completed}&dpr_reviewed=${!!selectedPlanProfile.is_dpr_reviewed}&dpr_generated=${!!selectedPlanProfile.is_dpr_generated}&dpr_approved=${!!selectedPlanProfile.is_dpr_approved}`,
-            //     {
-            //       state: {
-            //         plan: selectedPlanProfile,
-            //       },
-                  
-            //     }
-            //   );
-            // }}
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <path d="M5 12h14" />
-              <path d="M13 5l7 7-7 7" />
-            </svg>
-             View DPR 
-          </button>
+      {selectedPlanProfile?.is_dpr_reviewed && (
+  <button
+    className="flex items-center gap-2 text-indigo-600 hover:text-indigo-700 mb-2 text-sm mt-4"
+    onClick={() => {
+      window.open(
+        `/landscape-stewardship/plan-view?id=${selectedPlanProfile.id}` +
+        `&completed=${!!selectedPlanProfile.is_completed}` +
+        `&dpr_reviewed=${!!selectedPlanProfile.is_dpr_reviewed}` +
+        `&dpr_generated=${!!selectedPlanProfile.is_dpr_generated}` +
+        `&dpr_approved=${!!selectedPlanProfile.is_dpr_approved}` +
+        `&stateId=${encodeURIComponent(state?.state_id ?? "")}&stateName=${encodeURIComponent(state?.label ?? "")}` +
+        `&districtId=${encodeURIComponent(district?.district_id ?? "")}&districtName=${encodeURIComponent(district?.label ?? "")}`,
+        "_blank"
+      );
+    }}
+  >
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M5 12h14" />
+      <path d="M13 5l7 7-7 7" />
+    </svg>
+    View DPR
+  </button>
+)}
 
         </div>
       )}
