@@ -214,4 +214,3 @@ Live validation should confirm, for a representative tehsil:
   console, and whether `geolibre:ready` is received from the configured origin.
 - **A style differs from QGIS:** compare the QML with its `STYLE_PROFILES` entry
   for vectors or the published GeoServer style for rasters.
-
