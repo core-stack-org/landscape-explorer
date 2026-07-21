@@ -1,22 +1,22 @@
 const DEFAULT_VIEWER_URL = "https://web.geolibre.app/";
 
 /**
- * The GeoLibre application version KYL expects to embed.
+ * The preferred GeoLibre application version for a versioned deployment.
  *
- * For a compatible GeoLibre 2.x update, this is normally the only value that
- * needs to change. The iframe handshake verifies that the deployed viewer
- * reports the same version before KYL sends it a project.
+ * The public web.geolibre.app URL is unversioned, so this value does not select
+ * what that server returns. By default KYL accepts compatible 2.x viewers and
+ * uses this value only for {version} URL templates and project metadata.
  */
 export const GEOLIBRE_CONFIG = Object.freeze({
   version: process.env.REACT_APP_GEOLIBRE_VERSION || "2.2.0",
-  minimumCompatibleVersion: "2.2.0",
+  minimumCompatibleVersion: "2.0.0",
   supportedMajorVersion: 2,
   viewerUrlTemplate:
     process.env.REACT_APP_GEOLIBRE_URL_TEMPLATE ||
     process.env.REACT_APP_GEOLIBRE_URL ||
     DEFAULT_VIEWER_URL,
   strictVersion:
-    process.env.REACT_APP_GEOLIBRE_STRICT_VERSION !== "false",
+    process.env.REACT_APP_GEOLIBRE_STRICT_VERSION === "true",
 });
 
 // GeoLibre's project schema version is independent from its application release.
