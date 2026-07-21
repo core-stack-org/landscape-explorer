@@ -28,12 +28,12 @@ describe("GeoLibre iframe bridge", () => {
   beforeEach(() => jest.useFakeTimers());
   afterEach(() => jest.useRealTimers());
 
-  it("loads the project and fits its bbox after a valid v2.2 handshake", () => {
+  it("loads the project and fits its bbox after a compatible v2.1 handshake", () => {
     render(<GeoLibreFrame project={project} />);
     const frame = screen.getByTitle("GeoLibre GIS workspace");
     const postMessage = jest.spyOn(frame.contentWindow, "postMessage");
 
-    act(() => announceReady(frame));
+    act(() => announceReady(frame, "2.1.0"));
 
     expect(postMessage).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -55,15 +55,15 @@ describe("GeoLibre iframe bridge", () => {
     );
   });
 
-  it("does not send a project to an unexpected viewer version", () => {
+  it("does not send a project to an incompatible major version", () => {
     render(<GeoLibreFrame project={project} />);
     const frame = screen.getByTitle("GeoLibre GIS workspace");
     const postMessage = jest.spyOn(frame.contentWindow, "postMessage");
 
-    act(() => announceReady(frame, "2.3.0"));
+    act(() => announceReady(frame, "3.0.0"));
 
     expect(screen.getByRole("alert").textContent).toMatch(
-      /configured for GeoLibre 2\.2\.0.*loaded 2\.3\.0/i
+      /GeoLibre 3\.0\.0 is not compatible.*major version 2/i
     );
     expect(postMessage).not.toHaveBeenCalledWith(
       expect.objectContaining({ type: "geolibre:load-project" }),
