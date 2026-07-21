@@ -123,6 +123,7 @@ const KYLDashboardPage = () => {
   const showConnectivityRef = useRef(false);
   const [manualSelectedMWS, setManualSelectedMWS] = useState([]);
   const [showPlans, setShowPlans] = useState(false);
+  const [showStewards, setShowStewards] = useState(false);
 
 
   const [dataJsonError, setDataJsonError] = useState(null);
@@ -957,14 +958,6 @@ const handleResetMWS = () => {
   
       const start = uidToCoord[uid];
       const end   = uidToCoord[downstream];
-      if (!start || !end) {
-        console.log("Missing centroid", {
-          uid,
-          downstream,
-          start,
-          end,
-        });
-      }
       if (!start || !end) return;
   
       const key =
@@ -3069,6 +3062,7 @@ useEffect(() => {
             setShowPlans={setShowPlans}
           selectionMode={selectionMode}
           setSelectionMode={setSelectionMode}
+          showStewards
           />
           <LayerErrorToast
             errors={layerErrors}
@@ -3127,6 +3121,8 @@ useEffect(() => {
           onResetMWSSelection={handleResetMWSSelection}
           showPlans={showPlans}
           setShowPlans={setShowPlans}
+          showStewards={showStewards}
+          setShowStewards={setShowStewards}
 
         />
       </div>
