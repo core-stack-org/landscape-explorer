@@ -1,11 +1,12 @@
 import {
+  GEOLIBRE_CONFIG,
   geoLibreVersionStatus,
   resolveGeoLibreViewer,
 } from "./geolibre.config";
 
 const config = {
   version: "2.2.0",
-  minimumCompatibleVersion: "2.2.0",
+  minimumCompatibleVersion: "2.0.0",
   supportedMajorVersion: 2,
   viewerUrlTemplate: "https://viewer.example/geolibre/{version}/",
   strictVersion: true,
@@ -26,9 +27,18 @@ describe("GeoLibre application configuration", () => {
     });
   });
 
+  it("accepts supported hosted GeoLibre 2.x releases by default", () => {
+    expect(geoLibreVersionStatus("2.1.0", GEOLIBRE_CONFIG).compatible).toBe(
+      true
+    );
+    expect(geoLibreVersionStatus("2.2.0", GEOLIBRE_CONFIG).compatible).toBe(
+      true
+    );
+  });
+
   it("rejects unexpected, older, and major-version viewers", () => {
     expect(geoLibreVersionStatus("2.3.0", config).compatible).toBe(false);
-    expect(geoLibreVersionStatus("2.1.9", config).compatible).toBe(false);
+    expect(geoLibreVersionStatus("1.9.9", config).compatible).toBe(false);
     expect(geoLibreVersionStatus("3.0.0", config).compatible).toBe(false);
   });
 

@@ -50,35 +50,35 @@ contains the full tehsil rather than a generic India extent.
 
 ## Version configuration
 
-The normal upgrade control is the `version` value in
-`../../config/geolibre.config.js`:
+The default hosted viewer accepts any GeoLibre release from `2.0.0` up to, but
+not including, `3.0.0`. Compatible 2.x hosted upgrades need no KYL code change.
+The compatibility range lives in `../../config/geolibre.config.js`:
 
 ```js
 export const GEOLIBRE_CONFIG = Object.freeze({
   version: process.env.REACT_APP_GEOLIBRE_VERSION || "2.2.0",
+  minimumCompatibleVersion: "2.0.0",
   supportedMajorVersion: 2,
   // ...
 });
 ```
 
-For a compatible GeoLibre 2.x release, change that one fallback value, or set:
+`version` records the preferred/tested release and fills `{version}` in a
+versioned URL template. It cannot select the release served by the unversioned
+`https://web.geolibre.app/` deployment.
+
+For an exactly pinned self-hosted release, set:
 
 ```dotenv
 REACT_APP_GEOLIBRE_VERSION=2.3.0
-```
-
-The hosted `https://web.geolibre.app/` URL follows GeoLibre's current web
-deployment; it is not an immutable versioned release asset. KYL therefore
-checks the version reported by the iframe and refuses to send data on a
-mismatch. For an exactly pinned self-hosted deployment, use a URL template:
-
-```dotenv
 REACT_APP_GEOLIBRE_URL_TEMPLATE=https://maps.example.org/geolibre/{version}/
+REACT_APP_GEOLIBRE_STRICT_VERSION=true
 ```
 
-`{version}` is replaced automatically. Set
-`REACT_APP_GEOLIBRE_STRICT_VERSION=false` only for deliberate compatibility
-testing of a newer GeoLibre 2.x viewer. A major-version update should update
+The hosted URL follows GeoLibre's current web deployment and may also be served
+from an existing browser cache. KYL checks its reported version, accepts the
+compatible 2.x range, and rejects other major versions. `{version}` is replaced
+automatically for versioned deployments. A major-version update should update
 the compatibility rules and project/bridge tests, not just the version value.
 
 GeoLibre's application version (`2.2.0`) is separate from its project schema
