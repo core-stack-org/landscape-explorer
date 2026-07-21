@@ -6,3 +6,7 @@ bun.lock
 package-lock.json
 
 src/pages/DemContourMap.jsx
+
+
+.local/
+.history/
