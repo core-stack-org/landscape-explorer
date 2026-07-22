@@ -503,10 +503,13 @@ const buildVectorLayer = ({
   catalogLayer,
   layerName,
   request,
-  data,
+  data = EMPTY_FEATURE_COLLECTION,
   failure,
+  loaded = false,
 }) => {
   const style = layerStyle(catalogLayer);
+  const isOverview = catalogLayer.loadGroup === "overview";
+  const loadState = failure ? "error" : loaded ? "loaded" : "unloaded";
   return {
     id: `corestack-${catalogLayer.id}`,
     name: catalogLayer.label,
@@ -520,16 +523,20 @@ const buildVectorLayer = ({
       outputFormat: request.outputFormat,
       srsName: request.srsName,
     },
-    visible: catalogLayer.id === "demographics",
-    opacity: 1,
+    visible: isOverview,
+    opacity: isOverview ? 0.8 : 1,
     style,
     metadata: {
       featureCount: data.features.length,
       service: "wfs",
       sourceKind: "wfs-getfeature",
       typeName: request.typeName,
+      loadState,
       ...(failure ? { initialLoadError: failure.message } : {}),
-      corestack: coreStackMetadata(catalogLayer, layerName, request.url),
+      corestack: {
+        ...coreStackMetadata(catalogLayer, layerName, request.url),
+        loadState,
+      },
     },
     geojson: data,
     sourcePath: request.url,
@@ -597,6 +604,7 @@ export const buildGeoLibreProject = async ({
   geoserverUrl = process.env.REACT_APP_GEOSERVER_URL || DEFAULT_GEOSERVER_URL,
   signal,
   onProgress = () => {},
+  onInitialProject = () => {},
   fetchFeatureCollection = fetchWfsFeatureCollection,
 }) => {
   if (!state || !district || !tehsil) {
@@ -642,7 +650,12 @@ export const buildGeoLibreProject = async ({
 
     try {
       const data = await requestCache.get(request.url);
-      vectorResults.set(catalogLayer.id, { data, layerName, request });
+      vectorResults.set(catalogLayer.id, {
+        data,
+        layerName,
+        request,
+        loaded: true,
+      });
       return data;
     } catch (error) {
       if (signal?.aborted) throw error;
@@ -663,6 +676,7 @@ export const buildGeoLibreProject = async ({
         layerName,
         request,
         failure,
+        loaded: false,
       });
       return EMPTY_FEATURE_COLLECTION;
     }
@@ -671,9 +685,17 @@ export const buildGeoLibreProject = async ({
   const socioeconomic = GEOLIBRE_VECTOR_LAYERS.find(
     (layer) => layer.id === "demographics"
   );
-  const mws = GEOLIBRE_VECTOR_LAYERS.find((layer) => layer.id === "mws_layers");
+  const administrative = GEOLIBRE_VECTOR_LAYERS.find(
+    (layer) => layer.id === "administrative_boundaries"
+  );
+  const watershedLayers = GEOLIBRE_VECTOR_LAYERS.filter(
+    (layer) => layer.loadGroup === "watersheds"
+  );
 
   const socioeconomicData = await loadVector(socioeconomic, true);
+  // Both Overview entries use the same GeoServer source. The request cache
+  // makes this a metadata/style duplication, not a second network download.
+  await loadVector(administrative, true, false);
   const bounds = geoJsonBounds(socioeconomicData);
   if (!bounds) {
     throw new Error(
@@ -681,79 +703,86 @@ export const buildGeoLibreProject = async ({
     );
   }
 
-  await loadVector(mws);
-  const remainingVectors = GEOLIBRE_VECTOR_LAYERS.filter(
-    (layer) => layer.id !== socioeconomic.id && layer.id !== mws.id
-  );
+  const createProject = (stage) => {
+    const layers = GEOLIBRE_LAYERS.map((catalogLayer) => {
+      const layerName = catalogLayer.layerName(scope);
+      if (catalogLayer.sourceType === "wfs") {
+        const result = vectorResults.get(catalogLayer.id);
+        return buildVectorLayer({
+          catalogLayer,
+          layerName,
+          ...(result || {
+            data: EMPTY_FEATURE_COLLECTION,
+            request: buildWfsRequest(baseUrl, catalogLayer, layerName),
+            loaded: false,
+          }),
+        });
+      }
+      return buildRasterLayer({ catalogLayer, layerName, baseUrl, bounds });
+    });
+    const orderedLayers = orderGeoLibreLayers(layers);
+    const styles = Object.fromEntries(
+      orderedLayers.map((layer) => [layer.id, layer.style])
+    );
+    const viewer = resolveGeoLibreViewer();
+
+    return {
+      version: GEOLIBRE_PROJECT_FORMAT_VERSION,
+      name: `${tehsil}, ${district}: CoRE Stack landscape`,
+      mapView: mapViewFromBounds(bounds, viewport),
+      basemapStyleUrl: DEFAULT_BASEMAP_STYLE,
+      basemapVisible: true,
+      basemapOpacity: 1,
+      layers: orderedLayers,
+      layerGroups: GROUPS_TOP_FIRST.map((group) => ({
+        ...group,
+        visible: true,
+        opacity: 1,
+      })),
+      styles,
+      preferences: projectPreferences,
+      legend: {
+        title: `${tehsil} landscape layers`,
+        groupByLayer: true,
+        order: [...orderedLayers].reverse().map((layer) => layer.id),
+        overrides: {},
+      },
+      metadata: {
+        generatedAtUtc: new Date().toISOString(),
+        generatedBy: "Know Your Landscape",
+        scope: { level: "tehsil", state, district, tehsil, bounds },
+        geolibre: {
+          applicationVersion: GEOLIBRE_CONFIG.version,
+          projectFormatVersion: GEOLIBRE_PROJECT_FORMAT_VERSION,
+          viewerUrl: viewer.url,
+        },
+        layerLoading: {
+          stage,
+          order: [
+            "Administrative Boundaries and Socio-Economic Profile",
+            "Watersheds in the background",
+            "Other vector layers on manual Refresh",
+            "Raster tiles on visibility toggle",
+          ],
+          initialLoadFailures: [...failures],
+        },
+        qmlStyleContract:
+          "Vector QML symbology is represented in GeoLibre styles. Raster QML symbology is rendered by named GeoServer WMS styles. Original QML URLs are retained per layer.",
+      },
+    };
+  };
+
+  onProgress({ phase: "project", message: "Opening Overview in GeoLibre…" });
+  const initialProject = createProject("overview");
+  onInitialProject(initialProject);
+
   onProgress({
-    phase: "vectors",
-    message: `Loading ${remainingVectors.length} supporting vector layers…`,
+    phase: "watersheds",
+    message: "Loading Watersheds in the background…",
   });
   await Promise.all(
-    remainingVectors.map((layer) => loadVector(layer, false, false))
+    watershedLayers.map((layer) => loadVector(layer, false, false))
   );
 
-  onProgress({ phase: "project", message: "Preparing the GeoLibre project…" });
-  const layers = GEOLIBRE_LAYERS.map((catalogLayer) => {
-    const layerName = catalogLayer.layerName(scope);
-    if (catalogLayer.sourceType === "wfs") {
-      return buildVectorLayer({
-        catalogLayer,
-        layerName,
-        ...vectorResults.get(catalogLayer.id),
-      });
-    }
-    return buildRasterLayer({ catalogLayer, layerName, baseUrl, bounds });
-  });
-  const orderedLayers = orderGeoLibreLayers(layers);
-  const styles = Object.fromEntries(
-    orderedLayers.map((layer) => [layer.id, layer.style])
-  );
-  const viewer = resolveGeoLibreViewer();
-
-  return {
-    version: GEOLIBRE_PROJECT_FORMAT_VERSION,
-    name: `${tehsil}, ${district}: CoRE Stack landscape`,
-    mapView: mapViewFromBounds(bounds, viewport),
-    basemapStyleUrl: DEFAULT_BASEMAP_STYLE,
-    basemapVisible: true,
-    basemapOpacity: 1,
-    layers: orderedLayers,
-    layerGroups: GROUPS_TOP_FIRST.map((group) => ({
-      ...group,
-      visible: true,
-      opacity: 1,
-    })),
-    styles,
-    preferences: projectPreferences,
-    legend: {
-      title: `${tehsil} landscape layers`,
-      groupByLayer: true,
-      order: [...orderedLayers].reverse().map((layer) => layer.id),
-      overrides: {},
-    },
-    metadata: {
-      generatedAtUtc: new Date().toISOString(),
-      generatedBy: "Know Your Landscape",
-      scope: { level: "tehsil", state, district, tehsil, bounds },
-      geolibre: {
-        applicationVersion: GEOLIBRE_CONFIG.version,
-        projectFormatVersion: GEOLIBRE_PROJECT_FORMAT_VERSION,
-        viewerUrl: viewer.url,
-      },
-      layerLoading: {
-        order: [
-          "Socio-Economic Profile",
-          "Micro-watersheds",
-          "Other vector layers",
-          "Latest LULC layers",
-          "Historical LULC layers",
-          "Other raster layers on visibility toggle",
-        ],
-        initialLoadFailures: failures,
-      },
-      qmlStyleContract:
-        "Vector QML symbology is represented in GeoLibre styles. Raster QML symbology is rendered by named GeoServer WMS styles. Original QML URLs are retained per layer.",
-    },
-  };
+  return createProject("watersheds");
 };

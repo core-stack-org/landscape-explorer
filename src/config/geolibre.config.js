@@ -1,9 +1,5 @@
 const DEFAULT_VIEWER_URL = "https://web.geolibre.app/";
 
-// Change this one value when KYL moves to another tested GeoLibre release.
-// It selects the deployed build only when viewerUrlTemplate contains {version}.
-export const DEFAULT_GEOLIBRE_VERSION = "2.2.0";
-
 /**
  * The preferred GeoLibre application version for a versioned deployment.
  *
@@ -12,7 +8,7 @@ export const DEFAULT_GEOLIBRE_VERSION = "2.2.0";
  * uses this value only for {version} URL templates and project metadata.
  */
 export const GEOLIBRE_CONFIG = Object.freeze({
-  version: process.env.REACT_APP_GEOLIBRE_VERSION || DEFAULT_GEOLIBRE_VERSION,
+  version: process.env.REACT_APP_GEOLIBRE_VERSION || "2.2.0",
   minimumCompatibleVersion: "2.0.0",
   supportedMajorVersion: 2,
   viewerUrlTemplate:

@@ -1,8 +1,9 @@
 # KYL GeoLibre integration
 
 `/download_layers` is a thin host for GeoLibre. KYL keeps its existing header
-(including **QGIS Documentation**) and gives the rest of the page to a trusted
-GeoLibre iframe. There is no second KYL map, layer selector, or project panel.
+(including **GeoLibre User Guide**, **QGIS Documentation**, and the QML style
+repository fallback) and gives the rest of the page to a trusted GeoLibre
+iframe. There is no second KYL map, layer selector, or project panel.
 
 The implementation targets
 [GeoLibre v2.2.0](https://github.com/opengeos/GeoLibre/releases/tag/v2.2.0)
@@ -12,29 +13,26 @@ and uses its supported embed bridge and WFS project representation.
 
 1. The KYL homepage carries the selected state, district, and tehsil to
    `/download_layers` as query parameters.
-2. `geolibreProject.js` fetches the Socio-Economic WFS layer first and derives
-   the complete tehsil bounding box from its GeoJSON.
-3. It fetches MWS next, followed by the remaining vectors. Duplicate sources
-   (Socio-Economic / Administrative Boundary and MWS / Hydrological Boundary)
-   are fetched once and reused.
-4. Vector layers are represented exactly as GeoLibre 2.2 WFS layers: an
-   embedded `FeatureCollection`, a live `sourcePath`, and
-   `metadata.sourceKind = "wfs-getfeature"`.
-5. WMS layers are configured but hidden, so raster tiles are requested only
-   when a user makes a layer visible in GeoLibre.
-6. The iframe reports `geolibre:ready`; KYL verifies its application version
-   and sends one `geolibre:load-project` message. It then uses GeoLibre 2.2's
-   command bridge to fit the exact bounds against the iframe's real map size.
-
-Only **Socio-Economic Profile** starts visible. Every other layer starts hidden
-with opacity `1`, so turning it on in GeoLibre shows its intended styling rather
-than an invisible zero-opacity layer.
+2. `geolibreProject.js` fetches the shared Overview WFS source once. It creates
+   **Administrative Boundaries** and **Socio-Economic Profile** from that data,
+   derives the complete tehsil bounding box, and immediately opens GeoLibre.
+3. Both Overview layers start visible at opacity `0.8`, in that display order.
+4. While the user can already use the map, KYL downloads the three Watersheds
+   entries in the background. The MWS / Hydrological Boundary duplicate source
+   is fetched once and reused. A second project message adds the hydrated data
+   without showing another KYL loading overlay.
+5. Other vector layers remain listed, hidden, and empty. They make no initial
+   WFS request; use the layer action **Refresh** when that data is needed.
+6. Raster layers remain listed and hidden. WMS tiles are requested only when a
+   user makes a raster visible.
+7. The iframe reports `geolibre:ready`; KYL verifies its application version,
+   sends the current project stage, and fits the exact tehsil bounds.
 
 ## Native layer organization
 
 GeoLibre's own layer panel is ordered top-first as:
 
-1. Overview (Socio-Economic Profile, Administrative Boundaries)
+1. Overview (Administrative Boundaries, Socio-Economic Profile)
 2. Watersheds (MWS and related hydrological layers)
 3. Other vector layers
 4. LULC Level 3, Level 2, and Level 1 by year
@@ -52,14 +50,12 @@ contains the full tehsil rather than a generic India extent.
 
 The default hosted viewer accepts any GeoLibre release from `2.0.0` up to, but
 not including, `3.0.0`. Compatible 2.x hosted upgrades need no KYL code change.
-The one source-code value to update is `DEFAULT_GEOLIBRE_VERSION` in
+The one source-code fallback to update is the version value in
 `../../config/geolibre.config.js`:
 
 ```js
-export const DEFAULT_GEOLIBRE_VERSION = "2.2.0";
-
 export const GEOLIBRE_CONFIG = Object.freeze({
-  version: process.env.REACT_APP_GEOLIBRE_VERSION || DEFAULT_GEOLIBRE_VERSION,
+  version: process.env.REACT_APP_GEOLIBRE_VERSION || "2.2.0",
   minimumCompatibleVersion: "2.0.0",
   supportedMajorVersion: 2,
   // ...
@@ -96,17 +92,22 @@ application.
 |---|---|
 | `../../config/geolibre.config.js` | Viewer application version, URL resolution, strict handshake compatibility |
 | `../../config/geolibreLayers.js` | GeoServer names, all LULC years, QML references, WMS styles, load groups |
-| `geolibreProject.js` | Priority WFS fetching, v2.2 project construction, styles, WMS/WCS references, bbox camera |
+| `geolibreProject.js` | Staged Overview/Watersheds WFS fetching, lazy vector placeholders, styles, WMS/WCS references, bbox camera |
 | `GeoLibreFrame.jsx` | Iframe lifecycle, trusted-origin bridge, version check, loading and failure overlays |
 | `../../pages/LandscapeExplorer.jsx` | Route-to-project orchestration; no duplicate map or layer UI |
 
-The current project contains 45 entries: 13 vector entries (11 distinct WFS
-requests), 24 LULC year/level rasters, and 8 other rasters.
+The current project contains 45 entries: 13 vector entries, 24 LULC year/level
+rasters, and 8 other rasters. Initial startup performs one distinct Overview WFS
+request followed by two distinct Watersheds requests in the background. The
+remaining vector endpoints are not fetched during startup.
 
 ## Styling contract
 
 - Vector QML rules are translated into GeoLibre categorized or expression
   styles. The source QML URL remains in `metadata.corestack.qmlStyleUrl`.
+- If GeoLibre cannot download a required `.qml`, users can download it from the
+  [CoRE Stack QGIS Styles repository](https://github.com/core-stack-org/QGIS-Styles)
+  and load it through QGIS layer properties.
 - Raster QML styles are published as named GeoServer styles and rendered by
   WMS. Their original QML URLs are also retained.
 - Each raster keeps its styled WMS tiles for display and exposes its complete
@@ -124,6 +125,24 @@ Changing only a QML URL does not alter rendered vector symbology; update the
 matching style profile in `geolibreProject.js`. Raster appearance changes must
 be published to the named GeoServer WMS style.
 
+## Fresh-checkout setup
+
+No backend patch, generated project file, vendored GeoLibre bundle, or local
+`.local/` prototype is required. A tester needs this branch and one `.env` file:
+
+```bash
+git fetch origin
+git switch feat/geolibre-cog-download
+git pull --ff-only
+cp .env.example .env
+npm install
+```
+
+The committed `.env.example` provides the public API and GeoServer values needed
+by both the existing KYL dashboard and the GeoLibre route. GeoLibre uses its
+source defaults unless an operator intentionally enables the commented override
+variables. Restart the React development server after any `.env` change.
+
 ## Validation
 
 Focused tests:
@@ -131,7 +150,9 @@ Focused tests:
 ```bash
 CI=true npm test -- --watchAll=false \
   src/config/geolibre.config.test.js \
-  src/components/geolibre/geolibreProject.test.js
+  src/components/geolibre/geolibreProject.test.js \
+  src/components/geolibre/GeoLibreFrame.test.jsx \
+  src/components/landing_navbar.test.jsx
 ```
 
 Build:
@@ -146,12 +167,47 @@ Local demo:
 HOST=0.0.0.0 PORT=3000 BROWSER=none npm start
 ```
 
-Open `http://localhost:3000`, select a state, district, and tehsil, and click
-**Download Layers**. The generated URL can be refreshed or shared on the same
-KYL host because it contains the selected location.
+Check both routes:
+
+1. Open `http://localhost:3000/kyl_dashboard` and confirm there is no
+   `REACT_APP_GEOSERVER_URL is not set` runtime error.
+2. Open `http://localhost:3000`, select a state, district, and tehsil, and click
+   **Download Layers**.
+3. Confirm the GeoLibre badge reports `2.2.0`, the map fits the tehsil, and the
+   Overview panel shows Administrative Boundaries then Socio-Economic Profile,
+   both visible at `0.80`.
+4. Confirm Watersheds populate after the workspace opens while other vectors
+   remain unloaded. Use **Refresh** on a hidden vector to fetch it.
+5. Enable a raster and verify its styled WMS display and **Export → GeoTIFF
+   (COG)** full-coverage download.
+6. Open both documentation buttons and the QML repository fallback.
+
+The generated `/download_layers?state=...&district=...&tehsil=...` URL can be
+refreshed or shared on the same KYL host because the location is URL-backed.
 
 For a release upgrade, verify all of the following before changing the default
 version: the ready handshake reports the expected release, the project loads
-without `geolibre:error`, Socio-Economic is the only visible layer, the full
-tehsil fits, hidden vectors can be enabled, WMS tiles appear when enabled, and
-GeoLibre can save/export the resulting project.
+without `geolibre:error`, both Overview layers are visible at `0.8`, the full
+tehsil fits, Watersheds hydrate, lazy vectors can be refreshed, WMS tiles appear
+when enabled, and GeoLibre can save/export the resulting project.
+
+## Production deployment
+
+The deployment must set `REACT_APP_API_URL` and `REACT_APP_GEOSERVER_URL` before
+running `npm run build`. The current official viewer is a rolling URL. To pin an
+exact self-hosted build, additionally set the three version-template variables
+shown above. GeoServer WFS, WMS, and WCS endpoints must remain reachable from
+the user's browser with CORS enabled, and the site's framing policy must permit
+`https://web.geolibre.app`.
+
+## Future integration options
+
+GeoLibre 2.2 leaves room for deeper work without another KYL map implementation:
+
+- hydrate lazy vectors automatically when their visibility changes;
+- use direct object-store COG URLs for immutable original-file downloads;
+- preconfigure processing models, bookmarks, print layouts, stories, or plugins;
+- expose saved/shareable GeoLibre project files for partner workflows;
+- add direct QML import once GeoLibre's web project/style contract supports it;
+- self-host tested versioned builds so a single version change selects the
+  exact deployed application binary.

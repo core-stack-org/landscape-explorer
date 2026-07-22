@@ -37,16 +37,17 @@ npm install
 
 ### 3. Environment Variables Setup
 
-Create a .env file in the root directory of the project where the package.json is located.
+Create `.env` from the committed deployable example in the repository root:
 
 ```bash
-touch .env
+cp .env.example .env
 ```
-Add the following variables to .env
+
+The example contains the public API, GeoServer, and optional GeoLibre settings.
+Add deployment-specific keys only when the feature that uses them is required:
+
 ```env
-REACT_APP_API_URL="https://geoserver.core-stack.org/api/v1"
 REACT_APP_GOOGLE_KEY="xxx"
-REACT_APP_GEOSERVER_URL="https://geoserver.core-stack.org:8443/geoserver/"
 
 # Google Analytics
 REACT_APP_GA_MEASUREMENT_ID="xxx"
@@ -56,6 +57,10 @@ REACT_APP_WATERBODYREJ_USERNAME="xxx"
 REACT_APP_WATERBODYREJ_PASSWORD="xxx"
 REACT_APP_BASEURL="https://geoserver.core-stack.org"
 ```
+
+Restart the development server whenever `.env` changes. See
+[`src/components/geolibre/README.md`](src/components/geolibre/README.md) for the
+complete `/download_layers` test and deployment checklist.
 ### 4. Running the Application
 
 ```bash

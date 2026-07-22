@@ -19,18 +19,6 @@ export const LATEST_GEOLIBRE_LULC_YEAR =
 
 const LAYERS = [
   {
-    id: "demographics",
-    label: "Socio-Economic Profile",
-    domain: "Demographic",
-    loadGroup: "overview",
-    sourceType: "wfs",
-    workspace: "panchayat_boundaries",
-    geometryType: "polygon",
-    layerName: ({ district, tehsil }) => `${district}_${tehsil}`,
-    styleProfile: "demographics",
-    qmlStyleUrl: qmlStyle("Demographic/literary_rate_style.qml"),
-  },
-  {
     id: "administrative_boundaries",
     label: "Administrative Boundaries",
     domain: "Demographic",
@@ -41,6 +29,18 @@ const LAYERS = [
     layerName: ({ district, tehsil }) => `${district}_${tehsil}`,
     styleProfile: "boundary",
     qmlStyleUrl: qmlStyle("Demographic/Administrative-Boundary-Style.qml"),
+  },
+  {
+    id: "demographics",
+    label: "Socio-Economic Profile",
+    domain: "Demographic",
+    loadGroup: "overview",
+    sourceType: "wfs",
+    workspace: "panchayat_boundaries",
+    geometryType: "polygon",
+    layerName: ({ district, tehsil }) => `${district}_${tehsil}`,
+    styleProfile: "demographics",
+    qmlStyleUrl: qmlStyle("Demographic/literary_rate_style.qml"),
   },
   {
     id: "mws_layers",
