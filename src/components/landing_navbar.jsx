@@ -77,18 +77,6 @@ const LandingNavbar = () => {
                   </a>
                   .
                 </p>
-                <p className="text-center text-xs text-slate-600 sm:text-right">
-                  CoRE Stack datasets are available under{" "}
-                  <a
-                    href="https://creativecommons.org/licenses/by/4.0/"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="font-medium text-purple-700 underline decoration-purple-300 underline-offset-2 hover:text-purple-900"
-                  >
-                    CC BY 4.0
-                  </a>
-                  .
-                </p>
               </div>
             )}
 
