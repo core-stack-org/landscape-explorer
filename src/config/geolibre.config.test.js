@@ -17,7 +17,12 @@ describe("GeoLibre application configuration", () => {
     expect(resolveGeoLibreViewer(config)).toEqual({
       url: "https://viewer.example/geolibre/2.2.0/?embed=1&welcome=0",
       origin: "https://viewer.example",
+      versionPinned: true,
     });
+  });
+
+  it("marks the official unversioned deployment as rolling", () => {
+    expect(resolveGeoLibreViewer(GEOLIBRE_CONFIG).versionPinned).toBe(false);
   });
 
   it("accepts the configured v2.2 viewer", () => {

@@ -64,7 +64,7 @@ describe("GeoLibre 2.2 project generation", () => {
     );
   });
 
-  it("builds official embedded WFS layers and lazy hidden WMS layers", async () => {
+  it("builds embedded WFS layers and downloadable, lazy styled rasters", async () => {
     const project = await buildGeoLibreProject({
       ...location,
       fetchFeatureCollection: successfulFetch,
@@ -105,12 +105,29 @@ describe("GeoLibre 2.2 project generation", () => {
     const latestLulc = project.layers.find(
       (layer) => layer.id === "corestack-lulc_level_3_24_25"
     );
-    expect(latestLulc).toMatchObject({ type: "wms", visible: false });
+    expect(latestLulc).toMatchObject({
+      type: "raster",
+      visible: false,
+      metadata: {
+        service: "wms",
+        corestack: {
+          rasterDownload: {
+            kind: "full-coverage-geotiff",
+            bytePreservingInGeoLibre: true,
+          },
+        },
+      },
+    });
     expect(latestLulc.source.layers).toBe(
       "LULC_level_3:LULC_24_25_cachar_lakhipur_level_3"
     );
     expect(latestLulc.source.tiles[0]).toContain(
       "BBOX={bbox-epsg-3857}"
+    );
+    expect(latestLulc.source.wmsUrl).toContain("/LULC_level_3/wms");
+    expect(latestLulc.source.url).toContain("request=GetCoverage");
+    expect(latestLulc.source.url).toContain(
+      "CoverageId=LULC_level_3%3ALULC_24_25_cachar_lakhipur_level_3"
     );
   });
 
