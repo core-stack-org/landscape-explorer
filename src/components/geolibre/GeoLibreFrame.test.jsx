@@ -1,5 +1,5 @@
 import { act, render, screen } from "@testing-library/react";
-import GeoLibreFrame from "./GeoLibreFrame";
+import GeoLibreFrame, { formatGeoLibreLog } from "./GeoLibreFrame";
 
 const project = {
   version: "0.2.0",
@@ -68,12 +68,45 @@ describe("GeoLibre iframe bridge", () => {
     act(() => announceReady(frame, "3.0.0"));
 
     expect(screen.getByRole("alert").textContent).toMatch(
-      /GeoLibre 3\.0\.0 is not compatible.*major version 2/i
+      /map is temporarily unavailable.*try again in a moment/i
     );
+    expect(screen.getByRole("alert").textContent).not.toMatch(
+      /GeoLibre 3\.0\.0|major version|iframe/i
+    );
+    expect(
+      screen.getByRole("button", { name: /Download technical log/i })
+    ).toBeTruthy();
     expect(postMessage).not.toHaveBeenCalledWith(
       expect.objectContaining({ type: "geolibre:load-project" }),
       expect.any(String)
     );
+  });
+
+  it("shows helpful language when the iframe handshake is delayed", () => {
+    render(<GeoLibreFrame project={project} onRetry={jest.fn()} />);
+
+    act(() => jest.advanceTimersByTime(90000));
+
+    expect(screen.getByRole("alert").textContent).toMatch(
+      /map is taking longer than expected.*internet connection.*try again/i
+    );
+    expect(screen.getByRole("alert").textContent).not.toMatch(
+      /iframe handshake|browser console/i
+    );
+  });
+
+  it("formats bounded troubleshooting entries as a plain-text log", () => {
+    const output = formatGeoLibreLog([
+      {
+        timestamp: "2026-07-22T00:00:00.000Z",
+        event: "iframe_handshake_timeout",
+        details: { expectedVersion: "2.2.0" },
+      },
+    ]);
+
+    expect(output).toContain("KYL GeoLibre technical log");
+    expect(output).toContain("iframe_handshake_timeout");
+    expect(output).toContain('"expectedVersion":"2.2.0"');
   });
 
   it("reloads a lazily hydrated project without fitting the tehsil again", () => {
