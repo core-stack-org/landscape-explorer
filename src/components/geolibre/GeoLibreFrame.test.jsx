@@ -72,4 +72,27 @@ describe("GeoLibre iframe bridge", () => {
       expect.any(String)
     );
   });
+
+  it("replaces the Overview project when background Watersheds are ready", () => {
+    const { rerender } = render(<GeoLibreFrame project={project} />);
+    const frame = screen.getByTitle("GeoLibre GIS workspace");
+    const postMessage = jest.spyOn(frame.contentWindow, "postMessage");
+
+    act(() => announceReady(frame));
+
+    const watershedProject = {
+      ...project,
+      metadata: { layerLoading: { stage: "watersheds" } },
+    };
+    rerender(<GeoLibreFrame project={watershedProject} />);
+
+    expect(postMessage).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: "geolibre:load-project",
+        project: watershedProject,
+        seq: 2,
+      }),
+      "https://web.geolibre.app"
+    );
+  });
 });

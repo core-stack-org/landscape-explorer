@@ -40,17 +40,44 @@ const LandingNavbar = () => {
 
           <div className="flex flex-wrap gap-3 items-center justify-center">
             {isDownloadPage && (
-              <a
-                href="https://docs.google.com/document/d/1jet4EEBbbKgpNrPnuNJJDRuAJUiR2pIMFQp9JTlygAQ/edit?usp=sharing"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-2 px-4 py-2 rounded-lg bg-purple-50 hover:bg-purple-100 transition-all duration-200 border border-purple-200 group"
-              >
-                <span className="text-sm sm:text-base font-medium text-purple-700 group-hover:text-purple-800">
-                  QGIS Documentation
-                </span>
-                <ExternalLink className="h-4 w-4 text-purple-600 group-hover:scale-110 transition-transform" />
-              </a>
+              <div className="flex flex-col items-center gap-1 sm:items-end">
+                <div className="flex flex-wrap items-center justify-center gap-2 sm:justify-end">
+                  <a
+                    href="https://geolibre.app/user-guide/interface/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2 rounded-lg border border-purple-200 bg-purple-50 px-4 py-2 transition-all duration-200 hover:bg-purple-100 group"
+                  >
+                    <span className="text-sm font-medium text-purple-700 group-hover:text-purple-800 sm:text-base">
+                      GeoLibre User Guide
+                    </span>
+                    <ExternalLink className="h-4 w-4 text-purple-600 transition-transform group-hover:scale-110" />
+                  </a>
+                  <a
+                    href="https://docs.google.com/document/d/1jet4EEBbbKgpNrPnuNJJDRuAJUiR2pIMFQp9JTlygAQ/edit?usp=sharing"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2 rounded-lg border border-purple-200 bg-purple-50 px-4 py-2 transition-all duration-200 hover:bg-purple-100 group"
+                  >
+                    <span className="text-sm font-medium text-purple-700 group-hover:text-purple-800 sm:text-base">
+                      QGIS Documentation
+                    </span>
+                    <ExternalLink className="h-4 w-4 text-purple-600 transition-transform group-hover:scale-110" />
+                  </a>
+                </div>
+                <p className="text-center text-xs text-slate-600 sm:text-right">
+                  Can&apos;t download a QML style in GeoLibre? Get it from the{" "}
+                  <a
+                    href="https://github.com/core-stack-org/QGIS-Styles"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="font-medium text-purple-700 underline decoration-purple-300 underline-offset-2 hover:text-purple-900"
+                  >
+                    CoRE Stack QGIS Styles repository
+                  </a>
+                  .
+                </p>
+              </div>
             )}
 
             {isHomePage && (
