@@ -64,7 +64,7 @@ describe("GeoLibre 2.2 project generation", () => {
     );
   });
 
-  it("builds embedded WFS layers and downloadable, lazy styled rasters", async () => {
+  it("builds staged WFS layers and downloadable, lazy styled rasters", async () => {
     const project = await buildGeoLibreProject({
       ...location,
       fetchFeatureCollection: successfulFetch,
@@ -81,7 +81,7 @@ describe("GeoLibre 2.2 project generation", () => {
     expect(socioeconomic).toMatchObject({
       type: "geojson",
       visible: true,
-      opacity: 1,
+      opacity: 0.8,
       source: {
         type: "geojson",
         service: "wfs",
@@ -92,6 +92,7 @@ describe("GeoLibre 2.2 project generation", () => {
         sourceKind: "wfs-getfeature",
         service: "wfs",
         featureCount: 1,
+        loadState: "loaded",
       },
     });
     expect(socioeconomic.geojson.type).toBe("FeatureCollection");
@@ -99,8 +100,33 @@ describe("GeoLibre 2.2 project generation", () => {
     const visibleLayers = project.layers.filter((layer) => layer.visible);
     expect(visibleLayers.map((layer) => layer.id)).toEqual([
       "corestack-demographics",
+      "corestack-administrative_boundaries",
     ]);
-    expect(project.layers.every((layer) => layer.opacity === 1)).toBe(true);
+    expect(
+      visibleLayers.every((layer) => layer.opacity === 0.8)
+    ).toBe(true);
+    expect(
+      project.layers
+        .filter((layer) => !layer.visible)
+        .every((layer) => layer.opacity === 1)
+    ).toBe(true);
+
+    const mws = project.layers.find(
+      (layer) => layer.id === "corestack-mws_layers"
+    );
+    expect(mws).toMatchObject({
+      visible: false,
+      metadata: { loadState: "loaded", featureCount: 1 },
+    });
+
+    const drainage = project.layers.find(
+      (layer) => layer.id === "corestack-drainage"
+    );
+    expect(drainage).toMatchObject({
+      visible: false,
+      metadata: { loadState: "unloaded", featureCount: 0 },
+      geojson: { type: "FeatureCollection", features: [] },
+    });
 
     const latestLulc = project.layers.find(
       (layer) => layer.id === "corestack-lulc_level_3_24_25"
@@ -141,8 +167,8 @@ describe("GeoLibre 2.2 project generation", () => {
       .map((layer) => layer.id);
 
     expect(displayIds.slice(0, 5)).toEqual([
-      "corestack-demographics",
       "corestack-administrative_boundaries",
+      "corestack-demographics",
       "corestack-mws_layers",
       "corestack-hydrological_boundaries",
       "corestack-mws_layers_fortnight",
@@ -164,24 +190,42 @@ describe("GeoLibre 2.2 project generation", () => {
     ]);
   });
 
-  it("fetches socioeconomic first, MWS second, and reuses duplicate WFS requests", async () => {
+  it("opens Overview first, then loads Watersheds with duplicate WFS reuse", async () => {
+    const onInitialProject = jest.fn();
     await buildGeoLibreProject({
       ...location,
       fetchFeatureCollection: successfulFetch,
+      onInitialProject,
     });
 
+    expect(onInitialProject).toHaveBeenCalledTimes(1);
+    const initialProject = onInitialProject.mock.calls[0][0];
+    expect(initialProject.metadata.layerLoading.stage).toBe("overview");
+    expect(
+      initialProject.layers.find(
+        (layer) => layer.id === "corestack-mws_layers"
+      ).metadata.loadState
+    ).toBe("unloaded");
+    expect(
+      initialProject.layers
+        .filter((layer) => layer.visible)
+        .map((layer) => layer.id)
+    ).toEqual([
+      "corestack-demographics",
+      "corestack-administrative_boundaries",
+    ]);
     expect(successfulFetch.mock.calls[0][0].typeName).toBe(
       "panchayat_boundaries:cachar_lakhipur"
     );
     expect(successfulFetch.mock.calls[1][0].typeName).toBe(
       "mws_layers:deltaG_well_depth_cachar_lakhipur"
     );
-    expect(successfulFetch).toHaveBeenCalledTimes(11);
+    expect(successfulFetch).toHaveBeenCalledTimes(3);
   });
 
-  it("keeps an unavailable optional vector listed for GeoLibre refresh", async () => {
-    const fetchWithDrainageFailure = jest.fn(async (request) => {
-      if (request.typeName.startsWith("drainage:")) {
+  it("keeps an unavailable background Watershed listed for GeoLibre refresh", async () => {
+    const fetchWithWatershedFailure = jest.fn(async (request) => {
+      if (request.typeName.includes("deltaG_fortnight")) {
         throw new Error("temporary outage");
       }
       return polygonFeatureCollection(request);
@@ -189,15 +233,16 @@ describe("GeoLibre 2.2 project generation", () => {
 
     const project = await buildGeoLibreProject({
       ...location,
-      fetchFeatureCollection: fetchWithDrainageFailure,
+      fetchFeatureCollection: fetchWithWatershedFailure,
     });
-    const drainage = project.layers.find(
-      (layer) => layer.id === "corestack-drainage"
+    const fortnightly = project.layers.find(
+      (layer) => layer.id === "corestack-mws_layers_fortnight"
     );
 
-    expect(drainage.geojson.features).toEqual([]);
-    expect(drainage.metadata).toMatchObject({
+    expect(fortnightly.geojson.features).toEqual([]);
+    expect(fortnightly.metadata).toMatchObject({
       sourceKind: "wfs-getfeature",
+      loadState: "error",
       initialLoadError: "temporary outage",
     });
     expect(project.metadata.layerLoading.initialLoadFailures).toHaveLength(1);

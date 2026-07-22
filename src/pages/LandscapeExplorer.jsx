@@ -65,12 +65,17 @@ const LandscapeExplorer = () => {
       onProgress: ({ message }) => {
         if (!controller.signal.aborted) setProgress(message);
       },
+      onInitialProject: (overviewProject) => {
+        if (controller.signal.aborted) return;
+        setProject(overviewProject);
+        setProgress("Loading Watersheds in the background…");
+        trackEvent("GeoLibre", "open_workspace", scope.tehsil);
+      },
     })
       .then((nextProject) => {
         if (controller.signal.aborted) return;
         setProject(nextProject);
-        setProgress("Opening the tehsil project in GeoLibre…");
-        trackEvent("GeoLibre", "open_workspace", scope.tehsil);
+        setProgress("Overview and Watersheds are ready.");
       })
       .catch((buildError) => {
         if (controller.signal.aborted) return;
