@@ -10,7 +10,31 @@ import {
 
 const DEFAULT_GEOSERVER_URL =
   "https://geoserver.core-stack.org:8443/geoserver/";
-const DEFAULT_BASEMAP_STYLE = "https://tiles.openfreemap.org/styles/liberty";
+const GOOGLE_SATELLITE_HYBRID_STYLE = {
+  version: 8,
+  name: "Google Satellite Hybrid",
+  sources: {
+    "google-satellite-hybrid": {
+      type: "raster",
+      tiles: ["https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}"],
+      tileSize: 256,
+      attribution: "© Google",
+      maxzoom: 20,
+    },
+  },
+  layers: [
+    {
+      id: "google-satellite-hybrid",
+      type: "raster",
+      source: "google-satellite-hybrid",
+    },
+  ],
+};
+export const DEFAULT_GEOLIBRE_BASEMAP_STYLE =
+  process.env.REACT_APP_GEOLIBRE_BASEMAP_STYLE_URL ||
+  `data:application/json;charset=utf-8,${encodeURIComponent(
+    JSON.stringify(GOOGLE_SATELLITE_HYBRID_STYLE)
+  )}`;
 const EMPTY_FEATURE_COLLECTION = Object.freeze({
   type: "FeatureCollection",
   features: [],
@@ -260,14 +284,158 @@ const STYLE_PROFILES = {
   ),
 };
 
+const LEGEND_PROFILES = {
+  boundary: [["Administrative or hydrological boundary", "#111827", "line"]],
+  demographics: [
+    ["Literacy below 46%", "#98fb98"],
+    ["Literacy 46% to below 59%", "#32cd32"],
+    ["Literacy 59% to below 70%", "#228b22"],
+    ["Literacy 70% or above", "#006400"],
+  ],
+  mws: [
+    ["Net groundwater change below -5", "#ff0000"],
+    ["Net groundwater change -5 to below -1", "#ffff00"],
+    ["Net groundwater change -1 to below 1", "#25b63c"],
+    ["Net groundwater change 1 or above", "#1017f8"],
+  ],
+  waterbodies: [["Surface waterbody", "#6495ed"]],
+  cropping_intensity: [
+    ["Average cropping intensity below 1", "#ff9371"],
+    ["Average cropping intensity 1 to below 2", "#ffa500"],
+    ["Average cropping intensity 2 or above", "#bad93e"],
+  ],
+  drought: [
+    ["No recurrent drought year", "#f4d03f"],
+    ["One recurrent drought year", "#eb984e"],
+    ["Two or more recurrent drought years", "#e74c3c"],
+  ],
+  terrain: [
+    ["V-shaped river valleys and deep narrow canyons", "#313695"],
+    ["Lateral midslope drainage and local valleys", "#4575b4"],
+    ["Upland drainage and stream headwaters", "#a50026"],
+    ["U-shaped valleys", "#e0f3f8"],
+    ["Broad flat areas", "#fffc00"],
+    ["Broad open slopes", "#feb24c"],
+    ["Mesa tops", "#f46d43"],
+    ["Upper slopes", "#d73027"],
+    ["Local ridges or hilltops", "#91bfdb"],
+    ["Midslope divides or local ridges", "#800000"],
+    ["Mountain tops or high ridges", "#4d0000"],
+  ],
+  clart: [
+    ["Good recharge", "#4ee323"],
+    ["Moderate recharge", "#f3ff33"],
+    ["Surface-water harvesting", "#f21223"],
+    ["Regeneration", "#b40f7d"],
+    ["High-runoff zone", "#1774de"],
+  ],
+  afforestation: [
+    ["Trees to trees", "#73bb53"],
+    ["Built-up to trees", "#ff0000"],
+    ["Crops to trees", "#eee05d"],
+    ["Barren to trees", "#a9a9a9"],
+    ["Shrubs and scrubs to trees", "#eaa4f0"],
+  ],
+  deforestation: [
+    ["Trees to trees", "#73bb53"],
+    ["Trees to built-up", "#ff0000"],
+    ["Trees to crops", "#eee05d"],
+    ["Trees to barren", "#a9a9a9"],
+    ["Trees to shrubs and scrubs", "#eaa4f0"],
+  ],
+  degradation: [
+    ["Crops to crops", "#eee05d"],
+    ["Crops to built-up", "#ff0000"],
+    ["Crops to barren", "#a9a9a9"],
+    ["Crops to shrubs and scrubs", "#eaa4f0"],
+  ],
+  urbanization: [
+    ["Built-up to built-up", "#ff0000"],
+    ["Water to built-up", "#1ca3ec"],
+    ["Trees or crops to built-up", "#73bb53"],
+    ["Barren or shrubs and scrubs to built-up", "#a9a9a9"],
+  ],
+  cropintensity: [
+    ["Double to single cropping", "#ff6347"],
+    ["Triple, annual or perennial to single", "#ff4500"],
+    ["Triple, annual or perennial to double", "#ff0000"],
+    ["Single to double cropping", "#00ff00"],
+    ["Single to triple, annual or perennial", "#32cd32"],
+    ["Double to triple, annual or perennial", "#228b22"],
+    ["Single to single cropping", "#4227f5"],
+    ["Double to double cropping", "#712103"],
+    ["Triple, annual or perennial unchanged", "#ad27f5"],
+  ],
+  restoration: [
+    ["Mosaic restoration", "#d79b0f"],
+    ["Wide-scale restoration", "#0f077c"],
+    ["Protection", "#4fbc14"],
+  ],
+  lulc_level_1: [
+    ["Built-up", "#ff0000"],
+    ["Water", "#1ca3ec"],
+    ["Greenery", "#73bb53"],
+    ["Barren lands", "#a9a9a9"],
+    ["Shrubs and scrubs", "#eaa4f0"],
+  ],
+  lulc_level_2: [
+    ["Trees and forests", "#73bb53"],
+    ["Crops", "#fad36f"],
+  ],
+  lulc_level_3: [
+    ["Single Kharif", "#d9f0a3"],
+    ["Single non-Kharif", "#a6d96a"],
+    ["Double cropping", "#4daf4a"],
+    ["Triple cropping", "#006d2c"],
+  ],
+};
+
+const legendShape = (catalogLayer) =>
+  catalogLayer.geometryType === "line"
+    ? "line"
+    : catalogLayer.geometryType === "point"
+      ? "circle"
+      : "square";
+
+const layerLegend = (catalogLayer, style) => {
+  const profile =
+    LEGEND_PROFILES[catalogLayer.id] ||
+    LEGEND_PROFILES[catalogLayer.baseId] ||
+    LEGEND_PROFILES[catalogLayer.styleProfile];
+  const shape = legendShape(catalogLayer);
+  const entries =
+    profile ||
+    (style.vectorStyleStops || []).map((stop) => [
+      stop.label || String(stop.value),
+      stop.color,
+    ]);
+  const items = entries.map(([label, color, itemShape]) => ({
+    label,
+    color,
+    shape: itemShape || shape,
+  }));
+  const baseTitle = catalogLayer.baseId
+    ? catalogLayer.label.split(" · ")[0]
+    : catalogLayer.label;
+  return {
+    key: catalogLayer.baseId || catalogLayer.id,
+    title: `${baseTitle} legend`,
+    items,
+    legendPosition: "bottom-left",
+  };
+};
+
 const GROUPS_TOP_FIRST = [
-  { id: "overview", name: "Overview", collapsed: false },
-  { id: "watersheds", name: "Watersheds", collapsed: false },
-  { id: "vectors", name: "Other vector layers", collapsed: true },
-  { id: "lulc-3", name: "LULC Level 3 by year", collapsed: true },
-  { id: "lulc-2", name: "LULC Level 2 by year", collapsed: true },
-  { id: "lulc-1", name: "LULC Level 1 by year", collapsed: true },
-  { id: "rasters", name: "Other raster layers", collapsed: true },
+  { id: "demographic", name: "Demographic", collapsed: false },
+  { id: "hydrology", name: "Hydrology", collapsed: true },
+  { id: "lulc-3", name: "LULC · Level 3 by year", collapsed: true },
+  { id: "lulc-2", name: "LULC · Level 2 by year", collapsed: true },
+  { id: "lulc-1", name: "LULC · Level 1 by year", collapsed: true },
+  { id: "land", name: "Land", collapsed: true },
+  { id: "agriculture", name: "Agriculture", collapsed: true },
+  { id: "restoration", name: "Restoration", collapsed: true },
+  { id: "climate", name: "Climate", collapsed: true },
+  { id: "nrega", name: "NREGA", collapsed: true },
 ];
 
 const projectPreferences = {
@@ -485,7 +653,7 @@ const layerStyle = (layer) =>
     ? { ...RASTER_STYLE }
     : { ...(STYLE_PROFILES[layer.styleProfile] || BASE_STYLE) };
 
-const coreStackMetadata = (layer, layerName, sourceUrl) => ({
+const coreStackMetadata = (layer, layerName, sourceUrl, style) => ({
   domain: layer.domain,
   geoserverWorkspace: layer.workspace,
   geoserverLayer: layerName,
@@ -493,6 +661,7 @@ const coreStackMetadata = (layer, layerName, sourceUrl) => ({
   liveSource: sourceUrl,
   qmlStyleUrl: layer.qmlStyleUrl,
   year: layer.year || null,
+  legend: layerLegend(layer, style),
   styleContract:
     layer.sourceType === "wms"
       ? "GeoServer renders the named style published from the CoRE Stack QGIS style catalog."
@@ -508,7 +677,7 @@ const buildVectorLayer = ({
   loaded = false,
 }) => {
   const style = layerStyle(catalogLayer);
-  const isOverview = catalogLayer.loadGroup === "overview";
+  const isDefaultDisplay = catalogLayer.defaultVisible === true;
   const loadState = failure ? "error" : loaded ? "loaded" : "unloaded";
   return {
     id: `corestack-${catalogLayer.id}`,
@@ -523,8 +692,8 @@ const buildVectorLayer = ({
       outputFormat: request.outputFormat,
       srsName: request.srsName,
     },
-    visible: isOverview,
-    opacity: isOverview ? 0.8 : 1,
+    visible: isDefaultDisplay,
+    opacity: isDefaultDisplay ? 0.8 : 1,
     style,
     metadata: {
       featureCount: data.features.length,
@@ -534,7 +703,7 @@ const buildVectorLayer = ({
       loadState,
       ...(failure ? { initialLoadError: failure.message } : {}),
       corestack: {
-        ...coreStackMetadata(catalogLayer, layerName, request.url),
+        ...coreStackMetadata(catalogLayer, layerName, request.url, style),
         loadState,
       },
     },
@@ -567,7 +736,7 @@ const buildRasterLayer = ({ catalogLayer, layerName, baseUrl, bounds }) => {
     metadata: {
       service: "wms",
       corestack: {
-        ...coreStackMetadata(catalogLayer, layerName, wmsSource.url),
+        ...coreStackMetadata(catalogLayer, layerName, wmsSource.url, style),
         wcsDownloadUrl,
         rasterDownload: {
           kind: "full-coverage-geotiff",
@@ -591,6 +760,51 @@ export const orderGeoLibreLayers = (layers) => {
     displayOrderForGroup(group.id, layers)
   );
   return topFirst.reverse();
+};
+
+const mapLegendEntries = (orderedLayers) => {
+  const seen = new Set();
+  const entries = [...orderedLayers]
+    .reverse()
+    .map((layer) => layer.metadata?.corestack?.legend)
+    .filter((entry) => {
+      if (!entry?.items?.length || seen.has(entry.key)) return false;
+      seen.add(entry.key);
+      return true;
+    });
+  const selected = entries.find((entry) => entry.key === "demographics");
+  return selected
+    ? [selected, ...entries.filter((entry) => entry !== selected)]
+    : entries;
+};
+
+const legendPluginState = (entries) => {
+  const selected = entries[0];
+  if (!selected) return undefined;
+  return {
+    manifestUrls: [],
+    activePluginIds: [
+      "maplibre-layer-control",
+      "maplibre-atmosphere-effects",
+      "maplibre-deckgl-viz",
+      "maplibre-gl-components",
+    ],
+    mapControlPositions: { "maplibre-gl-components": "top-right" },
+    settings: {
+      "maplibre-gl-components": {
+        legend: {
+          visible: true,
+          collapsed: true,
+          hasLegend: true,
+          selectedLegendIndex: 0,
+          title: selected.title,
+          items: selected.items,
+          legendPosition: selected.legendPosition,
+          legends: entries.map(({ key: _key, ...entry }) => entry),
+        },
+      },
+    },
+  };
 };
 
 const readableError = (error) =>
@@ -787,7 +1001,7 @@ export const buildGeoLibreProject = async ({
     (layer) => layer.id === "administrative_boundaries"
   );
   const socioeconomicData = await loadVector(socioeconomic, true);
-  // Both Overview entries use the same GeoServer source. The request cache
+  // Both default Demographic entries use the same GeoServer source. The request cache
   // makes this a metadata/style duplication, not a second network download.
   await loadVector(administrative, true, false);
   const bounds = geoJsonBounds(socioeconomicData);
@@ -818,13 +1032,14 @@ export const buildGeoLibreProject = async ({
     const styles = Object.fromEntries(
       orderedLayers.map((layer) => [layer.id, layer.style])
     );
+    const mapLegends = mapLegendEntries(orderedLayers);
     const viewer = resolveGeoLibreViewer();
 
     return {
       version: GEOLIBRE_PROJECT_FORMAT_VERSION,
       name: `${tehsil}, ${district}: CoRE Stack landscape`,
       mapView: mapViewFromBounds(bounds, viewport),
-      basemapStyleUrl: DEFAULT_BASEMAP_STYLE,
+      basemapStyleUrl: DEFAULT_GEOLIBRE_BASEMAP_STYLE,
       basemapVisible: true,
       basemapOpacity: 1,
       layers: orderedLayers,
@@ -835,8 +1050,9 @@ export const buildGeoLibreProject = async ({
       })),
       styles,
       preferences: projectPreferences,
+      plugins: legendPluginState(mapLegends),
       legend: {
-        title: `${tehsil} landscape layers`,
+        title: `${tehsil} CoRE Stack layers`,
         groupByLayer: true,
         order: [...orderedLayers].reverse().map((layer) => layer.id),
         overrides: {},
@@ -844,6 +1060,11 @@ export const buildGeoLibreProject = async ({
       metadata: {
         generatedAtUtc: new Date().toISOString(),
         generatedBy: "Know Your Landscape",
+        license: {
+          name: "CC BY 4.0",
+          url: "https://creativecommons.org/licenses/by/4.0/",
+          notice: "CoRE Stack datasets are available under CC BY 4.0",
+        },
         scope: { level: "tehsil", state, district, tehsil, bounds },
         geolibre: {
           applicationVersion: GEOLIBRE_CONFIG.version,
@@ -851,10 +1072,10 @@ export const buildGeoLibreProject = async ({
           viewerUrl: viewer.url,
         },
         layerLoading: {
-          stage: "overview",
+          stage: "demographic",
           order: [
             "Administrative Boundaries and Socio-Economic Profile",
-            "Other vector layers on first visibility toggle",
+            "All other vector layers on first visibility toggle",
             "Raster tiles on visibility toggle",
           ],
           initialLoadFailures: [...failures],
@@ -866,6 +1087,6 @@ export const buildGeoLibreProject = async ({
     };
   };
 
-  onProgress({ phase: "project", message: "Opening Overview in GeoLibre…" });
+  onProgress({ phase: "project", message: "Opening this tehsil in GeoLibre…" });
   return createProject();
 };

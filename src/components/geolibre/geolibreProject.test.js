@@ -1,5 +1,6 @@
 import {
   buildGeoLibreProject,
+  DEFAULT_GEOLIBRE_BASEMAP_STYLE,
   formatGeoServerName,
   geoJsonBounds,
   hydrateGeoLibreVectorLayer,
@@ -65,7 +66,7 @@ describe("GeoLibre 2.2 project generation", () => {
     );
   });
 
-  it("builds Overview WFS layers and downloadable, lazy styled rasters", async () => {
+  it("builds default Demographic WFS layers and downloadable, lazy styled rasters", async () => {
     const project = await buildGeoLibreProject({
       ...location,
       fetchFeatureCollection: successfulFetch,
@@ -75,6 +76,14 @@ describe("GeoLibre 2.2 project generation", () => {
     expect(project.layers).toHaveLength(GEOLIBRE_LAYERS.length);
     expect(project.layers).toHaveLength(45);
     expect(project.mapView.bbox).toEqual([92.9, 24.7, 93.2, 25]);
+    expect(project.basemapStyleUrl).toBe(DEFAULT_GEOLIBRE_BASEMAP_STYLE);
+    expect(decodeURIComponent(project.basemapStyleUrl)).toContain(
+      "https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}"
+    );
+    expect(project.metadata.license).toMatchObject({
+      name: "CC BY 4.0",
+      notice: "CoRE Stack datasets are available under CC BY 4.0",
+    });
 
     const socioeconomic = project.layers.find(
       (layer) => layer.id === "corestack-demographics"
@@ -160,7 +169,7 @@ describe("GeoLibre 2.2 project generation", () => {
     expect(successfulFetch).toHaveBeenCalledTimes(1);
   });
 
-  it("orders the native GeoLibre panel by overview, vectors, LULC, then rasters", async () => {
+  it("uses the deployed domain taxonomy while preserving the preferred order", async () => {
     const project = await buildGeoLibreProject({
       ...location,
       fetchFeatureCollection: successfulFetch,
@@ -172,39 +181,78 @@ describe("GeoLibre 2.2 project generation", () => {
     expect(displayIds.slice(0, 5)).toEqual([
       "corestack-administrative_boundaries",
       "corestack-demographics",
-      "corestack-mws_layers",
-      "corestack-hydrological_boundaries",
-      "corestack-mws_layers_fortnight",
+      "corestack-drainage",
+      "corestack-remote_sensed_waterbodies",
+      "corestack-soge",
     ]);
     expect(displayIds.indexOf("corestack-lulc_level_3_24_25")).toBeLessThan(
       displayIds.indexOf("corestack-lulc_level_3_23_24")
     );
-    expect(displayIds.indexOf("corestack-lulc_level_1_24_25")).toBeLessThan(
+    expect(displayIds.indexOf("corestack-lulc_level_3_24_25")).toBeLessThan(
       displayIds.indexOf("corestack-terrain")
     );
     expect(project.layerGroups.map((group) => group.id)).toEqual([
-      "overview",
-      "watersheds",
-      "vectors",
+      "demographic",
+      "hydrology",
       "lulc-3",
       "lulc-2",
       "lulc-1",
-      "rasters",
+      "land",
+      "agriculture",
+      "restoration",
+      "climate",
+      "nrega",
     ]);
   });
 
-  it("loads only the shared Overview source during project creation", async () => {
+  it("starts a minimized color legend with the configured layer palettes", async () => {
+    const project = await buildGeoLibreProject({
+      ...location,
+      fetchFeatureCollection: successfulFetch,
+    });
+    const legend =
+      project.plugins.settings["maplibre-gl-components"].legend;
+
+    expect(project.plugins.activePluginIds).toContain(
+      "maplibre-gl-components"
+    );
+    expect(legend).toMatchObject({
+      visible: true,
+      collapsed: true,
+      hasLegend: true,
+      title: "Socio-Economic Profile legend",
+    });
+    expect(legend.items).toContainEqual({
+      label: "Literacy 70% or above",
+      color: "#006400",
+      shape: "square",
+    });
+    expect(legend.legends.map((entry) => entry.title)).toEqual(
+      expect.arrayContaining([
+        "Drainage legend",
+        "Terrain legend",
+        "LULC Level 3 legend",
+        "Restoration Opportunities legend",
+      ])
+    );
+  });
+
+  it("loads only the shared Demographic source during project creation", async () => {
     const project = await buildGeoLibreProject({
       ...location,
       fetchFeatureCollection: successfulFetch,
     });
 
-    expect(project.metadata.layerLoading.stage).toBe("overview");
+    expect(project.metadata.layerLoading.stage).toBe("demographic");
     expect(
       project.layers
         .filter(
           (layer) =>
-            layer.type === "geojson" && layer.groupId !== "overview"
+            layer.type === "geojson" &&
+            ![
+              "corestack-administrative_boundaries",
+              "corestack-demographics",
+            ].includes(layer.id)
         )
         .every((layer) => layer.metadata.loadState === "unloaded")
     ).toBe(true);

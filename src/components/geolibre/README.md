@@ -5,6 +5,9 @@
 repository fallback) and gives the rest of the page to a trusted GeoLibre
 iframe. There is no second KYL map, layer selector, or project panel.
 
+CoRE Stack datasets are available under
+[CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
+
 The implementation targets
 [GeoLibre v2.2.0](https://github.com/opengeos/GeoLibre/releases/tag/v2.2.0)
 and uses its supported embed bridge and WFS project representation.
@@ -13,11 +16,12 @@ and uses its supported embed bridge and WFS project representation.
 
 1. The KYL homepage carries the selected state, district, and tehsil to
    `/download_layers` as query parameters.
-2. `geolibreProject.js` fetches the shared Overview WFS source once. It creates
+2. `geolibreProject.js` fetches the shared Demographic WFS source once. It creates
    **Administrative Boundaries** and **Socio-Economic Profile** from that data,
    derives the complete tehsil bounding box, and immediately opens GeoLibre.
-3. Both Overview layers start visible at opacity `0.8`, in that display order.
-4. Every vector outside Overview—including all Watersheds—starts listed,
+3. Both default Demographic layers start visible at opacity `0.8`, in that
+   display order.
+4. Every vector outside the two default Demographic entries starts listed,
    hidden, and empty. Its first visibility toggle asks KYL to fetch that WFS
    source and send the hydrated layer back to GeoLibre. The hydrated layer is
    retained, so later off/on toggles do not repeat its WFS request.
@@ -26,28 +30,97 @@ and uses its supported embed bridge and WFS project representation.
    source for later toggles; normal browser and MapLibre tile caches reuse tiles
    that have already been fetched.
 6. The iframe reports `geolibre:ready`; KYL verifies its application version,
-   sends the Overview project, and fits the exact tehsil bounds once. Lazy
+   sends the initial project, and fits the exact tehsil bounds once. Lazy
    project updates preserve the user's live map view and never fit it again.
+
+```mermaid
+flowchart LR
+    A[KYL location selection] --> B[/download_layers URL]
+    B --> C[Project builder]
+    C --> D[Shared tehsil WFS]
+    D --> C
+    C --> E[GeoLibre project]
+    E --> F[Trusted iframe bridge]
+    F --> G[GeoLibre 2.x]
+    G --> H[Lazy WFS vectors]
+    G --> I[WMS display and WCS downloads]
+```
+
+```mermaid
+sequenceDiagram
+    actor User
+    participant GeoLibre
+    participant KYL
+    participant GeoServer
+    User->>GeoLibre: Toggle a hidden vector
+    GeoLibre-->>KYL: geolibre:state
+    KYL->>GeoServer: WFS GetFeature
+    GeoServer-->>KYL: GeoJSON FeatureCollection
+    KYL-->>GeoLibre: Hydrated project state
+    User->>GeoLibre: Toggle the layer off and on
+    GeoLibre-->>KYL: geolibre:state
+    Note over KYL,GeoLibre: Reuse cached layer; no second WFS request or bbox fit
+```
+
+## Methodology
+
+1. **Scope:** state, district, and tehsil are read from the route so a project
+   is reproducible and shareable.
+2. **Extent:** the shared panchayat-boundary WFS response supplies both default
+   Demographic layers and the authoritative tehsil bbox.
+3. **Catalog:** `geolibreLayers.js` is the single layer inventory. It assigns
+   the deployed KYL domain, GeoServer source, QML reference, year, and order.
+4. **Cartography:** vector QML logic is represented in GeoLibre styles; raster
+   QML is rendered by the corresponding named GeoServer WMS style. Matching
+   color labels are also persisted in GeoLibre's native on-map legends.
+5. **Loading:** only the shared default WFS is fetched at startup. Other
+   vectors hydrate once on first toggle; rasters remain native lazy WMS layers.
+6. **Download:** vector data remains available through GeoLibre and complete
+   raster coverage is exposed through WCS for **GeoTIFF (COG)** export.
+7. **Failure handling:** users receive short recovery guidance. A bounded
+   technical trace can be downloaded as a `.log` file when support needs it.
 
 ## Native layer organization
 
-GeoLibre's own layer panel is ordered top-first as:
+GeoLibre's own layer panel follows the deployed Download Layers taxonomy,
+ordered top-first as:
 
-1. Overview (Administrative Boundaries, Socio-Economic Profile)
-2. Watersheds (MWS and related hydrological layers)
-3. Other vector layers
-4. LULC Level 3, Level 2, and Level 1 by year
-5. Other raster layers
+1. Demographic (Administrative Boundaries, Socio-Economic Profile)
+2. Hydrology
+3. LULC Level 3 by year
+4. LULC Level 2 by year
+5. LULC Level 1 by year
+6. Land
+7. Agriculture
+8. Restoration
+9. Climate
+10. NREGA
 
-The non-overview groups are collapsed where appropriate. Every layer outside
-Overview is toggle-to-load. Each LULC group shows 2024-2025 first while
-retaining every available year back to 2017-2018.
+The remaining groups are collapsed. Every layer outside the two default
+Demographic entries is toggle-to-load. Each LULC group shows 2024-2025 first
+while retaining every available year back to 2017-2018.
 
 The project camera is calculated from the Socio-Economic geometry using a
 padded Web Mercator fit. `mapView.bbox` is also retained in project metadata,
 and the iframe receives one `fitBounds` command after its initial load, so the
 initial map contains the full tehsil rather than a generic India extent. Layer
 toggles and lazy hydration do not issue another fit command.
+
+## Basemap and legends
+
+The default is the same Google Satellite Hybrid tile source used by the
+existing KYL maps. It is wrapped in an inline MapLibre style with Google
+attribution. A deployment can replace it with another valid MapLibre style:
+
+```dotenv
+REACT_APP_GEOLIBRE_BASEMAP_STYLE_URL=https://maps.example.org/style.json
+```
+
+GeoLibre's built-in Components plugin provides an on-map legend in minimized
+mode by default, keeping the map clear. Socio-Economic Profile is selected
+initially when the user expands it, and the selector includes the configured
+vector, raster, and LULC palettes. The separate `legend` project field retains
+ordering and grouping for GeoLibre's Print Layout legend.
 
 ## Version configuration
 
@@ -94,16 +167,26 @@ application.
 | File | Responsibility |
 |---|---|
 | `../../config/geolibre.config.js` | Viewer application version, URL resolution, strict handshake compatibility |
-| `../../config/geolibreLayers.js` | GeoServer names, all LULC years, QML references, WMS styles, load groups |
-| `geolibreProject.js` | Overview generation, single-vector hydration, lazy placeholders, styles, WMS/WCS references, bbox camera |
-| `GeoLibreFrame.jsx` | Iframe lifecycle, trusted-origin bridge, state events, one-time bbox fit, version and failure handling |
+| `../../config/geolibreLayers.js` | GeoServer names, deployed domains, all LULC years, QML references and WMS styles |
+| `geolibreProject.js` | Project generation, legends, Google imagery, vector hydration, WMS/WCS references and bbox camera |
+| `GeoLibreFrame.jsx` | Iframe bridge, one-time bbox fit, human error states and downloadable bounded technical log |
 | `../../pages/LandscapeExplorer.jsx` | Route-to-project orchestration and fetch-on-first-toggle vector cache; no duplicate map or layer UI |
 
 The current project contains 45 entries: 13 vector entries, 24 LULC year/level
 rasters, and 8 other rasters. Initial startup performs exactly one distinct WFS
-request for the shared Overview data and no WMS request. Each non-Overview
-vector makes its own WFS request only on its first toggle. Hidden rasters make
+request for the shared Demographic data and no WMS request. Each other vector
+makes its own WFS request only on its first toggle. Hidden rasters make
 no WMS tile request.
+
+## Error handling
+
+The page never presents iframe handshakes, version parsing, viewer URLs, or
+browser-console instructions as end-user error text. It asks the user to retry,
+check their connection where relevant, and contact the CoRE Stack team if the
+problem continues. **Download technical log** creates a small
+`kyl-geolibre-<timestamp>.log` file containing at most the latest 40 lifecycle
+events. Browsers require this explicit user download and cannot silently write
+a log file to the user's filesystem.
 
 ## Styling contract
 
@@ -177,25 +260,30 @@ Check both routes:
    `REACT_APP_GEOSERVER_URL is not set` runtime error.
 2. Open `http://localhost:3000`, select a state, district, and tehsil, and click
    **Download Layers**.
-3. Confirm the GeoLibre badge reports `2.2.0`, the map fits the tehsil, and the
-   Overview panel shows Administrative Boundaries then Socio-Economic Profile,
+3. Confirm the GeoLibre badge reports a compatible 2.x version, the Google
+   Satellite Hybrid basemap appears, the map fits the tehsil, and Demographic
+   shows Administrative Boundaries then Socio-Economic Profile,
    both visible at `0.80`.
-4. Confirm no Watershed or other non-Overview layer loads by itself. Toggle one
-   Watershed and one **Other vector layer** and confirm each loads. Toggle each
+4. Confirm the native legend starts minimized, expands to the Socio-Economic
+   colors, and its selector includes raster and LULC legends.
+5. Confirm no other layer loads by itself. Toggle a Climate layer and Drainage
+   under Hydrology and confirm each loads. Toggle each
    off and on again and confirm its WFS request is not repeated.
-5. Confirm the map does not refit after those vector loads. Enable a raster and
+6. Confirm the map does not refit after those vector loads. Enable a raster and
    verify its styled WMS display and **Export → GeoTIFF
    (COG)** full-coverage download.
-6. Open both documentation buttons and the QML repository fallback.
+7. Open both documentation buttons, the QML repository, and the CC BY 4.0 link.
+8. If testing a failure state, confirm it uses human recovery guidance and that
+   **Download technical log** saves a `.log` file.
 
 The generated `/download_layers?state=...&district=...&tehsil=...` URL can be
 refreshed or shared on the same KYL host because the location is URL-backed.
 
 For a release upgrade, verify all of the following before changing the default
 version: the ready handshake reports the expected release, the project loads
-without `geolibre:error`, both Overview layers are visible at `0.8`, the full
-tehsil fits exactly once, Watersheds and other vectors hydrate only when
-toggled and are then reused, WMS tiles appear only when enabled, and GeoLibre
+without `geolibre:error`, both default Demographic layers are visible at `0.8`,
+the full tehsil fits exactly once, Climate, Hydrology, and other vectors hydrate
+only when toggled and are then reused, WMS tiles appear only when enabled, and GeoLibre
 can save/export the resulting project.
 
 ## Production deployment
@@ -205,7 +293,8 @@ running `npm run build`. The current official viewer is a rolling URL. To pin an
 exact self-hosted build, additionally set the three version-template variables
 shown above. GeoServer WFS, WMS, and WCS endpoints must remain reachable from
 the user's browser with CORS enabled, and the site's framing policy must permit
-`https://web.geolibre.app`.
+`https://web.geolibre.app`. Browser policy must also permit imagery requests to
+`https://mt1.google.com`, unless the basemap override is used.
 
 ## Future integration options
 
