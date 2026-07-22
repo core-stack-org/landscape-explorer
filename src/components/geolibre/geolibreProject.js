@@ -596,6 +596,105 @@ export const orderGeoLibreLayers = (layers) => {
 const readableError = (error) =>
   error instanceof Error ? error.message : String(error);
 
+const replaceProjectLayer = (project, layerId, replacement) => ({
+  ...project,
+  layers: project.layers.map((layer) =>
+    layer.id === layerId ? replacement : layer
+  ),
+});
+
+const withLazyLoadFailure = (project, layerId, failure) => {
+  const layerLoading = project.metadata?.layerLoading || {};
+  const remainingFailures = (layerLoading.lazyLoadFailures || []).filter(
+    (item) => item.layerId !== layerId
+  );
+  return {
+    ...project,
+    metadata: {
+      ...project.metadata,
+      layerLoading: {
+        ...layerLoading,
+        lazyLoadFailures: failure
+          ? [...remainingFailures, failure]
+          : remainingFailures,
+      },
+    },
+  };
+};
+
+export const hydrateGeoLibreVectorLayer = async ({
+  project,
+  layerId,
+  signal,
+  fetchFeatureCollection = fetchWfsFeatureCollection,
+}) => {
+  const layer = project?.layers?.find((item) => item.id === layerId);
+  if (!layer || layer.type !== "geojson") {
+    throw new Error(`GeoLibre vector layer ${layerId} is not available.`);
+  }
+  if (layer.metadata?.loadState === "loaded") return project;
+
+  const request = {
+    url: layer.source?.url,
+    typeName: layer.source?.typeName,
+    version: layer.source?.version,
+    outputFormat: layer.source?.outputFormat,
+    srsName: layer.source?.srsName,
+  };
+  if (!request.url) {
+    throw new Error(`GeoLibre vector layer ${layer.name} has no WFS URL.`);
+  }
+
+  try {
+    const data = await fetchFeatureCollection(request, { signal });
+    const { initialLoadError: _initialLoadError, ...metadata } =
+      layer.metadata || {};
+    const hydratedLayer = {
+      ...layer,
+      geojson: data,
+      metadata: {
+        ...metadata,
+        featureCount: data.features.length,
+        loadState: "loaded",
+        corestack: {
+          ...metadata.corestack,
+          loadState: "loaded",
+        },
+      },
+    };
+    return withLazyLoadFailure(
+      replaceProjectLayer(project, layerId, hydratedLayer),
+      layerId,
+      null
+    );
+  } catch (error) {
+    if (signal?.aborted) throw error;
+    const failure = {
+      layerId,
+      layerName: layer.name,
+      sourceUrl: request.url,
+      message: readableError(error),
+    };
+    const failedLayer = {
+      ...layer,
+      metadata: {
+        ...layer.metadata,
+        loadState: "error",
+        initialLoadError: failure.message,
+        corestack: {
+          ...layer.metadata?.corestack,
+          loadState: "error",
+        },
+      },
+    };
+    return withLazyLoadFailure(
+      replaceProjectLayer(project, layerId, failedLayer),
+      layerId,
+      failure
+    );
+  }
+};
+
 export const buildGeoLibreProject = async ({
   state,
   district,
@@ -604,7 +703,6 @@ export const buildGeoLibreProject = async ({
   geoserverUrl = process.env.REACT_APP_GEOSERVER_URL || DEFAULT_GEOSERVER_URL,
   signal,
   onProgress = () => {},
-  onInitialProject = () => {},
   fetchFeatureCollection = fetchWfsFeatureCollection,
 }) => {
   if (!state || !district || !tehsil) {
@@ -688,10 +786,6 @@ export const buildGeoLibreProject = async ({
   const administrative = GEOLIBRE_VECTOR_LAYERS.find(
     (layer) => layer.id === "administrative_boundaries"
   );
-  const watershedLayers = GEOLIBRE_VECTOR_LAYERS.filter(
-    (layer) => layer.loadGroup === "watersheds"
-  );
-
   const socioeconomicData = await loadVector(socioeconomic, true);
   // Both Overview entries use the same GeoServer source. The request cache
   // makes this a metadata/style duplication, not a second network download.
@@ -703,7 +797,7 @@ export const buildGeoLibreProject = async ({
     );
   }
 
-  const createProject = (stage) => {
+  const createProject = () => {
     const layers = GEOLIBRE_LAYERS.map((catalogLayer) => {
       const layerName = catalogLayer.layerName(scope);
       if (catalogLayer.sourceType === "wfs") {
@@ -757,14 +851,14 @@ export const buildGeoLibreProject = async ({
           viewerUrl: viewer.url,
         },
         layerLoading: {
-          stage,
+          stage: "overview",
           order: [
             "Administrative Boundaries and Socio-Economic Profile",
-            "Watersheds in the background",
-            "Other vector layers on manual Refresh",
+            "Other vector layers on first visibility toggle",
             "Raster tiles on visibility toggle",
           ],
           initialLoadFailures: [...failures],
+          lazyLoadFailures: [],
         },
         qmlStyleContract:
           "Vector QML symbology is represented in GeoLibre styles. Raster QML symbology is rendered by named GeoServer WMS styles. Original QML URLs are retained per layer.",
@@ -773,16 +867,5 @@ export const buildGeoLibreProject = async ({
   };
 
   onProgress({ phase: "project", message: "Opening Overview in GeoLibre…" });
-  const initialProject = createProject("overview");
-  onInitialProject(initialProject);
-
-  onProgress({
-    phase: "watersheds",
-    message: "Loading Watersheds in the background…",
-  });
-  await Promise.all(
-    watershedLayers.map((layer) => loadVector(layer, false, false))
-  );
-
-  return createProject("watersheds");
+  return createProject();
 };

@@ -23,5 +23,8 @@ describe("Download Layers navigation", () => {
       screen.getByRole("link", { name: /CoRE Stack QGIS Styles repository/i })
         .getAttribute("href")
     ).toBe("https://github.com/core-stack-org/QGIS-Styles");
+    expect(document.body.textContent).toContain(
+      "To Use these layers with QGIS, download layer styles from the CoRE Stack QGIS Styles repository."
+    );
   });
 });

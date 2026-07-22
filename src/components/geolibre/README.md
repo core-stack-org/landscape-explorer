@@ -17,16 +17,17 @@ and uses its supported embed bridge and WFS project representation.
    **Administrative Boundaries** and **Socio-Economic Profile** from that data,
    derives the complete tehsil bounding box, and immediately opens GeoLibre.
 3. Both Overview layers start visible at opacity `0.8`, in that display order.
-4. While the user can already use the map, KYL downloads the three Watersheds
-   entries in the background. The MWS / Hydrological Boundary duplicate source
-   is fetched once and reused. A second project message adds the hydrated data
-   without showing another KYL loading overlay.
-5. Other vector layers remain listed, hidden, and empty. They make no initial
-   WFS request; use the layer action **Refresh** when that data is needed.
-6. Raster layers remain listed and hidden. WMS tiles are requested only when a
-   user makes a raster visible.
-7. The iframe reports `geolibre:ready`; KYL verifies its application version,
-   sends the current project stage, and fits the exact tehsil bounds.
+4. Every vector outside Overview—including all Watersheds—starts listed,
+   hidden, and empty. Its first visibility toggle asks KYL to fetch that WFS
+   source and send the hydrated layer back to GeoLibre. The hydrated layer is
+   retained, so later off/on toggles do not repeat its WFS request.
+5. Raster layers also start listed and hidden. GeoLibre requests their styled
+   WMS tiles only after the first visibility toggle and retains the live raster
+   source for later toggles; normal browser and MapLibre tile caches reuse tiles
+   that have already been fetched.
+6. The iframe reports `geolibre:ready`; KYL verifies its application version,
+   sends the Overview project, and fits the exact tehsil bounds once. Lazy
+   project updates preserve the user's live map view and never fit it again.
 
 ## Native layer organization
 
@@ -38,13 +39,15 @@ GeoLibre's own layer panel is ordered top-first as:
 4. LULC Level 3, Level 2, and Level 1 by year
 5. Other raster layers
 
-The non-overview groups are collapsed where appropriate. Each LULC group shows
-2024-2025 first while retaining every available year back to 2017-2018.
+The non-overview groups are collapsed where appropriate. Every layer outside
+Overview is toggle-to-load. Each LULC group shows 2024-2025 first while
+retaining every available year back to 2017-2018.
 
 The project camera is calculated from the Socio-Economic geometry using a
 padded Web Mercator fit. `mapView.bbox` is also retained in project metadata,
-and the iframe receives a `fitBounds` command after loading, so the initial map
-contains the full tehsil rather than a generic India extent.
+and the iframe receives one `fitBounds` command after its initial load, so the
+initial map contains the full tehsil rather than a generic India extent. Layer
+toggles and lazy hydration do not issue another fit command.
 
 ## Version configuration
 
@@ -92,22 +95,23 @@ application.
 |---|---|
 | `../../config/geolibre.config.js` | Viewer application version, URL resolution, strict handshake compatibility |
 | `../../config/geolibreLayers.js` | GeoServer names, all LULC years, QML references, WMS styles, load groups |
-| `geolibreProject.js` | Staged Overview/Watersheds WFS fetching, lazy vector placeholders, styles, WMS/WCS references, bbox camera |
-| `GeoLibreFrame.jsx` | Iframe lifecycle, trusted-origin bridge, version check, loading and failure overlays |
-| `../../pages/LandscapeExplorer.jsx` | Route-to-project orchestration; no duplicate map or layer UI |
+| `geolibreProject.js` | Overview generation, single-vector hydration, lazy placeholders, styles, WMS/WCS references, bbox camera |
+| `GeoLibreFrame.jsx` | Iframe lifecycle, trusted-origin bridge, state events, one-time bbox fit, version and failure handling |
+| `../../pages/LandscapeExplorer.jsx` | Route-to-project orchestration and fetch-on-first-toggle vector cache; no duplicate map or layer UI |
 
 The current project contains 45 entries: 13 vector entries, 24 LULC year/level
-rasters, and 8 other rasters. Initial startup performs one distinct Overview WFS
-request followed by two distinct Watersheds requests in the background. The
-remaining vector endpoints are not fetched during startup.
+rasters, and 8 other rasters. Initial startup performs exactly one distinct WFS
+request for the shared Overview data and no WMS request. Each non-Overview
+vector makes its own WFS request only on its first toggle. Hidden rasters make
+no WMS tile request.
 
 ## Styling contract
 
 - Vector QML rules are translated into GeoLibre categorized or expression
   styles. The source QML URL remains in `metadata.corestack.qmlStyleUrl`.
-- If GeoLibre cannot download a required `.qml`, users can download it from the
+- To use these layers with QGIS, download layer styles from the
   [CoRE Stack QGIS Styles repository](https://github.com/core-stack-org/QGIS-Styles)
-  and load it through QGIS layer properties.
+  and load them through QGIS layer properties.
 - Raster QML styles are published as named GeoServer styles and rendered by
   WMS. Their original QML URLs are also retained.
 - Each raster keeps its styled WMS tiles for display and exposes its complete
@@ -176,9 +180,11 @@ Check both routes:
 3. Confirm the GeoLibre badge reports `2.2.0`, the map fits the tehsil, and the
    Overview panel shows Administrative Boundaries then Socio-Economic Profile,
    both visible at `0.80`.
-4. Confirm Watersheds populate after the workspace opens while other vectors
-   remain unloaded. Use **Refresh** on a hidden vector to fetch it.
-5. Enable a raster and verify its styled WMS display and **Export → GeoTIFF
+4. Confirm no Watershed or other non-Overview layer loads by itself. Toggle one
+   Watershed and one **Other vector layer** and confirm each loads. Toggle each
+   off and on again and confirm its WFS request is not repeated.
+5. Confirm the map does not refit after those vector loads. Enable a raster and
+   verify its styled WMS display and **Export → GeoTIFF
    (COG)** full-coverage download.
 6. Open both documentation buttons and the QML repository fallback.
 
@@ -188,8 +194,9 @@ refreshed or shared on the same KYL host because the location is URL-backed.
 For a release upgrade, verify all of the following before changing the default
 version: the ready handshake reports the expected release, the project loads
 without `geolibre:error`, both Overview layers are visible at `0.8`, the full
-tehsil fits, Watersheds hydrate, lazy vectors can be refreshed, WMS tiles appear
-when enabled, and GeoLibre can save/export the resulting project.
+tehsil fits exactly once, Watersheds and other vectors hydrate only when
+toggled and are then reused, WMS tiles appear only when enabled, and GeoLibre
+can save/export the resulting project.
 
 ## Production deployment
 
@@ -204,7 +211,6 @@ the user's browser with CORS enabled, and the site's framing policy must permit
 
 GeoLibre 2.2 leaves room for deeper work without another KYL map implementation:
 
-- hydrate lazy vectors automatically when their visibility changes;
 - use direct object-store COG URLs for immutable original-file downloads;
 - preconfigure processing models, bookmarks, print layouts, stories, or plugins;
 - expose saved/shareable GeoLibre project files for partner workflows;

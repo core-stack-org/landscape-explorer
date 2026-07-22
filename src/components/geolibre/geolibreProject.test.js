@@ -2,6 +2,7 @@ import {
   buildGeoLibreProject,
   formatGeoServerName,
   geoJsonBounds,
+  hydrateGeoLibreVectorLayer,
   mapViewFromBounds,
 } from "./geolibreProject";
 import { GEOLIBRE_LAYERS } from "../../config/geolibreLayers";
@@ -64,7 +65,7 @@ describe("GeoLibre 2.2 project generation", () => {
     );
   });
 
-  it("builds staged WFS layers and downloadable, lazy styled rasters", async () => {
+  it("builds Overview WFS layers and downloadable, lazy styled rasters", async () => {
     const project = await buildGeoLibreProject({
       ...location,
       fetchFeatureCollection: successfulFetch,
@@ -116,7 +117,8 @@ describe("GeoLibre 2.2 project generation", () => {
     );
     expect(mws).toMatchObject({
       visible: false,
-      metadata: { loadState: "loaded", featureCount: 1 },
+      metadata: { loadState: "unloaded", featureCount: 0 },
+      geojson: { type: "FeatureCollection", features: [] },
     });
 
     const drainage = project.layers.find(
@@ -155,6 +157,7 @@ describe("GeoLibre 2.2 project generation", () => {
     expect(latestLulc.source.url).toContain(
       "CoverageId=LULC_level_3%3ALULC_24_25_cachar_lakhipur_level_3"
     );
+    expect(successfulFetch).toHaveBeenCalledTimes(1);
   });
 
   it("orders the native GeoLibre panel by overview, vectors, LULC, then rasters", async () => {
@@ -190,24 +193,27 @@ describe("GeoLibre 2.2 project generation", () => {
     ]);
   });
 
-  it("opens Overview first, then loads Watersheds with duplicate WFS reuse", async () => {
-    const onInitialProject = jest.fn();
-    await buildGeoLibreProject({
+  it("loads only the shared Overview source during project creation", async () => {
+    const project = await buildGeoLibreProject({
       ...location,
       fetchFeatureCollection: successfulFetch,
-      onInitialProject,
     });
 
-    expect(onInitialProject).toHaveBeenCalledTimes(1);
-    const initialProject = onInitialProject.mock.calls[0][0];
-    expect(initialProject.metadata.layerLoading.stage).toBe("overview");
+    expect(project.metadata.layerLoading.stage).toBe("overview");
     expect(
-      initialProject.layers.find(
-        (layer) => layer.id === "corestack-mws_layers"
-      ).metadata.loadState
+      project.layers
+        .filter(
+          (layer) =>
+            layer.type === "geojson" && layer.groupId !== "overview"
+        )
+        .every((layer) => layer.metadata.loadState === "unloaded")
+    ).toBe(true);
+    expect(
+      project.layers.find((layer) => layer.id === "corestack-mws_layers")
+        .metadata.loadState
     ).toBe("unloaded");
     expect(
-      initialProject.layers
+      project.layers
         .filter((layer) => layer.visible)
         .map((layer) => layer.id)
     ).toEqual([
@@ -217,35 +223,77 @@ describe("GeoLibre 2.2 project generation", () => {
     expect(successfulFetch.mock.calls[0][0].typeName).toBe(
       "panchayat_boundaries:cachar_lakhipur"
     );
-    expect(successfulFetch.mock.calls[1][0].typeName).toBe(
-      "mws_layers:deltaG_well_depth_cachar_lakhipur"
-    );
-    expect(successfulFetch).toHaveBeenCalledTimes(3);
+    expect(successfulFetch).toHaveBeenCalledTimes(1);
   });
 
-  it("keeps an unavailable background Watershed listed for GeoLibre refresh", async () => {
-    const fetchWithWatershedFailure = jest.fn(async (request) => {
-      if (request.typeName.includes("deltaG_fortnight")) {
-        throw new Error("temporary outage");
-      }
-      return polygonFeatureCollection(request);
-    });
-
+  it("loads a toggled vector once and reuses its hydrated data", async () => {
     const project = await buildGeoLibreProject({
       ...location,
-      fetchFeatureCollection: fetchWithWatershedFailure,
+      fetchFeatureCollection: successfulFetch,
     });
-    const fortnightly = project.layers.find(
-      (layer) => layer.id === "corestack-mws_layers_fortnight"
+    const drainageId = "corestack-drainage";
+    const toggledProject = {
+      ...project,
+      layers: project.layers.map((layer) =>
+        layer.id === drainageId ? { ...layer, visible: true } : layer
+      ),
+    };
+
+    const hydratedProject = await hydrateGeoLibreVectorLayer({
+      project: toggledProject,
+      layerId: drainageId,
+      fetchFeatureCollection: successfulFetch,
+    });
+    const drainage = hydratedProject.layers.find(
+      (layer) => layer.id === drainageId
     );
 
-    expect(fortnightly.geojson.features).toEqual([]);
-    expect(fortnightly.metadata).toMatchObject({
-      sourceKind: "wfs-getfeature",
-      loadState: "error",
-      initialLoadError: "temporary outage",
+    expect(drainage).toMatchObject({
+      visible: true,
+      metadata: { loadState: "loaded", featureCount: 1 },
     });
-    expect(project.metadata.layerLoading.initialLoadFailures).toHaveLength(1);
+    expect(successfulFetch.mock.calls[1][0].typeName).toContain("drainage");
+    expect(successfulFetch).toHaveBeenCalledTimes(2);
+
+    const reusedProject = await hydrateGeoLibreVectorLayer({
+      project: hydratedProject,
+      layerId: drainageId,
+      fetchFeatureCollection: successfulFetch,
+    });
+    expect(reusedProject).toBe(hydratedProject);
+    expect(successfulFetch).toHaveBeenCalledTimes(2);
+  });
+
+  it("keeps a failed lazy vector available for a later toggle retry", async () => {
+    const project = await buildGeoLibreProject({
+      ...location,
+      fetchFeatureCollection: successfulFetch,
+    });
+    const layerId = "corestack-mws_layers_fortnight";
+    const failedFetch = jest.fn(async () => {
+      throw new Error("temporary outage");
+    });
+
+    const failedProject = await hydrateGeoLibreVectorLayer({
+      project,
+      layerId,
+      fetchFeatureCollection: failedFetch,
+    });
+    expect(
+      failedProject.layers.find((layer) => layer.id === layerId).metadata
+    ).toMatchObject({ loadState: "error", initialLoadError: "temporary outage" });
+    expect(failedProject.metadata.layerLoading.lazyLoadFailures).toHaveLength(1);
+
+    const retriedProject = await hydrateGeoLibreVectorLayer({
+      project: failedProject,
+      layerId,
+      fetchFeatureCollection: successfulFetch,
+    });
+    expect(
+      retriedProject.layers.find((layer) => layer.id === layerId).metadata
+        .loadState
+    ).toBe("loaded");
+    expect(retriedProject.metadata.layerLoading.lazyLoadFailures).toEqual([]);
   });
 
   it("requires the socioeconomic extent", async () => {
