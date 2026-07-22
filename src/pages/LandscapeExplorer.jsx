@@ -1,8 +1,11 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useRecoilValue } from "recoil";
 import GeoLibreFrame from "../components/geolibre/GeoLibreFrame";
-import { buildGeoLibreProject } from "../components/geolibre/geolibreProject";
+import {
+  buildGeoLibreProject,
+  hydrateGeoLibreVectorLayer,
+} from "../components/geolibre/geolibreProject";
 import LandingNavbar from "../components/landing_navbar";
 import {
   blockAtom,
@@ -17,6 +20,31 @@ import {
 
 const labelOf = (selection) => selection?.label || "";
 
+const scopeKeyOf = (project) => {
+  const scope = project?.metadata?.scope;
+  return scope ? [scope.state, scope.district, scope.tehsil].join("|") : "";
+};
+
+const mergeHydratedVectorLayers = (viewerProject, hydratedLayers) => ({
+  ...viewerProject,
+  layers: viewerProject.layers.map((layer) => {
+    const hydrated = hydratedLayers.get(layer.id);
+    if (!hydrated) return layer;
+    return {
+      ...layer,
+      geojson: hydrated.geojson,
+      metadata: {
+        ...layer.metadata,
+        ...hydrated.metadata,
+        corestack: {
+          ...layer.metadata?.corestack,
+          ...hydrated.metadata?.corestack,
+        },
+      },
+    };
+  }),
+});
+
 const LandscapeExplorer = () => {
   const selectedState = useRecoilValue(stateAtom);
   const selectedDistrict = useRecoilValue(districtAtom);
@@ -26,6 +54,11 @@ const LandscapeExplorer = () => {
   const [progress, setProgress] = useState("Starting GeoLibre…");
   const [error, setError] = useState("");
   const [retryKey, setRetryKey] = useState(0);
+  const currentScopeKeyRef = useRef("");
+  const lazyQueueRef = useRef(Promise.resolve());
+  const lazyStateSequenceRef = useRef(0);
+  const hydratedLayersRef = useRef(new Map());
+  const hydrationDirtyRef = useRef(false);
 
   const scope = useMemo(() => {
     const params = new URLSearchParams(routeLocation.search);
@@ -42,6 +75,15 @@ const LandscapeExplorer = () => {
   ]);
 
   const hasLocation = Boolean(scope.state && scope.district && scope.tehsil);
+  const scopeKey = [scope.state, scope.district, scope.tehsil].join("|");
+
+  useEffect(() => {
+    currentScopeKeyRef.current = scopeKey;
+    lazyStateSequenceRef.current += 1;
+    lazyQueueRef.current = Promise.resolve();
+    hydratedLayersRef.current = new Map();
+    hydrationDirtyRef.current = false;
+  }, [scopeKey]);
 
   useEffect(() => {
     initializeAnalytics();
@@ -65,17 +107,12 @@ const LandscapeExplorer = () => {
       onProgress: ({ message }) => {
         if (!controller.signal.aborted) setProgress(message);
       },
-      onInitialProject: (overviewProject) => {
-        if (controller.signal.aborted) return;
-        setProject(overviewProject);
-        setProgress("Loading Watersheds in the background…");
-        trackEvent("GeoLibre", "open_workspace", scope.tehsil);
-      },
     })
       .then((nextProject) => {
         if (controller.signal.aborted) return;
         setProject(nextProject);
-        setProgress("Overview and Watersheds are ready.");
+        setProgress("Overview is ready. Toggle another layer to load it.");
+        trackEvent("GeoLibre", "open_workspace", scope.tehsil);
       })
       .catch((buildError) => {
         if (controller.signal.aborted) return;
@@ -88,6 +125,52 @@ const LandscapeExplorer = () => {
 
     return () => controller.abort();
   }, [hasLocation, retryKey, scope]);
+
+  const handleProjectState = useCallback((viewerProject) => {
+    const viewerScopeKey = scopeKeyOf(viewerProject);
+    const sequence = lazyStateSequenceRef.current + 1;
+    lazyStateSequenceRef.current = sequence;
+
+    lazyQueueRef.current = lazyQueueRef.current
+      .catch(() => undefined)
+      .then(async () => {
+        if (viewerScopeKey !== currentScopeKeyRef.current) return;
+
+        let nextProject = mergeHydratedVectorLayers(
+          viewerProject,
+          hydratedLayersRef.current
+        );
+        const layersToLoad = nextProject.layers.filter(
+          (layer) =>
+            layer.type === "geojson" &&
+            layer.visible &&
+            ["unloaded", "error"].includes(layer.metadata?.loadState)
+        );
+
+        for (const layer of layersToLoad) {
+          nextProject = await hydrateGeoLibreVectorLayer({
+            project: nextProject,
+            layerId: layer.id,
+          });
+          const hydrated = nextProject.layers.find(
+            (item) => item.id === layer.id
+          );
+          if (hydrated) hydratedLayersRef.current.set(layer.id, hydrated);
+          hydrationDirtyRef.current = true;
+        }
+
+        if (
+          viewerScopeKey !== currentScopeKeyRef.current ||
+          sequence !== lazyStateSequenceRef.current ||
+          (!layersToLoad.length && !hydrationDirtyRef.current)
+        ) {
+          return;
+        }
+
+        hydrationDirtyRef.current = false;
+        setProject(nextProject);
+      });
+  }, []);
 
   if (!hasLocation) {
     return (
@@ -116,8 +199,11 @@ const LandscapeExplorer = () => {
 
   const failures =
     project?.metadata?.layerLoading?.initialLoadFailures?.length || 0;
-  const warning = failures
-    ? `${failures} layer${failures === 1 ? "" : "s"} could not be preloaded. They remain listed in GeoLibre and can be retried with Refresh.`
+  const lazyFailures =
+    project?.metadata?.layerLoading?.lazyLoadFailures?.length || 0;
+  const totalFailures = failures + lazyFailures;
+  const warning = totalFailures
+    ? `${totalFailures} layer${totalFailures === 1 ? "" : "s"} could not be loaded. Toggle the layer off and on to retry.`
     : "";
 
   return (
@@ -128,6 +214,7 @@ const LandscapeExplorer = () => {
         preparationMessage={progress}
         preparationError={error}
         warning={warning}
+        onProjectState={handleProjectState}
         onRetry={() => setRetryKey((value) => value + 1)}
       />
     </div>

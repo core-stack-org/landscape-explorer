@@ -11,9 +11,11 @@ const GeoLibreFrame = ({
   preparationError,
   warning,
   onRetry,
+  onProjectState,
 }) => {
   const frameRef = useRef(null);
   const fitTimerRef = useRef(null);
+  const fittedScopeRef = useRef("");
   const sentProjectRef = useRef(null);
   const sequenceRef = useRef(0);
   const [viewerState, setViewerState] = useState("loading");
@@ -80,6 +82,11 @@ const GeoLibreFrame = ({
           event.data.message || "GeoLibre could not load the generated project."
         );
         setViewerState("error");
+        return;
+      }
+
+      if (event.data.type === "geolibre:state" && event.data.project) {
+        onProjectState?.(event.data.project);
       }
     };
 
@@ -88,7 +95,7 @@ const GeoLibreFrame = ({
       window.removeEventListener("message", handleMessage);
       if (handshakeTimer !== null) window.clearTimeout(handshakeTimer);
     };
-  }, [viewer.origin, viewer.url]);
+  }, [onProjectState, viewer.origin, viewer.url]);
 
   useEffect(
     () => () => {
@@ -121,11 +128,20 @@ const GeoLibreFrame = ({
       viewer.origin
     );
     sentProjectRef.current = project;
-    if (fitTimerRef.current !== null) {
-      window.clearTimeout(fitTimerRef.current);
-    }
     const bounds = project.mapView?.bbox;
-    if (Array.isArray(bounds) && bounds.length === 4) {
+    const scope = project.metadata?.scope;
+    const scopeKey = scope
+      ? [scope.state, scope.district, scope.tehsil].join("|")
+      : project.name || "default";
+    if (
+      Array.isArray(bounds) &&
+      bounds.length === 4 &&
+      fittedScopeRef.current !== scopeKey
+    ) {
+      fittedScopeRef.current = scopeKey;
+      if (fitTimerRef.current !== null) {
+        window.clearTimeout(fitTimerRef.current);
+      }
       fitTimerRef.current = window.setTimeout(() => {
         target.postMessage(
           {
@@ -157,6 +173,7 @@ const GeoLibreFrame = ({
           allowFullScreen
           data-geolibre-version={viewerVersion || undefined}
           onLoad={() => {
+            fittedScopeRef.current = "";
             setViewerVersion("");
             setViewerState((current) =>
               current === "loaded" ? current : "loading"
