@@ -5,6 +5,7 @@ import GeoLibreFrame from "../components/geolibre/GeoLibreFrame";
 import {
   buildGeoLibreProject,
   hydrateGeoLibreVectorLayer,
+  syncGeoLibreActiveLegends,
 } from "../components/geolibre/geolibreProject";
 import LandingNavbar from "../components/landing_navbar";
 import {
@@ -136,10 +137,12 @@ const LandscapeExplorer = () => {
       .then(async () => {
         if (viewerScopeKey !== currentScopeKeyRef.current) return;
 
-        let nextProject = mergeHydratedVectorLayers(
+        const mergedProject = mergeHydratedVectorLayers(
           viewerProject,
           hydratedLayersRef.current
         );
+        let nextProject = syncGeoLibreActiveLegends(mergedProject);
+        const legendChanged = nextProject !== mergedProject;
         const layersToLoad = nextProject.layers.filter(
           (layer) =>
             layer.type === "geojson" &&
@@ -162,7 +165,9 @@ const LandscapeExplorer = () => {
         if (
           viewerScopeKey !== currentScopeKeyRef.current ||
           sequence !== lazyStateSequenceRef.current ||
-          (!layersToLoad.length && !hydrationDirtyRef.current)
+          (!layersToLoad.length &&
+            !hydrationDirtyRef.current &&
+            !legendChanged)
         ) {
           return;
         }
