@@ -538,13 +538,21 @@ const buildVectorLayer = ({
 };
 
 const buildRasterLayer = ({ catalogLayer, layerName, baseUrl, bounds }) => {
-  const source = buildWmsSource(baseUrl, catalogLayer, layerName, bounds);
+  const wmsSource = buildWmsSource(baseUrl, catalogLayer, layerName, bounds);
   const wcsDownloadUrl = buildWcsUrl(baseUrl, catalogLayer, layerName);
+  const source = {
+    ...wmsSource,
+    // GeoLibre exposes its byte-preserving "GeoTIFF (COG)" export for a
+    // raster layer when source.url points to a complete downloadable file.
+    // Rendering still uses the styled WMS tile template above.
+    url: wcsDownloadUrl,
+    wmsUrl: wmsSource.url,
+  };
   const style = layerStyle(catalogLayer);
   return {
     id: `corestack-${catalogLayer.id}`,
     name: catalogLayer.label,
-    type: "wms",
+    type: "raster",
     source,
     visible: false,
     opacity: 1,
@@ -552,11 +560,16 @@ const buildRasterLayer = ({ catalogLayer, layerName, baseUrl, bounds }) => {
     metadata: {
       service: "wms",
       corestack: {
-        ...coreStackMetadata(catalogLayer, layerName, source.url),
+        ...coreStackMetadata(catalogLayer, layerName, wmsSource.url),
         wcsDownloadUrl,
+        rasterDownload: {
+          kind: "full-coverage-geotiff",
+          url: wcsDownloadUrl,
+          bytePreservingInGeoLibre: true,
+        },
       },
     },
-    sourcePath: source.url,
+    sourcePath: wcsDownloadUrl,
     groupId: catalogLayer.loadGroup,
   };
 };
