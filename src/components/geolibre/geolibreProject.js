@@ -421,7 +421,7 @@ const layerLegend = (catalogLayer, style) => {
     key: catalogLayer.baseId || catalogLayer.id,
     title: `${baseTitle} legend`,
     items,
-    legendPosition: "bottom-left",
+    legendPosition: "bottom-right",
   };
 };
 
@@ -778,33 +778,91 @@ const mapLegendEntries = (orderedLayers) => {
     : entries;
 };
 
-const legendPluginState = (entries) => {
+const legendPluginState = (entries, currentPlugins) => {
   const selected = entries[0];
-  if (!selected) return undefined;
+  const currentComponents =
+    currentPlugins?.settings?.["maplibre-gl-components"] || {};
+  const currentLegend = currentComponents.legend;
+  const selectedIndex = Math.max(
+    0,
+    entries.findIndex((entry) => entry.title === currentLegend?.title)
+  );
+  const selectedEntry = entries[selectedIndex] || selected;
+  const legend = selectedEntry
+    ? {
+        ...currentLegend,
+        visible: true,
+        collapsed: currentLegend?.collapsed ?? true,
+        hasLegend: true,
+        selectedLegendIndex: selectedIndex,
+        title: selectedEntry.title,
+        items: selectedEntry.items,
+        legendPosition: selectedEntry.legendPosition,
+        legends: entries.map(({ key: _key, ...entry }) => entry),
+      }
+    : {
+        ...currentLegend,
+        visible: false,
+        collapsed: true,
+        hasLegend: false,
+        selectedLegendIndex: 0,
+        title: "Legend",
+        items: [],
+        legendPosition: "bottom-right",
+        legends: [],
+      };
+
   return {
-    manifestUrls: [],
-    activePluginIds: [
-      "maplibre-layer-control",
-      "maplibre-atmosphere-effects",
-      "maplibre-deckgl-viz",
-      "maplibre-gl-components",
-    ],
-    mapControlPositions: { "maplibre-gl-components": "top-right" },
+    manifestUrls: currentPlugins?.manifestUrls || [],
+    activePluginIds: Array.from(
+      new Set([
+        ...(currentPlugins?.activePluginIds || [
+          "maplibre-layer-control",
+          "maplibre-atmosphere-effects",
+          "maplibre-deckgl-viz",
+        ]),
+        "maplibre-gl-components",
+      ])
+    ),
+    mapControlPositions: {
+      ...currentPlugins?.mapControlPositions,
+      "maplibre-gl-components": "top-right",
+    },
     settings: {
+      ...currentPlugins?.settings,
       "maplibre-gl-components": {
-        legend: {
-          visible: true,
-          collapsed: true,
-          hasLegend: true,
-          selectedLegendIndex: 0,
-          title: selected.title,
-          items: selected.items,
-          legendPosition: selected.legendPosition,
-          legends: entries.map(({ key: _key, ...entry }) => entry),
-        },
+        ...currentComponents,
+        legend,
       },
     },
   };
+};
+
+const legendStateSignature = (legend) =>
+  JSON.stringify({
+    visible: legend?.visible,
+    title: legend?.title,
+    items: legend?.items,
+    legendPosition: legend?.legendPosition,
+    legends: legend?.legends,
+  });
+
+export const syncGeoLibreActiveLegends = (project) => {
+  if (!project?.layers) return project;
+  const entries = mapLegendEntries(
+    project.layers.filter((layer) => layer.visible)
+  );
+  const plugins = legendPluginState(entries, project.plugins);
+  const currentLegend =
+    project.plugins?.settings?.["maplibre-gl-components"]?.legend;
+  const nextLegend = plugins.settings["maplibre-gl-components"].legend;
+
+  if (
+    legendStateSignature(currentLegend) === legendStateSignature(nextLegend)
+  ) {
+    return project;
+  }
+  return { ...project, plugins };
 };
 
 const readableError = (error) =>
@@ -1032,7 +1090,9 @@ export const buildGeoLibreProject = async ({
     const styles = Object.fromEntries(
       orderedLayers.map((layer) => [layer.id, layer.style])
     );
-    const mapLegends = mapLegendEntries(orderedLayers);
+    const mapLegends = mapLegendEntries(
+      orderedLayers.filter((layer) => layer.visible)
+    );
     const viewer = resolveGeoLibreViewer();
 
     return {

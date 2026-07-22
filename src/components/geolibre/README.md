@@ -56,7 +56,7 @@ sequenceDiagram
     GeoLibre-->>KYL: geolibre:state
     KYL->>GeoServer: WFS GetFeature
     GeoServer-->>KYL: GeoJSON FeatureCollection
-    KYL-->>GeoLibre: Hydrated project state
+    KYL-->>GeoLibre: Hydrated state and active-layer legends
     User->>GeoLibre: Toggle the layer off and on
     GeoLibre-->>KYL: geolibre:state
     Note over KYL,GeoLibre: Reuse cached layer; no second WFS request or bbox fit
@@ -72,7 +72,8 @@ sequenceDiagram
    the deployed KYL domain, GeoServer source, QML reference, year, and order.
 4. **Cartography:** vector QML logic is represented in GeoLibre styles; raster
    QML is rendered by the corresponding named GeoServer WMS style. Matching
-   color labels are also persisted in GeoLibre's native on-map legends.
+   color labels are synchronized into GeoLibre's native legend only while the
+   corresponding layer is visible.
 5. **Loading:** only the shared default WFS is fetched at startup. Other
    vectors hydrate once on first toggle; rasters remain native lazy WMS layers.
 6. **Download:** vector data remains available through GeoLibre and complete
@@ -116,11 +117,13 @@ attribution. A deployment can replace it with another valid MapLibre style:
 REACT_APP_GEOLIBRE_BASEMAP_STYLE_URL=https://maps.example.org/style.json
 ```
 
-GeoLibre's built-in Components plugin provides an on-map legend in minimized
-mode by default, keeping the map clear. Socio-Economic Profile is selected
-initially when the user expands it, and the selector includes the configured
-vector, raster, and LULC palettes. The separate `legend` project field retains
-ordering and grouping for GeoLibre's Print Layout legend.
+GeoLibre's built-in Components plugin provides one on-map legend control in
+minimized mode by default. Its rendered legend uses the bottom-right map corner,
+and its selector contains only layers that are currently visible. Toggling a
+layer on adds its symbol classes; toggling it off removes them. One selected
+layer's classes are shown at a time, so enabling several layers does not expand
+every palette across the map. The separate `legend` project field retains the
+complete layer ordering and grouping for GeoLibre's Print Layout legend.
 
 ## Version configuration
 
@@ -264,8 +267,9 @@ Check both routes:
    Satellite Hybrid basemap appears, the map fits the tehsil, and Demographic
    shows Administrative Boundaries then Socio-Economic Profile,
    both visible at `0.80`.
-4. Confirm the native legend starts minimized, expands to the Socio-Economic
-   colors, and its selector includes raster and LULC legends.
+4. Confirm the native legend starts minimized and lists only Administrative
+   Boundaries and Socio-Economic Profile. Toggle a raster or LULC layer on and
+   confirm its legend appears; toggle it off and confirm that entry disappears.
 5. Confirm no other layer loads by itself. Toggle a Climate layer and Drainage
    under Hydrology and confirm each loads. Toggle each
    off and on again and confirm its WFS request is not repeated.
