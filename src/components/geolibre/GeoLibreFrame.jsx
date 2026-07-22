@@ -18,6 +18,7 @@ const GeoLibreFrame = ({
   const sequenceRef = useRef(0);
   const [viewerState, setViewerState] = useState("loading");
   const [viewerError, setViewerError] = useState("");
+  const [viewerVersion, setViewerVersion] = useState("");
   const [readyGeneration, setReadyGeneration] = useState(0);
 
   const viewer = useMemo(() => {
@@ -66,6 +67,7 @@ const GeoLibreFrame = ({
           setViewerState("error");
           return;
         }
+        setViewerVersion(String(event.data.version));
         sentProjectRef.current = null;
         setViewerError("");
         setViewerState("ready");
@@ -153,10 +155,24 @@ const GeoLibreFrame = ({
           className="h-full w-full border-0 bg-white"
           allow="fullscreen; clipboard-read; clipboard-write"
           allowFullScreen
-          onLoad={() => setViewerState((current) =>
-            current === "loaded" ? current : "loading"
-          )}
+          data-geolibre-version={viewerVersion || undefined}
+          onLoad={() => {
+            setViewerVersion("");
+            setViewerState((current) =>
+              current === "loaded" ? current : "loading"
+            );
+          }}
         />
+      )}
+
+      {!activeError && viewerVersion && (
+        <div
+          className="pointer-events-none absolute bottom-8 right-3 rounded-md border border-slate-300 bg-white/95 px-2 py-1 text-[11px] font-medium text-slate-700 shadow-sm"
+          title={`Loaded from ${viewer.url}`}
+          role="status"
+        >
+          GeoLibre {viewerVersion} · {viewer.versionPinned ? "pinned" : "rolling host"}
+        </div>
       )}
 
       {(showProgress || activeError) && (

@@ -1,5 +1,9 @@
 const DEFAULT_VIEWER_URL = "https://web.geolibre.app/";
 
+// Change this one value when KYL moves to another tested GeoLibre release.
+// It selects the deployed build only when viewerUrlTemplate contains {version}.
+export const DEFAULT_GEOLIBRE_VERSION = "2.2.0";
+
 /**
  * The preferred GeoLibre application version for a versioned deployment.
  *
@@ -8,7 +12,7 @@ const DEFAULT_VIEWER_URL = "https://web.geolibre.app/";
  * uses this value only for {version} URL templates and project metadata.
  */
 export const GEOLIBRE_CONFIG = Object.freeze({
-  version: process.env.REACT_APP_GEOLIBRE_VERSION || "2.2.0",
+  version: process.env.REACT_APP_GEOLIBRE_VERSION || DEFAULT_GEOLIBRE_VERSION,
   minimumCompatibleVersion: "2.0.0",
   supportedMajorVersion: 2,
   viewerUrlTemplate:
@@ -38,6 +42,7 @@ const compareVersions = (left, right) => {
 
 export const resolveGeoLibreViewer = (config = GEOLIBRE_CONFIG) => {
   const version = String(config.version).replace(/^v/, "");
+  const versionPinned = config.viewerUrlTemplate.includes("{version}");
   const resolvedTemplate = config.viewerUrlTemplate.replaceAll(
     "{version}",
     version
@@ -45,7 +50,7 @@ export const resolveGeoLibreViewer = (config = GEOLIBRE_CONFIG) => {
   const url = new URL(resolvedTemplate);
   url.searchParams.set("embed", "1");
   url.searchParams.set("welcome", "0");
-  return { url: url.toString(), origin: url.origin };
+  return { url: url.toString(), origin: url.origin, versionPinned };
 };
 
 export const geoLibreVersionStatus = (

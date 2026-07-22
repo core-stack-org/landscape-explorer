@@ -35,6 +35,8 @@ describe("GeoLibre iframe bridge", () => {
 
     act(() => announceReady(frame, "2.1.0"));
 
+    expect(screen.getByText(/GeoLibre 2\.1\.0 · rolling host/i)).toBeTruthy();
+
     expect(postMessage).toHaveBeenCalledWith(
       expect.objectContaining({
         type: "geolibre:load-project",

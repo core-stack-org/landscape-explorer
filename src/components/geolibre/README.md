@@ -52,11 +52,14 @@ contains the full tehsil rather than a generic India extent.
 
 The default hosted viewer accepts any GeoLibre release from `2.0.0` up to, but
 not including, `3.0.0`. Compatible 2.x hosted upgrades need no KYL code change.
-The compatibility range lives in `../../config/geolibre.config.js`:
+The one source-code value to update is `DEFAULT_GEOLIBRE_VERSION` in
+`../../config/geolibre.config.js`:
 
 ```js
+export const DEFAULT_GEOLIBRE_VERSION = "2.2.0";
+
 export const GEOLIBRE_CONFIG = Object.freeze({
-  version: process.env.REACT_APP_GEOLIBRE_VERSION || "2.2.0",
+  version: process.env.REACT_APP_GEOLIBRE_VERSION || DEFAULT_GEOLIBRE_VERSION,
   minimumCompatibleVersion: "2.0.0",
   supportedMajorVersion: 2,
   // ...
@@ -80,6 +83,8 @@ from an existing browser cache. KYL checks its reported version, accepts the
 compatible 2.x range, and rejects other major versions. `{version}` is replaced
 automatically for versioned deployments. A major-version update should update
 the compatibility rules and project/bridge tests, not just the version value.
+The small badge over the iframe reports the version that actually completed the
+GeoLibre handshake and whether its deployment URL is `rolling` or `pinned`.
 
 GeoLibre's application version (`2.2.0`) is separate from its project schema
 version (`0.2.0`). Do not change the project format merely when upgrading the
@@ -104,7 +109,16 @@ requests), 24 LULC year/level rasters, and 8 other rasters.
   styles. The source QML URL remains in `metadata.corestack.qmlStyleUrl`.
 - Raster QML styles are published as named GeoServer styles and rendered by
   WMS. Their original QML URLs are also retained.
-- WCS GetCoverage URLs remain in raster metadata for data export workflows.
+- Each raster keeps its styled WMS tiles for display and exposes its complete
+  WCS GetCoverage GeoTIFF as `source.url`. This is the contract GeoLibre 2.1+
+  uses to show **Export → GeoTIFF (COG)** and save the returned bytes without
+  subset extraction or client-side re-encoding.
+
+GeoServer WCS returns the complete published coverage, matching KYL's previous
+download flow. It is not guaranteed to be byte-identical to GeoServer's private
+backing file. If immutable original COG objects are published later, place those
+direct object URLs in the raster catalogue and use them instead of the WCS
+fallback.
 
 Changing only a QML URL does not alter rendered vector symbology; update the
 matching style profile in `geolibreProject.js`. Raster appearance changes must
