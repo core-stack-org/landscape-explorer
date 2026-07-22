@@ -5,6 +5,7 @@ import {
   geoJsonBounds,
   hydrateGeoLibreVectorLayer,
   mapViewFromBounds,
+  syncGeoLibreActiveLegends,
 } from "./geolibreProject";
 import { GEOLIBRE_LAYERS } from "../../config/geolibreLayers";
 
@@ -205,7 +206,7 @@ describe("GeoLibre 2.2 project generation", () => {
     ]);
   });
 
-  it("starts a minimized color legend with the configured layer palettes", async () => {
+  it("starts a minimized legend containing only active default layers", async () => {
     const project = await buildGeoLibreProject({
       ...location,
       fetchFeatureCollection: successfulFetch,
@@ -227,14 +228,55 @@ describe("GeoLibre 2.2 project generation", () => {
       color: "#006400",
       shape: "square",
     });
-    expect(legend.legends.map((entry) => entry.title)).toEqual(
-      expect.arrayContaining([
-        "Drainage legend",
-        "Terrain legend",
-        "LULC Level 3 legend",
-        "Restoration Opportunities legend",
-      ])
-    );
+    expect(legend.legendPosition).toBe("bottom-right");
+    expect(legend.legends.map((entry) => entry.title)).toEqual([
+      "Socio-Economic Profile legend",
+      "Administrative Boundaries legend",
+    ]);
+  });
+
+  it("adds and removes legend entries when layer visibility changes", async () => {
+    const project = await buildGeoLibreProject({
+      ...location,
+      fetchFeatureCollection: successfulFetch,
+    });
+    const withVisibleLayers = {
+      ...project,
+      layers: project.layers.map((layer) =>
+        ["corestack-drainage", "corestack-terrain"].includes(layer.id)
+          ? { ...layer, visible: true }
+          : layer
+      ),
+    };
+    const synced = syncGeoLibreActiveLegends(withVisibleLayers);
+    const legend =
+      synced.plugins.settings["maplibre-gl-components"].legend;
+
+    expect(legend.legends.map((entry) => entry.title)).toEqual([
+      "Socio-Economic Profile legend",
+      "Administrative Boundaries legend",
+      "Drainage legend",
+      "Terrain legend",
+    ]);
+
+    const drainageHidden = {
+      ...synced,
+      layers: synced.layers.map((layer) =>
+        layer.id === "corestack-drainage"
+          ? { ...layer, visible: false }
+          : layer
+      ),
+    };
+    const resynced = syncGeoLibreActiveLegends(drainageHidden);
+    expect(
+      resynced.plugins.settings["maplibre-gl-components"].legend.legends.map(
+        (entry) => entry.title
+      )
+    ).toEqual([
+      "Socio-Economic Profile legend",
+      "Administrative Boundaries legend",
+      "Terrain legend",
+    ]);
   });
 
   it("loads only the shared Demographic source during project creation", async () => {
