@@ -182,10 +182,21 @@ describe("GeoLibre 2.2 project generation", () => {
     expect(displayIds.slice(0, 5)).toEqual([
       "corestack-administrative_boundaries",
       "corestack-demographics",
-      "corestack-drainage",
-      "corestack-remote_sensed_waterbodies",
-      "corestack-soge",
+      "corestack-mws_layers",
+      "corestack-hydrological_boundaries",
+      "corestack-mws_layers_fortnight",
     ]);
+    expect(
+      project.layers
+        .filter((layer) =>
+          [
+            "corestack-mws_layers",
+            "corestack-hydrological_boundaries",
+            "corestack-mws_layers_fortnight",
+          ].includes(layer.id)
+        )
+        .every((layer) => layer.groupId === "hydrology")
+    ).toBe(true);
     expect(displayIds.indexOf("corestack-lulc_level_3_24_25")).toBeLessThan(
       displayIds.indexOf("corestack-lulc_level_3_23_24")
     );
