@@ -4,6 +4,9 @@ import GeoLibreFrame from "./GeoLibreFrame";
 const project = {
   version: "0.2.0",
   name: "Lakhipur project",
+  metadata: {
+    scope: { state: "Assam", district: "Cachar", tehsil: "Lakhipur" },
+  },
   mapView: {
     center: [93.04, 24.84],
     zoom: 9.6,
@@ -73,26 +76,58 @@ describe("GeoLibre iframe bridge", () => {
     );
   });
 
-  it("replaces the Overview project when background Watersheds are ready", () => {
+  it("reloads a lazily hydrated project without fitting the tehsil again", () => {
     const { rerender } = render(<GeoLibreFrame project={project} />);
     const frame = screen.getByTitle("GeoLibre GIS workspace");
     const postMessage = jest.spyOn(frame.contentWindow, "postMessage");
 
     act(() => announceReady(frame));
+    act(() => jest.advanceTimersByTime(1500));
 
-    const watershedProject = {
+    const hydratedProject = {
       ...project,
-      metadata: { layerLoading: { stage: "watersheds" } },
+      layers: [{ id: "corestack-drainage", visible: true }],
     };
-    rerender(<GeoLibreFrame project={watershedProject} />);
+    rerender(<GeoLibreFrame project={hydratedProject} />);
 
     expect(postMessage).toHaveBeenCalledWith(
       expect.objectContaining({
         type: "geolibre:load-project",
-        project: watershedProject,
+        project: hydratedProject,
         seq: 2,
       }),
       "https://web.geolibre.app"
     );
+    act(() => jest.advanceTimersByTime(1500));
+    expect(
+      postMessage.mock.calls.filter(
+        ([message]) => message.type === "geolibre:command" && message.method === "fitBounds"
+      )
+    ).toHaveLength(1);
+  });
+
+  it("forwards viewer state snapshots for toggle-triggered loading", () => {
+    const onProjectState = jest.fn();
+    render(
+      <GeoLibreFrame project={project} onProjectState={onProjectState} />
+    );
+    const frame = screen.getByTitle("GeoLibre GIS workspace");
+    act(() => announceReady(frame));
+
+    const viewerProject = {
+      ...project,
+      layers: [{ id: "corestack-drainage", visible: true }],
+    };
+    act(() => {
+      window.dispatchEvent(
+        new MessageEvent("message", {
+          origin: "https://web.geolibre.app",
+          source: frame.contentWindow,
+          data: { type: "geolibre:state", project: viewerProject },
+        })
+      );
+    });
+
+    expect(onProjectState).toHaveBeenCalledWith(viewerProject);
   });
 });

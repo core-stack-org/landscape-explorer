@@ -66,7 +66,7 @@ const LandingNavbar = () => {
                   </a>
                 </div>
                 <p className="text-center text-xs text-slate-600 sm:text-right">
-                  Can&apos;t download a QML style in GeoLibre? Get it from the{" "}
+                  To Use these layers with QGIS, download layer styles from the{" "}
                   <a
                     href="https://github.com/core-stack-org/QGIS-Styles"
                     target="_blank"
