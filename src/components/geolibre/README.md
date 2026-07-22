@@ -87,7 +87,7 @@ GeoLibre's own layer panel follows the deployed Download Layers taxonomy,
 ordered top-first as:
 
 1. Demographic (Administrative Boundaries, Socio-Economic Profile)
-2. Hydrology
+2. Hydrology (including micro-watersheds and hydrological variables)
 3. LULC Level 3 by year
 4. LULC Level 2 by year
 5. LULC Level 1 by year
@@ -270,7 +270,7 @@ Check both routes:
 4. Confirm the native legend starts minimized and lists only Administrative
    Boundaries and Socio-Economic Profile. Toggle a raster or LULC layer on and
    confirm its legend appears; toggle it off and confirm that entry disappears.
-5. Confirm no other layer loads by itself. Toggle a Climate layer and Drainage
+5. Confirm no other layer loads by itself. Toggle Micro-watersheds and Drainage
    under Hydrology and confirm each loads. Toggle each
    off and on again and confirm its WFS request is not repeated.
 6. Confirm the map does not refit after those vector loads. Enable a raster and
@@ -286,7 +286,7 @@ refreshed or shared on the same KYL host because the location is URL-backed.
 For a release upgrade, verify all of the following before changing the default
 version: the ready handshake reports the expected release, the project loads
 without `geolibre:error`, both default Demographic layers are visible at `0.8`,
-the full tehsil fits exactly once, Climate, Hydrology, and other vectors hydrate
+the full tehsil fits exactly once, Hydrology and other vectors hydrate
 only when toggled and are then reused, WMS tiles appear only when enabled, and GeoLibre
 can save/export the resulting project.
 
