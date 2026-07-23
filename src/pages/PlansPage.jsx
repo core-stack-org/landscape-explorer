@@ -420,6 +420,7 @@ const PlansPage = () => {
     const metaStatsRef    = useRef(null);
     const hasRestoredRef  = useRef(false);
     const viewModeRef = useRef("plans");
+    const stewardLayerRef = useRef(null);
 
     const [viewMode,            setViewMode]            = useState("plans");
     const [metaStats,           setMetaStats]           = useState(null);
@@ -984,6 +985,7 @@ const handleVillageSuggestionSelect = (placeId, description) => {
             geometry:    new Point([parseFloat(p.longitude), parseFloat(p.latitude)]),
             planDetails: p,
             });
+            f.set("featureType", "plan");
             f.setStyle(DOT_DEFAULT(getPlanStatus(p)));
             return f;
         });
@@ -1004,6 +1006,85 @@ const handleVillageSuggestionSelect = (placeId, description) => {
         duration: 600,
         });
     };
+
+    const addStewardDots = (stewardsData) => {
+  const map = mapRef.current;
+  if (!map) return;
+
+  if (stewardLayerRef.current) {
+    map.removeLayer(stewardLayerRef.current);
+    stewardLayerRef.current = null;
+  }
+
+  const features = stewardsData
+    .map((steward) => {
+      const firstPlan = steward.plans?.find(
+        (plan) =>
+          plan.latitude != null &&
+          plan.longitude != null
+      );
+
+      if (!firstPlan) return null;
+
+      const feature = new Feature({
+        geometry: new Point([
+          Number(firstPlan.longitude),
+          Number(firstPlan.latitude),
+        ]),
+      });
+
+      feature.set("stewardDetails", steward);
+      feature.set("featureType", "steward");
+      feature.setStyle(STEWARD_DOT_DEFAULT());
+      return feature;
+    })
+    .filter(Boolean);
+
+  if (!features.length) return;
+
+  const layer = new VectorLayer({
+    source: new VectorSource({ features }),
+    zIndex: 20,
+  });
+
+  layer.set("layerName", "stewardLayer");
+  stewardLayerRef.current = layer;
+  map.addLayer(layer);
+
+  map.getView().fit(layer.getSource().getExtent(), {
+    padding: [60, 60, 60, 60],
+    duration: 600,
+  });
+};
+
+const STEWARD_DOT_DEFAULT = () =>
+  new Style({
+    image: new CircleStyle({
+      radius: 7,
+      fill: new Fill({
+        color: "#6C3EFF",
+      }),
+      stroke: new Stroke({
+        color: "#ffffff",
+        width: 2,
+      }),
+    }),
+  });
+
+const STEWARD_DOT_HOVERED = () =>
+  new Style({
+    image: new CircleStyle({
+      radius: 10,
+      fill: new Fill({
+        color: "#6C3EFF",
+      }),
+      stroke: new Stroke({
+        color: "#ffffff",
+        width: 2.5,
+      }),
+    }),
+  });
+
 
     // ── STATE CLICK → DRILL DOWN ────────────────────────────────
     const handleStatePinClick = async (stateData) => {
@@ -1072,6 +1153,7 @@ const handleVillageSuggestionSelect = (placeId, description) => {
         setMapLoading(true);
         currentDistrictRef.current = districtData;
 
+
         if (districtLayerRef.current) {
           mapRef.current.removeLayer(districtLayerRef.current);
           districtLayerRef.current = null;
@@ -1097,13 +1179,24 @@ const handleVillageSuggestionSelect = (placeId, description) => {
         setStewardLoading(true);
         setSelectedSteward(null);
         currentDistrictRef.current = districtData;
+         if (districtLayerRef.current) {
+          mapRef.current.removeLayer(districtLayerRef.current);
+          districtLayerRef.current = null;
+        }
+
         try {
           const data = await fetchStewardListing(
             currentStateRef.current?.state_id,
             orgRef.current?.value ?? null,
             districtData.district_id
           );
-          setStewardListing(data.stewards ?? []);
+         const stewards = data.stewards ?? [];
+         console.log("Stewards:", stewards);
+          console.log("First steward:", stewards[0]);
+
+          setStewardListing(stewards);
+          addStewardDots(stewards);
+
         } catch (err) {
           console.error("Steward listing failed:", err);
         } finally {
@@ -1221,11 +1314,31 @@ const handleVillageSuggestionSelect = (placeId, description) => {
         } finally {
           setStatsLoading(false);
         }
-      } else {
-        // Stewards: just clear the listing, district pins are still on the map
-        setStewardListing([]);
-        setSelectedSteward(null);
-      }
+   } else {
+  // Remove steward dots
+  if (stewardLayerRef.current) {
+    map.removeLayer(stewardLayerRef.current);
+    stewardLayerRef.current = null;
+  }
+    hoveredFeatureRef.current = null;
+  selectedFeatureRef.current = null;
+
+  setStewardListing([]);
+  setSelectedSteward(null);
+
+  // Restore district pins
+  try {
+    const stewardData = await fetchStewardStats(
+      orgRef.current?.value ?? null,
+      currentStateRef.current.state_id
+    );
+
+    setStewardStats(stewardData);
+    await addDistrictPins(stewardData.district_level ?? []);
+  } catch (err) {
+    console.error("Back to district pins failed:", err);
+  }
+}
     };
 
     // ── MAP CLICK HANDLER ───────────────────────────────────────
@@ -1246,6 +1359,21 @@ const handleVillageSuggestionSelect = (placeId, description) => {
               setSelectedPlan(feature.get("planDetails"));
               return true;
             }
+
+            if (layerName === "stewardLayer") {
+                const steward = feature.get("stewardDetails");
+
+                if (steward) {
+                  setStewardModalPlan({
+                    facilitator_name: steward.facilitator_name,
+                    organization:
+                      steward.organization?.id ??
+                      getStewardOrgId(steward.facilitator_name),
+                  });
+                }
+
+                return true;
+              }
 
             if (layerName === "bubbleLayer") {
               const stateData = feature.get("stateData");
@@ -1272,23 +1400,41 @@ const handleVillageSuggestionSelect = (placeId, description) => {
 
             const layerName = hitLayer?.get("layerName");
 
-            if (
-            hoveredFeatureRef.current &&
-            hoveredFeatureRef.current !== hitFeature &&
-            hoveredFeatureRef.current !== selectedFeatureRef.current
+          if (
+              hoveredFeatureRef.current &&
+              hoveredFeatureRef.current !== hitFeature &&
+              hoveredFeatureRef.current !== selectedFeatureRef.current
             ) {
-                hoveredFeatureRef.current.setStyle(DOT_DEFAULT(getFeatureStatus(hoveredFeatureRef.current)));
-                hoveredFeatureRef.current = null;
+              if (hoveredFeatureRef.current.get("featureType") === "steward") {
+                hoveredFeatureRef.current.setStyle(STEWARD_DOT_DEFAULT());
+              } else {
+                hoveredFeatureRef.current.setStyle(
+                  DOT_DEFAULT(getFeatureStatus(hoveredFeatureRef.current))
+                );
+              }
+
+              hoveredFeatureRef.current = null;
             }
 
-            if (hitFeature && layerName === "planLayer" && hitFeature !== selectedFeatureRef.current) {
-            hitFeature.setStyle(DOT_HOVERED(getFeatureStatus(hitFeature)));
-            hoveredFeatureRef.current = hitFeature;
-                map.getTargetElement().style.cursor = "pointer";
+          if (
+              hitFeature &&
+              layerName === "planLayer" &&
+              hitFeature !== selectedFeatureRef.current
+            ) {
+              hitFeature.setStyle(DOT_HOVERED(getFeatureStatus(hitFeature)));
+              hoveredFeatureRef.current = hitFeature;
+              map.getTargetElement().style.cursor = "pointer";
+
+            } else if (hitFeature && layerName === "stewardLayer") {
+              hitFeature.setStyle(STEWARD_DOT_HOVERED());
+              hoveredFeatureRef.current = hitFeature;
+              map.getTargetElement().style.cursor = "pointer";
+
             } else if (hitFeature && layerName === "bubbleLayer") {
-                map.getTargetElement().style.cursor = "pointer";
+              map.getTargetElement().style.cursor = "pointer";
+
             } else if (!hitFeature) {
-                map.getTargetElement().style.cursor = "default";
+              map.getTargetElement().style.cursor = "default";
             }
         };
 
@@ -1944,7 +2090,7 @@ const handleVillageSuggestionSelect = (placeId, description) => {
                     </div>
 
 
-                    <div className="bg-white rounded-2xl p-4 shadow-sm"
+                    {/* <div className="bg-white rounded-2xl p-4 shadow-sm"
                       style={{ border: `1px solid ${P.border}` }}>
                       <div className="flex items-center justify-between mb-3">
                         <p className="text-xs font-semibold uppercase tracking-widest"
@@ -2043,7 +2189,7 @@ const handleVillageSuggestionSelect = (placeId, description) => {
                           </div>
                         </div>
                       )}
-                    </div>
+                    </div> */}
                   </>
 
                 ) : (
