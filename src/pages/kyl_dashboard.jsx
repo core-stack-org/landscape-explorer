@@ -54,7 +54,7 @@ import { layerErrorBus, emitLayerError, LAYER_ERROR_TYPES } from "../actions/lay
 import { useLayerErrors } from '../actions/useLayerErrors';
 import LayerErrorToast from '../actions/LayerErrorToast';
 import Overlay from "ol/Overlay";
-
+import ScaleLine from "ol/control/ScaleLine";
 const KYLDashboardPage = () => {
   const mapElement = useRef(null);
   const mapRef = useRef(null);
@@ -2108,10 +2108,22 @@ const handleResetMWS = () => {
           smoothExtentConstraint: true,
           smoothResolutionConstraint: true,
         }),
+        
         loadTilesWhileAnimating: true,
         loadTilesWhileInteracting: true,
       });
-  
+      const scaleLine = new ScaleLine({
+        units: "metric",
+        minWidth: 100,
+      });
+
+      map.addControl(scaleLine);
+      const scaleElement = scaleLine.element;
+      scaleElement.style.left = "auto";
+      scaleElement.style.right = "20px";
+      scaleElement.style.bottom = "20px";
+      scaleElement.style.top = "auto";
+      scaleElement.style.position = "absolute";
       mapRef.current = map;
       const tooltip = document.createElement("div");
 
