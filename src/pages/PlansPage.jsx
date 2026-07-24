@@ -17,8 +17,10 @@ import LandingNavbar from "../components/landing_navbar.jsx";
 import FilterListIcon from "@mui/icons-material/FilterList";
 import SelectReact from "react-select";
 import StewardDetailPage from "../components/steward_detailPage.jsx";
-import { useSearchParams } from "react-router-dom";
 import { useMap, useMapsLibrary } from "@vis.gl/react-google-maps";
+import { distance } from "fastest-levenshtein";
+import { useSearchParams } from "react-router-dom";
+
 
 const P = {
   base:    "oklch(49.6% 0.265 301.924)",
@@ -471,6 +473,28 @@ const PlansPage = () => {
       );
     };
 
+    const findClosestDistrict = (districtName, nameToId) => {
+  const search = districtName.toLowerCase().trim();
+
+  let bestKey = null;
+  let bestDistance = Infinity;
+
+  Object.keys(nameToId).forEach((key) => {
+    const d = distance(search, key.toLowerCase());
+
+    if (d < bestDistance) {
+      bestDistance = d;
+      bestKey = key;
+    }
+  });
+
+  console.log(
+    `Closest match: ${districtName} → ${bestKey} (distance: ${bestDistance})`
+  );
+
+  return bestDistance <= 2 ? nameToId[bestKey] : null;
+};
+
 const handleVillageSuggestionSelect = (placeId, description) => {
       setVillageSearchText(description);
       setVillageSuggestions([]);
@@ -488,8 +512,14 @@ const handleVillageSuggestionSelect = (placeId, description) => {
 
           const components  = place?.address_components ?? [];
           const stateName    = components.find((c) => c.types.includes("administrative_area_level_1"))?.long_name;
-          const districtName = components.find((c) => c.types.includes("administrative_area_level_2"))?.long_name;
+          const districtName = components.find((c) => c.types.includes("administrative_area_level_3"))?.long_name ||
+                               components.find((c) => c.types.includes("administrative_area_level_2"))?.long_name;
+          const tehsilName =  components.find((c) => c.types.includes("locality"))?.long_name ||  place?.name;
           const searchTerm    = (place?.name || description.split(",")[0] || "").toLowerCase();
+          console.log(components);
+          console.log("District Name:", districtName);
+          // console.log("District Lookup:", nameToId[districtName?.toLowerCase()]);
+          console.log("Tehsil Name:", tehsilName);
 
           if (bubbleLayerRef.current) {
             mapRef.current.removeLayer(bubbleLayerRef.current);
@@ -508,7 +538,10 @@ const handleVillageSuggestionSelect = (placeId, description) => {
               const nameToId = Object.fromEntries(
                 Object.entries(districtLookupRef.current).map(([id, name]) => [name.toLowerCase(), Number(id)])
               );
-              const districtId = nameToId[districtName.toLowerCase()];
+              let districtId = nameToId[districtName.toLowerCase()];
+              if (!districtId) {
+                districtId = findClosestDistrict(districtName, nameToId);
+              }
               if (districtId) {
                 currentDistrictRef.current = { district_id: districtId, district_name: districtName };
                 const [plans, districtStats, dprData, trackingData] = await Promise.all([
@@ -517,6 +550,8 @@ const handleVillageSuggestionSelect = (placeId, description) => {
                   fetchDprReportStatus({ organizationId: orgRef.current?.value ?? null, districtId }),
                   fetchStatusTracking({ organizationId: orgRef.current?.value ?? null, districtId }),
                 ]);
+                  console.log("District plans count:", plans.length);
+
                 addPlanDots(plans);
                 setMetaStats(districtStats);
                 setDprStatus(dprData);
@@ -1666,7 +1701,61 @@ const STEWARD_DOT_HOVERED = () =>
                   styles={selectStyles}
                 />
               </div>
+
+              <SelectReact
+                value={organization}
+                onChange={handleOrgChange}
+                options={filteredOrgOptions}
+                isClearable
+                placeholder="Filter by organization"
+                styles={selectStyles}
+              />
             </div>
+
+              {/* Village Search */}
+            <div className="relative flex-1">
+              <div
+                className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 z-10"
+                style={{ color: P.muted }}
+              >
+                <FilterListIcon style={{ fontSize: 18 }} />
+              </div>
+
+              <input
+                type="text"
+                value={villageSearchText}
+                onChange={(e) => handleVillageInputChange(e.target.value)}
+                placeholder="Search village name..."
+                className="w-full pl-9 pr-3 rounded-xl text-sm outline-none"
+                style={{
+                  minHeight: "42px",
+                  border: "1px solid rgba(220, 200, 240, 0.8)",
+                  boxShadow: "0 8px 24px rgba(0,0,0,0.10)",
+                  backgroundColor: "rgba(255,255,255,0.97)",
+                  backdropFilter: "blur(6px)",
+                  color: P.text,
+                }}
+              />
+
+              {villageSuggestions.length > 0 && (
+                <div
+                  className="absolute top-full left-0 right-0 mt-1 rounded-xl overflow-hidden z-20"
+                  style={{ background: "white", boxShadow: "0 8px 24px rgba(0,0,0,0.12)" }}
+                >
+                  {villageSuggestions.map((s) => (
+                    <div
+                      key={s.place_id}
+                      onClick={() => handleVillageSuggestionSelect(s.place_id, s.description)}
+                      className="px-3 py-2 text-sm cursor-pointer hover:bg-gray-50"
+                      style={{ color: P.text, borderBottom: `1px solid ${P.border}` }}
+                    >
+                      {s.description}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
 
             {/* PLAN STATUS LEGEND */}
             {planDotsVisible && (
