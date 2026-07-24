@@ -18,10 +18,12 @@ import {
   initializeAnalytics,
 } from "../services/analytics";
 import LandingNavbar from "../components/landing_navbar.jsx";
+import GeoLibreRustWorkbench from "../components/geolibre-rust/GeoLibreRustWorkbench.jsx";
 
 const LandscapeExplorer = () => {
   const [showLeftSidebar, setShowLeftSidebar] = useState(false);
   const [showRightSidebar, setShowRightSidebar] = useState(true);
+  const [showRustWorkbench, setShowRustWorkbench] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
   // Recoil state
@@ -50,6 +52,11 @@ const LandscapeExplorer = () => {
       mapRef.current = node;
     }
   }, []);
+
+  const getMapInstance = useCallback(
+    () => mapRef.current?.getMap?.() || null,
+    []
+  );
 
   // Layer toggle state - with demographics on by default
   const [toggledLayers, setToggledLayers] = useState({
@@ -376,6 +383,17 @@ const LandscapeExplorer = () => {
 
 
         <div className="flex-1 relative p-2">
+          <button
+            type="button"
+            onClick={() => setShowRustWorkbench(true)}
+            className="absolute left-5 top-5 z-30 flex items-center gap-2 rounded-lg border border-orange-200 bg-white/95 px-3 py-2 text-sm font-semibold text-slate-800 shadow-lg backdrop-blur hover:bg-orange-50"
+            aria-label="Open KYL GeoLibre Rust Workbench"
+          >
+            <span className="rounded bg-orange-100 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-orange-700">
+              Rust
+            </span>
+            Analysis Workbench
+          </button>
 
           <Map
             ref={setMapRef}
@@ -452,6 +470,14 @@ const LandscapeExplorer = () => {
           </div>
         )}
       </div>
+      <GeoLibreRustWorkbench
+        open={showRustWorkbench}
+        onClose={() => setShowRustWorkbench(false)}
+        district={district?.label}
+        tehsil={block?.label}
+        getMap={getMapInstance}
+        toggledLayers={toggledLayers}
+      />
     </div>
   );
 };
