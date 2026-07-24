@@ -1,0 +1,25 @@
+{
+  "version": 8,
+  "name": "Google Hybrid",
+  "sources": {
+    "google-hybrid": {
+      "type": "raster",
+      "tiles": [
+        "https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}"
+      ],
+      "tileSize": 256,
+      "maxzoom": 22,
+      "attribution": "Google"
+    }
+  },
+  "layers": [
+    {
+      "id": "google-hybrid",
+      "type": "raster",
+      "source": "google-hybrid",
+      "paint": {
+        "raster-fade-duration": 120
+      }
+    }
+  ]
+}

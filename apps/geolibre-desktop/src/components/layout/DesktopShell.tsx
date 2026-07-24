@@ -142,6 +142,12 @@ import { TopToolbar } from "./TopToolbar";
 import type { LayoutOptions } from "../../hooks/useLayoutOptions";
 import type { ThemeMode } from "../../hooks/useThemeMode";
 import type { ProjectUrlLoadState } from "../../hooks/useProjectUrlLoader";
+import { CORE_GEOSTACK_PLUGIN_ID } from "../../core-geostack/constants";
+import { restoreCoreGeoStack } from "../../core-geostack/plugin";
+import {
+  getCoreGeoStackWorkspaceSnapshot,
+  subscribeCoreGeoStackWorkspace,
+} from "../../core-geostack/workspace-state";
 
 /**
  * Confirm loading a vector source whose feature count tripped the loader's
@@ -648,6 +654,11 @@ export function DesktopShell({
   // Style (right) or Layers (left) sidebar surface (issue #765).
   const replaceStylePanelId = useReplaceStylePanelId();
   const replaceLayersPanelId = useReplaceLayersPanelId();
+  const coreGeoStackWorkspace = useSyncExternalStore(
+    subscribeCoreGeoStackWorkspace,
+    getCoreGeoStackWorkspaceSnapshot,
+    getCoreGeoStackWorkspaceSnapshot,
+  );
   const [pluginPanelWidth, setPluginPanelWidth] = useState(PLUGIN_PANEL_DEFAULT_WIDTH);
   // The active plugin panel's content lives in this one host element (created
   // once per app instance). The active dock slot adopts it via appendChild, so
@@ -720,6 +731,19 @@ export function DesktopShell({
   const [diagnosticsOpen, setDiagnosticsOpen] = useState(false);
   const diagnostics = useDiagnosticsSnapshot();
   const externalPluginsReady = useExternalPluginsReady(mapControllerRef);
+  useEffect(() => {
+    // CoRE-GeoStack is the product shell, so mount it as soon as the first map
+    // instance exists. External plugin discovery can take several seconds on a
+    // cold browser; the primary KYL workspace must never wait behind it.
+    if (!mapReadyGeneration || !mapControllerRef.current) return;
+    const appAPI = createAppAPI(mapControllerRef);
+    const pluginManager = getPluginManager();
+    if (!pluginManager.isActive(CORE_GEOSTACK_PLUGIN_ID)) {
+      pluginManager.activate(CORE_GEOSTACK_PLUGIN_ID, appAPI);
+    } else {
+      restoreCoreGeoStack(appAPI);
+    }
+  }, [mapControllerRef, mapReadyGeneration]);
   // Gate plugin URLs carried inside an opened project behind an explicit trust
   // decision before any of their code is fetched or imported (#1062).
   const projectPluginTrust = useProjectPluginTrust();
@@ -1008,7 +1032,18 @@ export function DesktopShell({
     if (!externalPluginsReady || !mapReadyGeneration || !mapControllerRef.current) return;
     const appAPI = createAppAPI(mapControllerRef);
     const pluginManager = getPluginManager();
-    pluginManager.restoreProjectState(useAppStore.getState().projectPlugins, appAPI);
+    const savedPluginState = useAppStore.getState().projectPlugins;
+    // Older GeoLibre/KYL projects predate this distribution-owned plugin.
+    // Loading one must restore its data without switching off the product shell.
+    const projectPluginState = savedPluginState
+      ? {
+          ...savedPluginState,
+          activePluginIds: [
+            ...new Set([...savedPluginState.activePluginIds, CORE_GEOSTACK_PLUGIN_ID]),
+          ],
+        }
+      : savedPluginState;
+    pluginManager.restoreProjectState(projectPluginState, appAPI);
     restoreThreeDTilesLayers(appAPI);
     restoreRasterLayers(appAPI);
     restorePlanetaryComputerLayers(appAPI);
@@ -1061,6 +1096,9 @@ export function DesktopShell({
     // Same contract for the deck.gl overlay: re-attach it to the current map
     // and re-render any deckgl-viz layers a restored project carries.
     restoreDeckViz(appAPI, pluginManager.isActive(DECK_VIZ_PLUGIN_ID));
+    if (pluginManager.isActive(CORE_GEOSTACK_PLUGIN_ID)) {
+      restoreCoreGeoStack(appAPI);
+    }
     const search = window.location.search;
     void pluginManager
       .handleUrlParameters(new URLSearchParams(search), appAPI, `${projectGeneration}:${search}`)
@@ -1935,7 +1973,7 @@ export function DesktopShell({
               `page-has-heading-one` check) expect, without altering the
               chrome-free visual layout. Placed inside the main landmark so it
               is not flagged as content outside a landmark. */}
-          <h1 className="sr-only">GeoLibre map workspace</h1>
+          <h1 className="sr-only">CoRE-GeoStack map workspace</h1>
           <SectionErrorBoundary label="Map" fallbackClassName="h-full w-full">
             <MapGrid>
               <MapCanvas
@@ -2088,7 +2126,10 @@ export function DesktopShell({
                   mapControllerRef={mapControllerRef}
                   onResizeStart={startStylePanelResize}
                   autoCollapse={
-                    notebookOpen || storymapPresenting || autoCollapsedPanel === "style"
+                    coreGeoStackWorkspace.mode === "focus" ||
+                    notebookOpen ||
+                    storymapPresenting ||
+                    autoCollapsedPanel === "style"
                   }
                 />
               </SectionErrorBoundary>

@@ -1,8 +1,8 @@
 {
-  "name": "geolibre",
+  "name": "core-geostack",
   "version": "2.2.0",
   "private": true,
-  "description": "GeoLibre: a free and open-source, lightweight, cloud-native GIS platform for visualizing, exploring, and analyzing geospatial data. It runs in the web browser, on the desktop, on mobile, and inside Jupyter notebooks, all while keeping your data local and private",
+  "description": "CoRE-GeoStack: a map-first Know Your Landscape platform built on GeoLibre for exploring, analyzing, and communicating CoRE Stack geospatial data.",
   "workspaces": [
     "apps/*",
     "packages/*",
@@ -22,6 +22,7 @@
     "test:backend:coverage": "python -m pytest backend/geolibre_server/tests --cov=geolibre_server --cov-report=term-missing --cov-fail-under=55",
     "test:worker": "npm run typecheck -w geolibre-viewer-worker && npm run typecheck -w geolibre-collab-worker && npm run typecheck -w geolibre-tiles-worker",
     "test:e2e": "playwright test",
+    "check:core-geostack": "node scripts/check-core-geostack-knowledge.mjs",
     "check:rust": "cargo check --manifest-path apps/geolibre-desktop/src-tauri/Cargo.toml",
     "ci": "npm run lint && npm run build && npm run test:frontend:coverage && npm run test:worker && npm run test:backend:coverage && npm run check:rust",
     "tauri": "npm run tauri -w geolibre-desktop",

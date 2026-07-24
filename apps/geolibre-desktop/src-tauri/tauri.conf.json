@@ -1,8 +1,8 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "GeoLibre Desktop",
+  "productName": "CoRE-GeoStack",
   "version": "2.2.0",
-  "identifier": "org.geolibre.desktop",
+  "identifier": "org.corestack.coregeostack",
   "build": {
     "beforeDevCommand": "npm run dev",
     "devUrl": "http://localhost:5173",
@@ -13,7 +13,7 @@
     "windows": [
       {
         "create": false,
-        "title": "GeoLibre Desktop",
+        "title": "CoRE-GeoStack",
         "width": 1280,
         "height": 800,
         "resizable": true,

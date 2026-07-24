@@ -723,11 +723,11 @@ function pwaPlugin(): Plugin[] {
     injectRegister: false,
     includeAssets: ["favicon.ico", "favicon.png", "apple-touch-icon.png"],
     manifest: {
-      name: "GeoLibre",
-      short_name: "GeoLibre",
+      name: "CoRE-GeoStack",
+      short_name: "CoRE-GeoStack",
       description:
-        "A free and open-source, lightweight, cloud-native GIS platform for visualizing, exploring, and analyzing geospatial data, running in the browser, on the desktop, on mobile, and inside Jupyter notebooks while keeping your data local and private.",
-      theme_color: "#2f8f85",
+        "A map-first Know Your Landscape platform for exploring, analyzing, and communicating CoRE Stack geospatial data.",
+      theme_color: "#17151f",
       background_color: "#ffffff",
       display: "standalone",
       orientation: "any",

@@ -56,7 +56,6 @@ import {
   Info,
   Keyboard,
   Link2,
-  Map,
   MapPin,
   MessageSquare,
   Moon,
@@ -80,7 +79,6 @@ import type { ProjectFileActions } from "../../hooks/useProjectFileActions";
 import { useToolbarPanels } from "../../hooks/useToolbarPanels";
 import { useVectorTileGeometryBackfill } from "../../hooks/useVectorTileGeometryBackfill";
 import type { ThemeMode } from "../../hooks/useThemeMode";
-import { isTauri } from "../../lib/tauri-io";
 import { isMaptoolkitBasemapActive } from "../../lib/maptoolkit-basemap";
 import { useDesktopSettingsStore } from "../../hooks/useDesktopSettings";
 import { MENU_MANAGED_PLUGIN_IDS, isMenuVisible, isPluginVisible } from "../../lib/ui-profile";
@@ -142,6 +140,7 @@ import {
   VECTOR_TOOL_COMMANDS,
   WEBSITE_URL,
 } from "./toolbar/constants";
+import { CoreGeoStackModeBar } from "../../core-geostack/CoreGeoStackModeBar";
 
 interface TopToolbarProps {
   compact?: boolean;
@@ -1103,7 +1102,6 @@ export function TopToolbar({
   // its trigger Button this class instead of `toolbarButtonClass`.
   const toolbarSecondaryButtonClass = cn(toolbarButtonClass, "hidden md:inline-flex");
   const toolbarIconClassName = cn("h-3.5 w-3.5", showLabels && "sm:me-1");
-  const appTitle = isTauri() ? "GeoLibre Desktop" : "GeoLibre";
   const renderToolbarLabel = (label: string) =>
     showLabels ? <span className="hidden sm:inline">{label}</span> : null;
   const chrome: ToolbarChrome = {
@@ -1124,10 +1122,7 @@ export function TopToolbar({
             "flex-wrap px-2 md:flex-nowrap md:overflow-x-auto",
       )}
     >
-      <span className="me-1 flex shrink-0 items-center gap-1.5 text-sm font-semibold text-primary md:me-2">
-        <Map className="h-4 w-4" />
-        {showProjectInfo ? <span className="hidden sm:inline">{appTitle}</span> : null}
-      </span>
+      <CoreGeoStackModeBar showIdentity={showProjectInfo} />
       {isMenuVisible(uiProfile, "project") && (
         <ProjectMenu
           chrome={chrome}

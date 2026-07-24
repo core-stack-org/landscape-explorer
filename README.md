@@ -1,4 +1,16 @@
-# GeoLibre
+# CoRE-GeoStack
+
+CoRE-GeoStack is the map-first CoRE Stack platform for **Know Your Landscape**,
+deep geospatial exploration, analysis, stories, and presentation. It is developed
+as a focused distribution of GeoLibre: the map is the application, KYL is a
+first-class workspace, and Rust/WASM-backed GIS capabilities remain available
+without a separate download page or iframe.
+
+Development knowledge, decisions, performance budgets, and the current handoff
+live in [`docs/core-geostack/`](docs/core-geostack/README.md). The material below
+documents the upstream GeoLibre capabilities that CoRE-GeoStack inherits.
+
+## GeoLibre foundation
 
 [![Launch GeoLibre Web](https://img.shields.io/badge/Launch-GeoLibre%20Web-green.svg)](https://web.geolibre.app/)
 [![GeoLibre shared project](https://img.shields.io/badge/GeoLibre-share-green.svg)](https://share.geolibre.app)

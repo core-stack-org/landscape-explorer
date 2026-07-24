@@ -88,6 +88,8 @@ import { fetchUrlBytes } from "../lib/native-http";
 import { partitionProjectPluginManifestUrls } from "../lib/plugin-trust";
 import { createWmsTileUrl, normalizeWmsVersion } from "../components/layout/add-data/helpers";
 import { createExternalNativeStoreLayer } from "../lib/external-native-layer";
+import { CORE_GEOSTACK_PLUGIN_ID } from "../core-geostack/constants";
+import { coreGeoStackPlugin } from "../core-geostack/plugin";
 import { mergeStringLists } from "../lib/string-lists";
 import {
   browserSaveFallsBackToDownload,
@@ -133,6 +135,7 @@ interface TauriRuntimeWindow extends Window {
 
 const manager = new PluginManager();
 manager.registerAll([
+  coreGeoStackPlugin,
   maplibreLayerControlPlugin,
   maplibreGeoEditorPlugin,
   maplibreAnnotationsPlugin,
@@ -169,6 +172,10 @@ manager.registerAll([
   maplibreDeckGlVizPlugin,
   maplibreComponentsPlugin,
 ]);
+// This distribution-owned plugin must run through the normal restore path so
+// it receives a real map-backed app API. markDefaultActive deliberately does
+// not pre-mark it active, unlike a built-in activeByDefault plugin.
+manager.markDefaultActive(CORE_GEOSTACK_PLUGIN_ID);
 
 // The Timelapse plugin records the map to a video blob but cannot depend on
 // the app's Tauri I/O helpers, so the save step (native dialog under Tauri,
