@@ -10,7 +10,7 @@ is tracked as the `geolibre-upstream` Git remote.
 CoRE-GeoStack application
 ├── React application shell and accessible controls
 ├── one MapLibre map/camera/context
-├── CoRE-GeoStack KYL plugin and Focus workspace
+├── CoRE-GeoStack KYL plugin and Focus/Explore workspace
 ├── shared deck.gl analytical overlays
 ├── GeoLibre project, story, print, and plugin systems
 ├── DuckDB-WASM local spatial query
@@ -50,7 +50,30 @@ No CoRE component may create a second primary MapLibre or deck.gl instance.
 7. A tehsil selection resolves the existing workspace/layer naming contract.
 8. Only selected WFS/WMS layers load; previous good layers remain until their
    replacements are ready.
-9. Mode, location, layers, and filters stay shareable in the URL and project.
+9. Explore opens in the same rail and resolves the selected tehsil through the
+   established KYL JSON and GeoServer WFS contracts.
+10. A selected filter range adds a result layer to the same map; MWS results
+    also derive their intersecting village context.
+11. Mode, location, layers, and filters stay shareable in the URL and project.
+
+## Explore execution
+
+React owns Explore page, category, filter, and URL state. The
+`CoreGeoStackExploreRuntime` owns asynchronous data loading and result-layer
+lifecycle. It:
+
+1. resolves stable filter ids in the form `Source:indicator:optionIndex`;
+2. fetches only the JSON records and WFS geometry needed by selected filters;
+3. applies inclusive KYL ranges, OR within one indicator, and AND across
+   indicators;
+4. derives legacy waterbody fields before matching;
+5. adds styled result and context features through GeoLibre's native GeoJSON
+   layer API; and
+6. aborts stale requests and replaces previous results only after new results
+   are ready.
+
+The runtime does not create another map, maintain a parallel layer tree, or
+silently reinterpret the preserved KYL buckets.
 
 ## Responsive shell
 

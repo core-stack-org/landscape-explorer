@@ -21,6 +21,7 @@ export const CORE_GEOSTACK_COLORS = Object.freeze({
 });
 
 export interface CoreGeoStackRuntimeConfig {
+  apiUrl: string;
   basemapStyleUrl: string | null;
   geoserverUrl: string;
   tehsilPmtilesUrl: string | null;
@@ -30,6 +31,7 @@ export interface CoreGeoStackRuntimeConfig {
   villageMinZoom: number;
 }
 
+const DEFAULT_API_URL = "https://geoserver.core-stack.org/api/v1/";
 const DEFAULT_GEOSERVER_URL = "https://geoserver.core-stack.org:8443/geoserver/";
 const DEFAULT_BASEMAP_STYLE_URL = "/basemaps/google-hybrid.json";
 
@@ -50,6 +52,9 @@ function numericEnv(name: string, fallback: number): number {
 
 export function getCoreGeoStackRuntimeConfig(): CoreGeoStackRuntimeConfig {
   return {
+    apiUrl: serviceRoot(
+      envValue("VITE_CORE_GEOSTACK_API_URL") ?? DEFAULT_API_URL,
+    ),
     // Preserve KYL's existing Google hybrid context by default. Deployments can
     // replace it with an authorized Google style or any MapLibre style URL.
     basemapStyleUrl:

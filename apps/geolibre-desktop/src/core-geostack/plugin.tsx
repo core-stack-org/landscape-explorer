@@ -8,8 +8,9 @@ import {
   getCoreGeoStackRuntimeConfig,
   INDIA_VIEW,
 } from "./constants";
-import { CoreGeoStackFocusPanel } from "./CoreGeoStackFocusPanel";
+import { CoreGeoStackWorkspacePanel } from "./CoreGeoStackWorkspacePanel";
 import { mountCoreGeoStackBoundaryLayers } from "./boundary-layers";
+import { CoreGeoStackExploreRuntime } from "./explore-runtime";
 import { CoreGeoStackLayerRuntime } from "./layer-runtime";
 import {
   applyCoreGeoStackDurableState,
@@ -24,13 +25,14 @@ let unregisterPanel: (() => void) | null = null;
 let unsubscribeWorkspace: (() => void) | null = null;
 let boundaryCleanup: (() => void) | null = null;
 let layerRuntime: CoreGeoStackLayerRuntime | null = null;
+let exploreRuntime: CoreGeoStackExploreRuntime | null = null;
 let activeApp: GeoLibreAppAPI | null = null;
 let lastMode: string | null = null;
 let previousProjection: "globe" | "mercator" | null = null;
 
-function renderFocusPanel(container: HTMLElement): () => void {
+function renderWorkspacePanel(container: HTMLElement): () => void {
   const root: Root = createRoot(container);
-  root.render(<CoreGeoStackFocusPanel />);
+  root.render(<CoreGeoStackWorkspacePanel />);
   return () => root.unmount();
 }
 
@@ -38,10 +40,12 @@ function syncWorkspaceChrome(app: GeoLibreAppAPI): void {
   const snapshot = getCoreGeoStackWorkspaceSnapshot();
   if (lastMode !== snapshot.mode) {
     lastMode = snapshot.mode;
-    if (snapshot.mode === "focus") app.openRightPanel?.(CORE_GEOSTACK_PANEL_ID);
+    if (snapshot.mode === "focus" || snapshot.mode === "explore")
+      app.openRightPanel?.(CORE_GEOSTACK_PANEL_ID);
     else app.collapseRightPanel?.(CORE_GEOSTACK_PANEL_ID);
   }
   void layerRuntime?.sync(snapshot);
+  void exploreRuntime?.sync(snapshot);
 }
 
 function attachToCurrentMap(app: GeoLibreAppAPI): void {
@@ -81,14 +85,16 @@ function activateCoreGeoStack(app: GeoLibreAppAPI): void {
   unregisterPanel =
     app.registerRightPanel?.({
       id: CORE_GEOSTACK_PANEL_ID,
-      title: "KYL Focus",
+      title: "KYL workspace",
       dock: "replace-layers",
       defaultWidth: 360,
-      render: renderFocusPanel,
+      render: renderWorkspacePanel,
     }) ?? null;
 
   layerRuntime?.dispose();
   layerRuntime = new CoreGeoStackLayerRuntime(app);
+  exploreRuntime?.dispose();
+  exploreRuntime = new CoreGeoStackExploreRuntime(app);
   unsubscribeWorkspace?.();
   unsubscribeWorkspace = subscribeCoreGeoStackWorkspace(() => syncWorkspaceChrome(app));
   lastMode = null;
@@ -105,6 +111,8 @@ function deactivateCoreGeoStack(): void {
   boundaryCleanup = null;
   layerRuntime?.dispose();
   layerRuntime = null;
+  exploreRuntime?.dispose();
+  exploreRuntime = null;
   if (previousProjection) activeApp?.setMapProjection?.(previousProjection);
   activeApp = null;
   lastMode = null;
@@ -117,7 +125,11 @@ export function restoreCoreGeoStack(app: GeoLibreAppAPI): void {
   attachToCurrentMap(app);
   layerRuntime?.dispose();
   layerRuntime = new CoreGeoStackLayerRuntime(app);
-  void layerRuntime.sync(getCoreGeoStackWorkspaceSnapshot());
+  exploreRuntime?.dispose();
+  exploreRuntime = new CoreGeoStackExploreRuntime(app);
+  const snapshot = getCoreGeoStackWorkspaceSnapshot();
+  void layerRuntime.sync(snapshot);
+  void exploreRuntime.sync(snapshot);
 }
 
 export const coreGeoStackPlugin: GeoLibrePlugin = {

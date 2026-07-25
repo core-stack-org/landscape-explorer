@@ -27,8 +27,10 @@
 
 ## Phase 2 — KYL equivalence
 
-- [ ] Port every filter choice and legacy bucket rule with fixtures
-- [ ] Port pattern evaluation and cross-level MWS/village intersections
+- [x] Port every filter choice and legacy bucket rule with fixtures
+- [x] Add tehsil-filtered MWS, village, and waterbody Explore pages
+- [x] Derive MWS-to-village intersections
+- [ ] Port pattern evaluation and remaining cross-level intersections
 - [ ] Port the full style and legend profiles
 - [ ] Add active-only legend synchronization
 - [ ] Add time-aware LULC comparison controls
@@ -45,6 +47,7 @@
 ## Phase 4 — communication and collaboration
 
 - [ ] Curated CoRE stories and presentation templates
+- [ ] General tehsil-story schema backed by shared KYL location and filter state
 - [ ] Map-story builder presets
 - [ ] Print/export templates with source and caveat blocks
 - [ ] Shared remote workspaces after privacy and authorization design

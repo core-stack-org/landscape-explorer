@@ -55,15 +55,42 @@ The legacy-proven definitions are preserved without reinterpretation:
 - `data/kyl-filters.json`
 - `data/kyl-patterns.json`
 
-They are migration inputs. The current first slice inventories them in the Focus
-workspace; choice-level execution and bucketing must be ported with fixture
-tests before being called equivalent to legacy KYL.
+The filter definitions now execute as first-class Explore pages:
+
+- Micro-watersheds: 27 indicators and 80 options
+- Villages: 16 indicators and 47 options
+- Waterbodies: 4 indicators and 11 options
+
+Filter ids use `Source:indicator:optionIndex` and are shareable URL values.
+Range endpoints are inclusive. Multiple options for one indicator are ORed;
+different indicators are ANDed. MWS results derive intersecting villages.
+Waterbody type, size, surface-water trend, and drainage-line values are derived
+with the legacy KYL rules before matching.
+
+Patterns remain migration inputs. Pattern evaluation is not yet equivalent to
+legacy KYL and must not be presented as an implemented Explore capability.
+
+## Tehsil-filtered Explore sources
+
+For a selected state, district, and tehsil, Explore uses these established
+contracts:
+
+| Page | Attribute source | Geometry source |
+| --- | --- | --- |
+| Micro-watersheds | `/api/v1/download_kyl_data/` | `mws_layers:deltaG_well_depth_<district>_<tehsil>` |
+| Villages | `/api/v1/download_kyl_village_data` | `panchayat_boundaries:<district>_<tehsil>` |
+| Waterbodies | derived WFS properties | `swb:surface_waterbodies_<district>_<tehsil>` |
+
+Both JSON endpoints receive normalized `state`, `district`, and `block` values
+plus `file_type=json`. Requests are lazy and cached for the browser session.
+Changing the selected tehsil clears prior filters, matching `/kyl_dashboard`.
 
 ## Source and method ledger
 
 | Source | Role | Current policy |
 | --- | --- | --- |
 | CoRE Stack GeoServer | Tehsil-scoped WFS/WMS layers | lazy, status-visible |
+| CoRE Stack KYL API | Tehsil-scoped Explore attributes | lazy, session-cached |
 | CoRE QGIS Styles repository | authoritative style inputs | retain source URL |
 | PMTiles deployment artifacts | national multiscale boundaries | range-requested |
 | COG endpoints | full-resolution raster analysis/download | windowed/lazy |

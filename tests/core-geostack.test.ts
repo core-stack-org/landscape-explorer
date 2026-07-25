@@ -8,11 +8,23 @@ import {
   slugLocationPart,
 } from "../apps/geolibre-desktop/src/core-geostack/layer-catalog";
 import {
+  KYL_EXPLORE_PAGES,
+  filterKylRecords,
+  kylFilterSelectionId,
+  resolveKylFilterSelections,
+  waterbodyExploreRecord,
+} from "../apps/geolibre-desktop/src/core-geostack/explore-filters";
+import {
+  buildKylExploreDataUrl,
+} from "../apps/geolibre-desktop/src/core-geostack/explore-runtime";
+import {
   DEFAULT_CORE_GEOSTACK_WORKSPACE,
+  applyCoreGeoStackDurableState,
   getCoreGeoStackWorkspaceSnapshot,
   parseCoreGeoStackUrl,
   serializeCoreGeoStackUrl,
   setCoreGeoStackDataStatus,
+  setCoreGeoStackLocation,
 } from "../apps/geolibre-desktop/src/core-geostack/workspace-state";
 
 describe("CoRE-GeoStack KYL layer contract", () => {
@@ -112,5 +124,111 @@ describe("CoRE-GeoStack readiness state", () => {
     assert.equal(status.kind, "partial");
     assert.match(status.message, /2 KYL layers ready/);
     assert.match(status.message, /tehsil index is not configured/);
+  });
+
+  it("surfaces Explore loading without hiding existing readiness context", () => {
+    setCoreGeoStackDataStatus("explore", {
+      kind: "loading",
+      message: "Filtering Nambulipulikunta",
+    });
+    const status = getCoreGeoStackWorkspaceSnapshot().dataStatus;
+    assert.equal(status.kind, "loading");
+    assert.match(status.message, /Filtering Nambulipulikunta/);
+    assert.match(status.message, /tehsil index is not configured/);
+    setCoreGeoStackDataStatus("explore", {
+      kind: "idle",
+      message: "Choose Explore filters to begin an analysis",
+    });
+  });
+});
+
+describe("CoRE-GeoStack Explore contract", () => {
+  it("preserves the KYL filter pages and all choice buckets", () => {
+    assert.deepEqual(
+      KYL_EXPLORE_PAGES.map((page) => [
+        page.id,
+        page.categories.flatMap((category) => category.filters).length,
+        page.categories
+          .flatMap((category) => category.filters)
+          .reduce((count, filter) => count + filter.values.length, 0),
+      ]),
+      [
+        ["MWS", 27, 80],
+        ["Village", 16, 47],
+        ["Waterbody", 4, 11],
+      ],
+    );
+  });
+
+  it("uses OR within an indicator and AND across indicators", () => {
+    const terrain = KYL_EXPLORE_PAGES[0].categories
+      .flatMap((category) => category.filters)
+      .find((filter) => filter.name === "terrainCluster_ID");
+    const relief = KYL_EXPLORE_PAGES[0].categories
+      .flatMap((category) => category.filters)
+      .find((filter) => filter.name === "relief");
+    assert.ok(terrain);
+    assert.ok(relief);
+
+    const selectionIds = [
+      kylFilterSelectionId(terrain, 0),
+      kylFilterSelectionId(relief, 0),
+      kylFilterSelectionId(relief, 2),
+    ];
+    const matches = filterKylRecords(
+      [
+        { id: "low-hills", terrainCluster_ID: 2, relief: 6 },
+        { id: "moderate-hills", terrainCluster_ID: 2, relief: 50 },
+        { id: "high-plains", terrainCluster_ID: 1, relief: 200 },
+        { id: "high-hills", terrainCluster_ID: 2, relief: 200 },
+      ],
+      resolveKylFilterSelections(selectionIds),
+    );
+    assert.deepEqual(
+      matches.map((record) => record.id),
+      ["low-hills", "high-hills"],
+    );
+  });
+
+  it("derives the legacy waterbody filter fields before matching", () => {
+    const record = waterbodyExploreRecord({
+      UID: "wb-1",
+      waterbody_type: "river",
+      area_ored: 4,
+      on_drainage_line: 1,
+      "area_17-18": 1,
+      "area_18-19": 2,
+      "area_19-20": 3,
+    });
+    assert.equal(record.waterbody_type, 1);
+    assert.equal(record.waterbody_size, 4);
+    assert.equal(record.surface_water_trend, 1);
+    assert.equal(record.drainage_line, 1);
+  });
+
+  it("builds the established tehsil-filtered KYL data endpoint", () => {
+    const url = new URL(
+      buildKylExploreDataUrl("MWS", {
+        state: "Andhra Pradesh",
+        district: "Ananthapur",
+        tehsil: "Nambulipulikunta",
+      }) as string,
+    );
+    assert.equal(url.pathname, "/api/v1/download_kyl_data/");
+    assert.equal(url.searchParams.get("state"), "andhra_pradesh");
+    assert.equal(url.searchParams.get("district"), "ananthapur");
+    assert.equal(url.searchParams.get("block"), "nambulipulikunta");
+  });
+
+  it("clears filters when the selected tehsil changes, matching KYL", () => {
+    applyCoreGeoStackDurableState({
+      selectedFilterIds: ["MWS:relief:0"],
+    });
+    setCoreGeoStackLocation({
+      state: "Andhra Pradesh",
+      district: "Ananthapur",
+      tehsil: "Nambulipulikunta",
+    });
+    assert.deepEqual(getCoreGeoStackWorkspaceSnapshot().selectedFilterIds, []);
   });
 });

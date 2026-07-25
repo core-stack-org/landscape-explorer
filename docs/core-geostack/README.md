@@ -34,6 +34,7 @@ small and deliberate:
 
 - register the CoRE-GeoStack plugin;
 - expose the approved mode bar and product name;
+- keep Focus and tehsil-filtered Explore in one shared KYL workspace;
 - restore the plugin when the underlying MapLibre instance is recreated;
 - keep deployment configuration in environment variables and the admin profile.
 

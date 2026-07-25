@@ -54,7 +54,7 @@ export function CoreGeoStackModeBar({ showIdentity = true }: { showIdentity?: bo
   const activateMode = (mode: CoreGeoStackMode) => {
     setCoreGeoStackMode(mode);
     const app = useAppStore.getState();
-    if (mode === "focus") {
+    if (mode === "focus" || mode === "explore") {
       openRightPanel(CORE_GEOSTACK_PANEL_ID);
       return;
     }

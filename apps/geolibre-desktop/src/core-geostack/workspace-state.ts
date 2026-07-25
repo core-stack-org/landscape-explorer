@@ -22,7 +22,7 @@ export interface CoreGeoStackDataStatus {
   updatedAt?: string;
 }
 
-export type CoreGeoStackDataChannel = "boundary" | "layers";
+export type CoreGeoStackDataChannel = "boundary" | "layers" | "explore";
 
 export interface CoreGeoStackWorkspaceSnapshot {
   mode: CoreGeoStackMode;
@@ -114,12 +114,17 @@ const dataStatusChannels: Record<CoreGeoStackDataChannel, CoreGeoStackDataStatus
     kind: "idle",
     message: "Choose an active tehsil to load KYL layers",
   },
+  explore: {
+    kind: "idle",
+    message: "Choose Explore filters to begin an analysis",
+  },
 };
 
 function combinedDataStatus(): CoreGeoStackDataStatus {
   const statuses = [
     dataStatusChannels.layers,
     dataStatusChannels.boundary,
+    dataStatusChannels.explore,
   ].filter((status) => status.kind !== "idle");
   if (!statuses.length) return DEFAULT_CORE_GEOSTACK_WORKSPACE.dataStatus;
 
@@ -180,7 +185,7 @@ export function setCoreGeoStackMode(mode: CoreGeoStackMode): void {
 }
 
 export function setCoreGeoStackLocation(location: CoreGeoStackLocation): void {
-  publish({ ...snapshot, location }, "push");
+  publish({ ...snapshot, location, selectedFilterIds: [] }, "push");
 }
 
 export function toggleCoreGeoStackLayer(layerId: string): void {
@@ -195,6 +200,11 @@ export function toggleCoreGeoStackFilter(filterId: string): void {
   if (selected.has(filterId)) selected.delete(filterId);
   else selected.add(filterId);
   publish({ ...snapshot, selectedFilterIds: [...selected] }, "push");
+}
+
+export function clearCoreGeoStackFilters(): void {
+  if (!snapshot.selectedFilterIds.length) return;
+  publish({ ...snapshot, selectedFilterIds: [] }, "push");
 }
 
 export function setCoreGeoStackDataStatus(
