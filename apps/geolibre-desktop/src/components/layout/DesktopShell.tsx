@@ -735,7 +735,7 @@ export function DesktopShell({
     // CoRE-GeoStack is the product shell, so mount it as soon as the first map
     // instance exists. External plugin discovery can take several seconds on a
     // cold browser; the primary KYL workspace must never wait behind it.
-    if (!mapReadyGeneration || !mapControllerRef.current) return;
+    if (!mapControllerRef.current) return;
     const appAPI = createAppAPI(mapControllerRef);
     const pluginManager = getPluginManager();
     if (!pluginManager.isActive(CORE_GEOSTACK_PLUGIN_ID)) {

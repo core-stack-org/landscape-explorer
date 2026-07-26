@@ -1,88 +1,81 @@
 # Current handoff
 
-Updated: 2026-07-25
-Cycle: 002 — tehsil-filtered Explore
+Updated: 2026-07-26
+Cycle: 003 — generalized tehsil Stories
 
 ## Branch and base
 
-- Branch: `platform/core-geostack`
+- Branch: `platform/core-geostack-stories-observability`
+- Story work is based on `platform/core-geostack` at `3ddb1e35`.
 - Base remote: `geolibre-upstream`
-- Base commit at creation: `bfca39a02e50b898497bd8c29cd3c287606d7326`
+- Base commit at platform creation:
+  `bfca39a02e50b898497bd8c29cd3c287606d7326`
 - Legacy and experimental branches remain untouched.
 
 ## Implemented
 
-- CoRE-GeoStack product identity for web, PWA, and Tauri.
-- Single map-first application with Focus, Explore, Stories, and Present modes.
-- First-class KYL plugin using GeoLibre's shared Layers rail.
-- Mercator India new-project view with the migrated Google hybrid basemap.
-- Focus-mode Style rail auto-collapse so the map is not boxed between two
-  permanently expanded sidebars.
-- Typed URL/project state for mode, location, layers, and filters.
-- Migrated active-location, filter, pattern, and 45-layer catalogue contracts.
-- Lazy direct GeoServer WFS/WMS layer runtime.
-- Independent tehsil/village PMTiles mounting contract.
-- Visible live/loading/partial/error data states.
-- Approved desktop, portrait, and landscape visual contracts.
-- Architecture, data, performance, ADR, roadmap, learning, and handoff system.
-- One KYL workspace shared by Focus and Explore; Explore no longer opens a
-  separate or unfiltered surface.
-- Tehsil-filtered Micro-watershed, Village, and Waterbody Explore pages.
-- All 46 preserved KYL indicators and 138 choice buckets exposed by category.
-- Inclusive range matching, OR within an indicator, AND across indicators, and
-  filter reset on location change.
-- URL-backed filter ids and browser back/forward-safe state.
-- Lazy KYL JSON/WFS loading, stale-request cancellation, session caching, and
-  native GeoLibre result layers.
-- MWS-derived village context and legacy-derived waterbody filter fields.
-- Tehsil-first empty state that returns directly to Focus selection.
+- One map-first application with three modes: Focus, Explore, and Stories.
+- Removed the duplicate Present mode; old `mode=present` URLs resolve to
+  Stories while new URLs emit only `mode=stories`.
+- A first `core-tehsil-v1` generalized story generator backed by the current
+  state, district, tehsil, selected KYL layers, filter ids, camera, visible
+  native GeoLibre layers/opacities, and live Explore result summaries.
+- Deterministic orientation, human-context, thematic-domain, Explore-evidence,
+  and synthesis scenes.
+- Generated story preview with layer/filter/evidence counts and ordered scenes
+  before replacing an existing project story.
+- Direct actions to build/rebuild, read, and edit the native GeoLibre story.
+- GeoLibre's existing scroll reader, chapter navigation, camera/layer-opacity
+  transitions, editor, and export remain authoritative; no second presenter or
+  map was added.
+- Explore result layers remain mounted in Stories, avoiding an unnecessary
+  reload and preserving the evidence referenced by generated scenes.
+- A tehsil-first Stories empty state that returns directly to Focus.
+- Immediate CoRE plugin activation once a map controller exists, so a slow or
+  blocked basemap `load` event cannot leave the KYL workspace unregistered.
+- Typed tests, ADR-0005, updated architecture/data/visual contracts, learning
+  log, roadmap, and immutable cycle handoff.
 
 ## Validation
 
-- Node 22 dependency graph installed in a native-filesystem validation mirror:
-  1,405 packages.
-- Focused CoRE-GeoStack tests: 14 passed, 0 failed.
-- Focused ESLint: passed.
-- TypeScript and production PWA build: passed; 7,707 modules transformed.
-- Cold production preview smoke at 1440x900 and 393x851: HTTP 200, product
-  identity/Focus/Pan India visible, service worker active, 0 runtime errors.
-- Live Nambulipulikunta smoke: both default WFS layers loaded, the map fitted to
-  their bounds over Google hybrid imagery, and the status retained the missing
-  national-index caveat alongside layer readiness.
-- Live Explore smoke for Nambulipulikunta: High Relief matched 42/45
-  micro-watersheds and derived 12/15 mapped villages; a population bucket
-  matched 5 villages; Off river matched 456/510 waterbodies.
-- Desktop result-layer and narrow mobile empty-state screenshots passed with
-  zero browser console or page errors. Filter state remained in the URL.
+- Focused CoRE-GeoStack tests: 18 passed, 0 failed.
+- Focused ESLint for the changed CoRE source: passed with 0 warnings.
+- TypeScript project build: passed.
+- Production PWA build: passed; 7,709 modules transformed and 428 entries
+  precached.
+- Desktop production browser smoke at 1440x900:
+  - Nambulipulikunta opened directly in Stories;
+  - the selected relief filter produced a five-scene proposal;
+  - the evidence scene recorded 42 of 45 matching micro-watersheds;
+  - building and reading used GeoLibre's native scroll presenter;
+  - chapter navigation applied the Micro-watershed evidence scene;
+  - Present was absent from the mode bar; and
+  - zero page or console errors occurred.
+- Legacy `mode=present` browser smoke opened the Stories workspace.
+- Mobile 393x851 smoke displayed the operable tehsil-first Stories empty state.
+- Browser screenshots were visually inspected for the desktop reader and
+  mobile empty state.
 - Knowledge-base structure and `git diff --check`: passed.
-- Rust check could not run because `cargo` is not installed in this environment.
-  No Rust source changed; Tauri product configuration remains JSON-valid.
+- Rust check remains unavailable because `cargo` is not installed. This cycle
+  changes no Rust source.
 
 ## Known limitations
 
-- National PMTiles URLs are deployment inputs and are not yet populated.
-- A cold local preview reached the Focus workspace in 4.2-9.8 seconds across
-  sampled browser runs. This is a baseline, not compliance with the 2.5-second
-  warm-load budget; startup code splitting and measurement remain required.
-- KYL patterns are preserved but are not yet executed.
-- Explore result layers use a deliberately clear matched/context style; full
-  legacy thematic styles and active-only legends remain incomplete.
-- Cross-source composition currently derives MWS-to-village context. Pattern
-  evaluation and deeper MWS/waterbody composition remain.
-- Live equivalence has been proven for Nambulipulikunta, not yet across the
-  approved multi-tehsil validation set.
-- Waterbody WFS payloads can be comparatively large and need explicit mobile
-  payload/performance budgets.
-- Only the most important vector style profiles are currently applied directly;
-  complete style/legend equivalence remains Phase 2.
-- Product-specific icons still inherit the upstream GeoLibre asset set.
+- Generated prose is a structured first preset, not a curated editorial story.
+- Live equivalence remains proven for Nambulipulikunta rather than the approved
+  multi-tehsil validation set.
+- Pattern evaluation and deeper cross-source composition remain incomplete.
+- Full thematic-style and active-only legend equivalence remains Phase 2 work.
+- National tehsil/village PMTiles deployment artifacts remain unconfigured.
+- Story generation captures the current camera rather than a persisted
+  tehsil-specific editorial camera template.
+- A cold local build still carries the inherited large startup graph.
 
 ## Next executable step
 
-Define the generalized tehsil-story schema so a story can reuse the selected
-tehsil, filter ids, result summaries, camera, and visible GeoLibre layers. The
-first prototype should render one validated Explore state as a reproducible
-story scene without introducing a second selection model.
+Add a second story preset with explicit source/date/caveat blocks and validate
+both presets across the approved multi-tehsil set. Then expose print/handout
+templates without creating another story state model.
 
 The immutable snapshot for this handoff is
-[`2026-07-25-cycle-002-explore-filters.md`](2026-07-25-cycle-002-explore-filters.md).
+[`2026-07-26-cycle-003-tehsil-stories.md`](2026-07-26-cycle-003-tehsil-stories.md).

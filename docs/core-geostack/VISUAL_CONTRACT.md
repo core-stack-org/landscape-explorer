@@ -9,7 +9,8 @@ The user approved continuing from the concept set on 2026-07-24.
 ## Locked semantics
 
 - The map is visible immediately; there is no product landing screen.
-- Focus, Explore, Stories, and Present are modes of one workspace.
+- Focus, Explore, and Stories are modes of one workspace. Reading or presenting
+  a story is an action inside Stories, not a duplicate top-level mode.
 - Cyan represents administrative context; violet represents committed
   selection. Color is reinforced by line/fill treatment and text state.
 - Location, active layer count, filter state, source, and freshness remain
@@ -48,6 +49,6 @@ hover. On phones, the panel becomes a sheet while the map remains visible.
 | Tehsil/village boundaries | multiscale administrative context | PMTiles + MapLibre | readiness status; zoom payload check |
 | KYL thematic layers | focused local evidence | WFS/WMS/COG | source/error summary; layer count tests |
 | Attribute summaries | selected-feature lookup/comparison | GeoLibre panels | accessible table |
-| Stories/presentations | explanatory sequence | GeoLibre story system | printable/static handout |
+| Stories | authoring, explanatory sequence, playback, and export | GeoLibre story system | printable/static handout |
 
 All specialist passes were completed locally; no subagent delegation was used.

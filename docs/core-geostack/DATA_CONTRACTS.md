@@ -70,6 +70,24 @@ with the legacy KYL rules before matching.
 Patterns remain migration inputs. Pattern evaluation is not yet equivalent to
 legacy KYL and must not be presented as an implemented Explore capability.
 
+## Generalized tehsil stories
+
+The first CoRE story schema is `core-tehsil-v1`. Its input is existing durable
+workspace state plus current runtime evidence:
+
+- required state, district, and tehsil names;
+- stable selected KYL layer ids;
+- stable selected filter ids;
+- current MapLibre center, zoom, pitch, and bearing;
+- visible GeoLibre layer ids, names, and opacities; and
+- per-source Explore totals, matches, and derived-result flags when available.
+
+The output is GeoLibre's native `StoryMap`: orientation and human-context
+chapters, one chapter per selected thematic domain, one per active Explore
+source, and a final synthesis where appropriate. Generation makes no new data
+request and creates no second location, filter, layer, camera, or map model.
+Chapter descriptions escape workspace-derived text before storing HTML.
+
 ## Tehsil-filtered Explore sources
 
 For a selected state, district, and tehsil, Explore uses these established

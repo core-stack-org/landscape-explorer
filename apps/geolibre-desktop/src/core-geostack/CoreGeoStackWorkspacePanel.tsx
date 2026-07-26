@@ -1,6 +1,7 @@
 import { useSyncExternalStore } from "react";
 import { CoreGeoStackExplorePanel } from "./CoreGeoStackExplorePanel";
 import { CoreGeoStackFocusPanel } from "./CoreGeoStackFocusPanel";
+import { CoreGeoStackStoryPanel } from "./CoreGeoStackStoryPanel";
 import {
   getCoreGeoStackWorkspaceSnapshot,
   subscribeCoreGeoStackWorkspace,
@@ -12,9 +13,7 @@ export function CoreGeoStackWorkspacePanel() {
     getCoreGeoStackWorkspaceSnapshot,
     getCoreGeoStackWorkspaceSnapshot,
   );
-  return snapshot.mode === "explore" ? (
-    <CoreGeoStackExplorePanel />
-  ) : (
-    <CoreGeoStackFocusPanel />
-  );
+  if (snapshot.mode === "explore") return <CoreGeoStackExplorePanel />;
+  if (snapshot.mode === "stories") return <CoreGeoStackStoryPanel />;
+  return <CoreGeoStackFocusPanel />;
 }

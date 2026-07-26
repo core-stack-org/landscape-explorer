@@ -1,7 +1,7 @@
 import { useAppStore } from "@geolibre/core";
-import { collapseRightPanel, openRightPanel } from "@geolibre/plugins";
+import { openRightPanel } from "@geolibre/plugins";
 import { Button, cn } from "@geolibre/ui";
-import { BookOpen, Compass, Crosshair, MonitorPlay } from "lucide-react";
+import { BookOpen, Compass, Crosshair } from "lucide-react";
 import { useSyncExternalStore } from "react";
 import {
   CORE_GEOSTACK_NAME,
@@ -19,7 +19,6 @@ const modes = [
   { id: "focus" as const, label: "Focus", icon: Crosshair },
   { id: "explore" as const, label: "Explore", icon: Compass },
   { id: "stories" as const, label: "Stories", icon: BookOpen },
-  { id: "present" as const, label: "Present", icon: MonitorPlay },
 ];
 
 function statusColor(kind: string): string {
@@ -50,24 +49,14 @@ export function CoreGeoStackModeBar({ showIdentity = true }: { showIdentity?: bo
     getCoreGeoStackWorkspaceSnapshot,
     getCoreGeoStackWorkspaceSnapshot,
   );
-
   const activateMode = (mode: CoreGeoStackMode) => {
     setCoreGeoStackMode(mode);
     const app = useAppStore.getState();
-    if (mode === "focus" || mode === "explore") {
-      openRightPanel(CORE_GEOSTACK_PANEL_ID);
-      return;
-    }
-    collapseRightPanel(CORE_GEOSTACK_PANEL_ID);
     if (mode === "stories") {
       app.setStorymapPresenting(false);
-      app.setStorymapPanelOpen(true);
-      return;
+      app.setStorymapPanelOpen(false);
     }
-    if (mode === "present") {
-      if (app.storymap?.chapters.length) app.setStorymapPresenting(true, true);
-      else app.setStorymapPanelOpen(true);
-    }
+    openRightPanel(CORE_GEOSTACK_PANEL_ID);
   };
 
   return (

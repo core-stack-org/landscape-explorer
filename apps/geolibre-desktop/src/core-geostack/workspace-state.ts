@@ -1,4 +1,4 @@
-export const CORE_GEOSTACK_MODES = ["focus", "explore", "stories", "present"] as const;
+export const CORE_GEOSTACK_MODES = ["focus", "explore", "stories"] as const;
 export type CoreGeoStackMode = (typeof CORE_GEOSTACK_MODES)[number];
 
 export interface CoreGeoStackLocation {
@@ -52,7 +52,8 @@ export const DEFAULT_CORE_GEOSTACK_WORKSPACE: CoreGeoStackWorkspaceSnapshot = Ob
   }),
 });
 
-function normalizedMode(value: string | null): CoreGeoStackMode {
+function normalizedMode(value: unknown): CoreGeoStackMode {
+  if (value === "present") return "stories";
   return CORE_GEOSTACK_MODES.includes(value as CoreGeoStackMode)
     ? (value as CoreGeoStackMode)
     : "focus";
@@ -219,7 +220,7 @@ export function applyCoreGeoStackDurableState(state: CoreGeoStackDurableState): 
   publish(
     {
       ...snapshot,
-      mode: state.mode ?? snapshot.mode,
+      mode: state.mode ? normalizedMode(state.mode) : snapshot.mode,
       location: state.location ? { ...state.location } : snapshot.location,
       selectedLayerIds: state.selectedLayerIds
         ? unique(state.selectedLayerIds)

@@ -40,9 +40,7 @@ function syncWorkspaceChrome(app: GeoLibreAppAPI): void {
   const snapshot = getCoreGeoStackWorkspaceSnapshot();
   if (lastMode !== snapshot.mode) {
     lastMode = snapshot.mode;
-    if (snapshot.mode === "focus" || snapshot.mode === "explore")
-      app.openRightPanel?.(CORE_GEOSTACK_PANEL_ID);
-    else app.collapseRightPanel?.(CORE_GEOSTACK_PANEL_ID);
+    app.openRightPanel?.(CORE_GEOSTACK_PANEL_ID);
   }
   void layerRuntime?.sync(snapshot);
   void exploreRuntime?.sync(snapshot);

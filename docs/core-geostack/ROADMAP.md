@@ -5,7 +5,7 @@
 - [x] Independent branch based on current GeoLibre upstream
 - [x] CoRE-GeoStack web/PWA/Tauri identity
 - [x] Migrated Google hybrid default and Mercator India camera
-- [x] Focus, Explore, Stories, Present modes
+- [x] Focus, Explore, and Stories modes
 - [x] First-class KYL shared-rail plugin
 - [x] Migrated active locations, filters, patterns, and 45-layer taxonomy
 - [x] Lazy direct WFS/WMS loading
@@ -47,7 +47,8 @@
 ## Phase 4 — communication and collaboration
 
 - [ ] Curated CoRE stories and presentation templates
-- [ ] General tehsil-story schema backed by shared KYL location and filter state
-- [ ] Map-story builder presets
+- [x] General tehsil-story schema backed by shared KYL location and filter state
+- [x] First generalized tehsil-story builder preset
+- [ ] Additional map-story builder presets
 - [ ] Print/export templates with source and caveat blocks
 - [ ] Shared remote workspaces after privacy and authorization design

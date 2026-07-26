@@ -247,7 +247,7 @@ export class CoreGeoStackExploreRuntime {
   async sync(snapshot: CoreGeoStackWorkspaceSnapshot): Promise<void> {
     const selections = resolveKylFilterSelections(snapshot.selectedFilterIds);
     const nextKey = JSON.stringify({
-      mode: snapshot.mode,
+      mode: snapshot.mode === "stories" ? "explore" : snapshot.mode,
       location: snapshot.location,
       filters: selections.map((selection) => selection.id).sort(),
     });
@@ -258,7 +258,7 @@ export class CoreGeoStackExploreRuntime {
     const controller = new AbortController();
     this.controller = controller;
 
-    if (snapshot.mode !== "explore") {
+    if (snapshot.mode !== "explore" && snapshot.mode !== "stories") {
       this.clearLoadedLayers();
       publishRuntimeSnapshot(DEFAULT_EXPLORE_RUNTIME_SNAPSHOT);
       setCoreGeoStackDataStatus("explore", {

@@ -2,8 +2,9 @@
 
 1. **The map is the entry point.** There is no landing page between a person and
    the Pan-India workspace.
-2. **One application, several modes.** Focus, Explore, Stories, and Present are
-   states of one workspace and one map, not competing pages.
+2. **One application, three modes.** Focus, Explore, and Stories are states of
+   one workspace and one map, not competing pages. Stories includes authoring,
+   playback, and export; presentation is an action, not another mode.
 3. **KYL is first-class.** Its location hierarchy, filters, patterns, bucketing,
    styles, and layer taxonomy are authoritative domain knowledge.
 4. **GeoLibre is infrastructure, not an embed.** CoRE-GeoStack extends its map,

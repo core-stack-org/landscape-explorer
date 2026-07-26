@@ -54,7 +54,11 @@ No CoRE component may create a second primary MapLibre or deck.gl instance.
    established KYL JSON and GeoServer WFS contracts.
 10. A selected filter range adds a result layer to the same map; MWS results
     also derive their intersecting village context.
-11. Mode, location, layers, and filters stay shareable in the URL and project.
+11. Stories derives an editable scene sequence from that same location, camera,
+    selected layers, filter ids, and live result summaries.
+12. The existing GeoLibre story editor and scroll-driven reader apply scene
+    camera and opacity changes to the same map.
+13. Mode, location, layers, and filters stay shareable in the URL and project.
 
 ## Explore execution
 
@@ -74,6 +78,26 @@ lifecycle. It:
 
 The runtime does not create another map, maintain a parallel layer tree, or
 silently reinterpret the preserved KYL buckets.
+
+## Stories execution
+
+React owns the Stories workspace and proposed-scene preview.
+`buildCoreGeoStackTehsilStory` is a pure typed transformation from the current
+KYL workspace into GeoLibre's native `StoryMap` contract. It:
+
+1. requires the existing state, district, and tehsil selection;
+2. captures the current camera and visible native GeoLibre layer ids;
+3. groups selected KYL layers into thematic domain scenes;
+4. creates evidence scenes for each active Explore source and records the live
+   matched/total result summary when available;
+5. restores the original visible-layer opacities in the synthesis scene; and
+6. hands the result to GeoLibre's existing editor, reader, and static export
+   rather than creating another presentation surface.
+
+Generated chapter ids begin with `core-tehsil-v1` so CoRE-authored stories can
+be recognized without claiming unrelated custom GeoLibre stories. The old
+`mode=present` URL value is read as `stories` for compatibility and is no longer
+emitted.
 
 ## Responsive shell
 

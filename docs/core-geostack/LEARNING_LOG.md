@@ -49,4 +49,21 @@
   summaries, and map camera rather than inventing a second story-specific data
   selection model.
 
+## 2026-07-26 — generalized tehsil stories
+
+- Stories and Present were two labels for one workflow. A single Stories mode
+  now owns generation, chapter editing, scroll-driven reading, and export.
+- A story is a typed view of existing KYL state, not a separate saved analysis.
+  The generator consumes the selected tehsil, layer/filter ids, current camera,
+  visible layer ids/opacities, and live Explore summaries.
+- Explore result layers must remain mounted while Stories derives and reads its
+  evidence scenes; switching between those modes should not trigger an
+  unnecessary reload.
+- Scene changes reference native GeoLibre layer ids, so the existing map, layer
+  tree, editor, reader, and static handout remain authoritative.
+- Generated chapter ids need a versioned namespace. `core-tehsil-v1` identifies
+  CoRE-generated stories without taking ownership of custom GeoLibre projects.
+- Compatibility migration belongs at the URL boundary: old `mode=present`
+  links resolve to Stories while new URLs emit only the three supported modes.
+
 Append only. If a learning changes an architectural rule, also create an ADR.

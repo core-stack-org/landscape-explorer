@@ -18,6 +18,12 @@ import {
   buildKylExploreDataUrl,
 } from "../apps/geolibre-desktop/src/core-geostack/explore-runtime";
 import {
+  buildCoreGeoStackTehsilStory,
+  isCoreGeoStackTehsilStory,
+  summarizeCoreGeoStackTehsilStory,
+} from "../apps/geolibre-desktop/src/core-geostack/story-builder";
+import {
+  CORE_GEOSTACK_MODES,
   DEFAULT_CORE_GEOSTACK_WORKSPACE,
   applyCoreGeoStackDurableState,
   getCoreGeoStackWorkspaceSnapshot,
@@ -84,6 +90,11 @@ describe("CoRE-GeoStack URL state", () => {
 
   it("falls back to Focus for invalid modes", () => {
     assert.equal(parseCoreGeoStackUrl(new URLSearchParams("mode=unknown")).mode, "focus");
+  });
+
+  it("removes Present and migrates old Present links to Stories", () => {
+    assert.deepEqual(CORE_GEOSTACK_MODES, ["focus", "explore", "stories"]);
+    assert.equal(parseCoreGeoStackUrl(new URLSearchParams("mode=present")).mode, "stories");
   });
 
   it("preserves unrelated GeoLibre parameters while serializing stable state", () => {
@@ -230,5 +241,96 @@ describe("CoRE-GeoStack Explore contract", () => {
       tehsil: "Nambulipulikunta",
     });
     assert.deepEqual(getCoreGeoStackWorkspaceSnapshot().selectedFilterIds, []);
+  });
+});
+
+describe("CoRE-GeoStack tehsil story contract", () => {
+  const input = {
+    location: {
+      state: "Andhra Pradesh",
+      district: "Ananthapur",
+      tehsil: "Nambulipulikunta",
+    },
+    selectedLayerIds: [
+      "administrative_boundaries",
+      "demographics",
+      "mws_layers",
+    ],
+    selectedFilterIds: ["MWS:relief:2"],
+    mapView: {
+      center: [78.36, 14.03] as [number, number],
+      zoom: 10.5,
+      pitch: 0,
+      bearing: 0,
+    },
+    layers: [
+      {
+        id: "admin-live",
+        name: "Administrative Boundaries",
+        visible: true,
+        opacity: 1,
+      },
+      {
+        id: "demographic-live",
+        name: "Socio-Economic Profile",
+        visible: true,
+        opacity: 0.9,
+      },
+      {
+        id: "mws-live",
+        name: "Micro-watersheds and Hydrological Variables",
+        visible: true,
+        opacity: 0.8,
+      },
+      {
+        id: "explore-mws-live",
+        name: "Explore · Micro-watersheds",
+        visible: true,
+        opacity: 0.7,
+      },
+    ],
+    results: [{ source: "MWS" as const, total: 45, matched: 42 }],
+  };
+
+  it("builds deterministic scenes from location, layers, filters, and live results", () => {
+    const story = buildCoreGeoStackTehsilStory(input);
+    assert.equal(story.title, "Nambulipulikunta — Know Your Landscape");
+    assert.deepEqual(
+      story.chapters.map((chapter) => chapter.id.split(":").at(-1)),
+      ["orientation", "people", "hydrology", "mws", "synthesis"],
+    );
+    assert.match(story.chapters[3].description, /42 of 45 matching features/);
+    assert.ok(
+      story.chapters[3].onChapterEnter.some(
+        (change) => change.layerId === "explore-mws-live" && change.opacity >= 0.82,
+      ),
+    );
+    assert.equal(
+      story.chapters.at(-1)?.onChapterEnter.find(
+        (change) => change.layerId === "explore-mws-live",
+      )?.opacity,
+      0.7,
+    );
+  });
+
+  it("identifies generated tehsil stories without claiming custom stories", () => {
+    const story = buildCoreGeoStackTehsilStory(input);
+    assert.equal(isCoreGeoStackTehsilStory(story), true);
+    assert.equal(
+      isCoreGeoStackTehsilStory({
+        ...story,
+        chapters: [{ ...story.chapters[0], id: "custom-story:first" }],
+      }),
+      false,
+    );
+  });
+
+  it("summarizes the proposed scene before replacing an existing story", () => {
+    assert.deepEqual(summarizeCoreGeoStackTehsilStory(input), {
+      chapterCount: 5,
+      domainCount: 1,
+      filterCount: 1,
+      liveLayerCount: 4,
+    });
   });
 });
