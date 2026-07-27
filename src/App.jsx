@@ -8,6 +8,7 @@ import AgroHorticulture from "./pages/AgroHorticulture";
 import RWBDashboard from "./pages/RWBDashboard";
 import EmbedDashboard from "./components/embed_dashboards";
 import { Toaster } from "react-hot-toast";
+import StewardDetailPage from "./components/steward_detailPage.jsx";
 
 //import DEMContourMap from "./pages/DemContourMap"
 
@@ -24,6 +25,7 @@ function App() {
         <Route path="/rwb" element={<RWBDashboard />} />
         <Route path="/landscape-stewardship" element={<PlansPage />} />
         <Route path="/landscape-stewardship/plan-view" element={<PlanViewPage />} />
+        <Route path="/landscape-stewardship/steward-view/:organization/:facilitator" element={<StewardDetailPage />} />
         <Route path="/dashboard/:dashboardType" element={<EmbedDashboard />}
 />
       </Routes>
