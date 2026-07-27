@@ -66,4 +66,22 @@
 - Compatibility migration belongs at the URL boundary: old `mode=present`
   links resolve to Stories while new URLs emit only the three supported modes.
 
+## 2026-07-27 — runnable WSL review path
+
+- A successful build and HTTP 200 do not prove that MapLibre can render.
+  Chromium can block both WebGL1 and WebGL2 under WSL even while the rest of the
+  React application works.
+- Current Chromium no longer guarantees automatic SwiftShader WebGL fallback.
+  A dedicated local-review Chrome profile must explicitly use ANGLE's
+  `swiftshader-webgl` implementation and opt in with
+  `--enable-unsafe-swiftshader`.
+- A separate browser profile prevents an existing Chrome process from silently
+  ignoring new GPU-process flags. That profile is only for the trusted local
+  application because Chromium describes the fallback as a lower-security mode.
+- On `/mnt/y`, use the built preview for review. Cold Vite dependency
+  optimization exceeded 2 GB resident memory and failed to paint within three
+  minutes, while the production preview reached the shell in about 2.2 seconds.
+- Map failure UI must provide an actionable WebGL/WSL recovery path instead of
+  only a generic Retry button.
+
 Append only. If a learning changes an architectural rule, also create an ADR.

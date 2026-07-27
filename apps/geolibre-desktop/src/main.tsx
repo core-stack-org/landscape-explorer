@@ -42,11 +42,13 @@ import { I18nextProvider } from "react-i18next";
 // lazily imported, so `i18nReady` resolves once the initial locale's catalog has
 // loaded and init has run — the render below awaits it.
 import i18n, { i18nReady } from "./i18n";
+import { installAppInteractionLogger } from "./lib/app-logger";
 import { installDiagnosticsCapture } from "./lib/diagnostics";
 import { isTauri } from "./lib/is-tauri";
 import { installStaleChunkReload } from "./lib/stale-chunk-reload";
 
 installDiagnosticsCapture();
+installAppInteractionLogger();
 // In the desktop build, route geocoding (place search / reverse geocode)
 // through Tauri's native HTTP client so it bypasses WebView CORS: public
 // Nominatim's CDN intermittently omits the CORS header on cached responses,

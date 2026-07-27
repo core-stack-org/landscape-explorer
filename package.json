@@ -9,6 +9,8 @@
     "workers/*"
   ],
   "scripts": {
+    "start": "npm run preview -w geolibre-desktop -- --host 127.0.0.1 --port 4173",
+    "open:wsl": "bash scripts/open-core-geostack-wsl.sh",
     "dev": "npm run dev -w geolibre-desktop",
     "build": "npm run build -w geolibre-desktop",
     "build:jupyterlite": "node scripts/build-jupyterlite.mjs",

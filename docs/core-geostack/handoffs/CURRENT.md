@@ -1,7 +1,7 @@
 # Current handoff
 
-Updated: 2026-07-26
-Cycle: 003 — generalized tehsil Stories
+Updated: 2026-07-27
+Cycle: 004 — whole-app observability and reliable WSL review
 
 ## Branch and base
 
@@ -35,13 +35,25 @@ Cycle: 003 — generalized tehsil Stories
   blocked basemap `load` event cannot leave the KYL workspace unregistered.
 - Typed tests, ADR-0005, updated architecture/data/visual contracts, learning
   log, roadmap, and immutable cycle handoff.
+- One structured logger installed at the application entry point before React
+  loads, covering startup diagnostics, GeoLibre menus/dialogs/panels/plugins,
+  map interactions, CoRE workspace transitions, and story actions.
+- A privacy allow-list that excludes typed values, feature attributes,
+  credentials, raw URLs/query strings, and diagnostic bodies.
+- A bounded local activity log with download/clear/inspect controls and optional
+  HTTP(S) batching that honors Do Not Track.
+- `npm start` as the reliable `/mnt/y` production-preview path and
+  `npm run open:wsl` as the dedicated SwiftShader WebGL Chrome launcher.
+- Actionable map-failure recovery text for WSL WebGL blocklisting.
+- ADR-0006, an observability/privacy contract, focused privacy tests, and a
+  recursive knowledge-base update.
 
 ## Validation
 
-- Focused CoRE-GeoStack tests: 18 passed, 0 failed.
+- Focused CoRE-GeoStack and logger tests: 20 passed, 0 failed.
 - Focused ESLint for the changed CoRE source: passed with 0 warnings.
 - TypeScript project build: passed.
-- Production PWA build: passed; 7,709 modules transformed and 428 entries
+- Production PWA build: passed; 7,710 modules transformed and 427 entries
   precached.
 - Desktop production browser smoke at 1440x900:
   - Nambulipulikunta opened directly in Stories;
@@ -55,6 +67,15 @@ Cycle: 003 — generalized tehsil Stories
 - Mobile 393x851 smoke displayed the operable tehsil-first Stories empty state.
 - Browser screenshots were visually inspected for the desktop reader and
   mobile empty state.
+- Production preview returned HTTP 200 and reached the CoRE shell in 2.17
+  seconds in a clean browser with zero page errors.
+- The cold `/mnt/y` Vite development path was reproduced: it exceeded 2 GB
+  resident memory and did not reach DOM content in 180 seconds.
+- The user's WSL Chrome failure was traced to explicit `WebGL1 blocklisted` and
+  `WebGL2 blocklisted` messages. Chromium's documented SwiftShader WebGL flags
+  restored WebGL1, created the MapLibre canvas, and produced zero page errors.
+- Generic Project-menu clicks, map events, workspace/data transitions, and
+  semantic story events were observed in the shared local logger.
 - Knowledge-base structure and `git diff --check`: passed.
 - Rust check remains unavailable because `cargo` is not installed. This cycle
   changes no Rust source.
@@ -70,12 +91,18 @@ Cycle: 003 — generalized tehsil Stories
 - Story generation captures the current camera rather than a persisted
   tehsil-specific editorial camera template.
 - A cold local build still carries the inherited large startup graph.
+- Hot-module development is not practical from the Windows `9p` mount; it needs
+  a WSL-native Linux clone/worktree.
+- The WSL fallback is CPU-rendered and slower than supported hardware WebGL.
+- Remote logger transport remains unconfigured until retention, access,
+  authorization, and deletion policies are approved.
 
 ## Next executable step
 
-Add a second story preset with explicit source/date/caveat blocks and validate
-both presets across the approved multi-tehsil set. Then expose print/handout
-templates without creating another story state model.
+Define the first approved aggregation/retention policy for privacy-filtered
+activity events and use the local evidence to prioritize startup splitting.
+Then add a source/date/caveat-aware story preset and validate it across the
+approved multi-tehsil set.
 
 The immutable snapshot for this handoff is
-[`2026-07-26-cycle-003-tehsil-stories.md`](2026-07-26-cycle-003-tehsil-stories.md).
+[`2026-07-27-cycle-004-observability-wsl-runtime.md`](2026-07-27-cycle-004-observability-wsl-runtime.md).

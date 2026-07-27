@@ -115,6 +115,7 @@ import { MapGrid } from "./MapGrid";
 import { RemoteCursorsOverlay } from "./RemoteCursorsOverlay";
 import { useCommandBridge } from "../../hooks/useCommandBridge";
 import { appendDiagnostic, useDiagnosticsSnapshot } from "../../lib/diagnostics";
+import { attachMapInteractionLogger } from "../../lib/app-logger";
 import { SectionErrorBoundary, SilentErrorBoundary } from "../common/error-boundaries";
 import { AttributeTable } from "../panels/AttributeTable";
 import { RasterAttributeTable } from "../panels/RasterAttributeTable";
@@ -731,6 +732,12 @@ export function DesktopShell({
   const [diagnosticsOpen, setDiagnosticsOpen] = useState(false);
   const diagnostics = useDiagnosticsSnapshot();
   const externalPluginsReady = useExternalPluginsReady(mapControllerRef);
+  useEffect(() => {
+    if (!mapReadyGeneration) return;
+    const map = mapControllerRef.current?.getMap();
+    if (!map) return;
+    return attachMapInteractionLogger(map);
+  }, [mapReadyGeneration]);
   useEffect(() => {
     // CoRE-GeoStack is the product shell, so mount it as soon as the first map
     // instance exists. External plugin discovery can take several seconds on a
@@ -1974,7 +1981,18 @@ export function DesktopShell({
               chrome-free visual layout. Placed inside the main landmark so it
               is not flagged as content outside a landmark. */}
           <h1 className="sr-only">CoRE-GeoStack map workspace</h1>
-          <SectionErrorBoundary label="Map" fallbackClassName="h-full w-full">
+          <SectionErrorBoundary
+            label="Map"
+            fallbackClassName="h-full w-full"
+            recoveryHint={
+              <p>
+                MapLibre requires WebGL. If WSL Chrome reports WebGL as blocklisted,
+                keep the server running and launch the app with{" "}
+                <code className="rounded bg-muted px-1 py-0.5">npm run open:wsl</code>.
+                Other map failures are recorded in Diagnostics.
+              </p>
+            }
+          >
             <MapGrid>
               <MapCanvas
                 controllerRef={mapControllerRef}

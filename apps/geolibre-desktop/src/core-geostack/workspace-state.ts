@@ -1,3 +1,5 @@
+import { recordAppEvent } from "../lib/app-logger";
+
 export const CORE_GEOSTACK_MODES = ["focus", "explore", "stories"] as const;
 export type CoreGeoStackMode = (typeof CORE_GEOSTACK_MODES)[number];
 
@@ -183,10 +185,17 @@ export function subscribeCoreGeoStackWorkspace(listener: () => void): () => void
 export function setCoreGeoStackMode(mode: CoreGeoStackMode): void {
   if (snapshot.mode === mode) return;
   publish({ ...snapshot, mode }, "push");
+  recordAppEvent("workspace.mode_changed", { mode });
 }
 
 export function setCoreGeoStackLocation(location: CoreGeoStackLocation): void {
   publish({ ...snapshot, location, selectedFilterIds: [] }, "push");
+  recordAppEvent("workspace.location_changed", {
+    state: location.state,
+    district: location.district,
+    tehsil: location.tehsil,
+    filterCount: 0,
+  });
 }
 
 export function toggleCoreGeoStackLayer(layerId: string): void {
@@ -194,6 +203,11 @@ export function toggleCoreGeoStackLayer(layerId: string): void {
   if (selected.has(layerId)) selected.delete(layerId);
   else selected.add(layerId);
   publish({ ...snapshot, selectedLayerIds: [...selected] }, "push");
+  recordAppEvent("workspace.layer_toggled", {
+    target: layerId,
+    visible: selected.has(layerId),
+    layerCount: selected.size,
+  });
 }
 
 export function toggleCoreGeoStackFilter(filterId: string): void {
@@ -201,11 +215,17 @@ export function toggleCoreGeoStackFilter(filterId: string): void {
   if (selected.has(filterId)) selected.delete(filterId);
   else selected.add(filterId);
   publish({ ...snapshot, selectedFilterIds: [...selected] }, "push");
+  recordAppEvent("workspace.filter_toggled", {
+    target: filterId,
+    visible: selected.has(filterId),
+    filterCount: selected.size,
+  });
 }
 
 export function clearCoreGeoStackFilters(): void {
   if (!snapshot.selectedFilterIds.length) return;
   publish({ ...snapshot, selectedFilterIds: [] }, "push");
+  recordAppEvent("workspace.filters_cleared", { filterCount: 0 });
 }
 
 export function setCoreGeoStackDataStatus(
@@ -214,6 +234,15 @@ export function setCoreGeoStackDataStatus(
 ): void {
   dataStatusChannels[channel] = { ...dataStatus };
   publish({ ...snapshot, dataStatus: combinedDataStatus() });
+  recordAppEvent(
+    "data.status_changed",
+    {
+      source: channel,
+      status: dataStatus.kind,
+      summary: dataStatus.message,
+    },
+    dataStatus.kind === "error" ? "error" : "debug",
+  );
 }
 
 export function applyCoreGeoStackDurableState(state: CoreGeoStackDurableState): void {
@@ -231,6 +260,11 @@ export function applyCoreGeoStackDurableState(state: CoreGeoStackDurableState): 
     },
     "replace",
   );
+  recordAppEvent("workspace.state_applied", {
+    mode: snapshot.mode,
+    layerCount: snapshot.selectedLayerIds.length,
+    filterCount: snapshot.selectedFilterIds.length,
+  });
 }
 
 export function coreGeoStackDurableState(): CoreGeoStackDurableState {
@@ -250,5 +284,6 @@ if (typeof window !== "undefined") {
         dataStatus: snapshot.dataStatus,
       }),
     );
+    recordAppEvent("navigation.popstate", { mode: snapshot.mode });
   });
 }

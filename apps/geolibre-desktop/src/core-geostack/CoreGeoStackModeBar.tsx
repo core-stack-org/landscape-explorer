@@ -1,8 +1,13 @@
 import { useAppStore } from "@geolibre/core";
 import { openRightPanel } from "@geolibre/plugins";
 import { Button, cn } from "@geolibre/ui";
-import { BookOpen, Compass, Crosshair } from "lucide-react";
+import { Activity, BookOpen, Compass, Crosshair } from "lucide-react";
 import { useSyncExternalStore } from "react";
+import {
+  downloadAppLog,
+  getAppLogSnapshot,
+  subscribeAppLog,
+} from "../lib/app-logger";
 import {
   CORE_GEOSTACK_NAME,
   CORE_GEOSTACK_PANEL_ID,
@@ -49,6 +54,11 @@ export function CoreGeoStackModeBar({ showIdentity = true }: { showIdentity?: bo
     getCoreGeoStackWorkspaceSnapshot,
     getCoreGeoStackWorkspaceSnapshot,
   );
+  const logSnapshot = useSyncExternalStore(
+    subscribeAppLog,
+    getAppLogSnapshot,
+    getAppLogSnapshot,
+  );
   const activateMode = (mode: CoreGeoStackMode) => {
     setCoreGeoStackMode(mode);
     const app = useAppStore.getState();
@@ -90,6 +100,7 @@ export function CoreGeoStackModeBar({ showIdentity = true }: { showIdentity?: bo
             )}
             aria-pressed={snapshot.mode === id}
             title={`${label} mode`}
+            data-log-action={`core.mode.${id}`}
             onClick={() => activateMode(id)}
           >
             <Icon className="h-3.5 w-3.5 lg:me-1.5" />
@@ -97,6 +108,19 @@ export function CoreGeoStackModeBar({ showIdentity = true }: { showIdentity?: bo
           </Button>
         ))}
       </nav>
+      <Button
+        type="button"
+        size="sm"
+        variant="ghost"
+        className="ms-0.5 h-8 shrink-0 px-2 text-xs text-muted-foreground"
+        aria-label={`Download app activity log with ${logSnapshot.eventCount} events`}
+        title={`Download privacy-filtered app activity log (${logSnapshot.eventCount} events)`}
+        data-log-action="logger.download"
+        onClick={downloadAppLog}
+      >
+        <Activity className="h-3.5 w-3.5 xl:me-1.5" />
+        <span className="hidden tabular-nums xl:inline">{logSnapshot.eventCount}</span>
+      </Button>
       <span
         className="ms-1 hidden shrink-0 items-center gap-1.5 rounded-full border px-2 py-1 text-[11px] text-muted-foreground 2xl:flex"
         title={snapshot.dataStatus.message}

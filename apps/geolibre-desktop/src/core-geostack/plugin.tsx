@@ -2,6 +2,10 @@ import { DEFAULT_PROJECT_NAME, useAppStore } from "@geolibre/core";
 import type { GeoLibreAppAPI, GeoLibrePlugin } from "@geolibre/plugins";
 import { createRoot, type Root } from "react-dom/client";
 import {
+  recordAppEvent,
+  setAppLogContextProvider,
+} from "../lib/app-logger";
+import {
   CORE_GEOSTACK_NAME,
   CORE_GEOSTACK_PANEL_ID,
   CORE_GEOSTACK_PLUGIN_ID,
@@ -71,6 +75,19 @@ function attachToCurrentMap(app: GeoLibreAppAPI): void {
 
 function activateCoreGeoStack(app: GeoLibreAppAPI): void {
   activeApp = app;
+  setAppLogContextProvider(() => {
+    const workspace = getCoreGeoStackWorkspaceSnapshot();
+    return {
+      mode: workspace.mode,
+      state: workspace.location.state,
+      district: workspace.location.district,
+      tehsil: workspace.location.tehsil,
+      layerCount: workspace.selectedLayerIds.length,
+      filterCount: workspace.selectedFilterIds.length,
+      status: workspace.dataStatus.kind,
+    };
+  });
+  recordAppEvent("plugin.activated", { target: CORE_GEOSTACK_PLUGIN_ID });
   previousProjection ??= app.getMapProjection?.() ?? "globe";
   app.setMapProjection?.("mercator");
   const config = getCoreGeoStackRuntimeConfig();
@@ -101,6 +118,8 @@ function activateCoreGeoStack(app: GeoLibreAppAPI): void {
 }
 
 function deactivateCoreGeoStack(): void {
+  recordAppEvent("plugin.deactivated", { target: CORE_GEOSTACK_PLUGIN_ID });
+  setAppLogContextProvider(null);
   unsubscribeWorkspace?.();
   unsubscribeWorkspace = null;
   unregisterPanel?.();

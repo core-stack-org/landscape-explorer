@@ -99,6 +99,22 @@ be recognized without claiming unrelated custom GeoLibre stories. The old
 `mode=present` URL value is read as `stories` for compatibility and is no longer
 emitted.
 
+## Whole-application observability
+
+The interaction logger is installed once at the application entry point, before
+the React application is loaded and below the CoRE-GeoStack plugin boundary. It
+therefore covers startup diagnostics, GeoLibre menus, dialogs, panels, map
+controls, plugins, and CoRE workspaces. CoRE supplies only safe workspace
+context such as mode, selected location, counts, and data status.
+
+The logger records committed DOM interactions, settled map movement, semantic
+workspace transitions, story actions, and the existing diagnostics stream.
+It intentionally excludes pointer movement, typed values, feature attributes,
+credentials, raw query strings, and diagnostic message bodies. Events are held
+in a bounded local ring buffer by default; remote batching is opt-in and obeys
+the browser's Do Not Track signal. The complete operational and privacy contract
+is maintained in [OBSERVABILITY.md](OBSERVABILITY.md).
+
 ## Responsive shell
 
 - **Large screen:** left Focus/Layers rail, central map, optional right

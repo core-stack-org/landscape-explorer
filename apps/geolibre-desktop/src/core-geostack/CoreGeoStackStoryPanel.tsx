@@ -2,6 +2,7 @@ import { useAppStore } from "@geolibre/core";
 import { Button, cn } from "@geolibre/ui";
 import {
   BookOpen,
+  Download,
   FilePenLine,
   Layers3,
   MapPin,
@@ -11,11 +12,18 @@ import {
 } from "lucide-react";
 import { useMemo, useState, useSyncExternalStore } from "react";
 import {
+  downloadAppLog,
+  getAppLogSnapshot,
+  recordAppEvent,
+  subscribeAppLog,
+} from "../lib/app-logger";
+import {
   getKylExploreRuntimeSnapshot,
   subscribeKylExploreRuntime,
 } from "./explore-runtime";
 import {
   buildCoreGeoStackTehsilStory,
+  CORE_TEHSIL_STORY_SCHEMA,
   isCoreGeoStackTehsilStory,
   summarizeCoreGeoStackTehsilStory,
   type CoreGeoStackTehsilStorySummary,
@@ -48,6 +56,11 @@ export function CoreGeoStackStoryPanel() {
     subscribeKylExploreRuntime,
     getKylExploreRuntimeSnapshot,
     getKylExploreRuntimeSnapshot,
+  );
+  const logSnapshot = useSyncExternalStore(
+    subscribeAppLog,
+    getAppLogSnapshot,
+    getAppLogSnapshot,
   );
   const layers = useAppStore((state) => state.layers);
   const mapView = useAppStore((state) => state.mapView);
@@ -90,23 +103,43 @@ export function CoreGeoStackStoryPanel() {
         "Replace the current story with a new story generated from this tehsil workspace?",
       )
     ) {
+      recordAppEvent("story.generation_cancelled", { reason: "existing-story" });
       return;
     }
     setBuildError(null);
     try {
       setStorymap(plan.story);
+      recordAppEvent("story.generated", {
+        schema: CORE_TEHSIL_STORY_SCHEMA,
+        chapterCount: plan.story.chapters.length,
+        layerCount: plan.summary.liveLayerCount,
+        filterCount: plan.summary.filterCount,
+      });
     } catch (error) {
       const summary = error instanceof Error ? error.message : String(error);
       setBuildError(summary);
+      recordAppEvent(
+        "story.generation_failed",
+        { errorName: error instanceof Error ? error.name : "Error", summary },
+        "error",
+      );
     }
   };
 
   const readStory = () => {
     if (!activeStory?.chapters.length) return;
+    recordAppEvent("story.read_started", {
+      chapterCount: activeStory.chapters.length,
+      storyId: generatedForTehsil ? CORE_TEHSIL_STORY_SCHEMA : "custom",
+    });
     setStorymapPresenting(true);
   };
 
   const editStory = () => {
+    recordAppEvent("story.editor_opened", {
+      chapterCount: activeStory?.chapters.length ?? 0,
+      storyId: generatedForTehsil ? CORE_TEHSIL_STORY_SCHEMA : "custom",
+    });
     setStorymapPanelOpen(true);
   };
 
@@ -133,6 +166,7 @@ export function CoreGeoStackStoryPanel() {
               type="button"
               size="sm"
               className="mt-4 min-h-10"
+              data-log-action="stories.choose-tehsil"
               onClick={() => setCoreGeoStackMode("focus")}
             >
               Choose a tehsil
@@ -222,6 +256,7 @@ export function CoreGeoStackStoryPanel() {
                 <Button
                   type="button"
                   size="sm"
+                  data-log-action="stories.read"
                   onClick={readStory}
                 >
                   <Play className="me-1.5 h-3.5 w-3.5" />
@@ -231,6 +266,7 @@ export function CoreGeoStackStoryPanel() {
                   type="button"
                   size="sm"
                   variant="outline"
+                  data-log-action="stories.edit"
                   onClick={editStory}
                 >
                   <FilePenLine className="me-1.5 h-3.5 w-3.5" />
@@ -243,6 +279,7 @@ export function CoreGeoStackStoryPanel() {
               size="sm"
               variant={activeStory ? "outline" : "default"}
               disabled={!plan || waitingForResults}
+              data-log-action={activeStory ? "stories.rebuild" : "stories.build"}
               onClick={buildStory}
             >
               {activeStory ? (
@@ -289,10 +326,18 @@ export function CoreGeoStackStoryPanel() {
         ) : null}
       </div>
 
-      <footer className="border-t bg-muted/25 px-3 py-2.5">
-        <p className="text-[11px] leading-4 text-muted-foreground">
-          One tehsil workspace · one editable GeoLibre story
-        </p>
+      <footer className="border-t bg-muted/25 p-3">
+        <Button
+          type="button"
+          size="sm"
+          variant="ghost"
+          className="w-full justify-start text-xs"
+          data-log-action="logger.download"
+          onClick={downloadAppLog}
+        >
+          <Download className="me-2 h-3.5 w-3.5" />
+          Download activity log · {logSnapshot.eventCount} events
+        </Button>
       </footer>
     </section>
   );

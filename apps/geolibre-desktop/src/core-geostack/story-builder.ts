@@ -358,7 +358,7 @@ export function buildCoreGeoStackTehsilStory(
     inset: true,
     insetPosition: "bottom-right",
     hideChapterNav: false,
-    startSlide: "global",
+    startSlide: "none",
     endSlide: "adjacent",
     chapters,
   };

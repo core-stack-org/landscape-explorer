@@ -84,6 +84,7 @@ export function SectionErrorBoundary({
   fallbackClassName,
   resetKeys,
   onClose,
+  recoveryHint,
 }: {
   label: string;
   children: ReactNode;
@@ -93,6 +94,8 @@ export function SectionErrorBoundary({
    */
   fallbackClassName?: string;
   resetKeys?: readonly unknown[];
+  /** Optional targeted recovery guidance shown below the generic failure. */
+  recoveryHint?: ReactNode;
   /**
    * When the crashed section owns its own close control (a dockable panel whose
    * header is replaced by this fallback), pass a closer so the user is not
@@ -111,6 +114,7 @@ export function SectionErrorBoundary({
           reset={reset}
           className={fallbackClassName}
           onClose={onClose}
+          recoveryHint={recoveryHint}
         />
       )}
     >
@@ -141,10 +145,12 @@ function SectionErrorFallback({
   reset,
   className,
   onClose,
+  recoveryHint,
 }: Pick<ErrorBoundaryFallbackProps, "reset"> & {
   label: string;
   className?: string;
   onClose?: () => void;
+  recoveryHint?: ReactNode;
 }) {
   const { t } = useTranslation();
   return (
@@ -158,6 +164,11 @@ function SectionErrorFallback({
       <p className="text-sm text-muted-foreground">
         {label} failed to render. The rest of GeoLibre is still available.
       </p>
+      {recoveryHint ? (
+        <div className="max-w-md text-xs leading-5 text-muted-foreground">
+          {recoveryHint}
+        </div>
+      ) : null}
       <div className="flex items-center gap-2">
         <Button variant="outline" size="sm" onClick={reset}>
           <RefreshCw className="h-4 w-4" />

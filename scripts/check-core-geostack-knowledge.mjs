@@ -6,6 +6,7 @@ const required = [
   "docs/core-geostack/ARCHITECTURE.md",
   "docs/core-geostack/DATA_CONTRACTS.md",
   "docs/core-geostack/PERFORMANCE_BUDGETS.md",
+  "docs/core-geostack/OBSERVABILITY.md",
   "docs/core-geostack/VISUAL_CONTRACT.md",
   "docs/core-geostack/ROADMAP.md",
   "docs/core-geostack/LEARNING_LOG.md",

@@ -295,6 +295,7 @@ describe("CoRE-GeoStack tehsil story contract", () => {
   it("builds deterministic scenes from location, layers, filters, and live results", () => {
     const story = buildCoreGeoStackTehsilStory(input);
     assert.equal(story.title, "Nambulipulikunta — Know Your Landscape");
+    assert.equal(story.startSlide, "none");
     assert.deepEqual(
       story.chapters.map((chapter) => chapter.id.split(":").at(-1)),
       ["orientation", "people", "hydrology", "mws", "synthesis"],

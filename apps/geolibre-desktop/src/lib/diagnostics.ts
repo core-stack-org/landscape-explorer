@@ -1,4 +1,5 @@
 import { useSyncExternalStore } from "react";
+import { recordAppEvent } from "./app-logger";
 import { classifyFetchFailure } from "./fetch-error";
 import { isTauri } from "./is-tauri";
 
@@ -327,6 +328,16 @@ export function appendDiagnostic(input: DiagnosticInput): void {
 
   records = [record, ...records].slice(0, MAX_DIAGNOSTIC_RECORDS);
   emitChange();
+  recordAppEvent(
+    "diagnostic.recorded",
+    {
+      kind: record.category,
+      status: record.level,
+      target: record.source,
+      summary: `${record.category} diagnostic`,
+    },
+    record.level === "error" ? "error" : record.level === "warning" ? "warn" : "debug",
+  );
 }
 
 export function clearDiagnostics(): void {
