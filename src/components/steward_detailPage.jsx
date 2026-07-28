@@ -184,6 +184,7 @@ if (!organization || !facilitator) return;
             accent={P.dark}
           />
         </div>
+<div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
         {/* PERSONAL DETAILS */}
         <div className="bg-white rounded-2xl p-5 shadow-sm"
@@ -211,6 +212,8 @@ if (!organization || !facilitator) return;
           <InfoRow label="Tehsils"   value={tehsils   || "N/A"} />
         </div>
 
+        </div>
+
         {/* PLANS */}
         <div className="bg-white rounded-2xl p-5 shadow-sm"
           style={{ border: `1px solid ${P.border}` }}>
@@ -229,6 +232,7 @@ if (!organization || !facilitator) return;
                   style={{ background: P.lighter, border: `1px solid ${P.border}` }}>
               <p
                 onClick={() => {
+                  if (!p.is_completed) return;
                   window.open(
                     `/landscape-stewardship/plan-view?id=${p.id}` +
                       `&stateId=${returnContext?.stateId ?? ""}` +
@@ -238,8 +242,17 @@ if (!organization || !facilitator) return;
                     "_blank"
                   );
                 }}
-                className="text-sm font-medium truncate cursor-pointer hover:underline"
-                style={{ color: P.base }}
+             className={`text-sm font-medium truncate ${
+            p.is_completed
+              ? "cursor-pointer hover:underline"
+              : "cursor-not-allowed"
+          }`}
+          style={{
+            color: p.is_completed ? P.base : "#9CA3AF", // grey for incomplete
+            textDecoration: p.is_completed ? "underline" : "none",
+            opacity: p.is_completed ? 1 : 0.65,
+          }}
+
               >
                 {p.name}
               </p>

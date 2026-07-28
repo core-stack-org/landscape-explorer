@@ -64,11 +64,12 @@ const fetchMetaStats = async (organizationId = null, stateId = null, districtId 
   return res.json();
 };
 
-const fetchStewardStats = async (organizationId = null, stateId = null) => {
+const fetchStewardStats = async (organizationId = null, stateId = null, districtId = null) => {
   let url = `${process.env.REACT_APP_API_URL}/watershed/plans/steward-meta-stats/`;
   const params = new URLSearchParams();
   if (organizationId) params.append("organization", organizationId);
-  if (stateId)        params.append("state", stateId);
+  if (stateId)        params.append("state",        stateId);
+  if (districtId)     params.append("district",     districtId);
   if (params.toString()) url += `?${params.toString()}`;
   const res = await fetch(url, {
     headers: {
@@ -1206,7 +1207,7 @@ console.log("viewMode:", viewMode);
         }
 
       try {
-  const [listingData, stewardData, districtMetaStats] = await Promise.all([
+  const [listingData, stewardData, districtMetaStats, dprData, trackingData] = await Promise.all([
     fetchStewardListing(
       currentStateRef.current?.state_id,
       orgRef.current?.value ?? null,
@@ -1214,13 +1215,23 @@ console.log("viewMode:", viewMode);
     ),
     fetchStewardStats(
       orgRef.current?.value ?? null,
-      currentStateRef.current?.state_id
+      currentStateRef.current?.state_id,
+      districtData.district_id
     ),
     fetchMetaStats(
       orgRef.current?.value ?? null,
       null,
       districtData.district_id
     ),
+     fetchDprReportStatus({
+    organizationId: orgRef.current?.value ?? null,
+    districtId: districtData.district_id,
+  }),
+
+  fetchStatusTracking({
+    organizationId: orgRef.current?.value ?? null,
+    districtId: districtData.district_id,
+  }),
   ]);
 
   const stewards = listingData.stewards ?? [];
@@ -1230,6 +1241,8 @@ console.log("viewMode:", viewMode);
 
   setStewardStats(stewardData);
   setMetaStats(districtMetaStats);
+  setDprStatus(dprData);
+setStatusTracking(trackingData);
 
 }catch (err) {
           console.error("Steward listing failed:", err);
