@@ -1292,7 +1292,7 @@ const handleResetMWS = () => {
           [0, 0, 0, 1],
         ],
         "stroke-width": ["case", ["==", ["get", "isSelected"], 1], 2.0, 1.2],
-        "fill-color": [255, 255, 0, 0.01],
+        "fill-color": [255, 255, 0, 0.001],
       });
   
       // ── 4. Zoom animation ────────────────────────────────────────────────────
@@ -2825,8 +2825,7 @@ useEffect(() => {
             }
             else{
                if (village && typeof village[filterName] !== 'undefined' && village.village_id) {
-                const value = Number(village[filterName]);
-                if (!isNaN(value) && value == selectedOption.value) {
+                if (String(village[filterName]) === String(selectedOption.value)) {
                   if (candidateVillages.size === 0 || candidateVillages.has(village.village_id)) {
                     tempArr.add(village.village_id);
                   }
