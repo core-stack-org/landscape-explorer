@@ -2825,8 +2825,7 @@ useEffect(() => {
             }
             else{
                if (village && typeof village[filterName] !== 'undefined' && village.village_id) {
-                const value = Number(village[filterName]);
-                if (!isNaN(value) && value == selectedOption.value) {
+                if (String(village[filterName]) === String(selectedOption.value)) {
                   if (candidateVillages.size === 0 || candidateVillages.has(village.village_id)) {
                     tempArr.add(village.village_id);
                   }
