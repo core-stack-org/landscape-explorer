@@ -1299,7 +1299,7 @@ const handleResetMWS = () => {
           [0, 0, 0, 1],
         ],
         "stroke-width": ["case", ["==", ["get", "isSelected"], 1], 2.0, 1.2],
-        "fill-color": [255, 255, 0, 0.01],
+        "fill-color": [255, 255, 0, 0.001],
       });
   
       // ── 4. Zoom animation ────────────────────────────────────────────────────
