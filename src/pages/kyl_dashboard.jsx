@@ -2405,69 +2405,69 @@ useEffect(() => {
   }, [mapRef.current, state, district, block]);
 
 
-const updateSelectedMWSStyle = (selectedIds) => {
-  if (!mwsLayerRef.current) return;
+  const updateSelectedMWSStyle = (selectedIds) => {
+    if (!mwsLayerRef.current) return;
 
-  const features = mwsLayerRef.current.getSource().getFeatures();
+    const features = mwsLayerRef.current.getSource().getFeatures();
 
-  features.forEach((feature) => {
-    const uid = feature.get("uid");
-    feature.set(
-      "isSelected",
-      selectedIds.includes(uid) ? 1 : 0,
-      true
-    );
-  });
-
-  mwsLayerRef.current.getSource().changed();
-  // applyDefaultMWSStyle();
-};
-
-useEffect(() => {
-  if (!mapRef.current) return;
-
-const handleMapClick = (event) => {
-    const mwsSource = mwsLayerRef.current?.getSource();
-    const feature = mwsSource
-      ? mwsSource.getFeaturesAtCoordinate(event.coordinate)[0]
-      : undefined;
-
-    if (!feature) return;
-
-    const uid = feature.get("uid");
-
-    setManualSelectedMWS((prev) => {
-      const updated = prev.includes(uid)
-        ? prev.filter((id) => id !== uid)
-        : [...prev, uid];
-
-      updateSelectedMWSStyle(updated);
-
-      if (updated.length === 0) {
-        setSelectedMWSProfile(null);
-        setHighlightMWS(null);
-      } else {
-        setSelectedMWSProfile(feature.getProperties());
-        setHighlightMWS(uid);
-      }
-
-      return updated;
+    features.forEach((feature) => {
+      const uid = feature.get("uid");
+      feature.set(
+        "isSelected",
+        selectedIds.includes(uid) ? 1 : 0,
+        true
+      );
     });
 
-    if (toastId) {
-      toast.dismiss(toastId);
-      setToastId(null);
-    }
+    mwsLayerRef.current.getSource().changed();
+    // applyDefaultMWSStyle();
   };
 
-  mapRef.current.on("click", handleMapClick);
+  useEffect(() => {
+    if (!mapRef.current) return;
 
-  return () => {
-    if (mapRef.current) {
-      mapRef.current.un("click", handleMapClick);
-    }
-  };
-}, [toastId, mapRef.current]);
+  const handleMapClick = (event) => {
+      const mwsSource = mwsLayerRef.current?.getSource();
+      const feature = mwsSource
+        ? mwsSource.getFeaturesAtCoordinate(event.coordinate)[0]
+        : undefined;
+
+      if (!feature) return;
+
+      const uid = feature.get("uid");
+
+      setManualSelectedMWS((prev) => {
+        const updated = prev.includes(uid)
+          ? prev.filter((id) => id !== uid)
+          : [...prev, uid];
+
+        updateSelectedMWSStyle(updated);
+
+        if (updated.length === 0) {
+          setSelectedMWSProfile(null);
+          setHighlightMWS(null);
+        } else {
+          setSelectedMWSProfile(feature.getProperties());
+          setHighlightMWS(uid);
+        }
+
+        return updated;
+      });
+
+      if (toastId) {
+        toast.dismiss(toastId);
+        setToastId(null);
+      }
+    };
+
+    mapRef.current.on("click", handleMapClick);
+
+    return () => {
+      if (mapRef.current) {
+        mapRef.current.un("click", handleMapClick);
+      }
+    };
+  }, [toastId, mapRef.current]);
 
 
  

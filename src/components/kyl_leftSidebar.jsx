@@ -8,7 +8,7 @@ import { ChevronRight, ArrowLeft, AlertCircle, WifiOff, FileX, Loader2 } from 'l
 const FILTER_SECTION_MAP = {
   'terrainCluster_ID':            'Micro watershed',
   'relief':                       'Micro watershed',
-  'relative_mean_elevation' :     'Micro watershedWS',
+  'relative_mean_elevation' :     'Micro watershed',
   'lulc_crop_percent':            'Micro watershed',
   'avg_precipitation':            'Micro watershed',
   'avg_runoff':                   'Micro watershed',
@@ -52,24 +52,24 @@ const FILTER_SECTION_MAP = {
   'livestock_management_centers': 'Village',
   'agricultural_support_infrastructure':    'Village',
   'total_assets':                 'Village',
-  'road_connectivity' : 'Village',
-  'electricity_supply' : 'Village',
-  'housing_quality' : 'Village',
-  'maternal_and_child_health_service_access' : 'Village',
+  'road_connectivity_cat_cluster' : 'Village',
+  'energy_access_cat_cluster' : 'Village',
+  'housing_quality_cat_cluster' : 'Village',
+  'maternal_child_health_cat_cluster' : 'Village',
   'water_and_sanitation_infrastructure' : 'Village',
-  'access_to_formal_banking_services' : 'Village',
-  'coverage_across_PDS_NFSA_BPL_and_Pension' : 'Village',
-  'institutionalization_strength' : 'Village',
+  'financial_inclusion_cat_cluster' : 'Village',
+  'social_protection_cat_cluster' : 'Village',
+  'institutionalization_cat_cluster' : 'Village',
   'civic_infrastructure' : 'Village',
-  'farm_employment' : 'Village',
+  'livelihoods_employment_cat_cluster' : 'Village',
   'forest-based_livelihood' : 'Village',
   'alternate_farming' : 'Village',
   'fisheries_adoption' : 'Village',
   'cottage_industry' : 'Village',
-  'livestock_management_service_quality' : 'Village',
+  'livestock_veterinary_cat_cluster' : 'Village',
   'common_pasture_access' : 'Village',
-  'watershed_infrastructure_and_modern_irrigation' : 'Village'
- 
+  'agriculture_irrigation_watershed_cat_cluster' : 'Village',
+  'agriculture_organic_farming_cat_cluster' : 'Village'
 };
 
 const getFilterSection = (filterName) => FILTER_SECTION_MAP[filterName] || 'Other';
