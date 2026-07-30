@@ -8,7 +8,7 @@ const DEFAULT_VIEWER_URL = "https://web.geolibre.app/";
  * uses this value only for {version} URL templates and project metadata.
  */
 export const GEOLIBRE_CONFIG = Object.freeze({
-  version: process.env.REACT_APP_GEOLIBRE_VERSION || "2.2.0",
+  version: process.env.REACT_APP_GEOLIBRE_VERSION || "2.4.0",
   minimumCompatibleVersion: "2.0.0",
   supportedMajorVersion: 2,
   viewerUrlTemplate:

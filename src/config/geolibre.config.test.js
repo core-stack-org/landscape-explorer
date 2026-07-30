@@ -13,6 +13,10 @@ const config = {
 };
 
 describe("GeoLibre application configuration", () => {
+  it("records v2.4.0 as the currently tested release", () => {
+    expect(GEOLIBRE_CONFIG.version).toBe("2.4.0");
+  });
+
   it("resolves a versioned viewer URL and embed parameters", () => {
     expect(resolveGeoLibreViewer(config)).toEqual({
       url: "https://viewer.example/geolibre/2.2.0/?embed=1&welcome=0",
@@ -37,6 +41,9 @@ describe("GeoLibre application configuration", () => {
       true
     );
     expect(geoLibreVersionStatus("2.2.0", GEOLIBRE_CONFIG).compatible).toBe(
+      true
+    );
+    expect(geoLibreVersionStatus("2.4.0", GEOLIBRE_CONFIG).compatible).toBe(
       true
     );
   });

@@ -9,7 +9,7 @@ CoRE Stack datasets are available under
 [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
 
 The implementation targets
-[GeoLibre v2.2.0](https://github.com/opengeos/GeoLibre/releases/tag/v2.2.0)
+[GeoLibre v2.4.0](https://github.com/opengeos/GeoLibre/releases/tag/v2.4.0)
 and uses its supported embed bridge and WFS project representation.
 
 ## Runtime flow
@@ -81,6 +81,55 @@ sequenceDiagram
 7. **Failure handling:** users receive short recovery guidance. A bounded
    technical trace can be downloaded as a `.log` file when support needs it.
 
+## Python and Jupyter Lab
+
+The **Python Lab** button is enabled after the tehsil project is ready. It
+generates two location-specific files from the project currently held by KYL:
+
+- a `.ipynb` notebook for GeoLibre's native Jupyter panel, Google Colab, VS
+  Code, or local Jupyter;
+- a `.py` helper file for GeoLibre's built-in Python Console editor.
+
+The notebook deliberately supports two runtimes:
+
+```mermaid
+flowchart TD
+    A[KYL tehsil project] --> B[Generated notebook]
+    B --> C[GeoLibre web Notebook panel]
+    C --> D[JupyterLite and Pyodide in browser]
+    D --> E[Notebook bridge]
+    E --> F[Live KYL GeoLibre map]
+    B --> G[Colab, VS Code, or local Jupyter]
+    G --> H[geolibre Python anywidget]
+    H --> I[Portable project copy]
+```
+
+In the native path, `geolibre.connect()` sends camera, visibility, opacity,
+GeoJSON, and processing commands to the map already visible beside the
+notebook. Toggling a hidden KYL vector still travels through the existing
+`geolibre:state` bridge, so KYL fetches it once and retains it exactly as if the
+user had clicked the Layers panel.
+
+In the external path, the notebook installs the same version recorded by
+`GEOLIBRE_CONFIG`, creates a `geolibre.Map` anywidget, and loads the generated
+project embedded in the notebook. This is a portable snapshot: already hydrated
+vectors and all remote raster definitions travel with it. When an external user
+selects an unloaded vector, the notebook reconstructs it from the public WFS
+metadata embedded in the project and adds the hydrated result to its own map.
+KYL's browser cache and fetch-on-toggle callback remain specific to
+`/download_layers`.
+
+The generated examples provide domain/layer controls, visibility and opacity,
+overview/Hydrology/latest-LULC presets, tehsil extent fitting, observation
+markers, and a buffer recipe. They create session or derived layers only and
+never write to CoRE Stack's published sources.
+
+The browser cannot silently place a KYL file into the cross-origin
+`web.geolibre.app` JupyterLite filesystem. Users therefore download the
+notebook, open **Processing → Jupyter Notebook**, upload it once, and run all
+cells. This explicit handoff preserves the hosted viewer's security boundary
+and requires no notebook server or KYL backend.
+
 ## Native layer organization
 
 GeoLibre's own layer panel follows the deployed Download Layers taxonomy,
@@ -134,7 +183,7 @@ The one source-code fallback to update is the version value in
 
 ```js
 export const GEOLIBRE_CONFIG = Object.freeze({
-  version: process.env.REACT_APP_GEOLIBRE_VERSION || "2.2.0",
+  version: process.env.REACT_APP_GEOLIBRE_VERSION || "2.4.0",
   minimumCompatibleVersion: "2.0.0",
   supportedMajorVersion: 2,
   // ...
@@ -148,7 +197,7 @@ versioned URL template. It cannot select the release served by the unversioned
 For an exactly pinned self-hosted release, set:
 
 ```dotenv
-REACT_APP_GEOLIBRE_VERSION=2.3.0
+REACT_APP_GEOLIBRE_VERSION=2.4.0
 REACT_APP_GEOLIBRE_URL_TEMPLATE=https://maps.example.org/geolibre/{version}/
 REACT_APP_GEOLIBRE_STRICT_VERSION=true
 ```
@@ -161,7 +210,7 @@ the compatibility rules and project/bridge tests, not just the version value.
 The small badge over the iframe reports the version that actually completed the
 GeoLibre handshake and whether its deployment URL is `rolling` or `pinned`.
 
-GeoLibre's application version (`2.2.0`) is separate from its project schema
+GeoLibre's application version (`2.4.0`) is separate from its project schema
 version (`0.2.0`). Do not change the project format merely when upgrading the
 application.
 
@@ -173,6 +222,8 @@ application.
 | `../../config/geolibreLayers.js` | GeoServer names, deployed domains, all LULC years, QML references and WMS styles |
 | `geolibreProject.js` | Project generation, legends, Google imagery, vector hydration, WMS/WCS references and bbox camera |
 | `GeoLibreFrame.jsx` | Iframe bridge, one-time bbox fit, human error states and downloadable bounded technical log |
+| `pythonLabArtifacts.js` | Tehsil-specific notebook, live-map controls, portable anywidget project, and Python Console script |
+| `GeoLibrePythonLab.jsx` | Compact download, native Jupyter upload, Colab, and documentation handoff |
 | `../../pages/LandscapeExplorer.jsx` | Route-to-project orchestration and fetch-on-first-toggle vector cache; no duplicate map or layer UI |
 
 The current project contains 45 entries: 13 vector entries, 24 LULC year/level
@@ -222,7 +273,7 @@ No backend patch, generated project file, vendored GeoLibre bundle, or local
 
 ```bash
 git fetch origin
-git switch feat/geolibre-cog-download
+git switch feat/geolibre-python-notebook-demo
 git pull --ff-only
 cp .env.example .env
 npm install
@@ -242,7 +293,8 @@ CI=true npm test -- --watchAll=false \
   src/config/geolibre.config.test.js \
   src/components/geolibre/geolibreProject.test.js \
   src/components/geolibre/GeoLibreFrame.test.jsx \
-  src/components/landing_navbar.test.jsx
+  src/components/geolibre/pythonLabArtifacts.test.js \
+  src/components/geolibre/GeoLibrePythonLab.test.jsx
 ```
 
 Build:
@@ -279,6 +331,12 @@ Check both routes:
 7. Open both documentation buttons, the QML repository, and the CC BY 4.0 link.
 8. If testing a failure state, confirm it uses human recovery guidance and that
    **Download technical log** saves a `.log` file.
+9. Open **Python Lab**, download the notebook, then open GeoLibre's
+   **Processing → Jupyter Notebook** panel. Upload the notebook and run all
+   cells. Confirm **Hydrology starter** loads the three named layers and that
+   **Fit tehsil** restores the selected extent.
+10. Upload the same notebook to Colab and run all cells. Confirm it installs the
+    configured GeoLibre Python version and renders a portable project widget.
 
 The generated `/download_layers?state=...&district=...&tehsil=...` URL can be
 refreshed or shared on the same KYL host because the location is URL-backed.
@@ -302,11 +360,15 @@ the user's browser with CORS enabled, and the site's framing policy must permit
 
 ## Future integration options
 
-GeoLibre 2.2 leaves room for deeper work without another KYL map implementation:
+GeoLibre 2.4 leaves room for deeper work without another KYL map implementation:
 
 - use direct object-store COG URLs for immutable original-file downloads;
 - preconfigure processing models, bookmarks, print layouts, stories, or plugins;
 - expose saved/shareable GeoLibre project files for partner workflows;
+- publish a curated notebook library and self-host it with a versioned
+  GeoLibre/JupyterLite build for one-click notebook opening;
+- move long-running native GDAL/Rasterio workflows to GeoLibre Desktop or a
+  managed Jupyter service while retaining the same project contract;
 - add direct QML import once GeoLibre's web project/style contract supports it;
 - self-host tested versioned builds so a single version change selects the
   exact deployed application binary.

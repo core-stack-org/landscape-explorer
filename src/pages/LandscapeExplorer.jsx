@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useRecoilValue } from "recoil";
 import GeoLibreFrame from "../components/geolibre/GeoLibreFrame";
+import GeoLibrePythonLab from "../components/geolibre/GeoLibrePythonLab";
 import {
   buildGeoLibreProject,
   hydrateGeoLibreVectorLayer,
@@ -55,6 +56,7 @@ const LandscapeExplorer = () => {
   const [progress, setProgress] = useState("Starting GeoLibre…");
   const [error, setError] = useState("");
   const [retryKey, setRetryKey] = useState(0);
+  const [pythonLabOpen, setPythonLabOpen] = useState(false);
   const currentScopeKeyRef = useRef("");
   const lazyQueueRef = useRef(Promise.resolve());
   const lazyStateSequenceRef = useRef(0);
@@ -80,6 +82,7 @@ const LandscapeExplorer = () => {
 
   useEffect(() => {
     currentScopeKeyRef.current = scopeKey;
+    setPythonLabOpen(false);
     lazyStateSequenceRef.current += 1;
     lazyQueueRef.current = Promise.resolve();
     hydratedLayersRef.current = new Map();
@@ -213,7 +216,10 @@ const LandscapeExplorer = () => {
 
   return (
     <div className="flex h-screen flex-col overflow-hidden bg-white">
-      <LandingNavbar />
+      <LandingNavbar
+        onOpenPythonLab={() => setPythonLabOpen(true)}
+        pythonLabDisabled={!project}
+      />
       <GeoLibreFrame
         project={project}
         preparationMessage={progress}
@@ -221,6 +227,11 @@ const LandscapeExplorer = () => {
         warning={warning}
         onProjectState={handleProjectState}
         onRetry={() => setRetryKey((value) => value + 1)}
+      />
+      <GeoLibrePythonLab
+        open={pythonLabOpen}
+        project={project}
+        onClose={() => setPythonLabOpen(false)}
       />
     </div>
   );
