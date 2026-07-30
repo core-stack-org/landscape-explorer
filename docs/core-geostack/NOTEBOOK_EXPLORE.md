@@ -103,7 +103,7 @@ cd /mnt/y/core-stack-org/landscape-explorer
 HOST=127.0.0.1 PORT=3000 BROWSER=none npm start
 
 # Native CoRE-GeoStack worktree
-cd /mnt/y/core-stack-org/landscape-explorer-core-geostack-notebooks
+cd /home/amitportal/worktrees/core-geostack-notebooks
 npm run build
 npm start
 ```

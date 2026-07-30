@@ -36,8 +36,8 @@ export async function openCoreGeoStackLulcComparison(
   if (selection.beforeYear === selection.afterYear) {
     throw new Error("Choose two different LULC years.");
   }
-  const beforeDefinitionId = `lulc_${selection.level}_${selection.beforeYear}`;
-  const afterDefinitionId = `lulc_${selection.level}_${selection.afterYear}`;
+  const beforeDefinitionId = `lulc_level_${selection.level}_${selection.beforeYear}`;
+  const afterDefinitionId = `lulc_level_${selection.level}_${selection.afterYear}`;
   const beforeDefinition = coreGeoStackLayer(beforeDefinitionId);
   const afterDefinition = coreGeoStackLayer(afterDefinitionId);
   if (!beforeDefinition || !afterDefinition) {

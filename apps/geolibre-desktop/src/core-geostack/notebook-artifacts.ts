@@ -409,7 +409,7 @@ print("Saved the selected watershed as GeoJSON and its indicators as CSV.")
 }
 
 function lulcLayerId(level: string, year: string): string {
-  return `lulc_${level}_${year}`;
+  return `lulc_level_${level}_${year}`;
 }
 
 function wmsLayerInfo(

@@ -8,5 +8,8 @@
 # install on demand with `%pip install ...` / piplite.
 jupyterlite-core>=0.4,<0.6
 jupyterlite-pyodide-kernel>=0.4,<0.6
-jupyterlab>=4.2,<5
-notebook>=7.2,<8
+# JupyterLite 0.5's federated extensions target JupyterLab 4.3 / Notebook 7.3.
+# Allowing newer 4.x/7.x releases produces shared-module runtime failures even
+# though the static build itself succeeds.
+jupyterlab>=4.3.4,<4.4
+notebook>=7.3.2,<7.4

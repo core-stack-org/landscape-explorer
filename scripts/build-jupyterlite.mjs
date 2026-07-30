@@ -17,7 +17,14 @@
 // public/ into dist/ at build time).
 
 import { spawnSync } from "node:child_process";
-import { copyFileSync, existsSync, mkdirSync, rmSync } from "node:fs";
+import {
+  copyFileSync,
+  existsSync,
+  mkdirSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -111,5 +118,18 @@ if (!existsSync(resolve(outputDir, "lab", "index.html"))) {
   );
   process.exit(1);
 }
+
+// JupyterLite 0.5 currently drops `exposeAppInBrowser` from the lite-dir
+// jupyter-lite.json while composing the generated root config. GeoLibre needs
+// that supported option for same-origin theme sync and one-click notebook
+// creation, so enforce it in the final config that config-utils.js actually
+// loads at runtime.
+const outputConfigPath = resolve(outputDir, "jupyter-lite.json");
+const outputConfig = JSON.parse(readFileSync(outputConfigPath, "utf8"));
+outputConfig["jupyter-config-data"] = {
+  ...(outputConfig["jupyter-config-data"] ?? {}),
+  exposeAppInBrowser: true,
+};
+writeFileSync(outputConfigPath, `${JSON.stringify(outputConfig, null, 2)}\n`, "utf8");
 
 console.log(`[build-jupyterlite] Built JupyterLite site into ${outputDir}`);
