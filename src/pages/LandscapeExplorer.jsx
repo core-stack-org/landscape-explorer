@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useRecoilValue } from "recoil";
+import GeoLibreExploreLab from "../components/geolibre/GeoLibreExploreLab";
 import GeoLibreFrame from "../components/geolibre/GeoLibreFrame";
-import GeoLibrePythonLab from "../components/geolibre/GeoLibrePythonLab";
 import {
   buildGeoLibreProject,
   hydrateGeoLibreVectorLayer,
@@ -56,8 +56,9 @@ const LandscapeExplorer = () => {
   const [progress, setProgress] = useState("Starting GeoLibre…");
   const [error, setError] = useState("");
   const [retryKey, setRetryKey] = useState(0);
-  const [pythonLabOpen, setPythonLabOpen] = useState(false);
+  const [exploreOpen, setExploreOpen] = useState(false);
   const currentScopeKeyRef = useRef("");
+  const normalProjectRef = useRef(null);
   const lazyQueueRef = useRef(Promise.resolve());
   const lazyStateSequenceRef = useRef(0);
   const hydratedLayersRef = useRef(new Map());
@@ -82,7 +83,8 @@ const LandscapeExplorer = () => {
 
   useEffect(() => {
     currentScopeKeyRef.current = scopeKey;
-    setPythonLabOpen(false);
+    setExploreOpen(false);
+    normalProjectRef.current = null;
     lazyStateSequenceRef.current += 1;
     lazyQueueRef.current = Promise.resolve();
     hydratedLayersRef.current = new Map();
@@ -114,6 +116,7 @@ const LandscapeExplorer = () => {
     })
       .then((nextProject) => {
         if (controller.signal.aborted) return;
+        normalProjectRef.current = nextProject;
         setProject(nextProject);
         setProgress("Overview is ready. Toggle another layer to load it.");
         trackEvent("GeoLibre", "open_workspace", scope.tehsil);
@@ -176,6 +179,9 @@ const LandscapeExplorer = () => {
         }
 
         hydrationDirtyRef.current = false;
+        if (nextProject.metadata?.explore?.mode !== "lulc-comparison") {
+          normalProjectRef.current = nextProject;
+        }
         setProject(nextProject);
       });
   }, []);
@@ -217,8 +223,8 @@ const LandscapeExplorer = () => {
   return (
     <div className="flex h-screen flex-col overflow-hidden bg-white">
       <LandingNavbar
-        onOpenPythonLab={() => setPythonLabOpen(true)}
-        pythonLabDisabled={!project}
+        onOpenExplore={() => setExploreOpen(true)}
+        exploreDisabled={!project}
       />
       <GeoLibreFrame
         project={project}
@@ -228,10 +234,19 @@ const LandscapeExplorer = () => {
         onProjectState={handleProjectState}
         onRetry={() => setRetryKey((value) => value + 1)}
       />
-      <GeoLibrePythonLab
-        open={pythonLabOpen}
+      <GeoLibreExploreLab
+        open={exploreOpen}
         project={project}
-        onClose={() => setPythonLabOpen(false)}
+        onClose={() => setExploreOpen(false)}
+        onApplyProject={(nextProject) => {
+          if (project?.metadata?.explore?.mode !== "lulc-comparison") {
+            normalProjectRef.current = project;
+          }
+          setProject(nextProject);
+        }}
+        onRestoreProject={() => {
+          if (normalProjectRef.current) setProject(normalProjectRef.current);
+        }}
       />
     </div>
   );

@@ -61,7 +61,7 @@ const project = {
   },
 };
 
-describe("KYL GeoLibre Python Lab artifacts", () => {
+describe("KYL GeoLibre layer workbench artifacts", () => {
   it("creates a valid notebook with native and external GeoLibre modes", () => {
     const notebook = buildGeoLibreNotebook(project);
     const source = notebook.cells

@@ -185,7 +185,9 @@ const nativePanelScript = ({ panelId, layers, scope }) => `
 
 export const buildGeoLibreNotebook = (project) => {
   if (!project?.metadata?.scope || !Array.isArray(project.layers)) {
-    throw new Error("A generated tehsil project is required for the Python Lab.");
+    throw new Error(
+      "A generated tehsil project is required for the layer workbench."
+    );
   }
 
   const scope = projectScope(project);
@@ -417,7 +419,7 @@ centre = ((west + east) / 2, (south + north) / 2)
     cells: [
       markdownCell(
         "kyl-introduction",
-        `# KYL GeoLibre Python Lab: ${scope.tehsil}
+        `# KYL GeoLibre Layer Workbench: ${scope.tehsil}
 
 This notebook is generated from the **${scope.tehsil}, ${scope.district}, ${scope.state}**
 CoRE Stack project. It supports two modes:
@@ -494,7 +496,9 @@ belong in GeoLibre Desktop or an external Jupyter environment.`
 
 export const buildGeoLibreConsoleScript = (project) => {
   if (!project?.metadata?.scope || !Array.isArray(project.layers)) {
-    throw new Error("A generated tehsil project is required for the Python Lab.");
+    throw new Error(
+      "A generated tehsil project is required for the layer workbench."
+    );
   }
   const scope = projectScope(project);
   const layers = pythonLabLayers(project);

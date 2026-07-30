@@ -81,27 +81,47 @@ sequenceDiagram
 7. **Failure handling:** users receive short recovery guidance. A bounded
    technical trace can be downloaded as a `.log` file when support needs it.
 
-## Python and Jupyter Lab
+## CoRE Stack Explore
 
-The **Python Lab** button is enabled after the tehsil project is ready. It
-generates two location-specific files from the project currently held by KYL:
+The **Explore** button is enabled after the tehsil project is ready. It is a
+small, tehsil-aware learning and analysis workbench rather than a generic
+notebook download dialog.
 
-- a `.ipynb` notebook for GeoLibre's native Jupyter panel, Google Colab, VS
-  Code, or local Jupyter;
-- a `.py` helper file for GeoLibre's built-in Python Console editor.
+It provides:
 
-The notebook deliberately supports two runtimes:
+- an immediate synchronized two-pane LULC comparison, with a selectable LULC
+  level and before/after years;
+- a Hydrology and Cropping notebook based on the CoRE Stack
+  latitude/longitude → MWS → tehsil-profile workflow;
+- an LULC comparison notebook using GeoLibre's Python `split_map()` helper;
+- a general layer workbench and Python Console helper.
+
+Every notebook knows the selected scope, bbox, current layer catalogue, source
+metadata, and tested GeoLibre version. The hydrology workbook fetches the live
+MWS WFS only when its data cell runs. It discovers indicator/year families,
+selects an MWS by point, plots precipitation, groundwater and cropping fields,
+optionally calls the authenticated CoRE Stack API, returns a derived selection
+to GeoLibre, and exports GeoJSON/CSV session files.
+
+No API credential is embedded. The optional API section reads
+`CORESTACK_API_KEY` or `CS_API` from a Colab Secret or environment variable,
+then falls back to a hidden runtime prompt.
+
+The notebooks deliberately support two runtimes:
 
 ```mermaid
 flowchart TD
-    A[KYL tehsil project] --> B[Generated notebook]
-    B --> C[GeoLibre web Notebook panel]
-    C --> D[JupyterLite and Pyodide in browser]
-    D --> E[Notebook bridge]
-    E --> F[Live KYL GeoLibre map]
-    B --> G[Colab, VS Code, or local Jupyter]
-    G --> H[geolibre Python anywidget]
-    H --> I[Portable project copy]
+    A[KYL tehsil project] --> B[Explore artifact generators]
+    B --> C[Curated tehsil notebook]
+    C --> D[GeoLibre web Notebook panel]
+    D --> E[JupyterLite and Pyodide in browser]
+    E --> F[Notebook bridge]
+    F --> G[Live KYL GeoLibre map]
+    B --> H[LULC comparison project]
+    H --> I[Synchronized two-pane GeoLibre view]
+    C --> J[Colab, VS Code, or local Jupyter]
+    J --> K[geolibre Python anywidget]
+    K --> L[Portable project copy]
 ```
 
 In the native path, `geolibre.connect()` sends camera, visibility, opacity,
@@ -119,16 +139,44 @@ metadata embedded in the project and adds the hydrated result to its own map.
 KYL's browser cache and fetch-on-toggle callback remain specific to
 `/download_layers`.
 
-The generated examples provide domain/layer controls, visibility and opacity,
+The general workbench provides domain/layer controls, visibility and opacity,
 overview/Hydrology/latest-LULC presets, tehsil extent fitting, observation
-markers, and a buffer recipe. They create session or derived layers only and
-never write to CoRE Stack's published sources.
+markers, and a buffer recipe. All Explore workflows create session or derived
+layers only and never write to CoRE Stack's published sources.
 
-The browser cannot silently place a KYL file into the cross-origin
-`web.geolibre.app` JupyterLite filesystem. Users therefore download the
-notebook, open **Processing → Jupyter Notebook**, upload it once, and run all
-cells. This explicit handoff preserves the hosted viewer's security boundary
-and requires no notebook server or KYL backend.
+### Why notebooks are not pre-seeded in the public side panel
+
+GeoLibre's web Notebook panel opens a static JupyterLite build from
+`web.geolibre.app/jupyterlite/`. GeoLibre 2.4 bundles its starter files into
+that build and does not expose a host command for writing a dynamic notebook to
+JupyterLite storage. Because KYL and the public viewer are different origins,
+KYL also cannot reach through the iframe and write the file itself.
+
+The current public-host workflow is therefore: download a notebook, open
+**Processing → Jupyter Notebook**, upload it once, and run it. The notebook then
+controls the live map through `geolibre.connect()`.
+
+For production one-click availability, use a pinned CoRE Stack-hosted GeoLibre
+build and add the curated notebooks to GeoLibre's JupyterLite `files/` contents
+at build time. A small upstream enhancement could additionally accept a trusted
+notebook URL or content message and open it in the panel. Both approaches keep
+the notebook beside the map; neither requires CoRE Stack to execute user
+analysis on its own servers.
+
+### LULC split view
+
+**Open comparison** creates a standard GeoLibre project with:
+
+- `mapLayout: { rows: 1, cols: 2, syncView: true }`;
+- the earlier LULC layer visible in the primary pane;
+- the later LULC layer visible through the secondary pane's visibility
+  overrides;
+- the same bbox/camera in both panes;
+- Administrative Boundaries visible for spatial reference.
+
+The project is sent through the existing iframe bridge. No new map component,
+duplicated raster request code, or server-side image operation is introduced.
+**Return to normal map** restores the cached KYL project.
 
 ## Native layer organization
 
@@ -222,8 +270,9 @@ application.
 | `../../config/geolibreLayers.js` | GeoServer names, deployed domains, all LULC years, QML references and WMS styles |
 | `geolibreProject.js` | Project generation, legends, Google imagery, vector hydration, WMS/WCS references and bbox camera |
 | `GeoLibreFrame.jsx` | Iframe bridge, one-time bbox fit, human error states and downloadable bounded technical log |
-| `pythonLabArtifacts.js` | Tehsil-specific notebook, live-map controls, portable anywidget project, and Python Console script |
-| `GeoLibrePythonLab.jsx` | Compact download, native Jupyter upload, Colab, and documentation handoff |
+| `pythonLabArtifacts.js` | General layer notebook, live-map controls, portable anywidget project, and Python Console script |
+| `exploreNotebookArtifacts.js` | Hydrology/LULC notebooks, notebook filenames, LULC discovery, and synchronized comparison projects |
+| `GeoLibreExploreLab.jsx` | Explore catalogue, notebook downloads, LULC selectors, comparison launch, and runtime guidance |
 | `../../pages/LandscapeExplorer.jsx` | Route-to-project orchestration and fetch-on-first-toggle vector cache; no duplicate map or layer UI |
 
 The current project contains 45 entries: 13 vector entries, 24 LULC year/level
@@ -273,7 +322,7 @@ No backend patch, generated project file, vendored GeoLibre bundle, or local
 
 ```bash
 git fetch origin
-git switch feat/geolibre-python-notebook-demo
+git switch feat/geolibre-explore-workbench
 git pull --ff-only
 cp .env.example .env
 npm install
@@ -294,7 +343,8 @@ CI=true npm test -- --watchAll=false \
   src/components/geolibre/geolibreProject.test.js \
   src/components/geolibre/GeoLibreFrame.test.jsx \
   src/components/geolibre/pythonLabArtifacts.test.js \
-  src/components/geolibre/GeoLibrePythonLab.test.jsx
+  src/components/geolibre/exploreNotebookArtifacts.test.js \
+  src/components/geolibre/GeoLibreExploreLab.test.jsx
 ```
 
 Build:
@@ -331,12 +381,20 @@ Check both routes:
 7. Open both documentation buttons, the QML repository, and the CC BY 4.0 link.
 8. If testing a failure state, confirm it uses human recovery guidance and that
    **Download technical log** saves a `.log` file.
-9. Open **Python Lab**, download the notebook, then open GeoLibre's
-   **Processing → Jupyter Notebook** panel. Upload the notebook and run all
-   cells. Confirm **Hydrology starter** loads the three named layers and that
-   **Fit tehsil** restores the selected extent.
-10. Upload the same notebook to Colab and run all cells. Confirm it installs the
-    configured GeoLibre Python version and renders a portable project widget.
+9. Open **Explore**, keep LULC Level 3, select 2017-2018 and 2024-2025, and
+   click **Open comparison**. Confirm the two labeled panes share one camera,
+   show different years, and retain Administrative Boundaries. Reopen Explore
+   and choose **Return to normal map**.
+10. Download **Hydrology and cropping**, open GeoLibre's
+    **Processing → Jupyter Notebook** panel, upload it, and run through the
+    public WFS sections. Confirm the indicator inventory and MWS selection run
+    without an API key. Run the optional profile cell only with a tester-owned
+    key.
+11. Upload the same notebook to Colab. Confirm it installs the configured
+    GeoLibre Python version, renders the portable project widget, and never
+    contains a generated credential.
+12. Download **LULC change** and confirm its external runtime activates
+    GeoLibre's before/after swipe with the chosen level and years.
 
 The generated `/download_layers?state=...&district=...&tehsil=...` URL can be
 refreshed or shared on the same KYL host because the location is URL-backed.
@@ -365,8 +423,9 @@ GeoLibre 2.4 leaves room for deeper work without another KYL map implementation:
 - use direct object-store COG URLs for immutable original-file downloads;
 - preconfigure processing models, bookmarks, print layouts, stories, or plugins;
 - expose saved/shareable GeoLibre project files for partner workflows;
-- publish a curated notebook library and self-host it with a versioned
-  GeoLibre/JupyterLite build for one-click notebook opening;
+- self-host the pinned GeoLibre/JupyterLite build so the Explore notebook
+  library is visible in the side panel without the one-time upload;
+- propose a trusted notebook URL/content command to GeoLibre upstream;
 - move long-running native GDAL/Rasterio workflows to GeoLibre Desktop or a
   managed Jupyter service while retaining the same project contract;
 - add direct QML import once GeoLibre's web project/style contract supports it;

@@ -1,9 +1,9 @@
 import React, { useState } from "react";
 import newLogo from "../assets/newlogoWhite.png";
 import { useLocation } from "react-router-dom";
-import { Info, ExternalLink, NotebookPen } from "lucide-react";
+import { Info, ExternalLink, Telescope } from "lucide-react";
 
-const LandingNavbar = ({ onOpenPythonLab, pythonLabDisabled = false }) => {
+const LandingNavbar = ({ onOpenExplore, exploreDisabled = false }) => {
   const location = useLocation();
   const isDownloadPage = location.pathname === "/download_layers";
   const isHomePage = location.pathname === "/";
@@ -42,21 +42,21 @@ const LandingNavbar = ({ onOpenPythonLab, pythonLabDisabled = false }) => {
             {isDownloadPage && (
               <div className="flex flex-col items-center gap-1 sm:items-end">
                 <div className="flex flex-wrap items-center justify-center gap-2 sm:justify-end">
-                  {onOpenPythonLab && (
+                  {onOpenExplore && (
                     <button
                       type="button"
-                      onClick={onOpenPythonLab}
-                      disabled={pythonLabDisabled}
+                      onClick={onOpenExplore}
+                      disabled={exploreDisabled}
                       title={
-                        pythonLabDisabled
-                          ? "The Python Lab will be ready when the tehsil map has loaded."
-                          : "Open a tehsil-specific Python and Jupyter demo"
+                        exploreDisabled
+                          ? "Explore will be ready when the tehsil map has loaded."
+                          : "Open guided CoRE Stack geospatial experiments"
                       }
                       className="flex items-center gap-2 rounded-lg border border-purple-700 bg-purple-700 px-4 py-2 text-white transition-all duration-200 hover:bg-purple-800 disabled:cursor-wait disabled:border-slate-300 disabled:bg-slate-300"
                     >
-                      <NotebookPen className="h-4 w-4" />
+                      <Telescope className="h-4 w-4" />
                       <span className="text-sm font-semibold sm:text-base">
-                        Python Lab
+                        Explore
                       </span>
                     </button>
                   )}
