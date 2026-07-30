@@ -16,6 +16,7 @@ import { CoreGeoStackWorkspacePanel } from "./CoreGeoStackWorkspacePanel";
 import { mountCoreGeoStackBoundaryLayers } from "./boundary-layers";
 import { CoreGeoStackExploreRuntime } from "./explore-runtime";
 import { CoreGeoStackLayerRuntime } from "./layer-runtime";
+import { bindCoreGeoStackComparisonRuntime } from "./lulc-comparison";
 import {
   applyCoreGeoStackDurableState,
   coreGeoStackDurableState,
@@ -108,6 +109,7 @@ function activateCoreGeoStack(app: GeoLibreAppAPI): void {
 
   layerRuntime?.dispose();
   layerRuntime = new CoreGeoStackLayerRuntime(app);
+  bindCoreGeoStackComparisonRuntime(layerRuntime);
   exploreRuntime?.dispose();
   exploreRuntime = new CoreGeoStackExploreRuntime(app);
   unsubscribeWorkspace?.();
@@ -128,6 +130,7 @@ function deactivateCoreGeoStack(): void {
   boundaryCleanup = null;
   layerRuntime?.dispose();
   layerRuntime = null;
+  bindCoreGeoStackComparisonRuntime(null);
   exploreRuntime?.dispose();
   exploreRuntime = null;
   if (previousProjection) activeApp?.setMapProjection?.(previousProjection);
@@ -142,6 +145,7 @@ export function restoreCoreGeoStack(app: GeoLibreAppAPI): void {
   attachToCurrentMap(app);
   layerRuntime?.dispose();
   layerRuntime = new CoreGeoStackLayerRuntime(app);
+  bindCoreGeoStackComparisonRuntime(layerRuntime);
   exploreRuntime?.dispose();
   exploreRuntime = new CoreGeoStackExploreRuntime(app);
   const snapshot = getCoreGeoStackWorkspaceSnapshot();

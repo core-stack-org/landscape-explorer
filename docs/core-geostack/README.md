@@ -13,7 +13,8 @@ Start with:
 5. [Observability and privacy](OBSERVABILITY.md)
 6. [Approved visual contract](VISUAL_CONTRACT.md)
 7. [Roadmap](ROADMAP.md)
-8. [Current handoff](handoffs/CURRENT.md)
+8. [Notebook-backed Explore](NOTEBOOK_EXPLORE.md)
+9. [Current handoff](handoffs/CURRENT.md)
 
 Architectural decisions are immutable records under [`decisions/`](decisions/).
 When a decision changes, add a superseding ADR rather than rewriting history.

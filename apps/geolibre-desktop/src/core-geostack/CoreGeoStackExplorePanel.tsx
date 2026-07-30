@@ -1,14 +1,17 @@
 import { Button, cn } from "@geolibre/ui";
 import {
   ArrowLeft,
+  BookOpen,
   Check,
   ChevronRight,
+  Columns2,
   Compass,
   Droplets,
   FilterX,
   House,
   MapPin,
   Mountain,
+  NotebookPen,
   RefreshCw,
 } from "lucide-react";
 import { useMemo, useState, useSyncExternalStore } from "react";
@@ -22,6 +25,20 @@ import {
   getKylExploreRuntimeSnapshot,
   subscribeKylExploreRuntime,
 } from "./explore-runtime";
+import { CORE_GEOSTACK_LULC_YEARS } from "./layer-catalog";
+import {
+  closeCoreGeoStackLulcComparison,
+  openCoreGeoStackLulcComparison,
+} from "./lulc-comparison";
+import {
+  buildExploreResultsNotebook,
+  buildHydrologyNotebook,
+  buildLulcNotebook,
+  DEFAULT_LULC_NOTEBOOK_SELECTION,
+  type CoreGeoStackNotebookKind,
+  type LulcNotebookSelection,
+} from "./notebook-artifacts";
+import { launchNotebook } from "../lib/notebook-launcher";
 import {
   clearCoreGeoStackFilters,
   getCoreGeoStackWorkspaceSnapshot,
@@ -70,6 +87,11 @@ export function CoreGeoStackExplorePanel() {
     () => resolvedSelections[0]?.source ?? "MWS",
   );
   const [activeCategoryId, setActiveCategoryId] = useState<string | null>(null);
+  const [lulcSelection, setLulcSelection] = useState<LulcNotebookSelection>(
+    DEFAULT_LULC_NOTEBOOK_SELECTION,
+  );
+  const [comparisonBusy, setComparisonBusy] = useState(false);
+  const [studioMessage, setStudioMessage] = useState<string | null>(null);
 
   const activePage =
     KYL_EXPLORE_PAGES.find((page) => page.id === activeSource) ?? KYL_EXPLORE_PAGES[0];
@@ -87,6 +109,38 @@ export function CoreGeoStackExplorePanel() {
   const selectPage = (source: KylExploreSource) => {
     setActiveSource(source);
     setActiveCategoryId(null);
+  };
+
+  const openNotebook = (kind: CoreGeoStackNotebookKind) => {
+    try {
+      const artifact =
+        kind === "hydrology"
+          ? buildHydrologyNotebook(snapshot)
+          : kind === "lulc"
+            ? buildLulcNotebook(snapshot, lulcSelection)
+            : buildExploreResultsNotebook(snapshot, runtime.results);
+      launchNotebook(artifact.fileName, artifact.notebook);
+      setStudioMessage(
+        `${kind === "hydrology" ? "Hydrology and cropping" : kind === "lulc" ? "LULC change" : "Explore results"} opened beside the map.`,
+      );
+    } catch (error) {
+      setStudioMessage(error instanceof Error ? error.message : "The notebook could not be opened.");
+    }
+  };
+
+  const openComparison = async () => {
+    setComparisonBusy(true);
+    setStudioMessage("Loading both LULC years into a synchronized comparison.");
+    try {
+      await openCoreGeoStackLulcComparison(lulcSelection);
+      setStudioMessage("The synchronized LULC comparison is ready.");
+    } catch (error) {
+      setStudioMessage(
+        error instanceof Error ? error.message : "The comparison could not be opened.",
+      );
+    } finally {
+      setComparisonBusy(false);
+    }
   };
 
   if (!hasTehsil) {
@@ -215,6 +269,154 @@ export function CoreGeoStackExplorePanel() {
       </div>
 
       <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-3">
+        <section className="mb-4 rounded-lg border bg-background p-3">
+          <div className="flex items-start gap-2">
+            <span className="grid h-8 w-8 shrink-0 place-items-center rounded-md bg-primary/10 text-primary">
+              <NotebookPen className="h-4 w-4" />
+            </span>
+            <div className="min-w-0">
+              <h3 className="text-xs font-semibold">KYL notebook studio</h3>
+              <p className="mt-0.5 text-[10px] leading-4 text-muted-foreground">
+                Open tehsil-aware Python cells directly beside the live map. Analysis runs
+                locally in JupyterLite or GeoLibre Desktop.
+              </p>
+            </div>
+          </div>
+
+          <div className="mt-2 grid grid-cols-1 gap-1.5">
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              className="min-h-9 justify-start px-2 text-[11px]"
+              onClick={() => openNotebook("hydrology")}
+            >
+              <Droplets className="me-2 h-3.5 w-3.5" />
+              Hydrology and cropping lab
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              className="min-h-9 justify-start px-2 text-[11px]"
+              disabled={!snapshot.selectedFilterIds.length}
+              onClick={() => openNotebook("explore-results")}
+            >
+              <BookOpen className="me-2 h-3.5 w-3.5" />
+              Reproduce active Explore filters
+            </Button>
+          </div>
+
+          <div className="mt-3 border-t pt-3">
+            <div className="mb-2 flex items-center gap-1.5">
+              <Columns2 className="h-3.5 w-3.5 text-primary" />
+              <span className="text-[11px] font-semibold">LULC change laboratory</span>
+            </div>
+            <div className="grid grid-cols-3 gap-1.5">
+              <label className="text-[9px] font-medium text-muted-foreground">
+                Level
+                <select
+                  value={lulcSelection.level}
+                  className="mt-1 h-8 w-full rounded border bg-background px-1 text-[11px] text-foreground"
+                  onChange={(event) =>
+                    setLulcSelection((current) => ({
+                      ...current,
+                      level: event.target.value as LulcNotebookSelection["level"],
+                    }))
+                  }
+                >
+                  <option value="1">Level 1</option>
+                  <option value="2">Level 2</option>
+                  <option value="3">Level 3</option>
+                </select>
+              </label>
+              <label className="text-[9px] font-medium text-muted-foreground">
+                Earlier
+                <select
+                  value={lulcSelection.beforeYear}
+                  className="mt-1 h-8 w-full rounded border bg-background px-1 text-[11px] text-foreground"
+                  onChange={(event) =>
+                    setLulcSelection((current) => ({
+                      ...current,
+                      beforeYear: event.target.value,
+                    }))
+                  }
+                >
+                  {CORE_GEOSTACK_LULC_YEARS.map((year) => (
+                    <option key={year.value} value={year.value}>
+                      {year.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="text-[9px] font-medium text-muted-foreground">
+                Later
+                <select
+                  value={lulcSelection.afterYear}
+                  className="mt-1 h-8 w-full rounded border bg-background px-1 text-[11px] text-foreground"
+                  onChange={(event) =>
+                    setLulcSelection((current) => ({
+                      ...current,
+                      afterYear: event.target.value,
+                    }))
+                  }
+                >
+                  {CORE_GEOSTACK_LULC_YEARS.map((year) => (
+                    <option key={year.value} value={year.value}>
+                      {year.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </div>
+            <div className="mt-2 grid grid-cols-2 gap-1.5">
+              <Button
+                type="button"
+                size="sm"
+                className="min-h-9 px-2 text-[10px]"
+                disabled={
+                  comparisonBusy || lulcSelection.beforeYear === lulcSelection.afterYear
+                }
+                onClick={() => void openComparison()}
+              >
+                {comparisonBusy ? (
+                  <RefreshCw className="me-1.5 h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <Columns2 className="me-1.5 h-3.5 w-3.5" />
+                )}
+                Compare maps
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                className="min-h-9 px-2 text-[10px]"
+                disabled={lulcSelection.beforeYear === lulcSelection.afterYear}
+                onClick={() => openNotebook("lulc")}
+              >
+                <NotebookPen className="me-1.5 h-3.5 w-3.5" />
+                Open notebook
+              </Button>
+            </div>
+            <button
+              type="button"
+              className="mt-2 text-[10px] font-medium text-primary hover:underline"
+              onClick={() => {
+                closeCoreGeoStackLulcComparison();
+                setStudioMessage("Returned to the latest selected LULC year.");
+              }}
+            >
+              Return to one map
+            </button>
+          </div>
+
+          {studioMessage ? (
+            <p className="mt-2 rounded bg-muted px-2 py-1.5 text-[10px] leading-4 text-muted-foreground">
+              {studioMessage}
+            </p>
+          ) : null}
+        </section>
+
         <div className="mb-3 flex items-start justify-between gap-3">
           <div className="min-w-0">
             {activeCategory ? (

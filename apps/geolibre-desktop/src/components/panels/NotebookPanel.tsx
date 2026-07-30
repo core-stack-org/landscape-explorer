@@ -15,7 +15,13 @@ import { useNotebookBridge } from "../../hooks/useNotebookBridge";
 import { useNotebookThemeSync } from "../../hooks/useNotebookThemeSync";
 import type { ThemeMode } from "../../hooks/useThemeMode";
 import { isTauri } from "../../lib/is-tauri";
-import { startJupyterServer } from "../../lib/jupyter";
+import { saveJupyterNotebook, startJupyterServer } from "../../lib/jupyter";
+import {
+  completeNotebookLaunch,
+  getPendingNotebookLaunch,
+  subscribeNotebookLaunch,
+  type NotebookLaunchRequest,
+} from "../../lib/notebook-launcher";
 
 /**
  * Resolve the notebook iframe URL for the current environment:
@@ -63,12 +69,25 @@ export function NotebookPanel({ onResizeStart, mapControllerRef, themeMode }: No
   const [loaded, setLoaded] = useState(false);
   const [src, setSrc] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [launchRequest, setLaunchRequest] = useState<NotebookLaunchRequest | null>(
+    getPendingNotebookLaunch,
+  );
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
   // Let notebook cells drive the live map via the shared scripting protocol.
   useNotebookBridge(iframeRef, mapControllerRef);
   // Mirror the app's light/dark theme into the embedded notebook.
   useNotebookThemeSync(iframeRef, themeMode, loaded);
+
+  useEffect(
+    () =>
+      subscribeNotebookLaunch((request) => {
+        setError(null);
+        setIsCollapsed(false);
+        setLaunchRequest(request);
+      }),
+    [],
+  );
 
   // Resolve the iframe URL once on mount (desktop starts the JupyterLab server,
   // which can take a moment on first run while uv syncs the environment).
@@ -95,6 +114,108 @@ export function NotebookPanel({ onResizeStart, mapControllerRef, themeMode }: No
       cancelled = true;
     };
   }, [t]);
+
+  // Generated CoRE-GeoStack notebooks open directly instead of making the user
+  // download and upload an .ipynb. On web, the same-origin JupyterLite app lets
+  // us save through its ContentsManager and execute docmanager:open. On native
+  // desktop, Rust writes into the loopback JupyterLab root and we navigate the
+  // panel to that file.
+  useEffect(() => {
+    if (!launchRequest) return;
+    setIsCollapsed(false);
+    let cancelled = false;
+    let retryTimer: number | undefined;
+
+    const fail = (reason: unknown) => {
+      if (cancelled) return;
+      setError(
+        reason instanceof Error
+          ? reason.message
+          : typeof reason === "string"
+            ? reason
+            : "The analysis notebook could not be opened. Please try again.",
+      );
+    };
+
+    if (isTauri()) {
+      void (async () => {
+        try {
+          const info = await startJupyterServer();
+          await saveJupyterNotebook(launchRequest.fileName, launchRequest.notebook);
+          if (cancelled) return;
+          const url = new URL(
+            `/lab/tree/${encodeURIComponent(launchRequest.fileName)}`,
+            info.url,
+          );
+          url.searchParams.set("token", info.token);
+          url.searchParams.set("kylRequest", String(launchRequest.id));
+          setLoaded(false);
+          setSrc(url.href);
+          completeNotebookLaunch(launchRequest.id);
+          setLaunchRequest(null);
+        } catch (reason) {
+          fail(reason);
+        }
+      })();
+    } else {
+      if (!loaded) return;
+      let attempts = 0;
+      const openInJupyterLite = async () => {
+        if (cancelled) return;
+        try {
+          const win = iframeRef.current?.contentWindow as
+            | (Window & {
+                jupyterapp?: {
+                  commands?: {
+                    hasCommand?: (id: string) => boolean;
+                    execute?: (id: string, args?: unknown) => Promise<unknown>;
+                  };
+                  serviceManager?: {
+                    contents?: {
+                      save?: (path: string, model: unknown) => Promise<unknown>;
+                    };
+                  };
+                };
+              })
+            | null
+            | undefined;
+          const app = win?.jupyterapp;
+          const save = app?.serviceManager?.contents?.save;
+          const canOpen = app?.commands?.hasCommand?.("docmanager:open");
+          if (!save || !canOpen) {
+            if (attempts++ < 80) {
+              retryTimer = window.setTimeout(() => {
+                void openInJupyterLite();
+              }, 250);
+              return;
+            }
+            throw new Error(
+              "The notebook workspace is still starting. Close the panel and try again.",
+            );
+          }
+          await save.call(app.serviceManager?.contents, launchRequest.fileName, {
+            type: "notebook",
+            format: "json",
+            content: launchRequest.notebook,
+          });
+          await app.commands?.execute?.("docmanager:open", {
+            path: launchRequest.fileName,
+          });
+          if (cancelled) return;
+          completeNotebookLaunch(launchRequest.id);
+          setLaunchRequest(null);
+        } catch (reason) {
+          fail(reason);
+        }
+      };
+      void openInJupyterLite();
+    }
+
+    return () => {
+      cancelled = true;
+      if (retryTimer !== undefined) window.clearTimeout(retryTimer);
+    };
+  }, [launchRequest, loaded]);
 
   return (
     <aside

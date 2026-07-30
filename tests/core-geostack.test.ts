@@ -16,7 +16,14 @@ import {
 } from "../apps/geolibre-desktop/src/core-geostack/explore-filters";
 import {
   buildKylExploreDataUrl,
+  buildKylExploreWfsUrl,
 } from "../apps/geolibre-desktop/src/core-geostack/explore-runtime";
+import {
+  buildExploreResultsNotebook,
+  buildHydrologyNotebook,
+  buildLulcNotebook,
+  notebookSourceText,
+} from "../apps/geolibre-desktop/src/core-geostack/notebook-artifacts";
 import {
   buildCoreGeoStackTehsilStory,
   isCoreGeoStackTehsilStory,
@@ -241,6 +248,60 @@ describe("CoRE-GeoStack Explore contract", () => {
       tehsil: "Nambulipulikunta",
     });
     assert.deepEqual(getCoreGeoStackWorkspaceSnapshot().selectedFilterIds, []);
+  });
+});
+
+describe("CoRE-GeoStack direct notebook contract", () => {
+  const snapshot = {
+    ...DEFAULT_CORE_GEOSTACK_WORKSPACE,
+    mode: "explore" as const,
+    location: {
+      state: "Assam",
+      district: "Cachar",
+      tehsil: "Lakhipur",
+    },
+    selectedFilterIds: ["MWS:relief:0"],
+  };
+
+  it("generates a scoped hydrology workbook without a credential", () => {
+    const artifact = buildHydrologyNotebook(snapshot);
+    const source = notebookSourceText(artifact.notebook);
+    assert.equal(
+      artifact.fileName,
+      "KYL_assam_cachar_lakhipur_hydrology_and_cropping.ipynb",
+    );
+    assert.match(source, /download_kyl_data/);
+    assert.match(source, /deltaG_well_depth_cachar_lakhipur/);
+    assert.match(source, /get_mwsid_by_latlon/);
+    assert.match(source, /get_tehsil_data/);
+    assert.doesNotMatch(source, /CS_API=/);
+  });
+
+  it("generates a two-year LULC inspection workbook", () => {
+    const artifact = buildLulcNotebook(snapshot, {
+      level: "3",
+      beforeYear: "17_18",
+      afterYear: "24_25",
+    });
+    const source = notebookSourceText(artifact.notebook);
+    assert.match(source, /LULC_17_18_cachar_lakhipur_level_3/);
+    assert.match(source, /LULC_24_25_cachar_lakhipur_level_3/);
+    assert.match(source, /GetFeatureInfo/);
+  });
+
+  it("captures active Explore selections in a reproducible notebook", () => {
+    const artifact = buildExploreResultsNotebook(snapshot, [
+      { source: "MWS", total: 86, matched: 12 },
+    ]);
+    const source = notebookSourceText(artifact.notebook);
+    assert.match(source, /OR within one indicator/);
+    assert.match(source, /MWS:relief:0/);
+    assert.match(source, /filter_records/);
+  });
+
+  it("exposes the matching tehsil WFS used by notebook generation", () => {
+    const url = new URL(buildKylExploreWfsUrl("MWS", snapshot.location) as string);
+    assert.equal(url.searchParams.get("typeName"), "mws_layers:deltaG_well_depth_cachar_lakhipur");
   });
 });
 

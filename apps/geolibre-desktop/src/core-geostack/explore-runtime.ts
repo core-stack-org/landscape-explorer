@@ -91,7 +91,7 @@ export function buildKylExploreDataUrl(
   return url.href;
 }
 
-function buildKylExploreWfsUrl(
+export function buildKylExploreWfsUrl(
   source: KylExploreSource,
   location: CoreGeoStackLocation,
 ): string | null {

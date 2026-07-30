@@ -23,6 +23,23 @@ export async function startJupyterServer(): Promise<JupyterServerInfo> {
   return invoke<JupyterServerInfo>("start_jupyter_server");
 }
 
+/**
+ * Save a generated notebook into the native JupyterLab root.
+ *
+ * The Rust command validates the flat `.ipynb` filename and writes only inside
+ * GeoLibre's app-data notebook directory.
+ */
+export async function saveJupyterNotebook(
+  fileName: string,
+  notebook: unknown,
+): Promise<string> {
+  assertTauri();
+  return invoke<string>("save_jupyter_notebook", {
+    fileName,
+    content: JSON.stringify(notebook, null, 2),
+  });
+}
+
 /** Stop the desktop JupyterLab server if it is running. */
 export async function stopJupyterServer(): Promise<void> {
   assertTauri();

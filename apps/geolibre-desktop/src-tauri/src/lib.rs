@@ -230,6 +230,7 @@ pub fn run() {
             stop_martin_server,
             start_geolibre_sidecar,
             stop_geolibre_sidecar,
+            save_jupyter_notebook,
             start_jupyter_server,
             stop_jupyter_server,
             start_earth_engine_oauth,
@@ -1743,6 +1744,37 @@ async fn start_jupyter_server(app: tauri::AppHandle) -> Result<JupyterServerInfo
     tauri::async_runtime::spawn_blocking(move || start_jupyter_server_blocking(app))
         .await
         .map_err(|error| format!("Could not join Jupyter startup task: {error}"))?
+}
+
+fn is_valid_generated_notebook_name(file_name: &str) -> bool {
+    !file_name.is_empty()
+        && file_name.len() <= 180
+        && file_name.ends_with(".ipynb")
+        && file_name
+            .chars()
+            .all(|character| character.is_ascii_alphanumeric() || "._-".contains(character))
+}
+
+#[tauri::command]
+fn save_jupyter_notebook(
+    app: tauri::AppHandle,
+    file_name: String,
+    content: String,
+) -> Result<String, String> {
+    if !is_valid_generated_notebook_name(&file_name) {
+        return Err("The generated notebook filename is not valid.".to_string());
+    }
+    let notebooks_dir = app
+        .path()
+        .app_data_dir()
+        .map_err(|error| format!("Could not resolve app data directory: {error}"))?
+        .join("runtime")
+        .join("notebooks");
+    fs::create_dir_all(&notebooks_dir)
+        .map_err(|error| format!("Could not create the notebook directory: {error}"))?;
+    fs::write(notebooks_dir.join(&file_name), content)
+        .map_err(|error| format!("Could not save the generated notebook: {error}"))?;
+    Ok(file_name)
 }
 
 fn start_jupyter_server_blocking(app: tauri::AppHandle) -> Result<JupyterServerInfo, String> {
@@ -3316,7 +3348,8 @@ mod tests {
         client_cert_password_without_path, ensure_fetchable_url, find_zip_manifest_path,
         is_allowed_local_vector_path, is_allowed_project_path, is_disallowed_ip,
         is_safe_absolute_path, plugin_archive_file_name, resolve_sidecar_in_resource_dir,
-        CapturedOutput, CAPTURED_LOG_MAX_LINES, CAPTURED_LOG_REPORTED_LINES, CAPTURED_LOG_SETTLE,
+        is_valid_generated_notebook_name, CapturedOutput, CAPTURED_LOG_MAX_LINES,
+        CAPTURED_LOG_REPORTED_LINES, CAPTURED_LOG_SETTLE,
     };
     use std::env;
     use std::ffi::OsStr;
@@ -3330,6 +3363,16 @@ mod tests {
     // `std::env::set_var` is process-global, so the tests that stage an AppImage
     // environment must not run concurrently with each other.
     static ENV_LOCK: Mutex<()> = Mutex::new(());
+
+    #[test]
+    fn validates_generated_notebook_names_without_allowing_paths() {
+        assert!(is_valid_generated_notebook_name(
+            "KYL_assam_cachar_lakhipur_hydrology.ipynb"
+        ));
+        assert!(!is_valid_generated_notebook_name("../outside.ipynb"));
+        assert!(!is_valid_generated_notebook_name("nested/notebook.ipynb"));
+        assert!(!is_valid_generated_notebook_name("notes.py"));
+    }
 
     // A throwaway directory tree under the system temp dir that removes itself
     // on drop, so scratch dirs are cleaned up even when an assertion panics.

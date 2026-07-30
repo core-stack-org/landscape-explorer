@@ -154,6 +154,10 @@ export class CoreGeoStackLayerRuntime {
 
   constructor(private readonly app: GeoLibreAppAPI) {}
 
+  getLayerId(definitionId: string): string | null {
+    return this.layerIds.get(definitionId) ?? null;
+  }
+
   async sync(snapshot: CoreGeoStackWorkspaceSnapshot): Promise<void> {
     const districtLabel = snapshot.location.district;
     const tehsilLabel = snapshot.location.tehsil;
