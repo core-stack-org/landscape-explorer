@@ -544,6 +544,12 @@ const MapLegend = ({ showMWS, showVillages, currentLayer, showConnectivity,showP
     { fill: "rgba(144, 238, 144, 0.8)", stroke: "rgba(34, 139, 34, 1)", label: "High/Strong" },
   ];
 
+  const LivestockData = [
+    { fill: "rgba(220, 20, 60, 0.8)", stroke: "rgba(139, 0, 0, 1)", label: "Low Population" },
+    { fill: "rgba(255, 215, 0, 0.8)", stroke: "rgba(218, 165, 32, 1)", label: "Moderate Population" },
+    { fill: "rgba(144, 238, 144, 0.8)", stroke: "rgba(34, 139, 34, 1)", label: "High Population" },
+  ]
+
 
   const isExcludedLulc = (name) => {
     if (!name) return false;
@@ -763,6 +769,9 @@ const MapLegend = ({ showMWS, showVillages, currentLayer, showConnectivity,showP
     (layer) => layer.name.includes("road_connectivity_cat_cluster") || layer.name.includes("energy_access_cat_cluster") || layer.name.includes("housing_quality_cat_cluster") || layer.name.includes("maternal_child_health_cat_cluster") || layer.name.includes("water_sanitation_cat_cluster") || layer.name.includes("financial_inclusion_cat_cluster") || layer.name.includes("social_protection_cat_cluster") || layer.name.includes("institutionalization_cat_cluster") || layer.name.includes("civic_infrastructure_cat_cluster") || layer.name.includes("livelihoods_employment_cat_cluster") || layer.name.includes("livelihoods_forest_resources_cat_cluster") || layer.name.includes("livelihoods_alternative_farming_cat_cluster") || layer.name.includes("livelihoods_fisheries_cat_cluster") || layer.name.includes("livelihoods_cottage_traditional_industry_cat_cluster") || layer.name.includes("livestock_veterinary_cat_cluster") || layer.name.includes("livelihoods_common_resources_cat_cluster") || layer.name.includes("agriculture_irrigation_watershed_cat_cluster")|| layer.name.includes("agriculture_organic_farming_cat_cluster")
   );
 
+  const isLivestockActive = currentLayer?.some(
+    (layer) => layer.name.includes("small_animals_total") || layer.name.includes("large_animals_total")
+  )
 
   return (
     <div
@@ -1918,6 +1927,18 @@ const MapLegend = ({ showMWS, showVillages, currentLayer, showConnectivity,showP
                 <div className="space-y-2">
                   <h4 className="text-xs font-medium text-gray-600">Antyodaya Legend</h4>
                   {AntyodayaData.map((item, index) => (
+                    <div key={`fac-live-${index}`} className="flex items-center gap-2">
+                      <div className="w-4 h-4 rounded" style={{ backgroundColor: item.fill, border: `1px solid ${item.stroke}` }} />
+                      <span className="text-sm text-gray-600">{item.label}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {isLivestockActive && (
+                <div className="space-y-2">
+                  <h4 className="text-xs font-medium text-gray-600">Livestock Legend</h4>
+                  {LivestockData.map((item, index) => (
                     <div key={`fac-live-${index}`} className="flex items-center gap-2">
                       <div className="w-4 h-4 rounded" style={{ backgroundColor: item.fill, border: `1px solid ${item.stroke}` }} />
                       <span className="text-sm text-gray-600">{item.label}</span>
