@@ -1725,7 +1725,7 @@
                 "styleIdx": 8
             }
         ],
-        "Facilities": [
+        "Education": [
             {
                 "name": "essential_education_infra",
                 "label": "Primary education institutions",
@@ -1811,49 +1811,6 @@
                 ],
                 "rasterStyle": "",
                 "styleIdx": 16
-            },
-            {
-                "name": "public_distribution_system",
-                "label": "Public distribution system",
-                "type": 2,
-                "values": [
-                    {
-                        "label": "Within 2 kms",
-                        "value": {
-                            "lower": 0,
-                            "upper": 2
-                        }
-                    },
-                    {
-                        "label": "More than 2 kms",
-                        "value": {
-                            "lower": 2,
-                            "upper": 9999999999
-                        }
-                    }
-                ],
-                "layer_store": [
-                    "facilities_proximity"
-                ],
-                "layer_name": [
-                    "facilities"
-                ],
-                "vectorStyle": [
-                    {
-                        "fill": "rgba(232, 238, 186, 0.8)",
-                        "stroke": "rgba(232, 238, 186, 1)",
-                        "lower": 0,
-                        "upper": 2
-                    },
-                    {
-                        "fill": "rgba(137, 151, 10, 0.8)",
-                        "stroke": "rgba(137, 151, 10, 1)",
-                        "lower": 2,
-                        "upper": 9999999999
-                    }
-                ],
-                "rasterStyle": "",
-                "styleIdx": 19
             }
         ],
         "Basic Infrastructure" : [
@@ -2318,6 +2275,49 @@
                 ],
                 "rasterStyle": [],
                 "styleIdx": 46
+            },
+            {
+                "name": "public_distribution_system",
+                "label": "Public distribution system",
+                "type": 2,
+                "values": [
+                    {
+                        "label": "Within 2 kms",
+                        "value": {
+                            "lower": 0,
+                            "upper": 2
+                        }
+                    },
+                    {
+                        "label": "More than 2 kms",
+                        "value": {
+                            "lower": 2,
+                            "upper": 9999999999
+                        }
+                    }
+                ],
+                "layer_store": [
+                    "facilities_proximity"
+                ],
+                "layer_name": [
+                    "facilities"
+                ],
+                "vectorStyle": [
+                    {
+                        "fill": "rgba(232, 238, 186, 0.8)",
+                        "stroke": "rgba(232, 238, 186, 1)",
+                        "lower": 0,
+                        "upper": 2
+                    },
+                    {
+                        "fill": "rgba(137, 151, 10, 0.8)",
+                        "stroke": "rgba(137, 151, 10, 1)",
+                        "lower": 2,
+                        "upper": 9999999999
+                    }
+                ],
+                "rasterStyle": "",
+                "styleIdx": 19
             }
         ],
         "Community Institutions and Governance" : [
@@ -2727,6 +2727,118 @@
                 ],
                 "rasterStyle": [],
                 "styleIdx": 55
+            },
+            {
+                "name": "small_animals_total",
+                "label": "Bovines (Cattle / Buffalo)",
+                "type": 2,
+                "values": [
+                    {
+                        "label": "Low Bovine Population (0–200)",
+                        "value": {
+                            "lower": 0,
+                            "upper": 200
+                        }
+                    },
+                    {
+                        "label": "Moderate Bovine Population (201–500)",
+                        "value": {
+                            "lower": 201,
+                            "upper": 500
+                        }
+                    },
+                    {
+                        "label": "High Bovine Population (>500)",
+                        "value": {
+                            "lower": 501,
+                            "upper": 9999999999
+                        }
+                    }
+                ],
+                "layer_store": [
+                    "livestocks"
+                ],
+                "layer_name": [
+                    "livestocks"
+                ],
+                "vectorStyle": [
+                    {
+                        "fill": "rgba(220, 20, 60, 0.8)",
+                        "stroke": "rgba(139, 0, 0, 1)",
+                        "lower": 0,
+                        "upper": 200
+                    },
+                    {
+                        "fill": "rgba(255, 215, 0, 0.8)",
+                        "stroke": "rgba(218, 165, 32, 1)",
+                        "lower": 201,
+                        "upper": 500
+                    },
+                    {
+                        "fill": "rgba(144, 238, 144, 0.8)",
+                        "stroke": "rgba(34, 139, 34, 1)",
+                        "lower": 501,
+                        "upper": 9999999999
+                    }
+                ],
+                "rasterStyle": "",
+                "styleIdx": 58
+            },
+            {
+                "name": "large_animals_total",
+                "label": "Small Animals (Sheep / Goat / Pig)",
+                "type": 2,
+                "values": [
+                    {
+                        "label": "Low Small Animal Population (0–80)",
+                        "value": {
+                            "lower": 0,
+                            "upper": 80
+                        }
+                    },
+                    {
+                        "label": "Moderate Small Animal Population (81–250)",
+                        "value": {
+                            "lower": 81,
+                            "upper": 250
+                        }
+                    },
+                    {
+                        "label": "High Small Animal Population (>250)",
+                        "value": {
+                            "lower": 251,
+                            "upper": 9999999999
+                        }
+                    }
+                ],
+                "layer_store": [
+                    "livestocks"
+                ],
+                "layer_name": [
+                    "livestocks"
+                ],
+                "vectorStyle": [
+                    {
+                        "fill": "rgba(220, 20, 60, 0.8)",
+                        "stroke": "rgba(139, 0, 0, 1)",
+                        "lower": 0,
+                        "upper": 80
+                    },
+                    {
+                        "fill": "rgba(255, 215, 0, 0.8)",
+                        "stroke": "rgba(218, 165, 32, 1)",
+                        "lower": 81,
+                        "upper": 250
+                    },
+                    {
+                        "fill": "rgba(144, 238, 144, 0.8)",
+                        "stroke": "rgba(34, 139, 34, 1)",
+                        "lower": 251,
+                        "upper": 9999999999
+                    }
+                ],
+                "rasterStyle": "",
+                "styleIdx": 59
             }
         ],
         "Irrigation Infrastructure" : [
