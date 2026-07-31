@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router";
 import { useRecoilState } from "recoil";
 import {
@@ -38,7 +38,7 @@ export default function KYLHomePage() {
 
     fetchStates();
     setBlock(null);
-  }, [setBlock, setStatesData]);
+  }, []);
 
   const handleItemSelect = (setter, value) => {
     if (setter === setState) {
@@ -62,16 +62,7 @@ export default function KYLHomePage() {
     }
     else{
       trackEvent("Navigation", "button_click", buttonName);
-      if (path === "/download_layers" && state && district && block) {
-        const params = new URLSearchParams({
-          state: state.label,
-          district: district.label,
-          tehsil: block.label,
-        });
-        navigate(`${path}?${params.toString()}`);
-      } else {
-        navigate(path);
-      }
+      navigate(path);
     }
   };
 
@@ -169,10 +160,8 @@ export default function KYLHomePage() {
                     Know Your Landscape
                   </button>
                   <button
-                    className="bg-purple-100 hover:bg-purple-200 text-purple-800 px-4 py-2 rounded-lg w-full sm:w-auto text-base font-medium transition-colors disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-400"
+                    className="bg-purple-100 hover:bg-purple-200 text-purple-800 px-4 py-2 rounded-lg w-full sm:w-auto text-base font-medium transition-colors"
                     onClick={() => handleNavigate("/download_layers", "Download Layers")}
-                    disabled={!state || !district || !block}
-                    title={!block ? "Select a state, district, and tehsil first" : undefined}
                   >
                     Download Layers
                   </button>
