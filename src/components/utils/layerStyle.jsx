@@ -6,7 +6,7 @@ const layerStyles = (feature, vectorStyle, idx = 0, villageJson, dataJson) => {
     let years = ["2017","2018","2019","2020","2021","2022", "2023", "2024"]
     let tempIdx = 0;
     let avg_Res = 0;
-    
+
     switch (idx) {
         case 0:
             return new Style({
@@ -51,8 +51,6 @@ const layerStyles = (feature, vectorStyle, idx = 0, villageJson, dataJson) => {
                 let tempDro = (feature.values_["drlb_"+item].match(/2/g) || []).length + (feature.values_["drlb_"+item].match(/3/g)||[]).length;
                 if(tempDro >= 5){avg_Res++;}
             })
-            console.log(feature.values_.uid)
-            console.log(avg_Res)
             break;
 
         case 5:
@@ -169,47 +167,52 @@ const layerStyles = (feature, vectorStyle, idx = 0, villageJson, dataJson) => {
             break
 
         case 15:
-            avg_Res = Math.max(feature.values_["school_primary_distance"], feature.values_["school_upper_primary_distance"], feature.values_["school_secondary_distance"]) 
+            avg_Res = Math.max(feature.values_["l3_school_primary_distance_km"], feature.values_["l3_school_upper_primary_distance_km"], feature.values_["l3_school_secondary_distance_km"])
+            //console.log(feature.values_.)
+            console.log(typeof(feature.values_["l3_school_primary_distance_km"]))
+            console.log(typeof(feature.values_["l3_school_upper_primary_distance_km"]))
+
+            console.log(avg_Res)
             break;
 
         case 16:
-            avg_Res = Math.min(feature.values_["school_higher_secondary_distance"], feature.values_["college_distance"], feature.values_["universities_distance"])
+            avg_Res = Math.min(feature.values_["l3_school_higher_secondary_distance_km"], feature.values_["l3_college_distance_km"], feature.values_["l3_universities_distance_km"])
             break;
             
         case 17:
-            avg_Res = Math.max(feature.values_["health_sub_cen_distance"], feature.values_["health_phc_distance"])
+            avg_Res = Math.max(feature.values_["l3_health_sub_cen_distance_km"], feature.values_["l3_health_phc_distance_km"])
             break;
             
         case 18:
-            avg_Res = Math.min(feature.values_["health_chc_distance"], feature.values_["health_dis_h_distance"], feature.values_["health_s_t_h_distance"])
+            avg_Res = Math.min(feature.values_["l3_health_chc_distance_km"], feature.values_["l3_health_dis_h_distance_km"], feature.values_["l3_health_s_t_h_distance_km"])
             break;
 
         case 19:
-            avg_Res = feature.values_["pds_distance"]
+            avg_Res = feature.values_["l3_pds_distance_km"]
             break;
 
         case 20:
-            avg_Res = Math.max(feature.values_["csc_distance"], feature.values_["bank_mitra_distance"], feature.values_["bank_branch_distance"], feature.values_["bank_atm_distance"])
+            avg_Res = Math.max(feature.values_["l3_csc_distance_km"], feature.values_["l3_bank_mitra_distance_km"], feature.values_["l3_bank_branch_distance_km"], feature.values_["l3_bank_atm_distance_km"])
             break;
             
         case 21:
-            avg_Res = Math.min(feature.values_["apmc_distance"], feature.values_["agri_industry_markets_trading_distance"])
+            avg_Res = Math.min(feature.values_["l2_apmc_access_distance_km"], feature.values_["l3_agri_industry_markets_trading_distance_km"])
             break;
 
         case 22:
-            avg_Res = Math.min(feature.values_["agri_industry_storage_warehousing_distance"], feature.values_["agri_industry_distribution_utilities_distance"], feature.values_["agri_industry_agri_processing_distance"], feature.values_["agri_industry_industrial_manufacturing_distance"])
+            avg_Res = Math.min(feature.values_["l3_agri_industry_storage_warehousing_distance_km"], feature.values_["l3_agri_industry_distribution_utilities_distance_km"], feature.values_["l3_agri_industry_agri_processing_distance_km"], feature.values_["l3_agri_industry_industrial_manufacturing_distance_km"])
             break;
 
         case 23:
-            avg_Res = feature.values_["agri_industry_co_operatives_societies_distance"]
+            avg_Res = feature.values_["l3_agri_industry_co_operatives_societies_distance_km"]
             break;
 
         case 24:
-            avg_Res = feature.values_["agri_industry_dairy_animal_husbandry_distance"]
+            avg_Res = feature.values_["l3_agri_industry_dairy_animal_husbandry_distance_km"]
             break;
 
         case 25:
-            avg_Res = feature.values_["agri_industry_agri_support_infrastructure_distance"]
+            avg_Res = feature.values_["l3_agri_industry_agri_support_infrastructure_distance_km"]
             break;
 
         case 26:
@@ -412,21 +415,33 @@ const layerStyles = (feature, vectorStyle, idx = 0, villageJson, dataJson) => {
         case 57:
             avg_Res = feature.values_["agriculture_organic_farming_cat_value"]
             break;
+        
+        case 58:
+            avg_Res = feature.values_["small_animals_total"]
+            break;
+        
+        case 59:
+            avg_Res = feature.values_["large_animals_total"]
+            break;
     }
-    
+
     for(tempIdx = 0; tempIdx < vectorStyle.length; ++tempIdx){
         if(avg_Res >= vectorStyle[tempIdx].lower && avg_Res <= vectorStyle[tempIdx].upper){
             break;
         }
     }
 
+
+    // avg_Res didn't fall in any bin (missing/NaN data, or out of range) — fall back to a default style
+    const matchedStyle = vectorStyle[tempIdx] || {};
+
     return new Style({
         stroke: new Stroke({
-            color: vectorStyle[tempIdx].stroke !== undefined ? vectorStyle[tempIdx].stroke : "#006400",
+            color: matchedStyle.stroke !== undefined ? matchedStyle.stroke : "#006400",
             width: 1.0,
         }),
         fill: new Fill({
-            color: vectorStyle[tempIdx].fill !== undefined ? vectorStyle[tempIdx].fill : "rgba(144, 238, 144, 0.3)",
+            color: matchedStyle.fill !== undefined ? matchedStyle.fill : "rgba(144, 238, 144, 0.3)",
         })
     })
 }

@@ -347,7 +347,7 @@ const KYLLeftSidebar = ({
           <button
             key={tab}
             onClick={() => handleTabChange(tab)}
-            className={`flex-1 py-2 rounded-lg text-xs font-semibold transition-colors
+            className={`flex-1 py-2 px-3 rounded-lg text-xs font-semibold text-center transition-colors
               ${activeTab === tab
                 ? 'bg-indigo-600 text-white shadow-sm'
                 : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
@@ -440,14 +440,14 @@ const KYLLeftSidebar = ({
                           disabled={isDisabled}
                           title={isDisabled && reasonKey ? DISABLED_REASON_META[reasonKey].label : undefined}
                           className={`w-full flex items-center justify-between px-4 py-3 rounded-lg
-                            border text-sm font-medium transition-all
+                            border text-sm font-medium text-left transition-all
                             ${isDisabled
                               ? 'bg-gray-50 text-gray-400 border-gray-100 cursor-not-allowed'
                               : 'bg-white text-gray-700 border-gray-200 hover:border-indigo-300 hover:bg-indigo-50 hover:text-indigo-700'
                             }`}
                         >
-                          <span>{category}</span>
-                          <div className="flex items-center gap-2">
+                          <span className="text-left">{category}</span>
+                          <div className="flex items-center gap-2 shrink-0">
                             {activeCount > 0 && (
                               <span className="text-[10px] font-bold bg-indigo-600 text-white px-1.5 py-0.5 rounded-full leading-none">
                                 {activeCount}
@@ -469,14 +469,14 @@ const KYLLeftSidebar = ({
                   disabled={isDisabled}
                   title={isDisabled && reasonKey ? DISABLED_REASON_META[reasonKey].label : undefined}
                   className={`w-full flex items-center justify-between px-4 py-3 rounded-lg
-                    border text-sm font-medium transition-all
+                    border text-sm font-medium text-left transition-all
                     ${isDisabled
                       ? 'bg-gray-50 text-gray-400 border-gray-100 cursor-not-allowed'
                       : 'bg-white text-gray-700 border-gray-200 hover:border-indigo-300 hover:bg-indigo-50 hover:text-indigo-700'
                     }`}
                 >
-                  <span>{category}</span>
-                  <ChevronRight className="w-4 h-4 text-gray-400" />
+                  <span className="text-left">{category}</span>
+                  <ChevronRight className="w-4 h-4 text-gray-400 shrink-0" />
                 </button>
               ))
             )}
@@ -530,10 +530,10 @@ const KYLLeftSidebar = ({
                 key={subcategory}
                 onClick={() => setSelectedSubcategory(subcategory)}
                 disabled={isDisabled}
-                className="w-full flex items-center justify-between px-4 py-3 bg-white rounded-lg border border-gray-200 hover:border-indigo-300 hover:bg-indigo-50 transition-all text-sm font-medium text-gray-700 hover:text-indigo-700"
+                className="w-full flex items-center justify-between px-4 py-3 bg-white rounded-lg border border-gray-200 hover:border-indigo-300 hover:bg-indigo-50 transition-all text-sm font-medium text-left text-gray-700 hover:text-indigo-700"
               >
-                <span>{subcategory}</span>
-                <ChevronRight className="w-4 h-4 text-gray-400" />
+                <span className="text-left">{subcategory}</span>
+                <ChevronRight className="w-4 h-4 text-gray-400 shrink-0" />
               </button>
             ))}
           </div>
