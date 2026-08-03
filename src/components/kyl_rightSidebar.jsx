@@ -2160,7 +2160,7 @@ const sheet5Count =
   );
 
   return (
-    <div className="w-[320px] h-full flex flex-col gap-2 overflow-y-auto pr-1 custom-scrollbar">
+    <div className="w-[320px] shrink-0 h-full flex flex-col gap-2 overflow-y-auto pr-1 custom-scrollbar">
       <SelectionPopup />
 
       {/* Universal Back Button */}

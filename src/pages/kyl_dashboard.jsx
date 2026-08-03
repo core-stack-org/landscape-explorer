@@ -3080,12 +3080,12 @@ useEffect(() => {
 
 
   return (
-    <div className="min-h-screenbg-white flex flex-col">
+    <div className="h-screen bg-white flex flex-col overflow-hidden">
       <Toaster />
-      <div className="sticky top-0 z-50 bg-white border-b border-gray-100">
+      <div className="shrink-0 bg-white border-b border-gray-100">
         <LandingNavbar />
       </div>
-      <div className="flex h-[calc(100vh-48px)] p-4 gap-4">
+      <div className="flex flex-1 min-h-0 p-4 gap-4">
         {/* Left Sidebar */}
         <KYLLeftSidebar
           key={sidebarResetKey}
@@ -3129,7 +3129,7 @@ useEffect(() => {
         />
 
         {/* Map Container */}
-        <div className="relative flex-1 h-full flex flex-col">
+        <div className="relative flex-1 min-w-0 h-full flex flex-col">
           <KYLMapContainer
             isLoading={islayerLoaded || isLoading}
             statesData={statesData}
