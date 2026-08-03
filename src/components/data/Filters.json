@@ -1471,7 +1471,7 @@
         "Demographic": [
             {
                 "name": "total_population",
-                "label": "Total Population",
+                "label": "Total Population Count",
                 "type": 2,
                 "values": [
                     {
@@ -1725,7 +1725,7 @@
                 "styleIdx": 8
             }
         ],
-        "Education": [
+        "Education Access": [
             {
                 "name": "essential_education_infra",
                 "label": "Primary education institutions",
@@ -1813,7 +1813,7 @@
                 "styleIdx": 16
             }
         ],
-        "Basic Infrastructure" : [
+        "Essential Infrastructure Availability" : [
             {
                 "name": "road_connectivity_cat_cluster",
                 "label": "Road Connectivity",
@@ -1944,7 +1944,7 @@
                 "styleIdx": 42
             }
         ],
-        "Health and Sanitation" : [
+        "Healthcare Access" : [
             {
                 "name": "maternal_child_health_cat_cluster",
                 "label": "Maternal and Child Health Service Access",
@@ -2147,7 +2147,7 @@
         "Financial Inclusion" : [
             {
                 "name": "financial_inclusion_cat_cluster",
-                "label": "Access to formal banking services",
+                "label": "Access to formal banking channels",
                 "type": 1,
                 "values": [
                     {
@@ -2187,55 +2187,12 @@
                 ],
                 "rasterStyle": [],
                 "styleIdx": 45
-            },
-            {
-                "name": "financial_inclusion",
-                "label": "Access to banks and financial services",
-                "type": 2,
-                "values": [
-                    {
-                        "label": "Within 5 kms",
-                        "value": {
-                            "lower": 0,
-                            "upper": 5
-                        }
-                    },
-                    {
-                        "label": "More than 5 kms",
-                        "value": {
-                            "lower": 5,
-                            "upper": 9999999999
-                        }
-                    }
-                ],
-                "layer_store": [
-                    "facilities_proximity"
-                ],
-                "layer_name": [
-                    "facilities"
-                ],
-                "vectorStyle": [
-                    {
-                        "fill": "rgba(72, 55, 217, 0.8)",
-                        "stroke": "rgba(72, 55, 217, 1)",
-                        "lower": 0,
-                        "upper": 5
-                    },
-                    {
-                        "fill": "rgba(8, 8, 77, 0.8)",
-                        "stroke": "rgba(8, 8, 77, 1)",
-                        "lower": 5,
-                        "upper": 9999999999
-                    }
-                ],
-                "rasterStyle": "",
-                "styleIdx": 20
             }
         ],
-        "Welfare inclusion" : [
+        "Social welfare access" : [
             {
                 "name": "social_protection_cat_cluster",
-                "label": "Coverage across PDS, NFSA, BPL and Pension",
+                "label": "Coverage under PDS, NFSA, NSAP",
                 "type": 1,
                 "values": [
                     {
@@ -2278,7 +2235,7 @@
             },
             {
                 "name": "public_distribution_system",
-                "label": "Public distribution system",
+                "label": "PDS access",
                 "type": 2,
                 "values": [
                     {
@@ -2320,10 +2277,10 @@
                 "styleIdx": 19
             }
         ],
-        "Community Institutions and Governance" : [
+        "Community Institutions" : [
             {
                 "name": "institutionalization_cat_cluster",
-                "label": "Institutionalization Strength",
+                "label": "Presence of SHGs, FPOs, Cooperatives",
                 "type": 1,
                 "values": [
                     {
@@ -2363,52 +2320,9 @@
                 ],
                 "rasterStyle": [],
                 "styleIdx": 47
-            },
-            {
-                "name": "civic_infrastructure_cat_cluster",
-                "label": "Civic Infrastructure",
-                "type": 1,
-                "values": [
-                    {
-                        "label": "Poor",
-                        "value": "LOW"
-                    },
-                    {
-                        "label": "Moderate",
-                        "value": "MEDIUM"
-                    },
-                    {
-                        "label": "Strong",
-                        "value": "HIGH"
-                    }
-                ],
-                "layer_store": ["antyodaya_2020"],
-                "layer_name": ["antyodaya20"],
-                "vectorStyle": [
-                    {
-                        "fill": "rgba(220, 20, 60, 0.8)",
-                        "stroke": "rgba(139, 0, 0, 1)",
-                        "lower": 0,
-                        "upper": 0.33
-                    },
-                    {
-                        "fill": "rgba(255, 215, 0, 0.8)",
-                        "stroke": "rgba(218, 165, 32, 1)",
-                        "lower": 0.330001,
-                        "upper": 0.66
-                    },
-                    {
-                        "fill": "rgba(144, 238, 144, 0.8)",
-                        "stroke": "rgba(34, 139, 34, 1)",
-                        "lower": 0.660001,
-                        "upper": 1
-                    }
-                ],
-                "rasterStyle": [],
-                "styleIdx": 48
             }
         ],
-        "Livelihood Diversification" : [
+        "Livelihood" : [
             {
                 "name": "livelihoods_employment_cat_cluster",
                 "label": "Farm Employment",
@@ -2520,7 +2434,7 @@
             },
             {
                 "name": "livelihoods_fisheries_cat_cluster",
-                "label": "Fisheries Adoption",
+                "label": "Fisheries Presence",
                 "type": 1,
                 "values": [
                     {
@@ -2595,10 +2509,10 @@
                 "styleIdx": 53
             }
         ],
-        "Livestock and Dairy Support" : [
+        "Livestock and Dairy" : [
             {
                 "name": "livestock_veterinary_cat_cluster",
-                "label": "Livestock Management Service Quality",
+                "label": "Veterinary services and support availability",
                 "type": 1,
                 "values": [
                     {
@@ -2641,7 +2555,7 @@
             },
             {
                 "name": "livestock_management_centers",
-                "label": "Livestock Management Centers (Dairy and Animal Husbandry)",
+                "label": "Market access points",
                 "type": 2,
                 "values": [
                     {
@@ -2730,7 +2644,7 @@
             },
             {
                 "name": "small_animals_total",
-                "label": "Bovines (Cattle / Buffalo)",
+                "label": "Bovines (Cattle / Buffalo) count",
                 "type": 2,
                 "values": [
                     {
@@ -2786,7 +2700,7 @@
             },
             {
                 "name": "large_animals_total",
-                "label": "Small Animals (Sheep / Goat / Pig)",
+                "label": "Small Animals (Sheep / Goat / Pig) count",
                 "type": 2,
                 "values": [
                     {
@@ -2841,7 +2755,7 @@
                 "styleIdx": 59
             }
         ],
-        "Irrigation Infrastructure" : [
+        "Climate resilience and irrigation infrastructure" : [
             {
                 "name": "agriculture_irrigation_watershed_cat_cluster",
                 "label": "Watershed Infrastructure and Modern Irrigation",
@@ -2884,12 +2798,66 @@
                 ],
                 "rasterStyle": [],
                 "styleIdx": 56
+            },
+            {
+                "name": "total_assets",
+                "label": "Total number of NREGA works during 2016-24",
+                "type": 2,
+                "values": [
+                    {
+                        "label": "Less than 100",
+                        "value": {
+                            "lower": 0,
+                            "upper": 100
+                        }
+                    },
+                    {
+                        "label": "Between 100 to 300",
+                        "value": {
+                            "lower": 100,
+                            "upper": 300
+                        }
+                    },
+                    {
+                        "label": "More than 300",
+                        "value": {
+                            "lower": 300,
+                            "upper": 999999999
+                        }
+                    }
+                ],
+                "layer_store": [
+                    "nrega_assets"
+                ],
+                "layer_name": [],
+                "vectorStyle": [
+                    {
+                        "fill": "rgba(135, 206, 235, 0.8)",
+                        "stroke": "rgba(135, 206, 235, 1)",
+                        "lower": 0,
+                        "upper": 100
+                    },
+                    {
+                        "fill": "rgba(65, 105, 225, 0.8)",
+                        "stroke": "rgba(65, 105, 225, 1)",
+                        "lower": 100,
+                        "upper": 300
+                    },
+                    {
+                        "fill": "rgba(0, 0, 128, 0.8)",
+                        "stroke": "rgba(0, 0, 128, 1)",
+                        "lower": 300,
+                        "upper": 999999999
+                    }
+                ],
+                "rasterStyle": "",
+                "styleIdx": 9
             }
         ],
-        "Agricultural Support Services and Market Access" : [
+        "Agricultural Support and Market Access" : [
             {
                 "name": "agricultural_support_infrastructure",
-                "label": "Agricultural support infrastructure",
+                "label": "Agri inputs and advisory access",
                 "type": 2,
                 "values": [
                     {
@@ -2945,7 +2913,7 @@
             },
             {
                 "name": "post_harvest_infra",
-                "label": "Post Agricultural Produce Harvest Support",
+                "label": "Post harvest processing centers",
                 "type": 2,
                 "values": [
                     {
@@ -3001,7 +2969,7 @@
             },
             {
                 "name": "agri_market_access",
-                "label": "Access to mandis",
+                "label": "Market access",
                 "type": 2,
                 "values": [
                     {
@@ -3112,7 +3080,7 @@
                 "styleIdx": 23
             }
         ],
-        "Ecological and Climate Resilience" : [
+        "Agroecological support" : [
             {
                 "name": "agriculture_organic_farming_cat_cluster",
                 "label": "Organic Farming Adoption",
@@ -3155,60 +3123,6 @@
                 ],
                 "rasterStyle": [],
                 "styleIdx": 57
-            },
-            {
-                "name": "total_assets",
-                "label": "Total number of NREGA works during 2016-24",
-                "type": 2,
-                "values": [
-                    {
-                        "label": "Less than 100",
-                        "value": {
-                            "lower": 0,
-                            "upper": 100
-                        }
-                    },
-                    {
-                        "label": "Between 100 to 300",
-                        "value": {
-                            "lower": 100,
-                            "upper": 300
-                        }
-                    },
-                    {
-                        "label": "More than 300",
-                        "value": {
-                            "lower": 300,
-                            "upper": 999999999
-                        }
-                    }
-                ],
-                "layer_store": [
-                    "nrega_assets"
-                ],
-                "layer_name": [],
-                "vectorStyle": [
-                    {
-                        "fill": "rgba(135, 206, 235, 0.8)",
-                        "stroke": "rgba(135, 206, 235, 1)",
-                        "lower": 0,
-                        "upper": 100
-                    },
-                    {
-                        "fill": "rgba(65, 105, 225, 0.8)",
-                        "stroke": "rgba(65, 105, 225, 1)",
-                        "lower": 100,
-                        "upper": 300
-                    },
-                    {
-                        "fill": "rgba(0, 0, 128, 0.8)",
-                        "stroke": "rgba(0, 0, 128, 1)",
-                        "lower": 300,
-                        "upper": 999999999
-                    }
-                ],
-                "rasterStyle": "",
-                "styleIdx": 9
             }
         ]
     }
