@@ -319,7 +319,7 @@ const KYLLeftSidebar = ({
   const showPatternList  = !!indicatorType && activeTab === 'Patterns' && !!selectedSubcategory;
 
   return (
-    <div className="w-[320px] bg-white rounded-xl border border-gray-100 shadow-sm flex flex-col h-full overflow-hidden">
+    <div className="w-[320px] shrink-0 bg-white rounded-xl border border-gray-100 shadow-sm flex flex-col h-full overflow-hidden">
 
       {/* ── Layer-selecting overlay ─────────────────────────────────────── */}
       {isLayerSelecting && (
