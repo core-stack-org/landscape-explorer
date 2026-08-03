@@ -12,6 +12,7 @@ import SelectButton from "./buttons/select_button";
 import filtersDetails from "../components/data/Filters.json";
 import { ArrowLeft, Loader2, Table, FileText, FileSpreadsheet, X, ChevronRight, CheckCircle2,Layers3,Users } from 'lucide-react';
 import KYLMWSProfilePanel from "./kyl_MWSProfilePanel.jsx";
+import KYLVillageProfilePanel from "./kyl_VillageProfilePanel.jsx";
 import KYLWaterbodyPanel from "./kyl_waterbodypanel.jsx";
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -62,7 +63,11 @@ const KYLRightSidebar = ({
    selectionMode,
   setSelectionMode,
   manualSelectedMWS,
-  onResetMWSSelection, 
+  onResetMWSSelection,
+  selectedVillageProfile,
+  manualSelectedVillage,
+  onResetVillage,
+  onResetVillageSelection,
   showPlans,
   setShowPlans,
   showStewards,
@@ -84,7 +89,8 @@ const KYLRightSidebar = ({
 
   const stewardsLayerRef = React.useRef(null);
 
-  const showBothPanels = selectedMWSProfile && selectedWaterbodyProfile;
+  const activeProfilePanelCount = [selectedMWSProfile, selectedVillageProfile, selectedWaterbodyProfile].filter(Boolean).length;
+  const showBothPanels = activeProfilePanelCount > 1;
   const navigate = useNavigate();
 
   const transformName = (name) => {
@@ -96,6 +102,9 @@ const KYLRightSidebar = ({
       .replace(/^_|_$/g, "")
       .toLowerCase()
   };
+
+  const buildVillageReportUrl = (villageId) =>
+    `${process.env.REACT_APP_API_URL}/generate_village_report/?state=${transformName(state?.label)}&district=${transformName(district?.label)}&block=${transformName(block?.label)}&villageId=${villageId}`;
 
   const exportBoundaries = async (format) => {
     setIsExportingGeo(true);
@@ -496,6 +505,7 @@ const villages = (mwsRecord.mws_intersect_villages || []).map((villageId) => {
 
   const handleUniversalBack = () => {
     onResetMWS();
+    onResetVillage();
     onResetWaterbody();
     setSelectedPlanProfile(null);
     setSelectedStewardProfile(null);
@@ -1947,18 +1957,21 @@ const sheet5Count =
                                       }
                                     }
                                     return (
-                                      <span
+                                      <a
                                         key={v.villageId}
-                                        title={`${isSelected ? 'Matches filter' : 'Intersects'} | ID: ${v.villageId}`}
-                                       className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium border ${
+                                        href={buildVillageReportUrl(v.villageId)}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        title={`${isSelected ? 'Matches filter' : 'Intersects'} | ID: ${v.villageId} — open village report`}
+                                       className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium border transition-colors ${
                                         isSelected
-                                          ? "bg-emerald-500 border-emerald-600 text-white"
-                                          : "bg-violet-50 border-violet-200 text-violet-700"
+                                          ? "bg-emerald-500 border-emerald-600 text-white hover:bg-emerald-600"
+                                          : "bg-violet-50 border-violet-200 text-violet-700 hover:bg-violet-100"
                                       }`}
                                       >
                                         {v.villageName || 'Unknown'}
                                         <span className="opacity-70 font-mono text-[9px]">({v.villageId})</span>
-                                      </span>
+                                      </a>
                                     );
                                   })}
                                 </div>
@@ -2147,7 +2160,7 @@ const sheet5Count =
   );
 
   return (
-    <div className="w-[320px] flex flex-col gap-2">
+    <div className="w-[320px] h-full flex flex-col gap-2 overflow-y-auto pr-1 custom-scrollbar">
       <SelectionPopup />
 
       {/* Universal Back Button */}
@@ -2186,6 +2199,22 @@ const sheet5Count =
     onOpenSelection={() => setShowSelectionPopup(true)}
 />
 
+) : null}
+
+{selectedVillageProfile ? (
+<KYLVillageProfilePanel
+    villageData={selectedVillageProfile}
+     onBack={() => {
+      onResetVillage();
+      setSelectedPlanProfile(null);
+       setSelectedStewardProfile(null);
+    }}
+    hideBackButton={showBothPanels}
+    selectedVillages={manualSelectedVillage}
+    onResetVillage={onResetVillage}
+    onResetSelection={onResetVillageSelection}
+    onOpenSelection={selectedMWSProfile ? undefined : () => setShowSelectionPopup(true)}
+/>
 ) : null}
 
       {selectedWaterbodyProfile && (
@@ -2663,13 +2692,15 @@ const sheet5Count =
 
     <div className="max-h-44 overflow-y-auto pr-1 flex flex-wrap gap-1.5">
       {displayVillages.map((village) => (
-        <span
+        <button
           key={village.villageId}
-          title={village.villageName}
-          className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[9px] font-medium bg-emerald-50 border border-emerald-100 text-emerald-700 max-w-full"
+          type="button"
+          title={`Open report for ${village.villageName}`}
+          onClick={() => window.open(buildVillageReportUrl(village.villageId), '_blank', 'noopener,noreferrer')}
+          className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[9px] font-medium bg-emerald-50 border border-emerald-100 text-emerald-700 hover:bg-emerald-100 hover:border-emerald-300 max-w-full transition-colors"
         >
                     <span className="truncate">{village.villageName}</span>
-        </span>
+        </button>
       ))}
     </div>
   </div>

@@ -539,9 +539,20 @@ const MapLegend = ({ showMWS, showVillages, currentLayer, showConnectivity,showP
   ];
 
   const AntyodayaData = [
-    { fill: "rgba(220, 20, 60, 0.8)", stroke: "rgba(139, 0, 0, 1)", label: "Low/Poor" },
+    { fill: "rgba(220, 20, 60, 0.8)", stroke: "rgba(139, 0, 0, 1)", label: "Poor" },
     { fill: "rgba(255, 215, 0, 0.8)", stroke: "rgba(218, 165, 32, 1)", label: "Moderate" },
-    { fill: "rgba(144, 238, 144, 0.8)", stroke: "rgba(34, 139, 34, 1)", label: "High/Strong" },
+    { fill: "rgba(144, 238, 144, 0.8)", stroke: "rgba(34, 139, 34, 1)", label: "Strong" },
+  ];
+
+  const AntyodayaData1 = [
+    { fill: "rgba(220, 20, 60, 0.8)", stroke: "rgba(139, 0, 0, 1)", label: "Poor" },
+    { fill: "rgba(255, 215, 0, 0.8)", stroke: "rgba(218, 165, 32, 1)", label: "Moderate" },
+    { fill: "rgba(144, 238, 144, 0.8)", stroke: "rgba(34, 139, 34, 1)", label: "High" },
+  ];
+
+  const AntyodayaData2 = [
+    { fill: "rgba(220, 20, 60, 0.8)", stroke: "rgba(139, 0, 0, 1)", label: "Low" },
+    { fill: "rgba(144, 238, 144, 0.8)", stroke: "rgba(34, 139, 34, 1)", label: "High" },
   ];
 
   const LivestockData = [
@@ -549,6 +560,7 @@ const MapLegend = ({ showMWS, showVillages, currentLayer, showConnectivity,showP
     { fill: "rgba(255, 215, 0, 0.8)", stroke: "rgba(218, 165, 32, 1)", label: "Moderate Population" },
     { fill: "rgba(144, 238, 144, 0.8)", stroke: "rgba(34, 139, 34, 1)", label: "High Population" },
   ]
+
 
 
   const isExcludedLulc = (name) => {
@@ -766,9 +778,74 @@ const MapLegend = ({ showMWS, showVillages, currentLayer, showConnectivity,showP
   );
 
   const isAntyodayaActive = currentLayer?.some(
-    (layer) => layer.name.includes("road_connectivity_cat_cluster") || layer.name.includes("energy_access_cat_cluster") || layer.name.includes("housing_quality_cat_cluster") || layer.name.includes("maternal_child_health_cat_cluster") || layer.name.includes("water_sanitation_cat_cluster") || layer.name.includes("financial_inclusion_cat_cluster") || layer.name.includes("social_protection_cat_cluster") || layer.name.includes("institutionalization_cat_cluster") || layer.name.includes("civic_infrastructure_cat_cluster") || layer.name.includes("livelihoods_employment_cat_cluster") || layer.name.includes("livelihoods_forest_resources_cat_cluster") || layer.name.includes("livelihoods_alternative_farming_cat_cluster") || layer.name.includes("livelihoods_fisheries_cat_cluster") || layer.name.includes("livelihoods_cottage_traditional_industry_cat_cluster") || layer.name.includes("livestock_veterinary_cat_cluster") || layer.name.includes("livelihoods_common_resources_cat_cluster") || layer.name.includes("agriculture_irrigation_watershed_cat_cluster")|| layer.name.includes("agriculture_organic_farming_cat_cluster")
+    (layer) => layer.name.includes("agriculture_organic_farming_cat_cluster")
   );
 
+  const isRoadConnectivity = currentLayer?.some(
+    (layer) => layer.name.includes("road_connectivity_cat_cluster")
+  )
+
+  const isElectricityActive = currentLayer?.some(
+    (layer) => layer.name.includes("energy_access_cat_cluster") 
+  )
+
+  const isHousingactive = currentLayer?.some(
+    (layer) => layer.name.includes("housing_quality_cat_cluster")
+  )
+
+  const isChildHealthActive = currentLayer?.some(
+    (layer) => layer.name.includes("maternal_child_health_cat_cluster")
+  )
+
+  const isWaterSanityActive = currentLayer?.some(
+    (layer) => layer.name.includes("water_sanitation_cat_cluster")
+  )
+
+  const isbankingaccessActive = currentLayer?.some(
+    (layer) => layer.name.includes("financial_inclusion_cat_cluster")
+  )
+
+  const isCoverageActive = currentLayer?.some(
+    (layer) => layer.name.includes("social_protection_cat_cluster")
+  )
+
+  const isInstituteActive = currentLayer?.some(
+    (layer) => layer.name.includes("institutionalization_cat_cluster")
+  )
+
+  const isFarmEmployActive = currentLayer?.some(
+    (layer) => layer.name.includes("livelihoods_employment_cat_cluster")
+  )
+
+  const isAltFarmActive = currentLayer?.some(
+    (layer) => layer.name.includes("livelihoods_alternative_farming_cat_cluster")
+  )
+
+  const isFisheriesActive = currentLayer?.some(
+    (layer) => layer.name.includes("livelihoods_fisheries_cat_cluster")
+  )
+
+  const isCottageActive = currentLayer?.some(
+    (layer) => layer.name.includes("livelihoods_cottage_traditional_industry_cat_cluster")
+  )
+
+  const isVeterinaryActive = currentLayer?.some(
+    (layer) => layer.name.includes("livestock_veterinary_cat_cluster")
+  )
+
+  const isCommonPasture = currentLayer?.some(
+    (layer) => layer.name.includes("livelihoods_common_resources_cat_cluster")
+  )
+
+  const isWatershedIrrigation = currentLayer?.some(
+    (layer) => layer.name.includes("agriculture_irrigation_watershed_cat_cluster")
+  )
+
+  const isForestLivelihoodActive = currentLayer?.some(
+    (layer) => layer.name.includes("livelihoods_forest_resources_cat_cluster")
+  )
+
+  
   const isLivestockActive = currentLayer?.some(
     (layer) => layer.name.includes("small_animals_total") || layer.name.includes("large_animals_total")
   )
@@ -875,31 +952,31 @@ const MapLegend = ({ showMWS, showVillages, currentLayer, showConnectivity,showP
               )}
 
               {/* Plans Legend Section */}
-{showPlans && (
-  <div className="space-y-2">
-    <h4 className="text-xs font-medium text-gray-600">
-      Plans
-    </h4>
+              {showPlans && (
+                <div className="space-y-2">
+                  <h4 className="text-xs font-medium text-gray-600">
+                    Plans
+                  </h4>
 
-    {planLegendItems.map((item, index) => (
-      <div
-        key={`plan-${index}`}
-        className="flex items-center gap-2"
-      >
-        <div
-          className="w-4 h-4 rounded-full"
-          style={{
-            backgroundColor: item.color,
-            border: `2px solid ${item.border}`,
-          }}
-        />
-        <span className="text-sm text-gray-600">
-          {item.name}
-        </span>
-      </div>
-    ))}
-  </div>
-)}
+                  {planLegendItems.map((item, index) => (
+                    <div
+                      key={`plan-${index}`}
+                      className="flex items-center gap-2"
+                    >
+                      <div
+                        className="w-4 h-4 rounded-full"
+                        style={{
+                          backgroundColor: item.color,
+                          border: `2px solid ${item.border}`,
+                        }}
+                      />
+                      <span className="text-sm text-gray-600">
+                        {item.name}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
 
               {/* LULC Legend Section */}
               {isLulcLayerActive && (
@@ -1925,8 +2002,200 @@ const MapLegend = ({ showMWS, showVillages, currentLayer, showConnectivity,showP
 
               {isAntyodayaActive && (
                 <div className="space-y-2">
-                  <h4 className="text-xs font-medium text-gray-600">Antyodaya Legend</h4>
+                  <h4 className="text-xs font-medium text-gray-600">Organic Farming Adoption</h4>
+                  {AntyodayaData1.map((item, index) => (
+                    <div key={`fac-live-${index}`} className="flex items-center gap-2">
+                      <div className="w-4 h-4 rounded" style={{ backgroundColor: item.fill, border: `1px solid ${item.stroke}` }} />
+                      <span className="text-sm text-gray-600">{item.label}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {isRoadConnectivity && (
+                <div className="space-y-2">
+                  <h4 className="text-xs font-medium text-gray-600">Road Connectivity</h4>
                   {AntyodayaData.map((item, index) => (
+                    <div key={`fac-live-${index}`} className="flex items-center gap-2">
+                      <div className="w-4 h-4 rounded" style={{ backgroundColor: item.fill, border: `1px solid ${item.stroke}` }} />
+                      <span className="text-sm text-gray-600">{item.label}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {isElectricityActive && (
+                <div className="space-y-2">
+                  <h4 className="text-xs font-medium text-gray-600">Electricity Supply</h4>
+                  {AntyodayaData.map((item, index) => (
+                    <div key={`fac-live-${index}`} className="flex items-center gap-2">
+                      <div className="w-4 h-4 rounded" style={{ backgroundColor: item.fill, border: `1px solid ${item.stroke}` }} />
+                      <span className="text-sm text-gray-600">{item.label}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {isHousingactive && (
+                <div className="space-y-2">
+                  <h4 className="text-xs font-medium text-gray-600">Housing Quality</h4>
+                  {AntyodayaData.map((item, index) => (
+                    <div key={`fac-live-${index}`} className="flex items-center gap-2">
+                      <div className="w-4 h-4 rounded" style={{ backgroundColor: item.fill, border: `1px solid ${item.stroke}` }} />
+                      <span className="text-sm text-gray-600">{item.label}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {isChildHealthActive && (
+                <div className="space-y-2">
+                  <h4 className="text-xs font-medium text-gray-600">Maternal and Child Health Service Access</h4>
+                  {AntyodayaData.map((item, index) => (
+                    <div key={`fac-live-${index}`} className="flex items-center gap-2">
+                      <div className="w-4 h-4 rounded" style={{ backgroundColor: item.fill, border: `1px solid ${item.stroke}` }} />
+                      <span className="text-sm text-gray-600">{item.label}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {isWaterSanityActive && (
+                <div className="space-y-2">
+                  <h4 className="text-xs font-medium text-gray-600">Water and Sanitation Infrastructure</h4>
+                  {AntyodayaData.map((item, index) => (
+                    <div key={`fac-live-${index}`} className="flex items-center gap-2">
+                      <div className="w-4 h-4 rounded" style={{ backgroundColor: item.fill, border: `1px solid ${item.stroke}` }} />
+                      <span className="text-sm text-gray-600">{item.label}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {isbankingaccessActive && (
+                <div className="space-y-2">
+                  <h4 className="text-xs font-medium text-gray-600">Access to formal banking services</h4>
+                  {AntyodayaData1.map((item, index) => (
+                    <div key={`fac-live-${index}`} className="flex items-center gap-2">
+                      <div className="w-4 h-4 rounded" style={{ backgroundColor: item.fill, border: `1px solid ${item.stroke}` }} />
+                      <span className="text-sm text-gray-600">{item.label}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {isCoverageActive && (
+                <div className="space-y-2">
+                  <h4 className="text-xs font-medium text-gray-600">Coverage under PDS, NFSA, NSAP</h4>
+                  {AntyodayaData.map((item, index) => (
+                    <div key={`fac-live-${index}`} className="flex items-center gap-2">
+                      <div className="w-4 h-4 rounded" style={{ backgroundColor: item.fill, border: `1px solid ${item.stroke}` }} />
+                      <span className="text-sm text-gray-600">{item.label}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {isInstituteActive && (
+                <div className="space-y-2">
+                  <h4 className="text-xs font-medium text-gray-600">Presence of SHGs, FPOs, Cooperatives</h4>
+                  {AntyodayaData.map((item, index) => (
+                    <div key={`fac-live-${index}`} className="flex items-center gap-2">
+                      <div className="w-4 h-4 rounded" style={{ backgroundColor: item.fill, border: `1px solid ${item.stroke}` }} />
+                      <span className="text-sm text-gray-600">{item.label}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {isFarmEmployActive && (
+                <div className="space-y-2">
+                  <h4 className="text-xs font-medium text-gray-600">Farm Employment</h4>
+                  {AntyodayaData1.map((item, index) => (
+                    <div key={`fac-live-${index}`} className="flex items-center gap-2">
+                      <div className="w-4 h-4 rounded" style={{ backgroundColor: item.fill, border: `1px solid ${item.stroke}` }} />
+                      <span className="text-sm text-gray-600">{item.label}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {isForestLivelihoodActive && (
+                <div className="space-y-2">
+                  <h4 className="text-xs font-medium text-gray-600">Forest-based Livelihood</h4>
+                  {AntyodayaData2.map((item, index) => (
+                    <div key={`fac-live-${index}`} className="flex items-center gap-2">
+                      <div className="w-4 h-4 rounded" style={{ backgroundColor: item.fill, border: `1px solid ${item.stroke}` }} />
+                      <span className="text-sm text-gray-600">{item.label}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {isAltFarmActive && (
+                <div className="space-y-2">
+                  <h4 className="text-xs font-medium text-gray-600">Alternate Farming</h4>
+                  {AntyodayaData2.map((item, index) => (
+                    <div key={`fac-live-${index}`} className="flex items-center gap-2">
+                      <div className="w-4 h-4 rounded" style={{ backgroundColor: item.fill, border: `1px solid ${item.stroke}` }} />
+                      <span className="text-sm text-gray-600">{item.label}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {isFisheriesActive && (
+                <div className="space-y-2">
+                  <h4 className="text-xs font-medium text-gray-600">Fisheries Presence</h4>
+                  {AntyodayaData1.map((item, index) => (
+                    <div key={`fac-live-${index}`} className="flex items-center gap-2">
+                      <div className="w-4 h-4 rounded" style={{ backgroundColor: item.fill, border: `1px solid ${item.stroke}` }} />
+                      <span className="text-sm text-gray-600">{item.label}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {isCottageActive && (
+                <div className="space-y-2">
+                  <h4 className="text-xs font-medium text-gray-600">Cottage Industry</h4>
+                  {AntyodayaData2.map((item, index) => (
+                    <div key={`fac-live-${index}`} className="flex items-center gap-2">
+                      <div className="w-4 h-4 rounded" style={{ backgroundColor: item.fill, border: `1px solid ${item.stroke}` }} />
+                      <span className="text-sm text-gray-600">{item.label}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {isVeterinaryActive && (
+                <div className="space-y-2">
+                  <h4 className="text-xs font-medium text-gray-600">Veterinary services and support availability</h4>
+                  {AntyodayaData1.map((item, index) => (
+                    <div key={`fac-live-${index}`} className="flex items-center gap-2">
+                      <div className="w-4 h-4 rounded" style={{ backgroundColor: item.fill, border: `1px solid ${item.stroke}` }} />
+                      <span className="text-sm text-gray-600">{item.label}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {isCommonPasture && (
+                <div className="space-y-2">
+                  <h4 className="text-xs font-medium text-gray-600">Common Pasture Access</h4>
+                  {AntyodayaData2.map((item, index) => (
+                    <div key={`fac-live-${index}`} className="flex items-center gap-2">
+                      <div className="w-4 h-4 rounded" style={{ backgroundColor: item.fill, border: `1px solid ${item.stroke}` }} />
+                      <span className="text-sm text-gray-600">{item.label}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {isWatershedIrrigation && (
+                <div className="space-y-2">
+                  <h4 className="text-xs font-medium text-gray-600">Watershed Infrastructure and Modern Irrigation</h4>
+                  {AntyodayaData1.map((item, index) => (
                     <div key={`fac-live-${index}`} className="flex items-center gap-2">
                       <div className="w-4 h-4 rounded" style={{ backgroundColor: item.fill, border: `1px solid ${item.stroke}` }} />
                       <span className="text-sm text-gray-600">{item.label}</span>
@@ -1937,7 +2206,7 @@ const MapLegend = ({ showMWS, showVillages, currentLayer, showConnectivity,showP
 
               {isLivestockActive && (
                 <div className="space-y-2">
-                  <h4 className="text-xs font-medium text-gray-600">Livestock Legend</h4>
+                  <h4 className="text-xs font-medium text-gray-600">Livestock Count</h4>
                   {LivestockData.map((item, index) => (
                     <div key={`fac-live-${index}`} className="flex items-center gap-2">
                       <div className="w-4 h-4 rounded" style={{ backgroundColor: item.fill, border: `1px solid ${item.stroke}` }} />
