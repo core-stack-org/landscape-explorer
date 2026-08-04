@@ -102,7 +102,6 @@ const KYLDashboardPage = () => {
 
   const [toastId, setToastId] = useState(null);
   const [selectedMWSProfile, setSelectedMWSProfile] = useState(null);
-  const [selectedVillageProfile, setSelectedVillageProfile] = useState(null);
   const [searchLatLong, setSearchLatLong] = useState(null);
 
   // * Triggers
@@ -123,7 +122,6 @@ const KYLDashboardPage = () => {
   const [isLayerSelecting, setIsLayerSelecting] = useState(false);
   const showConnectivityRef = useRef(false);
   const [manualSelectedMWS, setManualSelectedMWS] = useState([]);
-  const [manualSelectedVillage, setManualSelectedVillage] = useState([]);
   const [showPlans, setShowPlans] = useState(false);
   const [showStewards, setShowStewards] = useState(false);
 
@@ -218,18 +216,6 @@ const handleResetMWS = () => {
       toast.dismiss(toastId);
       setToastId(null);
     }
-  };
-
-  const handleResetVillage = () => {
-    setSelectedVillageProfile(null);
-    setManualSelectedVillage([]);
-    if (boundaryLayerRef.current) resetVillageStyle();
-  };
-
-  const handleResetVillageSelection = () => {
-    setManualSelectedVillage([]);
-    setSelectedVillageProfile(null);
-    if (boundaryLayerRef.current) resetVillageStyle();
   };
 
   const getAllFilterTypes = () => {
@@ -719,19 +705,6 @@ const handleResetMWS = () => {
 
   setHighlightMWS(null);
 };
-
-  const resetVillageStyle = () => {
-    if (!boundaryLayerRef.current) return;
-
-    const features = boundaryLayerRef.current.getSource().getFeatures();
-
-    features.forEach((feature) => {
-      feature.set("isManuallySelected", 0, true);
-    });
-
-    boundaryLayerRef.current.getSource().changed();
-  };
-
 
   const updateFilteredMWS = (filteredIds) => {
     if (!mwsLayerRef.current) return;
@@ -1310,7 +1283,6 @@ const handleResetMWS = () => {
         variables: { hasSelection: false, isVisualizeOn: false },
         "stroke-color": [
           "case",
-          ["==", ["get", "isManuallySelected"], 1], [255, 225, 0, 1],
           ["var", "isVisualizeOn"],       [0, 0, 0, 1],
           ["==", ["get", "isSelected"], 1], [255, 225, 0, 1],
           ["==", ["get", "isSelected"], 0], [
@@ -1318,17 +1290,8 @@ const handleResetMWS = () => {
           ],
           [0, 0, 0, 1],
         ],
-        "stroke-width": [
-          "case",
-          ["==", ["get", "isManuallySelected"], 1], 2.5,
-          ["==", ["get", "isSelected"], 1], 2.0,
-          1.2,
-        ],
-        "fill-color": [
-          "case",
-          ["==", ["get", "isManuallySelected"], 1], [255, 225, 0, 0.4],
-          [255, 255, 0, 0.001],
-        ],
+        "stroke-width": ["case", ["==", ["get", "isSelected"], 1], 2.0, 1.2],
+        "fill-color": [255, 255, 0, 0.001],
       });
   
       // ── 4. Zoom animation ────────────────────────────────────────────────────
@@ -2459,23 +2422,6 @@ useEffect(() => {
     // applyDefaultMWSStyle();
   };
 
-  const updateSelectedVillageStyle = (selectedIds) => {
-    if (!boundaryLayerRef.current) return;
-
-    const features = boundaryLayerRef.current.getSource().getFeatures();
-
-    features.forEach((feature) => {
-      const villageId = feature.get("vill_ID");
-      feature.set(
-        "isManuallySelected",
-        selectedIds.includes(villageId) ? 1 : 0,
-        true
-      );
-    });
-
-    boundaryLayerRef.current.getSource().changed();
-  };
-
   useEffect(() => {
     if (!mapRef.current) return;
 
@@ -2485,53 +2431,31 @@ useEffect(() => {
         ? mwsSource.getFeaturesAtCoordinate(event.coordinate)[0]
         : undefined;
 
-      if (feature) {
-        const uid = feature.get("uid");
+      if (!feature) return;
 
-        setManualSelectedMWS((prev) => {
-          const updated = prev.includes(uid)
-            ? prev.filter((id) => id !== uid)
-            : [...prev, uid];
+      const uid = feature.get("uid");
 
-          updateSelectedMWSStyle(updated);
+      setManualSelectedMWS((prev) => {
+        const updated = prev.includes(uid)
+          ? prev.filter((id) => id !== uid)
+          : [...prev, uid];
 
-          if (updated.length === 0) {
-            setSelectedMWSProfile(null);
-            setHighlightMWS(null);
-          } else {
-            setSelectedMWSProfile(feature.getProperties());
-            setHighlightMWS(uid);
-          }
+        updateSelectedMWSStyle(updated);
 
-          return updated;
-        });
-
-        if (toastId) {
-          toast.dismiss(toastId);
-          setToastId(null);
+        if (updated.length === 0) {
+          setSelectedMWSProfile(null);
+          setHighlightMWS(null);
+        } else {
+          setSelectedMWSProfile(feature.getProperties());
+          setHighlightMWS(uid);
         }
-      }
 
-      const villageSource = boundaryLayerRef.current?.getVisible()
-        ? boundaryLayerRef.current.getSource()
-        : undefined;
-      const villageFeature = villageSource
-        ? villageSource.getFeaturesAtCoordinate(event.coordinate)[0]
-        : undefined;
+        return updated;
+      });
 
-      if (villageFeature) {
-        const villageId = villageFeature.get("vill_ID");
-
-        setManualSelectedVillage((prev) => {
-          const updated = prev.includes(villageId)
-            ? prev.filter((id) => id !== villageId)
-            : [...prev, villageId];
-
-          updateSelectedVillageStyle(updated);
-          setSelectedVillageProfile(updated.length === 0 ? null : villageFeature.getProperties());
-
-          return updated;
-        });
+      if (toastId) {
+        toast.dismiss(toastId);
+        setToastId(null);
       }
     };
 
@@ -3205,10 +3129,6 @@ useEffect(() => {
           setSelectionMode={setSelectionMode}
           manualSelectedMWS={manualSelectedMWS}
           onResetMWSSelection={handleResetMWSSelection}
-          selectedVillageProfile={selectedVillageProfile}
-          manualSelectedVillage={manualSelectedVillage}
-          onResetVillage={handleResetVillage}
-          onResetVillageSelection={handleResetVillageSelection}
           showPlans={showPlans}
           setShowPlans={setShowPlans}
           showStewards={showStewards}

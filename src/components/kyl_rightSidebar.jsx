@@ -12,7 +12,6 @@ import SelectButton from "./buttons/select_button";
 import filtersDetails from "../components/data/Filters.json";
 import { ArrowLeft, Loader2, Table, FileText, FileSpreadsheet, X, ChevronRight, CheckCircle2,Layers3,Users } from 'lucide-react';
 import KYLMWSProfilePanel from "./kyl_MWSProfilePanel.jsx";
-import KYLVillageProfilePanel from "./kyl_VillageProfilePanel.jsx";
 import KYLWaterbodyPanel from "./kyl_waterbodypanel.jsx";
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -64,10 +63,6 @@ const KYLRightSidebar = ({
   setSelectionMode,
   manualSelectedMWS,
   onResetMWSSelection,
-  selectedVillageProfile,
-  manualSelectedVillage,
-  onResetVillage,
-  onResetVillageSelection,
   showPlans,
   setShowPlans,
   showStewards,
@@ -89,8 +84,7 @@ const KYLRightSidebar = ({
 
   const stewardsLayerRef = React.useRef(null);
 
-  const activeProfilePanelCount = [selectedMWSProfile, selectedVillageProfile, selectedWaterbodyProfile].filter(Boolean).length;
-  const showBothPanels = activeProfilePanelCount > 1;
+  const showBothPanels = selectedMWSProfile && selectedWaterbodyProfile;
   const navigate = useNavigate();
 
   const transformName = (name) => {
@@ -505,7 +499,6 @@ const villages = (mwsRecord.mws_intersect_villages || []).map((villageId) => {
 
   const handleUniversalBack = () => {
     onResetMWS();
-    onResetVillage();
     onResetWaterbody();
     setSelectedPlanProfile(null);
     setSelectedStewardProfile(null);
@@ -2199,22 +2192,6 @@ const sheet5Count =
     onOpenSelection={() => setShowSelectionPopup(true)}
 />
 
-) : null}
-
-{selectedVillageProfile ? (
-<KYLVillageProfilePanel
-    villageData={selectedVillageProfile}
-     onBack={() => {
-      onResetVillage();
-      setSelectedPlanProfile(null);
-       setSelectedStewardProfile(null);
-    }}
-    hideBackButton={showBothPanels}
-    selectedVillages={manualSelectedVillage}
-    onResetVillage={onResetVillage}
-    onResetSelection={onResetVillageSelection}
-    onOpenSelection={selectedMWSProfile ? undefined : () => setShowSelectionPopup(true)}
-/>
 ) : null}
 
       {selectedWaterbodyProfile && (
