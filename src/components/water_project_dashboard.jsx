@@ -290,7 +290,12 @@ const WaterProjectDashboard = () => {
     );
   };
   
-  const mwsForMap = matchedMWSFeaturesProject;
+  // All matched MWS features for map (terrain/drainage cropped to full project area)
+  const mwsForMap = Array.isArray(matchedMWSFeaturesProject)
+    ? matchedMWSFeaturesProject
+    : matchedMWSFeaturesProject
+      ? [matchedMWSFeaturesProject]
+      : [];
 
   const mwsForCharts = useMemo(() => {
     return getFirstMwsWithValues(matchedMWSFeaturesProject);
