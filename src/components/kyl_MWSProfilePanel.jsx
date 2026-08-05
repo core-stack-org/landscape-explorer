@@ -6,7 +6,7 @@ import { trackEvent } from "../services/analytics.js";
 import { CheckCircle2, Layers3,Table } from "lucide-react";
 
 const KYLMWSProfilePanel = ({ mwsData, onBack, hideBackButton = false, onResetMWS,onOpenSelection,
-  selectedMWS = [],}) => {
+  selectedMWS = [],  intersectingVillages = [], }) => {
   const state = useRecoilValue(stateAtom);
   const district = useRecoilValue(districtAtom);
   const block = useRecoilValue(blockAtom);
@@ -87,6 +87,7 @@ const KYLMWSProfilePanel = ({ mwsData, onBack, hideBackButton = false, onResetMW
         Read report for more details.
       </p>
     </div>
+
 
     <button
       className="flex items-center gap-2 text-indigo-600 hover:text-indigo-700 mb-2"
@@ -180,6 +181,31 @@ const KYLMWSProfilePanel = ({ mwsData, onBack, hideBackButton = false, onResetMW
           </button>
         </div>
       )}
+
+       {intersectingVillages.length > 0 && (
+  <div className="mt-5">
+    <div className="flex items-center justify-between mb-3">
+      <h3 className="font-medium text-gray-900">
+        Selected Villages
+      </h3>
+
+      <div className="w-6 h-6 rounded-full bg-green-100 text-green-700 text-xs font-semibold flex items-center justify-center">
+        {intersectingVillages.length}
+      </div>
+    </div>
+
+    <div className="flex flex-wrap gap-2">
+      {intersectingVillages.map((village) => (
+        <span
+          key={village.villageId}
+          className="px-3 py-1 rounded-full border border-green-200 bg-green-50 text-green-700 text-xs"
+        >
+          {village.villageName}
+        </span>
+      ))}
+    </div>
+  </div>
+)}
     </div>
   );
 };
