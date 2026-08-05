@@ -39,9 +39,17 @@ const extractProjectSeasonalData = (properties) => {
     });
   });
 
+  const totalRainfall = sortedFullYears.map((fullYear) =>
+    seasons.reduce(
+      (sum, season) =>
+        sum + Number(properties[`precipitation_${season}_${fullYear}`] ?? 0),
+      0
+    )
+  );
+
   return {
     years: sortedFullYears.map((full) => yearMap.get(full)),
-    seasonData,
+    totalRainfall,
   };
 };
 
@@ -102,32 +110,16 @@ const PrecipitationStackChart = ({ feature ,waterbody,typeparam,water_rej_data})
   else {
     if (!feature.properties) return null;
 
-    const { years, seasonData } =
+    const { years, totalRainfall } =
       extractProjectSeasonalData(feature.properties);
 
     labels = years;
-    datasets = [
-      {
-        label: "Zaid",
-        data: seasonData.zaid,
-        backgroundColor: "#0f5e9c",
-        stack: "precip",
-      },
-      {
-        label: "Rabi",
-        data: seasonData.rabi,
-        backgroundColor: "#1ca3ec",
-        stack: "precip",
-      },
-      {
-        label: "Kharif",
-        data: seasonData.kharif,
-        backgroundColor: "#74CCF4",
-        stack: "precip",
-      },
-
- 
-    ];
+datasets = [
+  {
+    label: "Total Rainfall",
+    data: totalRainfall,
+    backgroundColor: "#1E90FF",
+  },];
   }
 
   const normalizeYear = (iv) => {
