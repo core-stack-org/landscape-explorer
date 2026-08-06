@@ -15,11 +15,21 @@ describe("GeoLibre legend", () => {
   it("selects the legend for a newly visible LULC style", () => {
     const { rerender } = render(<GeoLibreLegend legends={[level1]} />);
 
-    fireEvent.click(screen.getByRole("button", { name: "Legend" }));
+    expect(
+      screen.getByRole("button", { name: "Legend" }).getAttribute("aria-expanded")
+    ).toBe("true");
     expect(screen.getByText("Built-up")).toBeTruthy();
+
+    fireEvent.click(screen.getByRole("button", { name: "Legend" }));
+    expect(
+      screen.getByRole("button", { name: "Legend" }).getAttribute("aria-expanded")
+    ).toBe("false");
 
     rerender(<GeoLibreLegend legends={[level1, level2]} />);
 
+    expect(
+      screen.getByRole("button", { name: "Legend" }).getAttribute("aria-expanded")
+    ).toBe("true");
     expect(
       screen.getByRole("combobox", { name: "Visible layer legend" }).value
     ).toBe("LULC Level 2 legend");
