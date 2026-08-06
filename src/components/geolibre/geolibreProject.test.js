@@ -1,4 +1,5 @@
 import {
+  activeGeoLibreLegends,
   buildGeoLibreProject,
   DEFAULT_GEOLIBRE_BASEMAP_STYLE,
   formatGeoServerName,
@@ -236,7 +237,7 @@ describe("GeoLibre 2.2 project generation", () => {
     ]);
   });
 
-  it("starts a minimized legend containing only active default layers", async () => {
+  it("prepares default legend data for the KYL overlay", async () => {
     const project = await buildGeoLibreProject({
       ...location,
       fetchFeatureCollection: successfulFetch,
@@ -248,7 +249,7 @@ describe("GeoLibre 2.2 project generation", () => {
       "maplibre-gl-components"
     );
     expect(legend).toMatchObject({
-      visible: true,
+      visible: false,
       collapsed: true,
       hasLegend: true,
       title: "Socio-Economic Profile legend",
@@ -307,6 +308,43 @@ describe("GeoLibre 2.2 project generation", () => {
       "Administrative Boundaries legend",
       "Terrain legend",
     ]);
+  });
+
+  it("returns a separate active legend for every visible LULC style", async () => {
+    const project = await buildGeoLibreProject({
+      ...location,
+      fetchFeatureCollection: successfulFetch,
+    });
+    const withLulcStyles = {
+      ...project,
+      layers: project.layers.map((layer) =>
+        [
+          "corestack-lulc_level_1_17_18",
+          "corestack-lulc_level_2_17_18",
+          "corestack-lulc_level_3_17_18",
+        ].includes(layer.id)
+          ? { ...layer, visible: true }
+          : layer
+      ),
+    };
+
+    const legends = activeGeoLibreLegends(withLulcStyles);
+    expect(legends.map((legend) => legend.title)).toEqual(
+      expect.arrayContaining([
+        "LULC Level 1 legend",
+        "LULC Level 2 legend",
+        "LULC Level 3 legend",
+      ])
+    );
+    expect(
+      legends.find((legend) => legend.title === "LULC Level 1 legend").items
+    ).toHaveLength(5);
+    expect(
+      legends.find((legend) => legend.title === "LULC Level 2 legend").items
+    ).toHaveLength(2);
+    expect(
+      legends.find((legend) => legend.title === "LULC Level 3 legend").items
+    ).toHaveLength(4);
   });
 
   it("loads only the shared Demographic source during project creation", async () => {

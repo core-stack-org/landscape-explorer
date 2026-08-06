@@ -3,6 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 import { useRecoilValue } from "recoil";
 import GeoLibreFrame from "../components/geolibre/GeoLibreFrame";
 import {
+  activeGeoLibreLegends,
   buildGeoLibreProject,
   hydrateGeoLibreVectorLayer,
   syncGeoLibreActiveLegends,
@@ -52,6 +53,7 @@ const LandscapeExplorer = () => {
   const selectedTehsil = useRecoilValue(blockAtom);
   const routeLocation = useLocation();
   const [project, setProject] = useState(null);
+  const [legends, setLegends] = useState([]);
   const [progress, setProgress] = useState("Starting GeoLibre…");
   const [error, setError] = useState("");
   const [retryKey, setRetryKey] = useState(0);
@@ -84,6 +86,7 @@ const LandscapeExplorer = () => {
     lazyQueueRef.current = Promise.resolve();
     hydratedLayersRef.current = new Map();
     hydrationDirtyRef.current = false;
+    setLegends([]);
   }, [scopeKey]);
 
   useEffect(() => {
@@ -112,6 +115,7 @@ const LandscapeExplorer = () => {
       .then((nextProject) => {
         if (controller.signal.aborted) return;
         setProject(nextProject);
+        setLegends(activeGeoLibreLegends(nextProject));
         setProgress("Overview is ready. Toggle another layer to load it.");
         trackEvent("GeoLibre", "open_workspace", scope.tehsil);
       })
@@ -129,6 +133,9 @@ const LandscapeExplorer = () => {
 
   const handleProjectState = useCallback((viewerProject) => {
     const viewerScopeKey = scopeKeyOf(viewerProject);
+    if (viewerScopeKey === currentScopeKeyRef.current) {
+      setLegends(activeGeoLibreLegends(viewerProject));
+    }
     const sequence = lazyStateSequenceRef.current + 1;
     lazyStateSequenceRef.current = sequence;
 
@@ -221,6 +228,7 @@ const LandscapeExplorer = () => {
         preparationMessage={progress}
         preparationError={error}
         warning={warning}
+        legends={legends}
         onProjectState={handleProjectState}
         onRetry={() => setRetryKey((value) => value + 1)}
       />
