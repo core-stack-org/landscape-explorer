@@ -162,11 +162,31 @@ describe("GeoLibre 2.2 project generation", () => {
     expect(latestLulc.source.tiles[0]).toContain(
       "BBOX={bbox-epsg-3857}"
     );
-    expect(latestLulc.source.wmsUrl).toContain("/LULC_level_3/wms");
+    expect(latestLulc.source.wmsUrl).toContain("/geoserver/wms");
     expect(latestLulc.source.url).toContain("request=GetCoverage");
     expect(latestLulc.source.url).toContain(
       "CoverageId=LULC_level_3%3ALULC_24_25_cachar_lakhipur_level_3"
     );
+    const latestLulcStyles = [1, 2, 3].map((level) =>
+      project.layers.find(
+        (layer) => layer.id === `corestack-lulc_level_${level}_24_25`
+      )
+    );
+    expect(latestLulcStyles.map((layer) => layer.source.layers)).toEqual([
+      "LULC_level_3:LULC_24_25_cachar_lakhipur_level_3",
+      "LULC_level_3:LULC_24_25_cachar_lakhipur_level_3",
+      "LULC_level_3:LULC_24_25_cachar_lakhipur_level_3",
+    ]);
+    expect(latestLulcStyles.map((layer) => layer.source.url)).toEqual([
+      latestLulc.source.url,
+      latestLulc.source.url,
+      latestLulc.source.url,
+    ]);
+    expect(latestLulcStyles.map((layer) => layer.source.styles)).toEqual([
+      "lulc_level_1_style",
+      "lulc_level_2_style",
+      "lulc_level_3_style",
+    ]);
     expect(successfulFetch).toHaveBeenCalledTimes(1);
   });
 
@@ -212,7 +232,6 @@ describe("GeoLibre 2.2 project generation", () => {
       "land",
       "agriculture",
       "restoration",
-      "climate",
       "nrega",
     ]);
   });

@@ -434,7 +434,6 @@ const GROUPS_TOP_FIRST = [
   { id: "land", name: "Land", collapsed: true },
   { id: "agriculture", name: "Agriculture", collapsed: true },
   { id: "restoration", name: "Restoration", collapsed: true },
-  { id: "climate", name: "Climate", collapsed: true },
   { id: "nrega", name: "NREGA", collapsed: true },
 ];
 
@@ -501,7 +500,11 @@ const buildWfsRequest = (baseUrl, layer, layerName) => {
 };
 
 const buildWmsSource = (baseUrl, layer, layerName, bounds) => {
-  const endpoint = `${baseUrl}${layer.workspace}/wms`;
+  // Cross-workspace LULC styles are available through GeoServer's global WMS,
+  // while other catalog layers retain their workspace-scoped endpoints.
+  const endpoint = layer.useGlobalWms
+    ? `${baseUrl}wms`
+    : `${baseUrl}${layer.workspace}/wms`;
   const qualifiedName = `${layer.workspace}:${layerName}`;
   const source = {
     type: "raster",

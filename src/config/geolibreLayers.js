@@ -3,6 +3,8 @@ const QML_RAW_BASE =
 
 const qmlStyle = (path) => `${QML_RAW_BASE}/${path}`;
 
+const LULC_SOURCE_WORKSPACE = "LULC_level_3";
+
 export const GEOLIBRE_LULC_YEARS = [
   { label: "2017-2018", value: "17_18" },
   { label: "2018-2019", value: "18_19" },
@@ -282,24 +284,24 @@ const LULC_LEVELS = [
     id: "lulc_level_1",
     label: "LULC Level 1",
     domain: "Land",
-    workspace: "LULC_level_1",
-    wmsStyle: "LULC_level_1:lulc_level_1_style",
+    workspace: LULC_SOURCE_WORKSPACE,
+    wmsStyle: "lulc_level_1_style",
     qmlStyleUrl: qmlStyle("Land/level-1-op.qml"),
   },
   {
     id: "lulc_level_2",
     label: "LULC Level 2",
     domain: "Land",
-    workspace: "LULC_level_2",
-    wmsStyle: "LULC_level_2:lulc_level_2_style",
+    workspace: LULC_SOURCE_WORKSPACE,
+    wmsStyle: "lulc_level_2_style",
     qmlStyleUrl: qmlStyle("Land/level-2.qml"),
   },
   {
     id: "lulc_level_3",
     label: "LULC Level 3",
     domain: "Agriculture",
-    workspace: "LULC_level_3",
-    wmsStyle: "LULC_level_3:lulc_level_3_style",
+    workspace: LULC_SOURCE_WORKSPACE,
+    wmsStyle: "lulc_level_3_style",
     qmlStyleUrl: qmlStyle("Agriculture/level-3.qml"),
   },
 ];
@@ -312,9 +314,10 @@ export const GEOLIBRE_LULC_LAYERS = LULC_LEVELS.flatMap((level, index) =>
     label: `${level.label} · ${year.label}`,
     loadGroup: `lulc-${index + 1}`,
     sourceType: "wms",
+    useGlobalWms: true,
     year: year.value,
     layerName: ({ district, tehsil }) =>
-      `LULC_${year.value}_${district}_${tehsil}_level_${index + 1}`,
+      `LULC_${year.value}_${district}_${tehsil}_level_3`,
   }))
 );
 
