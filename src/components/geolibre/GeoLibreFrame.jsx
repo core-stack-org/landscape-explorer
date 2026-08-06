@@ -4,6 +4,7 @@ import {
   geoLibreVersionStatus,
   resolveGeoLibreViewer,
 } from "../../config/geolibre.config";
+import GeoLibreLegend from "./GeoLibreLegend";
 
 const MAX_TECHNICAL_LOG_ENTRIES = 40;
 
@@ -66,6 +67,7 @@ const GeoLibreFrame = ({
   preparationMessage,
   preparationError,
   warning,
+  legends,
   onRetry,
   onProjectState,
 }) => {
@@ -310,9 +312,13 @@ const GeoLibreFrame = ({
         />
       )}
 
+      {!userIssue && viewerState === "loaded" && (
+        <GeoLibreLegend legends={legends} />
+      )}
+
       {!userIssue && viewerVersion && (
         <div
-          className="pointer-events-none absolute bottom-8 right-3 rounded-md border border-slate-300 bg-white/95 px-2 py-1 text-[11px] font-medium text-slate-700 shadow-sm"
+          className="pointer-events-none absolute bottom-3 left-3 rounded-md border border-slate-300 bg-white/95 px-2 py-1 text-[11px] font-medium text-slate-700 shadow-sm"
           title={`Loaded from ${viewer.url}`}
           role="status"
         >
