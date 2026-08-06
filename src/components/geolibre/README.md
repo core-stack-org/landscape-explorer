@@ -122,12 +122,14 @@ REACT_APP_GEOLIBRE_BASEMAP_STYLE_URL=https://maps.example.org/style.json
 ```
 
 GeoLibre's built-in Components plugin provides one on-map legend control in
-minimized mode by default. Its rendered legend uses the bottom-right map corner,
-and its selector contains only layers that are currently visible. Toggling a
-layer on adds its symbol classes; toggling it off removes them. One selected
-layer's classes are shown at a time, so enabling several layers does not expand
-every palette across the map. The separate `legend` project field retains the
-complete layer ordering and grouping for GeoLibre's Print Layout legend.
+minimized mode by default. Its rendered legend uses the bottom-right map corner.
+The initial project includes the default-visible layers; a lazy vector hydration
+refreshes the selector with the layers visible at that point. Raster-only
+visibility changes stay inside the iframe instead of sending the full project
+back to GeoLibre. This preserves GeoLibre's native raster sources and avoids
+reloading tiles that have already been added to the map. The separate `legend`
+project field retains the complete layer ordering and grouping for GeoLibre's
+Print Layout legend.
 
 ## Version configuration
 
