@@ -121,15 +121,14 @@ attribution. A deployment can replace it with another valid MapLibre style:
 REACT_APP_GEOLIBRE_BASEMAP_STYLE_URL=https://maps.example.org/style.json
 ```
 
-GeoLibre's built-in Components plugin provides one on-map legend control in
-minimized mode by default. Its rendered legend uses the bottom-right map corner.
-The initial project includes the default-visible layers; a lazy vector hydration
-refreshes the selector with the layers visible at that point. Raster-only
-visibility changes stay inside the iframe instead of sending the full project
-back to GeoLibre. This preserves GeoLibre's native raster sources and avoids
-reloading tiles that have already been added to the map. The separate `legend`
-project field retains the complete layer ordering and grouping for GeoLibre's
-Print Layout legend.
+KYL renders one minimized on-map legend control over the bottom-right map corner.
+Its selector is updated directly from GeoLibre state snapshots and contains the
+currently visible layers. A newly enabled layer becomes the selected legend, so
+Level 1, Level 2, and Level 3 LULC styles each immediately show their own class
+palette. This update does not send the full project back to the iframe, preserving
+GeoLibre's native raster sources and avoiding redundant tile reloads. The
+separate `legend` project field retains the complete layer ordering and grouping
+for GeoLibre's Print Layout legend.
 
 ## Version configuration
 

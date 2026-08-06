@@ -781,6 +781,11 @@ const mapLegendEntries = (orderedLayers) => {
     : entries;
 };
 
+export const activeGeoLibreLegends = (project) =>
+  project?.layers
+    ? mapLegendEntries(project.layers.filter((layer) => layer.visible))
+    : [];
+
 const legendPluginState = (entries, currentPlugins) => {
   const selected = entries[0];
   const currentComponents =
@@ -794,7 +799,9 @@ const legendPluginState = (entries, currentPlugins) => {
   const legend = selectedEntry
     ? {
         ...currentLegend,
-        visible: true,
+        // KYL renders this state outside the cross-origin iframe so it can be
+        // updated without replacing the project and recreating raster sources.
+        visible: false,
         collapsed: currentLegend?.collapsed ?? true,
         hasLegend: true,
         selectedLegendIndex: selectedIndex,
@@ -852,9 +859,7 @@ const legendStateSignature = (legend) =>
 
 export const syncGeoLibreActiveLegends = (project) => {
   if (!project?.layers) return project;
-  const entries = mapLegendEntries(
-    project.layers.filter((layer) => layer.visible)
-  );
+  const entries = activeGeoLibreLegends(project);
   const plugins = legendPluginState(entries, project.plugins);
   const currentLegend =
     project.plugins?.settings?.["maplibre-gl-components"]?.legend;
