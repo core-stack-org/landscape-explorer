@@ -2199,6 +2199,7 @@ const sheet5Count =
     onResetMWS={onResetMWS}
     onResetSelection={onResetMWSSelection} 
     onOpenSelection={() => setShowSelectionPopup(true)}
+    intersectingVillages={displayVillages}  
 />
 
 ) : null}

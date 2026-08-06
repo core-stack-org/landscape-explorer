@@ -64,11 +64,12 @@ const fetchMetaStats = async (organizationId = null, stateId = null, districtId 
   return res.json();
 };
 
-const fetchStewardStats = async (organizationId = null, stateId = null) => {
+const fetchStewardStats = async (organizationId = null, stateId = null, districtId = null) => {
   let url = `${process.env.REACT_APP_API_URL}/watershed/plans/steward-meta-stats/`;
   const params = new URLSearchParams();
   if (organizationId) params.append("organization", organizationId);
-  if (stateId)        params.append("state", stateId);
+  if (stateId)        params.append("state",        stateId);
+  if (districtId)     params.append("district",     districtId);
   if (params.toString()) url += `?${params.toString()}`;
   const res = await fetch(url, {
     headers: {
@@ -451,6 +452,17 @@ const PlansPage = () => {
 
     const [villageSearchText, setVillageSearchText]   = useState("");
     const [villageSuggestions, setVillageSuggestions] = useState([]);
+    const fromStewardMap = location.state?.fromStewardMap;
+
+    
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+
+    if (params.get("view") === "steward") {
+      setViewMode("stewards");
+    }
+  }, [location.search]);
 
     useEffect(() => {
       if (!placesLib) return;
@@ -686,6 +698,7 @@ const handleVillageSuggestionSelect = (placeId, description) => {
   const stateName = searchParams.get("stateName");
   const districtId = searchParams.get("district");
   const districtName = searchParams.get("districtName");
+  const view = searchParams.get("view");
 
   if (!stateId) return;
 
@@ -696,13 +709,18 @@ const handleVillageSuggestionSelect = (placeId, description) => {
       handleStatePinClick({
         state_id: stateId,
         state_name: stateName,
-      }).then(() => {
-        if (districtId) {
-          handleDistrictPinClick({
-            district_id: districtId,
-            district_name: districtName,
-          });
-        }
+      }).then(async() => {
+        if (!districtId) return;
+
+  if (view === "steward") {
+    setViewMode("stewards");
+    viewModeRef.current = "stewards";
+  }
+
+  await handleDistrictPinClick({
+    district_id: districtId,
+    district_name: districtName,
+  });
       });
     }
   }, 100);
@@ -1140,6 +1158,9 @@ const STEWARD_DOT_HOVERED = () =>
     };
 
     const handleDistrictPinClick = async (districtData) => {
+      console.log("District Click");
+console.log("viewModeRef:", viewModeRef.current);
+console.log("viewMode:", viewMode);
       if (!districtData) return;
 
       setSearchParams((prev) => {
@@ -1176,6 +1197,7 @@ const STEWARD_DOT_HOVERED = () =>
           setMapLoading(false);
         }
       } else {
+         console.log("Entered steward branch");
         setStewardLoading(true);
         setSelectedSteward(null);
         currentDistrictRef.current = districtData;
@@ -1445,6 +1467,10 @@ const STEWARD_DOT_HOVERED = () =>
             map.un("pointermove", handlePointerMove);
         };
     }, [metaStats]);
+
+    useEffect(() => {
+  console.log("Selected Steward:", selectedSteward);
+}, [selectedSteward]);
 
     // ── ORG CHANGE ──────────────────────────────────────────────
     const handleOrgChange = async (selected) => {
@@ -1725,8 +1751,138 @@ const STEWARD_DOT_HOVERED = () =>
                 style={{ border: `1px solid ${P.border}` }}>
                 <p className="text-sm" style={{ color: P.muted }}>Failed to load stats. Please refresh.</p>
               </div>
-            ) : selectedPlan ? (
 
+         ) : selectedSteward ? (
+                  <div className="flex flex-col h-full gap-4">
+                <div className="flex flex-col gap-4 flex-1 overflow-y-auto pr-1">
+
+                  <div className="rounded-2xl p-5 text-white shadow-lg relative"
+                    style={{ background: `linear-gradient(135deg, ${P.base}, ${P.dark})` }}>
+                    <button
+                     onClick={() => {
+                        if (selectedFeatureRef.current) {
+                          selectedFeatureRef.current.setStyle(STEWARD_DOT_DEFAULT());
+                          selectedFeatureRef.current = null;
+                        }
+
+                        setSelectedSteward(null);
+                      }}
+                      className="absolute top-3 right-3 w-7 h-7 rounded-full flex items-center
+                                justify-center transition-all hover:bg-white/20"
+                      style={{ color: "white" }}
+                    >✕</button>
+                    <p className="text-xs font-semibold uppercase tracking-widest mb-1"
+                      style={{ color: "oklch(90% 0.08 301.924)" }}>Steward Details</p>
+                    <p className="text-2xl font-bold tracking-tight pr-8">  {selectedSteward.facilitator_name}
+</p>
+                    <p className="text-sm mt-1" style={{ color: "oklch(85% 0.08 301.924)" }}>
+                      {selectedSteward.organization?.name|| "--"}
+                    </p>
+                  </div>
+
+                  <div className="bg-white rounded-2xl p-4 shadow-sm"
+                    style={{ border: `1px solid ${P.border}` }}>
+                    <div className="grid grid-cols-2 gap-3">
+                      {[
+                        { label: "Organization",   value: selectedSteward.organization?.name,},
+                        { label: "Project",        value: selectedSteward.projects?.map((p) => p.name).join(", "),     },
+                        { label: "Villages",  value:  selectedSteward.villages?.length ?? 0,    },
+                        { label: "States",  value:  selectedSteward.states?.map((s) => s.name).join(", ")   },
+                      ].map(({ label, value }) => (
+                        <div key={label} className="rounded-xl p-3"
+                          style={{ background: P.lighter, border: `1px solid ${P.border}` }}>
+                          <p className="text-xs font-medium mb-1" style={{ color: P.muted }}>{label}</p>
+                          <p className="text-sm font-semibold" style={{ color: P.text }}>{value || "--"}</p>
+                        </div>
+                      ))}                      
+                    </div>
+                  </div>
+
+                 <div className="bg-white rounded-2xl p-4 shadow-sm"
+                  style={{ border: `1px solid ${P.border}` }}>
+                  <p
+                    className="text-xs font-semibold uppercase tracking-widest mb-3"
+                    style={{ color: P.muted }}
+                  >
+                    Status
+                  </p>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    {[
+                      {
+                        label: "Assigned Plans",
+                        value: selectedSteward.plan_count,
+                        icon: "📋",
+                      },
+                      {
+                        label: "Completed Plans",
+                        value: selectedSteward.completed_count,
+                        icon: "✅",
+                      },
+                    ].map(({ label, value, icon }) => (
+                      <div
+                        key={label}
+                        className="rounded-xl p-3 flex items-center gap-2"
+                        style={{
+                          background: P.lighter,
+                          border: `1px solid ${P.border}`,
+                        }}
+                      >
+                        <span className="text-base">{icon}</span>
+
+                        <div>
+                          <p
+                            className="text-xs font-medium"
+                            style={{ color: P.muted }}
+                          >
+                            {label}
+                          </p>
+
+                          <p
+                            className="text-sm font-semibold"
+                            style={{ color: P.text }}
+                          >
+                            {value}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                </div>
+
+                <button
+         onClick={() => {
+  const slug = selectedSteward.facilitator_name
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, "-");
+
+  const url =
+    `/landscape-stewardship/steward-view/${selectedSteward.organization.id}/${slug}` +
+    `?stateId=${currentStateRef.current?.state_id ?? ""}` +
+    `&stateName=${encodeURIComponent(currentStateRef.current?.state_name ?? "")}` +
+    `&districtId=${currentDistrictRef.current?.district_id ?? ""}` +
+    `&districtName=${encodeURIComponent(currentDistrictRef.current?.district_name ?? "")}`;
+
+  window.open(url, "_blank");
+}}
+                  className="w-full py-3 rounded-2xl text-white font-semibold text-sm flex-shrink-0
+                            shadow-lg transition-all duration-200"
+                  // disabled={!selectedPlan.is_dpr_reviewed}
+                  style={{
+                    background: selectedSteward
+                      ? `linear-gradient(135deg, ${P.base}, ${P.dark})`
+                      : "oklch(85% 0.04 301.924)",
+                    // color: selectedPlan.is_dpr_reviewed ? "#fff" : P.muted,
+                    // cursor: selectedPlan.is_dpr_reviewed ? "pointer" : "not-allowed",
+                  }}
+                >
+                  View Full Steward →
+                </button>
+              </div>
+
+              ) : selectedPlan ? (
               <div className="flex flex-col h-full gap-4">
                 <div className="flex flex-col gap-4 flex-1 overflow-y-auto pr-1">
 
