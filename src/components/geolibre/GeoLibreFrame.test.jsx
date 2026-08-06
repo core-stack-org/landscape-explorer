@@ -139,6 +139,50 @@ describe("GeoLibre iframe bridge", () => {
     ).toHaveLength(1);
   });
 
+  it("keeps an already-loaded raster source when only visibility changes", () => {
+    const rasterProject = {
+      ...project,
+      layers: [
+        {
+          id: "corestack-lulc_level_2_17_18",
+          name: "LULC Level 2 · 2017-2018",
+          type: "raster",
+          source: {
+            type: "raster",
+            tiles: ["https://geoserver.example/wms?year=17_18&style=level_2"],
+          },
+          visible: true,
+          opacity: 1,
+          style: { rasterBrightnessMin: 0, rasterBrightnessMax: 1 },
+        },
+      ],
+    };
+    const { rerender } = render(<GeoLibreFrame project={rasterProject} />);
+    const frame = screen.getByTitle("GeoLibre GIS workspace");
+    const postMessage = jest.spyOn(frame.contentWindow, "postMessage");
+
+    act(() => announceReady(frame));
+    const loadCount = () =>
+      postMessage.mock.calls.filter(([message]) =>
+        message.type === "geolibre:load-project"
+      ).length;
+    expect(loadCount()).toBe(1);
+
+    rerender(
+      <GeoLibreFrame
+        project={{
+          ...rasterProject,
+          layers: rasterProject.layers.map((layer) => ({
+            ...layer,
+            visible: false,
+          })),
+        }}
+      />
+    );
+
+    expect(loadCount()).toBe(1);
+  });
+
   it("forwards viewer state snapshots for toggle-triggered loading", () => {
     const onProjectState = jest.fn();
     render(
