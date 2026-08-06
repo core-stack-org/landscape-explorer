@@ -1,0 +1,4 @@
+interface:
+  display_name: "Manage GeoLibre Layers"
+  short_description: "Add and safely change KYL GeoLibre layers"
+  default_prompt: "Use $manage-geolibre-layers to add or modify a KYL GeoLibre layer and validate every shared contract."

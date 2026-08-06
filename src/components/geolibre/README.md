@@ -337,6 +337,76 @@ When a raster presentation changes:
 4. update `qmlStyleUrl` if applicable;
 5. inspect the live WMS image and the KYL legend side by side.
 
+## Use the repository skill
+
+The repository includes an agent-readable and human-readable
+[GeoLibre layer maintenance skill](../../../.agents/skills/manage-geolibre-layers/SKILL.md)
+at `.agents/skills/manage-geolibre-layers/SKILL.md`.
+
+Use it whenever a task adds, removes, or changes a Download Layers entry. The
+skill turns this guide into an execution checklist: it first identifies the
+physical data source and the logical presentation, then routes the work through
+every applicable catalog, source, style, legend, loading, caching, download,
+test, documentation, and live-verification step.
+
+An AI agent can be asked directly:
+
+```text
+Use $manage-geolibre-layers to add <layer name> to <group>. Its deployed source
+is <workspace and naming rule>. Preserve lazy loading and add its map style,
+legend, download behavior, tests, and documentation.
+```
+
+Examples for narrower work:
+
+```text
+Use $manage-geolibre-layers to change the class breaks and legend of Drought.
+
+Use $manage-geolibre-layers to add the 2025-2026 LULC year without creating
+Level 1 or Level 2 physical raster sources.
+
+Use $manage-geolibre-layers to move CLART within Hydrology and change its
+default opacity without changing its GeoServer source.
+
+Use $manage-geolibre-layers to replace Terrain's named WMS style and verify
+that its visible palette and KYL legend still agree.
+```
+
+For a human making the change manually, open the skill and follow the matching
+workflow in order. Do not start by copying another catalog object: first verify
+whether the request introduces a new physical dataset or only another
+presentation of an existing one. That distinction determines whether a new
+WFS/WMS/WCS request is legitimate.
+
+Every normal new-layer task follows this complete chain:
+
+1. prove one representative deployed source and its actual properties/pixels;
+2. register its identity, naming rule, group, and presentation in the catalog;
+3. implement or select its map style and matching visible legend;
+4. preserve hidden startup, first-toggle loading, scoped reuse, and download
+   behavior appropriate to its source type;
+5. add assertions for the generated GeoLibre project and changed interaction;
+6. test the real layer in `/download_layers`, including off/on reuse;
+7. update inventory counts and this knowledge document.
+
+The source-type workflows below explain the exact fields and tests for each
+step. The skill makes agents follow the same sequence automatically.
+
+The skill contains specific workflows for:
+
+- adding WFS vectors and WMS/WCS rasters;
+- adding an LULC year or another presentation over existing LULC cells;
+- changing names, domains, groups, order, collapse, visibility, or opacity;
+- changing vector expressions, raster named styles, palettes, and legends;
+- changing GeoServer workspace, layer-name, endpoint, or download contracts;
+- changing first-toggle loading, retries, caches, and project reload behavior;
+- removing layers without leaving styles, legends, groups, or tests behind.
+
+It also defines the minimum automated and live evidence required before anyone
+claims the layer is complete. If publishing a GeoServer style or coverage is
+outside the agent's authority, the skill requires that dependency to be stated
+explicitly instead of treating a catalog-only edit as finished.
+
 ## How to make common changes
 
 ### Add a vector layer
