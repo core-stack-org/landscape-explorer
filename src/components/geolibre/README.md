@@ -94,12 +94,16 @@ ordered top-first as:
 6. Land
 7. Agriculture
 8. Restoration
-9. Climate
-10. NREGA
+9. NREGA
 
 The remaining groups are collapsed. Every layer outside the two default
 Demographic entries is toggle-to-load. Each LULC group shows 2024-2025 first
-while retaining every available year back to 2017-2018.
+while retaining every available year back to 2017-2018. The three LULC levels
+are presentation choices over the same Level 3 coverage for each year: GeoLibre
+uses `lulc_level_1_style`, `lulc_level_2_style`, or `lulc_level_3_style` without
+requesting separate Level 1 and Level 2 raster datasets. These cross-workspace
+styles are rendered through GeoServer's global WMS endpoint; downloads continue
+to use the single Level 3 WCS coverage.
 
 The project camera is calculated from the Socio-Economic geometry using a
 padded Web Mercator fit. `mapView.bbox` is also retained in project metadata,
@@ -175,11 +179,11 @@ application.
 | `GeoLibreFrame.jsx` | Iframe bridge, one-time bbox fit, human error states and downloadable bounded technical log |
 | `../../pages/LandscapeExplorer.jsx` | Route-to-project orchestration and fetch-on-first-toggle vector cache; no duplicate map or layer UI |
 
-The current project contains 45 entries: 13 vector entries, 24 LULC year/level
-rasters, and 8 other rasters. Initial startup performs exactly one distinct WFS
-request for the shared Demographic data and no WMS request. Each other vector
-makes its own WFS request only on its first toggle. Hidden rasters make
-no WMS tile request.
+The current project contains 45 entries: 13 vector entries, 24 LULC year/style
+entries backed by 8 Level 3 yearly rasters, and 8 other rasters. Initial startup
+performs exactly one distinct WFS request for the shared Demographic data and no
+WMS request. Each other vector makes its own WFS request only on its first
+toggle. Hidden rasters make no WMS tile request.
 
 ## Error handling
 
