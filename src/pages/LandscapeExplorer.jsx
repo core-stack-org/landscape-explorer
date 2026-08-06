@@ -141,8 +141,7 @@ const LandscapeExplorer = () => {
           viewerProject,
           hydratedLayersRef.current
         );
-        let nextProject = syncGeoLibreActiveLegends(mergedProject);
-        const legendChanged = nextProject !== mergedProject;
+        let nextProject = mergedProject;
         const layersToLoad = nextProject.layers.filter(
           (layer) =>
             layer.type === "geojson" &&
@@ -165,13 +164,16 @@ const LandscapeExplorer = () => {
         if (
           viewerScopeKey !== currentScopeKeyRef.current ||
           sequence !== lazyStateSequenceRef.current ||
-          (!layersToLoad.length &&
-            !hydrationDirtyRef.current &&
-            !legendChanged)
+          (!layersToLoad.length && !hydrationDirtyRef.current)
         ) {
           return;
         }
 
+        // A visibility-only state already lives inside the GeoLibre iframe.
+        // Sending it back as a full project would recreate every native raster
+        // source and make an already-loaded WMS layer fetch its tiles again.
+        // Only replace the project when lazy vector hydration supplied new data.
+        nextProject = syncGeoLibreActiveLegends(nextProject);
         hydrationDirtyRef.current = false;
         setProject(nextProject);
       });
