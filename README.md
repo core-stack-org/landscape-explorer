@@ -56,6 +56,19 @@ REACT_APP_WATERBODYREJ_USERNAME="xxx"
 REACT_APP_WATERBODYREJ_PASSWORD="xxx"
 REACT_APP_BASEURL="https://geoserver.core-stack.org"
 ```
+
+During `npm start`, the district-profile button defaults to
+`http://localhost:8000/api/v1` while the other KYL requests remain on the
+configured API. To use another district-profile backend, set this in
+`.env.development.local` and restart `npm start`:
+
+```env
+REACT_APP_DISTRICT_PROFILE_API_URL="http://localhost:8000/api/v1"
+```
+
+Run the backend separately with `conda activate corestack-backend` followed by
+`python manage.py runserver`.
+
 ### 4. Running the Application
 
 ```bash

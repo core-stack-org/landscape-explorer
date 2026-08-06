@@ -2,6 +2,7 @@ node_modules
 build/
 .env
 .env.local
+.env.*.local
 bun.lock
 package-lock.json
 

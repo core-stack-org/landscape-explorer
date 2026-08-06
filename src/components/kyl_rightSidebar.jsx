@@ -1006,6 +1006,25 @@ const STEWARD_DOT_DEFAULT = () =>
     window.open(reportURL, '_blank', 'noopener,noreferrer');
   };
 
+  const handleDistrictReport = () => {
+    if (!district?.district_id) return;
+    const districtProfileApiUrl = (
+      process.env.REACT_APP_DISTRICT_PROFILE_API_URL ||
+      (process.env.NODE_ENV === 'development'
+        ? 'http://localhost:8000/api/v1'
+        : null) ||
+      process.env.REACT_APP_API_URL
+    )?.replace(/\/$/, '');
+    if (!districtProfileApiUrl) return;
+    const query = new URLSearchParams({
+      district_id: district.district_id,
+      state: state?.label ?? '',
+      district: district?.label ?? '',
+    });
+    const reportURL = `${districtProfileApiUrl}/generate_district_report/?${query.toString()}`;
+    window.open(reportURL, '_blank', 'noopener,noreferrer');
+  };
+
   const generateSelectionTableData = () => {
     const mwsData = [];
     const villageData = [];
@@ -2411,6 +2430,21 @@ const sheet5Count =
                 </div>
               ))}
             </div>
+
+            {district && (
+              <button
+                onClick={handleDistrictReport}
+                disabled={!district?.district_id}
+                className={`mt-4 w-full flex items-center justify-center gap-2 py-2.5 text-xs font-semibold rounded-lg transition-colors border ${
+                  !district?.district_id
+                    ? 'opacity-50 cursor-not-allowed bg-gray-100 text-gray-400 border-gray-200'
+                    : 'text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border-emerald-200'
+                }`}
+              >
+                <FileText className="w-3.5 h-3.5" />
+                District Profile
+              </button>
+            )}
 
             {block && (
               <div className="mt-4 flex flex-col gap-2">
