@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 
 const GeoLibreLegend = ({ legends = [] }) => {
-  const [collapsed, setCollapsed] = useState(true);
+  const [collapsed, setCollapsed] = useState(false);
   const [selectedTitle, setSelectedTitle] = useState("");
   const previousTitlesRef = useRef([]);
 
@@ -10,6 +10,7 @@ const GeoLibreLegend = ({ legends = [] }) => {
     const addedTitle = titles.find(
       (title) => !previousTitlesRef.current.includes(title)
     );
+    if (addedTitle) setCollapsed(false);
     setSelectedTitle((current) =>
       addedTitle || (titles.includes(current) ? current : titles[0] || "")
     );
@@ -22,7 +23,7 @@ const GeoLibreLegend = ({ legends = [] }) => {
     legends.find((legend) => legend.title === selectedTitle) || legends[0];
 
   return (
-    <aside className="absolute bottom-8 right-3 z-20 w-72 max-w-[calc(100%-1.5rem)] rounded-lg border border-slate-200 bg-white/95 text-slate-800 shadow-xl backdrop-blur-sm">
+    <aside className="absolute bottom-10 right-3 z-20 w-72 max-w-[calc(100%-1.5rem)] rounded-lg border border-slate-200 bg-white/95 text-slate-800 shadow-xl backdrop-blur-sm md:right-[22rem]">
       <button
         type="button"
         className="flex w-full items-center justify-between gap-3 px-3 py-2 text-left text-sm font-semibold"
