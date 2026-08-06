@@ -1206,45 +1206,20 @@ console.log("viewMode:", viewMode);
           districtLayerRef.current = null;
         }
 
-      try {
-  const [listingData, stewardData, districtMetaStats, dprData, trackingData] = await Promise.all([
-    fetchStewardListing(
-      currentStateRef.current?.state_id,
-      orgRef.current?.value ?? null,
-      districtData.district_id
-    ),
-    fetchStewardStats(
-      orgRef.current?.value ?? null,
-      currentStateRef.current?.state_id,
-      districtData.district_id
-    ),
-    fetchMetaStats(
-      orgRef.current?.value ?? null,
-      null,
-      districtData.district_id
-    ),
-     fetchDprReportStatus({
-    organizationId: orgRef.current?.value ?? null,
-    districtId: districtData.district_id,
-  }),
+        try {
+          const data = await fetchStewardListing(
+            currentStateRef.current?.state_id,
+            orgRef.current?.value ?? null,
+            districtData.district_id
+          );
+         const stewards = data.stewards ?? [];
+         console.log("Stewards:", stewards);
+          console.log("First steward:", stewards[0]);
 
-  fetchStatusTracking({
-    organizationId: orgRef.current?.value ?? null,
-    districtId: districtData.district_id,
-  }),
-  ]);
+          setStewardListing(stewards);
+          addStewardDots(stewards);
 
-  const stewards = listingData.stewards ?? [];
-
-  setStewardListing(stewards);
-  addStewardDots(stewards);
-
-  setStewardStats(stewardData);
-  setMetaStats(districtMetaStats);
-  setDprStatus(dprData);
-setStatusTracking(trackingData);
-
-}catch (err) {
+        } catch (err) {
           console.error("Steward listing failed:", err);
         } finally {
           setStewardLoading(false);
@@ -1409,18 +1384,15 @@ setStatusTracking(trackingData);
 
             if (layerName === "stewardLayer") {
                 const steward = feature.get("stewardDetails");
-                if (steward) {
-                  setSelectedSteward(steward);
-                }
 
-                // if (steward) {
-                //   setStewardModalPlan({
-                //     facilitator_name: steward.facilitator_name,
-                //     organization:
-                //       steward.organization?.id ??
-                //       getStewardOrgId(steward.facilitator_name),
-                //   });
-                // }
+                if (steward) {
+                  setStewardModalPlan({
+                    facilitator_name: steward.facilitator_name,
+                    organization:
+                      steward.organization?.id ??
+                      getStewardOrgId(steward.facilitator_name),
+                  });
+                }
 
                 return true;
               }

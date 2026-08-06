@@ -1363,7 +1363,7 @@ const MapLegend = ({ showMWS, showVillages, currentLayer, showConnectivity,showP
               {isDryspellLayerActive && (
                 <div className="space-y-2">
                   <h4 className="text-xs font-medium text-gray-600">
-                    Dryspell Vector
+                    Dry spell Vector
                   </h4>
                   {dryspellLengendItems.map((item, index) => (
                     <div

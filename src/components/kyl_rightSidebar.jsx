@@ -544,6 +544,15 @@ const villages = (mwsRecord.mws_intersect_villages || []).map((villageId) => {
         selectedWaterbodyValues: { ...prev.selectedWaterbodyValues, [filter.name]: null },
       }));
     }
+    else if (sourceType === "Waterbody") {
+      setFilterSelections((prev) => ({
+        ...prev,
+        selectedWaterbodyValues: {
+          ...prev.selectedWaterbodyValues,
+          [filter.name]: null,
+        },
+      }));
+    }
   };
 
   const toggleWaterbodies = () => {
