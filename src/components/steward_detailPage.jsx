@@ -162,7 +162,13 @@ console.log("Response OK:", res.ok);
       </p>
 
       <h1 className="text-lg font-bold text-white truncate">
-        {stewardData.facilitator_name}
+        {stewardData.facilitator_name
+          ?.split(" ")
+          .map(
+            (word) =>
+              word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+          )
+          .join(" ")}
       </h1>
     </div>
 
