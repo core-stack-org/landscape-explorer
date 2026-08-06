@@ -2224,10 +2224,10 @@ const Map = forwardRef(({
       }
 
       let LulcLayer = await getImageLayers(
-        "LULC_level_1",
-        `LULC_${lulcYear1.value}_${transformName(district.label)}_${transformName(block.label)}_level_1`,
+        "LULC_level_3",
+        `LULC_${lulcYear1.value}_${transformName(district.label)}_${transformName(block.label)}_level_3`,
         true,
-        ""
+        "lulc_level_1_style"
       );
 
       if (LulcLayer) {
@@ -2254,10 +2254,10 @@ const Map = forwardRef(({
       }
 
       let LulcLayer = await getImageLayers(
-        "LULC_level_2",
-        `LULC_${lulcYear2.value}_${transformName(district.label)}_${transformName(block.label)}_level_2`,
+        "LULC_level_3",
+        `LULC_${lulcYear2.value}_${transformName(district.label)}_${transformName(block.label)}_level_3`,
         true,
-        ""
+        "lulc_level_2_style"
       );
 
       if (LulcLayer) {
