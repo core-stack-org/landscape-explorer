@@ -70,6 +70,8 @@ if (!organization || !facilitator) return;
           },
         });
         if (!res.ok) throw new Error(`API error ${res.status}`);
+        console.log("Status:", res.status);
+console.log("Response OK:", res.ok);
         const data = await res.json();
         console.log("Steward API Response:", data);
 
