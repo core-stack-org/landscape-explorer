@@ -991,6 +991,12 @@ const handleVillageSuggestionSelect = (placeId, description) => {
         const map = mapRef.current;
         if (!map) return;
 
+          // Remove steward dots
+        if (stewardLayerRef.current) {
+          map.removeLayer(stewardLayerRef.current);
+          stewardLayerRef.current = null;
+        }
+
         if (planLayerRef.current) {
         map.removeLayer(planLayerRef.current);
         planLayerRef.current = null;
@@ -1206,19 +1212,42 @@ console.log("viewMode:", viewMode);
           districtLayerRef.current = null;
         }
 
-        try {
-          const data = await fetchStewardListing(
-            currentStateRef.current?.state_id,
-            orgRef.current?.value ?? null,
-            districtData.district_id
-          );
-         const stewards = data.stewards ?? [];
-         console.log("Stewards:", stewards);
-          console.log("First steward:", stewards[0]);
+          try {
+  const [listingData, stewardData, districtMetaStats, dprData, trackingData] = await Promise.all([
+    fetchStewardListing(
+      currentStateRef.current?.state_id,
+      orgRef.current?.value ?? null,
+      districtData.district_id
+    ),
+    fetchStewardStats(
+      orgRef.current?.value ?? null,
+      currentStateRef.current?.state_id,
+      districtData.district_id
+    ),
+    fetchMetaStats(
+      orgRef.current?.value ?? null,
+      null,
+      districtData.district_id
+    ),
+     fetchDprReportStatus({
+    organizationId: orgRef.current?.value ?? null,
+    districtId: districtData.district_id,
+  }),fetchStatusTracking({
+    organizationId: orgRef.current?.value ?? null,
+    districtId: districtData.district_id,
+  }),
+  ]);
 
-          setStewardListing(stewards);
-          addStewardDots(stewards);
+  const stewards = listingData.stewards ?? [];
 
+  setStewardListing(stewards);
+  addStewardDots(stewards);
+
+  setStewardStats(stewardData);
+  setMetaStats(districtMetaStats);
+  setDprStatus(dprData);
+setStatusTracking(trackingData);
+        
         } catch (err) {
           console.error("Steward listing failed:", err);
         } finally {
@@ -1386,12 +1415,7 @@ console.log("viewMode:", viewMode);
                 const steward = feature.get("stewardDetails");
 
                 if (steward) {
-                  setStewardModalPlan({
-                    facilitator_name: steward.facilitator_name,
-                    organization:
-                      steward.organization?.id ??
-                      getStewardOrgId(steward.facilitator_name),
-                  });
+                  setSelectedSteward(steward);
                 }
 
                 return true;
@@ -1927,10 +1951,20 @@ console.log("viewMode:", viewMode);
                         <div
                           className="rounded-xl p-3 cursor-pointer hover:shadow-md transition-all duration-200"
                           style={{ background: P.light, border: `1px solid ${P.base}` }}
-                          onClick={() => setStewardModalPlan({
-                            facilitator_name: selectedPlan.facilitator_name,
-                            organization:     selectedPlan.organization,
-                          })}
+                          onClick={() => {
+                          const slug = selectedPlan.facilitator_name
+                            ?.toLowerCase()
+                            .replace(/\s+/g, "-");
+
+                          const url =
+                            `/landscape-stewardship/steward-view/${selectedPlan.organization}/${slug}` +
+                            `?stateId=${currentStateRef.current?.state_id ?? ""}` +
+                            `&stateName=${encodeURIComponent(currentStateRef.current?.state_name ?? "")}` +
+                            `&districtId=${currentDistrictRef.current?.district_id ?? ""}` +
+                            `&districtName=${encodeURIComponent(currentDistrictRef.current?.district_name ?? "")}`;
+
+                          window.open(url, "_blank");
+                        }}
                         >
                           <p className="text-xs font-medium mb-1" style={{ color: P.muted }}>Steward</p>
                           <div className="flex items-center justify-between">
@@ -2046,6 +2080,11 @@ console.log("viewMode:", viewMode);
                         if (planLayerRef.current) {
                           mapRef.current.removeLayer(planLayerRef.current);
                           planLayerRef.current = null;
+                        }
+
+                        if (stewardLayerRef.current) {
+                          mapRef.current.removeLayer(stewardLayerRef.current);
+                          stewardLayerRef.current = null;
                         }
                         if (districtLayerRef.current) {
                           mapRef.current.removeLayer(districtLayerRef.current);
