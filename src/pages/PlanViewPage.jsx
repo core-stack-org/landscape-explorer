@@ -36,6 +36,8 @@ const TABS = [
   { id: "livelihood",  label: "Livelihood Demands" },
 ];
 
+
+
 // ── API HELPERS ───────────────────────────────────────────
 
 const apiFetch = (url) =>
@@ -802,9 +804,9 @@ const PlanViewPage = () => {
     const showPopupForFeature = (feature, coordinate) => {
       const props = feature.getProperties();
       const villageId   = props.vill_ID;
-      const stateVal    = (props.state    || "").toLowerCase();
-      const districtVal = (props.district || "").toLowerCase();
-      const blockVal    = (props.tehsil   || "").toLowerCase();
+      const stateVal    = transformName((props.state    || "").toLowerCase());
+      const districtVal = transformName((props.district || "").toLowerCase());
+      const blockVal    = transformName((props.tehsil   || "").toLowerCase());
       const villageName = props.vill_name || "Village";
 
       popupCard.innerHTML = `
