@@ -4,6 +4,7 @@
             {
                 "name": "terrainCluster_ID",
                 "label": "Terrain Type",
+                "source": "Terrain data source (Dummy)",
                 "type": 1,
                 "values": [
                     {
@@ -40,6 +41,7 @@
             {
                 "name": "relief",
                 "label": "Microwatershed Relief",
+                "source": "Microwatershed Relief source (Dummy)",
                 "type": 2,
                 "values": [
                     {
@@ -109,6 +111,7 @@
             {
                 "name": "relative_mean_elevation",
                 "label": "Relative Mean Elevation",
+                "source": "Relative Mean Elevation source (Dummy)",
                 "type": 2,
                 "values": [
                     {
@@ -144,6 +147,7 @@
             {
                 "name": "lulc_crop_percent",
                 "label": "Percentage of area with crops",
+                "source": "Land Use Land Cover source (Dummy)",
                 "type": 2,
                 "values": [
                     {
@@ -181,6 +185,7 @@
             {
                 "name": "lulc_forest_percent",
                 "label": "Percentage of area with tree cover",
+                "source": "Land Use Land Cover source (Dummy)",
                 "type": 2,
                 "values": [
                     {
@@ -218,6 +223,7 @@
             {
                 "name": "lulc_shrub_percent",
                 "label": "Percentage of area with shrubs",
+                "source": "Land Use Land Cover source (Dummy)",
                 "type": 2,
                 "values": [
                     {
@@ -257,6 +263,7 @@
             {
                 "name": "avg_precipitation",
                 "label": "Average rainfall over the years 2017 to 2024",
+                "source": "Climate data source (Dummy)",
                 "type": 2,
                 "values": [
                     {
@@ -339,6 +346,7 @@
             {
                 "name": "avg_runoff",
                 "label": "Average runoff over the years 2017 to 2024",
+                "source": "Climate data source (Dummy)",
                 "type": 2,
                 "values": [
                     {
@@ -395,6 +403,7 @@
             {
                 "name": "drought_category",
                 "label": "Number of drought years from 2017 to 2024",
+                "source": "Climate data source (Dummy)",
                 "type": 2,
                 "values": [
                     {
@@ -451,6 +460,7 @@
             {
                 "name": "avg_number_dry_spell",
                 "label": "Average number of weeks of dry spells over the years 2017 to 2024",
+                "source": "Climate data source (Dummy)",
                 "type": 2,
                 "values": [
                     {
@@ -509,6 +519,7 @@
             {
                 "name": "avg_rabi_surface_water_mws",
                 "label": "Percentage of average surface water availability during Rabi from 2017 to 2024",
+                "source": "Hydrology source (Dummy)",
                 "type": 2,
                 "values": [
                     {
@@ -565,6 +576,7 @@
             {
                 "name": "avg_zaid_surface_water_mws",
                 "label": "Percentage of average surface water availability during Zaid from 2017 to 2024",
+                "source": "Hydrology source (Dummy)",
                 "type": 2,
                 "values": [
                     {
@@ -621,6 +633,7 @@
             {
                 "name": "aquifer_class",
                 "label": "Aquifer type",
+                "source": "Aquifer type source (Dummy)",
                 "type": 1,
                 "values": [
                     {
@@ -730,6 +743,7 @@
             {
                 "name": "soge_class",
                 "label": "Stage of groundwater extraction",
+                "source": "Stage of groundwater extraction source (Dummy)",
                 "type": 1,
                 "values": [
                     {
@@ -797,6 +811,7 @@
             {
                 "name": "trend_g",
                 "label": "Water balance trend over the years 2017 to 2024",
+                "source": "Water balance trend source (Dummy)",
                 "type": 1,
                 "values": [
                     {
@@ -846,6 +861,7 @@
             {
                 "name": "avg_double_cropped",
                 "label": "Average percentage of double cropped area over the years 2017 to 2025",
+                "source": "Agriculture source (Dummy)",
                 "type": 2,
                 "values": [
                     {
@@ -885,6 +901,7 @@
             {
                 "name": "degradation_land_area",
                 "label": "Cropping degradation",
+                "source": "Cropping degradation source (Dummy)",
                 "type": 2,
                 "values": [
                     {
@@ -943,6 +960,7 @@
             {
                 "name": "river_available",
                 "label": "River",
+                "source": "River source (Dummy)",
                 "type": 1,
                 "values": [
                     {
@@ -972,6 +990,7 @@
             {
                 "name": "canal_available",
                 "label": "Canal",
+                "source": "Canal source (Dummy)",
                 "type": 1,
                 "values": [
                     {
@@ -1003,6 +1022,7 @@
             {
                 "name": "decrease_in_tree_cover",
                 "label": "Reduction in tree cover",
+                "source": "Change detection source (Dummy)",
                 "type": 2,
                 "values": [
                     {
@@ -1061,6 +1081,7 @@
             {
                 "name": "increase_in_tree_cover",
                 "label": "Increase in tree cover",
+                "source": "Change detection source (Dummy)",
                 "type": 2,
                 "values": [
                     {
@@ -1119,6 +1140,7 @@
             {
                 "name": "area_wide_scale_restoration",
                 "label": "Area with potential for wide-scale restoration",
+                "source": "Restoration source (Dummy)",
                 "type": 2,
                 "values": [
                     {
@@ -1160,6 +1182,7 @@
             {
                 "name": "area_protection",
                 "label": "Area with potential for protection",
+                "source": "Protection source (Dummy)",
                 "type": 2,
                 "values": [
                     {
@@ -1201,6 +1224,7 @@
             {
                 "name": "green_credit",
                 "label": "Green Credits",
+                "source": "Green credits source (Dummy)",
                 "type": 1,
                 "values": [
                     {
@@ -1234,6 +1258,7 @@
             {
                 "name": "lcw_conflict",
                 "label": "Land Conflicts",
+                "source": "Land conflicts source (Dummy)",
                 "type": 2,
                 "values": [
                     {
@@ -1268,6 +1293,7 @@
             {
                 "name": "factory_csr",
                 "label": "Industry",
+                "source": "Industry source (Dummy)",
                 "type": 2,
                 "values": [
                     {
@@ -1302,6 +1328,7 @@
             {
                 "name": "mining",
                 "label": "Mining",
+                "source": "Mining source (Dummy)",
                 "type": 2,
                 "values": [
                     {
@@ -1340,6 +1367,7 @@
             {
                 "name": "waterbody_type",
                 "label": "Waterbody Type",
+                "source": "Waterbody type source (Dummy)",
                 "type": 1,
                 "values": [
                     {
@@ -1366,6 +1394,7 @@
             {
                 "name": "waterbody_size",
                 "label": "Size of Waterbody",
+                "source": "Waterbody size source (Dummy)",
                 "type": 2,
                 "values": [
                     {
@@ -1472,6 +1501,7 @@
             {
                 "name": "total_population",
                 "label": "Total Population Count",
+                "source": "Population source (Dummy)",
                 "type": 2,
                 "values": [
                     {
@@ -1539,6 +1569,7 @@
             {
                 "name": "percent_st_population",
                 "label": "Percentage ST population",
+                "source": "Population source (Dummy)",
                 "type": 2,
                 "values": [
                     {
@@ -1593,6 +1624,7 @@
             {
                 "name": "percent_sc_population",
                 "label": "Percentage SC population",
+                "source": "Population source (Dummy)",
                 "type": 2,
                 "values": [
                     {
@@ -1660,6 +1692,7 @@
             {
                 "name": "literacy_level",
                 "label": "Percentage literacy levels",
+                "source": "Population source (Dummy)",
                 "type": 2,
                 "values": [
                     {
@@ -1729,6 +1762,7 @@
             {
                 "name": "essential_education_infra",
                 "label": "Primary education institutions",
+                "source": "Education source (Dummy)",
                 "type": 2,
                 "values": [
                     {
@@ -1772,6 +1806,7 @@
             {
                 "name": "higher_education_infra",
                 "label": "Higher education institutions",
+                "source": "Education source (Dummy)",
                 "type": 2,
                 "values": [
                     {
@@ -1817,6 +1852,7 @@
             {
                 "name": "road_connectivity_cat_cluster",
                 "label": "Road Connectivity",
+                "source": "Infrastructure source (Dummy)",
                 "type": 1,
                 "values": [
                     {
@@ -1860,6 +1896,7 @@
             {
                 "name": "energy_access_cat_cluster",
                 "label": "Electricity Supply",
+                "source": "Infrastructure source (Dummy)",
                 "type": 1,
                 "values": [
                     {
@@ -1903,6 +1940,7 @@
             {
                 "name": "housing_quality_cat_cluster",
                 "label": "Housing Quality",
+                "source": "Infrastructure source (Dummy)",
                 "type": 1,
                 "values": [
                     {
@@ -1948,6 +1986,7 @@
             {
                 "name": "maternal_child_health_cat_cluster",
                 "label": "Maternal and Child Health Service Access",
+                "source": "Healthcare source (Dummy)",
                 "type": 1,
                 "values": [
                     {
@@ -1991,6 +2030,7 @@
             {
                 "name": "water_sanitation_cat_cluster",
                 "label": "Water and Sanitation Infrastructure",
+                "source": "Healthcare source (Dummy)",
                 "type": 1,
                 "values": [
                     {
@@ -2034,6 +2074,7 @@
             {
                 "name": "essential_health_services",
                 "label": "Essential health services",
+                "source": "Healthcare source (Dummy)",
                 "type": 2,
                 "values": [
                     {
@@ -2090,6 +2131,7 @@
             {
                 "name": "advanced_health_services",
                 "label": "Advanced health services",
+                "source": "Healthcare source (Dummy)",
                 "type": 2,
                 "values": [
                     {
@@ -2148,6 +2190,7 @@
             {
                 "name": "financial_inclusion_cat_cluster",
                 "label": "Access to formal banking channels",
+                "source": "Financial inclusion source (Dummy)", 
                 "type": 1,
                 "values": [
                     {
@@ -2193,6 +2236,7 @@
             {
                 "name": "social_protection_cat_cluster",
                 "label": "Coverage under PDS, NFSA, NSAP",
+                "source": "Social welfare access source (Dummy)",
                 "type": 1,
                 "values": [
                     {
@@ -2236,6 +2280,7 @@
             {
                 "name": "public_distribution_system",
                 "label": "PDS access",
+                "source": "Social welfare access source (Dummy)",
                 "type": 2,
                 "values": [
                     {
@@ -2281,6 +2326,7 @@
             {
                 "name": "institutionalization_cat_cluster",
                 "label": "Presence of SHGs, FPOs, Cooperatives",
+                "source": "Community Institutions source (Dummy)",
                 "type": 1,
                 "values": [
                     {
@@ -2326,6 +2372,7 @@
             {
                 "name": "livelihoods_employment_cat_cluster",
                 "label": "Farm Employment",
+                "source": "Livelihood source (Dummy)",
                 "type": 1,
                 "values": [
                     {
@@ -2369,6 +2416,7 @@
             {
                 "name": "livelihoods_forest_resources_cat_cluster",
                 "label": "Forest-based Livelihood",
+                "source": "Livelihood source (Dummy)",
                 "type": 1,
                 "values": [
                     {
@@ -2402,6 +2450,7 @@
             {
                 "name": "livelihoods_alternative_farming_cat_cluster",
                 "label": "Alternate Farming",
+                "source": "Livelihood source (Dummy)",
                 "type": 1,
                 "values": [
                     {
@@ -2435,6 +2484,7 @@
             {
                 "name": "livelihoods_fisheries_cat_cluster",
                 "label": "Fisheries Presence",
+                "source": "Livelihood source (Dummy)",
                 "type": 1,
                 "values": [
                     {
@@ -2478,6 +2528,7 @@
             {
                 "name": "livelihoods_cottage_traditional_industry_cat_cluster",
                 "label": "Cottage Industry",
+                "source": "Livelihood source (Dummy)",
                 "type": 1,
                 "values": [
                     {
@@ -2513,6 +2564,7 @@
             {
                 "name": "livestock_veterinary_cat_cluster",
                 "label": "Veterinary services and support availability",
+                "source": "Livestock and Dairy source (Dummy)",
                 "type": 1,
                 "values": [
                     {
@@ -2556,6 +2608,7 @@
             {
                 "name": "livestock_management_centers",
                 "label": "Market access points",
+                "source": "Livestock and Dairy source (Dummy)",
                 "type": 2,
                 "values": [
                     {
@@ -2612,6 +2665,7 @@
             {
                 "name": "livelihoods_common_resources_cat_cluster",
                 "label": "Common Pasture Access",
+                "source": "Livelihood source (Dummy)",
                 "type": 1,
                 "values": [
                     {
@@ -2645,6 +2699,7 @@
             {
                 "name": "small_animals_total",
                 "label": "Bovines (Cattle / Buffalo) count",
+                "source": "Livestock and Dairy source (Dummy)",
                 "type": 2,
                 "values": [
                     {
@@ -2701,6 +2756,7 @@
             {
                 "name": "large_animals_total",
                 "label": "Small Animals (Sheep / Goat / Pig) count",
+                "source": "Livestock and Dairy source (Dummy)",
                 "type": 2,
                 "values": [
                     {
@@ -2759,6 +2815,7 @@
             {
                 "name": "agriculture_irrigation_watershed_cat_cluster",
                 "label": "Watershed Infrastructure and Modern Irrigation",
+                "source": "Climate resilience and irrigation infrastructure source (Dummy)",
                 "type": 1,
                 "values": [
                     {
@@ -2802,6 +2859,7 @@
             {
                 "name": "total_assets",
                 "label": "Total number of NREGA works during 2016-24",
+                "source": "Agricultural Support and Market Access source (Dummy)",
                 "type": 2,
                 "values": [
                     {
@@ -2858,6 +2916,7 @@
             {
                 "name": "agricultural_support_infrastructure",
                 "label": "Agri inputs and advisory access",
+                "source": "Agricultural Support and Market Access source (Dummy)",
                 "type": 2,
                 "values": [
                     {
@@ -2914,6 +2973,7 @@
             {
                 "name": "post_harvest_infra",
                 "label": "Post harvest processing centers",
+                "source": "Agricultural Support and Market Access source (Dummy)",
                 "type": 2,
                 "values": [
                     {
@@ -2970,6 +3030,7 @@
             {
                 "name": "agri_market_access",
                 "label": "Market access",
+                "source": "Agricultural Support and Market Access source (Dummy)",
                 "type": 2,
                 "values": [
                     {
@@ -3026,6 +3087,7 @@
             {
                 "name": "farmer_cooperatives_access",
                 "label": "Access to farmer cooperatives",
+                "source": "Agricultural Support and Market Access source (Dummy)",
                 "type": 2,
                 "values": [
                     {
@@ -3084,6 +3146,7 @@
             {
                 "name": "agriculture_organic_farming_cat_cluster",
                 "label": "Organic Farming Adoption",
+                "source": "Agroecological support source (Dummy)",
                 "type": 1,
                 "values": [
                     {
