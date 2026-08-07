@@ -456,10 +456,10 @@ const RightSidebar = ({
     const districtFormatted = district.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_');
     const blockFormatted = block.label.toLowerCase().replace(/\s*\(\s*/g, '_').replace(/\s*\)\s*/g, '').replace(/\s+/g, '_');
 
-    const url = `https://geoserver.core-stack.org:8443/geoserver/LULC_level_${level.split('_').pop()}/wcs?service=WCS&version=2.0.1&request=GetCoverage&CoverageId=LULC_level_${level.split('_').pop()}:LULC_${yearValue}_${districtFormatted}_${blockFormatted}_level_${level.split('_').pop()}&format=geotiff&compression=LZW&tiling=false`;
+    const url = `https://geoserver.core-stack.org:8443/geoserver/LULC_level_3/wcs?service=WCS&version=2.0.1&request=GetCoverage&CoverageId=LULC_level_3:LULC_${yearValue}_${districtFormatted}_${blockFormatted}_level_3&format=geotiff&compression=LZW&tiling=false`;
 
     // Use our direct geotiff download function
-    downloadGeoTiff(url, `LULC_${level.split('_').pop()}_${yearValue}`);
+    downloadGeoTiff(url, `LULC_${yearValue}`);
   };
 
   // Image layer download handler

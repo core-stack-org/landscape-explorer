@@ -10,7 +10,7 @@ import { useNavigate } from "react-router-dom";
 import React,{useEffect} from "react";
 import SelectButton from "./buttons/select_button";
 import filtersDetails from "../components/data/Filters.json";
-import { ArrowLeft, Loader2, Table, FileText, FileSpreadsheet, X, ChevronRight, CheckCircle2,Layers3 } from 'lucide-react';
+import { ArrowLeft, Loader2, Table, FileText, FileSpreadsheet, X, ChevronRight, CheckCircle2,Layers3,Users } from 'lucide-react';
 import KYLMWSProfilePanel from "./kyl_MWSProfilePanel.jsx";
 import KYLWaterbodyPanel from "./kyl_waterbodypanel.jsx";
 import jsPDF from 'jspdf';
@@ -62,9 +62,11 @@ const KYLRightSidebar = ({
    selectionMode,
   setSelectionMode,
   manualSelectedMWS,
-  onResetMWSSelection, 
+  onResetMWSSelection,
   showPlans,
   setShowPlans,
+  showStewards,
+  setShowStewards,
 }) => {
   const [loadingWB, setLoadingWB] = React.useState(false);
   const [showSelectionPopup, setShowSelectionPopup] = React.useState(false);
@@ -76,6 +78,11 @@ const KYLRightSidebar = ({
   const [plansLoading, setPlansLoading] = React.useState(false);
   const [selectedPlanProfile, setSelectedPlanProfile] = React.useState(null);
   const plansLayerRef = React.useRef(null);
+  const [stewards, setStewards] = React.useState([]);
+  const [stewardsLoading, setStewardsLoading] = React.useState(false);
+  const [selectedStewardProfile, setSelectedStewardProfile] = React.useState(null);
+
+  const stewardsLayerRef = React.useRef(null);
 
   const showBothPanels = selectedMWSProfile && selectedWaterbodyProfile;
   const navigate = useNavigate();
@@ -89,6 +96,9 @@ const KYLRightSidebar = ({
       .replace(/^_|_$/g, "")
       .toLowerCase()
   };
+
+  const buildVillageReportUrl = (villageId) =>
+    `${process.env.REACT_APP_API_URL}/generate_village_report/?state=${transformName(state?.label)}&district=${transformName(district?.label)}&block=${transformName(block?.label)}&villageId=${villageId}`;
 
   const exportBoundaries = async (format) => {
     setIsExportingGeo(true);
@@ -349,6 +359,17 @@ useEffect(() => {
   setShowPlans(false);
 }, [state, district, block]);
 
+useEffect(() => {
+  if (stewardsLayerRef.current && mapRef.current) {
+    mapRef.current.removeLayer(stewardsLayerRef.current);
+    stewardsLayerRef.current = null;
+  }
+
+  setStewards([]);
+  setSelectedStewardProfile(null);
+  setShowStewards(false);
+}, [state, district, block]);
+
 
 const manualSelectionDetails = React.useMemo(() => {
   if (!manualSelectedMWS?.length || !dataJson?.length) return [];
@@ -480,6 +501,7 @@ const villages = (mwsRecord.mws_intersect_villages || []).map((villageId) => {
     onResetMWS();
     onResetWaterbody();
     setSelectedPlanProfile(null);
+    setSelectedStewardProfile(null);
   };
 
   const handleIndicatorRemoval = (filter) => {
@@ -520,6 +542,15 @@ const villages = (mwsRecord.mws_intersect_villages || []).map((villageId) => {
       setFilterSelections((prev) => ({
         ...prev,
         selectedWaterbodyValues: { ...prev.selectedWaterbodyValues, [filter.name]: null },
+      }));
+    }
+    else if (sourceType === "Waterbody") {
+      setFilterSelections((prev) => ({
+        ...prev,
+        selectedWaterbodyValues: {
+          ...prev.selectedWaterbodyValues,
+          [filter.name]: null,
+        },
       }));
     }
   };
@@ -683,6 +714,110 @@ const showPlansOnMap = (plansData) => {
   }
 };
 
+const showStewardsOnMap = (stewardsData) => {
+  if (!mapRef.current) return;
+
+  // Remove old steward layer
+  if (stewardsLayerRef.current) {
+    mapRef.current.removeLayer(stewardsLayerRef.current);
+    stewardsLayerRef.current = null;
+  }
+
+  const features = stewardsData
+    .map((steward) => {
+      const firstPlan = steward.plans?.find(
+        (plan) =>
+          plan.latitude != null &&
+          plan.longitude != null
+      );
+
+      if (!firstPlan) return null;
+
+      if (
+        firstPlan.latitude == null ||
+        firstPlan.longitude == null
+      ) {
+        return null;
+      }
+
+  const feature = new Feature({
+  geometry: new Point([
+    Number(firstPlan.longitude),
+    Number(firstPlan.latitude),
+  ]),
+});
+    feature.set("stewardDetails", steward); 
+    feature.setStyle(STEWARD_DOT_DEFAULT());
+    return feature;
+    })
+    .filter(Boolean);
+
+  const layer = new VectorLayer({
+    source: new VectorSource({
+      features,
+    }),
+  });
+
+  stewardsLayerRef.current = layer;
+
+  mapRef.current.addLayer(layer);
+};
+
+const handleStewardsClick = async () => {
+  try {
+    // Hide stewards if already visible
+    if (showStewards) {
+      if (stewardsLayerRef.current) {
+        mapRef.current.removeLayer(stewardsLayerRef.current);
+        stewardsLayerRef.current = null;
+      }
+
+      setShowStewards(false);
+      return;
+    }
+
+    // Already fetched, just show again
+    if (stewards.length > 0) {
+      showStewardsOnMap(stewards);
+      setShowStewards(true);
+      return;
+    }
+
+    // Fetch first time
+    setStewardsLoading(true);
+
+    const response = await fetchStewardsByTehsil(block.block_id);
+
+    setStewards(response.stewards || []);
+    showStewardsOnMap(response.stewards || []);
+
+    setShowStewards(true);
+  } catch (err) {
+    console.error("Error fetching stewards:", err);
+  } finally {
+    setStewardsLoading(false);
+  }
+};
+
+const fetchStewardsByTehsil = async (block) => {
+  const res = await fetch(
+    `${process.env.REACT_APP_API_URL}/watershed/plans/steward-listing/?tehsil=${block}`,
+    {
+      headers: {
+        "Content-Type": "application/json",
+        "ngrok-skip-browser-warning": "1",
+        "X-API-Key": process.env.REACT_APP_API_KEY,
+      },
+    }
+  );
+
+  if (!res.ok) {
+    throw new Error(`API Error ${res.status}`);
+  }
+
+  return res.json();
+};
+
 React.useEffect(() => {
   if (!mapRef.current) return;
 
@@ -749,6 +884,65 @@ React.useEffect(() => {
   };
 }, [showPlans, navigate]);
 
+React.useEffect(() => {
+  if (!mapRef.current) return;
+
+  let hoveredFeature = null;
+
+  const handleStewardHover = (evt) => {
+    const feature = mapRef.current.forEachFeatureAtPixel(
+      evt.pixel,
+      (feature, layer) => {
+        if (layer === stewardsLayerRef.current) {
+          return feature;
+        }
+      }
+    );
+
+    if (hoveredFeature && hoveredFeature !== feature) {
+      hoveredFeature.setStyle(STEWARD_DOT_DEFAULT());
+      hoveredFeature = null;
+    }
+
+    if (feature && feature !== hoveredFeature) {
+      feature.setStyle(STEWARD_DOT_HOVERED());
+      hoveredFeature = feature;
+    }
+
+    mapRef.current.getTargetElement().style.cursor =
+      feature ? "pointer" : "";
+  };
+
+  const handleStewardClick = (evt) => {
+  if (!showStewards || !stewardsLayerRef.current) return;
+
+  const feature = mapRef.current.forEachFeatureAtPixel(
+    evt.pixel,
+    (feature, layer) => {
+      if (layer === stewardsLayerRef.current) {
+        return feature;
+      }
+    }
+  );
+
+  if (!feature) return;
+
+  const steward = feature.get("stewardDetails");
+
+  if (!steward) return;
+
+  setSelectedStewardProfile(steward);
+};
+
+  mapRef.current.on("pointermove", handleStewardHover);
+  mapRef.current.on("singleclick", handleStewardClick);
+
+  return () => {
+    mapRef.current?.un("pointermove", handleStewardHover);
+    mapRef.current?.un("singleclick", handleStewardClick);
+  };
+}, [showStewards]);
+
 // ── PLAN DOT STYLES ──────────────────────────────────────────────────────────
 
 const PLAN_STATUS_COLORS = {
@@ -787,6 +981,34 @@ const DOT_SELECTED = (status = "in_progress") => new Style({
     stroke: new Stroke({ color: PLAN_STATUS_COLORS[status].fill, width: 3.5 }),
   }),
 });
+
+const STEWARD_DOT_DEFAULT = () =>
+  new Style({
+    image: new CircleStyle({
+      radius: 7,
+      fill: new Fill({
+        color: "#6C3EFF",
+      }),
+      stroke: new Stroke({
+        color: "#ffffff",
+        width: 2,
+      }),
+    }),
+  });
+
+  const STEWARD_DOT_HOVERED = () =>
+  new Style({
+    image: new CircleStyle({
+      radius: 10, 
+      fill: new Fill({
+        color: "#6C3EFF",
+      }),
+      stroke: new Stroke({
+        color: "#ffffff",
+        width: 2.5,
+      }),
+    }),
+  });
   
   const handleTehsilReport = () => {
     const reportURL = `${process.env.REACT_APP_API_URL}/generate_tehsil_report/?state=${transformName(state?.label)}&district=${transformName(district?.label)}&block=${transformName(block?.label)}`;
@@ -1737,18 +1959,21 @@ const sheet5Count =
                                       }
                                     }
                                     return (
-                                      <span
+                                      <a
                                         key={v.villageId}
-                                        title={`${isSelected ? 'Matches filter' : 'Intersects'} | ID: ${v.villageId}`}
-                                       className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium border ${
+                                        href={buildVillageReportUrl(v.villageId)}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        title={`${isSelected ? 'Matches filter' : 'Intersects'} | ID: ${v.villageId} — open village report`}
+                                       className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium border transition-colors ${
                                         isSelected
-                                          ? "bg-emerald-500 border-emerald-600 text-white"
-                                          : "bg-violet-50 border-violet-200 text-violet-700"
+                                          ? "bg-emerald-500 border-emerald-600 text-white hover:bg-emerald-600"
+                                          : "bg-violet-50 border-violet-200 text-violet-700 hover:bg-violet-100"
                                       }`}
                                       >
                                         {v.villageName || 'Unknown'}
                                         <span className="opacity-70 font-mono text-[9px]">({v.villageId})</span>
-                                      </span>
+                                      </a>
                                     );
                                   })}
                                 </div>
@@ -1923,6 +2148,29 @@ const sheet5Count =
     );
   };
 
+  const handleStewardProfileClick = (steward) => {
+  if (!steward) return;
+
+  const organizationId = steward.organization?.id;
+  const facilitatorSlug = steward.facilitator_name
+  ?.replace(/[().]/g, "")
+  .trim()
+  .replace(/\s+/g, "-")
+  .replace(/-+/g, "-")
+  .replace(/^-|-$/g, "")
+  .toLowerCase();
+
+  window.open(
+    `/landscape-stewardship/steward-view/${organizationId}/${facilitatorSlug}` +
+      `?stateId=${encodeURIComponent(state?.state_id ?? "")}` +
+      `&stateName=${encodeURIComponent(state?.label ?? "")}` +
+      `&districtId=${encodeURIComponent(district?.district_id ?? "")}` +
+      `&districtName=${encodeURIComponent(district?.label ?? "")}`,
+    "_blank"
+  );
+ 
+};
+
   // ─── Shared section header component ─────────────────────────────────────
   const SectionHeader = ({ title, count, action }) => (
     <div className="flex items-center justify-between mb-2">
@@ -1937,7 +2185,7 @@ const sheet5Count =
   );
 
   return (
-    <div className="w-[320px] flex flex-col gap-2">
+    <div className="w-[320px] shrink-0 h-full flex flex-col gap-2 overflow-y-auto pr-1 custom-scrollbar">
       <SelectionPopup />
 
       {/* Universal Back Button */}
@@ -1964,6 +2212,7 @@ const sheet5Count =
      onBack={() => {
       onResetMWS();
       setSelectedPlanProfile(null);
+       setSelectedStewardProfile(null);
     }}
     hideBackButton={showBothPanels}
     selectionMode={selectionMode}
@@ -1973,6 +2222,7 @@ const sheet5Count =
     onResetMWS={onResetMWS}
     onResetSelection={onResetMWSSelection} 
     onOpenSelection={() => setShowSelectionPopup(true)}
+    intersectingVillages={displayVillages}  
 />
 
 ) : null}
@@ -2055,8 +2305,119 @@ const sheet5Count =
 
         </div>
       )}
+      {selectedStewardProfile && (
+        <div className="bg-white rounded-xl border border-gray-100 p-4 shadow-sm">
+         <div className="flex items-center justify-between mb-5">
+          <h2
+            onClick={() => handleStewardProfileClick(selectedStewardProfile)}
+            className="text-lg font-semibold text-gray-900 cursor-pointer hover:text-indigo-600 hover:underline transition-colors"
+          >
+            {selectedStewardProfile.facilitator_name}
+          </h2>
 
-      {!selectedMWSProfile && !selectedWaterbodyProfile && !selectedPlanProfile && (
+          <span className="px-2.5 py-1 rounded-full bg-indigo-50 text-indigo-700 text-xs font-medium">
+            {selectedStewardProfile.organization?.name || "--"}
+          </span>
+        </div>
+
+          {/* Details */}
+          <div className="mb-5">
+            <h3 className="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-3">
+              Details
+            </h3>
+            <div className="rounded-xl border border-gray-200 bg-gray-50 divide-y">
+              <div className="flex justify-between items-center px-4 py-3">
+                <span className="text-sm text-gray-500">Project</span>
+                <span className="text-sm font-medium text-gray-800">
+                  {selectedStewardProfile.projects?.[0]?.name || "--"}
+                </span>
+              </div>
+            <div className="flex justify-between items-center px-4 py-3">
+                <span className="text-sm text-gray-500">Total Plans</span>
+                <span className="font-semibold text-gray-800">
+                  {selectedStewardProfile.plan_count ?? "--"}
+                </span>
+              </div>
+          </div>
+          </div>
+
+          {/* Assigned Plans */}
+          <div>
+            <h3 className="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-3">
+              Assigned Plans
+            </h3>
+            <div className="space-y-2">
+              {selectedStewardProfile.plans?.map((plan) => (
+                <div
+                  key={plan.id}
+                  className="rounded-lg border border-gray-200 bg-white px-3 py-3"
+                >
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <p className="font-medium text-gray-900">
+                        {plan.plan}
+                      </p>
+                      <p className="text-xs text-gray-500 mt-1">
+                        Village: {plan.village_name || "--"}
+                      </p>
+                    </div>
+                    <div className="flex flex-col items-end gap-2">
+                    <span
+                      className={`text-xs font-semibold ${
+                        plan.is_completed
+                          ? "text-green-600"
+                          : "text-amber-600"
+                      }`}
+                    >
+                      {plan.is_completed ? "Completed" : "Pending"}
+                    </span>
+                      {plan.is_completed && (
+                        <button
+                          onClick={() => {
+                            window.open(
+                              `/landscape-stewardship/plan-view?id=${plan.id}` +
+                                `&completed=${!!plan.is_completed}` +
+                                `&dpr_reviewed=${!!plan.is_dpr_reviewed}` +
+                                `&dpr_generated=${!!plan.is_dpr_generated}` +
+                                `&dpr_approved=${!!plan.is_dpr_approved}` +
+                                `&stateId=${encodeURIComponent(state?.state_id ?? "")}` +
+                                `&stateName=${encodeURIComponent(state?.label ?? "")}` +
+                                `&districtId=${encodeURIComponent(district?.district_id ?? "")}` +
+                                `&districtName=${encodeURIComponent(district?.label ?? "")}`,
+                              "_blank"
+                            );
+                          }}
+                          className="text-xs font-medium text-indigo-600 hover:text-indigo-700 flex items-center gap-1"
+                        >
+                          View DPR
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            width="12"
+                            height="12"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          >
+                            <path d="M5 12h14" />
+                            <path d="M13 5l7 7-7 7" />
+                          </svg>
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
+
+            </div>
+          </div>
+
+        </div>
+      )}
+
+      {!selectedMWSProfile && !selectedWaterbodyProfile && !selectedPlanProfile && !selectedStewardProfile &&(
           <div className="flex flex-col gap-2">
 
           {/* ── Hint banner ── */}
@@ -2089,7 +2450,7 @@ const sheet5Count =
 
             {block && (
               <div className="mt-4 flex flex-col gap-2">
-                <div className="flex flex-col gap-2">
+                <div className="grid grid-cols-2 gap-2">
                 <button
                 onClick={handleTehsilReport}
                 disabled={isLoading || !mwsLayerRef?.current}
@@ -2105,9 +2466,8 @@ const sheet5Count =
                     </svg>
                     Tehsil Report
                   </button>
-                <div className="grid grid-cols-2 gap-2">
 
-                  <button
+                        <button
                     onClick={toggleWaterbodies}
                     disabled={isLoading || !mwsLayerRef?.current}
                     className={`flex items-center justify-center gap-1.5 py-2 text-xs font-semibold rounded-lg transition-colors border ${
@@ -2137,7 +2497,8 @@ const sheet5Count =
                       </>
                     )}
                   </button>
-
+                   </div>
+                <div className="grid grid-cols-2 gap-2">
                   <button
                   onClick={handlePlansClick}
                     disabled={isLoading || !mwsLayerRef?.current}
@@ -2150,20 +2511,20 @@ const sheet5Count =
                     }`}
                   >
                    {showPlans ? (
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    width="14"
-    height="14"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-  >
-    <path d="M18 6 6 18" />
-    <path d="m6 6 12 12" />
-  </svg>
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="14"
+                        height="14"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <path d="M18 6 6 18" />
+                        <path d="m6 6 12 12" />
+                      </svg>
                       ) : (
                         <svg
                           xmlns="http://www.w3.org/2000/svg"
@@ -2184,8 +2545,59 @@ const sheet5Count =
                     {showPlans ? "Hide Plans" : "Plans"}
                     </button>
 
+                         <button
+                  onClick={handleStewardsClick}
+                    disabled={isLoading || !mwsLayerRef?.current}
+                    className={`flex items-center justify-center gap-1.5 py-2 text-xs font-semibold rounded-lg transition-colors border ${
+                      (isLoading || !mwsLayerRef?.current)
+                        ? "opacity-50 cursor-not-allowed pointer-events-none bg-gray-100 text-gray-400 border-gray-200"
+                        : showStewards
+                          ? "text-red-600 bg-red-50 hover:bg-red-100 border-red-100"
+                          : "text-indigo-600 bg-indigo-50 hover:bg-indigo-100 border-indigo-100"
+                    }`}
+                  >
+                   {showStewards ? (
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="14"
+                      height="14"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+                      <circle cx="9" cy="7" r="4" />
+                      <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+                      <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                      <line x1="3" y1="3" x2="21" y2="21" />
+                    </svg>
+                      ) : (
+                     <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="14"
+                        height="14"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+                        <circle cx="9" cy="7" r="4" />
+                        <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+                        <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                      </svg>
+                      )}
+
+                    {showStewards ? "Hide Stewards" : "Stewards"}
+                    </button>
+
                   </div>
-                </div>
+               
 
                 <button
                   onClick={toggleConnectivity}
@@ -2293,13 +2705,15 @@ const sheet5Count =
 
     <div className="max-h-44 overflow-y-auto pr-1 flex flex-wrap gap-1.5">
       {displayVillages.map((village) => (
-        <span
+        <button
           key={village.villageId}
-          title={village.villageName}
-          className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[9px] font-medium bg-emerald-50 border border-emerald-100 text-emerald-700 max-w-full"
+          type="button"
+          title={`Open report for ${village.villageName}`}
+          onClick={() => window.open(buildVillageReportUrl(village.villageId), '_blank', 'noopener,noreferrer')}
+          className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[9px] font-medium bg-emerald-50 border border-emerald-100 text-emerald-700 hover:bg-emerald-100 hover:border-emerald-300 max-w-full transition-colors"
         >
                     <span className="truncate">{village.villageName}</span>
-        </span>
+        </button>
       ))}
     </div>
   </div>

@@ -8,7 +8,7 @@ import { ChevronRight, ArrowLeft, AlertCircle, WifiOff, FileX, Loader2 } from 'l
 const FILTER_SECTION_MAP = {
   'terrainCluster_ID':            'Micro watershed',
   'relief':                       'Micro watershed',
-  'relative_mean_elevation' :     'Micro watershedWS',
+  'relative_mean_elevation' :     'Micro watershed',
   'lulc_crop_percent':            'Micro watershed',
   'avg_precipitation':            'Micro watershed',
   'avg_runoff':                   'Micro watershed',
@@ -52,24 +52,24 @@ const FILTER_SECTION_MAP = {
   'livestock_management_centers': 'Village',
   'agricultural_support_infrastructure':    'Village',
   'total_assets':                 'Village',
-  'road_connectivity' : 'Village',
-  'electricity_supply' : 'Village',
-  'housing_quality' : 'Village',
-  'maternal_and_child_health_service_access' : 'Village',
+  'road_connectivity_cat_cluster' : 'Village',
+  'energy_access_cat_cluster' : 'Village',
+  'housing_quality_cat_cluster' : 'Village',
+  'maternal_child_health_cat_cluster' : 'Village',
   'water_and_sanitation_infrastructure' : 'Village',
-  'access_to_formal_banking_services' : 'Village',
-  'coverage_across_PDS_NFSA_BPL_and_Pension' : 'Village',
-  'institutionalization_strength' : 'Village',
+  'financial_inclusion_cat_cluster' : 'Village',
+  'social_protection_cat_cluster' : 'Village',
+  'institutionalization_cat_cluster' : 'Village',
   'civic_infrastructure' : 'Village',
-  'farm_employment' : 'Village',
+  'livelihoods_employment_cat_cluster' : 'Village',
   'forest-based_livelihood' : 'Village',
   'alternate_farming' : 'Village',
   'fisheries_adoption' : 'Village',
   'cottage_industry' : 'Village',
-  'livestock_management_service_quality' : 'Village',
+  'livestock_veterinary_cat_cluster' : 'Village',
   'common_pasture_access' : 'Village',
-  'watershed_infrastructure_and_modern_irrigation' : 'Village'
- 
+  'agriculture_irrigation_watershed_cat_cluster' : 'Village',
+  'agriculture_organic_farming_cat_cluster' : 'Village'
 };
 
 const getFilterSection = (filterName) => FILTER_SECTION_MAP[filterName] || 'Other';
@@ -319,7 +319,7 @@ const KYLLeftSidebar = ({
   const showPatternList  = !!indicatorType && activeTab === 'Patterns' && !!selectedSubcategory;
 
   return (
-    <div className="w-[320px] bg-white rounded-xl border border-gray-100 shadow-sm flex flex-col h-full overflow-hidden">
+    <div className="w-[320px] shrink-0 bg-white rounded-xl border border-gray-100 shadow-sm flex flex-col h-full overflow-hidden">
 
       {/* ── Layer-selecting overlay ─────────────────────────────────────── */}
       {isLayerSelecting && (
@@ -347,7 +347,7 @@ const KYLLeftSidebar = ({
           <button
             key={tab}
             onClick={() => handleTabChange(tab)}
-            className={`flex-1 py-2 rounded-lg text-xs font-semibold transition-colors
+            className={`flex-1 py-2 px-3 rounded-lg text-xs font-semibold text-center transition-colors
               ${activeTab === tab
                 ? 'bg-indigo-600 text-white shadow-sm'
                 : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
@@ -440,14 +440,14 @@ const KYLLeftSidebar = ({
                           disabled={isDisabled}
                           title={isDisabled && reasonKey ? DISABLED_REASON_META[reasonKey].label : undefined}
                           className={`w-full flex items-center justify-between px-4 py-3 rounded-lg
-                            border text-sm font-medium transition-all
+                            border text-sm font-medium text-left transition-all
                             ${isDisabled
                               ? 'bg-gray-50 text-gray-400 border-gray-100 cursor-not-allowed'
                               : 'bg-white text-gray-700 border-gray-200 hover:border-indigo-300 hover:bg-indigo-50 hover:text-indigo-700'
                             }`}
                         >
-                          <span>{category}</span>
-                          <div className="flex items-center gap-2">
+                          <span className="text-left">{category}</span>
+                          <div className="flex items-center gap-2 shrink-0">
                             {activeCount > 0 && (
                               <span className="text-[10px] font-bold bg-indigo-600 text-white px-1.5 py-0.5 rounded-full leading-none">
                                 {activeCount}
@@ -469,14 +469,14 @@ const KYLLeftSidebar = ({
                   disabled={isDisabled}
                   title={isDisabled && reasonKey ? DISABLED_REASON_META[reasonKey].label : undefined}
                   className={`w-full flex items-center justify-between px-4 py-3 rounded-lg
-                    border text-sm font-medium transition-all
+                    border text-sm font-medium text-left transition-all
                     ${isDisabled
                       ? 'bg-gray-50 text-gray-400 border-gray-100 cursor-not-allowed'
                       : 'bg-white text-gray-700 border-gray-200 hover:border-indigo-300 hover:bg-indigo-50 hover:text-indigo-700'
                     }`}
                 >
-                  <span>{category}</span>
-                  <ChevronRight className="w-4 h-4 text-gray-400" />
+                  <span className="text-left">{category}</span>
+                  <ChevronRight className="w-4 h-4 text-gray-400 shrink-0" />
                 </button>
               ))
             )}
@@ -530,10 +530,10 @@ const KYLLeftSidebar = ({
                 key={subcategory}
                 onClick={() => setSelectedSubcategory(subcategory)}
                 disabled={isDisabled}
-                className="w-full flex items-center justify-between px-4 py-3 bg-white rounded-lg border border-gray-200 hover:border-indigo-300 hover:bg-indigo-50 transition-all text-sm font-medium text-gray-700 hover:text-indigo-700"
+                className="w-full flex items-center justify-between px-4 py-3 bg-white rounded-lg border border-gray-200 hover:border-indigo-300 hover:bg-indigo-50 transition-all text-sm font-medium text-left text-gray-700 hover:text-indigo-700"
               >
-                <span>{subcategory}</span>
-                <ChevronRight className="w-4 h-4 text-gray-400" />
+                <span className="text-left">{subcategory}</span>
+                <ChevronRight className="w-4 h-4 text-gray-400 shrink-0" />
               </button>
             ))}
           </div>

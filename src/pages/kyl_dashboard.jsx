@@ -54,7 +54,7 @@ import { layerErrorBus, emitLayerError, LAYER_ERROR_TYPES } from "../actions/lay
 import { useLayerErrors } from '../actions/useLayerErrors';
 import LayerErrorToast from '../actions/LayerErrorToast';
 import Overlay from "ol/Overlay";
-
+import ScaleLine from "ol/control/ScaleLine";
 const KYLDashboardPage = () => {
   const mapElement = useRef(null);
   const mapRef = useRef(null);
@@ -123,6 +123,7 @@ const KYLDashboardPage = () => {
   const showConnectivityRef = useRef(false);
   const [manualSelectedMWS, setManualSelectedMWS] = useState([]);
   const [showPlans, setShowPlans] = useState(false);
+  const [showStewards, setShowStewards] = useState(false);
 
 
   const [dataJsonError, setDataJsonError] = useState(null);
@@ -705,7 +706,6 @@ const handleResetMWS = () => {
   setHighlightMWS(null);
 };
 
-
   const updateFilteredMWS = (filteredIds) => {
     if (!mwsLayerRef.current) return;
     const source = mwsLayerRef.current.getSource();
@@ -957,14 +957,6 @@ const handleResetMWS = () => {
   
       const start = uidToCoord[uid];
       const end   = uidToCoord[downstream];
-      if (!start || !end) {
-        console.log("Missing centroid", {
-          uid,
-          downstream,
-          start,
-          end,
-        });
-      }
       if (!start || !end) return;
   
       const key =
@@ -2115,10 +2107,22 @@ const handleResetMWS = () => {
           smoothExtentConstraint: true,
           smoothResolutionConstraint: true,
         }),
+        
         loadTilesWhileAnimating: true,
         loadTilesWhileInteracting: true,
       });
-  
+      const scaleLine = new ScaleLine({
+        units: "metric",
+        minWidth: 100,
+      });
+
+      map.addControl(scaleLine);
+      const scaleElement = scaleLine.element;
+      scaleElement.style.left = "auto";
+      scaleElement.style.right = "20px";
+      scaleElement.style.bottom = "20px";
+      scaleElement.style.top = "auto";
+      scaleElement.style.position = "absolute";
       mapRef.current = map;
       const tooltip = document.createElement("div");
 
@@ -2400,69 +2404,69 @@ useEffect(() => {
   }, [mapRef.current, state, district, block]);
 
 
-const updateSelectedMWSStyle = (selectedIds) => {
-  if (!mwsLayerRef.current) return;
+  const updateSelectedMWSStyle = (selectedIds) => {
+    if (!mwsLayerRef.current) return;
 
-  const features = mwsLayerRef.current.getSource().getFeatures();
+    const features = mwsLayerRef.current.getSource().getFeatures();
 
-  features.forEach((feature) => {
-    const uid = feature.get("uid");
-    feature.set(
-      "isSelected",
-      selectedIds.includes(uid) ? 1 : 0,
-      true
-    );
-  });
-
-  mwsLayerRef.current.getSource().changed();
-  // applyDefaultMWSStyle();
-};
-
-useEffect(() => {
-  if (!mapRef.current) return;
-
-const handleMapClick = (event) => {
-    const mwsSource = mwsLayerRef.current?.getSource();
-    const feature = mwsSource
-      ? mwsSource.getFeaturesAtCoordinate(event.coordinate)[0]
-      : undefined;
-
-    if (!feature) return;
-
-    const uid = feature.get("uid");
-
-    setManualSelectedMWS((prev) => {
-      const updated = prev.includes(uid)
-        ? prev.filter((id) => id !== uid)
-        : [...prev, uid];
-
-      updateSelectedMWSStyle(updated);
-
-      if (updated.length === 0) {
-        setSelectedMWSProfile(null);
-        setHighlightMWS(null);
-      } else {
-        setSelectedMWSProfile(feature.getProperties());
-        setHighlightMWS(uid);
-      }
-
-      return updated;
+    features.forEach((feature) => {
+      const uid = feature.get("uid");
+      feature.set(
+        "isSelected",
+        selectedIds.includes(uid) ? 1 : 0,
+        true
+      );
     });
 
-    if (toastId) {
-      toast.dismiss(toastId);
-      setToastId(null);
-    }
+    mwsLayerRef.current.getSource().changed();
+    // applyDefaultMWSStyle();
   };
 
-  mapRef.current.on("click", handleMapClick);
+  useEffect(() => {
+    if (!mapRef.current) return;
 
-  return () => {
-    if (mapRef.current) {
-      mapRef.current.un("click", handleMapClick);
-    }
-  };
-}, [toastId, mapRef.current]);
+  const handleMapClick = (event) => {
+      const mwsSource = mwsLayerRef.current?.getSource();
+      const feature = mwsSource
+        ? mwsSource.getFeaturesAtCoordinate(event.coordinate)[0]
+        : undefined;
+
+      if (!feature) return;
+
+      const uid = feature.get("uid");
+
+      setManualSelectedMWS((prev) => {
+        const updated = prev.includes(uid)
+          ? prev.filter((id) => id !== uid)
+          : [...prev, uid];
+
+        updateSelectedMWSStyle(updated);
+
+        if (updated.length === 0) {
+          setSelectedMWSProfile(null);
+          setHighlightMWS(null);
+        } else {
+          setSelectedMWSProfile(feature.getProperties());
+          setHighlightMWS(uid);
+        }
+
+        return updated;
+      });
+
+      if (toastId) {
+        toast.dismiss(toastId);
+        setToastId(null);
+      }
+    };
+
+    mapRef.current.on("click", handleMapClick);
+
+    return () => {
+      if (mapRef.current) {
+        mapRef.current.un("click", handleMapClick);
+      }
+    };
+  }, [toastId, mapRef.current]);
 
 
  
@@ -2820,8 +2824,7 @@ useEffect(() => {
             }
             else{
                if (village && typeof village[filterName] !== 'undefined' && village.village_id) {
-                const value = Number(village[filterName]);
-                if (!isNaN(value) && value == selectedOption.value) {
+                if (String(village[filterName]) === String(selectedOption.value)) {
                   if (candidateVillages.size === 0 || candidateVillages.has(village.village_id)) {
                     tempArr.add(village.village_id);
                   }
@@ -3001,12 +3004,12 @@ useEffect(() => {
 
 
   return (
-    <div className="min-h-screenbg-white flex flex-col">
+    <div className="h-screen bg-white flex flex-col overflow-hidden">
       <Toaster />
-      <div className="sticky top-0 z-50 bg-white border-b border-gray-100">
+      <div className="shrink-0 bg-white border-b border-gray-100">
         <LandingNavbar />
       </div>
-      <div className="flex h-[calc(100vh-48px)] p-4 gap-4">
+      <div className="flex flex-1 min-h-0 p-4 gap-4">
         {/* Left Sidebar */}
         <KYLLeftSidebar
           key={sidebarResetKey}
@@ -3050,7 +3053,7 @@ useEffect(() => {
         />
 
         {/* Map Container */}
-        <div className="relative flex-1 h-full flex flex-col">
+        <div className="relative flex-1 min-w-0 h-full flex flex-col">
           <KYLMapContainer
             isLoading={islayerLoaded || isLoading}
             statesData={statesData}
@@ -3069,6 +3072,7 @@ useEffect(() => {
             setShowPlans={setShowPlans}
           selectionMode={selectionMode}
           setSelectionMode={setSelectionMode}
+          showStewards
           />
           <LayerErrorToast
             errors={layerErrors}
@@ -3123,10 +3127,12 @@ useEffect(() => {
           mwsLayerRef={mwsLayerRef}
            selectionMode={selectionMode}
           setSelectionMode={setSelectionMode}
-          manualSelectedMWS={manualSelectedMWS} 
+          manualSelectedMWS={manualSelectedMWS}
           onResetMWSSelection={handleResetMWSSelection}
           showPlans={showPlans}
           setShowPlans={setShowPlans}
+          showStewards={showStewards}
+          setShowStewards={setShowStewards}
 
         />
       </div>

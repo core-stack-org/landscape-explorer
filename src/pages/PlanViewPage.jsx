@@ -827,7 +827,7 @@ const PlanViewPage = () => {
       const btn = popupCard.querySelector("#village-report-btn");
       if (btn) {
         btn.onclick = () => {
-          const reportUrl = `http://127.0.0.1:8000/api/v1/generate_village_report/?state=${stateVal}&district=${districtVal}&block=${blockVal}&villageId=${villageId}`;
+          const reportUrl = `${process.env.REACT_APP_API_URL}/generate_village_report/?state=${stateVal}&district=${districtVal}&block=${blockVal}&villageId=${villageId}`;
           window.open(reportUrl, "_blank");
           closePopup();
         };
