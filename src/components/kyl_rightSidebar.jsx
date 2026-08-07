@@ -2148,6 +2148,29 @@ const sheet5Count =
     );
   };
 
+  const handleStewardProfileClick = (steward) => {
+  if (!steward) return;
+
+  const organizationId = steward.organization?.id;
+  const facilitatorSlug = steward.facilitator_name
+  ?.replace(/[().]/g, "")
+  .trim()
+  .replace(/\s+/g, "-")
+  .replace(/-+/g, "-")
+  .replace(/^-|-$/g, "")
+  .toLowerCase();
+
+  window.open(
+    `/landscape-stewardship/steward-view/${organizationId}/${facilitatorSlug}` +
+      `?stateId=${encodeURIComponent(state?.state_id ?? "")}` +
+      `&stateName=${encodeURIComponent(state?.label ?? "")}` +
+      `&districtId=${encodeURIComponent(district?.district_id ?? "")}` +
+      `&districtName=${encodeURIComponent(district?.label ?? "")}`,
+    "_blank"
+  );
+ 
+};
+
   // ─── Shared section header component ─────────────────────────────────────
   const SectionHeader = ({ title, count, action }) => (
     <div className="flex items-center justify-between mb-2">
@@ -2285,7 +2308,10 @@ const sheet5Count =
       {selectedStewardProfile && (
         <div className="bg-white rounded-xl border border-gray-100 p-4 shadow-sm">
          <div className="flex items-center justify-between mb-5">
-          <h2 className="text-lg font-semibold text-gray-900">
+          <h2
+            onClick={() => handleStewardProfileClick(selectedStewardProfile)}
+            className="text-lg font-semibold text-gray-900 cursor-pointer hover:text-indigo-600 hover:underline transition-colors"
+          >
             {selectedStewardProfile.facilitator_name}
           </h2>
 

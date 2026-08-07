@@ -70,6 +70,8 @@ if (!organization || !facilitator) return;
           },
         });
         if (!res.ok) throw new Error(`API error ${res.status}`);
+        console.log("Status:", res.status);
+console.log("Response OK:", res.ok);
         const data = await res.json();
         console.log("Steward API Response:", data);
 
@@ -160,7 +162,13 @@ if (!organization || !facilitator) return;
       </p>
 
       <h1 className="text-lg font-bold text-white truncate">
-        {stewardData.facilitator_name}
+        {stewardData.facilitator_name
+          ?.split(" ")
+          .map(
+            (word) =>
+              word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+          )
+          .join(" ")}
       </h1>
     </div>
 

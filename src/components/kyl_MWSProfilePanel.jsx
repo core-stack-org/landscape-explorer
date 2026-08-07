@@ -30,6 +30,9 @@ const KYLMWSProfilePanel = ({ mwsData, onBack, hideBackButton = false, onResetMW
     window.open(`${process.env.REACT_APP_API_URL}/generate_mws_report/?state=${transformName(state.label)}&district=${transformName(district.label)}&block=${transformName(block.label)}&uid=${id}`, '_blank');
   }
 
+  const buildVillageReportUrl = (villageId) =>
+  `${process.env.REACT_APP_API_URL}/generate_village_report/?state=${transformName(state?.label)}&district=${transformName(district?.label)}&block=${transformName(block?.label)}&villageId=${villageId}`;
+
   useEffect(() => {
     if (dataJson !== null) {
       const found = dataJson.find((item) => item.mws_id === mwsData?.uid)
@@ -195,15 +198,24 @@ const KYLMWSProfilePanel = ({ mwsData, onBack, hideBackButton = false, onResetMW
     </div>
 
     <div className="flex flex-wrap gap-2">
-      {intersectingVillages.map((village) => (
-        <span
-          key={village.villageId}
-          className="px-3 py-1 rounded-full border border-green-200 bg-green-50 text-green-700 text-xs"
-        >
-          {village.villageName}
-        </span>
-      ))}
-    </div>
+  {intersectingVillages.map((village) => (
+    <button
+      key={village.villageId}
+      type="button"
+      title={`Open report for ${village.villageName}`}
+      onClick={() =>
+        window.open(
+          buildVillageReportUrl(village.villageId),
+          "_blank",
+          "noopener,noreferrer"
+        )
+      }
+      className="px-3 py-1 rounded-full border border-green-200 bg-green-50 text-green-700 text-xs hover:bg-green-100 hover:border-green-300 transition-colors"
+    >
+      {village.villageName}
+    </button>
+  ))}
+</div>
   </div>
 )}
     </div>
