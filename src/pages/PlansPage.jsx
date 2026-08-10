@@ -1902,7 +1902,7 @@ setStatusTracking(trackingData);
                     // cursor: selectedPlan.is_dpr_reviewed ? "pointer" : "not-allowed",
                   }}
                 >
-                  View Full Steward →
+                  View Steward Profile →
                 </button>
               </div>
 
