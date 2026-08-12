@@ -1207,7 +1207,7 @@ const drainageLayer = await getVectorLayers(
 
       if (terrainLayer) {
         terrainLayer.setZIndex(1);
-        terrainLayer.setOpacity(0.7);
+        terrainLayer.setOpacity(0.6);
         terrainLayer.addFilter(new Crop({ feature: mwsCropFeature }));
         map.addLayer(terrainLayer);
       }
@@ -1340,20 +1340,47 @@ if (isTehsil) {
   mwsBoundaryLayer.set("id", "mws_boundary_layer");
   map.addLayer(mwsBoundaryLayer);
 
+  const extent = mwsMultiPolygon.getExtent();
+
+if (extent && extent.every(Number.isFinite)) {
+  view.fit(extent, {
+    padding: [60, 60, 60, 60],
+    maxZoom: 17,
+    duration: 500,
+  });
+}
+
+
   // Load layers
   const terrainKey = `${transformName(district)}_${transformName(block)}_terrain_raster`;
   const drainageKey = `${transformName(district)}_${transformName(block)}`;
 
-  const [terrainLayer, drainageLayer] = await Promise.all([
-    getImageLayer("terrain", terrainKey, true, "Terrain_Style_11_Classes").catch(() => null),
-    getVectorLayers("drainage", drainageKey, true, "drainage").catch(() => null),
-  ]);
+ const [terrainLayer, drainageLayer] = await Promise.all([
+  getImageLayer(
+    "terrain",
+    terrainKey,
+    true,
+    "Terrain_Style_11_Classes"
+  ),
 
+  getVectorLayers(
+    "drainage",
+    drainageKey,
+    true,
+    "drainage"
+  ).catch(() => null),
+]);
   // Clip terrain to MultiPolygon
-  if (terrainLayer) {
-    terrainLayer.addFilter(new Crop({ feature: mwsCropFeature }));
-    map.addLayer(terrainLayer);
-  }
+ if (terrainLayer) {
+  terrainLayer.setZIndex(1);
+  terrainLayer.setOpacity(0.6);
+
+  terrainLayer.addFilter(
+    new Crop({ feature: mwsCropFeature })
+  );
+
+  map.addLayer(terrainLayer);
+}
 
   // Clip drainage + style
   if (drainageLayer) {
@@ -1378,10 +1405,10 @@ if (isTehsil) {
   }
 
   // Compute combined extent & zoom
-  view.fit(mwsMultiPolygon.getExtent(), {
-    padding: [60, 60, 60, 60],
-    maxZoom: 17,
-  });
+  // view.fit(mwsMultiPolygon.getExtent(), {
+  //   padding: [60, 60, 60, 60],
+  //   maxZoom: 17,
+  // });
 
   // Draw waterbody
   if (selectedWaterbody?.geometry) {
