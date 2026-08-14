@@ -561,7 +561,17 @@ const MapLegend = ({ showMWS, showVillages, currentLayer, showConnectivity,showP
     { fill: "rgba(144, 238, 144, 0.8)", stroke: "rgba(34, 139, 34, 1)", label: "High Population" },
   ]
 
+  const IncreaseCanopy = [
+    { fill: "rgba(255, 0, 0, 0.8)", stroke: "rgba(255, 0, 0, 1)", label: "<20%: Minimal" },
+    { fill: "rgba(238, 224, 93, 0.8)", stroke: "rgba(238, 224, 93, 1)", label: "Between 20-40%: Considerable" },
+    { fill: "rgba(115, 187, 83, 0.8)", stroke: "rgba(115, 187, 83, 1)", label: ">40%: Huge" },
+  ]
 
+  const ReductionCanopy = [
+    { fill: "rgba(115, 187, 83, 0.8)", stroke: "rgba(115, 187, 83, 1)", label: "<5%: Minimal" },
+    { fill: "rgba(238, 224, 93, 0.8)", stroke: "rgba(238, 224, 93, 1)", label: "Between 5-15%: Considerable" },
+    { fill: "rgba(255, 0, 0, 0.8)", stroke: "rgba(255, 0, 0, 1)", label: ">15%: Huge" },
+  ]
 
   const isExcludedLulc = (name) => {
     if (!name) return false;
@@ -686,7 +696,7 @@ const MapLegend = ({ showMWS, showVillages, currentLayer, showConnectivity,showP
 
   const isCropAfforestationActive = currentLayer?.some(
     (layer) =>
-      layer.name === "increase_in_tree_cover" || layer.name.includes("increase")
+      layer.name === "increase_in_tree_cover"
   );
 
   const isAquiferActive = currentLayer?.some(
@@ -845,9 +855,16 @@ const MapLegend = ({ showMWS, showVillages, currentLayer, showConnectivity,showP
     (layer) => layer.name.includes("livelihoods_forest_resources_cat_cluster")
   )
 
-  
   const isLivestockActive = currentLayer?.some(
     (layer) => layer.name.includes("small_animals_total") || layer.name.includes("large_animals_total")
+  )
+
+  const isIncreaseCanopyActive = currentLayer?.some(
+    (layer) => layer.name.includes("increase_canopy_density_height")
+  )
+
+  const isReduceCanopyActive = currentLayer?.some(
+    (layer) => layer.name.includes("reduction_canopy_density_height")
   )
 
   return (
@@ -2208,6 +2225,30 @@ const MapLegend = ({ showMWS, showVillages, currentLayer, showConnectivity,showP
                 <div className="space-y-2">
                   <h4 className="text-xs font-medium text-gray-600">Livestock Count</h4>
                   {LivestockData.map((item, index) => (
+                    <div key={`fac-live-${index}`} className="flex items-center gap-2">
+                      <div className="w-4 h-4 rounded" style={{ backgroundColor: item.fill, border: `1px solid ${item.stroke}` }} />
+                      <span className="text-sm text-gray-600">{item.label}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {isIncreaseCanopyActive && (
+                <div className="space-y-2">
+                  <h4 className="text-xs font-medium text-gray-600">Increase in canopy density and height</h4>
+                  {IncreaseCanopy.map((item, index) => (
+                    <div key={`fac-live-${index}`} className="flex items-center gap-2">
+                      <div className="w-4 h-4 rounded" style={{ backgroundColor: item.fill, border: `1px solid ${item.stroke}` }} />
+                      <span className="text-sm text-gray-600">{item.label}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {isReduceCanopyActive && (
+                <div className="space-y-2">
+                  <h4 className="text-xs font-medium text-gray-600">Reduction in canopy density and height</h4>
+                  {ReductionCanopy.map((item, index) => (
                     <div key={`fac-live-${index}`} className="flex items-center gap-2">
                       <div className="w-4 h-4 rounded" style={{ backgroundColor: item.fill, border: `1px solid ${item.stroke}` }} />
                       <span className="text-sm text-gray-600">{item.label}</span>
