@@ -1158,6 +1158,88 @@
                 "styleIdx": 0
             },
             {
+                "name": "increase_canopy_density_height",
+                "label": "Increase in canopy density and height",
+                "type": 2,
+                "values": [
+                    {
+                        "label": "<20%: Minimal",
+                        "value": {
+                            "lower": 0,
+                            "upper": 20
+                        }
+                    },
+                    {
+                        "label": "Between 10-40%: Considerable",
+                        "value": {
+                            "lower": 10,
+                            "upper": 40
+                        }
+                    },
+                    {
+                        "label": ">40%: Huge",
+                        "value": {
+                            "lower": 40,
+                            "upper": 9999999
+                        }
+                    }
+                ],
+                "layer_store": [
+                    ""
+                ],
+                "layer_name": [
+                    ""
+                ],
+                "vectorStyle": [
+                    {}
+                ],
+                "rasterStyle": [
+                    ""
+                ],
+                "styleIdx": 0
+            },
+            {
+                "name": "reduction_canopy_density_height",
+                "label": "Reduction in canopy density and height",
+                "type": 2,
+                "values": [
+                    {
+                        "label": "<5%: Minimal",
+                        "value": {
+                            "lower": 0,
+                            "upper": 5
+                        }
+                    },
+                    {
+                        "label": "Between 5-15%: Considerable",
+                        "value": {
+                            "lower": 5,
+                            "upper": 15
+                        }
+                    },
+                    {
+                        "label": ">15%: Huge",
+                        "value": {
+                            "lower": 15,
+                            "upper": 9999999
+                        }
+                    }
+                ],
+                "layer_store": [
+                    ""
+                ],
+                "layer_name": [
+                    ""
+                ],
+                "vectorStyle": [
+                    {}
+                ],
+                "rasterStyle": [
+                    ""
+                ],
+                "styleIdx": 0
+            },
+            {
                 "name": "area_protection",
                 "label": "Area with potential for protection",
                 "type": 2,

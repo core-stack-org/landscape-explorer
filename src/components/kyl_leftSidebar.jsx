@@ -31,6 +31,8 @@ const FILTER_SECTION_MAP = {
   'lcw_conflict':                 'Micro watershed',
   'factory_csr':                  'Micro watershed',
   'mining':                       'Micro watershed',
+  'increase_canopy_density_height' : 'Micro watershed',
+  'reduction_canopy_density_height' : 'Micro watershed',
 
   'waterbody_type':               'Waterbody',
   'waterbody_size':               'Waterbody',
@@ -489,6 +491,8 @@ const KYLLeftSidebar = ({
             {getFiltersBySection().map(([section, filters]) => {
                 const isVillageSection = section === 'Village';
                 const villageReasonKey = resolveVillageReasonKey(villageFiltersDisabledReason);
+
+                console.log(filters)
 
                 return (
                 <div key={section}>
