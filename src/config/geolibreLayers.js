@@ -49,8 +49,8 @@ const LAYERS = [
   {
     id: "mws_layers",
     label: "Micro-watersheds and Hydrological Variables",
-    domain: "Hydrology",
-    loadGroup: "hydrology",
+    domain: "Climate",
+    loadGroup: "climate",
     sourceType: "wfs",
     workspace: "mws_layers",
     geometryType: "polygon",
@@ -62,8 +62,8 @@ const LAYERS = [
   {
     id: "hydrological_boundaries",
     label: "Hydrological Boundaries",
-    domain: "Hydrology",
-    loadGroup: "hydrology",
+    domain: "Climate",
+    loadGroup: "climate",
     sourceType: "wfs",
     workspace: "mws_layers",
     geometryType: "polygon",
@@ -75,8 +75,8 @@ const LAYERS = [
   {
     id: "mws_layers_fortnight",
     label: "Fortnightly Hydrological Variables",
-    domain: "Hydrology",
-    loadGroup: "hydrology",
+    domain: "Climate",
+    loadGroup: "climate",
     sourceType: "wfs",
     workspace: "mws_layers",
     geometryType: "polygon",

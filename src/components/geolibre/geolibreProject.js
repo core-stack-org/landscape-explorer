@@ -426,15 +426,16 @@ const layerLegend = (catalogLayer, style) => {
 };
 
 const GROUPS_TOP_FIRST = [
-  { id: "demographic", name: "Demographic", collapsed: false },
+  { id: "land", name: "Land", collapsed: true },
+  { id: "climate", name: "Climate", collapsed: true },
   { id: "hydrology", name: "Hydrology", collapsed: true },
+  { id: "agriculture", name: "Agriculture", collapsed: true },
   { id: "lulc-3", name: "LULC · Level 3 by year", collapsed: true },
   { id: "lulc-2", name: "LULC · Level 2 by year", collapsed: true },
   { id: "lulc-1", name: "LULC · Level 1 by year", collapsed: true },
-  { id: "land", name: "Land", collapsed: true },
-  { id: "agriculture", name: "Agriculture", collapsed: true },
   { id: "restoration", name: "Restoration", collapsed: true },
   { id: "nrega", name: "NREGA", collapsed: true },
+  { id: "demographic", name: "Demographic", collapsed: false },
 ];
 
 const projectPreferences = {
