@@ -1001,64 +1001,6 @@
         ],
         "Restoration": [
             {
-                "name": "decrease_in_tree_cover",
-                "label": "Reduction in tree cover",
-                "type": 2,
-                "values": [
-                    {
-                        "label": "Less than 50 hectares",
-                        "value": {
-                            "lower": 0,
-                            "upper": 50
-                        }
-                    },
-                    {
-                        "label": "Between 50 to 100 hectares",
-                        "value": {
-                            "lower": 50,
-                            "upper": 100
-                        }
-                    },
-                    {
-                        "label": "More than 100 hectares",
-                        "value": {
-                            "lower": 100,
-                            "upper": 999999
-                        }
-                    }
-                ],
-                "layer_store": [
-                    "change_detection"
-                ],
-                "layer_name": [
-                    "Deforestation"
-                ],
-                "vectorStyle": [
-                    {
-                        "fill": "rgba(115, 187, 83, 0.8)",
-                        "stroke": "rgba(115, 187, 83, 1)",
-                        "lower": 0,
-                        "upper": 50
-                    },
-                    {
-                        "fill": "rgba(238, 224, 93, 0.8)",
-                        "stroke": "rgba(238, 224, 93, 1)",
-                        "lower": 50,
-                        "upper": 100
-                    },
-                    {
-                        "fill": "rgba(255, 0, 0, 0.8)",
-                        "stroke": "rgba(255, 0, 0, 1)",
-                        "lower": 100,
-                        "upper": 9999999
-                    }
-                ],
-                "rasterStyle": [
-                    ""
-                ],
-                "styleIdx": 13
-            },
-            {
                 "name": "increase_in_tree_cover",
                 "label": "Increase in tree cover",
                 "type": 2,
@@ -1115,47 +1057,6 @@
                     ""
                 ],
                 "styleIdx": 14
-            },
-            {
-                "name": "area_wide_scale_restoration",
-                "label": "Area with potential for wide-scale restoration",
-                "type": 2,
-                "values": [
-                    {
-                        "label": "Less than 200 hectares",
-                        "value": {
-                            "lower": 0,
-                            "upper": 200
-                        }
-                    },
-                    {
-                        "label": "Between 200 to 600 hectares",
-                        "value": {
-                            "lower": 200,
-                            "upper": 600
-                        }
-                    },
-                    {
-                        "label": "More than 600 hectares",
-                        "value": {
-                            "lower": 600,
-                            "upper": 999999
-                        }
-                    }
-                ],
-                "layer_store": [
-                    "restoration"
-                ],
-                "layer_name": [
-                    "restoration"
-                ],
-                "vectorStyle": [
-                    {}
-                ],
-                "rasterStyle": [
-                    "restoration_style"
-                ],
-                "styleIdx": 0
             },
             {
                 "name": "increase_canopy_density_height",
@@ -1216,6 +1117,64 @@
                 "styleIdx": 60
             },
             {
+                "name": "decrease_in_tree_cover",
+                "label": "Reduction in tree cover",
+                "type": 2,
+                "values": [
+                    {
+                        "label": "Less than 50 hectares",
+                        "value": {
+                            "lower": 0,
+                            "upper": 50
+                        }
+                    },
+                    {
+                        "label": "Between 50 to 100 hectares",
+                        "value": {
+                            "lower": 50,
+                            "upper": 100
+                        }
+                    },
+                    {
+                        "label": "More than 100 hectares",
+                        "value": {
+                            "lower": 100,
+                            "upper": 999999
+                        }
+                    }
+                ],
+                "layer_store": [
+                    "change_detection"
+                ],
+                "layer_name": [
+                    "Deforestation"
+                ],
+                "vectorStyle": [
+                    {
+                        "fill": "rgba(115, 187, 83, 0.8)",
+                        "stroke": "rgba(115, 187, 83, 1)",
+                        "lower": 0,
+                        "upper": 50
+                    },
+                    {
+                        "fill": "rgba(238, 224, 93, 0.8)",
+                        "stroke": "rgba(238, 224, 93, 1)",
+                        "lower": 50,
+                        "upper": 100
+                    },
+                    {
+                        "fill": "rgba(255, 0, 0, 0.8)",
+                        "stroke": "rgba(255, 0, 0, 1)",
+                        "lower": 100,
+                        "upper": 9999999
+                    }
+                ],
+                "rasterStyle": [
+                    ""
+                ],
+                "styleIdx": 13
+            },
+            {
                 "name": "reduction_canopy_density_height",
                 "label": "Reduction in canopy density and height",
                 "type": 2,
@@ -1272,6 +1231,47 @@
                     ""
                 ],
                 "styleIdx": 61
+            },        
+            {
+                "name": "area_wide_scale_restoration",
+                "label": "Area with potential for wide-scale restoration",
+                "type": 2,
+                "values": [
+                    {
+                        "label": "Less than 200 hectares",
+                        "value": {
+                            "lower": 0,
+                            "upper": 200
+                        }
+                    },
+                    {
+                        "label": "Between 200 to 600 hectares",
+                        "value": {
+                            "lower": 200,
+                            "upper": 600
+                        }
+                    },
+                    {
+                        "label": "More than 600 hectares",
+                        "value": {
+                            "lower": 600,
+                            "upper": 999999
+                        }
+                    }
+                ],
+                "layer_store": [
+                    "restoration"
+                ],
+                "layer_name": [
+                    "restoration"
+                ],
+                "vectorStyle": [
+                    {}
+                ],
+                "rasterStyle": [
+                    "restoration_style"
+                ],
+                "styleIdx": 0
             },
             {
                 "name": "area_protection",
