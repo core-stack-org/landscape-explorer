@@ -33,8 +33,6 @@ import KYLLeftSidebar from "../components/kyl_leftSidebar";
 import KYLRightSidebar from "../components/kyl_rightSidebar.jsx";
 import KYLMapContainer from "../components/kyl_mapContainer.jsx";
 import layerStyle from "../components/utils/layerStyle.jsx";
-import { getAllPatternTypes, getSubcategoriesForCategory, getPatternsForSubcategory } from '../components/utils/patternsHelper.js';
-import { handlePatternSelection as handlePatternSelectionLogic, isPatternSelected } from '../components/utils/patternSelectionLogic.js';
 
 import { toast, Toaster } from "react-hot-toast";
 import {
@@ -55,6 +53,12 @@ import { useLayerErrors } from '../actions/useLayerErrors';
 import LayerErrorToast from '../actions/LayerErrorToast';
 import Overlay from "ol/Overlay";
 import ScaleLine from "ol/control/ScaleLine";
+
+import { FILTER_BY_NAME, getAllFilterTypes, getFiltersByCategory, getFormattedSelectedFilters as getFormattedFilters } from "../components/utils/filtersIndex.js";
+import { getAllPatternTypes, getSubcategoriesForCategory, getPatternsForSubcategory, getFormattedSelectedPatterns as getFormattedPatterns } from "../components/utils/patternsIndex.js";
+import { selectPattern, isPatternSelected } from "../components/utils/patternSelectionLogic.js";
+
+
 const KYLDashboardPage = () => {
   const mapElement = useRef(null);
   const mapRef = useRef(null);
@@ -132,6 +136,10 @@ const KYLDashboardPage = () => {
   const INDIA_ZOOM   = 5;
   const { errors: layerErrors, dismiss: dismissLayerError, retry: retryLayerError } = useLayerErrors();
 
+  const getFormattedSelectedFilters = () => getFormattedFilters(filterSelections);
+  const getFormattedSelectedPatterns = () => getFormattedPatterns(patternSelections);
+  const handlePatternSelection = (pattern, isSelected) =>
+    setPatternSelections(selectPattern(pattern, isSelected, patternSelections));
 
 
   const dataJsonIndex = useMemo(() => {
@@ -196,7 +204,7 @@ const KYLDashboardPage = () => {
       .toLowerCase()
   };
 
-const handleResetMWS = () => {
+  const handleResetMWS = () => {
     setSelectedMWSProfile(null);
     setManualSelectedMWS([]);
     setHighlightMWS(null);
@@ -218,123 +226,7 @@ const handleResetMWS = () => {
     }
   };
 
-  const getAllFilterTypes = () => {
-    const types = new Set();
-    Object.keys(filtersDetails).forEach((indicator) => {
-      Object.keys(filtersDetails[indicator]).forEach((type) => {
-        types.add(type);
-      });
-    });
-    return Array.from(types);
-  };
 
-  const getAllFilters = () => {
-    const allFilters = [];
-    Object.keys(filtersDetails).forEach((indicator) => {
-      Object.keys(filtersDetails[indicator]).forEach((type) => {
-        filtersDetails[indicator][type].forEach((filter) => {
-          if (
-            (filter.type === 1 || filter.type === 2) &&
-            filter.values.length > 0
-          ) {
-            allFilters.push({ ...filter, category: type });
-          }
-        });
-      });
-    });
-    return allFilters;
-  };
-
-  const getFormattedSelectedFilters = () => {
-    const allSelections = [];
-    const groupedSelections = {};
-
-    const processSelections = (selections, dataSource) => {
-      if (!selections) return;
-      Object.entries(selections).forEach(([name, values]) => {
-        if (!values) return;
-
-        let filterGroup = null;
-        outerLoop: for (const ind of Object.keys(filtersDetails)) {
-          for (const type of Object.keys(filtersDetails[ind])) {
-            const found = filtersDetails[ind][type].find((group) => group.name === name);
-            if (found) { filterGroup = found; break outerLoop; }
-          }
-        }
-
-        if (filterGroup) {
-          if (!groupedSelections[name]) {
-            groupedSelections[name] = {
-              filterName: filterGroup.label,
-              values: [],
-              name: filterGroup.name,
-              layer_store: values[0].layer_store,
-              layer_name: values[0].layer_name,
-              rasterStyle: values[0].rasterStyle,
-              vectorStyle: values[0].vectorStyle,
-              styleIdx: values[0].styleIdx,
-            };
-          }
-          values.forEach((selectedOption) => {
-            groupedSelections[name].values.push(selectedOption.label);
-          });
-        }
-      });
-    };
-
-    processSelections(filterSelections.selectedMWSValues, "MWS");
-    processSelections(filterSelections.selectedVillageValues, "Village");
-    processSelections(filterSelections.selectedWaterbodyValues, "Waterbody");
-    Object.values(groupedSelections).forEach(group => allSelections.push(group));
-    return allSelections;
-  };
-
-  const getFormattedSelectedPatterns = () => {
-    const allSelections = [];
-
-    const processSelections = (selections) => {
-      if (!selections) return;
-      Object.entries(selections).forEach(([name, values]) => {
-        if (!values) return;
-        let filterGroup = null;
-        outerLoop: for (const ind of Object.keys(PatternsData)) {
-          for (const x of Object.keys(PatternsData[ind])) {
-            for (const y of Object.keys(PatternsData[ind][x])) {
-              const found = PatternsData[ind][x][y].find((group) => group.Name === name);
-              if (found) { filterGroup = found; break outerLoop; }
-            }
-          }
-        }
-        if (filterGroup) {
-          allSelections.push({
-            patternName: filterGroup.Name,
-            category: filterGroup.Category,
-            level: filterGroup.level,
-            values: filterGroup.Values,
-            characterstics: filterGroup.Characteristics,
-          });
-        }
-      });
-    };
-
-    processSelections(patternSelections.selectedMWSPatterns);
-    processSelections(patternSelections.selectedVillagePatterns);
-    return allSelections;
-  };
-
-  const determineFilterSource = (filterName) => {
-    for (const topLevelKey of Object.keys(filtersDetails)) {
-      if (filtersDetails[topLevelKey]) {
-        for (const categoryKey of Object.keys(filtersDetails[topLevelKey])) {
-          const found = filtersDetails[topLevelKey][categoryKey].find(
-            (f) => f.name === filterName
-          );
-          if (found) return { ...found, name: topLevelKey };
-        }
-      }
-    }
-    return null;
-  };
 
   const handleFilterSelection = (name, option, isChecked) => {
      if (showConnectivityRef.current) {
@@ -345,7 +237,7 @@ const handleResetMWS = () => {
     setSelectedMWSProfile(null);
     resetMWSStyle();
     setHighlightMWS(null);
-    const sourceType = determineFilterSource(name);
+    const sourceType = FILTER_BY_NAME.get(name);
     option = {
       ...option,
       layer_store: sourceType["layer_store"],
@@ -414,10 +306,6 @@ const handleResetMWS = () => {
         };
       });
     }
-  };
-
-  const handlePatternSelection = (pattern, isSelected) => {
-    handlePatternSelectionLogic(pattern, isSelected, patternSelections, setPatternSelections);
   };
 
   // ─── WB filters: ID-based lookup via dataJsonIndex, no geometry ───
@@ -693,18 +581,18 @@ const handleResetMWS = () => {
 
   // const resetMWSStyle = () => setHighlightMWS(null);
   const resetMWSStyle = () => {
-  if (!mwsLayerRef.current) return;
+    if (!mwsLayerRef.current) return;
 
-  const features = mwsLayerRef.current.getSource().getFeatures();
+    const features = mwsLayerRef.current.getSource().getFeatures();
 
-  features.forEach((feature) => {
-    feature.set("isSelected", 0, true);
-  });
+    features.forEach((feature) => {
+      feature.set("isSelected", 0, true);
+    });
 
-  mwsLayerRef.current.getSource().changed();
+    mwsLayerRef.current.getSource().changed();
 
-  setHighlightMWS(null);
-};
+    setHighlightMWS(null);
+  };
 
   const updateFilteredMWS = (filteredIds) => {
     if (!mwsLayerRef.current) return;
@@ -3016,16 +2904,9 @@ useEffect(() => {
           indicatorType={indicatorType}
           setIndicatorType={setIndicatorType}
           filterSelections={filterSelections}
-          setFilterSelections={setFilterSelections}
-          getAllFilterTypes={getAllFilterTypes}
-          getAllFilters={getAllFilters}
           handleFilterSelection={handleFilterSelection}
           toggleStates={toggleStates}
-          setToggleStates={setToggleStates}
           handleLayerSelection={handleLayerSelection}
-          currentLayer={currentLayer}
-          setCurrentLayer={setCurrentLayer}
-          mapRef={mapRef}
           filtersEnabled={filtersEnabled}
           filtersDisabledReason={
             dataJsonError === 'not_found' ? 'No MWS data available for this block.' :
@@ -3093,8 +2974,6 @@ useEffect(() => {
           handleItemSelect={handleItemSelect}
           setFilterSelections={setFilterSelections}
           setPatternSelections={setPatternSelections}
-          getFormattedSelectedFilters={getFormattedSelectedFilters}
-          getFormattedSelectedPatterns={getFormattedSelectedPatterns}
           handlePatternRemoval={handlePatternRemoval}
           selectedMWS={selectedMWS}
           selectedVillages={villageIdList}

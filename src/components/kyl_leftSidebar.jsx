@@ -3,201 +3,56 @@ import KYLIndicatorFilter from './kyl_indicatorFilter';
 import KYLPatternDisplay from './kyl_patternDisplay';
 import { ChevronRight, ArrowLeft, AlertCircle, WifiOff, FileX, Loader2 } from 'lucide-react';
 
-// ─── Filter section mapping ───────────────────────────────────────────────────
-
-const FILTER_SECTION_MAP = {
-  'terrainCluster_ID':            'Micro watershed',
-  'relief':                       'Micro watershed',
-  'relative_mean_elevation' :     'Micro watershed',
-  'lulc_crop_percent':            'Micro watershed',
-  'avg_precipitation':            'Micro watershed',
-  'avg_runoff':                   'Micro watershed',
-  'drought_category':             'Micro watershed',
-  'avg_number_dry_spell':         'Micro watershed',
-  'avg_rabi_surface_water_mws':   'Micro watershed',
-  'avg_zaid_surface_water_mws':   'Micro watershed',
-  'aquifer_class':                'Micro watershed',
-  'soge_class':                   'Micro watershed',
-  'trend_g':                      'Micro watershed',
-  'avg_double_cropped':           'Micro watershed',
-  'degradation_land_area':        'Micro watershed',
-  'river_available':              'Micro watershed',
-  'canal_available':              'Micro watershed',
-  'decrease_in_tree_cover':       'Micro watershed',
-  'increase_in_tree_cover':       'Micro watershed',
-  'area_wide_scale_restoration':  'Micro watershed',
-  'area_protection':              'Micro watershed',
-  'green_credit':                 'Micro watershed',
-  'lcw_conflict':                 'Micro watershed',
-  'factory_csr':                  'Micro watershed',
-  'mining':                       'Micro watershed',
-  'increase_canopy_density_height' : 'Micro watershed',
-  'reduction_canopy_density_height' : 'Micro watershed',
-
-  'waterbody_type':               'Waterbody',
-  'waterbody_size':               'Waterbody',
-  'surface_water_trend':          'Waterbody',
-  'drainage_line':                'Waterbody',
-
-  'total_population':             'Village',
-  'percent_st_population':        'Village',
-  'percent_sc_population':        'Village',
-  'literacy_level':               'Village',
-  'essential_education_infra':    'Village',
-  'higher_education_infra':       'Village',
-  'advanced_health_services':     'Village',
-  'public_distribution_system':   'Village',
-  'financial_inclusion':          'Village',
-  'agri_market_access':           'Village',
-  'post_harvest_infra':           'Village',
-  'farmer_cooperatives_access':   'Village',
-  'livestock_management_centers': 'Village',
-  'agricultural_support_infrastructure':    'Village',
-  'total_assets':                 'Village',
-  'road_connectivity_cat_cluster' : 'Village',
-  'energy_access_cat_cluster' : 'Village',
-  'housing_quality_cat_cluster' : 'Village',
-  'maternal_child_health_cat_cluster' : 'Village',
-  'water_and_sanitation_infrastructure' : 'Village',
-  'financial_inclusion_cat_cluster' : 'Village',
-  'social_protection_cat_cluster' : 'Village',
-  'institutionalization_cat_cluster' : 'Village',
-  'civic_infrastructure' : 'Village',
-  'livelihoods_employment_cat_cluster' : 'Village',
-  'forest-based_livelihood' : 'Village',
-  'alternate_farming' : 'Village',
-  'fisheries_adoption' : 'Village',
-  'cottage_industry' : 'Village',
-  'livestock_veterinary_cat_cluster' : 'Village',
-  'common_pasture_access' : 'Village',
-  'agriculture_irrigation_watershed_cat_cluster' : 'Village',
-  'agriculture_organic_farming_cat_cluster' : 'Village'
-};
-
-const getFilterSection = (filterName) => FILTER_SECTION_MAP[filterName] || 'Other';
-
-// ─── Disabled reason banner ───────────────────────────────────────────────────
-// Maps each dataJsonError value to an icon + colour scheme + message.
-// Kept as a lookup so adding new error types only requires one edit here.
+import { getFiltersByCategory, CATEGORIES_BY_SECTION } from '../components/utils/filtersIndex.js';
 
 const DISABLED_REASON_META = {
   not_found: {
-    Icon:    FileX,
-    bg:      'bg-amber-50',
-    border:  'border-amber-200',
-    iconCls: 'text-amber-500',
-    textCls: 'text-amber-800',
-    label:   'Oops. Data not yet generated for this location yet',
+    Icon: FileX, bg: 'bg-amber-50', border: 'border-amber-200', iconCls: 'text-amber-500', textCls: 'text-amber-800',
+    label: 'Oops. Data not yet generated for this location yet',
     detail: (
-        <>
+      <>
         Request data for the location via this form{' '}
         <a
-            href="https://docs.google.com/forms/d/e/1FAIpQLSesYshZg_HmNc0FgF-JSBye-AeN6mdyrhF2cjGmqLYeD7WgZA/viewform"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="underline font-medium hover:opacity-70"
-            onClick={(e) => e.stopPropagation()}
-        >
-            here
-        </a>
-        .
-        </>
+          href="https://docs.google.com/forms/d/e/1FAIpQLSesYshZg_HmNc0FgF-JSBye-AeN6mdyrhF2cjGmqLYeD7WgZA/viewform"
+          target="_blank" rel="noopener noreferrer"
+          className="underline font-medium hover:opacity-70"
+          onClick={(e) => e.stopPropagation()}
+        >here</a>.
+      </>
     )
   },
-  network: {
-    Icon:    WifiOff,
-    bg:      'bg-red-50',
-    border:  'border-red-200',
-    iconCls: 'text-red-500',
-    textCls: 'text-red-800',
-    label:   'Data taking time to load ?',
-    detail:  'Use the Retry button in the error notification to reload MWS data.',
-  },
-  parse: {
-    Icon:    AlertCircle,
-    bg:      'bg-red-50',
-    border:  'border-red-200',
-    iconCls: 'text-red-500',
-    textCls: 'text-red-800',
-    label:   'Malformed data response',
-    detail:  'The server returned unexpected data. Try refreshing the page.',
-  },
-  loading: {
-    Icon:    Loader2,
-    bg:      'bg-indigo-50',
-    border:  'border-indigo-200',
-    iconCls: 'text-indigo-400 animate-spin',
-    textCls: 'text-indigo-700',
-    label:   'Map is loading…',
-    detail:  'Filters will be available once the map finishes loading.',
-  },
+  network: { Icon: WifiOff, bg: 'bg-red-50', border: 'border-red-200', iconCls: 'text-red-500', textCls: 'text-red-800', label: 'Data taking time to load ?', detail: 'Use the Retry button in the error notification to reload MWS data.' },
+  parse: { Icon: AlertCircle, bg: 'bg-red-50', border: 'border-red-200', iconCls: 'text-red-500', textCls: 'text-red-800', label: 'Malformed data response', detail: 'The server returned unexpected data. Try refreshing the page.' },
+  loading: { Icon: Loader2, bg: 'bg-indigo-50', border: 'border-indigo-200', iconCls: 'text-indigo-400 animate-spin', textCls: 'text-indigo-700', label: 'Map is loading…', detail: 'Filters will be available once the map finishes loading.' },
 };
 
 const VILLAGE_REASON_META = {
-  not_found: {
-    Icon:    FileX,
-    bg:      'bg-amber-50',
-    border:  'border-amber-200',
-    iconCls: 'text-amber-500',
-    textCls: 'text-amber-800',
-    label:   'No village data for this block',
-    detail:  'Village attribute data hasn\'t been generated here yet.',
-  },
-  network: {
-    Icon:    WifiOff,
-    bg:      'bg-red-50',
-    border:  'border-red-200',
-    iconCls: 'text-red-500',
-    textCls: 'text-red-800',
-    label:   'Data taking time to load ?',
-    detail:  'Use the Retry button in the error notification to reload.',
-  },
-  parse: {
-    Icon:    AlertCircle,
-    bg:      'bg-red-50',
-    border:  'border-red-200',
-    iconCls: 'text-red-500',
-    textCls: 'text-red-800',
-    label:   'Malformed village data',
-    detail:  'The server returned unexpected data. Try refreshing.',
-  },
+  not_found: { Icon: FileX, bg: 'bg-amber-50', border: 'border-amber-200', iconCls: 'text-amber-500', textCls: 'text-amber-800', label: 'No village data for this block', detail: "Village attribute data hasn't been generated here yet." },
+  network: { Icon: WifiOff, bg: 'bg-red-50', border: 'border-red-200', iconCls: 'text-red-500', textCls: 'text-red-800', label: 'Data taking time to load ?', detail: 'Use the Retry button in the error notification to reload.' },
+  parse: { Icon: AlertCircle, bg: 'bg-red-50', border: 'border-red-200', iconCls: 'text-red-500', textCls: 'text-red-800', label: 'Malformed village data', detail: 'The server returned unexpected data. Try refreshing.' },
 };
 
-/**
- * Resolves which reason key to use given the props.
- * Returns null when filters are enabled (no banner needed).
- *
- * @param {boolean} filtersEnabled
- * @param {string|null} filtersDisabledReason  — raw string from parent
- * @returns {keyof DISABLED_REASON_META | null}
- */
 function resolveReasonKey(filtersEnabled, filtersDisabledReason) {
   if (filtersEnabled) return null;
   if (!filtersDisabledReason) return null;
-
-  if (filtersDisabledReason.includes('No MWS data'))        return 'not_found';
-  if (filtersDisabledReason.includes('failed to load'))     return 'network';
-  if (filtersDisabledReason.includes('malformed'))          return 'parse';
-  if (filtersDisabledReason.includes('loading'))            return 'loading';
-
-  return null; // unknown reason — render nothing rather than a broken banner
+  if (filtersDisabledReason.includes('No MWS data')) return 'not_found';
+  if (filtersDisabledReason.includes('failed to load')) return 'network';
+  if (filtersDisabledReason.includes('malformed')) return 'parse';
+  if (filtersDisabledReason.includes('loading')) return 'loading';
+  return null;
 }
 
-// Resolves a villageJsonError string → key for VILLAGE_REASON_META
 function resolveVillageReasonKey(villageFiltersDisabledReason) {
   if (!villageFiltersDisabledReason) return null;
-  if (villageFiltersDisabledReason.includes('No village data'))  return 'not_found';
-  if (villageFiltersDisabledReason.includes('failed to load'))   return 'network';
-  if (villageFiltersDisabledReason.includes('malformed'))        return 'parse';
+  if (villageFiltersDisabledReason.includes('No village data')) return 'not_found';
+  if (villageFiltersDisabledReason.includes('failed to load')) return 'network';
+  if (villageFiltersDisabledReason.includes('malformed')) return 'parse';
   return null;
 }
 
 function FiltersDisabledBanner({ reasonKey }) {
   if (!reasonKey) return null;
-
-  const { Icon, bg, border, iconCls, textCls, label, detail } =
-    DISABLED_REASON_META[reasonKey];
-
+  const { Icon, bg, border, iconCls, textCls, label, detail } = DISABLED_REASON_META[reasonKey];
   return (
     <div className={`flex items-start gap-2.5 px-3 py-2.5 rounded-lg border ${bg} ${border} mb-3`}>
       <Icon className={`w-4 h-4 mt-0.5 shrink-0 ${iconCls}`} />
@@ -211,9 +66,7 @@ function FiltersDisabledBanner({ reasonKey }) {
 
 function VillageFiltersBanner({ reasonKey }) {
   if (!reasonKey) return null;
-  const { Icon, bg, border, iconCls, textCls, label, detail } =
-    VILLAGE_REASON_META[reasonKey];
- 
+  const { Icon, bg, border, iconCls, textCls, label, detail } = VILLAGE_REASON_META[reasonKey];
   return (
     <div className={`flex items-start gap-2 px-2.5 py-2 rounded-lg border ${bg} ${border} mb-3`}>
       <Icon className={`w-3.5 h-3.5 mt-0.5 shrink-0 ${iconCls}`} />
@@ -225,14 +78,10 @@ function VillageFiltersBanner({ reasonKey }) {
   );
 }
 
-// ─── Main component ───────────────────────────────────────────────────────────
-
 const KYLLeftSidebar = ({
   indicatorType,
   setIndicatorType,
   filterSelections,
-  getAllFilterTypes,
-  getAllFilters,
   handleFilterSelection,
   toggleStates,
   handleLayerSelection,
@@ -273,65 +122,34 @@ const KYLLeftSidebar = ({
   };
 
   const isDisabled = !filtersEnabled || isFilterProcessing;
-
-  // Resolve the reason key once — used by the banner and the empty-state hint
   const reasonKey = resolveReasonKey(filtersEnabled, filtersDisabledReason);
 
   const getActiveCategoryCount = (category) => {
-    return getAllFilters()
-      .filter(f => f.category === category)
-      .reduce((count, f) => {
-        const mwsVals = filterSelections.selectedMWSValues?.[f.name];
-        const vilVals = filterSelections.selectedVillageValues?.[f.name];
-        const wbVals  = filterSelections.selectedWaterbodyValues?.[f.name];
-        if (mwsVals?.length || vilVals?.length || wbVals?.length) return count + 1;
-        return count;
-      }, 0);
-  };
-
-  const getCategorySection = (category) => {
-    const filters = getAllFilters().filter(f => f.category === category);
-    if (filters.length === 0) return 'Other';
-    return getFilterSection(filters[0].name) || 'Other';
-  };
-
-  const getCategoriesBySection = () => {
-    const categories = getAllFilterTypes();
-    const grouped = { 'Micro watershed': [], Waterbody: [], Village: [], Other: [] };
-    categories.forEach(category => {
-      const section = getCategorySection(category);
-      (grouped[section] ?? grouped.Other).push(category);
-    });
-    return Object.entries(grouped).filter(([, cats]) => cats.length > 0);
-  };
-
-  const getFiltersBySection = () => {
-    const filters = getAllFilters().filter(f => f.category === indicatorType);
-    const grouped = { 'Micro watershed': [], Waterbody: [], Village: [], Other: [] };
-    filters.forEach(filter => {
-      const section = getFilterSection(filter.name) || 'Other';
-      (grouped[section] ?? grouped.Other).push(filter);
-    });
-    return Object.entries(grouped).filter(([, flt]) => flt.length > 0);
+    return getFiltersByCategory(category).reduce((count, f) => {
+      const mwsVals = filterSelections.selectedMWSValues?.[f.name];
+      const vilVals = filterSelections.selectedVillageValues?.[f.name];
+      const wbVals = filterSelections.selectedWaterbodyValues?.[f.name];
+      if (mwsVals?.length || vilVals?.length || wbVals?.length) return count + 1;
+      return count;
+    }, 0);
   };
 
   const showCategoryList = !indicatorType;
-  const showFilterList   = !!indicatorType && activeTab === 'Filters';
-  const showSubcatList   = !!indicatorType && activeTab === 'Patterns' && !selectedSubcategory;
-  const showPatternList  = !!indicatorType && activeTab === 'Patterns' && !!selectedSubcategory;
+  const showFilterList = !!indicatorType && activeTab === 'Filters';
+  const showSubcatList = !!indicatorType && activeTab === 'Patterns' && !selectedSubcategory;
+  const showPatternList = !!indicatorType && activeTab === 'Patterns' && !!selectedSubcategory;
+
+  const currentFilters = showFilterList ? getFiltersByCategory(indicatorType) : [];
+  const isVillageSection = currentFilters[0]?.section === 'Village';
+  const villageReasonKey = resolveVillageReasonKey(villageFiltersDisabledReason);
 
   return (
     <div className="w-[320px] shrink-0 bg-white rounded-xl border border-gray-100 shadow-sm flex flex-col h-full overflow-hidden">
 
-      {/* ── Layer-selecting overlay ─────────────────────────────────────── */}
       {isLayerSelecting && (
         <div
           className="absolute inset-0 z-50 flex flex-col items-center justify-center rounded-xl gap-3"
-          style={{
-            background:     'rgba(255,255,255,0.85)',
-            backdropFilter: 'blur(2px)',
-            animation:      'fadeIn 0.15s ease-in-out',
-          }}
+          style={{ background: 'rgba(255,255,255,0.85)', backdropFilter: 'blur(2px)', animation: 'fadeIn 0.15s ease-in-out' }}
         >
           <div className="w-8 h-8 border-[3px] border-indigo-200 border-t-indigo-600 rounded-full animate-spin" />
           <p className="text-xs font-semibold text-indigo-600">Adding layer to map…</p>
@@ -339,28 +157,21 @@ const KYLLeftSidebar = ({
         </div>
       )}
 
-      <style>{`
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-      `}</style>
+      <style>{`@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }`}</style>
 
-      {/* ── Tabs ───────────────────────────────────────────────────────── */}
       <div className="flex gap-2 p-3 pb-0 shrink-0">
         {['Filters', 'Patterns'].map(tab => (
           <button
             key={tab}
             onClick={() => handleTabChange(tab)}
             className={`flex-1 py-2 px-3 rounded-lg text-xs font-semibold text-center transition-colors
-              ${activeTab === tab
-                ? 'bg-indigo-600 text-white shadow-sm'
-                : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
-              }`}
+              ${activeTab === tab ? 'bg-indigo-600 text-white shadow-sm' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}
           >
             {tab === 'Patterns' ? 'Patterns (Experimental)' : 'Filters'}
           </button>
         ))}
       </div>
 
-      {/* ── Breadcrumb ─────────────────────────────────────────────────── */}
       {indicatorType && (
         <div className="flex items-center gap-2 px-3 pt-3 pb-1 shrink-0">
           <button
@@ -374,8 +185,7 @@ const KYLLeftSidebar = ({
           <span className="text-xs text-gray-500 font-medium truncate">
             {selectedSubcategory
               ? <><span className="text-gray-400">{indicatorType}</span> › {selectedSubcategory}</>
-              : indicatorType
-            }
+              : indicatorType}
           </span>
           {selectedSubcategory && (
             <>
@@ -393,18 +203,11 @@ const KYLLeftSidebar = ({
 
       <div className="w-full h-px bg-gray-100 mt-2 shrink-0" />
 
-      {/* ── Scrollable content ─────────────────────────────────────────── */}
       <div className="flex-1 overflow-y-auto overflow-x-hidden min-h-0 p-3 custom-scrollbar">
 
-        {/* ── VIEW A: Category list ───────────────────────────────────── */}
         {showCategoryList && (
           <div className="space-y-6">
 
-            {/*
-              Disabled reason banner — shown instead of the normal hint
-              when filters are unavailable for a known reason.
-              When filters ARE enabled, show the normal instructional hint.
-            */}
             {isDisabled && reasonKey
               ? <FiltersDisabledBanner reasonKey={reasonKey} />
               : activeTab === 'Filters' &&
@@ -413,8 +216,7 @@ const KYLLeftSidebar = ({
                   <p className="text-[11px] text-indigo-600 bg-indigo-50 px-3 py-2 rounded-lg mb-3 border border-indigo-100">
                     Select a category below to apply filters
                   </p>
-                )
-            }
+                )}
 
             {activeTab === 'Patterns' && (
               <p className="text-[11px] text-indigo-600 bg-indigo-50 px-3 py-2 rounded-lg mb-3 border border-indigo-100">
@@ -423,12 +225,10 @@ const KYLLeftSidebar = ({
             )}
 
             {activeTab === 'Filters' ? (
-              getCategoriesBySection().map(([section, categories]) => (
+              CATEGORIES_BY_SECTION.map(([section, categories]) => (
                 <div key={section}>
                   <div className="mb-4 flex items-center gap-3">
-                    <h3 className="text-xs font-bold uppercase tracking-widest text-gray-600">
-                      {section}
-                    </h3>
+                    <h3 className="text-xs font-bold uppercase tracking-widest text-gray-600">{section}</h3>
                     <div className="flex-1 h-px bg-gradient-to-r from-gray-200 to-transparent" />
                   </div>
 
@@ -445,8 +245,7 @@ const KYLLeftSidebar = ({
                             border text-sm font-medium text-left transition-all
                             ${isDisabled
                               ? 'bg-gray-50 text-gray-400 border-gray-100 cursor-not-allowed'
-                              : 'bg-white text-gray-700 border-gray-200 hover:border-indigo-300 hover:bg-indigo-50 hover:text-indigo-700'
-                            }`}
+                              : 'bg-white text-gray-700 border-gray-200 hover:border-indigo-300 hover:bg-indigo-50 hover:text-indigo-700'}`}
                         >
                           <span className="text-left">{category}</span>
                           <div className="flex items-center gap-2 shrink-0">
@@ -474,8 +273,7 @@ const KYLLeftSidebar = ({
                     border text-sm font-medium text-left transition-all
                     ${isDisabled
                       ? 'bg-gray-50 text-gray-400 border-gray-100 cursor-not-allowed'
-                      : 'bg-white text-gray-700 border-gray-200 hover:border-indigo-300 hover:bg-indigo-50 hover:text-indigo-700'
-                    }`}
+                      : 'bg-white text-gray-700 border-gray-200 hover:border-indigo-300 hover:bg-indigo-50 hover:text-indigo-700'}`}
                 >
                   <span className="text-left">{category}</span>
                   <ChevronRight className="w-4 h-4 text-gray-400 shrink-0" />
@@ -485,48 +283,27 @@ const KYLLeftSidebar = ({
           </div>
         )}
 
-        {/* ── VIEW B: Filter list ─────────────────────────────────────── */}
         {showFilterList && (
-            <div className="space-y-6">
-            {getFiltersBySection().map(([section, filters]) => {
-                const isVillageSection = section === 'Village';
-                const villageReasonKey = resolveVillageReasonKey(villageFiltersDisabledReason);
+          <div className="space-y-6 ml-1">
+            {isVillageSection && villageReasonKey && !isDisabled && (
+              <VillageFiltersBanner reasonKey={villageReasonKey} />
+            )}
 
-                console.log(filters)
-
-                return (
-                <div key={section}>
-                    {isVillageSection && villageReasonKey && !isDisabled && (
-                        <VillageFiltersBanner reasonKey={villageReasonKey} />
-                    )}
-        
-                    <div className="space-y-6 ml-1">
-                        {filters.map(filter => {
-                            return(
-                                <div key={filter.name}>
-                                <KYLIndicatorFilter
-                                    filter={{
-                                    ...filter,
-                                    selectedValue: combinedSelectedValues[filter.name]?.[0],
-                                    }}
-                                    onFilterChange={handleFilterSelection}
-                                    isDisabled={isDisabled || (isVillageSection && !!villageReasonKey)}          // ← per-section disabled
-                                    getFormattedSelectedFilters={getFormattedSelectedFilters}
-                                    toggleStates={toggleStates}
-                                    handleLayerSelection={handleLayerSelection}
-                                    showConnectivityRef={showConnectivityRef}
-                                />
-                                </div>
-                            )
-                        })}
-                    </div>
-                </div>
-                );
-            })}
-            </div>
+            {currentFilters.map((filter) => (
+              <KYLIndicatorFilter
+                key={filter.name}
+                filter={{ ...filter, selectedValue: combinedSelectedValues[filter.name]?.[0] }}
+                onFilterChange={handleFilterSelection}
+                isDisabled={isDisabled || (isVillageSection && !!villageReasonKey)}
+                getFormattedSelectedFilters={getFormattedSelectedFilters}
+                toggleStates={toggleStates}
+                handleLayerSelection={handleLayerSelection}
+                showConnectivityRef={showConnectivityRef}
+              />
+            ))}
+          </div>
         )}
 
-        {/* ── VIEW C: Pattern subcategory list ───────────────────────── */}
         {showSubcatList && (
           <div className="space-y-1.5">
             {getSubcategoriesForCategory?.(indicatorType).map(subcategory => (
@@ -543,7 +320,6 @@ const KYLLeftSidebar = ({
           </div>
         )}
 
-        {/* ── VIEW D: Pattern list ────────────────────────────────────── */}
         {showPatternList && (
           <div className="space-y-4">
             {getPatternsForSubcategory?.(indicatorType, selectedSubcategory).map((pattern, index) => (
