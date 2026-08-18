@@ -22,51 +22,52 @@ const DroughtChart = ({ mwsGeoData, waterbody, typeparam }) => {
         waterbody?.properties?.MWS_UID ??
         waterbody?.properties?.mws_uid_list
       )?.toString()?.trim()
-    : waterbody?.MWS_UID?.toString()?.trim();
+    : (
+        waterbody?.MWS_UID ??
+        waterbody?.mws_uid_list
+      )?.toString()?.trim();
 
-  if (!mwsUid) return null;
+if (!rawMwsUid) return null;
 
-  const parts = mwsUid.split("_");
-  const partialUid = parts.length >= 2 ? `${parts[0]}_${parts[1]}` : mwsUid;
+const mwsUidList = rawMwsUid.includes("|")
+  ? rawMwsUid
+      .split("|")
+      .map((id) => id.trim())
+      .filter(Boolean)
+  : rawMwsUid
+      .split("_")
+      .reduce((acc, val, idx, arr) => {
+        if (idx % 2 === 0 && arr[idx + 1]) {
+          acc.push(`${val}_${arr[idx + 1]}`);
+        }
+        return acc;
+      }, []);
 
   let matchedFeature = null;
 
   // PROJECT MODE
-  if (typeparam === "project") {
-    matchedFeature =
-      mwsGeoData?.features?.find(
-        (f) =>
-          f.properties?.uid?.toString()?.trim() === mwsUid ||
-          f.properties?.MWS_UID?.toString()?.trim() === mwsUid
-      ) ||
-      mwsGeoData?.features?.find((f) => {
-        const p = f.properties || {};
-        return (
-          p.uid?.toString()?.trim()?.includes(partialUid) ||
-          p.MWS_UID?.toString()?.trim()?.includes(partialUid)
-        );
-      });
-  }
+if (typeparam === "project") {
+  matchedFeature = mwsGeoData?.features?.find((f) => {
+    const uid =
+      f.properties?.uid?.toString()?.trim() ||
+      f.properties?.MWS_UID?.toString()?.trim();
+
+    return mwsUidList.includes(uid);
+  });
+}
 
   // TEHSIL MODE
-  if (typeparam === "tehsil") {
-    matchedFeature =
-      mwsGeoData.find((f) => {
-        const p = f.getProperties();
-        return (
-          p.uid?.toString()?.trim() === mwsUid ||
-          p.MWS_UID?.toString()?.trim() === mwsUid
-        );
-      }) ||
-      mwsGeoData.find((f) => {
-        const p = f.getProperties();
-        return (
-          p.uid?.toString()?.trim()?.includes(partialUid) ||
-          p.MWS_UID?.toString()?.trim()?.includes(partialUid)
-        );
-      });
-  }
+ if (typeparam === "tehsil") {
+  matchedFeature = mwsGeoData.find((f) => {
+    const p = f.getProperties();
 
+    const uid =
+      p.uid?.toString()?.trim() ||
+      p.MWS_UID?.toString()?.trim();
+
+    return mwsUidList.includes(uid);
+  });
+}
   if (!matchedFeature) return null;
 
   const props =
