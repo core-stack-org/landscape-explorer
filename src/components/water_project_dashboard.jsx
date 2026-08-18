@@ -236,19 +236,34 @@ const WaterProjectDashboard = () => {
   //   return () => clearTimeout(t);
   // }, [loadingData]);
   
-  const extractMwsUidList = (mwsUidString) => {
-    if (!mwsUidString) return [];
+const extractMwsUidList = (mwsUidString) => {
+  if (!mwsUidString) return [];
 
-    return mwsUidString
-      .split("_")
-      .reduce((acc, val, idx, arr) => {
-        // join pairs: 12 + 33823 → 12_33823
-        if (idx % 2 === 0 && arr[idx + 1]) {
-          acc.push(`${val}_${arr[idx + 1]}`);
-        }
-        return acc;
-      }, []);
-  };
+  const value = String(mwsUidString).trim();
+
+  // NEW FORMAT
+  // Example:
+  // "12_355341|12_359307|12_355643"
+  if (value.includes("|")) {
+    return value
+      .split("|")
+      .map((id) => id.trim())
+      .filter(Boolean);
+  }
+
+  // OLD FORMAT
+  // Example:
+  // "12_355341_12_359307_12_355643"
+  return value
+    .split("_")
+    .reduce((acc, val, idx, arr) => {
+      if (idx % 2 === 0 && arr[idx + 1]) {
+        acc.push(`${val}_${arr[idx + 1]}`);
+      }
+
+      return acc;
+    }, []);
+};
 
   const getMatchedMWSFeaturesProject = (mwsGeoData, activeSelectedWaterbody) => {
     if (!mwsGeoData?.features?.length || !activeSelectedWaterbody) return [];
@@ -436,6 +451,12 @@ const WaterProjectDashboard = () => {
       if (!featureId || !raw) return;
   
       const wbMwsList = extractMwsUidList(raw);
+      console.log("RAW MWS VALUE:", raw);
+console.log("EXTRACTED MWS IDS:", wbMwsList);
+console.log(
+  "AVAILABLE MWS IDS:",
+  mwsGeoData.features.map((f) => f.properties?.uid)
+);
       const mws = mwsGeoData.features
       .filter((f) =>
         wbMwsList.includes(f.properties?.uid?.toString().trim())
