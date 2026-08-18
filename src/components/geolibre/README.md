@@ -1,9 +1,9 @@
 # KYL GeoLibre integration
 
 `/download_layers` is a thin host for GeoLibre. KYL keeps its existing header
-(including **GeoLibre User Guide**, **QGIS Documentation**, and the QML style
-repository fallback) and gives the rest of the page to a trusted GeoLibre
-iframe. There is no second KYL map, layer selector, or project panel.
+(including **GeoLibre User Guide** and **QGIS Documentation**) and gives the
+rest of the page to a trusted GeoLibre iframe. There is no second KYL map,
+layer selector, or project panel.
 
 CoRE Stack datasets are available under
 [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
@@ -69,11 +69,13 @@ sequenceDiagram
 2. **Extent:** the shared panchayat-boundary WFS response supplies both default
    Demographic layers and the authoritative tehsil bbox.
 3. **Catalog:** `geolibreLayers.js` is the single layer inventory. It assigns
-   the deployed KYL domain, GeoServer source, QML reference, year, and order.
-4. **Cartography:** vector QML logic is represented in GeoLibre styles; raster
-   QML is rendered by the corresponding named GeoServer WMS style. Matching
-   color labels are synchronized into GeoLibre's native legend only while the
-   corresponding layer is visible.
+   the deployed KYL domain, GeoServer source, year, and order.
+4. **Cartography:** named raster styles are rendered directly by GeoServer WMS.
+   Every layer exposes live GeoServer SLD and JSON/PNG legend endpoints. The
+   finalized vector profiles remain in the project as a visual-parity safeguard
+   because GeoLibre project JSON cannot attach a remote SLD to a predeclared
+   WFS layer. Matching color labels are synchronized into GeoLibre's native
+   legend only while the corresponding layer is visible.
 5. **Loading:** only the shared default WFS is fetched at startup. Other
    vectors hydrate once on first toggle; rasters remain native lazy WMS layers.
 6. **Download:** vector data remains available through GeoLibre and complete
@@ -177,8 +179,8 @@ application.
 | File | Responsibility |
 |---|---|
 | `../../config/geolibre.config.js` | Viewer application version, URL resolution, strict handshake compatibility |
-| `../../config/geolibreLayers.js` | GeoServer names, deployed domains, all LULC years, QML references and WMS styles |
-| `geolibreProject.js` | Project generation, legends, Google imagery, vector hydration, WMS/WCS references and bbox camera |
+| `../../config/geolibreLayers.js` | GeoServer names, deployed domains, all LULC years and named WMS styles |
+| `geolibreProject.js` | Project generation, legends, Google imagery, vector hydration, GeoServer style/WFS/WMS/WCS references and bbox camera |
 | `GeoLibreFrame.jsx` | Iframe bridge, one-time bbox fit, human error states and downloadable bounded technical log |
 | `../../pages/LandscapeExplorer.jsx` | Route-to-project orchestration and fetch-on-first-toggle vector cache; no duplicate map or layer UI |
 
@@ -200,13 +202,18 @@ a log file to the user's filesystem.
 
 ## Styling contract
 
-- Vector QML rules are translated into GeoLibre categorized or expression
-  styles. The source QML URL remains in `metadata.corestack.qmlStyleUrl`.
-- To use these layers with QGIS, download layer styles from the
-  [CoRE Stack QGIS Styles repository](https://github.com/core-stack-org/QGIS-Styles)
-  and load them through QGIS layer properties.
-- Raster QML styles are published as named GeoServer styles and rendered by
-  WMS. Their original QML URLs are also retained.
+- Style delivery no longer depends on GitHub-hosted QML files. Each layer's
+  `metadata.corestack.geoserverStyle` contains public GeoServer `GetStyles` and
+  `GetLegendGraphic` URLs for SLD, JSON legend, and PNG legend access.
+- Named raster styles are applied by GeoServer in every WMS tile request, so
+  the rendered pixels and published server style remain one contract.
+- WFS returns geometry and attributes, not cartography. GeoLibre 2.6 can import
+  an SLD interactively, but its project format cannot associate a remote SLD
+  URL with an already declared WFS layer. The finalized GeoLibre vector styles
+  and legends therefore remain embedded as a tested parity fallback instead of
+  adopting GeoServer's generic `polygon`, `line`, `point`, or `generic` defaults.
+- When a finalized vector style is assigned on GeoServer, validate its public
+  SLD and JSON legend against the parity profile before making it authoritative.
 - Each raster keeps its styled WMS tiles for display and exposes its complete
   WCS GetCoverage GeoTIFF as `source.url`. This is the contract GeoLibre 2.1+
   uses to show **Export → GeoTIFF (COG)** and save the returned bytes without
@@ -218,9 +225,10 @@ backing file. If immutable original COG objects are published later, place those
 direct object URLs in the raster catalogue and use them instead of the WCS
 fallback.
 
-Changing only a QML URL does not alter rendered vector symbology; update the
-matching style profile in `geolibreProject.js`. Raster appearance changes must
-be published to the named GeoServer WMS style.
+Changing a GeoServer vector default does not automatically alter rendered
+GeoLibre symbology; update and test the matching parity profile until GeoLibre
+supports remote SLD URLs in saved project layers. Raster appearance changes
+must be published to the named GeoServer WMS style.
 
 ## Fresh-checkout setup
 
@@ -283,7 +291,8 @@ Check both routes:
 6. Confirm the map does not refit after those vector loads. Enable a raster and
    verify its styled WMS display and **Export → GeoTIFF
    (COG)** full-coverage download.
-7. Open both documentation buttons, the QML repository, and the CC BY 4.0 link.
+7. Open both documentation buttons and the CC BY 4.0 link. Inspect a generated
+   layer's metadata and confirm its style URLs use the configured GeoServer.
 8. If testing a failure state, confirm it uses human recovery guidance and that
    **Download technical log** saves a `.log` file.
 
@@ -314,6 +323,7 @@ GeoLibre 2.2 leaves room for deeper work without another KYL map implementation:
 - use direct object-store COG URLs for immutable original-file downloads;
 - preconfigure processing models, bookmarks, print layouts, stories, or plugins;
 - expose saved/shareable GeoLibre project files for partner workflows;
-- add direct QML import once GeoLibre's web project/style contract supports it;
+- replace vector parity profiles with live SLD URLs once GeoLibre's project
+  format supports remote styles on predeclared WFS layers;
 - self-host tested versioned builds so a single version change selects the
   exact deployed application binary.
