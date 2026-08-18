@@ -236,19 +236,34 @@ const WaterProjectDashboard = () => {
   //   return () => clearTimeout(t);
   // }, [loadingData]);
   
-  const extractMwsUidList = (mwsUidString) => {
-    if (!mwsUidString) return [];
+const extractMwsUidList = (mwsUidString) => {
+  if (!mwsUidString) return [];
 
-    return mwsUidString
-      .split("_")
-      .reduce((acc, val, idx, arr) => {
-        // join pairs: 12 + 33823 → 12_33823
-        if (idx % 2 === 0 && arr[idx + 1]) {
-          acc.push(`${val}_${arr[idx + 1]}`);
-        }
-        return acc;
-      }, []);
-  };
+  const value = String(mwsUidString).trim();
+
+  // NEW FORMAT
+  // Example:
+  // "12_355341|12_359307|12_355643"
+  if (value.includes("|")) {
+    return value
+      .split("|")
+      .map((id) => id.trim())
+      .filter(Boolean);
+  }
+
+  // OLD FORMAT
+  // Example:
+  // "12_355341_12_359307_12_355643"
+  return value
+    .split("_")
+    .reduce((acc, val, idx, arr) => {
+      if (idx % 2 === 0 && arr[idx + 1]) {
+        acc.push(`${val}_${arr[idx + 1]}`);
+      }
+
+      return acc;
+    }, []);
+};
 
   const getMatchedMWSFeaturesProject = (mwsGeoData, activeSelectedWaterbody) => {
     if (!mwsGeoData?.features?.length || !activeSelectedWaterbody) return [];
@@ -320,6 +335,20 @@ const WaterProjectDashboard = () => {
     });
   }, [zoiFeatures, activeSelectedWaterbody]);
 
+  const hasNdviData = useMemo(() => {
+  if (!isTehsilMode || !matchedZoiFeature) return true;
+
+  const props = matchedZoiFeature.getProperties?.() || {};
+
+  return Object.entries(props).some(([key, value]) => {
+    if (!key.startsWith("NDVI_")) return false;
+
+    return value !== null &&
+           value !== undefined &&
+           value !== "" &&
+           Number.isFinite(Number(value));
+  });
+}, [isTehsilMode, matchedZoiFeature]);
   
   const zoiAreaFromFeature = matchedZoiFeature
   ? Number(matchedZoiFeature.get("zoi_area")) || 0
@@ -422,6 +451,12 @@ const WaterProjectDashboard = () => {
       if (!featureId || !raw) return;
   
       const wbMwsList = extractMwsUidList(raw);
+      console.log("RAW MWS VALUE:", raw);
+console.log("EXTRACTED MWS IDS:", wbMwsList);
+console.log(
+  "AVAILABLE MWS IDS:",
+  mwsGeoData.features.map((f) => f.properties?.uid)
+);
       const mws = mwsGeoData.features
       .filter((f) =>
         wbMwsList.includes(f.properties?.uid?.toString().trim())
@@ -1729,20 +1764,22 @@ const mwsSheet = XLSX.utils.json_to_sheet(mwsData, {
             </div>
   
             {/* NDVI */}
-            {showMap && activeSelectedWaterbody && (
+{/* NDVI */}
+{showMap && activeSelectedWaterbody && hasNdviData && (
   <div className="bg-white rounded-xl shadow-md p-6 mt-8">
     <div className="w-full min-h-[420px]">
-    <NDVIChart
-                      zoiFeatures={zoiFeatures}
-                      waterbody={activeSelectedWaterbody}
-                      years={WATER_DASHBOARD_CONFIG.ndviYears}
-                    />
+      <NDVIChart
+        zoiFeatures={zoiFeatures}
+        waterbody={activeSelectedWaterbody}
+        years={WATER_DASHBOARD_CONFIG.ndviYears}
+      />
     </div>
-    {showMap && activeSelectedWaterbody && (
-  <div className="text-gray-500 text-[clamp(0.65rem,0.95vw,0.7rem)] mt-2 pl-2 w-full">
-    <p><b>NDVI : </b> Used harmonized Landsat-7, Landsat-8 and Sentinel-2 NDVI values to construct 16-day NDVI time series, gap-filled with MODIS NDVI values.</p>
-  </div>
-)}
+
+    <div className="text-gray-500 text-[clamp(0.65rem,0.95vw,0.7rem)] mt-2 pl-2 w-full">
+      <p>
+        <b>NDVI : </b> Used harmonized Landsat-7, Landsat-8 and Sentinel-2 NDVI values to construct 16-day NDVI time series, gap-filled with MODIS NDVI values.
+      </p>
+    </div>
   </div>
 )}
   
