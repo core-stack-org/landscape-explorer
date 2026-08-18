@@ -76,7 +76,7 @@ describe("GeoLibre 2.2 project generation", () => {
 
     expect(project.version).toBe("0.2.0");
     expect(project.layers).toHaveLength(GEOLIBRE_LAYERS.length);
-    expect(project.layers).toHaveLength(51);
+    expect(project.layers).toHaveLength(54);
     expect(project.mapView.bbox).toEqual([92.9, 24.7, 93.2, 25]);
     expect(project.basemapStyleUrl).toBe(DEFAULT_GEOLIBRE_BASEMAP_STYLE);
     expect(decodeURIComponent(project.basemapStyleUrl)).toContain(
@@ -200,9 +200,12 @@ describe("GeoLibre 2.2 project generation", () => {
       .reverse()
       .map((layer) => layer.id);
 
-    expect(displayIds.slice(0, 5)).toEqual([
+    expect(displayIds.slice(0, 8)).toEqual([
       "corestack-administrative_boundaries",
       "corestack-demographics",
+      "corestack-facilities",
+      "corestack-antyodaya",
+      "corestack-livestock",
       "corestack-mws_layers",
       "corestack-hydrological_boundaries",
       "corestack-mws_layers_fortnight",
@@ -226,6 +229,7 @@ describe("GeoLibre 2.2 project generation", () => {
     );
     expect(project.layerGroups.map((group) => group.id)).toEqual([
       "demographic",
+      "village-data",
       "hydrology",
       "lulc-3",
       "lulc-2",
@@ -250,6 +254,11 @@ describe("GeoLibre 2.2 project generation", () => {
     );
 
     expect(typeNames).toMatchObject({
+      "corestack-facilities":
+        "facilities_proximity:facilities_cachar_lakhipur",
+      "corestack-antyodaya":
+        "antyodaya_2020:antyodaya20_cachar_lakhipur",
+      "corestack-livestock": "livestocks:livestocks_cachar_lakhipur",
       "corestack-river": "river:cachar_lakhipur_river_vector",
       "corestack-canal": "canal:cachar_lakhipur_canal_vector",
       "corestack-green_credit": "green_credit:cachar_lakhipur_green_credit",
@@ -257,6 +266,17 @@ describe("GeoLibre 2.2 project generation", () => {
       "corestack-industry": "factory_csr:cachar_lakhipur_factory_csr",
       "corestack-mining": "mining:cachar_lakhipur_mining",
     });
+
+    expect(project.styles["corestack-facilities"].vectorStyleExpression).toContain(
+      "l2_essential_education_distance_km"
+    );
+    expect(project.styles["corestack-antyodaya"]).toMatchObject({
+      vectorStyleMode: "categorized",
+      vectorStyleProperty: "road_connectivity_cat_cluster",
+    });
+    expect(project.styles["corestack-livestock"].vectorStyleExpression).toContain(
+      "small_animals_total"
+    );
   });
 
   it("prepares default legend data for the KYL overlay", async () => {

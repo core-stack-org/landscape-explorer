@@ -161,6 +161,37 @@ const STYLE_PROFILES = {
     ],
     { fillColor: "#98fb98", strokeColor: "#111827", fillOpacity: 0.65 }
   ),
+  facilities: expressionStyle(
+    [
+      "step",
+      numericProperty("l2_essential_education_distance_km"),
+      "#fff9c4",
+      2,
+      "#ffc107",
+    ],
+    { fillColor: "#fff9c4", strokeColor: "#232323", fillOpacity: 0.8 }
+  ),
+  antyodaya: categoryStyle(
+    "road_connectivity_cat_cluster",
+    [
+      ["LOW", "#dc143c", "Poor road connectivity"],
+      ["MEDIUM", "#ffd700", "Moderate road connectivity"],
+      ["HIGH", "#90ee90", "Strong road connectivity"],
+    ],
+    { fillColor: "#ffd700", strokeColor: "#232323", fillOpacity: 0.8 }
+  ),
+  livestock: expressionStyle(
+    [
+      "step",
+      numericProperty("small_animals_total"),
+      "#dc143c",
+      201,
+      "#ffd700",
+      501,
+      "#90ee90",
+    ],
+    { fillColor: "#ffd700", strokeColor: "#232323", fillOpacity: 0.8 }
+  ),
   terrain_vector: categoryStyle(
     "terrainClu",
     [
@@ -320,6 +351,20 @@ const LEGEND_PROFILES = {
     ["Literacy 59% to below 70%", "#228b22"],
     ["Literacy 70% or above", "#006400"],
   ],
+  facilities: [
+    ["Primary education within 2 km", "#fff9c4"],
+    ["Primary education more than 2 km away", "#ffc107"],
+  ],
+  antyodaya: [
+    ["Poor road connectivity", "#dc143c"],
+    ["Moderate road connectivity", "#ffd700"],
+    ["Strong road connectivity", "#90ee90"],
+  ],
+  livestock: [
+    ["Bovine population 0 to 200", "#dc143c"],
+    ["Bovine population 201 to 500", "#ffd700"],
+    ["Bovine population above 500", "#90ee90"],
+  ],
   mws: [
     ["Net groundwater change below -5", "#ff0000"],
     ["Net groundwater change -5 to below -1", "#ffff00"],
@@ -461,6 +506,7 @@ const layerLegend = (catalogLayer, style) => {
 
 const GROUPS_TOP_FIRST = [
   { id: "demographic", name: "Demographic", collapsed: false },
+  { id: "village-data", name: "Village Data", collapsed: true },
   { id: "hydrology", name: "Hydrology", collapsed: true },
   { id: "lulc-3", name: "LULC · Level 3 by year", collapsed: true },
   { id: "lulc-2", name: "LULC · Level 2 by year", collapsed: true },
