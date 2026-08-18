@@ -105,6 +105,13 @@ describe("GeoLibre 2.2 project generation", () => {
         service: "wfs",
         featureCount: 1,
         loadState: "loaded",
+        corestack: {
+          geoserverStyle: {
+            provider: "GeoServer",
+            assignment: "layer-default",
+            renderingMode: "geolibre-parity-profile",
+          },
+        },
       },
     });
     expect(socioeconomic.geojson.type).toBe("FeatureCollection");
@@ -150,6 +157,11 @@ describe("GeoLibre 2.2 project generation", () => {
       metadata: {
         service: "wms",
         corestack: {
+          geoserverStyle: {
+            name: "lulc_level_3_style",
+            assignment: "named-style",
+            renderingMode: "server-rendered-wms",
+          },
           rasterDownload: {
             kind: "full-coverage-geotiff",
             bytePreservingInGeoLibre: true,
@@ -164,6 +176,12 @@ describe("GeoLibre 2.2 project generation", () => {
       "BBOX={bbox-epsg-3857}"
     );
     expect(latestLulc.source.wmsUrl).toContain("/geoserver/wms");
+    expect(latestLulc.metadata.corestack.geoserverStyle.sldUrl).toContain(
+      "REQUEST=GetStyles"
+    );
+    expect(
+      latestLulc.metadata.corestack.geoserverStyle.legendJsonUrl
+    ).toContain("FORMAT=application%2Fjson");
     expect(latestLulc.source.url).toContain("request=GetCoverage");
     expect(latestLulc.source.url).toContain(
       "CoverageId=LULC_level_3%3ALULC_24_25_cachar_lakhipur_level_3"
@@ -207,6 +225,14 @@ describe("GeoLibre 2.2 project generation", () => {
     expect(dem.source.url).toContain(
       "CoverageId=dem%3Acachar_lakhipur_dem_raster"
     );
+    expect(
+      project.layers.every(
+        (layer) =>
+          !JSON.stringify(layer.metadata?.corestack || {}).includes(
+            "githubusercontent.com"
+          )
+      )
+    ).toBe(true);
     expect(successfulFetch).toHaveBeenCalledTimes(1);
   });
 

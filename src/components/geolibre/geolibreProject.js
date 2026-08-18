@@ -601,12 +601,57 @@ const buildWfsRequest = (baseUrl, layer, layerName) => {
   };
 };
 
+const wmsEndpointFor = (baseUrl, layer) =>
+  layer.useGlobalWms
+    ? `${baseUrl}wms`
+    : `${baseUrl}${layer.workspace}/wms`;
+
+const buildGeoServerStyleSource = (baseUrl, layer, layerName) => {
+  const endpoint = wmsEndpointFor(baseUrl, layer);
+  const qualifiedName = `${layer.workspace}:${layerName}`;
+  const namedStyle = layer.wmsStyle || "";
+  const getStylesEntry = namedStyle ? [["STYLES", namedStyle]] : [];
+  const legendStyleEntry = namedStyle ? [["STYLE", namedStyle]] : [];
+  const common = [
+    ["SERVICE", "WMS"],
+    ["VERSION", "1.1.1"],
+  ];
+
+  return {
+    provider: "GeoServer",
+    name: namedStyle || null,
+    assignment: namedStyle ? "named-style" : "layer-default",
+    renderingMode:
+      layer.sourceType === "wms"
+        ? "server-rendered-wms"
+        : "geolibre-parity-profile",
+    sldUrl: appendQuery(endpoint, [
+      ...common,
+      ["REQUEST", "GetStyles"],
+      ["LAYERS", qualifiedName],
+      ...getStylesEntry,
+    ]),
+    legendJsonUrl: appendQuery(endpoint, [
+      ...common,
+      ["REQUEST", "GetLegendGraphic"],
+      ["FORMAT", "application/json"],
+      ["LAYER", qualifiedName],
+      ...legendStyleEntry,
+    ]),
+    legendImageUrl: appendQuery(endpoint, [
+      ...common,
+      ["REQUEST", "GetLegendGraphic"],
+      ["FORMAT", "image/png"],
+      ["LAYER", qualifiedName],
+      ...legendStyleEntry,
+    ]),
+  };
+};
+
 const buildWmsSource = (baseUrl, layer, layerName, bounds) => {
   // Cross-workspace LULC styles are available through GeoServer's global WMS,
   // while other catalog layers retain their workspace-scoped endpoints.
-  const endpoint = layer.useGlobalWms
-    ? `${baseUrl}wms`
-    : `${baseUrl}${layer.workspace}/wms`;
+  const endpoint = wmsEndpointFor(baseUrl, layer);
   const qualifiedName = `${layer.workspace}:${layerName}`;
   const source = {
     type: "raster",
@@ -758,19 +803,19 @@ const layerStyle = (layer) =>
     ? { ...RASTER_STYLE }
     : { ...(STYLE_PROFILES[layer.styleProfile] || BASE_STYLE) };
 
-const coreStackMetadata = (layer, layerName, sourceUrl, style) => ({
+const coreStackMetadata = (layer, layerName, sourceUrl, style, baseUrl) => ({
   domain: layer.domain,
   geoserverWorkspace: layer.workspace,
   geoserverLayer: layerName,
   sourceType: layer.sourceType,
   liveSource: sourceUrl,
-  qmlStyleUrl: layer.qmlStyleUrl,
+  geoserverStyle: buildGeoServerStyleSource(baseUrl, layer, layerName),
   year: layer.year || null,
   legend: layerLegend(layer, style),
   styleContract:
     layer.sourceType === "wms"
-      ? "GeoServer renders the named style published from the CoRE Stack QGIS style catalog."
-      : "The QGIS QML symbology is represented as a GeoLibre vector style.",
+      ? "GeoServer renders the published named style through WMS."
+      : "GeoLibre retains the finalized vector profile while the live GeoServer SLD and legend endpoints provide the server style contract.",
 });
 
 const buildVectorLayer = ({
@@ -780,6 +825,7 @@ const buildVectorLayer = ({
   data = EMPTY_FEATURE_COLLECTION,
   failure,
   loaded = false,
+  baseUrl,
 }) => {
   const style = layerStyle(catalogLayer);
   const isDefaultDisplay = catalogLayer.defaultVisible === true;
@@ -808,7 +854,13 @@ const buildVectorLayer = ({
       loadState,
       ...(failure ? { initialLoadError: failure.message } : {}),
       corestack: {
-        ...coreStackMetadata(catalogLayer, layerName, request.url, style),
+        ...coreStackMetadata(
+          catalogLayer,
+          layerName,
+          request.url,
+          style,
+          baseUrl
+        ),
         loadState,
       },
     },
@@ -841,7 +893,13 @@ const buildRasterLayer = ({ catalogLayer, layerName, baseUrl, bounds }) => {
     metadata: {
       service: "wms",
       corestack: {
-        ...coreStackMetadata(catalogLayer, layerName, wmsSource.url, style),
+        ...coreStackMetadata(
+          catalogLayer,
+          layerName,
+          wmsSource.url,
+          style,
+          baseUrl
+        ),
         wcsDownloadUrl,
         rasterDownload: {
           kind: "full-coverage-geotiff",
@@ -1187,6 +1245,7 @@ export const buildGeoLibreProject = async ({
         return buildVectorLayer({
           catalogLayer,
           layerName,
+          baseUrl,
           ...(result || {
             data: EMPTY_FEATURE_COLLECTION,
             request: buildWfsRequest(baseUrl, catalogLayer, layerName),
@@ -1251,8 +1310,8 @@ export const buildGeoLibreProject = async ({
           initialLoadFailures: [...failures],
           lazyLoadFailures: [],
         },
-        qmlStyleContract:
-          "Vector QML symbology is represented in GeoLibre styles. Raster QML symbology is rendered by named GeoServer WMS styles. Original QML URLs are retained per layer.",
+        geoserverStyleContract:
+          "Raster symbology is rendered by named GeoServer WMS styles. Vector layers retain the verified GeoLibre parity profiles and expose live GeoServer GetStyles and GetLegendGraphic endpoints without depending on GitHub-hosted QML files.",
       },
     };
   };
