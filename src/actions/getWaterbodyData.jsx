@@ -20,6 +20,7 @@ export const getWaterbodyData = async ({
       });
       return null;
     }
+    console.log("Fetching waterbody data for:", district.label, block.label, waterbodyUID);
 
     const transformName = (name) => {
       if (!name) return "";
@@ -63,6 +64,7 @@ export const getWaterbodyData = async ({
     });
 
     const extractMwsUidList = (mwsUidString) => {
+      console.log("Extracting MWS UID list from:", mwsUidString);
       if (!mwsUidString) return [];
   
       return mwsUidString
@@ -122,7 +124,8 @@ export const getWaterbodyData = async ({
     if (matchedWaterbody) {
       const wbMwsUID =
         matchedWaterbody.get("MWS_UID") ||
-        matchedWaterbody.get("mws_uid");
+        matchedWaterbody.get("mws_uid") ||
+        matchedWaterbody.get("mws_uid_list");
 
       if (wbMwsUID) {
         // extract list like ["12_308838","12_311076","12_316294"]
@@ -130,6 +133,7 @@ export const getWaterbodyData = async ({
    
     
         matchedMWS = mwsFeatures.filter((f) => {
+            console.log("MWS FEATURE:", f.getProperties());
           const uid = (f.get("uid") || f.get("UID"))?.toString();
           return uid && mwsUidList.includes(uid.trim());
         });
@@ -159,9 +163,11 @@ if (zoiLayer) {
 
   // Match only for selected WB
   if (matchedWaterbody) {
-    const wbUid =
+   const wbUid =
       matchedWaterbody.get("UID")?.toString()?.trim() ||
-      matchedWaterbody.get("uid")?.toString()?.trim();
+      matchedWaterbody.get("uid")?.toString()?.trim() ||
+      matchedWaterbody.get("id")?.toString()?.trim() ||
+      matchedWaterbody.get("wb_id")?.toString()?.trim();
 
     matchedZOI = rawZoiFeatures.filter(f => {
       const zUid =

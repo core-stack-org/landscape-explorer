@@ -151,6 +151,7 @@ export const useGlobalWaterData = ({
           });
 
           drought = await fetchWFS(droughtTypeName);
+          console.log("DROUGHT DATA:", drought);
 
 
         if (drought?.features) {
