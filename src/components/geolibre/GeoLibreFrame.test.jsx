@@ -17,7 +17,7 @@ const project = {
   layers: [],
 };
 
-const announceReady = (frame, version = "2.2.0") => {
+const announceReady = (frame, version = "2.6.0") => {
   window.dispatchEvent(
     new MessageEvent("message", {
       origin: "https://web.geolibre.app",
@@ -31,14 +31,14 @@ describe("GeoLibre iframe bridge", () => {
   beforeEach(() => jest.useFakeTimers());
   afterEach(() => jest.useRealTimers());
 
-  it("loads the project and fits its bbox after a compatible v2.1 handshake", () => {
+  it("loads the project and fits its bbox after a compatible v2.6 handshake", () => {
     render(<GeoLibreFrame project={project} />);
     const frame = screen.getByTitle("GeoLibre GIS workspace");
     const postMessage = jest.spyOn(frame.contentWindow, "postMessage");
 
-    act(() => announceReady(frame, "2.1.0"));
+    act(() => announceReady(frame, "2.6.0"));
 
-    expect(screen.getByText(/GeoLibre 2\.1\.0 · rolling host/i)).toBeTruthy();
+    expect(screen.getByText(/GeoLibre 2\.6\.0 · rolling host/i)).toBeTruthy();
 
     expect(postMessage).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -100,13 +100,13 @@ describe("GeoLibre iframe bridge", () => {
       {
         timestamp: "2026-07-22T00:00:00.000Z",
         event: "iframe_handshake_timeout",
-        details: { expectedVersion: "2.2.0" },
+        details: { expectedVersion: "2.6.0" },
       },
     ]);
 
     expect(output).toContain("KYL GeoLibre technical log");
     expect(output).toContain("iframe_handshake_timeout");
-    expect(output).toContain('"expectedVersion":"2.2.0"');
+    expect(output).toContain('"expectedVersion":"2.6.0"');
   });
 
   it("reloads a lazily hydrated project without fitting the tehsil again", () => {

@@ -48,7 +48,7 @@ beforeEach(() => {
   );
 });
 
-describe("GeoLibre 2.2 project generation", () => {
+describe("GeoLibre 2.6 project generation", () => {
   it("normalizes KYL location labels for GeoServer layer names", () => {
     expect(formatGeoServerName("  Banas Kantha (Palanpur) ")).toBe(
       "banas_kantha_palanpur"
