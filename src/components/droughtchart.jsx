@@ -16,7 +16,7 @@ const DroughtChart = ({ mwsGeoData, waterbody, typeparam }) => {
   if (!mwsGeoData || !waterbody) return null;
 
   // GET UID
- let mwsUid =
+ const rawMwsUid =
   typeparam === "tehsil"
     ? (
         waterbody?.properties?.MWS_UID ??
@@ -42,7 +42,6 @@ const mwsUidList = rawMwsUid.includes("|")
         }
         return acc;
       }, []);
-
   let matchedFeature = null;
 
   // PROJECT MODE
