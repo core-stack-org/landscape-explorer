@@ -199,6 +199,20 @@ const STYLE_PROFILES = {
     ],
     { fillColor: "#03045e", strokeColor: "#03045e", strokeWidth: 2 }
   ),
+  river: {
+    ...BASE_STYLE,
+    fillColor: "#2b93fa",
+    strokeColor: "#2b93fa",
+    strokeWidth: 2,
+    fillOpacity: 0.8,
+  },
+  canal: {
+    ...BASE_STYLE,
+    fillColor: "#2b93fa",
+    strokeColor: "#2b93fa",
+    strokeWidth: 2,
+    fillOpacity: 0.8,
+  },
   waterbodies: {
     ...BASE_STYLE,
     fillColor: "#6495ed",
@@ -282,6 +296,20 @@ const STYLE_PROFILES = {
       circleRadius: 6,
     }
   ),
+  green_credit: {
+    ...BASE_STYLE,
+    fillColor: "#14d11d",
+    strokeColor: "#14d11d",
+    fillOpacity: 0.6,
+  },
+  industry_point: {
+    ...BASE_STYLE,
+    fillColor: "#ff0000",
+    strokeColor: "#ffffff",
+    strokeWidth: 1,
+    fillOpacity: 1,
+    circleRadius: 10,
+  },
 };
 
 const LEGEND_PROFILES = {
@@ -299,6 +327,8 @@ const LEGEND_PROFILES = {
     ["Net groundwater change 1 or above", "#1017f8"],
   ],
   waterbodies: [["Surface waterbody", "#6495ed"]],
+  river: [["River", "#2b93fa", "line"]],
+  canal: [["Canal", "#2b93fa", "line"]],
   cropping_intensity: [
     ["Average cropping intensity below 1", "#ff9371"],
     ["Average cropping intensity 1 to below 2", "#ffa500"],
@@ -371,6 +401,10 @@ const LEGEND_PROFILES = {
     ["Wide-scale restoration", "#0f077c"],
     ["Protection", "#4fbc14"],
   ],
+  green_credit: [["Green Credit project area", "#14d11d"]],
+  land_conflicts: [["Reported land conflict", "#ff0000", "circle"]],
+  industry: [["Industry or CSR site", "#ff0000", "circle"]],
+  mining: [["Mining site", "#ff0000", "circle"]],
   lulc_level_1: [
     ["Built-up", "#ff0000"],
     ["Water", "#1ca3ec"],
@@ -434,6 +468,7 @@ const GROUPS_TOP_FIRST = [
   { id: "land", name: "Land", collapsed: true },
   { id: "agriculture", name: "Agriculture", collapsed: true },
   { id: "restoration", name: "Restoration", collapsed: true },
+  { id: "industry", name: "Industry", collapsed: true },
   { id: "nrega", name: "NREGA", collapsed: true },
 ];
 
