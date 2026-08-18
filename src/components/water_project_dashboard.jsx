@@ -253,13 +253,19 @@ const WaterProjectDashboard = () => {
   const getMatchedMWSFeaturesProject = (mwsGeoData, activeSelectedWaterbody) => {
     if (!mwsGeoData?.features?.length || !activeSelectedWaterbody) return [];
 
-    const raw = activeSelectedWaterbody.MWS_UID ||  activeSelectedWaterbody.properties?.MWS_UID;
+  const raw =
+      activeSelectedWaterbody.MWS_UID ??
+      activeSelectedWaterbody.properties?.MWS_UID ??
+      activeSelectedWaterbody.mws_uid_list ??
+      activeSelectedWaterbody.properties?.mws_uid_list;
 
     if (!raw) return [];
 
     const wbMwsList = extractMwsUidList(raw);
-
+    
     const matchedFeatures = mwsGeoData.features.filter((f) => {
+      console.log(mwsGeoData)
+      console.log("MWS FEATURE PROPERTIES:", f.properties);
       const uid = f.properties?.uid?.toString().trim();
       return wbMwsList.includes(uid);
     });

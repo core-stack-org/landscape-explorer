@@ -16,10 +16,13 @@ const DroughtChart = ({ mwsGeoData, waterbody, typeparam }) => {
   if (!mwsGeoData || !waterbody) return null;
 
   // GET UID
-  let mwsUid =
-    typeparam === "tehsil"
-      ? waterbody?.properties?.MWS_UID?.toString()?.trim()
-      : waterbody?.MWS_UID?.toString()?.trim();
+ let mwsUid =
+  typeparam === "tehsil"
+    ? (
+        waterbody?.properties?.MWS_UID ??
+        waterbody?.properties?.mws_uid_list
+      )?.toString()?.trim()
+    : waterbody?.MWS_UID?.toString()?.trim();
 
   if (!mwsUid) return null;
 

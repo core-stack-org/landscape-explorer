@@ -13,6 +13,7 @@ ChartJS.register(BarElement, CategoryScale, LinearScale, Tooltip, Legend);
 
   // PROJECT MODE PARSING (unchanged)
 const extractProjectSeasonalData = (properties) => {
+  console.log("Extracting project seasonal data from properties:", properties);
   
   const seasons = ["kharif", "rabi", "zaid"];
   const yearMap = new Map();
