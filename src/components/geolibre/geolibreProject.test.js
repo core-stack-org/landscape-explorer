@@ -76,7 +76,7 @@ describe("GeoLibre 2.2 project generation", () => {
 
     expect(project.version).toBe("0.2.0");
     expect(project.layers).toHaveLength(GEOLIBRE_LAYERS.length);
-    expect(project.layers).toHaveLength(54);
+    expect(project.layers).toHaveLength(55);
     expect(project.mapView.bbox).toEqual([92.9, 24.7, 93.2, 25]);
     expect(project.basemapStyleUrl).toBe(DEFAULT_GEOLIBRE_BASEMAP_STYLE);
     expect(decodeURIComponent(project.basemapStyleUrl)).toContain(
@@ -188,6 +188,25 @@ describe("GeoLibre 2.2 project generation", () => {
       "lulc_level_2_style",
       "lulc_level_3_style",
     ]);
+
+    const dem = project.layers.find((layer) => layer.id === "corestack-dem");
+    expect(dem).toMatchObject({
+      type: "raster",
+      visible: false,
+      source: {
+        layers: "dem:cachar_lakhipur_dem_raster",
+        styles: "dem_grayscale",
+      },
+      metadata: {
+        corestack: {
+          geoserverWorkspace: "dem",
+          rasterDownload: { kind: "full-coverage-geotiff" },
+        },
+      },
+    });
+    expect(dem.source.url).toContain(
+      "CoverageId=dem%3Acachar_lakhipur_dem_raster"
+    );
     expect(successfulFetch).toHaveBeenCalledTimes(1);
   });
 

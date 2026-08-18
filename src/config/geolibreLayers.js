@@ -300,6 +300,16 @@ const LAYERS = [
     qmlStyleUrl: qmlStyle("Land/terrain_1-12class.qml"),
   },
   {
+    id: "dem",
+    label: "Digital Elevation Model",
+    domain: "Land",
+    loadGroup: "land",
+    sourceType: "wms",
+    workspace: "dem",
+    layerName: ({ district, tehsil }) => `${district}_${tehsil}_dem_raster`,
+    wmsStyle: "dem_grayscale",
+  },
+  {
     id: "clart",
     label: "CLART",
     domain: "Hydrology",
