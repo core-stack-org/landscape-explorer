@@ -87,14 +87,15 @@ GeoLibre's own layer panel follows the deployed Download Layers taxonomy,
 ordered top-first as:
 
 1. Demographic (Administrative Boundaries, Socio-Economic Profile)
-2. Hydrology (including micro-watersheds and hydrological variables)
+2. Hydrology (including micro-watersheds, rivers, canals and hydrological variables)
 3. LULC Level 3 by year
 4. LULC Level 2 by year
 5. LULC Level 1 by year
 6. Land
 7. Agriculture
 8. Restoration
-9. NREGA
+9. Industry
+10. NREGA
 
 The remaining groups are collapsed. Every layer outside the two default
 Demographic entries is toggle-to-load. Each LULC group shows 2024-2025 first
@@ -180,7 +181,7 @@ application.
 | `GeoLibreFrame.jsx` | Iframe bridge, one-time bbox fit, human error states and downloadable bounded technical log |
 | `../../pages/LandscapeExplorer.jsx` | Route-to-project orchestration and fetch-on-first-toggle vector cache; no duplicate map or layer UI |
 
-The current project contains 45 entries: 13 vector entries, 24 LULC year/style
+The current project contains 51 entries: 19 vector entries, 24 LULC year/style
 entries backed by 8 Level 3 yearly rasters, and 8 other rasters. Initial startup
 performs exactly one distinct WFS request for the shared Demographic data and no
 WMS request. Each other vector makes its own WFS request only on its first

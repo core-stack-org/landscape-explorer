@@ -76,7 +76,7 @@ describe("GeoLibre 2.2 project generation", () => {
 
     expect(project.version).toBe("0.2.0");
     expect(project.layers).toHaveLength(GEOLIBRE_LAYERS.length);
-    expect(project.layers).toHaveLength(45);
+    expect(project.layers).toHaveLength(51);
     expect(project.mapView.bbox).toEqual([92.9, 24.7, 93.2, 25]);
     expect(project.basemapStyleUrl).toBe(DEFAULT_GEOLIBRE_BASEMAP_STYLE);
     expect(decodeURIComponent(project.basemapStyleUrl)).toContain(
@@ -233,8 +233,30 @@ describe("GeoLibre 2.2 project generation", () => {
       "land",
       "agriculture",
       "restoration",
+      "industry",
       "nrega",
     ]);
+  });
+
+  it("uses the deployed KYL names for hydrology, restoration, and industry sources", async () => {
+    const project = await buildGeoLibreProject({
+      ...location,
+      fetchFeatureCollection: successfulFetch,
+    });
+    const typeNames = Object.fromEntries(
+      project.layers
+        .filter((layer) => layer.type === "geojson")
+        .map((layer) => [layer.id, layer.source.typeName])
+    );
+
+    expect(typeNames).toMatchObject({
+      "corestack-river": "river:cachar_lakhipur_river_vector",
+      "corestack-canal": "canal:cachar_lakhipur_canal_vector",
+      "corestack-green_credit": "green_credit:cachar_lakhipur_green_credit",
+      "corestack-land_conflicts": "lcw:cachar_lakhipur_lcw_conflict",
+      "corestack-industry": "factory_csr:cachar_lakhipur_factory_csr",
+      "corestack-mining": "mining:cachar_lakhipur_mining",
+    });
   });
 
   it("prepares default legend data for the KYL overlay", async () => {
