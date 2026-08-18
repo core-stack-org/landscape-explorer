@@ -9,7 +9,7 @@ CoRE Stack datasets are available under
 [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
 
 The implementation targets
-[GeoLibre v2.2.0](https://github.com/opengeos/GeoLibre/releases/tag/v2.2.0)
+[GeoLibre v2.6.0](https://github.com/opengeos/GeoLibre/releases/tag/v2.6.0)
 and uses its supported embed bridge and WFS project representation.
 
 ## Runtime flow
@@ -136,15 +136,15 @@ for GeoLibre's Print Layout legend.
 
 ## Version configuration
 
-The default hosted viewer accepts any GeoLibre release from `2.0.0` up to, but
+The default hosted viewer accepts any GeoLibre release from `2.6.0` up to, but
 not including, `3.0.0`. Compatible 2.x hosted upgrades need no KYL code change.
 The one source-code fallback to update is the version value in
 `../../config/geolibre.config.js`:
 
 ```js
 export const GEOLIBRE_CONFIG = Object.freeze({
-  version: process.env.REACT_APP_GEOLIBRE_VERSION || "2.2.0",
-  minimumCompatibleVersion: "2.0.0",
+  version: process.env.REACT_APP_GEOLIBRE_VERSION || "2.6.0",
+  minimumCompatibleVersion: "2.6.0",
   supportedMajorVersion: 2,
   // ...
 });
@@ -157,7 +157,7 @@ versioned URL template. It cannot select the release served by the unversioned
 For an exactly pinned self-hosted release, set:
 
 ```dotenv
-REACT_APP_GEOLIBRE_VERSION=2.3.0
+REACT_APP_GEOLIBRE_VERSION=2.6.0
 REACT_APP_GEOLIBRE_URL_TEMPLATE=https://maps.example.org/geolibre/{version}/
 REACT_APP_GEOLIBRE_STRICT_VERSION=true
 ```
@@ -170,7 +170,7 @@ the compatibility rules and project/bridge tests, not just the version value.
 The small badge over the iframe reports the version that actually completed the
 GeoLibre handshake and whether its deployment URL is `rolling` or `pinned`.
 
-GeoLibre's application version (`2.2.0`) is separate from its project schema
+GeoLibre's application version (`2.6.0`) is separate from its project schema
 version (`0.2.0`). Do not change the project format merely when upgrading the
 application.
 
@@ -318,7 +318,7 @@ the user's browser with CORS enabled, and the site's framing policy must permit
 
 ## Future integration options
 
-GeoLibre 2.2 leaves room for deeper work without another KYL map implementation:
+GeoLibre 2.6 leaves room for deeper work without another KYL map implementation:
 
 - use direct object-store COG URLs for immutable original-file downloads;
 - preconfigure processing models, bookmarks, print layouts, stories, or plugins;
