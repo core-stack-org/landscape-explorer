@@ -320,6 +320,20 @@ const WaterProjectDashboard = () => {
     });
   }, [zoiFeatures, activeSelectedWaterbody]);
 
+  const hasNdviData = useMemo(() => {
+  if (!isTehsilMode || !matchedZoiFeature) return true;
+
+  const props = matchedZoiFeature.getProperties?.() || {};
+
+  return Object.entries(props).some(([key, value]) => {
+    if (!key.startsWith("NDVI_")) return false;
+
+    return value !== null &&
+           value !== undefined &&
+           value !== "" &&
+           Number.isFinite(Number(value));
+  });
+}, [isTehsilMode, matchedZoiFeature]);
   
   const zoiAreaFromFeature = matchedZoiFeature
   ? Number(matchedZoiFeature.get("zoi_area")) || 0
@@ -1729,20 +1743,22 @@ const mwsSheet = XLSX.utils.json_to_sheet(mwsData, {
             </div>
   
             {/* NDVI */}
-            {showMap && activeSelectedWaterbody && (
+{/* NDVI */}
+{showMap && activeSelectedWaterbody && hasNdviData && (
   <div className="bg-white rounded-xl shadow-md p-6 mt-8">
     <div className="w-full min-h-[420px]">
-    <NDVIChart
-                      zoiFeatures={zoiFeatures}
-                      waterbody={activeSelectedWaterbody}
-                      years={WATER_DASHBOARD_CONFIG.ndviYears}
-                    />
+      <NDVIChart
+        zoiFeatures={zoiFeatures}
+        waterbody={activeSelectedWaterbody}
+        years={WATER_DASHBOARD_CONFIG.ndviYears}
+      />
     </div>
-    {showMap && activeSelectedWaterbody && (
-  <div className="text-gray-500 text-[clamp(0.65rem,0.95vw,0.7rem)] mt-2 pl-2 w-full">
-    <p><b>NDVI : </b> Used harmonized Landsat-7, Landsat-8 and Sentinel-2 NDVI values to construct 16-day NDVI time series, gap-filled with MODIS NDVI values.</p>
-  </div>
-)}
+
+    <div className="text-gray-500 text-[clamp(0.65rem,0.95vw,0.7rem)] mt-2 pl-2 w-full">
+      <p>
+        <b>NDVI : </b> Used harmonized Landsat-7, Landsat-8 and Sentinel-2 NDVI values to construct 16-day NDVI time series, gap-filled with MODIS NDVI values.
+      </p>
+    </div>
   </div>
 )}
   
