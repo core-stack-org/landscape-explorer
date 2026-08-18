@@ -63,20 +63,33 @@ export const getWaterbodyData = async ({
       }),
     });
 
-    const extractMwsUidList = (mwsUidString) => {
-      console.log("Extracting MWS UID list from:", mwsUidString);
-      if (!mwsUidString) return [];
-  
-      return mwsUidString
-        .split("_")
-        .reduce((acc, val, idx, arr) => {
-          // join pairs: 12 + 33823 → 12_33823
-          if (idx % 2 === 0 && arr[idx + 1]) {
-            acc.push(`${val}_${arr[idx + 1]}`);
-          }
-          return acc;
-        }, []);
-    };
+const extractMwsUidList = (mwsUidString) => {
+  console.log("Extracting MWS UID list from:", mwsUidString);
+
+  if (!mwsUidString) return [];
+
+  const value = String(mwsUidString).trim();
+
+  // NEW FORMAT
+  // Example: "12_355341|12_359307|12_355643"
+  if (value.includes("|")) {
+    return value
+      .split("|")
+      .map((id) => id.trim())
+      .filter(Boolean);
+  }
+
+  // OLD FORMAT
+  // Example: "12_355341_12_359307_12_355643"
+  return value
+    .split("_")
+    .reduce((acc, val, idx, arr) => {
+      if (idx % 2 === 0 && arr[idx + 1]) {
+        acc.push(`${val}_${arr[idx + 1]}`);
+      }
+      return acc;
+    }, []);
+};
   
     const wbLayerName = `surface_waterbodies_${dist}_${blk}`;
     const wbLayer = await getWebglVectorLayers("swb", wbLayerName, false, true);
