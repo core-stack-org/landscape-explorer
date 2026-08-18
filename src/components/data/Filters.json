@@ -1468,10 +1468,10 @@
                     }
                 ],
                 "layer_store": [
-                    "waterbodies"
+                    "swb"
                 ],
                 "layer_name": [
-                    "waterbodies"
+                    "surface_waterbodies"
                 ],
                 "vectorStyle": [
                     {}
@@ -1514,10 +1514,10 @@
                     }
                 ],
                 "layer_store": [
-                    "waterbodies"
+                    "swb"
                 ],
                 "layer_name": [
-                    "waterbodies"
+                    "surface_waterbodies"
                 ],
                 "vectorStyle": [
                     {}
@@ -1544,10 +1544,10 @@
                     }
                 ],
                 "layer_store": [
-                    "waterbodies"
+                    "swb"
                 ],
                 "layer_name": [
-                    "waterbodies"
+                    "surface_waterbodies"
                 ],
                 "vectorStyle": [
                     {}
@@ -1570,10 +1570,10 @@
                     }
                 ],
                 "layer_store": [
-                    "waterbodies"
+                    "swb"
                 ],
                 "layer_name": [
-                    "waterbodies"
+                    "surface_waterbodies"
                 ],
                 "vectorStyle": [
                     {}
