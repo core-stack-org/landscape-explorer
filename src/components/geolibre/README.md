@@ -92,7 +92,7 @@ ordered top-first as:
 4. LULC Level 3 by year
 5. LULC Level 2 by year
 6. LULC Level 1 by year
-7. Land
+7. Land (including terrain and the Digital Elevation Model)
 8. Agriculture
 9. Restoration
 10. Industry
@@ -182,8 +182,8 @@ application.
 | `GeoLibreFrame.jsx` | Iframe bridge, one-time bbox fit, human error states and downloadable bounded technical log |
 | `../../pages/LandscapeExplorer.jsx` | Route-to-project orchestration and fetch-on-first-toggle vector cache; no duplicate map or layer UI |
 
-The current project contains 54 entries: 22 vector entries, 24 LULC year/style
-entries backed by 8 Level 3 yearly rasters, and 8 other rasters. Initial startup
+The current project contains 55 entries: 22 vector entries, 24 LULC year/style
+entries backed by 8 Level 3 yearly rasters, and 9 other rasters. Initial startup
 performs exactly one distinct WFS request for the shared Demographic data and no
 WMS request. Each other vector makes its own WFS request only on its first
 toggle. Hidden rasters make no WMS tile request.
