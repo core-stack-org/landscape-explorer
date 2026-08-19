@@ -50,6 +50,8 @@
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
+    "notebooks:generate": "node public/geolibre-notebooks/generate_notebooks.mjs",
+    "notebooks:check": "node public/geolibre-notebooks/generate_notebooks.mjs --check",
     "eject": "react-scripts eject"
   },
   "eslintConfig": {

@@ -1,0 +1,44 @@
+[
+  {
+    "id": "tehsil-mws-overview",
+    "filename": "01_tehsil_mws_overview.ipynb",
+    "title": "Understand the micro-watersheds in a tehsil",
+    "summary": "Join MWS groundwater and terrain data to understand the selected tehsil.",
+    "featured": true
+  },
+  {
+    "id": "hydrology-water-balance",
+    "filename": "02_hydrology_water_balance.ipynb",
+    "title": "Follow water conditions through time",
+    "summary": "Explore annual and fortnightly water conditions for one MWS.",
+    "featured": true
+  },
+  {
+    "id": "agriculture-drought",
+    "filename": "03_agriculture_and_drought.ipynb",
+    "title": "Compare cropping intensity and drought",
+    "summary": "Compare cropping intensity and drought across years and MWSes.",
+    "featured": true
+  },
+  {
+    "id": "outlier-mws",
+    "filename": "04_outlier_mws.ipynb",
+    "title": "Find unusual micro-watersheds",
+    "summary": "Find robust multivariate outliers and inspect why they differ.",
+    "featured": true
+  },
+  {
+    "id": "similar-mws",
+    "filename": "05_similar_mws.ipynb",
+    "title": "Find similar micro-watersheds within a tehsil",
+    "summary": "Find five comparable MWS profiles within the same tehsil.",
+    "featured": true
+  },
+  {
+    "id": "layer-manifest",
+    "filename": "00_core_stack_layer_manifest.ipynb",
+    "title": "Find and download CoRE Stack GeoServer layers",
+    "summary": "Browse every layer and construct WFS or WCS downloads for another tehsil.",
+    "featured": false
+  }
+]
