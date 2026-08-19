@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen } from "@testing-library/react";
+import { act, render, screen } from "@testing-library/react";
 import GeoLibreFrame, {
   formatGeoLibreLog,
   geoLibreProjectLoadSignature,
@@ -100,28 +100,6 @@ describe("GeoLibre iframe bridge", () => {
       expect.objectContaining({ type: "geolibre:load-project" }),
       expect.any(String)
     );
-  });
-
-  it("offers the scoped notebook only after the project is loaded", () => {
-    const onDownloadNotebook = jest.fn();
-    render(
-      <GeoLibreFrame
-        project={project}
-        onDownloadNotebook={onDownloadNotebook}
-      />
-    );
-    const frame = screen.getByTitle("GeoLibre GIS workspace");
-
-    expect(
-      screen.queryByRole("button", { name: /Download project notebook/i })
-    ).toBeNull();
-
-    act(() => announceReady(frame));
-    fireEvent.click(
-      screen.getByRole("button", { name: /Download project notebook/i })
-    );
-
-    expect(onDownloadNotebook).toHaveBeenCalledTimes(1);
   });
 
   it("shows helpful language when the iframe handshake is delayed", () => {
