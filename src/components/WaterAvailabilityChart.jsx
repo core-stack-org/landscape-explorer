@@ -33,9 +33,9 @@ const WaterAvailabilityChart = ({
   onImpactYearChange,
   impactPair
 }) => {
+
   const [showImpact, setShowImpact] = useState(false);
   const prevImpactRef = useRef(null);
-
 
   const extractSeasonYears = (props = {}) => {
     const years = new Set();
@@ -220,9 +220,14 @@ const hasPostYear = React.useMemo(() => {
   const interventionYear = (() => {
     if (isTehsil) return null;
 
-    const f = water_rej_data?.features?.find(
-      (x) => x.properties?.UID === waterbody?.UID
+    // const f = water_rej_data?.features?.find(
+    //   (x) => x.properties?.UID === waterbody?.UID
+    // );
+
+     const f = water_rej_data?.features?.find(
+      (x) => x.id?.toString() === waterbody?.waterbody_id?.toString()  // was: x.properties?.UID === waterbody?.UID
     );
+
     return normalizeYear(f?.properties?.intervention_year);
   })();
 
@@ -255,8 +260,8 @@ useEffect(() => {
       { key: "crops", label: "Crops", color: "#BAD93E" },
       { key: "tree", label: "Tree/Forest", color: "#38761d" },
       { key: "shrubs", label: "Shrubs/Scrubs", color: "#eaa4f0" },
-      { key: "barren_land", label: "Barren", color: "#A9A9A9" },
-      { key: "builtup", label: "Built-up", color: "#ff0000" },
+      // { key: "barren_land", label: "Barren", color: "#A9A9A9" },
+      { key: "non_vegetation", label: "Non-Vegetation", color: "#A9A9A9" },
     ],
   };
 
@@ -281,10 +286,14 @@ useEffect(() => {
         single_kharif: p[`single_kharif_${year}`] ?? 0,
         single_non_kharif: p[`single_kharif_no_${year}`] ?? 0,
         tree: p[`tree_${year}`] ?? 0,
-        barren_land: p[`barren_land_${year}`] ?? 0,
+        // barren_land: p[`barren_land_${year}`] ?? 0,
         double_cropping: p[`double_cropping_${year}`] ?? 0,
         triple_cropping: p[`tripple_cropping_${year}`] ?? 0,
-        builtup: p[`build_up_${year}`] ?? 0,
+        // builtup: p[`build_up_${year}`] ?? 0,
+        non_vegetation:
+          (p[`barren_land_${year}`] ?? 0) +
+          (p[`build_up_${year}`] ?? 0),
+
       };
     });
   
@@ -298,10 +307,11 @@ useEffect(() => {
       single_kharif: 0,
       single_non_kharif: 0,
       tree: 0,
-      barren_land: 0,
+      // barren_land: 0,
       double_cropping: 0,
       triple_cropping: 0,
-      builtup: 0,
+      // builtup: 0,
+      non_vegetation: 0,
     }));
   
     water_rej_data.features.forEach((feature) => {
@@ -321,10 +331,13 @@ useEffect(() => {
           rawData[i].single_kharif += p[`single_kharif_${year}`] ?? 0;
           rawData[i].single_non_kharif += p[`single_kharif_no_${year}`] ?? 0;
           rawData[i].tree += p[`tree_${year}`] ?? 0;
-          rawData[i].barren_land += p[`barren_land_${year}`] ?? 0;
+          // rawData[i].barren_land += p[`barren_land_${year}`] ?? 0;
           rawData[i].double_cropping += p[`double_cropping_${year}`] ?? 0;
           rawData[i].triple_cropping += p[`tripple_cropping_${year}`] ?? 0;
-          rawData[i].builtup += p[`build_up_${year}`] ?? 0;
+          // rawData[i].builtup += p[`build_up_${year}`] ?? 0;
+          rawData[i].non_vegetation +=
+            (p[`barren_land_${year}`] ?? 0) +
+            (p[`build_up_${year}`] ?? 0);
         });
       }
     });

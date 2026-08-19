@@ -279,8 +279,6 @@ const extractMwsUidList = (mwsUidString) => {
     const wbMwsList = extractMwsUidList(raw);
     
     const matchedFeatures = mwsGeoData.features.filter((f) => {
-      console.log(mwsGeoData)
-      console.log("MWS FEATURE PROPERTIES:", f.properties);
       const uid = f.properties?.uid?.toString().trim();
       return wbMwsList.includes(uid);
     });
@@ -451,12 +449,6 @@ const extractMwsUidList = (mwsUidString) => {
       if (!featureId || !raw) return;
   
       const wbMwsList = extractMwsUidList(raw);
-      console.log("RAW MWS VALUE:", raw);
-console.log("EXTRACTED MWS IDS:", wbMwsList);
-console.log(
-  "AVAILABLE MWS IDS:",
-  mwsGeoData.features.map((f) => f.properties?.uid)
-);
       const mws = mwsGeoData.features
       .filter((f) =>
         wbMwsList.includes(f.properties?.uid?.toString().trim())
@@ -821,7 +813,7 @@ console.log(
         ? totalZaidImpactedArea / totalAreaOred
         : 0,
     };
-  }, [geoData, zoiFeatures]);
+  }, [geoData, mwsGeoData, zoiFeatures]);
  
   const selectedPair = useMemo(() => {
     if (!activeSelectedWaterbody || !rows?.length) return null;
@@ -1441,7 +1433,6 @@ const mwsSheet = XLSX.utils.json_to_sheet(mwsData, {
     saveAs(blob, fileName);
   };
 
-  console.log(activeSelectedWaterbody)
     return (
     <div className={`${isTehsilMode ? "pb-8 w-full" : "mx-6 my-8 bg-white rounded-xl shadow-md p-6"}`}>
   
@@ -1519,7 +1510,21 @@ const mwsSheet = XLSX.utils.json_to_sheet(mwsData, {
     {mode === "project" && (
       <div className="flex gap-2 flex-shrink-0">
         <button
-          onClick={() => navigate("/rwb", { replace: true })}
+         onClick={() => {
+            const params = new URLSearchParams(location.search);
+            const waterbody = params.get("waterbody");
+
+            if (waterbody) {
+              // Waterbody detail → Project table
+              params.delete("waterbody");
+              params.delete("UID");
+
+              navigate(`/rwb?${params.toString()}`, { replace: true });
+            } else {
+              // Project table → Organization & Project selection
+              navigate("/rwb", { replace: true });
+            }
+          }}
           className="px-4 py-2 bg-purple-600 text-white rounded-md text-sm hover:bg-purple-600 flex items-center gap-2 flex-shrink-0"
         >
           <ArrowBackIosNewIcon sx={{ fontSize: 16 }} />
@@ -1772,6 +1777,7 @@ const mwsSheet = XLSX.utils.json_to_sheet(mwsData, {
         zoiFeatures={zoiFeatures}
         waterbody={activeSelectedWaterbody}
         years={WATER_DASHBOARD_CONFIG.ndviYears}
+        water_rej_data={isTehsilMode ? geoData ? { features: [geoData]} : null : geoData }
       />
     </div>
 
