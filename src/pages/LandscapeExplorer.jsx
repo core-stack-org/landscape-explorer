@@ -8,6 +8,7 @@ import {
   hydrateGeoLibreVectorLayer,
   syncGeoLibreActiveLegends,
 } from "../components/geolibre/geolibreProject";
+import { downloadGeoLibreProjectExplorerNotebook } from "../components/geolibre/geolibreNotebook";
 import LandingNavbar from "../components/landing_navbar";
 import {
   blockAtom,
@@ -186,6 +187,12 @@ const LandscapeExplorer = () => {
       });
   }, []);
 
+  const handleDownloadNotebook = useCallback(() => {
+    if (!project) return;
+    downloadGeoLibreProjectExplorerNotebook(project);
+    trackEvent("GeoLibre", "download_project_notebook", scope.tehsil);
+  }, [project, scope.tehsil]);
+
   if (!hasLocation) {
     return (
       <div className="flex h-screen flex-col bg-slate-100">
@@ -229,6 +236,7 @@ const LandscapeExplorer = () => {
         preparationError={error}
         warning={warning}
         legends={legends}
+        onDownloadNotebook={handleDownloadNotebook}
         onProjectState={handleProjectState}
         onRetry={() => setRetryKey((value) => value + 1)}
       />

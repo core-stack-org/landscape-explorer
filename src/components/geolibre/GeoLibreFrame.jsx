@@ -68,6 +68,7 @@ const GeoLibreFrame = ({
   preparationError,
   warning,
   legends,
+  onDownloadNotebook,
   onRetry,
   onProjectState,
 }) => {
@@ -316,13 +317,26 @@ const GeoLibreFrame = ({
         <GeoLibreLegend legends={legends} />
       )}
 
-      {!userIssue && viewerVersion && (
-        <div
-          className="pointer-events-none absolute bottom-3 left-3 rounded-md border border-slate-300 bg-white/95 px-2 py-1 text-[11px] font-medium text-slate-700 shadow-sm"
-          title={`Loaded from ${viewer.url}`}
-          role="status"
-        >
-          GeoLibre {viewerVersion} · {viewer.versionPinned ? "pinned" : "rolling host"}
+      {!userIssue && viewerState === "loaded" && (
+        <div className="absolute bottom-3 left-3 z-20 flex flex-wrap items-center gap-2">
+          {viewerVersion && (
+            <div
+              className="pointer-events-none rounded-md border border-slate-300 bg-white/95 px-2 py-1 text-[11px] font-medium text-slate-700 shadow-sm"
+              title={`Loaded from ${viewer.url}`}
+              role="status"
+            >
+              GeoLibre {viewerVersion} · {viewer.versionPinned ? "pinned" : "rolling host"}
+            </div>
+          )}
+          {onDownloadNotebook && (
+            <button
+              type="button"
+              onClick={onDownloadNotebook}
+              className="rounded-md border border-purple-700 bg-white/95 px-3 py-1.5 text-xs font-semibold text-purple-800 shadow-sm hover:bg-purple-50"
+            >
+              Download project notebook
+            </button>
+          )}
         </div>
       )}
 

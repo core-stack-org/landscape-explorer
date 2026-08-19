@@ -327,3 +327,16 @@ GeoLibre 2.6 leaves room for deeper work without another KYL map implementation:
   format supports remote styles on predeclared WFS layers;
 - self-host tested versioned builds so a single version change selects the
   exact deployed application binary.
+
+## Starter notebook experiment
+
+The page can generate a tehsil-scoped project explorer with **Download project
+notebook** after GeoLibre loads. It captures the project's layer catalogue and
+GeoServer WFS/WCS sources, fetches one vector in JupyterLite, summarizes its
+attributes, and adds a temporary sample layer back to the map.
+
+It is not injected into the official `web.geolibre.app` panel: GeoLibre 2.6 has
+no notebook field in its project schema or notebook command in its embed API,
+and the hosted JupyterLite filesystem belongs to the cross-origin GeoLibre
+deployment. See `notebooks/README.md` for the exact self-hosted preload steps
+and the corrected web capability boundary.
