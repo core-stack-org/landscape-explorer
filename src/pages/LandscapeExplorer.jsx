@@ -8,7 +8,7 @@ import {
   hydrateGeoLibreVectorLayer,
   syncGeoLibreActiveLegends,
 } from "../components/geolibre/geolibreProject";
-import { downloadGeoLibreProjectExplorerNotebook } from "../components/geolibre/geolibreNotebook";
+import { downloadGeoLibreNotebook } from "../components/geolibre/geolibreNotebook";
 import LandingNavbar from "../components/landing_navbar";
 import {
   blockAtom,
@@ -187,10 +187,13 @@ const LandscapeExplorer = () => {
       });
   }, []);
 
-  const handleDownloadNotebook = useCallback(() => {
-    if (!project) return;
-    downloadGeoLibreProjectExplorerNotebook(project);
-    trackEvent("GeoLibre", "download_project_notebook", scope.tehsil);
+  const handleDownloadNotebook = useCallback(async (notebookId) => {
+    if (!project) {
+      throw new Error("Select a tehsil before downloading a notebook.");
+    }
+    const result = await downloadGeoLibreNotebook(notebookId, project);
+    trackEvent("GeoLibre", "download_notebook", `${scope.tehsil}:${notebookId}`);
+    return result;
   }, [project, scope.tehsil]);
 
   if (!hasLocation) {
@@ -229,14 +232,16 @@ const LandscapeExplorer = () => {
 
   return (
     <div className="flex h-screen flex-col overflow-hidden bg-white">
-      <LandingNavbar />
+      <LandingNavbar
+        notebookProject={project}
+        onDownloadNotebook={handleDownloadNotebook}
+      />
       <GeoLibreFrame
         project={project}
         preparationMessage={progress}
         preparationError={error}
         warning={warning}
         legends={legends}
-        onDownloadNotebook={handleDownloadNotebook}
         onProjectState={handleProjectState}
         onRetry={() => setRetryKey((value) => value + 1)}
       />

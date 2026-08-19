@@ -328,15 +328,21 @@ GeoLibre 2.6 leaves room for deeper work without another KYL map implementation:
 - self-host tested versioned builds so a single version change selects the
   exact deployed application binary.
 
-## Starter notebook experiment
+## Guided notebook catalogue
 
-The page can generate a tehsil-scoped project explorer with **Download project
-notebook** after GeoLibre loads. It captures the project's layer catalogue and
-GeoServer WFS/WCS sources, fetches one vector in JupyterLite, summarizes its
-attributes, and adds a temporary sample layer back to the map.
+The top navigation now exposes five question-led notebooks plus a separate
+55-presentation GeoServer layer manifest. A download injects the active state,
+district, tehsil and bounds into a checked-in template. Each notebook also
+provides location controls for exploring a different published tehsil without
+editing Python or a GeoServer URL.
 
-It is not injected into the official `web.geolibre.app` panel: GeoLibre 2.6 has
-no notebook field in its project schema or notebook command in its embed API,
-and the hosted JupyterLite filesystem belongs to the cross-origin GeoLibre
-deployment. See `notebooks/README.md` for the exact self-hosted preload steps
-and the corrected web capability boundary.
+The templates fetch only their relevant WFS sources, use WCS for analytical
+raster downloads, and can add temporary derived GeoJSON back to the adjacent
+map. Recently downloaded notebook IDs are kept as a two-item local preference;
+no project data is persisted in browser storage.
+
+The hosted GeoLibre 2.6 JupyterLite filesystem cannot be populated through the
+project/embed contract. Users therefore download from KYL and upload through
+**Processing → Jupyter Notebook → Upload Files**. See
+`public/geolibre-notebooks/README.md` for the notebook briefs, data contract,
+capability boundary, regeneration command and validation gates.

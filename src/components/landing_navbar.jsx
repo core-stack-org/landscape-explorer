@@ -2,8 +2,9 @@ import React, { useState } from "react";
 import newLogo from "../assets/newlogoWhite.png";
 import { useLocation } from "react-router-dom";
 import { Info, ExternalLink } from "lucide-react";
+import GeoLibreNotebookMenu from "./geolibre/GeoLibreNotebookMenu";
 
-const LandingNavbar = () => {
+const LandingNavbar = ({ notebookProject, onDownloadNotebook }) => {
   const location = useLocation();
   const isDownloadPage = location.pathname === "/download_layers";
   const isHomePage = location.pathname === "/";
@@ -39,6 +40,13 @@ const LandingNavbar = () => {
           </a>
 
           <div className="flex flex-wrap gap-3 items-center justify-center">
+            {isDownloadPage && (
+              <GeoLibreNotebookMenu
+                project={notebookProject}
+                onDownload={onDownloadNotebook}
+              />
+            )}
+
             {isDownloadPage && (
               <a
                 href="https://docs.google.com/document/d/1jet4EEBbbKgpNrPnuNJJDRuAJUiR2pIMFQp9JTlygAQ/edit?usp=sharing"
