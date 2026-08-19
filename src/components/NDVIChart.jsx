@@ -14,6 +14,7 @@ import {
 } from "chart.js";
 import "chartjs-adapter-date-fns";
 import { create, all } from "mathjs";
+import annotationPlugin from "chartjs-plugin-annotation";
 const math = create(all);
 
 ChartJS.register(
@@ -25,7 +26,8 @@ ChartJS.register(
   Tooltip,
   Legend,
   TimeScale,
-  ScatterController
+  ScatterController,
+  annotationPlugin
 );
 
 // Whittaker smoothing (Eilers, 2003)
@@ -55,6 +57,7 @@ const whittakerSmooth = (y, lambda = 100, d = 2) => {
 const NDVIChart = ({
   zoiFeatures,
   waterbody,
+  water_rej_data,
   years = ["2017", "2018", "2019", "2020", "2021", "2022", "2023", "2024"],
 
 }) => {
@@ -73,6 +76,47 @@ const NDVIChart = ({
 
   if (!matchedFeature) return null;
 
+  const normalizeYear = (iv) => {
+  if (!iv || typeof iv !== "string" || !iv.includes("-")) return null;
+
+  const clean = iv.replace(/_/g, "-").trim();
+  const parts = clean.split("-");
+
+  if (parts[0].length === 2 && parts[1].length === 2) {
+    return clean;
+  }
+
+  if (parts[0].length === 4 && parts[1].length === 2) {
+    return `${parts[0].slice(2)}-${parts[1]}`;
+  }
+
+  if (parts[0].length === 2 && parts[1].length === 4) {
+    return `${parts[0]}-${parts[1].slice(2)}`;
+  }
+
+  if (parts[0].length === 4 && parts[1].length === 4) {
+    return `${parts[0].slice(2)}-${parts[1].slice(2)}`;
+  }
+
+  return null;
+};
+
+const interventionYear = (() => {
+  const f = water_rej_data?.features?.find(
+    (x) =>
+      x.id?.toString() === waterbody?.waterbody_id?.toString()
+  );
+
+  return normalizeYear(f?.properties?.intervention_year);
+})();
+
+const interventionDate = (() => {
+  if (!interventionYear) return null;
+
+  const startYear = Number(`20${interventionYear.split("-")[0]}`);
+
+  return `${startYear}-07-01`;
+})();
   const ndviPoints = [];
 
   years.forEach((year) => {
@@ -151,6 +195,15 @@ const NDVIChart = ({
         pointRadius: 0,
         spanGaps: true, // connect line over skipped points
       },
+       {
+      label: "Black line = Intervention Year",
+      data: [],
+      borderColor: "black",
+      backgroundColor: "black",
+      borderWidth: 3,
+      pointRadius: 0,
+      type: "line",
+    },
     ],
   };
 
@@ -162,10 +215,34 @@ const NDVIChart = ({
     },
 
     plugins: {
+      
       legend: { display: true },
       position: "top",
       tooltip: { mode: "index", intersect: false },
+          annotation: {
+  annotations: interventionDate
+    ? {
+        interventionLine: {
+          type: "line",
+          scaleID: "x",
+          value: interventionDate,
+          borderColor: "black",
+          borderWidth: 2,
+          label: {
+            content: `Intervention Year (${interventionYear})`,
+            enabled: true,
+            position: "start",
+            color: "black",
+            font: {
+              weight: "bold",
+            },
+          },
+        },
+      }
+    : {},
+},
     },
+
     scales: {
       x: {
         type: "time",
