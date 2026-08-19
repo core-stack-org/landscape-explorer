@@ -20,7 +20,6 @@ export const getWaterbodyData = async ({
       });
       return null;
     }
-    console.log("Fetching waterbody data for:", district.label, block.label, waterbodyUID);
 
     const transformName = (name) => {
       if (!name) return "";
@@ -64,8 +63,6 @@ export const getWaterbodyData = async ({
     });
 
 const extractMwsUidList = (mwsUidString) => {
-  console.log("Extracting MWS UID list from:", mwsUidString);
-
   if (!mwsUidString) return [];
 
   const value = String(mwsUidString).trim();
@@ -146,7 +143,6 @@ const extractMwsUidList = (mwsUidString) => {
    
     
         matchedMWS = mwsFeatures.filter((f) => {
-            console.log("MWS FEATURE:", f.getProperties());
           const uid = (f.get("uid") || f.get("UID"))?.toString();
           return uid && mwsUidList.includes(uid.trim());
         });
