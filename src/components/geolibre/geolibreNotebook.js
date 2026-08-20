@@ -1,5 +1,12 @@
 export const GEOLIBRE_NOTEBOOK_CATALOGUE = Object.freeze([
   {
+    id: "quick-mws-preview",
+    filename: "06_quick_mws_preview.ipynb",
+    title: "Quick start: inspect five micro-watersheds",
+    summary: "Confirm browser Python, inspect five MWS records, and add them to the map.",
+    featured: true,
+  },
+  {
     id: "tehsil-mws-overview",
     filename: "01_tehsil_mws_overview.ipynb",
     title: "Understand the micro-watersheds in a tehsil",

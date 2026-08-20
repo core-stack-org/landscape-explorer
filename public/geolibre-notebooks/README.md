@@ -1,8 +1,8 @@
 # CoRE Stack notebooks for GeoLibre
 
-The KYL GeoLibre page provides five guided analytical notebooks and one
-separate layer-manifest notebook. Each download is a normal `.ipynb` file for
-GeoLibre's native Jupyter Notebook panel.
+The KYL GeoLibre page provides one minimal quick-start notebook, five guided
+analytical notebooks, and one separate layer-manifest notebook. Each download
+is a normal `.ipynb` file for GeoLibre's native Jupyter Notebook panel.
 
 ## User workflow
 
@@ -26,6 +26,7 @@ Official references:
 
 | Notebook | Analytical job and relevant layers | Primary evidence | Important caveat and QA |
 |---|---|---|---|
+| Quick start: inspect five micro-watersheds | Verify the browser workflow with one bounded MWS request | Five attribute records and a temporary map layer | This is a smoke test and preview, not a tehsil-wide analysis |
 | Understand the micro-watersheds in a tehsil | Establish MWS context from annual groundwater change and terrain vector data | Joined table, groundwater distribution, area-weighted terrain composition, temporary MWS map | A tehsil average does not describe every MWS; verify UID join and missingness |
 | Follow water conditions through time | Inspect one MWS through annual groundwater, fortnightly water balance, and filtered waterbody history | Three directly labelled time-series panels and selected-MWS map | Co-movement does not establish causation; verify parsed dates and selected UID |
 | Compare cropping intensity and drought | Compare yearly and cross-MWS agricultural variation | Separate yearly panels, scatter plot, transparent threshold shortlist | Separate units stay in separate panels; correlation is descriptive, not causal |
@@ -52,15 +53,45 @@ The notebooks fetch only the relevant published sources for their question:
 - no API key is embedded or requested.
 
 The five analytical notebooks carry two to four layer definitions each. The
-manifest notebook carries all 55 layer presentations, including the 24 annual
-LULC presentations. Static templates default to Dumka–Masalia so they remain
-usable when opened directly; KYL injects the selected project's display names
-and bounds at download time.
+quick start carries one layer definition and avoids pandas, NumPy, Matplotlib,
+widgets, and runtime installation. The manifest notebook carries all 55 layer
+presentations, including the 24 annual LULC presentations. Static templates
+default to Dumka–Masalia so they remain usable when opened directly; KYL
+injects the selected project's display names and bounds at download time.
 
 Layer availability varies by tehsil. A failed or empty response is reported as
 unavailable for that scope, rather than interpreted as a zero real-world count.
 The notebooks preserve raw values beside derived scores and expose missingness
 where it affects comparison.
+
+## Browser-safe notebook authoring rules
+
+The executed Banka notebook established the following rules for future work:
+
+1. Start with a one-line kernel smoke test. If it fails, do not diagnose later
+   cells or packages.
+2. Use only the packages needed for the question. Avoid optional UI packages in
+   a shared setup cell; one missing import otherwise prevents every helper from
+   being defined and produces misleading downstream `NameError` messages.
+3. Prefer the active KYL scope injected at download time over notebook widgets.
+   Download from another KYL page to change scope.
+4. Bound every preview request with `maxFeatures`, a verified CQL filter, or
+   both. A browser notebook should not download a whole geometry layer merely
+   to select one record.
+5. Verify field names and encodings against live GeoServer data. For example,
+   waterbody membership is stored in pipe-separated `mws_uid_list`, not an
+   `MWS_UID` field.
+6. Check empty responses immediately and raise a message naming the missing
+   scope or MWS. Do not allow an empty frame to fail several cells later.
+7. Keep kernel verification, data retrieval, interpretation, and optional map
+   mutation in separate short cells. This makes the failing boundary obvious.
+8. Keep visible code cells to roughly 5–10 lines and explain the result and its
+   caveat in adjacent Markdown.
+9. Treat `geolibre.connect()` as a map-output bridge. Fetch analytical values
+   directly from bounded WFS/WCS requests instead of claiming synchronous
+   access to the iframe's complete live layer state.
+10. Validate generated JSON, compile every Python cell, test representative
+    live schemas, and run repository tests before publishing a template.
 
 ## GeoLibre web capability boundary
 
@@ -93,7 +124,7 @@ The generator lives beside the notebooks in
 `public/geolibre-notebooks/generate_notebooks.mjs`. Repository tests and the
 check command verify:
 
-- exactly five guided notebooks plus the separate manifest;
+- exactly one quick start, five analytical notebooks, and the separate manifest;
 - output-free Python (Pyodide) notebook metadata;
 - no optional `ipywidgets` bootstrap dependency;
 - public code cells of at most ten lines;
