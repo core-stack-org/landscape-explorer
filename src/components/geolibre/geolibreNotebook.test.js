@@ -73,11 +73,22 @@ describe("CoRE Stack GeoLibre notebook catalogue", () => {
       expect(publicCode.every((cell) => cell.source.length <= 10)).toBe(true);
       expect(allSource).toContain("from pyodide.http import pyfetch");
       expect(allSource).toContain("geolibre.connect()");
+      expect(allSource).not.toContain("ipywidgets");
+      expect(allSource).not.toContain("widgets.");
       expect(allSource).not.toContain("ask_map");
       expect(allSource).not.toContain("geolibre._request");
       expect(allSource).not.toContain("from js import");
       expect(allSource).not.toMatch(/api[_ -]?key/i);
     }
+  });
+
+  it("uses the deployed waterbody membership field and bounded hydrology requests", () => {
+    const notebook = readNotebook("02_hydrology_water_balance.ipynb");
+    const allSource = notebook.cells.flatMap((cell) => cell.source).join("");
+
+    expect(allSource).toContain("max_features=1");
+    expect(allSource).toContain("mws_uid_list LIKE");
+    expect(allSource).not.toContain("MWS_UID='");
   });
 
   it("limits analytical templates to relevant layers and exposes all 55 presentations in the manifest", () => {

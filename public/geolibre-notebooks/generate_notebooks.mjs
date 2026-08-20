@@ -120,8 +120,7 @@ from urllib.parse import urlencode
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-import ipywidgets as widgets
-from IPython.display import display, Markdown
+from IPython.display import display
 import geolibre
 
 GEOSERVER_BASE = "https://geoserver.core-stack.org:8443/geoserver/"
@@ -134,25 +133,17 @@ def geoserver_name(value):
     value = re.sub(r"[()]", "", str(value or "").strip().lower())
     return re.sub(r"_+", "_", re.sub(r"\s+", "_", value)).strip("_")
 
-state_input = widgets.Text(value=SCOPE["state"], description="State:", layout=widgets.Layout(width="98%"))
-district_input = widgets.Text(value=SCOPE["district"], description="District:", layout=widgets.Layout(width="98%"))
-tehsil_input = widgets.Text(value=SCOPE["tehsil"], description="Tehsil:", layout=widgets.Layout(width="98%"))
-display(widgets.VBox([
-    widgets.HTML("<b>Study location</b><br><small>Change a name here, then rerun the data cells. No Python editing is needed.</small>"),
-    state_input, district_input, tehsil_input,
-]))
-
 def selected_scope():
     return {
-        "state": state_input.value.strip(),
-        "district": geoserver_name(district_input.value),
-        "tehsil": geoserver_name(tehsil_input.value),
+        "state": str(SCOPE["state"]).strip(),
+        "district": geoserver_name(SCOPE["district"]),
+        "tehsil": geoserver_name(SCOPE["tehsil"]),
     }
 
 def get_spec(layer_id):
     return next(layer for layer in LAYER_SPECS if layer["id"] == layer_id)
 
-def layer_url(layer_id, cql_filter=None):
+def layer_url(layer_id, cql_filter=None, max_features=None):
     scope = selected_scope()
     spec = get_spec(layer_id)
     layer_name = spec["layerNameTemplate"].format(**scope)
@@ -162,6 +153,8 @@ def layer_url(layer_id, cql_filter=None):
                   "typeName": qualified, "outputFormat": "application/json", "srsName": "EPSG:4326"}
         if cql_filter:
             params["CQL_FILTER"] = cql_filter
+        if max_features:
+            params["maxFeatures"] = int(max_features)
         return f'{GEOSERVER_BASE}{spec["workspace"]}/ows?{urlencode(params)}'
     params = {"service": "WCS", "version": "2.0.1", "request": "GetCoverage",
               "CoverageId": qualified, "format": "geotiff", "compression": "LZW"}
@@ -184,11 +177,11 @@ async def fetch_json(url, label="GeoServer layer"):
             f'{label} is not available for {scope["district"]}/{scope["tehsil"]}, or GeoServer could not be reached: {error}'
         ) from error
 
-async def load_geojson(layer_id, cql_filter=None):
+async def load_geojson(layer_id, cql_filter=None, max_features=None):
     spec = get_spec(layer_id)
     if spec["service"] != "WFS":
         raise ValueError(f'{spec["label"]} is a raster. Use its WCS URL instead of loading it as GeoJSON.')
-    data = await fetch_json(layer_url(layer_id, cql_filter), spec["label"])
+    data = await fetch_json(layer_url(layer_id, cql_filter, max_features), spec["label"])
     if data.get("type") != "FeatureCollection":
         raise RuntimeError(f'{spec["label"]} did not return GeoJSON features.')
     return data
@@ -273,7 +266,7 @@ print(f'Ready for {SCOPE["tehsil"]}, {SCOPE["district"]}.')`;
 
 const notebook = ({ id, title, subtitle, layerIds, analysis, cells }) => ({
   cells: [
-    markdown("corestack-title", `# ${title}\n\n${subtitle}\n\nRun each cell with **Shift+Enter**. The location controls default to the active KYL tehsil when this notebook is downloaded from CoRE Stack.`),
+    markdown("corestack-title", `# ${title}\n\n${subtitle}\n\nRun each cell with **Shift+Enter**. This download is already scoped to the active KYL tehsil and needs no package-installation cell.`),
     hidden("corestack-setup", commonSetup(layerIds)),
     hidden("corestack-analysis", analysis),
     ...cells,
@@ -402,19 +395,23 @@ def plot_hydrology(annual, fortnight, waterbodies, mws_id):
     plt.tight_layout()
     plt.show()`,
   cells: [
-    markdown("hydrology-load-title", "## 1. Load the MWS histories\n\nOnly annual and fortnightly MWS layers are loaded initially. Waterbodies are requested after an MWS is selected."),
-    code("hydrology-load", `annual_geojson = await load_geojson("mws_layers")
-fortnight_geojson = await load_geojson("mws_layers_fortnight")
+    markdown("hydrology-load-title", "## 1. Load one MWS history\n\nThe notebook selects the first published MWS and then requests only its fortnightly history. This keeps the browser download small and deterministic."),
+    code("hydrology-load", `annual_geojson = await load_geojson("mws_layers", max_features=1)
 annual_frame = to_frame(annual_geojson)
+if annual_frame.empty: raise RuntimeError("No micro-watershed was published for this tehsil.")
+mws_id = with_uid(annual_frame)["uid"].iloc[0]
+safe_mws_id = str(mws_id).replace("'", "''")
+fortnight_geojson = await load_geojson("mws_layers_fortnight", f"uid='{safe_mws_id}'")
 fortnight_frame = to_frame(fortnight_geojson)
-mws_picker = widgets.Dropdown(options=sorted(with_uid(annual_frame)["uid"]), description="MWS:")
-display(mws_picker)`),
-    markdown("hydrology-plot-title", "## 2. Plot the selected MWS\n\nChoose an MWS above, then rerun this cell. The waterbody request is filtered to that MWS to keep the download small."),
-    code("hydrology-plot", `mws_id = mws_picker.value
-water_geojson = await load_geojson("remote_sensed_waterbodies", f"MWS_UID='{mws_id}'")
+if fortnight_frame.empty: raise RuntimeError(f"No fortnightly history was published for MWS {mws_id}.")
+print(f"Selected MWS {mws_id} from {SCOPE['tehsil']}, {SCOPE['district']}.")`),
+    markdown("hydrology-plot-title", "## 2. Plot the selected MWS\n\nThe waterbody request uses its published `mws_uid_list` membership field instead of downloading every waterbody in the tehsil."),
+    code("hydrology-plot", `water_filter = f"mws_uid_list LIKE '%{safe_mws_id}%'"
+water_geojson = await load_geojson("remote_sensed_waterbodies", water_filter)
 annual_series = annual_groundwater(annual_frame, mws_id)
 fortnight_series = fortnightly_balance(fortnight_frame, mws_id)
 waterbody_series = waterbody_history(to_frame(water_geojson))
+print(f"Found {len(water_geojson['features'])} intersecting waterbodies.")
 plot_hydrology(annual_series, fortnight_series, waterbody_series, mws_id)`),
     markdown("hydrology-map-title", "## 3. Locate the selected MWS\n\nThe highlighted polygon is temporary and does not alter CoRE Stack data."),
     code("hydrology-map", `selected = features_for_uids(annual_geojson, [mws_id])
@@ -500,9 +497,9 @@ show_on_map("agriculture-shortlist", features_for_uids(crop_geojson, shortlist.i
             "Notebook · drought/cropping shortlist", fillColor="#f97316", strokeColor="#7c2d12", fillOpacity=0.6)`),
     markdown("agriculture-interpret", "## Interpretation\n\nThis notebook can reveal years or MWSes worth investigating. Rainfall, irrigation, soils, crop choice, infrastructure, markets, and data quality can all affect the observed relationship."),
     markdown("agriculture-optional-title", "## Optional: inspect annual values for one MWS"),
-    optional("agriculture-optional", `mws_picker = widgets.Dropdown(options=sorted(profile.index), description="MWS:")
-display(mws_picker)
-display(profile.loc[[mws_picker.value]].round(2))`),
+    optional("agriculture-optional", `example_uid = sorted(profile.index)[0]
+print(f"Example MWS: {example_uid}")
+display(profile.loc[[example_uid]].round(2))`),
   ],
 });
 
@@ -649,10 +646,10 @@ drought_geojson = await load_geojson("drought")
 terrain_geojson = await load_geojson("terrain_vector")
 profile = build_mws_profile(to_frame(mws_geojson), to_frame(crop_geojson),
                             to_frame(drought_geojson), to_frame(terrain_geojson))
-mws_picker = widgets.Dropdown(options=sorted(profile.index), description="Target MWS:")
-display(mws_picker)`),
-    markdown("similar-find-title", "## 2. Find five similar profiles\n\nChoose a target above, then rerun. Distance is the root-mean-square standardized difference; candidates need at least 70% of the target's available metrics, with a minimum of four."),
-    code("similar-find", `target_uid = mws_picker.value
+target_uid = sorted(profile.index)[0]
+print(f"Using {target_uid} as the example target MWS.")`),
+    markdown("similar-find-title", "## 2. Find five similar profiles\n\nDistance is the root-mean-square standardized difference; candidates need at least 70% of the target's available metrics, with a minimum of four."),
+    code("similar-find", `
 peers, standardized = similar_mws(profile, target_uid, count=5)
 display(peers.round(3))
 plot_similar_profiles(standardized, target_uid, peers)`),
@@ -693,15 +690,11 @@ def describe_layer(layer_id):
     code("manifest-list", `catalogue = manifest_table()
 print(f"{len(catalogue)} GeoLibre layer presentations are available in this manifest.")
 display(catalogue)`),
-    markdown("manifest-pick-title", "## 2. Choose one dataset\n\nChange the location controls above or choose another dataset here, then rerun the next cell."),
-    code("manifest-pick", `layer_picker = widgets.Dropdown(
-    options=[(layer["label"], layer["id"]) for layer in LAYER_SPECS],
-    value="mws_layers", description="Dataset:", layout=widgets.Layout(width="98%"),
-)
-display(layer_picker)`),
+    markdown("manifest-pick-title", "## 2. Use a safe example dataset\n\nThe example uses the MWS vector layer already present in the project, avoiding optional widget dependencies."),
+    code("manifest-pick", `layer_id = "mws_layers"
+print(f"Example dataset: {get_spec(layer_id)['label']}")`),
     markdown("manifest-url-title", "## 3. Generate the download URL\n\nRaster WCS coverages can be large, so this notebook prints their URL rather than downloading them automatically."),
-    code("manifest-url", `layer_id = layer_picker.value
-display(describe_layer(layer_id))
+    code("manifest-url", `display(describe_layer(layer_id))
 if get_spec(layer_id)["service"] == "WFS":
     chosen_geojson = await load_geojson(layer_id)
     chosen_table = to_frame(chosen_geojson)
