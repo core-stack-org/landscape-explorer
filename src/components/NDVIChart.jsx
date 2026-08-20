@@ -196,7 +196,7 @@ const interventionDate = (() => {
         spanGaps: true, // connect line over skipped points
       },
        {
-      label: "Black line = Intervention Year",
+      label: `Black line = Intervention Year (${interventionYear})`,
       data: [],
       borderColor: "black",
       backgroundColor: "black",
