@@ -31,6 +31,8 @@ const WaterProjectDashboard = () => {
   const [selectedFeature, setSelectedFeature] = useState(null);
   const [infoAnchor, setInfoAnchor] = useState(null);
   const [impactYear, setImpactYear] = useState({ pre: null, post: null });
+  const [showImpact, setShowImpact] = useState(false);
+  const [showAgriImpact, setShowAgriImpact] = useState(false);
   const [autoOpened, setAutoOpened] = useState(false);
   const [showMap, setShowMap] = useState(false);  
   const [tehsilMap, setTehsilMap] = useState(null);
@@ -1681,6 +1683,8 @@ const mwsSheet = XLSX.utils.json_to_sheet(mwsData, {
                   onImpactYearChange={setImpactYear} 
                   years={extractedSeasonalYears} 
                   impactPair={selectedPair} 
+                  onComparisonChange={setShowImpact}
+
                 />
               </div>
   
@@ -1690,6 +1694,10 @@ const mwsSheet = XLSX.utils.json_to_sheet(mwsData, {
                   waterbody={activeSelectedWaterbody}
                   water_rej_data={isTehsilMode ? geoData ? { features: [geoData]} : null : geoData }
                   typeparam={typeParam}
+                  onImpactYearChange={setImpactYear} 
+                  years={extractedSeasonalYears} 
+                  impactPair={selectedPair} 
+                  showImpact={showImpact}
                 />
               </div>
   
@@ -1757,6 +1765,8 @@ const mwsSheet = XLSX.utils.json_to_sheet(mwsData, {
                   isTehsil={isTehsilMode}
                   years={extractedSeasonalYears}
                   water_rej_data={isTehsilMode ? geoData ? { features: [geoData]} : null : geoData }
+                  showImpact={showAgriImpact}
+                  setShowImpact={setShowAgriImpact}
                 />
   
                 <DroughtChart
@@ -1764,6 +1774,11 @@ const mwsSheet = XLSX.utils.json_to_sheet(mwsData, {
                   waterbody={activeSelectedWaterbody}
                   typeparam={typeParam}
                   years={extractedSeasonalYears} 
+                  impactYear={impactYear}
+                  interventionYear={selectedInterventionYear}
+                  showImpact={showAgriImpact}
+                  setShowImpact={setShowAgriImpact}
+
                 />
               </div>
             </div>
