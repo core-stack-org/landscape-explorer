@@ -9,13 +9,13 @@ GeoLibre's native Jupyter Notebook panel.
 1. Select a state, district, and tehsil in Know Your Landscape.
 2. Open the GeoLibre page.
 3. Open **Explore CoRE Stack Data Layers with Notebooks** in the top bar.
-4. Download a notebook. Its location controls default to the active tehsil.
+4. Download a notebook. KYL embeds the active tehsil into that download.
 5. In GeoLibre, choose **Processing → Jupyter Notebook → Upload Files**.
 6. Upload the `.ipynb` and run cells in order with **Shift+Enter**.
 
-Every notebook also displays state, district, and tehsil text controls. Change
-those controls and rerun the data cells to explore another published scope;
-users do not need to edit a GeoServer URL or Python source.
+Download another notebook from the corresponding KYL page to change location.
+The notebooks deliberately avoid optional `ipywidgets` controls, so users do
+not need to install a package or edit a GeoServer URL before running them.
 
 Official references:
 
@@ -95,6 +95,7 @@ check command verify:
 
 - exactly five guided notebooks plus the separate manifest;
 - output-free Python (Pyodide) notebook metadata;
+- no optional `ipywidgets` bootstrap dependency;
 - public code cells of at most ten lines;
 - no API key or unsupported iframe/worker read-back bridge;
 - the intended relevant-layer set for every analytical notebook;

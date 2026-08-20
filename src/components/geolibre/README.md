@@ -332,9 +332,9 @@ GeoLibre 2.6 leaves room for deeper work without another KYL map implementation:
 
 The top navigation now exposes five question-led notebooks plus a separate
 55-presentation GeoServer layer manifest. A download injects the active state,
-district, tehsil and bounds into a checked-in template. Each notebook also
-provides location controls for exploring a different published tehsil without
-editing Python or a GeoServer URL.
+district, tehsil and bounds into a checked-in template. The notebooks avoid
+optional widget packages; download from another KYL page to change location
+without editing Python or a GeoServer URL.
 
 The templates fetch only their relevant WFS sources, use WCS for analytical
 raster downloads, and can add temporary derived GeoJSON back to the adjacent

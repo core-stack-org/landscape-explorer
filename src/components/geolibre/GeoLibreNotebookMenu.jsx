@@ -152,7 +152,7 @@ const GeoLibreNotebookMenu = ({ project, onDownload }) => {
             </p>
             <p className="mt-1 text-xs leading-5 text-slate-600">
               Processing → Jupyter Notebook → Upload Files. Each download starts
-              with the active tehsil and also provides editable location controls.
+              with the active tehsil and runs without optional widget packages.
             </p>
             <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
               <a
