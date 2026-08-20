@@ -9,10 +9,11 @@ import {
   Legend,
 } from "chart.js";
 import { Bar } from "react-chartjs-2";
+import annotationPlugin from "chartjs-plugin-annotation";
 
-ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
+ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, annotationPlugin);
 
-const DroughtChart = ({ mwsGeoData, waterbody, typeparam }) => {
+const DroughtChart = ({ mwsGeoData, waterbody, typeparam , impactYear, interventionYear, showImpact, setShowImpact }) => {
   if (!mwsGeoData || !waterbody) return null;
 
   // GET UID
@@ -28,6 +29,34 @@ const DroughtChart = ({ mwsGeoData, waterbody, typeparam }) => {
       )?.toString()?.trim();
 
 if (!rawMwsUid) return null;
+
+const normalizeYear = (iv) => {
+  if (!iv || typeof iv !== "string" || !iv.includes("-")) return null;
+
+  const clean = iv.replace(/_/g, "-").trim();
+  const parts = clean.split("-");
+
+  if (parts[0].length === 2 && parts[1].length === 2) {
+    return clean;
+  }
+
+  if (parts[0].length === 4 && parts[1].length === 2) {
+    return `${parts[0].slice(2)}-${parts[1]}`;
+  }
+
+  if (parts[0].length === 2 && parts[1].length === 4) {
+    return `${parts[0]}-${parts[1].slice(2)}`;
+  }
+
+  if (parts[0].length === 4 && parts[1].length === 4) {
+    return `${parts[0].slice(2)}-${parts[1].slice(2)}`;
+  }
+
+  return null;
+};
+
+const normalizedInterventionYear = normalizeYear(interventionYear);
+
 
 const mwsUidList = rawMwsUid.includes("|")
   ? rawMwsUid
@@ -114,14 +143,46 @@ if (typeparam === "project") {
   );
 
 
-  const data = {
-    labels: sliderYears,
-    datasets: [
-      { label: "Moderate Weeks", data: w_mod, backgroundColor: "#EB984E" },
-      { label: "Severe Weeks", data: w_sev, backgroundColor: "#E74C3C" },
-      { label: "Dry Spell Weeks", data: drysp, backgroundColor: "#8884d8" },
-    ],
-  };
+const isImpactMode = showImpact && impactYear?.pre && impactYear?.post;
+
+const data = {
+  labels: sliderYears,
+  datasets: [
+    {
+      label: "Moderate Weeks",
+      data: w_mod.map((value, index) =>
+        !isImpactMode ||
+        sliderYears[index] === impactYear.pre ||
+        sliderYears[index] === impactYear.post
+          ? value
+          : 0
+      ),
+      backgroundColor: "#EB984E",
+    },
+    {
+      label: "Severe Weeks",
+      data: w_sev.map((value, index) =>
+        !isImpactMode ||
+        sliderYears[index] === impactYear.pre ||
+        sliderYears[index] === impactYear.post
+          ? value
+          : 0
+      ),
+      backgroundColor: "#E74C3C",
+    },
+    {
+      label: "Dry Spell Weeks",
+      data: drysp.map((value, index) =>
+        !isImpactMode ||
+        sliderYears[index] === impactYear.pre ||
+        sliderYears[index] === impactYear.post
+          ? value
+          : 0
+      ),
+      backgroundColor: "#8884d8",
+    },
+  ],
+};
 
   return (
     <div className=" px-0 ml-6" style={{ height: "clamp(300px, 45vh, 400px)",width:"94%"  }}>
@@ -130,9 +191,39 @@ if (typeparam === "project") {
         options={{
           responsive: true,
           maintainAspectRatio: false,
-          plugins: {
-            title: { display: true, text: "Drought Incidence" },
-            legend: { position: "bottom" },
+         plugins: {
+           title: {
+              display: true,
+              text:
+                showImpact && impactYear?.pre && impactYear?.post
+                  ? `Impact Analysis: Showing Only Pre (${impactYear.pre}) and Post (${impactYear.post}) Years`
+                  : "Drought Incidence",
+            },
+            legend: {
+              position: "bottom",
+            },
+            annotation: {
+              annotations: normalizedInterventionYear
+                ? {
+                    interventionLine: {
+                      type: "line",
+                      scaleID: "x",
+                      value: normalizedInterventionYear,
+                      borderColor: "black",
+                      borderWidth: 2,
+                      label: {
+                        content: `Intervention Year (${normalizedInterventionYear})`,
+                        enabled: true,
+                        position: "start",
+                        color: "black",
+                        font: {
+                          weight: "bold",
+                        },
+                      },
+                    },
+                  }
+                : {},
+            },
           },
           scales: {
             x: {
