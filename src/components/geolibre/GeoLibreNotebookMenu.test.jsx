@@ -10,7 +10,7 @@ const project = {
 describe("GeoLibre notebook download menu", () => {
   beforeEach(() => window.localStorage.clear());
 
-  it("shows the workflow, official documentation, and six disabled downloads without a scope", () => {
+  it("shows the workflow, official documentation, and seven disabled downloads without a scope", () => {
     render(<GeoLibreNotebookMenu />);
     fireEvent.click(
       screen.getByRole("button", {
@@ -25,7 +25,7 @@ describe("GeoLibre notebook download menu", () => {
     expect(
       screen.getByRole("link", { name: /Notebook guide/i }).getAttribute("href")
     ).toBe("https://geolibre.app/notebook/");
-    expect(screen.getAllByTitle(/^Download (?!guided)/i)).toHaveLength(6);
+    expect(screen.getAllByTitle(/^Download (?!guided)/i)).toHaveLength(7);
     expect(screen.getByText("Guided notebooks")).toBeTruthy();
     expect(screen.getByText("Complete layer manifest")).toBeTruthy();
     expect(

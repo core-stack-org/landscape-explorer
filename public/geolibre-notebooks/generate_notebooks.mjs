@@ -287,6 +287,52 @@ const notebook = ({ id, title, subtitle, layerIds, analysis, cells }) => ({
   nbformat_minor: 5,
 });
 
+const quickStart = {
+  cells: [
+    markdown("quick-title", "# Quick start: inspect five micro-watersheds\n\nThis smallest CoRE Stack notebook confirms that browser Python works, fetches five published features, shows their attributes, and adds them to the adjacent GeoLibre map. Run the four code cells in order with **Shift+Enter**. No package installation is needed."),
+    markdown("quick-kernel-title", "## 1. Confirm the browser kernel"),
+    code("quick-kernel", `import json
+SCOPE = json.loads(${pythonJson(DEFAULT_SCOPE)})
+print(f"Python is ready for {SCOPE['tehsil']}, {SCOPE['district']}. No packages were installed.")`, {
+      tags: ["corestack-hidden"],
+    }),
+    markdown("quick-fetch-title", "## 2. Fetch five features\n\nThis uses only Pyodide's browser HTTP helper and a bounded GeoServer WFS request."),
+    code("quick-fetch", `import re
+from pyodide.http import pyfetch
+district, tehsil = [re.sub(r"[^a-z0-9]+", "_", str(value).lower()).strip("_") for value in (SCOPE["district"], SCOPE["tehsil"])]
+layer_name = f"deltaG_well_depth_{district}_{tehsil}"
+url = f"https://geoserver.core-stack.org:8443/geoserver/mws_layers/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=mws_layers:{layer_name}&outputFormat=application/json&srsName=EPSG:4326&maxFeatures=5"
+response = await pyfetch(url)
+if not response.ok: raise RuntimeError(f"GeoServer returned HTTP {response.status}.")
+data = await response.json()
+print(f"Loaded {len(data['features'])} micro-watersheds from {SCOPE['tehsil']}.")`),
+    markdown("quick-attributes-title", "## 3. Inspect the attributes\n\nExpand a record to see annual groundwater values, area, net-change summaries, and its MWS identifier."),
+    code("quick-attributes", `from IPython.display import JSON, display
+attributes = [feature.get("properties", {}) for feature in data["features"]]
+display(JSON(attributes, expanded=False))`),
+    markdown("quick-map-title", "## 4. Add the same five features to GeoLibre\n\nThe new layer is temporary and does not change the published CoRE Stack data."),
+    code("quick-map", `import geolibre
+m = geolibre.connect()
+layer_id = m.add_geojson(data, name="Notebook · five MWS preview", fillColor="#60a5fa", strokeColor="#1e3a8a", fillOpacity=0.35)
+print(f"Added temporary GeoLibre layer: {layer_id}")`),
+  ],
+  metadata: {
+    kernelspec: { display_name: "Python (Pyodide)", language: "python", name: "python" },
+    language_info: { name: "python" },
+    corestack: {
+      id: "quick-mws-preview",
+      title: "Quick start: inspect five micro-watersheds",
+      templateScope: DEFAULT_SCOPE,
+      templateVersion: "2026-08-20",
+      relevantLayerIds: ["mws_layers"],
+      requiresGeoLibre: "2.6.x",
+      minimalDependencies: true,
+    },
+  },
+  nbformat: 4,
+  nbformat_minor: 5,
+};
+
 const overview = notebook({
   id: "tehsil-mws-overview",
   title: "Understand the micro-watersheds in a tehsil",
@@ -713,6 +759,8 @@ else:
 });
 
 const CATALOGUE = [
+  { id: quickStart.metadata.corestack.id, filename: "06_quick_mws_preview.ipynb", title: quickStart.metadata.corestack.title,
+    summary: "Confirm browser Python, inspect five MWS records, and add them to the map.", featured: true, notebook: quickStart },
   { id: overview.metadata.corestack.id, filename: "01_tehsil_mws_overview.ipynb", title: overview.metadata.corestack.title,
     summary: "Join MWS groundwater and terrain data to understand the selected tehsil.", featured: true, notebook: overview },
   { id: hydrology.metadata.corestack.id, filename: "02_hydrology_water_balance.ipynb", title: hydrology.metadata.corestack.title,

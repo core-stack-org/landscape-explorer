@@ -330,8 +330,8 @@ GeoLibre 2.6 leaves room for deeper work without another KYL map implementation:
 
 ## Guided notebook catalogue
 
-The top navigation now exposes five question-led notebooks plus a separate
-55-presentation GeoServer layer manifest. A download injects the active state,
+The top navigation now exposes one minimal quick start, five question-led
+notebooks, and a separate 55-presentation GeoServer layer manifest. A download injects the active state,
 district, tehsil and bounds into a checked-in template. The notebooks avoid
 optional widget packages; download from another KYL page to change location
 without editing Python or a GeoServer URL.

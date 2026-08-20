@@ -32,15 +32,39 @@ const readNotebook = (filename) =>
   JSON.parse(fs.readFileSync(path.join(notebookDirectory, filename), "utf8"));
 
 describe("CoRE Stack GeoLibre notebook catalogue", () => {
-  it("publishes five guided notebooks plus a separate layer manifest", () => {
+  it("publishes a quick start, five analytical notebooks, and a separate layer manifest", () => {
     const publicCatalogue = JSON.parse(
       fs.readFileSync(path.join(notebookDirectory, "catalog.json"), "utf8")
     );
 
-    expect(GEOLIBRE_NOTEBOOK_CATALOGUE).toHaveLength(6);
-    expect(GEOLIBRE_NOTEBOOK_CATALOGUE.filter(({ featured }) => featured)).toHaveLength(5);
+    expect(GEOLIBRE_NOTEBOOK_CATALOGUE).toHaveLength(7);
+    expect(GEOLIBRE_NOTEBOOK_CATALOGUE.filter(({ featured }) => featured)).toHaveLength(6);
     expect(publicCatalogue).toEqual(GEOLIBRE_NOTEBOOK_CATALOGUE);
     expect(GEOLIBRE_NOTEBOOK_CATALOGUE.at(-1).id).toBe("layer-manifest");
+  });
+
+  it("keeps the quick start bounded and free of scientific package dependencies", () => {
+    const notebook = readNotebook("06_quick_mws_preview.ipynb");
+    const allSource = notebook.cells.flatMap((cell) => cell.source).join("");
+    const kernelCell = notebook.cells.find((cell) => cell.id === "quick-kernel");
+    const scoped = injectGeoLibreNotebookScope(
+      notebook,
+      project,
+      "2026-08-20T00:00:00.000Z"
+    );
+
+    expect(notebook.metadata.corestack).toMatchObject({
+      id: "quick-mws-preview",
+      relevantLayerIds: ["mws_layers"],
+      minimalDependencies: true,
+    });
+    expect(allSource).toContain("maxFeatures=5");
+    expect(allSource).toContain("geolibre.connect()");
+    expect(allSource).not.toMatch(/pandas|numpy|matplotlib|ipywidgets|%pip/);
+    expect(kernelCell.metadata.jupyter).toBeUndefined();
+    expect(
+      scoped.cells.find((cell) => cell.id === "quick-kernel").source.join("")
+    ).toContain("Lakhipur");
   });
 
   it("keeps every template output-free, Pyodide-ready, and free of the unsupported bridge", () => {
@@ -50,8 +74,7 @@ describe("CoRE Stack GeoLibre notebook catalogue", () => {
       const publicCode = notebook.cells.filter(
         (cell) =>
           cell.cell_type === "code" &&
-          !cell.metadata?.tags?.includes("corestack-hidden") &&
-          !cell.metadata?.tags?.includes("corestack-optional")
+          cell.metadata?.jupyter?.source_hidden !== true
       );
 
       expect(notebook).toMatchObject({
@@ -93,6 +116,7 @@ describe("CoRE Stack GeoLibre notebook catalogue", () => {
 
   it("limits analytical templates to relevant layers and exposes all 55 presentations in the manifest", () => {
     const expected = {
+      "quick-mws-preview": ["mws_layers"],
       "tehsil-mws-overview": ["mws_layers", "terrain_vector"],
       "hydrology-water-balance": [
         "mws_layers",
