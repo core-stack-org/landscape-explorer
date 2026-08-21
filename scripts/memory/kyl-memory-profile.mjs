@@ -380,6 +380,10 @@ const frameMetrics = async (frame, role) => {
               ?.getAttribute("aria-label") === "Collapse group",
         })
       );
+      const bodyText = document.body?.innerText || "";
+      const kernelStatusText = bodyText.match(
+        /Python \(Pyodide\)\s*\|\s*(Idle|Busy|Unknown|Starting)/i
+      )?.[0];
       return {
         role: frameRole,
         url: location.href,
@@ -398,7 +402,9 @@ const frameMetrics = async (frame, role) => {
         layers,
         groups,
         jupyterKernelStatus:
-          document.querySelector(".jp-KernelStatus")?.textContent?.trim() || null,
+          document.querySelector(".jp-KernelStatus")?.textContent?.trim() ||
+          kernelStatusText ||
+          null,
       };
     }, role);
   } catch (error) {
@@ -1085,10 +1091,11 @@ const main = async () => {
       .locator(".jp-OutputArea-output")
       .filter({ hasText: "KYL memory probe" })
       .waitFor({ state: "visible", timeout: timeoutMs });
-    await jupyter
-      .locator(".jp-KernelStatus")
-      .filter({ hasText: /Idle/i })
-      .waitFor({ state: "visible", timeout: timeoutMs });
+    await jupyter.waitForFunction(
+      () => /Python \(Pyodide\)\s*\|\s*Idle/i.test(document.body?.innerText || ""),
+      undefined,
+      { timeout: timeoutMs }
+    );
     assertProbe(
       "07-notebook-real-python",
       "Python cell executed through Pyodide",
