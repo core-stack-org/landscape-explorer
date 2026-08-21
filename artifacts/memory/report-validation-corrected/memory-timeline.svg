@@ -1,0 +1,115 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="620" viewBox="0 0 1280 620" role="img" aria-labelledby="title desc">
+<title id="title">Chromium process-tree memory by tested state</title>
+<desc id="desc">Median proportional set size (PSS); whiskers show the three-run range.</desc>
+<rect width="100%" height="100%" fill="#FFFFFF"/>
+<text x="40" y="38" font-family="sans-serif" font-size="22" font-weight="700" fill="#111827">Chromium process-tree memory by tested state</text>
+<text x="40" y="61" font-family="sans-serif" font-size="12" fill="#475569">Median proportional set size (PSS); whiskers show the three-run range.</text>
+<line x1="75" y1="485.0" x2="1245" y2="485.0" stroke="#E2E8F0"/>
+<text x="65" y="489.0" text-anchor="end" font-family="sans-serif" font-size="11" fill="#64748B">0</text>
+<line x1="75" y1="466.8" x2="1245" y2="466.8" stroke="#E2E8F0"/>
+<text x="65" y="470.8" text-anchor="end" font-family="sans-serif" font-size="11" fill="#64748B">100</text>
+<line x1="75" y1="448.6" x2="1245" y2="448.6" stroke="#E2E8F0"/>
+<text x="65" y="452.6" text-anchor="end" font-family="sans-serif" font-size="11" fill="#64748B">200</text>
+<line x1="75" y1="430.5" x2="1245" y2="430.5" stroke="#E2E8F0"/>
+<text x="65" y="434.5" text-anchor="end" font-family="sans-serif" font-size="11" fill="#64748B">300</text>
+<line x1="75" y1="412.3" x2="1245" y2="412.3" stroke="#E2E8F0"/>
+<text x="65" y="416.3" text-anchor="end" font-family="sans-serif" font-size="11" fill="#64748B">400</text>
+<line x1="75" y1="394.1" x2="1245" y2="394.1" stroke="#E2E8F0"/>
+<text x="65" y="398.1" text-anchor="end" font-family="sans-serif" font-size="11" fill="#64748B">500</text>
+<line x1="75" y1="375.9" x2="1245" y2="375.9" stroke="#E2E8F0"/>
+<text x="65" y="379.9" text-anchor="end" font-family="sans-serif" font-size="11" fill="#64748B">600</text>
+<line x1="75" y1="357.7" x2="1245" y2="357.7" stroke="#E2E8F0"/>
+<text x="65" y="361.7" text-anchor="end" font-family="sans-serif" font-size="11" fill="#64748B">700</text>
+<line x1="75" y1="339.5" x2="1245" y2="339.5" stroke="#E2E8F0"/>
+<text x="65" y="343.5" text-anchor="end" font-family="sans-serif" font-size="11" fill="#64748B">800</text>
+<line x1="75" y1="321.4" x2="1245" y2="321.4" stroke="#E2E8F0"/>
+<text x="65" y="325.4" text-anchor="end" font-family="sans-serif" font-size="11" fill="#64748B">900</text>
+<line x1="75" y1="303.2" x2="1245" y2="303.2" stroke="#E2E8F0"/>
+<text x="65" y="307.2" text-anchor="end" font-family="sans-serif" font-size="11" fill="#64748B">1000</text>
+<line x1="75" y1="285.0" x2="1245" y2="285.0" stroke="#E2E8F0"/>
+<text x="65" y="289.0" text-anchor="end" font-family="sans-serif" font-size="11" fill="#64748B">1100</text>
+<line x1="75" y1="266.8" x2="1245" y2="266.8" stroke="#E2E8F0"/>
+<text x="65" y="270.8" text-anchor="end" font-family="sans-serif" font-size="11" fill="#64748B">1200</text>
+<line x1="75" y1="248.6" x2="1245" y2="248.6" stroke="#E2E8F0"/>
+<text x="65" y="252.6" text-anchor="end" font-family="sans-serif" font-size="11" fill="#64748B">1300</text>
+<line x1="75" y1="230.5" x2="1245" y2="230.5" stroke="#E2E8F0"/>
+<text x="65" y="234.5" text-anchor="end" font-family="sans-serif" font-size="11" fill="#64748B">1400</text>
+<line x1="75" y1="212.3" x2="1245" y2="212.3" stroke="#E2E8F0"/>
+<text x="65" y="216.3" text-anchor="end" font-family="sans-serif" font-size="11" fill="#64748B">1500</text>
+<line x1="75" y1="194.1" x2="1245" y2="194.1" stroke="#E2E8F0"/>
+<text x="65" y="198.1" text-anchor="end" font-family="sans-serif" font-size="11" fill="#64748B">1600</text>
+<line x1="75" y1="175.9" x2="1245" y2="175.9" stroke="#E2E8F0"/>
+<text x="65" y="179.9" text-anchor="end" font-family="sans-serif" font-size="11" fill="#64748B">1700</text>
+<line x1="75" y1="157.7" x2="1245" y2="157.7" stroke="#E2E8F0"/>
+<text x="65" y="161.7" text-anchor="end" font-family="sans-serif" font-size="11" fill="#64748B">1800</text>
+<line x1="75" y1="139.5" x2="1245" y2="139.5" stroke="#E2E8F0"/>
+<text x="65" y="143.5" text-anchor="end" font-family="sans-serif" font-size="11" fill="#64748B">1900</text>
+<line x1="75" y1="121.4" x2="1245" y2="121.4" stroke="#E2E8F0"/>
+<text x="65" y="125.4" text-anchor="end" font-family="sans-serif" font-size="11" fill="#64748B">2000</text>
+<line x1="75" y1="103.2" x2="1245" y2="103.2" stroke="#E2E8F0"/>
+<text x="65" y="107.2" text-anchor="end" font-family="sans-serif" font-size="11" fill="#64748B">2100</text>
+<line x1="75" y1="85.0" x2="1245" y2="85.0" stroke="#E2E8F0"/>
+<text x="65" y="89.0" text-anchor="end" font-family="sans-serif" font-size="11" fill="#64748B">2200</text>
+<line x1="75.0" y1="395.4" x2="75.0" y2="394.8" stroke="#94A3B8" stroke-width="2"/>
+<circle cx="75.0" cy="395.3" r="4" fill="#5B5BD6"/>
+<text transform="translate(78.0,501) rotate(55)" font-family="sans-serif" font-size="10" fill="#334155">Home</text>
+<line x1="136.6" y1="236.1" x2="136.6" y2="204.7" stroke="#94A3B8" stroke-width="2"/>
+<circle cx="136.6" cy="232.6" r="4" fill="#5B5BD6"/>
+<text transform="translate(139.6,501) rotate(55)" font-family="sans-serif" font-size="10" fill="#334155">Default project</text>
+<line x1="198.2" y1="267.4" x2="198.2" y2="237.7" stroke="#94A3B8" stroke-width="2"/>
+<circle cx="198.2" cy="238.8" r="4" fill="#5B5BD6"/>
+<text transform="translate(201.2,501) rotate(55)" font-family="sans-serif" font-size="10" fill="#334155">Raster on · 1</text>
+<line x1="259.7" y1="256.0" x2="259.7" y2="243.6" stroke="#94A3B8" stroke-width="2"/>
+<circle cx="259.7" cy="246.3" r="4" fill="#5B5BD6"/>
+<text transform="translate(262.7,501) rotate(55)" font-family="sans-serif" font-size="10" fill="#334155">Raster off · 1</text>
+<line x1="321.3" y1="270.9" x2="321.3" y2="235.4" stroke="#94A3B8" stroke-width="2"/>
+<circle cx="321.3" cy="245.4" r="4" fill="#5B5BD6"/>
+<text transform="translate(324.3,501) rotate(55)" font-family="sans-serif" font-size="10" fill="#334155">Raster on · 2</text>
+<line x1="382.9" y1="264.3" x2="382.9" y2="254.6" stroke="#94A3B8" stroke-width="2"/>
+<circle cx="382.9" cy="263.7" r="4" fill="#5B5BD6"/>
+<text transform="translate(385.9,501) rotate(55)" font-family="sans-serif" font-size="10" fill="#334155">Raster off · 2</text>
+<line x1="444.5" y1="257.0" x2="444.5" y2="234.9" stroke="#94A3B8" stroke-width="2"/>
+<circle cx="444.5" cy="246.9" r="4" fill="#5B5BD6"/>
+<text transform="translate(447.5,501) rotate(55)" font-family="sans-serif" font-size="10" fill="#334155">Raster on · 3</text>
+<line x1="506.1" y1="259.1" x2="506.1" y2="231.3" stroke="#94A3B8" stroke-width="2"/>
+<circle cx="506.1" cy="258.2" r="4" fill="#5B5BD6"/>
+<text transform="translate(509.1,501) rotate(55)" font-family="sans-serif" font-size="10" fill="#334155">Raster off · 3</text>
+<line x1="567.6" y1="223.6" x2="567.6" y2="194.5" stroke="#94A3B8" stroke-width="2"/>
+<circle cx="567.6" cy="206.6" r="4" fill="#5B5BD6"/>
+<text transform="translate(570.6,501) rotate(55)" font-family="sans-serif" font-size="10" fill="#334155">Mixed layers</text>
+<line x1="629.2" y1="256.9" x2="629.2" y2="224.0" stroke="#94A3B8" stroke-width="2"/>
+<circle cx="629.2" cy="229.5" r="4" fill="#5B5BD6"/>
+<text transform="translate(632.2,501) rotate(55)" font-family="sans-serif" font-size="10" fill="#334155">Notebook panel</text>
+<line x1="690.8" y1="254.8" x2="690.8" y2="244.4" stroke="#94A3B8" stroke-width="2"/>
+<circle cx="690.8" cy="245.5" r="4" fill="#5B5BD6"/>
+<text transform="translate(693.8,501) rotate(55)" font-family="sans-serif" font-size="10" fill="#334155">Python executed</text>
+<line x1="752.4" y1="208.5" x2="752.4" y2="191.5" stroke="#94A3B8" stroke-width="2"/>
+<circle cx="752.4" cy="203.4" r="4" fill="#5B5BD6"/>
+<text transform="translate(755.4,501) rotate(55)" font-family="sans-serif" font-size="10" fill="#334155">Notebook closed</text>
+<line x1="813.9" y1="239.5" x2="813.9" y2="194.2" stroke="#94A3B8" stroke-width="2"/>
+<circle cx="813.9" cy="198.6" r="4" fill="#5B5BD6"/>
+<text transform="translate(816.9,501) rotate(55)" font-family="sans-serif" font-size="10" fill="#334155">Warm reload</text>
+<line x1="875.5" y1="195.0" x2="875.5" y2="153.7" stroke="#94A3B8" stroke-width="2"/>
+<polyline points="75.0,395.3 136.6,232.6 198.2,238.8 259.7,246.3 321.3,245.4 382.9,263.7 444.5,246.9 506.1,258.2 567.6,206.6 629.2,229.5 690.8,245.5 752.4,203.4 813.9,198.6 875.5,182.0 937.1,238.0 998.7,154.0 1060.3,184.5 1121.8,123.7 1183.4,169.1 1245.0,166.8" fill="none" stroke="#5B5BD6" stroke-width="3"/>
+<circle cx="875.5" cy="182.0" r="4" fill="#5B5BD6"/>
+<text transform="translate(878.5,501) rotate(55)" font-family="sans-serif" font-size="10" fill="#334155">Cold reload</text>
+<line x1="937.1" y1="270.3" x2="937.1" y2="214.5" stroke="#94A3B8" stroke-width="2"/>
+<circle cx="937.1" cy="238.0" r="4" fill="#5B5BD6"/>
+<text transform="translate(940.1,501) rotate(55)" font-family="sans-serif" font-size="10" fill="#334155">GeoLibre closed</text>
+<line x1="998.7" y1="171.6" x2="998.7" y2="148.1" stroke="#94A3B8" stroke-width="2"/>
+<circle cx="998.7" cy="154.0" r="4" fill="#5B5BD6"/>
+<text transform="translate(1001.7,501) rotate(55)" font-family="sans-serif" font-size="10" fill="#334155">Reopen 1</text>
+<line x1="1060.3" y1="202.4" x2="1060.3" y2="182.1" stroke="#94A3B8" stroke-width="2"/>
+<circle cx="1060.3" cy="184.5" r="4" fill="#5B5BD6"/>
+<text transform="translate(1063.3,501) rotate(55)" font-family="sans-serif" font-size="10" fill="#334155">Close 1</text>
+<line x1="1121.8" y1="135.5" x2="1121.8" y2="102.0" stroke="#94A3B8" stroke-width="2"/>
+<circle cx="1121.8" cy="123.7" r="4" fill="#5B5BD6"/>
+<text transform="translate(1124.8,501) rotate(55)" font-family="sans-serif" font-size="10" fill="#334155">Reopen 2</text>
+<line x1="1183.4" y1="197.5" x2="1183.4" y2="136.4" stroke="#94A3B8" stroke-width="2"/>
+<circle cx="1183.4" cy="169.1" r="4" fill="#5B5BD6"/>
+<text transform="translate(1186.4,501) rotate(55)" font-family="sans-serif" font-size="10" fill="#334155">Close 2</text>
+<line x1="1245.0" y1="196.0" x2="1245.0" y2="135.3" stroke="#94A3B8" stroke-width="2"/>
+<circle cx="1245.0" cy="166.8" r="4" fill="#5B5BD6"/>
+<text transform="translate(1248.0,501) rotate(55)" font-family="sans-serif" font-size="10" fill="#334155">Final home</text>
+<text transform="translate(18,285.0) rotate(-90)" font-family="sans-serif" font-size="12" fill="#334155">PSS (MiB)</text>
+</svg>

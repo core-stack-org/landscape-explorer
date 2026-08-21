@@ -1,0 +1,1842 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-08-21T09:28:08.163540+05:30",
+  "inputFiles": [
+    "/home/amit-spatial/core-stack/landscape-explorer-memory-profiling/artifacts/memory/corrected/chromium-run1/memory-run-v2.json",
+    "/home/amit-spatial/core-stack/landscape-explorer-memory-profiling/artifacts/memory/corrected/chromium-run2/memory-run-v2.json",
+    "/home/amit-spatial/core-stack/landscape-explorer-memory-profiling/artifacts/memory/corrected/chromium-run3/memory-run-v2.json"
+  ],
+  "validation": {
+    "runCount": 3,
+    "allScenariosPassed": true,
+    "allAssertionsPassed": true,
+    "scenarioEntriesPerRun": [
+      11,
+      11,
+      11
+    ],
+    "assertionsPerRun": [
+      27,
+      27,
+      27
+    ]
+  },
+  "provenance": [
+    {
+      "branch": "chore/kyl-memory-profiling",
+      "commit": "36632724ffcc523d0ad13d908a89e0ed5cee8159",
+      "gitStatusAtStart": "",
+      "buildHashes": {
+        "index": "dedadf5ace8b94f24e3527c849717cf5ae8a9691068293b9516da855d60b1b6d",
+        "scripts": {
+          "main.7a63c656.js": "107ca4e2aad1cfca001c8025e38b1b653b043bf73a2c749e97eed419390832f9"
+        }
+      },
+      "browserVersion": "149.0.7827.55",
+      "executablePath": "/home/amit-spatial/.cache/ms-playwright/chromium-1228/chrome-linux64/chrome",
+      "durationSeconds": 383.816
+    },
+    {
+      "branch": "chore/kyl-memory-profiling",
+      "commit": "baebc98c40d8e83bc6359eb5184fe5af83435ec0",
+      "gitStatusAtStart": "?? artifacts/",
+      "buildHashes": {
+        "index": "dedadf5ace8b94f24e3527c849717cf5ae8a9691068293b9516da855d60b1b6d",
+        "scripts": {
+          "main.7a63c656.js": "107ca4e2aad1cfca001c8025e38b1b653b043bf73a2c749e97eed419390832f9"
+        }
+      },
+      "browserVersion": "149.0.7827.55",
+      "executablePath": "/home/amit-spatial/.cache/ms-playwright/chromium-1228/chrome-linux64/chrome",
+      "durationSeconds": 574.615
+    },
+    {
+      "branch": "chore/kyl-memory-profiling",
+      "commit": "baebc98c40d8e83bc6359eb5184fe5af83435ec0",
+      "gitStatusAtStart": "?? artifacts/",
+      "buildHashes": {
+        "index": "dedadf5ace8b94f24e3527c849717cf5ae8a9691068293b9516da855d60b1b6d",
+        "scripts": {
+          "main.7a63c656.js": "107ca4e2aad1cfca001c8025e38b1b653b043bf73a2c749e97eed419390832f9"
+        }
+      },
+      "browserVersion": "149.0.7827.55",
+      "executablePath": "/home/amit-spatial/.cache/ms-playwright/chromium-1228/chrome-linux64/chrome",
+      "durationSeconds": 507.649
+    }
+  ],
+  "stages": [
+    {
+      "name": "Home",
+      "label": "01-home-stabilized:stable-3",
+      "pssMiB": {
+        "median": 493.5361328125,
+        "min": 492.6240234375,
+        "max": 495.837890625,
+        "values": [
+          492.6240234375,
+          495.837890625,
+          493.5361328125
+        ]
+      },
+      "rssMiB": {
+        "median": 988.56640625,
+        "min": 986.83203125,
+        "max": 991.9140625,
+        "values": [
+          988.56640625,
+          991.9140625,
+          986.83203125
+        ]
+      },
+      "privateMiB": {
+        "median": 319.31640625,
+        "min": 318.31640625,
+        "max": 319.859375,
+        "values": [
+          319.31640625,
+          319.859375,
+          318.31640625
+        ]
+      },
+      "profileDiskMiB": {
+        "median": 1.305232048034668,
+        "min": 1.305232048034668,
+        "max": 1.4385395050048828,
+        "values": [
+          1.305232048034668,
+          1.305232048034668,
+          1.4385395050048828
+        ]
+      },
+      "workers": {
+        "median": 0,
+        "min": 0,
+        "max": 0,
+        "values": [
+          0,
+          0,
+          0
+        ]
+      }
+    },
+    {
+      "name": "Default project",
+      "label": "04-full-default-project:stable-3",
+      "pssMiB": {
+        "median": 1388.10546875,
+        "min": 1368.9609375,
+        "max": 1541.537109375,
+        "values": [
+          1541.537109375,
+          1368.9609375,
+          1388.10546875
+        ]
+      },
+      "rssMiB": {
+        "median": 2138.921875,
+        "min": 2102.38671875,
+        "max": 2273.51953125,
+        "values": [
+          2273.51953125,
+          2102.38671875,
+          2138.921875
+        ]
+      },
+      "privateMiB": {
+        "median": 1100.0703125,
+        "min": 1098.94140625,
+        "max": 1271.84375,
+        "values": [
+          1271.84375,
+          1100.0703125,
+          1098.94140625
+        ]
+      },
+      "profileDiskMiB": {
+        "median": 5.474366188049316,
+        "min": 1.4605827331542969,
+        "max": 5.474368095397949,
+        "values": [
+          1.4605827331542969,
+          5.474368095397949,
+          5.474366188049316
+        ]
+      },
+      "workers": {
+        "median": 1,
+        "min": 1,
+        "max": 1,
+        "values": [
+          1,
+          1,
+          1
+        ]
+      }
+    },
+    {
+      "name": "Raster on \u00b7 1",
+      "label": "05-raster-cycle-1:on",
+      "pssMiB": {
+        "median": 1353.8837890625,
+        "min": 1196.6826171875,
+        "max": 1360.015625,
+        "values": [
+          1196.6826171875,
+          1353.8837890625,
+          1360.015625
+        ]
+      },
+      "rssMiB": {
+        "median": 2090.03515625,
+        "min": 1933.50390625,
+        "max": 2113.96484375,
+        "values": [
+          1933.50390625,
+          2090.03515625,
+          2113.96484375
+        ]
+      },
+      "privateMiB": {
+        "median": 1068.5390625,
+        "min": 924.125,
+        "max": 1082.51953125,
+        "values": [
+          924.125,
+          1082.51953125,
+          1068.5390625
+        ]
+      },
+      "profileDiskMiB": {
+        "median": 5.474366188049316,
+        "min": 1.4607658386230469,
+        "max": 5.474368095397949,
+        "values": [
+          1.4607658386230469,
+          5.474368095397949,
+          5.474366188049316
+        ]
+      },
+      "workers": {
+        "median": 1,
+        "min": 1,
+        "max": 1,
+        "values": [
+          1,
+          1,
+          1
+        ]
+      }
+    },
+    {
+      "name": "Raster off \u00b7 1",
+      "label": "05-raster-cycle-1:off",
+      "pssMiB": {
+        "median": 1312.6005859375,
+        "min": 1259.2734375,
+        "max": 1327.7666015625,
+        "values": [
+          1259.2734375,
+          1327.7666015625,
+          1312.6005859375
+        ]
+      },
+      "rssMiB": {
+        "median": 2063.13671875,
+        "min": 1995.921875,
+        "max": 2065.796875,
+        "values": [
+          1995.921875,
+          2063.13671875,
+          2065.796875
+        ]
+      },
+      "privateMiB": {
+        "median": 1020.9375,
+        "min": 987.05859375,
+        "max": 1056.4453125,
+        "values": [
+          987.05859375,
+          1056.4453125,
+          1020.9375
+        ]
+      },
+      "profileDiskMiB": {
+        "median": 5.474366188049316,
+        "min": 1.4607839584350586,
+        "max": 5.474368095397949,
+        "values": [
+          1.4607839584350586,
+          5.474368095397949,
+          5.474366188049316
+        ]
+      },
+      "workers": {
+        "median": 1,
+        "min": 1,
+        "max": 1,
+        "values": [
+          1,
+          1,
+          1
+        ]
+      }
+    },
+    {
+      "name": "Raster on \u00b7 2",
+      "label": "05-raster-cycle-2:on",
+      "pssMiB": {
+        "median": 1317.93359375,
+        "min": 1177.375,
+        "max": 1372.8115234375,
+        "values": [
+          1177.375,
+          1317.93359375,
+          1372.8115234375
+        ]
+      },
+      "rssMiB": {
+        "median": 2053.9921875,
+        "min": 1914.0234375,
+        "max": 2126.29296875,
+        "values": [
+          1914.0234375,
+          2053.9921875,
+          2126.29296875
+        ]
+      },
+      "privateMiB": {
+        "median": 1046.9921875,
+        "min": 904.53125,
+        "max": 1081.65625,
+        "values": [
+          904.53125,
+          1046.9921875,
+          1081.65625
+        ]
+      },
+      "profileDiskMiB": {
+        "median": 5.474366188049316,
+        "min": 1.4695100784301758,
+        "max": 5.474368095397949,
+        "values": [
+          1.4695100784301758,
+          5.474368095397949,
+          5.474366188049316
+        ]
+      },
+      "workers": {
+        "median": 1,
+        "min": 1,
+        "max": 1,
+        "values": [
+          1,
+          1,
+          1
+        ]
+      }
+    },
+    {
+      "name": "Raster off \u00b7 2",
+      "label": "05-raster-cycle-2:off",
+      "pssMiB": {
+        "median": 1216.9052734375,
+        "min": 1214.033203125,
+        "max": 1267.30078125,
+        "values": [
+          1214.033203125,
+          1216.9052734375,
+          1267.30078125
+        ]
+      },
+      "rssMiB": {
+        "median": 1953.25390625,
+        "min": 1950.3125,
+        "max": 2021.28515625,
+        "values": [
+          1950.3125,
+          1953.25390625,
+          2021.28515625
+        ]
+      },
+      "privateMiB": {
+        "median": 946.01171875,
+        "min": 941.6796875,
+        "max": 975.98828125,
+        "values": [
+          941.6796875,
+          946.01171875,
+          975.98828125
+        ]
+      },
+      "profileDiskMiB": {
+        "median": 5.474366188049316,
+        "min": 1.470367431640625,
+        "max": 5.474368095397949,
+        "values": [
+          1.470367431640625,
+          5.474368095397949,
+          5.474366188049316
+        ]
+      },
+      "workers": {
+        "median": 1,
+        "min": 1,
+        "max": 1,
+        "values": [
+          1,
+          1,
+          1
+        ]
+      }
+    },
+    {
+      "name": "Raster on \u00b7 3",
+      "label": "05-raster-cycle-3:on",
+      "pssMiB": {
+        "median": 1309.7509765625,
+        "min": 1254.0791015625,
+        "max": 1375.79296875,
+        "values": [
+          1254.0791015625,
+          1309.7509765625,
+          1375.79296875
+        ]
+      },
+      "rssMiB": {
+        "median": 2046.44140625,
+        "min": 1990.78125,
+        "max": 2129.51953125,
+        "values": [
+          1990.78125,
+          2046.44140625,
+          2129.51953125
+        ]
+      },
+      "privateMiB": {
+        "median": 1038.34375,
+        "min": 982.078125,
+        "max": 1084.703125,
+        "values": [
+          982.078125,
+          1038.34375,
+          1084.703125
+        ]
+      },
+      "profileDiskMiB": {
+        "median": 5.474366188049316,
+        "min": 5.470367431640625,
+        "max": 5.474368095397949,
+        "values": [
+          5.470367431640625,
+          5.474368095397949,
+          5.474366188049316
+        ]
+      },
+      "workers": {
+        "median": 1,
+        "min": 1,
+        "max": 1,
+        "values": [
+          1,
+          1,
+          1
+        ]
+      }
+    },
+    {
+      "name": "Raster off \u00b7 3",
+      "label": "05-raster-cycle-3:off",
+      "pssMiB": {
+        "median": 1247.2548828125,
+        "min": 1242.4296875,
+        "max": 1395.1962890625,
+        "values": [
+          1247.2548828125,
+          1242.4296875,
+          1395.1962890625
+        ]
+      },
+      "rssMiB": {
+        "median": 1984.5078125,
+        "min": 1978.86328125,
+        "max": 2149.390625,
+        "values": [
+          1984.5078125,
+          1978.86328125,
+          2149.390625
+        ]
+      },
+      "privateMiB": {
+        "median": 975.09375,
+        "min": 971.515625,
+        "max": 1103.79296875,
+        "values": [
+          975.09375,
+          971.515625,
+          1103.79296875
+        ]
+      },
+      "profileDiskMiB": {
+        "median": 5.474366188049316,
+        "min": 5.470367431640625,
+        "max": 5.474368095397949,
+        "values": [
+          5.470367431640625,
+          5.474368095397949,
+          5.474366188049316
+        ]
+      },
+      "workers": {
+        "median": 1,
+        "min": 1,
+        "max": 1,
+        "values": [
+          1,
+          1,
+          1
+        ]
+      }
+    },
+    {
+      "name": "Mixed layers",
+      "label": "06-multiple:CLART:on",
+      "pssMiB": {
+        "median": 1531.0693359375,
+        "min": 1437.5927734375,
+        "max": 1597.78125,
+        "values": [
+          1437.5927734375,
+          1597.78125,
+          1531.0693359375
+        ]
+      },
+      "rssMiB": {
+        "median": 2286.95703125,
+        "min": 2177.3671875,
+        "max": 2343.66015625,
+        "values": [
+          2177.3671875,
+          2343.66015625,
+          2286.95703125
+        ]
+      },
+      "privateMiB": {
+        "median": 1238.2890625,
+        "min": 1163.64453125,
+        "max": 1317.640625,
+        "values": [
+          1163.64453125,
+          1317.640625,
+          1238.2890625
+        ]
+      },
+      "profileDiskMiB": {
+        "median": 5.474365234375,
+        "min": 5.474364280700684,
+        "max": 5.474368095397949,
+        "values": [
+          5.474364280700684,
+          5.474368095397949,
+          5.474365234375
+        ]
+      },
+      "workers": {
+        "median": 1,
+        "min": 1,
+        "max": 1,
+        "values": [
+          1,
+          1,
+          1
+        ]
+      }
+    },
+    {
+      "name": "Notebook panel",
+      "label": "07-notebook:panel-open:stable-2",
+      "pssMiB": {
+        "median": 1405.2919921875,
+        "min": 1254.2841796875,
+        "max": 1435.705078125,
+        "values": [
+          1254.2841796875,
+          1405.2919921875,
+          1435.705078125
+        ]
+      },
+      "rssMiB": {
+        "median": 2121.36328125,
+        "min": 1971.91015625,
+        "max": 2166.72265625,
+        "values": [
+          1971.91015625,
+          2121.36328125,
+          2166.72265625
+        ]
+      },
+      "privateMiB": {
+        "median": 1156.01953125,
+        "min": 1007.0859375,
+        "max": 1168.6171875,
+        "values": [
+          1007.0859375,
+          1156.01953125,
+          1168.6171875
+        ]
+      },
+      "profileDiskMiB": {
+        "median": 5.474365234375,
+        "min": 5.474363327026367,
+        "max": 5.474368095397949,
+        "values": [
+          5.474363327026367,
+          5.474368095397949,
+          5.474365234375
+        ]
+      },
+      "workers": {
+        "median": 1,
+        "min": 1,
+        "max": 1,
+        "values": [
+          1,
+          1,
+          1
+        ]
+      }
+    },
+    {
+      "name": "Python executed",
+      "label": "07-notebook:python-executed:stable-3",
+      "pssMiB": {
+        "median": 1317.2490234375,
+        "min": 1265.9990234375,
+        "max": 1323.3583984375,
+        "values": [
+          1323.3583984375,
+          1317.2490234375,
+          1265.9990234375
+        ]
+      },
+      "rssMiB": {
+        "median": 2030.59375,
+        "min": 1992.640625,
+        "max": 2038.3125,
+        "values": [
+          2038.3125,
+          2030.59375,
+          1992.640625
+        ]
+      },
+      "privateMiB": {
+        "median": 1070.65625,
+        "min": 1002.98828125,
+        "max": 1079.41015625,
+        "values": [
+          1079.41015625,
+          1070.65625,
+          1002.98828125
+        ]
+      },
+      "profileDiskMiB": {
+        "median": 5.474365234375,
+        "min": 5.474363327026367,
+        "max": 5.474368095397949,
+        "values": [
+          5.474363327026367,
+          5.474368095397949,
+          5.474365234375
+        ]
+      },
+      "workers": {
+        "median": 2,
+        "min": 2,
+        "max": 2,
+        "values": [
+          2,
+          2,
+          2
+        ]
+      }
+    },
+    {
+      "name": "Notebook closed",
+      "label": "07-notebook:closed:stable-2",
+      "pssMiB": {
+        "median": 1548.771484375,
+        "min": 1520.958984375,
+        "max": 1614.4453125,
+        "values": [
+          1614.4453125,
+          1548.771484375,
+          1520.958984375
+        ]
+      },
+      "rssMiB": {
+        "median": 2287.6484375,
+        "min": 2272.8203125,
+        "max": 2354.1640625,
+        "values": [
+          2354.1640625,
+          2287.6484375,
+          2272.8203125
+        ]
+      },
+      "privateMiB": {
+        "median": 1277.1953125,
+        "min": 1233.671875,
+        "max": 1345.81640625,
+        "values": [
+          1345.81640625,
+          1277.1953125,
+          1233.671875
+        ]
+      },
+      "profileDiskMiB": {
+        "median": 5.474365234375,
+        "min": 5.474363327026367,
+        "max": 5.474368095397949,
+        "values": [
+          5.474363327026367,
+          5.474368095397949,
+          5.474365234375
+        ]
+      },
+      "workers": {
+        "median": 1,
+        "min": 1,
+        "max": 1,
+        "values": [
+          1,
+          1,
+          1
+        ]
+      }
+    },
+    {
+      "name": "Warm reload",
+      "label": "08-warm-reload:stable-3",
+      "pssMiB": {
+        "median": 1575.0986328125,
+        "min": 1350.1240234375,
+        "max": 1599.21484375,
+        "values": [
+          1350.1240234375,
+          1599.21484375,
+          1575.0986328125
+        ]
+      },
+      "rssMiB": {
+        "median": 2330.20703125,
+        "min": 2095.6015625,
+        "max": 2340.1015625,
+        "values": [
+          2095.6015625,
+          2340.1015625,
+          2330.20703125
+        ]
+      },
+      "privateMiB": {
+        "median": 1284.44921875,
+        "min": 1076.125,
+        "max": 1325.359375,
+        "values": [
+          1076.125,
+          1325.359375,
+          1284.44921875
+        ]
+      },
+      "profileDiskMiB": {
+        "median": 5.474365234375,
+        "min": 5.474363327026367,
+        "max": 5.474367141723633,
+        "values": [
+          5.474363327026367,
+          5.474367141723633,
+          5.474365234375
+        ]
+      },
+      "workers": {
+        "median": 1,
+        "min": 1,
+        "max": 1,
+        "values": [
+          1,
+          1,
+          1
+        ]
+      }
+    },
+    {
+      "name": "Cold reload",
+      "label": "08-cold-reload:stable-3",
+      "pssMiB": {
+        "median": 1666.3896484375,
+        "min": 1594.7265625,
+        "max": 1822.1513671875,
+        "values": [
+          1594.7265625,
+          1822.1513671875,
+          1666.3896484375
+        ]
+      },
+      "rssMiB": {
+        "median": 2419.05859375,
+        "min": 2341.23828125,
+        "max": 2565.3671875,
+        "values": [
+          2341.23828125,
+          2565.3671875,
+          2419.05859375
+        ]
+      },
+      "privateMiB": {
+        "median": 1378.91796875,
+        "min": 1320.23046875,
+        "max": 1547.0546875,
+        "values": [
+          1320.23046875,
+          1547.0546875,
+          1378.91796875
+        ]
+      },
+      "profileDiskMiB": {
+        "median": 5.474365234375,
+        "min": 5.474363327026367,
+        "max": 5.474367141723633,
+        "values": [
+          5.474363327026367,
+          5.474367141723633,
+          5.474365234375
+        ]
+      },
+      "workers": {
+        "median": 1,
+        "min": 1,
+        "max": 1,
+        "values": [
+          1,
+          1,
+          1
+        ]
+      }
+    },
+    {
+      "name": "GeoLibre closed",
+      "label": "09-close-geolibre:stable-3",
+      "pssMiB": {
+        "median": 1358.4443359375,
+        "min": 1180.6357421875,
+        "max": 1487.900390625,
+        "values": [
+          1180.6357421875,
+          1358.4443359375,
+          1487.900390625
+        ]
+      },
+      "rssMiB": {
+        "median": 2039.11328125,
+        "min": 1865.48828125,
+        "max": 2182.64453125,
+        "values": [
+          1865.48828125,
+          2039.11328125,
+          2182.64453125
+        ]
+      },
+      "privateMiB": {
+        "median": 1144.85546875,
+        "min": 967.4609375,
+        "max": 1257.48828125,
+        "values": [
+          967.4609375,
+          1144.85546875,
+          1257.48828125
+        ]
+      },
+      "profileDiskMiB": {
+        "median": 5.474365234375,
+        "min": 5.474363327026367,
+        "max": 5.474367141723633,
+        "values": [
+          5.474363327026367,
+          5.474367141723633,
+          5.474365234375
+        ]
+      },
+      "workers": {
+        "median": 0,
+        "min": 0,
+        "max": 0,
+        "values": [
+          0,
+          0,
+          0
+        ]
+      }
+    },
+    {
+      "name": "Reopen 1",
+      "label": "10-reopen-close:1:open",
+      "pssMiB": {
+        "median": 1820.3828125,
+        "min": 1723.7744140625,
+        "max": 1853.1572265625,
+        "values": [
+          1723.7744140625,
+          1820.3828125,
+          1853.1572265625
+        ]
+      },
+      "rssMiB": {
+        "median": 2567.328125,
+        "min": 2473.75390625,
+        "max": 2611.03515625,
+        "values": [
+          2473.75390625,
+          2567.328125,
+          2611.03515625
+        ]
+      },
+      "privateMiB": {
+        "median": 1541.609375,
+        "min": 1445.78125,
+        "max": 1560.47265625,
+        "values": [
+          1445.78125,
+          1541.609375,
+          1560.47265625
+        ]
+      },
+      "profileDiskMiB": {
+        "median": 5.474365234375,
+        "min": 5.474363327026367,
+        "max": 5.474367141723633,
+        "values": [
+          5.474363327026367,
+          5.474367141723633,
+          5.474365234375
+        ]
+      },
+      "workers": {
+        "median": 1,
+        "min": 1,
+        "max": 1,
+        "values": [
+          1,
+          1,
+          1
+        ]
+      }
+    },
+    {
+      "name": "Close 1",
+      "label": "10-reopen-close:1:closed-home:stable-2",
+      "pssMiB": {
+        "median": 1652.76171875,
+        "min": 1554.5478515625,
+        "max": 1665.9892578125,
+        "values": [
+          1554.5478515625,
+          1652.76171875,
+          1665.9892578125
+        ]
+      },
+      "rssMiB": {
+        "median": 2333.44140625,
+        "min": 2239.41015625,
+        "max": 2358.3671875,
+        "values": [
+          2239.41015625,
+          2333.44140625,
+          2358.3671875
+        ]
+      },
+      "privateMiB": {
+        "median": 1438.8828125,
+        "min": 1341.671875,
+        "max": 1440.07421875,
+        "values": [
+          1341.671875,
+          1440.07421875,
+          1438.8828125
+        ]
+      },
+      "profileDiskMiB": {
+        "median": 5.474365234375,
+        "min": 5.474363327026367,
+        "max": 5.474367141723633,
+        "values": [
+          5.474363327026367,
+          5.474367141723633,
+          5.474365234375
+        ]
+      },
+      "workers": {
+        "median": 0,
+        "min": 0,
+        "max": 0,
+        "values": [
+          0,
+          0,
+          0
+        ]
+      }
+    },
+    {
+      "name": "Reopen 2",
+      "label": "10-reopen-close:2:open",
+      "pssMiB": {
+        "median": 1987.3798828125,
+        "min": 1922.310546875,
+        "max": 2106.7197265625,
+        "values": [
+          1922.310546875,
+          1987.3798828125,
+          2106.7197265625
+        ]
+      },
+      "rssMiB": {
+        "median": 2736.07421875,
+        "min": 2668.6796875,
+        "max": 2864.22265625,
+        "values": [
+          2668.6796875,
+          2736.07421875,
+          2864.22265625
+        ]
+      },
+      "privateMiB": {
+        "median": 1708.02734375,
+        "min": 1648.17578125,
+        "max": 1812.88671875,
+        "values": [
+          1648.17578125,
+          1708.02734375,
+          1812.88671875
+        ]
+      },
+      "profileDiskMiB": {
+        "median": 5.474365234375,
+        "min": 5.474363327026367,
+        "max": 5.474367141723633,
+        "values": [
+          5.474363327026367,
+          5.474367141723633,
+          5.474365234375
+        ]
+      },
+      "workers": {
+        "median": 1,
+        "min": 1,
+        "max": 1,
+        "values": [
+          1,
+          1,
+          1
+        ]
+      }
+    },
+    {
+      "name": "Close 2",
+      "label": "10-reopen-close:2:closed-home:stable-2",
+      "pssMiB": {
+        "median": 1737.447265625,
+        "min": 1581.0283203125,
+        "max": 1917.4873046875,
+        "values": [
+          1737.447265625,
+          1581.0283203125,
+          1917.4873046875
+        ]
+      },
+      "rssMiB": {
+        "median": 2417.94140625,
+        "min": 2262.234375,
+        "max": 2608.28125,
+        "values": [
+          2417.94140625,
+          2262.234375,
+          2608.28125
+        ]
+      },
+      "privateMiB": {
+        "median": 1528.7578125,
+        "min": 1368.16796875,
+        "max": 1692.12109375,
+        "values": [
+          1528.7578125,
+          1368.16796875,
+          1692.12109375
+        ]
+      },
+      "profileDiskMiB": {
+        "median": 5.474365234375,
+        "min": 5.474363327026367,
+        "max": 5.474367141723633,
+        "values": [
+          5.474363327026367,
+          5.474367141723633,
+          5.474365234375
+        ]
+      },
+      "workers": {
+        "median": 0,
+        "min": 0,
+        "max": 0,
+        "values": [
+          0,
+          0,
+          0
+        ]
+      }
+    },
+    {
+      "name": "Final home",
+      "label": "final-home",
+      "pssMiB": {
+        "median": 1750.26953125,
+        "min": 1589.732421875,
+        "max": 1923.21875,
+        "values": [
+          1750.26953125,
+          1589.732421875,
+          1923.21875
+        ]
+      },
+      "rssMiB": {
+        "median": 2430.55859375,
+        "min": 2275.76171875,
+        "max": 2609.37109375,
+        "values": [
+          2430.55859375,
+          2275.76171875,
+          2609.37109375
+        ]
+      },
+      "privateMiB": {
+        "median": 1541.67578125,
+        "min": 1376.49609375,
+        "max": 1697.3515625,
+        "values": [
+          1541.67578125,
+          1376.49609375,
+          1697.3515625
+        ]
+      },
+      "profileDiskMiB": {
+        "median": 5.474365234375,
+        "min": 5.474363327026367,
+        "max": 5.474367141723633,
+        "values": [
+          5.474363327026367,
+          5.474367141723633,
+          5.474365234375
+        ]
+      },
+      "workers": {
+        "median": 0,
+        "min": 0,
+        "max": 0,
+        "values": [
+          0,
+          0,
+          0
+        ]
+      }
+    }
+  ],
+  "processComposition": [
+    {
+      "name": "Home",
+      "rolesMiB": {
+        "browser": 94.5341796875,
+        "renderer": 208.46875,
+        "gpu": 101.7626953125,
+        "network-service": 44.87890625,
+        "storage-service": 11.7294921875,
+        "zygote": 32.2939453125,
+        "utility": 0.0,
+        "other": 0.0
+      }
+    },
+    {
+      "name": "Default",
+      "rolesMiB": {
+        "browser": 99.529296875,
+        "renderer": 951.017578125,
+        "gpu": 235.4619140625,
+        "network-service": 64.912109375,
+        "storage-service": 9.4921875,
+        "zygote": 30.1494140625,
+        "utility": 6.3818359375,
+        "other": 0.0
+      }
+    },
+    {
+      "name": "Mixed",
+      "rolesMiB": {
+        "browser": 139.1787109375,
+        "renderer": 1023.279296875,
+        "gpu": 266.9111328125,
+        "network-service": 73.8544921875,
+        "storage-service": 9.34375,
+        "zygote": 30.142578125,
+        "utility": 6.3525390625,
+        "other": 0.0
+      }
+    },
+    {
+      "name": "Python",
+      "rolesMiB": {
+        "browser": 130.0185546875,
+        "renderer": 803.3720703125,
+        "gpu": 242.431640625,
+        "network-service": 84.68359375,
+        "storage-service": 9.5107421875,
+        "zygote": 30.0712890625,
+        "utility": 6.3486328125,
+        "other": 0.0
+      }
+    },
+    {
+      "name": "Closed",
+      "rolesMiB": {
+        "browser": 162.9453125,
+        "renderer": 913.212890625,
+        "gpu": 142.94921875,
+        "network-service": 90.4912109375,
+        "storage-service": 9.5146484375,
+        "zygote": 30.107421875,
+        "utility": 6.4228515625,
+        "other": 0.0
+      }
+    }
+  ],
+  "network": {
+    "categoriesMiB": {
+      "basemap": {
+        "median": 6.526129722595215,
+        "min": 4.559817314147949,
+        "max": 7.441533088684082,
+        "values": [
+          4.559817314147949,
+          7.441533088684082,
+          6.526129722595215
+        ]
+      },
+      "corestack-api": {
+        "median": 0.8480463027954102,
+        "min": 0.8480396270751953,
+        "max": 0.8481502532958984,
+        "values": [
+          0.8480396270751953,
+          0.8480463027954102,
+          0.8481502532958984
+        ]
+      },
+      "geolibre-app": {
+        "median": 35.355485916137695,
+        "min": 35.3548641204834,
+        "max": 35.356221199035645,
+        "values": [
+          35.356221199035645,
+          35.355485916137695,
+          35.3548641204834
+        ]
+      },
+      "jupyter-pyodide": {
+        "median": 10.213841438293457,
+        "min": 10.213830947875977,
+        "max": 10.214168548583984,
+        "values": [
+          10.213841438293457,
+          10.214168548583984,
+          10.213830947875977
+        ]
+      },
+      "kyl-app": {
+        "median": 5.075438499450684,
+        "min": 5.075438499450684,
+        "max": 5.075438499450684,
+        "values": [
+          5.075438499450684,
+          5.075438499450684,
+          5.075438499450684
+        ]
+      },
+      "other": {
+        "median": 3.8341312408447266,
+        "min": 3.8341064453125,
+        "max": 3.834160804748535,
+        "values": [
+          3.8341312408447266,
+          3.8341064453125,
+          3.834160804748535
+        ]
+      },
+      "raster-wms": {
+        "median": 2.1165428161621094,
+        "min": 2.1165428161621094,
+        "max": 2.397775650024414,
+        "values": [
+          2.1165428161621094,
+          2.397775650024414,
+          2.1165428161621094
+        ]
+      },
+      "vector-wfs": {
+        "median": 7.839737892150879,
+        "min": 7.8397369384765625,
+        "max": 7.839737892150879,
+        "values": [
+          7.839737892150879,
+          7.839737892150879,
+          7.8397369384765625
+        ]
+      }
+    },
+    "negativeSizeRecords": [
+      956,
+      939,
+      957
+    ]
+  },
+  "notebook": {
+    "runs": [
+      {
+        "pssBeforeMiB": 1336.578125,
+        "pssPanelMiB": 1254.2841796875,
+        "pssPythonMiB": 1323.3583984375,
+        "pssClosedMiB": 1614.4453125,
+        "diskBeforeMiB": 5.474363327026367,
+        "diskPanelMiB": 5.474363327026367,
+        "diskPythonMiB": 5.474363327026367,
+        "diskClosedMiB": 5.474363327026367,
+        "originUsagePanelMiB": 29.94706916809082,
+        "originUsagePythonMiB": 29.95046043395996,
+        "originUsageDeltaKiB": 3.47265625,
+        "originCachePanelMiB": 19.393593788146973,
+        "originIndexedDbPanelMiB": 10.551835060119629,
+        "workersBefore": [
+          "https://web.geolibre.app/assets/maplibre-gl-worker-0j-cjoB-.js"
+        ],
+        "workersPanel": [
+          "https://web.geolibre.app/assets/maplibre-gl-worker-0j-cjoB-.js"
+        ],
+        "workersPython": [
+          "https://web.geolibre.app/assets/maplibre-gl-worker-0j-cjoB-.js",
+          "https://web.geolibre.app/jupyterlite/extensions/@jupyterlite/pyodide-kernel-extension/static/352.3014c3141745cb055fab.js?v=3014c3141745cb055fab"
+        ],
+        "workersClosed": [
+          "https://web.geolibre.app/assets/maplibre-gl-worker-0j-cjoB-.js"
+        ],
+        "pythonKernelStatus": "Python (Pyodide) | Idle",
+        "jupyterResponseMiB": 1.338292121887207,
+        "jupyterAccountedMiB": 10.213841438293457,
+        "wasmResponseMiB": 2.8552780151367188,
+        "wasmUrls": [
+          "https://cdn.jsdelivr.net/pyodide/v0.27.1/full/pyodide.asm.wasm"
+        ]
+      },
+      {
+        "pssBeforeMiB": 1488.615234375,
+        "pssPanelMiB": 1405.2919921875,
+        "pssPythonMiB": 1317.2490234375,
+        "pssClosedMiB": 1548.771484375,
+        "diskBeforeMiB": 5.474368095397949,
+        "diskPanelMiB": 5.474368095397949,
+        "diskPythonMiB": 5.474368095397949,
+        "diskClosedMiB": 5.474368095397949,
+        "originUsagePanelMiB": 29.94710636138916,
+        "originUsagePythonMiB": 29.9504976272583,
+        "originUsageDeltaKiB": 3.47265625,
+        "originCachePanelMiB": 19.393577575683594,
+        "originIndexedDbPanelMiB": 10.551888465881348,
+        "workersBefore": [
+          "https://web.geolibre.app/assets/maplibre-gl-worker-0j-cjoB-.js"
+        ],
+        "workersPanel": [
+          "https://web.geolibre.app/assets/maplibre-gl-worker-0j-cjoB-.js"
+        ],
+        "workersPython": [
+          "https://web.geolibre.app/assets/maplibre-gl-worker-0j-cjoB-.js",
+          "https://web.geolibre.app/jupyterlite/extensions/@jupyterlite/pyodide-kernel-extension/static/352.3014c3141745cb055fab.js?v=3014c3141745cb055fab"
+        ],
+        "workersClosed": [
+          "https://web.geolibre.app/assets/maplibre-gl-worker-0j-cjoB-.js"
+        ],
+        "pythonKernelStatus": "Python (Pyodide) | Idle",
+        "jupyterResponseMiB": 1.3386192321777344,
+        "jupyterAccountedMiB": 10.214168548583984,
+        "wasmResponseMiB": 2.8552780151367188,
+        "wasmUrls": [
+          "https://cdn.jsdelivr.net/pyodide/v0.27.1/full/pyodide.asm.wasm"
+        ]
+      },
+      {
+        "pssBeforeMiB": 1311.150390625,
+        "pssPanelMiB": 1435.705078125,
+        "pssPythonMiB": 1265.9990234375,
+        "pssClosedMiB": 1520.958984375,
+        "diskBeforeMiB": 5.474365234375,
+        "diskPanelMiB": 5.474365234375,
+        "diskPythonMiB": 5.474365234375,
+        "diskClosedMiB": 5.474365234375,
+        "originUsagePanelMiB": 29.945565223693848,
+        "originUsagePythonMiB": 29.94895648956299,
+        "originUsageDeltaKiB": 3.47265625,
+        "originCachePanelMiB": 19.392091751098633,
+        "originIndexedDbPanelMiB": 10.551833152770996,
+        "workersBefore": [
+          "https://web.geolibre.app/assets/maplibre-gl-worker-0j-cjoB-.js"
+        ],
+        "workersPanel": [
+          "https://web.geolibre.app/assets/maplibre-gl-worker-0j-cjoB-.js"
+        ],
+        "workersPython": [
+          "https://web.geolibre.app/assets/maplibre-gl-worker-0j-cjoB-.js",
+          "https://web.geolibre.app/jupyterlite/extensions/@jupyterlite/pyodide-kernel-extension/static/352.3014c3141745cb055fab.js?v=3014c3141745cb055fab"
+        ],
+        "workersClosed": [
+          "https://web.geolibre.app/assets/maplibre-gl-worker-0j-cjoB-.js"
+        ],
+        "pythonKernelStatus": "Python (Pyodide) | Idle",
+        "jupyterResponseMiB": 1.3382816314697266,
+        "jupyterAccountedMiB": 10.213830947875977,
+        "wasmResponseMiB": 2.8552780151367188,
+        "wasmUrls": [
+          "https://cdn.jsdelivr.net/pyodide/v0.27.1/full/pyodide.asm.wasm"
+        ]
+      }
+    ],
+    "aggregate": {
+      "pssBeforeMiB": {
+        "median": 1336.578125,
+        "min": 1311.150390625,
+        "max": 1488.615234375,
+        "values": [
+          1336.578125,
+          1488.615234375,
+          1311.150390625
+        ]
+      },
+      "pssPanelMiB": {
+        "median": 1405.2919921875,
+        "min": 1254.2841796875,
+        "max": 1435.705078125,
+        "values": [
+          1254.2841796875,
+          1405.2919921875,
+          1435.705078125
+        ]
+      },
+      "pssPythonMiB": {
+        "median": 1317.2490234375,
+        "min": 1265.9990234375,
+        "max": 1323.3583984375,
+        "values": [
+          1323.3583984375,
+          1317.2490234375,
+          1265.9990234375
+        ]
+      },
+      "pssClosedMiB": {
+        "median": 1548.771484375,
+        "min": 1520.958984375,
+        "max": 1614.4453125,
+        "values": [
+          1614.4453125,
+          1548.771484375,
+          1520.958984375
+        ]
+      },
+      "diskBeforeMiB": {
+        "median": 5.474365234375,
+        "min": 5.474363327026367,
+        "max": 5.474368095397949,
+        "values": [
+          5.474363327026367,
+          5.474368095397949,
+          5.474365234375
+        ]
+      },
+      "diskPanelMiB": {
+        "median": 5.474365234375,
+        "min": 5.474363327026367,
+        "max": 5.474368095397949,
+        "values": [
+          5.474363327026367,
+          5.474368095397949,
+          5.474365234375
+        ]
+      },
+      "diskPythonMiB": {
+        "median": 5.474365234375,
+        "min": 5.474363327026367,
+        "max": 5.474368095397949,
+        "values": [
+          5.474363327026367,
+          5.474368095397949,
+          5.474365234375
+        ]
+      },
+      "diskClosedMiB": {
+        "median": 5.474365234375,
+        "min": 5.474363327026367,
+        "max": 5.474368095397949,
+        "values": [
+          5.474363327026367,
+          5.474368095397949,
+          5.474365234375
+        ]
+      },
+      "originUsagePanelMiB": {
+        "median": 29.94706916809082,
+        "min": 29.945565223693848,
+        "max": 29.94710636138916,
+        "values": [
+          29.94706916809082,
+          29.94710636138916,
+          29.945565223693848
+        ]
+      },
+      "originUsagePythonMiB": {
+        "median": 29.95046043395996,
+        "min": 29.94895648956299,
+        "max": 29.9504976272583,
+        "values": [
+          29.95046043395996,
+          29.9504976272583,
+          29.94895648956299
+        ]
+      },
+      "originUsageDeltaKiB": {
+        "median": 3.47265625,
+        "min": 3.47265625,
+        "max": 3.47265625,
+        "values": [
+          3.47265625,
+          3.47265625,
+          3.47265625
+        ]
+      },
+      "originCachePanelMiB": {
+        "median": 19.393577575683594,
+        "min": 19.392091751098633,
+        "max": 19.393593788146973,
+        "values": [
+          19.393593788146973,
+          19.393577575683594,
+          19.392091751098633
+        ]
+      },
+      "originIndexedDbPanelMiB": {
+        "median": 10.551835060119629,
+        "min": 10.551833152770996,
+        "max": 10.551888465881348,
+        "values": [
+          10.551835060119629,
+          10.551888465881348,
+          10.551833152770996
+        ]
+      },
+      "jupyterResponseMiB": {
+        "median": 1.338292121887207,
+        "min": 1.3382816314697266,
+        "max": 1.3386192321777344,
+        "values": [
+          1.338292121887207,
+          1.3386192321777344,
+          1.3382816314697266
+        ]
+      },
+      "jupyterAccountedMiB": {
+        "median": 10.213841438293457,
+        "min": 10.213830947875977,
+        "max": 10.214168548583984,
+        "values": [
+          10.213841438293457,
+          10.214168548583984,
+          10.213830947875977
+        ]
+      },
+      "wasmResponseMiB": {
+        "median": 2.8552780151367188,
+        "min": 2.8552780151367188,
+        "max": 2.8552780151367188,
+        "values": [
+          2.8552780151367188,
+          2.8552780151367188,
+          2.8552780151367188
+        ]
+      }
+    }
+  },
+  "residual": {
+    "runs": [
+      {
+        "baselinePssMiB": 492.6240234375,
+        "closedPssMiB": 1180.6357421875,
+        "finalPssMiB": 1750.26953125,
+        "finalMinusBaselineMiB": 1257.6455078125,
+        "baselineRendererCount": 2,
+        "finalRendererCount": 3,
+        "baselineRendererPssMiB": 207.537109375,
+        "finalRendererPssMiB": 1286.9375
+      },
+      {
+        "baselinePssMiB": 495.837890625,
+        "closedPssMiB": 1358.4443359375,
+        "finalPssMiB": 1589.732421875,
+        "finalMinusBaselineMiB": 1093.89453125,
+        "baselineRendererCount": 2,
+        "finalRendererCount": 3,
+        "baselineRendererPssMiB": 208.46875,
+        "finalRendererPssMiB": 1129.712890625
+      },
+      {
+        "baselinePssMiB": 493.5361328125,
+        "closedPssMiB": 1487.900390625,
+        "finalPssMiB": 1923.21875,
+        "finalMinusBaselineMiB": 1429.6826171875,
+        "baselineRendererCount": 2,
+        "finalRendererCount": 3,
+        "baselineRendererPssMiB": 208.9111328125,
+        "finalRendererPssMiB": 1477.6005859375
+      }
+    ],
+    "aggregate": {
+      "baselinePssMiB": {
+        "median": 493.5361328125,
+        "min": 492.6240234375,
+        "max": 495.837890625,
+        "values": [
+          492.6240234375,
+          495.837890625,
+          493.5361328125
+        ]
+      },
+      "closedPssMiB": {
+        "median": 1358.4443359375,
+        "min": 1180.6357421875,
+        "max": 1487.900390625,
+        "values": [
+          1180.6357421875,
+          1358.4443359375,
+          1487.900390625
+        ]
+      },
+      "finalPssMiB": {
+        "median": 1750.26953125,
+        "min": 1589.732421875,
+        "max": 1923.21875,
+        "values": [
+          1750.26953125,
+          1589.732421875,
+          1923.21875
+        ]
+      },
+      "finalMinusBaselineMiB": {
+        "median": 1257.6455078125,
+        "min": 1093.89453125,
+        "max": 1429.6826171875,
+        "values": [
+          1257.6455078125,
+          1093.89453125,
+          1429.6826171875
+        ]
+      },
+      "baselineRendererCount": {
+        "median": 2,
+        "min": 2,
+        "max": 2,
+        "values": [
+          2,
+          2,
+          2
+        ]
+      },
+      "finalRendererCount": {
+        "median": 3,
+        "min": 3,
+        "max": 3,
+        "values": [
+          3,
+          3,
+          3
+        ]
+      },
+      "baselineRendererPssMiB": {
+        "median": 208.46875,
+        "min": 207.537109375,
+        "max": 208.9111328125,
+        "values": [
+          207.537109375,
+          208.46875,
+          208.9111328125
+        ]
+      },
+      "finalRendererPssMiB": {
+        "median": 1286.9375,
+        "min": 1129.712890625,
+        "max": 1477.6005859375,
+        "values": [
+          1286.9375,
+          1129.712890625,
+          1477.6005859375
+        ]
+      }
+    }
+  },
+  "scenariosSeconds": {
+    "01-home-stabilized": {
+      "median": 3.592,
+      "min": 3.563,
+      "max": 3.953,
+      "values": [
+        3.592,
+        3.563,
+        3.953
+      ]
+    },
+    "02-select-inputs-open-kyl": {
+      "median": 42.682,
+      "min": 6.854,
+      "max": 169.45,
+      "values": [
+        6.854,
+        169.45,
+        42.682
+      ]
+    },
+    "03-download-layers-route-no-scope": {
+      "median": 2.093,
+      "min": 2.074,
+      "max": 28.617,
+      "values": [
+        2.093,
+        2.074,
+        28.617
+      ]
+    },
+    "04-full-default-project": {
+      "median": 17.492,
+      "min": 17.103,
+      "max": 19.268,
+      "values": [
+        17.103,
+        17.492,
+        19.268
+      ]
+    },
+    "05-raster-three-toggle-cycles": {
+      "median": 76.03,
+      "min": 73.709,
+      "max": 76.093,
+      "values": [
+        76.03,
+        76.093,
+        73.709
+      ]
+    },
+    "06-multiple-layers-and-controls": {
+      "median": 121.511,
+      "min": 112.096,
+      "max": 124.702,
+      "values": [
+        121.511,
+        124.702,
+        112.096
+      ]
+    },
+    "07-notebook-real-python": {
+      "median": 90.523,
+      "min": 88.861,
+      "max": 101.617,
+      "values": [
+        88.861,
+        101.617,
+        90.523
+      ]
+    },
+    "08-warm-reload": {
+      "median": 16.888,
+      "min": 16.559,
+      "max": 17.596,
+      "values": [
+        16.888,
+        17.596,
+        16.559
+      ]
+    },
+    "08-cold-reload": {
+      "median": 17.91,
+      "min": 17.203,
+      "max": 17.92,
+      "values": [
+        17.91,
+        17.92,
+        17.203
+      ]
+    },
+    "09-close-geolibre": {
+      "median": 3.257,
+      "min": 3.099,
+      "max": 3.283,
+      "values": [
+        3.099,
+        3.257,
+        3.283
+      ]
+    },
+    "10-reopen-close-residual-cycles": {
+      "median": 21.363,
+      "min": 20.694,
+      "max": 21.409,
+      "values": [
+        21.409,
+        20.694,
+        21.363
+      ]
+    }
+  },
+  "webgl": [
+    {
+      "vendor": "Google Inc. (Google)",
+      "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)"
+    },
+    {
+      "vendor": "Google Inc. (Google)",
+      "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)"
+    },
+    {
+      "vendor": "Google Inc. (Google)",
+      "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)"
+    }
+  ],
+  "pageErrors": [
+    [
+      {
+        "timestamp": "2026-08-21T03:15:22.073Z",
+        "type": "pageerror",
+        "error": "undefined"
+      }
+    ],
+    [
+      {
+        "timestamp": "2026-08-21T03:25:14.901Z",
+        "type": "pageerror",
+        "error": "undefined"
+      }
+    ],
+    [
+      {
+        "timestamp": "2026-08-21T03:35:00.592Z",
+        "type": "pageerror",
+        "error": "undefined"
+      }
+    ]
+  ]
+}
