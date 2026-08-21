@@ -515,6 +515,8 @@ const assertProbe = (scenario, name, condition, actual, expected) => {
 };
 
 const runScenario = async (page, cdp, browserPid, id, action) => {
+  const started = Date.now();
+  console.error(`[${now()}] START ${id}`);
   activePhase = `${id}:before`;
   const before = await sample(page, cdp, browserPid, `${id}:before`);
   const assertionStart = assertions.length;
@@ -543,6 +545,9 @@ const runScenario = async (page, cdp, browserPid, id, action) => {
       .map((entry) => samples.indexOf(entry)),
     assertions: assertions.slice(assertionStart),
   });
+  console.error(
+    `[${now()}] ${status.toUpperCase()} ${id} (${Date.now() - started} ms)`
+  );
 };
 
 const route = (pathname) => new URL(pathname, baseUrl).toString();
