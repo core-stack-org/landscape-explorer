@@ -1069,8 +1069,18 @@ const main = async () => {
     await sample(page, cdp, browserPid, "07-notebook:new-python-notebook");
     await editor.click({ force: true });
     await editor.fill('print("KYL memory probe")');
+    const editorText = (await editor.textContent())?.trim();
+    assertProbe(
+      "07-notebook-real-python",
+      "Python source was entered in the active code cell",
+      editorText === 'print("KYL memory probe")',
+      editorText,
+      'print("KYL memory probe")'
+    );
     activePhase = "07-notebook:execute-python";
-    await editor.press("Shift+Enter");
+    await jupyter
+      .getByRole("button", { name: "Run this cell and advance (Shift+Enter)" })
+      .click({ timeout: timeoutMs });
     await jupyter
       .locator(".jp-OutputArea-output")
       .filter({ hasText: "KYL memory probe" })
