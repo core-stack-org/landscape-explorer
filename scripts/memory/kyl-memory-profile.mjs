@@ -65,6 +65,7 @@ const scenarios = [];
 const samples = [];
 const networkRecords = [];
 const pendingNetworkRecords = new Set();
+const deferredNetworkRecords = new WeakSet();
 const requestMetadata = new WeakMap();
 let activePhase = "bootstrap";
 let previousNetworkCursor = 0;
@@ -291,8 +292,25 @@ const summarizeNetwork = (records) => {
 };
 
 const waitForPendingNetwork = async () => {
-  if (pendingNetworkRecords.size) {
-    await Promise.allSettled([...pendingNetworkRecords]);
+  const pending = [...pendingNetworkRecords].filter(
+    (promise) => !deferredNetworkRecords.has(promise)
+  );
+  if (!pending.length) return;
+  let settled = false;
+  await Promise.race([
+    Promise.allSettled(pending).then(() => {
+      settled = true;
+    }),
+    sleep(5000),
+  ]);
+  if (!settled) {
+    pending.forEach((promise) => deferredNetworkRecords.add(promise));
+    record("network_size_drain_deferred", {
+      severity: "warning",
+      pendingCount: pending.length,
+      message:
+        "Playwright request-size queries exceeded 5 seconds; raw records will be appended when they resolve.",
+    });
   }
 };
 
