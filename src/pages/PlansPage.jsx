@@ -317,14 +317,22 @@ const createPinStyle = (stateName, count) => {
 
 // ── PLAN DOT STYLES ──────────────────────────────────────────────────────────
 
+// const PLAN_STATUS_COLORS = {
+//   in_progress:   { fill: "#FF6FFF", stroke: "#ffffff" }, // magenta
+//   dpr_completed: { fill: "#8B3FE6", stroke: "#ffffff" }, // chartreuse
+//   dpr_approved:  { fill: "#CCFF00", stroke: "#3E5800" },
+// };
+
 const PLAN_STATUS_COLORS = {
-  in_progress:   { fill: "#FF6FFF", stroke: "#ffffff" }, // magenta
-  dpr_completed: { fill: "#CCFF00", stroke: "#3E5800" }, // chartreuse
+  in_progress: { fill: "#CCFF00", stroke: "#3E5800",},
+  dpr_completed: { fill: "#00BFFF", stroke: "#005F8F",},
+  dpr_approved: { fill: "#FF1493", stroke: "#8B004F", },
 };
 
 const getPlanStatus = (plan) => {
   if (!plan) return "in_progress";
   if (plan.is_dpr_reviewed) return "dpr_completed";
+  if (plan.is_dpr_approved) return "dpr_approved";
   return "in_progress";
 };
 
@@ -1727,6 +1735,9 @@ setStatusTracking(trackingData);
                 {[
                   { color: PLAN_STATUS_COLORS.in_progress.fill,   label: "In Progress"    },
                   { color: PLAN_STATUS_COLORS.dpr_completed.fill, label: "DPR Completed"  },
+                  { color: PLAN_STATUS_COLORS.dpr_approved.fill,  label: "DPR Approved"  },
+
+                  
                 ].map(({ color, label }) => (
                   <div key={label} className="flex items-center gap-2">
                     <div className="w-3.5 h-3.5 rounded-full flex-shrink-0"
@@ -2478,6 +2489,25 @@ setStatusTracking(trackingData);
                       </div>
                     </div>
                   </div>
+
+                    <div className="rounded-xl p-3"
+                        style={{ background: P.lighter, border: `1px solid ${P.border}` }}>
+                        <p className="text-xs font-medium mb-3" style={{ color: P.muted }}>Demands Generated</p>
+
+                        <div className="flex flex-col gap-2">
+                          <div className="rounded-lg p-3 flex items-center justify-between"
+                            style={{ background: "white", border: `1px solid ${P.border}` }}>
+                            <p className="text-xs font-semibold" style={{ color: P.text }}>Community</p>
+                            <p className="text-sm font-bold" style={{ color: P.base }}>{metaStats?.demand_overview?.community_demands}</p>
+                          </div>
+
+                          <div className="rounded-lg p-3 flex items-center justify-between"
+                            style={{ background: "white", border: `1px solid ${P.border}` }}>
+                            <p className="text-xs font-semibold" style={{ color: P.text }}>Individual</p>
+                            <p className="text-sm font-bold" style={{ color: P.base }}>{metaStats?.demand_overview?.individual_demands}</p>
+                          </div>
+                        </div>
+                      </div>
 
                     {(filteredOrgOptions?.length > 0) && (
                       <div className="bg-white rounded-2xl p-4 shadow-sm"

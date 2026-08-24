@@ -946,8 +946,9 @@ React.useEffect(() => {
 // ── PLAN DOT STYLES ──────────────────────────────────────────────────────────
 
 const PLAN_STATUS_COLORS = {
-  in_progress:   { fill: "#FF6FFF", stroke: "#ffffff" }, // magenta
-  dpr_completed: { fill: "#CCFF00", stroke: "#3E5800" }, // chartreuse
+  in_progress: { fill: "#CCFF00", stroke: "#3E5800",},
+  dpr_completed: { fill: "#00BFFF", stroke: "#005F8F",},
+  dpr_approved: { fill: "#FF1493", stroke: "#8B004F", },
 };
 
 const getPlanStatus = (plan) => {
