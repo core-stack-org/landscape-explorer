@@ -203,15 +203,20 @@ const MapLegend = ({ showMWS, showVillages, currentLayer, showConnectivity,showP
 
   const planLegendItems = [
   {
-    color: "#FF6FFF",
+    color: "#FF1493",
     border: "#ffffff",
-    name: "In Progress",
+    name: "DPR Approved",
   },
   {
     color: "#CCFF00",
     border: "#3E5800",
-    name: "DPR Reviewed",
+    name: "In Progress",
   },
+  {
+    color: "#00BFFF",
+    border: "#005F8F",
+    name: "DPR Completed",
+  }
 ];
 
   const lulcLegendItems = [
