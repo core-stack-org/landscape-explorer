@@ -1,7 +1,20 @@
 import React, { useState } from "react";
 import newLogo from "../assets/newlogoWhite.png";
 import { useLocation } from "react-router-dom";
-import { Info, ExternalLink } from "lucide-react";
+import { BookOpen, Compass, ExternalLink, Info } from "lucide-react";
+import GeoLibreTour from "./geolibre/GeoLibreTour";
+
+const HeaderTooltip = ({ children, text }) => (
+  <div className="group relative">
+    {children}
+    <div
+      role="tooltip"
+      className="pointer-events-none absolute right-0 top-full z-[100] mt-2 w-64 rounded-lg bg-slate-900 px-3 py-2 text-xs leading-5 text-white opacity-0 shadow-xl transition-opacity group-hover:opacity-100 group-focus-within:opacity-100"
+    >
+      {text}
+    </div>
+  </div>
+);
 
 const LandingNavbar = () => {
   const location = useLocation();
@@ -9,6 +22,7 @@ const LandingNavbar = () => {
   const isHomePage = location.pathname === "/";
   const isKylDashboard = location.pathname === "/kyl_dashboard";
   const [showTooltip, setShowTooltip] = useState(false);
+  const [showGeoLibreTour, setShowGeoLibreTour] = useState(false);
 
   const handleIndicatorsClick = () => {
     window.open(
@@ -40,17 +54,52 @@ const LandingNavbar = () => {
 
           <div className="flex flex-wrap gap-3 items-center justify-center">
             {isExploreDataPage && (
-              <a
-                href="https://docs.google.com/document/d/1jet4EEBbbKgpNrPnuNJJDRuAJUiR2pIMFQp9JTlygAQ/edit?usp=sharing"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-2 px-4 py-2 rounded-lg bg-purple-50 hover:bg-purple-100 transition-all duration-200 border border-purple-200 group"
-              >
-                <span className="text-sm sm:text-base font-medium text-purple-700 group-hover:text-purple-800">
-                  QGIS Documentation
-                </span>
-                <ExternalLink className="h-4 w-4 text-purple-600 group-hover:scale-110 transition-transform" />
-              </a>
+              <>
+                <HeaderTooltip text="A five-step guide to layers, map navigation, legends, and downloads in this CoRE Stack project.">
+                  <button
+                    type="button"
+                    onClick={() => setShowGeoLibreTour(true)}
+                    className="flex items-center gap-2 rounded-lg border border-purple-300 bg-purple-700 px-4 py-2 text-white transition-all duration-200 hover:bg-purple-800"
+                    aria-label="Start the GeoLibre quick tour"
+                  >
+                    <Compass className="h-4 w-4" />
+                    <span className="text-sm font-semibold sm:text-base">
+                      Quick Tour
+                    </span>
+                  </button>
+                </HeaderTooltip>
+
+                <HeaderTooltip text="Open GeoLibre's official hands-on tutorials for complete mapping and analysis workflows.">
+                  <a
+                    href="https://geolibre.app/tutorials/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2 rounded-lg border border-purple-200 bg-purple-50 px-4 py-2 transition-all duration-200 hover:bg-purple-100"
+                    aria-label="Open GeoLibre Tutorials in a new tab"
+                  >
+                    <BookOpen className="h-4 w-4 text-purple-600" />
+                    <span className="text-sm font-medium text-purple-700 sm:text-base">
+                      GeoLibre Tutorials
+                    </span>
+                    <ExternalLink className="h-4 w-4 text-purple-600" />
+                  </a>
+                </HeaderTooltip>
+
+                <HeaderTooltip text="Learn how to download and use CoRE Stack layers in the QGIS desktop workflow.">
+                  <a
+                    href="https://docs.google.com/document/d/1jet4EEBbbKgpNrPnuNJJDRuAJUiR2pIMFQp9JTlygAQ/edit?usp=sharing"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2 rounded-lg border border-purple-200 bg-purple-50 px-4 py-2 transition-all duration-200 hover:bg-purple-100"
+                    aria-label="Open QGIS Documentation in a new tab"
+                  >
+                    <span className="text-sm font-medium text-purple-700 sm:text-base">
+                      QGIS Documentation
+                    </span>
+                    <ExternalLink className="h-4 w-4 text-purple-600" />
+                  </a>
+                </HeaderTooltip>
+              </>
             )}
 
             {isHomePage && (
@@ -107,6 +156,10 @@ const LandingNavbar = () => {
           </div>
         </div>
       </div>
+      <GeoLibreTour
+        open={showGeoLibreTour}
+        onClose={() => setShowGeoLibreTour(false)}
+      />
     </nav>
   );
 };

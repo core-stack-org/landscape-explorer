@@ -6,7 +6,7 @@ import {
   geoJsonBounds,
   hydrateGeoLibreVectorLayer,
   mapViewFromBounds,
-  syncGeoLibreActiveLegends,
+  sanitizeGeoLibreProjectPlugins,
 } from "./geolibreProject";
 import { GEOLIBRE_LAYERS } from "../../config/geolibreLayers";
 
@@ -78,8 +78,8 @@ describe("GeoLibre 2.6 project generation", () => {
     expect(project.layers).toHaveLength(GEOLIBRE_LAYERS.length);
     expect(project.layers).toHaveLength(55);
     expect(project.mapView.bbox).toEqual([92.9, 24.7, 93.2, 25]);
-    expect(project.mapLayout).toEqual({ rows: 1, cols: 1 });
-    expect(project.secondaryMapViews).toEqual([]);
+    expect(project.mapLayout).toBeUndefined();
+    expect(project.secondaryMapViews).toBeUndefined();
     expect(project.basemapStyleUrl).toBe(DEFAULT_GEOLIBRE_BASEMAP_STYLE);
     expect(decodeURIComponent(project.basemapStyleUrl)).toContain(
       "https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}"
@@ -331,16 +331,16 @@ describe("GeoLibre 2.6 project generation", () => {
       ...location,
       fetchFeatureCollection: successfulFetch,
     });
-    const legend =
-      project.plugins.settings["maplibre-gl-components"].legend;
+    const legends = activeGeoLibreLegends(project);
+    const legend = legends[0];
 
-    expect(project.plugins.activePluginIds).toContain(
+    expect(project.plugins.activePluginIds).not.toContain(
       "maplibre-gl-components"
     );
+    expect(project.plugins.activePluginIds).not.toContain("maplibre-gl-swipe");
+    expect(project.plugins.settings["maplibre-gl-components"]).toBeUndefined();
+    expect(project.plugins.settings["maplibre-gl-swipe"]).toBeUndefined();
     expect(legend).toMatchObject({
-      visible: false,
-      collapsed: true,
-      hasLegend: true,
       title: "Socio-Economic Profile legend",
     });
     expect(legend.items).toContainEqual({
@@ -349,10 +349,64 @@ describe("GeoLibre 2.6 project generation", () => {
       shape: "square",
     });
     expect(legend.legendPosition).toBe("bottom-right");
-    expect(legend.legends.map((entry) => entry.title)).toEqual([
+    expect(legends.map((entry) => entry.title)).toEqual([
       "Socio-Economic Profile legend",
       "Administrative Boundaries legend",
     ]);
+  });
+
+  it("does not override a user-selected split-map layout", async () => {
+    const project = await buildGeoLibreProject({
+      ...location,
+      fetchFeatureCollection: successfulFetch,
+    });
+    const retainedComparison = {
+      ...project,
+      mapLayout: { rows: 1, cols: 2 },
+      secondaryMapViews: [{ id: "secondary-0", view: project.mapView }],
+      plugins: {
+        ...project.plugins,
+        activePluginIds: [
+          ...project.plugins.activePluginIds,
+          "maplibre-gl-components",
+          "maplibre-gl-swipe",
+        ],
+        mapControlPositions: {
+          ...project.plugins.mapControlPositions,
+          "maplibre-gl-components": "top-right",
+          "maplibre-gl-swipe": "top-right",
+        },
+        settings: {
+          ...project.plugins.settings,
+          "maplibre-gl-components": { controls: ["swipe"] },
+          "maplibre-gl-swipe": {
+            active: true,
+            collapsed: false,
+            leftLayers: ["corestack-administrative-boundaries"],
+            rightLayers: ["corestack-demographics"],
+          },
+        },
+      },
+    };
+
+    const reset = sanitizeGeoLibreProjectPlugins(retainedComparison);
+
+    expect(reset.mapLayout).toEqual({ rows: 1, cols: 2 });
+    expect(reset.secondaryMapViews).toEqual(
+      retainedComparison.secondaryMapViews
+    );
+    expect(reset.plugins.activePluginIds).not.toContain(
+      "maplibre-gl-components"
+    );
+    expect(reset.plugins.activePluginIds).not.toContain("maplibre-gl-swipe");
+    expect(
+      reset.plugins.mapControlPositions["maplibre-gl-components"]
+    ).toBeUndefined();
+    expect(
+      reset.plugins.mapControlPositions["maplibre-gl-swipe"]
+    ).toBeUndefined();
+    expect(reset.plugins.settings["maplibre-gl-components"]).toBeUndefined();
+    expect(reset.plugins.settings["maplibre-gl-swipe"]).toBeUndefined();
   });
 
   it("adds and removes legend entries when layer visibility changes", async () => {
@@ -368,11 +422,10 @@ describe("GeoLibre 2.6 project generation", () => {
           : layer
       ),
     };
-    const synced = syncGeoLibreActiveLegends(withVisibleLayers);
-    const legend =
-      synced.plugins.settings["maplibre-gl-components"].legend;
+    const synced = sanitizeGeoLibreProjectPlugins(withVisibleLayers);
+    const legends = activeGeoLibreLegends(synced);
 
-    expect(legend.legends.map((entry) => entry.title)).toEqual([
+    expect(legends.map((entry) => entry.title)).toEqual([
       "Socio-Economic Profile legend",
       "Administrative Boundaries legend",
       "Drainage legend",
@@ -387,12 +440,8 @@ describe("GeoLibre 2.6 project generation", () => {
           : layer
       ),
     };
-    const resynced = syncGeoLibreActiveLegends(drainageHidden);
-    expect(
-      resynced.plugins.settings["maplibre-gl-components"].legend.legends.map(
-        (entry) => entry.title
-      )
-    ).toEqual([
+    const resynced = sanitizeGeoLibreProjectPlugins(drainageHidden);
+    expect(activeGeoLibreLegends(resynced).map((entry) => entry.title)).toEqual([
       "Socio-Economic Profile legend",
       "Administrative Boundaries legend",
       "Terrain legend",

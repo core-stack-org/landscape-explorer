@@ -1,0 +1,160 @@
+import { useEffect, useState } from "react";
+import { ChevronLeft, ChevronRight, ExternalLink, X } from "lucide-react";
+
+export const GEOLIBRE_TOUR_STEPS = [
+  {
+    title: "Start with the Layers panel",
+    description:
+      "Expand a CoRE Stack theme on the left, then use the eye control to show a layer. Only the two Demographic layers load initially; other datasets load when you first enable them.",
+    tip: "Begin with Hydrology, Land, Agriculture, or a LULC year to keep the map focused.",
+  },
+  {
+    title: "Inspect and adjust a layer",
+    description:
+      "Each layer row provides visibility, opacity, zoom, identify, styling, and more actions. Select one layer at a time before opening the Style panel on the right.",
+    tip: "Lower opacity when comparing a thematic layer with the satellite basemap.",
+  },
+  {
+    title: "Navigate the landscape",
+    description:
+      "Drag to pan, use the wheel or map buttons to zoom, and use fullscreen when you need more room. The status bar reports coordinates, zoom, bearing, pitch, and the current extent.",
+    tip: "Press R inside GeoLibre to reset pitch and bearing if the map becomes tilted or rotated.",
+  },
+  {
+    title: "Read the active legend",
+    description:
+      "The CoRE Stack legend follows the visible layers. Choose a legend from its dropdown when several datasets are active, and compare its classes with the features on the map.",
+    tip: "Hide layers you are not interpreting so the legend and map remain easy to read.",
+  },
+  {
+    title: "Download or continue in GIS",
+    description:
+      "Open a layer's more-actions menu for its available export options. Use QGIS Documentation for the CoRE Stack desktop workflow, or GeoLibre Tutorials for broader GeoLibre tools and analysis.",
+    tip: "Before exporting, confirm the selected layer, geographic extent, and output format match the next step in your workflow.",
+  },
+];
+
+const GeoLibreTour = ({ open, onClose }) => {
+  const [stepIndex, setStepIndex] = useState(0);
+
+  useEffect(() => {
+    if (open) setStepIndex(0);
+  }, [open]);
+
+  useEffect(() => {
+    if (!open) return undefined;
+    const handleKeyDown = (event) => {
+      if (event.key === "Escape") onClose();
+      if (event.key === "ArrowLeft") {
+        setStepIndex((value) => Math.max(0, value - 1));
+      }
+      if (event.key === "ArrowRight") {
+        setStepIndex((value) =>
+          Math.min(GEOLIBRE_TOUR_STEPS.length - 1, value + 1)
+        );
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [onClose, open]);
+
+  if (!open) return null;
+
+  const step = GEOLIBRE_TOUR_STEPS[stepIndex];
+  const isFirst = stepIndex === 0;
+  const isLast = stepIndex === GEOLIBRE_TOUR_STEPS.length - 1;
+
+  return (
+    <div
+      className="fixed inset-0 z-[10000] flex items-center justify-center bg-slate-950/55 p-4"
+      role="presentation"
+      onMouseDown={(event) => {
+        if (event.target === event.currentTarget) onClose();
+      }}
+    >
+      <section
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="geolibre-tour-title"
+        className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-2xl"
+      >
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-wider text-purple-700">
+              Explore CoRE Stack Data Layers · {stepIndex + 1} of {GEOLIBRE_TOUR_STEPS.length}
+            </p>
+            <h2
+              id="geolibre-tour-title"
+              className="mt-2 text-xl font-semibold text-slate-900"
+            >
+              {step.title}
+            </h2>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-lg p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-800"
+            aria-label="Close GeoLibre quick tour"
+            title="Close tour"
+          >
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+
+        <p className="mt-4 text-sm leading-6 text-slate-700">
+          {step.description}
+        </p>
+        <div className="mt-4 rounded-xl border border-purple-100 bg-purple-50 p-3 text-sm leading-5 text-purple-900">
+          <span className="font-semibold">Tip:</span> {step.tip}
+        </div>
+
+        <div className="mt-5 flex gap-1" aria-label="Tour progress">
+          {GEOLIBRE_TOUR_STEPS.map((item, index) => (
+            <span
+              key={item.title}
+              className={`h-1.5 flex-1 rounded-full ${
+                index <= stepIndex ? "bg-purple-600" : "bg-slate-200"
+              }`}
+            />
+          ))}
+        </div>
+
+        <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
+          <a
+            href="https://geolibre.app/tutorials/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 text-sm font-semibold text-purple-700 hover:text-purple-900"
+          >
+            Official tutorials
+            <ExternalLink className="h-4 w-4" />
+          </a>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              disabled={isFirst}
+              onClick={() => setStepIndex((value) => value - 1)}
+              className="inline-flex items-center gap-1 rounded-lg border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              <ChevronLeft className="h-4 w-4" />
+              Back
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                if (isLast) onClose();
+                else setStepIndex((value) => value + 1);
+              }}
+              className="inline-flex items-center gap-1 rounded-lg bg-purple-700 px-3 py-2 text-sm font-semibold text-white hover:bg-purple-800"
+            >
+              {isLast ? "Finish" : "Next"}
+              {!isLast && <ChevronRight className="h-4 w-4" />}
+            </button>
+          </div>
+        </div>
+      </section>
+    </div>
+  );
+};
+
+export default GeoLibreTour;

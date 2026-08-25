@@ -6,7 +6,7 @@ import {
   activeGeoLibreLegends,
   buildGeoLibreProject,
   hydrateGeoLibreVectorLayer,
-  syncGeoLibreActiveLegends,
+  sanitizeGeoLibreProjectPlugins,
 } from "../components/geolibre/geolibreProject";
 import LandingNavbar from "../components/landing_navbar";
 import {
@@ -180,7 +180,7 @@ const LandscapeExplorer = () => {
         // Sending it back as a full project would recreate every native raster
         // source and make an already-loaded WMS layer fetch its tiles again.
         // Only replace the project when lazy vector hydration supplied new data.
-        nextProject = syncGeoLibreActiveLegends(nextProject);
+        nextProject = sanitizeGeoLibreProjectPlugins(nextProject);
         hydrationDirtyRef.current = false;
         setProject(nextProject);
       });
