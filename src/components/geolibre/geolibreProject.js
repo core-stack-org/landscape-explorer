@@ -5,6 +5,7 @@ import {
 } from "../../config/geolibre.config";
 import {
   GEOLIBRE_LAYERS,
+  GEOLIBRE_NREGA_CATEGORIES,
   GEOLIBRE_VECTOR_LAYERS,
 } from "../../config/geolibreLayers";
 
@@ -305,28 +306,6 @@ const STYLE_PROFILES = {
     ],
     { fillColor: "#eb984e", strokeColor: "#232323", fillOpacity: 0.5 }
   ),
-  nrega: categoryStyle(
-    "WorkCatego",
-    [
-      ["Agri Impact - HH,  Community", "#ffa500", "Land restoration"],
-      ["Household Livelihood", "#c2678d", "Off-farm livelihood assets"],
-      ["Irrigation - Site level impact", "#1a759f", "Irrigation on farms"],
-      ["Others - HH, Community", "#355070", "Community assets"],
-      ["Plantation", "#52b69a", "Plantations"],
-      [
-        "SWC - Landscape level impact",
-        "#6495ed",
-        "Soil and Water conservation",
-      ],
-      ["Un Identified", "#6d597a", "Unidentified"],
-    ],
-    {
-      fillColor: "#6d597a",
-      strokeColor: "#ffffff",
-      fillOpacity: 0.9,
-      circleRadius: 6,
-    }
-  ),
   green_credit: {
     ...BASE_STYLE,
     fillColor: "#14d11d",
@@ -471,6 +450,11 @@ const LEGEND_PROFILES = {
   land_conflicts: [["Reported land conflict", "#ff0000", "circle"]],
   industry: [["Industry or CSR site", "#ff0000", "circle"]],
   mining: [["Mining site", "#ff0000", "circle"]],
+  nrega: GEOLIBRE_NREGA_CATEGORIES.map((category) => [
+    category.label,
+    category.color,
+    category.markerShape,
+  ]),
   lulc_level_1: [
     ["Built-up", "#ff0000"],
     ["Water", "#1ca3ec"],
@@ -514,9 +498,11 @@ const layerLegend = (catalogLayer, style) => {
     color,
     shape: itemShape || shape,
   }));
-  const baseTitle = catalogLayer.baseId
-    ? catalogLayer.label.split(" · ")[0]
-    : catalogLayer.label;
+  const baseTitle =
+    catalogLayer.legendTitle ||
+    (catalogLayer.baseId
+      ? catalogLayer.label.split(" · ")[0]
+      : catalogLayer.label);
   return {
     key: catalogLayer.baseId || catalogLayer.id,
     title: `${baseTitle} legend`,
@@ -798,10 +784,31 @@ export const fetchWfsFeatureCollection = async (request, { signal } = {}) => {
   return data;
 };
 
+const nregaLayerStyle = (categoryId) => {
+  const category = GEOLIBRE_NREGA_CATEGORIES.find(
+    (item) => item.id === categoryId
+  );
+  return {
+    ...BASE_STYLE,
+    fillColor: category?.color || "#6b7280",
+    strokeColor: "#ffffff",
+    strokeWidth: 1,
+    fillOpacity: 0.9,
+    circleRadius: 4,
+    markerEnabled: true,
+    markerShape: category?.markerShape || "circle",
+    markerColor: category?.color || "#6b7280",
+    markerSize: 14,
+    pointRenderer: "single",
+  };
+};
+
 const layerStyle = (layer) =>
   layer.sourceType === "wms"
     ? { ...RASTER_STYLE }
-    : { ...(STYLE_PROFILES[layer.styleProfile] || BASE_STYLE) };
+    : layer.nregaCategoryId
+      ? nregaLayerStyle(layer.nregaCategoryId)
+      : { ...(STYLE_PROFILES[layer.styleProfile] || BASE_STYLE) };
 
 const coreStackMetadata = (layer, layerName, sourceUrl, style, baseUrl) => ({
   domain: layer.domain,
@@ -861,6 +868,9 @@ const buildVectorLayer = ({
           style,
           baseUrl
         ),
+        ...(catalogLayer.nregaCategoryId
+          ? { nregaCategoryId: catalogLayer.nregaCategoryId }
+          : {}),
         loadState,
       },
     },
@@ -997,6 +1007,44 @@ const replaceProjectLayer = (project, layerId, replacement) => ({
   ),
 });
 
+const nregaCategoryForLayer = (layer) =>
+  GEOLIBRE_NREGA_CATEGORIES.find(
+    (category) =>
+      category.id === layer.metadata?.corestack?.nregaCategoryId
+  );
+
+const nregaFeaturesForCategory = (features, category) => {
+  const knownValues = new Set(
+    GEOLIBRE_NREGA_CATEGORIES.filter((item) => !item.fallback).flatMap(
+      (item) => item.values
+    )
+  );
+  return features.filter((feature) => {
+    const value = feature?.properties?.WorkCatego ?? "";
+    return category.fallback
+      ? !knownValues.has(value)
+      : category.values.includes(value);
+  });
+};
+
+const hydrateLayerWithData = (layer, data) => {
+  const { initialLoadError: _initialLoadError, ...metadata } =
+    layer.metadata || {};
+  return {
+    ...layer,
+    geojson: data,
+    metadata: {
+      ...metadata,
+      featureCount: data.features.length,
+      loadState: "loaded",
+      corestack: {
+        ...metadata.corestack,
+        loadState: "loaded",
+      },
+    },
+  };
+};
+
 const withLazyLoadFailure = (project, layerId, failure) => {
   const layerLoading = project.metadata?.layerLoading || {};
   const remainingFailures = (layerLoading.lazyLoadFailures || []).filter(
@@ -1041,23 +1089,29 @@ export const hydrateGeoLibreVectorLayer = async ({
 
   try {
     const data = await fetchFeatureCollection(request, { signal });
-    const { initialLoadError: _initialLoadError, ...metadata } =
-      layer.metadata || {};
-    const hydratedLayer = {
-      ...layer,
-      geojson: data,
-      metadata: {
-        ...metadata,
-        featureCount: data.features.length,
-        loadState: "loaded",
-        corestack: {
-          ...metadata.corestack,
-          loadState: "loaded",
-        },
-      },
-    };
+    const category = nregaCategoryForLayer(layer);
+    const hydratedProject = category
+      ? {
+          ...project,
+          layers: project.layers.map((item) => {
+            const itemCategory = nregaCategoryForLayer(item);
+            if (!itemCategory) return item;
+            return hydrateLayerWithData(item, {
+              ...data,
+              features: nregaFeaturesForCategory(
+                data.features,
+                itemCategory
+              ),
+            });
+          }),
+        }
+      : replaceProjectLayer(
+          project,
+          layerId,
+          hydrateLayerWithData(layer, data)
+        );
     return withLazyLoadFailure(
-      replaceProjectLayer(project, layerId, hydratedLayer),
+      hydratedProject,
       layerId,
       null
     );

@@ -47,6 +47,17 @@ const mergeHydratedVectorLayers = (viewerProject, hydratedLayers) => ({
   }),
 });
 
+const rememberHydratedVectorLayers = (project, hydratedLayers) => {
+  project.layers.forEach((layer) => {
+    if (
+      layer.type === "geojson" &&
+      layer.metadata?.loadState === "loaded"
+    ) {
+      hydratedLayers.set(layer.id, layer);
+    }
+  });
+};
+
 const LandscapeExplorer = () => {
   const selectedState = useRecoilValue(stateAtom);
   const selectedDistrict = useRecoilValue(districtAtom);
@@ -161,10 +172,13 @@ const LandscapeExplorer = () => {
             project: nextProject,
             layerId: layer.id,
           });
-          const hydrated = nextProject.layers.find(
-            (item) => item.id === layer.id
+          // One NREGA request hydrates every independently toggleable work-type
+          // layer. Remember every hydrated sibling so a later visibility event
+          // cannot merge against stale empty data.
+          rememberHydratedVectorLayers(
+            nextProject,
+            hydratedLayersRef.current
           );
-          if (hydrated) hydratedLayersRef.current.set(layer.id, hydrated);
           hydrationDirtyRef.current = true;
         }
 

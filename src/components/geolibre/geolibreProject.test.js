@@ -8,7 +8,10 @@ import {
   mapViewFromBounds,
   sanitizeGeoLibreProjectPlugins,
 } from "./geolibreProject";
-import { GEOLIBRE_LAYERS } from "../../config/geolibreLayers";
+import {
+  GEOLIBRE_LAYERS,
+  GEOLIBRE_NREGA_CATEGORIES,
+} from "../../config/geolibreLayers";
 
 const location = {
   state: "Assam",
@@ -38,6 +41,33 @@ const polygonFeatureCollection = (request) => ({
     },
   ],
 });
+
+const nregaFeatureCollection = {
+  type: "FeatureCollection",
+  features: [
+    "Agri Impact - HH,  Community",
+    "Household Livelihood",
+    "Irrigation - Site level impact",
+    "Irrigation Site level - Non RWH",
+    "Others - HH, Community",
+    "Plantation",
+    "SWC - Landscape level impact",
+    "Un Identified",
+    "",
+    "A future category",
+  ].map((WorkCatego, index) => ({
+    type: "Feature",
+    id: `nrega-${index}`,
+    properties: {
+      WorkCatego,
+      "Work Type": `Work type ${index}`,
+    },
+    geometry: {
+      type: "Point",
+      coordinates: [92.92 + index * 0.02, 24.72 + index * 0.02],
+    },
+  })),
+};
 
 const successfulFetch = jest.fn();
 
@@ -76,7 +106,7 @@ describe("GeoLibre 2.6 project generation", () => {
 
     expect(project.version).toBe("0.2.0");
     expect(project.layers).toHaveLength(GEOLIBRE_LAYERS.length);
-    expect(project.layers).toHaveLength(55);
+    expect(project.layers).toHaveLength(62);
     expect(project.mapView.bbox).toEqual([92.9, 24.7, 93.2, 25]);
     expect(project.mapLayout).toBeUndefined();
     expect(project.secondaryMapViews).toBeUndefined();
@@ -558,6 +588,115 @@ describe("GeoLibre 2.6 project generation", () => {
     });
     expect(reusedProject).toBe(hydratedProject);
     expect(successfulFetch).toHaveBeenCalledTimes(2);
+  });
+
+  it("hydrates separately selectable NREGA work types with small native markers", async () => {
+    const project = await buildGeoLibreProject({
+      ...location,
+      fetchFeatureCollection: successfulFetch,
+    });
+    const layerId = "corestack-nrega_land_restoration";
+    const selectedLayerIds = new Set([
+      layerId,
+      "corestack-nrega_irrigation_site",
+      "corestack-nrega_plantation",
+    ]);
+    const toggledProject = {
+      ...project,
+      layers: project.layers.map((layer) =>
+        layer.groupId === "nrega"
+          ? { ...layer, visible: selectedLayerIds.has(layer.id) }
+          : layer
+      ),
+    };
+    const nregaFetch = jest.fn(async () => nregaFeatureCollection);
+
+    const hydratedProject = await hydrateGeoLibreVectorLayer({
+      project: toggledProject,
+      layerId,
+      fetchFeatureCollection: nregaFetch,
+    });
+    const nregaLayers = hydratedProject.layers.filter(
+      (layer) => layer.groupId === "nrega"
+    );
+    const nrega = nregaLayers.find((layer) => layer.id === layerId);
+
+    expect(nregaFetch).toHaveBeenCalledTimes(1);
+    expect(nregaLayers).toHaveLength(GEOLIBRE_NREGA_CATEGORIES.length);
+    expect(nrega).toMatchObject({
+      id: layerId,
+      name: "Land restoration",
+      visible: true,
+      metadata: {
+        loadState: "loaded",
+        featureCount: 1,
+      },
+    });
+    expect(nrega.geojson.features).toEqual([nregaFeatureCollection.features[0]]);
+    expect(nrega.style).toMatchObject({
+      vectorStyleMode: "single",
+      fillOpacity: 0.9,
+      circleRadius: 4,
+      markerEnabled: true,
+      markerShape: "square",
+      markerColor: "#e68600",
+      markerSize: 14,
+      pointRenderer: "single",
+    });
+    expect(
+      [...nregaLayers].reverse().map((item) => item.name)
+    ).toEqual(GEOLIBRE_NREGA_CATEGORIES.map((category) => category.label));
+    expect(
+      [...nregaLayers].reverse().map((item) => item.style.markerShape)
+    ).toEqual(GEOLIBRE_NREGA_CATEGORIES.map((category) => category.markerShape));
+    expect(
+      nregaLayers.every((item) => item.metadata.loadState === "loaded")
+    ).toBe(true);
+    expect(
+      nregaLayers
+        .filter((item) => item.visible)
+        .map((item) => item.id)
+        .sort()
+    ).toEqual([...selectedLayerIds].sort());
+    expect(
+      nregaLayers.reduce(
+        (count, item) => count + item.geojson.features.length,
+        0
+      )
+    ).toBe(nregaFeatureCollection.features.length);
+    expect(
+      nrega.metadata.corestack.legend.items.map((item) => item.shape)
+    ).toEqual(
+      GEOLIBRE_NREGA_CATEGORIES.map((category) => category.markerShape)
+    );
+    expect(nrega.style.labels).toBeUndefined();
+    expect(nrega.style.diagramType).toBeUndefined();
+
+    const reusedProject = await hydrateGeoLibreVectorLayer({
+      project: hydratedProject,
+      layerId,
+      fetchFeatureCollection: nregaFetch,
+    });
+    expect(reusedProject).toBe(hydratedProject);
+    expect(nregaFetch).toHaveBeenCalledTimes(1);
+
+    const allVisibleProject = {
+      ...hydratedProject,
+      layers: hydratedProject.layers.map((layer) =>
+        layer.groupId === "nrega" ? { ...layer, visible: true } : layer
+      ),
+    };
+    const allVisibleResult = await hydrateGeoLibreVectorLayer({
+      project: allVisibleProject,
+      layerId,
+      fetchFeatureCollection: nregaFetch,
+    });
+    expect(
+      allVisibleResult.layers
+        .filter((item) => item.groupId === "nrega")
+        .every((item) => item.visible)
+    ).toBe(true);
+    expect(nregaFetch).toHaveBeenCalledTimes(1);
   });
 
   it("keeps a failed lazy vector available for a later toggle retry", async () => {
