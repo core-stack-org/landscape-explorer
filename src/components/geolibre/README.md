@@ -1,9 +1,9 @@
 # KYL GeoLibre integration
 
 `/explore_data` is a thin host for GeoLibre. KYL keeps its existing header
-(including **GeoLibre User Guide** and **QGIS Documentation**) and gives the
-rest of the page to a trusted GeoLibre iframe. There is no second KYL map,
-layer selector, or project panel.
+(including **Quick Tour**, **GeoLibre Tutorials**, and **QGIS Documentation**)
+and gives the rest of the page to a trusted GeoLibre iframe. There is no second
+KYL map, layer selector, or project panel.
 
 CoRE Stack datasets are available under
 [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
@@ -32,6 +32,26 @@ and uses its supported embed bridge and WFS project representation.
 6. The iframe reports `geolibre:ready`; KYL verifies its application version,
    sends the initial project, and fits the exact tehsil bounds once. Lazy
    project updates preserve the user's live map view and never fit it again.
+7. A generated project omits `mapLayout` and `secondaryMapViews`, which is
+   GeoLibre's native single-map representation. It also omits GeoLibre's
+   Components plugin because that plugin's default control set includes Swipe;
+   KYL already supplies the on-map legend itself. The standalone Swipe plugin
+   is omitted too. KYL never simulates a split layout or overrides a layout the
+   user later selects from the View menu.
+
+## User guidance
+
+The header provides three complementary entry points:
+
+- **Quick Tour** opens a five-step, keyboard-accessible CoRE Stack guide to the
+  Layers panel, layer controls, map navigation, legends, and exports.
+- **GeoLibre Tutorials** opens GeoLibre's official hands-on tutorials.
+- **QGIS Documentation** opens the CoRE Stack desktop-GIS workflow.
+
+Header actions include hover and keyboard-focus tooltips. The embedded
+GeoLibre controls are cross-origin, so KYL does not reach into the iframe to
+modify their DOM; the Quick Tour explains those controls without coupling the
+integration to GeoLibre's internal markup.
 
 ```mermaid
 flowchart LR
@@ -74,8 +94,8 @@ sequenceDiagram
    Every layer exposes live GeoServer SLD and JSON/PNG legend endpoints. The
    finalized vector profiles remain in the project as a visual-parity safeguard
    because GeoLibre project JSON cannot attach a remote SLD to a predeclared
-   WFS layer. Matching color labels are synchronized into GeoLibre's native
-   legend only while the corresponding layer is visible.
+   WFS layer. Matching color labels are shown in KYL's on-map legend only while
+   the corresponding layer is visible.
 5. **Loading:** only the shared default WFS is fetched at startup. Other
    vectors hydrate once on first toggle; rasters remain native lazy WMS layers.
 6. **Download:** vector data remains available through GeoLibre and complete
@@ -291,8 +311,10 @@ Check both routes:
 6. Confirm the map does not refit after those vector loads. Enable a raster and
    verify its styled WMS display and **Export → GeoTIFF
    (COG)** full-coverage download.
-7. Open both documentation buttons and the CC BY 4.0 link. Inspect a generated
-   layer's metadata and confirm its style URLs use the configured GeoServer.
+7. Confirm there is no vertical Layer Swipe divider after the project loads.
+   Open **Quick Tour**, step through all five tips, and open both documentation
+   links. Inspect a generated layer's metadata and confirm its style URLs use
+   the configured GeoServer.
 8. If testing a failure state, confirm it uses human recovery guidance and that
    **Download technical log** saves a `.log` file.
 
