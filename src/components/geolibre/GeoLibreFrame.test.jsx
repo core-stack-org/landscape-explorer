@@ -1,5 +1,8 @@
 import { act, render, screen } from "@testing-library/react";
-import GeoLibreFrame, { formatGeoLibreLog } from "./GeoLibreFrame";
+import GeoLibreFrame, {
+  formatGeoLibreLog,
+  geoLibreProjectLoadSignature,
+} from "./GeoLibreFrame";
 
 const project = {
   version: "0.2.0",
@@ -30,6 +33,23 @@ const announceReady = (frame, version = "2.6.0") => {
 describe("GeoLibre iframe bridge", () => {
   beforeEach(() => jest.useFakeTimers());
   afterEach(() => jest.useRealTimers());
+
+  it("treats a map-layout reset as a project reload", () => {
+    const splitProject = {
+      ...project,
+      mapLayout: { rows: 1, cols: 2 },
+      secondaryMapViews: [{ id: "secondary-0", view: project.mapView }],
+    };
+    const singleMapProject = {
+      ...project,
+      mapLayout: { rows: 1, cols: 1 },
+      secondaryMapViews: [],
+    };
+
+    expect(geoLibreProjectLoadSignature(splitProject)).not.toBe(
+      geoLibreProjectLoadSignature(singleMapProject)
+    );
+  });
 
   it("loads the project and fits its bbox after a compatible v2.6 handshake", () => {
     render(<GeoLibreFrame project={project} />);

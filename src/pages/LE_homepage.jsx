@@ -161,9 +161,14 @@ export default function KYLHomePage() {
                   </button>
                   <button
                     className="bg-purple-100 hover:bg-purple-200 text-purple-800 px-4 py-2 rounded-lg w-full sm:w-auto text-base font-medium transition-colors"
-                    onClick={() => handleNavigate("/download_layers", "Download Layers")}
+                    onClick={() =>
+                      handleNavigate(
+                        "/explore_data",
+                        "Explore CoRE Data Layers"
+                      )
+                    }
                   >
-                    Download Layers
+                    Explore CoRE Data Layers
                   </button>
                 </div>
               </div>

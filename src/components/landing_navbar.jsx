@@ -5,7 +5,7 @@ import { Info, ExternalLink } from "lucide-react";
 
 const LandingNavbar = () => {
   const location = useLocation();
-  const isDownloadPage = location.pathname === "/download_layers";
+  const isExploreDataPage = location.pathname === "/explore_data";
   const isHomePage = location.pathname === "/";
   const isKylDashboard = location.pathname === "/kyl_dashboard";
   const [showTooltip, setShowTooltip] = useState(false);
@@ -39,7 +39,7 @@ const LandingNavbar = () => {
           </a>
 
           <div className="flex flex-wrap gap-3 items-center justify-center">
-            {isDownloadPage && (
+            {isExploreDataPage && (
               <a
                 href="https://docs.google.com/document/d/1jet4EEBbbKgpNrPnuNJJDRuAJUiR2pIMFQp9JTlygAQ/edit?usp=sharing"
                 target="_blank"
