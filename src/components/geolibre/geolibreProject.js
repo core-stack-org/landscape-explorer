@@ -1268,6 +1268,10 @@ export const buildGeoLibreProject = async ({
       version: GEOLIBRE_PROJECT_FORMAT_VERSION,
       name: `${tehsil}, ${district}: CoRE Stack landscape`,
       mapView: mapViewFromBounds(bounds, viewport),
+      // Always reset GeoLibre to its single-map layout. Without an explicit
+      // layout, the rolling web viewer can retain a previous split-view state.
+      mapLayout: { rows: 1, cols: 1 },
+      secondaryMapViews: [],
       basemapStyleUrl: DEFAULT_GEOLIBRE_BASEMAP_STYLE,
       basemapVisible: true,
       basemapOpacity: 1,

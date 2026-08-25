@@ -1,6 +1,6 @@
 # KYL GeoLibre integration
 
-`/download_layers` is a thin host for GeoLibre. KYL keeps its existing header
+`/explore_data` is a thin host for GeoLibre. KYL keeps its existing header
 (including **GeoLibre User Guide** and **QGIS Documentation**) and gives the
 rest of the page to a trusted GeoLibre iframe. There is no second KYL map,
 layer selector, or project panel.
@@ -15,7 +15,7 @@ and uses its supported embed bridge and WFS project representation.
 ## Runtime flow
 
 1. The KYL homepage carries the selected state, district, and tehsil to
-   `/download_layers` as query parameters.
+   `/explore_data` as query parameters.
 2. `geolibreProject.js` fetches the shared Demographic WFS source once. It creates
    **Administrative Boundaries** and **Socio-Economic Profile** from that data,
    derives the complete tehsil bounding box, and immediately opens GeoLibre.
@@ -35,7 +35,7 @@ and uses its supported embed bridge and WFS project representation.
 
 ```mermaid
 flowchart LR
-    A[KYL location selection] --> B[/download_layers URL]
+    A[KYL location selection] --> B[/explore_data URL]
     B --> C[Project builder]
     C --> D[Shared tehsil WFS]
     D --> C
@@ -85,7 +85,7 @@ sequenceDiagram
 
 ## Native layer organization
 
-GeoLibre's own layer panel follows the deployed Download Layers taxonomy,
+GeoLibre's own layer panel follows the deployed CoRE data-layer taxonomy,
 ordered top-first as:
 
 1. Demographic (Administrative Boundaries, Socio-Economic Profile)
@@ -277,7 +277,7 @@ Check both routes:
 1. Open `http://localhost:3000/kyl_dashboard` and confirm there is no
    `REACT_APP_GEOSERVER_URL is not set` runtime error.
 2. Open `http://localhost:3000`, select a state, district, and tehsil, and click
-   **Download Layers**.
+   **Explore CoRE Data Layers**.
 3. Confirm the GeoLibre badge reports a compatible 2.x version, the Google
    Satellite Hybrid basemap appears, the map fits the tehsil, and Demographic
    shows Administrative Boundaries then Socio-Economic Profile,
@@ -296,7 +296,7 @@ Check both routes:
 8. If testing a failure state, confirm it uses human recovery guidance and that
    **Download technical log** saves a `.log` file.
 
-The generated `/download_layers?state=...&district=...&tehsil=...` URL can be
+The generated `/explore_data?state=...&district=...&tehsil=...` URL can be
 refreshed or shared on the same KYL host because the location is URL-backed.
 
 For a release upgrade, verify all of the following before changing the default
