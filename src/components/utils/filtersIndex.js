@@ -1,29 +1,33 @@
 import filtersData from '../data/Filters.json';
 
-// Filters.json is nested namespace -> category -> [filter]. We walk it once
-// here, at module load, instead of every component walking it on every render.
 const SECTION_LABELS = { MWS: 'Micro watershed', Waterbody: 'Waterbody', Village: 'Village' };
 
-export const ALL_FILTERS = [];
-export const FILTER_BY_NAME = new Map();
-export const CATEGORIES_BY_SECTION = [];
-
-for (const namespace of Object.keys(filtersData)) {
-  const section = SECTION_LABELS[namespace] || namespace;
-  const categories = Object.keys(filtersData[namespace]);
-  CATEGORIES_BY_SECTION.push([section, categories]);
-
-  for (const category of categories) {
-    for (const filter of filtersData[namespace][category]) {
-      if (filter.type !== 1 && filter.type !== 2) continue;
-      if (!filter.values?.length) continue;
-
-      const entry = { ...filter, namespace, category, section };
-      ALL_FILTERS.push(entry);
-      FILTER_BY_NAME.set(filter.name, entry);
-    }
-  }
+function toOldValueShape(filter) {
+  return filter.bins.map((bin) =>
+    filter.type === 2
+      ? { label: bin.label, value: { lower: bin.lower, upper: bin.upper } }
+      : { label: bin.label, value: bin.value }
+  );
 }
+
+export const ALL_FILTERS = filtersData.map((f) => ({
+  ...f,
+  values: toOldValueShape(f),
+  vectorStyle: f.bins,
+  styleIdx: f.styleKey === 'static' ? 0 : 1,
+}));
+
+export const FILTER_BY_NAME = new Map(ALL_FILTERS.map((f) => [f.name, f]));
+
+export const CATEGORIES_BY_SECTION = (() => {
+  const bySection = new Map();
+  for (const filter of ALL_FILTERS) {
+    const section = SECTION_LABELS[filter.namespace] || filter.namespace;
+    if (!bySection.has(section)) bySection.set(section, new Set());
+    bySection.get(section).add(filter.category);
+  }
+  return [...bySection.entries()].map(([section, cats]) => [section, [...cats]]);
+})();
 
 export function getAllFilterTypes() {
   return CATEGORIES_BY_SECTION.flatMap(([, categories]) => categories);
