@@ -80,6 +80,22 @@ describe("GeoLibre iframe bridge", () => {
     );
   });
 
+  it("does not reload the same project for a same-scope rerender", () => {
+    const { rerender } = render(<GeoLibreFrame project={project} />);
+    const frame = screen.getByTitle("GeoLibre GIS workspace");
+    const postMessage = jest.spyOn(frame.contentWindow, "postMessage");
+
+    act(() => announceReady(frame));
+    const loadCount = () =>
+      postMessage.mock.calls.filter(
+        ([message]) => message.type === "geolibre:load-project"
+      ).length;
+    expect(loadCount()).toBe(1);
+
+    rerender(<GeoLibreFrame project={project} />);
+    expect(loadCount()).toBe(1);
+  });
+
   it("does not send a project to an incompatible major version", () => {
     render(<GeoLibreFrame project={project} />);
     const frame = screen.getByTitle("GeoLibre GIS workspace");
