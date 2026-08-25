@@ -946,88 +946,42 @@ export const activeGeoLibreLegends = (project) =>
     ? mapLegendEntries(project.layers.filter((layer) => layer.visible))
     : [];
 
-const legendPluginState = (entries, currentPlugins) => {
-  const selected = entries[0];
-  const currentComponents =
-    currentPlugins?.settings?.["maplibre-gl-components"] || {};
-  const currentLegend = currentComponents.legend;
-  const selectedIndex = Math.max(
-    0,
-    entries.findIndex((entry) => entry.title === currentLegend?.title)
+const DISABLED_PROJECT_PLUGIN_IDS = new Set([
+  // GeoLibre's Components plugin enables every component control by default,
+  // including its own Swipe control. KYL renders the legend outside the iframe,
+  // so the entire redundant component grid can be omitted from this project.
+  "maplibre-gl-components",
+  "maplibre-gl-swipe",
+]);
+
+const withoutDisabledProjectPlugins = (entries) =>
+  Object.fromEntries(
+    Object.entries(entries || {}).filter(
+      ([pluginId]) => !DISABLED_PROJECT_PLUGIN_IDS.has(pluginId)
+    )
   );
-  const selectedEntry = entries[selectedIndex] || selected;
-  const legend = selectedEntry
-    ? {
-        ...currentLegend,
-        // KYL renders this state outside the cross-origin iframe so it can be
-        // updated without replacing the project and recreating raster sources.
-        visible: false,
-        collapsed: currentLegend?.collapsed ?? true,
-        hasLegend: true,
-        selectedLegendIndex: selectedIndex,
-        title: selectedEntry.title,
-        items: selectedEntry.items,
-        legendPosition: selectedEntry.legendPosition,
-        legends: entries.map(({ key: _key, ...entry }) => entry),
-      }
-    : {
-        ...currentLegend,
-        visible: false,
-        collapsed: true,
-        hasLegend: false,
-        selectedLegendIndex: 0,
-        title: "Legend",
-        items: [],
-        legendPosition: "bottom-right",
-        legends: [],
-      };
 
-  return {
-    manifestUrls: currentPlugins?.manifestUrls || [],
-    activePluginIds: Array.from(
-      new Set([
-        ...(currentPlugins?.activePluginIds || [
-          "maplibre-layer-control",
-          "maplibre-atmosphere-effects",
-          "maplibre-deckgl-viz",
-        ]),
-        "maplibre-gl-components",
-      ])
-    ),
-    mapControlPositions: {
-      ...currentPlugins?.mapControlPositions,
-      "maplibre-gl-components": "top-right",
-    },
-    settings: {
-      ...currentPlugins?.settings,
-      "maplibre-gl-components": {
-        ...currentComponents,
-        legend,
-      },
-    },
-  };
-};
+const coreStackPluginState = (currentPlugins) => ({
+  manifestUrls: currentPlugins?.manifestUrls || [],
+  activePluginIds: Array.from(
+    new Set(
+      currentPlugins?.activePluginIds || [
+        "maplibre-layer-control",
+        "maplibre-atmosphere-effects",
+        "maplibre-deckgl-viz",
+      ]
+    )
+  ).filter((pluginId) => !DISABLED_PROJECT_PLUGIN_IDS.has(pluginId)),
+  mapControlPositions: withoutDisabledProjectPlugins(
+    currentPlugins?.mapControlPositions
+  ),
+  settings: withoutDisabledProjectPlugins(currentPlugins?.settings),
+});
 
-const legendStateSignature = (legend) =>
-  JSON.stringify({
-    visible: legend?.visible,
-    title: legend?.title,
-    items: legend?.items,
-    legendPosition: legend?.legendPosition,
-    legends: legend?.legends,
-  });
-
-export const syncGeoLibreActiveLegends = (project) => {
+export const sanitizeGeoLibreProjectPlugins = (project) => {
   if (!project?.layers) return project;
-  const entries = activeGeoLibreLegends(project);
-  const plugins = legendPluginState(entries, project.plugins);
-  const currentLegend =
-    project.plugins?.settings?.["maplibre-gl-components"]?.legend;
-  const nextLegend = plugins.settings["maplibre-gl-components"].legend;
-
-  if (
-    legendStateSignature(currentLegend) === legendStateSignature(nextLegend)
-  ) {
+  const plugins = coreStackPluginState(project.plugins);
+  if (JSON.stringify(project.plugins) === JSON.stringify(plugins)) {
     return project;
   }
   return { ...project, plugins };
@@ -1259,19 +1213,12 @@ export const buildGeoLibreProject = async ({
     const styles = Object.fromEntries(
       orderedLayers.map((layer) => [layer.id, layer.style])
     );
-    const mapLegends = mapLegendEntries(
-      orderedLayers.filter((layer) => layer.visible)
-    );
     const viewer = resolveGeoLibreViewer();
 
     return {
       version: GEOLIBRE_PROJECT_FORMAT_VERSION,
       name: `${tehsil}, ${district}: CoRE Stack landscape`,
       mapView: mapViewFromBounds(bounds, viewport),
-      // Always reset GeoLibre to its single-map layout. Without an explicit
-      // layout, the rolling web viewer can retain a previous split-view state.
-      mapLayout: { rows: 1, cols: 1 },
-      secondaryMapViews: [],
       basemapStyleUrl: DEFAULT_GEOLIBRE_BASEMAP_STYLE,
       basemapVisible: true,
       basemapOpacity: 1,
@@ -1283,7 +1230,7 @@ export const buildGeoLibreProject = async ({
       })),
       styles,
       preferences: projectPreferences,
-      plugins: legendPluginState(mapLegends),
+      plugins: coreStackPluginState(),
       legend: {
         title: `${tehsil} CoRE Stack layers`,
         groupByLayer: true,
