@@ -31,11 +31,11 @@ const WaterAvailabilityChart = ({
   water_rej_data,
   mwsFeature,
   onImpactYearChange,
-  impactPair
+  impactPair,onComparisonChange
 }) => {
+
   const [showImpact, setShowImpact] = useState(false);
   const prevImpactRef = useRef(null);
-
 
   const extractSeasonYears = (props = {}) => {
     const years = new Set();
@@ -220,9 +220,14 @@ const hasPostYear = React.useMemo(() => {
   const interventionYear = (() => {
     if (isTehsil) return null;
 
-    const f = water_rej_data?.features?.find(
-      (x) => x.properties?.UID === waterbody?.UID
+    // const f = water_rej_data?.features?.find(
+    //   (x) => x.properties?.UID === waterbody?.UID
+    // );
+
+     const f = water_rej_data?.features?.find(
+      (x) => x.id?.toString() === waterbody?.waterbody_id?.toString()  // was: x.properties?.UID === waterbody?.UID
     );
+
     return normalizeYear(f?.properties?.intervention_year);
   })();
 
@@ -255,8 +260,8 @@ useEffect(() => {
       { key: "crops", label: "Crops", color: "#BAD93E" },
       { key: "tree", label: "Tree/Forest", color: "#38761d" },
       { key: "shrubs", label: "Shrubs/Scrubs", color: "#eaa4f0" },
-      { key: "barren_land", label: "Barren", color: "#A9A9A9" },
-      { key: "builtup", label: "Built-up", color: "#ff0000" },
+      // { key: "barren_land", label: "Barren", color: "#A9A9A9" },
+      { key: "non_vegetation", label: "Non-Vegetation", color: "#A9A9A9" },
     ],
   };
 
@@ -281,10 +286,14 @@ useEffect(() => {
         single_kharif: p[`single_kharif_${year}`] ?? 0,
         single_non_kharif: p[`single_kharif_no_${year}`] ?? 0,
         tree: p[`tree_${year}`] ?? 0,
-        barren_land: p[`barren_land_${year}`] ?? 0,
+        // barren_land: p[`barren_land_${year}`] ?? 0,
         double_cropping: p[`double_cropping_${year}`] ?? 0,
         triple_cropping: p[`tripple_cropping_${year}`] ?? 0,
-        builtup: p[`build_up_${year}`] ?? 0,
+        // builtup: p[`build_up_${year}`] ?? 0,
+        non_vegetation:
+          (p[`barren_land_${year}`] ?? 0) +
+          (p[`build_up_${year}`] ?? 0),
+
       };
     });
   
@@ -298,10 +307,11 @@ useEffect(() => {
       single_kharif: 0,
       single_non_kharif: 0,
       tree: 0,
-      barren_land: 0,
+      // barren_land: 0,
       double_cropping: 0,
       triple_cropping: 0,
-      builtup: 0,
+      // builtup: 0,
+      non_vegetation: 0,
     }));
   
     water_rej_data.features.forEach((feature) => {
@@ -321,10 +331,13 @@ useEffect(() => {
           rawData[i].single_kharif += p[`single_kharif_${year}`] ?? 0;
           rawData[i].single_non_kharif += p[`single_kharif_no_${year}`] ?? 0;
           rawData[i].tree += p[`tree_${year}`] ?? 0;
-          rawData[i].barren_land += p[`barren_land_${year}`] ?? 0;
+          // rawData[i].barren_land += p[`barren_land_${year}`] ?? 0;
           rawData[i].double_cropping += p[`double_cropping_${year}`] ?? 0;
           rawData[i].triple_cropping += p[`tripple_cropping_${year}`] ?? 0;
-          rawData[i].builtup += p[`build_up_${year}`] ?? 0;
+          // rawData[i].builtup += p[`build_up_${year}`] ?? 0;
+          rawData[i].non_vegetation +=
+            (p[`barren_land_${year}`] ?? 0) +
+            (p[`build_up_${year}`] ?? 0);
         });
       }
     });
@@ -382,30 +395,40 @@ useEffect(() => {
 
   if (!showImpact || !computedImpactYear || !hasPostYear) {
     data = baseData;
-  } else if (computedImpactYear) {
-    const waterIndicators = ["kharif", "rabi", "zaid"];
+} else if (computedImpactYear) {
 
-    data = {
-      labels: years, // keep all years visible
-      datasets: [...waterIndicators].reverse().map((key) => {
-        const cat = groups["Water Indicators"].find((c) => c.key === key);
-        return {
-          label: `Water Indicators | ${cat.label}`,
-          backgroundColor: cat.color,
-          stack: "Stack 0",
-          order: 2,
-          //  only show bars for impact years, set others to 0
-          data: years.map((year, i) => {
-            const isImpactYear =
+  // Show ALL categories in comparison mode,
+  // but only for the selected pre and post years.
+  const allCategories = Object.entries(groups);
+
+  data = {
+    labels: years,
+
+    datasets: allCategories.flatMap(([groupName, items]) => {
+      const orderedItems =
+        groupName === "Water Indicators"
+          ? [...items].reverse()
+          : items;
+
+      return orderedItems.map((cat) => ({
+        label: `${groupName} | ${cat.label}`,
+        backgroundColor: cat.color,
+        stack: "Stack 0",
+        order: 2,
+
+        data: years.map((year, i) => {
+          const isImpactYear =
             year.trim() === computedImpactYear?.pre?.trim() ||
             year.trim() === computedImpactYear?.post?.trim();
-            return isImpactYear ? normalizedData[i][key] ?? 0 : 0;
-          }),
-          position: "center",
-        };
-      }),
-    };
-  }
+
+          return isImpactYear
+            ? normalizedData[i]?.[cat.key] ?? 0
+            : 0;
+        }),
+      }));
+    }),
+  };
+}
 
   const options = {
     maintainAspectRatio: false,
@@ -421,12 +444,10 @@ useEffect(() => {
           ? "Water Availabilty & Land use inside Waterbody"
           : !showImpact || !computedImpactYear || !hasPostYear
             ? "Water Availabilty & Land use inside Waterbody (Black line = intervention year)"
-            : `Impact Analysis: Showing Only Pre (${computedImpactYear.pre}) and Post (${computedImpactYear.post}) Years`,
-            font: {
-              font: {
-                size: Math.max(9, Math.min(window.innerHeight * 0.02, 18)),
-                weight: "bold",
-              }  
+            : `Impact Analysis: Pre (${computedImpactYear.pre}) | Post (${computedImpactYear.post})`,
+           font: {
+              size: Math.max(10, Math.min(window.innerHeight * 0.022, 14)),
+              weight: "bold",
             },
       },
       
@@ -506,7 +527,7 @@ useEffect(() => {
 <div
   className="legend-container flex flex-col mb-1 px-2"
   style={{
-    minHeight: "clamp(6rem, 15vh, 10rem)",
+    minHeight: "clamp(4em, 10vh, 7rem)",
     overflow: "hidden",
     rowGap: "0.15rem",
   }}
@@ -514,7 +535,7 @@ useEffect(() => {
   <div className="flex flex-wrap items-start w-full relative gap-x-[0.3rem] gap-y-[0.2rem]">
 
     {/* Keep your original legend rendering exactly as before */}
-    {(!showImpact || !computedImpactYear || !hasPostYear) && (
+    {(
   Object.entries(groups).map(([group, items]) => (
     <div key={group} className="min-w-[5rem] mb-[0.3rem]">
       <strong className="block text-[clamp(0.40rem,0.50rem,0.60rem)] mb-[0.3rem]">
@@ -585,7 +606,11 @@ useEffect(() => {
       <input
         type="checkbox"
         checked={showImpact}
-        onChange={() => setShowImpact(!showImpact)}
+        onChange={() => {
+          const newValue = !showImpact;
+          setShowImpact(newValue);
+          onComparisonChange?.(newValue);
+        }}
         className="sr-only peer"
       />
 
@@ -619,35 +644,6 @@ useEffect(() => {
 
   {showImpact && computedImpactYear &&(
     <div className="flex flex-col items-start justify-start mt-[0.4rem] whitespace-nowrap">
-      <div className="flex items-center mb-[0.2rem]">
-        <span
-          className="inline-block rounded-sm mr-[0.3rem]"
-          style={{ width: "0.8rem", height: "0.8rem", backgroundColor: "#74CCF4" }}
-        ></span>
-        <span className="text-[clamp(0.7rem,0.55rem,0.9rem)] text-gray-700 font-medium">
-          Kharif : Water available in Kharif
-        </span>
-      </div>
-
-      <div className="flex items-center mb-[0.2rem]">
-        <span
-          className="inline-block rounded-sm mr-[0.3rem]"
-          style={{ width: "0.8rem", height: "0.8rem", backgroundColor: "#1ca3ec" }}
-        ></span>
-        <span className="text-[clamp(0.7rem,0.55rem,0.9rem)] text-gray-700 font-medium">
-          Kharif Rabi : Water available in Kharif, Rabi
-        </span>
-      </div>
-
-      <div className="flex items-center mb-[0.2rem]">
-        <span
-          className="inline-block rounded-sm mr-[0.3rem]"
-          style={{ width: "0.8rem", height: "0.8rem", backgroundColor: "#0f5e9c" }}
-        ></span>
-        <span className="text-[clamp(0.7rem,0.55rem,0.9rem)] text-gray-700 font-medium">
-          Kharif Rabi Zaid : Water available in Kharif, Rabi And Zaid
-        </span>
-      </div>
 
       {showImpact && computedImpactYear && (
         <div className="mx-auto w-fit text-[clamp(0.55rem,0.55rem, 0.8rem)] text-gray-700 rounded-md px-[0.3rem] py-[0.15rem] text-center shadow-sm">
@@ -660,8 +656,6 @@ useEffect(() => {
     </div>
   )}
 </div>
-
-
 
       {/* Chart wrapper: fix the chart area height so it doesn't reflow */}
       <div className="chart-container w-full px-0"   style={{ height: "clamp(280px, 40vh, 450px)" }}

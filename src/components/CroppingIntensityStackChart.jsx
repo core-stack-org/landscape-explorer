@@ -32,9 +32,11 @@ const CroppingIntensityStackChart = ({
   impactYear,
   isTehsil,
   years,
-  water_rej_data
+  water_rej_data,
+  showImpact,
+  setShowImpact
 }) => {
-  const [showImpact, setShowImpact] = useState(false);
+  // const [showImpact, setShowImpact] = useState(false);
 console.log(impactYear)
   const hasValidImpactYears = impactYear?.pre && impactYear?.post;
 

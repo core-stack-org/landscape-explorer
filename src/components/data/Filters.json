@@ -1001,6 +1001,122 @@
         ],
         "Restoration": [
             {
+                "name": "increase_in_tree_cover",
+                "label": "Increase in tree cover",
+                "type": 2,
+                "values": [
+                    {
+                        "label": "Less than 50 hectares",
+                        "value": {
+                            "lower": 0,
+                            "upper": 50
+                        }
+                    },
+                    {
+                        "label": "Between 50 to 100 hectares",
+                        "value": {
+                            "lower": 50,
+                            "upper": 100
+                        }
+                    },
+                    {
+                        "label": "More than 100 hectares",
+                        "value": {
+                            "lower": 100,
+                            "upper": 999999
+                        }
+                    }
+                ],
+                "layer_store": [
+                    "change_detection"
+                ],
+                "layer_name": [
+                    "Afforestation"
+                ],
+                "vectorStyle": [
+                    {
+                        "fill": "rgba(255, 0, 0, 0.8)",
+                        "stroke": "rgba(255, 0, 0, 1)",
+                        "lower": 0,
+                        "upper": 50
+                    },
+                    {
+                        "fill": "rgba(238, 224, 93, 0.8)",
+                        "stroke": "rgba(238, 224, 93, 1)",
+                        "lower": 50,
+                        "upper": 100
+                    },
+                    {
+                        "fill": "rgba(115, 187, 83, 0.8)",
+                        "stroke": "rgba(115, 187, 83, 1)",
+                        "lower": 100,
+                        "upper": 9999999
+                    }
+                ],
+                "rasterStyle": [
+                    ""
+                ],
+                "styleIdx": 14
+            },
+            {
+                "name": "increase_canopy_density_height",
+                "label": "Increase in canopy density and height",
+                "type": 2,
+                "values": [
+                    {
+                        "label": "<20%: Minimal",
+                        "value": {
+                            "lower": 0,
+                            "upper": 20
+                        }
+                    },
+                    {
+                        "label": "Between 20-40%: Considerable",
+                        "value": {
+                            "lower": 20,
+                            "upper": 40
+                        }
+                    },
+                    {
+                        "label": ">40%: Huge",
+                        "value": {
+                            "lower": 40,
+                            "upper": 9999999
+                        }
+                    }
+                ],
+                "layer_store": [
+                    "tree_overall_vector"
+                ],
+                "layer_name": [
+                    "overall_change_vector"
+                ],
+                "vectorStyle": [
+                     {
+                        "fill": "rgba(255, 0, 0, 0.8)",
+                        "stroke": "rgba(255, 0, 0, 1)",
+                        "lower": 0,
+                        "upper": 20
+                    },
+                    {
+                        "fill": "rgba(238, 224, 93, 0.8)",
+                        "stroke": "rgba(238, 224, 93, 1)",
+                        "lower": 20,
+                        "upper": 40
+                    },
+                    {
+                        "fill": "rgba(115, 187, 83, 0.8)",
+                        "stroke": "rgba(115, 187, 83, 1)",
+                        "lower": 40,
+                        "upper": 9999999
+                    }
+                ],
+                "rasterStyle": [
+                    ""
+                ],
+                "styleIdx": 60
+            },
+            {
                 "name": "decrease_in_tree_cover",
                 "label": "Reduction in tree cover",
                 "type": 2,
@@ -1059,63 +1175,63 @@
                 "styleIdx": 13
             },
             {
-                "name": "increase_in_tree_cover",
-                "label": "Increase in tree cover",
+                "name": "reduction_canopy_density_height",
+                "label": "Reduction in canopy density and height",
                 "type": 2,
                 "values": [
                     {
-                        "label": "Less than 50 hectares",
+                        "label": "<5%: Minimal",
                         "value": {
                             "lower": 0,
-                            "upper": 50
+                            "upper": 5
                         }
                     },
                     {
-                        "label": "Between 50 to 100 hectares",
+                        "label": "Between 5-15%: Considerable",
                         "value": {
-                            "lower": 50,
-                            "upper": 100
+                            "lower": 5,
+                            "upper": 15
                         }
                     },
                     {
-                        "label": "More than 100 hectares",
+                        "label": ">15%: Huge",
                         "value": {
-                            "lower": 100,
-                            "upper": 999999
+                            "lower": 15,
+                            "upper": 9999999
                         }
                     }
                 ],
                 "layer_store": [
-                    "change_detection"
+                    "tree_overall_vector"
                 ],
                 "layer_name": [
-                    "Afforestation"
+                    "overall_change_vector"
                 ],
                 "vectorStyle": [
-                    {
-                        "fill": "rgba(255, 0, 0, 0.8)",
-                        "stroke": "rgba(255, 0, 0, 1)",
+                     {
+                        "fill": "rgba(115, 187, 83, 0.8)",
+                        "stroke": "rgba(115, 187, 83, 1)",
                         "lower": 0,
-                        "upper": 50
+                        "upper": 5
                     },
                     {
                         "fill": "rgba(238, 224, 93, 0.8)",
                         "stroke": "rgba(238, 224, 93, 1)",
-                        "lower": 50,
-                        "upper": 100
+                        "lower": 5,
+                        "upper": 15
                     },
                     {
-                        "fill": "rgba(115, 187, 83, 0.8)",
-                        "stroke": "rgba(115, 187, 83, 1)",
-                        "lower": 100,
+                        "fill": "rgba(255, 0, 0, 0.8)",
+                        "stroke": "rgba(255, 0, 0, 1)",
+                        "lower": 15,
                         "upper": 9999999
                     }
                 ],
                 "rasterStyle": [
                     ""
                 ],
-                "styleIdx": 14
-            },
+                "styleIdx": 61
+            },        
             {
                 "name": "area_wide_scale_restoration",
                 "label": "Area with potential for wide-scale restoration",
@@ -1352,10 +1468,10 @@
                     }
                 ],
                 "layer_store": [
-                    "waterbodies"
+                    "swb"
                 ],
                 "layer_name": [
-                    "waterbodies"
+                    "surface_waterbodies"
                 ],
                 "vectorStyle": [
                     {}
@@ -1398,10 +1514,10 @@
                     }
                 ],
                 "layer_store": [
-                    "waterbodies"
+                    "swb"
                 ],
                 "layer_name": [
-                    "waterbodies"
+                    "surface_waterbodies"
                 ],
                 "vectorStyle": [
                     {}
@@ -1428,10 +1544,10 @@
                     }
                 ],
                 "layer_store": [
-                    "waterbodies"
+                    "swb"
                 ],
                 "layer_name": [
-                    "waterbodies"
+                    "surface_waterbodies"
                 ],
                 "vectorStyle": [
                     {}
@@ -1454,10 +1570,10 @@
                     }
                 ],
                 "layer_store": [
-                    "waterbodies"
+                    "swb"
                 ],
                 "layer_name": [
-                    "waterbodies"
+                    "surface_waterbodies"
                 ],
                 "vectorStyle": [
                     {}

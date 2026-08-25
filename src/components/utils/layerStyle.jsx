@@ -423,6 +423,24 @@ const layerStyles = (feature, vectorStyle, idx = 0, villageJson, dataJson) => {
         case 59:
             avg_Res = feature.values_["large_animals_total"]
             break;
+        
+        case 60:
+            for(let i = 0 ; i < dataJson.length; ++i){
+                if(dataJson[i].mws_id === feature.values_.uid){
+                    avg_Res = dataJson[i].increase_canopy_density_height;
+                    break;
+                }
+            }
+            break;
+        
+        case 61:
+            for(let i = 0 ; i < dataJson.length; ++i){
+                if(dataJson[i].mws_id === feature.values_.uid){
+                    avg_Res = dataJson[i].reduction_canopy_density_height;
+                    break;
+                }
+            }
+            break;
     }
 
     for(tempIdx = 0; tempIdx < vectorStyle.length; ++tempIdx){

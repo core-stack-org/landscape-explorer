@@ -317,14 +317,22 @@ const createPinStyle = (stateName, count) => {
 
 // ── PLAN DOT STYLES ──────────────────────────────────────────────────────────
 
+// const PLAN_STATUS_COLORS = {
+//   in_progress:   { fill: "#FF6FFF", stroke: "#ffffff" }, // magenta
+//   dpr_completed: { fill: "#8B3FE6", stroke: "#ffffff" }, // chartreuse
+//   dpr_approved:  { fill: "#CCFF00", stroke: "#3E5800" },
+// };
+
 const PLAN_STATUS_COLORS = {
-  in_progress:   { fill: "#FF6FFF", stroke: "#ffffff" }, // magenta
-  dpr_completed: { fill: "#CCFF00", stroke: "#3E5800" }, // chartreuse
+  in_progress: { fill: "#CCFF00", stroke: "#3E5800",},
+  dpr_completed: { fill: "#00BFFF", stroke: "#005F8F",},
+  dpr_approved: { fill: "#FF1493", stroke: "#8B004F", },
 };
 
 const getPlanStatus = (plan) => {
   if (!plan) return "in_progress";
   if (plan.is_dpr_reviewed) return "dpr_completed";
+  if (plan.is_dpr_approved) return "dpr_approved";
   return "in_progress";
 };
 
@@ -991,6 +999,12 @@ const handleVillageSuggestionSelect = (placeId, description) => {
         const map = mapRef.current;
         if (!map) return;
 
+          // Remove steward dots
+        if (stewardLayerRef.current) {
+          map.removeLayer(stewardLayerRef.current);
+          stewardLayerRef.current = null;
+        }
+
         if (planLayerRef.current) {
         map.removeLayer(planLayerRef.current);
         planLayerRef.current = null;
@@ -1206,19 +1220,42 @@ console.log("viewMode:", viewMode);
           districtLayerRef.current = null;
         }
 
-        try {
-          const data = await fetchStewardListing(
-            currentStateRef.current?.state_id,
-            orgRef.current?.value ?? null,
-            districtData.district_id
-          );
-         const stewards = data.stewards ?? [];
-         console.log("Stewards:", stewards);
-          console.log("First steward:", stewards[0]);
+          try {
+  const [listingData, stewardData, districtMetaStats, dprData, trackingData] = await Promise.all([
+    fetchStewardListing(
+      currentStateRef.current?.state_id,
+      orgRef.current?.value ?? null,
+      districtData.district_id
+    ),
+    fetchStewardStats(
+      orgRef.current?.value ?? null,
+      currentStateRef.current?.state_id,
+      districtData.district_id
+    ),
+    fetchMetaStats(
+      orgRef.current?.value ?? null,
+      null,
+      districtData.district_id
+    ),
+     fetchDprReportStatus({
+    organizationId: orgRef.current?.value ?? null,
+    districtId: districtData.district_id,
+  }),fetchStatusTracking({
+    organizationId: orgRef.current?.value ?? null,
+    districtId: districtData.district_id,
+  }),
+  ]);
 
-          setStewardListing(stewards);
-          addStewardDots(stewards);
+  const stewards = listingData.stewards ?? [];
 
+  setStewardListing(stewards);
+  addStewardDots(stewards);
+
+  setStewardStats(stewardData);
+  setMetaStats(districtMetaStats);
+  setDprStatus(dprData);
+setStatusTracking(trackingData);
+        
         } catch (err) {
           console.error("Steward listing failed:", err);
         } finally {
@@ -1386,12 +1423,7 @@ console.log("viewMode:", viewMode);
                 const steward = feature.get("stewardDetails");
 
                 if (steward) {
-                  setStewardModalPlan({
-                    facilitator_name: steward.facilitator_name,
-                    organization:
-                      steward.organization?.id ??
-                      getStewardOrgId(steward.facilitator_name),
-                  });
+                  setSelectedSteward(steward);
                 }
 
                 return true;
@@ -1703,6 +1735,9 @@ console.log("viewMode:", viewMode);
                 {[
                   { color: PLAN_STATUS_COLORS.in_progress.fill,   label: "In Progress"    },
                   { color: PLAN_STATUS_COLORS.dpr_completed.fill, label: "DPR Completed"  },
+                  { color: PLAN_STATUS_COLORS.dpr_approved.fill,  label: "DPR Approved"  },
+
+                  
                 ].map(({ color, label }) => (
                   <div key={label} className="flex items-center gap-2">
                     <div className="w-3.5 h-3.5 rounded-full flex-shrink-0"
@@ -1878,7 +1913,7 @@ console.log("viewMode:", viewMode);
                     // cursor: selectedPlan.is_dpr_reviewed ? "pointer" : "not-allowed",
                   }}
                 >
-                  View Full Steward →
+                  View Steward Profile →
                 </button>
               </div>
 
@@ -1927,10 +1962,20 @@ console.log("viewMode:", viewMode);
                         <div
                           className="rounded-xl p-3 cursor-pointer hover:shadow-md transition-all duration-200"
                           style={{ background: P.light, border: `1px solid ${P.base}` }}
-                          onClick={() => setStewardModalPlan({
-                            facilitator_name: selectedPlan.facilitator_name,
-                            organization:     selectedPlan.organization,
-                          })}
+                          onClick={() => {
+                          const slug = selectedPlan.facilitator_name
+                            ?.toLowerCase()
+                            .replace(/\s+/g, "-");
+
+                          const url =
+                            `/landscape-stewardship/steward-view/${selectedPlan.organization}/${slug}` +
+                            `?stateId=${currentStateRef.current?.state_id ?? ""}` +
+                            `&stateName=${encodeURIComponent(currentStateRef.current?.state_name ?? "")}` +
+                            `&districtId=${currentDistrictRef.current?.district_id ?? ""}` +
+                            `&districtName=${encodeURIComponent(currentDistrictRef.current?.district_name ?? "")}`;
+
+                          window.open(url, "_blank");
+                        }}
                         >
                           <p className="text-xs font-medium mb-1" style={{ color: P.muted }}>Steward</p>
                           <div className="flex items-center justify-between">
@@ -2046,6 +2091,11 @@ console.log("viewMode:", viewMode);
                         if (planLayerRef.current) {
                           mapRef.current.removeLayer(planLayerRef.current);
                           planLayerRef.current = null;
+                        }
+
+                        if (stewardLayerRef.current) {
+                          mapRef.current.removeLayer(stewardLayerRef.current);
+                          stewardLayerRef.current = null;
                         }
                         if (districtLayerRef.current) {
                           mapRef.current.removeLayer(districtLayerRef.current);
@@ -2439,6 +2489,25 @@ console.log("viewMode:", viewMode);
                       </div>
                     </div>
                   </div>
+
+                    <div className="rounded-xl p-3"
+                        style={{ background: P.lighter, border: `1px solid ${P.border}` }}>
+                        <p className="text-xs font-medium mb-3" style={{ color: P.muted }}>Demands Generated</p>
+
+                        <div className="flex flex-col gap-2">
+                          <div className="rounded-lg p-3 flex items-center justify-between"
+                            style={{ background: "white", border: `1px solid ${P.border}` }}>
+                            <p className="text-xs font-semibold" style={{ color: P.text }}>Community</p>
+                            <p className="text-sm font-bold" style={{ color: P.base }}>{metaStats?.demand_overview?.community_demands}</p>
+                          </div>
+
+                          <div className="rounded-lg p-3 flex items-center justify-between"
+                            style={{ background: "white", border: `1px solid ${P.border}` }}>
+                            <p className="text-xs font-semibold" style={{ color: P.text }}>Individual</p>
+                            <p className="text-sm font-bold" style={{ color: P.base }}>{metaStats?.demand_overview?.individual_demands}</p>
+                          </div>
+                        </div>
+                      </div>
 
                     {(filteredOrgOptions?.length > 0) && (
                       <div className="bg-white rounded-2xl p-4 shadow-sm"
