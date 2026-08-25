@@ -91,7 +91,7 @@ const LandscapeExplorer = () => {
 
   useEffect(() => {
     initializeAnalytics();
-    trackPageView("/download_layers");
+    trackPageView("/explore_data");
   }, []);
 
   useEffect(() => {
