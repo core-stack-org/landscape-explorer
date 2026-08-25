@@ -20,7 +20,7 @@ function App() {
         
         <Route path="/" element={<LEHomepage />} />
         <Route path="/kyl_dashboard" element={<KYLDashboardPage />} />
-        <Route path="/download_layers" element={<LandscapeExplorer />} />
+        <Route path="/explore_data" element={<LandscapeExplorer />} />
         <Route path="/agrohorticulture" element={<AgroHorticulture />} />
         <Route path="/rwb" element={<RWBDashboard />} />
         <Route path="/landscape-stewardship" element={<PlansPage />} />

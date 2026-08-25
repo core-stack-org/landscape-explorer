@@ -2,24 +2,24 @@ import fs from "fs";
 import path from "path";
 
 describe("application routes", () => {
-  it("keeps /download_layers wired to the GeoLibre implementation", () => {
+  it("keeps /explore_data wired to the GeoLibre implementation", () => {
     const appSource = fs.readFileSync(path.join(__dirname, "App.jsx"), "utf8");
-    const downloadPageSource = fs.readFileSync(
+    const exploreDataPageSource = fs.readFileSync(
       path.join(__dirname, "pages/LandscapeExplorer.jsx"),
       "utf8"
     );
 
     expect(appSource).toContain(
-      '<Route path="/download_layers" element={<LandscapeExplorer />} />'
+      '<Route path="/explore_data" element={<LandscapeExplorer />} />'
     );
-    expect(downloadPageSource).toContain(
+    expect(exploreDataPageSource).toContain(
       'import GeoLibreFrame from "../components/geolibre/GeoLibreFrame";'
     );
-    expect(downloadPageSource).toContain("<GeoLibreFrame");
-    expect(downloadPageSource).not.toContain(
+    expect(exploreDataPageSource).toContain("<GeoLibreFrame");
+    expect(exploreDataPageSource).not.toContain(
       'components/landscape-explorer/map/Map.jsx'
     );
-    expect(downloadPageSource).not.toContain(
+    expect(exploreDataPageSource).not.toContain(
       'components/landscape-explorer/sidebar/RightSidebar.jsx'
     );
   });

@@ -47,6 +47,8 @@ export const geoLibreProjectLoadSignature = (project) =>
         name: project.name,
         scope: project.metadata?.scope,
         bbox: project.mapView?.bbox,
+        mapLayout: project.mapLayout,
+        secondaryMapViews: project.secondaryMapViews,
         layers: (project.layers || []).map((layer) => ({
           id: layer.id,
           name: layer.name,

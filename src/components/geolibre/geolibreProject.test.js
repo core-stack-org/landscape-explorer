@@ -78,6 +78,8 @@ describe("GeoLibre 2.6 project generation", () => {
     expect(project.layers).toHaveLength(GEOLIBRE_LAYERS.length);
     expect(project.layers).toHaveLength(55);
     expect(project.mapView.bbox).toEqual([92.9, 24.7, 93.2, 25]);
+    expect(project.mapLayout).toEqual({ rows: 1, cols: 1 });
+    expect(project.secondaryMapViews).toEqual([]);
     expect(project.basemapStyleUrl).toBe(DEFAULT_GEOLIBRE_BASEMAP_STYLE);
     expect(decodeURIComponent(project.basemapStyleUrl)).toContain(
       "https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}"
