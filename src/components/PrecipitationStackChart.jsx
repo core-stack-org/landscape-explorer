@@ -12,8 +12,7 @@ import { Bar } from "react-chartjs-2";
 ChartJS.register(BarElement, CategoryScale, LinearScale, Tooltip, Legend);
 
   // PROJECT MODE PARSING (unchanged)
-const extractProjectSeasonalData = (properties) => {
-  
+const extractProjectSeasonalData = (properties) => {  
   const seasons = ["kharif", "rabi", "zaid"];
   const yearMap = new Map();
 
@@ -83,13 +82,14 @@ const extractTehsilRainfall = (values_) => {
 };
 
    //MAIN COMPONENT
-const PrecipitationStackChart = ({ feature ,waterbody,typeparam,water_rej_data}) => {
+const PrecipitationStackChart = ({ feature ,waterbody,typeparam,water_rej_data, onImpactYearChange,
+  impactPair, showImpact}) => {
   if (!feature) return null;
 
   const isTehsil = feature.values_ !== undefined;
   let labels = [];
   let datasets = [];
-
+const computedImpactYear = impactPair ?? null;
 
     // TEHSIL MODE
   if (isTehsil) {
@@ -162,7 +162,41 @@ datasets = [
     return normalized;
     })();
 
-  const data = { labels, datasets };
+  // const data = { labels, datasets };
+
+  let chartLabels = labels;
+let chartDatasets = datasets;
+
+if (showImpact && computedImpactYear?.pre && computedImpactYear?.post) {
+
+ if (showImpact && computedImpactYear?.pre && computedImpactYear?.post) {
+  const impactYears = [
+    computedImpactYear.pre,
+    computedImpactYear.post,
+  ];
+
+  chartLabels = labels;
+
+  chartDatasets = [
+    {
+      label: "Total Rainfall",
+      data: labels.map((year, index) => {
+        const isImpactYear =
+          year.trim() === computedImpactYear.pre.trim() ||
+          year.trim() === computedImpactYear.post.trim();
+
+        return isImpactYear ? datasets[0].data[index] : 0;
+      }),
+      backgroundColor: "#1E90FF",
+    },
+  ];
+}
+}
+
+const data = {
+  labels: chartLabels,
+  datasets: chartDatasets,
+};
 
   const options = {
     maintainAspectRatio: false,
@@ -172,7 +206,18 @@ datasets = [
     },
     plugins: {
       legend: { position: "bottom" },
-      title:{display:true,text:"Rainfall (in mm) (Black line = intervention year)",position:"top",font: { size: 16, weight: "bold" },},
+      title: {
+        display: true,
+        text:
+          showImpact && computedImpactYear?.pre && computedImpactYear?.post
+            ? `Impact Analysis: Pre (${computedImpactYear.pre}) | Post (${computedImpactYear.post})`
+            : "Rainfall (in mm) (Black line = intervention year)",
+        position: "top",
+        font: {
+              size: Math.max(10, Math.min(window.innerHeight * 0.022, 14)),
+              weight: "bold",
+            },
+      },
       tooltip: { mode: "index", intersect: false },
       annotation: {
         annotations: isTehsil

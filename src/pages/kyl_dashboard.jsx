@@ -2136,7 +2136,7 @@ const KYLDashboardPage = () => {
       setTimeout(() => (waterbodyClickedRef.current = false), 150);
 
       const props = wbFeature.getProperties();
-      const wb_id = props?.UID;
+const wb_id = props?.UID ?? props?.id ?? props?.wb_id;
       if (!wb_id) return;
 
       const geojson = new GeoJSON();

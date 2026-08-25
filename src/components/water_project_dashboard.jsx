@@ -31,6 +31,8 @@ const WaterProjectDashboard = () => {
   const [selectedFeature, setSelectedFeature] = useState(null);
   const [infoAnchor, setInfoAnchor] = useState(null);
   const [impactYear, setImpactYear] = useState({ pre: null, post: null });
+  const [showImpact, setShowImpact] = useState(false);
+  const [showAgriImpact, setShowAgriImpact] = useState(false);
   const [autoOpened, setAutoOpened] = useState(false);
   const [showMap, setShowMap] = useState(false);  
   const [tehsilMap, setTehsilMap] = useState(null);
@@ -236,29 +238,48 @@ const WaterProjectDashboard = () => {
   //   return () => clearTimeout(t);
   // }, [loadingData]);
   
-  const extractMwsUidList = (mwsUidString) => {
-    if (!mwsUidString) return [];
+const extractMwsUidList = (mwsUidString) => {
+  if (!mwsUidString) return [];
 
-    return mwsUidString
-      .split("_")
-      .reduce((acc, val, idx, arr) => {
-        // join pairs: 12 + 33823 → 12_33823
-        if (idx % 2 === 0 && arr[idx + 1]) {
-          acc.push(`${val}_${arr[idx + 1]}`);
-        }
-        return acc;
-      }, []);
-  };
+  const value = String(mwsUidString).trim();
+
+  // NEW FORMAT
+  // Example:
+  // "12_355341|12_359307|12_355643"
+  if (value.includes("|")) {
+    return value
+      .split("|")
+      .map((id) => id.trim())
+      .filter(Boolean);
+  }
+
+  // OLD FORMAT
+  // Example:
+  // "12_355341_12_359307_12_355643"
+  return value
+    .split("_")
+    .reduce((acc, val, idx, arr) => {
+      if (idx % 2 === 0 && arr[idx + 1]) {
+        acc.push(`${val}_${arr[idx + 1]}`);
+      }
+
+      return acc;
+    }, []);
+};
 
   const getMatchedMWSFeaturesProject = (mwsGeoData, activeSelectedWaterbody) => {
     if (!mwsGeoData?.features?.length || !activeSelectedWaterbody) return [];
 
-    const raw = activeSelectedWaterbody.MWS_UID ||  activeSelectedWaterbody.properties?.MWS_UID;
+  const raw =
+      activeSelectedWaterbody.MWS_UID ??
+      activeSelectedWaterbody.properties?.MWS_UID ??
+      activeSelectedWaterbody.mws_uid_list ??
+      activeSelectedWaterbody.properties?.mws_uid_list;
 
     if (!raw) return [];
 
     const wbMwsList = extractMwsUidList(raw);
-
+    
     const matchedFeatures = mwsGeoData.features.filter((f) => {
       const uid = f.properties?.uid?.toString().trim();
       return wbMwsList.includes(uid);
@@ -314,6 +335,20 @@ const WaterProjectDashboard = () => {
     });
   }, [zoiFeatures, activeSelectedWaterbody]);
 
+  const hasNdviData = useMemo(() => {
+  if (!isTehsilMode || !matchedZoiFeature) return true;
+
+  const props = matchedZoiFeature.getProperties?.() || {};
+
+  return Object.entries(props).some(([key, value]) => {
+    if (!key.startsWith("NDVI_")) return false;
+
+    return value !== null &&
+           value !== undefined &&
+           value !== "" &&
+           Number.isFinite(Number(value));
+  });
+}, [isTehsilMode, matchedZoiFeature]);
   
   const zoiAreaFromFeature = matchedZoiFeature
   ? Number(matchedZoiFeature.get("zoi_area")) || 0
@@ -780,7 +815,7 @@ const WaterProjectDashboard = () => {
         ? totalZaidImpactedArea / totalAreaOred
         : 0,
     };
-  }, [geoData, zoiFeatures]);
+  }, [geoData, mwsGeoData, zoiFeatures]);
  
   const selectedPair = useMemo(() => {
     if (!activeSelectedWaterbody || !rows?.length) return null;
@@ -1400,7 +1435,6 @@ const mwsSheet = XLSX.utils.json_to_sheet(mwsData, {
     saveAs(blob, fileName);
   };
 
-  console.log(activeSelectedWaterbody)
     return (
     <div className={`${isTehsilMode ? "pb-8 w-full" : "mx-6 my-8 bg-white rounded-xl shadow-md p-6"}`}>
   
@@ -1478,7 +1512,21 @@ const mwsSheet = XLSX.utils.json_to_sheet(mwsData, {
     {mode === "project" && (
       <div className="flex gap-2 flex-shrink-0">
         <button
-          onClick={() => navigate("/rwb", { replace: true })}
+         onClick={() => {
+            const params = new URLSearchParams(location.search);
+            const waterbody = params.get("waterbody");
+
+            if (waterbody) {
+              // Waterbody detail → Project table
+              params.delete("waterbody");
+              params.delete("UID");
+
+              navigate(`/rwb?${params.toString()}`, { replace: true });
+            } else {
+              // Project table → Organization & Project selection
+              navigate("/rwb", { replace: true });
+            }
+          }}
           className="px-4 py-2 bg-purple-600 text-white rounded-md text-sm hover:bg-purple-600 flex items-center gap-2 flex-shrink-0"
         >
           <ArrowBackIosNewIcon sx={{ fontSize: 16 }} />
@@ -1635,6 +1683,8 @@ const mwsSheet = XLSX.utils.json_to_sheet(mwsData, {
                   onImpactYearChange={setImpactYear} 
                   years={extractedSeasonalYears} 
                   impactPair={selectedPair} 
+                  onComparisonChange={setShowImpact}
+
                 />
               </div>
   
@@ -1644,6 +1694,10 @@ const mwsSheet = XLSX.utils.json_to_sheet(mwsData, {
                   waterbody={activeSelectedWaterbody}
                   water_rej_data={isTehsilMode ? geoData ? { features: [geoData]} : null : geoData }
                   typeparam={typeParam}
+                  onImpactYearChange={setImpactYear} 
+                  years={extractedSeasonalYears} 
+                  impactPair={selectedPair} 
+                  showImpact={showImpact}
                 />
               </div>
   
@@ -1711,6 +1765,8 @@ const mwsSheet = XLSX.utils.json_to_sheet(mwsData, {
                   isTehsil={isTehsilMode}
                   years={extractedSeasonalYears}
                   water_rej_data={isTehsilMode ? geoData ? { features: [geoData]} : null : geoData }
+                  showImpact={showAgriImpact}
+                  setShowImpact={setShowAgriImpact}
                 />
   
                 <DroughtChart
@@ -1718,25 +1774,33 @@ const mwsSheet = XLSX.utils.json_to_sheet(mwsData, {
                   waterbody={activeSelectedWaterbody}
                   typeparam={typeParam}
                   years={extractedSeasonalYears} 
+                  impactYear={impactYear}
+                  interventionYear={selectedInterventionYear}
+                  showImpact={showAgriImpact}
+                  setShowImpact={setShowAgriImpact}
+
                 />
               </div>
             </div>
   
             {/* NDVI */}
-            {showMap && activeSelectedWaterbody && (
+{/* NDVI */}
+{showMap && activeSelectedWaterbody && hasNdviData && (
   <div className="bg-white rounded-xl shadow-md p-6 mt-8">
     <div className="w-full min-h-[420px]">
-    <NDVIChart
-                      zoiFeatures={zoiFeatures}
-                      waterbody={activeSelectedWaterbody}
-                      years={WATER_DASHBOARD_CONFIG.ndviYears}
-                    />
+      <NDVIChart
+        zoiFeatures={zoiFeatures}
+        waterbody={activeSelectedWaterbody}
+        years={WATER_DASHBOARD_CONFIG.ndviYears}
+        water_rej_data={isTehsilMode ? geoData ? { features: [geoData]} : null : geoData }
+      />
     </div>
-    {showMap && activeSelectedWaterbody && (
-  <div className="text-gray-500 text-[clamp(0.65rem,0.95vw,0.7rem)] mt-2 pl-2 w-full">
-    <p><b>NDVI : </b> Used harmonized Landsat-7, Landsat-8 and Sentinel-2 NDVI values to construct 16-day NDVI time series, gap-filled with MODIS NDVI values.</p>
-  </div>
-)}
+
+    <div className="text-gray-500 text-[clamp(0.65rem,0.95vw,0.7rem)] mt-2 pl-2 w-full">
+      <p>
+        <b>NDVI : </b> Used harmonized Landsat-7, Landsat-8 and Sentinel-2 NDVI values to construct 16-day NDVI time series, gap-filled with MODIS NDVI values.
+      </p>
+    </div>
   </div>
 )}
   

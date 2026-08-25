@@ -62,19 +62,31 @@ export const getWaterbodyData = async ({
       }),
     });
 
-    const extractMwsUidList = (mwsUidString) => {
-      if (!mwsUidString) return [];
-  
-      return mwsUidString
-        .split("_")
-        .reduce((acc, val, idx, arr) => {
-          // join pairs: 12 + 33823 → 12_33823
-          if (idx % 2 === 0 && arr[idx + 1]) {
-            acc.push(`${val}_${arr[idx + 1]}`);
-          }
-          return acc;
-        }, []);
-    };
+const extractMwsUidList = (mwsUidString) => {
+  if (!mwsUidString) return [];
+
+  const value = String(mwsUidString).trim();
+
+  // NEW FORMAT
+  // Example: "12_355341|12_359307|12_355643"
+  if (value.includes("|")) {
+    return value
+      .split("|")
+      .map((id) => id.trim())
+      .filter(Boolean);
+  }
+
+  // OLD FORMAT
+  // Example: "12_355341_12_359307_12_355643"
+  return value
+    .split("_")
+    .reduce((acc, val, idx, arr) => {
+      if (idx % 2 === 0 && arr[idx + 1]) {
+        acc.push(`${val}_${arr[idx + 1]}`);
+      }
+      return acc;
+    }, []);
+};
   
     const wbLayerName = `surface_waterbodies_${dist}_${blk}`;
     const wbLayer = await getWebglVectorLayers("swb", wbLayerName, false, true);
@@ -122,7 +134,8 @@ export const getWaterbodyData = async ({
     if (matchedWaterbody) {
       const wbMwsUID =
         matchedWaterbody.get("MWS_UID") ||
-        matchedWaterbody.get("mws_uid");
+        matchedWaterbody.get("mws_uid") ||
+        matchedWaterbody.get("mws_uid_list");
 
       if (wbMwsUID) {
         // extract list like ["12_308838","12_311076","12_316294"]
@@ -159,9 +172,11 @@ if (zoiLayer) {
 
   // Match only for selected WB
   if (matchedWaterbody) {
-    const wbUid =
+   const wbUid =
       matchedWaterbody.get("UID")?.toString()?.trim() ||
-      matchedWaterbody.get("uid")?.toString()?.trim();
+      matchedWaterbody.get("uid")?.toString()?.trim() ||
+      matchedWaterbody.get("id")?.toString()?.trim() ||
+      matchedWaterbody.get("wb_id")?.toString()?.trim();
 
     matchedZOI = rawZoiFeatures.filter(f => {
       const zUid =
