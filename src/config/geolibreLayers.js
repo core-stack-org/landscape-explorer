@@ -14,6 +14,66 @@ export const GEOLIBRE_LULC_YEARS = [
 export const LATEST_GEOLIBRE_LULC_YEAR =
   GEOLIBRE_LULC_YEARS[GEOLIBRE_LULC_YEARS.length - 1].value;
 
+export const GEOLIBRE_NREGA_CATEGORIES = Object.freeze([
+  {
+    id: "land_restoration",
+    label: "Land restoration",
+    color: "#e68600",
+    markerShape: "square",
+    values: ["Agri Impact - HH,  Community"],
+  },
+  {
+    id: "livelihood",
+    label: "Household livelihood",
+    color: "#c45a87",
+    markerShape: "circle",
+    values: ["Household Livelihood"],
+  },
+  {
+    id: "irrigation_site",
+    label: "Irrigation — site-level impact",
+    color: "#087f8c",
+    markerShape: "pin",
+    values: ["Irrigation - Site level impact"],
+  },
+  {
+    id: "irrigation_non_rwh",
+    label: "Irrigation — non-RWH",
+    color: "#16a6b6",
+    markerShape: "diamond",
+    values: ["Irrigation Site level - Non RWH"],
+  },
+  {
+    id: "community",
+    label: "Community assets",
+    color: "#3d4e78",
+    markerShape: "cross",
+    values: ["Others - HH, Community"],
+  },
+  {
+    id: "plantation",
+    label: "Plantation and forestry",
+    color: "#2d8f5b",
+    markerShape: "triangle",
+    values: ["Plantation"],
+  },
+  {
+    id: "soil_water_conservation",
+    label: "Soil and water conservation",
+    color: "#4169b1",
+    markerShape: "star",
+    values: ["SWC - Landscape level impact"],
+  },
+  {
+    id: "unclassified",
+    label: "Other or unclassified",
+    color: "#6b7280",
+    markerShape: "circle",
+    values: ["", "Un Identified"],
+    fallback: true,
+  },
+]);
+
 const LAYERS = [
   {
     id: "administrative_boundaries",
@@ -212,9 +272,11 @@ const LAYERS = [
     layerName: ({ district, tehsil }) => `${district}_${tehsil}_drought`,
     styleProfile: "drought",
   },
-  {
-    id: "nrega",
-    label: "NREGA Assets",
+  ...GEOLIBRE_NREGA_CATEGORIES.map((category) => ({
+    id: `nrega_${category.id}`,
+    baseId: "nrega",
+    label: category.label,
+    legendTitle: "NREGA Assets",
     domain: "NREGA",
     loadGroup: "nrega",
     sourceType: "wfs",
@@ -222,7 +284,8 @@ const LAYERS = [
     geometryType: "point",
     layerName: ({ district, tehsil }) => `${district}_${tehsil}`,
     styleProfile: "nrega",
-  },
+    nregaCategoryId: category.id,
+  })),
   {
     id: "green_credit",
     label: "Green Credit Projects",
