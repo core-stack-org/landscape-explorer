@@ -55,7 +55,7 @@ const LandingNavbar = () => {
           <div className="flex flex-wrap gap-3 items-center justify-center">
             {isExploreDataPage && (
               <>
-                <HeaderTooltip text="A five-step guide to layers, map navigation, legends, and downloads in this CoRE Stack project.">
+                <HeaderTooltip text="New to the map? See where to find layers and try a few useful ways to explore your landscape.">
                   <button
                     type="button"
                     onClick={() => setShowGeoLibreTour(true)}
@@ -69,7 +69,7 @@ const LandingNavbar = () => {
                   </button>
                 </HeaderTooltip>
 
-                <HeaderTooltip text="Open GeoLibre's official hands-on tutorials for complete mapping and analysis workflows.">
+                <HeaderTooltip text="Learn how to inspect features, style layers, add data, and use more GeoLibre map tools.">
                   <a
                     href="https://geolibre.app/tutorials/"
                     target="_blank"
@@ -85,7 +85,7 @@ const LandingNavbar = () => {
                   </a>
                 </HeaderTooltip>
 
-                <HeaderTooltip text="Learn how to download and use CoRE Stack layers in the QGIS desktop workflow.">
+                <HeaderTooltip text="Learn how to download CoRE Stack layers and open them in QGIS.">
                   <a
                     href="https://docs.google.com/document/d/1jet4EEBbbKgpNrPnuNJJDRuAJUiR2pIMFQp9JTlygAQ/edit?usp=sharing"
                     target="_blank"

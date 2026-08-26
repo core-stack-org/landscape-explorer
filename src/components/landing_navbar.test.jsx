@@ -28,6 +28,6 @@ describe("Explore Data navigation help", () => {
       screen.getByRole("button", { name: /Start the GeoLibre quick tour/i })
     );
     expect(screen.getByRole("dialog")).toBeTruthy();
-    expect(screen.getByText("Start with the Layers panel")).toBeTruthy();
+    expect(screen.getByText("Find layers to explore")).toBeTruthy();
   });
 });

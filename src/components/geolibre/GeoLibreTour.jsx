@@ -3,34 +3,40 @@ import { ChevronLeft, ChevronRight, ExternalLink, X } from "lucide-react";
 
 export const GEOLIBRE_TOUR_STEPS = [
   {
-    title: "Start with the Layers panel",
+    title: "Find layers to explore",
     description:
-      "Expand a CoRE Stack theme on the left, then use the eye control to show a layer. Only the two Demographic layers load initially; other datasets load when you first enable them.",
-    tip: "Begin with Hydrology, Land, Agriculture, or a LULC year to keep the map focused.",
+      "The Layers panel is on the left. Scroll through its themes, open a theme, and use the eye button beside any layer to show or hide it.",
+    tip: "You can keep several layers visible together. Hide a layer whenever it gets in the way of what you are studying.",
   },
   {
-    title: "Inspect and adjust a layer",
+    title: "Start with a micro-watershed",
     description:
-      "Each layer row provides visibility, opacity, zoom, identify, styling, and more actions. Select one layer at a time before opening the Style panel on the right.",
-    tip: "Lower opacity when comparing a thematic layer with the satellite basemap.",
+      "Open Hydrology and show MicroWatershed Boundaries. Add Annual Water Balance to compare conditions across the small areas where rainfall and runoff drain towards a common outlet.",
+    tip: "Click a micro-watershed to inspect its information, and lower the layer opacity if you also want to see the satellite image below it.",
   },
   {
-    title: "Navigate the landscape",
+    title: "Follow the water network",
     description:
-      "Drag to pan, use the wheel or map buttons to zoom, and use fullscreen when you need more room. The status bar reports coordinates, zoom, bearing, pitch, and the current extent.",
-    tip: "Press R inside GeoLibre to reset pitch and bearing if the map becomes tilted or rotated.",
+      "Show Drainage Lines, Rivers, and Canals together. Zoom in and out to follow smaller drainage lines into rivers and see where canals branch away from them.",
+    tip: "Pan along a river instead of looking at the whole tehsil at once. Local connections become clearer as you zoom in.",
   },
   {
-    title: "Read the active legend",
+    title: "See how land use changes",
     description:
-      "The CoRE Stack legend follows the visible layers. Choose a legend from its dropdown when several datasets are active, and compare its classes with the features on the map.",
-    tip: "Hide layers you are not interpreting so the legend and map remain easy to read.",
+      "Open a LULC group and choose a year. Level 1 gives a broad view of land cover, while Levels 2 and 3 show more detailed land-use classes.",
+    tip: "Try one recent year first. Then switch years to look for changes in crops, water, vegetation, or built-up land.",
   },
   {
-    title: "Download or continue in GIS",
+    title: "Understand what you see",
     description:
-      "Open a layer's more-actions menu for its available export options. Use QGIS Documentation for the CoRE Stack desktop workflow, or GeoLibre Tutorials for broader GeoLibre tools and analysis.",
-    tip: "Before exporting, confirm the selected layer, geographic extent, and output format match the next step in your workflow.",
+      "Use a layer's identify control, then click the map to read information for that place. The legend explains the colours used by the visible layers.",
+    tip: "If the map becomes crowded, hide a few layers or reduce their opacity before comparing values and colours.",
+  },
+  {
+    title: "Save a layer or learn more",
+    description:
+      "Open the three-dot menu beside a layer to see its download options. GeoLibre Tutorials explain more map tools, and QGIS Documentation shows how to open downloaded CoRE Stack layers in QGIS.",
+    tip: "Before saving, check that you selected the layer, area, and file format you actually need.",
   },
 ];
 
