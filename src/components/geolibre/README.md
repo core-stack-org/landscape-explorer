@@ -43,7 +43,7 @@ and uses its supported embed bridge and WFS project representation.
 
 The header provides three complementary entry points:
 
-- **Quick Tour** opens a five-step, keyboard-accessible CoRE Stack guide to the
+- **Quick Tour** opens a six-step, keyboard-accessible CoRE Stack guide to the
   Layers panel, layer controls, map navigation, legends, and exports.
 - **GeoLibre Tutorials** opens GeoLibre's official hands-on tutorials.
 - **QGIS Documentation** opens the CoRE Stack desktop-GIS workflow.
@@ -305,7 +305,7 @@ Check both routes:
 4. Confirm the native legend starts minimized and lists only Administrative
    Boundaries and Socio-Economic Profile. Toggle a raster or LULC layer on and
    confirm its legend appears; toggle it off and confirm that entry disappears.
-5. Confirm no other layer loads by itself. Toggle Micro-watersheds and Drainage
+5. Confirm no other layer loads by itself. Toggle MicroWatershed Boundaries and Drainage
    under Hydrology and confirm each loads. Toggle each
    off and on again and confirm its WFS request is not repeated.
 6. Confirm the map does not refit after those vector loads. Enable a raster and

@@ -283,10 +283,25 @@ describe("GeoLibre 2.6 project generation", () => {
       "corestack-facilities",
       "corestack-antyodaya",
       "corestack-livestock",
-      "corestack-mws_layers",
       "corestack-hydrological_boundaries",
+      "corestack-mws_layers",
       "corestack-mws_layers_fortnight",
     ]);
+    expect(
+      Object.fromEntries(
+        project.layers.map((layer) => [layer.id, layer.name])
+      )
+    ).toMatchObject({
+      "corestack-facilities": "Facilities Proximity",
+      "corestack-antyodaya": "Mission Antyodaya (2020)",
+      "corestack-hydrological_boundaries":
+        "MicroWatershed Boundaries",
+      "corestack-mws_layers": "Annual Water Balance",
+      "corestack-mws_layers_fortnight": "Fortnightly Water Balance",
+      "corestack-terrain_vector": "Terrain Clusters",
+      "corestack-drainage": "Drainage Lines",
+      "corestack-remote_sensed_waterbodies": "Surface Water Bodies",
+    });
     expect(
       project.layers
         .filter((layer) =>
@@ -458,7 +473,7 @@ describe("GeoLibre 2.6 project generation", () => {
     expect(legends.map((entry) => entry.title)).toEqual([
       "Socio-Economic Profile legend",
       "Administrative Boundaries legend",
-      "Drainage legend",
+      "Drainage Lines legend",
       "Terrain legend",
     ]);
 
