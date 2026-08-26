@@ -101,7 +101,7 @@ const LAYERS = [
   },
   {
     id: "facilities",
-    label: "Facilities and Services Access",
+    label: "Facilities Proximity",
     domain: "Village",
     loadGroup: "village-data",
     sourceType: "wfs",
@@ -112,7 +112,7 @@ const LAYERS = [
   },
   {
     id: "antyodaya",
-    label: "Mission Antyodaya Village Indicators (2020)",
+    label: "Mission Antyodaya (2020)",
     domain: "Village",
     loadGroup: "village-data",
     sourceType: "wfs",
@@ -134,20 +134,8 @@ const LAYERS = [
     styleProfile: "livestock",
   },
   {
-    id: "mws_layers",
-    label: "Micro-watersheds and Hydrological Variables",
-    domain: "Hydrology",
-    loadGroup: "hydrology",
-    sourceType: "wfs",
-    workspace: "mws_layers",
-    geometryType: "polygon",
-    layerName: ({ district, tehsil }) =>
-      `deltaG_well_depth_${district}_${tehsil}`,
-    styleProfile: "mws",
-  },
-  {
     id: "hydrological_boundaries",
-    label: "Hydrological Boundaries",
+    label: "MicroWatershed Boundaries",
     domain: "Hydrology",
     loadGroup: "hydrology",
     sourceType: "wfs",
@@ -158,8 +146,20 @@ const LAYERS = [
     styleProfile: "boundary",
   },
   {
+    id: "mws_layers",
+    label: "Annual Water Balance",
+    domain: "Hydrology",
+    loadGroup: "hydrology",
+    sourceType: "wfs",
+    workspace: "mws_layers",
+    geometryType: "polygon",
+    layerName: ({ district, tehsil }) =>
+      `deltaG_well_depth_${district}_${tehsil}`,
+    styleProfile: "mws",
+  },
+  {
     id: "mws_layers_fortnight",
-    label: "Fortnightly Hydrological Variables",
+    label: "Fortnightly Water Balance",
     domain: "Hydrology",
     loadGroup: "hydrology",
     sourceType: "wfs",
@@ -171,7 +171,7 @@ const LAYERS = [
   },
   {
     id: "terrain_vector",
-    label: "Terrain Vector",
+    label: "Terrain Clusters",
     domain: "Land",
     loadGroup: "land",
     sourceType: "wfs",
@@ -182,7 +182,7 @@ const LAYERS = [
   },
   {
     id: "drainage",
-    label: "Drainage",
+    label: "Drainage Lines",
     domain: "Hydrology",
     loadGroup: "hydrology",
     sourceType: "wfs",
@@ -217,7 +217,7 @@ const LAYERS = [
   },
   {
     id: "remote_sensed_waterbodies",
-    label: "Remote-Sensed Waterbodies",
+    label: "Surface Water Bodies",
     domain: "Hydrology",
     loadGroup: "hydrology",
     sourceType: "wfs",
