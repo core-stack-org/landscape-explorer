@@ -1,5 +1,6 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import LandingNavbar from "./landing_navbar";
+import { downloadExcel } from "./landscape-explorer/utils/downloadHelper";
 
 jest.mock(
   "react-router-dom",
@@ -7,15 +8,29 @@ jest.mock(
   { virtual: true }
 );
 
-describe("Explore Data navigation help", () => {
-  it("shows the quick tour and both tutorial resources", () => {
-    render(<LandingNavbar />);
+jest.mock("./landscape-explorer/utils/downloadHelper", () => ({
+  downloadExcel: jest.fn(() => Promise.resolve(true)),
+}));
 
-    expect(
-      screen
-        .getByRole("link", { name: /Open GeoLibre Tutorials/i })
-        .getAttribute("href")
-    ).toBe("https://geolibre.app/tutorials/");
+describe("Explore Data navigation help", () => {
+  it("shows the quick tour, datasheet download, and QGIS documentation", async () => {
+    render(
+      <LandingNavbar
+        downloadScope={{ state: "BIHAR", district: "BANKA", tehsil: "BANKA" }}
+      />
+    );
+
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: /Download Excel for the selected tehsil/i,
+      })
+    );
+    await waitFor(() =>
+      expect(downloadExcel).toHaveBeenCalledWith(
+        "https://geoserver.core-stack.org/api/v1/download_excel_layer?state=BIHAR&district=BANKA&block=BANKA",
+        "BANKA_data.xlsx"
+      )
+    );
     expect(
       screen
         .getByRole("link", { name: /Open QGIS Documentation/i })
