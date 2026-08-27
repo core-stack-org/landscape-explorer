@@ -1,7 +1,7 @@
 # KYL GeoLibre integration
 
 `/explore_data` is a thin host for GeoLibre. KYL keeps its existing header
-(including **Quick Tour**, **GeoLibre Tutorials**, and **QGIS Documentation**)
+(including **Quick Tour**, **Download Excel**, and **QGIS Documentation**)
 and gives the rest of the page to a trusted GeoLibre iframe. There is no second
 KYL map, layer selector, or project panel.
 
@@ -45,7 +45,7 @@ The header provides three complementary entry points:
 
 - **Quick Tour** opens a six-step, keyboard-accessible CoRE Stack guide to the
   Layers panel, layer controls, map navigation, legends, and exports.
-- **GeoLibre Tutorials** opens GeoLibre's official hands-on tutorials.
+- **Download Excel** downloads the Excel datasheet for the selected tehsil.
 - **QGIS Documentation** opens the CoRE Stack desktop-GIS workflow.
 
 Header actions include hover and keyboard-focus tooltips. The embedded

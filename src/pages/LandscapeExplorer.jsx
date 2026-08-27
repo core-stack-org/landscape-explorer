@@ -203,7 +203,7 @@ const LandscapeExplorer = () => {
   if (!hasLocation) {
     return (
       <div className="flex h-screen flex-col bg-slate-100">
-        <LandingNavbar />
+        <LandingNavbar downloadScope={scope} />
         <main className="flex min-h-0 flex-1 items-center justify-center p-6">
           <div className="max-w-md rounded-2xl bg-white p-7 text-center shadow-xl">
             <h1 className="text-xl font-semibold text-slate-900">
@@ -236,7 +236,7 @@ const LandscapeExplorer = () => {
 
   return (
     <div className="flex h-screen flex-col overflow-hidden bg-white">
-      <LandingNavbar />
+      <LandingNavbar downloadScope={scope} />
       <GeoLibreFrame
         project={project}
         preparationMessage={progress}
