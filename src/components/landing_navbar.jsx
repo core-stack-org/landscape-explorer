@@ -1,8 +1,9 @@
 import React, { useState } from "react";
 import newLogo from "../assets/newlogoWhite.png";
 import { useLocation } from "react-router-dom";
-import { BookOpen, Compass, ExternalLink, Info } from "lucide-react";
+import { Compass, ExternalLink, FileSpreadsheet, Info } from "lucide-react";
 import GeoLibreTour from "./geolibre/GeoLibreTour";
+import { downloadExcel } from "./landscape-explorer/utils/downloadHelper";
 
 const HeaderTooltip = ({ children, text }) => (
   <div className="group relative">
@@ -16,13 +17,18 @@ const HeaderTooltip = ({ children, text }) => (
   </div>
 );
 
-const LandingNavbar = () => {
+const LandingNavbar = ({ downloadScope = null }) => {
   const location = useLocation();
   const isExploreDataPage = location.pathname === "/explore_data";
   const isHomePage = location.pathname === "/";
   const isKylDashboard = location.pathname === "/kyl_dashboard";
   const [showTooltip, setShowTooltip] = useState(false);
   const [showGeoLibreTour, setShowGeoLibreTour] = useState(false);
+  const [isDownloadingDataSheet, setIsDownloadingDataSheet] = useState(false);
+
+  const canDownloadDataSheet = Boolean(
+    downloadScope?.state && downloadScope?.district && downloadScope?.tehsil
+  );
 
   const handleIndicatorsClick = () => {
     window.open(
@@ -30,6 +36,30 @@ const LandingNavbar = () => {
       '_blank',
       'noopener,noreferrer'
     );
+  };
+
+  const handleDataSheetDownload = async () => {
+    if (!canDownloadDataSheet || isDownloadingDataSheet) return;
+
+    setIsDownloadingDataSheet(true);
+    const query = new URLSearchParams({
+      state: downloadScope.state,
+      district: downloadScope.district,
+      block: downloadScope.tehsil,
+    });
+    const apiBaseUrl = (
+      process.env.REACT_APP_API_URL ||
+      "https://geoserver.core-stack.org/api/v1"
+    ).replace(/\/$/, "");
+
+    try {
+      await downloadExcel(
+        `${apiBaseUrl}/download_excel_layer?${query.toString()}`,
+        `${downloadScope.tehsil}_data.xlsx`
+      );
+    } finally {
+      setIsDownloadingDataSheet(false);
+    }
   };
 
   return (
@@ -69,20 +99,19 @@ const LandingNavbar = () => {
                   </button>
                 </HeaderTooltip>
 
-                <HeaderTooltip text="Learn how to inspect features, style layers, add data, and use more GeoLibre map tools.">
-                  <a
-                    href="https://geolibre.app/tutorials/"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-2 rounded-lg border border-purple-200 bg-purple-50 px-4 py-2 transition-all duration-200 hover:bg-purple-100"
-                    aria-label="Open GeoLibre Tutorials in a new tab"
+                <HeaderTooltip text={canDownloadDataSheet ? "Download the Excel datasheet for the selected tehsil." : "Select a state, district, and tehsil to download its datasheet."}>
+                  <button
+                    type="button"
+                    onClick={handleDataSheetDownload}
+                    disabled={!canDownloadDataSheet || isDownloadingDataSheet}
+                    className="flex items-center justify-center rounded-lg border border-emerald-300 bg-emerald-50 px-4 py-2 text-sm font-medium text-emerald-800 transition-colors duration-200 hover:bg-emerald-100 focus:outline-none disabled:cursor-not-allowed disabled:border-gray-300 disabled:bg-gray-100 disabled:text-gray-400 disabled:hover:bg-gray-100"
+                    aria-label="Download Excel for the selected tehsil"
                   >
-                    <BookOpen className="h-4 w-4 text-purple-600" />
-                    <span className="text-sm font-medium text-purple-700 sm:text-base">
-                      GeoLibre Tutorials
+                    <FileSpreadsheet className="h-4 w-4" />
+                    <span className="ml-2">
+                      {isDownloadingDataSheet ? "Downloading…" : "Download Excel"}
                     </span>
-                    <ExternalLink className="h-4 w-4 text-purple-600" />
-                  </a>
+                  </button>
                 </HeaderTooltip>
 
                 <HeaderTooltip text="Learn how to download CoRE Stack layers and open them in QGIS.">
