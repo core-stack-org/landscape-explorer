@@ -6,12 +6,8 @@
     "namespace": "MWS",
     "category": "Terrain",
     "source": "mws",
-    "layer_store": [
-      "terrain"
-    ],
-    "layer_name": [
-      "terrain_raster"
-    ],
+    "layer_store": ["terrain"],
+    "layer_name": ["terrain_raster"],
     "rasterStyle": "Terrain_Style_11_Classes",
     "styleKey": "static",
     "bins": [
@@ -40,12 +36,8 @@
     "namespace": "MWS",
     "category": "Terrain",
     "source": "mws",
-    "layer_store": [
-      "mws_layers"
-    ],
-    "layer_name": [
-      "deltaG_well_depth"
-    ],
+    "layer_store": ["mws_layers"],
+    "layer_name": ["deltaG_well_depth"],
     "rasterStyle": "",
     "styleKey": "relief",
     "bins": [
@@ -86,12 +78,8 @@
     "namespace": "MWS",
     "category": "Terrain",
     "source": "mws",
-    "layer_store": [
-      "dem"
-    ],
-    "layer_name": [
-      "dem_raster"
-    ],
+    "layer_store": ["dem"],
+    "layer_name": ["dem_raster"],
     "rasterStyle": "dem_grayscale",
     "styleKey": "static",
     "bins": [
@@ -119,12 +107,8 @@
     "namespace": "MWS",
     "category": "Land-Use",
     "source": "mws",
-    "layer_store": [
-      "LULC"
-    ],
-    "layer_name": [
-      "level_3"
-    ],
+    "layer_store": ["LULC"],
+    "layer_name": ["level_3"],
     "rasterStyle": "lulc_land_use_KYL",
     "styleKey": "static",
     "bins": [
@@ -152,12 +136,8 @@
     "namespace": "MWS",
     "category": "Land-Use",
     "source": "mws",
-    "layer_store": [
-      "LULC"
-    ],
-    "layer_name": [
-      "level_3"
-    ],
+    "layer_store": ["LULC"],
+    "layer_name": ["level_3"],
     "rasterStyle": "lulc_land_use_KYL",
     "styleKey": "static",
     "bins": [
@@ -185,12 +165,8 @@
     "namespace": "MWS",
     "category": "Land-Use",
     "source": "mws",
-    "layer_store": [
-      "LULC"
-    ],
-    "layer_name": [
-      "level_3"
-    ],
+    "layer_store": ["LULC"],
+    "layer_name": ["level_3"],
     "rasterStyle": "lulc_land_use_KYL",
     "styleKey": "static",
     "bins": [
@@ -218,12 +194,8 @@
     "namespace": "MWS",
     "category": "Climate",
     "source": "mws",
-    "layer_store": [
-      "mws_layers"
-    ],
-    "layer_name": [
-      "deltaG_well_depth"
-    ],
+    "layer_store": ["mws_layers"],
+    "layer_name": ["deltaG_well_depth"],
     "rasterStyle": "",
     "styleKey": "avg_precipitation",
     "bins": [
@@ -271,12 +243,8 @@
     "namespace": "MWS",
     "category": "Climate",
     "source": "mws",
-    "layer_store": [
-      "mws_layers"
-    ],
-    "layer_name": [
-      "deltaG_well_depth"
-    ],
+    "layer_store": ["mws_layers"],
+    "layer_name": ["deltaG_well_depth"],
     "rasterStyle": "",
     "styleKey": "avg_runoff",
     "bins": [
@@ -310,12 +278,8 @@
     "namespace": "MWS",
     "category": "Climate",
     "source": "mws",
-    "layer_store": [
-      "drought"
-    ],
-    "layer_name": [
-      "drought"
-    ],
+    "layer_store": ["drought"],
+    "layer_name": ["drought"],
     "rasterStyle": "",
     "styleKey": "drought_category",
     "bins": [
@@ -349,12 +313,8 @@
     "namespace": "MWS",
     "category": "Climate",
     "source": "mws",
-    "layer_store": [
-      "drought"
-    ],
-    "layer_name": [
-      "drought"
-    ],
+    "layer_store": ["drought"],
+    "layer_name": ["drought"],
     "rasterStyle": "",
     "styleKey": "avg_number_dry_spell",
     "bins": [
@@ -388,12 +348,8 @@
     "namespace": "MWS",
     "category": "Hydrology",
     "source": "mws",
-    "layer_store": [
-      "mws_layers"
-    ],
-    "layer_name": [
-      "deltaG_well_depth"
-    ],
+    "layer_store": ["mws_layers"],
+    "layer_name": ["deltaG_well_depth"],
     "rasterStyle": "",
     "styleKey": "avg_rabi_surface_water_mws",
     "bins": [
@@ -427,12 +383,8 @@
     "namespace": "MWS",
     "category": "Hydrology",
     "source": "mws",
-    "layer_store": [
-      "mws_layers"
-    ],
-    "layer_name": [
-      "deltaG_well_depth"
-    ],
+    "layer_store": ["mws_layers"],
+    "layer_name": ["deltaG_well_depth"],
     "rasterStyle": "",
     "styleKey": "avg_zaid_surface_water_mws",
     "bins": [
@@ -466,12 +418,8 @@
     "namespace": "MWS",
     "category": "Hydrology",
     "source": "mws",
-    "layer_store": [
-      "aquifer"
-    ],
-    "layer_name": [
-      "aquifer_vector"
-    ],
+    "layer_store": ["aquifer"],
+    "layer_name": ["aquifer_vector"],
     "rasterStyle": "",
     "styleKey": "aquifer_class",
     "bins": [
@@ -578,12 +526,8 @@
     "namespace": "MWS",
     "category": "Hydrology",
     "source": "mws",
-    "layer_store": [
-      "soge"
-    ],
-    "layer_name": [
-      "soge_vector"
-    ],
+    "layer_store": ["soge"],
+    "layer_name": ["soge_vector"],
     "rasterStyle": "",
     "styleKey": "soge_class",
     "bins": [
@@ -626,12 +570,8 @@
     "namespace": "MWS",
     "category": "Hydrology",
     "source": "mws",
-    "layer_store": [
-      "mws_layers"
-    ],
-    "layer_name": [
-      "deltaG_well_depth"
-    ],
+    "layer_store": ["mws_layers"],
+    "layer_name": ["deltaG_well_depth"],
     "rasterStyle": "",
     "styleKey": "trend_g",
     "bins": [
@@ -662,12 +602,8 @@
     "namespace": "MWS",
     "category": "Agriculture",
     "source": "mws",
-    "layer_store": [
-      "LULC"
-    ],
-    "layer_name": [
-      "level_3"
-    ],
+    "layer_store": ["LULC"],
+    "layer_name": ["level_3"],
     "rasterStyle": "",
     "styleKey": "static",
     "bins": [
@@ -695,12 +631,8 @@
     "namespace": "MWS",
     "category": "Agriculture",
     "source": "mws",
-    "layer_store": [
-      "change_detection"
-    ],
-    "layer_name": [
-      "Degradation"
-    ],
+    "layer_store": ["change_detection"],
+    "layer_name": ["Degradation"],
     "rasterStyle": "",
     "styleKey": "degradation_land_area",
     "bins": [
@@ -734,12 +666,8 @@
     "namespace": "MWS",
     "category": "Agriculture",
     "source": "mws",
-    "layer_store": [
-      "river"
-    ],
-    "layer_name": [
-      "river_vector"
-    ],
+    "layer_store": ["river"],
+    "layer_name": ["river_vector"],
     "rasterStyle": "",
     "styleKey": "static",
     "bins": [
@@ -764,12 +692,8 @@
     "namespace": "MWS",
     "category": "Agriculture",
     "source": "mws",
-    "layer_store": [
-      "canal"
-    ],
-    "layer_name": [
-      "canal_vector"
-    ],
+    "layer_store": ["canal"],
+    "layer_name": ["canal_vector"],
     "rasterStyle": "",
     "styleKey": "static",
     "bins": [
@@ -794,12 +718,8 @@
     "namespace": "MWS",
     "category": "Restoration",
     "source": "mws",
-    "layer_store": [
-      "change_detection"
-    ],
-    "layer_name": [
-      "Afforestation"
-    ],
+    "layer_store": ["change_detection"],
+    "layer_name": ["Afforestation"],
     "rasterStyle": "",
     "styleKey": "increase_in_tree_cover",
     "bins": [
@@ -833,12 +753,8 @@
     "namespace": "MWS",
     "category": "Restoration",
     "source": "mws",
-    "layer_store": [
-      "tree_overall_vector"
-    ],
-    "layer_name": [
-      "overall_change_vector"
-    ],
+    "layer_store": ["tree_overall_vector"],
+    "layer_name": ["overall_change_vector"],
     "rasterStyle": "",
     "styleKey": "increase_canopy_density_height",
     "bins": [
@@ -872,12 +788,8 @@
     "namespace": "MWS",
     "category": "Restoration",
     "source": "mws",
-    "layer_store": [
-      "change_detection"
-    ],
-    "layer_name": [
-      "Deforestation"
-    ],
+    "layer_store": ["change_detection"],
+    "layer_name": ["Deforestation"],
     "rasterStyle": "",
     "styleKey": "decrease_in_tree_cover",
     "bins": [
@@ -911,12 +823,8 @@
     "namespace": "MWS",
     "category": "Restoration",
     "source": "mws",
-    "layer_store": [
-      "tree_overall_vector"
-    ],
-    "layer_name": [
-      "overall_change_vector"
-    ],
+    "layer_store": ["tree_overall_vector"],
+    "layer_name": ["overall_change_vector"],
     "rasterStyle": "",
     "styleKey": "reduction_canopy_density_height",
     "bins": [
@@ -950,12 +858,8 @@
     "namespace": "MWS",
     "category": "Restoration",
     "source": "mws",
-    "layer_store": [
-      "restoration"
-    ],
-    "layer_name": [
-      "restoration"
-    ],
+    "layer_store": ["restoration"],
+    "layer_name": ["restoration"],
     "rasterStyle": "restoration_style",
     "styleKey": "static",
     "bins": [
@@ -983,12 +887,8 @@
     "namespace": "MWS",
     "category": "Restoration",
     "source": "mws",
-    "layer_store": [
-      "restoration"
-    ],
-    "layer_name": [
-      "restoration"
-    ],
+    "layer_store": ["restoration"],
+    "layer_name": ["restoration"],
     "rasterStyle": "restoration_style",
     "styleKey": "static",
     "bins": [
@@ -1016,12 +916,8 @@
     "namespace": "MWS",
     "category": "Restoration",
     "source": "mws",
-    "layer_store": [
-      "green_credit"
-    ],
-    "layer_name": [
-      "green_credit"
-    ],
+    "layer_store": ["green_credit"],
+    "layer_name": ["green_credit"],
     "rasterStyle": "",
     "styleKey": "static",
     "bins": [
@@ -1046,12 +942,8 @@
     "namespace": "MWS",
     "category": "Industry",
     "source": "mws",
-    "layer_store": [
-      "lcw"
-    ],
-    "layer_name": [
-      "lcw_conflict"
-    ],
+    "layer_store": ["lcw"],
+    "layer_name": ["lcw_conflict"],
     "rasterStyle": "",
     "styleKey": "static",
     "bins": [
@@ -1074,12 +966,8 @@
     "namespace": "MWS",
     "category": "Industry",
     "source": "mws",
-    "layer_store": [
-      "factory_csr"
-    ],
-    "layer_name": [
-      "factory_csr"
-    ],
+    "layer_store": ["factory_csr"],
+    "layer_name": ["factory_csr"],
     "rasterStyle": "",
     "styleKey": "static",
     "bins": [
@@ -1102,12 +990,8 @@
     "namespace": "MWS",
     "category": "Industry",
     "source": "mws",
-    "layer_store": [
-      "mining"
-    ],
-    "layer_name": [
-      "mining"
-    ],
+    "layer_store": ["mining"],
+    "layer_name": ["mining"],
     "rasterStyle": "",
     "styleKey": "static",
     "bins": [
@@ -1130,12 +1014,8 @@
     "namespace": "Waterbody",
     "category": "Waterbody",
     "source": "wb-feature",
-    "layer_store": [
-      "waterbodies"
-    ],
-    "layer_name": [
-      "waterbodies"
-    ],
+    "layer_store": ["waterbodies"],
+    "layer_name": ["waterbodies"],
     "rasterStyle": "",
     "styleKey": "waterbody_type",
     "bins": [
@@ -1156,12 +1036,8 @@
     "namespace": "Waterbody",
     "category": "Waterbody",
     "source": "wb-feature",
-    "layer_store": [
-      "waterbodies"
-    ],
-    "layer_name": [
-      "waterbodies"
-    ],
+    "layer_store": ["waterbodies"],
+    "layer_name": ["waterbodies"],
     "rasterStyle": "",
     "styleKey": "static",
     "bins": [
@@ -1194,12 +1070,8 @@
     "namespace": "Waterbody",
     "category": "Waterbody",
     "source": "wb-feature",
-    "layer_store": [
-      "waterbodies"
-    ],
-    "layer_name": [
-      "waterbodies"
-    ],
+    "layer_store": ["waterbodies"],
+    "layer_name": ["waterbodies"],
     "rasterStyle": "",
     "styleKey": "surface_water_trend",
     "bins": [
@@ -1224,12 +1096,8 @@
     "namespace": "Waterbody",
     "category": "Waterbody",
     "source": "wb-feature",
-    "layer_store": [
-      "waterbodies"
-    ],
-    "layer_name": [
-      "waterbodies"
-    ],
+    "layer_store": ["waterbodies"],
+    "layer_name": ["waterbodies"],
     "rasterStyle": "",
     "styleKey": "drainage_line",
     "bins": [
@@ -1250,9 +1118,7 @@
     "namespace": "Village",
     "category": "Demographic",
     "source": "village",
-    "layer_store": [
-      "panchayat_boundaries"
-    ],
+    "layer_store": ["panchayat_boundaries"],
     "layer_name": [],
     "rasterStyle": "",
     "styleKey": "total_population",
@@ -1294,9 +1160,7 @@
     "namespace": "Village",
     "category": "Demographic",
     "source": "village",
-    "layer_store": [
-      "panchayat_boundaries"
-    ],
+    "layer_store": ["panchayat_boundaries"],
     "layer_name": [],
     "rasterStyle": "",
     "styleKey": "percent_st_population",
@@ -1331,9 +1195,7 @@
     "namespace": "Village",
     "category": "Demographic",
     "source": "village",
-    "layer_store": [
-      "panchayat_boundaries"
-    ],
+    "layer_store": ["panchayat_boundaries"],
     "layer_name": [],
     "rasterStyle": "",
     "styleKey": "percent_sc_population",
@@ -1375,9 +1237,7 @@
     "namespace": "Village",
     "category": "Demographic",
     "source": "village",
-    "layer_store": [
-      "panchayat_boundaries"
-    ],
+    "layer_store": ["panchayat_boundaries"],
     "layer_name": [],
     "rasterStyle": "",
     "styleKey": "literacy_level",
@@ -1419,12 +1279,8 @@
     "namespace": "Village",
     "category": "Education Access",
     "source": "village",
-    "layer_store": [
-      "facilities_proximity"
-    ],
-    "layer_name": [
-      "facilities"
-    ],
+    "layer_store": ["facilities_proximity"],
+    "layer_name": ["facilities"],
     "rasterStyle": "",
     "styleKey": "essential_education_infra",
     "bins": [
@@ -1451,12 +1307,8 @@
     "namespace": "Village",
     "category": "Education Access",
     "source": "village",
-    "layer_store": [
-      "facilities_proximity"
-    ],
-    "layer_name": [
-      "facilities"
-    ],
+    "layer_store": ["facilities_proximity"],
+    "layer_name": ["facilities"],
     "rasterStyle": "",
     "styleKey": "higher_education_infra",
     "bins": [
@@ -1483,12 +1335,8 @@
     "namespace": "Village",
     "category": "Essential Infrastructure Availability",
     "source": "village",
-    "layer_store": [
-      "antyodaya_2020"
-    ],
-    "layer_name": [
-      "antyodaya20"
-    ],
+    "layer_store": ["antyodaya_2020"],
+    "layer_name": ["antyodaya20"],
     "rasterStyle": "",
     "styleKey": "road_connectivity_cat_cluster",
     "bins": [
@@ -1533,12 +1381,8 @@
     "namespace": "Village",
     "category": "Essential Infrastructure Availability",
     "source": "village",
-    "layer_store": [
-      "antyodaya_2020"
-    ],
-    "layer_name": [
-      "antyodaya20"
-    ],
+    "layer_store": ["antyodaya_2020"],
+    "layer_name": ["antyodaya20"],
     "rasterStyle": "",
     "styleKey": "energy_access_cat_cluster",
     "bins": [
@@ -1583,12 +1427,8 @@
     "namespace": "Village",
     "category": "Essential Infrastructure Availability",
     "source": "village",
-    "layer_store": [
-      "antyodaya_2020"
-    ],
-    "layer_name": [
-      "antyodaya20"
-    ],
+    "layer_store": ["antyodaya_2020"],
+    "layer_name": ["antyodaya20"],
     "rasterStyle": "",
     "styleKey": "housing_quality_cat_cluster",
     "bins": [
@@ -1633,12 +1473,8 @@
     "namespace": "Village",
     "category": "Healthcare Access",
     "source": "village",
-    "layer_store": [
-      "antyodaya_2020"
-    ],
-    "layer_name": [
-      "antyodaya20"
-    ],
+    "layer_store": ["antyodaya_2020"],
+    "layer_name": ["antyodaya20"],
     "rasterStyle": "",
     "styleKey": "maternal_child_health_cat_cluster",
     "bins": [
@@ -1683,12 +1519,8 @@
     "namespace": "Village",
     "category": "Healthcare Access",
     "source": "village",
-    "layer_store": [
-      "antyodaya_2020"
-    ],
-    "layer_name": [
-      "antyodaya20"
-    ],
+    "layer_store": ["antyodaya_2020"],
+    "layer_name": ["antyodaya20"],
     "rasterStyle": "",
     "styleKey": "water_sanitation_cat_cluster",
     "bins": [
@@ -1733,12 +1565,8 @@
     "namespace": "Village",
     "category": "Healthcare Access",
     "source": "village",
-    "layer_store": [
-      "facilities_proximity"
-    ],
-    "layer_name": [
-      "facilities"
-    ],
+    "layer_store": ["facilities_proximity"],
+    "layer_name": ["facilities"],
     "rasterStyle": "",
     "styleKey": "essential_health_services",
     "bins": [
@@ -1772,12 +1600,8 @@
     "namespace": "Village",
     "category": "Healthcare Access",
     "source": "village",
-    "layer_store": [
-      "facilities_proximity"
-    ],
-    "layer_name": [
-      "facilities"
-    ],
+    "layer_store": ["facilities_proximity"],
+    "layer_name": ["facilities"],
     "rasterStyle": "",
     "styleKey": "advanced_health_services",
     "bins": [
@@ -1811,12 +1635,8 @@
     "namespace": "Village",
     "category": "Financial Inclusion",
     "source": "village",
-    "layer_store": [
-      "antyodaya_2020"
-    ],
-    "layer_name": [
-      "antyodaya20"
-    ],
+    "layer_store": ["antyodaya_2020"],
+    "layer_name": ["antyodaya20"],
     "rasterStyle": "",
     "styleKey": "financial_inclusion_cat_cluster",
     "bins": [
@@ -1861,12 +1681,8 @@
     "namespace": "Village",
     "category": "Social welfare access",
     "source": "village",
-    "layer_store": [
-      "antyodaya_2020"
-    ],
-    "layer_name": [
-      "antyodaya20"
-    ],
+    "layer_store": ["antyodaya_2020"],
+    "layer_name": ["antyodaya20"],
     "rasterStyle": "",
     "styleKey": "social_protection_cat_cluster",
     "bins": [
@@ -1911,12 +1727,8 @@
     "namespace": "Village",
     "category": "Social welfare access",
     "source": "village",
-    "layer_store": [
-      "facilities_proximity"
-    ],
-    "layer_name": [
-      "facilities"
-    ],
+    "layer_store": ["facilities_proximity"],
+    "layer_name": ["facilities"],
     "rasterStyle": "",
     "styleKey": "public_distribution_system",
     "bins": [
@@ -1943,12 +1755,8 @@
     "namespace": "Village",
     "category": "Community Institutions",
     "source": "village",
-    "layer_store": [
-      "antyodaya_2020"
-    ],
-    "layer_name": [
-      "antyodaya20"
-    ],
+    "layer_store": ["antyodaya_2020"],
+    "layer_name": ["antyodaya20"],
     "rasterStyle": "",
     "styleKey": "institutionalization_cat_cluster",
     "bins": [
@@ -1993,12 +1801,8 @@
     "namespace": "Village",
     "category": "Livelihood",
     "source": "village",
-    "layer_store": [
-      "antyodaya_2020"
-    ],
-    "layer_name": [
-      "antyodaya20"
-    ],
+    "layer_store": ["antyodaya_2020"],
+    "layer_name": ["antyodaya20"],
     "rasterStyle": "",
     "styleKey": "livelihoods_employment_cat_cluster",
     "bins": [
@@ -2043,12 +1847,8 @@
     "namespace": "Village",
     "category": "Livelihood",
     "source": "village",
-    "layer_store": [
-      "antyodaya_2020"
-    ],
-    "layer_name": [
-      "antyodaya20"
-    ],
+    "layer_store": ["antyodaya_2020"],
+    "layer_name": ["antyodaya20"],
     "rasterStyle": "",
     "styleKey": "livelihoods_forest_resources_cat_cluster",
     "bins": [
@@ -2083,12 +1883,8 @@
     "namespace": "Village",
     "category": "Livelihood",
     "source": "village",
-    "layer_store": [
-      "antyodaya_2020"
-    ],
-    "layer_name": [
-      "antyodaya20"
-    ],
+    "layer_store": ["antyodaya_2020"],
+    "layer_name": ["antyodaya20"],
     "rasterStyle": "",
     "styleKey": "livelihoods_alternative_farming_cat_cluster",
     "bins": [
@@ -2123,12 +1919,8 @@
     "namespace": "Village",
     "category": "Livelihood",
     "source": "village",
-    "layer_store": [
-      "antyodaya_2020"
-    ],
-    "layer_name": [
-      "antyodaya20"
-    ],
+    "layer_store": ["antyodaya_2020"],
+    "layer_name": ["antyodaya20"],
     "rasterStyle": "",
     "styleKey": "livelihoods_fisheries_cat_cluster",
     "bins": [
@@ -2173,12 +1965,8 @@
     "namespace": "Village",
     "category": "Livelihood",
     "source": "village",
-    "layer_store": [
-      "antyodaya_2020"
-    ],
-    "layer_name": [
-      "antyodaya20"
-    ],
+    "layer_store": ["antyodaya_2020"],
+    "layer_name": ["antyodaya20"],
     "rasterStyle": "",
     "styleKey": "livelihoods_cottage_traditional_industry_cat_cluster",
     "bins": [
@@ -2213,12 +2001,8 @@
     "namespace": "Village",
     "category": "Livestock and Dairy",
     "source": "village",
-    "layer_store": [
-      "antyodaya_2020"
-    ],
-    "layer_name": [
-      "antyodaya20"
-    ],
+    "layer_store": ["antyodaya_2020"],
+    "layer_name": ["antyodaya20"],
     "rasterStyle": "",
     "styleKey": "livestock_veterinary_cat_cluster",
     "bins": [
@@ -2263,12 +2047,8 @@
     "namespace": "Village",
     "category": "Livestock and Dairy",
     "source": "village",
-    "layer_store": [
-      "facilities_proximity"
-    ],
-    "layer_name": [
-      "facilities"
-    ],
+    "layer_store": ["facilities_proximity"],
+    "layer_name": ["facilities"],
     "rasterStyle": "",
     "styleKey": "livestock_management_centers",
     "bins": [
@@ -2302,12 +2082,8 @@
     "namespace": "Village",
     "category": "Livestock and Dairy",
     "source": "village",
-    "layer_store": [
-      "antyodaya_2020"
-    ],
-    "layer_name": [
-      "antyodaya20"
-    ],
+    "layer_store": ["antyodaya_2020"],
+    "layer_name": ["antyodaya20"],
     "rasterStyle": "",
     "styleKey": "livelihoods_common_resources_cat_cluster",
     "bins": [
@@ -2342,12 +2118,8 @@
     "namespace": "Village",
     "category": "Livestock and Dairy",
     "source": "village",
-    "layer_store": [
-      "livestocks"
-    ],
-    "layer_name": [
-      "livestocks"
-    ],
+    "layer_store": ["livestocks"],
+    "layer_name": ["livestocks"],
     "rasterStyle": "",
     "styleKey": "small_animals_total",
     "bins": [
@@ -2381,12 +2153,8 @@
     "namespace": "Village",
     "category": "Livestock and Dairy",
     "source": "village",
-    "layer_store": [
-      "livestocks"
-    ],
-    "layer_name": [
-      "livestocks"
-    ],
+    "layer_store": ["livestocks"],
+    "layer_name": ["livestocks"],
     "rasterStyle": "",
     "styleKey": "large_animals_total",
     "bins": [
@@ -2420,12 +2188,8 @@
     "namespace": "Village",
     "category": "Climate resilience and irrigation infrastructure",
     "source": "village",
-    "layer_store": [
-      "antyodaya_2020"
-    ],
-    "layer_name": [
-      "antyodaya20"
-    ],
+    "layer_store": ["antyodaya_2020"],
+    "layer_name": ["antyodaya20"],
     "rasterStyle": "",
     "styleKey": "agriculture_irrigation_watershed_cat_cluster",
     "bins": [
@@ -2470,9 +2234,7 @@
     "namespace": "Village",
     "category": "Climate resilience and irrigation infrastructure",
     "source": "village",
-    "layer_store": [
-      "nrega_assets"
-    ],
+    "layer_store": ["nrega_assets"],
     "layer_name": [],
     "rasterStyle": "",
     "styleKey": "total_assets",
@@ -2507,12 +2269,8 @@
     "namespace": "Village",
     "category": "Agricultural Support and Market Access",
     "source": "village",
-    "layer_store": [
-      "facilities_proximity"
-    ],
-    "layer_name": [
-      "facilities"
-    ],
+    "layer_store": ["facilities_proximity"],
+    "layer_name": ["facilities"],
     "rasterStyle": "",
     "styleKey": "agricultural_support_infrastructure",
     "bins": [
@@ -2546,12 +2304,8 @@
     "namespace": "Village",
     "category": "Agricultural Support and Market Access",
     "source": "village",
-    "layer_store": [
-      "facilities_proximity"
-    ],
-    "layer_name": [
-      "facilities"
-    ],
+    "layer_store": ["facilities_proximity"],
+    "layer_name": ["facilities"],
     "rasterStyle": "",
     "styleKey": "post_harvest_infra",
     "bins": [
@@ -2585,12 +2339,8 @@
     "namespace": "Village",
     "category": "Agricultural Support and Market Access",
     "source": "village",
-    "layer_store": [
-      "facilities_proximity"
-    ],
-    "layer_name": [
-      "facilities"
-    ],
+    "layer_store": ["facilities_proximity"],
+    "layer_name": ["facilities"],
     "rasterStyle": "",
     "styleKey": "agri_market_access",
     "bins": [
@@ -2624,12 +2374,8 @@
     "namespace": "Village",
     "category": "Agricultural Support and Market Access",
     "source": "village",
-    "layer_store": [
-      "facilities_proximity"
-    ],
-    "layer_name": [
-      "facilities"
-    ],
+    "layer_store": ["facilities_proximity"],
+    "layer_name": ["facilities"],
     "rasterStyle": "",
     "styleKey": "farmer_cooperatives_access",
     "bins": [
@@ -2663,12 +2409,8 @@
     "namespace": "Village",
     "category": "Agroecological support",
     "source": "village",
-    "layer_store": [
-      "antyodaya_2020"
-    ],
-    "layer_name": [
-      "antyodaya20"
-    ],
+    "layer_store": ["antyodaya_2020"],
+    "layer_name": ["antyodaya20"],
     "rasterStyle": "",
     "styleKey": "agriculture_organic_farming_cat_cluster",
     "bins": [
@@ -2703,6 +2445,442 @@
         "upper": 1,
         "fill": "rgba(144, 238, 144, 0.8)",
         "stroke": "rgba(34, 139, 34, 1)"
+      }
+    ]
+  },
+  {
+    "name": "nitrogen_levels",
+    "label": "Nitrogen Levels",
+    "type": 2,
+    "namespace": "MWS",
+    "category": "Soil",
+    "source": "mws",
+    "layer_store": ["soil_health_raster"],
+    "layer_name": ["soil_health_raster_N"],
+    "rasterStyle": "Soil_Health_Nitrogen",
+    "styleKey": "static",
+    "bins": [
+      {
+        "label": "Low (<280 kg/ha)",
+        "lower": 0,
+        "upper": 280,
+        "fill": "rgba(200, 230, 201, 0.8)",
+        "stroke": "rgba(200, 230, 201, 1)"
+      },
+      {
+        "label": "Medium (280-560 kg/ha)",
+        "lower": 280,
+        "upper": 560,
+        "fill": "rgba(102, 187, 106, 0.8)",
+        "stroke": "rgba(102, 187, 106, 1)"
+      },
+      {
+        "label": "High (>560 kg/ha)",
+        "lower": 560,
+        "upper": 9999999999,
+        "fill": "rgba(46, 125, 50, 0.8)",
+        "stroke": "rgba(46, 125, 50, 1)"
+      }
+    ]
+  },
+  {
+    "name": "phosphoros_levels",
+    "label": "Phosphorus Levels",
+    "type": 2,
+    "namespace": "MWS",
+    "category": "Soil",
+    "source": "mws",
+    "layer_store": ["soil_health_raster"],
+    "layer_name": ["soil_health_raster_P"],
+    "rasterStyle": "Soil_Health_Phosphorus",
+    "styleKey": "static",
+    "bins": [
+      {
+        "label": "Low (<10 kg/ha)",
+        "lower": 0,
+        "upper": 10,
+        "fill": "rgba(200, 230, 201, 0.8)",
+        "stroke": "rgba(200, 230, 201, 1)"
+      },
+      {
+        "label": "Medium (10-25 kg/ha)",
+        "lower": 10,
+        "upper": 25,
+        "fill": "rgba(102, 187, 106, 0.8)",
+        "stroke": "rgba(102, 187, 106, 1)"
+      },
+      {
+        "label": "High (>25 kg/ha)",
+        "lower": 25,
+        "upper": 9999999999,
+        "fill": "rgba(46, 125, 50, 0.8)",
+        "stroke": "rgba(46, 125, 50, 1)"
+      }
+    ]
+  },
+  {
+    "name": "potassium_levels",
+    "label": "Pottasium Levels",
+    "type": 2,
+    "namespace": "MWS",
+    "category": "Soil",
+    "source": "mws",
+    "layer_store": ["soil_health_raster"],
+    "layer_name": ["soil_health_raster_K"],
+    "rasterStyle": "Soil_Health_Potassium",
+    "styleKey": "static",
+    "bins": [
+      {
+        "label": "Low (120 kg/ha)",
+        "lower": 0,
+        "upper": 120,
+        "fill": "rgba(200, 230, 201, 0.8)",
+        "stroke": "rgba(200, 230, 201, 1)"
+      },
+      {
+        "label": "Medium (120-280 kg/ha)",
+        "lower": 120,
+        "upper": 280,
+        "fill": "rgba(102, 187, 106, 0.8)",
+        "stroke": "rgba(102, 187, 106, 1)"
+      },
+      {
+        "label": "High (>280 kg/ha)",
+        "lower": 280,
+        "upper": 9999999999,
+        "fill": "rgba(46, 125, 50, 0.8)",
+        "stroke": "rgba(46, 125, 50, 1)"
+      }
+    ]
+  },
+  {
+    "name": "organic_carbon",
+    "label": "Organic Carbon Concentration",
+    "type": 2,
+    "namespace": "MWS",
+    "category": "Soil",
+    "source": "mws",
+    "layer_store": ["soil_health_raster"],
+    "layer_name": ["soil_health_raster_OC"],
+    "rasterStyle": "Soil_Health_Organic_carbon",
+    "styleKey": "static",
+    "bins": [
+      {
+        "label": "Low (120 kg/ha)",
+        "lower": 0,
+        "upper": 120,
+        "fill": "rgba(200, 230, 201, 0.8)",
+        "stroke": "rgba(200, 230, 201, 1)"
+      },
+      {
+        "label": "Medium (120-280 kg/ha)",
+        "lower": 120,
+        "upper": 280,
+        "fill": "rgba(102, 187, 106, 0.8)",
+        "stroke": "rgba(102, 187, 106, 1)"
+      },
+      {
+        "label": "High (>280 kg/ha)",
+        "lower": 280,
+        "upper": 9999999999,
+        "fill": "rgba(46, 125, 50, 0.8)",
+        "stroke": "rgba(46, 125, 50, 1)"
+      }
+    ]
+  },
+  {
+    "name": "soil_ph",
+    "label": "Acidity / Alkanity in soil",
+    "type": 2,
+    "namespace": "MWS",
+    "category": "Soil",
+    "source": "mws",
+    "layer_store": ["soil_type"],
+    "layer_name": ["soil_type"],
+    "rasterStyle": "",
+    "styleKey": "soil_ph",
+    "bins": [
+      {
+        "label": "Acidic (<6.5)",
+        "lower": 0,
+        "upper": 6.5,
+        "fill": "rgba(200, 230, 201, 0.8)",
+        "stroke": "rgba(200, 230, 201, 1)"
+      },
+      {
+        "label": "Near Neutral (6.5-7.5)",
+        "lower": 6.5,
+        "upper": 7.5,
+        "fill": "rgba(102, 187, 106, 0.8)",
+        "stroke": "rgba(102, 187, 106, 1)"
+      },
+      {
+        "label": "Alkaline (>7.5)",
+        "lower": 7.5,
+        "upper": 9999999999,
+        "fill": "rgba(46, 125, 50, 0.8)",
+        "stroke": "rgba(46, 125, 50, 1)"
+      }
+    ],
+    "visualizeBins": [
+      {
+        "lower": 0,
+        "upper": 6.5,
+        "fill": "rgba(220, 20, 60, 0.8)",
+        "stroke": "rgba(139, 0, 0, 1)"
+      },
+      {
+        "lower": 6.5,
+        "upper": 7.5,
+        "fill": "rgba(255, 215, 0, 0.8)",
+        "stroke": "rgba(218, 165, 32, 1)"
+      },
+      {
+        "lower": 7.5,
+        "upper": 9999999999,
+        "fill": "rgba(144, 238, 144, 0.8)",
+        "stroke": "rgba(34, 139, 34, 1)"
+      }
+    ]
+  },
+  {
+    "name": "organic_carbon_tree_cover",
+    "label": "Organic Carbon Concentration for Various Forest Systems",
+    "type": 2,
+    "namespace": "MWS",
+    "category": "Restoration",
+    "source": "mws",
+    "layer_store": ["soil_health_raster"],
+    "layer_name": ["soil_health_raster_OC_OLM"],
+    "rasterStyle": "Soil_Health_OC_OLM",
+    "styleKey": "static",
+    "bins": [
+      {
+        "label": "<=1% (Scrubs / Degraded land)",
+        "lower": 0,
+        "upper": 1,
+        "fill": "rgba(200, 230, 201, 0.8)",
+        "stroke": "rgba(200, 230, 201, 1)"
+      },
+      {
+        "label": "1-2% (Open Forests)",
+        "lower": 1,
+        "upper": 2,
+        "fill": "rgba(102, 187, 106, 0.8)",
+        "stroke": "rgba(102, 187, 106, 1)"
+      },
+      {
+        "label": "2-3% (Moderately Dense Forest)",
+        "lower": 2,
+        "upper": 3,
+        "fill": "rgba(46, 125, 50, 0.8)",
+        "stroke": "rgba(46, 125, 50, 1)"
+      },
+      {
+        "label": ">3% (Very Dense Forest)",
+        "lower": 3,
+        "upper": 9999999999,
+        "fill": "rgba(46, 125, 50, 0.8)",
+        "stroke": "rgba(46, 125, 50, 1)"
+      }
+    ]
+  },
+  {
+    "name": "reduction_in_shrubland_cover",
+    "label": "Degradation of Shrublands",
+    "type": 2,
+    "namespace": "MWS",
+    "category": "Restoration",
+    "source": "mws",
+    "layer_store": ["change_detection"],
+    "layer_name": ["ShrubChange"],
+    "rasterStyle": "",
+    "styleKey": "reduction_in_shrubland_cover",
+    "bins": [
+      {
+        "label": "Low (<40 ha)",
+        "lower": 0,
+        "upper": 40,
+        "fill": "rgba(144, 238, 144, 0.8)",
+        "stroke": "rgba(144, 238, 144, 1)"
+      },
+      {
+        "label": "Moderate (40-120 ha)",
+        "lower": 40,
+        "upper": 120,
+        "fill": "rgba(255, 215, 0, 0.8)",
+        "stroke": "rgba(255, 215, 0, 1)"
+      },
+      {
+        "label": "High (>120 ha)",
+        "lower": 120,
+        "upper": 9999999999,
+        "fill": "rgba(220, 20, 60, 0.8)",
+        "stroke": "rgba(220, 20, 60, 1)"
+      }
+    ]
+  },
+  {
+    "name": "soil_drainage",
+    "label": "Soil Drainage",
+    "type": 1,
+    "namespace": "MWS",
+    "category": "Soil",
+    "source": "mws",
+    "layer_store": ["soil_type"],
+    "layer_name": ["soil_type"],
+    "rasterStyle": "",
+    "styleKey": "soil_drainage",
+    "bins": [
+      {
+        "label": "Excessively Drained",
+        "value": 0
+      },
+      {
+        "label": "Well Drained",
+        "value": 1
+      },
+      {
+        "label": "Imperfectly Drained",
+        "value": 3
+      },
+      {
+        "label": "Poorly Drained",
+        "value": 2
+      }
+    ],
+    "visualizeBins": [
+      {
+        "value": "Excessively drained",
+        "fill": "rgba(255, 236, 179, 0.8)",
+        "stroke": "rgba(245, 200, 90, 1)"
+      },
+      {
+        "value": "Somewhat excessively drained",
+        "fill": "rgba(255, 236, 179, 0.8)",
+        "stroke": "rgba(245, 200, 90, 1)"
+      },
+      {
+        "value": "Well drained",
+        "fill": "rgba(129, 199, 132, 0.8)",
+        "stroke": "rgba(56, 142, 60, 1)"
+      },
+      {
+        "value": "Moderately well drained",
+        "fill": "rgba(129, 199, 132, 0.8)",
+        "stroke": "rgba(56, 142, 60, 1)"
+      },
+      {
+        "value": "Imperfectly drained",
+        "fill": "rgba(255, 183, 77, 0.8)",
+        "stroke": "rgba(239, 108, 0, 1)"
+      },
+      {
+        "value": "Poorly drained",
+        "fill": "rgba(100, 181, 246, 0.8)",
+        "stroke": "rgba(30, 136, 229, 1)"
+      },
+      {
+        "value": "Very poorly drained",
+        "fill": "rgba(63, 81, 181, 0.8)",
+        "stroke": "rgba(40, 53, 147, 1)"
+      }
+    ]
+  },
+  {
+    "name": "soil_texture",
+    "label": "Soil Texture",
+    "type": 1,
+    "namespace": "MWS",
+    "category": "Soil",
+    "source": "mws",
+    "layer_store": ["soil_type"],
+    "layer_name": ["soil_type"],
+    "rasterStyle": "",
+    "styleKey": "soil_texture",
+    "bins": [
+      {
+        "label": "Coarse / Sandy",
+        "value": 0
+      },
+      {
+        "label": "Medium / Loamy",
+        "value": 1
+      },
+      {
+        "label": "Moderately Fine / Clay Loam",
+        "value": 2
+      },
+      {
+        "label": "Fine / Clayey",
+        "value": 3
+      }
+    ],
+    "visualizeBins": [
+      {
+        "value": "Clay (heavy)",
+        "fill": "rgba(139, 69, 19, 0.8)",
+        "stroke": "rgba(100, 45, 10, 1)"
+      },
+      {
+        "value": "Silty clay",
+        "fill": "rgba(139, 69, 19, 0.8)",
+        "stroke": "rgba(100, 45, 10, 1)"
+      },
+      {
+        "value": "Clay",
+        "fill": "rgba(139, 69, 19, 0.8)",
+        "stroke": "rgba(100, 45, 10, 1)"
+      },
+      {
+        "value": "Sandy clay",
+        "fill": "rgba(139, 69, 19, 0.8)",
+        "stroke": "rgba(100, 45, 10, 1)"
+      },
+      {
+        "value": "Sandy clay loam",
+        "fill": "rgba(181, 101, 29, 0.8)",
+        "stroke": "rgba(140, 75, 20, 1)"
+      },
+      {
+        "value": "Silty clay loam",
+        "fill": "rgba(181, 101, 29, 0.8)",
+        "stroke": "rgba(140, 75, 20, 1)"
+      },
+      {
+        "value": "Clay loam",
+        "fill": "rgba(181, 101, 29, 0.8)",
+        "stroke": "rgba(140, 75, 20, 1)"
+      },
+      {
+        "value": "Silt",
+        "fill": "rgba(210, 180, 140, 0.8)",
+        "stroke": "rgba(170, 140, 100, 1)"
+      },
+      {
+        "value": "Silt loam",
+        "fill": "rgba(210, 180, 140, 0.8)",
+        "stroke": "rgba(170, 140, 100, 1)"
+      },
+      {
+        "value": "Loam",
+        "fill": "rgba(210, 180, 140, 0.8)",
+        "stroke": "rgba(170, 140, 100, 1)"
+      },
+      {
+        "value": "sandy loam",
+        "fill": "rgba(245, 222, 179, 0.8)",
+        "stroke": "rgba(210, 180, 120, 1)"
+      },
+      {
+        "value": "Loamy sand",
+        "fill": "rgba(245, 222, 179, 0.8)",
+        "stroke": "rgba(210, 180, 120, 1)"
+      },
+      {
+        "value": "sand",
+        "fill": "rgba(245, 222, 179, 0.8)",
+        "stroke": "rgba(210, 180, 120, 1)"
       }
     ]
   }

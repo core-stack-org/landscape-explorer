@@ -108,10 +108,17 @@ export const STYLE_RESOLVERS = {
   livelihoods_common_resources_cat_cluster: { dualPath: true, get: (f) => f.get('common_pastures_feat_value') },
   agriculture_irrigation_watershed_cat_cluster: { dualPath: true, get: (f) => f.get('agriculture_irrigation_watershed_cat_value') },
   agriculture_organic_farming_cat_cluster: { dualPath: true, get: (f) => f.get('agriculture_organic_farming_cat_value') },
+
+
+  soil_ph : { dualPath: true, get: (f) => f.get('topsoil_ph') },
+  reduction_in_shrubland_cover : { dualPath: false, get: (f) => f.get('total_change') },
+  soil_drainage : { dualPath: true, get: (f) => f.get('soil_drainage_classes') },
+  soil_texture : { dualPath: true, get: (f) => f.get('subsoil_texture') },
 };
 
 function findBin(value, bins) {
   if (value === undefined || value === null || Number.isNaN(value)) return null;
+  console.log(bins)
   return bins.find((b) =>
     b.value !== undefined ? String(b.value) === String(value) : value >= b.lower && value <= b.upper
   );

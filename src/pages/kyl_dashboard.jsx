@@ -97,6 +97,13 @@ const LAYER_LOADERS = {
   green_credit: { fetch: 'vector', buildLayerName: (f, i, ctx) => `${ctx.dist}_${ctx.blk}_${f.layer_name[i]}`, selfStyled: false },
   terrain_lulc: { fetch: 'vector', buildLayerName: (f, i, ctx) => `${ctx.dist}_${ctx.blk}_${f.layer_name[i]}`, selfStyled: false },
   panchayat_boundaries: { fetch: 'vector', buildLayerName: (f, i, ctx) => `${ctx.dist}_${ctx.blk}`, selfStyled: false },
+  soil_health_vector : { fetch: 'vector', buildLayerName: (f, i, ctx) => `${ctx.dist}_${ctx.blk}_soil_health_vector`, selfStyled: false },
+  soil_health_raster_N : { fetch: 'image', buildLayerName: (f, i, ctx) => `${ctx.dist}_${ctx.blk}_soil_health_raster_N`, selfStyled: true },
+  soil_health_raster_P : { fetch: 'image', buildLayerName: (f, i, ctx) => `${ctx.dist}_${ctx.blk}_soil_health_raster_P`, selfStyled: true },
+  soil_health_raster_K : { fetch: 'image', buildLayerName: (f, i, ctx) => `${ctx.dist}_${ctx.blk}_soil_health_raster_K`, selfStyled: true },
+  soil_health_raster_OC : { fetch: 'image', buildLayerName: (f, i, ctx) => `${ctx.dist}_${ctx.blk}_soil_health_raster_OC`, selfStyled: true },
+  soil_health_raster_OC_OLM : { fetch: 'image', buildLayerName: (f, i, ctx) => `${ctx.dist}_${ctx.blk}_soil_health_raster_OC_OLM`, selfStyled: true },
+  soil_type :  { fetch: 'vector', buildLayerName: (f, i, ctx) => `soil_type_${ctx.dist}_${ctx.blk}`, selfStyled: false }
 };
 
 const KYLDashboardPage = () => {
@@ -1673,7 +1680,13 @@ const KYLDashboardPage = () => {
             const ctx = { dist, blk, lulcYear };
 
             const loaderKey = filter.layer_store[i];
-            const config = LAYER_LOADERS[loaderKey] || DEFAULT_LOADER;
+            let config
+
+            if(loaderKey === "soil_health_raster")
+              config = LAYER_LOADERS[filter.layer_name[i]] || DEFAULT_LOADER;
+            else
+              config = LAYER_LOADERS[loaderKey] || DEFAULT_LOADER;
+
             const storeName = config.store ? config.store(filter, i) : loaderKey;
             const layerName = config.buildLayerName(filter, i, ctx);
 
