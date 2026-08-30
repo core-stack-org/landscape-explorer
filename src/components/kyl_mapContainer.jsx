@@ -665,6 +665,12 @@ const SoilTexture = [
   }
 ]
 
+  const shrublandDiversion = [
+    { fill: "rgba(115, 187, 83, 0.8)", stroke: "rgba(115, 187, 83, 1)", label: "Low (<40 ha)" },
+    { fill: "rgba(238, 224, 93, 0.8)", stroke: "rgba(238, 224, 93, 1)", label: "Moderate (40-120 ha)" },
+    { fill: "rgba(255, 0, 0, 0.8)", stroke: "rgba(255, 0, 0, 1)", label: "High (>120 ha)" },
+  ]
+
 
 
   const isExcludedLulc = (name) => {
@@ -993,6 +999,10 @@ const SoilTexture = [
 
   const isSoilTextureActive = currentLayer?.some(
     (layer) => layer.name.includes("soil_texture")
+  )
+
+  const isShrubLandActive = currentLayer?.some(
+    (layer) => layer.name.includes("reduction_in_shrubland_cover")
   )
 
 
@@ -2472,6 +2482,17 @@ const SoilTexture = [
                 <div className="space-y-2">
                   <h4 className="text-xs font-medium text-gray-600">Soil Texture</h4>
                   {SoilTexture.map((item, index) => (
+                    <div key={`fac-live-${index}`} className="flex items-center gap-2">
+                      <div className="w-4 h-4 rounded" style={{ backgroundColor: item.fill, border: `1px solid ${item.stroke}` }} />
+                      <span className="text-sm text-gray-600">{item.label}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {isShrubLandActive && (
+                <div className="space-y-2">
+                  <h4 className="text-xs font-medium text-gray-600">Shrubland Diversion</h4>
+                  {shrublandDiversion.map((item, index) => (
                     <div key={`fac-live-${index}`} className="flex items-center gap-2">
                       <div className="w-4 h-4 rounded" style={{ backgroundColor: item.fill, border: `1px solid ${item.stroke}` }} />
                       <span className="text-sm text-gray-600">{item.label}</span>

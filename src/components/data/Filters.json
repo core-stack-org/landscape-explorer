@@ -712,6 +712,61 @@
     ]
   },
   {
+    "name": "soil_ph",
+    "label": "Acidity / Alkanity in soil",
+    "type": 2,
+    "namespace": "MWS",
+    "category": "Soil",
+    "source": "mws",
+    "layer_store": ["soil_type"],
+    "layer_name": ["soil_type"],
+    "rasterStyle": "",
+    "styleKey": "soil_ph",
+    "bins": [
+      {
+        "label": "Acidic (<6.5)",
+        "lower": 0,
+        "upper": 6.5,
+        "fill": "rgba(200, 230, 201, 0.8)",
+        "stroke": "rgba(200, 230, 201, 1)"
+      },
+      {
+        "label": "Near Neutral (6.5-7.5)",
+        "lower": 6.5,
+        "upper": 7.5,
+        "fill": "rgba(102, 187, 106, 0.8)",
+        "stroke": "rgba(102, 187, 106, 1)"
+      },
+      {
+        "label": "Alkaline (>7.5)",
+        "lower": 7.5,
+        "upper": 9999999999,
+        "fill": "rgba(46, 125, 50, 0.8)",
+        "stroke": "rgba(46, 125, 50, 1)"
+      }
+    ],
+    "visualizeBins": [
+      {
+        "lower": 0,
+        "upper": 6.5,
+        "fill": "rgba(220, 20, 60, 0.8)",
+        "stroke": "rgba(139, 0, 0, 1)"
+      },
+      {
+        "lower": 6.5,
+        "upper": 7.5,
+        "fill": "rgba(255, 215, 0, 0.8)",
+        "stroke": "rgba(218, 165, 32, 1)"
+      },
+      {
+        "lower": 7.5,
+        "upper": 9999999999,
+        "fill": "rgba(144, 238, 144, 0.8)",
+        "stroke": "rgba(34, 139, 34, 1)"
+      }
+    ]
+  },
+  {
     "name": "increase_in_tree_cover",
     "label": "Increase in tree cover",
     "type": 2,
@@ -932,6 +987,41 @@
         "value": 0,
         "fill": "rgba(20, 209, 29, 0.6)",
         "stroke": "rgba(20, 209, 29, 1)"
+      }
+    ]
+  },
+  {
+    "name": "reduction_in_shrubland_cover",
+    "label": "Shrubland diversion",
+    "type": 2,
+    "namespace": "MWS",
+    "category": "Shrublands",
+    "source": "mws",
+    "layer_store": ["change_detection"],
+    "layer_name": ["ShrubChange"],
+    "rasterStyle": "",
+    "styleKey": "reduction_in_shrubland_cover",
+    "bins": [
+      {
+        "label": "Low (<40 ha)",
+        "lower": 0,
+        "upper": 40,
+        "fill": "rgba(144, 238, 144, 0.8)",
+        "stroke": "rgba(144, 238, 144, 1)"
+      },
+      {
+        "label": "Moderate (40-120 ha)",
+        "lower": 40,
+        "upper": 120,
+        "fill": "rgba(255, 215, 0, 0.8)",
+        "stroke": "rgba(255, 215, 0, 1)"
+      },
+      {
+        "label": "High (>120 ha)",
+        "lower": 120,
+        "upper": 9999999999,
+        "fill": "rgba(220, 20, 60, 0.8)",
+        "stroke": "rgba(220, 20, 60, 1)"
       }
     ]
   },
@@ -2589,61 +2679,6 @@
     ]
   },
   {
-    "name": "soil_ph",
-    "label": "Acidity / Alkanity in soil",
-    "type": 2,
-    "namespace": "MWS",
-    "category": "Soil",
-    "source": "mws",
-    "layer_store": ["soil_type"],
-    "layer_name": ["soil_type"],
-    "rasterStyle": "",
-    "styleKey": "soil_ph",
-    "bins": [
-      {
-        "label": "Acidic (<6.5)",
-        "lower": 0,
-        "upper": 6.5,
-        "fill": "rgba(200, 230, 201, 0.8)",
-        "stroke": "rgba(200, 230, 201, 1)"
-      },
-      {
-        "label": "Near Neutral (6.5-7.5)",
-        "lower": 6.5,
-        "upper": 7.5,
-        "fill": "rgba(102, 187, 106, 0.8)",
-        "stroke": "rgba(102, 187, 106, 1)"
-      },
-      {
-        "label": "Alkaline (>7.5)",
-        "lower": 7.5,
-        "upper": 9999999999,
-        "fill": "rgba(46, 125, 50, 0.8)",
-        "stroke": "rgba(46, 125, 50, 1)"
-      }
-    ],
-    "visualizeBins": [
-      {
-        "lower": 0,
-        "upper": 6.5,
-        "fill": "rgba(220, 20, 60, 0.8)",
-        "stroke": "rgba(139, 0, 0, 1)"
-      },
-      {
-        "lower": 6.5,
-        "upper": 7.5,
-        "fill": "rgba(255, 215, 0, 0.8)",
-        "stroke": "rgba(218, 165, 32, 1)"
-      },
-      {
-        "lower": 7.5,
-        "upper": 9999999999,
-        "fill": "rgba(144, 238, 144, 0.8)",
-        "stroke": "rgba(34, 139, 34, 1)"
-      }
-    ]
-  },
-  {
     "name": "organic_carbon_tree_cover",
     "label": "Organic Carbon Concentration for Various Forest Systems",
     "type": 2,
@@ -2682,41 +2717,6 @@
         "upper": 9999999999,
         "fill": "rgba(46, 125, 50, 0.8)",
         "stroke": "rgba(46, 125, 50, 1)"
-      }
-    ]
-  },
-  {
-    "name": "reduction_in_shrubland_cover",
-    "label": "Degradation of Shrublands",
-    "type": 2,
-    "namespace": "MWS",
-    "category": "Restoration",
-    "source": "mws",
-    "layer_store": ["change_detection"],
-    "layer_name": ["ShrubChange"],
-    "rasterStyle": "",
-    "styleKey": "reduction_in_shrubland_cover",
-    "bins": [
-      {
-        "label": "Low (<40 ha)",
-        "lower": 0,
-        "upper": 40,
-        "fill": "rgba(144, 238, 144, 0.8)",
-        "stroke": "rgba(144, 238, 144, 1)"
-      },
-      {
-        "label": "Moderate (40-120 ha)",
-        "lower": 40,
-        "upper": 120,
-        "fill": "rgba(255, 215, 0, 0.8)",
-        "stroke": "rgba(255, 215, 0, 1)"
-      },
-      {
-        "label": "High (>120 ha)",
-        "lower": 120,
-        "upper": 9999999999,
-        "fill": "rgba(220, 20, 60, 0.8)",
-        "stroke": "rgba(220, 20, 60, 1)"
       }
     ]
   },
