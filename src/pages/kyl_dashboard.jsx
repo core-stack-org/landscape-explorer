@@ -19,27 +19,21 @@ import TileWMS     from 'ol/source/TileWMS.js';
 import Control from "ol/control/Control.js";
 import { defaults as defaultControls } from "ol/control/defaults.js";
 import { Map, View } from "ol";
-import { Fill, Stroke, Style, Circle as CircleStyle } from "ol/style.js";
+import { Stroke, Style } from "ol/style.js";
 import GeoJSON from "ol/format/GeoJSON";
 
 import LandingNavbar from "../components/landing_navbar.jsx";
 import getStates from "../actions/getStates.js";
 import getVectorLayers from "../actions/getVectorLayers.js";
 import getImageLayer from "../actions/getImageLayers.js";
-import filtersDetails from "../components/data/Filters.json";
-import PatternsData from '../components/data/Patterns.json';
 
 import KYLLeftSidebar from "../components/kyl_leftSidebar";
 import KYLRightSidebar from "../components/kyl_rightSidebar.jsx";
 import KYLMapContainer from "../components/kyl_mapContainer.jsx";
-import layerStyle from "../components/utils/layerStyle.jsx";
-import { getAllPatternTypes, getSubcategoriesForCategory, getPatternsForSubcategory } from '../components/utils/patternsHelper.js';
-import { handlePatternSelection as handlePatternSelectionLogic, isPatternSelected } from '../components/utils/patternSelectionLogic.js';
 
 import { toast, Toaster } from "react-hot-toast";
 import {
   trackPageView,
-  trackEvent,
   initializeAnalytics,
 } from "../services/analytics";
 import getWebGlLayers from "../actions/getWebGlLayers.js";
@@ -55,6 +49,63 @@ import { useLayerErrors } from '../actions/useLayerErrors';
 import LayerErrorToast from '../actions/LayerErrorToast';
 import Overlay from "ol/Overlay";
 import ScaleLine from "ol/control/ScaleLine";
+
+import { FILTER_BY_NAME, getFormattedSelectedFilters as getFormattedFilters } from "../components/utils/filtersIndex.js";
+import { getAllPatternTypes, getSubcategoriesForCategory, getPatternsForSubcategory, getFormattedSelectedPatterns as getFormattedPatterns } from "../components/utils/patternsIndex.js";
+import { selectPattern, isPatternSelected } from "../components/utils/patternSelectionLogic.js";
+import { buildMWSIndex, buildVillageIndex, deriveSelection, buildVillageNameIndex } from "../components/utils/dataIndexes.js";
+import { createFeatureStyleFn } from "../components/utils/styleRegistry.js";
+
+const DEFAULT_LOADER = {
+  fetch: 'vector',
+  buildLayerName: (filter, i, ctx) => `${filter.layer_name[i]}_${ctx.dist}_${ctx.blk}`,
+  selfStyled: false,
+};
+
+const LAYER_LOADERS = {
+  terrain: {
+    fetch: 'image',
+    buildLayerName: (filter, i, ctx) => `${ctx.dist}_${ctx.blk}_${filter.layer_name[i]}`,
+    selfStyled: true,
+    errorWatch: true,
+  },
+  LULC: {
+    fetch: 'image',
+    store: (filter, i) => `${filter.layer_store[i]}_${filter.layer_name[i]}`,
+    buildLayerName: (filter, i, ctx) => `LULC_${ctx.lulcYear}_${ctx.dist}_${ctx.blk}_${filter.layer_name[i]}`,
+    selfStyled: true,
+    errorWatch: true,
+  },
+  restoration: {
+    fetch: 'image',
+    buildLayerName: (filter, i, ctx) => `${filter.layer_name[i]}_${ctx.dist}_${ctx.blk}_raster`,
+    selfStyled: true,
+    errorWatch: true,
+  },
+  dem: { fetch: 'vector', buildLayerName: DEFAULT_LOADER.buildLayerName, selfStyled: true },
+
+  nrega_assets: { fetch: 'webgl', buildLayerName: (f, i, ctx) => `${ctx.dist}_${ctx.blk}`, selfStyled: true },
+  lcw: { fetch: 'webgl', buildLayerName: (f, i, ctx) => `${ctx.dist}_${ctx.blk}`, selfStyled: true },
+  factory_csr: { fetch: 'webgl', buildLayerName: (f, i, ctx) => `${ctx.dist}_${ctx.blk}`, selfStyled: true },
+  mining: { fetch: 'webgl', buildLayerName: (f, i, ctx) => `${ctx.dist}_${ctx.blk}`, selfStyled: true },
+
+  river: { fetch: 'vector', buildLayerName: (f, i, ctx) => `${ctx.dist}_${ctx.blk}_${f.layer_name[i]}`, selfStyled: true, isLine: true },
+  canal: { fetch: 'vector', buildLayerName: (f, i, ctx) => `${ctx.dist}_${ctx.blk}_${f.layer_name[i]}`, selfStyled: true, isLine: true },
+
+  change_detection: { fetch: 'vector', buildLayerName: (f, i, ctx) => `change_vector_${ctx.dist}_${ctx.blk}_${f.layer_name[i]}`, selfStyled: false },
+  drought: { fetch: 'vector', buildLayerName: (f, i, ctx) => `${ctx.dist}_${ctx.blk}_${f.layer_name[i]}`, selfStyled: false },
+  green_credit: { fetch: 'vector', buildLayerName: (f, i, ctx) => `${ctx.dist}_${ctx.blk}_${f.layer_name[i]}`, selfStyled: false },
+  terrain_lulc: { fetch: 'vector', buildLayerName: (f, i, ctx) => `${ctx.dist}_${ctx.blk}_${f.layer_name[i]}`, selfStyled: false },
+  panchayat_boundaries: { fetch: 'vector', buildLayerName: (f, i, ctx) => `${ctx.dist}_${ctx.blk}`, selfStyled: false },
+  soil_health_vector : { fetch: 'vector', buildLayerName: (f, i, ctx) => `${ctx.dist}_${ctx.blk}_soil_health_vector`, selfStyled: false },
+  soil_health_raster_N : { fetch: 'image', buildLayerName: (f, i, ctx) => `${ctx.dist}_${ctx.blk}_soil_health_raster_N`, selfStyled: true },
+  soil_health_raster_P : { fetch: 'image', buildLayerName: (f, i, ctx) => `${ctx.dist}_${ctx.blk}_soil_health_raster_P`, selfStyled: true },
+  soil_health_raster_K : { fetch: 'image', buildLayerName: (f, i, ctx) => `${ctx.dist}_${ctx.blk}_soil_health_raster_K`, selfStyled: true },
+  soil_health_raster_OC : { fetch: 'image', buildLayerName: (f, i, ctx) => `${ctx.dist}_${ctx.blk}_soil_health_raster_OC`, selfStyled: true },
+  soil_health_raster_OC_OLM : { fetch: 'image', buildLayerName: (f, i, ctx) => `${ctx.dist}_${ctx.blk}_soil_health_raster_OC_OLM`, selfStyled: true },
+  soil_type :  { fetch: 'vector', buildLayerName: (f, i, ctx) => `soil_type_${ctx.dist}_${ctx.blk}`, selfStyled: false }
+};
+
 const KYLDashboardPage = () => {
   const mapElement = useRef(null);
   const mapRef = useRef(null);
@@ -72,7 +123,7 @@ const KYLDashboardPage = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [islayerLoaded, setIsLayerLoaded] = useState(false);
   const [highlightMWS, setHighlightMWS] = useState(null);
-  const [selectedMWS, setSelectedMWS] = useState([]);
+
   const [selectionMode, setSelectionMode] = useState("single");
 
   const [dataJson, setDataJson] = useRecoilState(dataJsonAtom);
@@ -81,9 +132,7 @@ const KYLDashboardPage = () => {
 
   const [currentLayer, setCurrentLayer] = useState([]);
   const [toggleStates, setToggleStates] = useState({});
-  const [villageIdList, setVillageIdList] = useState(new Set([]));
-  const [patternVillageList, setPatternVillageList] = useState(new Set([]));
-  const [finalVillageList, setFinalVillageList] = useState(new Set([]));
+
 
   const [statesData, setStatesData] = useRecoilState(stateDataAtom);
   const [state, setState] = useRecoilState(stateAtom);
@@ -105,8 +154,6 @@ const KYLDashboardPage = () => {
   const [searchLatLong, setSearchLatLong] = useState(null);
 
   // * Triggers
-  const [clickedWaterbodyId, setClickedWaterbodyId] = useState(null);
-  const [waterbodyDashboardUrl, setWaterbodyDashboardUrl] = useState(null);
   const [selectedWaterbodyProfile, setSelectedWaterbodyProfile] = useState(null);
 
   const waterbodyClickedRef = useRef(false);
@@ -114,7 +161,6 @@ const KYLDashboardPage = () => {
   const [selectedWaterbodyForTehsil, setSelectedWaterbodyForTehsil] = useRecoilState(selectedWaterbodyForTehsilAtom);
   const [showWB, setShowWB] = useState(false);
   const [showConnectivity, setShowConnectivity] = useState(false);
-  const [hasFilters, setHasFilters] = useState(false);
   const [selectedWaterbodyIds, setSelectedWaterbodyIds] = useState(new Set([]));
   const [isWBVisualizeOn, setIsWBVisualizeOn] = useState(false);
   const [activeWBVisualize, setActiveWBVisualize] = useState(null);
@@ -132,45 +178,25 @@ const KYLDashboardPage = () => {
   const INDIA_ZOOM   = 5;
   const { errors: layerErrors, dismiss: dismissLayerError, retry: retryLayerError } = useLayerErrors();
 
+  const getFormattedSelectedFilters = () => getFormattedFilters(filterSelections);
+  const getFormattedSelectedPatterns = () => getFormattedPatterns(patternSelections);
+  const handlePatternSelection = (pattern, isSelected) =>
+    setPatternSelections(selectPattern(pattern, isSelected, patternSelections));
+  const [boundaryLoadedVersion, setBoundaryLoadedVersion] = useState(0);
 
 
-  const dataJsonIndex = useMemo(() => {
-    if (!dataJson || !Array.isArray(dataJson)) return null;
+  const mwsIndex = useMemo(() => buildMWSIndex(dataJson), [dataJson]);
+  const villageIndex = useMemo(() => buildVillageIndex(villageJson), [villageJson]);
+  const villageNameIndex = useMemo(
+    () => buildVillageNameIndex(villageJson, boundaryLayerRef),
+    [villageJson, boundaryLoadedVersion]
+  );
 
-    const byId = new Map();          // mws_id → mwsItem
-    const mwsToVillages = new Map(); // mws_id → village_id[]
-    const mwsToSWBIds = new Map();   // mws_id → swbId[] (string)
-    const fieldIndex = {};           // fieldName → { value → Set<mws_id> }
-
-    dataJson.forEach(item => {
-      if (!item?.mws_id) return;
-      const id = item.mws_id;
-
-      byId.set(id, item);
-      mwsToVillages.set(id, item.mws_intersect_villages || []);
-      mwsToSWBIds.set(
-        id,
-        (item.mws_intersect_swb || []).map(swb =>
-          typeof swb === 'object' ? String(swb.swbId) : String(swb)
-        )
-      );
-
-      Object.keys(item).forEach(field => {
-        if (
-          field === 'mws_id' ||
-          field === 'mws_intersect_villages' ||
-          field === 'mws_intersect_swb'
-        ) return;
-
-        if (!fieldIndex[field]) fieldIndex[field] = {};
-        const key = String(item[field]);
-        if (!fieldIndex[field][key]) fieldIndex[field][key] = new Set();
-        fieldIndex[field][key].add(id);
-      });
-    });
-
-    return { byId, mwsToVillages, mwsToSWBIds, fieldIndex };
-  }, [dataJson]);
+  const derivedSelection = useMemo(
+    () => deriveSelection({ filterSelections, patternSelections, manualSelectedMWS }, mwsIndex, villageIndex),
+    [filterSelections, patternSelections, manualSelectedMWS, mwsIndex, villageIndex]
+  );
+  const { selectedMWS, villageIdList } = derivedSelection;
 
   // ─── Contour interval based on zoom resolution ───────────────────────────────
   const getContourInterval = (resolution) => {
@@ -196,7 +222,7 @@ const KYLDashboardPage = () => {
       .toLowerCase()
   };
 
-const handleResetMWS = () => {
+  const handleResetMWS = () => {
     setSelectedMWSProfile(null);
     setManualSelectedMWS([]);
     setHighlightMWS(null);
@@ -208,8 +234,13 @@ const handleResetMWS = () => {
   };
 
   const handleResetMWSSelection = () => {
-    setSelectedMWS([]);
     setManualSelectedMWS([]);
+    setFilterSelections({
+      selectedMWSValues: {},
+      selectedVillageValues: {},
+      selectedWaterbodyValues: {},
+    });
+    setPatternSelections({ selectedMWSPatterns: {}, selectedVillagePatterns: {} });
     setHighlightMWS(null);
     if (mwsLayerRef.current) resetMWSStyle();
     if (toastId) {
@@ -218,123 +249,6 @@ const handleResetMWS = () => {
     }
   };
 
-  const getAllFilterTypes = () => {
-    const types = new Set();
-    Object.keys(filtersDetails).forEach((indicator) => {
-      Object.keys(filtersDetails[indicator]).forEach((type) => {
-        types.add(type);
-      });
-    });
-    return Array.from(types);
-  };
-
-  const getAllFilters = () => {
-    const allFilters = [];
-    Object.keys(filtersDetails).forEach((indicator) => {
-      Object.keys(filtersDetails[indicator]).forEach((type) => {
-        filtersDetails[indicator][type].forEach((filter) => {
-          if (
-            (filter.type === 1 || filter.type === 2) &&
-            filter.values.length > 0
-          ) {
-            allFilters.push({ ...filter, category: type });
-          }
-        });
-      });
-    });
-    return allFilters;
-  };
-
-  const getFormattedSelectedFilters = () => {
-    const allSelections = [];
-    const groupedSelections = {};
-
-    const processSelections = (selections, dataSource) => {
-      if (!selections) return;
-      Object.entries(selections).forEach(([name, values]) => {
-        if (!values) return;
-
-        let filterGroup = null;
-        outerLoop: for (const ind of Object.keys(filtersDetails)) {
-          for (const type of Object.keys(filtersDetails[ind])) {
-            const found = filtersDetails[ind][type].find((group) => group.name === name);
-            if (found) { filterGroup = found; break outerLoop; }
-          }
-        }
-
-        if (filterGroup) {
-          if (!groupedSelections[name]) {
-            groupedSelections[name] = {
-              filterName: filterGroup.label,
-              values: [],
-              name: filterGroup.name,
-              layer_store: values[0].layer_store,
-              layer_name: values[0].layer_name,
-              rasterStyle: values[0].rasterStyle,
-              vectorStyle: values[0].vectorStyle,
-              styleIdx: values[0].styleIdx,
-            };
-          }
-          values.forEach((selectedOption) => {
-            groupedSelections[name].values.push(selectedOption.label);
-          });
-        }
-      });
-    };
-
-    processSelections(filterSelections.selectedMWSValues, "MWS");
-    processSelections(filterSelections.selectedVillageValues, "Village");
-    processSelections(filterSelections.selectedWaterbodyValues, "Waterbody");
-    Object.values(groupedSelections).forEach(group => allSelections.push(group));
-    return allSelections;
-  };
-
-  const getFormattedSelectedPatterns = () => {
-    const allSelections = [];
-
-    const processSelections = (selections) => {
-      if (!selections) return;
-      Object.entries(selections).forEach(([name, values]) => {
-        if (!values) return;
-        let filterGroup = null;
-        outerLoop: for (const ind of Object.keys(PatternsData)) {
-          for (const x of Object.keys(PatternsData[ind])) {
-            for (const y of Object.keys(PatternsData[ind][x])) {
-              const found = PatternsData[ind][x][y].find((group) => group.Name === name);
-              if (found) { filterGroup = found; break outerLoop; }
-            }
-          }
-        }
-        if (filterGroup) {
-          allSelections.push({
-            patternName: filterGroup.Name,
-            category: filterGroup.Category,
-            level: filterGroup.level,
-            values: filterGroup.Values,
-            characterstics: filterGroup.Characteristics,
-          });
-        }
-      });
-    };
-
-    processSelections(patternSelections.selectedMWSPatterns);
-    processSelections(patternSelections.selectedVillagePatterns);
-    return allSelections;
-  };
-
-  const determineFilterSource = (filterName) => {
-    for (const topLevelKey of Object.keys(filtersDetails)) {
-      if (filtersDetails[topLevelKey]) {
-        for (const categoryKey of Object.keys(filtersDetails[topLevelKey])) {
-          const found = filtersDetails[topLevelKey][categoryKey].find(
-            (f) => f.name === filterName
-          );
-          if (found) return { ...found, name: topLevelKey };
-        }
-      }
-    }
-    return null;
-  };
 
   const handleFilterSelection = (name, option, isChecked) => {
      if (showConnectivityRef.current) {
@@ -345,7 +259,7 @@ const handleResetMWS = () => {
     setSelectedMWSProfile(null);
     resetMWSStyle();
     setHighlightMWS(null);
-    const sourceType = determineFilterSource(name);
+    const sourceType = FILTER_BY_NAME.get(name);
     option = {
       ...option,
       layer_store: sourceType["layer_store"],
@@ -355,7 +269,7 @@ const handleResetMWS = () => {
       styleIdx: sourceType["styleIdx"],
     };
 
-    if (sourceType.name === "MWS") {
+    if (sourceType.namespace === "MWS") {
       setFilterSelections((prev) => {
         const currentArray = prev.selectedMWSValues[name] || [];
         let newArray;
@@ -373,7 +287,7 @@ const handleResetMWS = () => {
           },
         };
       });
-    } else if (sourceType.name === "Village") {
+    } else if (sourceType.namespace === "Village") {
       setFilterSelections((prev) => {
         const currentArray = prev.selectedVillageValues[name] || [];
         let newArray;
@@ -391,7 +305,7 @@ const handleResetMWS = () => {
           },
         };
       });
-    } else if (sourceType.name === "Waterbody") {
+    } else if (sourceType.namespace === "Waterbody") {
       if (!showWB) {
         toast.error("Please enable 'Show Waterbodies' to apply waterbody filters.");
         return;
@@ -416,24 +330,20 @@ const handleResetMWS = () => {
     }
   };
 
-  const handlePatternSelection = (pattern, isSelected) => {
-    handlePatternSelectionLogic(pattern, isSelected, patternSelections, setPatternSelections);
-  };
-
   // ─── WB filters: ID-based lookup via dataJsonIndex, no geometry ───
   const applyWaterbodyFilters = (mwsIds, wbFilters, isVisualizeOn) => {
-  if (!waterbodiesLayerRef.current) return;
+    if (!waterbodiesLayerRef.current) return;
 
-  const wbSource = waterbodiesLayerRef.current.getSource();
-  const filterKeys = Object.keys(wbFilters || {}).filter(k => wbFilters[k]);
+    const wbSource = waterbodiesLayerRef.current.getSource();
+    const filterKeys = Object.keys(wbFilters || {}).filter(k => wbFilters[k]);
 
-  // A MWS-level filter is "active" even if it currently matches 0 MWS —
-  // in that case waterbodies should show NONE, not fall back to showing all.
-  const mwsFilterKeys = Object.keys(filterSelections.selectedMWSValues || {});
-  const isMWSFilterSelected = mwsFilterKeys.some(k => filterSelections.selectedMWSValues[k]);
+    // A MWS-level filter is "active" even if it currently matches 0 MWS —
+    // in that case waterbodies should show NONE, not fall back to showing all.
+    const mwsFilterKeys = Object.keys(filterSelections.selectedMWSValues || {});
+    const isMWSFilterSelected = mwsFilterKeys.some(k => filterSelections.selectedMWSValues[k]);
 
-  const hasMWSFilter = mwsIds.length > 0 || isMWSFilterSelected;
-  const hasAttrFilter = filterKeys.length > 0;
+    const hasMWSFilter = mwsIds.length > 0 || isMWSFilterSelected;
+    const hasAttrFilter = filterKeys.length > 0;
 
     if (!hasMWSFilter && !hasAttrFilter && !isVisualizeOn) {
       waterbodiesLayerRef.current.updateStyleVariables({ wbFilterActive: 0 });
@@ -601,7 +511,7 @@ const handleResetMWS = () => {
           if (!wbId) return;
           if (hasMWSFilter) {
             const inMWS = mwsIds.some(mwsId =>
-              (dataJsonIndex?.mwsToSWBIds.get(mwsId) || []).includes(wbId)
+              (mwsIndex.mwsToSWB.get(mwsId) || []).some(swb => swb.swbId === wbId)
             );
             if (!inMWS) return;
           }
@@ -693,18 +603,18 @@ const handleResetMWS = () => {
 
   // const resetMWSStyle = () => setHighlightMWS(null);
   const resetMWSStyle = () => {
-  if (!mwsLayerRef.current) return;
+    if (!mwsLayerRef.current) return;
 
-  const features = mwsLayerRef.current.getSource().getFeatures();
+    const features = mwsLayerRef.current.getSource().getFeatures();
 
-  features.forEach((feature) => {
-    feature.set("isSelected", 0, true);
-  });
+    features.forEach((feature) => {
+      feature.set("isSelected", 0, true);
+    });
 
-  mwsLayerRef.current.getSource().changed();
+    mwsLayerRef.current.getSource().changed();
 
-  setHighlightMWS(null);
-};
+    setHighlightMWS(null);
+  };
 
   const updateFilteredMWS = (filteredIds) => {
     if (!mwsLayerRef.current) return;
@@ -1277,7 +1187,7 @@ const handleResetMWS = () => {
   
       mwsLayerRef.current      = mwsLayer;
       boundaryLayerRef.current = boundaryLayer;
-  
+        
       // ── 3. Style boundary ────────────────────────────────────────────────────
       boundaryLayer.setStyle({
         variables: { hasSelection: false, isVisualizeOn: false },
@@ -1331,6 +1241,8 @@ const handleResetMWS = () => {
         fetchMWSLayer([]),
         applyDefaultMWSStyle(),   // synchronous but wrapped for uniformity
       ]);
+
+      setBoundaryLoadedVersion((v) => v + 1);
   
     } catch (error) {
       // ── Differentiated recovery ──────────────────────────────────────────────
@@ -1657,6 +1569,12 @@ const handleResetMWS = () => {
   
       // ── BRANCH A: layer already on — toggle it off ──────────────────────────
       if (checkIfPresent) {
+        if (checkIfPresent.layerRef._moveEndHandler) {
+          mapRef.current.un('moveend', checkIfPresent.layerRef._moveEndHandler);
+        }
+        if (checkIfPresent.layerRef._cancelImageWatch) {
+          checkIfPresent.layerRef._cancelImageWatch();
+        }
         checkIfPresent.layerRef.forEach((item) => mapRef.current.removeLayer(item));
         if (!existingLayer) mapRef.current.addLayer(boundaryLayerRef.current);
   
@@ -1715,149 +1633,7 @@ const handleResetMWS = () => {
         for (let i = 0; i < len; ++i) {
           let tempLayer;
   
-          if (filter.layer_store[i] === "terrain") {
-            tempLayer = await getImageLayer(
-              filter.layer_store[i],
-              `${transformName(district.label)}_${transformName(block.label)}_${filter.layer_name[i]}`,
-              true, filter.rasterStyle
-            );
-            layerRef.push(tempLayer);
-            mapRef.current.addLayer(tempLayer);
-            addedLayersThisCall.push(tempLayer);
-
-            const cancelWatch = watchForImageLoadError(
-              `${transformName(district.label)}_${transformName(block.label)}_${filter.layer_name[i]}`,
-              () => {
-                // Remove the failed layer from the map
-                try { mapRef.current.removeLayer(tempLayer); } catch (_) {}
-          
-                // Restore core layers if they were removed (they were, for this branch)
-                try {
-                  if (!mapRef.current.getLayers().getArray().includes(mwsLayerRef.current)) {
-                    mapRef.current.addLayer(mwsLayerRef.current);
-                  }
-                  if (!mapRef.current.getLayers().getArray().includes(boundaryLayerRef.current)) {
-                    mapRef.current.addLayer(boundaryLayerRef.current);
-                  }
-                  boundaryLayerRef.current.setZIndex(9999);
-                  boundaryLayerRef.current.updateStyleVariables({ isVisualizeOn: false });
-                  mwsLayerRef.current.updateStyleVariables({ isVisualizeOn: false });
-                  setShowMWS(true);
-                } catch (_) {}
-          
-                // Reset toggle and currentLayer so the user can retry
-                setToggleStates(prev => ({ ...prev, [filter.name]: false }));
-                setCurrentLayer(prev => prev.filter(l => l.name !== filter.name));
-              }
-            );
-            layerRef._cancelImageWatch = cancelWatch;
-          } else if (filter.layer_store[i] === "change_detection") {
-            tempLayer = await getVectorLayers(
-              `${filter.layer_store[i]}`,
-              `change_vector_${transformName(district.label)}_${transformName(block.label)}_${filter.layer_name[i]}`
-            );
-  
-          } else if (filter.layer_store[i] === "nrega_assets") {
-            tempLayer = await getWebGlLayers(
-              filter.layer_store[i],
-              `${transformName(district.label)}_${transformName(block.label)}`,
-              true, true, null, null,
-              transformName(district.label), transformName(block.label)
-            );
-            layerRef.push(tempLayer);
-            mapRef.current.addLayer(tempLayer);
-            addedLayersThisCall.push(tempLayer);
-  
-          } else if (["lcw", "factory_csr", "mining"].includes(filter.layer_store[i])) {
-            tempLayer = await getWebGlLayers(
-              filter.layer_store[i],
-              `${transformName(district.label)}_${transformName(block.label)}`,
-              true, true, null, null,
-              transformName(district.label), transformName(block.label)
-            );
-            layerRef.push(tempLayer);
-            mapRef.current.addLayer(tempLayer);
-            addedLayersThisCall.push(tempLayer);
-  
-          } else if (filter.layer_store[i] === "LULC") {
-            tempLayer = await getImageLayer(
-              `${filter.layer_store[i]}_${filter.layer_name[i]}`,
-              `LULC_${lulcYear}_${transformName(district.label)}_${transformName(block.label)}_${filter.layer_name[i]}`,
-              true, filter.rasterStyle
-            );
-            layerRef.push(tempLayer);
-            mapRef.current.addLayer(tempLayer);
-            addedLayersThisCall.push(tempLayer);
-          
-            watchForImageLoadError(
-              `LULC_${lulcYear}_${transformName(district.label)}_${transformName(block.label)}_${filter.layer_name[i]}`,
-              () => {
-                try { mapRef.current.removeLayer(tempLayer); } catch (_) {}
-                try {
-                  if (!mapRef.current.getLayers().getArray().includes(mwsLayerRef.current)) {
-                    mapRef.current.addLayer(mwsLayerRef.current);
-                  }
-                  if (!mapRef.current.getLayers().getArray().includes(boundaryLayerRef.current)) {
-                    mapRef.current.addLayer(boundaryLayerRef.current);
-                  }
-                  boundaryLayerRef.current.setZIndex(9999);
-                  boundaryLayerRef.current.updateStyleVariables({ isVisualizeOn: false });
-                  mwsLayerRef.current.updateStyleVariables({ isVisualizeOn: false });
-                  setShowMWS(true);
-                } catch (_) {}
-                setToggleStates(prev => ({ ...prev, [filter.name]: false }));
-                setCurrentLayer(prev => prev.filter(l => l.name !== filter.name));
-              }
-            );
-          } else if (
-            filter.layer_store[i] === "drought" ||
-            filter.layer_store[i] === "green_credit" ||
-            filter.layer_store[i] === "terrain_lulc" ||
-            filter.layer_store[i] === "river" ||
-            filter.layer_store[i] === "canal"
-          ) {
-            tempLayer = await getVectorLayers(
-              filter.layer_store[i],
-              `${transformName(district.label)}_${transformName(block.label)}_${filter.layer_name[i]}`
-            );
-  
-          } else if (filter.layer_store[i] === "panchayat_boundaries") {
-            tempLayer = await getVectorLayers(
-              filter.layer_store[i],
-              `${transformName(district.label)}_${transformName(block.label)}`
-            );
-  
-          } else if (filter.layer_store[i] === "restoration") {
-            tempLayer = await getImageLayer(
-              filter.layer_store[i],
-              `${filter.layer_name[i]}_${transformName(district.label)}_${transformName(block.label)}_raster`,
-              true, filter.rasterStyle
-            );
-            layerRef.push(tempLayer);
-            mapRef.current.addLayer(tempLayer);
-            addedLayersThisCall.push(tempLayer);
-          
-            watchForImageLoadError(
-              `${filter.layer_name[i]}_${transformName(district.label)}_${transformName(block.label)}_raster`,
-              () => {
-                try { mapRef.current.removeLayer(tempLayer); } catch (_) {}
-                try {
-                  if (!mapRef.current.getLayers().getArray().includes(mwsLayerRef.current)) {
-                    mapRef.current.addLayer(mwsLayerRef.current);
-                  }
-                  if (!mapRef.current.getLayers().getArray().includes(boundaryLayerRef.current)) {
-                    mapRef.current.addLayer(boundaryLayerRef.current);
-                  }
-                  boundaryLayerRef.current.setZIndex(9999);
-                  boundaryLayerRef.current.updateStyleVariables({ isVisualizeOn: false });
-                  mwsLayerRef.current.updateStyleVariables({ isVisualizeOn: false });
-                  setShowMWS(true);
-                } catch (_) {}
-                setToggleStates(prev => ({ ...prev, [filter.name]: false }));
-                setCurrentLayer(prev => prev.filter(l => l.name !== filter.name));
-              }
-            );
-          } else if (filter.name === "relative_mean_elevation") {
+          if (filter.name === "relative_mean_elevation") {
             const view = mapRef.current.getView();
   
             tempLayer = await getImageLayer(
@@ -1888,48 +1664,71 @@ const handleResetMWS = () => {
             addedLayersThisCall.push(tempLayer, contourLayer);
   
             let lastInterval = getContourInterval(view.getResolution());
-            mapRef.current.on('moveend', () => {
+            const handleContourMoveEnd = () => {
               const interval = getContourInterval(view.getResolution());
               if (interval !== lastInterval) {
                 lastInterval = interval;
                 contourSource.updateParams({ ENV: `interval:${interval}` });
               }
-            });
+            };
+            mapRef.current.on('moveend', handleContourMoveEnd);
+            layerRef._moveEndHandler = handleContourMoveEnd;
   
           } else {
-            tempLayer = await getVectorLayers(
-              filter.layer_store[i],
-              `${filter.layer_name[i]}_${transformName(district.label)}_${transformName(block.label)}`
-            );
-          }
-  
-          // ── Post-loop: style + add to map for vector/unstyled layers ─────────
-          if (filter.layer_store[i] === "river" || filter.layer_store[i] === "canal") {
-            tempLayer.setStyle(new Style({
-              stroke: new Stroke({ color: "rgba(0, 0, 255, 1)", width: 2.5 }),
-            }));
-            tempLayer.setZIndex(9998);
+            const dist = transformName(district.label);
+            const blk = transformName(block.label);
+            const ctx = { dist, blk, lulcYear };
+
+            const loaderKey = filter.layer_store[i];
+            let config
+
+            if(loaderKey === "soil_health_raster")
+              config = LAYER_LOADERS[filter.layer_name[i]] || DEFAULT_LOADER;
+            else
+              config = LAYER_LOADERS[loaderKey] || DEFAULT_LOADER;
+
+            const storeName = config.store ? config.store(filter, i) : loaderKey;
+            const layerName = config.buildLayerName(filter, i, ctx);
+
+            if (config.fetch === 'image') {
+              tempLayer = await getImageLayer(storeName, layerName, true, filter.rasterStyle);
+            } else if (config.fetch === 'webgl') {
+              tempLayer = await getWebGlLayers(loaderKey, layerName, true, true, null, null, dist, blk);
+            } else {
+              tempLayer = await getVectorLayers(loaderKey, layerName);
+            }
+
             layerRef.push(tempLayer);
             mapRef.current.addLayer(tempLayer);
             addedLayersThisCall.push(tempLayer);
-  
-          } else if (
-            filter.layer_store[i] !== "terrain" &&
-            filter.layer_store[i] !== "LULC" &&
-            filter.layer_store[i] !== "restoration" &&
-            filter.layer_store[i] !== "nrega_assets" &&
-            filter.layer_store[i] !== "lcw" &&
-            filter.layer_store[i] !== "factory_csr" &&
-            filter.layer_store[i] !== "mining" &&
-            filter.layer_store[i] !== "dem"
-          ) {
-            tempLayer.setStyle((feature) =>
-              layerStyle(feature, filter.vectorStyle, filter.styleIdx, villageJson, dataJson)
-            );
-            tempLayer.setZIndex(10);
-            layerRef.push(tempLayer);
-            mapRef.current.addLayer(tempLayer);
-            addedLayersThisCall.push(tempLayer);
+
+            if (config.errorWatch) {
+              const cancelWatch = watchForImageLoadError(layerName, () => {
+                try { mapRef.current.removeLayer(tempLayer); } catch (_) {}
+                try {
+                  if (!mapRef.current.getLayers().getArray().includes(mwsLayerRef.current)) {
+                    mapRef.current.addLayer(mwsLayerRef.current);
+                  }
+                  if (!mapRef.current.getLayers().getArray().includes(boundaryLayerRef.current)) {
+                    mapRef.current.addLayer(boundaryLayerRef.current);
+                  }
+                  boundaryLayerRef.current.setZIndex(9999);
+                  boundaryLayerRef.current.updateStyleVariables({ isVisualizeOn: false });
+                  mwsLayerRef.current.updateStyleVariables({ isVisualizeOn: false });
+                  setShowMWS(true);
+                } catch (_) {}
+                setToggleStates(prev => ({ ...prev, [filter.name]: false }));
+                setCurrentLayer(prev => prev.filter(l => l.name !== filter.name));
+              });
+            }
+
+            if (config.isLine) {
+              tempLayer.setStyle(new Style({ stroke: new Stroke({ color: "rgba(0, 0, 255, 1)", width: 2.5 }) }));
+              tempLayer.setZIndex(9998);
+            } else if (!config.selfStyled) {
+              tempLayer.setStyle(createFeatureStyleFn(filter, { mwsIndex, villageIndex }));
+              tempLayer.setZIndex(10);
+            }
           }
         }
   
@@ -2126,26 +1925,26 @@ const handleResetMWS = () => {
       mapRef.current = map;
       const tooltip = document.createElement("div");
 
-tooltip.style.cssText = `
-  background: rgba(0,0,0,0.8);
-  color: white;
-  padding: 4px 8px;
-  border-radius: 4px;
-  font-size: 12px;
-  font-weight: 500;
-  white-space: nowrap;
-  pointer-events: none;
-  display: none;
-`;
+      tooltip.style.cssText = `
+        background: rgba(0,0,0,0.8);
+        color: white;
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-size: 12px;
+        font-weight: 500;
+        white-space: nowrap;
+        pointer-events: none;
+        display: none;
+      `;
 
-const overlay = new Overlay({
-  element: tooltip,
-  offset: [10, 0],
-  positioning: "center-left",
-});
+      const overlay = new Overlay({
+        element: tooltip,
+        offset: [10, 0],
+        positioning: "center-left",
+      });
 
-map.addOverlay(overlay);
-villageTooltipRef.current = overlay;
+      map.addOverlay(overlay);
+      villageTooltipRef.current = overlay;
     };
   
     const { offsetWidth, offsetHeight } = mapElement.current;
@@ -2172,45 +1971,45 @@ villageTooltipRef.current = overlay;
     return () => observer.disconnect();
   };
 
-useEffect(() => {
-  if (!mapRef.current || !boundaryLayerRef.current || !villageTooltipRef.current)
-    return;
+  useEffect(() => {
+    if (!mapRef.current || !boundaryLayerRef.current || !villageTooltipRef.current)
+      return;
 
-  const map = mapRef.current;
+    const map = mapRef.current;
 
-  const handlePointerMove = (evt) => {
-    const source = boundaryLayerRef.current.getSource();
-    const villageFeature = source.getFeaturesAtCoordinate(evt.coordinate)[0] || null;
+    const handlePointerMove = (evt) => {
+      const source = boundaryLayerRef.current.getSource();
+      const villageFeature = source.getFeaturesAtCoordinate(evt.coordinate)[0] || null;
 
-    const overlay = villageTooltipRef.current;
-    const tooltip = overlay.getElement();
+      const overlay = villageTooltipRef.current;
+      const tooltip = overlay.getElement();
 
-    if (villageFeature) {
-      const props = villageFeature.getProperties();
+      if (villageFeature) {
+        const props = villageFeature.getProperties();
 
-      tooltip.innerHTML =
-        props.vill_name ||
-        props.village_name ||
-        props.name ||
-        "Unknown";
+        tooltip.innerHTML =
+          props.vill_name ||
+          props.village_name ||
+          props.name ||
+          "Unknown";
 
-      tooltip.style.display = "block";
-      overlay.setPosition(evt.coordinate);
+        tooltip.style.display = "block";
+        overlay.setPosition(evt.coordinate);
 
-      map.getTargetElement().style.cursor = "pointer";
-    } else {
-      tooltip.style.display = "none";
-      overlay.setPosition(undefined);
-      map.getTargetElement().style.cursor = "";
-    }
-  };
+        map.getTargetElement().style.cursor = "pointer";
+      } else {
+        tooltip.style.display = "none";
+        overlay.setPosition(undefined);
+        map.getTargetElement().style.cursor = "";
+      }
+    };
 
-  map.on("pointermove", handlePointerMove);
+    map.on("pointermove", handlePointerMove);
 
-  return () => {
-    map.un("pointermove", handlePointerMove);
-  };
-}, [boundaryLayerRef.current]);
+    return () => {
+      map.un("pointermove", handlePointerMove);
+    };
+  }, [boundaryLayerRef.current]);
 
   const handleItemSelect = (setter, value) => {
     setter(value);
@@ -2250,8 +2049,6 @@ useEffect(() => {
     });
     setPatternSelections({ selectedMWSPatterns: {}, selectedVillagePatterns: {} });
     setIndicatorType(null);
-    setSelectedMWS([]);
-    setVillageIdList(new Set([]));
     setSelectedMWSProfile(null);
     setShowMWS(true);
     setShowVillages(true);
@@ -2425,7 +2222,7 @@ const wb_id = props?.UID ?? props?.id ?? props?.wb_id;
   useEffect(() => {
     if (!mapRef.current) return;
 
-  const handleMapClick = (event) => {
+    const handleMapClick = (event) => {
       const mwsSource = mwsLayerRef.current?.getSource();
       const feature = mwsSource
         ? mwsSource.getFeaturesAtCoordinate(event.coordinate)[0]
@@ -2470,7 +2267,7 @@ const wb_id = props?.UID ?? props?.id ?? props?.wb_id;
 
 
  
-useEffect(() => {
+  useEffect(() => {
     if (mapRef.current && waterbodiesLayerRef.current) {
       mapRef.current.removeLayer(waterbodiesLayerRef.current);
       waterbodiesLayerRef.current = null;
@@ -2574,408 +2371,22 @@ useEffect(() => {
     if (searchLatLong !== null) searchUserLatLong();
   }, [searchLatLong]);
 
-  // ============================================
-  // 1. PROCESS MWS FILTERS
-  // ============================================
+  
   useEffect(() => {
-    try {
-      if (!dataJson || !Array.isArray(dataJson) || !dataJsonIndex) return;
-          setManualSelectedMWS([]); 
+    updateFilteredMWS(selectedMWS);
+  }, [selectedMWS]);
 
-      const mwsFilterKeys = Object.keys(filterSelections.selectedMWSValues || {});
-      const activeKeys = mwsFilterKeys.filter(k => filterSelections.selectedMWSValues[k]);
-
-      if (activeKeys.length === 0) {
-        setSelectedMWS([]);
-        setHasFilters(false);
-        applyDefaultMWSStyle()
-        const source = mwsLayerRef.current?.getSource();
-        if (source) {
-          source.getFeatures().forEach((f) => {
-            f.unset("isFiltered");
-            f.unset("hasFilters");
-          });
-          source.changed();
-        }
-        return;
-      }
-
-      let resultSet = null; // null = not yet restricted
-
-      activeKeys.forEach(filterName => {
-        const filterValues = filterSelections.selectedMWSValues[filterName];
-        if (!filterValues) return;
-
-        const filter = getAllFilters().find(f => f.name === filterName);
-        const matchedIds = new Set();
-
-        filterValues.forEach(selectedOption => {
-          if (filter?.type === 2) {
-            // Range filter — linear scan but only once per field
-            dataJson.forEach(item => {
-              if (!item?.mws_id) return;
-              const value = Number(item[filterName]);
-              if (!isNaN(value) && value >= selectedOption.value.lower && value <= selectedOption.value.upper) {
-                matchedIds.add(item.mws_id);
-              }
-            });
-          } else {
-            // Exact match — O(1) via pre-built fieldIndex
-            const key = String(selectedOption.value);
-            const indexedSet = dataJsonIndex.fieldIndex[filterName]?.[key];
-            if (indexedSet) indexedSet.forEach(id => matchedIds.add(id));
-          }
-        });
-
-        // AND across filter names
-        if (resultSet === null) {
-          resultSet = matchedIds;
-        } else {
-          resultSet.forEach(id => { if (!matchedIds.has(id)) resultSet.delete(id); });
-        }
-      });
-
-      const resultMWS = resultSet ? [...resultSet] : [];
-      setSelectedMWS(resultMWS);
-      setHasFilters(resultMWS.length > 0);
-      updateFilteredMWS(resultMWS);
-
-      // Village derivation — O(selectedMWS) via mwsToVillages map, no dataJson loop
-      const villages = new Set();
-      resultMWS.forEach(mwsId => {
-        (dataJsonIndex.mwsToVillages.get(mwsId) || []).forEach(v => villages.add(v));
-      });
-      setVillageIdList(villages);
-
-    } catch (error) {
-      console.error("Error in MWS filter processing:", error);
-    }
-  }, [filterSelections.selectedMWSValues, dataJson, dataJsonIndex]);
-
-
-  // ============================================
-  // 2. PROCESS MWS PATTERNS
-  // ============================================
-  useEffect(() => {
-    try {
-      if (!dataJson || !Array.isArray(dataJson)) return;
-
-      const mwsPatternKeys = Object.keys(patternSelections.selectedMWSPatterns || {});
-      const mwsFilterKeys = Object.keys(filterSelections.selectedMWSValues || {});
-      const hasMwsFilters = mwsFilterKeys.some(key => filterSelections.selectedMWSValues[key] !== null);
-      const hasMwsPatterns = mwsPatternKeys.some(key => patternSelections.selectedMWSPatterns[key] !== null);
-
-      if (!hasMwsPatterns) {
-        if (hasMwsFilters) {
-          let resultMWS = [];
-          mwsFilterKeys.forEach((filterName) => {
-            const filterValues = filterSelections.selectedMWSValues[filterName];
-            if (!filterValues) return;
-            let tempArr = [];
-            const filter = getAllFilters().find((f) => f.name === filterName);
-            filterValues.forEach((selectedOption) => {
-              if (filter?.type === 2) {
-                dataJson.forEach((item) => {
-                  if (item && typeof item[filterName] !== "undefined" && item.mws_id) {
-                    const value = Number(item[filterName]);
-                    if (!isNaN(value) && value >= selectedOption.value.lower && value <= selectedOption.value.upper) {
-                      if (!tempArr.includes(item.mws_id)) tempArr.push(item.mws_id);
-                    }
-                  }
-                });
-              } else {
-                dataJson.forEach((item) => {
-                  if (item && item[filterName] === selectedOption.value && item.mws_id) {
-                    if (!tempArr.includes(item.mws_id)) tempArr.push(item.mws_id);
-                  }
-                });
-              }
-            });
-            if (resultMWS.length > 0) resultMWS = resultMWS.filter((id) => tempArr.includes(id));
-            else resultMWS = tempArr;
-          });
-          setSelectedMWS(resultMWS);
-          updateFilteredMWS(resultMWS);
-          return;
-        } else {
-          setSelectedMWS([]);
-          const source = mwsLayerRef.current?.getSource();
-          if (source) { source.getFeatures().forEach((f) => f.unset("isFiltered")); source.changed(); }
-          return;
-        }
-      }
-
-      let resultMWS = new Set();
-      mwsPatternKeys.forEach((patternName) => {
-        const pattern = patternSelections.selectedMWSPatterns[patternName];
-        if (!pattern) return;
-        let patternMatches = new Set();
-        pattern.conditions.forEach((condition) => {
-          dataJson.forEach((item) => {
-            let matches = false;
-            if (condition.type === 1 && item[condition.key] === condition.value) matches = true;
-            else if (condition.type === 2 && item[condition.key] >= condition.value.lower && item[condition.key] <= condition.value.upper) matches = true;
-            else if (condition.type === 3 && item[condition.key] != condition.value) matches = true;
-            if (matches) patternMatches.add(item.mws_id);
-          });
-        });
-        if (resultMWS.size > 0) resultMWS = new Set([...resultMWS].filter((x) => patternMatches.has(x)));
-        else resultMWS = patternMatches;
-      });
-
-      if (hasMwsFilters) {
-        let filterResults = [];
-        mwsFilterKeys.forEach((filterName) => {
-          const filterValues = filterSelections.selectedMWSValues[filterName];
-          if (!filterValues) return;
-          let tempArr = [];
-          const filter = getAllFilters().find((f) => f.name === filterName);
-          filterValues.forEach((selectedOption) => {
-            dataJson.forEach((item) => {
-              if (!item || !item.mws_id) return;
-              if (filter?.type === 2) {
-                const value = Number(item[filterName]);
-                if (!isNaN(value) && value >= selectedOption.value.lower && value <= selectedOption.value.upper) {
-                  if (!tempArr.includes(item.mws_id)) tempArr.push(item.mws_id);
-                }
-              } else {
-                if (item[filterName] === selectedOption.value && !tempArr.includes(item.mws_id)) tempArr.push(item.mws_id);
-              }
-            });
-          });
-          if (filterResults.length > 0) filterResults = filterResults.filter((id) => tempArr.includes(id));
-          else filterResults = tempArr;
-        });
-
-        const finalMWS = [...resultMWS].filter((id) => filterResults.includes(id));
-        setSelectedMWS(finalMWS);
-        updateFilteredMWS(finalMWS);
-        const v1 = new Set();
-        dataJson.forEach((item) => {
-          if (finalMWS.includes(item.mws_id) && Array.isArray(item.mws_intersect_villages)) {
-            item.mws_intersect_villages.forEach((v) => v1.add(v));
-          }
-        });
-        setVillageIdList(v1);
-      } else {
-        const finalMWS = [...resultMWS];
-        setSelectedMWS(finalMWS);
-        updateFilteredMWS(finalMWS);
-        const v2 = new Set();
-        dataJson.forEach((item) => {
-          if (finalMWS.includes(item.mws_id) && Array.isArray(item.mws_intersect_villages)) {
-            item.mws_intersect_villages.forEach((v) => v2.add(v));
-          }
-        });
-        setVillageIdList(v2);
-      }
-    } catch (error) {
-      console.error("Error in MWS pattern processing:", error);
-    }
-  }, [patternSelections.selectedMWSPatterns, filterSelections.selectedMWSValues, dataJson]);
-
-
-  // ============================================
-  // 3. PROCESS VILLAGE FILTERS
-  // ============================================
-  useEffect(() => {
-    try {
-      if (!villageJson || !Array.isArray(villageJson)) return;
-      if (!dataJson || !Array.isArray(dataJson)) return;
-
-      const villageFilterKeys = Object.keys(filterSelections.selectedVillageValues || {});
-      const hasVillageFilters = villageFilterKeys.some(
-        key => filterSelections.selectedVillageValues[key] !== null
-      );
-
-      if (!hasVillageFilters) {
-        setPatternVillageList(new Set());
-        return;
-      }
-
-      const candidateVillages = new Set();
-      if (selectedMWS.length > 0) {
-        dataJson.forEach(mwsItem => {
-          if (selectedMWS.includes(mwsItem.mws_id) && Array.isArray(mwsItem.mws_intersect_villages)) {
-            mwsItem.mws_intersect_villages.forEach(villageId => candidateVillages.add(villageId));
-          }
-        });
-      }
-
-      let resultVillages = new Set();
-
-      villageFilterKeys.forEach(filterName => {
-        const filterValues = filterSelections.selectedVillageValues[filterName];
-        if (!filterValues) return;
-        console.log(filterName)
-        const filter = getAllFilters().find((f) => f.name === filterName);
-        const tempArr = new Set();
-        filterValues.forEach(selectedOption => {
-          villageJson.forEach(village => {
-            if (filter?.type === 2) {
-              if (village && typeof village[filterName] !== 'undefined' && village.village_id) {
-                const value = Number(village[filterName]);
-                if (!isNaN(value) && value >= selectedOption.value.lower && value <= selectedOption.value.upper) {
-                  if (candidateVillages.size === 0 || candidateVillages.has(village.village_id)) {
-                    tempArr.add(village.village_id);
-                  }
-                }
-              }
-            }
-            else{
-               if (village && typeof village[filterName] !== 'undefined' && village.village_id) {
-                if (String(village[filterName]) === String(selectedOption.value)) {
-                  if (candidateVillages.size === 0 || candidateVillages.has(village.village_id)) {
-                    tempArr.add(village.village_id);
-                  }
-                }
-              }
-            }
-          });
-        });
-
-        if (resultVillages.size > 0) {
-          resultVillages = new Set([...resultVillages].filter(x => tempArr.has(x)));
-        } else {
-          resultVillages = tempArr;
-        }
-      });
-
-      setPatternVillageList(resultVillages);
-    } catch (error) {
-      console.error("Error in village filter processing:", error);
-    }
-  }, [filterSelections.selectedVillageValues, villageJson, dataJson, selectedMWS]);
-
-
-  // ============================================
-  // 4. PROCESS VILLAGE PATTERNS
-  // ============================================
-  useEffect(() => {
-    try {
-      if (!villageJson || !Array.isArray(villageJson)) return;
-      if (!dataJson || !Array.isArray(dataJson)) return;
-
-      const villagePatternKeys = Object.keys(patternSelections.selectedVillagePatterns || {});
-      const villageFilterKeys = Object.keys(filterSelections.selectedVillageValues || {});
-
-      const hasVillagePatterns = villagePatternKeys.some(
-        key => patternSelections.selectedVillagePatterns[key] !== null
-      );
-      const hasVillageFilters = villageFilterKeys.some(
-        key => filterSelections.selectedVillageValues[key] !== null
-      );
-
-      if (!hasVillagePatterns && !hasVillageFilters) {
-        const mwsFilterKeys = Object.keys(filterSelections.selectedMWSValues || {});
-        const hasMwsFilters = mwsFilterKeys.some(k => filterSelections.selectedMWSValues[k] !== null);
-        const mwsPatternKeys = Object.keys(patternSelections.selectedMWSPatterns || {});
-        const hasMwsPatterns = mwsPatternKeys.some(k => patternSelections.selectedMWSPatterns[k] !== null);
-
-        if (!hasMwsFilters && !hasMwsPatterns) {
-          // No selections at any level — clear villages
-          setVillageIdList(new Set());
-        } else {
-          // Village filters/patterns were cleared — restore villages to the
-          // full MWS intersect set instead of leaving the stale filtered list
-          const villages = new Set();
-          selectedMWS.forEach(mwsId => {
-            (dataJsonIndex?.mwsToVillages.get(mwsId) || []).forEach(v => villages.add(v));
-          });
-          setVillageIdList(villages);
-        }
-        return;
-      }
-
-      if (!hasVillagePatterns && hasVillageFilters) {
-        setVillageIdList(patternVillageList);
-        return;
-      }
-
-      let resultVillages = new Set();
-
-      villagePatternKeys.forEach(patternName => {
-        const pattern = patternSelections.selectedVillagePatterns[patternName];
-        if (!pattern) return;
-
-        const patternMatches = new Set();
-
-        pattern.conditions.forEach(condition => {
-          villageJson.forEach(village => {
-            let matches = false;
-            if (condition.type === 1 && village[condition.key] === condition.value) matches = true;
-            else if (condition.type === 2 && village[condition.key] >= condition.value.lower && village[condition.key] <= condition.value.upper) matches = true;
-            else if (condition.type === 3 && village[condition.key] != condition.value) matches = true;
-            if (matches) patternMatches.add(village.village_id);
-          });
-        });
-
-        if (resultVillages.size > 0) {
-          resultVillages = new Set([...resultVillages].filter(x => patternMatches.has(x)));
-        } else {
-          resultVillages = patternMatches;
-        }
-      });
-
-      const candidateVillages = new Set();
-      if (selectedMWS.length > 0) {
-        dataJson.forEach(mwsItem => {
-          if (selectedMWS.includes(mwsItem.mws_id) && Array.isArray(mwsItem.mws_intersect_villages)) {
-            mwsItem.mws_intersect_villages.forEach(villageId => candidateVillages.add(villageId));
-          }
-        });
-      }
-
-      if (candidateVillages.size > 0) {
-        resultVillages = new Set([...resultVillages].filter(id => candidateVillages.has(id)));
-      }
-
-      if (hasVillageFilters && patternVillageList.size > 0) {
-        resultVillages = new Set([...resultVillages].filter(id => patternVillageList.has(id)));
-      }
-
-      setVillageIdList(resultVillages);
-    } catch (error) {
-      console.error("Error in village pattern processing:", error);
-    }
-  }, [
-    patternSelections.selectedVillagePatterns,
-    filterSelections.selectedVillageValues,  // restored — production includes this
-    patternVillageList,
-    selectedMWS,
-    dataJson,
-    villageJson,
-    dataJsonIndex,
-  ]);
-
-
-  // ============================================
-  // 5. SYNC villageIdList → Admin boundary layer
-  // ============================================
   useEffect(() => {
     fetchAdminLayer([...villageIdList]);
-    setFinalVillageList(villageIdList);
   }, [villageIdList]);
 
+
   useEffect(() => {
-    if (!dataJsonIndex) return;
-
     const hasActiveWBFilters = Object.keys(filterSelections.selectedWaterbodyValues || {})
-      .some(k => filterSelections.selectedWaterbodyValues[k] !== null);
-    if (hasActiveWBFilters) return;
-
-    if (selectedMWS.length === 0) {
-      setSelectedWaterbodyIds(new Set());
-      return;
-    }
-
-    const ids = new Set();
-    selectedMWS.forEach(mwsId => {
-      (dataJsonIndex.mwsToSWBIds.get(mwsId) || []).forEach(id => ids.add(id));
-    });
-    setSelectedWaterbodyIds(ids);
-
-  }, [selectedMWS, filterSelections.selectedWaterbodyValues, dataJsonIndex]);
+      .some((k) => filterSelections.selectedWaterbodyValues[k]);
+    if (hasActiveWBFilters) return; // applyWaterbodyFilters owns it in this case
+    setSelectedWaterbodyIds(derivedSelection.selectedWaterbodyIds);
+  }, [derivedSelection, filterSelections.selectedWaterbodyValues]);
 
   useEffect(() => {
     if (!showWB || !waterbodiesLayerRef.current) return;
@@ -3016,16 +2427,9 @@ useEffect(() => {
           indicatorType={indicatorType}
           setIndicatorType={setIndicatorType}
           filterSelections={filterSelections}
-          setFilterSelections={setFilterSelections}
-          getAllFilterTypes={getAllFilterTypes}
-          getAllFilters={getAllFilters}
           handleFilterSelection={handleFilterSelection}
           toggleStates={toggleStates}
-          setToggleStates={setToggleStates}
           handleLayerSelection={handleLayerSelection}
-          currentLayer={currentLayer}
-          setCurrentLayer={setCurrentLayer}
-          mapRef={mapRef}
           filtersEnabled={filtersEnabled}
           filtersDisabledReason={
             dataJsonError === 'not_found' ? 'No MWS data available for this block.' :
@@ -3107,8 +2511,6 @@ useEffect(() => {
           onResetMWS={handleResetMWS}
           selectedMWSProfile={selectedMWSProfile}
           waterbodiesLayerRef={waterbodiesLayerRef}
-          clickedWaterbodyId={clickedWaterbodyId}
-          waterbodyDashboardUrl={waterbodyDashboardUrl}
           selectedWaterbodyProfile={selectedWaterbodyProfile}
           onResetWaterbody={() => setSelectedWaterbodyProfile(null)}
           setShowWB={setShowWB}
@@ -3121,11 +2523,10 @@ useEffect(() => {
           dataJson={dataJson}
           selectedWaterbodyIds={selectedWaterbodyIds}
           selectedWaterbodyData={selectedWaterbodyData}
-          mwsDrainageLayerRef={mwsDrainageLayerRef}
           villageJson={villageJson}
           isLoading={isLoading}
           mwsLayerRef={mwsLayerRef}
-           selectionMode={selectionMode}
+          selectionMode={selectionMode}
           setSelectionMode={setSelectionMode}
           manualSelectedMWS={manualSelectedMWS}
           onResetMWSSelection={handleResetMWSSelection}
@@ -3133,7 +2534,8 @@ useEffect(() => {
           setShowPlans={setShowPlans}
           showStewards={showStewards}
           setShowStewards={setShowStewards}
-
+          mwsIndex={mwsIndex}
+          villageNameIndex={villageNameIndex}
         />
       </div>
     </div>

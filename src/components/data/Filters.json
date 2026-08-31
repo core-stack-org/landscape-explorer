@@ -1,3245 +1,2887 @@
-{
-    "MWS": {
-        "Terrain": [
-            {
-                "name": "terrainCluster_ID",
-                "label": "Terrain Type",
-                "type": 1,
-                "values": [
-                    {
-                        "label": "Hills and Valleys",
-                        "value": 2
-                    },
-                    {
-                        "label": "Broad Slopes and Hilly",
-                        "value": 0
-                    },
-                    {
-                        "label": "Broad Slopes and Plains",
-                        "value": 3
-                    },
-                    {
-                        "label": "Mostly Plains",
-                        "value": 1
-                    }
-                ],
-                "layer_store": [
-                    "terrain"
-                ],
-                "layer_name": [
-                    "terrain_raster"
-                ],
-                "vectorStyle": [
-                    {}
-                ],
-                "rasterStyle": [
-                    "Terrain_Style_11_Classes"
-                ],
-                "styleIdx": 0
-            },
-            {
-                "name": "relief",
-                "label": "Microwatershed Relief",
-                "type": 2,
-                "values": [
-                    {
-                        "label": "Low Relief (less than 6m)",
-                        "value": {
-                            "lower": 0,
-                            "upper": 6
-                        }
-                    },
-                    {
-                        "label": "Moderate Relief (between 6m and 110m)",
-                        "value": {
-                            "lower": 6,
-                            "upper": 110
-                        }
-                    },
-                    {
-                        "label": "High Relief (between 110m and 900m)",
-                        "value": {
-                            "lower": 110,
-                            "upper": 900
-                        }
-                    },
-                    {
-                        "label": "Extremely High Relief (More than 900m)",
-                        "value": {
-                            "lower": 900,
-                            "upper": 999999
-                        }
-                    }
-                ],
-                "layer_store": [
-                    "mws_layers"
-                ],
-                "layer_name": [
-                    "deltaG_well_depth"
-                ],
-                "vectorStyle": [
-                    {
-                        "fill": "rgba(217, 240, 211, 0.8)",
-                        "stroke": "rgba(224, 224, 224, 1)",
-                        "lower": 0,
-                        "upper": 6
-                    },
-                    {
-                        "fill": "rgba(166, 217, 106, 0.8)",
-                        "stroke": "rgba(189, 189, 189, 1)",
-                        "lower": 6,
-                        "upper": 110
-                    },
-                    {
-                        "fill": "rgba(253, 174, 97, 0.8)",
-                        "stroke": "rgba(117, 117, 117, 1)",
-                        "lower": 110,
-                        "upper": 900
-                    },
-                    {
-                        "fill": "rgba(215, 48, 39, 0.8)",
-                        "stroke": "rgba(66, 66, 66, 1)",
-                        "lower": 900,
-                        "upper": 999999
-                    }
-                ],
-                "rasterStyle": "",
-                "styleIdx": 37
-            },
-            {
-                "name": "relative_mean_elevation",
-                "label": "Relative Mean Elevation",
-                "type": 2,
-                "values": [
-                    {
-                        "label": "Lower Relative Mean Elevation (<-100)",
-                        "value": {
-                            "lower": -999999,
-                            "upper": -100
-                        }
-                    },
-                    {
-                        "label": "Moderate Relative Mean Elevation (-100 to +100)",
-                        "value": {
-                            "lower": -100,
-                            "upper": 100
-                        }
-                    },
-                    {
-                        "label": "High Relative Mean Elevation (>+100)",
-                        "value": {
-                            "lower": 100,
-                            "upper": 999999
-                        }
-                    }
-                ],
-                "layer_store": ["dem"],
-                "layer_name": ["dem_raster"],
-                "vectorStyle": [],
-                "rasterStyle": "dem_grayscale",
-                "styleIdx": 0
-            }
-        ],
-        "Land-Use": [
-            {
-                "name": "lulc_crop_percent",
-                "label": "Percentage of area with crops",
-                "type": 2,
-                "values": [
-                    {
-                        "label": "Less than 30%",
-                        "value": {
-                            "lower": 0,
-                            "upper": 30
-                        }
-                    },
-                    {
-                        "label": "Between 30-60%",
-                        "value": {
-                            "lower": 30,
-                            "upper": 60
-                        }
-                    },
-                    {
-                        "label": "More than 60%",
-                        "value": {
-                            "lower": 60,
-                            "upper": 999999
-                        }
-                    }
-                ],
-                "layer_store": [
-                    "LULC"
-                ],
-                "layer_name": [
-                    "level_3"
-                ],
-                "vectorStyle": [],
-                "rasterStyle": "lulc_land_use_KYL",
-                "styleIdx": 0
-            },
-            {
-                "name": "lulc_forest_percent",
-                "label": "Percentage of area with tree cover",
-                "type": 2,
-                "values": [
-                    {
-                        "label": "Less than 25%",
-                        "value": {
-                            "lower": 0,
-                            "upper": 25
-                        }
-                    },
-                    {
-                        "label": "Between 25-50%",
-                        "value": {
-                            "lower": 25,
-                            "upper": 50
-                        }
-                    },
-                    {
-                        "label": "More than 50%",
-                        "value": {
-                            "lower": 50,
-                            "upper": 999999
-                        }
-                    }
-                ],
-                "layer_store": [
-                    "LULC"
-                ],
-                "layer_name": [
-                    "level_3"
-                ],
-                "vectorStyle": [],
-                "rasterStyle": "lulc_land_use_KYL",
-                "styleIdx": 0
-            },
-            {
-                "name": "lulc_shrub_percent",
-                "label": "Percentage of area with shrubs",
-                "type": 2,
-                "values": [
-                    {
-                        "label": "Less than 5%",
-                        "value": {
-                            "lower": 0,
-                            "upper": 5
-                        }
-                    },
-                    {
-                        "label": "Between 5-15%",
-                        "value": {
-                            "lower": 5,
-                            "upper": 15
-                        }
-                    },
-                    {
-                        "label": "More than 15%",
-                        "value": {
-                            "lower": 15,
-                            "upper": 999999
-                        }
-                    }
-                ],
-                "layer_store": [
-                    "LULC"
-                ],
-                "layer_name": [
-                    "level_3"
-                ],
-                "vectorStyle": [],
-                "rasterStyle": "lulc_land_use_KYL",
-                "styleIdx": 0
-            }
-        ],
-        "Climate": [
-            {
-                "name": "avg_precipitation",
-                "label": "Average rainfall over the years 2017 to 2024",
-                "type": 2,
-                "values": [
-                    {
-                        "label": "Arid: <740 mm",
-                        "value": {
-                            "lower": 0,
-                            "upper": 740
-                        }
-                    },
-                    {
-                        "label": "Semi-arid: 740mm-960 mm",
-                        "value": {
-                            "lower": 740,
-                            "upper": 960
-                        }
-                    },
-                    {
-                        "label": "Moderate: 960mm-1200 mm",
-                        "value": {
-                            "lower": 960,
-                            "upper": 1200
-                        }
-                    },
-                    {
-                        "label": "High: 1200mm-1620 mm",
-                        "value": {
-                            "lower": 1200,
-                            "upper": 1620
-                        }
-                    },
-                    {
-                        "label": "Very high: >1620 mm",
-                        "value": {
-                            "lower": 1620,
-                            "upper": 9999999999
-                        }
-                    }
-                ],
-                "layer_store": [
-                    "mws_layers"
-                ],
-                "layer_name": [
-                    "deltaG_well_depth"
-                ],
-                "vectorStyle": [
-                    {
-                        "fill": "rgba(176, 224, 230, 0.8)",
-                        "stroke": "rgba(176, 224, 230, 1)",
-                        "lower": 0,
-                        "upper": 740
-                    },
-                    {
-                        "fill": "rgba(135, 206, 250, 0.8)",
-                        "stroke": "rgba(135, 206, 250, 1)",
-                        "lower": 740,
-                        "upper": 960
-                    },
-                    {
-                        "fill": "rgba(43, 147, 250, 0.8)",
-                        "stroke": "rgba(43, 147, 250, 1)",
-                        "lower": 960,
-                        "upper": 1200
-                    },
-                    {
-                        "fill": "rgba(3, 107, 210, 0.8)",
-                        "stroke": "rgba(3, 107, 210, 1)",
-                        "lower": 1200,
-                        "upper": 1620
-                    },
-                    {
-                        "fill": "rgba(0, 64, 128, 0.8)",
-                        "stroke": "rgba(0, 64, 128, 1)",
-                        "lower": 1620,
-                        "upper": 9999999999
-                    }
-                ],
-                "rasterStyle": "",
-                "styleIdx": 1
-            },
-            {
-                "name": "avg_runoff",
-                "label": "Average runoff over the years 2017 to 2024",
-                "type": 2,
-                "values": [
-                    {
-                        "label": "Less than 100mm",
-                        "value": {
-                            "lower": 0,
-                            "upper": 100
-                        }
-                    },
-                    {
-                        "label": "Between 100mm to 300mm",
-                        "value": {
-                            "lower": 100,
-                            "upper": 300
-                        }
-                    },
-                    {
-                        "label": "More than 300mm",
-                        "value": {
-                            "lower": 300,
-                            "upper": 9999999999
-                        }
-                    }
-                ],
-                "layer_store": [
-                    "mws_layers"
-                ],
-                "layer_name": [
-                    "deltaG_well_depth"
-                ],
-                "vectorStyle": [
-                    {
-                        "fill": "rgba(128, 229, 230, 0.8)",
-                        "stroke": "rgba(128, 229, 230, 1)",
-                        "lower": 0,
-                        "upper": 100
-                    },
-                    {
-                        "fill": "rgba(0, 206, 209, 0.8)",
-                        "stroke": "rgba(0, 206, 209, 1)",
-                        "lower": 100,
-                        "upper": 300
-                    },
-                    {
-                        "fill": "rgba(0, 138, 140, 0.8)",
-                        "stroke": "rgba(0, 138, 140, 1)",
-                        "lower": 300,
-                        "upper": 9999999999
-                    }
-                ],
-                "rasterStyle": "",
-                "styleIdx": 3
-            },
-            {
-                "name": "drought_category",
-                "label": "Number of drought years from 2017 to 2024",
-                "type": 2,
-                "values": [
-                    {
-                        "label": "No Drought",
-                        "value": {
-                            "lower": 0,
-                            "upper": 0
-                        }
-                    },
-                    {
-                        "label": "At least one drought year",
-                        "value": {
-                            "lower": 1,
-                            "upper": 9999
-                        }
-                    },
-                    {
-                        "label": "At least two drought years",
-                        "value": {
-                            "lower": 2,
-                            "upper": 9999
-                        }
-                    }
-                ],
-                "layer_store": [
-                    "drought"
-                ],
-                "layer_name": [
-                    "drought"
-                ],
-                "vectorStyle": [
-                    {
-                        "fill": "rgba(244, 208, 63, 0.8)",
-                        "stroke": "rgba(244, 208, 63, 1)",
-                        "lower": 0,
-                        "upper": 0
-                    },
-                    {
-                        "fill": "rgba(231, 76, 60, 0.8)",
-                        "stroke": "rgba(231, 76, 60, 1)",
-                        "lower": 2,
-                        "upper": 99999
-                    },
-                    {
-                        "fill": "rgba(235, 152, 78, 0.8)",
-                        "stroke": "rgba(235, 152, 78, 1)",
-                        "lower": 1,
-                        "upper": 99999
-                    }
-                ],
-                "rasterStyle": "",
-                "styleIdx": 4
-            },
-            {
-                "name": "avg_number_dry_spell",
-                "label": "Average number of weeks of dry spells over the years 2017 to 2024",
-                "type": 2,
-                "values": [
-                    {
-                        "label": "No weeks of dry spells",
-                        "value": {
-                            "lower": 0,
-                            "upper": 1
-                        }
-                    },
-                    {
-                        "label": "At least one week of dry spell",
-                        "value": {
-                            "lower": 1,
-                            "upper": 999999999
-                        }
-                    },
-                    {
-                        "label": "At least two weeks of dry spells",
-                        "value": {
-                            "lower": 2,
-                            "upper": 9999999999
-                        }
-                    }
-                ],
-                "layer_store": [
-                    "drought"
-                ],
-                "layer_name": [
-                    "drought"
-                ],
-                "vectorStyle": [
-                    {
-                        "fill": "rgba(210, 180, 140, 0.8)",
-                        "stroke": "rgba(210, 180, 140, 1)",
-                        "lower": 0,
-                        "upper": 1
-                    },
-                    {
-                        "fill": "rgba(90, 46, 15, 0.8)",
-                        "stroke": "rgba(90, 46, 15, 1)",
-                        "lower": 2,
-                        "upper": 999999999
-                    },
-                    {
-                        "fill": "rgba(139, 69, 19, 0.8)",
-                        "stroke": "rgba(139, 69, 19, 1)",
-                        "lower": 1,
-                        "upper": 999999999
-                    }
-                ],
-                "rasterStyle": "",
-                "styleIdx": 2
-            }
-        ],
-        "Hydrology": [
-            {
-                "name": "avg_rabi_surface_water_mws",
-                "label": "Percentage of average surface water availability during Rabi from 2017 to 2024",
-                "type": 2,
-                "values": [
-                    {
-                        "label": "Less than 30%",
-                        "value": {
-                            "lower": 0,
-                            "upper": 30
-                        }
-                    },
-                    {
-                        "label": "Between 30% to 70%",
-                        "value": {
-                            "lower": 30,
-                            "upper": 70
-                        }
-                    },
-                    {
-                        "label": "More than 70%",
-                        "value": {
-                            "lower": 70,
-                            "upper": 999999
-                        }
-                    }
-                ],
-                "layer_store": [
-                    "mws_layers"
-                ],
-                "layer_name": [
-                    "deltaG_well_depth"
-                ],
-                "vectorStyle": [
-                    {
-                        "fill": "rgba(116, 204, 244, 0.8)",
-                        "stroke": "rgba(116, 204, 244, 1)",
-                        "lower": 0,
-                        "upper": 30
-                    },
-                    {
-                        "fill": "rgba(28, 163, 236, 0.8)",
-                        "stroke": "rgba(28, 163, 236, 1)",
-                        "lower": 30,
-                        "upper": 70
-                    },
-                    {
-                        "fill": "rgba(15, 94, 156, 0.8)",
-                        "stroke": "rgba(15, 94, 156, 1)",
-                        "lower": 70,
-                        "upper": 9999999
-                    }
-                ],
-                "rasterStyle": "",
-                "styleIdx": 26
-            },
-            {
-                "name": "avg_zaid_surface_water_mws",
-                "label": "Percentage of average surface water availability during Zaid from 2017 to 2024",
-                "type": 2,
-                "values": [
-                    {
-                        "label": "Less than 25%",
-                        "value": {
-                            "lower": 0,
-                            "upper": 25
-                        }
-                    },
-                    {
-                        "label": "Between 25%-50%",
-                        "value": {
-                            "lower": 25,
-                            "upper": 50
-                        }
-                    },
-                    {
-                        "label": "More than 50%",
-                        "value": {
-                            "lower": 50,
-                            "upper": 99999
-                        }
-                    }
-                ],
-                "layer_store": [
-                    "mws_layers"
-                ],
-                "layer_name": [
-                    "deltaG_well_depth"
-                ],
-                "vectorStyle": [
-                    {
-                        "fill": "rgba(116, 204, 244, 0.8)",
-                        "stroke": "rgba(116, 204, 244, 1)",
-                        "lower": 0,
-                        "upper": 25
-                    },
-                    {
-                        "fill": "rgba(28, 163, 236, 0.8)",
-                        "stroke": "rgba(28, 163, 236, 1)",
-                        "lower": 25,
-                        "upper": 50
-                    },
-                    {
-                        "fill": "rgba(15, 94, 156, 0.8)",
-                        "stroke": "rgba(15, 94, 156, 1)",
-                        "lower": 50,
-                        "upper": 9999999
-                    }
-                ],
-                "rasterStyle": "",
-                "styleIdx": 27
-            },
-            {
-                "name": "aquifer_class",
-                "label": "Aquifer type",
-                "type": 1,
-                "values": [
-                    {
-                        "label": "Hard rock",
-                        "value": 0
-                    },
-                    {
-                        "label": "Alluvial",
-                        "value": 1
-                    }
-                ],
-                "layer_store": [
-                    "aquifer"
-                ],
-                "layer_name": [
-                    "aquifer_vector"
-                ],
-                "vectorStyle": [
-                    {
-                        "fill": "rgba(255, 253, 181, 0.8)",
-                        "stroke": "rgba(255, 253, 181, 1)",
-                        "lower": 0,
-                        "upper": 0
-                    },
-                    {
-                        "fill": "rgba(243, 164, 37, 0.8)",
-                        "stroke": "rgba(243, 164, 37, 1)",
-                        "lower": 1,
-                        "upper": 1
-                    },
-                    {
-                        "fill": "rgba(153, 236, 241, 0.8)",
-                        "stroke": "rgba(153, 236, 241, 1)",
-                        "lower": 2,
-                        "upper": 2
-                    },
-                    {
-                        "fill": "rgba(165, 248, 197, 0.8)",
-                        "stroke": "rgba(165, 248, 197, 1)",
-                        "lower": 3,
-                        "upper": 3
-                    },
-                    {
-                        "fill": "rgba(245, 124, 153, 0.8)",
-                        "stroke": "rgba(245, 124, 153, 1)",
-                        "lower": 4,
-                        "upper": 4
-                    },
-                    {
-                        "fill": "rgba(232, 213, 46, 0.8)",
-                        "stroke": "rgba(232, 213, 46, 1)",
-                        "lower": 5,
-                        "upper": 5
-                    },
-                    {
-                        "fill": "rgba(60, 146, 242, 0.8)",
-                        "stroke": "rgba(60, 146, 242, 1)",
-                        "lower": 6,
-                        "upper": 6
-                    },
-                    {
-                        "fill": "rgba(213, 219, 33, 0.8)",
-                        "stroke": "rgba(213, 219, 33, 1)",
-                        "lower": 7,
-                        "upper": 7
-                    },
-                    {
-                        "fill": "rgba(207, 127, 244, 0.8)",
-                        "stroke": "rgba(207, 127, 244, 1)",
-                        "lower": 8,
-                        "upper": 8
-                    },
-                    {
-                        "fill": "rgba(244, 219, 255, 0.8)",
-                        "stroke": "rgba(244, 219, 255, 1)",
-                        "lower": 9,
-                        "upper": 9
-                    },
-                    {
-                        "fill": "rgba(80, 192, 43, 0.8)",
-                        "stroke": "rgba(80, 192, 43, 1)",
-                        "lower": 10,
-                        "upper": 10
-                    },
-                    {
-                        "fill": "rgba(255, 225, 181, 0.8)",
-                        "stroke": "rgba(255, 225, 181, 1)",
-                        "lower": 11,
-                        "upper": 11
-                    },
-                    {
-                        "fill": "rgba(228, 207, 241, 0.8)",
-                        "stroke": "rgba(228, 207, 241, 1)",
-                        "lower": 12,
-                        "upper": 12
-                    },
-                    {
-                        "fill": "rgba(87, 210, 255, 0.8)",
-                        "stroke": "rgba(87, 210, 255, 1)",
-                        "lower": 13,
-                        "upper": 13
-                    }
-                ],
-                "rasterStyle": "",
-                "styleIdx": 11
-            },
-            {
-                "name": "soge_class",
-                "label": "Stage of groundwater extraction",
-                "type": 1,
-                "values": [
-                    {
-                        "label": "Safe",
-                        "value": 0
-                    },
-                    {
-                        "label": "Semi-Critical",
-                        "value": 1
-                    },
-                    {
-                        "label": "Critical",
-                        "value": 2
-                    },
-                    {
-                        "label": "Over-exploited",
-                        "value": 3
-                    },
-                    {
-                        "label": "Not Assessed",
-                        "value": 4
-                    }
-                ],
-                "layer_store": [
-                    "soge"
-                ],
-                "layer_name": [
-                    "soge_vector"
-                ],
-                "vectorStyle": [
-                    {
-                        "fill": "rgba(255, 255, 255, 1)",
-                        "stroke": "rgba(255, 255, 255, 1)",
-                        "lower": 0,
-                        "upper": 0
-                    },
-                    {
-                        "fill": "rgba(116, 204, 244,, 0.8)",
-                        "stroke": "rgba(116, 204, 244,, 1)",
-                        "lower": 1,
-                        "upper": 1
-                    },
-                    {
-                        "fill": "rgba(69, 117, 180, 0.8)",
-                        "stroke": "rgba(69, 117, 180, 1)",
-                        "lower": 2,
-                        "upper": 2
-                    },
-                    {
-                        "fill": "rgba(49, 54, 149, 0.8)",
-                        "stroke": "rgba(49, 54, 149, 1)",
-                        "lower": 3,
-                        "upper": 3
-                    },
-                    {
-                        "fill": "rgba(169, 169, 169, 0.8)",
-                        "stroke": "rgba(169, 169, 169, 1)",
-                        "lower": 4,
-                        "upper": 4
-                    }
-                ],
-                "rasterStyle": "",
-                "styleIdx": 12
-            },
-            {
-                "name": "trend_g",
-                "label": "Water balance trend over the years 2017 to 2024",
-                "type": 1,
-                "values": [
-                    {
-                        "label": "Positive Trend",
-                        "value": "1"
-                    },
-                    {
-                        "label": "Negative Trend",
-                        "value": "-1"
-                    },
-                    {
-                        "label": "No Trend",
-                        "value": "0"
-                    }
-                ],
-                "layer_store": [
-                    "mws_layers"
-                ],
-                "layer_name": [
-                    "deltaG_well_depth"
-                ],
-                "vectorStyle": [
-                    {
-                        "fill": "rgba(156, 163, 175, 0.8)",
-                        "stroke": "rgba(156, 163, 175, 1)",
-                        "lower": 0,
-                        "upper": 0
-                    },
-                    {
-                        "fill": "rgba(34, 197, 94, 0.8)",
-                        "stroke": "rgba(34, 197, 94, 1)",
-                        "lower": 1,
-                        "upper": 1
-                    },
-                    {
-                        "fill": "rgba(239, 68, 68, 0.8)",
-                        "stroke": "rgba(239, 68, 68, 1)",
-                        "lower": -1,
-                        "upper": -1
-                    }
-                ],
-                "rasterStyle": "",
-                "styleIdx": 10
-            }
-        ],
-        "Agriculture": [
-            {
-                "name": "avg_double_cropped",
-                "label": "Average percentage of double cropped area over the years 2017 to 2025",
-                "type": 2,
-                "values": [
-                    {
-                        "label": "Less than 30%",
-                        "value": {
-                            "lower": 0,
-                            "upper": 30
-                        }
-                    },
-                    {
-                        "label": "Between 30% to 60%",
-                        "value": {
-                            "lower": 30,
-                            "upper": 60
-                        }
-                    },
-                    {
-                        "label": "More than 60%",
-                        "value": {
-                            "lower": 60,
-                            "upper": 999999
-                        }
-                    }
-                ],
-                "layer_store": [
-                    "LULC"
-                ],
-                "layer_name": [
-                    "level_3"
-                ],
-                "vectorStyle": [
-                    {}
-                ],
-                "rasterStyle": "",
-                "styleIdx": 0
-            },
-            {
-                "name": "degradation_land_area",
-                "label": "Cropping degradation",
-                "type": 2,
-                "values": [
-                    {
-                        "label": "Less than 30 hectares",
-                        "value": {
-                            "lower": 0,
-                            "upper": 30
-                        }
-                    },
-                    {
-                        "label": "Between 30 hectares to 90 hectares",
-                        "value": {
-                            "lower": 30,
-                            "upper": 90
-                        }
-                    },
-                    {
-                        "label": "More than 90 hectares",
-                        "value": {
-                            "lower": 90,
-                            "upper": 999999
-                        }
-                    }
-                ],
-                "layer_store": [
-                    "change_detection"
-                ],
-                "layer_name": [
-                    "Degradation"
-                ],
-                "vectorStyle": [
-                    {
-                        "fill": "rgba(115, 187, 83, 0.8)",
-                        "stroke": "rgba(115, 187, 83, 1)",
-                        "lower": 0,
-                        "upper": 30
-                    },
-                    {
-                        "fill": "rgba(238, 224, 93, 0.8)",
-                        "stroke": "rgba(238, 224, 93, 1)",
-                        "lower": 30,
-                        "upper": 90
-                    },
-                    {
-                        "fill": "rgba(255, 0, 0, 0.8)",
-                        "stroke": "rgba(255, 0, 0, 1)",
-                        "lower": 90,
-                        "upper": 9999999
-                    }
-                ],
-                "rasterStyle": [
-                    ""
-                ],
-                "styleIdx": 28
-            },
-            {
-                "name": "river_available",
-                "label": "River",
-                "type": 1,
-                "values": [
-                    {
-                        "label": "Present",
-                        "value": true
-                    },
-                    {
-                        "label": "Absent",
-                        "value": false
-                    }
-                ],
-                "layer_store": [
-                    "river"
-                ],
-                "layer_name": [
-                    "river_vector"
-                ],
-                "vectorStyle": [
-                    {
-                        "fill": "rgba(43, 147, 250, 0.8)",
-                        "stroke": "rgba(43, 147, 250, 1)"
-                    }
-                ],
-                "rasterStyle": "",
-                "styleIdx": 0
-            },
-            {
-                "name": "canal_available",
-                "label": "Canal",
-                "type": 1,
-                "values": [
-                    {
-                        "label": "Present",
-                        "value": true
-                    },
-                    {
-                        "label": "Absent",
-                        "value": false
-                    }
-                ],
-                "layer_store": [
-                    "canal"
-                ],
-                "layer_name": [
-                    "canal_vector"
-                ],
-                "vectorStyle": [
-                    {
-                        "fill": "rgba(43, 147, 250, 0.8)",
-                        "stroke": "rgba(43, 147, 250, 1)"
-                    }
-                ],
-                "rasterStyle": "",
-                "styleIdx": 0
-            }
-        ],
-        "Restoration": [
-            {
-                "name": "increase_in_tree_cover",
-                "label": "Increase in tree cover",
-                "type": 2,
-                "values": [
-                    {
-                        "label": "Less than 50 hectares",
-                        "value": {
-                            "lower": 0,
-                            "upper": 50
-                        }
-                    },
-                    {
-                        "label": "Between 50 to 100 hectares",
-                        "value": {
-                            "lower": 50,
-                            "upper": 100
-                        }
-                    },
-                    {
-                        "label": "More than 100 hectares",
-                        "value": {
-                            "lower": 100,
-                            "upper": 999999
-                        }
-                    }
-                ],
-                "layer_store": [
-                    "change_detection"
-                ],
-                "layer_name": [
-                    "Afforestation"
-                ],
-                "vectorStyle": [
-                    {
-                        "fill": "rgba(255, 0, 0, 0.8)",
-                        "stroke": "rgba(255, 0, 0, 1)",
-                        "lower": 0,
-                        "upper": 50
-                    },
-                    {
-                        "fill": "rgba(238, 224, 93, 0.8)",
-                        "stroke": "rgba(238, 224, 93, 1)",
-                        "lower": 50,
-                        "upper": 100
-                    },
-                    {
-                        "fill": "rgba(115, 187, 83, 0.8)",
-                        "stroke": "rgba(115, 187, 83, 1)",
-                        "lower": 100,
-                        "upper": 9999999
-                    }
-                ],
-                "rasterStyle": [
-                    ""
-                ],
-                "styleIdx": 14
-            },
-            {
-                "name": "increase_canopy_density_height",
-                "label": "Increase in canopy density and height",
-                "type": 2,
-                "values": [
-                    {
-                        "label": "<20%: Minimal",
-                        "value": {
-                            "lower": 0,
-                            "upper": 20
-                        }
-                    },
-                    {
-                        "label": "Between 20-40%: Considerable",
-                        "value": {
-                            "lower": 20,
-                            "upper": 40
-                        }
-                    },
-                    {
-                        "label": ">40%: Huge",
-                        "value": {
-                            "lower": 40,
-                            "upper": 9999999
-                        }
-                    }
-                ],
-                "layer_store": [
-                    "tree_overall_vector"
-                ],
-                "layer_name": [
-                    "overall_change_vector"
-                ],
-                "vectorStyle": [
-                     {
-                        "fill": "rgba(255, 0, 0, 0.8)",
-                        "stroke": "rgba(255, 0, 0, 1)",
-                        "lower": 0,
-                        "upper": 20
-                    },
-                    {
-                        "fill": "rgba(238, 224, 93, 0.8)",
-                        "stroke": "rgba(238, 224, 93, 1)",
-                        "lower": 20,
-                        "upper": 40
-                    },
-                    {
-                        "fill": "rgba(115, 187, 83, 0.8)",
-                        "stroke": "rgba(115, 187, 83, 1)",
-                        "lower": 40,
-                        "upper": 9999999
-                    }
-                ],
-                "rasterStyle": [
-                    ""
-                ],
-                "styleIdx": 60
-            },
-            {
-                "name": "decrease_in_tree_cover",
-                "label": "Reduction in tree cover",
-                "type": 2,
-                "values": [
-                    {
-                        "label": "Less than 50 hectares",
-                        "value": {
-                            "lower": 0,
-                            "upper": 50
-                        }
-                    },
-                    {
-                        "label": "Between 50 to 100 hectares",
-                        "value": {
-                            "lower": 50,
-                            "upper": 100
-                        }
-                    },
-                    {
-                        "label": "More than 100 hectares",
-                        "value": {
-                            "lower": 100,
-                            "upper": 999999
-                        }
-                    }
-                ],
-                "layer_store": [
-                    "change_detection"
-                ],
-                "layer_name": [
-                    "Deforestation"
-                ],
-                "vectorStyle": [
-                    {
-                        "fill": "rgba(115, 187, 83, 0.8)",
-                        "stroke": "rgba(115, 187, 83, 1)",
-                        "lower": 0,
-                        "upper": 50
-                    },
-                    {
-                        "fill": "rgba(238, 224, 93, 0.8)",
-                        "stroke": "rgba(238, 224, 93, 1)",
-                        "lower": 50,
-                        "upper": 100
-                    },
-                    {
-                        "fill": "rgba(255, 0, 0, 0.8)",
-                        "stroke": "rgba(255, 0, 0, 1)",
-                        "lower": 100,
-                        "upper": 9999999
-                    }
-                ],
-                "rasterStyle": [
-                    ""
-                ],
-                "styleIdx": 13
-            },
-            {
-                "name": "reduction_canopy_density_height",
-                "label": "Reduction in canopy density and height",
-                "type": 2,
-                "values": [
-                    {
-                        "label": "<5%: Minimal",
-                        "value": {
-                            "lower": 0,
-                            "upper": 5
-                        }
-                    },
-                    {
-                        "label": "Between 5-15%: Considerable",
-                        "value": {
-                            "lower": 5,
-                            "upper": 15
-                        }
-                    },
-                    {
-                        "label": ">15%: Huge",
-                        "value": {
-                            "lower": 15,
-                            "upper": 9999999
-                        }
-                    }
-                ],
-                "layer_store": [
-                    "tree_overall_vector"
-                ],
-                "layer_name": [
-                    "overall_change_vector"
-                ],
-                "vectorStyle": [
-                     {
-                        "fill": "rgba(115, 187, 83, 0.8)",
-                        "stroke": "rgba(115, 187, 83, 1)",
-                        "lower": 0,
-                        "upper": 5
-                    },
-                    {
-                        "fill": "rgba(238, 224, 93, 0.8)",
-                        "stroke": "rgba(238, 224, 93, 1)",
-                        "lower": 5,
-                        "upper": 15
-                    },
-                    {
-                        "fill": "rgba(255, 0, 0, 0.8)",
-                        "stroke": "rgba(255, 0, 0, 1)",
-                        "lower": 15,
-                        "upper": 9999999
-                    }
-                ],
-                "rasterStyle": [
-                    ""
-                ],
-                "styleIdx": 61
-            },        
-            {
-                "name": "area_wide_scale_restoration",
-                "label": "Area with potential for wide-scale restoration",
-                "type": 2,
-                "values": [
-                    {
-                        "label": "Less than 200 hectares",
-                        "value": {
-                            "lower": 0,
-                            "upper": 200
-                        }
-                    },
-                    {
-                        "label": "Between 200 to 600 hectares",
-                        "value": {
-                            "lower": 200,
-                            "upper": 600
-                        }
-                    },
-                    {
-                        "label": "More than 600 hectares",
-                        "value": {
-                            "lower": 600,
-                            "upper": 999999
-                        }
-                    }
-                ],
-                "layer_store": [
-                    "restoration"
-                ],
-                "layer_name": [
-                    "restoration"
-                ],
-                "vectorStyle": [
-                    {}
-                ],
-                "rasterStyle": [
-                    "restoration_style"
-                ],
-                "styleIdx": 0
-            },
-            {
-                "name": "area_protection",
-                "label": "Area with potential for protection",
-                "type": 2,
-                "values": [
-                    {
-                        "label": "Less than 400 hectares",
-                        "value": {
-                            "lower": 0,
-                            "upper": 400
-                        }
-                    },
-                    {
-                        "label": "Between 400 to 800 hectares",
-                        "value": {
-                            "lower": 400,
-                            "upper": 800
-                        }
-                    },
-                    {
-                        "label": "More than 800 hectares",
-                        "value": {
-                            "lower": 800,
-                            "upper": 9999999
-                        }
-                    }
-                ],
-                "layer_store": [
-                    "restoration"
-                ],
-                "layer_name": [
-                    "restoration"
-                ],
-                "vectorStyle": [
-                    {}
-                ],
-                "rasterStyle": [
-                    "restoration_style"
-                ],
-                "styleIdx": 0
-            },
-            {
-                "name": "green_credit",
-                "label": "Green Credits",
-                "type": 1,
-                "values": [
-                    {
-                        "label": "Has green credits projects",
-                        "value": 1
-                    },
-                    {
-                        "label": "No known green credits projects",
-                        "value": 0
-                    }
-                ],
-                "layer_store": [
-                    "green_credit"
-                ],
-                "layer_name": [
-                    "green_credit"
-                ],
-                "vectorStyle": [
-                    {
-                        "fill": "rgba(20, 209, 29, 0.6)",
-                        "stroke": "rgbargba(20, 209, 29, 1)"
-                    }
-                ],
-                "rasterStyle": [
-                    ""
-                ],
-                "styleIdx": 0
-            }
-        ],
-        "Industry": [
-            {
-                "name": "lcw_conflict",
-                "label": "Land Conflicts",
-                "type": 2,
-                "values": [
-                    {
-                        "label": "Areas with one or more conflicts",
-                        "value": {
-                            "lower": 1,
-                            "upper": 9999
-                        }
-                    },
-                    {
-                        "label": "Areas with no known conflicts",
-                        "value": {
-                            "lower": -9999,
-                            "upper": 0
-                        }
-                    }
-                ],
-                "layer_store": [
-                    "lcw"
-                ],
-                "layer_name": [
-                    "lcw_conflict"
-                ],
-                "vectorStyle": [
-                    {}
-                ],
-                "rasterStyle": [
-                    ""
-                ],
-                "styleIdx": 0
-            },
-            {
-                "name": "factory_csr",
-                "label": "Industry",
-                "type": 2,
-                "values": [
-                    {
-                        "label": "Areas with industries",
-                        "value": {
-                            "lower": 1,
-                            "upper": 9999
-                        }
-                    },
-                    {
-                        "label": "Areas with no known industries",
-                        "value": {
-                            "lower": -9999,
-                            "upper": 0
-                        }
-                    }
-                ],
-                "layer_store": [
-                    "factory_csr"
-                ],
-                "layer_name": [
-                    "factory_csr"
-                ],
-                "vectorStyle": [
-                    {}
-                ],
-                "rasterStyle": [
-                    ""
-                ],
-                "styleIdx": 0
-            },
-            {
-                "name": "mining",
-                "label": "Mining",
-                "type": 2,
-                "values": [
-                    {
-                        "label": "Areas with mining sites",
-                        "value": {
-                            "lower": 1,
-                            "upper": 9999
-                        }
-                    },
-                    {
-                        "label": "Areas with no known mining sites",
-                        "value": {
-                            "lower": -9999,
-                            "upper": 0
-                        }
-                    }
-                ],
-                "layer_store": [
-                    "mining"
-                ],
-                "layer_name": [
-                    "mining"
-                ],
-                "vectorStyle": [
-                    {}
-                ],
-                "rasterStyle": [
-                    ""
-                ],
-                "styleIdx": 0
-            }
-        ]
-    },
-    "Waterbody": {
-        "Waterbody": [
-            {
-                "name": "waterbody_type",
-                "label": "Waterbody Type",
-                "type": 1,
-                "values": [
-                    {
-                        "label": "On river",
-                        "value": 1
-                    },
-                    {
-                        "label": "Off river",
-                        "value": 0
-                    }
-                ],
-                "layer_store": [
-                    "swb"
-                ],
-                "layer_name": [
-                    "surface_waterbodies"
-                ],
-                "vectorStyle": [
-                    {}
-                ],
-                "rasterStyle": "",
-                "styleIdx": 2
-            },
-            {
-                "name": "waterbody_size",
-                "label": "Size of Waterbody",
-                "type": 2,
-                "values": [
-                    {
-                        "label": "WB < 1 ha",
-                        "value": {
-                            "lower": 0,
-                            "upper": 1
-                        }
-                    },
-                    {
-                        "label": "1 ha < WB < 5 ha",
-                        "value": {
-                            "lower": 1,
-                            "upper": 5
-                        }
-                    },
-                    {
-                        "label": "5 ha < WB < 10 ha",
-                        "value": {
-                            "lower": 5,
-                            "upper": 10
-                        }
-                    },
-                    {
-                        "label": "WB > 10 ha",
-                        "value": {
-                            "lower": 10,
-                            "upper": 999999
-                        }
-                    }
-                ],
-                "layer_store": [
-                    "swb"
-                ],
-                "layer_name": [
-                    "surface_waterbodies"
-                ],
-                "vectorStyle": [
-                    {}
-                ],
-                "rasterStyle": "",
-                "styleIdx": 0
-            },
-            {
-                "name": "surface_water_trend",
-                "label": "Surface Water Trend",
-                "type": 1,
-                "values": [
-                    {
-                        "label": "Positive Trend",
-                        "value": 1
-                    },
-                    {
-                        "label": "Negative Trend",
-                        "value": -1
-                    },
-                    {
-                        "label": "Steady",
-                        "value": 0
-                    }
-                ],
-                "layer_store": [
-                    "swb"
-                ],
-                "layer_name": [
-                    "surface_waterbodies"
-                ],
-                "vectorStyle": [
-                    {}
-                ],
-                "rasterStyle": "",
-                "styleIdx": 1
-            },
-            {
-                "name": "drainage_line",
-                "label": "Drainage Line",
-                "type": 1,
-                "values": [
-                    {
-                        "label": "On drainage line",
-                        "value": 1
-                    },
-                    {
-                        "label": "Off drainage line",
-                        "value": 0
-                    }
-                ],
-                "layer_store": [
-                    "swb"
-                ],
-                "layer_name": [
-                    "surface_waterbodies"
-                ],
-                "vectorStyle": [
-                    {}
-                ],
-                "rasterStyle": "",
-                "styleIdx": 2
-            }
-        ]
-    },
-    "Village": {
-        "Demographic": [
-            {
-                "name": "total_population",
-                "label": "Total Population Count",
-                "type": 2,
-                "values": [
-                    {
-                        "label": "Less than 800",
-                        "value": {
-                            "lower": 0,
-                            "upper": 800
-                        }
-                    },
-                    {
-                        "label": "Between 800 to 2400",
-                        "value": {
-                            "lower": 800,
-                            "upper": 2400
-                        }
-                    },
-                    {
-                        "label": "Between 2400 - 8900",
-                        "value": {
-                            "lower": 2400,
-                            "upper": 8900
-                        }
-                    },
-                    {
-                        "label": "More than 8900",
-                        "value": {
-                            "lower": 8900,
-                            "upper": 9999999999
-                        }
-                    }
-                ],
-                "layer_store": [
-                    "panchayat_boundaries"
-                ],
-                "layer_name": [],
-                "vectorStyle": [
-                    {
-                        "fill": "rgba(192, 128, 129, 0.8)",
-                        "stroke": "rgba(192, 128, 129, 1)",
-                        "lower": 0,
-                        "upper": 800
-                    },
-                    {
-                        "fill": "rgba(128, 0, 32, 0.8)",
-                        "stroke": "rgba(128, 0, 32, 1)",
-                        "lower": 800,
-                        "upper": 2400
-                    },
-                    {
-                        "fill": "rgba(91, 14, 45, 0.8)",
-                        "stroke": "rgba(91, 14, 45, 1)",
-                        "lower": 2400,
-                        "upper": 8900
-                    },
-                    {
-                        "fill": "rgba(61, 0, 15, 0.8)",
-                        "stroke": "rgba(61, 0, 15, 1)",
-                        "lower": 8900,
-                        "upper": 9999999999
-                    }
-                ],
-                "rasterStyle": "",
-                "styleIdx": 5
-            },
-            {
-                "name": "percent_st_population",
-                "label": "Percentage ST population",
-                "type": 2,
-                "values": [
-                    {
-                        "label": "Less than 18%",
-                        "value": {
-                            "lower": 0,
-                            "upper": 18
-                        }
-                    },
-                    {
-                        "label": "Between 18% to 33%",
-                        "value": {
-                            "lower": 18,
-                            "upper": 33
-                        }
-                    },
-                    {
-                        "label": "More than 33%",
-                        "value": {
-                            "lower": 33,
-                            "upper": 999999999
-                        }
-                    }
-                ],
-                "layer_store": [
-                    "panchayat_boundaries"
-                ],
-                "layer_name": [],
-                "vectorStyle": [
-                    {
-                        "fill": "rgba(238, 234, 197, 0.8)",
-                        "stroke": "rgba(238, 234, 197, 1)",
-                        "lower": 0,
-                        "upper": 18
-                    },
-                    {
-                        "fill": "rgba(247, 219, 165, 0.8)",
-                        "stroke": "rgba(247, 219, 165, 1)",
-                        "lower": 18,
-                        "upper": 33
-                    },
-                    {
-                        "fill": "rgba(236, 181, 115, 0.8)",
-                        "stroke": "rgba(236, 181, 115, 1)",
-                        "lower": 33,
-                        "upper": 999999999
-                    }
-                ],
-                "rasterStyle": "",
-                "styleIdx": 6
-            },
-            {
-                "name": "percent_sc_population",
-                "label": "Percentage SC population",
-                "type": 2,
-                "values": [
-                    {
-                        "label": "Less than 5%",
-                        "value": {
-                            "lower": 0,
-                            "upper": 5
-                        }
-                    },
-                    {
-                        "label": "Between 5% to 17%",
-                        "value": {
-                            "lower": 5,
-                            "upper": 17
-                        }
-                    },
-                    {
-                        "label": "Between 17% to 37%",
-                        "value": {
-                            "lower": 17,
-                            "upper": 37
-                        }
-                    },
-                    {
-                        "label": "More than 37%",
-                        "value": {
-                            "lower": 37,
-                            "upper": 100
-                        }
-                    }
-                ],
-                "layer_store": [
-                    "panchayat_boundaries"
-                ],
-                "layer_name": [],
-                "vectorStyle": [
-                    {
-                        "fill": "rgba(230, 230, 250, 0.8)",
-                        "stroke": "rgba(230, 230, 250, 1)",
-                        "lower": 0,
-                        "upper": 5
-                    },
-                    {
-                        "fill": "rgba(218, 112, 214, 0.8)",
-                        "stroke": "rgba(218, 112, 214, 1)",
-                        "lower": 5,
-                        "upper": 17
-                    },
-                    {
-                        "fill": "rgba(120, 81, 169, 0.8)",
-                        "stroke": "rgba(120, 81, 169, 1)",
-                        "lower": 17,
-                        "upper": 37
-                    },
-                    {
-                        "fill": "rgba(75, 0, 130, 0.8)",
-                        "stroke": "rgba(75, 0, 130, 1)",
-                        "lower": 37,
-                        "upper": 100
-                    }
-                ],
-                "rasterStyle": "",
-                "styleIdx": 7
-            },
-            {
-                "name": "literacy_level",
-                "label": "Percentage literacy levels",
-                "type": 2,
-                "values": [
-                    {
-                        "label": "Less than 46%",
-                        "value": {
-                            "lower": 0,
-                            "upper": 46
-                        }
-                    },
-                    {
-                        "label": "Between 46% to 59%",
-                        "value": {
-                            "lower": 46,
-                            "upper": 59
-                        }
-                    },
-                    {
-                        "label": "Between 59% to 70%",
-                        "value": {
-                            "lower": 59,
-                            "upper": 70
-                        }
-                    },
-                    {
-                        "label": "More than 70%",
-                        "value": {
-                            "lower": 70,
-                            "upper": 999999999
-                        }
-                    }
-                ],
-                "layer_store": [
-                    "panchayat_boundaries"
-                ],
-                "layer_name": [],
-                "vectorStyle": [
-                    {
-                        "fill": "rgba(152, 251, 152, 0.8)",
-                        "stroke": "rgba(152, 251, 152, 1)",
-                        "lower": 0,
-                        "upper": 46
-                    },
-                    {
-                        "fill": "rgba(50, 205, 50, 0.8)",
-                        "stroke": "rgba((50, 205, 50, 1)",
-                        "lower": 46,
-                        "upper": 59
-                    },
-                    {
-                        "fill": "rgba(34, 139, 34, 0.8)",
-                        "stroke": "rgba(34, 139, 34, 1)",
-                        "lower": 59,
-                        "upper": 70
-                    },
-                    {
-                        "fill": "rgba(0, 100, 0, 0.8)",
-                        "stroke": "rgba(0, 100, 0, 1)",
-                        "lower": 70,
-                        "upper": 999999999
-                    }
-                ],
-                "rasterStyle": "",
-                "styleIdx": 8
-            }
-        ],
-        "Education Access": [
-            {
-                "name": "essential_education_infra",
-                "label": "Primary education institutions",
-                "type": 2,
-                "values": [
-                    {
-                        "label": "Within 2 kms",
-                        "value": {
-                            "lower": 0,
-                            "upper": 2
-                        }
-                    },
-                    {
-                        "label": "More than 2 kms",
-                        "value": {
-                            "lower": 2,
-                            "upper": 9999999999
-                        }
-                    }
-                ],
-                "layer_store": [
-                    "facilities_proximity"
-                ],
-                "layer_name": [
-                    "facilities"
-                ],
-                "vectorStyle": [
-                    {
-                        "fill": "rgba(255, 249, 196, 0.8)",
-                        "stroke": "rgba(255, 249, 196, 1)",
-                        "lower": 0,
-                        "upper": 2
-                    },
-                    {
-                        "fill": "rgba(255, 193, 7, 0.8)",
-                        "stroke": "rgba(255, 193, 7, 1)",
-                        "lower": 2,
-                        "upper": 9999999999
-                    }
-                ],
-                "rasterStyle": "",
-                "styleIdx": 15
-            },
-            {
-                "name": "higher_education_infra",
-                "label": "Higher education institutions",
-                "type": 2,
-                "values": [
-                    {
-                        "label": "Within 3 kms",
-                        "value": {
-                            "lower": 0,
-                            "upper": 3
-                        }
-                    },
-                    {
-                        "label": "More than 3 kms",
-                        "value": {
-                            "lower": 3,
-                            "upper": 9999999999
-                        }
-                    }
-                ],
-                "layer_store": [
-                    "facilities_proximity"
-                ],
-                "layer_name": [
-                    "facilities"
-                ],
-                "vectorStyle": [
-                    {
-                        "fill": "rgba(232, 238, 186, 0.8)",
-                        "stroke": "rgba(232, 238, 186, 1)",
-                        "lower": 0,
-                        "upper": 3
-                    },
-                    {
-                        "fill": "rgba(137, 151, 10, 0.8)",
-                        "stroke": "rgba(137, 151, 10, 1)",
-                        "lower": 3,
-                        "upper": 9999999999
-                    }
-                ],
-                "rasterStyle": "",
-                "styleIdx": 16
-            }
-        ],
-        "Essential Infrastructure Availability" : [
-            {
-                "name": "road_connectivity_cat_cluster",
-                "label": "Road Connectivity",
-                "type": 1,
-                "values": [
-                    {
-                        "label": "Poor",
-                        "value": "LOW"
-                    },
-                    {
-                        "label": "Moderate",
-                        "value": "MEDIUM"
-                    },
-                    {
-                        "label": "Strong",
-                        "value": "HIGH"
-                    }
-                ],
-                "layer_store": ["antyodaya_2020"],
-                "layer_name": ["antyodaya20"],
-                "vectorStyle": [
-                {
-                    "fill": "rgba(220, 20, 60, 0.8)",
-                    "stroke": "rgba(139, 0, 0, 1)",
-                    "lower": 0,
-                    "upper": 0.33
-                },
-                {
-                    "fill": "rgba(255, 215, 0, 0.8)",
-                    "stroke": "rgba(218, 165, 32, 1)",
-                    "lower": 0.330001,
-                    "upper": 0.66
-                },
-                {
-                    "fill": "rgba(144, 238, 144, 0.8)",
-                    "stroke": "rgba(34, 139, 34, 1)",
-                    "lower": 0.660001,
-                    "upper": 1
-                }
-            ],
-                "rasterStyle": [],
-                "styleIdx": 40
-            },
-            {
-                "name": "energy_access_cat_cluster",
-                "label": "Electricity Supply",
-                "type": 1,
-                "values": [
-                    {
-                        "label": "Poor",
-                        "value": "LOW"
-                    },
-                    {
-                        "label": "Moderate",
-                        "value": "MEDIUM"
-                    },
-                    {
-                        "label": "Strong",
-                        "value": "HIGH"
-                    }
-                ],
-                "layer_store": ["antyodaya_2020"],
-                "layer_name": ["antyodaya20"],
-                "vectorStyle": [
-                    {
-                        "fill": "rgba(220, 20, 60, 0.8)",
-                        "stroke": "rgba(139, 0, 0, 1)",
-                        "lower": 0,
-                        "upper": 0.33
-                    },
-                    {
-                        "fill": "rgba(255, 215, 0, 0.8)",
-                        "stroke": "rgba(218, 165, 32, 1)",
-                        "lower": 0.330001,
-                        "upper": 0.66
-                    },
-                    {
-                        "fill": "rgba(144, 238, 144, 0.8)",
-                        "stroke": "rgba(34, 139, 34, 1)",
-                        "lower": 0.660001,
-                        "upper": 1
-                    }
-                ],
-                "rasterStyle": [],
-                "styleIdx": 41
-            },
-            {
-                "name": "housing_quality_cat_cluster",
-                "label": "Housing Quality",
-                "type": 1,
-                "values": [
-                    {
-                        "label": "Poor",
-                        "value": "LOW"
-                    },
-                    {
-                        "label": "Moderate",
-                        "value": "MEDIUM"
-                    },
-                    {
-                        "label": "Strong",
-                        "value": "HIGH"
-                    }
-                ],
-                "layer_store": ["antyodaya_2020"],
-                "layer_name": ["antyodaya20"],
-                "vectorStyle": [
-                    {
-                        "fill": "rgba(220, 20, 60, 0.8)",
-                        "stroke": "rgba(139, 0, 0, 1)",
-                        "lower": 0,
-                        "upper": 0.33
-                    },
-                    {
-                        "fill": "rgba(255, 215, 0, 0.8)",
-                        "stroke": "rgba(218, 165, 32, 1)",
-                        "lower": 0.330001,
-                        "upper": 0.66
-                    },
-                    {
-                        "fill": "rgba(144, 238, 144, 0.8)",
-                        "stroke": "rgba(34, 139, 34, 1)",
-                        "lower": 0.660001,
-                        "upper": 1
-                    }
-                ],
-                "rasterStyle": [],
-                "styleIdx": 42
-            }
-        ],
-        "Healthcare Access" : [
-            {
-                "name": "maternal_child_health_cat_cluster",
-                "label": "Maternal and Child Health Service Access",
-                "type": 1,
-                "values": [
-                    {
-                        "label": "Poor",
-                        "value": "LOW"
-                    },
-                    {
-                        "label": "Moderate",
-                        "value": "MEDIUM"
-                    },
-                    {
-                        "label": "Strong",
-                        "value": "HIGH"
-                    }
-                ],
-                "layer_store": ["antyodaya_2020"],
-                "layer_name": ["antyodaya20"],
-                "vectorStyle": [
-                    {
-                        "fill": "rgba(220, 20, 60, 0.8)",
-                        "stroke": "rgba(139, 0, 0, 1)",
-                        "lower": 0,
-                        "upper": 0.33
-                    },
-                    {
-                        "fill": "rgba(255, 215, 0, 0.8)",
-                        "stroke": "rgba(218, 165, 32, 1)",
-                        "lower": 0.330001,
-                        "upper": 0.66
-                    },
-                    {
-                        "fill": "rgba(144, 238, 144, 0.8)",
-                        "stroke": "rgba(34, 139, 34, 1)",
-                        "lower": 0.660001,
-                        "upper": 1
-                    }
-                ],
-                "rasterStyle": [],
-                "styleIdx": 43
-            },
-            {
-                "name": "water_sanitation_cat_cluster",
-                "label": "Water and Sanitation Infrastructure",
-                "type": 1,
-                "values": [
-                    {
-                        "label": "Poor",
-                        "value": "LOW"
-                    },
-                    {
-                        "label": "Moderate",
-                        "value": "MEDIUM"
-                    },
-                    {
-                        "label": "Strong",
-                        "value": "HIGH"
-                    }
-                ],
-                "layer_store": ["antyodaya_2020"],
-                "layer_name": ["antyodaya20"],
-                "vectorStyle": [
-                    {
-                        "fill": "rgba(220, 20, 60, 0.8)",
-                        "stroke": "rgba(139, 0, 0, 1)",
-                        "lower": 0,
-                        "upper": 0.33
-                    },
-                    {
-                        "fill": "rgba(255, 215, 0, 0.8)",
-                        "stroke": "rgba(218, 165, 32, 1)",
-                        "lower": 0.330001,
-                        "upper": 0.66
-                    },
-                    {
-                        "fill": "rgba(144, 238, 144, 0.8)",
-                        "stroke": "rgba(34, 139, 34, 1)",
-                        "lower": 0.660001,
-                        "upper": 1
-                    }
-                ],
-                "rasterStyle": [],
-                "styleIdx": 44
-            },
-            {
-                "name": "essential_health_services",
-                "label": "Essential health services",
-                "type": 2,
-                "values": [
-                    {
-                        "label": "Less than 2 kms",
-                        "value": {
-                            "lower": 0,
-                            "upper": 2
-                        }
-                    },
-                    {
-                        "label": "Between 2 to 5 kms",
-                        "value": {
-                            "lower": 2,
-                            "upper": 5
-                        }
-                    },
-                    {
-                        "label": "More than 5 kms",
-                        "value": {
-                            "lower": 5,
-                            "upper": 9999999999
-                        }
-                    }
-                ],
-                "layer_store": [
-                    "facilities_proximity"
-                ],
-                "layer_name": [
-                    "facilities"
-                ],
-                "vectorStyle": [
-                    {
-                        "fill": "rgba(255, 205, 210, 0.8)",
-                        "stroke": "rgba(255, 205, 210, 1)",
-                        "lower": 0,
-                        "upper": 2
-                    },
-                    {
-                        "fill": "rgba(239, 83, 80, 0.8)",
-                        "stroke": "rgba(239, 83, 80, 1)",
-                        "lower": 2,
-                        "upper": 5
-                    },
-                    {
-                        "fill": "rgba(183, 28, 28, 0.8)",
-                        "stroke": "rgba(183, 28, 28, 1)",
-                        "lower": 5,
-                        "upper": 9999999999
-                    }
-                ],
-                "rasterStyle": "",
-                "styleIdx": 17
-            },
-            {
-                "name": "advanced_health_services",
-                "label": "Advanced health services",
-                "type": 2,
-                "values": [
-                    {
-                        "label": "<10 kms",
-                        "value": {
-                            "lower": 0,
-                            "upper": 10
-                        }
-                    },
-                    {
-                        "label": "10-25 kms",
-                        "value": {
-                            "lower": 10,
-                            "upper": 25
-                        }
-                    },
-                    {
-                        "label": ">25 kms",
-                        "value": {
-                            "lower": 25,
-                            "upper": 9999999999
-                        }
-                    }
-                ],
-                "layer_store": [
-                    "facilities_proximity"
-                ],
-                "layer_name": [
-                    "facilities"
-                ],
-                "vectorStyle": [
-                    {
-                        "fill": "rgba(255, 205, 210, 0.8)",
-                        "stroke": "rgba(255, 205, 210, 1)",
-                        "lower": 0,
-                        "upper": 10
-                    },
-                    {
-                        "fill": "rgba(239, 83, 80, 0.8)",
-                        "stroke": "rgba(239, 83, 80, 1)",
-                        "lower": 10,
-                        "upper": 25
-                    },
-                    {
-                        "fill": "rgba(183, 28, 28, 0.8)",
-                        "stroke": "rgba(183, 28, 28, 1)",
-                        "lower": 25,
-                        "upper": 9999999999
-                    }
-                ],
-                "rasterStyle": "",
-                "styleIdx": 18
-            }
-        ],
-        "Financial Inclusion" : [
-            {
-                "name": "financial_inclusion_cat_cluster",
-                "label": "Access to formal banking channels",
-                "type": 1,
-                "values": [
-                    {
-                        "label": "Poor",
-                        "value": "LOW"
-                    },
-                    {
-                        "label": "Moderate",
-                        "value": "MEDIUM"
-                    },
-                    {
-                        "label": "High",
-                        "value": "HIGH"
-                    }
-                ],
-                "layer_store": ["antyodaya_2020"],
-                "layer_name": ["antyodaya20"],
-                "vectorStyle": [
-                    {
-                        "fill": "rgba(220, 20, 60, 0.8)",
-                        "stroke": "rgba(139, 0, 0, 1)",
-                        "lower": 0,
-                        "upper": 0.33
-                    },
-                    {
-                        "fill": "rgba(255, 215, 0, 0.8)",
-                        "stroke": "rgba(218, 165, 32, 1)",
-                        "lower": 0.330001,
-                        "upper": 0.66
-                    },
-                    {
-                        "fill": "rgba(144, 238, 144, 0.8)",
-                        "stroke": "rgba(34, 139, 34, 1)",
-                        "lower": 0.660001,
-                        "upper": 1
-                    }
-                ],
-                "rasterStyle": [],
-                "styleIdx": 45
-            }
-        ],
-        "Social welfare access" : [
-            {
-                "name": "social_protection_cat_cluster",
-                "label": "Coverage under PDS, NFSA, NSAP",
-                "type": 1,
-                "values": [
-                    {
-                        "label": "Poor",
-                        "value": "LOW"
-                    },
-                    {
-                        "label": "Moderate",
-                        "value": "MEDIUM"
-                    },
-                    {
-                        "label": "Strong",
-                        "value": "HIGH"
-                    }
-                ],
-                "layer_store": ["antyodaya_2020"],
-                "layer_name": ["antyodaya20"],
-                "vectorStyle": [
-                    {
-                        "fill": "rgba(220, 20, 60, 0.8)",
-                        "stroke": "rgba(139, 0, 0, 1)",
-                        "lower": 0,
-                        "upper": 0.33
-                    },
-                    {
-                        "fill": "rgba(255, 215, 0, 0.8)",
-                        "stroke": "rgba(218, 165, 32, 1)",
-                        "lower": 0.330001,
-                        "upper": 0.66
-                    },
-                    {
-                        "fill": "rgba(144, 238, 144, 0.8)",
-                        "stroke": "rgba(34, 139, 34, 1)",
-                        "lower": 0.660001,
-                        "upper": 1
-                    }
-                ],
-                "rasterStyle": [],
-                "styleIdx": 46
-            },
-            {
-                "name": "public_distribution_system",
-                "label": "PDS access",
-                "type": 2,
-                "values": [
-                    {
-                        "label": "Within 2 kms",
-                        "value": {
-                            "lower": 0,
-                            "upper": 2
-                        }
-                    },
-                    {
-                        "label": "More than 2 kms",
-                        "value": {
-                            "lower": 2,
-                            "upper": 9999999999
-                        }
-                    }
-                ],
-                "layer_store": [
-                    "facilities_proximity"
-                ],
-                "layer_name": [
-                    "facilities"
-                ],
-                "vectorStyle": [
-                    {
-                        "fill": "rgba(232, 238, 186, 0.8)",
-                        "stroke": "rgba(232, 238, 186, 1)",
-                        "lower": 0,
-                        "upper": 2
-                    },
-                    {
-                        "fill": "rgba(137, 151, 10, 0.8)",
-                        "stroke": "rgba(137, 151, 10, 1)",
-                        "lower": 2,
-                        "upper": 9999999999
-                    }
-                ],
-                "rasterStyle": "",
-                "styleIdx": 19
-            }
-        ],
-        "Community Institutions" : [
-            {
-                "name": "institutionalization_cat_cluster",
-                "label": "Presence of SHGs, FPOs, Cooperatives",
-                "type": 1,
-                "values": [
-                    {
-                        "label": "Poor",
-                        "value": "LOW"
-                    },
-                    {
-                        "label": "Moderate",
-                        "value": "MEDIUM"
-                    },
-                    {
-                        "label": "Strong",
-                        "value": "HIGH"
-                    }
-                ],
-                "layer_store": ["antyodaya_2020"],
-                "layer_name": ["antyodaya20"],
-                "vectorStyle": [
-                    {
-                        "fill": "rgba(220, 20, 60, 0.8)",
-                        "stroke": "rgba(139, 0, 0, 1)",
-                        "lower": 0,
-                        "upper": 0.33
-                    },
-                    {
-                        "fill": "rgba(255, 215, 0, 0.8)",
-                        "stroke": "rgba(218, 165, 32, 1)",
-                        "lower": 0.330001,
-                        "upper": 0.66
-                    },
-                    {
-                        "fill": "rgba(144, 238, 144, 0.8)",
-                        "stroke": "rgba(34, 139, 34, 1)",
-                        "lower": 0.660001,
-                        "upper": 1
-                    }
-                ],
-                "rasterStyle": [],
-                "styleIdx": 47
-            }
-        ],
-        "Livelihood" : [
-            {
-                "name": "livelihoods_employment_cat_cluster",
-                "label": "Farm Employment",
-                "type": 1,
-                "values": [
-                    {
-                        "label": "Low",
-                        "value": "LOW"
-                    },
-                    {
-                        "label": "Moderate",
-                        "value": "MEDIUM"
-                    },
-                    {
-                        "label": "High",
-                        "value": "HIGH"
-                    }
-                ],
-                "layer_store": ["antyodaya_2020"],
-                "layer_name": ["antyodaya20"],
-                "vectorStyle": [
-                    {
-                        "fill": "rgba(220, 20, 60, 0.8)",
-                        "stroke": "rgba(139, 0, 0, 1)",
-                        "lower": 0,
-                        "upper": 0.33
-                    },
-                    {
-                        "fill": "rgba(255, 215, 0, 0.8)",
-                        "stroke": "rgba(218, 165, 32, 1)",
-                        "lower": 0.330001,
-                        "upper": 0.66
-                    },
-                    {
-                        "fill": "rgba(144, 238, 144, 0.8)",
-                        "stroke": "rgba(34, 139, 34, 1)",
-                        "lower": 0.660001,
-                        "upper": 1
-                    }
-                ],
-                "rasterStyle": [],
-                "styleIdx": 49
-            },
-            {
-                "name": "livelihoods_forest_resources_cat_cluster",
-                "label": "Forest-based Livelihood",
-                "type": 1,
-                "values": [
-                    {
-                        "label": "Low",
-                        "value": "LOW"
-                    },
-                    {
-                        "label": "High",
-                        "value": "HIGH"
-                    }
-                ],
-                "layer_store": ["antyodaya_2020"],
-                "layer_name": ["antyodaya20"],
-                "vectorStyle": [
-                    {
-                        "fill": "rgba(220, 20, 60, 0.8)",
-                        "stroke": "rgba(139, 0, 0, 1)",
-                        "lower": 0,
-                        "upper": 0.5
-                    },
-                    {
-                        "fill": "rgba(144, 238, 144, 0.8)",
-                        "stroke": "rgba(34, 139, 34, 1)",
-                        "lower": 0.5,
-                        "upper": 1
-                    }
-                ],
-                "rasterStyle": [],
-                "styleIdx": 50
-            },
-            {
-                "name": "livelihoods_alternative_farming_cat_cluster",
-                "label": "Alternate Farming",
-                "type": 1,
-                "values": [
-                    {
-                        "label": "Low",
-                        "value": "LOW"
-                    },
-                    {
-                        "label": "High",
-                        "value": "HIGH"
-                    }
-                ],
-                "layer_store": ["antyodaya_2020"],
-                "layer_name": ["antyodaya20"],
-                "vectorStyle": [
-                    {
-                        "fill": "rgba(220, 20, 60, 0.8)",
-                        "stroke": "rgba(139, 0, 0, 1)",
-                        "lower": 0,
-                        "upper": 0.5
-                    },
-                    {
-                        "fill": "rgba(144, 238, 144, 0.8)",
-                        "stroke": "rgba(34, 139, 34, 1)",
-                        "lower": 0.5,
-                        "upper": 1
-                    }
-                ],
-                "rasterStyle": [],
-                "styleIdx": 51
-            },
-            {
-                "name": "livelihoods_fisheries_cat_cluster",
-                "label": "Fisheries Presence",
-                "type": 1,
-                "values": [
-                    {
-                        "label": "Low",
-                        "value": "LOW"
-                    },
-                    {
-                        "label": "Moderate",
-                        "value": "MEDIUM"
-                    },
-                    {
-                        "label": "High",
-                        "value": "HIGH"
-                    }
-                ],
-                "layer_store": ["antyodaya_2020"],
-                "layer_name": ["antyodaya20"],
-                "vectorStyle": [
-                    {
-                        "fill": "rgba(220, 20, 60, 0.8)",
-                        "stroke": "rgba(139, 0, 0, 1)",
-                        "lower": 0,
-                        "upper": 0.33
-                    },
-                    {
-                        "fill": "rgba(255, 215, 0, 0.8)",
-                        "stroke": "rgba(218, 165, 32, 1)",
-                        "lower": 0.330001,
-                        "upper": 0.66
-                    },
-                    {
-                        "fill": "rgba(144, 238, 144, 0.8)",
-                        "stroke": "rgba(34, 139, 34, 1)",
-                        "lower": 0.660001,
-                        "upper": 1
-                    }
-                ],
-                "rasterStyle": [],
-                "styleIdx": 52
-            },
-            {
-                "name": "livelihoods_cottage_traditional_industry_cat_cluster",
-                "label": "Cottage Industry",
-                "type": 1,
-                "values": [
-                    {
-                        "label": "Low",
-                        "value": "LOW"
-                    },
-                    {
-                        "label": "High",
-                        "value": "HIGH"
-                    }
-                ],
-                "layer_store": ["antyodaya_2020"],
-                "layer_name": ["antyodaya20"],
-                "vectorStyle": [
-                    {
-                        "fill": "rgba(220, 20, 60, 0.8)",
-                        "stroke": "rgba(139, 0, 0, 1)",
-                        "lower": 0,
-                        "upper": 0.5
-                    },
-                    {
-                        "fill": "rgba(144, 238, 144, 0.8)",
-                        "stroke": "rgba(34, 139, 34, 1)",
-                        "lower": 0.5,
-                        "upper": 1
-                    }
-                ],
-                "rasterStyle": [],
-                "styleIdx": 53
-            }
-        ],
-        "Livestock and Dairy" : [
-            {
-                "name": "livestock_veterinary_cat_cluster",
-                "label": "Veterinary services and support availability",
-                "type": 1,
-                "values": [
-                    {
-                        "label": "Low",
-                        "value": "LOW"
-                    },
-                    {
-                        "label": "Moderate",
-                        "value": "MEDIUM"
-                    },
-                    {
-                        "label": "High",
-                        "value": "HIGH"
-                    }
-                ],
-                "layer_store": ["antyodaya_2020"],
-                "layer_name": ["antyodaya20"],
-                "vectorStyle": [
-                    {
-                        "fill": "rgba(220, 20, 60, 0.8)",
-                        "stroke": "rgba(139, 0, 0, 1)",
-                        "lower": 0,
-                        "upper": 0.33
-                    },
-                    {
-                        "fill": "rgba(255, 215, 0, 0.8)",
-                        "stroke": "rgba(218, 165, 32, 1)",
-                        "lower": 0.330001,
-                        "upper": 0.66
-                    },
-                    {
-                        "fill": "rgba(144, 238, 144, 0.8)",
-                        "stroke": "rgba(34, 139, 34, 1)",
-                        "lower": 0.660001,
-                        "upper": 1
-                    }
-                ],
-                "rasterStyle": [],
-                "styleIdx": 54
-            },
-            {
-                "name": "livestock_management_centers",
-                "label": "Market access points",
-                "type": 2,
-                "values": [
-                    {
-                        "label": "<10 kms",
-                        "value": {
-                            "lower": 0,
-                            "upper": 10
-                        }
-                    },
-                    {
-                        "label": "10-30 kms",
-                        "value": {
-                            "lower": 10,
-                            "upper": 30
-                        }
-                    },
-                    {
-                        "label": ">30 kms",
-                        "value": {
-                            "lower": 30,
-                            "upper": 9999999999
-                        }
-                    }
-                ],
-                "layer_store": [
-                    "facilities_proximity"
-                ],
-                "layer_name": [
-                    "facilities"
-                ],
-                "vectorStyle": [
-                    {
-                        "fill": "rgba(255, 170, 85, 0.8)",
-                        "stroke": "rgba(255, 170, 85, 1)",
-                        "lower": 0,
-                        "upper": 10
-                    },
-                    {
-                        "fill": "rgba(170, 85, 0, 0.8)",
-                        "stroke": "rgba(170, 85, 0, 1)",
-                        "lower": 10,
-                        "upper": 30
-                    },
-                    {
-                        "fill": "rgba(85, 43, 0, 0.8)",
-                        "stroke": "rgba(85, 43, 0, 1)",
-                        "lower": 30,
-                        "upper": 9999999999
-                    }
-                ],
-                "rasterStyle": "",
-                "styleIdx": 24
-            },
-            {
-                "name": "livelihoods_common_resources_cat_cluster",
-                "label": "Common Pasture Access",
-                "type": 1,
-                "values": [
-                    {
-                        "label": "Low",
-                        "value": "LOW"
-                    },
-                    {
-                        "label": "High",
-                        "value": "HIGH"
-                    }
-                ],
-                "layer_store": ["antyodaya_2020"],
-                "layer_name": ["antyodaya20"],
-                "vectorStyle": [
-                    {
-                        "fill": "rgba(220, 20, 60, 0.8)",
-                        "stroke": "rgba(139, 0, 0, 1)",
-                        "lower": 0,
-                        "upper": 0.5
-                    },
-                    {
-                        "fill": "rgba(144, 238, 144, 0.8)",
-                        "stroke": "rgba(34, 139, 34, 1)",
-                        "lower": 0.5,
-                        "upper": 1
-                    }
-                ],
-                "rasterStyle": [],
-                "styleIdx": 55
-            },
-            {
-                "name": "small_animals_total",
-                "label": "Bovines (Cattle / Buffalo) count",
-                "type": 2,
-                "values": [
-                    {
-                        "label": "Low Bovine Population (0–200)",
-                        "value": {
-                            "lower": 0,
-                            "upper": 200
-                        }
-                    },
-                    {
-                        "label": "Moderate Bovine Population (201–500)",
-                        "value": {
-                            "lower": 201,
-                            "upper": 500
-                        }
-                    },
-                    {
-                        "label": "High Bovine Population (>500)",
-                        "value": {
-                            "lower": 501,
-                            "upper": 9999999999
-                        }
-                    }
-                ],
-                "layer_store": [
-                    "livestocks"
-                ],
-                "layer_name": [
-                    "livestocks"
-                ],
-                "vectorStyle": [
-                    {
-                        "fill": "rgba(220, 20, 60, 0.8)",
-                        "stroke": "rgba(139, 0, 0, 1)",
-                        "lower": 0,
-                        "upper": 200
-                    },
-                    {
-                        "fill": "rgba(255, 215, 0, 0.8)",
-                        "stroke": "rgba(218, 165, 32, 1)",
-                        "lower": 201,
-                        "upper": 500
-                    },
-                    {
-                        "fill": "rgba(144, 238, 144, 0.8)",
-                        "stroke": "rgba(34, 139, 34, 1)",
-                        "lower": 501,
-                        "upper": 9999999999
-                    }
-                ],
-                "rasterStyle": "",
-                "styleIdx": 58
-            },
-            {
-                "name": "large_animals_total",
-                "label": "Small Animals (Sheep / Goat / Pig) count",
-                "type": 2,
-                "values": [
-                    {
-                        "label": "Low Small Animal Population (0–80)",
-                        "value": {
-                            "lower": 0,
-                            "upper": 80
-                        }
-                    },
-                    {
-                        "label": "Moderate Small Animal Population (81–250)",
-                        "value": {
-                            "lower": 81,
-                            "upper": 250
-                        }
-                    },
-                    {
-                        "label": "High Small Animal Population (>250)",
-                        "value": {
-                            "lower": 251,
-                            "upper": 9999999999
-                        }
-                    }
-                ],
-                "layer_store": [
-                    "livestocks"
-                ],
-                "layer_name": [
-                    "livestocks"
-                ],
-                "vectorStyle": [
-                    {
-                        "fill": "rgba(220, 20, 60, 0.8)",
-                        "stroke": "rgba(139, 0, 0, 1)",
-                        "lower": 0,
-                        "upper": 80
-                    },
-                    {
-                        "fill": "rgba(255, 215, 0, 0.8)",
-                        "stroke": "rgba(218, 165, 32, 1)",
-                        "lower": 81,
-                        "upper": 250
-                    },
-                    {
-                        "fill": "rgba(144, 238, 144, 0.8)",
-                        "stroke": "rgba(34, 139, 34, 1)",
-                        "lower": 251,
-                        "upper": 9999999999
-                    }
-                ],
-                "rasterStyle": "",
-                "styleIdx": 59
-            }
-        ],
-        "Climate resilience and irrigation infrastructure" : [
-            {
-                "name": "agriculture_irrigation_watershed_cat_cluster",
-                "label": "Watershed Infrastructure and Modern Irrigation",
-                "type": 1,
-                "values": [
-                    {
-                        "label": "Low",
-                        "value": "LOW"
-                    },
-                    {
-                        "label": "Moderate",
-                        "value": "MEDIUM"
-                    },
-                    {
-                        "label": "High",
-                        "value": "HIGH"
-                    }
-                ],
-                "layer_store": ["antyodaya_2020"],
-                "layer_name": ["antyodaya20"],
-                "vectorStyle": [
-                    {
-                        "fill": "rgba(220, 20, 60, 0.8)",
-                        "stroke": "rgba(139, 0, 0, 1)",
-                        "lower": 0,
-                        "upper": 0.33
-                    },
-                    {
-                        "fill": "rgba(255, 215, 0, 0.8)",
-                        "stroke": "rgba(218, 165, 32, 1)",
-                        "lower": 0.330001,
-                        "upper": 0.66
-                    },
-                    {
-                        "fill": "rgba(144, 238, 144, 0.8)",
-                        "stroke": "rgba(34, 139, 34, 1)",
-                        "lower": 0.660001,
-                        "upper": 1
-                    }
-                ],
-                "rasterStyle": [],
-                "styleIdx": 56
-            },
-            {
-                "name": "total_assets",
-                "label": "Total number of NREGA works during 2016-24",
-                "type": 2,
-                "values": [
-                    {
-                        "label": "Less than 100",
-                        "value": {
-                            "lower": 0,
-                            "upper": 100
-                        }
-                    },
-                    {
-                        "label": "Between 100 to 300",
-                        "value": {
-                            "lower": 100,
-                            "upper": 300
-                        }
-                    },
-                    {
-                        "label": "More than 300",
-                        "value": {
-                            "lower": 300,
-                            "upper": 999999999
-                        }
-                    }
-                ],
-                "layer_store": [
-                    "nrega_assets"
-                ],
-                "layer_name": [],
-                "vectorStyle": [
-                    {
-                        "fill": "rgba(135, 206, 235, 0.8)",
-                        "stroke": "rgba(135, 206, 235, 1)",
-                        "lower": 0,
-                        "upper": 100
-                    },
-                    {
-                        "fill": "rgba(65, 105, 225, 0.8)",
-                        "stroke": "rgba(65, 105, 225, 1)",
-                        "lower": 100,
-                        "upper": 300
-                    },
-                    {
-                        "fill": "rgba(0, 0, 128, 0.8)",
-                        "stroke": "rgba(0, 0, 128, 1)",
-                        "lower": 300,
-                        "upper": 999999999
-                    }
-                ],
-                "rasterStyle": "",
-                "styleIdx": 9
-            }
-        ],
-        "Agricultural Support and Market Access" : [
-            {
-                "name": "agricultural_support_infrastructure",
-                "label": "Agri inputs and advisory access",
-                "type": 2,
-                "values": [
-                    {
-                        "label": "<10 kms",
-                        "value": {
-                            "lower": 0,
-                            "upper": 10
-                        }
-                    },
-                    {
-                        "label": "10-50 kms",
-                        "value": {
-                            "lower": 10,
-                            "upper": 50
-                        }
-                    },
-                    {
-                        "label": ">50 kms",
-                        "value": {
-                            "lower": 50,
-                            "upper": 9999999999
-                        }
-                    }
-                ],
-                "layer_store": [
-                    "facilities_proximity"
-                ],
-                "layer_name": [
-                    "facilities"
-                ],
-                "vectorStyle": [
-                    {
-                        "fill": "rgba(200, 230, 201, 0.8)",
-                        "stroke": "rgba(200, 230, 201, 1)",
-                        "lower": 0,
-                        "upper": 10
-                    },
-                    {
-                        "fill": "rgba(102, 187, 106, 0.8)",
-                        "stroke": "rgba(102, 187, 106, 1)",
-                        "lower": 10,
-                        "upper": 50
-                    },
-                    {
-                        "fill": "rgba(46, 125, 50, 0.8",
-                        "stroke": "rgba(46, 125, 50, 1)",
-                        "lower": 50,
-                        "upper": 9999999999
-                    }
-                ],
-                "rasterStyle": "",
-                "styleIdx": 25
-            },
-            {
-                "name": "post_harvest_infra",
-                "label": "Post harvest processing centers",
-                "type": 2,
-                "values": [
-                    {
-                        "label": "<5 kms",
-                        "value": {
-                            "lower": 0,
-                            "upper": 5
-                        }
-                    },
-                    {
-                        "label": "5-20 kms",
-                        "value": {
-                            "lower": 5,
-                            "upper": 20
-                        }
-                    },
-                    {
-                        "label": ">20 kms",
-                        "value": {
-                            "lower": 20,
-                            "upper": 9999999999
-                        }
-                    }
-                ],
-                "layer_store": [
-                    "facilities_proximity"
-                ],
-                "layer_name": [
-                    "facilities"
-                ],
-                "vectorStyle": [
-                    {
-                        "fill": "rgba(200, 230, 201, 0.8)",
-                        "stroke": "rgba(200, 230, 201, 1)",
-                        "lower": 0,
-                        "upper": 5
-                    },
-                    {
-                        "fill": "rgba(102, 187, 106, 0.8)",
-                        "stroke": "rgba(102, 187, 106, 1)",
-                        "lower": 5,
-                        "upper": 20
-                    },
-                    {
-                        "fill": "rgba(46, 125, 50, 0.8)",
-                        "stroke": "rgba(46, 125, 50, 1)",
-                        "lower": 20,
-                        "upper": 9999999999
-                    }
-                ],
-                "rasterStyle": "",
-                "styleIdx": 22
-            },
-            {
-                "name": "agri_market_access",
-                "label": "Market access",
-                "type": 2,
-                "values": [
-                    {
-                        "label": "<3 kms",
-                        "value": {
-                            "lower": 0,
-                            "upper": 3
-                        }
-                    },
-                    {
-                        "label": "3-10 kms",
-                        "value": {
-                            "lower": 3,
-                            "upper": 10
-                        }
-                    },
-                    {
-                        "label": ">10 kms",
-                        "value": {
-                            "lower": 10,
-                            "upper": 9999999999
-                        }
-                    }
-                ],
-                "layer_store": [
-                    "facilities_proximity"
-                ],
-                "layer_name": [
-                    "facilities"
-                ],
-                "vectorStyle": [
-                    {
-                        "fill": "rgba(255, 255, 102, 0.8)",
-                        "stroke": "rgba(255, 255, 102, 1)",
-                        "lower": 0,
-                        "upper": 3
-                    },
-                    {
-                        "fill": "rgba(159, 159, 0, 0.8)",
-                        "stroke": "rgba(159, 159, 0, 1)",
-                        "lower": 3,
-                        "upper": 10
-                    },
-                    {
-                        "fill": "rgba(98, 98, 0, 0.8)",
-                        "stroke": "rgba(98, 98, 0, 1)",
-                        "lower": 10,
-                        "upper": 9999999999
-                    }
-                ],
-                "rasterStyle": "",
-                "styleIdx": 21
-            },
-            {
-                "name": "farmer_cooperatives_access",
-                "label": "Access to farmer cooperatives",
-                "type": 2,
-                "values": [
-                    {
-                        "label": "<10 kms",
-                        "value": {
-                            "lower": 0,
-                            "upper": 10
-                        }
-                    },
-                    {
-                        "label": "10-30 kms",
-                        "value": {
-                            "lower": 10,
-                            "upper": 30
-                        }
-                    },
-                    {
-                        "label": ">30 kms",
-                        "value": {
-                            "lower": 30,
-                            "upper": 9999999999
-                        }
-                    }
-                ],
-                "layer_store": [
-                    "facilities_proximity"
-                ],
-                "layer_name": [
-                    "facilities"
-                ],
-                "vectorStyle": [
-                    {
-                        "fill": "rgba(204, 238, 255, 0.8)",
-                        "stroke": "rgba(204, 238, 255, 1)",
-                        "lower": 0,
-                        "upper": 10
-                    },
-                    {
-                        "fill": "rgba(0, 142, 212, 0.8)",
-                        "stroke": "rgba(0, 142, 212, 1)",
-                        "lower": 10,
-                        "upper": 30
-                    },
-                    {
-                        "fill": "rgba(0, 77, 116, 0.8)",
-                        "stroke": "rgba(0, 77, 116, 1)",
-                        "lower": 30,
-                        "upper": 9999999999
-                    }
-                ],
-                "rasterStyle": "",
-                "styleIdx": 23
-            }
-        ],
-        "Agroecological support" : [
-            {
-                "name": "agriculture_organic_farming_cat_cluster",
-                "label": "Organic Farming Adoption",
-                "type": 1,
-                "values": [
-                    {
-                        "label": "Low",
-                        "value": "LOW"
-                    },
-                    {
-                        "label": "Moderate",
-                        "value": "MEDIUM"
-                    },
-                    {
-                        "label": "High",
-                        "value": "HIGH"
-                    }
-                ],
-                "layer_store": ["antyodaya_2020"],
-                "layer_name": ["antyodaya20"],
-                "vectorStyle": [
-                    {
-                        "fill": "rgba(220, 20, 60, 0.8)",
-                        "stroke": "rgba(139, 0, 0, 1)",
-                        "lower": 0,
-                        "upper": 0.33
-                    },
-                    {
-                        "fill": "rgba(255, 215, 0, 0.8)",
-                        "stroke": "rgba(218, 165, 32, 1)",
-                        "lower": 0.330001,
-                        "upper": 0.66
-                    },
-                    {
-                        "fill": "rgba(144, 238, 144, 0.8)",
-                        "stroke": "rgba(34, 139, 34, 1)",
-                        "lower": 0.660001,
-                        "upper": 1
-                    }
-                ],
-                "rasterStyle": [],
-                "styleIdx": 57
-            }
-        ]
-    }
-}
+[
+  {
+    "name": "terrainCluster_ID",
+    "label": "Terrain Type",
+    "type": 1,
+    "namespace": "MWS",
+    "category": "Terrain",
+    "source": "mws",
+    "layer_store": ["terrain"],
+    "layer_name": ["terrain_raster"],
+    "rasterStyle": "Terrain_Style_11_Classes",
+    "styleKey": "static",
+    "bins": [
+      {
+        "label": "Hills and Valleys",
+        "value": 2
+      },
+      {
+        "label": "Broad Slopes and Hilly",
+        "value": 0
+      },
+      {
+        "label": "Broad Slopes and Plains",
+        "value": 3
+      },
+      {
+        "label": "Mostly Plains",
+        "value": 1
+      }
+    ]
+  },
+  {
+    "name": "relief",
+    "label": "Microwatershed Relief",
+    "type": 2,
+    "namespace": "MWS",
+    "category": "Terrain",
+    "source": "mws",
+    "layer_store": ["mws_layers"],
+    "layer_name": ["deltaG_well_depth"],
+    "rasterStyle": "",
+    "styleKey": "relief",
+    "bins": [
+      {
+        "label": "Low Relief (less than 6m)",
+        "lower": 0,
+        "upper": 6,
+        "fill": "rgba(217, 240, 211, 0.8)",
+        "stroke": "rgba(224, 224, 224, 1)"
+      },
+      {
+        "label": "Moderate Relief (between 6m and 110m)",
+        "lower": 6,
+        "upper": 110,
+        "fill": "rgba(166, 217, 106, 0.8)",
+        "stroke": "rgba(189, 189, 189, 1)"
+      },
+      {
+        "label": "High Relief (between 110m and 900m)",
+        "lower": 110,
+        "upper": 900,
+        "fill": "rgba(253, 174, 97, 0.8)",
+        "stroke": "rgba(117, 117, 117, 1)"
+      },
+      {
+        "label": "Extremely High Relief (More than 900m)",
+        "lower": 900,
+        "upper": 999999,
+        "fill": "rgba(215, 48, 39, 0.8)",
+        "stroke": "rgba(66, 66, 66, 1)"
+      }
+    ]
+  },
+  {
+    "name": "relative_mean_elevation",
+    "label": "Relative Mean Elevation",
+    "type": 2,
+    "namespace": "MWS",
+    "category": "Terrain",
+    "source": "mws",
+    "layer_store": ["dem"],
+    "layer_name": ["dem_raster"],
+    "rasterStyle": "dem_grayscale",
+    "styleKey": "static",
+    "bins": [
+      {
+        "label": "Lower Relative Mean Elevation (<-100)",
+        "lower": -999999,
+        "upper": -100
+      },
+      {
+        "label": "Moderate Relative Mean Elevation (-100 to +100)",
+        "lower": -100,
+        "upper": 100
+      },
+      {
+        "label": "High Relative Mean Elevation (>+100)",
+        "lower": 100,
+        "upper": 999999
+      }
+    ]
+  },
+  {
+    "name": "lulc_crop_percent",
+    "label": "Percentage of area with crops",
+    "type": 2,
+    "namespace": "MWS",
+    "category": "Land-Use",
+    "source": "mws",
+    "layer_store": ["LULC"],
+    "layer_name": ["level_3"],
+    "rasterStyle": "lulc_land_use_KYL",
+    "styleKey": "static",
+    "bins": [
+      {
+        "label": "Less than 30%",
+        "lower": 0,
+        "upper": 30
+      },
+      {
+        "label": "Between 30-60%",
+        "lower": 30,
+        "upper": 60
+      },
+      {
+        "label": "More than 60%",
+        "lower": 60,
+        "upper": 999999
+      }
+    ]
+  },
+  {
+    "name": "lulc_forest_percent",
+    "label": "Percentage of area with tree cover",
+    "type": 2,
+    "namespace": "MWS",
+    "category": "Land-Use",
+    "source": "mws",
+    "layer_store": ["LULC"],
+    "layer_name": ["level_3"],
+    "rasterStyle": "lulc_land_use_KYL",
+    "styleKey": "static",
+    "bins": [
+      {
+        "label": "Less than 25%",
+        "lower": 0,
+        "upper": 25
+      },
+      {
+        "label": "Between 25-50%",
+        "lower": 25,
+        "upper": 50
+      },
+      {
+        "label": "More than 50%",
+        "lower": 50,
+        "upper": 999999
+      }
+    ]
+  },
+  {
+    "name": "lulc_shrub_percent",
+    "label": "Percentage of area with shrubs",
+    "type": 2,
+    "namespace": "MWS",
+    "category": "Land-Use",
+    "source": "mws",
+    "layer_store": ["LULC"],
+    "layer_name": ["level_3"],
+    "rasterStyle": "lulc_land_use_KYL",
+    "styleKey": "static",
+    "bins": [
+      {
+        "label": "Less than 5%",
+        "lower": 0,
+        "upper": 5
+      },
+      {
+        "label": "Between 5-15%",
+        "lower": 5,
+        "upper": 15
+      },
+      {
+        "label": "More than 15%",
+        "lower": 15,
+        "upper": 999999
+      }
+    ]
+  },
+  {
+    "name": "avg_precipitation",
+    "label": "Average rainfall over the years 2017 to 2024",
+    "type": 2,
+    "namespace": "MWS",
+    "category": "Climate",
+    "source": "mws",
+    "layer_store": ["mws_layers"],
+    "layer_name": ["deltaG_well_depth"],
+    "rasterStyle": "",
+    "styleKey": "avg_precipitation",
+    "bins": [
+      {
+        "label": "Arid: <740 mm",
+        "lower": 0,
+        "upper": 740,
+        "fill": "rgba(176, 224, 230, 0.8)",
+        "stroke": "rgba(176, 224, 230, 1)"
+      },
+      {
+        "label": "Semi-arid: 740mm-960 mm",
+        "lower": 740,
+        "upper": 960,
+        "fill": "rgba(135, 206, 250, 0.8)",
+        "stroke": "rgba(135, 206, 250, 1)"
+      },
+      {
+        "label": "Moderate: 960mm-1200 mm",
+        "lower": 960,
+        "upper": 1200,
+        "fill": "rgba(43, 147, 250, 0.8)",
+        "stroke": "rgba(43, 147, 250, 1)"
+      },
+      {
+        "label": "High: 1200mm-1620 mm",
+        "lower": 1200,
+        "upper": 1620,
+        "fill": "rgba(3, 107, 210, 0.8)",
+        "stroke": "rgba(3, 107, 210, 1)"
+      },
+      {
+        "label": "Very high: >1620 mm",
+        "lower": 1620,
+        "upper": 9999999999,
+        "fill": "rgba(0, 64, 128, 0.8)",
+        "stroke": "rgba(0, 64, 128, 1)"
+      }
+    ]
+  },
+  {
+    "name": "avg_runoff",
+    "label": "Average runoff over the years 2017 to 2024",
+    "type": 2,
+    "namespace": "MWS",
+    "category": "Climate",
+    "source": "mws",
+    "layer_store": ["mws_layers"],
+    "layer_name": ["deltaG_well_depth"],
+    "rasterStyle": "",
+    "styleKey": "avg_runoff",
+    "bins": [
+      {
+        "label": "Less than 100mm",
+        "lower": 0,
+        "upper": 100,
+        "fill": "rgba(128, 229, 230, 0.8)",
+        "stroke": "rgba(128, 229, 230, 1)"
+      },
+      {
+        "label": "Between 100mm to 300mm",
+        "lower": 100,
+        "upper": 300,
+        "fill": "rgba(0, 206, 209, 0.8)",
+        "stroke": "rgba(0, 206, 209, 1)"
+      },
+      {
+        "label": "More than 300mm",
+        "lower": 300,
+        "upper": 9999999999,
+        "fill": "rgba(0, 138, 140, 0.8)",
+        "stroke": "rgba(0, 138, 140, 1)"
+      }
+    ]
+  },
+  {
+    "name": "drought_category",
+    "label": "Number of drought years from 2017 to 2024",
+    "type": 2,
+    "namespace": "MWS",
+    "category": "Climate",
+    "source": "mws",
+    "layer_store": ["drought"],
+    "layer_name": ["drought"],
+    "rasterStyle": "",
+    "styleKey": "drought_category",
+    "bins": [
+      {
+        "label": "No Drought",
+        "lower": 0,
+        "upper": 0,
+        "fill": "rgba(244, 208, 63, 0.8)",
+        "stroke": "rgba(244, 208, 63, 1)"
+      },
+      {
+        "label": "At least one drought year",
+        "lower": 1,
+        "upper": 9999,
+        "fill": "rgba(235, 152, 78, 0.8)",
+        "stroke": "rgba(235, 152, 78, 1)"
+      },
+      {
+        "label": "At least two drought years",
+        "lower": 2,
+        "upper": 9999,
+        "fill": "rgba(231, 76, 60, 0.8)",
+        "stroke": "rgba(231, 76, 60, 1)"
+      }
+    ]
+  },
+  {
+    "name": "avg_number_dry_spell",
+    "label": "Average number of weeks of dry spells over the years 2017 to 2024",
+    "type": 2,
+    "namespace": "MWS",
+    "category": "Climate",
+    "source": "mws",
+    "layer_store": ["drought"],
+    "layer_name": ["drought"],
+    "rasterStyle": "",
+    "styleKey": "avg_number_dry_spell",
+    "bins": [
+      {
+        "label": "No weeks of dry spells",
+        "lower": 0,
+        "upper": 1,
+        "fill": "rgba(210, 180, 140, 0.8)",
+        "stroke": "rgba(210, 180, 140, 1)"
+      },
+      {
+        "label": "At least one week of dry spell",
+        "lower": 1,
+        "upper": 999999999,
+        "fill": "rgba(139, 69, 19, 0.8)",
+        "stroke": "rgba(139, 69, 19, 1)"
+      },
+      {
+        "label": "At least two weeks of dry spells",
+        "lower": 2,
+        "upper": 9999999999,
+        "fill": "rgba(90, 46, 15, 0.8)",
+        "stroke": "rgba(90, 46, 15, 1)"
+      }
+    ]
+  },
+  {
+    "name": "avg_rabi_surface_water_mws",
+    "label": "Percentage of average surface water availability during Rabi from 2017 to 2024",
+    "type": 2,
+    "namespace": "MWS",
+    "category": "Hydrology",
+    "source": "mws",
+    "layer_store": ["mws_layers"],
+    "layer_name": ["deltaG_well_depth"],
+    "rasterStyle": "",
+    "styleKey": "avg_rabi_surface_water_mws",
+    "bins": [
+      {
+        "label": "Less than 30%",
+        "lower": 0,
+        "upper": 30,
+        "fill": "rgba(116, 204, 244, 0.8)",
+        "stroke": "rgba(116, 204, 244, 1)"
+      },
+      {
+        "label": "Between 30% to 70%",
+        "lower": 30,
+        "upper": 70,
+        "fill": "rgba(28, 163, 236, 0.8)",
+        "stroke": "rgba(28, 163, 236, 1)"
+      },
+      {
+        "label": "More than 70%",
+        "lower": 70,
+        "upper": 999999,
+        "fill": "rgba(15, 94, 156, 0.8)",
+        "stroke": "rgba(15, 94, 156, 1)"
+      }
+    ]
+  },
+  {
+    "name": "avg_zaid_surface_water_mws",
+    "label": "Percentage of average surface water availability during Zaid from 2017 to 2024",
+    "type": 2,
+    "namespace": "MWS",
+    "category": "Hydrology",
+    "source": "mws",
+    "layer_store": ["mws_layers"],
+    "layer_name": ["deltaG_well_depth"],
+    "rasterStyle": "",
+    "styleKey": "avg_zaid_surface_water_mws",
+    "bins": [
+      {
+        "label": "Less than 25%",
+        "lower": 0,
+        "upper": 25,
+        "fill": "rgba(116, 204, 244, 0.8)",
+        "stroke": "rgba(116, 204, 244, 1)"
+      },
+      {
+        "label": "Between 25%-50%",
+        "lower": 25,
+        "upper": 50,
+        "fill": "rgba(28, 163, 236, 0.8)",
+        "stroke": "rgba(28, 163, 236, 1)"
+      },
+      {
+        "label": "More than 50%",
+        "lower": 50,
+        "upper": 99999,
+        "fill": "rgba(15, 94, 156, 0.8)",
+        "stroke": "rgba(15, 94, 156, 1)"
+      }
+    ]
+  },
+  {
+    "name": "aquifer_class",
+    "label": "Aquifer type",
+    "type": 1,
+    "namespace": "MWS",
+    "category": "Hydrology",
+    "source": "mws",
+    "layer_store": ["aquifer"],
+    "layer_name": ["aquifer_vector"],
+    "rasterStyle": "",
+    "styleKey": "aquifer_class",
+    "bins": [
+      {
+        "label": "Hard rock",
+        "value": 0
+      },
+      {
+        "label": "Alluvial",
+        "value": 1
+      }
+    ],
+    "visualizeBins": [
+      {
+        "lower": 0,
+        "upper": 0,
+        "fill": "rgba(255, 253, 181, 0.8)",
+        "stroke": "rgba(255, 253, 181, 1)"
+      },
+      {
+        "lower": 1,
+        "upper": 1,
+        "fill": "rgba(243, 164, 37, 0.8)",
+        "stroke": "rgba(243, 164, 37, 1)"
+      },
+      {
+        "lower": 2,
+        "upper": 2,
+        "fill": "rgba(153, 236, 241, 0.8)",
+        "stroke": "rgba(153, 236, 241, 1)"
+      },
+      {
+        "lower": 3,
+        "upper": 3,
+        "fill": "rgba(165, 248, 197, 0.8)",
+        "stroke": "rgba(165, 248, 197, 1)"
+      },
+      {
+        "lower": 4,
+        "upper": 4,
+        "fill": "rgba(245, 124, 153, 0.8)",
+        "stroke": "rgba(245, 124, 153, 1)"
+      },
+      {
+        "lower": 5,
+        "upper": 5,
+        "fill": "rgba(232, 213, 46, 0.8)",
+        "stroke": "rgba(232, 213, 46, 1)"
+      },
+      {
+        "lower": 6,
+        "upper": 6,
+        "fill": "rgba(60, 146, 242, 0.8)",
+        "stroke": "rgba(60, 146, 242, 1)"
+      },
+      {
+        "lower": 7,
+        "upper": 7,
+        "fill": "rgba(213, 219, 33, 0.8)",
+        "stroke": "rgba(213, 219, 33, 1)"
+      },
+      {
+        "lower": 8,
+        "upper": 8,
+        "fill": "rgba(207, 127, 244, 0.8)",
+        "stroke": "rgba(207, 127, 244, 1)"
+      },
+      {
+        "lower": 9,
+        "upper": 9,
+        "fill": "rgba(244, 219, 255, 0.8)",
+        "stroke": "rgba(244, 219, 255, 1)"
+      },
+      {
+        "lower": 10,
+        "upper": 10,
+        "fill": "rgba(80, 192, 43, 0.8)",
+        "stroke": "rgba(80, 192, 43, 1)"
+      },
+      {
+        "lower": 11,
+        "upper": 11,
+        "fill": "rgba(255, 225, 181, 0.8)",
+        "stroke": "rgba(255, 225, 181, 1)"
+      },
+      {
+        "lower": 12,
+        "upper": 12,
+        "fill": "rgba(228, 207, 241, 0.8)",
+        "stroke": "rgba(228, 207, 241, 1)"
+      },
+      {
+        "lower": 13,
+        "upper": 13,
+        "fill": "rgba(87, 210, 255, 0.8)",
+        "stroke": "rgba(87, 210, 255, 1)"
+      }
+    ]
+  },
+  {
+    "name": "soge_class",
+    "label": "Stage of groundwater extraction",
+    "type": 1,
+    "namespace": "MWS",
+    "category": "Hydrology",
+    "source": "mws",
+    "layer_store": ["soge"],
+    "layer_name": ["soge_vector"],
+    "rasterStyle": "",
+    "styleKey": "soge_class",
+    "bins": [
+      {
+        "label": "Safe",
+        "value": 0,
+        "fill": "rgba(255, 255, 255, 1)",
+        "stroke": "rgba(255, 255, 255, 1)"
+      },
+      {
+        "label": "Semi-Critical",
+        "value": 1,
+        "fill": "rgba(116, 204, 244, 0.8)",
+        "stroke": "rgba(116, 204, 244, 1)"
+      },
+      {
+        "label": "Critical",
+        "value": 2,
+        "fill": "rgba(69, 117, 180, 0.8)",
+        "stroke": "rgba(69, 117, 180, 1)"
+      },
+      {
+        "label": "Over-exploited",
+        "value": 3,
+        "fill": "rgba(49, 54, 149, 0.8)",
+        "stroke": "rgba(49, 54, 149, 1)"
+      },
+      {
+        "label": "Not Assessed",
+        "value": 4,
+        "fill": "rgba(169, 169, 169, 0.8)",
+        "stroke": "rgba(169, 169, 169, 1)"
+      }
+    ]
+  },
+  {
+    "name": "trend_g",
+    "label": "Water balance trend over the years 2017 to 2024",
+    "type": 1,
+    "namespace": "MWS",
+    "category": "Hydrology",
+    "source": "mws",
+    "layer_store": ["mws_layers"],
+    "layer_name": ["deltaG_well_depth"],
+    "rasterStyle": "",
+    "styleKey": "trend_g",
+    "bins": [
+      {
+        "label": "Positive Trend",
+        "value": "1",
+        "fill": "rgba(34, 197, 94, 0.8)",
+        "stroke": "rgba(34, 197, 94, 1)"
+      },
+      {
+        "label": "Negative Trend",
+        "value": "-1",
+        "fill": "rgba(239, 68, 68, 0.8)",
+        "stroke": "rgba(239, 68, 68, 1)"
+      },
+      {
+        "label": "No Trend",
+        "value": "0",
+        "fill": "rgba(156, 163, 175, 0.8)",
+        "stroke": "rgba(156, 163, 175, 1)"
+      }
+    ]
+  },
+  {
+    "name": "avg_double_cropped",
+    "label": "Average percentage of double cropped area over the years 2017 to 2025",
+    "type": 2,
+    "namespace": "MWS",
+    "category": "Agriculture",
+    "source": "mws",
+    "layer_store": ["LULC"],
+    "layer_name": ["level_3"],
+    "rasterStyle": "",
+    "styleKey": "static",
+    "bins": [
+      {
+        "label": "Less than 30%",
+        "lower": 0,
+        "upper": 30
+      },
+      {
+        "label": "Between 30% to 60%",
+        "lower": 30,
+        "upper": 60
+      },
+      {
+        "label": "More than 60%",
+        "lower": 60,
+        "upper": 999999
+      }
+    ]
+  },
+  {
+    "name": "degradation_land_area",
+    "label": "Cropping degradation",
+    "type": 2,
+    "namespace": "MWS",
+    "category": "Agriculture",
+    "source": "mws",
+    "layer_store": ["change_detection"],
+    "layer_name": ["Degradation"],
+    "rasterStyle": "",
+    "styleKey": "degradation_land_area",
+    "bins": [
+      {
+        "label": "Less than 30 hectares",
+        "lower": 0,
+        "upper": 30,
+        "fill": "rgba(115, 187, 83, 0.8)",
+        "stroke": "rgba(115, 187, 83, 1)"
+      },
+      {
+        "label": "Between 30 hectares to 90 hectares",
+        "lower": 30,
+        "upper": 90,
+        "fill": "rgba(238, 224, 93, 0.8)",
+        "stroke": "rgba(238, 224, 93, 1)"
+      },
+      {
+        "label": "More than 90 hectares",
+        "lower": 90,
+        "upper": 999999,
+        "fill": "rgba(255, 0, 0, 0.8)",
+        "stroke": "rgba(255, 0, 0, 1)"
+      }
+    ]
+  },
+  {
+    "name": "river_available",
+    "label": "River",
+    "type": 1,
+    "namespace": "MWS",
+    "category": "Agriculture",
+    "source": "mws",
+    "layer_store": ["river"],
+    "layer_name": ["river_vector"],
+    "rasterStyle": "",
+    "styleKey": "static",
+    "bins": [
+      {
+        "label": "Present",
+        "value": true,
+        "fill": "rgba(43, 147, 250, 0.8)",
+        "stroke": "rgba(43, 147, 250, 1)"
+      },
+      {
+        "label": "Absent",
+        "value": false,
+        "fill": "rgba(43, 147, 250, 0.8)",
+        "stroke": "rgba(43, 147, 250, 1)"
+      }
+    ]
+  },
+  {
+    "name": "canal_available",
+    "label": "Canal",
+    "type": 1,
+    "namespace": "MWS",
+    "category": "Agriculture",
+    "source": "mws",
+    "layer_store": ["canal"],
+    "layer_name": ["canal_vector"],
+    "rasterStyle": "",
+    "styleKey": "static",
+    "bins": [
+      {
+        "label": "Present",
+        "value": true,
+        "fill": "rgba(43, 147, 250, 0.8)",
+        "stroke": "rgba(43, 147, 250, 1)"
+      },
+      {
+        "label": "Absent",
+        "value": false,
+        "fill": "rgba(43, 147, 250, 0.8)",
+        "stroke": "rgba(43, 147, 250, 1)"
+      }
+    ]
+  },
+  {
+    "name": "soil_ph",
+    "label": "Acidity / Alkanity in soil",
+    "type": 2,
+    "namespace": "MWS",
+    "category": "Soil",
+    "source": "mws",
+    "layer_store": ["soil_type"],
+    "layer_name": ["soil_type"],
+    "rasterStyle": "",
+    "styleKey": "soil_ph",
+    "bins": [
+      {
+        "label": "Acidic (<6.5)",
+        "lower": 0,
+        "upper": 6.5,
+        "fill": "rgba(200, 230, 201, 0.8)",
+        "stroke": "rgba(200, 230, 201, 1)"
+      },
+      {
+        "label": "Near Neutral (6.5-7.5)",
+        "lower": 6.5,
+        "upper": 7.5,
+        "fill": "rgba(102, 187, 106, 0.8)",
+        "stroke": "rgba(102, 187, 106, 1)"
+      },
+      {
+        "label": "Alkaline (>7.5)",
+        "lower": 7.5,
+        "upper": 9999999999,
+        "fill": "rgba(46, 125, 50, 0.8)",
+        "stroke": "rgba(46, 125, 50, 1)"
+      }
+    ],
+    "visualizeBins": [
+      {
+        "lower": 0,
+        "upper": 6.5,
+        "fill": "rgba(220, 20, 60, 0.8)",
+        "stroke": "rgba(139, 0, 0, 1)"
+      },
+      {
+        "lower": 6.5,
+        "upper": 7.5,
+        "fill": "rgba(255, 215, 0, 0.8)",
+        "stroke": "rgba(218, 165, 32, 1)"
+      },
+      {
+        "lower": 7.5,
+        "upper": 9999999999,
+        "fill": "rgba(144, 238, 144, 0.8)",
+        "stroke": "rgba(34, 139, 34, 1)"
+      }
+    ]
+  },
+  {
+    "name": "increase_in_tree_cover",
+    "label": "Increase in tree cover",
+    "type": 2,
+    "namespace": "MWS",
+    "category": "Restoration",
+    "source": "mws",
+    "layer_store": ["change_detection"],
+    "layer_name": ["Afforestation"],
+    "rasterStyle": "",
+    "styleKey": "increase_in_tree_cover",
+    "bins": [
+      {
+        "label": "Less than 50 hectares",
+        "lower": 0,
+        "upper": 50,
+        "fill": "rgba(255, 0, 0, 0.8)",
+        "stroke": "rgba(255, 0, 0, 1)"
+      },
+      {
+        "label": "Between 50 to 100 hectares",
+        "lower": 50,
+        "upper": 100,
+        "fill": "rgba(238, 224, 93, 0.8)",
+        "stroke": "rgba(238, 224, 93, 1)"
+      },
+      {
+        "label": "More than 100 hectares",
+        "lower": 100,
+        "upper": 999999,
+        "fill": "rgba(115, 187, 83, 0.8)",
+        "stroke": "rgba(115, 187, 83, 1)"
+      }
+    ]
+  },
+  {
+    "name": "increase_canopy_density_height",
+    "label": "Increase in canopy density and height",
+    "type": 2,
+    "namespace": "MWS",
+    "category": "Restoration",
+    "source": "mws",
+    "layer_store": ["tree_overall_vector"],
+    "layer_name": ["overall_change_vector"],
+    "rasterStyle": "",
+    "styleKey": "increase_canopy_density_height",
+    "bins": [
+      {
+        "label": "<20%: Minimal",
+        "lower": 0,
+        "upper": 20,
+        "fill": "rgba(255, 0, 0, 0.8)",
+        "stroke": "rgba(255, 0, 0, 1)"
+      },
+      {
+        "label": "Between 20-40%: Considerable",
+        "lower": 20,
+        "upper": 40,
+        "fill": "rgba(238, 224, 93, 0.8)",
+        "stroke": "rgba(238, 224, 93, 1)"
+      },
+      {
+        "label": ">40%: Huge",
+        "lower": 40,
+        "upper": 9999999,
+        "fill": "rgba(115, 187, 83, 0.8)",
+        "stroke": "rgba(115, 187, 83, 1)"
+      }
+    ]
+  },
+  {
+    "name": "decrease_in_tree_cover",
+    "label": "Reduction in tree cover",
+    "type": 2,
+    "namespace": "MWS",
+    "category": "Restoration",
+    "source": "mws",
+    "layer_store": ["change_detection"],
+    "layer_name": ["Deforestation"],
+    "rasterStyle": "",
+    "styleKey": "decrease_in_tree_cover",
+    "bins": [
+      {
+        "label": "Less than 50 hectares",
+        "lower": 0,
+        "upper": 50,
+        "fill": "rgba(115, 187, 83, 0.8)",
+        "stroke": "rgba(115, 187, 83, 1)"
+      },
+      {
+        "label": "Between 50 to 100 hectares",
+        "lower": 50,
+        "upper": 100,
+        "fill": "rgba(238, 224, 93, 0.8)",
+        "stroke": "rgba(238, 224, 93, 1)"
+      },
+      {
+        "label": "More than 100 hectares",
+        "lower": 100,
+        "upper": 999999,
+        "fill": "rgba(255, 0, 0, 0.8)",
+        "stroke": "rgba(255, 0, 0, 1)"
+      }
+    ]
+  },
+  {
+    "name": "reduction_canopy_density_height",
+    "label": "Reduction in canopy density and height",
+    "type": 2,
+    "namespace": "MWS",
+    "category": "Restoration",
+    "source": "mws",
+    "layer_store": ["tree_overall_vector"],
+    "layer_name": ["overall_change_vector"],
+    "rasterStyle": "",
+    "styleKey": "reduction_canopy_density_height",
+    "bins": [
+      {
+        "label": "<5%: Minimal",
+        "lower": 0,
+        "upper": 5,
+        "fill": "rgba(115, 187, 83, 0.8)",
+        "stroke": "rgba(115, 187, 83, 1)"
+      },
+      {
+        "label": "Between 5-15%: Considerable",
+        "lower": 5,
+        "upper": 15,
+        "fill": "rgba(238, 224, 93, 0.8)",
+        "stroke": "rgba(238, 224, 93, 1)"
+      },
+      {
+        "label": ">15%: Huge",
+        "lower": 15,
+        "upper": 9999999,
+        "fill": "rgba(255, 0, 0, 0.8)",
+        "stroke": "rgba(255, 0, 0, 1)"
+      }
+    ]
+  },
+  {
+    "name": "area_wide_scale_restoration",
+    "label": "Area with potential for wide-scale restoration",
+    "type": 2,
+    "namespace": "MWS",
+    "category": "Restoration",
+    "source": "mws",
+    "layer_store": ["restoration"],
+    "layer_name": ["restoration"],
+    "rasterStyle": "restoration_style",
+    "styleKey": "static",
+    "bins": [
+      {
+        "label": "Less than 200 hectares",
+        "lower": 0,
+        "upper": 200
+      },
+      {
+        "label": "Between 200 to 600 hectares",
+        "lower": 200,
+        "upper": 600
+      },
+      {
+        "label": "More than 600 hectares",
+        "lower": 600,
+        "upper": 999999
+      }
+    ]
+  },
+  {
+    "name": "area_protection",
+    "label": "Area with potential for protection",
+    "type": 2,
+    "namespace": "MWS",
+    "category": "Restoration",
+    "source": "mws",
+    "layer_store": ["restoration"],
+    "layer_name": ["restoration"],
+    "rasterStyle": "restoration_style",
+    "styleKey": "static",
+    "bins": [
+      {
+        "label": "Less than 400 hectares",
+        "lower": 0,
+        "upper": 400
+      },
+      {
+        "label": "Between 400 to 800 hectares",
+        "lower": 400,
+        "upper": 800
+      },
+      {
+        "label": "More than 800 hectares",
+        "lower": 800,
+        "upper": 9999999
+      }
+    ]
+  },
+  {
+    "name": "green_credit",
+    "label": "Green Credits",
+    "type": 1,
+    "namespace": "MWS",
+    "category": "Restoration",
+    "source": "mws",
+    "layer_store": ["green_credit"],
+    "layer_name": ["green_credit"],
+    "rasterStyle": "",
+    "styleKey": "static",
+    "bins": [
+      {
+        "label": "Has green credits projects",
+        "value": 1,
+        "fill": "rgba(20, 209, 29, 0.6)",
+        "stroke": "rgba(20, 209, 29, 1)"
+      },
+      {
+        "label": "No known green credits projects",
+        "value": 0,
+        "fill": "rgba(20, 209, 29, 0.6)",
+        "stroke": "rgba(20, 209, 29, 1)"
+      }
+    ]
+  },
+  {
+    "name": "reduction_in_shrubland_cover",
+    "label": "Shrubland diversion",
+    "type": 2,
+    "namespace": "MWS",
+    "category": "Shrublands",
+    "source": "mws",
+    "layer_store": ["change_detection"],
+    "layer_name": ["ShrubChange"],
+    "rasterStyle": "",
+    "styleKey": "reduction_in_shrubland_cover",
+    "bins": [
+      {
+        "label": "Low (<40 ha)",
+        "lower": 0,
+        "upper": 40,
+        "fill": "rgba(144, 238, 144, 0.8)",
+        "stroke": "rgba(144, 238, 144, 1)"
+      },
+      {
+        "label": "Moderate (40-120 ha)",
+        "lower": 40,
+        "upper": 120,
+        "fill": "rgba(255, 215, 0, 0.8)",
+        "stroke": "rgba(255, 215, 0, 1)"
+      },
+      {
+        "label": "High (>120 ha)",
+        "lower": 120,
+        "upper": 9999999999,
+        "fill": "rgba(220, 20, 60, 0.8)",
+        "stroke": "rgba(220, 20, 60, 1)"
+      }
+    ]
+  },
+  {
+    "name": "lcw_conflict",
+    "label": "Land Conflicts",
+    "type": 2,
+    "namespace": "MWS",
+    "category": "Industry",
+    "source": "mws",
+    "layer_store": ["lcw"],
+    "layer_name": ["lcw_conflict"],
+    "rasterStyle": "",
+    "styleKey": "static",
+    "bins": [
+      {
+        "label": "Areas with one or more conflicts",
+        "lower": 1,
+        "upper": 9999
+      },
+      {
+        "label": "Areas with no known conflicts",
+        "lower": -9999,
+        "upper": 0
+      }
+    ]
+  },
+  {
+    "name": "factory_csr",
+    "label": "Industry",
+    "type": 2,
+    "namespace": "MWS",
+    "category": "Industry",
+    "source": "mws",
+    "layer_store": ["factory_csr"],
+    "layer_name": ["factory_csr"],
+    "rasterStyle": "",
+    "styleKey": "static",
+    "bins": [
+      {
+        "label": "Areas with industries",
+        "lower": 1,
+        "upper": 9999
+      },
+      {
+        "label": "Areas with no known industries",
+        "lower": -9999,
+        "upper": 0
+      }
+    ]
+  },
+  {
+    "name": "mining",
+    "label": "Mining",
+    "type": 2,
+    "namespace": "MWS",
+    "category": "Industry",
+    "source": "mws",
+    "layer_store": ["mining"],
+    "layer_name": ["mining"],
+    "rasterStyle": "",
+    "styleKey": "static",
+    "bins": [
+      {
+        "label": "Areas with mining sites",
+        "lower": 1,
+        "upper": 9999
+      },
+      {
+        "label": "Areas with no known mining sites",
+        "lower": -9999,
+        "upper": 0
+      }
+    ]
+  },
+  {
+    "name": "waterbody_type",
+    "label": "Waterbody Type",
+    "type": 1,
+    "namespace": "Waterbody",
+    "category": "Waterbody",
+    "source": "wb-feature",
+    "layer_store": ["waterbodies"],
+    "layer_name": ["waterbodies"],
+    "rasterStyle": "",
+    "styleKey": "waterbody_type",
+    "bins": [
+      {
+        "label": "On river",
+        "value": 1
+      },
+      {
+        "label": "Off river",
+        "value": 0
+      }
+    ]
+  },
+  {
+    "name": "waterbody_size",
+    "label": "Size of Waterbody",
+    "type": 2,
+    "namespace": "Waterbody",
+    "category": "Waterbody",
+    "source": "wb-feature",
+    "layer_store": ["waterbodies"],
+    "layer_name": ["waterbodies"],
+    "rasterStyle": "",
+    "styleKey": "static",
+    "bins": [
+      {
+        "label": "WB < 1 ha",
+        "lower": 0,
+        "upper": 1
+      },
+      {
+        "label": "1 ha < WB < 5 ha",
+        "lower": 1,
+        "upper": 5
+      },
+      {
+        "label": "5 ha < WB < 10 ha",
+        "lower": 5,
+        "upper": 10
+      },
+      {
+        "label": "WB > 10 ha",
+        "lower": 10,
+        "upper": 999999
+      }
+    ]
+  },
+  {
+    "name": "surface_water_trend",
+    "label": "Surface Water Trend",
+    "type": 1,
+    "namespace": "Waterbody",
+    "category": "Waterbody",
+    "source": "wb-feature",
+    "layer_store": ["waterbodies"],
+    "layer_name": ["waterbodies"],
+    "rasterStyle": "",
+    "styleKey": "surface_water_trend",
+    "bins": [
+      {
+        "label": "Positive Trend",
+        "value": 1
+      },
+      {
+        "label": "Negative Trend",
+        "value": -1
+      },
+      {
+        "label": "Steady",
+        "value": 0
+      }
+    ]
+  },
+  {
+    "name": "drainage_line",
+    "label": "Drainage Line",
+    "type": 1,
+    "namespace": "Waterbody",
+    "category": "Waterbody",
+    "source": "wb-feature",
+    "layer_store": ["waterbodies"],
+    "layer_name": ["waterbodies"],
+    "rasterStyle": "",
+    "styleKey": "drainage_line",
+    "bins": [
+      {
+        "label": "On drainage line",
+        "value": 1
+      },
+      {
+        "label": "Off drainage line",
+        "value": 0
+      }
+    ]
+  },
+  {
+    "name": "total_population",
+    "label": "Total Population Count",
+    "type": 2,
+    "namespace": "Village",
+    "category": "Demographic",
+    "source": "village",
+    "layer_store": ["panchayat_boundaries"],
+    "layer_name": [],
+    "rasterStyle": "",
+    "styleKey": "total_population",
+    "bins": [
+      {
+        "label": "Less than 800",
+        "lower": 0,
+        "upper": 800,
+        "fill": "rgba(192, 128, 129, 0.8)",
+        "stroke": "rgba(192, 128, 129, 1)"
+      },
+      {
+        "label": "Between 800 to 2400",
+        "lower": 800,
+        "upper": 2400,
+        "fill": "rgba(128, 0, 32, 0.8)",
+        "stroke": "rgba(128, 0, 32, 1)"
+      },
+      {
+        "label": "Between 2400 - 8900",
+        "lower": 2400,
+        "upper": 8900,
+        "fill": "rgba(91, 14, 45, 0.8)",
+        "stroke": "rgba(91, 14, 45, 1)"
+      },
+      {
+        "label": "More than 8900",
+        "lower": 8900,
+        "upper": 9999999999,
+        "fill": "rgba(61, 0, 15, 0.8)",
+        "stroke": "rgba(61, 0, 15, 1)"
+      }
+    ]
+  },
+  {
+    "name": "percent_st_population",
+    "label": "Percentage ST population",
+    "type": 2,
+    "namespace": "Village",
+    "category": "Demographic",
+    "source": "village",
+    "layer_store": ["panchayat_boundaries"],
+    "layer_name": [],
+    "rasterStyle": "",
+    "styleKey": "percent_st_population",
+    "bins": [
+      {
+        "label": "Less than 18%",
+        "lower": 0,
+        "upper": 18,
+        "fill": "rgba(238, 234, 197, 0.8)",
+        "stroke": "rgba(238, 234, 197, 1)"
+      },
+      {
+        "label": "Between 18% to 33%",
+        "lower": 18,
+        "upper": 33,
+        "fill": "rgba(247, 219, 165, 0.8)",
+        "stroke": "rgba(247, 219, 165, 1)"
+      },
+      {
+        "label": "More than 33%",
+        "lower": 33,
+        "upper": 999999999,
+        "fill": "rgba(236, 181, 115, 0.8)",
+        "stroke": "rgba(236, 181, 115, 1)"
+      }
+    ]
+  },
+  {
+    "name": "percent_sc_population",
+    "label": "Percentage SC population",
+    "type": 2,
+    "namespace": "Village",
+    "category": "Demographic",
+    "source": "village",
+    "layer_store": ["panchayat_boundaries"],
+    "layer_name": [],
+    "rasterStyle": "",
+    "styleKey": "percent_sc_population",
+    "bins": [
+      {
+        "label": "Less than 5%",
+        "lower": 0,
+        "upper": 5,
+        "fill": "rgba(230, 230, 250, 0.8)",
+        "stroke": "rgba(230, 230, 250, 1)"
+      },
+      {
+        "label": "Between 5% to 17%",
+        "lower": 5,
+        "upper": 17,
+        "fill": "rgba(218, 112, 214, 0.8)",
+        "stroke": "rgba(218, 112, 214, 1)"
+      },
+      {
+        "label": "Between 17% to 37%",
+        "lower": 17,
+        "upper": 37,
+        "fill": "rgba(120, 81, 169, 0.8)",
+        "stroke": "rgba(120, 81, 169, 1)"
+      },
+      {
+        "label": "More than 37%",
+        "lower": 37,
+        "upper": 100,
+        "fill": "rgba(75, 0, 130, 0.8)",
+        "stroke": "rgba(75, 0, 130, 1)"
+      }
+    ]
+  },
+  {
+    "name": "literacy_level",
+    "label": "Percentage literacy levels",
+    "type": 2,
+    "namespace": "Village",
+    "category": "Demographic",
+    "source": "village",
+    "layer_store": ["panchayat_boundaries"],
+    "layer_name": [],
+    "rasterStyle": "",
+    "styleKey": "literacy_level",
+    "bins": [
+      {
+        "label": "Less than 46%",
+        "lower": 0,
+        "upper": 46,
+        "fill": "rgba(152, 251, 152, 0.8)",
+        "stroke": "rgba(152, 251, 152, 1)"
+      },
+      {
+        "label": "Between 46% to 59%",
+        "lower": 46,
+        "upper": 59,
+        "fill": "rgba(50, 205, 50, 0.8)",
+        "stroke": "rgba(50, 205, 50, 1)"
+      },
+      {
+        "label": "Between 59% to 70%",
+        "lower": 59,
+        "upper": 70,
+        "fill": "rgba(34, 139, 34, 0.8)",
+        "stroke": "rgba(34, 139, 34, 1)"
+      },
+      {
+        "label": "More than 70%",
+        "lower": 70,
+        "upper": 999999999,
+        "fill": "rgba(0, 100, 0, 0.8)",
+        "stroke": "rgba(0, 100, 0, 1)"
+      }
+    ]
+  },
+  {
+    "name": "essential_education_infra",
+    "label": "Primary education institutions",
+    "type": 2,
+    "namespace": "Village",
+    "category": "Education Access",
+    "source": "village",
+    "layer_store": ["facilities_proximity"],
+    "layer_name": ["facilities"],
+    "rasterStyle": "",
+    "styleKey": "essential_education_infra",
+    "bins": [
+      {
+        "label": "Within 2 kms",
+        "lower": 0,
+        "upper": 2,
+        "fill": "rgba(255, 249, 196, 0.8)",
+        "stroke": "rgba(255, 249, 196, 1)"
+      },
+      {
+        "label": "More than 2 kms",
+        "lower": 2,
+        "upper": 9999999999,
+        "fill": "rgba(255, 193, 7, 0.8)",
+        "stroke": "rgba(255, 193, 7, 1)"
+      }
+    ]
+  },
+  {
+    "name": "higher_education_infra",
+    "label": "Higher education institutions",
+    "type": 2,
+    "namespace": "Village",
+    "category": "Education Access",
+    "source": "village",
+    "layer_store": ["facilities_proximity"],
+    "layer_name": ["facilities"],
+    "rasterStyle": "",
+    "styleKey": "higher_education_infra",
+    "bins": [
+      {
+        "label": "Within 3 kms",
+        "lower": 0,
+        "upper": 3,
+        "fill": "rgba(232, 238, 186, 0.8)",
+        "stroke": "rgba(232, 238, 186, 1)"
+      },
+      {
+        "label": "More than 3 kms",
+        "lower": 3,
+        "upper": 9999999999,
+        "fill": "rgba(137, 151, 10, 0.8)",
+        "stroke": "rgba(137, 151, 10, 1)"
+      }
+    ]
+  },
+  {
+    "name": "road_connectivity_cat_cluster",
+    "label": "Road Connectivity",
+    "type": 1,
+    "namespace": "Village",
+    "category": "Essential Infrastructure Availability",
+    "source": "village",
+    "layer_store": ["antyodaya_2020"],
+    "layer_name": ["antyodaya20"],
+    "rasterStyle": "",
+    "styleKey": "road_connectivity_cat_cluster",
+    "bins": [
+      {
+        "label": "Poor",
+        "value": "LOW"
+      },
+      {
+        "label": "Moderate",
+        "value": "MEDIUM"
+      },
+      {
+        "label": "Strong",
+        "value": "HIGH"
+      }
+    ],
+    "visualizeBins": [
+      {
+        "lower": 0,
+        "upper": 0.33,
+        "fill": "rgba(220, 20, 60, 0.8)",
+        "stroke": "rgba(139, 0, 0, 1)"
+      },
+      {
+        "lower": 0.330001,
+        "upper": 0.66,
+        "fill": "rgba(255, 215, 0, 0.8)",
+        "stroke": "rgba(218, 165, 32, 1)"
+      },
+      {
+        "lower": 0.660001,
+        "upper": 1,
+        "fill": "rgba(144, 238, 144, 0.8)",
+        "stroke": "rgba(34, 139, 34, 1)"
+      }
+    ]
+  },
+  {
+    "name": "energy_access_cat_cluster",
+    "label": "Electricity Supply",
+    "type": 1,
+    "namespace": "Village",
+    "category": "Essential Infrastructure Availability",
+    "source": "village",
+    "layer_store": ["antyodaya_2020"],
+    "layer_name": ["antyodaya20"],
+    "rasterStyle": "",
+    "styleKey": "energy_access_cat_cluster",
+    "bins": [
+      {
+        "label": "Poor",
+        "value": "LOW"
+      },
+      {
+        "label": "Moderate",
+        "value": "MEDIUM"
+      },
+      {
+        "label": "Strong",
+        "value": "HIGH"
+      }
+    ],
+    "visualizeBins": [
+      {
+        "lower": 0,
+        "upper": 0.33,
+        "fill": "rgba(220, 20, 60, 0.8)",
+        "stroke": "rgba(139, 0, 0, 1)"
+      },
+      {
+        "lower": 0.330001,
+        "upper": 0.66,
+        "fill": "rgba(255, 215, 0, 0.8)",
+        "stroke": "rgba(218, 165, 32, 1)"
+      },
+      {
+        "lower": 0.660001,
+        "upper": 1,
+        "fill": "rgba(144, 238, 144, 0.8)",
+        "stroke": "rgba(34, 139, 34, 1)"
+      }
+    ]
+  },
+  {
+    "name": "housing_quality_cat_cluster",
+    "label": "Housing Quality",
+    "type": 1,
+    "namespace": "Village",
+    "category": "Essential Infrastructure Availability",
+    "source": "village",
+    "layer_store": ["antyodaya_2020"],
+    "layer_name": ["antyodaya20"],
+    "rasterStyle": "",
+    "styleKey": "housing_quality_cat_cluster",
+    "bins": [
+      {
+        "label": "Poor",
+        "value": "LOW"
+      },
+      {
+        "label": "Moderate",
+        "value": "MEDIUM"
+      },
+      {
+        "label": "Strong",
+        "value": "HIGH"
+      }
+    ],
+    "visualizeBins": [
+      {
+        "lower": 0,
+        "upper": 0.33,
+        "fill": "rgba(220, 20, 60, 0.8)",
+        "stroke": "rgba(139, 0, 0, 1)"
+      },
+      {
+        "lower": 0.330001,
+        "upper": 0.66,
+        "fill": "rgba(255, 215, 0, 0.8)",
+        "stroke": "rgba(218, 165, 32, 1)"
+      },
+      {
+        "lower": 0.660001,
+        "upper": 1,
+        "fill": "rgba(144, 238, 144, 0.8)",
+        "stroke": "rgba(34, 139, 34, 1)"
+      }
+    ]
+  },
+  {
+    "name": "maternal_child_health_cat_cluster",
+    "label": "Maternal and Child Health Service Access",
+    "type": 1,
+    "namespace": "Village",
+    "category": "Healthcare Access",
+    "source": "village",
+    "layer_store": ["antyodaya_2020"],
+    "layer_name": ["antyodaya20"],
+    "rasterStyle": "",
+    "styleKey": "maternal_child_health_cat_cluster",
+    "bins": [
+      {
+        "label": "Poor",
+        "value": "LOW"
+      },
+      {
+        "label": "Moderate",
+        "value": "MEDIUM"
+      },
+      {
+        "label": "Strong",
+        "value": "HIGH"
+      }
+    ],
+    "visualizeBins": [
+      {
+        "lower": 0,
+        "upper": 0.33,
+        "fill": "rgba(220, 20, 60, 0.8)",
+        "stroke": "rgba(139, 0, 0, 1)"
+      },
+      {
+        "lower": 0.330001,
+        "upper": 0.66,
+        "fill": "rgba(255, 215, 0, 0.8)",
+        "stroke": "rgba(218, 165, 32, 1)"
+      },
+      {
+        "lower": 0.660001,
+        "upper": 1,
+        "fill": "rgba(144, 238, 144, 0.8)",
+        "stroke": "rgba(34, 139, 34, 1)"
+      }
+    ]
+  },
+  {
+    "name": "water_sanitation_cat_cluster",
+    "label": "Water and Sanitation Infrastructure",
+    "type": 1,
+    "namespace": "Village",
+    "category": "Healthcare Access",
+    "source": "village",
+    "layer_store": ["antyodaya_2020"],
+    "layer_name": ["antyodaya20"],
+    "rasterStyle": "",
+    "styleKey": "water_sanitation_cat_cluster",
+    "bins": [
+      {
+        "label": "Poor",
+        "value": "LOW"
+      },
+      {
+        "label": "Moderate",
+        "value": "MEDIUM"
+      },
+      {
+        "label": "Strong",
+        "value": "HIGH"
+      }
+    ],
+    "visualizeBins": [
+      {
+        "lower": 0,
+        "upper": 0.33,
+        "fill": "rgba(220, 20, 60, 0.8)",
+        "stroke": "rgba(139, 0, 0, 1)"
+      },
+      {
+        "lower": 0.330001,
+        "upper": 0.66,
+        "fill": "rgba(255, 215, 0, 0.8)",
+        "stroke": "rgba(218, 165, 32, 1)"
+      },
+      {
+        "lower": 0.660001,
+        "upper": 1,
+        "fill": "rgba(144, 238, 144, 0.8)",
+        "stroke": "rgba(34, 139, 34, 1)"
+      }
+    ]
+  },
+  {
+    "name": "essential_health_services",
+    "label": "Essential health services",
+    "type": 2,
+    "namespace": "Village",
+    "category": "Healthcare Access",
+    "source": "village",
+    "layer_store": ["facilities_proximity"],
+    "layer_name": ["facilities"],
+    "rasterStyle": "",
+    "styleKey": "essential_health_services",
+    "bins": [
+      {
+        "label": "Less than 2 kms",
+        "lower": 0,
+        "upper": 2,
+        "fill": "rgba(255, 205, 210, 0.8)",
+        "stroke": "rgba(255, 205, 210, 1)"
+      },
+      {
+        "label": "Between 2 to 5 kms",
+        "lower": 2,
+        "upper": 5,
+        "fill": "rgba(239, 83, 80, 0.8)",
+        "stroke": "rgba(239, 83, 80, 1)"
+      },
+      {
+        "label": "More than 5 kms",
+        "lower": 5,
+        "upper": 9999999999,
+        "fill": "rgba(183, 28, 28, 0.8)",
+        "stroke": "rgba(183, 28, 28, 1)"
+      }
+    ]
+  },
+  {
+    "name": "advanced_health_services",
+    "label": "Advanced health services",
+    "type": 2,
+    "namespace": "Village",
+    "category": "Healthcare Access",
+    "source": "village",
+    "layer_store": ["facilities_proximity"],
+    "layer_name": ["facilities"],
+    "rasterStyle": "",
+    "styleKey": "advanced_health_services",
+    "bins": [
+      {
+        "label": "<10 kms",
+        "lower": 0,
+        "upper": 10,
+        "fill": "rgba(255, 205, 210, 0.8)",
+        "stroke": "rgba(255, 205, 210, 1)"
+      },
+      {
+        "label": "10-25 kms",
+        "lower": 10,
+        "upper": 25,
+        "fill": "rgba(239, 83, 80, 0.8)",
+        "stroke": "rgba(239, 83, 80, 1)"
+      },
+      {
+        "label": ">25 kms",
+        "lower": 25,
+        "upper": 9999999999,
+        "fill": "rgba(183, 28, 28, 0.8)",
+        "stroke": "rgba(183, 28, 28, 1)"
+      }
+    ]
+  },
+  {
+    "name": "financial_inclusion_cat_cluster",
+    "label": "Access to formal banking channels",
+    "type": 1,
+    "namespace": "Village",
+    "category": "Financial Inclusion",
+    "source": "village",
+    "layer_store": ["antyodaya_2020"],
+    "layer_name": ["antyodaya20"],
+    "rasterStyle": "",
+    "styleKey": "financial_inclusion_cat_cluster",
+    "bins": [
+      {
+        "label": "Poor",
+        "value": "LOW"
+      },
+      {
+        "label": "Moderate",
+        "value": "MEDIUM"
+      },
+      {
+        "label": "High",
+        "value": "HIGH"
+      }
+    ],
+    "visualizeBins": [
+      {
+        "lower": 0,
+        "upper": 0.33,
+        "fill": "rgba(220, 20, 60, 0.8)",
+        "stroke": "rgba(139, 0, 0, 1)"
+      },
+      {
+        "lower": 0.330001,
+        "upper": 0.66,
+        "fill": "rgba(255, 215, 0, 0.8)",
+        "stroke": "rgba(218, 165, 32, 1)"
+      },
+      {
+        "lower": 0.660001,
+        "upper": 1,
+        "fill": "rgba(144, 238, 144, 0.8)",
+        "stroke": "rgba(34, 139, 34, 1)"
+      }
+    ]
+  },
+  {
+    "name": "social_protection_cat_cluster",
+    "label": "Coverage under PDS, NFSA, NSAP",
+    "type": 1,
+    "namespace": "Village",
+    "category": "Social welfare access",
+    "source": "village",
+    "layer_store": ["antyodaya_2020"],
+    "layer_name": ["antyodaya20"],
+    "rasterStyle": "",
+    "styleKey": "social_protection_cat_cluster",
+    "bins": [
+      {
+        "label": "Poor",
+        "value": "LOW"
+      },
+      {
+        "label": "Moderate",
+        "value": "MEDIUM"
+      },
+      {
+        "label": "Strong",
+        "value": "HIGH"
+      }
+    ],
+    "visualizeBins": [
+      {
+        "lower": 0,
+        "upper": 0.33,
+        "fill": "rgba(220, 20, 60, 0.8)",
+        "stroke": "rgba(139, 0, 0, 1)"
+      },
+      {
+        "lower": 0.330001,
+        "upper": 0.66,
+        "fill": "rgba(255, 215, 0, 0.8)",
+        "stroke": "rgba(218, 165, 32, 1)"
+      },
+      {
+        "lower": 0.660001,
+        "upper": 1,
+        "fill": "rgba(144, 238, 144, 0.8)",
+        "stroke": "rgba(34, 139, 34, 1)"
+      }
+    ]
+  },
+  {
+    "name": "public_distribution_system",
+    "label": "PDS access",
+    "type": 2,
+    "namespace": "Village",
+    "category": "Social welfare access",
+    "source": "village",
+    "layer_store": ["facilities_proximity"],
+    "layer_name": ["facilities"],
+    "rasterStyle": "",
+    "styleKey": "public_distribution_system",
+    "bins": [
+      {
+        "label": "Within 2 kms",
+        "lower": 0,
+        "upper": 2,
+        "fill": "rgba(232, 238, 186, 0.8)",
+        "stroke": "rgba(232, 238, 186, 1)"
+      },
+      {
+        "label": "More than 2 kms",
+        "lower": 2,
+        "upper": 9999999999,
+        "fill": "rgba(137, 151, 10, 0.8)",
+        "stroke": "rgba(137, 151, 10, 1)"
+      }
+    ]
+  },
+  {
+    "name": "institutionalization_cat_cluster",
+    "label": "Presence of SHGs, FPOs, Cooperatives",
+    "type": 1,
+    "namespace": "Village",
+    "category": "Community Institutions",
+    "source": "village",
+    "layer_store": ["antyodaya_2020"],
+    "layer_name": ["antyodaya20"],
+    "rasterStyle": "",
+    "styleKey": "institutionalization_cat_cluster",
+    "bins": [
+      {
+        "label": "Poor",
+        "value": "LOW"
+      },
+      {
+        "label": "Moderate",
+        "value": "MEDIUM"
+      },
+      {
+        "label": "Strong",
+        "value": "HIGH"
+      }
+    ],
+    "visualizeBins": [
+      {
+        "lower": 0,
+        "upper": 0.33,
+        "fill": "rgba(220, 20, 60, 0.8)",
+        "stroke": "rgba(139, 0, 0, 1)"
+      },
+      {
+        "lower": 0.330001,
+        "upper": 0.66,
+        "fill": "rgba(255, 215, 0, 0.8)",
+        "stroke": "rgba(218, 165, 32, 1)"
+      },
+      {
+        "lower": 0.660001,
+        "upper": 1,
+        "fill": "rgba(144, 238, 144, 0.8)",
+        "stroke": "rgba(34, 139, 34, 1)"
+      }
+    ]
+  },
+  {
+    "name": "livelihoods_employment_cat_cluster",
+    "label": "Farm Employment",
+    "type": 1,
+    "namespace": "Village",
+    "category": "Livelihood",
+    "source": "village",
+    "layer_store": ["antyodaya_2020"],
+    "layer_name": ["antyodaya20"],
+    "rasterStyle": "",
+    "styleKey": "livelihoods_employment_cat_cluster",
+    "bins": [
+      {
+        "label": "Low",
+        "value": "LOW"
+      },
+      {
+        "label": "Moderate",
+        "value": "MEDIUM"
+      },
+      {
+        "label": "High",
+        "value": "HIGH"
+      }
+    ],
+    "visualizeBins": [
+      {
+        "lower": 0,
+        "upper": 0.33,
+        "fill": "rgba(220, 20, 60, 0.8)",
+        "stroke": "rgba(139, 0, 0, 1)"
+      },
+      {
+        "lower": 0.330001,
+        "upper": 0.66,
+        "fill": "rgba(255, 215, 0, 0.8)",
+        "stroke": "rgba(218, 165, 32, 1)"
+      },
+      {
+        "lower": 0.660001,
+        "upper": 1,
+        "fill": "rgba(144, 238, 144, 0.8)",
+        "stroke": "rgba(34, 139, 34, 1)"
+      }
+    ]
+  },
+  {
+    "name": "livelihoods_forest_resources_cat_cluster",
+    "label": "Forest-based Livelihood",
+    "type": 1,
+    "namespace": "Village",
+    "category": "Livelihood",
+    "source": "village",
+    "layer_store": ["antyodaya_2020"],
+    "layer_name": ["antyodaya20"],
+    "rasterStyle": "",
+    "styleKey": "livelihoods_forest_resources_cat_cluster",
+    "bins": [
+      {
+        "label": "Low",
+        "value": "LOW"
+      },
+      {
+        "label": "High",
+        "value": "HIGH"
+      }
+    ],
+    "visualizeBins": [
+      {
+        "lower": 0,
+        "upper": 0.5,
+        "fill": "rgba(220, 20, 60, 0.8)",
+        "stroke": "rgba(139, 0, 0, 1)"
+      },
+      {
+        "lower": 0.5,
+        "upper": 1,
+        "fill": "rgba(144, 238, 144, 0.8)",
+        "stroke": "rgba(34, 139, 34, 1)"
+      }
+    ]
+  },
+  {
+    "name": "livelihoods_alternative_farming_cat_cluster",
+    "label": "Alternate Farming",
+    "type": 1,
+    "namespace": "Village",
+    "category": "Livelihood",
+    "source": "village",
+    "layer_store": ["antyodaya_2020"],
+    "layer_name": ["antyodaya20"],
+    "rasterStyle": "",
+    "styleKey": "livelihoods_alternative_farming_cat_cluster",
+    "bins": [
+      {
+        "label": "Low",
+        "value": "LOW"
+      },
+      {
+        "label": "High",
+        "value": "HIGH"
+      }
+    ],
+    "visualizeBins": [
+      {
+        "lower": 0,
+        "upper": 0.5,
+        "fill": "rgba(220, 20, 60, 0.8)",
+        "stroke": "rgba(139, 0, 0, 1)"
+      },
+      {
+        "lower": 0.5,
+        "upper": 1,
+        "fill": "rgba(144, 238, 144, 0.8)",
+        "stroke": "rgba(34, 139, 34, 1)"
+      }
+    ]
+  },
+  {
+    "name": "livelihoods_fisheries_cat_cluster",
+    "label": "Fisheries Presence",
+    "type": 1,
+    "namespace": "Village",
+    "category": "Livelihood",
+    "source": "village",
+    "layer_store": ["antyodaya_2020"],
+    "layer_name": ["antyodaya20"],
+    "rasterStyle": "",
+    "styleKey": "livelihoods_fisheries_cat_cluster",
+    "bins": [
+      {
+        "label": "Low",
+        "value": "LOW"
+      },
+      {
+        "label": "Moderate",
+        "value": "MEDIUM"
+      },
+      {
+        "label": "High",
+        "value": "HIGH"
+      }
+    ],
+    "visualizeBins": [
+      {
+        "lower": 0,
+        "upper": 0.33,
+        "fill": "rgba(220, 20, 60, 0.8)",
+        "stroke": "rgba(139, 0, 0, 1)"
+      },
+      {
+        "lower": 0.330001,
+        "upper": 0.66,
+        "fill": "rgba(255, 215, 0, 0.8)",
+        "stroke": "rgba(218, 165, 32, 1)"
+      },
+      {
+        "lower": 0.660001,
+        "upper": 1,
+        "fill": "rgba(144, 238, 144, 0.8)",
+        "stroke": "rgba(34, 139, 34, 1)"
+      }
+    ]
+  },
+  {
+    "name": "livelihoods_cottage_traditional_industry_cat_cluster",
+    "label": "Cottage Industry",
+    "type": 1,
+    "namespace": "Village",
+    "category": "Livelihood",
+    "source": "village",
+    "layer_store": ["antyodaya_2020"],
+    "layer_name": ["antyodaya20"],
+    "rasterStyle": "",
+    "styleKey": "livelihoods_cottage_traditional_industry_cat_cluster",
+    "bins": [
+      {
+        "label": "Low",
+        "value": "LOW"
+      },
+      {
+        "label": "High",
+        "value": "HIGH"
+      }
+    ],
+    "visualizeBins": [
+      {
+        "lower": 0,
+        "upper": 0.5,
+        "fill": "rgba(220, 20, 60, 0.8)",
+        "stroke": "rgba(139, 0, 0, 1)"
+      },
+      {
+        "lower": 0.5,
+        "upper": 1,
+        "fill": "rgba(144, 238, 144, 0.8)",
+        "stroke": "rgba(34, 139, 34, 1)"
+      }
+    ]
+  },
+  {
+    "name": "livestock_veterinary_cat_cluster",
+    "label": "Veterinary services and support availability",
+    "type": 1,
+    "namespace": "Village",
+    "category": "Livestock and Dairy",
+    "source": "village",
+    "layer_store": ["antyodaya_2020"],
+    "layer_name": ["antyodaya20"],
+    "rasterStyle": "",
+    "styleKey": "livestock_veterinary_cat_cluster",
+    "bins": [
+      {
+        "label": "Low",
+        "value": "LOW"
+      },
+      {
+        "label": "Moderate",
+        "value": "MEDIUM"
+      },
+      {
+        "label": "High",
+        "value": "HIGH"
+      }
+    ],
+    "visualizeBins": [
+      {
+        "lower": 0,
+        "upper": 0.33,
+        "fill": "rgba(220, 20, 60, 0.8)",
+        "stroke": "rgba(139, 0, 0, 1)"
+      },
+      {
+        "lower": 0.330001,
+        "upper": 0.66,
+        "fill": "rgba(255, 215, 0, 0.8)",
+        "stroke": "rgba(218, 165, 32, 1)"
+      },
+      {
+        "lower": 0.660001,
+        "upper": 1,
+        "fill": "rgba(144, 238, 144, 0.8)",
+        "stroke": "rgba(34, 139, 34, 1)"
+      }
+    ]
+  },
+  {
+    "name": "livestock_management_centers",
+    "label": "Market access points",
+    "type": 2,
+    "namespace": "Village",
+    "category": "Livestock and Dairy",
+    "source": "village",
+    "layer_store": ["facilities_proximity"],
+    "layer_name": ["facilities"],
+    "rasterStyle": "",
+    "styleKey": "livestock_management_centers",
+    "bins": [
+      {
+        "label": "<10 kms",
+        "lower": 0,
+        "upper": 10,
+        "fill": "rgba(255, 170, 85, 0.8)",
+        "stroke": "rgba(255, 170, 85, 1)"
+      },
+      {
+        "label": "10-30 kms",
+        "lower": 10,
+        "upper": 30,
+        "fill": "rgba(170, 85, 0, 0.8)",
+        "stroke": "rgba(170, 85, 0, 1)"
+      },
+      {
+        "label": ">30 kms",
+        "lower": 30,
+        "upper": 9999999999,
+        "fill": "rgba(85, 43, 0, 0.8)",
+        "stroke": "rgba(85, 43, 0, 1)"
+      }
+    ]
+  },
+  {
+    "name": "livelihoods_common_resources_cat_cluster",
+    "label": "Common Pasture Access",
+    "type": 1,
+    "namespace": "Village",
+    "category": "Livestock and Dairy",
+    "source": "village",
+    "layer_store": ["antyodaya_2020"],
+    "layer_name": ["antyodaya20"],
+    "rasterStyle": "",
+    "styleKey": "livelihoods_common_resources_cat_cluster",
+    "bins": [
+      {
+        "label": "Low",
+        "value": "LOW"
+      },
+      {
+        "label": "High",
+        "value": "HIGH"
+      }
+    ],
+    "visualizeBins": [
+      {
+        "lower": 0,
+        "upper": 0.5,
+        "fill": "rgba(220, 20, 60, 0.8)",
+        "stroke": "rgba(139, 0, 0, 1)"
+      },
+      {
+        "lower": 0.5,
+        "upper": 1,
+        "fill": "rgba(144, 238, 144, 0.8)",
+        "stroke": "rgba(34, 139, 34, 1)"
+      }
+    ]
+  },
+  {
+    "name": "small_animals_total",
+    "label": "Bovines (Cattle / Buffalo) count",
+    "type": 2,
+    "namespace": "Village",
+    "category": "Livestock and Dairy",
+    "source": "village",
+    "layer_store": ["livestocks"],
+    "layer_name": ["livestocks"],
+    "rasterStyle": "",
+    "styleKey": "small_animals_total",
+    "bins": [
+      {
+        "label": "Low Bovine Population (0–200)",
+        "lower": 0,
+        "upper": 200,
+        "fill": "rgba(220, 20, 60, 0.8)",
+        "stroke": "rgba(139, 0, 0, 1)"
+      },
+      {
+        "label": "Moderate Bovine Population (201–500)",
+        "lower": 201,
+        "upper": 500,
+        "fill": "rgba(255, 215, 0, 0.8)",
+        "stroke": "rgba(218, 165, 32, 1)"
+      },
+      {
+        "label": "High Bovine Population (>500)",
+        "lower": 501,
+        "upper": 9999999999,
+        "fill": "rgba(144, 238, 144, 0.8)",
+        "stroke": "rgba(34, 139, 34, 1)"
+      }
+    ]
+  },
+  {
+    "name": "large_animals_total",
+    "label": "Small Animals (Sheep / Goat / Pig) count",
+    "type": 2,
+    "namespace": "Village",
+    "category": "Livestock and Dairy",
+    "source": "village",
+    "layer_store": ["livestocks"],
+    "layer_name": ["livestocks"],
+    "rasterStyle": "",
+    "styleKey": "large_animals_total",
+    "bins": [
+      {
+        "label": "Low Small Animal Population (0–80)",
+        "lower": 0,
+        "upper": 80,
+        "fill": "rgba(220, 20, 60, 0.8)",
+        "stroke": "rgba(139, 0, 0, 1)"
+      },
+      {
+        "label": "Moderate Small Animal Population (81–250)",
+        "lower": 81,
+        "upper": 250,
+        "fill": "rgba(255, 215, 0, 0.8)",
+        "stroke": "rgba(218, 165, 32, 1)"
+      },
+      {
+        "label": "High Small Animal Population (>250)",
+        "lower": 251,
+        "upper": 9999999999,
+        "fill": "rgba(144, 238, 144, 0.8)",
+        "stroke": "rgba(34, 139, 34, 1)"
+      }
+    ]
+  },
+  {
+    "name": "agriculture_irrigation_watershed_cat_cluster",
+    "label": "Watershed Infrastructure and Modern Irrigation",
+    "type": 1,
+    "namespace": "Village",
+    "category": "Climate resilience and irrigation infrastructure",
+    "source": "village",
+    "layer_store": ["antyodaya_2020"],
+    "layer_name": ["antyodaya20"],
+    "rasterStyle": "",
+    "styleKey": "agriculture_irrigation_watershed_cat_cluster",
+    "bins": [
+      {
+        "label": "Low",
+        "value": "LOW"
+      },
+      {
+        "label": "Moderate",
+        "value": "MEDIUM"
+      },
+      {
+        "label": "High",
+        "value": "HIGH"
+      }
+    ],
+    "visualizeBins": [
+      {
+        "lower": 0,
+        "upper": 0.33,
+        "fill": "rgba(220, 20, 60, 0.8)",
+        "stroke": "rgba(139, 0, 0, 1)"
+      },
+      {
+        "lower": 0.330001,
+        "upper": 0.66,
+        "fill": "rgba(255, 215, 0, 0.8)",
+        "stroke": "rgba(218, 165, 32, 1)"
+      },
+      {
+        "lower": 0.660001,
+        "upper": 1,
+        "fill": "rgba(144, 238, 144, 0.8)",
+        "stroke": "rgba(34, 139, 34, 1)"
+      }
+    ]
+  },
+  {
+    "name": "total_assets",
+    "label": "Total number of NREGA works during 2016-24",
+    "type": 2,
+    "namespace": "Village",
+    "category": "Climate resilience and irrigation infrastructure",
+    "source": "village",
+    "layer_store": ["nrega_assets"],
+    "layer_name": [],
+    "rasterStyle": "",
+    "styleKey": "total_assets",
+    "bins": [
+      {
+        "label": "Less than 100",
+        "lower": 0,
+        "upper": 100,
+        "fill": "rgba(135, 206, 235, 0.8)",
+        "stroke": "rgba(135, 206, 235, 1)"
+      },
+      {
+        "label": "Between 100 to 300",
+        "lower": 100,
+        "upper": 300,
+        "fill": "rgba(65, 105, 225, 0.8)",
+        "stroke": "rgba(65, 105, 225, 1)"
+      },
+      {
+        "label": "More than 300",
+        "lower": 300,
+        "upper": 999999999,
+        "fill": "rgba(0, 0, 128, 0.8)",
+        "stroke": "rgba(0, 0, 128, 1)"
+      }
+    ]
+  },
+  {
+    "name": "agricultural_support_infrastructure",
+    "label": "Agri inputs and advisory access",
+    "type": 2,
+    "namespace": "Village",
+    "category": "Agricultural Support and Market Access",
+    "source": "village",
+    "layer_store": ["facilities_proximity"],
+    "layer_name": ["facilities"],
+    "rasterStyle": "",
+    "styleKey": "agricultural_support_infrastructure",
+    "bins": [
+      {
+        "label": "<10 kms",
+        "lower": 0,
+        "upper": 10,
+        "fill": "rgba(200, 230, 201, 0.8)",
+        "stroke": "rgba(200, 230, 201, 1)"
+      },
+      {
+        "label": "10-50 kms",
+        "lower": 10,
+        "upper": 50,
+        "fill": "rgba(102, 187, 106, 0.8)",
+        "stroke": "rgba(102, 187, 106, 1)"
+      },
+      {
+        "label": ">50 kms",
+        "lower": 50,
+        "upper": 9999999999,
+        "fill": "rgba(46, 125, 50, 0.8)",
+        "stroke": "rgba(46, 125, 50, 1)"
+      }
+    ]
+  },
+  {
+    "name": "post_harvest_infra",
+    "label": "Post harvest processing centers",
+    "type": 2,
+    "namespace": "Village",
+    "category": "Agricultural Support and Market Access",
+    "source": "village",
+    "layer_store": ["facilities_proximity"],
+    "layer_name": ["facilities"],
+    "rasterStyle": "",
+    "styleKey": "post_harvest_infra",
+    "bins": [
+      {
+        "label": "<5 kms",
+        "lower": 0,
+        "upper": 5,
+        "fill": "rgba(200, 230, 201, 0.8)",
+        "stroke": "rgba(200, 230, 201, 1)"
+      },
+      {
+        "label": "5-20 kms",
+        "lower": 5,
+        "upper": 20,
+        "fill": "rgba(102, 187, 106, 0.8)",
+        "stroke": "rgba(102, 187, 106, 1)"
+      },
+      {
+        "label": ">20 kms",
+        "lower": 20,
+        "upper": 9999999999,
+        "fill": "rgba(46, 125, 50, 0.8)",
+        "stroke": "rgba(46, 125, 50, 1)"
+      }
+    ]
+  },
+  {
+    "name": "agri_market_access",
+    "label": "Market access",
+    "type": 2,
+    "namespace": "Village",
+    "category": "Agricultural Support and Market Access",
+    "source": "village",
+    "layer_store": ["facilities_proximity"],
+    "layer_name": ["facilities"],
+    "rasterStyle": "",
+    "styleKey": "agri_market_access",
+    "bins": [
+      {
+        "label": "<3 kms",
+        "lower": 0,
+        "upper": 3,
+        "fill": "rgba(255, 255, 102, 0.8)",
+        "stroke": "rgba(255, 255, 102, 1)"
+      },
+      {
+        "label": "3-10 kms",
+        "lower": 3,
+        "upper": 10,
+        "fill": "rgba(159, 159, 0, 0.8)",
+        "stroke": "rgba(159, 159, 0, 1)"
+      },
+      {
+        "label": ">10 kms",
+        "lower": 10,
+        "upper": 9999999999,
+        "fill": "rgba(98, 98, 0, 0.8)",
+        "stroke": "rgba(98, 98, 0, 1)"
+      }
+    ]
+  },
+  {
+    "name": "farmer_cooperatives_access",
+    "label": "Access to farmer cooperatives",
+    "type": 2,
+    "namespace": "Village",
+    "category": "Agricultural Support and Market Access",
+    "source": "village",
+    "layer_store": ["facilities_proximity"],
+    "layer_name": ["facilities"],
+    "rasterStyle": "",
+    "styleKey": "farmer_cooperatives_access",
+    "bins": [
+      {
+        "label": "<10 kms",
+        "lower": 0,
+        "upper": 10,
+        "fill": "rgba(204, 238, 255, 0.8)",
+        "stroke": "rgba(204, 238, 255, 1)"
+      },
+      {
+        "label": "10-30 kms",
+        "lower": 10,
+        "upper": 30,
+        "fill": "rgba(0, 142, 212, 0.8)",
+        "stroke": "rgba(0, 142, 212, 1)"
+      },
+      {
+        "label": ">30 kms",
+        "lower": 30,
+        "upper": 9999999999,
+        "fill": "rgba(0, 77, 116, 0.8)",
+        "stroke": "rgba(0, 77, 116, 1)"
+      }
+    ]
+  },
+  {
+    "name": "agriculture_organic_farming_cat_cluster",
+    "label": "Organic Farming Adoption",
+    "type": 1,
+    "namespace": "Village",
+    "category": "Agroecological support",
+    "source": "village",
+    "layer_store": ["antyodaya_2020"],
+    "layer_name": ["antyodaya20"],
+    "rasterStyle": "",
+    "styleKey": "agriculture_organic_farming_cat_cluster",
+    "bins": [
+      {
+        "label": "Low",
+        "value": "LOW"
+      },
+      {
+        "label": "Moderate",
+        "value": "MEDIUM"
+      },
+      {
+        "label": "High",
+        "value": "HIGH"
+      }
+    ],
+    "visualizeBins": [
+      {
+        "lower": 0,
+        "upper": 0.33,
+        "fill": "rgba(220, 20, 60, 0.8)",
+        "stroke": "rgba(139, 0, 0, 1)"
+      },
+      {
+        "lower": 0.330001,
+        "upper": 0.66,
+        "fill": "rgba(255, 215, 0, 0.8)",
+        "stroke": "rgba(218, 165, 32, 1)"
+      },
+      {
+        "lower": 0.660001,
+        "upper": 1,
+        "fill": "rgba(144, 238, 144, 0.8)",
+        "stroke": "rgba(34, 139, 34, 1)"
+      }
+    ]
+  },
+  {
+    "name": "nitrogen_levels",
+    "label": "Nitrogen Levels",
+    "type": 2,
+    "namespace": "MWS",
+    "category": "Soil",
+    "source": "mws",
+    "layer_store": ["soil_health_raster"],
+    "layer_name": ["soil_health_raster_N"],
+    "rasterStyle": "Soil_Health_Nitrogen",
+    "styleKey": "static",
+    "bins": [
+      {
+        "label": "Low (<280 kg/ha)",
+        "lower": 0,
+        "upper": 280,
+        "fill": "rgba(200, 230, 201, 0.8)",
+        "stroke": "rgba(200, 230, 201, 1)"
+      },
+      {
+        "label": "Medium (280-560 kg/ha)",
+        "lower": 280,
+        "upper": 560,
+        "fill": "rgba(102, 187, 106, 0.8)",
+        "stroke": "rgba(102, 187, 106, 1)"
+      },
+      {
+        "label": "High (>560 kg/ha)",
+        "lower": 560,
+        "upper": 9999999999,
+        "fill": "rgba(46, 125, 50, 0.8)",
+        "stroke": "rgba(46, 125, 50, 1)"
+      }
+    ]
+  },
+  {
+    "name": "phosphoros_levels",
+    "label": "Phosphorus Levels",
+    "type": 2,
+    "namespace": "MWS",
+    "category": "Soil",
+    "source": "mws",
+    "layer_store": ["soil_health_raster"],
+    "layer_name": ["soil_health_raster_P"],
+    "rasterStyle": "Soil_Health_Phosphorus",
+    "styleKey": "static",
+    "bins": [
+      {
+        "label": "Low (<10 kg/ha)",
+        "lower": 0,
+        "upper": 10,
+        "fill": "rgba(200, 230, 201, 0.8)",
+        "stroke": "rgba(200, 230, 201, 1)"
+      },
+      {
+        "label": "Medium (10-25 kg/ha)",
+        "lower": 10,
+        "upper": 25,
+        "fill": "rgba(102, 187, 106, 0.8)",
+        "stroke": "rgba(102, 187, 106, 1)"
+      },
+      {
+        "label": "High (>25 kg/ha)",
+        "lower": 25,
+        "upper": 9999999999,
+        "fill": "rgba(46, 125, 50, 0.8)",
+        "stroke": "rgba(46, 125, 50, 1)"
+      }
+    ]
+  },
+  {
+    "name": "potassium_levels",
+    "label": "Pottasium Levels",
+    "type": 2,
+    "namespace": "MWS",
+    "category": "Soil",
+    "source": "mws",
+    "layer_store": ["soil_health_raster"],
+    "layer_name": ["soil_health_raster_K"],
+    "rasterStyle": "Soil_Health_Potassium",
+    "styleKey": "static",
+    "bins": [
+      {
+        "label": "Low (120 kg/ha)",
+        "lower": 0,
+        "upper": 120,
+        "fill": "rgba(200, 230, 201, 0.8)",
+        "stroke": "rgba(200, 230, 201, 1)"
+      },
+      {
+        "label": "Medium (120-280 kg/ha)",
+        "lower": 120,
+        "upper": 280,
+        "fill": "rgba(102, 187, 106, 0.8)",
+        "stroke": "rgba(102, 187, 106, 1)"
+      },
+      {
+        "label": "High (>280 kg/ha)",
+        "lower": 280,
+        "upper": 9999999999,
+        "fill": "rgba(46, 125, 50, 0.8)",
+        "stroke": "rgba(46, 125, 50, 1)"
+      }
+    ]
+  },
+  {
+    "name": "organic_carbon",
+    "label": "Organic Carbon Concentration",
+    "type": 2,
+    "namespace": "MWS",
+    "category": "Soil",
+    "source": "mws",
+    "layer_store": ["soil_health_raster"],
+    "layer_name": ["soil_health_raster_OC"],
+    "rasterStyle": "Soil_Health_Organic_carbon",
+    "styleKey": "static",
+    "bins": [
+      {
+        "label": "Low (120 kg/ha)",
+        "lower": 0,
+        "upper": 120,
+        "fill": "rgba(200, 230, 201, 0.8)",
+        "stroke": "rgba(200, 230, 201, 1)"
+      },
+      {
+        "label": "Medium (120-280 kg/ha)",
+        "lower": 120,
+        "upper": 280,
+        "fill": "rgba(102, 187, 106, 0.8)",
+        "stroke": "rgba(102, 187, 106, 1)"
+      },
+      {
+        "label": "High (>280 kg/ha)",
+        "lower": 280,
+        "upper": 9999999999,
+        "fill": "rgba(46, 125, 50, 0.8)",
+        "stroke": "rgba(46, 125, 50, 1)"
+      }
+    ]
+  },
+  {
+    "name": "organic_carbon_tree_cover",
+    "label": "Organic Carbon Concentration for Various Forest Systems",
+    "type": 2,
+    "namespace": "MWS",
+    "category": "Restoration",
+    "source": "mws",
+    "layer_store": ["soil_health_raster"],
+    "layer_name": ["soil_health_raster_OC_OLM"],
+    "rasterStyle": "Soil_Health_OC_OLM",
+    "styleKey": "static",
+    "bins": [
+      {
+        "label": "<=1% (Scrubs / Degraded land)",
+        "lower": 0,
+        "upper": 1,
+        "fill": "rgba(200, 230, 201, 0.8)",
+        "stroke": "rgba(200, 230, 201, 1)"
+      },
+      {
+        "label": "1-2% (Open Forests)",
+        "lower": 1,
+        "upper": 2,
+        "fill": "rgba(102, 187, 106, 0.8)",
+        "stroke": "rgba(102, 187, 106, 1)"
+      },
+      {
+        "label": "2-3% (Moderately Dense Forest)",
+        "lower": 2,
+        "upper": 3,
+        "fill": "rgba(46, 125, 50, 0.8)",
+        "stroke": "rgba(46, 125, 50, 1)"
+      },
+      {
+        "label": ">3% (Very Dense Forest)",
+        "lower": 3,
+        "upper": 9999999999,
+        "fill": "rgba(46, 125, 50, 0.8)",
+        "stroke": "rgba(46, 125, 50, 1)"
+      }
+    ]
+  },
+  {
+    "name": "soil_drainage",
+    "label": "Soil Drainage",
+    "type": 1,
+    "namespace": "MWS",
+    "category": "Soil",
+    "source": "mws",
+    "layer_store": ["soil_type"],
+    "layer_name": ["soil_type"],
+    "rasterStyle": "",
+    "styleKey": "soil_drainage",
+    "bins": [
+      {
+        "label": "Excessively Drained",
+        "value": 0
+      },
+      {
+        "label": "Well Drained",
+        "value": 1
+      },
+      {
+        "label": "Imperfectly Drained",
+        "value": 3
+      },
+      {
+        "label": "Poorly Drained",
+        "value": 2
+      }
+    ],
+    "visualizeBins": [
+      {
+        "value": "Excessively drained",
+        "fill": "rgba(255, 236, 179, 0.8)",
+        "stroke": "rgba(245, 200, 90, 1)"
+      },
+      {
+        "value": "Somewhat excessively drained",
+        "fill": "rgba(255, 236, 179, 0.8)",
+        "stroke": "rgba(245, 200, 90, 1)"
+      },
+      {
+        "value": "Well drained",
+        "fill": "rgba(129, 199, 132, 0.8)",
+        "stroke": "rgba(56, 142, 60, 1)"
+      },
+      {
+        "value": "Moderately well drained",
+        "fill": "rgba(129, 199, 132, 0.8)",
+        "stroke": "rgba(56, 142, 60, 1)"
+      },
+      {
+        "value": "Imperfectly drained",
+        "fill": "rgba(255, 183, 77, 0.8)",
+        "stroke": "rgba(239, 108, 0, 1)"
+      },
+      {
+        "value": "Poorly drained",
+        "fill": "rgba(100, 181, 246, 0.8)",
+        "stroke": "rgba(30, 136, 229, 1)"
+      },
+      {
+        "value": "Very poorly drained",
+        "fill": "rgba(63, 81, 181, 0.8)",
+        "stroke": "rgba(40, 53, 147, 1)"
+      }
+    ]
+  },
+  {
+    "name": "soil_texture",
+    "label": "Soil Texture",
+    "type": 1,
+    "namespace": "MWS",
+    "category": "Soil",
+    "source": "mws",
+    "layer_store": ["soil_type"],
+    "layer_name": ["soil_type"],
+    "rasterStyle": "",
+    "styleKey": "soil_texture",
+    "bins": [
+      {
+        "label": "Coarse / Sandy",
+        "value": 0
+      },
+      {
+        "label": "Medium / Loamy",
+        "value": 1
+      },
+      {
+        "label": "Moderately Fine / Clay Loam",
+        "value": 2
+      },
+      {
+        "label": "Fine / Clayey",
+        "value": 3
+      }
+    ],
+    "visualizeBins": [
+      {
+        "value": "Clay (heavy)",
+        "fill": "rgba(139, 69, 19, 0.8)",
+        "stroke": "rgba(100, 45, 10, 1)"
+      },
+      {
+        "value": "Silty clay",
+        "fill": "rgba(139, 69, 19, 0.8)",
+        "stroke": "rgba(100, 45, 10, 1)"
+      },
+      {
+        "value": "Clay",
+        "fill": "rgba(139, 69, 19, 0.8)",
+        "stroke": "rgba(100, 45, 10, 1)"
+      },
+      {
+        "value": "Sandy clay",
+        "fill": "rgba(139, 69, 19, 0.8)",
+        "stroke": "rgba(100, 45, 10, 1)"
+      },
+      {
+        "value": "Sandy clay loam",
+        "fill": "rgba(181, 101, 29, 0.8)",
+        "stroke": "rgba(140, 75, 20, 1)"
+      },
+      {
+        "value": "Silty clay loam",
+        "fill": "rgba(181, 101, 29, 0.8)",
+        "stroke": "rgba(140, 75, 20, 1)"
+      },
+      {
+        "value": "Clay loam",
+        "fill": "rgba(181, 101, 29, 0.8)",
+        "stroke": "rgba(140, 75, 20, 1)"
+      },
+      {
+        "value": "Silt",
+        "fill": "rgba(210, 180, 140, 0.8)",
+        "stroke": "rgba(170, 140, 100, 1)"
+      },
+      {
+        "value": "Silt loam",
+        "fill": "rgba(210, 180, 140, 0.8)",
+        "stroke": "rgba(170, 140, 100, 1)"
+      },
+      {
+        "value": "Loam",
+        "fill": "rgba(210, 180, 140, 0.8)",
+        "stroke": "rgba(170, 140, 100, 1)"
+      },
+      {
+        "value": "sandy loam",
+        "fill": "rgba(245, 222, 179, 0.8)",
+        "stroke": "rgba(210, 180, 120, 1)"
+      },
+      {
+        "value": "Loamy sand",
+        "fill": "rgba(245, 222, 179, 0.8)",
+        "stroke": "rgba(210, 180, 120, 1)"
+      },
+      {
+        "value": "sand",
+        "fill": "rgba(245, 222, 179, 0.8)",
+        "stroke": "rgba(210, 180, 120, 1)"
+      }
+    ]
+  }
+]

@@ -120,20 +120,12 @@ export const tehsilZoiFeaturesAtom = atom({
   default: [],
 });
 
-export const mwsLayerRefAtom = atom({
-  key: "mwsLayerRefAtom",
-  default: null,
-});
 
 export const tehsilDroughtDataAtom = atom({
   key: "tehsilDroughtDataAtom",
   default: null,
 });
 
-export const plansAtom = atom({
-  key: "plansAtom",
-  default: [],
-});
 
 export const districtLookupAtom = atom({
   key: "districtLookupAtom",
