@@ -1835,7 +1835,9 @@ const mwsSheet = XLSX.utils.json_to_sheet(mwsData, {
                         props.maxCatchmentArea ??
                         props.max_catchment ??
                         null;
-                      return v ? `${Number(v).toFixed(2)} hectares` : "N/A";
+                      return v !== null && v !== undefined
+                        ? `${Number(v).toFixed(2)} hectares`
+                        : "N/A";
                     })(),
                     color: "text-blue-600",
                   },
@@ -1847,7 +1849,9 @@ const mwsSheet = XLSX.utils.json_to_sheet(mwsData, {
                       const streamOrder = props.max_stream_order ?? props.maxStreamOrder;
                       if (onDrain !== 1)
                         return <span className="text-red-500">Not On Drainage Line</span>;
-                      return streamOrder ? `ON Drainage Line Stream Order ${streamOrder}` : "N/A";
+                      return streamOrder !== null && streamOrder !== undefined
+                        ? `ON Drainage Line Stream Order ${streamOrder}`
+                        : "N/A";
                     })(),
                     color: "text-blue-600",
                   },
@@ -1856,7 +1860,9 @@ const mwsSheet = XLSX.utils.json_to_sheet(mwsData, {
                     value: (() => {
                       const props = activeSelectedWaterbody?.properties ?? activeSelectedWaterbody ?? {};
                       const streamOrder = props.max_stream_order ?? props.maxStreamOrder;
-                      return streamOrder ? `Order ${streamOrder}` : "N/A";
+                      return streamOrder !== null && streamOrder !== undefined
+                        ? `Order ${streamOrder}`
+                        : "N/A";
                     })(),
                     color: "text-blue-600",
                   },

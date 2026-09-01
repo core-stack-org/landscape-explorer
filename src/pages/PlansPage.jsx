@@ -19,6 +19,8 @@ import SelectReact from "react-select";
 import StewardDetailPage from "../components/steward_detailPage.jsx";
 import { useSearchParams } from "react-router-dom";
 import { useMap, useMapsLibrary } from "@vis.gl/react-google-maps";
+import StewardIcon from "../assets/steward_icon_final.png";
+import planIcon from "../assets/plan_icon_final.png";
 
 const P = {
   base:    "oklch(49.6% 0.265 301.924)",
@@ -324,9 +326,9 @@ const createPinStyle = (stateName, count) => {
 // };
 
 const PLAN_STATUS_COLORS = {
-  in_progress: { fill: "#CCFF00", stroke: "#3E5800",},
-  dpr_completed: { fill: "#00BFFF", stroke: "#005F8F",},
-  dpr_approved: { fill: "#FF1493", stroke: "#8B004F", },
+  in_progress: {fill: "#FF0000",stroke: "#8B0000",},
+  dpr_completed: {fill: "#FFFF00",stroke: "#B8B800", },
+  dpr_approved: {fill: "#00FF00",stroke: "#008000",},
 };
 
 const getPlanStatus = (plan) => {
@@ -338,29 +340,88 @@ const getPlanStatus = (plan) => {
 
 const getFeatureStatus = (feature) => getPlanStatus(feature.get("planDetails"));
 
-const DOT_DEFAULT  = (status = "in_progress") => new Style({
-  image: new CircleStyle({
-    radius: 9,
-    fill:   new Fill({ color: PLAN_STATUS_COLORS[status].fill }),
-    stroke: new Stroke({ color: PLAN_STATUS_COLORS[status].stroke, width: 2 }),
+const PLAN_ICON_DEFAULT = (status = "in_progress") => [
+  // Status ring
+  new Style({
+    image: new CircleStyle({
+      radius: 15,
+      fill: new Fill({
+        color: "transparent",
+      }),
+      stroke: new Stroke({
+        color: PLAN_STATUS_COLORS[status].fill,
+        width: 3,
+      }),
+    }),
   }),
-});
 
-const DOT_HOVERED  = (status = "in_progress") => new Style({
-  image: new CircleStyle({
-    radius: 12,
-    fill:   new Fill({ color: PLAN_STATUS_COLORS[status].fill }),
-    stroke: new Stroke({ color: "#ffffff", width: 2.5 }),
+  // Plan icon
+  new Style({
+    image: new Icon({
+      src: planIcon,
+      scale: 0.085,
+      anchor: [0.5, 0.5],
+      anchorXUnits: "fraction",
+      anchorYUnits: "fraction",
+    }),
   }),
-});
+];
 
-const DOT_SELECTED = (status = "in_progress") => new Style({
-  image: new CircleStyle({
-    radius: 12,
-    fill:   new Fill({ color: "#ffffff" }),
-    stroke: new Stroke({ color: PLAN_STATUS_COLORS[status].fill, width: 3.5 }),
+
+const PLAN_ICON_HOVERED = (status = "in_progress") => [
+  // Bigger status ring
+  new Style({
+    image: new CircleStyle({
+      radius: 17,
+      fill: new Fill({
+        color: "transparent",
+      }),
+      stroke: new Stroke({
+        color: PLAN_STATUS_COLORS[status].fill,
+        width: 3,
+      }),
+    }),
   }),
-});
+
+  // Bigger plan icon
+  new Style({
+    image: new Icon({
+      src: planIcon,
+      scale: 0.10,
+      anchor: [0.5, 0.5],
+      anchorXUnits: "fraction",
+      anchorYUnits: "fraction",
+    }),
+  }),
+];
+
+
+const PLAN_ICON_SELECTED = (status = "in_progress") => [
+  // Selected status ring
+  new Style({
+    image: new CircleStyle({
+      radius: 17,
+      fill: new Fill({
+        color: "transparent",
+      }),
+      stroke: new Stroke({
+        color: PLAN_STATUS_COLORS[status].fill,
+        width: 3.5,
+      }),
+    }),
+  }),
+
+  // Plan icon
+  new Style({
+    image: new Icon({
+      src: planIcon,
+      scale: 0.10,
+      anchor: [0.5, 0.5],
+      anchorXUnits: "fraction",
+      anchorYUnits: "fraction",
+    }),
+  }),
+];
 
 // ── SHARED COMPONENTS ─────────────────────────────────────────────────────────
 
@@ -1018,7 +1079,7 @@ const handleVillageSuggestionSelect = (placeId, description) => {
             planDetails: p,
             });
             f.set("featureType", "plan");
-            f.setStyle(DOT_DEFAULT(getPlanStatus(p)));
+            f.setStyle(PLAN_ICON_DEFAULT(getPlanStatus(p)));
             return f;
         });
 
@@ -1090,32 +1151,52 @@ const handleVillageSuggestionSelect = (placeId, description) => {
 };
 
 const STEWARD_DOT_DEFAULT = () =>
-  new Style({
-    image: new CircleStyle({
-      radius: 7,
-      fill: new Fill({
-        color: "#6C3EFF",
-      }),
-      stroke: new Stroke({
-        color: "#ffffff",
-        width: 2,
+  [
+    // White circular border
+    new Style({
+      image: new CircleStyle({
+        radius: 18,
+        fill: new Fill({
+          color: "#ffffff",
+        }),
       }),
     }),
-  });
+
+    // Steward icon
+    new Style({
+      image: new Icon({
+        src: StewardIcon,
+        scale: 0.12,
+        anchor: [0.5, 0.5],
+        anchorXUnits: "fraction",
+        anchorYUnits: "fraction",
+      }),
+    }),
+  ];
 
 const STEWARD_DOT_HOVERED = () =>
-  new Style({
-    image: new CircleStyle({
-      radius: 10,
-      fill: new Fill({
-        color: "#6C3EFF",
-      }),
-      stroke: new Stroke({
-        color: "#ffffff",
-        width: 2.5,
+  [
+    // White circular border
+    new Style({
+      image: new CircleStyle({
+        radius: 21,
+        fill: new Fill({
+          color: "#ffffff",
+        }),
       }),
     }),
-  });
+
+    // Slightly bigger steward icon on hover
+    new Style({
+      image: new Icon({
+        src: StewardIcon,
+        scale: 0.14,
+        anchor: [0.5, 0.5],
+        anchorXUnits: "fraction",
+        anchorYUnits: "fraction",
+      }),
+    }),
+  ];
 
 
     // ── STATE CLICK → DRILL DOWN ────────────────────────────────
@@ -1411,9 +1492,9 @@ setStatusTracking(trackingData);
 
             if (layerName === "planLayer") {
               if (selectedFeatureRef.current && selectedFeatureRef.current !== feature) {
-                selectedFeatureRef.current.setStyle(DOT_DEFAULT(getFeatureStatus(selectedFeatureRef.current)));
+                selectedFeatureRef.current.setStyle(PLAN_ICON_DEFAULT(getFeatureStatus(selectedFeatureRef.current)));
               }
-              feature.setStyle(DOT_SELECTED(getFeatureStatus(feature)));
+              feature.setStyle(PLAN_ICON_SELECTED(getFeatureStatus(feature)));
               selectedFeatureRef.current = feature;
               setSelectedPlan(feature.get("planDetails"));
               return true;
@@ -1463,7 +1544,7 @@ setStatusTracking(trackingData);
                 hoveredFeatureRef.current.setStyle(STEWARD_DOT_DEFAULT());
               } else {
                 hoveredFeatureRef.current.setStyle(
-                  DOT_DEFAULT(getFeatureStatus(hoveredFeatureRef.current))
+                  PLAN_ICON_DEFAULT(getFeatureStatus(hoveredFeatureRef.current))
                 );
               }
 
@@ -1475,7 +1556,7 @@ setStatusTracking(trackingData);
               layerName === "planLayer" &&
               hitFeature !== selectedFeatureRef.current
             ) {
-              hitFeature.setStyle(DOT_HOVERED(getFeatureStatus(hitFeature)));
+              hitFeature.setStyle(PLAN_ICON_HOVERED(getFeatureStatus(hitFeature)));
               hoveredFeatureRef.current = hitFeature;
               map.getTargetElement().style.cursor = "pointer";
 
@@ -1926,7 +2007,7 @@ setStatusTracking(trackingData);
                     <button
                       onClick={() => {
                         if (selectedFeatureRef.current) {
-                          selectedFeatureRef.current.setStyle(DOT_DEFAULT(getFeatureStatus(selectedFeatureRef.current)));
+                          selectedFeatureRef.current.setStyle(PLAN_ICON_DEFAULT(getFeatureStatus(selectedFeatureRef.current)));
                           selectedFeatureRef.current = null;
                         }
                         setSelectedPlan(null);
