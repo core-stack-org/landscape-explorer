@@ -203,15 +203,20 @@ const MapLegend = ({ showMWS, showVillages, currentLayer, showConnectivity,showP
 
   const planLegendItems = [
   {
-    color: "#FF6FFF",
+    color: "#FF1493",
     border: "#ffffff",
-    name: "In Progress",
+    name: "DPR Approved",
   },
   {
     color: "#CCFF00",
     border: "#3E5800",
-    name: "DPR Reviewed",
+    name: "In Progress",
   },
+  {
+    color: "#00BFFF",
+    border: "#005F8F",
+    name: "DPR Completed",
+  }
 ];
 
   const lulcLegendItems = [
@@ -573,6 +578,101 @@ const MapLegend = ({ showMWS, showVillages, currentLayer, showConnectivity,showP
     { fill: "rgba(255, 0, 0, 0.8)", stroke: "rgba(255, 0, 0, 1)", label: ">15%: Huge" },
   ]
 
+  const NitrogenLevel = [
+    { fill: "rgba(115, 187, 83, 0.8)", stroke: "rgba(115, 187, 83, 1)", label: "High (>560 kg/ha)" },
+    { fill: "rgba(238, 224, 93, 0.8)", stroke: "rgba(238, 224, 93, 1)", label: "Medium (280-560 kg/ha)" },
+    { fill: "rgba(255, 0, 0, 0.8)", stroke: "rgba(255, 0, 0, 1)", label: "Low (<280 kg/ha)" },
+  ]
+
+  const PhosphorusLevel = [
+    { fill: "rgba(115, 187, 83, 0.8)", stroke: "rgba(115, 187, 83, 1)", label: "High (>25 kg/ha)" },
+    { fill: "rgba(238, 224, 93, 0.8)", stroke: "rgba(238, 224, 93, 1)", label: "Medium (10-25 kg/ha)" },
+    { fill: "rgba(255, 0, 0, 0.8)", stroke: "rgba(255, 0, 0, 1)", label: "Low (<10 kg/ha)" },
+  ]
+
+  const PottasiumLevel = [
+    { fill: "rgba(115, 187, 83, 0.8)", stroke: "rgba(115, 187, 83, 1)", label: "High (>280 kg/ha)" },
+    { fill: "rgba(238, 224, 93, 0.8)", stroke: "rgba(238, 224, 93, 1)", label: "Medium (120-280 kg/ha)" },
+    { fill: "rgba(255, 0, 0, 0.8)", stroke: "rgba(255, 0, 0, 1)", label: "Low (120 kg/ha)" },
+  ]
+
+  const OrganicCarbon = [
+    { fill: "rgba(115, 187, 83, 0.8)", stroke: "rgba(115, 187, 83, 1)", label: "High (>280 kg/ha)" },
+    { fill: "rgba(238, 224, 93, 0.8)", stroke: "rgba(238, 224, 93, 1)", label: "Medium (120-280 kg/ha)" },
+    { fill: "rgba(255, 0, 0, 0.8)", stroke: "rgba(255, 0, 0, 1)", label: "Low (120 kg/ha)" },
+  ]
+
+  const soilPH = [
+    { fill: "rgba(115, 187, 83, 0.8)", stroke: "rgba(115, 187, 83, 1)", label: "Alkaline (>7.5)" },
+    { fill: "rgba(238, 224, 93, 0.8)", stroke: "rgba(238, 224, 93, 1)", label: "Near Neutral (6.5-7.5)" },
+    { fill: "rgba(255, 0, 0, 0.8)", stroke: "rgba(255, 0, 0, 1)", label: "Acidic (<6.5)" },
+  ]
+
+  const OCCForest = [
+    { fill: "rgba(239, 83, 80, 0.8)", stroke: "rgba(198, 40, 40, 1)", label: "<=1% (Scrubs / Degraded land)" },
+    { fill: "rgba(255, 202, 40, 0.8)", stroke: "rgba(245, 166, 35, 1)", label: "1-2% (Open Forests)" },
+    { fill: "rgba(129, 199, 132, 0.8)", stroke: "rgba(56, 142, 60, 1)", label: "2-3% (Moderately Dense Forest)" },
+    { fill: "rgba(102, 187, 106, 0.8)", stroke: "rgba(46, 125, 50, 1)", label: ">3% (Very Dense Forest)" },
+  ]
+  const SoilDrainage = [
+    {
+      fill: "rgba(255, 236, 179, 0.8)",
+      stroke: "rgba(245, 200, 90, 1)",
+      label: "Excessively / Somewhat Excessively Drained"
+    },
+    {
+      fill: "rgba(129, 199, 132, 0.8)",
+      stroke: "rgba(56, 142, 60, 1)",
+      label: "Well / Moderately Well Drained"
+    },
+    {
+      fill: "rgba(255, 183, 77, 0.8)",
+      stroke: "rgba(239, 108, 0, 1)",
+      label: "Imperfectly Drained"
+    },
+    {
+      fill: "rgba(100, 181, 246, 0.8)",
+      stroke: "rgba(30, 136, 229, 1)",
+      label: "Poorly Drained"
+    },
+    {
+      fill: "rgba(63, 81, 181, 0.8)",
+      stroke: "rgba(40, 53, 147, 1)",
+      label: "Very Poorly Drained"
+    }
+  ];
+
+const SoilTexture = [
+  {
+    fill: "rgba(245, 222, 179, 0.8)",
+    stroke: "rgba(210, 180, 120, 1)",
+    label: "Coarse / Sandy (Sand, Loamy sand, Sandy loam)"
+  },
+  {
+    fill: "rgba(210, 180, 140, 0.8)",
+    stroke: "rgba(170, 140, 100, 1)",
+    label: "Medium / Loamy (Loam, Silt loam, Silt)"
+  },
+  {
+    fill: "rgba(181, 101, 29, 0.8)",
+    stroke: "rgba(140, 75, 20, 1)",
+    label: "Moderately Fine / Clay Loam (Sandy clay loam, Clay loam, Silty clay loam)"
+  },
+  {
+    fill: "rgba(139, 69, 19, 0.8)",
+    stroke: "rgba(100, 45, 10, 1)",
+    label: "Fine / Clayey (Sandy clay, Silty clay, Clay, Clay (heavy))"
+  }
+]
+
+  const shrublandDiversion = [
+    { fill: "rgba(115, 187, 83, 0.8)", stroke: "rgba(115, 187, 83, 1)", label: "Low (<40 ha)" },
+    { fill: "rgba(238, 224, 93, 0.8)", stroke: "rgba(238, 224, 93, 1)", label: "Moderate (40-120 ha)" },
+    { fill: "rgba(255, 0, 0, 0.8)", stroke: "rgba(255, 0, 0, 1)", label: "High (>120 ha)" },
+  ]
+
+
+
   const isExcludedLulc = (name) => {
     if (!name) return false;
     return (
@@ -866,6 +966,45 @@ const MapLegend = ({ showMWS, showVillages, currentLayer, showConnectivity,showP
   const isReduceCanopyActive = currentLayer?.some(
     (layer) => layer.name.includes("reduction_canopy_density_height")
   )
+
+  const isNitrogenActive = currentLayer?.some(
+    (layer) => layer.name.includes("nitrogen_levels")
+  )
+
+  const isPhosphorusActive = currentLayer?.some(
+    (layer) => layer.name.includes("phosphoros_levels")
+  )
+
+  const isPottasiumActive = currentLayer?.some(
+    (layer) => layer.name.includes("potassium_levels")
+  )
+
+  const isOrganicCarbonActive = currentLayer?.some(
+    (layer) =>
+      layer.name.includes("organic_carbon") &&
+      !layer.name.includes("organic_carbon_tree_cover")
+  )
+
+  const isSoilPHActive = currentLayer?.some(
+    (layer) => layer.name.includes("soil_ph")
+  )
+
+  const isOCCForestActive = currentLayer?.some(
+    (layer) => layer.name.includes("organic_carbon_tree_cover")
+  )
+
+  const isSoilDrainageActive = currentLayer?.some(
+    (layer) => layer.name.includes("soil_drainage")
+  )
+
+  const isSoilTextureActive = currentLayer?.some(
+    (layer) => layer.name.includes("soil_texture")
+  )
+
+  const isShrubLandActive = currentLayer?.some(
+    (layer) => layer.name.includes("reduction_in_shrubland_cover")
+  )
+
 
   return (
     <div
@@ -2256,6 +2395,115 @@ const MapLegend = ({ showMWS, showVillages, currentLayer, showConnectivity,showP
                   ))}
                 </div>
               )}
+
+              {isNitrogenActive && (
+                <div className="space-y-2">
+                  <h4 className="text-xs font-medium text-gray-600">Nitrogen Levels</h4>
+                  {NitrogenLevel.map((item, index) => (
+                    <div key={`fac-live-${index}`} className="flex items-center gap-2">
+                      <div className="w-4 h-4 rounded" style={{ backgroundColor: item.fill, border: `1px solid ${item.stroke}` }} />
+                      <span className="text-sm text-gray-600">{item.label}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {isPhosphorusActive && (
+                <div className="space-y-2">
+                  <h4 className="text-xs font-medium text-gray-600">Phosphorus Levels</h4>
+                  {PhosphorusLevel.map((item, index) => (
+                    <div key={`fac-live-${index}`} className="flex items-center gap-2">
+                      <div className="w-4 h-4 rounded" style={{ backgroundColor: item.fill, border: `1px solid ${item.stroke}` }} />
+                      <span className="text-sm text-gray-600">{item.label}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {isPottasiumActive && (
+                <div className="space-y-2">
+                  <h4 className="text-xs font-medium text-gray-600">Pottasium Levels</h4>
+                  {PottasiumLevel.map((item, index) => (
+                    <div key={`fac-live-${index}`} className="flex items-center gap-2">
+                      <div className="w-4 h-4 rounded" style={{ backgroundColor: item.fill, border: `1px solid ${item.stroke}` }} />
+                      <span className="text-sm text-gray-600">{item.label}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {isOrganicCarbonActive && (
+                <div className="space-y-2">
+                  <h4 className="text-xs font-medium text-gray-600">Organic Carbon</h4>
+                  {OrganicCarbon.map((item, index) => (
+                    <div key={`fac-live-${index}`} className="flex items-center gap-2">
+                      <div className="w-4 h-4 rounded" style={{ backgroundColor: item.fill, border: `1px solid ${item.stroke}` }} />
+                      <span className="text-sm text-gray-600">{item.label}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {isSoilPHActive && (
+                <div className="space-y-2">
+                  <h4 className="text-xs font-medium text-gray-600">Soil PH</h4>
+                  {soilPH.map((item, index) => (
+                    <div key={`fac-live-${index}`} className="flex items-center gap-2">
+                      <div className="w-4 h-4 rounded" style={{ backgroundColor: item.fill, border: `1px solid ${item.stroke}` }} />
+                      <span className="text-sm text-gray-600">{item.label}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {isOCCForestActive && (
+                <div className="space-y-2">
+                  <h4 className="text-xs font-medium text-gray-600">Organic Carbon Concentration for Forest</h4>
+                  {OCCForest.map((item, index) => (
+                    <div key={`fac-live-${index}`} className="flex items-center gap-2">
+                      <div className="w-4 h-4 rounded" style={{ backgroundColor: item.fill, border: `1px solid ${item.stroke}` }} />
+                      <span className="text-sm text-gray-600">{item.label}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {isSoilDrainageActive && (
+                <div className="space-y-2">
+                  <h4 className="text-xs font-medium text-gray-600">Soil Drainage</h4>
+                  {SoilDrainage.map((item, index) => (
+                    <div key={`fac-live-${index}`} className="flex items-center gap-2">
+                      <div className="w-4 h-4 rounded" style={{ backgroundColor: item.fill, border: `1px solid ${item.stroke}` }} />
+                      <span className="text-sm text-gray-600">{item.label}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {isSoilTextureActive && (
+                <div className="space-y-2">
+                  <h4 className="text-xs font-medium text-gray-600">Soil Texture</h4>
+                  {SoilTexture.map((item, index) => (
+                    <div key={`fac-live-${index}`} className="flex items-center gap-2">
+                      <div className="w-4 h-4 rounded" style={{ backgroundColor: item.fill, border: `1px solid ${item.stroke}` }} />
+                      <span className="text-sm text-gray-600">{item.label}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {isShrubLandActive && (
+                <div className="space-y-2">
+                  <h4 className="text-xs font-medium text-gray-600">Shrubland Diversion</h4>
+                  {shrublandDiversion.map((item, index) => (
+                    <div key={`fac-live-${index}`} className="flex items-center gap-2">
+                      <div className="w-4 h-4 rounded" style={{ backgroundColor: item.fill, border: `1px solid ${item.stroke}` }} />
+                      <span className="text-sm text-gray-600">{item.label}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              
+
+
 
               {activeWBType === "waterbody_type" && (
                 <div className="space-y-2">

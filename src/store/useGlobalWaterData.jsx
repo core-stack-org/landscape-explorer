@@ -117,8 +117,6 @@ export const useGlobalWaterData = ({
         const d = transformName(district);
         const b = transformName(block);
 
-        console.log(d,b)
-
         // ZOI
         zoi = await fetchWFS(`swb:waterbodies_zoi_${d}_${b}`);
         if (!zoi?.features?.length) {
@@ -151,8 +149,6 @@ export const useGlobalWaterData = ({
           });
 
           drought = await fetchWFS(droughtTypeName);
-          console.log("DROUGHT DATA:", drought);
-
 
         if (drought?.features) {
           setTehsilDrought(

@@ -1,52 +1,21 @@
-export const handlePatternSelection = (pattern, isSelected, patternSelections, setPatternSelections) => {
-    const { name, level, category, subcategory, patternCategory, characteristics, values } = pattern;
-    
-    // Determine which level to update (MWS or Village)
-    const levelKey = level === 0 ? 'selectedMWSPatterns' : 'selectedVillagePatterns';
-    
-    // Create a copy of current selections
-    const updatedSelections = { ...patternSelections };
-    
-    if (isSelected) {
-        // Add the pattern to selections
-        updatedSelections[levelKey] = {
-            ...updatedSelections[levelKey],
-            [name]: {
-                category,
-                subcategory,
-                patternCategory,
-                characteristics,
-                level,
-                values,
-                // Store for easy access
-                conditions: values.map(v => ({
-                    label: v.label,
-                    key: v.Key,
-                    type: v.type,
-                    value: v.value
-                }))
-            }
-        };
-    } else {
-        // Remove the pattern from selections
-        const newLevelSelections = { ...updatedSelections[levelKey] };
-        delete newLevelSelections[name];
-        updatedSelections[levelKey] = newLevelSelections;
-    }
-    
-    // Update the state
-    setPatternSelections(updatedSelections);
-    
-    return updatedSelections;
-};
+// Patterns from patternsIndex.js already carry `conditions` — no need to
+// recompute them here.
+export function selectPattern(pattern, isSelected, patternSelections) {
+  const levelKey = pattern.level === 0 ? 'selectedMWSPatterns' : 'selectedVillagePatterns';
+  const updated = { ...patternSelections[levelKey] };
 
+  if (isSelected) updated[pattern.name] = pattern;
+  else delete updated[pattern.name];
 
-export const isPatternSelected = (patternName, patternSelections) => {
-    return !!(
-        patternSelections.selectedMWSPatterns[patternName] ||
-        patternSelections.selectedVillagePatterns[patternName]
-    );
-};
+  return { ...patternSelections, [levelKey]: updated };
+}
+
+export function isPatternSelected(patternName, patternSelections) {
+  return Boolean(
+    patternSelections.selectedMWSPatterns[patternName] ||
+    patternSelections.selectedVillagePatterns[patternName]
+  );
+}
 
 
 export const getAllSelectedPatterns = (patternSelections) => {

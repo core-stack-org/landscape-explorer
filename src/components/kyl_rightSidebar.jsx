@@ -9,7 +9,6 @@ import VectorSource from "ol/source/Vector";
 import { useNavigate } from "react-router-dom";
 import React,{useEffect} from "react";
 import SelectButton from "./buttons/select_button";
-import filtersDetails from "../components/data/Filters.json";
 import { ArrowLeft, Loader2, Table, FileText, FileSpreadsheet, X, ChevronRight, CheckCircle2,Layers3,Users } from 'lucide-react';
 import KYLMWSProfilePanel from "./kyl_MWSProfilePanel.jsx";
 import KYLWaterbodyPanel from "./kyl_waterbodypanel.jsx";
@@ -17,6 +16,8 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import XLSX from 'xlsx-js-style';
 import toast from 'react-hot-toast';
+import { buildIntersections } from '../components/utils/dataIndexes.js';
+import { FILTER_BY_NAME } from '../components/utils/filtersIndex.js';
 
 
 const KYLRightSidebar = ({
@@ -42,8 +43,6 @@ const KYLRightSidebar = ({
   onResetMWS,
   selectedMWSProfile,
   waterbodiesLayerRef,
-  clickedWaterbodyId,
-  waterbodyDashboardUrl,
   selectedWaterbodyProfile,
   onResetWaterbody,
   setShowWB,
@@ -56,7 +55,6 @@ const KYLRightSidebar = ({
   dataJson = [],
   selectedWaterbodyIds,
   selectedWaterbodyData = [],
-  mwsDrainageLayerRef,
   isLoading,
   mwsLayerRef,
    selectionMode,
@@ -67,6 +65,8 @@ const KYLRightSidebar = ({
   setShowPlans,
   showStewards,
   setShowStewards,
+  mwsIndex,
+  villageNameIndex,
 }) => {
   const [loadingWB, setLoadingWB] = React.useState(false);
   const [showSelectionPopup, setShowSelectionPopup] = React.useState(false);
@@ -75,11 +75,9 @@ const KYLRightSidebar = ({
   const [geoExportFormat, setGeoExportFormat] = React.useState(null);
   const [plans, setPlans] = React.useState([]);
   
-  const [plansLoading, setPlansLoading] = React.useState(false);
   const [selectedPlanProfile, setSelectedPlanProfile] = React.useState(null);
   const plansLayerRef = React.useRef(null);
   const [stewards, setStewards] = React.useState([]);
-  const [stewardsLoading, setStewardsLoading] = React.useState(false);
   const [selectedStewardProfile, setSelectedStewardProfile] = React.useState(null);
 
   const stewardsLayerRef = React.useRef(null);
@@ -268,85 +266,6 @@ const KYLRightSidebar = ({
   return Array.from(ids);
 }, [selectedMWS, manualSelectedMWS]);
 
-useEffect(() => {
-  if (
-    !manualSelectedMWS?.length ||
-    !dataJson?.length
-  )
-    return;
-
-  const manualSelectionDetails = manualSelectedMWS.map((mwsId) => {
-    const mwsRecord = dataJson.find(
-      (item) => String(item.mws_id) === String(mwsId)
-    );
-
-    if (!mwsRecord) {
-      return {
-        mwsId,
-        villages: [],
-        waterbodies: [],
-      };
-    }
-
-    // Villages
-    // const villages = (mwsRecord.mws_intersect_villages || []).map((villageId) => {
-    //   const village = villageJson.find(
-    //     (v) => String(v.village_id) === String(villageId)
-    //   );
-
-    //   return {
-    //     villageId,
-    //     villageName:
-    //       village?.village_name ||
-    //       village?.vill_name ||
-    //       village?.name ||
-    //       "Unknown",
-    //   };
-    // });
-    const villages = (mwsRecord.mws_intersect_villages || []).map((villageId) => {
-  let villageName = '';
-
-  // Try villageJson first
-  const village = villageJson.find(
-    (v) => String(v.village_id) === String(villageId)
-  );
-  if (village) villageName = village.village_name || village.vill_name || village.name || '';
-
-  // Fallback to boundary layer features
-  if (!villageName && boundaryLayerRef?.current) {
-    try {
-      const f = boundaryLayerRef.current.getSource().getFeatures()
-        .find(feat => {
-          const p = feat.getProperties();
-          return String(p.vill_ID ?? p.village_id) === String(villageId);
-        });
-      if (f) {
-        const p = f.getProperties();
-        villageName = p.vill_name || p.village_name || p.name || '';
-      }
-    } catch (_) {}
-  }
-
-  return {
-    villageId: String(villageId),
-    villageName: villageName || "Unknown",
-  };
-});
-
-    // Waterbodies
-    const waterbodies = (mwsRecord.mws_intersect_swb || []).map((swb) => ({
-      swbId: swb?.swbId ?? swb?.id ?? swb,
-      swbName: swb?.swbName ?? swb?.name ?? "",
-    }));
-
-    return {
-      mwsId,
-      villages,
-      waterbodies,
-    };
-  });
-}, [manualSelectedMWS, selectionMode, dataJson, villageJson]);
-
 
 useEffect(() => {
   if (plansLayerRef.current && mapRef.current) {
@@ -371,131 +290,83 @@ useEffect(() => {
 }, [state, district, block]);
 
 
-const manualSelectionDetails = React.useMemo(() => {
-  if (!manualSelectedMWS?.length || !dataJson?.length) return [];
+  const manualSelectionDetails = React.useMemo(() => {
+    if (!manualSelectedMWS?.length || !dataJson?.length) return [];
 
-  return manualSelectedMWS.map((mwsId) => {
-    const mwsRecord = dataJson.find(
-      (item) => String(item.mws_id) === String(mwsId)
+    return manualSelectedMWS.map((mwsId) => {
+      const mwsRecord = dataJson.find(
+        (item) => String(item.mws_id) === String(mwsId)
+      );
+
+      if (!mwsRecord) {
+        return {
+          mwsId,
+          villages: [],
+          waterbodies: [],
+        };
+      }
+
+  const villages = (mwsRecord.mws_intersect_villages || []).map((villageId) => {
+    let villageName = "";
+
+    // Try villageJson
+    const village = villageJson.find(
+      (v) => String(v.village_id) === String(villageId)
     );
 
-    if (!mwsRecord) {
-      return {
-        mwsId,
-        villages: [],
-        waterbodies: [],
-      };
+    if (village) {
+      villageName =
+        village.village_name ||
+        village.vill_name ||
+        village.name ||
+        "";
     }
 
-const villages = (mwsRecord.mws_intersect_villages || []).map((villageId) => {
-  let villageName = "";
+    // Fallback to boundary layer
+    if (!villageName && boundaryLayerRef?.current) {
+      try {
+        const feature = boundaryLayerRef.current
+          .getSource()
+          .getFeatures()
+          .find((feat) => {
+            const p = feat.getProperties();
+            return String(p.vill_ID ?? p.village_id) === String(villageId);
+          });
 
-  // Try villageJson
-  const village = villageJson.find(
-    (v) => String(v.village_id) === String(villageId)
-  );
-
-  if (village) {
-    villageName =
-      village.village_name ||
-      village.vill_name ||
-      village.name ||
-      "";
-  }
-
-  // Fallback to boundary layer
-  if (!villageName && boundaryLayerRef?.current) {
-    try {
-      const feature = boundaryLayerRef.current
-        .getSource()
-        .getFeatures()
-        .find((feat) => {
-          const p = feat.getProperties();
-          return String(p.vill_ID ?? p.village_id) === String(villageId);
-        });
-
-      if (feature) {
-        const p = feature.getProperties();
-        villageName =
-          p.vill_name ||
-          p.village_name ||
-          p.name ||
-          "";
-      }
-    } catch (_) {}
-  }
-
-  return {
-    villageId: String(villageId),
-    villageName: villageName || "Unknown",
-  };
-});
-
-    const waterbodies = (mwsRecord.mws_intersect_swb || []).map((swb) => ({
-      swbId: String(swb?.swbId ?? swb?.id ?? swb),
-      swbName: swb?.swbName ?? swb?.name ?? "",
-    }));
+        if (feature) {
+          const p = feature.getProperties();
+          villageName =
+            p.vill_name ||
+            p.village_name ||
+            p.name ||
+            "";
+        }
+      } catch (_) {}
+    }
 
     return {
-      mwsId: String(mwsId),
-      villages,
-      waterbodies,
+      villageId: String(villageId),
+      villageName: villageName || "Unknown",
     };
   });
-}, [manualSelectedMWS, dataJson, villageJson]);
 
-  const mwsVillageIntersections = React.useMemo(() => {
-    if (!allSelectedMWSIds || allSelectedMWSIds.length === 0 || !dataJson || !Array.isArray(dataJson)) return [];
+      const waterbodies = (mwsRecord.mws_intersect_swb || []).map((swb) => ({
+        swbId: String(swb?.swbId ?? swb?.id ?? swb),
+        swbName: swb?.swbName ?? swb?.name ?? "",
+      }));
 
-    return allSelectedMWSIds.map(mwsId => {
-      const mwsRecord = dataJson.find(d => String(d.mws_id) === String(mwsId));
-      if (!mwsRecord) return { mwsId, villages: [], waterbodies: [] };
-
-      // ── Villages ──
-      const villages = (mwsRecord.mws_intersect_villages || []).map(villageId => {
-        let villageName = '';
-
-        // Try villageJson first
-        if (villageJson && Array.isArray(villageJson)) {
-          const v = villageJson.find(v => String(v.village_id) === String(villageId));
-          if (v) villageName = v.village_name || v.vill_name || v.name || '';
-        }
-
-        // Fall back to boundary layer features
-        if (!villageName && boundaryLayerRef?.current) {
-          try {
-            const f = boundaryLayerRef.current.getSource().getFeatures()
-              .find(feat => {
-                const p = feat.getProperties();
-                return String(p.vill_ID ?? p.village_id) === String(villageId);
-              });
-            if (f) {
-              const p = f.getProperties();
-              villageName = p.vill_name || p.village_name || p.name || '';
-            }
-          } catch (_) {}
-        }
-
-        return { villageId: String(villageId), villageName: villageName || 'Unknown' };
-      });
-
-      // ── Waterbodies ──
-      const waterbodies = (mwsRecord.mws_intersect_swb || []).map(swb => {
-        if (typeof swb === 'object' && swb !== null) {
-          return {
-            swbId:      String(swb.swbId ?? swb.id ?? ''),
-            swbName:    swb.swbName || swb.name || '',
-            latitude:   Number(swb.latitude  ?? swb.lat  ?? 0),
-            longitude:  Number(swb.longitude ?? swb.long ?? swb.lng ?? 0),
-            ...swb,
-          };
-        }
-        return { swbId: String(swb), swbName: '', latitude: 0, longitude: 0 };
-      });
-
-      return { mwsId: String(mwsId), villages, waterbodies };
+      return {
+        mwsId: String(mwsId),
+        villages,
+        waterbodies,
+      };
     });
-  }, [allSelectedMWSIds, dataJson, villageJson, boundaryLayerRef]);
+  }, [manualSelectedMWS, dataJson, villageJson]);
+
+  const mwsVillageIntersections = React.useMemo(
+    () => buildIntersections(allSelectedMWSIds, mwsIndex, villageNameIndex),
+    [allSelectedMWSIds, mwsIndex, villageNameIndex]
+  );
 
   const handleUniversalBack = () => {
     onResetMWS();
@@ -516,17 +387,7 @@ const villages = (mwsRecord.mws_intersect_villages || []).map((villageId) => {
     }
     setToggleStates((prevStates) => ({ ...prevStates, [filter.name]: false }));
 
-    const sourceType = (function () {
-      for (const topLevelKey of Object.keys(filtersDetails)) {
-        if (filtersDetails[topLevelKey]) {
-          for (const categoryKey of Object.keys(filtersDetails[topLevelKey])) {
-            const found = filtersDetails[topLevelKey][categoryKey].find((f) => f.name === filter.name);
-            if (found) return topLevelKey;
-          }
-        }
-      }
-      return null;
-    })();
+    const sourceType = FILTER_BY_NAME.get(filter.name)?.namespace ?? null;
 
     if (sourceType === "MWS") {
       setFilterSelections((prev) => ({
@@ -589,7 +450,7 @@ const villages = (mwsRecord.mws_intersect_villages || []).map((villageId) => {
     }
   };
 
-const toggleConnectivity = () => {
+  const toggleConnectivity = () => {
     if (!showConnectivity) {
       const hasActiveFilters = getFormattedSelectedFilters().length > 0;
       if (currentLayer.length > 0 || hasActiveFilters) {
@@ -639,9 +500,6 @@ const toggleConnectivity = () => {
         return;
       }
 
-      // Fetch plans first time
-      setPlansLoading(true);
-
       const response = await fetchPlansByTehsil(block.block_id);
 
       setPlans(response);
@@ -652,7 +510,7 @@ const toggleConnectivity = () => {
     } catch (err) {
       console.error("Error fetching plans:", err);
     } finally {
-      setPlansLoading(false);
+      console.log("Plans fetched")
     }
   };
 
@@ -783,9 +641,6 @@ const handleStewardsClick = async () => {
       return;
     }
 
-    // Fetch first time
-    setStewardsLoading(true);
-
     const response = await fetchStewardsByTehsil(block.block_id);
 
     setStewards(response.stewards || []);
@@ -795,7 +650,7 @@ const handleStewardsClick = async () => {
   } catch (err) {
     console.error("Error fetching stewards:", err);
   } finally {
-    setStewardsLoading(false);
+    console.log("Stewards Fetched")
   }
 };
 
@@ -946,8 +801,9 @@ React.useEffect(() => {
 // ── PLAN DOT STYLES ──────────────────────────────────────────────────────────
 
 const PLAN_STATUS_COLORS = {
-  in_progress:   { fill: "#FF6FFF", stroke: "#ffffff" }, // magenta
-  dpr_completed: { fill: "#CCFF00", stroke: "#3E5800" }, // chartreuse
+  in_progress: { fill: "#CCFF00", stroke: "#3E5800",},
+  dpr_completed: { fill: "#00BFFF", stroke: "#005F8F",},
+  dpr_approved: { fill: "#FF1493", stroke: "#8B004F", },
 };
 
 const getPlanStatus = (plan) => {
@@ -974,13 +830,6 @@ const DOT_HOVERED  = (status = "in_progress") => new Style({
   }),
 });
 
-const DOT_SELECTED = (status = "in_progress") => new Style({
-  image: new CircleStyle({
-    radius: 12,
-    fill:   new Fill({ color: "#ffffff" }),
-    stroke: new Stroke({ color: PLAN_STATUS_COLORS[status].fill, width: 3.5 }),
-  }),
-});
 
 const STEWARD_DOT_DEFAULT = () =>
   new Style({
@@ -1029,24 +878,7 @@ const STEWARD_DOT_DEFAULT = () =>
       let villageIndex = 0;
       selectedVillages.forEach((villageId) => {
         const villageIdStr = String(villageId);
-        let vName = '';
-        if (villageJson && Array.isArray(villageJson)) {
-          const v = villageJson.find(v => String(v.village_id) === villageIdStr);
-          if (v) vName = v.village_name || v.vill_name || v.name || '';
-        }
-        if (!vName && boundaryLayerRef.current) {
-          try {
-            const features = boundaryLayerRef.current.getSource().getFeatures();
-            const f = features.find(feat => {
-              const props = feat.getProperties();
-              return String(props.vill_ID ?? props.village_id) === villageIdStr;
-            });
-            if (f) {
-              const props = f.getProperties();
-              vName = props.vill_name || props.village_name || props.name || '';
-            }
-          } catch (_) {}
-        }
+        const vName = villageNameIndex.get(villageIdStr) || '';
         villageData.push({
           id: `village-${villageIdStr}-${villageIndex}`,
           villageId: villageIdStr,
@@ -1060,26 +892,26 @@ const STEWARD_DOT_DEFAULT = () =>
   };
 
   const displayVillages = React.useMemo(() => {
-  // Manual MWS selection
-  if (manualSelectedMWS?.length > 0) {
-    return [
-      ...new Map(
-        manualSelectionDetails
-          .flatMap((mws) => mws.villages)
-          .map((v) => [v.villageId, v])
-      ).values(),
-    ];
-  }
+    // Manual MWS selection
+    if (manualSelectedMWS?.length > 0) {
+      return [
+        ...new Map(
+          manualSelectionDetails
+            .flatMap((mws) => mws.villages)
+            .map((v) => [v.villageId, v])
+        ).values(),
+      ];
+    }
 
-  // Filter selection
-  const { villageData } = generateSelectionTableData();
-  return villageData;
-}, [
-  manualSelectedMWS,
-  manualSelectionDetails,
-  selectedVillages,
-  villageJson,
-]);
+    // Filter selection
+    const { villageData } = generateSelectionTableData();
+    return villageData;
+  }, [
+    manualSelectedMWS,
+    manualSelectionDetails,
+    selectedVillages,
+    villageJson,
+  ]);
 
   // ─── WB property display resolver — uses cached precomputed props ───
   const getWBDisplayValue = (filterName, swb) => {
@@ -1373,27 +1205,17 @@ const STEWARD_DOT_DEFAULT = () =>
       const waterbodyFilters = [];
 
       selectedFilters.forEach(f => {
-        for (const topLevelKey of Object.keys(filtersDetails)) {
-          for (const categoryKey of Object.keys(filtersDetails[topLevelKey] || {})) {
-            if (Array.isArray(filtersDetails[topLevelKey][categoryKey]) &&
-              filtersDetails[topLevelKey][categoryKey].some(i => i.name === f.name)) {
-              if (topLevelKey === "MWS") mwsFilters.push(f);
-              if (topLevelKey === "Village") villageFilters.push(f);
-              if (topLevelKey === "Waterbody") waterbodyFilters.push(f);
-            }
-          }
-        }
+        const namespace = FILTER_BY_NAME.get(f.name)?.namespace;
+        if (namespace === "MWS") mwsFilters.push(f);
+        if (namespace === "Village") villageFilters.push(f);
+        if (namespace === "Waterbody") waterbodyFilters.push(f);
       });
 
       const getLabelFromValue = (filterName, value) => {
-        for (const topLevelKey of Object.keys(filtersDetails)) {
-          for (const categoryKey of Object.keys(filtersDetails[topLevelKey] || {})) {
-            const filterObj = filtersDetails[topLevelKey][categoryKey].find(f => f.name === filterName);
-            if (filterObj && filterObj.type === 1) {
-              const match = filterObj.values.find(v => String(v.value) === String(value));
-              return match ? match.label : value;
-            }
-          }
+        const filterObj = FILTER_BY_NAME.get(filterName);
+        if (filterObj && filterObj.type === 1) {
+          const match = filterObj.values.find(v => String(v.value) === String(value));
+          return match ? match.label : value;
         }
         return value;
       };
@@ -1646,27 +1468,8 @@ const STEWARD_DOT_DEFAULT = () =>
     const selectedPatternsCount = getFormattedSelectedPatterns();
 
 
-    const hasVillageFilter = selectedFiltersCount.some(f => {
-      for (const topKey of Object.keys(filtersDetails)) {
-        if (topKey === "Village") {
-          for (const catKey of Object.keys(filtersDetails[topKey] || {})) {
-            if (filtersDetails[topKey][catKey].some(i => i.name === f.name)) return true;
-          }
-        }
-      }
-      return false;
-    });
-
-    const hasWaterbodyFilter = selectedFiltersCount.some(f => {
-      for (const topKey of Object.keys(filtersDetails)) {
-        if (topKey === "Waterbody") {
-          for (const catKey of Object.keys(filtersDetails[topKey] || {})) {
-            if (filtersDetails[topKey][catKey].some(i => i.name === f.name)) return true;
-          }
-        }
-      }
-      return false;
-    });
+    const hasVillageFilter = selectedFiltersCount.some(f => FILTER_BY_NAME.get(f.name)?.namespace === "Village");
+    const hasWaterbodyFilter = selectedFiltersCount.some(f => FILTER_BY_NAME.get(f.name)?.namespace === "Waterbody");
 
     const hasVillagePattern = selectedPatternsCount.some(p => p.level);
 
@@ -1929,26 +1732,11 @@ const sheet5Count =
                                         : mwsGroup.villages
                                     )
                                     .filter(v => {
-                                    const manualGroup = manualSelectionDetails.find(
-                                      m => String(m.mwsId) === String(item.name)
-                                    );
-
-                                    const isManualVillage = manualGroup?.villages?.some(
-                                      mv => String(mv.villageId) === String(v.villageId)
-                                    );
-                                    
                                     const id = String(v.villageId);
                                     if (seenVillageIds.has(id)) return false;
                                     seenVillageIds.add(id);
                                     return true;
                                   }).map(v => {
-                                    const manualGroup = manualSelectionDetails.find(
-                                        m => String(m.mwsId) === String(item.name)
-                                    );
-
-                                    const isManualVillage = manualGroup?.villages?.some(
-                                        mv => String(mv.villageId) === String(v.villageId)
-                                    );
                                     const villageIdStr = String(v.villageId);
                                     let isSelected = false;
                                     if (hasVillageFilter || hasVillagePattern) {
@@ -1995,16 +1783,8 @@ const sheet5Count =
                                 return (
                                   <div className="flex flex-wrap gap-1">
                                     {allSwbs.map(swb => {
-                                      const manualGroup = manualSelectionDetails.find(
-                                        m => String(m.mwsId) === String(item.name)
-                                      );
-
-                                     
                                       const swbIdStr = typeof swb === 'object' ? String(swb.swbId) : String(swb);
                                       const swbName = typeof swb === 'object' ? (swb.swbName || '') : '';
-                                       const isManualWaterbody = manualGroup?.waterbodies?.some(
-                                        wb => String(wb.swbId) === swbIdStr
-                                      );
                                       // Green if WB filter is active and this WB matched it
                                       // Blue if just a structural intersection
                                       const isFilterMatched = hasWaterbodyFilter &&
@@ -2149,27 +1929,27 @@ const sheet5Count =
   };
 
   const handleStewardProfileClick = (steward) => {
-  if (!steward) return;
+    if (!steward) return;
 
-  const organizationId = steward.organization?.id;
-  const facilitatorSlug = steward.facilitator_name
-  ?.replace(/[().]/g, "")
-  .trim()
-  .replace(/\s+/g, "-")
-  .replace(/-+/g, "-")
-  .replace(/^-|-$/g, "")
-  .toLowerCase();
+    const organizationId = steward.organization?.id;
+    const facilitatorSlug = steward.facilitator_name
+    ?.replace(/[().]/g, "")
+    .trim()
+    .replace(/\s+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "")
+    .toLowerCase();
 
-  window.open(
-    `/landscape-stewardship/steward-view/${organizationId}/${facilitatorSlug}` +
-      `?stateId=${encodeURIComponent(state?.state_id ?? "")}` +
-      `&stateName=${encodeURIComponent(state?.label ?? "")}` +
-      `&districtId=${encodeURIComponent(district?.district_id ?? "")}` +
-      `&districtName=${encodeURIComponent(district?.label ?? "")}`,
-    "_blank"
-  );
- 
-};
+    window.open(
+      `/landscape-stewardship/steward-view/${organizationId}/${facilitatorSlug}` +
+        `?stateId=${encodeURIComponent(state?.state_id ?? "")}` +
+        `&stateName=${encodeURIComponent(state?.label ?? "")}` +
+        `&districtId=${encodeURIComponent(district?.district_id ?? "")}` +
+        `&districtName=${encodeURIComponent(district?.label ?? "")}`,
+      "_blank"
+    );
+  
+  };
 
   // ─── Shared section header component ─────────────────────────────────────
   const SectionHeader = ({ title, count, action }) => (
@@ -2201,31 +1981,25 @@ const sheet5Count =
         </div>
       )}
 
-      {/* {selectedMWSProfile && (
-        <KYLMWSProfilePanel mwsData={selectedMWSProfile} onBack={onResetMWS} hideBackButton={showBothPanels} />
-      )} */}
-{/* {(selectionMode === "single" && selectedMWSProfile) ||
- (selectionMode === "multi" && manualSelectedMWS.length > 0) ? ( */}
-{selectedMWSProfile ? (
-<KYLMWSProfilePanel
-    mwsData={selectedMWSProfile}
-     onBack={() => {
-      onResetMWS();
-      setSelectedPlanProfile(null);
-       setSelectedStewardProfile(null);
-    }}
-    hideBackButton={showBothPanels}
-    selectionMode={selectionMode}
-    // selectedMWS={selectedMWS}
-    selectedMWS={manualSelectedMWS}
-    setSelectionMode={setSelectionMode}
-    onResetMWS={onResetMWS}
-    onResetSelection={onResetMWSSelection} 
-    onOpenSelection={() => setShowSelectionPopup(true)}
-    intersectingVillages={displayVillages}  
-/>
+      {selectedMWSProfile ? (
+      <KYLMWSProfilePanel
+          mwsData={selectedMWSProfile}
+          onBack={() => {
+            onResetMWS();
+            setSelectedPlanProfile(null);
+            setSelectedStewardProfile(null);
+          }}
+          hideBackButton={showBothPanels}
+          selectionMode={selectionMode}
+          selectedMWS={manualSelectedMWS}
+          setSelectionMode={setSelectionMode}
+          onResetMWS={onResetMWS}
+          onResetSelection={onResetMWSSelection} 
+          onOpenSelection={() => setShowSelectionPopup(true)}
+          intersectingVillages={displayVillages}  
+      />
 
-) : null}
+      ) : null}
 
       {selectedWaterbodyProfile && (
         <KYLWaterbodyPanel waterbody={selectedWaterbodyProfile} onBack={onResetWaterbody} hideBackButton={showBothPanels} />
@@ -2270,38 +2044,38 @@ const sheet5Count =
 
           {/* View DPR Button */}
       {selectedPlanProfile?.is_dpr_reviewed && (
-  <button
-    className="flex items-center gap-2 text-indigo-600 hover:text-indigo-700 mb-2 text-sm mt-4"
-    onClick={() => {
-      window.open(
-        `/landscape-stewardship/plan-view?id=${selectedPlanProfile.id}` +
-        `&completed=${!!selectedPlanProfile.is_completed}` +
-        `&dpr_reviewed=${!!selectedPlanProfile.is_dpr_reviewed}` +
-        `&dpr_generated=${!!selectedPlanProfile.is_dpr_generated}` +
-        `&dpr_approved=${!!selectedPlanProfile.is_dpr_approved}` +
-        `&stateId=${encodeURIComponent(state?.state_id ?? "")}&stateName=${encodeURIComponent(state?.label ?? "")}` +
-        `&districtId=${encodeURIComponent(district?.district_id ?? "")}&districtName=${encodeURIComponent(district?.label ?? "")}`,
-        "_blank"
-      );
-    }}
-  >
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width="16"
-      height="16"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <path d="M5 12h14" />
-      <path d="M13 5l7 7-7 7" />
-    </svg>
-    View DPR
-  </button>
-)}
+        <button
+          className="flex items-center gap-2 text-indigo-600 hover:text-indigo-700 mb-2 text-sm mt-4"
+          onClick={() => {
+            window.open(
+              `/landscape-stewardship/plan-view?id=${selectedPlanProfile.id}` +
+              `&completed=${!!selectedPlanProfile.is_completed}` +
+              `&dpr_reviewed=${!!selectedPlanProfile.is_dpr_reviewed}` +
+              `&dpr_generated=${!!selectedPlanProfile.is_dpr_generated}` +
+              `&dpr_approved=${!!selectedPlanProfile.is_dpr_approved}` +
+              `&stateId=${encodeURIComponent(state?.state_id ?? "")}&stateName=${encodeURIComponent(state?.label ?? "")}` +
+              `&districtId=${encodeURIComponent(district?.district_id ?? "")}&districtName=${encodeURIComponent(district?.label ?? "")}`,
+              "_blank"
+            );
+          }}
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <path d="M5 12h14" />
+            <path d="M13 5l7 7-7 7" />
+          </svg>
+          View DPR
+        </button>
+      )}
 
         </div>
       )}
@@ -2691,33 +2465,33 @@ const sheet5Count =
           </div>
 
           {/* ── Selected Villages ── */}
-{displayVillages.length > 0 && (
-  <div className="bg-white rounded-xl border border-gray-100 p-4 shadow-sm">
-    <div className="flex items-center justify-between mb-3">
-      <h3 className="text-sm font-semibold text-gray-800">
-        Selected Villages
-      </h3>
+          {displayVillages.length > 0 && (
+            <div className="bg-white rounded-xl border border-gray-100 p-4 shadow-sm">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-sm font-semibold text-gray-800">
+                  Selected Villages
+                </h3>
 
-      <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 text-xs font-semibold">
-        {displayVillages.length}
-      </span>
-    </div>
+                <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 text-xs font-semibold">
+                  {displayVillages.length}
+                </span>
+              </div>
 
-    <div className="max-h-44 overflow-y-auto pr-1 flex flex-wrap gap-1.5">
-      {displayVillages.map((village) => (
-        <button
-          key={village.villageId}
-          type="button"
-          title={`Open report for ${village.villageName}`}
-          onClick={() => window.open(buildVillageReportUrl(village.villageId), '_blank', 'noopener,noreferrer')}
-          className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[9px] font-medium bg-emerald-50 border border-emerald-100 text-emerald-700 hover:bg-emerald-100 hover:border-emerald-300 max-w-full transition-colors"
-        >
-                    <span className="truncate">{village.villageName}</span>
-        </button>
-      ))}
-    </div>
-  </div>
-)}
+              <div className="max-h-44 overflow-y-auto pr-1 flex flex-wrap gap-1.5">
+                {displayVillages.map((village) => (
+                  <button
+                    key={village.villageId}
+                    type="button"
+                    title={`Open report for ${village.villageName}`}
+                    onClick={() => window.open(buildVillageReportUrl(village.villageId), '_blank', 'noopener,noreferrer')}
+                    className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[9px] font-medium bg-emerald-50 border border-emerald-100 text-emerald-700 hover:bg-emerald-100 hover:border-emerald-300 max-w-full transition-colors"
+                  >
+                              <span className="truncate">{village.villageName}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* ── Selected Patterns ── */}
           {getFormattedSelectedPatterns().length > 0 && (
@@ -2743,19 +2517,6 @@ const sheet5Count =
                   </div>
                 ))}
               </div>
-            </div>
-          )}
-
-          {/* ── Clicked Waterbody (legacy) ── */}
-          {clickedWaterbodyId && (
-            <div className="bg-sky-50 border border-sky-200 rounded-xl p-3">
-              <p className="text-xs font-semibold text-sky-800 mb-2">Waterbody: {clickedWaterbodyId}</p>
-              <button
-                onClick={() => window.open(waterbodyDashboardUrl, "_blank")}
-                className="w-full py-1.5 bg-sky-600 hover:bg-sky-700 text-white text-xs font-semibold rounded-lg transition-colors"
-              >
-                View Dashboard →
-              </button>
             </div>
           )}
         </div>
