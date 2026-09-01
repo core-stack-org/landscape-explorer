@@ -203,18 +203,18 @@ const MapLegend = ({ showMWS, showVillages, currentLayer, showConnectivity,showP
 
   const planLegendItems = [
   {
-    color: "#FF1493",
-    border: "#ffffff",
+    color: "#00FF00",
+    border: "#008000",
     name: "DPR Approved",
   },
   {
-    color: "#CCFF00",
-    border: "#3E5800",
+    color: "#FF0000",
+    border: "#8B0000",
     name: "In Progress",
   },
   {
-    color: "#00BFFF",
-    border: "#005F8F",
+    color: "#FFFF00",
+    border: "#B8B800",
     name: "DPR Completed",
   }
 ];
