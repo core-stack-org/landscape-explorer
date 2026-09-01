@@ -1,8 +1,19 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { useParams } from "react-router-dom";
 import LandingNavbar from "./landing_navbar";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useSearchParams } from "react-router-dom";
+import StewardIcon from "../assets/steward_icon_final.png";
+import MapSection from "./planMapSection";
+import getVectorLayers from "../actions/getVectorLayers";
+import { Fill, Stroke, Style, Text, Circle as CircleStyle  } from "ol/style";
+import Feature from "ol/Feature";
+import { Vector as VectorLayer } from "ol/layer";
+import { Vector as VectorSource } from "ol/source";
+import Point from "ol/geom/Point";
+import Overlay from "ol/Overlay";
+import planIcon from "../assets/plan_icon_final.png";
+import Icon from "ol/style/Icon";
 
 const P = {
   base:    "oklch(60% 0.2 301.924)",
@@ -48,6 +59,174 @@ const returnContext = {
   districtId: searchParams.get("districtId"),
   districtName: searchParams.get("districtName"),
 };
+
+// ── STEWARD VILLAGES MAP ───────────────────────────────
+const loadStewardVillages = useCallback(async (map) => {
+  const plans = stewardData.plans ?? [];
+console.log("Loading steward villages on map:", plans);
+  const validPlans = plans.filter(
+    (p) =>
+      p?.latitude &&
+      p?.longitude &&
+      !isNaN(parseFloat(p.latitude)) &&
+      !isNaN(parseFloat(p.longitude))
+  );
+  if (validPlans.length === 0) return;
+  console.log("Valid plans for map:", validPlans);
+
+  const features = validPlans.map((p) => {
+    const lon = parseFloat(p.longitude);
+    const lat = parseFloat(p.latitude);
+
+    const feature = new Feature({
+      geometry: new Point([lon, lat]),
+      planId: p.id,
+      planName: p.name || "Plan",
+      isCompleted: p.is_completed,
+
+    });
+
+    return feature;
+  });
+
+  const villageLayer = new VectorLayer({
+    source: new VectorSource({
+      features,
+    }),
+    zIndex: 10,
+  });
+
+villageLayer.setStyle((feature) => {
+  const isCompleted = feature.get("isCompleted");
+
+  return [
+    // Status boundary
+    new Style({
+      image: new CircleStyle({
+        radius: 20,
+        fill: new Fill({
+          color: "transparent",
+        }),
+        stroke: new Stroke({
+          color: isCompleted ? "#22c55e" : "#ef4444",
+          width: 4,
+        }),
+      }),
+    }),
+
+    // Plan icon
+    new Style({
+      image: new Icon({
+        src: planIcon,
+        scale: 0.12,
+        anchor: [0.5, 0.5],
+        anchorXUnits: "fraction",
+        anchorYUnits: "fraction",
+      }),
+    }),
+  ];
+});
+map.addLayer(villageLayer);
+
+// ─────────────────────────────────────────────
+// PLAN NAME HOVER TOOLTIP
+// ─────────────────────────────────────────────
+
+const tooltipElement = document.createElement("div");
+
+tooltipElement.className =
+  "px-3 py-1.5 rounded-lg text-xs font-semibold shadow-lg";
+
+tooltipElement.style.background = P.dark;
+tooltipElement.style.color = "#ffffff";
+tooltipElement.style.whiteSpace = "nowrap";
+tooltipElement.style.pointerEvents = "none";
+tooltipElement.style.display = "none";
+
+const tooltipOverlay = new Overlay({
+  element: tooltipElement,
+  offset: [0, -12],
+  positioning: "bottom-center",
+  stopEvent: false,
+});
+
+map.addOverlay(tooltipOverlay);
+
+
+// ─────────────────────────────────────────────
+// HOVER EVENT
+// ─────────────────────────────────────────────
+
+map.on("pointermove", (event) => {
+  const feature = map.forEachFeatureAtPixel(
+    event.pixel,
+    (feature) => feature,
+    {
+      hitTolerance: 6,
+    }
+  );
+
+  if (feature && feature.get("planName")) {
+    const coordinate = feature
+      .getGeometry()
+      .getCoordinates();
+
+    tooltipElement.innerText = feature.get("planName");
+
+    tooltipElement.style.display = "block";
+
+    tooltipOverlay.setPosition(coordinate);
+
+    map.getTargetElement().style.cursor = "pointer";
+  } else {
+    tooltipElement.style.display = "none";
+
+    tooltipOverlay.setPosition(undefined);
+
+    map.getTargetElement().style.cursor = "";
+  }
+});
+
+map.on("singleclick", (event) => {
+  const feature = map.forEachFeatureAtPixel(
+    event.pixel,
+    (feature) => feature,
+    {
+      hitTolerance: 6,
+    }
+  );
+
+  if (!feature) return;
+
+  const planId = feature.get("planId");
+  const isCompleted = feature.get("isCompleted");
+
+  // Only completed plans are clickable
+  if (!planId || !isCompleted) return;
+
+  window.open(
+    `/landscape-stewardship/plan-view?id=${planId}` +
+      `&stateId=${returnContext?.stateId ?? ""}` +
+      `&stateName=${encodeURIComponent(returnContext?.stateName ?? "")}` +
+      `&districtId=${returnContext?.districtId ?? ""}` +
+      `&districtName=${encodeURIComponent(
+        returnContext?.districtName ?? ""
+      )}`,
+    "_blank"
+  );
+});
+
+
+const extent = villageLayer.getSource().getExtent();
+
+  if (extent && !extent.some(isNaN)) {
+    map.getView().fit(extent, {
+      padding: [50, 50, 50, 50],
+      maxZoom: 14,
+      duration: 500,
+    });
+  }
+}, [stewardData?.plans]);
 
   useEffect(() => {
      console.log("organization:", organization);
@@ -118,81 +297,193 @@ console.log("Response OK:", res.ok);
   const districts = (locations.districts ?? []).map(d => d.name).join(", ");
   const tehsils   = (locations.tehsils   ?? []).map(t => t.name).join(", ");
   const projects  = (stewardData.projects ?? []).map(p => p.name).join(", ");
-
+  
+  
   const openPlan = async (plan) => {
-  console.log(plan);
 };
+
+
+
+
 
   return (
     <div className="flex flex-col h-full">
       <LandingNavbar />
-      {/* ── HEADER ─────────────────────────────────────── */}
-      <div className="sticky top-0 z-50 shadow-lg"
-        style={{ background: `linear-gradient(135deg, ${P.base}, ${P.dark})` }}>
-    <div className="max-w-[1800px] mx-auto px-6 py-4 flex items-center justify-between gap-4">
-  <div className="flex items-center gap-4 min-w-0">
 
-    <button
-      onClick={() => {
-        navigate(
-          `/landscape-stewardship?state=${returnContext?.stateId}&stateName=${encodeURIComponent(
-            returnContext?.stateName || ""
-          )}&district=${returnContext?.districtId}&districtName=${encodeURIComponent(
-            returnContext?.districtName || ""
-          )}&view=steward`
-        );
-      }}
-      className="flex-shrink-0 flex items-center gap-2 px-4 py-2 rounded-xl font-semibold
-                 text-sm transition-all duration-200 active:scale-95"
-      style={{
-        background: "rgba(255,255,255,0.95)",
-        color: P.dark,
-        boxShadow: "0 2px 12px rgba(0,0,0,0.15)",
-      }}
-    >
-      ← Back
-    </button>
+{/* ───────────────────── STEWARD HEADER ───────────────────── */}
+<div
+  className="relative z-10"
+  style={{
+    background: `linear-gradient(135deg, ${P.base}, ${P.dark})`,
+  }}
+>
+  <div className="max-w-[1800px] mx-auto px-6 py-12">
 
-    <div className="min-w-0">
-      <p
-        className="text-xs font-semibold uppercase tracking-widest"
-        style={{ color: "oklch(88% 0.08 301.924)" }}
+    {/* HEADER CONTENT */}
+    <div className="flex items-center gap-4">
+
+      {/* BACK BUTTON */}
+      <button
+        onClick={() => {
+          navigate(
+            `/landscape-stewardship?state=${returnContext?.stateId}&stateName=${encodeURIComponent(
+              returnContext?.stateName || ""
+            )}&district=${returnContext?.districtId}&districtName=${encodeURIComponent(
+              returnContext?.districtName || ""
+            )}&view=steward`
+          );
+        }}
+        className="
+          flex-shrink-0
+          inline-flex
+          items-center
+          gap-1
+          px-3
+          py-1.5
+          rounded-lg
+          text-[10px]
+          font-semibold
+          transition-all
+          duration-200
+          active:scale-95
+        "
+        style={{
+          background: "rgba(255,255,255,0.96)",
+          color: P.dark,
+          boxShadow: "0 2px 8px rgba(0,0,0,0.12)",
+        }}
       >
-        Landscape Steward
-      </p>
+        ← Back
+      </button>
 
-      <h1 className="text-lg font-bold text-white truncate">
-        {stewardData.facilitator_name
-          ?.split(" ")
-          .map(
-            (word) =>
-              word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
-          )
-          .join(" ")}
-      </h1>
+
+      {/* STEWARD DETAILS */}
+      <div className="min-w-0">
+
+        {/* NAME + PREVIEW */}
+        <div className="flex items-center gap-2">
+
+          <h1 className="text-lg font-bold text-white leading-tight">
+            {stewardData.facilitator_name
+              ?.split(" ")
+              .map(
+                (word) =>
+                  word.charAt(0).toUpperCase() +
+                  word.slice(1).toLowerCase()
+              )
+              .join(" ")}
+          </h1>
+
+        </div>
+
+
+        {/* SUPPORT DISTRICT */}
+        <p
+          className="text-[10px] mt-0.5"
+          style={{
+            color: "rgba(255,255,255,0.72)",
+          }}
+        >
+          Support District · {returnContext?.districtName || "—"}
+        </p>
+
+      </div>
+
     </div>
 
   </div>
 </div>
+
+
+{/* ───────────────────── BODY ───────────────────── */}
+<div className="flex-1 overflow-visible p-6 flex flex-col gap-6">
+
+  {/* ───────────────────── STATS ROW ───────────────────── */}
+  <div className="z-20 -mt-10 grid grid-cols-1 md:grid-cols-3 gap-4">
+    {/* TOTAL VILLAGES */}
+    <StatPill
+      label="Total Villages Covered"
+      value={stewardData.statistics?.total_plans ?? 0}
+      accent={P.base}
+    />
+
+    {/* PLANNING COMPLETED */}
+    <StatPill
+      label="Planning Completed For"
+      value={
+        stewardData.plans?.filter((p) => p.is_completed).length ?? 0
+      }
+      accent={P.dark}
+    />
+
+    {/* OVERALL PLANNING PROGRESS */}
+    <div
+      className="rounded-xl bg-white px-4 py-3"
+      style={{
+        boxShadow: "0 2px 10px rgba(0,0,0,0.08)",
+      }}
+    >
+      <div className="flex items-center justify-between mb-2">
+
+        <p
+          className="text-[8px] font-bold uppercase tracking-wider"
+          style={{
+            color: P.dark,
+          }}
+        >
+          Overall Planning Progress
+        </p>
+
       </div>
 
-      {/* ── BODY ───────────────────────────────────────── */}
-      <div className="flex-1 overflow-y-auto p-6 flex flex-col gap-6">
+      <div className="flex items-center gap-2">
 
-        {/* STATS ROW */}
-        <div className="grid grid-cols-2 gap-4">
-          <StatPill
-            label="Total Villages Covered"
-            value={stewardData.statistics?.total_plans}
-            accent={P.base}
-          />
-          <StatPill
-            label="Planning Completed For"
-            value={stewardData.plans?.filter(p => p.is_completed).length ?? 0}
-            accent={P.dark}
-          />
-        </div>
-<div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <span
+          className="text-lg font-bold"
+          style={{
+            color: P.dark,
+          }}
+        >
+          {stewardData.plans?.filter((p) => p.is_completed).length ?? 0}
+        </span>
+
+        <span className="text-[9px] text-slate-400">
+          of {stewardData.statistics?.total_plans ?? 0} villages
+        </span>
+
+      </div>
+
+      {/* Progress Bar */}
+      <div className="mt-2 h-1.5 w-full rounded-full bg-slate-100 overflow-hidden">
+
+        <div
+          className="h-full rounded-full transition-all duration-500"
+          style={{
+            width: `${
+              stewardData.statistics?.total_plans
+                ? Math.min(
+                    100,
+                    ((stewardData.plans?.filter(
+                      (p) => p.is_completed
+                    ).length ?? 0) /
+                      stewardData.statistics.total_plans) *
+                      100
+                  )
+                : 0
+            }%`,
+            background: P.base,
+          }}
+        />
+
+      </div>
+
+    </div>
+
+  </div>
+
+
+  {/* ───────────────────── EXISTING CONTENT ───────────────────── */}
+  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
         {/* PERSONAL DETAILS */}
         <div className="bg-white rounded-2xl p-5 shadow-sm"
@@ -221,6 +512,49 @@ console.log("Response OK:", res.ok);
         </div>
 
         </div>
+
+
+{/* ───────────────────── VILLAGES MAP OVERVIEW ───────────────────── */}
+<div
+  className="bg-white rounded-2xl p-5 shadow-sm"
+  style={{ border: `1px solid ${P.border}` }}
+>
+  <div className="flex items-center justify-between mb-4">
+    <p
+      className="text-xs font-semibold uppercase tracking-widest"
+      style={{ color: P.muted }}
+    >
+      Villages Map Overview
+    </p>
+
+    {/* <div className="flex items-center gap-2 flex-wrap">
+      {(stewardData.plans ?? []).map((p, i) => (
+        <span
+          key={p.id ?? i}
+          className="px-2.5 py-1 rounded-full text-[10px] font-semibold"
+          style={{
+            background: P.light,
+            color: P.base,
+            border: `1px solid ${P.border}`,
+          }}
+        >
+          {p.village_name || p.plan || "Village"}
+        </span>
+      ))}
+    </div> */}
+  </div>
+
+  <div className="w-full">
+    <MapSection
+      title=""
+      loadLayer={loadStewardVillages}
+      loadBoundary={() => {}}
+      districtNameSafe=""
+      blockNameSafe=""
+      plan={stewardData.plans?.[0] ?? null}
+    />
+  </div>
+</div>
 
         {/* PLANS */}
         <div className="bg-white rounded-2xl p-5 shadow-sm"
