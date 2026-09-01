@@ -1,7 +1,7 @@
 // src/components/kyl_rightSidebar.jsx
 import KML from 'ol/format/KML';
 import GeoJSON from 'ol/format/GeoJSON';
-import { Style, Stroke, Fill, Circle as CircleStyle } from "ol/style";
+import { Style, Stroke, Fill, Circle as CircleStyle ,Icon} from "ol/style";
 import Feature from "ol/Feature";
 import Point from "ol/geom/Point";
 import VectorLayer from "ol/layer/Vector";
@@ -18,6 +18,9 @@ import XLSX from 'xlsx-js-style';
 import toast from 'react-hot-toast';
 import { buildIntersections } from '../components/utils/dataIndexes.js';
 import { FILTER_BY_NAME } from '../components/utils/filtersIndex.js';
+import StewardIcon from "../assets/steward_icon_final.png";
+import planIcon from "../assets/plan_icon_final.png";
+
 
 
 const KYLRightSidebar = ({
@@ -544,7 +547,7 @@ const showPlansOnMap = (plansData) => {
 
   const status = getPlanStatus(plan);
 
-    feature.setStyle(DOT_DEFAULT(status));
+    feature.setStyle(PLAN_ICON_DEFAULT(status));
 
       return feature;
     });
@@ -693,14 +696,14 @@ React.useEffect(() => {
     // Restore previous hovered feature
     if (hoveredFeature && hoveredFeature !== feature) {
       const status = getFeatureStatus(hoveredFeature);
-      hoveredFeature.setStyle(DOT_DEFAULT(status));
+      hoveredFeature.setStyle(PLAN_ICON_DEFAULT(status));
       hoveredFeature = null;
     }
 
     // Apply hover style
     if (feature && feature !== hoveredFeature) {
       const status = getFeatureStatus(feature);
-      feature.setStyle(DOT_HOVERED(status));
+      feature.setStyle(PLAN_ICON_HOVERED(status));
       hoveredFeature = feature;
     }
 
@@ -801,9 +804,9 @@ React.useEffect(() => {
 // ── PLAN DOT STYLES ──────────────────────────────────────────────────────────
 
 const PLAN_STATUS_COLORS = {
-  in_progress: { fill: "#CCFF00", stroke: "#3E5800",},
-  dpr_completed: { fill: "#00BFFF", stroke: "#005F8F",},
-  dpr_approved: { fill: "#FF1493", stroke: "#8B004F", },
+  in_progress: {fill: "#FF0000",stroke: "#8B0000",},
+  dpr_completed: {fill: "#FFFF00",stroke: "#B8B800", },
+  dpr_approved: {fill: "#00FF00",stroke: "#008000",},
 };
 
 const getPlanStatus = (plan) => {
@@ -814,51 +817,138 @@ const getPlanStatus = (plan) => {
 
 const getFeatureStatus = (feature) => getPlanStatus(feature.get("planDetails"));
 
-const DOT_DEFAULT  = (status = "in_progress") => new Style({
-  image: new CircleStyle({
-    radius: 9,
-    fill:   new Fill({ color: PLAN_STATUS_COLORS[status].fill }),
-    stroke: new Stroke({ color: PLAN_STATUS_COLORS[status].stroke, width: 2 }),
+const PLAN_ICON_DEFAULT = (status = "in_progress") => [
+  // Status ring
+  new Style({
+    image: new CircleStyle({
+      radius: 15,
+      fill: new Fill({
+        color: "transparent",
+      }),
+      stroke: new Stroke({
+        color: PLAN_STATUS_COLORS[status].fill,
+        width: 3,
+      }),
+    }),
   }),
-});
 
-const DOT_HOVERED  = (status = "in_progress") => new Style({
-  image: new CircleStyle({
-    radius: 12,
-    fill:   new Fill({ color: PLAN_STATUS_COLORS[status].fill }),
-    stroke: new Stroke({ color: "#ffffff", width: 2.5 }),
+  // Plan icon
+  new Style({
+    image: new Icon({
+      src: planIcon,
+      scale: 0.085,
+      anchor: [0.5, 0.5],
+      anchorXUnits: "fraction",
+      anchorYUnits: "fraction",
+    }),
   }),
-});
+];
+
+
+const PLAN_ICON_HOVERED = (status = "in_progress") => [
+  // Bigger status ring
+  new Style({
+    image: new CircleStyle({
+      radius: 17,
+      fill: new Fill({
+        color: "transparent",
+      }),
+      stroke: new Stroke({
+        color: PLAN_STATUS_COLORS[status].fill,
+        width: 3,
+      }),
+    }),
+  }),
+
+  // Bigger plan icon
+  new Style({
+    image: new Icon({
+      src: planIcon,
+      scale: 0.10,
+      anchor: [0.5, 0.5],
+      anchorXUnits: "fraction",
+      anchorYUnits: "fraction",
+    }),
+  }),
+];
+
+
+const PLAN_ICON_SELECTED = (status = "in_progress") => [
+  // Selected status ring
+  new Style({
+    image: new CircleStyle({
+      radius: 17,
+      fill: new Fill({
+        color: "transparent",
+      }),
+      stroke: new Stroke({
+        color: PLAN_STATUS_COLORS[status].fill,
+        width: 3.5,
+      }),
+    }),
+  }),
+
+  // Plan icon
+  new Style({
+    image: new Icon({
+      src: planIcon,
+      scale: 0.10,
+      anchor: [0.5, 0.5],
+      anchorXUnits: "fraction",
+      anchorYUnits: "fraction",
+    }),
+  }),
+];
 
 
 const STEWARD_DOT_DEFAULT = () =>
-  new Style({
-    image: new CircleStyle({
-      radius: 7,
-      fill: new Fill({
-        color: "#6C3EFF",
-      }),
-      stroke: new Stroke({
-        color: "#ffffff",
-        width: 2,
+  [
+    // White circular border
+    new Style({
+      image: new CircleStyle({
+        radius: 18,
+        fill: new Fill({
+          color: "#ffffff",
+        }),
       }),
     }),
-  });
 
-  const STEWARD_DOT_HOVERED = () =>
-  new Style({
-    image: new CircleStyle({
-      radius: 10, 
-      fill: new Fill({
-        color: "#6C3EFF",
-      }),
-      stroke: new Stroke({
-        color: "#ffffff",
-        width: 2.5,
+    // Steward icon
+    new Style({
+      image: new Icon({
+        src: StewardIcon,
+        scale: 0.12,
+        anchor: [0.5, 0.5],
+        anchorXUnits: "fraction",
+        anchorYUnits: "fraction",
       }),
     }),
-  });
-  
+  ];
+
+const STEWARD_DOT_HOVERED = () =>
+  [
+    // White circular border
+    new Style({
+      image: new CircleStyle({
+        radius: 21,
+        fill: new Fill({
+          color: "#ffffff",
+        }),
+      }),
+    }),
+
+    // Slightly bigger steward icon on hover
+    new Style({
+      image: new Icon({
+        src: StewardIcon,
+        scale: 0.14,
+        anchor: [0.5, 0.5],
+        anchorXUnits: "fraction",
+        anchorYUnits: "fraction",
+      }),
+    }),
+  ];
+
   const handleTehsilReport = () => {
     const reportURL = `${process.env.REACT_APP_API_URL}/generate_tehsil_report/?state=${transformName(state?.label)}&district=${transformName(district?.label)}&block=${transformName(block?.label)}`;
     window.open(reportURL, '_blank', 'noopener,noreferrer');
