@@ -88,7 +88,7 @@ export const STYLE_RESOLVERS = {
     get: (f) => { const i = AQUIFER_TYPES.indexOf(f.get('Principal_')); return i === -1 ? 13 : i; },
   },
   soge_class: {
-    dualPath: true,
+    dualPath: false,
     get: (f) => { const i = SOGE_TYPES.indexOf(f.get('class')); return i === -1 ? 4 : i; },
   },
   road_connectivity_cat_cluster: { dualPath: true, get: (f) => f.get('road_connectivity_cat_value') },
