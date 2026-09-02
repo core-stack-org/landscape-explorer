@@ -70,6 +70,7 @@ const KYLRightSidebar = ({
   setShowStewards,
   mwsIndex,
   villageNameIndex,
+  setManualSelectedMWS
 }) => {
   const [loadingWB, setLoadingWB] = React.useState(false);
   const [showSelectionPopup, setShowSelectionPopup] = React.useState(false);
@@ -379,6 +380,7 @@ useEffect(() => {
   };
 
   const handleIndicatorRemoval = (filter) => {
+    setManualSelectedMWS([]);
     if (toggleStates[filter.name]) {
       const layerToRemove = currentLayer.find((l) => l.name === filter.name);
       if (layerToRemove) {
