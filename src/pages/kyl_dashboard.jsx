@@ -180,8 +180,10 @@ const KYLDashboardPage = () => {
 
   const getFormattedSelectedFilters = () => getFormattedFilters(filterSelections);
   const getFormattedSelectedPatterns = () => getFormattedPatterns(patternSelections);
-  const handlePatternSelection = (pattern, isSelected) =>
+  const handlePatternSelection = (pattern, isSelected) => {
+    setManualSelectedMWS([]);
     setPatternSelections(selectPattern(pattern, isSelected, patternSelections));
+  };
   const [boundaryLoadedVersion, setBoundaryLoadedVersion] = useState(0);
 
 
@@ -255,7 +257,7 @@ const KYLDashboardPage = () => {
       toast.error("Please turn off MWS Connectivity before applying filters.");
       return;
     }
-    // setSelectedMWS([]);
+    setManualSelectedMWS([]);
     setSelectedMWSProfile(null);
     resetMWSStyle();
     setHighlightMWS(null);
@@ -2018,6 +2020,7 @@ const KYLDashboardPage = () => {
   };
 
   const handlePatternRemoval = (pattern) => {
+    setManualSelectedMWS([]);
     const key = pattern.patternName || pattern.name;
     if (pattern.level) {
       setPatternSelections((prev) => ({
@@ -2536,6 +2539,7 @@ const wb_id = props?.UID ?? props?.id ?? props?.wb_id;
           setShowStewards={setShowStewards}
           mwsIndex={mwsIndex}
           villageNameIndex={villageNameIndex}
+          setManualSelectedMWS={setManualSelectedMWS}
         />
       </div>
     </div>
