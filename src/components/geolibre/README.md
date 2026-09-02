@@ -1,15 +1,15 @@
 # KYL GeoLibre integration
 
 `/download_layers` is a thin host for GeoLibre. KYL keeps its existing header
-(including **GeoLibre User Guide**, **QGIS Documentation**, and the QML style
-repository fallback) and gives the rest of the page to a trusted GeoLibre
-iframe. There is no second KYL map, layer selector, or project panel.
+(including **GeoLibre User Guide** and **QGIS Documentation**) and gives the
+rest of the page to a trusted GeoLibre iframe. There is no second KYL map,
+layer selector, or project panel.
 
 CoRE Stack datasets are available under
 [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
 
 The implementation targets
-[GeoLibre v2.2.0](https://github.com/opengeos/GeoLibre/releases/tag/v2.2.0)
+[GeoLibre v2.6.0](https://github.com/opengeos/GeoLibre/releases/tag/v2.6.0)
 and uses its supported embed bridge and WFS project representation.
 
 ## Runtime flow
@@ -69,11 +69,13 @@ sequenceDiagram
 2. **Extent:** the shared panchayat-boundary WFS response supplies both default
    Demographic layers and the authoritative tehsil bbox.
 3. **Catalog:** `geolibreLayers.js` is the single layer inventory. It assigns
-   the deployed KYL domain, GeoServer source, QML reference, year, and order.
-4. **Cartography:** vector QML logic is represented in GeoLibre styles; raster
-   QML is rendered by the corresponding named GeoServer WMS style. Matching
-   color labels are synchronized into GeoLibre's native legend only while the
-   corresponding layer is visible.
+   the deployed KYL domain, GeoServer source, year, and order.
+4. **Cartography:** named raster styles are rendered directly by GeoServer WMS.
+   Every layer exposes live GeoServer SLD and JSON/PNG legend endpoints. The
+   finalized vector profiles remain in the project as a visual-parity safeguard
+   because GeoLibre project JSON cannot attach a remote SLD to a predeclared
+   WFS layer. Matching color labels are synchronized into GeoLibre's native
+   legend only while the corresponding layer is visible.
 5. **Loading:** only the shared default WFS is fetched at startup. Other
    vectors hydrate once on first toggle; rasters remain native lazy WMS layers.
 6. **Download:** vector data remains available through GeoLibre and complete
@@ -87,19 +89,25 @@ GeoLibre's own layer panel follows the deployed Download Layers taxonomy,
 ordered top-first as:
 
 1. Demographic (Administrative Boundaries, Socio-Economic Profile)
-2. Hydrology (including micro-watersheds and hydrological variables)
-3. LULC Level 3 by year
-4. LULC Level 2 by year
-5. LULC Level 1 by year
-6. Land
-7. Agriculture
-8. Restoration
-9. Climate
-10. NREGA
+2. Village Data (facilities access, Mission Antyodaya and livestock)
+3. Hydrology (including micro-watersheds, rivers, canals and hydrological variables)
+4. LULC Level 3 by year
+5. LULC Level 2 by year
+6. LULC Level 1 by year
+7. Land (including terrain and the Digital Elevation Model)
+8. Agriculture
+9. Restoration
+10. Industry
+11. NREGA
 
 The remaining groups are collapsed. Every layer outside the two default
 Demographic entries is toggle-to-load. Each LULC group shows 2024-2025 first
-while retaining every available year back to 2017-2018.
+while retaining every available year back to 2017-2018. The three LULC levels
+are presentation choices over the same Level 3 coverage for each year: GeoLibre
+uses `lulc_level_1_style`, `lulc_level_2_style`, or `lulc_level_3_style` without
+requesting separate Level 1 and Level 2 raster datasets. These cross-workspace
+styles are rendered through GeoServer's global WMS endpoint; downloads continue
+to use the single Level 3 WCS coverage.
 
 The project camera is calculated from the Socio-Economic geometry using a
 padded Web Mercator fit. `mapView.bbox` is also retained in project metadata,
@@ -117,25 +125,26 @@ attribution. A deployment can replace it with another valid MapLibre style:
 REACT_APP_GEOLIBRE_BASEMAP_STYLE_URL=https://maps.example.org/style.json
 ```
 
-GeoLibre's built-in Components plugin provides one on-map legend control in
-minimized mode by default. Its rendered legend uses the bottom-right map corner,
-and its selector contains only layers that are currently visible. Toggling a
-layer on adds its symbol classes; toggling it off removes them. One selected
-layer's classes are shown at a time, so enabling several layers does not expand
-every palette across the map. The separate `legend` project field retains the
-complete layer ordering and grouping for GeoLibre's Print Layout legend.
+KYL renders one minimized on-map legend control over the bottom-right map corner.
+Its selector is updated directly from GeoLibre state snapshots and contains the
+currently visible layers. A newly enabled layer becomes the selected legend, so
+Level 1, Level 2, and Level 3 LULC styles each immediately show their own class
+palette. This update does not send the full project back to the iframe, preserving
+GeoLibre's native raster sources and avoiding redundant tile reloads. The
+separate `legend` project field retains the complete layer ordering and grouping
+for GeoLibre's Print Layout legend.
 
 ## Version configuration
 
-The default hosted viewer accepts any GeoLibre release from `2.0.0` up to, but
+The default hosted viewer accepts any GeoLibre release from `2.6.0` up to, but
 not including, `3.0.0`. Compatible 2.x hosted upgrades need no KYL code change.
 The one source-code fallback to update is the version value in
 `../../config/geolibre.config.js`:
 
 ```js
 export const GEOLIBRE_CONFIG = Object.freeze({
-  version: process.env.REACT_APP_GEOLIBRE_VERSION || "2.2.0",
-  minimumCompatibleVersion: "2.0.0",
+  version: process.env.REACT_APP_GEOLIBRE_VERSION || "2.6.0",
+  minimumCompatibleVersion: "2.6.0",
   supportedMajorVersion: 2,
   // ...
 });
@@ -148,7 +157,7 @@ versioned URL template. It cannot select the release served by the unversioned
 For an exactly pinned self-hosted release, set:
 
 ```dotenv
-REACT_APP_GEOLIBRE_VERSION=2.3.0
+REACT_APP_GEOLIBRE_VERSION=2.6.0
 REACT_APP_GEOLIBRE_URL_TEMPLATE=https://maps.example.org/geolibre/{version}/
 REACT_APP_GEOLIBRE_STRICT_VERSION=true
 ```
@@ -161,7 +170,7 @@ the compatibility rules and project/bridge tests, not just the version value.
 The small badge over the iframe reports the version that actually completed the
 GeoLibre handshake and whether its deployment URL is `rolling` or `pinned`.
 
-GeoLibre's application version (`2.2.0`) is separate from its project schema
+GeoLibre's application version (`2.6.0`) is separate from its project schema
 version (`0.2.0`). Do not change the project format merely when upgrading the
 application.
 
@@ -170,16 +179,16 @@ application.
 | File | Responsibility |
 |---|---|
 | `../../config/geolibre.config.js` | Viewer application version, URL resolution, strict handshake compatibility |
-| `../../config/geolibreLayers.js` | GeoServer names, deployed domains, all LULC years, QML references and WMS styles |
-| `geolibreProject.js` | Project generation, legends, Google imagery, vector hydration, WMS/WCS references and bbox camera |
+| `../../config/geolibreLayers.js` | GeoServer names, deployed domains, all LULC years and named WMS styles |
+| `geolibreProject.js` | Project generation, legends, Google imagery, vector hydration, GeoServer style/WFS/WMS/WCS references and bbox camera |
 | `GeoLibreFrame.jsx` | Iframe bridge, one-time bbox fit, human error states and downloadable bounded technical log |
 | `../../pages/LandscapeExplorer.jsx` | Route-to-project orchestration and fetch-on-first-toggle vector cache; no duplicate map or layer UI |
 
-The current project contains 45 entries: 13 vector entries, 24 LULC year/level
-rasters, and 8 other rasters. Initial startup performs exactly one distinct WFS
-request for the shared Demographic data and no WMS request. Each other vector
-makes its own WFS request only on its first toggle. Hidden rasters make
-no WMS tile request.
+The current project contains 55 entries: 22 vector entries, 24 LULC year/style
+entries backed by 8 Level 3 yearly rasters, and 9 other rasters. Initial startup
+performs exactly one distinct WFS request for the shared Demographic data and no
+WMS request. Each other vector makes its own WFS request only on its first
+toggle. Hidden rasters make no WMS tile request.
 
 ## Error handling
 
@@ -193,13 +202,18 @@ a log file to the user's filesystem.
 
 ## Styling contract
 
-- Vector QML rules are translated into GeoLibre categorized or expression
-  styles. The source QML URL remains in `metadata.corestack.qmlStyleUrl`.
-- To use these layers with QGIS, download layer styles from the
-  [CoRE Stack QGIS Styles repository](https://github.com/core-stack-org/QGIS-Styles)
-  and load them through QGIS layer properties.
-- Raster QML styles are published as named GeoServer styles and rendered by
-  WMS. Their original QML URLs are also retained.
+- Style delivery no longer depends on GitHub-hosted QML files. Each layer's
+  `metadata.corestack.geoserverStyle` contains public GeoServer `GetStyles` and
+  `GetLegendGraphic` URLs for SLD, JSON legend, and PNG legend access.
+- Named raster styles are applied by GeoServer in every WMS tile request, so
+  the rendered pixels and published server style remain one contract.
+- WFS returns geometry and attributes, not cartography. GeoLibre 2.6 can import
+  an SLD interactively, but its project format cannot associate a remote SLD
+  URL with an already declared WFS layer. The finalized GeoLibre vector styles
+  and legends therefore remain embedded as a tested parity fallback instead of
+  adopting GeoServer's generic `polygon`, `line`, `point`, or `generic` defaults.
+- When a finalized vector style is assigned on GeoServer, validate its public
+  SLD and JSON legend against the parity profile before making it authoritative.
 - Each raster keeps its styled WMS tiles for display and exposes its complete
   WCS GetCoverage GeoTIFF as `source.url`. This is the contract GeoLibre 2.1+
   uses to show **Export → GeoTIFF (COG)** and save the returned bytes without
@@ -211,9 +225,10 @@ backing file. If immutable original COG objects are published later, place those
 direct object URLs in the raster catalogue and use them instead of the WCS
 fallback.
 
-Changing only a QML URL does not alter rendered vector symbology; update the
-matching style profile in `geolibreProject.js`. Raster appearance changes must
-be published to the named GeoServer WMS style.
+Changing a GeoServer vector default does not automatically alter rendered
+GeoLibre symbology; update and test the matching parity profile until GeoLibre
+supports remote SLD URLs in saved project layers. Raster appearance changes
+must be published to the named GeoServer WMS style.
 
 ## Fresh-checkout setup
 
@@ -276,7 +291,8 @@ Check both routes:
 6. Confirm the map does not refit after those vector loads. Enable a raster and
    verify its styled WMS display and **Export → GeoTIFF
    (COG)** full-coverage download.
-7. Open both documentation buttons, the QML repository, and the CC BY 4.0 link.
+7. Open both documentation buttons and the CC BY 4.0 link. Inspect a generated
+   layer's metadata and confirm its style URLs use the configured GeoServer.
 8. If testing a failure state, confirm it uses human recovery guidance and that
    **Download technical log** saves a `.log` file.
 
@@ -302,11 +318,12 @@ the user's browser with CORS enabled, and the site's framing policy must permit
 
 ## Future integration options
 
-GeoLibre 2.2 leaves room for deeper work without another KYL map implementation:
+GeoLibre 2.6 leaves room for deeper work without another KYL map implementation:
 
 - use direct object-store COG URLs for immutable original-file downloads;
 - preconfigure processing models, bookmarks, print layouts, stories, or plugins;
 - expose saved/shareable GeoLibre project files for partner workflows;
-- add direct QML import once GeoLibre's web project/style contract supports it;
+- replace vector parity profiles with live SLD URLs once GeoLibre's project
+  format supports remote styles on predeclared WFS layers;
 - self-host tested versioned builds so a single version change selects the
   exact deployed application binary.

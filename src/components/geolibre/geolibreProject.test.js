@@ -1,4 +1,5 @@
 import {
+  activeGeoLibreLegends,
   buildGeoLibreProject,
   DEFAULT_GEOLIBRE_BASEMAP_STYLE,
   formatGeoServerName,
@@ -47,7 +48,7 @@ beforeEach(() => {
   );
 });
 
-describe("GeoLibre 2.2 project generation", () => {
+describe("GeoLibre 2.6 project generation", () => {
   it("normalizes KYL location labels for GeoServer layer names", () => {
     expect(formatGeoServerName("  Banas Kantha (Palanpur) ")).toBe(
       "banas_kantha_palanpur"
@@ -75,7 +76,7 @@ describe("GeoLibre 2.2 project generation", () => {
 
     expect(project.version).toBe("0.2.0");
     expect(project.layers).toHaveLength(GEOLIBRE_LAYERS.length);
-    expect(project.layers).toHaveLength(45);
+    expect(project.layers).toHaveLength(55);
     expect(project.mapView.bbox).toEqual([92.9, 24.7, 93.2, 25]);
     expect(project.basemapStyleUrl).toBe(DEFAULT_GEOLIBRE_BASEMAP_STYLE);
     expect(decodeURIComponent(project.basemapStyleUrl)).toContain(
@@ -104,6 +105,13 @@ describe("GeoLibre 2.2 project generation", () => {
         service: "wfs",
         featureCount: 1,
         loadState: "loaded",
+        corestack: {
+          geoserverStyle: {
+            provider: "GeoServer",
+            assignment: "layer-default",
+            renderingMode: "geolibre-parity-profile",
+          },
+        },
       },
     });
     expect(socioeconomic.geojson.type).toBe("FeatureCollection");
@@ -149,6 +157,11 @@ describe("GeoLibre 2.2 project generation", () => {
       metadata: {
         service: "wms",
         corestack: {
+          geoserverStyle: {
+            name: "lulc_level_3_style",
+            assignment: "named-style",
+            renderingMode: "server-rendered-wms",
+          },
           rasterDownload: {
             kind: "full-coverage-geotiff",
             bytePreservingInGeoLibre: true,
@@ -162,11 +175,64 @@ describe("GeoLibre 2.2 project generation", () => {
     expect(latestLulc.source.tiles[0]).toContain(
       "BBOX={bbox-epsg-3857}"
     );
-    expect(latestLulc.source.wmsUrl).toContain("/LULC_level_3/wms");
+    expect(latestLulc.source.wmsUrl).toContain("/geoserver/wms");
+    expect(latestLulc.metadata.corestack.geoserverStyle.sldUrl).toContain(
+      "REQUEST=GetStyles"
+    );
+    expect(
+      latestLulc.metadata.corestack.geoserverStyle.legendJsonUrl
+    ).toContain("FORMAT=application%2Fjson");
     expect(latestLulc.source.url).toContain("request=GetCoverage");
     expect(latestLulc.source.url).toContain(
       "CoverageId=LULC_level_3%3ALULC_24_25_cachar_lakhipur_level_3"
     );
+    const latestLulcStyles = [1, 2, 3].map((level) =>
+      project.layers.find(
+        (layer) => layer.id === `corestack-lulc_level_${level}_24_25`
+      )
+    );
+    expect(latestLulcStyles.map((layer) => layer.source.layers)).toEqual([
+      "LULC_level_3:LULC_24_25_cachar_lakhipur_level_3",
+      "LULC_level_3:LULC_24_25_cachar_lakhipur_level_3",
+      "LULC_level_3:LULC_24_25_cachar_lakhipur_level_3",
+    ]);
+    expect(latestLulcStyles.map((layer) => layer.source.url)).toEqual([
+      latestLulc.source.url,
+      latestLulc.source.url,
+      latestLulc.source.url,
+    ]);
+    expect(latestLulcStyles.map((layer) => layer.source.styles)).toEqual([
+      "lulc_level_1_style",
+      "lulc_level_2_style",
+      "lulc_level_3_style",
+    ]);
+
+    const dem = project.layers.find((layer) => layer.id === "corestack-dem");
+    expect(dem).toMatchObject({
+      type: "raster",
+      visible: false,
+      source: {
+        layers: "dem:cachar_lakhipur_dem_raster",
+        styles: "dem_grayscale",
+      },
+      metadata: {
+        corestack: {
+          geoserverWorkspace: "dem",
+          rasterDownload: { kind: "full-coverage-geotiff" },
+        },
+      },
+    });
+    expect(dem.source.url).toContain(
+      "CoverageId=dem%3Acachar_lakhipur_dem_raster"
+    );
+    expect(
+      project.layers.every(
+        (layer) =>
+          !JSON.stringify(layer.metadata?.corestack || {}).includes(
+            "githubusercontent.com"
+          )
+      )
+    ).toBe(true);
     expect(successfulFetch).toHaveBeenCalledTimes(1);
   });
 
@@ -179,9 +245,12 @@ describe("GeoLibre 2.2 project generation", () => {
       .reverse()
       .map((layer) => layer.id);
 
-    expect(displayIds.slice(0, 5)).toEqual([
+    expect(displayIds.slice(0, 8)).toEqual([
       "corestack-administrative_boundaries",
       "corestack-demographics",
+      "corestack-facilities",
+      "corestack-antyodaya",
+      "corestack-livestock",
       "corestack-mws_layers",
       "corestack-hydrological_boundaries",
       "corestack-mws_layers_fortnight",
@@ -205,6 +274,7 @@ describe("GeoLibre 2.2 project generation", () => {
     );
     expect(project.layerGroups.map((group) => group.id)).toEqual([
       "demographic",
+      "village-data",
       "hydrology",
       "lulc-3",
       "lulc-2",
@@ -212,12 +282,49 @@ describe("GeoLibre 2.2 project generation", () => {
       "land",
       "agriculture",
       "restoration",
-      "climate",
+      "industry",
       "nrega",
     ]);
   });
 
-  it("starts a minimized legend containing only active default layers", async () => {
+  it("uses the deployed KYL names for hydrology, restoration, and industry sources", async () => {
+    const project = await buildGeoLibreProject({
+      ...location,
+      fetchFeatureCollection: successfulFetch,
+    });
+    const typeNames = Object.fromEntries(
+      project.layers
+        .filter((layer) => layer.type === "geojson")
+        .map((layer) => [layer.id, layer.source.typeName])
+    );
+
+    expect(typeNames).toMatchObject({
+      "corestack-facilities":
+        "facilities_proximity:facilities_cachar_lakhipur",
+      "corestack-antyodaya":
+        "antyodaya_2020:antyodaya20_cachar_lakhipur",
+      "corestack-livestock": "livestocks:livestocks_cachar_lakhipur",
+      "corestack-river": "river:cachar_lakhipur_river_vector",
+      "corestack-canal": "canal:cachar_lakhipur_canal_vector",
+      "corestack-green_credit": "green_credit:cachar_lakhipur_green_credit",
+      "corestack-land_conflicts": "lcw:cachar_lakhipur_lcw_conflict",
+      "corestack-industry": "factory_csr:cachar_lakhipur_factory_csr",
+      "corestack-mining": "mining:cachar_lakhipur_mining",
+    });
+
+    expect(project.styles["corestack-facilities"].vectorStyleExpression).toContain(
+      "l2_essential_education_distance_km"
+    );
+    expect(project.styles["corestack-antyodaya"]).toMatchObject({
+      vectorStyleMode: "categorized",
+      vectorStyleProperty: "road_connectivity_cat_cluster",
+    });
+    expect(project.styles["corestack-livestock"].vectorStyleExpression).toContain(
+      "small_animals_total"
+    );
+  });
+
+  it("prepares default legend data for the KYL overlay", async () => {
     const project = await buildGeoLibreProject({
       ...location,
       fetchFeatureCollection: successfulFetch,
@@ -229,7 +336,7 @@ describe("GeoLibre 2.2 project generation", () => {
       "maplibre-gl-components"
     );
     expect(legend).toMatchObject({
-      visible: true,
+      visible: false,
       collapsed: true,
       hasLegend: true,
       title: "Socio-Economic Profile legend",
@@ -288,6 +395,43 @@ describe("GeoLibre 2.2 project generation", () => {
       "Administrative Boundaries legend",
       "Terrain legend",
     ]);
+  });
+
+  it("returns a separate active legend for every visible LULC style", async () => {
+    const project = await buildGeoLibreProject({
+      ...location,
+      fetchFeatureCollection: successfulFetch,
+    });
+    const withLulcStyles = {
+      ...project,
+      layers: project.layers.map((layer) =>
+        [
+          "corestack-lulc_level_1_17_18",
+          "corestack-lulc_level_2_17_18",
+          "corestack-lulc_level_3_17_18",
+        ].includes(layer.id)
+          ? { ...layer, visible: true }
+          : layer
+      ),
+    };
+
+    const legends = activeGeoLibreLegends(withLulcStyles);
+    expect(legends.map((legend) => legend.title)).toEqual(
+      expect.arrayContaining([
+        "LULC Level 1 legend",
+        "LULC Level 2 legend",
+        "LULC Level 3 legend",
+      ])
+    );
+    expect(
+      legends.find((legend) => legend.title === "LULC Level 1 legend").items
+    ).toHaveLength(5);
+    expect(
+      legends.find((legend) => legend.title === "LULC Level 2 legend").items
+    ).toHaveLength(2);
+    expect(
+      legends.find((legend) => legend.title === "LULC Level 3 legend").items
+    ).toHaveLength(4);
   });
 
   it("loads only the shared Demographic source during project creation", async () => {

@@ -1,7 +1,4 @@
-const QML_RAW_BASE =
-  "https://raw.githubusercontent.com/core-stack-org/QGIS-Styles/main";
-
-const qmlStyle = (path) => `${QML_RAW_BASE}/${path}`;
+const LULC_SOURCE_WORKSPACE = "LULC_level_3";
 
 export const GEOLIBRE_LULC_YEARS = [
   { label: "2017-2018", value: "17_18" },
@@ -29,7 +26,6 @@ const LAYERS = [
     geometryType: "polygon",
     layerName: ({ district, tehsil }) => `${district}_${tehsil}`,
     styleProfile: "boundary",
-    qmlStyleUrl: qmlStyle("Demographic/Administrative-Boundary-Style.qml"),
   },
   {
     id: "demographics",
@@ -42,7 +38,40 @@ const LAYERS = [
     geometryType: "polygon",
     layerName: ({ district, tehsil }) => `${district}_${tehsil}`,
     styleProfile: "demographics",
-    qmlStyleUrl: qmlStyle("Demographic/literary_rate_style.qml"),
+  },
+  {
+    id: "facilities",
+    label: "Facilities and Services Access",
+    domain: "Village",
+    loadGroup: "village-data",
+    sourceType: "wfs",
+    workspace: "facilities_proximity",
+    geometryType: "polygon",
+    layerName: ({ district, tehsil }) => `facilities_${district}_${tehsil}`,
+    styleProfile: "facilities",
+  },
+  {
+    id: "antyodaya",
+    label: "Mission Antyodaya Village Indicators (2020)",
+    domain: "Village",
+    loadGroup: "village-data",
+    sourceType: "wfs",
+    workspace: "antyodaya_2020",
+    geometryType: "polygon",
+    layerName: ({ district, tehsil }) =>
+      `antyodaya20_${district}_${tehsil}`,
+    styleProfile: "antyodaya",
+  },
+  {
+    id: "livestock",
+    label: "Village Livestock Census",
+    domain: "Village",
+    loadGroup: "village-data",
+    sourceType: "wfs",
+    workspace: "livestocks",
+    geometryType: "polygon",
+    layerName: ({ district, tehsil }) => `livestocks_${district}_${tehsil}`,
+    styleProfile: "livestock",
   },
   {
     id: "mws_layers",
@@ -55,7 +84,6 @@ const LAYERS = [
     layerName: ({ district, tehsil }) =>
       `deltaG_well_depth_${district}_${tehsil}`,
     styleProfile: "mws",
-    qmlStyleUrl: qmlStyle("Climate/MWS-Well-Depth-18_23.qml"),
   },
   {
     id: "hydrological_boundaries",
@@ -68,7 +96,6 @@ const LAYERS = [
     layerName: ({ district, tehsil }) =>
       `deltaG_well_depth_${district}_${tehsil}`,
     styleProfile: "boundary",
-    qmlStyleUrl: qmlStyle("Climate/MWS-Well-Depth-18_23.qml"),
   },
   {
     id: "mws_layers_fortnight",
@@ -81,7 +108,6 @@ const LAYERS = [
     layerName: ({ district, tehsil }) =>
       `deltaG_fortnight_${district}_${tehsil}`,
     styleProfile: "boundary",
-    qmlStyleUrl: qmlStyle("Hydrology/water_balance_fortnightly.qml"),
   },
   {
     id: "terrain_vector",
@@ -93,7 +119,6 @@ const LAYERS = [
     geometryType: "polygon",
     layerName: ({ district, tehsil }) => `${district}_${tehsil}_cluster`,
     styleProfile: "terrain_vector",
-    qmlStyleUrl: qmlStyle("Land/Terrain-Vector-Layer-Style.qml"),
   },
   {
     id: "drainage",
@@ -105,7 +130,30 @@ const LAYERS = [
     geometryType: "line",
     layerName: ({ district, tehsil }) => `${district}_${tehsil}`,
     styleProfile: "drainage",
-    qmlStyleUrl: qmlStyle("Hydrology/Drainage-Layer-Style.qml"),
+  },
+  {
+    id: "river",
+    label: "Rivers",
+    domain: "Hydrology",
+    loadGroup: "hydrology",
+    sourceType: "wfs",
+    workspace: "river",
+    geometryType: "line",
+    layerName: ({ district, tehsil }) =>
+      `${district}_${tehsil}_river_vector`,
+    styleProfile: "river",
+  },
+  {
+    id: "canal",
+    label: "Canals",
+    domain: "Hydrology",
+    loadGroup: "hydrology",
+    sourceType: "wfs",
+    workspace: "canal",
+    geometryType: "line",
+    layerName: ({ district, tehsil }) =>
+      `${district}_${tehsil}_canal_vector`,
+    styleProfile: "canal",
   },
   {
     id: "remote_sensed_waterbodies",
@@ -118,7 +166,6 @@ const LAYERS = [
     layerName: ({ district, tehsil }) =>
       `surface_waterbodies_${district}_${tehsil}`,
     styleProfile: "waterbodies",
-    qmlStyleUrl: qmlStyle("Hydrology/Surface-Waterbody-style.qml"),
   },
   {
     id: "soge",
@@ -130,7 +177,6 @@ const LAYERS = [
     geometryType: "polygon",
     layerName: ({ district, tehsil }) => `soge_vector_${district}_${tehsil}`,
     styleProfile: "soge",
-    qmlStyleUrl: qmlStyle("Hydrology/SOGE_style.qml"),
   },
   {
     id: "aquifer",
@@ -143,7 +189,6 @@ const LAYERS = [
     layerName: ({ district, tehsil }) =>
       `aquifer_vector_${district}_${tehsil}`,
     styleProfile: "aquifer",
-    qmlStyleUrl: qmlStyle("Hydrology/Aquifer_style.qml"),
   },
   {
     id: "cropping_intensity",
@@ -155,7 +200,6 @@ const LAYERS = [
     geometryType: "polygon",
     layerName: ({ district, tehsil }) => `${district}_${tehsil}_intensity`,
     styleProfile: "cropping_intensity",
-    qmlStyleUrl: qmlStyle("Agriculture/Cropping_intensity.qml"),
   },
   {
     id: "drought",
@@ -167,7 +211,6 @@ const LAYERS = [
     geometryType: "polygon",
     layerName: ({ district, tehsil }) => `${district}_${tehsil}_drought`,
     styleProfile: "drought",
-    qmlStyleUrl: qmlStyle("Agriculture/Drought_style.qml"),
   },
   {
     id: "nrega",
@@ -179,7 +222,53 @@ const LAYERS = [
     geometryType: "point",
     layerName: ({ district, tehsil }) => `${district}_${tehsil}`,
     styleProfile: "nrega",
-    qmlStyleUrl: qmlStyle("NREGA/NREG-Assets-Classified-Style.qml"),
+  },
+  {
+    id: "green_credit",
+    label: "Green Credit Projects",
+    domain: "Restoration",
+    loadGroup: "restoration",
+    sourceType: "wfs",
+    workspace: "green_credit",
+    geometryType: "polygon",
+    layerName: ({ district, tehsil }) =>
+      `${district}_${tehsil}_green_credit`,
+    styleProfile: "green_credit",
+  },
+  {
+    id: "land_conflicts",
+    label: "Land Conflicts",
+    domain: "Industry",
+    loadGroup: "industry",
+    sourceType: "wfs",
+    workspace: "lcw",
+    geometryType: "point",
+    layerName: ({ district, tehsil }) =>
+      `${district}_${tehsil}_lcw_conflict`,
+    styleProfile: "industry_point",
+  },
+  {
+    id: "industry",
+    label: "Industries and CSR",
+    domain: "Industry",
+    loadGroup: "industry",
+    sourceType: "wfs",
+    workspace: "factory_csr",
+    geometryType: "point",
+    layerName: ({ district, tehsil }) =>
+      `${district}_${tehsil}_factory_csr`,
+    styleProfile: "industry_point",
+  },
+  {
+    id: "mining",
+    label: "Mining Sites",
+    domain: "Industry",
+    loadGroup: "industry",
+    sourceType: "wfs",
+    workspace: "mining",
+    geometryType: "point",
+    layerName: ({ district, tehsil }) => `${district}_${tehsil}_mining`,
+    styleProfile: "industry_point",
   },
   {
     id: "terrain",
@@ -190,7 +279,16 @@ const LAYERS = [
     workspace: "terrain",
     layerName: ({ district, tehsil }) => `${district}_${tehsil}_terrain_raster`,
     wmsStyle: "terrain:terrain_raster",
-    qmlStyleUrl: qmlStyle("Land/terrain_1-12class.qml"),
+  },
+  {
+    id: "dem",
+    label: "Digital Elevation Model",
+    domain: "Land",
+    loadGroup: "land",
+    sourceType: "wms",
+    workspace: "dem",
+    layerName: ({ district, tehsil }) => `${district}_${tehsil}_dem_raster`,
+    wmsStyle: "dem_grayscale",
   },
   {
     id: "clart",
@@ -201,7 +299,6 @@ const LAYERS = [
     workspace: "clart",
     layerName: ({ district, tehsil }) => `${district}_${tehsil}_clart`,
     wmsStyle: "clart:testClart",
-    qmlStyleUrl: qmlStyle("Hydrology/CLART-Layer-Style.qml"),
   },
   {
     id: "afforestation",
@@ -213,7 +310,6 @@ const LAYERS = [
     layerName: ({ district, tehsil }) =>
       `change_${district}_${tehsil}_Afforestation`,
     wmsStyle: "change_detection:afforestation",
-    qmlStyleUrl: qmlStyle("Land/change_tree_cover_gain.qml"),
   },
   {
     id: "deforestation",
@@ -225,7 +321,6 @@ const LAYERS = [
     layerName: ({ district, tehsil }) =>
       `change_${district}_${tehsil}_Deforestation`,
     wmsStyle: "change_detection:deforestation",
-    qmlStyleUrl: qmlStyle("Land/change_tree_cover_loss.qml"),
   },
   {
     id: "degradation",
@@ -237,7 +332,6 @@ const LAYERS = [
     layerName: ({ district, tehsil }) =>
       `change_${district}_${tehsil}_Degradation`,
     wmsStyle: "change_detection:degradation",
-    qmlStyleUrl: qmlStyle("Land/change_cropping_reduction.qml"),
   },
   {
     id: "urbanization",
@@ -249,7 +343,6 @@ const LAYERS = [
     layerName: ({ district, tehsil }) =>
       `change_${district}_${tehsil}_Urbanization`,
     wmsStyle: "change_detection:urbanization",
-    qmlStyleUrl: qmlStyle("Land/change_urbanization.qml"),
   },
   {
     id: "cropintensity",
@@ -261,7 +354,6 @@ const LAYERS = [
     layerName: ({ district, tehsil }) =>
       `change_${district}_${tehsil}_CropIntensity`,
     wmsStyle: "change_detection:cropintensity",
-    qmlStyleUrl: qmlStyle("Land/change_cropping_intensity.qml"),
   },
   {
     id: "restoration",
@@ -273,7 +365,6 @@ const LAYERS = [
     layerName: ({ district, tehsil }) =>
       `restoration_${district}_${tehsil}_raster`,
     wmsStyle: "restoration:restoration_style",
-    qmlStyleUrl: qmlStyle("Restoration/Restoration_style.qml"),
   },
 ];
 
@@ -282,25 +373,22 @@ const LULC_LEVELS = [
     id: "lulc_level_1",
     label: "LULC Level 1",
     domain: "Land",
-    workspace: "LULC_level_1",
-    wmsStyle: "LULC_level_1:lulc_level_1_style",
-    qmlStyleUrl: qmlStyle("Land/level-1-op.qml"),
+    workspace: LULC_SOURCE_WORKSPACE,
+    wmsStyle: "lulc_level_1_style",
   },
   {
     id: "lulc_level_2",
     label: "LULC Level 2",
     domain: "Land",
-    workspace: "LULC_level_2",
-    wmsStyle: "LULC_level_2:lulc_level_2_style",
-    qmlStyleUrl: qmlStyle("Land/level-2.qml"),
+    workspace: LULC_SOURCE_WORKSPACE,
+    wmsStyle: "lulc_level_2_style",
   },
   {
     id: "lulc_level_3",
     label: "LULC Level 3",
     domain: "Agriculture",
-    workspace: "LULC_level_3",
-    wmsStyle: "LULC_level_3:lulc_level_3_style",
-    qmlStyleUrl: qmlStyle("Agriculture/level-3.qml"),
+    workspace: LULC_SOURCE_WORKSPACE,
+    wmsStyle: "lulc_level_3_style",
   },
 ];
 
@@ -312,9 +400,10 @@ export const GEOLIBRE_LULC_LAYERS = LULC_LEVELS.flatMap((level, index) =>
     label: `${level.label} · ${year.label}`,
     loadGroup: `lulc-${index + 1}`,
     sourceType: "wms",
+    useGlobalWms: true,
     year: year.value,
     layerName: ({ district, tehsil }) =>
-      `LULC_${year.value}_${district}_${tehsil}_level_${index + 1}`,
+      `LULC_${year.value}_${district}_${tehsil}_level_3`,
   }))
 );
 

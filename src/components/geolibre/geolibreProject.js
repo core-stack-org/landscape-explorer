@@ -161,6 +161,37 @@ const STYLE_PROFILES = {
     ],
     { fillColor: "#98fb98", strokeColor: "#111827", fillOpacity: 0.65 }
   ),
+  facilities: expressionStyle(
+    [
+      "step",
+      numericProperty("l2_essential_education_distance_km"),
+      "#fff9c4",
+      2,
+      "#ffc107",
+    ],
+    { fillColor: "#fff9c4", strokeColor: "#232323", fillOpacity: 0.8 }
+  ),
+  antyodaya: categoryStyle(
+    "road_connectivity_cat_cluster",
+    [
+      ["LOW", "#dc143c", "Poor road connectivity"],
+      ["MEDIUM", "#ffd700", "Moderate road connectivity"],
+      ["HIGH", "#90ee90", "Strong road connectivity"],
+    ],
+    { fillColor: "#ffd700", strokeColor: "#232323", fillOpacity: 0.8 }
+  ),
+  livestock: expressionStyle(
+    [
+      "step",
+      numericProperty("small_animals_total"),
+      "#dc143c",
+      201,
+      "#ffd700",
+      501,
+      "#90ee90",
+    ],
+    { fillColor: "#ffd700", strokeColor: "#232323", fillOpacity: 0.8 }
+  ),
   terrain_vector: categoryStyle(
     "terrainClu",
     [
@@ -199,6 +230,20 @@ const STYLE_PROFILES = {
     ],
     { fillColor: "#03045e", strokeColor: "#03045e", strokeWidth: 2 }
   ),
+  river: {
+    ...BASE_STYLE,
+    fillColor: "#2b93fa",
+    strokeColor: "#2b93fa",
+    strokeWidth: 2,
+    fillOpacity: 0.8,
+  },
+  canal: {
+    ...BASE_STYLE,
+    fillColor: "#2b93fa",
+    strokeColor: "#2b93fa",
+    strokeWidth: 2,
+    fillOpacity: 0.8,
+  },
   waterbodies: {
     ...BASE_STYLE,
     fillColor: "#6495ed",
@@ -282,6 +327,20 @@ const STYLE_PROFILES = {
       circleRadius: 6,
     }
   ),
+  green_credit: {
+    ...BASE_STYLE,
+    fillColor: "#14d11d",
+    strokeColor: "#14d11d",
+    fillOpacity: 0.6,
+  },
+  industry_point: {
+    ...BASE_STYLE,
+    fillColor: "#ff0000",
+    strokeColor: "#ffffff",
+    strokeWidth: 1,
+    fillOpacity: 1,
+    circleRadius: 10,
+  },
 };
 
 const LEGEND_PROFILES = {
@@ -292,6 +351,20 @@ const LEGEND_PROFILES = {
     ["Literacy 59% to below 70%", "#228b22"],
     ["Literacy 70% or above", "#006400"],
   ],
+  facilities: [
+    ["Primary education within 2 km", "#fff9c4"],
+    ["Primary education more than 2 km away", "#ffc107"],
+  ],
+  antyodaya: [
+    ["Poor road connectivity", "#dc143c"],
+    ["Moderate road connectivity", "#ffd700"],
+    ["Strong road connectivity", "#90ee90"],
+  ],
+  livestock: [
+    ["Bovine population 0 to 200", "#dc143c"],
+    ["Bovine population 201 to 500", "#ffd700"],
+    ["Bovine population above 500", "#90ee90"],
+  ],
   mws: [
     ["Net groundwater change below -5", "#ff0000"],
     ["Net groundwater change -5 to below -1", "#ffff00"],
@@ -299,6 +372,8 @@ const LEGEND_PROFILES = {
     ["Net groundwater change 1 or above", "#1017f8"],
   ],
   waterbodies: [["Surface waterbody", "#6495ed"]],
+  river: [["River", "#2b93fa", "line"]],
+  canal: [["Canal", "#2b93fa", "line"]],
   cropping_intensity: [
     ["Average cropping intensity below 1", "#ff9371"],
     ["Average cropping intensity 1 to below 2", "#ffa500"],
@@ -321,6 +396,27 @@ const LEGEND_PROFILES = {
     ["Local ridges or hilltops", "#91bfdb"],
     ["Midslope divides or local ridges", "#800000"],
     ["Mountain tops or high ridges", "#4d0000"],
+  ],
+  dem: [
+    ["0 m", "#0d0030"],
+    ["50 m", "#1a0f6e"],
+    ["100 m", "#1746a0"],
+    ["150 m", "#1a72c0"],
+    ["200 m", "#2191c0"],
+    ["250 m", "#1aab9e"],
+    ["300 m", "#16a085"],
+    ["340 m", "#1cb870"],
+    ["380 m", "#27ae60"],
+    ["410 m", "#5ab836"],
+    ["440 m", "#95c623"],
+    ["470 m", "#d4d400"],
+    ["500 m", "#f1c40f"],
+    ["530 m", "#e09a30"],
+    ["560 m", "#d4845a"],
+    ["590 m", "#b0623a"],
+    ["620 m", "#8b5e3c"],
+    ["660 m", "#c4a882"],
+    ["700 m or above", "#f5f0e8"],
   ],
   clart: [
     ["Good recharge", "#4ee323"],
@@ -371,6 +467,10 @@ const LEGEND_PROFILES = {
     ["Wide-scale restoration", "#0f077c"],
     ["Protection", "#4fbc14"],
   ],
+  green_credit: [["Green Credit project area", "#14d11d"]],
+  land_conflicts: [["Reported land conflict", "#ff0000", "circle"]],
+  industry: [["Industry or CSR site", "#ff0000", "circle"]],
+  mining: [["Mining site", "#ff0000", "circle"]],
   lulc_level_1: [
     ["Built-up", "#ff0000"],
     ["Water", "#1ca3ec"],
@@ -427,6 +527,7 @@ const layerLegend = (catalogLayer, style) => {
 
 const GROUPS_TOP_FIRST = [
   { id: "demographic", name: "Demographic", collapsed: false },
+  { id: "village-data", name: "Village Data", collapsed: true },
   { id: "hydrology", name: "Hydrology", collapsed: true },
   { id: "lulc-3", name: "LULC · Level 3 by year", collapsed: true },
   { id: "lulc-2", name: "LULC · Level 2 by year", collapsed: true },
@@ -434,7 +535,7 @@ const GROUPS_TOP_FIRST = [
   { id: "land", name: "Land", collapsed: true },
   { id: "agriculture", name: "Agriculture", collapsed: true },
   { id: "restoration", name: "Restoration", collapsed: true },
-  { id: "climate", name: "Climate", collapsed: true },
+  { id: "industry", name: "Industry", collapsed: true },
   { id: "nrega", name: "NREGA", collapsed: true },
 ];
 
@@ -500,8 +601,57 @@ const buildWfsRequest = (baseUrl, layer, layerName) => {
   };
 };
 
+const wmsEndpointFor = (baseUrl, layer) =>
+  layer.useGlobalWms
+    ? `${baseUrl}wms`
+    : `${baseUrl}${layer.workspace}/wms`;
+
+const buildGeoServerStyleSource = (baseUrl, layer, layerName) => {
+  const endpoint = wmsEndpointFor(baseUrl, layer);
+  const qualifiedName = `${layer.workspace}:${layerName}`;
+  const namedStyle = layer.wmsStyle || "";
+  const getStylesEntry = namedStyle ? [["STYLES", namedStyle]] : [];
+  const legendStyleEntry = namedStyle ? [["STYLE", namedStyle]] : [];
+  const common = [
+    ["SERVICE", "WMS"],
+    ["VERSION", "1.1.1"],
+  ];
+
+  return {
+    provider: "GeoServer",
+    name: namedStyle || null,
+    assignment: namedStyle ? "named-style" : "layer-default",
+    renderingMode:
+      layer.sourceType === "wms"
+        ? "server-rendered-wms"
+        : "geolibre-parity-profile",
+    sldUrl: appendQuery(endpoint, [
+      ...common,
+      ["REQUEST", "GetStyles"],
+      ["LAYERS", qualifiedName],
+      ...getStylesEntry,
+    ]),
+    legendJsonUrl: appendQuery(endpoint, [
+      ...common,
+      ["REQUEST", "GetLegendGraphic"],
+      ["FORMAT", "application/json"],
+      ["LAYER", qualifiedName],
+      ...legendStyleEntry,
+    ]),
+    legendImageUrl: appendQuery(endpoint, [
+      ...common,
+      ["REQUEST", "GetLegendGraphic"],
+      ["FORMAT", "image/png"],
+      ["LAYER", qualifiedName],
+      ...legendStyleEntry,
+    ]),
+  };
+};
+
 const buildWmsSource = (baseUrl, layer, layerName, bounds) => {
-  const endpoint = `${baseUrl}${layer.workspace}/wms`;
+  // Cross-workspace LULC styles are available through GeoServer's global WMS,
+  // while other catalog layers retain their workspace-scoped endpoints.
+  const endpoint = wmsEndpointFor(baseUrl, layer);
   const qualifiedName = `${layer.workspace}:${layerName}`;
   const source = {
     type: "raster",
@@ -653,19 +803,19 @@ const layerStyle = (layer) =>
     ? { ...RASTER_STYLE }
     : { ...(STYLE_PROFILES[layer.styleProfile] || BASE_STYLE) };
 
-const coreStackMetadata = (layer, layerName, sourceUrl, style) => ({
+const coreStackMetadata = (layer, layerName, sourceUrl, style, baseUrl) => ({
   domain: layer.domain,
   geoserverWorkspace: layer.workspace,
   geoserverLayer: layerName,
   sourceType: layer.sourceType,
   liveSource: sourceUrl,
-  qmlStyleUrl: layer.qmlStyleUrl,
+  geoserverStyle: buildGeoServerStyleSource(baseUrl, layer, layerName),
   year: layer.year || null,
   legend: layerLegend(layer, style),
   styleContract:
     layer.sourceType === "wms"
-      ? "GeoServer renders the named style published from the CoRE Stack QGIS style catalog."
-      : "The QGIS QML symbology is represented as a GeoLibre vector style.",
+      ? "GeoServer renders the published named style through WMS."
+      : "GeoLibre retains the finalized vector profile while the live GeoServer SLD and legend endpoints provide the server style contract.",
 });
 
 const buildVectorLayer = ({
@@ -675,6 +825,7 @@ const buildVectorLayer = ({
   data = EMPTY_FEATURE_COLLECTION,
   failure,
   loaded = false,
+  baseUrl,
 }) => {
   const style = layerStyle(catalogLayer);
   const isDefaultDisplay = catalogLayer.defaultVisible === true;
@@ -703,7 +854,13 @@ const buildVectorLayer = ({
       loadState,
       ...(failure ? { initialLoadError: failure.message } : {}),
       corestack: {
-        ...coreStackMetadata(catalogLayer, layerName, request.url, style),
+        ...coreStackMetadata(
+          catalogLayer,
+          layerName,
+          request.url,
+          style,
+          baseUrl
+        ),
         loadState,
       },
     },
@@ -736,7 +893,13 @@ const buildRasterLayer = ({ catalogLayer, layerName, baseUrl, bounds }) => {
     metadata: {
       service: "wms",
       corestack: {
-        ...coreStackMetadata(catalogLayer, layerName, wmsSource.url, style),
+        ...coreStackMetadata(
+          catalogLayer,
+          layerName,
+          wmsSource.url,
+          style,
+          baseUrl
+        ),
         wcsDownloadUrl,
         rasterDownload: {
           kind: "full-coverage-geotiff",
@@ -778,6 +941,11 @@ const mapLegendEntries = (orderedLayers) => {
     : entries;
 };
 
+export const activeGeoLibreLegends = (project) =>
+  project?.layers
+    ? mapLegendEntries(project.layers.filter((layer) => layer.visible))
+    : [];
+
 const legendPluginState = (entries, currentPlugins) => {
   const selected = entries[0];
   const currentComponents =
@@ -791,7 +959,9 @@ const legendPluginState = (entries, currentPlugins) => {
   const legend = selectedEntry
     ? {
         ...currentLegend,
-        visible: true,
+        // KYL renders this state outside the cross-origin iframe so it can be
+        // updated without replacing the project and recreating raster sources.
+        visible: false,
         collapsed: currentLegend?.collapsed ?? true,
         hasLegend: true,
         selectedLegendIndex: selectedIndex,
@@ -849,9 +1019,7 @@ const legendStateSignature = (legend) =>
 
 export const syncGeoLibreActiveLegends = (project) => {
   if (!project?.layers) return project;
-  const entries = mapLegendEntries(
-    project.layers.filter((layer) => layer.visible)
-  );
+  const entries = activeGeoLibreLegends(project);
   const plugins = legendPluginState(entries, project.plugins);
   const currentLegend =
     project.plugins?.settings?.["maplibre-gl-components"]?.legend;
@@ -1077,6 +1245,7 @@ export const buildGeoLibreProject = async ({
         return buildVectorLayer({
           catalogLayer,
           layerName,
+          baseUrl,
           ...(result || {
             data: EMPTY_FEATURE_COLLECTION,
             request: buildWfsRequest(baseUrl, catalogLayer, layerName),
@@ -1141,8 +1310,8 @@ export const buildGeoLibreProject = async ({
           initialLoadFailures: [...failures],
           lazyLoadFailures: [],
         },
-        qmlStyleContract:
-          "Vector QML symbology is represented in GeoLibre styles. Raster QML symbology is rendered by named GeoServer WMS styles. Original QML URLs are retained per layer.",
+        geoserverStyleContract:
+          "Raster symbology is rendered by named GeoServer WMS styles. Vector layers retain the verified GeoLibre parity profiles and expose live GeoServer GetStyles and GetLegendGraphic endpoints without depending on GitHub-hosted QML files.",
       },
     };
   };

@@ -4,6 +4,7 @@ import {
   geoLibreVersionStatus,
   resolveGeoLibreViewer,
 } from "../../config/geolibre.config";
+import GeoLibreLegend from "./GeoLibreLegend";
 
 const MAX_TECHNICAL_LOG_ENTRIES = 40;
 
@@ -35,18 +36,45 @@ export const formatGeoLibreLog = (entries) =>
     ),
   ].join("\n");
 
+// Visibility and opacity are live viewer state. They must not cause a full
+// project replacement, because GeoLibre would tear down and recreate native
+// raster sources that are already resident in the map. Keep only fields that
+// describe project structure, data, or styling in the load signature.
+export const geoLibreProjectLoadSignature = (project) =>
+  project
+    ? JSON.stringify({
+        version: project.version,
+        name: project.name,
+        scope: project.metadata?.scope,
+        bbox: project.mapView?.bbox,
+        layers: (project.layers || []).map((layer) => ({
+          id: layer.id,
+          name: layer.name,
+          type: layer.type,
+          source: layer.source,
+          sourcePath: layer.sourcePath,
+          groupId: layer.groupId,
+          style: layer.style,
+          loadState: layer.metadata?.loadState,
+          featureCount:
+            layer.metadata?.featureCount ?? layer.geojson?.features?.length,
+        })),
+      })
+    : "";
+
 const GeoLibreFrame = ({
   project,
   preparationMessage,
   preparationError,
   warning,
+  legends,
   onRetry,
   onProjectState,
 }) => {
   const frameRef = useRef(null);
   const fitTimerRef = useRef(null);
   const fittedScopeRef = useRef("");
-  const sentProjectRef = useRef(null);
+  const sentProjectSignatureRef = useRef("");
   const sequenceRef = useRef(0);
   const technicalLogRef = useRef([]);
   const [viewerState, setViewerState] = useState("loading");
@@ -138,7 +166,7 @@ const GeoLibreFrame = ({
           actualVersion: event.data.version,
         });
         setViewerVersion(String(event.data.version));
-        sentProjectRef.current = null;
+        sentProjectSignatureRef.current = "";
         setViewerIssue("");
         setViewerState("ready");
         setReadyGeneration((generation) => generation + 1);
@@ -181,11 +209,12 @@ const GeoLibreFrame = ({
 
   useEffect(() => {
     const target = frameRef.current?.contentWindow;
+    const projectSignature = geoLibreProjectLoadSignature(project);
     if (
       !target ||
       !project ||
       !["ready", "loaded"].includes(viewerState) ||
-      sentProjectRef.current === project
+      sentProjectSignatureRef.current === projectSignature
     ) {
       return;
     }
@@ -205,7 +234,7 @@ const GeoLibreFrame = ({
       projectName: project.name,
       layerCount: project.layers?.length || 0,
     });
-    sentProjectRef.current = project;
+    sentProjectSignatureRef.current = projectSignature;
     const bounds = project.mapView?.bbox;
     const scope = project.metadata?.scope;
     const scopeKey = scope
@@ -283,9 +312,13 @@ const GeoLibreFrame = ({
         />
       )}
 
+      {!userIssue && viewerState === "loaded" && (
+        <GeoLibreLegend legends={legends} />
+      )}
+
       {!userIssue && viewerVersion && (
         <div
-          className="pointer-events-none absolute bottom-8 right-3 rounded-md border border-slate-300 bg-white/95 px-2 py-1 text-[11px] font-medium text-slate-700 shadow-sm"
+          className="pointer-events-none absolute bottom-3 left-3 rounded-md border border-slate-300 bg-white/95 px-2 py-1 text-[11px] font-medium text-slate-700 shadow-sm"
           title={`Loaded from ${viewer.url}`}
           role="status"
         >
