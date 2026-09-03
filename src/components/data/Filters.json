@@ -2656,22 +2656,22 @@
     "styleKey": "static",
     "bins": [
       {
-        "label": "Low (120 kg/ha)",
+        "label": "Low (0.5 %)",
         "lower": 0,
-        "upper": 120,
+        "upper": 0.5,
         "fill": "rgba(200, 230, 201, 0.8)",
         "stroke": "rgba(200, 230, 201, 1)"
       },
       {
-        "label": "Medium (120-280 kg/ha)",
-        "lower": 120,
-        "upper": 280,
+        "label": "Medium (0.5-0.75%)",
+        "lower": 0.5,
+        "upper": 0.75,
         "fill": "rgba(102, 187, 106, 0.8)",
         "stroke": "rgba(102, 187, 106, 1)"
       },
       {
-        "label": "High (>280 kg/ha)",
-        "lower": 280,
+        "label": "High (>0.75%)",
+        "lower": 0.75,
         "upper": 9999999999,
         "fill": "rgba(46, 125, 50, 0.8)",
         "stroke": "rgba(46, 125, 50, 1)"
