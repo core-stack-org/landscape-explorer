@@ -235,6 +235,42 @@ const KYLDashboardPage = () => {
     }
   };
 
+  const handleRemoveMWS = (uid) => {
+  setManualSelectedMWS((prev) => {
+    const updated = prev.filter((id) => id !== uid);
+
+    // Update MWS selection styling on map
+    updateSelectedMWSStyle(updated);
+
+    // If no MWS is left, close the profile
+    if (updated.length === 0) {
+      setSelectedMWSProfile(null);
+      setHighlightMWS(null);
+      return updated;
+    }
+
+    // If the currently highlighted MWS was removed,
+    // highlight another remaining MWS
+    if (highlightMWS === uid) {
+      const nextUid = updated[updated.length - 1];
+      setHighlightMWS(nextUid);
+
+      const nextFeature = mwsLayerRef.current
+        ?.getSource()
+        ?.getFeatures()
+        ?.find(
+          (feature) => feature.get("uid") === nextUid
+        );
+
+      if (nextFeature) {
+        setSelectedMWSProfile(nextFeature.getProperties());
+      }
+    }
+
+    return updated;
+  });
+};
+
   const handleResetMWSSelection = () => {
     setManualSelectedMWS([]);
     setFilterSelections({

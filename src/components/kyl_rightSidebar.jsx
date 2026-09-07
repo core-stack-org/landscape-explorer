@@ -379,6 +379,44 @@ useEffect(() => {
     setSelectedStewardProfile(null);
   };
 
+  const handleRemoveMWS = (uid) => {
+  setManualSelectedMWS((prev) => {
+    const updated = prev.filter(
+      (id) => String(id) !== String(uid)
+    );
+
+    // Update map selection styling
+    if (mwsLayerRef?.current) {
+      const features = mwsLayerRef.current
+        .getSource()
+        .getFeatures();
+
+      features.forEach((feature) => {
+        const featureUid = feature.get("uid");
+
+        feature.set(
+          "isSelected",
+          updated.some(
+            (id) => String(id) === String(featureUid)
+          )
+            ? 1
+            : 0,
+          true
+        );
+      });
+
+      mwsLayerRef.current.getSource().changed();
+    }
+
+    // If no MWS remains, close the profile
+    if (updated.length === 0) {
+      onResetMWS();
+    }
+
+    return updated;
+  });
+};
+
   const handleIndicatorRemoval = (filter) => {
     setManualSelectedMWS([]);
     if (toggleStates[filter.name]) {
@@ -2087,6 +2125,7 @@ const sheet5Count =
           setSelectionMode={setSelectionMode}
           onResetMWS={onResetMWS}
           onResetSelection={onResetMWSSelection} 
+          onRemoveMWS={handleRemoveMWS}
           onOpenSelection={() => setShowSelectionPopup(true)}
           intersectingVillages={displayVillages}  
       />
