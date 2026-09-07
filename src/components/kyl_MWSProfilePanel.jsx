@@ -1,4 +1,4 @@
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, X } from 'lucide-react';
 import { stateAtom, districtAtom, blockAtom, dataJsonAtom } from '../store/locationStore.jsx';
 import { useRecoilValue } from 'recoil';
 import { useEffect, useState } from 'react';
@@ -6,7 +6,7 @@ import { trackEvent } from "../services/analytics.js";
 import { CheckCircle2, Layers3,Table } from "lucide-react";
 
 const KYLMWSProfilePanel = ({ mwsData, onBack, hideBackButton = false, onResetMWS,onOpenSelection,
-  selectedMWS = [],  intersectingVillages = [], }) => {
+  selectedMWS = [],  intersectingVillages = [],onRemoveMWS }) => {
   const state = useRecoilValue(stateAtom);
   const district = useRecoilValue(districtAtom);
   const block = useRecoilValue(blockAtom);
@@ -67,10 +67,7 @@ const KYLMWSProfilePanel = ({ mwsData, onBack, hideBackButton = false, onResetMW
       
       {hideBackButton && (
         <h2 className="text-lg font-medium mb-4">Micro watershed profile</h2>
-      )}
-
-               
-     
+      )}   
                 
 
 {selectedMWS.length <= 1 ? (
@@ -123,58 +120,8 @@ const KYLMWSProfilePanel = ({ mwsData, onBack, hideBackButton = false, onResetMW
     </p>
   </div>
 
-  <hr />
-
-  {/* Selected MWS List */}
-  <div className="space-y-3 max-h-[320px] overflow-y-auto">
-
-    {selectedMWS.map((uid, index) => (
-
-      <div
-        key={uid}
-        className="flex items-center justify-between rounded-lg border border-gray-200 px-4 py-3 hover:border-indigo-300 hover:bg-indigo-50 transition"
-      >
-
-        <div className="flex items-center gap-3">
-
-          <div className="w-7 h-7 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center text-xs font-semibold">
-            {index + 1}
-          </div>
-
-          <div>
-           <p className="text-sm font-medium text-gray-800">
-              {typeof uid === 'object' ? (uid.name ?? uid.id ?? 'Unknown') : uid}
-            </p>
-          </div>
-
-        </div>
-
-       <button
-      className="flex items-center gap-2 text-indigo-600 hover:text-indigo-700 mb-2"
-      onClick={() => handleReportDownload(mwsData?.uid)}
-    >
-      <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth={2}
-          d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
-        />
-      </svg>
-      <span className="text-sm">View Profile</span>
-    </button>
-
-
-      </div>
-
-    ))}
-
-  </div>
-
-</div>
-)}
-{onOpenSelection && (
-        <div className="flex justify-center mt-4">
+      {onOpenSelection && (
+        <div className="flex justify-start mt-4">
           <button
             onClick={onOpenSelection}
             className="flex justify-center items-center gap-1 px-4 py-1.5 text-[11px] font-semibold text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors border border-indigo-100"
@@ -184,6 +131,113 @@ const KYLMWSProfilePanel = ({ mwsData, onBack, hideBackButton = false, onResetMW
           </button>
         </div>
       )}
+  <hr />
+  
+
+<div className="flex items-center justify-between mb-2">
+  <h3 className="font-medium text-gray-900">
+    Selected MWS
+  </h3>
+
+  <div className="w-6 h-6 rounded-full bg-indigo-100 text-indigo-600 text-xs font-semibold flex items-center justify-center">
+    {selectedMWS.length}
+  </div>
+</div>
+
+
+  {/* Selected MWS List */}
+<div className="space-y-3 max-h-[320px] overflow-y-auto overflow-x-hidden pt-2">
+
+  {selectedMWS.map((uid, index) => (
+
+    <div
+      key={uid}
+      className="relative flex items-center justify-between rounded-lg border border-gray-200 px-2 py-2 hover:border-indigo-300 hover:bg-indigo-50 transition"
+    >
+
+      {/* Remove MWS button - top right corner */}
+      <button
+        type="button"
+        title="Remove from selection"
+        onClick={(e) => {
+          e.stopPropagation();
+          onRemoveMWS?.(
+            typeof uid === 'object' ? (uid.id ?? uid.uid) : uid
+          );
+        }}
+        className="
+          absolute -top-2 right-0      
+          w-4 h-4
+          flex items-center justify-center
+          rounded-full
+          bg-white
+          border border-gray-200
+          shadow-sm
+          text-gray-400
+          hover:text-red-500
+          hover:border-red-200
+          hover:bg-red-50
+          transition-all
+          z-10
+        "
+      >
+        <X className="w-2 h-2" />
+      </button>
+
+      {/* Left side - Number + UID */}
+      <div className="flex items-center gap-3">
+
+        <div className="w-7 h-7 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center text-xs font-semibold">
+          {index + 1}
+        </div>
+
+        <div>
+          <p className="text-sm font-medium text-gray-800">
+            {typeof uid === 'object'
+              ? (uid.name ?? uid.id ?? 'Unknown')
+              : uid}
+          </p>
+        </div>
+
+      </div>
+
+      {/* View Profile */}
+      <button
+        className="flex items-center gap-1 text-indigo-600 hover:text-indigo-700 mr-2"
+        onClick={() =>
+          handleReportDownload(
+            typeof uid === 'object'
+              ? (uid.id ?? uid.uid)
+              : uid
+          )
+        }
+      >
+        <svg
+          className="w-4 h-4"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+          />
+        </svg>
+
+        <span className="text-sm">View Profile</span>
+      </button>
+
+    </div>
+
+  ))}
+
+</div>
+
+</div>
+)}
+
 
        {intersectingVillages.length > 0 && (
   <div className="mt-5">
