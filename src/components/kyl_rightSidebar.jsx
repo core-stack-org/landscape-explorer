@@ -70,7 +70,8 @@ const KYLRightSidebar = ({
   setShowStewards,
   mwsIndex,
   villageNameIndex,
-  setManualSelectedMWS
+  setManualSelectedMWS,
+  handleRemoveMWS,
 }) => {
   const [loadingWB, setLoadingWB] = React.useState(false);
   const [showSelectionPopup, setShowSelectionPopup] = React.useState(false);
@@ -378,44 +379,6 @@ useEffect(() => {
     setSelectedPlanProfile(null);
     setSelectedStewardProfile(null);
   };
-
-  const handleRemoveMWS = (uid) => {
-  setManualSelectedMWS((prev) => {
-    const updated = prev.filter(
-      (id) => String(id) !== String(uid)
-    );
-
-    // Update map selection styling
-    if (mwsLayerRef?.current) {
-      const features = mwsLayerRef.current
-        .getSource()
-        .getFeatures();
-
-      features.forEach((feature) => {
-        const featureUid = feature.get("uid");
-
-        feature.set(
-          "isSelected",
-          updated.some(
-            (id) => String(id) === String(featureUid)
-          )
-            ? 1
-            : 0,
-          true
-        );
-      });
-
-      mwsLayerRef.current.getSource().changed();
-    }
-
-    // If no MWS remains, close the profile
-    if (updated.length === 0) {
-      onResetMWS();
-    }
-
-    return updated;
-  });
-};
 
   const handleIndicatorRemoval = (filter) => {
     setManualSelectedMWS([]);

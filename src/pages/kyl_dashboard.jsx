@@ -2576,6 +2576,7 @@ const wb_id = props?.UID ?? props?.id ?? props?.wb_id;
           mwsIndex={mwsIndex}
           villageNameIndex={villageNameIndex}
           setManualSelectedMWS={setManualSelectedMWS}
+          handleRemoveMWS={handleRemoveMWS}
         />
       </div>
     </div>
