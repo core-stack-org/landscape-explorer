@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import newLogo from "../assets/newlogoWhite.png";
 import { useLocation } from "react-router-dom";
-import { Compass, ExternalLink, FileSpreadsheet, Info } from "lucide-react";
+import { BarChart3, Compass, ExternalLink, FileSpreadsheet, Info } from "lucide-react";
 import GeoLibreTour from "./geolibre/GeoLibreTour";
 import { downloadExcel } from "./landscape-explorer/utils/downloadHelper";
 
@@ -17,7 +17,7 @@ const HeaderTooltip = ({ children, text }) => (
   </div>
 );
 
-const LandingNavbar = ({ downloadScope = null }) => {
+const LandingNavbar = ({ downloadScope = null, onOpenVisualise, visualiseOpen = false }) => {
   const location = useLocation();
   const isExploreDataPage = location.pathname === "/explore_data";
   const isHomePage = location.pathname === "/";
@@ -65,7 +65,7 @@ const LandingNavbar = ({ downloadScope = null }) => {
   return (
     <nav className="bg-white shadow-2xl sticky top-0 z-50">
       <div className="w-full px-4 sm:px-6 md:px-10">
-        <div className="flex flex-col sm:flex-row items-center justify-between h-auto sm:h-20 py-4 sm:py-0 gap-4 sm:gap-0">
+        <div className={`flex flex-col sm:flex-row items-center justify-between h-auto sm:h-20 sm:py-0 sm:gap-0 ${isExploreDataPage ? "py-2 gap-2" : "py-4 gap-4"}`}>
           <a
             href="https://core-stack.org"
             target="_blank"
@@ -75,7 +75,7 @@ const LandingNavbar = ({ downloadScope = null }) => {
             <img
               src={newLogo}
               alt="Corestack Logo"
-              className="h-14 w-14 sm:h-[70px] sm:w-[70px] shrink-0"
+              className={`${isExploreDataPage ? "h-10 w-10" : "h-14 w-14"} sm:h-[70px] sm:w-[70px] shrink-0`}
             />
             <span className="text-lg sm:text-xl font-semibold text-gray-800">
               CoRE Stack
@@ -85,6 +85,12 @@ const LandingNavbar = ({ downloadScope = null }) => {
           <div className="flex flex-wrap gap-3 items-center justify-center">
             {isExploreDataPage && (
               <>
+                {onOpenVisualise && <HeaderTooltip text="Explore water, agriculture, terrain and village data through charts.">
+                  <button type="button" onClick={onOpenVisualise} aria-expanded={visualiseOpen} aria-controls="visualise-data-panel"
+                    className="flex items-center gap-2 rounded-lg border border-blue-800 bg-blue-800 px-4 py-2 font-semibold text-white hover:bg-blue-900">
+                    <BarChart3 className="h-4 w-4" aria-hidden="true" /><span>Visualise Data</span>
+                  </button>
+                </HeaderTooltip>}
                 <HeaderTooltip text="New to the map? See where to find layers and try a few useful ways to explore your landscape.">
                   <button
                     type="button"
@@ -122,9 +128,10 @@ const LandingNavbar = ({ downloadScope = null }) => {
                     className="flex items-center gap-2 rounded-lg border border-purple-200 bg-purple-50 px-4 py-2 transition-all duration-200 hover:bg-purple-100"
                     aria-label="Open QGIS Documentation in a new tab"
                   >
-                    <span className="text-sm font-medium text-purple-700 sm:text-base">
+                    <span className="hidden text-sm font-medium text-purple-700 sm:inline sm:text-base">
                       QGIS Documentation
                     </span>
+                    <span className="text-sm font-medium text-purple-700 sm:hidden">QGIS Docs</span>
                     <ExternalLink className="h-4 w-4 text-purple-600" />
                   </a>
                 </HeaderTooltip>

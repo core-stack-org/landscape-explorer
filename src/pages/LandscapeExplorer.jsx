@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useRecoilValue } from "recoil";
 import GeoLibreFrame from "../components/geolibre/GeoLibreFrame";
@@ -21,6 +21,7 @@ import {
 } from "../services/analytics";
 
 const labelOf = (selection) => selection?.label || "";
+const VisualiseDataPanel = lazy(() => import("../components/geolibre/VisualiseDataPanel"));
 
 const scopeKeyOf = (project) => {
   const scope = project?.metadata?.scope;
@@ -68,6 +69,8 @@ const LandscapeExplorer = () => {
   const [progress, setProgress] = useState("Starting GeoLibre…");
   const [error, setError] = useState("");
   const [retryKey, setRetryKey] = useState(0);
+  const [visualiseStarted, setVisualiseStarted] = useState(false);
+  const [visualiseOpen, setVisualiseOpen] = useState(false);
   const currentScopeKeyRef = useRef("");
   const lazyQueueRef = useRef(Promise.resolve());
   const lazyStateSequenceRef = useRef(0);
@@ -236,7 +239,10 @@ const LandscapeExplorer = () => {
 
   return (
     <div className="flex h-screen flex-col overflow-hidden bg-white">
-      <LandingNavbar downloadScope={scope} />
+      <LandingNavbar downloadScope={scope} visualiseOpen={visualiseOpen}
+        onOpenVisualise={() => { setVisualiseStarted(true); setVisualiseOpen((value) => !value); }} />
+      <div className="relative flex min-h-0 flex-1">
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col">
       <GeoLibreFrame
         project={project}
         preparationMessage={progress}
@@ -246,6 +252,12 @@ const LandscapeExplorer = () => {
         onProjectState={handleProjectState}
         onRetry={() => setRetryKey((value) => value + 1)}
       />
+      </div>
+      {visualiseStarted && project && scopeKeyOf(project) === scopeKey && <Suspense fallback={visualiseOpen ? <p role="status" className="p-5">Opening Visualise Data…</p> : null}>
+        <VisualiseDataPanel key={scopeKey} project={project} scope={scope}
+          hidden={!visualiseOpen} onClose={() => setVisualiseOpen(false)} />
+      </Suspense>}
+      </div>
     </div>
   );
 };

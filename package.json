@@ -47,6 +47,7 @@
     "xlsx-js-style": "^1.2.0"
   },
   "scripts": {
+    "visualise:lint": "eslint src/components/geolibre/visualiseData.js src/components/geolibre/VisualiseDataPanel.jsx src/components/geolibre/VisualisePython.jsx",
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",

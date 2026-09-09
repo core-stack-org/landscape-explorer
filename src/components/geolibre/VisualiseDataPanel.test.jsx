@@ -1,0 +1,43 @@
+import React from "react";
+import {fireEvent, render, screen, waitFor} from "@testing-library/react";
+import "@testing-library/jest-dom";
+import VisualiseDataPanel from "./VisualiseDataPanel";
+jest.mock("react-chartjs-2",()=>({Bar: props => <div role="img" aria-label={props["aria-label"]}/>,Line: props => <div role="img" aria-label={props["aria-label"]}/> }));
+jest.mock("chartjs-adapter-date-fns",()=>({}));
+const scope = {state:"Bihar",district:"Nalanda",tehsil:"Hilsa"};
+const project = {layers:[]};
+const record = {uid:"001", "2017_2018":'{"Precipitation":100,"ET":50,"RunOff":20,"WellDepth":-2}',plain_area:80,slopy_area:20};
+beforeEach(()=>{global.fetch = jest.fn().mockResolvedValue({ok:true,json:async()=>({type:"FeatureCollection",totalFeatures:1,features:[{properties:record}]})}); URL.createObjectURL=jest.fn(()=>"blob:test"); URL.revokeObjectURL=jest.fn();global.Worker=jest.fn(()=>({postMessage:jest.fn(),terminate:jest.fn()}));});
+test("only the selected source loads; Python stays collapsed and starts on demand",async()=>{
+ render(<VisualiseDataPanel project={project} scope={scope} hidden={false} onClose={()=>{}}/>);
+ await screen.findByRole("link",{name:"Download chart data (.csv)"});
+ expect(global.fetch).toHaveBeenCalledTimes(1);expect(global.Worker).not.toHaveBeenCalled();
+ const editor=screen.getByLabelText(/Python code —/);expect(editor).not.toBeVisible();
+ fireEvent.click(screen.getByText("Python code",{selector:"summary"}));
+ fireEvent.change(editor,{target:{value:'print("edited")'}});
+ fireEvent.click(screen.getByRole("button",{name:"Run Python"}));
+ const worker=global.Worker.mock.results[0].value;
+ expect(worker.postMessage).toHaveBeenCalledWith({code:'print("edited")'});
+ fireEvent.click(screen.getByRole("button",{name:"Stop"}));expect(worker.terminate).toHaveBeenCalled();
+});
+test("switching charts reuses the same source, switching topic reads its source",async()=>{
+ render(<VisualiseDataPanel project={project} scope={scope} hidden={false} onClose={()=>{}}/>);
+ await screen.findByLabelText("Micro-watershed");
+ fireEvent.change(screen.getByLabelText("Visual"),{target:{value:"groundwater"}});
+ await screen.findByRole("img");expect(global.fetch).toHaveBeenCalledTimes(1);
+ fireEvent.change(screen.getByLabelText("Topic"),{target:{value:"Land and drainage"}});
+ await waitFor(()=>expect(global.fetch).toHaveBeenCalledTimes(2));
+ await screen.findByRole("link",{name:"Download chart data (.csv)"});
+ fireEvent.change(screen.getByLabelText("Topic"),{target:{value:"Water"}});
+ await screen.findByLabelText("Micro-watershed");expect(global.fetch).toHaveBeenCalledTimes(2);
+});
+test("retry recovers a failed request and unmount aborts pending work",async()=>{
+ global.fetch.mockRejectedValueOnce(new Error("offline"));
+ const {unmount}=render(<VisualiseDataPanel project={project} scope={scope} hidden={false} onClose={()=>{}}/>);
+ await screen.findByRole("alert");fireEvent.click(screen.getByRole("button",{name:"Try again"}));
+ await screen.findByLabelText("Micro-watershed");
+ global.fetch.mockImplementation(()=>new Promise(()=>{}));
+ fireEvent.change(screen.getByLabelText("Topic"),{target:{value:"Village"}});
+ await waitFor(()=>expect(global.fetch).toHaveBeenCalledTimes(3));
+ const signal=global.fetch.mock.calls[2][1].signal;unmount();expect(signal.aborted).toBe(true);
+});
