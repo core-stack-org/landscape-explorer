@@ -34,3 +34,11 @@ python3 scripts/notebooks/validate.py
 ```
 
 The final command checks structure and Python syntax without calling data services. Generated notebooks contain no execution outputs or saved credentials.
+
+## Browser API access
+
+Browser notebooks make requests from their notebook host. For the embedded GeoLibre host this is `https://web.geolibre.app`, even when Landscape Explorer itself runs on localhost. The API server must allow that origin, the GET method and the `X-API-Key` request header. CORS is configured in the backend's `nrm_app/settings.py`; frontend settings cannot grant access to the API.
+
+The backend includes `https://web.geolibre.app` in its production origins. Add other notebook deployments as exact origins in the backend's `CORS_ALLOWED_ORIGINS` environment variable, preserving existing entries. Deploy/restart the backend after changing its settings. A custom notebook host must be listed by its own origin, not just the parent map application's URL.
+
+Until the backend change is deployed, the API examples can run in local JupyterLab with a standard Python kernel, whose requests are not subject to browser CORS. The API key cell supports both synchronous `getpass` and browser kernels returning awaitable input, and trims whitespace before constructing the header. A local frontend `.env` file is not automatically available inside browser Python.

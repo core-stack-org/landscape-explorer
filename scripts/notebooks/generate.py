@@ -141,8 +141,15 @@ def select_mws(cells, variable):
 
 def api_setup(cells):
     section(cells, 'Connect to the CoRE Stack API', 'The [API guide](https://api-doc.core-stack.org) explains access. The key goes in the `X-API-Key` header. This cell reads `CORE_STACK_API_KEY` from your environment, or asks for it without showing it. The key is not written into the notebook.', '''
-        api_key = os.environ.get("CORE_STACK_API_KEY") or getpass("CoRE Stack API key: ")
-        api_headers = {"X-API-Key": api_key}
+        from inspect import isawaitable
+
+        api_key = os.environ.get("CORE_STACK_API_KEY", "").strip()
+        if not api_key:
+            api_key = getpass("CoRE Stack API key: ")
+            if isawaitable(api_key):
+                api_key = await api_key
+
+        api_headers = {"X-API-Key": str(api_key).strip()}
         ''')
 
 def api_tehsil(cells):
