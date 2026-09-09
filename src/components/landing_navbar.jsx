@@ -3,6 +3,7 @@ import newLogo from "../assets/newlogoWhite.png";
 import { useLocation } from "react-router-dom";
 import { Compass, ExternalLink, FileSpreadsheet, Info } from "lucide-react";
 import GeoLibreTour from "./geolibre/GeoLibreTour";
+import GeoLibreNotebookMenu from "./geolibre/GeoLibreNotebookMenu";
 import { downloadExcel } from "./landscape-explorer/utils/downloadHelper";
 
 const HeaderTooltip = ({ children, text }) => (
@@ -17,7 +18,11 @@ const HeaderTooltip = ({ children, text }) => (
   </div>
 );
 
-const LandingNavbar = ({ downloadScope = null }) => {
+const LandingNavbar = ({
+  downloadScope = null,
+  notebookProject = null,
+  onDownloadNotebook,
+}) => {
   const location = useLocation();
   const isExploreDataPage = location.pathname === "/explore_data";
   const isHomePage = location.pathname === "/";
@@ -98,6 +103,11 @@ const LandingNavbar = ({ downloadScope = null }) => {
                     </span>
                   </button>
                 </HeaderTooltip>
+
+                <GeoLibreNotebookMenu
+                  project={notebookProject}
+                  onDownload={onDownloadNotebook}
+                />
 
                 <HeaderTooltip text={canDownloadDataSheet ? "Download the Excel datasheet for the selected tehsil." : "Select a state, district, and tehsil to download its datasheet."}>
                   <button

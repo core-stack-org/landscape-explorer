@@ -50,7 +50,9 @@
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "eject": "react-scripts eject",
+    "notebooks:generate": "python3 scripts/notebooks/generate.py",
+    "notebooks:check": "python3 scripts/notebooks/generate.py --check"
   },
   "eslintConfig": {
     "extends": [

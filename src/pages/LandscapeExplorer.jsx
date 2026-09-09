@@ -8,6 +8,7 @@ import {
   hydrateGeoLibreVectorLayer,
   sanitizeGeoLibreProjectPlugins,
 } from "../components/geolibre/geolibreProject";
+import { downloadGeoLibreNotebook } from "../components/geolibre/geolibreNotebook";
 import LandingNavbar from "../components/landing_navbar";
 import {
   blockAtom,
@@ -200,6 +201,15 @@ const LandscapeExplorer = () => {
       });
   }, []);
 
+  const handleDownloadNotebook = useCallback(async (notebookId) => {
+    if (!project) {
+      throw new Error("Select a tehsil before downloading a notebook.");
+    }
+    const result = await downloadGeoLibreNotebook(notebookId, project);
+    trackEvent("GeoLibre", "download_notebook", `${scope.tehsil}:${notebookId}`);
+    return result;
+  }, [project, scope.tehsil]);
+
   if (!hasLocation) {
     return (
       <div className="flex h-screen flex-col bg-slate-100">
@@ -236,7 +246,11 @@ const LandscapeExplorer = () => {
 
   return (
     <div className="flex h-screen flex-col overflow-hidden bg-white">
-      <LandingNavbar downloadScope={scope} />
+      <LandingNavbar
+        downloadScope={scope}
+        notebookProject={project}
+        onDownloadNotebook={handleDownloadNotebook}
+      />
       <GeoLibreFrame
         project={project}
         preparationMessage={progress}

@@ -1,0 +1,44 @@
+[
+  {
+    "id": "start",
+    "filename": "01_start.ipynb",
+    "title": "1. Start",
+    "summary": "List the layers, open a vector table, explore a tehsil STAC collection and make your first API request.",
+    "featured": true
+  },
+  {
+    "id": "know-your-micro-watershed",
+    "filename": "02_know_your_micro_watershed.ipynb",
+    "title": "2. Know Your Micro-Watershed",
+    "summary": "Read the area, basin fields, elevation, terrain and drainage of one MWS, then map its upstream and downstream links.",
+    "featured": true
+  },
+  {
+    "id": "water-through-time",
+    "filename": "03_water_through_time.ipynb",
+    "title": "3. See Water through the Years and Seasons",
+    "summary": "Follow annual and seasonal rainfall, evapotranspiration and runoff, then read fortnightly water and vegetation values.",
+    "featured": true
+  },
+  {
+    "id": "surface-waterbodies",
+    "filename": "04_surface_waterbodies.ipynb",
+    "title": "4. Analyse Water Storage: Surface Waterbodies",
+    "summary": "List waterbodies and read their annual and seasonal water-spread areas from 2017–18 to 2024–25.",
+    "featured": true
+  },
+  {
+    "id": "agriculture-through-time",
+    "filename": "05_agriculture_through_time.ipynb",
+    "title": "5. Analyse Agriculture through Time",
+    "summary": "Read cropping areas and land-cover classes for one micro-watershed from 2017–18 to 2024–25.",
+    "featured": true
+  },
+  {
+    "id": "know-your-village",
+    "filename": "06_know_your_village.ipynb",
+    "title": "6. Know Your Village",
+    "summary": "Explore population, services, livestock, village survey records and nearby micro-watersheds.",
+    "featured": true
+  }
+]
