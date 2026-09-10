@@ -10,7 +10,7 @@ ROOT = Path(__file__).resolve().parents[2]
 OUT = ROOT / 'public/geolibre-notebooks'
 CHECK = '--check' in sys.argv
 CATALOG = []
-SCOPE = {'state': 'Bihar', 'district': 'Nalanda', 'tehsil': 'Hilsa'}
+DEFAULT_PLACE = {'state': 'Bihar', 'district': 'Nalanda', 'tehsil': 'Hilsa'}
 GROUPS = json.loads((ROOT / 'scripts/notebooks/village-groups.json').read_text())
 
 
@@ -67,20 +67,22 @@ def begin(number, slug, title, summary):
             import geopandas as gpd
             import matplotlib.pyplot as plt
             from IPython.display import display, Markdown, FileLink
+            pd.set_option("display.max_colwidth", 160)
             plt.rcParams.update({"axes.spines.top": False, "axes.spines.right": False})
             ''', True),
-        code(f'''SCOPE = json.loads({json.dumps(json.dumps(SCOPE))})
-API_URL = 'https://geoserver.core-stack.org/api/v1/'
+        code('''API_URL = 'https://geoserver.core-stack.org/api/v1/'
 STAC_URL = 'https://spatio-temporal-asset-catalog.s3.ap-south-1.amazonaws.com/CorestackCatalogs_merged_collection/tehsil_wise/catalog.json'
 YEARS = list(range(2017, 2025))''', True)]
     reader = code((ROOT / 'scripts/notebooks/response.py').read_text(), True)
     reader['metadata']['tags'].append('corestack-io')
     cells.append(reader)
-    section(cells, 'Choose the place and set your API key',
-        'Edit `SCOPE` in the setup cell to change the place. The [public API guide](https://docs.core-stack.org/use-precomputed-data/public-apis/) explains registration and API keys. This cell reuses `CORE_STACK_API_KEY` or asks for it privately, then stores it in this kernel’s environment. The key is sent only to the API, in the `X-API-Key` header. Restart the kernel and run from the top after changing places.', '''
-        place = {key: re.sub(r"[\\s_]+", "_", SCOPE[key].replace("(", "").replace(")", "")).strip("_").lower()
-                 for key in ["state", "district", "tehsil"]}
-        state, district, tehsil = place["state"], place["district"], place["tehsil"]
+    cells.extend([md('## Choose the location\n\nThese three fields contain the selected tehsil when downloaded from GeoLibre. Edit them to explore another location, then restart the kernel and run from the top.'),
+                  code('\n'.join(f'{name} = {json.dumps(value)}' for name, value in DEFAULT_PLACE.items()))])
+    cells[-1]['metadata']['tags'] = ['corestack-location']
+    section(cells, 'Set your API key',
+        'The [public API guide](https://docs.core-stack.org/use-precomputed-data/public-apis/) explains registration and keys. This cell reuses `CORE_STACK_API_KEY` or asks privately and stores it in this kernel’s environment. The request header is `X-API-Key`.', '''
+        place = {key: re.sub(r"[\\s_]+", "_", value.replace("(", "").replace(")", "")).strip("_").lower()
+                 for key, value in {"state": state, "district": district, "tehsil": tehsil}.items()}
         api_key = os.environ.get("CORE_STACK_API_KEY", "").strip()
         if not api_key:
             api_key = getpass("CoRE Stack API key: ")
@@ -88,7 +90,6 @@ YEARS = list(range(2017, 2025))''', True)]
                 api_key = await api_key
         os.environ["CORE_STACK_API_KEY"] = str(api_key).strip()
         api_headers = {"X-API-Key": os.environ["CORE_STACK_API_KEY"]}
-        display(place)
         ''')
     return entry, cells
 
@@ -106,7 +107,7 @@ def finish(entry, cells):
 def stac(cells, suffix, all_items=False):
     section(cells, 'Discover data and descriptions in STAC',
         'STAC lists published datasets, field descriptions, downloads and styles. Change `dataset` to another item from the collection. Asset links are used as published, wherever the files are hosted. STAC describes asset fields; API tables may use different names and units, which are shown explicitly in the examples below.', f'''
-        collection_url = urljoin(STAC_URL, f"{{state}}/{{district}}/{{tehsil}}/collection.json")
+        collection_url = urljoin(STAC_URL, "{{state}}/{{district}}/{{tehsil}}/collection.json".format(**place))
         response = requests.get(collection_url, timeout=90)
         collection = read_json(response)
         items = pd.DataFrame([{{"Item": link["href"].split("/")[-1].removesuffix(".json"),
@@ -116,11 +117,12 @@ def stac(cells, suffix, all_items=False):
         dataset = "{suffix}"
         matches = items.loc[items["Item"].str.endswith("_" + dataset)]
         item = None
+        field_notes = pd.DataFrame(columns=["name", "type", "description"])
         if not matches.empty:
             item_url = matches.iloc[0]["URL"]
             response = requests.get(item_url, timeout=90)
             item = read_json(response)
-            display(Markdown(item["properties"].get("description", "No description published.")))
+            display(pd.DataFrame([item["properties"]]).reindex(columns=["title", "description", "start_datetime", "end_datetime"]).T)
             field_notes = pd.DataFrame(item["properties"].get("table:columns", []))
             display(field_notes.reindex(columns=["name", "type", "description"]).head(12))
             print("Published field count:", len(field_notes), "— use field_notes to see them all.")
@@ -131,66 +133,69 @@ def stac(cells, suffix, all_items=False):
         ''')
 
 
-def load_tables(cells, names, primary='mws', village=False):
-    selection = '''
-        villages = tables["social_economic_indicator"]
-        villages = villages.loc[villages["village_id"].notna() & (villages["village_id"] != 0)]  # Exclude unassigned IDs.
-        display(villages[["village_name", "village_id"]])
-        village_id = str(villages.iloc[0]["village_id"])  # Choose another ID from the list.
-        village = villages.loc[villages["village_id"].astype(str) == village_id].iloc[0]
-        display(village.to_frame("Recorded value"))
-    ''' if village else f'''
-        mws_table = tables[{primary!r}]
-        display(mws_table[["uid"]])
-        mws_id = str(mws_table.iloc[0]["uid"])  # Choose another ID from the list.
-        selected = mws_table.loc[mws_table["uid"].astype(str) == mws_id].iloc[0]
-        display(selected.iloc[:10].to_frame("First 10 fields"))
-    '''
-    section(cells, 'Read the tehsil and choose a village' if village else 'Read the tehsil and choose a micro-watershed',
-        'One request returns the tehsil’s tables. The cell keeps the tables used here, lists identifiers and shows the first record’s first ten fields. Change the selected identifier, then rerun the following cells. Blank fields mean the source did not supply a value.',
+def load_tables(cells, table_name, columns, village=False):
+    identifier = 'village_id' if village else 'uid'
+    variable = 'village_id' if village else 'mws_id'
+    section(cells, 'Read one table and choose a record',
+        'The tehsil API has no table or column filter. This cell reads it once and selects a few fields. For other tables, use `pd.DataFrame(api_data[table_name])` and select `columns` from that table; the response is already in memory. The field list shows the available names.' + (' For the village example, the starting list uses identifiers that also have a service record when available.' if village else ''),
         f'''response = requests.get(API_URL + "get_tehsil_data/", params=place, headers=api_headers, timeout=180)
 api_data = read_json(response)
-required_tables = {names!r}
-tables = {{name: pd.DataFrame(api_data.get(name, [])) for name in required_tables}}
-display(pd.DataFrame({{"Table": required_tables, "Rows": [len(tables[name]) for name in required_tables]}}))
-''' + textwrap.dedent(selection).strip())
+display(pd.DataFrame({{"table": list(api_data), "rows": [len(rows) for rows in api_data.values()]}}))
+table_name = {table_name!r}
+table = pd.DataFrame(api_data[table_name])
+{"table = table.loc[table['village_id'].notna() & (table['village_id'] != 0)]  # Exclude unassigned IDs." if village else ""}
+display(pd.DataFrame({{"field": table.columns}}))
+{"service_ids = pd.DataFrame(api_data['facilities_proximity'])['village_id'].astype(str)" if village else ""}
+{"examples = table.loc[table['village_id'].astype(str).isin(service_ids)]  # Start with a village that also has a service record." if village else "examples = table"}
+{"examples = examples if not examples.empty else table" if village else ""}
+display(examples[{['village_name', identifier] if village else [identifier]!r}].head(10))
+{variable} = str(examples.iloc[0]["{identifier}"])  # Replace with an identifier from the table.
+selected = table.loc[table["{identifier}"].astype(str) == {variable}].iloc[0]
+columns = {columns!r}
+display(selected.reindex(columns).to_frame("value"))''')
 
 
-def mws_row(table, variable):
-    return f'{variable} = tables["{table}"].set_index("uid").reindex([mws_id]).iloc[0]'
+def another(cells, text):
+    cells.append(md('### Try another field\n\n' + text))
 
-
-entry, cells = begin(1, 'start', 'Start', 'Discover CoRE Stack datasets, make your first API request and save data to explore in a map or spreadsheet.')
-section(cells, 'See the available APIs',
-    'Read the specifications at [api-doc.core-stack.org](https://api-doc.core-stack.org). This public OpenAPI document lists the GET APIs and their required parameters without an API key.', '''
+entry, cells = begin(1, 'start', 'Start', 'Discover available data, inspect API specifications and save your first dataset.')
+section(cells, 'Choose an API from the public specification',
+    'The [API specifications](https://api-doc.core-stack.org) describe each request. This cell lists all GET APIs and required parameters, then shows the selected API’s parameters and response fields as tables. Change `api_path` to inspect another API.', '''
     response = requests.get("https://geoserver.core-stack.org/?format=openapi", timeout=90)
     specification = read_json(response)
-    operations = {path: details["get"] for path, details in specification["paths"].items()
-                  if "get" in details and path.startswith("/get_")}
-    display(pd.DataFrame([{"API": path, "Purpose": operation.get("summary", ""),
-                           "Required parameters": ", ".join(p["name"] for p in operation.get("parameters", []) if p.get("required"))}
-                          for path, operation in operations.items()]))
-    ''')
-section(cells, 'Choose an API and inspect its schema',
-    'Change `api_path` to one of the paths above. Parameter names, descriptions and response definitions come from the public specification. A `$ref` points to a named definition, included below.', '''
+    operations = {path: details["get"] for path, details in specification["paths"].items() if "get" in details and path.startswith("/get_")}
+    display(pd.DataFrame([{"path": path, "description": op.get("summary", ""),
+                           "required_parameters": ", ".join(p["name"] for p in op.get("parameters", []) if p.get("required"))}
+                          for path, op in operations.items()]))
     api_path = "/get_active_locations/"
     operation = operations[api_path]
     display(pd.DataFrame(operation.get("parameters", [])).reindex(columns=["name", "required", "type", "description"]))
-    display(operation.get("responses", {}))
-    response_schema = operation.get("responses", {}).get("200", {}).get("schema", {})
-    references = re.findall(r'#/definitions/([^" ]+)', json.dumps(response_schema))
-    display({name: specification.get("definitions", {}).get(name) for name in references})
+    display(pd.json_normalize(operation.get("responses", {})).T)
+    references = re.findall(r'#/definitions/([^" ]+)', json.dumps(operation.get("responses", {})))
+    for name in dict.fromkeys(references):
+        definition = specification.get("definitions", {}).get(name, {})
+        display(pd.DataFrame(definition.get("properties", {})).T)
     ''')
-section(cells, 'Make the request',
-    'Use `{}` for active locations or `place` for a tehsil API. Add `mws_id`, `uid`, or coordinates when the selected API requires them. The response stays in `api_result` for further exploration.', '''
-    parameters = {}  # For get_tehsil_data, use: parameters = place
+section(cells, 'Make the request and inspect its records',
+    'Use `{}` for active locations. For a tehsil API, set `parameters = place`. Add the identifier or coordinates required by the selected path. `record_path` selects a table inside a response, after it has been downloaded; it is not a server filter.', '''
+    parameters = {}
     response = requests.get(API_URL + api_path.lstrip("/"), params=parameters, headers=api_headers, timeout=180)
     api_result = read_json(response)
-    display(pd.json_normalize(api_result).head() if isinstance(api_result, list) else api_result)
+    record_path = None  # For get_tehsil_data, try "mws"; for get_mws_data, "time_series".
+    records = api_result[record_path] if record_path else api_result
+    preview = pd.json_normalize(records)
+    display(preview.head())
     ''')
 stac(cells, 'terrain_vector', all_items=True)
-section(cells, 'Read and save micro-watershed data',
-    'The geometry API supplies boundaries; `get_tehsil_data` supplies attributes. Join them on `uid`, inspect the first record and save GeoJSON and CSV. Open the GeoJSON in QGIS or GeoLibre to explore its fields.', '''
+section(cells, 'Discover available downloads',
+    '`get_generated_layer_urls` lists the published dataset downloads. Choose columns from this response to inspect styles or asset locations as well. STAC supplies their dataset and field descriptions.', '''
+    response = requests.get(API_URL + "get_generated_layer_urls/", params=place, headers=api_headers, timeout=180)
+    downloads = pd.DataFrame(read_json(response))
+    columns = ["dataset_name", "layer_type", "layer_url", "style_url"]
+    display(downloads.reindex(columns=columns))
+    ''')
+section(cells, 'Read, inspect and save micro-watershed data',
+    'Join the boundary and attribute APIs on `uid`. The first record is shown as a table; the files can be opened in QGIS or GeoLibre. All source field names remain unchanged.', '''
     response = requests.get(API_URL + "get_mws_geometries/", params=place, headers=api_headers, timeout=180)
     mws = gpd.GeoDataFrame.from_features(read_json(response)["features"], crs="EPSG:4326")
     response = requests.get(API_URL + "get_tehsil_data/", params=place, headers=api_headers, timeout=180)
@@ -198,381 +203,300 @@ section(cells, 'Read and save micro-watershed data',
     attributes = pd.DataFrame(api_data["mws"])
     mws["uid"], attributes["uid"] = mws["uid"].astype(str), attributes["uid"].astype(str)
     mws = mws.merge(attributes, on="uid", how="left", validate="one_to_one")
-    display(mws.drop(columns="geometry").iloc[0].to_frame("First MWS"))
+    display(mws.drop(columns="geometry").iloc[0].to_frame("value"))
     mws.to_file("micro_watersheds.geojson", driver="GeoJSON")
     mws.drop(columns="geometry").to_csv("micro_watersheds.csv", index=False)
     display(FileLink("micro_watersheds.geojson"), FileLink("micro_watersheds.csv"))
     ''')
-section(cells, 'Choose another table',
-    'The same response includes water, agriculture and village tables. Change `table_name` below; there is no need to download the tehsil again.', '''
-    display(pd.DataFrame({"Table": api_data.keys(), "Rows": [len(rows) for rows in api_data.values()]}))
-    table_name = "terrain"
-    table = pd.DataFrame(api_data[table_name])
-    display(table.iloc[0].to_frame("First record"))
-    ''')
+another(cells, 'The tehsil response is already in `api_data`. Use `pd.DataFrame(api_data["terrain"])` or replace `"terrain"` with `"dem"`, `"hydrological_annual"`, `"croppingIntensity_annual"` or `"social_economic_indicator"`. Inspect `.columns`, then select just the columns you want. The next notebooks demonstrate these choices without downloading the same response again within a notebook.')
 finish(entry, cells)
 
-entry, cells = begin(2, 'know-your-micro-watershed', 'Know Your Micro-Watershed', 'Read a micro-watershed’s area, elevation, terrain, drainage and upstream and downstream connections.')
-load_tables(cells, ['mws', 'dem', 'terrain', 'mws_connectivity', 'drainage_density', 'stream_order', 'river', 'canal', 'mws_intersect_villages', 'mws_intersect_swb'])
+entry, cells = begin(2, 'know-your-micro-watershed', 'Know Your Micro-Watershed', 'Read a micro-watershed’s basic details, compare its terrain and see its water connections.')
+load_tables(cells, 'mws', ['uid', 'area_in_ha', 'watershed_code', 'basin_code', 'sub_basin_code'])
 stac(cells, 'terrain_vector')
-section(cells, 'Area, basin and elevation', 'Areas are hectares and elevations are metres. Basin codes describe the source’s basin hierarchy.', '''
-    display(selected.reindex(["area_in_ha", "watershed_code", "basin_code", "sub_basin_code"]).to_frame("Value"))
-    elevation = tables["dem"].set_index("uid").reindex([mws_id])
-    display(elevation.reindex(columns=["min_elevation_in_m", "mean_elevation_in_m", "max_elevation_in_m"]))
-    ''')
-section(cells, 'How much is plain, slope, ridge or valley?',
-    'These API fields give each terrain class as a percentage of MWS area. The doughnut shows a complete set of shares totalling about 100%. Otherwise, a bar chart shows the available values without rescaling them.', mws_row('terrain', 'terrain') + '''
-terrain_fields = {"plain_area_percent": "Plains", "slopy_area_percent": "Broad slopes",
-                  "hill_slope_area_percent": "Hill slopes", "ridge_area_percent": "Ridges", "valley_area_percent": "Valleys"}
-terrain_shares = pd.to_numeric(terrain.reindex(terrain_fields), errors="coerce").rename(index=terrain_fields)
-display(terrain_shares.to_frame("MWS area (%)"))
-print("Reported total (%):", terrain_shares.sum(min_count=1))
-if terrain_shares.notna().all() and (terrain_shares >= 0).all() and abs(terrain_shares.sum() - 100) < 0.5:
-    terrain_shares.dropna().plot.pie(figsize=(6, 5), autopct="%1.1f%%", ylabel="", startangle=90,
-                                   wedgeprops={"width": 0.45}, title=f"Terrain · {mws_id}")
-    plt.show()
-else:
-    terrain_shares.dropna().plot.barh(figsize=(7, 3), xlabel="Reported MWS area (%)", title="Available terrain shares")
+section(cells, 'Compare terrain shares',
+    'The API gives terrain shares as percentages. The table keeps those field names and adds the corresponding STAC field and published description. A doughnut is used only for complete shares totalling about 100%.', '''
+    terrain = pd.DataFrame(api_data["terrain"]).set_index("uid").reindex([mws_id]).iloc[0]
+    stac_fields = {"plain_area_percent": "plain_area", "slopy_area_percent": "slopy_area", "hill_slope_area_percent": "hill_slope", "ridge_area_percent": "ridge_area", "valley_area_percent": "valley_are"}
+    terrain_values = pd.to_numeric(terrain.reindex(stac_fields), errors="coerce").to_frame("value")
+    terrain_values["stac_field"] = pd.Series(stac_fields)
+    terrain_values = terrain_values.join(field_notes.set_index("name")[["description", "type"]], on="stac_field")
+    display(terrain_values)
+    shares = terrain_values["value"]
+    if shares.notna().all() and (shares >= 0).all() and abs(shares.sum() - 100) < 0.5:
+        shares.plot.pie(figsize=(9, 5), autopct="%1.1f%%", ylabel="", wedgeprops={"width": 0.45})
+    else:
+        shares.dropna().plot.barh(figsize=(10, 3), xlabel="MWS area (%)")
+    plt.title(f"Terrain · {mws_id}")
     plt.tight_layout()
     plt.show()
-''')
-section(cells, 'Where does the water flow?',
-    'Select the published upstream and downstream identifiers, then highlight them on the boundary map. A missing connectivity record does not mean that no connections exist.', '''
-    connections = tables["mws_connectivity"]
-    connection = connections.loc[connections["uid"].astype(str) == mws_id]
-    upstream_ids, downstream_ids = [], []
-    if not connection.empty:
-        record = connection.iloc[0]
-        upstream_ids = ast.literal_eval(record["upstream_mws"]) if pd.notna(record["upstream_mws"]) else []
-        downstream_ids = [record["downstream_mws"]] if pd.notna(record["downstream_mws"]) and record["downstream_mws"] else []
-        display(pd.Series({"Upstream MWS": upstream_ids, "Downstream MWS": downstream_ids}).to_frame("Identifiers"))
+    ''')
+section(cells, 'Inspect another MWS table',
+    'Choose `table_name` and `columns`; this uses the response already loaded. Here, elevation is the example. Keep the same `mws_id` to compare records across tables.', '''
+    table_name = "dem"
+    columns = ["min_elevation_in_m", "mean_elevation_in_m", "max_elevation_in_m"]
+    details = pd.DataFrame(api_data[table_name])
+    display(pd.DataFrame({"field": details.columns}))
+    record = details.loc[details["uid"].astype(str) == mws_id]
+    display(record.reindex(columns=columns).T)
+    ''')
+another(cells, 'For drainage, use `table_name = "drainage_density"` and columns `drainage_density_weighted_in_km_per_km2`, `drainage_density_std_in_km_per_km2`, `stream_order_length_in_km`. For stream orders, use `"stream_order"` and `order_1_area_percent` through `order_11_area_percent`. `river` has `river_name`; `canal` has `canal_name` and `project_name`; `mws_intersect_swb` has `swb_uid`. The village intersection table uses `mws uid` instead of `uid`.')
+section(cells, 'See upstream and downstream connections',
+    'Read the identifiers from the connectivity table and boundaries from `get_mws_geometries`. The added `connection` column describes the map colours; source fields are retained. A missing record does not mean there are no water connections.', '''
+    connections = pd.DataFrame(api_data["mws_connectivity"])
+    match = connections.loc[connections["uid"].astype(str) == mws_id]
+    upstream, downstream = [], []
+    if not match.empty:
+        connection = match.iloc[0]
+        upstream = ast.literal_eval(connection["upstream_mws"]) if pd.notna(connection["upstream_mws"]) else []
+        downstream = [connection["downstream_mws"]] if pd.notna(connection["downstream_mws"]) and connection["downstream_mws"] else []
+        display(match[["uid", "upstream_mws", "downstream_mws"]])
     else:
         print("No connectivity record was returned for this MWS.")
     response = requests.get(API_URL + "get_mws_geometries/", params=place, headers=api_headers, timeout=180)
     boundaries = gpd.GeoDataFrame.from_features(read_json(response)["features"], crs="EPSG:4326")
     boundaries["uid"] = boundaries["uid"].astype(str)
-    related = boundaries.loc[boundaries["uid"].isin(upstream_ids + downstream_ids + [mws_id])].copy()
-    related["Connection"] = "Selected MWS"
-    related.loc[related["uid"].isin(upstream_ids), "Connection"] = "Upstream"
-    related.loc[related["uid"].isin(downstream_ids), "Connection"] = "Downstream"
+    related = boundaries.loc[boundaries["uid"].isin(upstream + downstream + [mws_id])].copy()
+    related["connection"] = "selected"
+    related.loc[related["uid"].isin(upstream), "connection"] = "upstream"
+    related.loc[related["uid"].isin(downstream), "connection"] = "downstream"
     if not related.empty:
-        related.plot(column="Connection", categorical=True, legend=True, edgecolor="white", figsize=(7, 6))
-        plt.title(f"Water connections · {mws_id}")
+        related.plot(column="connection", legend=True, edgecolor="white", figsize=(6, 5))
         plt.axis("off")
         plt.show()
-    print("Connected IDs outside these returned boundaries:", sorted(set(upstream_ids + downstream_ids) - set(boundaries["uid"])))
+    display(pd.DataFrame({"uid_outside_returned_boundaries": sorted(set(upstream + downstream) - set(boundaries["uid"]))}))
     ''')
-section(cells, 'Drainage and stream orders',
-    'Compare the recorded drainage-density measures and stream-order shares. Stream-order fields are labelled as area percentages in the API; they are not percentages of stream length.', mws_row('drainage_density', 'drainage') + '\n' + mws_row('stream_order', 'streams') + '''
-display(drainage.reindex(["drainage_density_weighted_in_km_per_km2", "drainage_density_std_in_km_per_km2", "stream_order_length_in_km"]).to_frame("Value"))
-orders = [f"order_{n}_area_percent" for n in range(1, 12)]
-shares = pd.to_numeric(streams.reindex(orders), errors="coerce")
-shares.index = range(1, 12)
-shares.dropna().plot.bar(figsize=(8, 3), color="#287d8e", xlabel="Stream order", ylabel="Area (%)", title=f"Stream orders · {mws_id}")
-plt.tight_layout()
-plt.show()
-''')
-section(cells, 'Inspect rivers, canals and linked records',
-    'Change `table_name` to `canal`, `mws_intersect_villages` or `mws_intersect_swb`. These tables retain their published field names; the village intersection table uses `mws uid`.', '''
-    table_name = "river"
-    table = tables[table_name]
-    id_column = "mws uid" if table_name == "mws_intersect_villages" else "uid"
-    display(table.loc[table[id_column].astype(str) == mws_id].T)
-    ''')
-section(cells, 'Get a compact indicator record', 'The KYL indicator API offers another view of this MWS. Its own field names remain visible.', '''
+section(cells, 'Look up indicators and a report',
+    '`get_mws_kyl_indicators` reads one MWS. Change `columns` to any field in `indicators.columns`. `get_mws_report` returns a report link when available.', '''
     response = requests.get(API_URL + "get_mws_kyl_indicators/", params={**place, "mws_id": mws_id}, headers=api_headers, timeout=180)
     indicators = pd.json_normalize(read_json(response))
-    display(indicators.T)
+    display(pd.DataFrame({"field": indicators.columns}))
+    columns = list(indicators.columns[:8])
+    display(indicators[columns].T)
+    response = requests.get(API_URL + "get_mws_report/", params={**place, "mws_id": mws_id}, headers=api_headers, timeout=90)
+    report = read_json(response) if response.ok else {"status": response.status_code, "detail": response.text[:500]}
+    display(pd.json_normalize(report))
     ''')
-section(cells, 'Look up the MWS from a point', 'Use a point inside the selected boundary, or replace the coordinates with your own latitude and longitude.', '''
+section(cells, 'Find the MWS at a coordinate', 'Use a point inside the selected boundary, or edit `latitude` and `longitude` to look up another point.', '''
     selected_boundary = boundaries.loc[boundaries["uid"] == mws_id]
     if not selected_boundary.empty:
         point = selected_boundary.geometry.iloc[0].representative_point()
         coordinates = {"latitude": point.y, "longitude": point.x}
         response = requests.get(API_URL + "get_mwsid_by_latlon/", params=coordinates, headers=api_headers, timeout=90)
-        display(read_json(response) if response.ok else {"HTTP status": response.status_code, "Response": response.text[:500]})
-    ''')
-section(cells, 'Open an available MWS report', 'This API returns a report link when one is available. A missing report does not prevent the data examples above from running.', '''
-    response = requests.get(API_URL + "get_mws_report/", params={**place, "mws_id": mws_id}, headers=api_headers, timeout=90)
-    display(read_json(response) if response.ok else {"HTTP status": response.status_code, "Response": response.text[:500]})
+        result = read_json(response) if response.ok else {"status": response.status_code, "detail": response.text[:500]}
+        display(pd.json_normalize(result))
     ''')
 finish(entry, cells)
 
-entry, cells = begin(3, 'water-through-time', 'See Water through the Years and Seasons', 'Compare annual and seasonal water values, fortnightly vegetation and water, and groundwater context.')
-load_tables(cells, ['hydrological_annual', 'hydrological_seasonal', 'soge_vector', 'aquifer_vector'], primary='hydrological_annual')
+entry, cells = begin(3, 'water-through-time', 'See Water through the Years and Seasons', 'Explore rainfall across years and seasons, then compare fortnightly water and vegetation.')
+load_tables(cells, 'hydrological_annual', ['uid', 'precipitation_in_mm_2017-2018', 'et_in_mm_2017-2018', 'runoff_in_mm_2017-2018'])
 stac(cells, 'water_balance_fortnightly_vector')
-section(cells, 'Annual and seasonal water together',
-    'Each column shows one water measure. Annual values sit above Kharif, Rabi and Zaid, with the same scale within each column. All water values are millimetres; years run July–June. Missing years remain gaps. These are separately published annual and seasonal summaries; this cell does not calculate one from the other.', '''
-    annual = selected
-    seasonal = tables["hydrological_seasonal"].set_index("uid").reindex([mws_id]).iloc[0]
-    measures = {"precipitation": "Rainfall", "et": "Evapotranspiration", "runoff": "Runoff"}
-    periods = ["Annual", "Kharif", "Rabi", "Zaid"]
-    water = pd.DataFrame([{ "Year": year, "Period": period, "Measure": label,
-                           "Water (mm)": (annual if period == "Annual" else seasonal).get(
-                               f"{field}{'' if period == 'Annual' else '_' + period.lower()}_in_mm_{year}-{year + 1}")}
-                          for year in YEARS for period in periods for field, label in measures.items()])
-    water["Water (mm)"] = pd.to_numeric(water["Water (mm)"], errors="coerce")
-    display(water.pivot(index="Year", columns=["Period", "Measure"], values="Water (mm)"))
-    fig, axes = plt.subplots(4, 3, figsize=(12, 9), sharex=True, sharey="col")
-    for row, period in enumerate(periods):
-        for col, label in enumerate(measures.values()):
-            values = water.loc[(water["Period"] == period) & (water["Measure"] == label)]
-            axes[row, col].plot(values["Year"], values["Water (mm)"], marker="o", color=["#247ba0", "#df9c32", "#528a64"][col])
-            axes[row, col].set_title(f"{period} · {label}")
-            axes[row, col].set_ylim(bottom=0)
-            axes[row, col].grid(alpha=0.2)
-        axes[row, 0].set_ylabel("mm")
-    for ax in axes[-1]:
-        ax.set_xticks(YEARS, [f"{y}–{str(y+1)[-2:]}" for y in YEARS], rotation=45)
-    fig.suptitle(f"Water through the years · {mws_id}")
+section(cells, 'Annual and seasonal rainfall',
+    'Change `measure` to `et` or `runoff` for the other water measures. The source field names stay in the table. Each chart uses millimetres and the same year positions; the annual and seasonal summaries are published separately.', '''
+    measure = "precipitation"
+    annual = pd.DataFrame(api_data["hydrological_annual"]).set_index("uid").reindex([mws_id]).iloc[0]
+    seasonal = pd.DataFrame(api_data["hydrological_seasonal"]).set_index("uid").reindex([mws_id]).iloc[0]
+    fig, axes = plt.subplots(4, 1, figsize=(9, 7), sharex=True, sharey=True)
+    values = []
+    for ax, period in zip(axes, ["annual", "kharif", "rabi", "zaid"]):
+        fields = [f"{measure}{'' if period == 'annual' else '_' + period}_in_mm_{y}-{y+1}" for y in YEARS]
+        record = annual if period == "annual" else seasonal
+        series = pd.to_numeric(record.reindex(fields), errors="coerce")
+        values.append(series)
+        ax.plot(YEARS, series, marker="o")
+        ax.set(title=f"{measure} · {period}", ylabel="mm", ylim=(0, None))
+        ax.grid(alpha=0.2)
+    display(pd.concat(values).to_frame("value"))
+    axes[-1].set_xticks(YEARS, [f"{y}–{str(y+1)[-2:]}" for y in YEARS], rotation=45)
     plt.tight_layout()
     plt.show()
     ''')
-section(cells, 'Fortnightly water and vegetation',
-    'The MWS API returns water and NDVI with their actual dates. NDVI is unitless, so it has its own axis. Change the date slice to look closely at a season.', '''
+section(cells, 'One MWS time series',
+    '`get_mws_data` fetches only the selected MWS. Choose `water_field` and `ndvi_field` to explore other measures; the actual dates returned by the API are used for both.', '''
     response = requests.get(API_URL + "get_mws_data/", params={**place, "mws_id": mws_id}, headers=api_headers, timeout=180)
     series = pd.DataFrame(read_json(response)["time_series"])
     series["date"] = pd.to_datetime(series["date"])
     series = series.set_index("date").sort_index()
-    columns = ["precipitation", "et", "runoff", "ndvi_crop", "ndvi_tree", "ndvi_shrub"]
-    series = series.reindex(columns=columns).apply(pd.to_numeric, errors="coerce")
-    view = series.loc["2017-07-01":"2025-06-30"]
+    display(pd.DataFrame({"field": series.columns}))
+    water_field, ndvi_field = "precipitation", "ndvi_crop"
+    view = series.loc["2017-07-01":"2025-06-30", [water_field, ndvi_field]].apply(pd.to_numeric, errors="coerce")
     display(view.head())
-    fig, axes = plt.subplots(2, 1, figsize=(12, 6), sharex=True)
-    view[["precipitation", "et", "runoff"]].rename(columns={"precipitation": "Rainfall", "et": "ET", "runoff": "Runoff"}).plot(ax=axes[0], ylabel="Water (mm)")
-    view[["ndvi_crop", "ndvi_tree", "ndvi_shrub"]].rename(columns={"ndvi_crop": "Crops", "ndvi_tree": "Trees", "ndvi_shrub": "Shrubs"}).plot(ax=axes[1], ylabel="NDVI (unitless)")
-    axes[1].set_ylim(-1, 1)
-    axes[0].set_title(f"Fortnightly water and vegetation · {mws_id}")
+    fig, axes = plt.subplots(2, 1, figsize=(10, 5), sharex=True)
+    view[water_field].plot(ax=axes[0], title=water_field, ylabel="mm")
+    view[ndvi_field].plot(ax=axes[1], title=ndvi_field, ylabel="NDVI (unitless)", ylim=(-1, 1))
     plt.tight_layout()
     plt.show()
     ''')
-section(cells, 'Groundwater and aquifers',
-    'Well depth and change in groundwater storage use separate units. The extraction class and aquifer composition provide context; they are not annual measurements.', mws_row('soge_vector', 'extraction') + '\n' + mws_row('aquifer_vector', 'aquifer') + '''
-display(extraction.reindex(["soge_dev_percent", "class_name"]).to_frame("Groundwater extraction"))
-display(aquifer.to_frame("Aquifer record"))
-groundwater = pd.DataFrame({"Well depth (m)": [annual.get(f"welldepth_in_m_{y}-{y+1}") for y in YEARS],
-                            "Change in storage (mm)": [annual.get(f"deltag_in_mm_{y}-{y+1}") for y in YEARS]}, index=YEARS).apply(pd.to_numeric, errors="coerce")
-fig, axes = plt.subplots(1, 2, figsize=(10, 3))
-for ax, column in zip(axes, groundwater):
-    groundwater[column].plot(ax=ax, marker="o", title=column, ylabel=column)
-    ax.axhline(0, color="gray", linewidth=0.6)
-plt.tight_layout()
-plt.show()
-''')
+another(cells, 'Set `water_field` to `et` or `runoff`, and `ndvi_field` to `ndvi_tree` or `ndvi_shrub`. To inspect groundwater using the earlier table example, choose `table_name = "soge_vector"` with `soge_dev_percent` and `class_name`, or `"aquifer_vector"` and inspect its columns. Annual `welldepth_in_m_2017-2018` and `deltag_in_mm_2017-2018` use different units; give them separate axes when plotting.')
 finish(entry, cells)
 
-entry, cells = begin(4, 'surface-waterbodies', 'Analyse Water Storage: Surface Waterbodies', 'Inspect individual waterbodies, seasonal water extent and the tehsil’s total mapped water area.')
+entry, cells = begin(4, 'surface-waterbodies', 'Analyse Water Storage: Surface Waterbodies', 'Read a published waterbody asset, plot its water extent and explore individual API records.')
 stac(cells, 'surface_water_bodies_vector')
-section(cells, 'Read the STAC asset and choose a waterbody',
-    'Use the GeoJSON download published by this STAC item. The same cell lists identifiers and selects the first waterbody. Change `waterbody_id` to explore another one.', '''
+section(cells, 'Choose a waterbody from the STAC asset',
+    'Follow the GeoJSON asset link published in STAC. Choose a `waterbody_id` from its `UID` column. The selected values appear with their original field names and any published descriptions.', '''
     waterbodies = gpd.GeoDataFrame()
     waterbody = pd.Series(dtype=object)
     if item is not None:
-        asset_url = urljoin(item_url, item["assets"]["data"]["href"])
-        response = requests.get(asset_url, timeout=180)
+        response = requests.get(urljoin(item_url, item["assets"]["data"]["href"]), timeout=180)
         waterbodies = gpd.GeoDataFrame.from_features(read_json(response)["features"], crs="EPSG:4326")
-        display(waterbodies[["UID"]])
+        display(waterbodies[["UID"]].head(10))
         waterbody_id = str(waterbodies.iloc[0]["UID"])
         waterbody = waterbodies.loc[waterbodies["UID"].astype(str) == waterbody_id].iloc[0]
-        display(waterbody.drop(labels="geometry").iloc[:12].to_frame("First 12 fields"))
+        columns = ["UID", "area_ored", "area_17-18", "k_17-18", "kr_17-18", "krz_17-18"]
+        display(waterbody.reindex(columns).to_frame("value").join(field_notes.set_index("name")[["description", "type"]]))
     ''')
-section(cells, 'Water area across years and seasons',
-    'Annual `area_YY-YY` values are hectares. Seasonal `k_`, `kr_` and `krz_` values are percentages of the `area_ored` reference footprint, also in hectares. Multiply that footprint by the seasonal percentage divided by 100. Missing years remain blank.', '''
+section(cells, 'Water extent through time',
+    'The annual `area_YY-YY` fields are hectares. The seasonal `k_`, `kr_` and `krz_` fields are percentages of `area_ored`, also in hectares. Keep the raw values and add a calculated hectare column for plotting.', '''
     if not waterbody.empty:
-        area = pd.DataFrame({"Annual": [waterbody.get(f"area_{y%100:02d}-{(y+1)%100:02d}") for y in YEARS]}, index=YEARS)
-        footprint_ha = pd.to_numeric(waterbody.get("area_ored"), errors="coerce")
-        for prefix, season in [("k", "Kharif"), ("kr", "Rabi"), ("krz", "Zaid")]:
-            shares = pd.to_numeric(pd.Series([waterbody.get(f"{prefix}_{y%100:02d}-{(y+1)%100:02d}") for y in YEARS], index=YEARS), errors="coerce")
-            area[season] = footprint_ha * shares / 100
-        area = area.apply(pd.to_numeric, errors="coerce")
-        display(area.rename_axis("Starting year").round(3))
-        area.plot(figsize=(10, 4), marker="o", ylabel="Water area (ha)", title=f"Water extent · {waterbody_id}")
-        plt.tight_layout()
+        prefix = "area"  # Try "k", "kr" or "krz" for a seasonal view.
+        fields = [f"{prefix}_{y%100:02d}-{(y+1)%100:02d}" for y in YEARS]
+        extent = pd.to_numeric(waterbody.reindex(fields), errors="coerce").to_frame("value")
+        extent = extent.join(field_notes.set_index("name")[["description", "type"]])
+        extent["area_in_ha"] = extent["value"] if prefix == "area" else extent["value"] * waterbody["area_ored"] / 100
+        display(extent)
+        plt.figure(figsize=(9, 3))
+        plt.plot(YEARS, extent["area_in_ha"], marker="o", label=prefix)
+        plt.ylabel("Water area (ha)")
+        plt.title(f"{prefix} · {waterbody_id}")
+        plt.grid(alpha=0.2)
         plt.show()
     ''')
-section(cells, 'Total mapped water area through time',
-    'Sum annual areas across the waterbody features in this STAC asset. This is water extent, not storage volume. The record count helps identify years with incomplete reporting; missing areas are not filled with zero.', '''
-    if not waterbodies.empty:
-        year_fields = [f"area_{y%100:02d}-{(y+1)%100:02d}" for y in YEARS]
-        annual_areas = waterbodies.reindex(columns=year_fields).apply(pd.to_numeric, errors="coerce")
-        annual_areas.columns = YEARS
-        totals = pd.DataFrame({"Water area (ha)": annual_areas.sum(min_count=1), "Records with area": annual_areas.count()})
-        display(totals)
-        totals["Water area (ha)"].plot(figsize=(9, 3), marker="o", ylabel="Water area (ha)", title=f"Total mapped water area · {tehsil}")
-        plt.tight_layout()
-        plt.show()
-    ''')
-section(cells, 'Explore the waterbody API',
-    'The API has its own waterbody inventory. Select an identifier returned by `get_waterbodies_data_by_admin` before calling `get_waterbody_data`; do not assume it matches the STAC asset’s identifiers. The response lists whichever property groups are available.', '''
+another(cells, 'Change `prefix` to compare the seasonal fields without changing the identifier. To inspect annual totals across the tehsil, use `waterbodies[fields].sum(min_count=1)` with `prefix = "area"`, and `waterbodies[fields].count()` to check how many records supply each year. These are mapped areas, not storage volumes.')
+section(cells, 'Read one waterbody from the API',
+    'First obtain the API’s own identifiers with `get_waterbodies_data_by_admin`. Use one of those in `get_waterbody_data`; STAC and API identifiers are not assumed to match. Select a property group and display it as a table.', '''
     response = requests.get(API_URL + "get_waterbodies_data_by_admin/", params=place, headers=api_headers, timeout=180)
     inventory = read_json(response)
-    display(pd.DataFrame({"API waterbody ID": list(inventory)}))
-    api_waterbody = {}
+    display(pd.DataFrame({"uid": list(inventory)}).head(10))
+    properties = {}
     if inventory:
         api_waterbody_id = next(iter(inventory))
         response = requests.get(API_URL + "get_waterbody_data/", params={**place, "uid": api_waterbody_id}, headers=api_headers, timeout=180)
         api_waterbody = read_json(response)[api_waterbody_id]
-        display(pd.DataFrame({"Property group": list(api_waterbody), "Fields": [list(value) if isinstance(value, dict) else value for value in api_waterbody.values()]}))
+        display(pd.DataFrame({"property_group": list(api_waterbody)}))
+        property_group = "zoi_properties"
+        properties = api_waterbody.get(property_group, {})
+        display(pd.DataFrame({"field": list(properties)}))
+        columns = list(properties)[:8]
+        display(pd.Series(properties, dtype=object).reindex(columns).to_frame("value"))
     ''')
-section(cells, 'Inspect a property group',
-    'Change `property_group` to another name above. Zone-of-influence NDVI describes vegetation around the waterbody, not water area. Its yearly fields contain date/value JSON that can be read as a time series.', '''
-    property_group = "zoi_properties"
-    properties = api_waterbody.get(property_group, {})
-    display(pd.Series(properties, dtype=object).head(12).to_frame("First 12 fields"))
-    ndvi = {}
-    for year in YEARS:
-        values = properties.get(f"NDVI_{year}")
-        if values:
-            ndvi.update(json.loads(values, parse_constant=lambda value: None) if isinstance(values, str) else values)
-    if ndvi:
-        vegetation = pd.to_numeric(pd.Series(ndvi), errors="coerce")
-        vegetation.index = pd.to_datetime(vegetation.index)
-        vegetation.sort_index().plot(figsize=(10, 3), ylabel="NDVI (unitless)", ylim=(-1, 1), title=f"Zone-of-influence vegetation · {api_waterbody_id}")
-        plt.tight_layout()
+section(cells, 'Read a dated property',
+    'Some property groups store a time series inside a JSON string. This example reads `NDVI_2017` into a DataFrame before plotting it. Change `field` to another dated field from the list above.', '''
+    field = "NDVI_2017"
+    dated_values = properties.get(field)
+    if dated_values:
+        dated_values = json.loads(dated_values, parse_constant=lambda value: None) if isinstance(dated_values, str) else dated_values
+        dated = pd.Series(dated_values, name=field).to_frame()
+        dated.index = pd.to_datetime(dated.index)
+        dated[field] = pd.to_numeric(dated[field], errors="coerce")
+        display(dated.head())
+        dated.sort_index().plot(figsize=(9, 3), ylabel="NDVI (unitless)", ylim=(-1, 1))
         plt.show()
+    else:
+        print("This property group does not contain the selected dated field. Choose another field from the table above.")
     ''')
 finish(entry, cells)
 
-entry, cells = begin(5, 'agriculture-through-time', 'Analyse Agriculture through Time', 'Compare cropping patterns, their shares of recorded cropped area, and broader land cover through the years.')
-load_tables(cells, ['croppingIntensity_annual', 'lulc_vector'], primary='croppingIntensity_annual')
+entry, cells = begin(5, 'agriculture-through-time', 'Analyse Agriculture through Time', 'Explore a cropping category over time and compare land-cover areas for one year.')
+load_tables(cells, 'croppingIntensity_annual', ['uid', 'area_in_ha', 'single_kharif_cropped_area_in_ha_2017-2018', 'doubly_cropped_area_in_ha_2017-2018'])
 stac(cells, 'cropping_intensity_vector')
-section(cells, 'Cropping area and composition',
-    'API area fields are already hectares. The four categories describe land cropped once, twice or three times; do not multiply area by the crop count. Shares use the sum of these categories, not total MWS area. These categories do not establish fallow area.', '''
-    crop_fields = {"single_kharif_cropped_area_in_ha": "Single Kharif", "single_non_kharif_cropped_area_in_ha": "Single non-Kharif",
-                   "doubly_cropped_area_in_ha": "Double cropped", "triply_cropped_area_in_ha": "Triple cropped"}
-    cropping = pd.DataFrame({label: [selected.get(f"{field}_{y}-{y+1}") for y in YEARS] for field, label in crop_fields.items()}, index=YEARS).apply(pd.to_numeric, errors="coerce")
-    display(cropping.rename_axis("Starting year"))
-    # Only complete years enter stacked charts; missing categories are not zero.
-    complete = cropping.dropna()
-    shares = complete.div(complete.sum(axis=1).replace(0, float("nan")), axis=0) * 100
-    fig, axes = plt.subplots(2, 1, figsize=(10, 7))
-    if not complete.empty:
-        complete.plot.bar(stacked=True, ax=axes[0], ylabel="Area (ha)", rot=0, title=f"Cropping patterns · {mws_id}")
-        shares.plot.bar(stacked=True, ax=axes[1], ylabel="Recorded cropped area (%)", rot=0, legend=False)
-        axes[1].set_ylim(0, 100)
-    plt.tight_layout()
+section(cells, 'One cropping category through time',
+    'Change `field_prefix` to explore a different cropping category. Source values are already hectares; no conversion or multiplication by crop count is needed.', '''
+    field_prefix = "single_kharif_cropped_area_in_ha"
+    fields = [f"{field_prefix}_{y}-{y+1}" for y in YEARS]
+    cropping = pd.to_numeric(selected.reindex(fields), errors="coerce").to_frame("value")
+    display(cropping)
+    plt.figure(figsize=(10, 3))
+    plt.plot(YEARS, cropping["value"], marker="o")
+    plt.ylabel("Area (ha)")
+    plt.title(field_prefix)
+    plt.grid(alpha=0.2)
     plt.show()
-    print("Years omitted from stacked charts:", cropping.index[cropping.isna().any(axis=1)].tolist())
-    fallow_fields = [name for name in selected.index if "fallow" in name or "uncropped" in name]
-    display(selected.reindex(fallow_fields).to_frame("Recorded fallow / uncropped values"))
     ''')
-section(cells, 'Broader land cover',
-    'Compare the main land-cover area fields for the same years. LULC columns use the starting year alone. Water-season categories are excluded here because they overlap in time.', mws_row('lulc_vector', 'land') + '''
-land_fields = {"cropland": "Cropland", "tree_forest": "Trees / forest", "shrub_scrub": "Shrub / scrub", "barrenlands": "Barren land", "built-up": "Built-up"}
-land_cover = pd.DataFrame({label: [land.get(f"{field}_area_in_ha_{y}") for y in YEARS] for field, label in land_fields.items()}, index=YEARS).apply(pd.to_numeric, errors="coerce")
-display(land_cover)
-land_cover.plot(subplots=True, layout=(2, 3), figsize=(12, 6), marker="o", legend=False, ylabel="Area (ha)", sharey=False)
-plt.suptitle(f"Land-cover area · {mws_id}")
-plt.tight_layout()
-plt.show()
-''')
-section(cells, 'Cropping intensity', 'Cropping intensity is a unitless value reported by the API. Compare its variation with the area charts above.', '''
-    intensity = pd.Series([selected.get(f"cropping_intensity_unit_less_{y}-{y+1}") for y in YEARS], index=YEARS, dtype=float)
-    intensity.plot(figsize=(8, 3), marker="o", ylabel="Cropping intensity (unitless)", title=f"Cropping intensity · {mws_id}")
+another(cells, 'Other prefixes are `single_non_kharif_cropped_area_in_ha`, `doubly_cropped_area_in_ha` and `triply_cropped_area_in_ha`. For cropping intensity, use `cropping_intensity_unit_less` and change the axis unit. Fallow or uncropped land should only be shown when a field explicitly records it; do not calculate it as an unexplained remainder.')
+section(cells, 'Land-cover areas in one year',
+    'Read `lulc_vector` from the response already in memory. Change `year` or `columns` to explore another year or class. The table and chart keep the API field names.', '''
+    land = pd.DataFrame(api_data["lulc_vector"]).set_index("uid").reindex([mws_id]).iloc[0]
+    display(pd.DataFrame({"field": land.index}))
+    year = 2017
+    columns = [f"{field}_area_in_ha_{year}" for field in ["cropland", "tree_forest", "shrub_scrub", "barrenlands", "built-up"]]
+    areas = pd.to_numeric(land.reindex(columns), errors="coerce").to_frame("value")
+    display(areas)
+    areas["value"].dropna().plot.barh(figsize=(10, 4), xlabel="Area (ha)", title=f"Land-cover areas · {year}")
     plt.tight_layout()
     plt.show()
     ''')
+another(cells, 'For a cropping composition table, select the four cropping area fields for one year from `selected`. Add a separate share column using `values / values.sum() * 100` only when all four values are present. This share describes the recorded cropping categories, not the whole MWS. Change `dataset` in the STAC cell to `land_use_land_cover_vector` to read its field descriptions; API names and asset names may differ.')
 finish(entry, cells)
 
-entry, cells = begin(6, 'know-your-village', 'Know Your Village', 'Explore population, distances to services, livestock and village survey answers, and find linked micro-watersheds.')
-load_tables(cells, ['social_economic_indicator', 'facilities_proximity', 'livestock', 'antyodaya', 'mws_intersect_villages'], village=True)
+entry, cells = begin(6, 'know-your-village', 'Know Your Village', 'Read village statistics, compare distances to services and explore one village survey topic.')
+load_tables(cells, 'social_economic_indicator', ['village_id', 'village_name', 'total_population_count', 'total_sc_population_count', 'total_st_population_count', 'literacy_rate_percent'], village=True)
 stac(cells, 'admin_boundaries_vector')
-section(cells, 'Population and literacy', 'Population, Scheduled Caste and Scheduled Tribe values are counts. Literacy is a percentage. Keep the different units visible.', '''
-    population_fields = {"total_population_count": "Population", "total_sc_population_count": "Scheduled Caste population", "total_st_population_count": "Scheduled Tribe population", "literacy_rate_percent": "Literacy (%)"}
-    display(village.reindex(population_fields).rename(index=population_fields).to_frame("Recorded value"))
-    ''')
 section(cells, 'How far away are services?',
-    'Compare the reported distances in kilometres. These fields give distances, not compass directions. Each point labels a service category; missing distances stay blank in the table and are omitted from the plot.', '''
-    facilities = tables["facilities_proximity"]
-    facility = facilities.loc[facilities["village_id"].astype(str) == village_id]
-    categories = {"essential_education": "Essential education", "higher_education": "Higher education", "essential_health": "Essential health", "advanced_health": "Advanced health", "essential_services": "Essential services", "financial_inclusion": "Financial services", "apmc_markets": "Agricultural markets", "post_harvest": "Post-harvest services", "cooperative": "Cooperatives", "livestock": "Livestock services", "agri_support_infra": "Agricultural support"}
-    facility = facility.iloc[0] if not facility.empty else pd.Series(dtype=object)
-    distances = pd.DataFrame({"Service": list(categories.values()),
-                              "Distance (km)": [facility.get(f"{name}_cat_distance_in_km") for name in categories],
-                              "Facility": [facility.get(f"{name}_facility_label") for name in categories]}).set_index("Service")
-    distances["Distance (km)"] = pd.to_numeric(distances["Distance (km)"], errors="coerce")
+    'Select the distance fields to compare. The API provides kilometres, not compass directions. The extra `description` column identifies the facility represented by each distance. Field names are retained on the chart.', '''
+    facilities = pd.DataFrame(api_data["facilities_proximity"])
+    matches = facilities.loc[facilities["village_id"].astype(str) == village_id]
+    facility = matches.iloc[0] if not matches.empty else pd.Series(dtype=object)
+    display(pd.DataFrame({"field": facilities.columns}))
+    categories = ["essential_education", "essential_health", "apmc_markets", "agri_support_infra"]
+    fields = [f"{category}_cat_distance_in_km" for category in categories]
+    distances = pd.to_numeric(facility.reindex(fields), errors="coerce").to_frame("value")
+    distances["description"] = [facility.get(f"{category}_facility_label") for category in categories]
     display(distances)
-    available = distances["Distance (km)"].dropna().sort_values()
+    available = distances["value"].dropna().sort_values()
     if not available.empty:
-        fig, ax = plt.subplots(figsize=(9, 5))
-        ax.hlines(available.index, 0, available, color="#b3d9d3", linewidth=3)
+        fig, ax = plt.subplots(figsize=(12, 3))
+        ax.hlines(available.index, 0, available, color="#a9d3cb", linewidth=3)
         ax.scatter(available, available.index, color="#227b71", s=50)
-        for label, value in available.items():
-            ax.annotate(f"{value:g} km", (value, label), xytext=(5, 0), textcoords="offset points", va="center")
-        ax.set(xlabel="Distance (km)", title=f"Access to services · {village['village_name']}")
-        ax.set_xlim(left=0, right=available.max() * 1.2 if available.max() > 0 else 1)
+        ax.set(xlabel="Distance (km)", xlim=(0, None), title="Village service distances")
         plt.tight_layout()
         plt.show()
     else:
-        print("No service distances were returned for this village.")
+        print("No distances were returned for these fields.")
     ''')
-section(cells, 'Livestock counts', 'Show animal types separately. The all-livestock total is a reference value, not another category to add to the chart.', '''
-    livestock = tables["livestock"]
-    records = livestock.loc[livestock["village_id"].astype(str) == village_id]
-    if not records.empty:
-        animals = records.iloc[0]
-        fields = {"cattle_total": "Cattle", "buffalo_total": "Buffalo", "sheep_total": "Sheep", "goat_total": "Goats", "pig_total": "Pigs"}
-        counts = pd.to_numeric(animals.reindex(fields), errors="coerce").rename(index=fields)
-        display(animals.reindex(["all_livestock_total", *fields]).to_frame("Count"))
-        counts.dropna().plot.barh(figsize=(7, 3), xlabel="Animals", color="#a47b48", title="Livestock by type")
-        plt.tight_layout()
-        plt.show()
-    else:
-        print("No livestock record was returned for this village.")
-    ''')
-cells.extend([md('## Explore a village survey topic\n\nThe collapsed reference lists the original Mission Antyodaya fields under the village report’s headings. Change `group` in the next cell to read a different topic. The category value is shown beside its source answers; values from different topics are not assumed to share a scale.'), code('survey_groups = ' + pformat(GROUPS, width=110, sort_dicts=False), True)])
-section(cells, 'Choose a survey topic',
-    'Try `agriculture_land_cultivation`, `agriculture_support_services`, `agricultural_markets`, `water_sanitation` or another group listed below. The same cell shows the category value and the original questions and answers.', '''
-    display(pd.DataFrame({"Available group": list(survey_groups)}))
+another(cells, 'Try `higher_education`, `advanced_health`, `financial_inclusion`, `post_harvest`, `cooperative` or `livestock` in `categories`. For livestock counts, use `statistics = pd.DataFrame(api_data["livestock"])`, select the same `village_id`, and choose columns `all_livestock_total`, `cattle_total`, `buffalo_total`, `sheep_total`, `goat_total`, `pig_total`. Reuse `api_data` to select the table; no additional request is needed.')
+cells.extend([md('## Choose a village survey topic\n\nThe collapsed reference lists the original survey fields and the village report’s descriptions. Choose one group below; the same example works for the other groups.'), code('survey_groups = ' + pformat(GROUPS, width=110, sort_dicts=False), True)])
+section(cells, 'Read a category value and its survey answers',
+    'The table keeps the API fields and adds descriptions. Plot only answers with the same unit; category values and other survey answers remain in the table.', '''
+    display(pd.DataFrame({"group": list(survey_groups)}))
     group = "agriculture_land_cultivation"
-    survey = tables["antyodaya"]
+    survey = pd.DataFrame(api_data["antyodaya"])
     matches = survey.loc[survey["village_id"].astype(str) == village_id]
     if not matches.empty:
         answers = matches.iloc[0]
-        print("Category value:", answers.get(group + "_cat_value"))
-        questions = pd.DataFrame(survey_groups[group])
-        questions["Answer"] = [answers.get(field) for field in questions["col"]]
-        display(questions[["label", "col", "Answer"]].rename(columns={"label": "Question", "col": "API field"}))
-        # Choose one unit for the plot; other answers remain in the table.
-        plot_unit = "(ha)"  # Change this to a unit in the displayed question labels.
-        numeric = questions.loc[(questions["repr"] == "numeric") & questions["label"].str.contains(plot_unit, regex=False)].set_index("label")["Answer"]
-        numeric = pd.to_numeric(numeric, errors="coerce").dropna()
-        if not numeric.empty:
-            numeric.plot.barh(figsize=(9, 4), xlabel=f"Recorded value {plot_unit}", title=group.replace("_", " ").title())
+        questions = survey_groups[group]
+        fields = [group + "_cat_value", *[question["col"] for question in questions]]
+        results = answers.reindex(fields).to_frame("value")
+        results["description"] = ["Published category value", *[question["label"] for question in questions]]
+        display(results)
+        plot_unit = "(ha)"
+        values = pd.to_numeric(results.loc[results["description"].str.contains(plot_unit, regex=False), "value"], errors="coerce").dropna()
+        if not values.empty:
+            values.plot.barh(figsize=(11, 4), xlabel=plot_unit, title=group)
             plt.tight_layout()
             plt.show()
     else:
-        print("No Mission Antyodaya record was returned for this village.")
+        print("No village survey record was returned for this identifier.")
     ''')
-section(cells, 'Agricultural land and access to services',
-    'Join the survey and service tables on `village_id`. Change the selected columns to combine other fields from the examples above. Source matches remain separate rows.', '''
-    agriculture_columns = ["village_id", "agriculture_land_cultivation_cat_value", "agricultural_markets_cat_value", "net_sown_area_in_hac"]
-    service_columns = ["village_id", "apmc_markets_cat_distance_in_km", "agri_support_infra_cat_distance_in_km"]
-    agriculture = survey.loc[survey["village_id"].astype(str) == village_id].reindex(columns=agriculture_columns).copy()
-    access = tables["facilities_proximity"].reindex(columns=service_columns).copy()
-    agriculture["village_id"], access["village_id"] = agriculture["village_id"].astype(str), access["village_id"].astype(str)
-    display(agriculture.merge(access, on="village_id", how="left"))
-    ''')
-section(cells, 'Find the village boundary and linked MWS',
-    'The geometry API calls the village identifier `vill_ID`. Use it to select the boundary. The tehsil’s intersection table supplies the linked MWS identifiers; it does not allocate population or livestock between them.', '''
+another(cells, 'Change `group` to `agriculture_support_services`, `agricultural_markets`, `water_sanitation` or another group from the table. Change `plot_unit` only to a unit shared by the fields you want to compare. To combine agricultural answers with service distances, select those columns from `survey` and `facilities`, and merge on `village_id`; retain both source field names.')
+section(cells, 'Read the village boundary and linked MWS',
+    '`get_village_geometries` supplies `vill_ID` and `vill_name`. The intersection table records linked MWS using `mws uid` and `village ids`. Keep these original identifiers when selecting records.', '''
     response = requests.get(API_URL + "get_village_geometries/", params=place, headers=api_headers, timeout=180)
     boundaries = gpd.GeoDataFrame.from_features(read_json(response)["features"], crs="EPSG:4326")
     boundary = boundaries.loc[boundaries["vill_ID"].astype(str) == village_id]
-    if not boundary.empty:
-        boundary.plot(figsize=(5, 5), color="#d7e9f5", edgecolor="#376987")
-        plt.title(str(village["village_name"]))
-        plt.axis("off")
-        plt.show()
-    links = tables["mws_intersect_villages"].copy()
+    display(boundary.drop(columns="geometry"))
+    links = pd.DataFrame(api_data["mws_intersect_villages"])
     links["village ids"] = links["village ids"].map(ast.literal_eval)
     linked = links.explode("village ids")
     display(linked.loc[linked["village ids"].astype(str) == village_id, ["mws uid", "area_in_ha"]])
     ''')
-section(cells, 'Look up administrative names from coordinates', 'Use a point inside the village, or supply your own latitude and longitude.', '''
+section(cells, 'Find administrative names at a point',
+    '`get_admin_details_by_latlon` returns the administrative names for a latitude and longitude. Use a point inside this village or enter your own coordinates.', '''
     if not boundary.empty:
         point = boundary.geometry.iloc[0].representative_point()
-        response = requests.get(API_URL + "get_admin_details_by_latlon/", params={"latitude": point.y, "longitude": point.x}, headers=api_headers, timeout=90)
-        display(read_json(response) if response.ok else {"HTTP status": response.status_code, "Response": response.text[:500]})
+        coordinates = {"latitude": point.y, "longitude": point.x}
+        response = requests.get(API_URL + "get_admin_details_by_latlon/", params=coordinates, headers=api_headers, timeout=90)
+        result = read_json(response) if response.ok else {"status": response.status_code, "detail": response.text[:500]}
+        display(pd.json_normalize(result))
     ''')
 finish(entry, cells)
 write(OUT / 'catalog.json', json.dumps(CATALOG, ensure_ascii=False, indent=2) + '\n')

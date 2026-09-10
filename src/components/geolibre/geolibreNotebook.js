@@ -37,7 +37,8 @@ const projectScope = (project) => {
   };
 };
 
-const pythonJson = (value) => JSON.stringify(JSON.stringify(value));
+// A JSON string literal is also a safe Python string literal for these values.
+const pythonString = (value) => JSON.stringify(String(value));
 
 export const geoLibreNotebookFilename = (notebookId, project) => {
   const definition = notebookDefinition(notebookId);
@@ -53,28 +54,23 @@ export const injectGeoLibreNotebookScope = (
 ) => {
   const scope = projectScope(project);
   const notebook = JSON.parse(JSON.stringify(template));
-  const setup = notebook.cells?.find(
-    (cell) =>
-      cell.cell_type === "code" &&
-      Array.isArray(cell.metadata?.tags) &&
-      cell.metadata.tags.includes("corestack-hidden") &&
-      cell.source?.some((line) => line.startsWith("SCOPE = json.loads("))
+  const location = notebook.cells?.find(
+    (cell) => cell.cell_type === "code" && cell.metadata?.tags?.includes("corestack-location")
   );
-
-  if (!setup) {
-    throw new Error("The GeoLibre notebook template has no injectable setup cell.");
+  const setup = notebook.cells?.find(
+    (cell) => cell.cell_type === "code" && cell.source?.some((line) => line.startsWith("API_URL ="))
+  );
+  if (!location || !setup) {
+    throw new Error("The GeoLibre notebook template has no injectable location or API setup cell.");
   }
-
+  location.source = ["state", "district", "tehsil"].map(
+    (name) => `${name} = ${pythonString(scope[name])}\n`
+  );
   const apiUrl = process.env.REACT_APP_API_URL ||
     "https://geoserver.core-stack.org/api/v1/";
-  const replacements = {
-    "SCOPE =": `SCOPE = json.loads(${pythonJson(scope)})\n`,
-    "API_URL =": `API_URL = json.loads(${pythonJson(apiUrl.replace(/\/?$/, "/"))})\n`,
-  };
-  setup.source = setup.source.map((line) => {
-    const key = Object.keys(replacements).find((prefix) => line.startsWith(prefix));
-    return key ? replacements[key] : line;
-  });
+  setup.source = setup.source.map((line) => line.startsWith("API_URL =")
+    ? `API_URL = ${pythonString(apiUrl.replace(/\/?$/, "/"))}\n`
+    : line);
   notebook.metadata = {
     ...notebook.metadata,
     corestack: {

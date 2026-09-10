@@ -3,42 +3,42 @@
     "id": "start",
     "filename": "01_start.ipynb",
     "title": "1. Start",
-    "summary": "Discover CoRE Stack datasets, make your first API request and save data to explore in a map or spreadsheet.",
+    "summary": "Discover available data, inspect API specifications and save your first dataset.",
     "featured": true
   },
   {
     "id": "know-your-micro-watershed",
     "filename": "02_know_your_micro_watershed.ipynb",
     "title": "2. Know Your Micro-Watershed",
-    "summary": "Read a micro-watershed’s area, elevation, terrain, drainage and upstream and downstream connections.",
+    "summary": "Read a micro-watershed’s basic details, compare its terrain and see its water connections.",
     "featured": true
   },
   {
     "id": "water-through-time",
     "filename": "03_water_through_time.ipynb",
     "title": "3. See Water through the Years and Seasons",
-    "summary": "Compare annual and seasonal water values, fortnightly vegetation and water, and groundwater context.",
+    "summary": "Explore rainfall across years and seasons, then compare fortnightly water and vegetation.",
     "featured": true
   },
   {
     "id": "surface-waterbodies",
     "filename": "04_surface_waterbodies.ipynb",
     "title": "4. Analyse Water Storage: Surface Waterbodies",
-    "summary": "Inspect individual waterbodies, seasonal water extent and the tehsil’s total mapped water area.",
+    "summary": "Read a published waterbody asset, plot its water extent and explore individual API records.",
     "featured": true
   },
   {
     "id": "agriculture-through-time",
     "filename": "05_agriculture_through_time.ipynb",
     "title": "5. Analyse Agriculture through Time",
-    "summary": "Compare cropping patterns, their shares of recorded cropped area, and broader land cover through the years.",
+    "summary": "Explore a cropping category over time and compare land-cover areas for one year.",
     "featured": true
   },
   {
     "id": "know-your-village",
     "filename": "06_know_your_village.ipynb",
     "title": "6. Know Your Village",
-    "summary": "Explore population, distances to services, livestock and village survey answers, and find linked micro-watersheds.",
+    "summary": "Read village statistics, compare distances to services and explore one village survey topic.",
     "featured": true
   }
 ]

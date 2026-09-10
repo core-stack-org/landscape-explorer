@@ -2,16 +2,16 @@
 
 Six short, editable walkthroughs use the public APIs and STAC. Each notebook combines loading, a record preview and the first selection in one step. The analysis uses ordinary pandas, GeoPandas and Matplotlib code in visible cells. Imports, the small JSON reader and the village survey field reference are collapsed.
 
-1. **Start** — discover APIs and required parameters from the public specification, inspect a response schema, make a configurable request, explore STAC, and save MWS GeoJSON and CSV.
-2. **Know Your Micro-Watershed** — area, basin and elevation, terrain composition, a map of water connections, drainage, stream orders and related API records.
-3. **See Water through the Years and Seasons** — aligned annual and seasonal charts, fortnightly water and NDVI, and groundwater context.
-4. **Analyse Water Storage: Surface Waterbodies** — individual annual and seasonal water extent, total mapped annual area, and the waterbody API’s own inventory and property groups.
-5. **Analyse Agriculture through Time** — cropping area and composition, land-cover trends and cropping intensity.
-6. **Know Your Village** — population, a service-distance plot, livestock, one editable survey-topic example, boundaries and linked MWS.
+1. **Start** — list all public APIs and required parameters, inspect a schema, make a configurable request, explore STAC and save MWS data.
+2. **Know Your Micro-Watershed** — terrain composition and water connections, with table choices for elevation, drainage and related records; use indicator, report and coordinate APIs.
+3. **See Water through the Years and Seasons** — one annual/seasonal water measure and one pair of fortnightly water/NDVI fields; change variables for the other measures.
+4. **Analyse Water Storage: Surface Waterbodies** — one annual or seasonal area series and one dated API property; choose fields or property groups to explore further.
+5. **Analyse Agriculture through Time** — one cropping category through time and a land-cover comparison; change category, year or columns.
+6. **Know Your Village** — population, selected service distances, one survey group, village geometry and administrative lookups; table choices cover the remaining village statistics.
 
 ## Open a notebook
 
-Choose **Learn with Notebooks** in GeoLibre, download a notebook, then open **Processing → Jupyter Notebook → Upload Files**. Choose the Python (Pyodide) kernel if asked. Downloads use the selected tehsil. Standalone templates start with Hilsa, Nalanda, Bihar; edit `SCOPE`, restart the kernel and run from the top to change place.
+Choose **Learn with Notebooks** in GeoLibre, download a notebook, then open **Processing → Jupyter Notebook → Upload Files**. Choose the Python (Pyodide) kernel if asked. Downloads use the selected tehsil. Standalone templates start with Hilsa, Nalanda, Bihar; edit the visible `state`, `district` and `tehsil` assignments, restart the kernel and run from the top to change place. The downloaded assignments contain the selected tehsil, without encoded JSON or map bounds.
 
 For local JupyterLab, install `requests pandas geopandas matplotlib ipython`. Each notebook reuses `CORE_STACK_API_KEY` from the kernel environment or asks for it privately with `getpass`. The setup supports synchronous and awaitable input. The [public API guide](https://docs.core-stack.org/use-precomputed-data/public-apis/) explains registration and API keys. A frontend `.env` file is not automatically available in a notebook kernel.
 
@@ -23,13 +23,15 @@ STAC supplies dataset discovery, descriptions, field documentation and asset lin
 
 The two waterbody request paths are `get_waterbodies_data_by_admin/` and `get_waterbody_data/`. Both require state, district and tehsil; the second also requires `uid`. Its identifier is selected from the API inventory, independently of STAC asset identifiers.
 
-## Read the charts
+## Explore other fields
 
-- Water values are millimetres. Annual and seasonal panels share a scale within each measure. Fortnightly NDVI uses its own unitless axis and the dates returned by the API.
-- Waterbody `area_YY-YY` and `area_ored` values are hectares. Seasonal `k_`, `kr_` and `krz_` percentages use `area_ored` as their reference footprint. The total-area chart sums feature areas and includes a count of records with values for each year. It does not measure water volume.
-- Cropping API areas are already hectares. Shares divide the four categories by their sum. Incomplete years are omitted from stacked charts and identified below them. Fallow area is shown only when explicitly supplied.
-- Service distances are kilometres. Distance fields alone do not supply compass bearings. Missing distances are omitted from the plot and remain blank in the table.
-- Mission Antyodaya questions and headings follow the village report mappings in `village-groups.json`. Category values accompany original survey answers.
+Each topic has one or two worked visual examples, followed by variable choices for related data. Original field names remain in tables, indexes and chart labels. Descriptions, STAC field references and calculated values are added as separate columns. STAC descriptions are joined only where fields correspond; an API field is not silently renamed to an asset field.
+
+`get_tehsil_data` currently accepts location parameters, with no table or field filter. It is called once per standalone notebook. Select another table using `pd.DataFrame(api_data[table_name])` and then its columns; this reuses the response already in memory. The MWS time-series and individual waterbody APIs accept identifiers for narrower requests. Separate notebook kernels do not share downloaded data.
+
+Water fields are millimetres; NDVI is unitless and uses a separate axis. Waterbody `area_YY-YY` and `area_ored` are hectares; seasonal percentages are multiplied by the `area_ored` footprint. Cropping API areas are already hectares. Service distances are kilometres, without compass bearings. Missing values remain missing, including years that are absent from the source.
+
+Survey fields retain their API names, with the village report's question descriptions beside them. Plot fields with the same unit, and keep category values separate from the original survey answers.
 
 `read_json(response)` reads the response text, handles a byte-order mark and JSON-encoded documents, and converts bare `NaN` and `Infinity` tokens to missing values without changing text containing those words. It raises HTTP or parsing errors rather than replacing failures with empty data. The original `response.text` remains available. Optional report and coordinate lookups display unsuccessful HTTP responses explicitly.
 
@@ -46,9 +48,10 @@ npm run notebooks:generate
 npm run notebooks:check
 python3 scripts/notebooks/validate.py
 python3 scripts/notebooks/test_response.py
+python3 scripts/notebooks/test_views.py
 ```
 
-The checks validate generated content, structure, syntax and JSON handling without downloading data. To execute a template locally after setting your key:
+The checks validate generated content, structure, syntax, JSON handling, unchanged field names and selected chart calculations without downloading data. To execute a template locally after setting your key:
 
 ```sh
 jupyter nbconvert --execute --to notebook --output-dir=.local/notebook-runs public/geolibre-notebooks/01_start.ipynb
