@@ -129,7 +129,7 @@ const GeoLibreNotebookMenu = ({ project, onDownload }) => {
         title="Download guided notebooks for the active CoRE Stack tehsil"
       >
         <BookOpen className="h-4 w-4" aria-hidden="true" />
-        <span>Learn with Notebooks</span>
+        <span>CoRE Stack Notebooks</span>
         <ChevronDown
           className={`h-4 w-4 transition-transform ${open ? "rotate-180" : ""}`}
           aria-hidden="true"
