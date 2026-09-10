@@ -78,6 +78,17 @@ YEARS = list(range(2017, 2025))''', True)]
         place = {"state": state, "district": district, "tehsil": tehsil}
         place
         ''')
+    section(cells, 'Set your API key for this session', 'The [public API guide](https://docs.core-stack.org/use-precomputed-data/public-apis/) explains how to register, generate an API key and use it. The key goes in the `X-API-Key` header. This cell stores `CORE_STACK_API_KEY` in the current Python kernel’s environment, so later API cells can reuse it. An existing key is reused without prompting. You can skip this cell when exploring only GeoServer or STAC data. Restarting the kernel may require entering the key again.', '''
+        from inspect import isawaitable
+
+        api_key = os.environ.get("CORE_STACK_API_KEY", "").strip()
+        if not api_key:
+            api_key = getpass("CoRE Stack API key: ")
+            if isawaitable(api_key):
+                api_key = await api_key
+
+        os.environ["CORE_STACK_API_KEY"] = str(api_key).strip()
+        ''')
     return entry, cells
 
 def api_guard(source):
