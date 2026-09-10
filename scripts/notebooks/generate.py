@@ -594,9 +594,16 @@ section(cells,'Read the waterbody API for this tehsil','`get_waterbodies_data_by
     api_waterbody_table = pd.DataFrame.from_dict(api_waterbodies, orient="index")
     api_waterbody_table.head()
     ''')
+section(cells, 'Choose a waterbody from the API', 'The API has its own published identifier list, which may differ from the GeoServer layer. Choose `api_waterbody_id` from this table. This is a separate selection from `waterbody_id` used in the GeoServer charts above.', '''
+    api_waterbody_ids = sorted(api_waterbodies)
+    display(pd.DataFrame({"API waterbody identifier": api_waterbody_ids}))
+    api_waterbody_id = api_waterbody_ids[0]
+    print("Selected API waterbody:", api_waterbody_id)
+    pd.json_normalize(api_waterbodies[api_waterbody_id]).T
+    ''')
 section(cells,'Read its annual and seasonal area fields','Select the same annual and seasonal field names. `reindex` keeps the requested columns visible even when a value is not supplied.', '''
     area_fields = [f"{prefix}_{year}" for year in year_suffixes for prefix in ["area", "k", "kr", "krz"]]
-    api_area = api_waterbody_table.reindex(index=[waterbody_id], columns=["area_ored"] + area_fields).iloc[0]
+    api_area = api_waterbody_table.reindex(index=[api_waterbody_id], columns=["area_ored"] + area_fields).iloc[0]
     api_water_area = pd.DataFrame({
         "Annual area (ha)": [api_area[f"area_{year}"] for year in year_suffixes],
         "Kharif area (ha)": [api_area[f"k_{year}"] * api_area["area_ored"] / 100 for year in year_suffixes],
@@ -605,11 +612,11 @@ section(cells,'Read its annual and seasonal area fields','Select the same annual
     }, index=water_area.index)
     api_water_area
     ''')
-section(cells,'Request the selected waterbody','Pass the same identifier to `get_waterbody_data`. The HTTP status and response show what the service returned.', '''
-    response = requests.get(API_URL + "get_waterbody_data/", params={**place, "uid": waterbody_id}, headers=api_headers, timeout=90)
+section(cells,'Request the selected waterbody','Pass the identifier selected from the API list to `get_waterbody_data`, using the same state, district and tehsil. The table shows the returned fields, including nested properties.', '''
+    response = requests.get(API_URL + "get_waterbody_data/", params={**place, "uid": api_waterbody_id}, headers=api_headers, timeout=90)
     print("HTTP status:", response.status_code)
     api_waterbody_response = response.json()
-    pd.DataFrame.from_dict(api_waterbody_response, orient="index")
+    pd.json_normalize(api_waterbody_response[api_waterbody_id]).T
     ''')
 finish(entry,cells)
 
