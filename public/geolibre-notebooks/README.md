@@ -50,3 +50,11 @@ Start reads the public specification from `https://geoserver.core-stack.org/?for
 The waterbody request paths are `get_waterbodies_data_by_admin/` and `get_waterbody_data/`. Both require state, district and tehsil; the second also requires `uid`.
 
 Collapsed parsing cells preserve raw API response text and decode it with Python's `json.loads`, including numeric `NaN` values. They do not repair malformed JSON or print whole responses. NDVI examples read the dates in each NDVI layer and align them by date instead of assuming the water-balance dates also exist there.
+
+## Templates and coverage
+
+The six files in this directory are the maintained templates, not outputs for a randomly selected tehsil. Their default location is Hilsa, Nalanda, Bihar. Downloading through GeoLibre substitutes the selected location. For a directly opened template, edit `SCOPE`, restart the kernel and run from the top.
+
+Coverage can differ between layers in the same tehsil. A missing connectivity record is reported as unavailable; it is not interpreted as no upstream or downstream connections. Supplemental numeric records retain blank values when the selected identifier is absent.
+
+API parsing cells show HTTP error status and a short response preview. Dependent API cells skip unsuccessful or non-JSON responses; the next independent API request can still run. A 500 response requires a server-side fix. A 404 response means the requested resource was not returned; the notebook does not substitute a different MWS or tehsil. These checks do not establish coverage for every location.

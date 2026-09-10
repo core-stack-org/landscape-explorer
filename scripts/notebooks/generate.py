@@ -1,4 +1,5 @@
 """Build six teaching notebooks. Generated code uses standard libraries directly."""
+import ast
 import hashlib
 import re
 import json
@@ -70,7 +71,7 @@ GEOSERVER = 'https://geoserver.core-stack.org:8443/geoserver/'
 API_URL = 'https://geoserver.core-stack.org/api/v1/'
 STAC_URL = 'https://spatio-temporal-asset-catalog.s3.ap-south-1.amazonaws.com/CorestackCatalogs_merged_collection/tehsil_wise/catalog.json'
 YEARS = list(range(2017, 2025))''', True)]
-    section(cells, 'Choose the tehsil', 'The starting place is Hilsa, Nalanda, Bihar. A notebook downloaded from GeoLibre uses the selected tehsil. Change these names to read another place.', '''
+    section(cells, 'Choose the tehsil', 'The template defaults to Hilsa, Nalanda, Bihar. GeoLibre downloads use your selected place instead. Edit `SCOPE` in the setup cell to change tehsil, then restart the kernel and run from the top. Layer coverage can differ between places.', '''
         state = SCOPE["state"].lower().replace(" ", "_")
         district = SCOPE["district"].lower().replace(" ", "_")
         tehsil = SCOPE["tehsil"].lower().replace(" ", "_")
@@ -79,9 +80,21 @@ YEARS = list(range(2017, 2025))''', True)]
         ''')
     return entry, cells
 
+def api_guard(source):
+    # Preserve notebook display of the last expression inside a conditional block.
+    lines = source.splitlines()
+    tree = ast.parse(source)
+    if tree.body and isinstance(tree.body[-1], ast.Expr):
+        last = tree.body[-1]
+        end = last.end_lineno - 1
+        lines[end] = lines[end][:last.end_col_offset] + ')' + lines[end][last.end_col_offset:]
+        lines[last.lineno - 1] = 'display(' + lines[last.lineno - 1]
+    return 'if api_payload is not None:\n' + textwrap.indent('\n'.join(lines), '    ')
+
 def finish(entry, cells):
     # Keep HTTP, permissive JSON decoding and data exploration separate for learners.
     expanded = []
+    in_api_section = False
     for notebook_cell in cells:
         source = ''.join(notebook_cell['source'])
         if notebook_cell['cell_type'] == 'code' and ('requests.get(API_URL' in source or 'requests.get(request_url' in source):
@@ -90,10 +103,23 @@ def finish(entry, cells):
             if token in source:
                 lines = source.splitlines()
                 split = next(i for i, line in enumerate(lines) if token in line)
-                expanded.append(code('\n'.join(lines[:split])))
-                expanded.append(code(f'raw_api_data_string = {response_name}.text\napi_payload = json.loads(raw_api_data_string.lstrip("\\ufeff"))', True))
-                expanded.append(code('\n'.join(lines[split:]).replace(token, 'api_payload')))
+                expanded.append(code('\n'.join(lines[:split]).replace(response_name + '.raise_for_status()', '# The next cell checks the HTTP status and reads the response.')))
+                in_api_section = True
+                expanded.append(code(f'''raw_api_data_string = {response_name}.text
+api_payload = None
+if {response_name}.ok:
+    try:
+        api_payload = json.loads(raw_api_data_string.lstrip("\\ufeff"))
+    except ValueError:
+        print("The API returned a response that is not valid JSON. Preview:", raw_api_data_string[:500])
+else:
+    print(f"API returned HTTP {{{response_name}.status_code}} for {{{response_name}.url}}")
+    print("This request did not return data. Other API examples can still be run.")
+    print(raw_api_data_string[:500])''', True))
+                expanded.append(code(api_guard('\n'.join(lines[split:]).replace(token, 'api_payload'))))
                 continue
+        if in_api_section and notebook_cell["cell_type"] == "code":
+            notebook_cell = code(api_guard(source))
         expanded.append(notebook_cell)
     cells = expanded
     for index, notebook_cell in enumerate(cells):
@@ -157,7 +183,7 @@ def select_mws(cells, variable):
         ''')
 
 def api_setup(cells):
-    section(cells, 'Connect to the CoRE Stack API', 'Read endpoint specifications at [api-doc.core-stack.org](https://api-doc.core-stack.org). The [public API guide](https://docs.core-stack.org/use-precomputed-data/public-apis/) explains how to register, generate an API key and use it. The key goes in the `X-API-Key` header. This cell reads `CORE_STACK_API_KEY` from your environment, or asks for it without showing it. The key is not written into the notebook. After each API request, run the collapsed parsing cell: it keeps the raw response text and reads it with `json.loads`, which accepts `NaN` as a missing numeric value. Expand the cell to inspect the code.', '''
+    section(cells, 'Connect to the CoRE Stack API', 'Read endpoint specifications at [api-doc.core-stack.org](https://api-doc.core-stack.org). The [public API guide](https://docs.core-stack.org/use-precomputed-data/public-apis/) explains how to register, generate an API key and use it. The key goes in the `X-API-Key` header. This cell reads `CORE_STACK_API_KEY` from your environment, or asks for it without showing it. The key is not written into the notebook. After each API request, run the collapsed parsing cell: it keeps the raw response text and reads it with `json.loads`, which accepts `NaN` as a missing numeric value. It also shows HTTP errors and skips dependent API cells if the request fails. Expand the cell to inspect the code.', '''
         from inspect import isawaitable
 
         api_key = os.environ.get("CORE_STACK_API_KEY", "").strip()
@@ -329,22 +355,29 @@ section(cells,'Terrain shares','These five fields are already percentages. They 
     ''')
 read(cells,'connectivity','Read MWS connections','`upstream` contains a list stored as text. `downstream` contains an identifier, or an empty string where no link is recorded.')
 section(cells,'List upstream and downstream MWS','Use `ast.literal_eval` to read the upstream list. Keep the downstream identifier as a string, including its underscore.', '''
-    connection = connectivity.loc[connectivity["uid"] == mws_id].iloc[0]
-    upstream_ids = ast.literal_eval(connection["upstream"])
-    downstream_ids = [connection["downstream"]] if connection["downstream"] else []
-    display(pd.DataFrame({"Upstream MWS": upstream_ids}))
-    display(pd.DataFrame({"Downstream MWS": downstream_ids}))
+    connection_rows = connectivity.loc[connectivity["uid"] == mws_id]
+    upstream_ids, downstream_ids = [], []
+    if connection_rows.empty:
+        print(f"No connectivity record is available for {mws_id}. This does not mean it has no connections.")
+    else:
+        connection = connection_rows.iloc[0]
+        upstream_ids = ast.literal_eval(connection["upstream"]) if pd.notna(connection["upstream"]) else []
+        downstream = connection["downstream"]
+        downstream_ids = [downstream] if pd.notna(downstream) and downstream else []
+        display(pd.DataFrame({"Upstream MWS": upstream_ids}))
+        display(pd.DataFrame({"Downstream MWS": downstream_ids}))
     ''')
 section(cells,'Map the connections','Blue MWS contribute water to the selected MWS. Orange MWS receive it. Only shapes in the loaded tehsil layer can be drawn.', '''
-    upstream_mws = mws.loc[mws["uid"].isin(upstream_ids)]
-    downstream_mws = mws.loc[mws["uid"].isin(downstream_ids)]
-    ax = selected_mws.plot(color="grey", edgecolor="black", figsize=(7, 6))
-    if not upstream_mws.empty:
-        upstream_mws.plot(ax=ax, color="steelblue", edgecolor="white")
-    if not downstream_mws.empty:
-        downstream_mws.plot(ax=ax, color="darkorange", edgecolor="white")
-    ax.set(title="Selected: grey · upstream: blue · downstream: orange", xlabel="Longitude", ylabel="Latitude")
-    plt.show()
+    if not connection_rows.empty:
+        upstream_mws = mws.loc[mws["uid"].isin(upstream_ids)]
+        downstream_mws = mws.loc[mws["uid"].isin(downstream_ids)]
+        ax = selected_mws.plot(color="grey", edgecolor="black", figsize=(7, 6))
+        if not upstream_mws.empty:
+            upstream_mws.plot(ax=ax, color="steelblue", edgecolor="white")
+        if not downstream_mws.empty:
+            downstream_mws.plot(ax=ax, color="darkorange", edgecolor="white")
+        ax.set(title="Selected: grey · upstream: blue · downstream: orange", xlabel="Longitude", ylabel="Latitude")
+        plt.show()
     ''')
 read(cells,'drainage','Read drainage density','Drainage density describes stream length relative to area.')
 section(cells,'Drainage-density values','Read the published weighted value and standard deviation in km/km².', '''
@@ -356,7 +389,7 @@ section(cells,'Drainage-density values','Read the published weighted value and s
 read(cells,'stream_order','Read stream-order shares','Columns `1` through `11` give the published area shares for the stream orders.')
 section(cells,'Stream-order shares','Turn the selected row into a short table and bar chart.', '''
     order_columns = [str(order) for order in range(1, 12)]
-    order_shares = stream_order.loc[stream_order["uid"] == mws_id, order_columns].iloc[0]
+    order_shares = stream_order.loc[stream_order["uid"] == mws_id].reindex(columns=order_columns).reset_index(drop=True).reindex([0]).iloc[0]
     display(order_shares.rename_axis("Stream order").to_frame("Area share (%)"))
     order_shares.plot.bar(figsize=(8, 3), xlabel="Stream order", ylabel="Area share (%)")
     plt.show()
@@ -462,9 +495,9 @@ section(cells,'Plot the fortnightly water series','These are water depths for ea
 for kind in ['crop','tree','shrub']:
     read(cells,'ndvi_'+kind,'Read NDVI on '+{'crop':'crops','tree':'trees','shrub':'shrubs'}[kind], 'NDVI is a unitless measure of vegetation greenness. The date fields contain numeric values directly.')
 section(cells,'Put the three NDVI series together','Read each layer’s own date columns for the same MWS. Pandas aligns the series by date and leaves a gap where a layer has no value.', '''
-    crop_ndvi = ndvi_crop.loc[ndvi_crop["uid"] == mws_id].iloc[0].filter(regex=r"^\\d{4}-\\d{2}-\\d{2}$")
-    tree_ndvi = ndvi_tree.loc[ndvi_tree["uid"] == mws_id].iloc[0].filter(regex=r"^\\d{4}-\\d{2}-\\d{2}$")
-    shrub_ndvi = ndvi_shrub.loc[ndvi_shrub["uid"] == mws_id].iloc[0].filter(regex=r"^\\d{4}-\\d{2}-\\d{2}$")
+    crop_ndvi = ndvi_crop.loc[ndvi_crop["uid"] == mws_id].reset_index(drop=True).reindex([0]).iloc[0].filter(regex=r"^\\d{4}-\\d{2}-\\d{2}$")
+    tree_ndvi = ndvi_tree.loc[ndvi_tree["uid"] == mws_id].reset_index(drop=True).reindex([0]).iloc[0].filter(regex=r"^\\d{4}-\\d{2}-\\d{2}$")
+    shrub_ndvi = ndvi_shrub.loc[ndvi_shrub["uid"] == mws_id].reset_index(drop=True).reindex([0]).iloc[0].filter(regex=r"^\\d{4}-\\d{2}-\\d{2}$")
     ndvi = pd.DataFrame({"Crops": crop_ndvi, "Trees": tree_ndvi, "Shrubs": shrub_ndvi})
     ndvi.index = pd.to_datetime(ndvi.index)
     ndvi = ndvi.sort_index().loc["2017-07-01":"2025-06-30"]
@@ -548,12 +581,6 @@ section(cells,'Read the waterbody API for this tehsil','`get_waterbodies_data_by
     api_waterbody_table = pd.DataFrame.from_dict(api_waterbodies, orient="index")
     api_waterbody_table.head()
     ''')
-section(cells,'Request the selected waterbody','Pass the same identifier to `get_waterbody_data`. The HTTP status and response show what the service returned.', '''
-    response = requests.get(API_URL + "get_waterbody_data/", params={**place, "uid": waterbody_id}, headers=api_headers, timeout=90)
-    print("HTTP status:", response.status_code)
-    api_waterbody_response = response.json()
-    pd.DataFrame.from_dict(api_waterbody_response, orient="index")
-    ''')
 section(cells,'Read its annual and seasonal area fields','Select the same annual and seasonal field names. `reindex` keeps the requested columns visible even when a value is not supplied.', '''
     area_fields = [f"{prefix}_{year}" for year in year_suffixes for prefix in ["area", "k", "kr", "krz"]]
     api_area = api_waterbody_table.reindex(index=[waterbody_id], columns=["area_ored"] + area_fields).iloc[0]
@@ -564,6 +591,12 @@ section(cells,'Read its annual and seasonal area fields','Select the same annual
         "Zaid area (ha)": [api_area[f"krz_{year}"] * api_area["area_ored"] / 100 for year in year_suffixes]
     }, index=water_area.index)
     api_water_area
+    ''')
+section(cells,'Request the selected waterbody','Pass the same identifier to `get_waterbody_data`. The HTTP status and response show what the service returned.', '''
+    response = requests.get(API_URL + "get_waterbody_data/", params={**place, "uid": waterbody_id}, headers=api_headers, timeout=90)
+    print("HTTP status:", response.status_code)
+    api_waterbody_response = response.json()
+    pd.DataFrame.from_dict(api_waterbody_response, orient="index")
     ''')
 finish(entry,cells)
 
@@ -610,7 +643,7 @@ section(cells,'Show the cropping shares','Divide each category by the sum of the
     ''')
 read(cells,'land_cover','Read the land-cover summary','This vector layer records the areas of broader land-cover classes and cropping classes for each year.')
 section(cells,'Read broader land-cover areas','Read the selected MWS using the exact field prefixes below. The values are hectares.', '''
-    cover_row = land_cover.loc[land_cover["uid"] == mws_id].iloc[0]
+    cover_row = land_cover.loc[land_cover["uid"] == mws_id].reset_index(drop=True).reindex([0]).iloc[0]
     cover_area = pd.DataFrame({
         "Built-up": [cover_row[f"built-up_area_{y}"] for y in YEARS],
         "Trees and forest": [cover_row[f"tree_forest_area_{y}"] for y in YEARS],
@@ -629,7 +662,7 @@ section(cells,'Plot the land-cover areas','Each line follows one published land-
 api_setup(cells);api_tehsil(cells)
 section(cells,'Cropping areas from the API','The API table is named `croppingIntensity_annual`. Its area fields include `in_ha` and the full year range.', '''
     api_crop_rows = pd.DataFrame(api_data["croppingIntensity_annual"])
-    api_crop_row = api_crop_rows.loc[api_crop_rows["uid"] == mws_id].iloc[0]
+    api_crop_row = api_crop_rows.loc[api_crop_rows["uid"] == mws_id].reset_index(drop=True).reindex([0]).iloc[0]
     api_crop_area = pd.DataFrame({
         "Single Kharif": [api_crop_row[f"single_kharif_cropped_area_in_ha_{y}-{y+1}"] for y in YEARS],
         "Single non-Kharif": [api_crop_row[f"single_non_kharif_cropped_area_in_ha_{y}-{y+1}"] for y in YEARS],
@@ -640,7 +673,7 @@ section(cells,'Cropping areas from the API','The API table is named `croppingInt
     ''')
 section(cells,'Land-cover areas from the API','Read the corresponding hectare fields in `lulc_vector`.', '''
     api_cover_rows = pd.DataFrame(api_data["lulc_vector"])
-    api_cover_row = api_cover_rows.loc[api_cover_rows["uid"] == mws_id].iloc[0]
+    api_cover_row = api_cover_rows.loc[api_cover_rows["uid"] == mws_id].reset_index(drop=True).reindex([0]).iloc[0]
     api_cover_area = pd.DataFrame({
         "Built-up": [api_cover_row[f"built-up_area_in_ha_{y}"] for y in YEARS],
         "Trees and forest": [api_cover_row[f"tree_forest_area_in_ha_{y}"] for y in YEARS],
@@ -683,7 +716,7 @@ section(cells,'Livestock in the village','Compare the recorded counts for the ma
     village_livestock[list(livestock_fields)].rename(columns=livestock_fields).T
     ''')
 read(cells,'survey','Read Mission Antyodaya records','Mission Antyodaya records describe village facilities and livelihoods. The following tables pair category values with the original survey fields. Survey answers retain their published values.')
-section(cells,'Select the village survey','Use the same village identifier to read its survey record.', 'village_survey = survey.loc[survey["village_id"] == village_id].iloc[0]\nvillage_survey[["village_name", "village_id"]]')
+section(cells,'Select the village survey','Use the same village identifier to read its survey record.', 'village_survey = survey.loc[survey["village_id"] == village_id].reset_index(drop=True).reindex([0]).iloc[0]\nvillage_survey[["village_name", "village_id"]]')
 survey_reference = {group: {p['col']: p['label'] for p in params} for group, params in GROUPS.items()}
 cells += [md('## Survey field reference\n\nThis collapsed reference pairs each survey group with its original fields and question labels. Run it once, then choose a group below.'),
           code('survey_groups = ' + pformat(survey_reference, width=100, sort_dicts=False), True)]
@@ -729,7 +762,7 @@ section(cells, 'Read village boundaries from the API', '`get_village_geometries`
     plt.show()
     ''')
 section(cells, 'Look up a place from coordinates', 'Take a point inside the village and ask `get_admin_details_by_latlon` for its administrative names. You can replace the latitude and longitude with another location.', '''
-    point = api_village.geometry.iloc[0].representative_point()
+    point = selected_village.geometry.iloc[0].representative_point()
     coordinates = {"latitude": point.y, "longitude": point.x}
     response = requests.get(API_URL + "get_admin_details_by_latlon/", params=coordinates, headers=api_headers, timeout=90)
     response.raise_for_status()
