@@ -2,12 +2,12 @@
 
 Run each notebook from top to bottom. The setup is collapsed; the data reads, selections, tables and charts are visible and editable. Each notebook uses ordinary requests, GeoPandas, pandas and Matplotlib code.
 
-1. **Start** — list layers, read a vector table, save GeoJSON and CSV, explore STAC metadata and make an API request.
+1. **Start** — list layers, read a vector table, save GeoJSON and CSV, explore STAC metadata, list public API paths and parameters, inspect their specifications and configure a request.
 2. **Know Your Micro-Watershed** — area, basin details, elevation, terrain, water connections and drainage.
 3. **See Water through the Years and Seasons** — annual and seasonal water values, fortnightly water and NDVI, groundwater and aquifers.
 4. **Analyse Water Storage: Surface Waterbodies** — identifiers, annual and seasonal areas, and total annual waterbody area.
 5. **Analyse Agriculture through Time** — cropping areas, hectare shares and broader land-cover classes.
-6. **Know Your Village** — population, services, livestock, Mission Antyodaya survey groups, agriculture and linked micro-watersheds.
+6. **Know Your Village** — population, services, livestock, an editable Mission Antyodaya group example, agricultural services, village geometry APIs and linked micro-watersheds.
 
 ## Open a notebook
 
@@ -42,3 +42,11 @@ Browser notebooks make requests from their notebook host. For the embedded GeoLi
 The backend includes `https://web.geolibre.app` in its production origins. Add other notebook deployments as exact origins in the backend's `CORS_ALLOWED_ORIGINS` environment variable, preserving existing entries. Deploy/restart the backend after changing its settings. A custom notebook host must be listed by its own origin, not just the parent map application's URL.
 
 Until the backend change is deployed, the API examples can run in local JupyterLab with a standard Python kernel, whose requests are not subject to browser CORS. The API key cell supports both synchronous `getpass` and browser kernels returning awaitable input, and trims whitespace before constructing the header. A local frontend `.env` file is not automatically available inside browser Python.
+
+## Explore the API catalogue
+
+Start reads the public specification from `https://geoserver.core-stack.org/?format=openapi`. Choose an API path to inspect its parameters and response definitions, then edit the request parameters and run it. Read the specifications at [api-doc.core-stack.org](https://api-doc.core-stack.org), and follow the [public API guide](https://docs.core-stack.org/use-precomputed-data/public-apis/) to obtain a key.
+
+The waterbody request paths are `get_waterbodies_data_by_admin/` and `get_waterbody_data/`. Both require state, district and tehsil; the second also requires `uid`.
+
+Collapsed parsing cells preserve raw API response text and decode it with Python's `json.loads`, including numeric `NaN` values. They do not repair malformed JSON or print whole responses. NDVI examples read the dates in each NDVI layer and align them by date instead of assuming the water-balance dates also exist there.

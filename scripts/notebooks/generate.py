@@ -1,5 +1,6 @@
 """Build six teaching notebooks. Generated code uses standard libraries directly."""
 import hashlib
+import re
 import json
 from pathlib import Path
 import subprocess
@@ -79,6 +80,22 @@ YEARS = list(range(2017, 2025))''', True)]
     return entry, cells
 
 def finish(entry, cells):
+    # Keep HTTP, permissive JSON decoding and data exploration separate for learners.
+    expanded = []
+    for notebook_cell in cells:
+        source = ''.join(notebook_cell['source'])
+        if notebook_cell['cell_type'] == 'code' and ('requests.get(API_URL' in source or 'requests.get(request_url' in source):
+            response_name = 'api_response' if 'api_response = requests.get' in source else 'response'
+            token = response_name + '.json()'
+            if token in source:
+                lines = source.splitlines()
+                split = next(i for i, line in enumerate(lines) if token in line)
+                expanded.append(code('\n'.join(lines[:split])))
+                expanded.append(code(f'raw_api_data_string = {response_name}.text\napi_payload = json.loads(raw_api_data_string.lstrip("\\ufeff"))', True))
+                expanded.append(code('\n'.join(lines[split:]).replace(token, 'api_payload')))
+                continue
+        expanded.append(notebook_cell)
+    cells = expanded
     for index, notebook_cell in enumerate(cells):
         notebook_cell["id"] = f"{index:03d}-" + notebook_cell["id"]
     nb = {'nbformat': 4, 'nbformat_minor': 5,
@@ -140,7 +157,7 @@ def select_mws(cells, variable):
         ''')
 
 def api_setup(cells):
-    section(cells, 'Connect to the CoRE Stack API', 'The [API guide](https://api-doc.core-stack.org) explains access. The key goes in the `X-API-Key` header. This cell reads `CORE_STACK_API_KEY` from your environment, or asks for it without showing it. The key is not written into the notebook.', '''
+    section(cells, 'Connect to the CoRE Stack API', 'Read endpoint specifications at [api-doc.core-stack.org](https://api-doc.core-stack.org). The [public API guide](https://docs.core-stack.org/use-precomputed-data/public-apis/) explains how to register, generate an API key and use it. The key goes in the `X-API-Key` header. This cell reads `CORE_STACK_API_KEY` from your environment, or asks for it without showing it. The key is not written into the notebook. After each API request, run the collapsed parsing cell: it keeps the raw response text and reads it with `json.loads`, which accepts `NaN` as a missing numeric value. Expand the cell to inspect the code.', '''
         from inspect import isawaitable
 
         api_key = os.environ.get("CORE_STACK_API_KEY", "").strip()
@@ -194,8 +211,7 @@ section(cells, 'Open the micro-watershed layer', 'Read one specific link. The JS
     mws.head()
     ''')
 section(cells, 'Read a few columns', '`uid` identifies a micro-watershed. `area_in_ha` gives its area in hectares. Change the column list to inspect other fields.', '''
-    print(mws.columns.tolist())
-    mws[["uid", "area_in_ha"]].head(10)
+    mws.drop(columns="geometry").iloc[:10, :10]
     ''')
 section(cells, 'Save the data', 'GeoJSON keeps the shapes; CSV keeps the table. Download the saved files from the notebook file browser. Open the GeoJSON using [GeoLibre’s Add Data tools](https://geolibre.app/user-guide/interface/) or follow the [CoRE Stack QGIS guide](https://docs.google.com/document/d/1jet4EEBbbKgpNrPnuNJJDRuAJUiR2pIMFQp9JTlygAQ/edit).', '''
     # GeoPandas writes GeoJSON directly, without a separate GIS file driver.
@@ -229,11 +245,61 @@ section(cells, 'Find the item’s assets', 'An item’s `assets` dictionary give
     assets["href"] = [urljoin(item_url, href) for href in assets["href"]]
     assets
     ''')
+section(cells, 'Explore the public APIs', 'The [API specifications](https://api-doc.core-stack.org) describe each endpoint. Follow the [public API guide](https://docs.core-stack.org/use-precomputed-data/public-apis/) to generate your API key. This public OpenAPI document lists the callable paths, required parameters and response descriptions; reading it does not require your key.', '''
+    API_SCHEMA_URL = "https://geoserver.core-stack.org/?format=openapi"
+    schema_response = requests.get(API_SCHEMA_URL, timeout=90)
+    schema_response.raise_for_status()
+    api_spec = schema_response.json()
+    api_paths = {path: methods["get"] for path, methods in api_spec["paths"].items() if path.startswith("/get_")}
+    api_catalogue = pd.DataFrame([
+        {"API path": path,
+         "Required parameters": ", ".join(p["name"] for p in operation["parameters"] if p["in"] == "query" and p.get("required")),
+         "Optional parameters": ", ".join(p["name"] for p in operation["parameters"] if p["in"] == "query" and not p.get("required"))}
+        for path, operation in api_paths.items()
+    ])
+    with pd.option_context("display.max_rows", None, "display.max_colwidth", None):
+        display(api_catalogue)
+    ''')
+section(cells, 'Choose an API and inspect its specification', 'Change `api_path` to any path in the table. The parameter table shows types and descriptions. The response definitions include documented schemas or examples.', '''
+    api_path = "/get_active_locations/"
+    operation = api_paths[api_path]
+    print(operation.get("description", operation.get("summary", "")))
+    parameters = pd.DataFrame(operation["parameters"])
+    display(parameters.reindex(columns=["name", "in", "required", "type", "description"]))
+    print(json.dumps(operation["responses"], indent=2))
+    ''')
 api_setup(cells)
+section(cells, 'Set parameters for the chosen API', 'The same base URL and API key header work for all the listed APIs. Edit `request_params` to match the chosen specification: use `{}` for active locations, `place.copy()` for tehsil APIs, or `{**place, "mws_id": mws_id}` for one MWS. Coordinate APIs take `latitude` and `longitude`; the single-waterbody API takes `place` and a `uid` from Notebook 4.', '''
+    mws_id = mws["uid"].sort_values().iloc[0]
+    request_params = {}  # get_active_locations needs no query parameters.
+    request_url = API_URL.rstrip("/") + api_path
+    print(request_url)
+    request_params
+    ''')
+section(cells, 'Request the data', 'Run this cell after changing the API path and parameters. The JSON response stays available as `api_result` for your next cell. No API key is included in the displayed URL.', '''
+    api_response = requests.get(request_url, params=request_params, headers=api_headers, timeout=180)
+    api_response.raise_for_status()
+    api_result = api_response.json()
+    print(json.dumps(api_result, indent=2)[:4000])  # Preview; api_result contains the full response.
+    ''')
+section(cells, 'Find the generated layer links', '`get_generated_layer_urls` lists published layer links for this tehsil, including styling information where supplied.', '''
+    response = requests.get(API_URL + "get_generated_layer_urls/", params=place, headers=api_headers, timeout=90)
+    response.raise_for_status()
+    api_layers = pd.DataFrame(response.json())
+    api_layers.head(10)
+    ''')
 api_tehsil(cells)
-section(cells, 'Read the API’s MWS table', 'The API returns ordinary records. Convert one named table to a DataFrame and select its columns.', '''
-    api_mws = pd.DataFrame(api_data["mws"])
-    api_mws[["uid", "area_in_ha", "watershed_code", "basin_code", "sub_basin_code"]].head(10)
+section(cells, 'Choose a tehsil table', 'Change `table_name` to any table in the preceding list. Start with the MWS records.', '''
+    table_name = "mws"
+    api_table = pd.DataFrame(api_data[table_name])
+    api_table.head(10)
+    ''')
+section(cells, 'Find an MWS from a point', 'Use a point inside the first MWS, or change the latitude and longitude to your own location.', '''
+    point = mws.geometry.iloc[0].representative_point()
+    coordinates = {"latitude": point.y, "longitude": point.x}
+    response = requests.get(API_URL + "get_mwsid_by_latlon/", params=coordinates, headers=api_headers, timeout=90)
+    response.raise_for_status()
+    response.json()
     ''')
 finish(entry, cells)
 
@@ -308,17 +374,28 @@ section(cells,'Waterbodies intersecting this MWS','The result lists waterbody id
     mws_intersect_swb = waterbodies.loc[waterbodies.intersects(mws_shape), ["UID"]]
     mws_intersect_swb
     ''')
-api_setup(cells); api_tehsil(cells)
-for group, var, title, cols, key in [
- ('mws','api_mws','Area and basin details from the API',['uid','area_in_ha','watershed_code','basin_code','sub_basin_code'],'uid'),
- ('dem','api_elevation','Elevation from the API',['min_elevation_in_m','max_elevation_in_m','mean_elevation_in_m'],'uid'),
- ('terrain','api_terrain','Terrain from the API',['plain_area_percent','slopy_area_percent','hill_slope_area_percent','ridge_area_percent','valley_area_percent'],'uid'),
- ('mws_connectivity','api_connections','MWS connections from the API',['upstream_mws','downstream_mws','direction'],'uid'),
- ('drainage_density','api_drainage','Drainage density from the API',['drainage_density_weighted_in_km_per_km2','drainage_density_std_in_km_per_km2'],'uid'),
- ('stream_order','api_orders','Stream-order shares from the API',[f'order_{n}_area_percent' for n in range(1,12)],'uid'),
- ('mws_intersect_villages','api_villages','Village intersections from the API',None,'mws uid'),
- ('mws_intersect_swb','api_waterbodies','Waterbody intersections from the API',None,'uid')]:
-    api_mws(cells,group,var,title,cols,key)
+api_setup(cells)
+section(cells, 'Read MWS boundaries from the API', '`get_mws_geometries` returns the tehsil boundaries as GeoJSON. Select the same MWS identifier used above.', '''
+    response = requests.get(API_URL + "get_mws_geometries/", params=place, headers=api_headers, timeout=90)
+    response.raise_for_status()
+    api_mws_boundaries = gpd.GeoDataFrame.from_features(response.json()["features"], crs="EPSG:4326")
+    api_mws_boundaries.loc[api_mws_boundaries["uid"] == mws_id]
+    ''')
+section(cells, 'Read the MWS indicator summary', '`get_mws_kyl_indicators` provides a compact indicator record. Inspect the column names to choose the indicators you want to explore next.', '''
+    response = requests.get(API_URL + "get_mws_kyl_indicators/", params={**place, "mws_id": mws_id}, headers=api_headers, timeout=90)
+    response.raise_for_status()
+    api_indicators = pd.DataFrame(response.json())
+    api_indicators.T
+    ''')
+section(cells, 'Find the MWS report', '`get_mws_report` returns the report link for this MWS.', '''
+    response = requests.get(API_URL + "get_mws_report/", params={**place, "mws_id": mws_id}, headers=api_headers, timeout=90)
+    response.raise_for_status()
+    response.json()
+    ''')
+
+api_tehsil(cells)
+section(cells, 'Compare the MWS tables', 'Choose `mws`, `dem`, `terrain`, `drainage_density` or `stream_order` to inspect this MWS. Change `table_name` and rerun this cell.', "table_name = 'terrain'\napi_table = pd.DataFrame(api_data[table_name])\napi_table.loc[api_table['uid'] == mws_id].T")
+section(cells, 'Try another MWS API', 'Change `mws_api` to `get_mws_data` for time series or `get_mws_kyl_indicators` for its summary. Notebook 3 plots the time-series response. Coordinate lookup is demonstrated in Start.', "mws_api = 'get_mws_data'\nresponse = requests.get(API_URL + mws_api + '/', params={**place, 'mws_id': mws_id}, headers=api_headers, timeout=90)\nresponse.raise_for_status()\nmws_result = response.json()\nprint(json.dumps(mws_result, indent=2)[:2000])")
 finish(entry,cells)
 
 # 3. Water through the years and seasons
@@ -384,12 +461,13 @@ section(cells,'Plot the fortnightly water series','These are water depths for ea
     ''')
 for kind in ['crop','tree','shrub']:
     read(cells,'ndvi_'+kind,'Read NDVI on '+{'crop':'crops','tree':'trees','shrub':'shrubs'}[kind], 'NDVI is a unitless measure of vegetation greenness. The date fields contain numeric values directly.')
-section(cells,'Put the three NDVI series together','Select the same MWS and the same date columns from each layer.', '''
-    crop_ndvi = ndvi_crop.loc[ndvi_crop["uid"] == mws_id, date_fields].iloc[0]
-    tree_ndvi = ndvi_tree.loc[ndvi_tree["uid"] == mws_id, date_fields].iloc[0]
-    shrub_ndvi = ndvi_shrub.loc[ndvi_shrub["uid"] == mws_id, date_fields].iloc[0]
+section(cells,'Put the three NDVI series together','Read each layer’s own date columns for the same MWS. Pandas aligns the series by date and leaves a gap where a layer has no value.', '''
+    crop_ndvi = ndvi_crop.loc[ndvi_crop["uid"] == mws_id].iloc[0].filter(regex=r"^\\d{4}-\\d{2}-\\d{2}$")
+    tree_ndvi = ndvi_tree.loc[ndvi_tree["uid"] == mws_id].iloc[0].filter(regex=r"^\\d{4}-\\d{2}-\\d{2}$")
+    shrub_ndvi = ndvi_shrub.loc[ndvi_shrub["uid"] == mws_id].iloc[0].filter(regex=r"^\\d{4}-\\d{2}-\\d{2}$")
     ndvi = pd.DataFrame({"Crops": crop_ndvi, "Trees": tree_ndvi, "Shrubs": shrub_ndvi})
     ndvi.index = pd.to_datetime(ndvi.index)
+    ndvi = ndvi.sort_index().loc["2017-07-01":"2025-06-30"]
     ndvi.head(12)
     ''')
 section(cells,'Plot vegetation greenness','The three plots share the NDVI scale and date axis.', '''
@@ -407,37 +485,25 @@ read(cells,'aquifer','Read the aquifer layer','The aquifer class identifies the 
 section(cells,'Aquifer description','Read the classification and the published aquifer description for the same identifier.', '''
     aquifer.loc[aquifer["uid"] == mws_id, ["aquifer_class", "Major_Aqui", "Principal_", "Age"]].T
     ''')
-api_setup(cells);api_tehsil(cells)
-section(cells,'Annual water values from the API','The API uses separate columns for each variable and year. Build the same three-column table using those exact names.', '''
-    api_annual_rows = pd.DataFrame(api_data["hydrological_annual"])
-    api_annual_row = api_annual_rows.loc[api_annual_rows["uid"] == mws_id].iloc[0]
-    api_annual = pd.DataFrame({
-        "Rainfall": [api_annual_row[f"precipitation_in_mm_{y}-{y+1}"] for y in YEARS],
-        "ET": [api_annual_row[f"et_in_mm_{y}-{y+1}"] for y in YEARS],
-        "Runoff": [api_annual_row[f"runoff_in_mm_{y}-{y+1}"] for y in YEARS]
-    }, index=YEARS)
-    api_annual
-    ''')
-section(cells,'Seasonal water values from the API','Read the recorded Kharif, Rabi and Zaid values for each year.', '''
-    api_season_rows = pd.DataFrame(api_data["hydrological_seasonal"])
-    api_season_row = api_season_rows.loc[api_season_rows["uid"] == mws_id].iloc[0]
-    api_seasonal = pd.DataFrame([
-        {"Year": year, "Season": season.title(),
-         "Rainfall": api_season_row[f"precipitation_{season}_in_mm_{year}-{year+1}"],
-         "ET": api_season_row[f"et_{season}_in_mm_{year}-{year+1}"],
-         "Runoff": api_season_row[f"runoff_{season}_in_mm_{year}-{year+1}"]}
-        for year in YEARS for season in ["kharif", "rabi", "zaid"]
-    ]).set_index(["Year", "Season"])
-    api_seasonal
-    ''')
+api_setup(cells)
 section(cells,'Fortnightly water and NDVI from the API','`get_mws_data` returns these time series for one MWS. Read its `time_series` list as a table.', '''
     response = requests.get(API_URL + "get_mws_data/", params={**place, "mws_id": mws_id}, headers=api_headers, timeout=90)
     response.raise_for_status()
     api_time_series = pd.DataFrame(response.json()["time_series"])
     api_time_series[["date", "precipitation", "runoff", "et", "ndvi_crop", "ndvi_tree", "ndvi_shrub"]].head(12)
     ''')
-api_mws(cells,'soge_vector','api_soge','Groundwater assessment from the API',['soge_dev_percent','class_name'])
-api_mws(cells,'aquifer_vector','api_aquifer','Aquifer class from the API',['aquifer_class'])
+section(cells, 'Plot the API time series', 'Rainfall, runoff and ET share millimetre units. NDVI is shown separately. Change the selected columns to explore another series.', '''
+    api_time_series["date"] = pd.to_datetime(api_time_series["date"])
+    api_series = api_time_series.set_index("date").sort_index()
+    api_series[["precipitation", "runoff", "et"]].plot(subplots=True, figsize=(10, 7), ylabel="mm")
+    plt.tight_layout()
+    plt.show()
+    api_series[["ndvi_crop", "ndvi_tree", "ndvi_shrub"]].plot(figsize=(10, 4), ylabel="NDVI")
+    plt.show()
+    ''')
+
+api_tehsil(cells)
+section(cells, 'Read a water table from the API', 'The first ten MWS identifiers are shown below. Choose `hydrological_annual`, `hydrological_seasonal`, `soge_vector` or `aquifer_vector`, then select the same MWS used above.', "display(pd.DataFrame(api_data['mws'])[['uid']].head(10))\ntable_name = 'hydrological_annual'\napi_water_table = pd.DataFrame(api_data[table_name])\napi_water_table.loc[api_water_table['uid'] == mws_id].T")
 finish(entry,cells)
 
 # 4. Surface waterbodies
@@ -618,23 +684,60 @@ section(cells,'Livestock in the village','Compare the recorded counts for the ma
     ''')
 read(cells,'survey','Read Mission Antyodaya records','Mission Antyodaya records describe village facilities and livelihoods. The following tables pair category values with the original survey fields. Survey answers retain their published values.')
 section(cells,'Select the village survey','Use the same village identifier to read its survey record.', 'village_survey = survey.loc[survey["village_id"] == village_id].iloc[0]\nvillage_survey[["village_name", "village_id"]]')
-for group, params in GROUPS.items():
-    fields = {group+'_cat_value':'Category value', group+'_cat_cluster':'Category group', **{p['col']:p['label'] for p in params}}
-    section(cells, group.replace('_',' ').capitalize(), 'The category value summarises this group. Read the survey answers below it for the recorded details.', f'fields = {pformat(fields, width=88, sort_dicts=False)}\nvillage_survey.reindex(list(fields)).rename(index=fields).to_frame("Recorded value")')
-category_fields = {g+'_cat_value':g.replace('_',' ').capitalize() for g in GROUPS}
-section(cells,'View the survey categories','This chart shows the published category values. Refer to the original survey answers above when interpreting a category.', f'category_fields = {pformat(category_fields, width=88, sort_dicts=False)}\ncategory_values = pd.to_numeric(village_survey[list(category_fields)]).rename(index=category_fields)\ncategory_values.plot.barh(figsize=(10, 9), xlabel="Category value")\nplt.tight_layout()\nplt.show()')
-agri_fields = {p['col']:p['label'] for g in ['agriculture_land_cultivation','agriculture_support_services','agricultural_markets'] for p in GROUPS[g]}
-section(cells,'Agriculture in the village','Read cultivation, agricultural support and market survey answers together. The distances below come from the facilities layer.', f'agriculture_fields = {pformat(agri_fields, width=88, sort_dicts=False)}\ndisplay(village_survey.reindex(list(agriculture_fields)).rename(index=agriculture_fields).to_frame("Survey answer"))\nservice_distances.loc[["Agricultural markets", "Post-harvest services", "Agricultural support infrastructure"]].to_frame("Distance (km)")')
+survey_reference = {group: {p['col']: p['label'] for p in params} for group, params in GROUPS.items()}
+cells += [md('## Survey field reference\n\nThis collapsed reference pairs each survey group with its original fields and question labels. Run it once, then choose a group below.'),
+          code('survey_groups = ' + pformat(survey_reference, width=100, sort_dicts=False), True)]
+section(cells, 'Choose a survey group', 'The list shows the available groups and their category values. Change `survey_group` to another name in the list, such as `energy_access`, `agriculture_land_cultivation` or `agricultural_markets`, then rerun the next cells.', '''
+    group_list = pd.DataFrame({"Group": list(survey_groups),
+        "Category value": [village_survey[g + "_cat_value"] for g in survey_groups]})
+    display(group_list)
+    survey_group = "road_connectivity"
+    ''')
+section(cells, 'Read the category and original answers', 'This table keeps the exact source field, question label and answer together. The category summarises the group; the survey answers describe the recorded details.', '''
+    fields = {survey_group + "_cat_value": "Category value",
+              survey_group + "_cat_cluster": "Category group", **survey_groups[survey_group]}
+    survey_answers = pd.DataFrame({"Field": list(fields), "Question": list(fields.values()),
+        "Recorded answer": village_survey.reindex(list(fields)).values})
+    with pd.option_context("display.max_colwidth", None):
+        display(survey_answers)
+    ''')
+section(cells, 'Compare category values', 'The chart summarises the published categories. Use the group selector above to inspect their original survey answers.', '''
+    group_list.set_index("Group")["Category value"].plot.barh(figsize=(10, 8), xlabel="Category value")
+    plt.tight_layout()
+    plt.show()
+    ''')
+section(cells, 'Explore agricultural services', 'Choose `agriculture_land_cultivation`, `agriculture_support_services` or `agricultural_markets` above to read their survey answers. Here are the service distances from the facilities layer.', '''
+    service_distances.loc[["Agricultural markets", "Post-harvest services", "Agricultural support infrastructure"]].to_frame("Distance (km)")
+    ''')
+section(cells, 'Bring agricultural services and survey data together', 'Join on the village identifier. Then change `agriculture_columns` to inspect other fields listed in the survey reference or facilities table. Multiple source matches remain separate rows.', '''
+    agriculture_columns = ["village_id", "agriculture_land_cultivation_cat_value", "agricultural_markets_cat_value"]
+    market_columns = ["village_id", "l2_apmc_access_distance_km", "l2_agri_support_infra_distance_km"]
+    agriculture = survey.loc[survey["village_id"] == village_id, agriculture_columns].merge(
+        facilities.loc[facilities["village_id"] == village_id, market_columns], on="village_id", how="left")
+    agriculture
+    ''')
 read(cells,'mws','Read micro-watersheds','Use the village boundary to find intersecting MWS. An intersection does not allocate village population or livestock to an MWS.')
 section(cells,'Micro-watersheds linked to the village','List MWS whose geometry intersects the selected village boundary.', 'village_boundary = selected_village.geometry.union_all()\nmws.loc[mws.intersects(village_boundary), ["uid", "area_in_ha"]]')
-api_setup(cells); api_tehsil(cells)
-for group, title in [('social_economic_indicator','Population and literacy from the API'),('facilities_proximity','Service distances from the API'),('livestock','Livestock from the API'),('antyodaya','Village survey answers from the API')]:
-    section(cells,title,'Read the corresponding API record for the same village. The field names show the recorded measure and units.', f'api_{group} = pd.DataFrame(api_data[{group!r}])\napi_{group}.loc[api_{group}["village_id"] == village_id].T')
-section(cells,'Village links from the API','The intersection table lists the village identifiers linked to each MWS.', '''
-    api_links = pd.DataFrame(api_data["mws_intersect_villages"])
-    village_lists = api_links["village ids"].apply(ast.literal_eval)
-    api_links.loc[[village_id in ids for ids in village_lists], ["mws uid", "village ids"]]
+api_setup(cells)
+section(cells, 'Read village boundaries from the API', '`get_village_geometries` returns GeoJSON boundaries with `vill_ID` and `vill_name`. Read the tehsil once, then select the village used above.', '''
+    response = requests.get(API_URL + "get_village_geometries/", params=place, headers=api_headers, timeout=90)
+    response.raise_for_status()
+    api_villages = gpd.GeoDataFrame.from_features(response.json()["features"], crs="EPSG:4326")
+    display(api_villages[["vill_ID", "vill_name"]])
+    api_village = api_villages.loc[api_villages["vill_ID"] == village_id]
+    api_village.plot(figsize=(6, 6), edgecolor="black", color="#d7e9f5")
+    plt.show()
     ''')
+section(cells, 'Look up a place from coordinates', 'Take a point inside the village and ask `get_admin_details_by_latlon` for its administrative names. You can replace the latitude and longitude with another location.', '''
+    point = api_village.geometry.iloc[0].representative_point()
+    coordinates = {"latitude": point.y, "longitude": point.x}
+    response = requests.get(API_URL + "get_admin_details_by_latlon/", params=coordinates, headers=api_headers, timeout=90)
+    response.raise_for_status()
+    response.json()
+    ''')
+
+api_tehsil(cells)
+section(cells, 'Read village records from the API', 'Choose `social_economic_indicator`, `facilities_proximity`, `livestock` or `antyodaya`. The same village identifier selects the record for each table.', "table_name = 'social_economic_indicator'\napi_village_table = pd.DataFrame(api_data[table_name])\napi_village_table.loc[api_village_table['village_id'] == village_id].T")
 finish(entry,cells)
 write(OUT / 'layers.json', json.dumps(LAYERS, ensure_ascii=False, indent=2) + '\n')
 write(OUT / 'catalog.json', json.dumps(CATALOG, ensure_ascii=False, indent=2) + '\n')
