@@ -56,6 +56,7 @@ def begin(number, slug, title, summary):
                 pyodide_http.patch_all()
 
             import os
+            import re
             import ast
             import json
             from getpass import getpass
@@ -72,9 +73,9 @@ API_URL = 'https://geoserver.core-stack.org/api/v1/'
 STAC_URL = 'https://spatio-temporal-asset-catalog.s3.ap-south-1.amazonaws.com/CorestackCatalogs_merged_collection/tehsil_wise/catalog.json'
 YEARS = list(range(2017, 2025))''', True)]
     section(cells, 'Choose the tehsil', 'The template defaults to Hilsa, Nalanda, Bihar. GeoLibre downloads use your selected place instead. Edit `SCOPE` in the setup cell to change tehsil, then restart the kernel and run from the top. Layer coverage can differ between places.', '''
-        state = SCOPE["state"].lower().replace(" ", "_")
-        district = SCOPE["district"].lower().replace(" ", "_")
-        tehsil = SCOPE["tehsil"].lower().replace(" ", "_")
+        state = re.sub(r"[\\s_]+", "_", SCOPE["state"].replace("(", "").replace(")", "")).strip("_").lower()
+        district = re.sub(r"[\\s_]+", "_", SCOPE["district"].replace("(", "").replace(")", "")).strip("_").lower()
+        tehsil = re.sub(r"[\\s_]+", "_", SCOPE["tehsil"].replace("(", "").replace(")", "")).strip("_").lower()
         place = {"state": state, "district": district, "tehsil": tehsil}
         place
         ''')
@@ -461,18 +462,19 @@ section(cells,'Plot annual rainfall, ET and runoff','The three series share a mi
     ax.grid(axis="y", alpha=0.2)
     plt.show()
     ''')
-read(cells,'fortnightly_water','Read fortnightly water data','The date fields contain JSON objects. Each July–June year has 26 published fortnight starts, beginning on July 1.')
+read(cells,'fortnightly_water','Read fortnightly water data','The date fields contain JSON objects. Use the published dates: interval starts can differ between tehsils.')
 section(cells,'Make a table of fortnightly water values','Use the date fields for 2017–18 through 2024–25. Converting the index to dates makes time-series plotting and seasonal grouping straightforward.', '''
-    date_fields = [date.strftime("%Y-%m-%d") for year in YEARS
-                   for date in pd.date_range(f"{year}-07-01", periods=26, freq="14D")]
-    fortnight_row = fortnightly_water.loc[fortnightly_water["uid"] == mws_id].iloc[0]
-    fortnightly = pd.DataFrame({date: json.loads(fortnight_row[date]) for date in date_fields}).T
+    fortnight_row = fortnightly_water.loc[fortnightly_water["uid"] == mws_id].reset_index(drop=True).reindex([0]).iloc[0]
+    date_fields = sorted(fortnightly_water.filter(regex=r"^\\d{4}-\\d{2}-\\d{2}$").columns)
+    fortnightly = pd.DataFrame({date: json.loads(fortnight_row[date]) if pd.notna(fortnight_row[date]) else {} for date in date_fields}).T
+    fortnightly = fortnightly.reindex(columns=["Precipitation", "ET", "RunOff"])
     fortnightly = fortnightly[["Precipitation", "ET", "RunOff"]].rename(columns={"Precipitation": "Rainfall", "RunOff": "Runoff"})
     fortnightly.index = pd.to_datetime(fortnightly.index)
+    fortnightly = fortnightly.loc["2017-07-01":"2025-06-30"]
     fortnightly.index.name = "Date"
     fortnightly.head(12)
     ''')
-section(cells,'Group the values into seasons','Kharif is July–October, Rabi November–February, and Zaid March–June. Each interval belongs to the season of its start date, as in the tehsil API. Annual and fortnightly layers are separate estimates, so their totals can differ.', '''
+section(cells,'Group the values into seasons','Kharif is July–October, Rabi November–February, and Zaid March–June. These sums use the available recorded intervals, so incomplete seasons are not full-season totals. Each interval belongs to the season of its start date, as in the tehsil API. Annual and fortnightly layers are separate estimates, so their totals can differ.', '''
     seasonal_rows = fortnightly.copy()
     month = seasonal_rows.index.month
     seasonal_rows["Year"] = seasonal_rows.index.year - (month < 7).astype(int)
