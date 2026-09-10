@@ -14,6 +14,8 @@ import Point from "ol/geom/Point";
 import Overlay from "ol/Overlay";
 import planIcon from "../assets/plan_icon_final.png";
 import Icon from "ol/style/Icon";
+import { Home } from "lucide-react";
+
 
 const P = {
   base:    "oklch(60% 0.2 301.924)",
@@ -46,6 +48,7 @@ const StatPill = ({ label, value, accent }) => (
 
 const StewardDetailPage = ({ plan, onClose }) => {
   const [stewardData, setStewardData] = useState(null);
+  const [planMetadata, setPlanMetadata] = useState([]);
   const [loading,     setLoading]     = useState(true);
   const [error,       setError]       = useState(false);
   const { organization, facilitator } = useParams();
@@ -63,7 +66,6 @@ const returnContext = {
 // ── STEWARD VILLAGES MAP ───────────────────────────────
 const loadStewardVillages = useCallback(async (map) => {
   const plans = stewardData.plans ?? [];
-console.log("Loading steward villages on map:", plans);
   const validPlans = plans.filter(
     (p) =>
       p?.latitude &&
@@ -72,7 +74,6 @@ console.log("Loading steward villages on map:", plans);
       !isNaN(parseFloat(p.longitude))
   );
   if (validPlans.length === 0) return;
-  console.log("Valid plans for map:", validPlans);
 
   const features = validPlans.map((p) => {
     const lon = parseFloat(p.longitude);
@@ -229,9 +230,6 @@ const extent = villageLayer.getSource().getExtent();
 }, [stewardData?.plans]);
 
   useEffect(() => {
-     console.log("organization:", organization);
-  console.log("facilitator:", facilitator);
-
 if (!organization || !facilitator) return;
     const load = async () => {
       setLoading(true);
@@ -240,7 +238,6 @@ if (!organization || !facilitator) return;
         const url = `${process.env.REACT_APP_API_URL}/organizations/${organization}/watershed/plans/steward-details/?facilitator_name=${encodeURIComponent(
   facilitator.replace(/-/g, " ")
 )}`;
-        console.log("Request URL:", url);
         const res = await fetch(url, {
           headers: {
             "Content-Type": "application/json",
@@ -249,11 +246,7 @@ if (!organization || !facilitator) return;
           },
         });
         if (!res.ok) throw new Error(`API error ${res.status}`);
-        console.log("Status:", res.status);
-console.log("Response OK:", res.ok);
         const data = await res.json();
-        console.log("Steward API Response:", data);
-
         setStewardData(data);
       } catch (err) {
         console.error("Steward detail fetch failed:", err);
@@ -265,6 +258,48 @@ console.log("Response OK:", res.ok);
 
     load();
 }, [organization, facilitator]);
+
+useEffect(() => {
+  if (!stewardData?.plans?.length) {
+    return;
+  }
+
+  const fetchPlanMetadata = async () => {
+    try {
+      const tehsilId = stewardData.working_locations?.tehsils?.[0]?.id;
+      const planIds = stewardData.plans.map((plan) => plan.id);
+
+      if (!tehsilId) {
+        console.error("Tehsil ID not found");
+        return;
+      }
+
+      const url = `${process.env.REACT_APP_API_URL}/watershed/plans/?tehsil=${tehsilId}&filter_test_plan=true`;
+      const res = await fetch(url, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          "ngrok-skip-browser-warning": "420",
+          "X-API-Key": process.env.REACT_APP_API_KEY,
+        },
+      });
+      if (!res.ok) {
+        throw new Error(`Plans fetch error ${res.status}`);
+      }
+
+      const data = await res.json();
+      const results = data.filter((plan) =>
+        planIds.includes(plan.id)
+      );
+      setPlanMetadata(results);
+    } catch (err) {
+      console.error("Error fetching plan metadata:", err);
+      setPlanMetadata([]);
+    }
+  };
+
+  fetchPlanMetadata();
+}, [stewardData]);
 
   // ── LOADING ──────────────────────────────────────────────
   if (loading) {
@@ -302,323 +337,255 @@ console.log("Response OK:", res.ok);
   const openPlan = async (plan) => {
 };
 
+const planYears = [
+  ...new Set(
+    planMetadata
+      .map((plan) => {
+        if (!plan.created_at) return null;
 
-
-
+        return new Date(plan.created_at).getFullYear();
+      })
+      .filter(Boolean)
+  ),
+].sort((a, b) => b - a);
 
   return (
     <div className="flex flex-col h-full">
       <LandingNavbar />
 
-{/* ───────────────────── STEWARD HEADER ───────────────────── */}
+{/* ───────────────────── PURPLE HEADER ───────────────────── */}
 <div
-  className="relative z-10"
+  className="relative z-10 h-28"
   style={{
     background: `linear-gradient(135deg, ${P.base}, ${P.dark})`,
   }}
 >
-  <div className="max-w-[1800px] mx-auto px-6 py-12">
-
-    {/* HEADER CONTENT */}
-    <div className="flex items-center gap-4">
-
-      {/* BACK BUTTON */}
-      <button
-        onClick={() => {
-          navigate(
-            `/landscape-stewardship?state=${returnContext?.stateId}&stateName=${encodeURIComponent(
-              returnContext?.stateName || ""
-            )}&district=${returnContext?.districtId}&districtName=${encodeURIComponent(
-              returnContext?.districtName || ""
-            )}&view=steward`
-          );
-        }}
-        className="
-          flex-shrink-0
-          inline-flex
-          items-center
-          gap-1
-          px-3
-          py-1.5
-          rounded-lg
-          text-[10px]
-          font-semibold
-          transition-all
-          duration-200
-          active:scale-95
-        "
-        style={{
-          background: "rgba(255,255,255,0.96)",
-          color: P.dark,
-          boxShadow: "0 2px 8px rgba(0,0,0,0.12)",
-        }}
-      >
-        ← Back
-      </button>
-
-
-      {/* STEWARD DETAILS */}
-      <div className="min-w-0">
-
-        {/* NAME + PREVIEW */}
-        <div className="flex items-center gap-2">
-
-          <h1 className="text-lg font-bold text-white leading-tight">
-            {stewardData.facilitator_name
-              ?.split(" ")
-              .map(
-                (word) =>
-                  word.charAt(0).toUpperCase() +
-                  word.slice(1).toLowerCase()
-              )
-              .join(" ")}
-          </h1>
-
-        </div>
-
-
-        {/* SUPPORT DISTRICT */}
-        <p
-          className="text-[10px] mt-0.5"
-          style={{
-            color: "rgba(255,255,255,0.72)",
-          }}
-        >
-          Support District · {returnContext?.districtName || "—"}
-        </p>
-
-      </div>
-
-    </div>
-
-  </div>
+  {/* HOME BUTTON */}
+  <button
+    onClick={() => {
+      navigate(
+        `/landscape-stewardship?state=${returnContext?.stateId}&stateName=${encodeURIComponent(
+          returnContext?.stateName || ""
+        )}&district=${returnContext?.districtId}&districtName=${encodeURIComponent(
+          returnContext?.districtName || ""
+        )}&view=steward`
+      );
+    }}
+    className="absolute left-6 top-6 w-11 h-11 rounded-full flex items-center justify-center transition-all duration-200 hover:scale-105 active:scale-95"
+    style={{
+      background: "rgba(255,255,255,0.95)",
+      color: P.dark,
+      boxShadow: "0 3px 10px rgba(0,0,0,0.15)",
+    }}
+    title="Home"
+  >
+    <Home size={20} strokeWidth={2.5} />
+  </button>
 </div>
-
 
 {/* ───────────────────── BODY ───────────────────── */}
-<div className="flex-1 overflow-visible p-6 flex flex-col gap-6">
+<div className="flex-1 overflow-visible p-6">
 
-  {/* ───────────────────── STATS ROW ───────────────────── */}
-  <div className="z-20 -mt-10 grid grid-cols-1 md:grid-cols-3 gap-4">
-    {/* TOTAL VILLAGES */}
-    <StatPill
-      label="Total Villages Covered"
-      value={stewardData.statistics?.total_plans ?? 0}
-      accent={P.base}
-    />
+  <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 items-stretch">
 
-    {/* PLANNING COMPLETED */}
-    <StatPill
-      label="Planning Completed For"
-      value={
-        stewardData.plans?.filter((p) => p.is_completed).length ?? 0
-      }
-      accent={P.dark}
-    />
-
-    {/* OVERALL PLANNING PROGRESS */}
-    <div
-      className="rounded-xl bg-white px-4 py-3"
-      style={{
-        boxShadow: "0 2px 10px rgba(0,0,0,0.08)",
-      }}
-    >
-      <div className="flex items-center justify-between mb-2">
-
-        <p
-          className="text-[8px] font-bold uppercase tracking-wider"
-          style={{
-            color: P.dark,
-          }}
-        >
-          Overall Planning Progress
-        </p>
-
-      </div>
-
-      <div className="flex items-center gap-2">
-
-        <span
-          className="text-lg font-bold"
-          style={{
-            color: P.dark,
-          }}
-        >
-          {stewardData.plans?.filter((p) => p.is_completed).length ?? 0}
-        </span>
-
-        <span className="text-[9px] text-slate-400">
-          of {stewardData.statistics?.total_plans ?? 0} villages
-        </span>
-
-      </div>
-
-      {/* Progress Bar */}
-      <div className="mt-2 h-1.5 w-full rounded-full bg-slate-100 overflow-hidden">
-
-        <div
-          className="h-full rounded-full transition-all duration-500"
-          style={{
-            width: `${
-              stewardData.statistics?.total_plans
-                ? Math.min(
-                    100,
-                    ((stewardData.plans?.filter(
-                      (p) => p.is_completed
-                    ).length ?? 0) /
-                      stewardData.statistics.total_plans) *
-                      100
-                  )
-                : 0
-            }%`,
-            background: P.base,
-          }}
-        />
-
-      </div>
-
-    </div>
-
-  </div>
-
-
-  {/* ───────────────────── EXISTING CONTENT ───────────────────── */}
-  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-
-        {/* PERSONAL DETAILS */}
-        <div className="bg-white rounded-2xl p-5 shadow-sm"
-          style={{ border: `1px solid ${P.border}` }}>
-          <p className="text-xs font-semibold uppercase tracking-widest mb-3"
-            style={{ color: P.muted }}>
-            Personal Details
-          </p>
-          <InfoRow label="Gender"            value={stewardData.gender}                    />
-          <InfoRow label="Age"               value={stewardData.age}                       />
-          <InfoRow label="Education"         value={stewardData.education_qualification}   />
-          <InfoRow label="Organization"      value={stewardData.organization?.name}        />
-          <InfoRow label="Projects"          value={projects}                              />
-        </div>
-
-        {/* WORKING LOCATIONS */}
-        <div className="bg-white rounded-2xl p-5 shadow-sm"
-          style={{ border: `1px solid ${P.border}` }}>
-          <p className="text-xs font-semibold uppercase tracking-widest mb-3"
-            style={{ color: P.muted }}>
-            Working Locations
-          </p>
-          <InfoRow label="States"    value={states    || "N/A"} />
-          <InfoRow label="Districts" value={districts || "N/A"} />
-          <InfoRow label="Tehsils"   value={tehsils   || "N/A"} />
-        </div>
-
-        </div>
-
-
-{/* ───────────────────── VILLAGES MAP OVERVIEW ───────────────────── */}
+    {/* =====================================================
+        LEFT SIDE — BASIC STEWARD DETAILS
+    ====================================================== */}
+    <div className="lg:col-span-2 flex flex-col gap-4">
+{/* PROFILE CARD */}
 <div
-  className="bg-white rounded-2xl p-5 shadow-sm"
+  className="relative z-20 bg-white rounded-2xl p-5 pt-20 shadow-sm h-full flex flex-col"
   style={{ border: `1px solid ${P.border}` }}
 >
-  <div className="flex items-center justify-between mb-4">
-    <p
-      className="text-xs font-semibold uppercase tracking-widest"
-      style={{ color: P.muted }}
+
+  {/* PROFILE PHOTO */}
+  <div
+    className="absolute left-1/2 -translate-x-1/2 -top-14"
+  >
+    <div
+      className="w-28 h-28 rounded-full overflow-hidden flex items-center justify-center"
+      style={{
+        background: P.light,
+        border: "5px solid white",
+        boxShadow: "0 4px 15px rgba(0,0,0,0.15)",
+      }}
     >
-      Villages Map Overview
-    </p>
-
-    {/* <div className="flex items-center gap-2 flex-wrap">
-      {(stewardData.plans ?? []).map((p, i) => (
-        <span
-          key={p.id ?? i}
-          className="px-2.5 py-1 rounded-full text-[10px] font-semibold"
-          style={{
-            background: P.light,
-            color: P.base,
-            border: `1px solid ${P.border}`,
-          }}
-        >
-          {p.village_name || p.plan || "Village"}
-        </span>
-      ))}
-    </div> */}
+      <img
+        src={StewardIcon}
+        alt="Steward"
+        className="w-full h-full object-cover"
+      />
+    </div>
   </div>
 
-  <div className="w-full">
-    <MapSection
-      title=""
-      loadLayer={loadStewardVillages}
-      loadBoundary={() => {}}
-      districtNameSafe=""
-      blockNameSafe=""
-      plan={stewardData.plans?.[0] ?? null}
-    />
+  {/* NAME */}
+  <div className="text-center mb-5 p-6">
+
+    <h1
+      className="text-xl font-bold"
+      style={{ color: P.text }}
+    >
+      {stewardData.facilitator_name
+        ?.split(" ")
+        .map(
+          (word) =>
+            word.charAt(0).toUpperCase() +
+            word.slice(1).toLowerCase()
+        )
+        .join(" ")}
+    </h1>
+
+    {/* GENDER + AGE */}
+    <div className="flex items-center justify-center gap-3 mt-1">
+
+      <span
+        className="text-sm font-medium"
+        style={{ color: P.muted }}
+      >
+        {stewardData.gender || "N/A"}
+      </span>
+
+      <span
+        className="w-1 h-1 rounded-full"
+        style={{ background: P.muted }}
+      />
+
+      <span
+        className="text-sm font-medium"
+        style={{ color: P.muted }}
+      >
+        {stewardData.age ? `${stewardData.age} yrs old` : "N/A"}
+      </span>
+
+    </div>
+
   </div>
+        {/* OTHER DETAILS */}
+        {/* <InfoRow
+          label="Years of Experience"
+          value={returnContext?.districtName || "N/A"}
+        /> */}
+        <div className="flex flex-col gap-2.5 mb-4 p-10 rounded-xl" style={{ background: P.lighter, border: `1px solid ${P.border}` }}>
+           <InfoRow
+          label="Gram Panchayat"
+          value={returnContext?.districtName || "N/A"}
+        />
+
+        <InfoRow
+          label="No. of Villages Covered"
+          value={stewardData.statistics?.total_plans ?? 0}
+        />
+
+        <InfoRow
+          label="Organization"
+          value={stewardData.organization?.name}
+        />
+
+        <InfoRow
+          label="Education"
+          value={stewardData.education_qualification}
+        />
+        </div>
+     
 </div>
 
-        {/* PLANS */}
-        <div className="bg-white rounded-2xl p-5 shadow-sm"
-          style={{ border: `1px solid ${P.border}` }}>
-          <p className="text-xs font-semibold uppercase tracking-widest mb-3"
-            style={{ color: P.muted }}>
-            Plans ({stewardData.plans?.length ?? 0})
-          </p>
 
-          <div className="flex flex-col gap-2">
-            {(stewardData.plans ?? []).length === 0 ? (
-              <p className="text-sm" style={{ color: P.muted }}>No plans found.</p>
-            ) : (
-              stewardData.plans.map((p, i) => (
-                <div key={p.id ?? i}
-                  className="flex items-center justify-between px-4 py-3 rounded-xl"
-                  style={{ background: P.lighter, border: `1px solid ${P.border}` }}>
-              <p
-                onClick={() => {
-                  if (!p.is_completed) return;
-                  window.open(
-                    `/landscape-stewardship/plan-view?id=${p.id}` +
-                      `&stateId=${returnContext?.stateId ?? ""}` +
-                      `&stateName=${encodeURIComponent(returnContext?.stateName ?? "")}` +
-                      `&districtId=${returnContext?.districtId ?? ""}` +
-                      `&districtName=${encodeURIComponent(returnContext?.districtName ?? "")}`,
-                    "_blank"
-                  );
-                }}
-             className={`text-sm font-medium truncate ${
-            p.is_completed
-              ? "cursor-pointer hover:underline"
-              : "cursor-not-allowed"
-          }`}
-          style={{
-            color: p.is_completed ? P.base : "#9CA3AF", // grey for incomplete
-            textDecoration: p.is_completed ? "underline" : "none",
-            opacity: p.is_completed ? 1 : 0.65,
-          }}
-
-              >
-                {p.name}
-              </p>
-                  <span
-                    className="text-xs font-semibold ml-3 flex-shrink-0 px-2 py-1 rounded-full"
-                    style={{
-                      background: p.is_completed
-                        ? "oklch(93% 0.08 145)"
-                        : "oklch(95% 0.05 60)",
-                      color: p.is_completed
-                        ? "oklch(38% 0.14 145)"
-                        : "oklch(45% 0.12 60)",
-                    }}
-                  >
-                    {p.is_completed ? "✓ Completed" : "⏳ In Progress"}
-                  </span>
-                </div>
-              ))
-            )}
-          </div>
+      {/* YOUTUBE LINKS — PLACEHOLDER FOR NEXT STEP */}
+      {/* <div
+        className="bg-white rounded-2xl p-4 shadow-sm"
+        style={{ border: `1px solid ${P.border}` }}
+      >
+      <p
+        className="text-base font-bold uppercase tracking-wider mb-2"
+        style={{ color: P.text }}
+      >
+        Story Links
+      </p>
+       <div className="bg-white rounded-2xl p-5 shadow-sm"
+        style={{ border: `1px solid ${P.border}` }}>
+          <a
+            href="https://www.youtube.com/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="block text-sm hover:underline"
+            style={{ color: P.base }}
+          >
+            • Stewardship Story
+          </a>
         </div>
+        <div className="bg-white rounded-2xl p-5 shadow-sm mt-3"
+        style={{ border: `1px solid ${P.border}` }}>
+          <a
+            href="https://www.youtube.com/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="block text-sm hover:underline"
+            style={{ color: P.base }}
+          >
+            • NRM Planning with Commons Connect
+          </a>
+        </div>
+      </div> */}
 
+    </div>
+
+
+    {/* =====================================================
+        RIGHT SIDE — MAP
+    ====================================================== */}
+    <div className="lg:col-span-3 h-full">
+
+      <div
+        className="bg-white rounded-2xl p-5 shadow-sm h-full flex flex-col"
+        style={{ border: `1px solid ${P.border}` }}
+      >
+
+        <div className="flex items-center justify-between mb-4">
+
+            {/* LEFT — STEWARDSHIP AREA */}
+            <p
+              className="text-xs font-semibold uppercase tracking-widest"
+              style={{ color: P.muted }}
+            >
+              Stewardship across {tehsils || "N/A"}
+            </p>
+
+            {/* RIGHT — YEAR */}
+           <select
+              className="px-3 py-1.5 rounded-lg text-xs font-semibold outline-none"
+              style={{
+                color: P.dark,
+                border: `1px solid ${P.border}`,
+                background: "#ffffff",
+              }}
+              defaultValue=""
+            >
+              <option value="" disabled>
+                Year
+              </option>
+
+              {planYears.map((year) => (
+                <option key={year} value={year}>
+                  {year}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="rounded-xl overflow-hidden w-full" style={{ height: "500px" }}>
+            <MapSection
+              title=""
+              loadLayer={loadStewardVillages}
+              loadBoundary={() => {}}
+              districtNameSafe=""
+              blockNameSafe=""
+              plan={stewardData.plans?.[0] ?? null}
+            />
+          </div>
       </div>
     </div>
+  </div>
+</div>
+</div>
   );
 };
 
