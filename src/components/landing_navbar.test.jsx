@@ -46,3 +46,15 @@ describe("Explore Data navigation help", () => {
     expect(screen.getByText("Find layers to explore")).toBeTruthy();
   });
 });
+
+it("resets the selected explorer first, then returns to location selection", () => {
+  const reset = jest.fn(), choose = jest.fn();
+  const {rerender} = render(<LandingNavbar downloadScope={{state:"Bihar", district:"Nalanda", tehsil:"Hilsa"}} onResetExplorer={reset} onChooseLocation={choose} />);
+  fireEvent.click(screen.getByRole("button",{name:"Reset tehsil view"}));
+  expect(reset).toHaveBeenCalledTimes(1);
+  expect(choose).not.toHaveBeenCalled();
+  fireEvent.click(screen.getByRole("button",{name:"Choose another tehsil"}));
+  expect(choose).toHaveBeenCalledTimes(1);
+  rerender(<LandingNavbar downloadScope={{state:"Bihar", district:"Banka", tehsil:"Banka"}} onResetExplorer={reset} onChooseLocation={choose} />);
+  expect(screen.getByRole("button",{name:"Reset tehsil view"})).toBeTruthy();
+});
