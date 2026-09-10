@@ -15,6 +15,8 @@ for path in paths:
     for cell in code_cells:
         source = ''.join(cell['source'])
         compile(source, str(path), 'exec', flags=ast.PyCF_ALLOW_TOP_LEVEL_AWAIT)
-        assert not any(isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) for node in ast.walk(ast.parse(source)))
+        functions = [node.name for node in ast.walk(ast.parse(source)) if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))]
+        assert functions == (["read_json"] if "corestack-io" in cell["metadata"].get("tags", []) else [])
+        assert "typeNames=" not in source and "typeName=" not in source and "GEOSERVER =" not in source
         assert not cell['outputs'] and cell['execution_count'] is None
     print(f'{path.name}: {len(code_cells)} code cells; structure and syntax checked')

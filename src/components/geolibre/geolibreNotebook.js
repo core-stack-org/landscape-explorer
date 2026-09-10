@@ -65,13 +65,10 @@ export const injectGeoLibreNotebookScope = (
     throw new Error("The GeoLibre notebook template has no injectable setup cell.");
   }
 
-  const geoserverUrl = process.env.REACT_APP_GEOSERVER_URL ||
-    "https://geoserver.core-stack.org:8443/geoserver/";
   const apiUrl = process.env.REACT_APP_API_URL ||
     "https://geoserver.core-stack.org/api/v1/";
   const replacements = {
     "SCOPE =": `SCOPE = json.loads(${pythonJson(scope)})\n`,
-    "GEOSERVER =": `GEOSERVER = json.loads(${pythonJson(geoserverUrl.replace(/\/?$/, "/"))})\n`,
     "API_URL =": `API_URL = json.loads(${pythonJson(apiUrl.replace(/\/?$/, "/"))})\n`,
   };
   setup.source = setup.source.map((line) => {
