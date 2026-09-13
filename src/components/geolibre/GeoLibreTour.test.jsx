@@ -30,3 +30,13 @@ describe("GeoLibre quick tour", () => {
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 });
+
+it("offers notebook guidance before the final slide with the shared Drive link", () => {
+  const notebookSteps = GEOLIBRE_TOUR_STEPS.map((step, index) => ({ ...step, index })).filter(step => step.link);
+  expect(notebookSteps).toHaveLength(2);
+  expect(notebookSteps.every(step => step.index < GEOLIBRE_TOUR_STEPS.length - 1)).toBe(true);
+  render(<GeoLibreTour open onClose={jest.fn()} />);
+  for (let i = 0; i < notebookSteps[0].index; i += 1) fireEvent.click(screen.getByRole("button", { name: "Next" }));
+  expect(screen.getByRole("link", { name: "Open CoRE Stack Notebooks" }).getAttribute("href"))
+    .toBe("https://drive.google.com/drive/folders/1UcqMoiqfcSzv0COTGnJQPPf8LiK4W4v6");
+});

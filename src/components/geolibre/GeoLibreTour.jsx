@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { ChevronLeft, ChevronRight, ExternalLink, X } from "lucide-react";
 
+import { CORE_STACK_NOTEBOOKS_URL } from "./notebookResources";
+
 export const GEOLIBRE_TOUR_STEPS = [
   {
     title: "Find layers to explore",
@@ -31,6 +33,20 @@ export const GEOLIBRE_TOUR_STEPS = [
     description:
       "Use a layer's identify control, then click the map to read information for that place. The legend explains the colours used by the visible layers.",
     tip: "If the map becomes crowded, hide a few layers or reduce their opacity before comparing values and colours.",
+  },
+  {
+    title: "Explore the data behind the map",
+    description:
+      "CoRE Stack Notebooks introduce the tables and time series behind these layers. Use simple Python examples to explore water, agriculture and village statistics, including values that are easier to compare in a table or chart.",
+    tip: "Start with the first notebook to discover datasets and APIs. The other notebooks help you explore a particular topic.",
+    link: { href: CORE_STACK_NOTEBOOKS_URL, label: "Open CoRE Stack Notebooks" },
+  },
+  {
+    title: "Run a notebook in Google Colab",
+    description:
+      "Open the notebook folder in Google Drive, choose a notebook, then use Open with → Google Colaboratory. The notebook guides you through adding an API key, finding available locations and choosing a tehsil.",
+    tip: "Run the cells in order, then change a field or identifier to explore other records. Colab runs Python for you; you do not need to install it on your computer.",
+    link: { href: CORE_STACK_NOTEBOOKS_URL, label: "Browse the notebook folder" },
   },
   {
     title: "Save a layer or learn more",
@@ -127,12 +143,12 @@ const GeoLibreTour = ({ open, onClose }) => {
 
         <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
           <a
-            href="https://geolibre.app/tutorials/"
+            href={step.link?.href || "https://geolibre.app/tutorials/"}
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-1.5 text-sm font-semibold text-purple-700 hover:text-purple-900"
           >
-            Official tutorials
+            {step.link?.label || "Official tutorials"}
             <ExternalLink className="h-4 w-4" />
           </a>
           <div className="flex gap-2">

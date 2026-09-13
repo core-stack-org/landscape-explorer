@@ -43,7 +43,7 @@ and uses its supported embed bridge and WFS project representation.
 
 The header provides three complementary entry points:
 
-- **Quick Tour** opens a six-step, keyboard-accessible CoRE Stack guide to the
+- **Quick Tour** opens a eight-step, keyboard-accessible CoRE Stack guide to the
   Layers panel, layer controls, map navigation, legends, and exports.
 - **Download Excel** downloads the Excel datasheet for the selected tehsil.
 - **QGIS Documentation** opens the CoRE Stack desktop-GIS workflow.
@@ -312,7 +312,7 @@ Check both routes:
    verify its styled WMS display and **Export → GeoTIFF
    (COG)** full-coverage download.
 7. Confirm there is no vertical Layer Swipe divider after the project loads.
-   Open **Quick Tour**, step through all five tips, and open both documentation
+   Open **Quick Tour**, step through all eight tips, and open both documentation
    links. Inspect a generated layer's metadata and confirm its style URLs use
    the configured GeoServer.
 8. If testing a failure state, confirm it uses human recovery guidance and that
@@ -349,3 +349,11 @@ GeoLibre 2.6 leaves room for deeper work without another KYL map implementation:
   format supports remote styles on predeclared WFS layers;
 - self-host tested versioned builds so a single version change selects the
   exact deployed application binary.
+
+### CoRE Stack Notebooks
+
+The header and two Quick Tour slides link to the shared Google Drive notebook folder. Open a notebook with Google Colaboratory to explore tables, time series and the public APIs. The link is available without selecting a tehsil; each notebook lists available locations and lets the reader choose one.
+
+Notebook files are maintained separately from the web application. This branch does not host notebook templates or generate location-specific downloads. The folder URL is defined once in `notebookResources.js`.
+
+Tehsil selections are retained in `/explore_data?state=…&district=…&tehsil=…`. The CoRE Stack button first resets the current tehsil view and then offers location selection on the next click.
