@@ -1,7 +1,8 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import newLogo from "../assets/newlogoWhite.png";
 import { useLocation } from "react-router-dom";
-import { Compass, ExternalLink, FileSpreadsheet, Info } from "lucide-react";
+import { BookOpen, Compass, ExternalLink, FileSpreadsheet, Info } from "lucide-react";
+import { CORE_STACK_NOTEBOOKS_URL } from "./geolibre/notebookResources";
 import GeoLibreTour from "./geolibre/GeoLibreTour";
 import { downloadExcel } from "./landscape-explorer/utils/downloadHelper";
 
@@ -17,11 +18,25 @@ const HeaderTooltip = ({ children, text }) => (
   </div>
 );
 
-const LandingNavbar = ({ downloadScope = null }) => {
+const LandingNavbar = ({
+  downloadScope = null,
+  onResetExplorer,
+  onChooseLocation,
+}) => {
   const location = useLocation();
-  const isExploreDataPage = location.pathname === "/explore_data";
+  const isExploreDataPage = location.pathname.replace(/\/$/, "") === "/explore_data";
   const isHomePage = location.pathname === "/";
   const isKylDashboard = location.pathname === "/kyl_dashboard";
+  const [explorerReset, setExplorerReset] = useState(false);
+  useEffect(() => setExplorerReset(false), [downloadScope?.state, downloadScope?.district, downloadScope?.tehsil]);
+  const canResetExplorer = isExploreDataPage && onResetExplorer;
+  const Brand = canResetExplorer ? "button" : "a";
+  const brandAction = explorerReset ? "Choose another tehsil" : "Reset tehsil view";
+  const handleBrandClick = () => {
+    setShowGeoLibreTour(false);
+    if (explorerReset) onChooseLocation();
+    else { onResetExplorer(); setExplorerReset(true); }
+  };
   const [showTooltip, setShowTooltip] = useState(false);
   const [showGeoLibreTour, setShowGeoLibreTour] = useState(false);
   const [isDownloadingDataSheet, setIsDownloadingDataSheet] = useState(false);
@@ -66,11 +81,10 @@ const LandingNavbar = ({ downloadScope = null }) => {
     <nav className="bg-white shadow-2xl sticky top-0 z-50">
       <div className="w-full px-4 sm:px-6 md:px-10">
         <div className="flex flex-col sm:flex-row items-center justify-between h-auto sm:h-20 py-4 sm:py-0 gap-4 sm:gap-0">
-          <a
-            href="https://core-stack.org"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-3 cursor-pointer"
+          <Brand
+            {...(canResetExplorer ? { type: "button", onClick: handleBrandClick } : { href: "/" })}
+            aria-label={canResetExplorer ? brandAction : "Go to the main explorer"}
+            className="flex items-center gap-3 cursor-pointer text-left"
           >
             <img
               src={newLogo}
@@ -79,8 +93,9 @@ const LandingNavbar = ({ downloadScope = null }) => {
             />
             <span className="text-lg sm:text-xl font-semibold text-gray-800">
               CoRE Stack
+              {canResetExplorer && <span className="block text-xs font-normal text-gray-600">{brandAction}</span>}
             </span>
-          </a>
+          </Brand>
 
           <div className="flex flex-wrap gap-3 items-center justify-center">
             {isExploreDataPage && (
@@ -93,10 +108,21 @@ const LandingNavbar = ({ downloadScope = null }) => {
                     aria-label="Start the GeoLibre quick tour"
                   >
                     <Compass className="h-4 w-4" />
-                    <span className="text-sm font-semibold sm:text-base">
-                      Quick Tour
-                    </span>
+                    Quick Tour
                   </button>
+                </HeaderTooltip>
+
+                <HeaderTooltip text="Explore CoRE Stack data with Python notebooks in Google Colab.">
+                  <a
+                    href={CORE_STACK_NOTEBOOKS_URL}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 rounded-lg border border-purple-200 bg-purple-50 px-3 py-2 text-sm font-semibold text-purple-800 hover:bg-purple-100"
+                  >
+                    <BookOpen className="h-4 w-4" aria-hidden="true" />
+                    CoRE Stack Notebooks
+                    <ExternalLink className="h-4 w-4" aria-hidden="true" />
+                  </a>
                 </HeaderTooltip>
 
                 <HeaderTooltip text={canDownloadDataSheet ? "Download the Excel datasheet for the selected tehsil." : "Select a state, district, and tehsil to download its datasheet."}>

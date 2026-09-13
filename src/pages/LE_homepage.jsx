@@ -1,3 +1,4 @@
+import { explorerUrl } from "../components/geolibre/explorerNavigation";
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router";
 import { useRecoilState } from "recoil";
@@ -62,7 +63,7 @@ export default function KYLHomePage() {
     }
     else{
       trackEvent("Navigation", "button_click", buttonName);
-      navigate(path);
+      navigate(path === "/explore_data" ? explorerUrl({ state: state?.label, district: district?.label, tehsil: block?.label }) : path);
     }
   };
 

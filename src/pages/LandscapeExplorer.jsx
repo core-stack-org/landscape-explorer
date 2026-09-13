@@ -1,5 +1,6 @@
+import { explorerUrl } from "../components/geolibre/explorerNavigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useRecoilValue } from "recoil";
 import GeoLibreFrame from "../components/geolibre/GeoLibreFrame";
 import {
@@ -63,6 +64,7 @@ const LandscapeExplorer = () => {
   const selectedDistrict = useRecoilValue(districtAtom);
   const selectedTehsil = useRecoilValue(blockAtom);
   const routeLocation = useLocation();
+  const navigate = useNavigate();
   const [project, setProject] = useState(null);
   const [legends, setLegends] = useState([]);
   const [progress, setProgress] = useState("Starting GeoLibre…");
@@ -92,13 +94,21 @@ const LandscapeExplorer = () => {
   const scopeKey = [scope.state, scope.district, scope.tehsil].join("|");
 
   useEffect(() => {
+    if (!hasLocation) return;
+    const params = new URLSearchParams(routeLocation.search);
+    if (!params.get("state") || !params.get("district") || !params.get("tehsil")) {
+      navigate(explorerUrl(scope), { replace: true });
+    }
+  }, [hasLocation, navigate, routeLocation.search, scope]);
+
+  useEffect(() => {
     currentScopeKeyRef.current = scopeKey;
     lazyStateSequenceRef.current += 1;
     lazyQueueRef.current = Promise.resolve();
     hydratedLayersRef.current = new Map();
     hydrationDirtyRef.current = false;
     setLegends([]);
-  }, [scopeKey]);
+  }, [scopeKey, retryKey]);
 
   useEffect(() => {
     initializeAnalytics();
@@ -236,8 +246,13 @@ const LandscapeExplorer = () => {
 
   return (
     <div className="flex h-screen flex-col overflow-hidden bg-white">
-      <LandingNavbar downloadScope={scope} />
+      <LandingNavbar
+        downloadScope={scope}
+        onResetExplorer={() => setRetryKey(value => value + 1)}
+        onChooseLocation={() => navigate("/")}
+      />
       <GeoLibreFrame
+        key={`${scopeKey}-${retryKey}`}
         project={project}
         preparationMessage={progress}
         preparationError={error}
