@@ -157,15 +157,15 @@ for GeoLibre's Print Layout legend.
 ## Version configuration
 
 The default hosted viewer accepts any GeoLibre release from `2.6.0` up to, but
-not including, `3.0.0`. Compatible 2.x hosted upgrades need no KYL code change.
-The one source-code fallback to update is the version value in
+not including, `4.0.0`. Compatible 2.x and 3.x hosted upgrades need no KYL code change.
+The compatibility policy is configured in
 `../../config/geolibre.config.js`:
 
 ```js
 export const GEOLIBRE_CONFIG = Object.freeze({
   version: process.env.REACT_APP_GEOLIBRE_VERSION || "2.6.0",
   minimumCompatibleVersion: "2.6.0",
-  supportedMajorVersion: 2,
+  supportedMajorVersion: 3, // inclusive major-version ceiling
   // ...
 });
 ```
@@ -184,7 +184,10 @@ REACT_APP_GEOLIBRE_STRICT_VERSION=true
 
 The hosted URL follows GeoLibre's current web deployment and may also be served
 from an existing browser cache. KYL checks its reported version, accepts the
-compatible 2.x range, and rejects other major versions. `{version}` is replaced
+compatible 2.x/3.x range, and rejects releases outside that range. The minimum
+version supplies the lower bound; `supportedMajorVersion` is the inclusive
+upper major-version bound. This check alone does not provide an older hosted
+build when the rolling site upgrades beyond the ceiling. `{version}` is replaced
 automatically for versioned deployments. A major-version update should update
 the compatibility rules and project/bridge tests, not just the version value.
 The small badge over the iframe reports the version that actually completed the

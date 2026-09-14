@@ -96,18 +96,33 @@ describe("GeoLibre iframe bridge", () => {
     expect(loadCount()).toBe(1);
   });
 
-  it("does not send a project to an incompatible major version", () => {
+  it("loads the project after the supported v3 handshake", () => {
     render(<GeoLibreFrame project={project} />);
     const frame = screen.getByTitle("GeoLibre GIS workspace");
     const postMessage = jest.spyOn(frame.contentWindow, "postMessage");
 
     act(() => announceReady(frame, "3.0.0"));
 
+    expect(screen.queryByRole("alert")).toBeNull();
+    expect(screen.getByText(/GeoLibre 3\.0\.0 · rolling host/i)).toBeTruthy();
+    expect(postMessage).toHaveBeenCalledWith(
+      expect.objectContaining({ type: "geolibre:load-project", project }),
+      "https://web.geolibre.app"
+    );
+  });
+
+  it("does not send a project to an incompatible major version", () => {
+    render(<GeoLibreFrame project={project} />);
+    const frame = screen.getByTitle("GeoLibre GIS workspace");
+    const postMessage = jest.spyOn(frame.contentWindow, "postMessage");
+
+    act(() => announceReady(frame, "4.0.0"));
+
     expect(screen.getByRole("alert").textContent).toMatch(
       /map is temporarily unavailable.*try again in a moment/i
     );
     expect(screen.getByRole("alert").textContent).not.toMatch(
-      /GeoLibre 3\.0\.0|major version|iframe/i
+      /GeoLibre 4\.0\.0|major version|iframe/i
     );
     expect(
       screen.getByRole("button", { name: /Download technical log/i })
