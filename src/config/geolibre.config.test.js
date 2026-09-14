@@ -38,6 +38,27 @@ describe("GeoLibre application configuration", () => {
     );
   });
 
+  it.each(["2.9.0", "2.10.0", "3.0.0", "3.12.4"])(
+    "accepts supported hosted release %s without changing the preferred version",
+    (version) => {
+      expect(geoLibreVersionStatus(version, GEOLIBRE_CONFIG).compatible).toBe(true);
+    }
+  );
+
+  it.each(["2.5.9", "1.9.9", "4.0.0", "10.0.0", "invalid", undefined])(
+    "rejects unsupported or invalid hosted release %s",
+    (version) => {
+      expect(geoLibreVersionStatus(version, GEOLIBRE_CONFIG).compatible).toBe(false);
+    }
+  );
+
+  it("preserves exact-version enforcement when multiple majors are allowed", () => {
+    const strict = { ...GEOLIBRE_CONFIG, version: "3.0.0", strictVersion: true };
+    expect(geoLibreVersionStatus("3.0.0", strict).compatible).toBe(true);
+    expect(geoLibreVersionStatus("3.0.1", strict).compatible).toBe(false);
+    expect(geoLibreVersionStatus("2.9.0", strict).compatible).toBe(false);
+  });
+
   it("rejects unexpected, older, and major-version viewers", () => {
     expect(geoLibreVersionStatus("2.5.0", config).compatible).toBe(false);
     expect(geoLibreVersionStatus("1.9.9", config).compatible).toBe(false);

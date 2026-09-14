@@ -4,13 +4,14 @@ const DEFAULT_VIEWER_URL = "https://web.geolibre.app/";
  * The preferred GeoLibre application version for a versioned deployment.
  *
  * The public web.geolibre.app URL is unversioned, so this value does not select
- * what that server returns. By default KYL accepts compatible 2.x viewers and
+ * what that server returns. By default KYL accepts compatible 2.x/3.x viewers and
  * uses this value only for {version} URL templates and project metadata.
  */
 export const GEOLIBRE_CONFIG = Object.freeze({
   version: process.env.REACT_APP_GEOLIBRE_VERSION || "2.6.0",
   minimumCompatibleVersion: "2.6.0",
-  supportedMajorVersion: 2,
+  // Inclusive ceiling; the minimum compatible version supplies the lower bound.
+  supportedMajorVersion: 3,
   viewerUrlTemplate:
     process.env.REACT_APP_GEOLIBRE_URL_TEMPLATE ||
     process.env.REACT_APP_GEOLIBRE_URL ||
@@ -68,13 +69,14 @@ export const geoLibreVersionStatus = (
     config.supportedMajorVersion ?? minimum[0]
   );
   if (
-    actual[0] !== supportedMajorVersion ||
-    expected[0] !== supportedMajorVersion ||
+    actual[0] > supportedMajorVersion ||
+    expected[0] > supportedMajorVersion ||
+    compareVersions(expected, minimum) < 0 ||
     compareVersions(actual, minimum) < 0
   ) {
     return {
       compatible: false,
-      message: `GeoLibre ${actualVersion} is not compatible with this KYL integration (requires ${config.minimumCompatibleVersion} or newer in major version ${supportedMajorVersion}).`,
+      message: `GeoLibre ${actualVersion} is not compatible with this KYL integration (requires ${config.minimumCompatibleVersion} or newer, through major version ${supportedMajorVersion}).`,
     };
   }
 
