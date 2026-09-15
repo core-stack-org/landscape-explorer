@@ -856,6 +856,7 @@
       selectedWB.waterbody_uid ||
       selectedWB.properties?.UID ||
       selectedWB.properties?.uid ||
+      selectedWB.properties?.wb_id ||
       null;
 
     if (!uid) return null;
@@ -865,7 +866,8 @@
       const fu =
         f.get("UID") ||
         f.get("uid") ||
-        f.get("waterbody_uid");
+        f.get("waterbody_uid")||
+        f.get("wb_id");
 
       return fu?.toString().trim() === uid;
     });

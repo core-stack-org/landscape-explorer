@@ -20,6 +20,7 @@ export const getWaterbodyData = async ({
       });
       return null;
     }
+    console.log("getWaterbodyData", { district, block, waterbodyUID });
 
     const transformName = (name) => {
       if (!name) return "";
@@ -93,7 +94,10 @@ const extractMwsUidList = (mwsUidString) => {
     // map.addLayer(wbLayer);
   
     // wbLayer.setStyle(yellowWaterbodyStyle);
-   
+   console.log("wbLayer", wbLayer);
+   console.log("wbLayerName", wbLayerName);
+   console.log("dist", dist);
+    console.log("blk", blk);
   
     const wbSource = wbLayer.getSource();
     const view = map.getView();
@@ -105,13 +109,30 @@ const extractMwsUidList = (mwsUidString) => {
     let matchedWaterbody = null;
   
     if (waterbodyUID) {
+      const requestedWaterbodyId = waterbodyUID.toString().trim();
+
       matchedWaterbody = wbFeatures.find((f) => {
-        const uid = f.get("UID") || f.get("uid");
-        return uid?.toString() === waterbodyUID.toString();
+        const featureUid =
+          f.get("UID") ??
+          f.get("uid");
+
+        const featureWbId =
+          f.get("wb_id") ??
+          f.get("WB_ID") ??
+          f.get("waterbody_id") ??
+          f.get("waterbodyId");
+
+        const uidMatches =
+          featureUid?.toString().trim() === requestedWaterbodyId;
+
+        const wbIdMatches =
+          featureWbId?.toString().trim() === requestedWaterbodyId;
+
+        return uidMatches || wbIdMatches;
       });
-  
+
       if (!matchedWaterbody) {
-        console.warn(" No waterbody matched UID:", waterbodyUID);
+        console.warn("No waterbody matched UID or wb_id:", waterbodyUID);
       }
     }
   
@@ -169,22 +190,53 @@ if (zoiLayer) {
   zoiSource.loadFeatures(extent, view.getResolution(), view.getProjection());
 
   rawZoiFeatures = await waitForFeatures(zoiSource);
+  console.log(
+  "ZOI layer name:",
+  zoiLayerName
+);
+
+console.log(
+  "Total raw ZOI features:",
+  rawZoiFeatures.length
+);
+
+console.log(
+  "First ZOI properties:",
+  rawZoiFeatures[0]?.getProperties()
+);
 
   // Match only for selected WB
-  if (matchedWaterbody) {
-   const wbUid =
-      matchedWaterbody.get("UID")?.toString()?.trim() ||
-      matchedWaterbody.get("uid")?.toString()?.trim() ||
-      matchedWaterbody.get("id")?.toString()?.trim() ||
-      matchedWaterbody.get("wb_id")?.toString()?.trim();
+if (matchedWaterbody) {
+  const waterbodyIds = [
+    matchedWaterbody.get("UID"),
+    matchedWaterbody.get("uid"),
+    matchedWaterbody.get("wb_id"),
+    matchedWaterbody.get("WB_ID"),
+    matchedWaterbody.get("waterbody_id"),
+    matchedWaterbody.get("waterbodyId"),
+    matchedWaterbody.get("id"),
+  ]
+    .filter((value) => value !== undefined && value !== null)
+    .map((value) => value.toString().trim());
 
-    matchedZOI = rawZoiFeatures.filter(f => {
-      const zUid =
-        f.get("UID")?.toString()?.trim() ||
-        f.get("uid")?.toString()?.trim();
-      return zUid === wbUid;
-    });
-  }
+  matchedZOI = rawZoiFeatures.filter((feature) => {
+    const zoiIds = [
+      feature.get("UID"),
+      feature.get("uid"),
+      feature.get("wb_id"),
+      feature.get("WB_ID"),
+      feature.get("waterbody_id"),
+      feature.get("waterbodyId"),
+      feature.get("id"),
+    ]
+      .filter((value) => value !== undefined && value !== null)
+      .map((value) => value.toString().trim());
+
+    return zoiIds.some((id) => waterbodyIds.includes(id));
+  });
+
+  console.log("ZOI matched count:", matchedZOI.length);
+}
 }
     return {
       wbLayer,
