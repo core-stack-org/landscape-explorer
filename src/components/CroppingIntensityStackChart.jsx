@@ -37,7 +37,6 @@ const CroppingIntensityStackChart = ({
   setShowImpact
 }) => {
   // const [showImpact, setShowImpact] = useState(false);
-console.log(impactYear)
   const hasValidImpactYears = impactYear?.pre && impactYear?.post;
 
   const wbUID =
