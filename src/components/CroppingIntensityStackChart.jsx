@@ -45,6 +45,7 @@ console.log(impactYear)
     waterbody?.uid ||
     waterbody?.properties?.UID ||
     waterbody?.properties?.uid ||
+    waterbody?.properties?.wb_id ||
     null;
 
   const matchedFeature = zoiFeatures.find(

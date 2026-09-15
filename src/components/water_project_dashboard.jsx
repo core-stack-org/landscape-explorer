@@ -336,7 +336,7 @@ const extractMwsUidList = (mwsUidString) => {
   }, [zoiFeatures, activeSelectedWaterbody]);
 
   const hasNdviData = useMemo(() => {
-  if (!isTehsilMode || !matchedZoiFeature) return true;
+    if (isTehsilMode && !matchedZoiFeature) return false;
 
   const props = matchedZoiFeature.getProperties?.() || {};
 
@@ -1463,7 +1463,7 @@ const mwsSheet = XLSX.utils.json_to_sheet(mwsData, {
             </h1>
   
             <p className="text-base text-blue-100 text-center mt-1">
-              Tehsil: {activeSelectedWaterbody?.properties?.Taluka || blockParam || "NA"} • UID: {activeSelectedWaterbody?.properties?.UID}
+                Tehsil: {activeSelectedWaterbody?.properties?.Taluka || blockParam || "NA"} • UID: {activeSelectedWaterbody?.properties?.UID || activeSelectedWaterbody?.properties?.wb_id || "NA"}
             </p>
           </div>
         </div>
