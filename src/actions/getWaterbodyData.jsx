@@ -20,7 +20,6 @@ export const getWaterbodyData = async ({
       });
       return null;
     }
-    console.log("getWaterbodyData", { district, block, waterbodyUID });
 
     const transformName = (name) => {
       if (!name) return "";
@@ -94,10 +93,6 @@ const extractMwsUidList = (mwsUidString) => {
     // map.addLayer(wbLayer);
   
     // wbLayer.setStyle(yellowWaterbodyStyle);
-   console.log("wbLayer", wbLayer);
-   console.log("wbLayerName", wbLayerName);
-   console.log("dist", dist);
-    console.log("blk", blk);
   
     const wbSource = wbLayer.getSource();
     const view = map.getView();
@@ -190,20 +185,6 @@ if (zoiLayer) {
   zoiSource.loadFeatures(extent, view.getResolution(), view.getProjection());
 
   rawZoiFeatures = await waitForFeatures(zoiSource);
-  console.log(
-  "ZOI layer name:",
-  zoiLayerName
-);
-
-console.log(
-  "Total raw ZOI features:",
-  rawZoiFeatures.length
-);
-
-console.log(
-  "First ZOI properties:",
-  rawZoiFeatures[0]?.getProperties()
-);
 
   // Match only for selected WB
 if (matchedWaterbody) {
@@ -235,7 +216,6 @@ if (matchedWaterbody) {
     return zoiIds.some((id) => waterbodyIds.includes(id));
   });
 
-  console.log("ZOI matched count:", matchedZOI.length);
 }
 }
     return {
