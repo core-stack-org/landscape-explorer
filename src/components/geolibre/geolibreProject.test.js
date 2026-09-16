@@ -79,6 +79,21 @@ beforeEach(() => {
 });
 
 describe("GeoLibre 2.6 project generation", () => {
+  it("classifies hydrated facilities using computed observations and serializes the same style", async () => {
+    const project = await buildGeoLibreProject({ ...location, fetchFeatureCollection: successfulFetch });
+    const layer = project.layers.find(item => item.id === "corestack-facilities");
+    layer.style = { ...layer.style, nativeDefaultAddedDuringRoundTrip: true };
+    const hydrated = await hydrateGeoLibreVectorLayer({ project, layerId: layer.id, fetchFeatureCollection: async () => ({
+      type: "FeatureCollection", features: [0, 1, 2, 3, 5, 8, null, "", 999].map((value, index) => ({
+        type: "Feature", geometry: null, properties: { l2_essential_education_distance_km: value, facilities_status: index === 8 ? "pending" : "computed" },
+      })),
+    }) });
+    const result = hydrated.layers.find(item => item.id === layer.id);
+    expect(result.style.vectorStyleStops.map(stop => stop.value)).toEqual([0, 1, 2, 3, 5, 8]);
+    expect(hydrated.styles[layer.id]).toEqual(result.style);
+    expect(result.geojson.features.slice(6).map(feature => feature.properties.fill)).toEqual(["#3b3b3b", "#3b3b3b", "#3b3b3b"]);
+    expect(result.geojson.features[0].properties.fill).toBeUndefined();
+  });
   it("normalizes KYL location labels for GeoServer layer names", () => {
     expect(formatGeoServerName("  Banas Kantha (Palanpur) ")).toBe(
       "banas_kantha_palanpur"
@@ -297,7 +312,7 @@ describe("GeoLibre 2.6 project generation", () => {
       "corestack-hydrological_boundaries":
         "MicroWatershed Boundaries",
       "corestack-mws_layers": "Net groundwater-level change, 2020–2025 (m)",
-      "corestack-mws_layers_fortnight": "Fortnightly groundwater balance (mm)",
+      "corestack-mws_layers_fortnight": "Fortnightly Water Balance",
       "corestack-terrain_vector": "Terrain Clusters",
       "corestack-drainage": "Drainage Lines",
       "corestack-remote_sensed_waterbodies": "Mapped waterbody footprint (ha)",

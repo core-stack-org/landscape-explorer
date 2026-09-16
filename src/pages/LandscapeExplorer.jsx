@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useRecoilValue } from "recoil";
 import GeoLibreFrame from "../components/geolibre/GeoLibreFrame";
+import { applyMissingDataStyle } from "../components/geolibre/geolibreStyleUtils";
 import {
   activeGeoLibreLegends,
   buildGeoLibreProject,
@@ -35,6 +36,8 @@ const mergeHydratedVectorLayers = (viewerProject, hydratedLayers) => ({
     return {
       ...layer,
       geojson: hydrated.geojson,
+      style: layer.metadata?.loadState !== "loaded" && !layer.style?.vectorStyleStops?.length
+        ? hydrated.style : layer.style,
       metadata: {
         ...layer.metadata,
         ...hydrated.metadata,
@@ -144,6 +147,7 @@ const LandscapeExplorer = () => {
 
   const handleProjectState = useCallback((viewerProject) => {
     const viewerScopeKey = scopeKeyOf(viewerProject);
+    if (viewerScopeKey !== currentScopeKeyRef.current) return;
     if (viewerScopeKey === currentScopeKeyRef.current) {
       setLegends(activeGeoLibreLegends(viewerProject));
     }
@@ -160,6 +164,9 @@ const LandscapeExplorer = () => {
           hydratedLayersRef.current
         );
         let nextProject = mergedProject;
+        const styledLayers = nextProject.layers.map(applyMissingDataStyle);
+        const missingStyleChanged = styledLayers.some((layer, index) => layer !== nextProject.layers[index]);
+        if (missingStyleChanged) nextProject = { ...nextProject, layers: styledLayers };
         const layersToLoad = nextProject.layers.filter(
           (layer) =>
             layer.type === "geojson" &&
@@ -185,7 +192,7 @@ const LandscapeExplorer = () => {
         if (
           viewerScopeKey !== currentScopeKeyRef.current ||
           sequence !== lazyStateSequenceRef.current ||
-          (!layersToLoad.length && !hydrationDirtyRef.current)
+          (!layersToLoad.length && !hydrationDirtyRef.current && !missingStyleChanged)
         ) {
           return;
         }
@@ -195,6 +202,8 @@ const LandscapeExplorer = () => {
         // source and make an already-loaded WMS layer fetch its tiles again.
         // Only replace the project when lazy vector hydration supplied new data.
         nextProject = sanitizeGeoLibreProjectPlugins(nextProject);
+        nextProject.styles = Object.fromEntries(nextProject.layers.map(layer => [layer.id, layer.style]));
+        rememberHydratedVectorLayers(nextProject, hydratedLayersRef.current);
         hydrationDirtyRef.current = false;
         setProject(nextProject);
       });
