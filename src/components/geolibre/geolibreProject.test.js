@@ -80,6 +80,19 @@ beforeEach(() => {
 });
 
 describe("GeoLibre 2.6 project generation", () => {
+  it("hydrates Fortnightly Water Balance with a dated DeltaG style without renaming the dataset", async () => {
+    const project = await buildGeoLibreProject({ ...location, fetchFeatureCollection: successfulFetch });
+    const result = await hydrateGeoLibreVectorLayer({ project, layerId: "corestack-mws_layers_fortnight", fetchFeatureCollection: async () => ({
+      type: "FeatureCollection", features: [{ type: "Feature", geometry: { type: "Polygon", coordinates: [] }, properties: { "2025-06-16": '{"DeltaG": 120}' } }],
+    }) });
+    const layer = result.layers.find(item => item.id === "corestack-mws_layers_fortnight");
+    expect(layer.name).toBe("Fortnightly Water Balance");
+    expect(layer.style.strokeColor).toBe("#05081c");
+    expect(layer.metadata.corestack.timeSeries).toMatchObject({ date: "2025-06-16", units: "mm" });
+    const compiled = createExpression(JSON.parse(layer.style.vectorStyleExpression), "layers[0].paint.fill-color");
+    expect(compiled.result).toBe("success");
+    expect(compiled.value.evaluate({ zoom: 10 }, { properties: layer.geojson.features[0].properties, type: 3 })).toBe("#2166ac");
+  });
   it("evaluates finalized thresholds and missing-data guards in the real MapLibre expression engine", async () => {
     const project = await buildGeoLibreProject({ ...location, fetchFeatureCollection: successfulFetch });
     const color = (id, properties) => {
