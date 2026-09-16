@@ -60,7 +60,7 @@ export const naturalBreaksStyle = (field, palette, data, overrides = {}) => {
   const colors = interpolateRampColors(palette, breaks.length);
   return {
     ...overrides,
-    fillColor: MISSING_DATA_COLOR,
+    fillColor: breaks.length === 1 ? colors[0] : MISSING_DATA_COLOR,
     simpleStyleEnabled: true,
     vectorStyleMode: "graduated",
     vectorStyleProperty: field,
@@ -108,7 +108,7 @@ export const applyMissingDataStyle = (layer) => {
     return { ...feature, properties };
   });
   const geojson = { ...layer.geojson, features };
-  const nextStyle = thematic ? { ...style, simpleStyleEnabled: true, ...(property !== "WorkCatego" ? { fillColor: MISSING_DATA_COLOR } : {}) } : style;
+  const nextStyle = thematic ? { ...style, simpleStyleEnabled: true } : style;
   if (JSON.stringify(geojson) === JSON.stringify(layer.geojson) && JSON.stringify(nextStyle) === JSON.stringify(style)) return layer;
   return { ...layer, style: nextStyle, geojson };
 };

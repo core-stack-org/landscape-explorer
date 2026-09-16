@@ -1,3 +1,5 @@
+import { interpolateRampColors } from "@geolibre/core";
+import { applyMissingDataStyle, MISSING_DATA_COLOR, fixedPaletteExpression, naturalBreaksStyle, paletteCategories } from "./geolibreStyleUtils";
 import {
   GEOLIBRE_CONFIG,
   GEOLIBRE_PROJECT_FORMAT_VERSION,
@@ -8,6 +10,38 @@ import {
   GEOLIBRE_NREGA_CATEGORIES,
   GEOLIBRE_VECTOR_LAYERS,
 } from "../../config/geolibreLayers";
+
+const VECTOR_DISPLAY_NAMES = {
+  "administrative_boundaries": "Administrative Boundaries",
+  "demographics": "Socio-Economic Profile",
+  "facilities": "Essential education distance (km)",
+  "antyodaya": "Maternal and child health (2020)",
+  "livestock": "Large animal population",
+  "hydrological_boundaries": "MicroWatershed Boundaries",
+  "mws_layers": "Net groundwater-level change, 2020\u20132025 (m)",
+  "mws_layers_fortnight": "Fortnightly groundwater balance (mm)",
+  "terrain_vector": "Terrain Clusters",
+  "drainage": "Drainage Lines",
+  "river": "Rivers",
+  "canal": "Canals",
+  "remote_sensed_waterbodies": "Mapped waterbody footprint (ha)",
+  "soge": "Stage of Groundwater Extraction",
+  "aquifer": "Aquifer",
+  "cropping_intensity": "Cropping Intensity",
+  "drought": "Recurrent drought years, 2017\u20132024",
+  "nrega_land_restoration": "Land restoration",
+  "nrega_livelihood": "NREGA Works: Household livelihood",
+  "nrega_irrigation_site": "NREGA Works: Irrigation \u2014 site-level impact",
+  "nrega_irrigation_non_rwh": "NREGA Works: Irrigation \u2014 non-RWH",
+  "nrega_community": "NREGA Works: Community assets",
+  "nrega_plantation": "NREGA Works: Plantation and forestry",
+  "nrega_soil_water_conservation": "NREGA Works: Soil and water conservation",
+  "nrega_unclassified": "NREGA Works: Other or unclassified",
+  "green_credit": "Green Credit Projects",
+  "land_conflicts": "Land Conflicts",
+  "industry": "Industries and CSR",
+  "mining": "Mining Sites"
+};
 
 const DEFAULT_GEOSERVER_URL =
   "https://geoserver.core-stack.org:8443/geoserver/";
@@ -44,7 +78,7 @@ const EMPTY_FEATURE_COLLECTION = Object.freeze({
 const BASE_STYLE = {
   minZoom: 0,
   maxZoom: 24,
-  fillColor: "#8b5cf6",
+  fillColor: MISSING_DATA_COLOR,
   strokeColor: "#4c1d95",
   strokeWidth: 1.5,
   strokeWidthUnit: "pixels",
@@ -73,6 +107,7 @@ const RASTER_STYLE = {
 const categoryStyle = (property, stops, overrides = {}) => ({
   ...BASE_STYLE,
   ...overrides,
+  fillColor: MISSING_DATA_COLOR,
   vectorStyleMode: "categorized",
   vectorStyleProperty: property,
   vectorStyleClassCount: stops.length,
@@ -83,54 +118,10 @@ const categoryStyle = (property, stops, overrides = {}) => ({
   })),
 });
 
-const expressionStyle = (expression, overrides = {}) => ({
-  ...BASE_STYLE,
-  ...overrides,
-  vectorStyleMode: "expression",
-  vectorStyleExpression: JSON.stringify(expression),
-});
-
-const numericProperty = (property, fallback = 0) => [
-  "to-number",
-  ["get", property],
-  fallback,
-];
-
-const croppingIntensityAverage = [
-  "/",
-  [
-    "+",
-    ...Array.from({ length: 8 }, (_, index) =>
-      numericProperty(`cropping_intensity_${2017 + index}`)
-    ),
-  ],
-  8,
-];
-
-const droughtOccurrences = (year, category) => [
-  "-",
-  [
-    "length",
-    ["split", ["to-string", ["get", `drlb_${year}`]], String(category)],
-  ],
-  1,
-];
-
-const droughtYearFlag = (year) => [
-  "case",
-  [
-    ">=",
-    ["+", droughtOccurrences(year, 2), droughtOccurrences(year, 3)],
-    5,
-  ],
-  1,
-  0,
-];
-
-const droughtYearCount = [
-  "+",
-  ...Array.from({ length: 8 }, (_, index) => droughtYearFlag(2017 + index)),
-];
+const numericProperty = (field) => ["to-number", ["get", field], 0];
+const cropFields = Array.from({ length: 8 }, (_, i) => `cropping_intensity_${2017 + i}`);
+const droughtFields = Array.from({ length: 8 }, (_, i) => [`w_mod_${2017 + i}`, `w_sev_${2017 + i}`]).flat();
+const thematicStyle = { ...BASE_STYLE, strokeColor: "#232323", strokeWidth: 0.5 };
 
 const STYLE_PROFILES = {
   boundary: {
@@ -140,59 +131,15 @@ const STYLE_PROFILES = {
     strokeColor: "#111827",
     strokeWidth: 1.5,
   },
-  demographics: expressionStyle(
-    [
-      "step",
-      [
-        "*",
-        [
-          "/",
-          numericProperty("P_LIT"),
-          ["max", numericProperty("TOT_P", 1), 1],
-        ],
-        100,
-      ],
-      "#98fb98",
-      46,
-      "#32cd32",
-      59,
-      "#228b22",
-      70,
-      "#006400",
-    ],
-    { fillColor: "#98fb98", strokeColor: "#111827", fillOpacity: 0.65 }
-  ),
-  facilities: expressionStyle(
-    [
-      "step",
-      numericProperty("l2_essential_education_distance_km"),
-      "#fff9c4",
-      2,
-      "#ffc107",
-    ],
-    { fillColor: "#fff9c4", strokeColor: "#232323", fillOpacity: 0.8 }
-  ),
-  antyodaya: categoryStyle(
-    "road_connectivity_cat_cluster",
-    [
-      ["LOW", "#dc143c", "Poor road connectivity"],
-      ["MEDIUM", "#ffd700", "Moderate road connectivity"],
-      ["HIGH", "#90ee90", "Strong road connectivity"],
-    ],
-    { fillColor: "#ffd700", strokeColor: "#232323", fillOpacity: 0.8 }
-  ),
-  livestock: expressionStyle(
-    [
-      "step",
-      numericProperty("small_animals_total"),
-      "#dc143c",
-      201,
-      "#ffd700",
-      501,
-      "#90ee90",
-    ],
-    { fillColor: "#ffd700", strokeColor: "#232323", fillOpacity: 0.8 }
-  ),
+  demographics: fixedPaletteExpression({
+    ...thematicStyle, fields: ["P_LIT", "TOT_P"],
+    value: ["*", ["/", numericProperty("P_LIT"), ["max", numericProperty("TOT_P"), 1]], 100],
+    guard: ["all", [">", numericProperty("TOT_P"), 0], [">=", numericProperty("P_LIT"), 0]],
+    thresholds: [50, 60, 70, 80, 90], palette: "rdbu", fillOpacity: 0.8,
+  }),
+  facilities: naturalBreaksStyle("l2_essential_education_distance_km", "coolwarm", null, { ...thematicStyle, fillOpacity: 0.8 }),
+  antyodaya: paletteCategories("maternal_child_health_cat_cluster", ["LOW", "MEDIUM", "HIGH"], "rdbu", { ...thematicStyle, fillOpacity: 0.8 }),
+  livestock: naturalBreaksStyle("large_animals_total", "rdbu", null, { ...thematicStyle, fillOpacity: 0.8 }),
   terrain_vector: categoryStyle(
     "terrainClu",
     [
@@ -203,20 +150,10 @@ const STYLE_PROFILES = {
     ],
     { fillColor: "#e5e059", strokeColor: "#232323", fillOpacity: 0.75 }
   ),
-  mws: expressionStyle(
-    [
-      "step",
-      numericProperty("Net2018_23"),
-      "#ff0000",
-      -5,
-      "#ffff00",
-      -1,
-      "#25b63c",
-      1,
-      "#1017f8",
-    ],
-    { fillColor: "#25b63c", strokeColor: "#232323", fillOpacity: 0.55 }
-  ),
+  mws: fixedPaletteExpression({
+    ...thematicStyle, fields: ["Net2020_25"], value: numericProperty("Net2020_25"),
+    thresholds: [-10, -5, -1, 1, 5, 10], palette: "rdbu", fillOpacity: 0.65,
+  }),
   drainage: categoryStyle(
     "ORDER",
     [
@@ -231,27 +168,12 @@ const STYLE_PROFILES = {
     ],
     { fillColor: "#03045e", strokeColor: "#03045e", strokeWidth: 2 }
   ),
-  river: {
-    ...BASE_STYLE,
-    fillColor: "#2b93fa",
-    strokeColor: "#2b93fa",
-    strokeWidth: 2,
-    fillOpacity: 0.8,
-  },
-  canal: {
-    ...BASE_STYLE,
-    fillColor: "#2b93fa",
-    strokeColor: "#2b93fa",
-    strokeWidth: 2,
-    fillOpacity: 0.8,
-  },
-  waterbodies: {
-    ...BASE_STYLE,
-    fillColor: "#6495ed",
-    fillOpacity: 0.5,
-    strokeColor: "#2563eb",
-    strokeWidth: 2,
-  },
+  river: { ...BASE_STYLE, fillColor: "#1d4ed8", strokeColor: "#1d4ed8", strokeWidth: 1.5, fillOpacity: 0.8 },
+  canal: { ...BASE_STYLE, fillColor: "#0891b2", strokeColor: "#0891b2", strokeWidth: 1.5, fillOpacity: 0.8 },
+  waterbodies: fixedPaletteExpression({
+    ...thematicStyle, fields: ["area_ored"], value: numericProperty("area_ored"),
+    thresholds: [0.05, 0.1, 0.5, 1, 5], palette: "blues", fillOpacity: 0.75, strokeWidth: 0.25,
+  }),
   soge: categoryStyle(
     "class",
     [
@@ -282,30 +204,15 @@ const STYLE_PROFILES = {
     ],
     { fillColor: "#57d2ff", strokeColor: "#232323", fillOpacity: 0.72 }
   ),
-  cropping_intensity: expressionStyle(
-    [
-      "step",
-      croppingIntensityAverage,
-      "#ff9371",
-      1,
-      "#ffa500",
-      2,
-      "#bad93e",
-    ],
-    { fillColor: "#ffa500", strokeColor: "#232323", fillOpacity: 0.7 }
-  ),
-  drought: expressionStyle(
-    [
-      "step",
-      droughtYearCount,
-      "#f4d03f",
-      1,
-      "#eb984e",
-      2,
-      "#e74c3c",
-    ],
-    { fillColor: "#eb984e", strokeColor: "#232323", fillOpacity: 0.5 }
-  ),
+  cropping_intensity: fixedPaletteExpression({
+    ...thematicStyle, fields: cropFields, value: ["/", ["+", ...cropFields.map(numericProperty)], 8],
+    thresholds: [1, 2], palette: "rdylgn", colors: interpolateRampColors("rdylgn", 6).slice(2, 5), fillOpacity: 0.7,
+  }),
+  drought: fixedPaletteExpression({
+    ...thematicStyle, fields: droughtFields,
+    value: ["+", ...Array.from({ length: 8 }, (_, i) => ["case", [">=", ["+", numericProperty(`w_mod_${2017 + i}`), numericProperty(`w_sev_${2017 + i}`)], 5], 1, 0])],
+    thresholds: [1, 2], colors: ["#f4d03f", "#eb984e", "#e74c3c"], fillOpacity: 0.5,
+  }),
   green_credit: {
     ...BASE_STYLE,
     fillColor: "#14d11d",
@@ -790,25 +697,34 @@ const nregaLayerStyle = (categoryId) => {
   );
   return {
     ...BASE_STYLE,
-    fillColor: category?.color || "#6b7280",
+    fillColor: category?.color || MISSING_DATA_COLOR,
     strokeColor: "#ffffff",
     strokeWidth: 1,
     fillOpacity: 0.9,
     circleRadius: 4,
+    simpleStyleEnabled: true,
+    vectorStyleProperty: "WorkCatego",
     markerEnabled: true,
     markerShape: category?.markerShape || "circle",
-    markerColor: category?.color || "#6b7280",
+    markerColor: category?.color || MISSING_DATA_COLOR,
     markerSize: 14,
     pointRenderer: "single",
   };
 };
 
-const layerStyle = (layer) =>
+const layerStyle = (layer, data) =>
   layer.sourceType === "wms"
     ? { ...RASTER_STYLE }
     : layer.nregaCategoryId
       ? nregaLayerStyle(layer.nregaCategoryId)
-      : { ...(STYLE_PROFILES[layer.styleProfile] || BASE_STYLE) };
+      : ["facilities", "livestock"].includes(layer.styleProfile)
+        ? naturalBreaksStyle(
+            STYLE_PROFILES[layer.styleProfile].vectorStyleProperty,
+            STYLE_PROFILES[layer.styleProfile].vectorStyleColorRamp,
+            layer.styleProfile === "facilities" ? { features: (data?.features || []).filter(feature => feature.properties?.facilities_status === "computed") } : data,
+            STYLE_PROFILES[layer.styleProfile]
+          )
+        : { ...(STYLE_PROFILES[layer.styleProfile] || BASE_STYLE) };
 
 const coreStackMetadata = (layer, layerName, sourceUrl, style, baseUrl) => ({
   domain: layer.domain,
@@ -834,12 +750,12 @@ const buildVectorLayer = ({
   loaded = false,
   baseUrl,
 }) => {
-  const style = layerStyle(catalogLayer);
+  const style = layerStyle(catalogLayer, data);
   const isDefaultDisplay = catalogLayer.defaultVisible === true;
   const loadState = failure ? "error" : loaded ? "loaded" : "unloaded";
-  return {
+  return applyMissingDataStyle({
     id: `corestack-${catalogLayer.id}`,
-    name: catalogLayer.label,
+    name: VECTOR_DISPLAY_NAMES[catalogLayer.id] || catalogLayer.label,
     type: "geojson",
     source: {
       type: "geojson",
@@ -877,7 +793,7 @@ const buildVectorLayer = ({
     geojson: data,
     sourcePath: request.url,
     groupId: catalogLayer.loadGroup,
-  };
+  });
 };
 
 const buildRasterLayer = ({ catalogLayer, layerName, baseUrl, bounds }) => {
@@ -1030,9 +946,14 @@ const nregaFeaturesForCategory = (features, category) => {
 const hydrateLayerWithData = (layer, data) => {
   const { initialLoadError: _initialLoadError, ...metadata } =
     layer.metadata || {};
-  return {
+  const catalogLayer = GEOLIBRE_LAYERS.find(item => `corestack-${item.id}` === layer.id);
+  const initialStyle = catalogLayer && layerStyle(catalogLayer);
+  const style = initialStyle && JSON.stringify(layer.style) === JSON.stringify(initialStyle)
+    ? layerStyle(catalogLayer, data) : layer.style;
+  return applyMissingDataStyle({
     ...layer,
     geojson: data,
+    style,
     metadata: {
       ...metadata,
       featureCount: data.features.length,
@@ -1042,7 +963,7 @@ const hydrateLayerWithData = (layer, data) => {
         loadState: "loaded",
       },
     },
-  };
+  });
 };
 
 const withLazyLoadFailure = (project, layerId, failure) => {

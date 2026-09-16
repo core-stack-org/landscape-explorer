@@ -292,15 +292,15 @@ describe("GeoLibre 2.6 project generation", () => {
         project.layers.map((layer) => [layer.id, layer.name])
       )
     ).toMatchObject({
-      "corestack-facilities": "Facilities Proximity",
-      "corestack-antyodaya": "Mission Antyodaya (2020)",
+      "corestack-facilities": "Essential education distance (km)",
+      "corestack-antyodaya": "Maternal and child health (2020)",
       "corestack-hydrological_boundaries":
         "MicroWatershed Boundaries",
-      "corestack-mws_layers": "Annual Water Balance",
-      "corestack-mws_layers_fortnight": "Fortnightly Water Balance",
+      "corestack-mws_layers": "Net groundwater-level change, 2020–2025 (m)",
+      "corestack-mws_layers_fortnight": "Fortnightly groundwater balance (mm)",
       "corestack-terrain_vector": "Terrain Clusters",
       "corestack-drainage": "Drainage Lines",
-      "corestack-remote_sensed_waterbodies": "Surface Water Bodies",
+      "corestack-remote_sensed_waterbodies": "Mapped waterbody footprint (ha)",
     });
     expect(
       project.layers
@@ -359,15 +359,15 @@ describe("GeoLibre 2.6 project generation", () => {
       "corestack-mining": "mining:cachar_lakhipur_mining",
     });
 
-    expect(project.styles["corestack-facilities"].vectorStyleExpression).toContain(
+    expect(project.styles["corestack-facilities"].vectorStyleProperty).toContain(
       "l2_essential_education_distance_km"
     );
     expect(project.styles["corestack-antyodaya"]).toMatchObject({
       vectorStyleMode: "categorized",
-      vectorStyleProperty: "road_connectivity_cat_cluster",
+      vectorStyleProperty: "maternal_child_health_cat_cluster",
     });
-    expect(project.styles["corestack-livestock"].vectorStyleExpression).toContain(
-      "small_animals_total"
+    expect(project.styles["corestack-livestock"].vectorStyleProperty).toContain(
+      "large_animals_total"
     );
   });
 
@@ -660,7 +660,7 @@ describe("GeoLibre 2.6 project generation", () => {
     });
     expect(
       [...nregaLayers].reverse().map((item) => item.name)
-    ).toEqual(GEOLIBRE_NREGA_CATEGORIES.map((category) => category.label));
+    ).toEqual(GEOLIBRE_NREGA_CATEGORIES.map((category, i) => i === 0 ? category.label : `NREGA Works: ${category.label}`));
     expect(
       [...nregaLayers].reverse().map((item) => item.style.markerShape)
     ).toEqual(GEOLIBRE_NREGA_CATEGORIES.map((category) => category.markerShape));
