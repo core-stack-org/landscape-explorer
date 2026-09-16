@@ -35,3 +35,5 @@ npm run build
 ```
 
 These are local source/unit/build checks. A release should also verify the patched viewer build and actual iframe behavior on the deployed origins (panel resizing, a palette change, WMS rendering and retries). No browser or local viewer is launched by this change's validation.
+
+For the patched viewer sources, `node integrations/geolibre/verify-host.mjs /path/to/GeoLibre` checks patched TS/TSX syntax and executes missing-value expressions through MapLibre, plus palette recoloring. This does not substitute for the viewer's full TypeScript build.

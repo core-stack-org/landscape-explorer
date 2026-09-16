@@ -28,7 +28,7 @@ export const paletteCategories = (field, categories, palette, overrides = {}) =>
     vectorStyleProperty: field,
     vectorStyleColorRamp: palette,
     vectorStyleClassCount: categories.length,
-    vectorStyleClassificationScheme: "unique-values",
+    vectorStyleClassificationScheme: "first-values",
     vectorStyleStops: categories.map((value, index) => ({ value, label: value, color: colors[index] })),
     vectorStyleExpression: "",
   };

@@ -12,6 +12,7 @@ import {
   GEOLIBRE_LAYERS,
   GEOLIBRE_NREGA_CATEGORIES,
 } from "../../config/geolibreLayers";
+import { createExpression } from "@maplibre/maplibre-gl-style-spec";
 
 const location = {
   state: "Assam",
@@ -79,6 +80,28 @@ beforeEach(() => {
 });
 
 describe("GeoLibre 2.6 project generation", () => {
+  it("evaluates finalized thresholds and missing-data guards in the real MapLibre expression engine", async () => {
+    const project = await buildGeoLibreProject({ ...location, fetchFeatureCollection: successfulFetch });
+    const color = (id, properties) => {
+      const expression = createExpression(JSON.parse(project.styles[`corestack-${id}`].vectorStyleExpression), "layers[0].paint.fill-color");
+      expect(expression.result).toBe("success");
+      return expression.value.evaluate({ zoom: 10 }, { properties, type: 3 });
+    };
+    expect(color("demographics", { P_LIT: 90, TOT_P: 100 })).toBe("#2166ac");
+    expect(color("demographics", { P_LIT: 0, TOT_P: 100 })).toBe("#b2182b");
+    expect(color("demographics", { P_LIT: 0, TOT_P: 0 })).toBe("#3b3b3b");
+    expect(color("mws_layers", { Net2020_25: 0 })).toBe("#f7f7f7");
+    expect(color("mws_layers", { Net2018_23: 2 })).toBe("#3b3b3b");
+    expect(color("remote_sensed_waterbodies", { area_ored: 5 })).toBe("#1e3a8a");
+    const crop = Object.fromEntries(Array.from({ length: 8 }, (_, i) => [`cropping_intensity_${2017 + i}`, 2]));
+    expect(color("cropping_intensity", crop)).toBe("#52ac5a");
+    expect(color("cropping_intensity", { ...crop, cropping_intensity_2024: null })).toBe("#3b3b3b");
+    const drought = Object.fromEntries(Array.from({ length: 8 }, (_, i) => [[`w_mod_${2017 + i}`, 0], [`w_sev_${2017 + i}`, 0]]).flat());
+    expect(color("drought", drought)).toBe("#f4d03f");
+    expect(color("drought", { ...drought, w_mod_2017: 5 })).toBe("#eb984e");
+    expect(color("drought", { ...drought, w_mod_2017: 5, w_sev_2018: 5 })).toBe("#e74c3c");
+    expect(color("drought", { ...drought, w_sev_2018: "" })).toBe("#3b3b3b");
+  });
   it("classifies hydrated facilities using computed observations and serializes the same style", async () => {
     const project = await buildGeoLibreProject({ ...location, fetchFeatureCollection: successfulFetch });
     const layer = project.layers.find(item => item.id === "corestack-facilities");

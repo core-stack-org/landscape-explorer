@@ -109,6 +109,7 @@ const categoryStyle = (property, stops, overrides = {}) => ({
   ...overrides,
   fillColor: MISSING_DATA_COLOR,
   vectorStyleMode: "categorized",
+  vectorStyleClassificationScheme: "first-values",
   vectorStyleProperty: property,
   vectorStyleClassCount: stops.length,
   vectorStyleStops: stops.map(([value, color, label]) => ({
