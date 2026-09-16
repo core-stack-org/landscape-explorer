@@ -124,6 +124,7 @@ export class GeoLibreReadiness {
   completeStartup(timing) {
     if (this.bootComplete) return;
     this.bootComplete = true;
+    this.log("viewer_startup_complete", { ...timing, handshakeToReadyMs: Math.round(this.now() - this.handshakeAt) });
     this.update({ state: "loaded", issue: "" });
     this.onReady?.(timing);
   }

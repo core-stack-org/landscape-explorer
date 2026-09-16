@@ -99,4 +99,5 @@ test("later layer hydration never reopens the completed startup overlay", () => 
   expect(update).not.toHaveBeenCalledWith(expect.objectContaining({ state: "preparing" }));
   expect(update).not.toHaveBeenCalledWith(expect.objectContaining({ state: "rendering" }));
   expect(onReady).toHaveBeenCalledTimes(1);
+  expect(log.mock.calls.filter(([event]) => event === "viewer_startup_complete")).toHaveLength(1);
 });
