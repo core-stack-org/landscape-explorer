@@ -79,7 +79,7 @@
       "^@geolibre/core$": "<rootDir>/node_modules/@geolibre/core/dist/index.mjs"
     },
     "transformIgnorePatterns": [
-      "node_modules/(?!(@geolibre/core|@maplibre/maplibre-gl-style-spec|uuid)/)"
+      "node_modules/(?!(@geolibre/core|uuid)/)"
     ]
   }
 }
