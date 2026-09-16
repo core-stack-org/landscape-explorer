@@ -5,5 +5,5 @@
   "entry": "index.js",
   "engines": ["maplibre"],
   "activeByDefault": true,
-  "description": "Reports the map viewport to the embedding CoRE Stack application."
+  "description": "Reports the map viewport and confirmed source rendering to the embedding CoRE Stack application."
 }
