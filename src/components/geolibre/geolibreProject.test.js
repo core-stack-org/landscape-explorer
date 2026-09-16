@@ -392,27 +392,10 @@ describe("GeoLibre 2.6 project generation", () => {
       fetchFeatureCollection: successfulFetch,
     });
     const legends = activeGeoLibreLegends(project);
-    const legend = legends[0];
-
-    expect(project.plugins.activePluginIds).not.toContain(
-      "maplibre-gl-components"
-    );
-    expect(project.plugins.activePluginIds).not.toContain("maplibre-gl-swipe");
-    expect(project.plugins.settings["maplibre-gl-components"]).toBeUndefined();
-    expect(project.plugins.settings["maplibre-gl-swipe"]).toBeUndefined();
-    expect(legend).toMatchObject({
-      title: "Socio-Economic Profile legend",
-    });
-    expect(legend.items).toContainEqual({
-      label: "Literacy 70% or above",
-      color: "#006400",
-      shape: "square",
-    });
-    expect(legend.legendPosition).toBe("bottom-right");
-    expect(legends.map((entry) => entry.title)).toEqual([
-      "Socio-Economic Profile legend",
-      "Administrative Boundaries legend",
-    ]);
+    expect(project.legend.panelVisible).toBe(true);
+    expect(project.legend.collapsed).toBe(false);
+    expect(legends).toEqual([]);
+    expect(project.layers.filter(layer => layer.type === "geojson").every(layer => !layer.metadata.corestack.legend)).toBe(true);
   });
 
   it("does not override a user-selected split-map layout", async () => {
@@ -486,9 +469,6 @@ describe("GeoLibre 2.6 project generation", () => {
     const legends = activeGeoLibreLegends(synced);
 
     expect(legends.map((entry) => entry.title)).toEqual([
-      "Socio-Economic Profile legend",
-      "Administrative Boundaries legend",
-      "Drainage Lines legend",
       "Terrain legend",
     ]);
 
@@ -502,8 +482,6 @@ describe("GeoLibre 2.6 project generation", () => {
     };
     const resynced = sanitizeGeoLibreProjectPlugins(drainageHidden);
     expect(activeGeoLibreLegends(resynced).map((entry) => entry.title)).toEqual([
-      "Socio-Economic Profile legend",
-      "Administrative Boundaries legend",
       "Terrain legend",
     ]);
   });
@@ -694,11 +672,7 @@ describe("GeoLibre 2.6 project generation", () => {
         0
       )
     ).toBe(nregaFeatureCollection.features.length);
-    expect(
-      nrega.metadata.corestack.legend.items.map((item) => item.shape)
-    ).toEqual(
-      GEOLIBRE_NREGA_CATEGORIES.map((category) => category.markerShape)
-    );
+    expect(nrega.metadata.corestack.legend).toBeUndefined();
     expect(nrega.style.labels).toBeUndefined();
     expect(nrega.style.diagramType).toBeUndefined();
 
