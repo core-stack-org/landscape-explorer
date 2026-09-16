@@ -230,46 +230,6 @@ const STYLE_PROFILES = {
 };
 
 const LEGEND_PROFILES = {
-  boundary: [["Administrative or hydrological boundary", "#111827", "line"]],
-  demographics: [
-    ["Literacy below 46%", "#98fb98"],
-    ["Literacy 46% to below 59%", "#32cd32"],
-    ["Literacy 59% to below 70%", "#228b22"],
-    ["Literacy 70% or above", "#006400"],
-  ],
-  facilities: [
-    ["Primary education within 2 km", "#fff9c4"],
-    ["Primary education more than 2 km away", "#ffc107"],
-  ],
-  antyodaya: [
-    ["Poor road connectivity", "#dc143c"],
-    ["Moderate road connectivity", "#ffd700"],
-    ["Strong road connectivity", "#90ee90"],
-  ],
-  livestock: [
-    ["Bovine population 0 to 200", "#dc143c"],
-    ["Bovine population 201 to 500", "#ffd700"],
-    ["Bovine population above 500", "#90ee90"],
-  ],
-  mws: [
-    ["Net groundwater change below -5", "#ff0000"],
-    ["Net groundwater change -5 to below -1", "#ffff00"],
-    ["Net groundwater change -1 to below 1", "#25b63c"],
-    ["Net groundwater change 1 or above", "#1017f8"],
-  ],
-  waterbodies: [["Surface waterbody", "#6495ed"]],
-  river: [["River", "#2b93fa", "line"]],
-  canal: [["Canal", "#2b93fa", "line"]],
-  cropping_intensity: [
-    ["Average cropping intensity below 1", "#ff9371"],
-    ["Average cropping intensity 1 to below 2", "#ffa500"],
-    ["Average cropping intensity 2 or above", "#bad93e"],
-  ],
-  drought: [
-    ["No recurrent drought year", "#f4d03f"],
-    ["One recurrent drought year", "#eb984e"],
-    ["Two or more recurrent drought years", "#e74c3c"],
-  ],
   terrain: [
     ["V-shaped river valleys and deep narrow canyons", "#313695"],
     ["Lateral midslope drainage and local valleys", "#4575b4"],
@@ -353,15 +313,6 @@ const LEGEND_PROFILES = {
     ["Wide-scale restoration", "#0f077c"],
     ["Protection", "#4fbc14"],
   ],
-  green_credit: [["Green Credit project area", "#14d11d"]],
-  land_conflicts: [["Reported land conflict", "#ff0000", "circle"]],
-  industry: [["Industry or CSR site", "#ff0000", "circle"]],
-  mining: [["Mining site", "#ff0000", "circle"]],
-  nrega: GEOLIBRE_NREGA_CATEGORIES.map((category) => [
-    category.label,
-    category.color,
-    category.markerShape,
-  ]),
   lulc_level_1: [
     ["Built-up", "#ff0000"],
     ["Water", "#1ca3ec"],
@@ -389,6 +340,7 @@ const legendShape = (catalogLayer) =>
       : "square";
 
 const layerLegend = (catalogLayer, style) => {
+  if (catalogLayer.sourceType !== "wms") return undefined;
   const profile =
     LEGEND_PROFILES[catalogLayer.id] ||
     LEGEND_PROFILES[catalogLayer.baseId] ||
@@ -734,7 +686,7 @@ const coreStackMetadata = (layer, layerName, sourceUrl, style, baseUrl) => ({
   liveSource: sourceUrl,
   geoserverStyle: buildGeoServerStyleSource(baseUrl, layer, layerName),
   year: layer.year || null,
-  legend: layerLegend(layer, style),
+  ...(layer.sourceType === "wms" ? { legend: layerLegend(layer, style) } : {}),
   styleContract:
     layer.sourceType === "wms"
       ? "GeoServer renders the published named style through WMS."
@@ -869,13 +821,13 @@ const mapLegendEntries = (orderedLayers) => {
 
 export const activeGeoLibreLegends = (project) =>
   project?.layers
-    ? mapLegendEntries(project.layers.filter((layer) => layer.visible))
+    ? mapLegendEntries(project.layers.filter((layer) => layer.visible && layer.type === "raster"))
     : [];
 
 const DISABLED_PROJECT_PLUGIN_IDS = new Set([
   // GeoLibre's Components plugin enables every component control by default,
-  // including its own Swipe control. KYL renders the legend outside the iframe,
-  // so the entire redundant component grid can be omitted from this project.
+  // including its own Swipe control. The native legend is a separate core panel;
+  // KYL supplements it with raster legends only.
   "maplibre-gl-components",
   "maplibre-gl-swipe",
 ]);
@@ -1208,6 +1160,8 @@ export const buildGeoLibreProject = async ({
       preferences: projectPreferences,
       plugins: coreStackPluginState(),
       legend: {
+        panelVisible: true,
+        collapsed: false,
         title: `${tehsil} CoRE Stack layers`,
         groupByLayer: true,
         order: [...orderedLayers].reverse().map((layer) => layer.id),
