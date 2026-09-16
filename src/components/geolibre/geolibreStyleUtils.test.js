@@ -1,4 +1,19 @@
-import { applyMissingDataStyle, finiteMeasurement, fixedPaletteExpression, naturalBreaksStyle } from "./geolibreStyleUtils";
+import { applyMissingDataStyle, finiteMeasurement, fixedPaletteExpression, naturalBreaksStyle, hasLayerData, boundaryColorForLayer } from "./geolibreStyleUtils";
+
+test.each([["facilities", "computed"], ["antyodaya", "matched"], ["livestock", "matched"]])("%s requires the explicit availability status", (id, status) => {
+  expect(hasLayerData(id, { data_availability_status: status })).toBe(true);
+  [undefined, null, "", "missing", "unmatched"].forEach(value => expect(hasLayerData(id, { data_availability_status: value })).toBe(false));
+  const layer = { id: `corestack-${id}`, type: "geojson", style: { vectorStyleMode: "categorized", vectorStyleProperty: "value" }, geojson: { features: [{ geometry: { type: "Polygon" }, properties: { value: "HIGH", data_availability_status: "unavailable" } }] } };
+  const styled = applyMissingDataStyle(layer);
+  expect(styled.geojson.features[0].properties.fill).toBe("#3b3b3b");
+  expect(styled.geojson.features[0].properties.stroke).toBe("#000000");
+  expect(styled.style.strokeColor).toBe("#000000");
+});
+
+test("village and MWS outline standards cover their thematic datasets", () => {
+  ["demographics", "facilities", "antyodaya", "livestock", "administrative_boundaries"].forEach(id => expect(boundaryColorForLayer(id)).toBe("#000000"));
+  ["hydrological_boundaries", "mws_layers", "mws_layers_fortnight", "terrain_vector", "cropping_intensity", "drought"].forEach(id => expect(boundaryColorForLayer(id)).toBe("#05081c"));
+});
 
 test("missing observations remain distinct from valid numeric zero", () => {
   [null, undefined, "", "  ", false, "bad", Infinity].forEach(value => expect(finiteMeasurement(value)).toBeNull());

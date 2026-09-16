@@ -1,6 +1,13 @@
 import { createGraduatedClassBreaks, interpolateRampColors } from "@geolibre/core";
 
 export const MISSING_DATA_COLOR = "#3b3b3b";
+export const VILLAGE_OUTLINE_COLOR = "#000000";
+export const MWS_OUTLINE_COLOR = "#05081c";
+const VILLAGE_LAYERS = new Set(["administrative_boundaries", "demographics", "facilities", "antyodaya", "livestock"]);
+const MWS_LAYERS = new Set(["hydrological_boundaries", "mws_layers", "mws_layers_fortnight", "terrain_vector", "cropping_intensity", "drought"]);
+export const boundaryColorForLayer = id => VILLAGE_LAYERS.has(id) ? VILLAGE_OUTLINE_COLOR : MWS_LAYERS.has(id) ? MWS_OUTLINE_COLOR : null;
+export const DATA_AVAILABILITY_STATUS = Object.freeze({ facilities: "computed", antyodaya: "matched", livestock: "matched" });
+export const hasLayerData = (id, properties) => !DATA_AVAILABILITY_STATUS[id] || properties?.data_availability_status === DATA_AVAILABILITY_STATUS[id];
 
 // Number(null), Number("") and Number(false) are zero: none are measurements.
 export const finiteMeasurement = (value) => {
@@ -78,6 +85,8 @@ export const naturalBreaksStyle = (field, palette, data, overrides = {}) => {
 export const applyMissingDataStyle = (layer) => {
   if (layer.type !== "geojson" || !layer.geojson) return layer;
   const style = layer.style || {};
+  const catalogId = layer.id?.replace(/^corestack-/, "");
+  const outline = boundaryColorForLayer(catalogId);
   const property = style.vectorStyleProperty;
   const expressionFields = style.vectorStyleMode === "expression" && property ? property.split("; ") : [];
   const thematic = (["graduated", "categorized"].includes(style.vectorStyleMode) || expressionFields.length || property === "WorkCatego") && property;
@@ -92,23 +101,26 @@ export const applyMissingDataStyle = (layer) => {
       delete properties.__corestack_missing_style;
     }
     const value = properties[property];
-    const missing = thematic && (expressionFields.length
+    const missing = !hasLayerData(catalogId, properties) || (thematic && (expressionFields.length
       ? expressionFields.some(field => finiteMeasurement(properties[field]) === null)
       : style.vectorStyleMode === "graduated"
-      ? finiteMeasurement(value) === null || (property === "l2_essential_education_distance_km" && properties.facilities_status !== "computed")
-      : value == null || String(value).trim() === "");
+      ? finiteMeasurement(value) === null
+      : value == null || String(value).trim() === ""));
     if (missing) {
       const original = {};
       for (const key of ["fill", "stroke", "marker-color"]) {
         if (Object.prototype.hasOwnProperty.call(properties, key)) original[key] = properties[key];
-        properties[key] = MISSING_DATA_COLOR;
+        if (key !== "stroke" || /LineString$/.test(feature.geometry?.type || "")) properties[key] = MISSING_DATA_COLOR;
       }
       properties.__corestack_missing_style = original;
     }
+    // GeoLibre also applies expression colors to polygon outlines. Simplestyle
+    // explicitly keeps the shared boundary convention independent of the fill.
+    if (outline) properties.stroke = outline;
     return { ...feature, properties };
   });
   const geojson = { ...layer.geojson, features };
-  const nextStyle = thematic ? { ...style, simpleStyleEnabled: true } : style;
+  const nextStyle = thematic || outline ? { ...style, simpleStyleEnabled: true, ...(outline ? { strokeColor: outline } : {}) } : style;
   if (JSON.stringify(geojson) === JSON.stringify(layer.geojson) && JSON.stringify(nextStyle) === JSON.stringify(style)) return layer;
   return { ...layer, style: nextStyle, geojson };
 };
