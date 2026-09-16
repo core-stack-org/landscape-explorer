@@ -7,7 +7,25 @@ const VILLAGE_LAYERS = new Set(["administrative_boundaries", "demographics", "fa
 const MWS_LAYERS = new Set(["hydrological_boundaries", "mws_layers", "mws_layers_fortnight", "terrain_vector", "cropping_intensity", "drought"]);
 export const boundaryColorForLayer = id => VILLAGE_LAYERS.has(id) ? VILLAGE_OUTLINE_COLOR : MWS_LAYERS.has(id) ? MWS_OUTLINE_COLOR : null;
 export const DATA_AVAILABILITY_STATUS = Object.freeze({ facilities: "computed", antyodaya: "matched", livestock: "matched" });
-export const hasLayerData = (id, properties) => !DATA_AVAILABILITY_STATUS[id] || properties?.data_availability_status === DATA_AVAILABILITY_STATUS[id];
+const LAYER_AVAILABILITY_FIELDS = Object.freeze({
+  facilities: "facilities_status",
+  antyodaya: "antyodaya_status",
+  livestock: "livestock_status",
+});
+
+// The data contract is `data_availability_status`. Older GeoServer views expose
+// the same value under a layer-specific name, so use that only when the common
+// field is absent. Source properties are retained unchanged for the style UI.
+export const dataAvailabilityStatus = (id, properties) => {
+  if (!properties) return undefined;
+  if (Object.prototype.hasOwnProperty.call(properties, "data_availability_status")) {
+    return properties.data_availability_status;
+  }
+  return properties[LAYER_AVAILABILITY_FIELDS[id]];
+};
+
+export const hasLayerData = (id, properties) => !DATA_AVAILABILITY_STATUS[id]
+  || dataAvailabilityStatus(id, properties) === DATA_AVAILABILITY_STATUS[id];
 
 // Number(null), Number("") and Number(false) are zero: none are measurements.
 export const finiteMeasurement = (value) => {
