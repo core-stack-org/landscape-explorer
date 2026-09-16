@@ -1,0 +1,9 @@
+{
+  "id": "corestack-embed",
+  "name": "CoRE Stack embed bridge",
+  "version": "1.0.0",
+  "entry": "index.js",
+  "engines": ["maplibre"],
+  "activeByDefault": true,
+  "description": "Reports the map viewport to the embedding CoRE Stack application."
+}
