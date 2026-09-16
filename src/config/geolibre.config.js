@@ -18,6 +18,10 @@ export const GEOLIBRE_CONFIG = Object.freeze({
     DEFAULT_VIEWER_URL,
   strictVersion:
     process.env.REACT_APP_GEOLIBRE_STRICT_VERSION === "true",
+  // Enable on the CoRE Stack viewer deployment that bundles corestack-embed.
+  // The public host can confirm map creation, but cannot confirm tile rendering.
+  requireRenderConfirmation:
+    process.env.REACT_APP_GEOLIBRE_REQUIRE_RENDER_CONFIRMATION === "true",
 });
 
 // GeoLibre's project schema version is independent from its application release.
