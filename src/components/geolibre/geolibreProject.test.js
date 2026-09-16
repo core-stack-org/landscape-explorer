@@ -130,6 +130,17 @@ describe("GeoLibre 2.6 project generation", () => {
     expect(result.geojson.features.slice(6).map(feature => feature.properties.fill)).toEqual(["#3b3b3b", "#3b3b3b", "#3b3b3b"]);
     expect(result.geojson.features[0].properties.fill).toBeUndefined();
   });
+  it("classifies source facilities status when GeoServer has not published the common status alias", async () => {
+    const project = await buildGeoLibreProject({ ...location, fetchFeatureCollection: successfulFetch });
+    const layer = project.layers.find(item => item.id === "corestack-facilities");
+    const hydrated = await hydrateGeoLibreVectorLayer({ project, layerId: layer.id, fetchFeatureCollection: async () => ({
+      type: "FeatureCollection", features: [1, 2, null].map((value, index) => ({
+        type: "Feature", geometry: null, properties: { l2_essential_education_distance_km: value, facilities_status: index === 2 ? "no village id available" : "computed" },
+      })),
+    }) });
+    const result = hydrated.layers.find(item => item.id === layer.id);
+    expect(result.geojson.features.map(feature => feature.properties.fill)).toEqual([undefined, undefined, "#3b3b3b"]);
+  });
   it("normalizes KYL location labels for GeoServer layer names", () => {
     expect(formatGeoServerName("  Banas Kantha (Palanpur) ")).toBe(
       "banas_kantha_palanpur"

@@ -10,6 +10,11 @@ test.each([["facilities", "computed"], ["antyodaya", "matched"], ["livestock", "
   expect(styled.style.strokeColor).toBe("#000000");
 });
 
+test.each([["facilities", "facilities_status", "computed"], ["antyodaya", "antyodaya_status", "matched"], ["livestock", "livestock_status", "matched"]])("%s accepts its legacy GeoServer availability field only when the common field is absent", (id, field, status) => {
+  expect(hasLayerData(id, { [field]: status })).toBe(true);
+  expect(hasLayerData(id, { data_availability_status: "missing", [field]: status })).toBe(false);
+});
+
 test("village and MWS outline standards cover their thematic datasets", () => {
   ["demographics", "facilities", "antyodaya", "livestock", "administrative_boundaries"].forEach(id => expect(boundaryColorForLayer(id)).toBe("#000000"));
   ["hydrological_boundaries", "mws_layers", "mws_layers_fortnight", "terrain_vector", "cropping_intensity", "drought"].forEach(id => expect(boundaryColorForLayer(id)).toBe("#05081c"));
