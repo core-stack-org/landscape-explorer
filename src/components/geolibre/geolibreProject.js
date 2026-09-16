@@ -19,7 +19,7 @@ const VECTOR_DISPLAY_NAMES = {
   "livestock": "Large animal population",
   "hydrological_boundaries": "MicroWatershed Boundaries",
   "mws_layers": "Net groundwater-level change, 2020\u20132025 (m)",
-  "mws_layers_fortnight": "Fortnightly groundwater balance (mm)",
+  "mws_layers_fortnight": "Fortnightly Water Balance",
   "terrain_vector": "Terrain Clusters",
   "drainage": "Drainage Lines",
   "river": "Rivers",
@@ -948,7 +948,7 @@ const hydrateLayerWithData = (layer, data) => {
     layer.metadata || {};
   const catalogLayer = GEOLIBRE_LAYERS.find(item => `corestack-${item.id}` === layer.id);
   const initialStyle = catalogLayer && layerStyle(catalogLayer);
-  const style = initialStyle && JSON.stringify(layer.style) === JSON.stringify(initialStyle)
+  const style = initialStyle && Object.entries(initialStyle).every(([key, value]) => JSON.stringify(layer.style?.[key]) === JSON.stringify(value))
     ? layerStyle(catalogLayer, data) : layer.style;
   return applyMissingDataStyle({
     ...layer,
@@ -1031,6 +1031,7 @@ export const hydrateGeoLibreVectorLayer = async ({
           layerId,
           hydrateLayerWithData(layer, data)
         );
+    hydratedProject.styles = Object.fromEntries(hydratedProject.layers.map(item => [item.id, item.style]));
     return withLazyLoadFailure(
       hydratedProject,
       layerId,
