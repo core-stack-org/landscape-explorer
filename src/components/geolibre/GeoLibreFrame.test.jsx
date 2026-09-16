@@ -30,6 +30,18 @@ const announceReady = (frame, version = "2.6.0") => {
   );
 };
 
+const receive = (frame, data) => act(() => {
+  window.dispatchEvent(new MessageEvent("message", { origin: "https://web.geolibre.app", source: frame.contentWindow, data }));
+});
+const initializeMap = (frame, postMessage, snapshot = project) => {
+  const load = postMessage.mock.calls.map(([message]) => message).filter(message => message.type === "geolibre:load-project").at(-1);
+  receive(frame, { type: "geolibre:state", seq: load.seq, project: snapshot });
+  const getView = postMessage.mock.calls.map(([message]) => message).filter(message => message.method === "getView").at(-1);
+  receive(frame, { type: "geolibre:result", requestId: getView.requestId, ok: true, value: { center: [93.04, 24.84] } });
+  const fit = postMessage.mock.calls.map(([message]) => message).filter(message => message.method === "fitBounds").at(-1);
+  if (fit) receive(frame, { type: "geolibre:result", requestId: fit.requestId, ok: true, value: null });
+};
+
 describe("GeoLibre iframe bridge", () => {
   beforeEach(() => jest.useFakeTimers());
   afterEach(() => jest.useRealTimers());
@@ -69,7 +81,7 @@ describe("GeoLibre iframe bridge", () => {
       "https://web.geolibre.app"
     );
 
-    act(() => jest.advanceTimersByTime(1500));
+    initializeMap(frame, postMessage);
     expect(postMessage).toHaveBeenCalledWith(
       expect.objectContaining({
         type: "geolibre:command",
@@ -166,13 +178,16 @@ describe("GeoLibre iframe bridge", () => {
     const postMessage = jest.spyOn(frame.contentWindow, "postMessage");
 
     act(() => announceReady(frame));
-    act(() => jest.advanceTimersByTime(1500));
+    initializeMap(frame, postMessage);
 
     const hydratedProject = {
       ...project,
       layers: [{ id: "corestack-drainage", visible: true }],
     };
+    expect(screen.queryByText("GeoLibre is loading")).toBeNull();
     rerender(<GeoLibreFrame project={hydratedProject} />);
+    expect(screen.queryByText("GeoLibre is loading")).toBeNull();
+    expect(screen.queryByText("Map open. Layers may still be loading.")).toBeNull();
 
     expect(postMessage).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -251,7 +266,7 @@ describe("GeoLibre iframe bridge", () => {
         new MessageEvent("message", {
           origin: "https://web.geolibre.app",
           source: frame.contentWindow,
-          data: { type: "geolibre:state", project: viewerProject },
+          data: { type: "geolibre:state", seq: 1, project: viewerProject },
         })
       );
     });
