@@ -80,7 +80,6 @@ const LAYERS = [
     label: "Administrative Boundaries",
     domain: "Demographic",
     loadGroup: "demographic",
-    defaultVisible: true,
     sourceType: "wfs",
     workspace: "panchayat_boundaries",
     geometryType: "polygon",
@@ -92,7 +91,6 @@ const LAYERS = [
     label: "Socio-Economic Profile",
     domain: "Demographic",
     loadGroup: "demographic",
-    defaultVisible: true,
     sourceType: "wfs",
     workspace: "panchayat_boundaries",
     geometryType: "polygon",
@@ -167,7 +165,7 @@ const LAYERS = [
     geometryType: "polygon",
     layerName: ({ district, tehsil }) =>
       `deltaG_fortnight_${district}_${tehsil}`,
-    styleProfile: "boundary",
+    styleProfile: "fortnight",
   },
   {
     id: "terrain_vector",
@@ -465,6 +463,8 @@ export const GEOLIBRE_LULC_LAYERS = LULC_LEVELS.flatMap((level, index) =>
     sourceType: "wms",
     useGlobalWms: true,
     year: year.value,
+    defaultVisible: year.value === LATEST_GEOLIBRE_LULC_YEAR,
+    startupDelayMs: year.value === LATEST_GEOLIBRE_LULC_YEAR ? index * 300 : 0,
     layerName: ({ district, tehsil }) =>
       `LULC_${year.value}_${district}_${tehsil}_level_3`,
   }))

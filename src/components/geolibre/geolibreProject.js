@@ -1,5 +1,6 @@
 import { interpolateRampColors } from "@geolibre/core";
-import { applyMissingDataStyle, MISSING_DATA_COLOR, fixedPaletteExpression, naturalBreaksStyle, paletteCategories } from "./geolibreStyleUtils";
+import { FORTNIGHT_VALUE_FIELD, prepareFortnightData } from "./geolibreFortnight";
+import { applyMissingDataStyle, boundaryColorForLayer, hasLayerData, MISSING_DATA_COLOR, fixedPaletteExpression, naturalBreaksStyle, paletteCategories } from "./geolibreStyleUtils";
 import {
   GEOLIBRE_CONFIG,
   GEOLIBRE_PROJECT_FORMAT_VERSION,
@@ -10,38 +11,6 @@ import {
   GEOLIBRE_NREGA_CATEGORIES,
   GEOLIBRE_VECTOR_LAYERS,
 } from "../../config/geolibreLayers";
-
-const VECTOR_DISPLAY_NAMES = {
-  "administrative_boundaries": "Administrative Boundaries",
-  "demographics": "Socio-Economic Profile",
-  "facilities": "Essential education distance (km)",
-  "antyodaya": "Maternal and child health (2020)",
-  "livestock": "Large animal population",
-  "hydrological_boundaries": "MicroWatershed Boundaries",
-  "mws_layers": "Net groundwater-level change, 2020\u20132025 (m)",
-  "mws_layers_fortnight": "Fortnightly Water Balance",
-  "terrain_vector": "Terrain Clusters",
-  "drainage": "Drainage Lines",
-  "river": "Rivers",
-  "canal": "Canals",
-  "remote_sensed_waterbodies": "Mapped waterbody footprint (ha)",
-  "soge": "Stage of Groundwater Extraction",
-  "aquifer": "Aquifer",
-  "cropping_intensity": "Cropping Intensity",
-  "drought": "Recurrent drought years, 2017\u20132024",
-  "nrega_land_restoration": "Land restoration",
-  "nrega_livelihood": "NREGA Works: Household livelihood",
-  "nrega_irrigation_site": "NREGA Works: Irrigation \u2014 site-level impact",
-  "nrega_irrigation_non_rwh": "NREGA Works: Irrigation \u2014 non-RWH",
-  "nrega_community": "NREGA Works: Community assets",
-  "nrega_plantation": "NREGA Works: Plantation and forestry",
-  "nrega_soil_water_conservation": "NREGA Works: Soil and water conservation",
-  "nrega_unclassified": "NREGA Works: Other or unclassified",
-  "green_credit": "Green Credit Projects",
-  "land_conflicts": "Land Conflicts",
-  "industry": "Industries and CSR",
-  "mining": "Mining Sites"
-};
 
 const DEFAULT_GEOSERVER_URL =
   "https://geoserver.core-stack.org:8443/geoserver/";
@@ -154,6 +123,10 @@ const STYLE_PROFILES = {
   mws: fixedPaletteExpression({
     ...thematicStyle, fields: ["Net2020_25"], value: numericProperty("Net2020_25"),
     thresholds: [-10, -5, -1, 1, 5, 10], palette: "rdbu", fillOpacity: 0.65,
+  }),
+  fortnight: fixedPaletteExpression({
+    ...thematicStyle, fields: [FORTNIGHT_VALUE_FIELD], value: numericProperty(FORTNIGHT_VALUE_FIELD),
+    thresholds: [-100, -50, -10, 10, 50, 100], palette: "rdbu", fillOpacity: 0.65,
   }),
   drainage: categoryStyle(
     "ORDER",
@@ -674,7 +647,7 @@ const layerStyle = (layer, data) =>
         ? naturalBreaksStyle(
             STYLE_PROFILES[layer.styleProfile].vectorStyleProperty,
             STYLE_PROFILES[layer.styleProfile].vectorStyleColorRamp,
-            layer.styleProfile === "facilities" ? { features: (data?.features || []).filter(feature => feature.properties?.facilities_status === "computed") } : data,
+            { features: (data?.features || []).filter(feature => hasLayerData(layer.id, feature.properties)) },
             STYLE_PROFILES[layer.styleProfile]
           )
         : { ...(STYLE_PROFILES[layer.styleProfile] || BASE_STYLE) };
@@ -689,7 +662,7 @@ const coreStackMetadata = (layer, layerName, sourceUrl, style, baseUrl) => ({
   year: layer.year || null,
   ...(layer.sourceType !== "wms" ? {
     missingDataColor: MISSING_DATA_COLOR,
-    paletteId: ["demographics", "facilities", "antyodaya", "livestock", "mws", "waterbodies", "cropping_intensity"].includes(layer.styleProfile) ? style.vectorStyleColorRamp : null,
+    paletteId: ["demographics", "facilities", "antyodaya", "livestock", "mws", "fortnight", "waterbodies", "cropping_intensity"].includes(layer.styleProfile) ? style.vectorStyleColorRamp : null,
   } : {}),
   ...(layer.sourceType === "wms" ? { legend: layerLegend(layer, style) } : {}),
   styleContract:
@@ -707,12 +680,13 @@ const buildVectorLayer = ({
   loaded = false,
   baseUrl,
 }) => {
-  const style = layerStyle(catalogLayer, data);
+  const outline = boundaryColorForLayer(catalogLayer.id);
+  const style = { ...layerStyle(catalogLayer, data), ...(outline ? { strokeColor: outline, simpleStyleEnabled: true } : {}) };
   const isDefaultDisplay = catalogLayer.defaultVisible === true;
   const loadState = failure ? "error" : loaded ? "loaded" : "unloaded";
   return applyMissingDataStyle({
     id: `corestack-${catalogLayer.id}`,
-    name: VECTOR_DISPLAY_NAMES[catalogLayer.id] || catalogLayer.label,
+    name: catalogLayer.label,
     type: "geojson",
     source: {
       type: "geojson",
@@ -724,7 +698,7 @@ const buildVectorLayer = ({
       srsName: request.srsName,
     },
     visible: isDefaultDisplay,
-    opacity: isDefaultDisplay ? 0.8 : 1,
+    opacity: 1,
     style,
     metadata: {
       featureCount: data.features.length,
@@ -770,11 +744,12 @@ const buildRasterLayer = ({ catalogLayer, layerName, baseUrl, bounds }) => {
     name: catalogLayer.label,
     type: "raster",
     source,
-    visible: false,
+    visible: catalogLayer.defaultVisible === true && !catalogLayer.startupDelayMs,
     opacity: 1,
     style,
     metadata: {
       service: "wms",
+      ...(catalogLayer.defaultVisible && catalogLayer.startupDelayMs ? { startupDelayMs: catalogLayer.startupDelayMs } : {}),
       corestack: {
         ...coreStackMetadata(
           catalogLayer,
@@ -905,7 +880,10 @@ const hydrateLayerWithData = (layer, data) => {
   const { initialLoadError: _initialLoadError, ...metadata } =
     layer.metadata || {};
   const catalogLayer = GEOLIBRE_LAYERS.find(item => `corestack-${item.id}` === layer.id);
-  const initialStyle = catalogLayer && layerStyle(catalogLayer);
+  const timeSeries = catalogLayer?.id === "mws_layers_fortnight" ? prepareFortnightData(data, layer.metadata?.corestack?.timeSeries?.date) : null;
+  if (timeSeries) data = timeSeries.data;
+  const outline = catalogLayer && boundaryColorForLayer(catalogLayer.id);
+  const initialStyle = catalogLayer && { ...layerStyle(catalogLayer), ...(outline ? { strokeColor: outline, simpleStyleEnabled: true } : {}) };
   const style = initialStyle && Object.entries(initialStyle).every(([key, value]) => JSON.stringify(layer.style?.[key]) === JSON.stringify(value))
     ? layerStyle(catalogLayer, data) : layer.style;
   return applyMissingDataStyle({
@@ -918,6 +896,7 @@ const hydrateLayerWithData = (layer, data) => {
       loadState: "loaded",
       corestack: {
         ...metadata.corestack,
+        ...(timeSeries ? { timeSeries: { date: timeSeries.date, dates: timeSeries.dates, valueProperty: FORTNIGHT_VALUE_FIELD, units: "mm", measurement: "DeltaG", mode: "one-observation-per-MWS" } } : {}),
         loadState: "loaded",
       },
     },
@@ -1093,7 +1072,7 @@ export const buildGeoLibreProject = async ({
       };
       if (required) {
         throw new Error(
-          `Could not load the Socio-Economic Profile needed to locate ${tehsil}: ${failure.message}`
+          `Could not load the administrative boundary needed to locate ${tehsil}: ${failure.message}`
         );
       }
       failures.push(failure);
@@ -1114,14 +1093,13 @@ export const buildGeoLibreProject = async ({
   const administrative = GEOLIBRE_VECTOR_LAYERS.find(
     (layer) => layer.id === "administrative_boundaries"
   );
-  const socioeconomicData = await loadVector(socioeconomic, true);
-  // Both default Demographic entries use the same GeoServer source. The request cache
-  // makes this a metadata/style duplication, not a second network download.
-  await loadVector(administrative, true, false);
-  const bounds = geoJsonBounds(socioeconomicData);
+  const administrativeData = await loadVector(administrative, true);
+  // Reuse the extent request for the separately styled, initially hidden layer.
+  await loadVector(socioeconomic, true, false);
+  const bounds = geoJsonBounds(administrativeData);
   if (!bounds) {
     throw new Error(
-      `The Socio-Economic Profile for ${tehsil} has no usable geographic extent.`
+      `The administrative boundary for ${tehsil} has no usable geographic extent.`
     );
   }
 
@@ -1188,9 +1166,10 @@ export const buildGeoLibreProject = async ({
           viewerUrl: viewer.url,
         },
         layerLoading: {
-          stage: "demographic",
+          stage: "base-map",
           order: [
-            "Administrative Boundaries and Socio-Economic Profile",
+            "Administrative extent (hidden)",
+            "Latest LULC Level 1, then Levels 2 and 3",
             "All other vector layers on first visibility toggle",
             "Raster tiles on visibility toggle",
           ],

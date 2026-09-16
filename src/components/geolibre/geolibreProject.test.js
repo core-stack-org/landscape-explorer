@@ -108,7 +108,7 @@ describe("GeoLibre 2.6 project generation", () => {
     layer.style = { ...layer.style, nativeDefaultAddedDuringRoundTrip: true };
     const hydrated = await hydrateGeoLibreVectorLayer({ project, layerId: layer.id, fetchFeatureCollection: async () => ({
       type: "FeatureCollection", features: [0, 1, 2, 3, 5, 8, null, "", 999].map((value, index) => ({
-        type: "Feature", geometry: null, properties: { l2_essential_education_distance_km: value, facilities_status: index === 8 ? "pending" : "computed" },
+        type: "Feature", geometry: null, properties: { l2_essential_education_distance_km: value, data_availability_status: index === 8 ? "pending" : "computed" },
       })),
     }) });
     const result = hydrated.layers.find(item => item.id === layer.id);
@@ -136,7 +136,7 @@ describe("GeoLibre 2.6 project generation", () => {
     );
   });
 
-  it("builds default Demographic WFS layers and downloadable, lazy styled rasters", async () => {
+  it("starts only latest LULC with staged refinements", async () => {
     const project = await buildGeoLibreProject({
       ...location,
       fetchFeatureCollection: successfulFetch,
@@ -145,6 +145,7 @@ describe("GeoLibre 2.6 project generation", () => {
     expect(project.version).toBe("0.2.0");
     expect(project.layers).toHaveLength(GEOLIBRE_LAYERS.length);
     expect(project.layers).toHaveLength(62);
+    expect(project.layers.every(layer => layer.name === GEOLIBRE_LAYERS.find(item => `corestack-${item.id}` === layer.id)?.label)).toBe(true);
     expect(project.mapView.bbox).toEqual([92.9, 24.7, 93.2, 25]);
     expect(project.mapLayout).toBeUndefined();
     expect(project.secondaryMapViews).toBeUndefined();
@@ -162,8 +163,8 @@ describe("GeoLibre 2.6 project generation", () => {
     );
     expect(socioeconomic).toMatchObject({
       type: "geojson",
-      visible: true,
-      opacity: 0.8,
+      visible: false,
+      opacity: 1,
       source: {
         type: "geojson",
         service: "wfs",
@@ -188,11 +189,10 @@ describe("GeoLibre 2.6 project generation", () => {
 
     const visibleLayers = project.layers.filter((layer) => layer.visible);
     expect(visibleLayers.map((layer) => layer.id)).toEqual([
-      "corestack-demographics",
-      "corestack-administrative_boundaries",
+      "corestack-lulc_level_1_24_25",
     ]);
     expect(
-      visibleLayers.every((layer) => layer.opacity === 0.8)
+      visibleLayers.every((layer) => layer.opacity === 1)
     ).toBe(true);
     expect(
       project.layers
@@ -330,23 +330,22 @@ describe("GeoLibre 2.6 project generation", () => {
         project.layers.map((layer) => [layer.id, layer.name])
       )
     ).toMatchObject({
-      "corestack-facilities": "Essential education distance (km)",
-      "corestack-antyodaya": "Maternal and child health (2020)",
+      "corestack-facilities": "Facilities Proximity",
+      "corestack-antyodaya": "Mission Antyodaya (2020)",
       "corestack-hydrological_boundaries":
         "MicroWatershed Boundaries",
-      "corestack-mws_layers": "Net groundwater-level change, 2020–2025 (m)",
+      "corestack-mws_layers": "Annual Water Balance",
       "corestack-mws_layers_fortnight": "Fortnightly Water Balance",
       "corestack-terrain_vector": "Terrain Clusters",
       "corestack-drainage": "Drainage Lines",
-      "corestack-remote_sensed_waterbodies": "Mapped waterbody footprint (ha)",
+      "corestack-remote_sensed_waterbodies": "Surface Water Bodies",
     });
     expect(
       project.layers
         .filter((layer) =>
           [
             "corestack-mws_layers",
-            "corestack-hydrological_boundaries",
-            "corestack-mws_layers_fortnight",
+                  "corestack-mws_layers_fortnight",
           ].includes(layer.id)
         )
         .every((layer) => layer.groupId === "hydrology")
@@ -417,7 +416,7 @@ describe("GeoLibre 2.6 project generation", () => {
     const legends = activeGeoLibreLegends(project);
     expect(project.legend.panelVisible).toBe(true);
     expect(project.legend.collapsed).toBe(false);
-    expect(legends).toEqual([]);
+    expect(legends.map(item => item.title)).toEqual(["LULC Level 1 legend"]);
     expect(project.layers.filter(layer => layer.type === "geojson").every(layer => !layer.metadata.corestack.legend)).toBe(true);
   });
 
@@ -492,6 +491,7 @@ describe("GeoLibre 2.6 project generation", () => {
     const legends = activeGeoLibreLegends(synced);
 
     expect(legends.map((entry) => entry.title)).toEqual([
+      "LULC Level 1 legend",
       "Terrain legend",
     ]);
 
@@ -505,6 +505,7 @@ describe("GeoLibre 2.6 project generation", () => {
     };
     const resynced = sanitizeGeoLibreProjectPlugins(drainageHidden);
     expect(activeGeoLibreLegends(resynced).map((entry) => entry.title)).toEqual([
+      "LULC Level 1 legend",
       "Terrain legend",
     ]);
   });
@@ -546,13 +547,13 @@ describe("GeoLibre 2.6 project generation", () => {
     ).toHaveLength(4);
   });
 
-  it("loads only the shared Demographic source during project creation", async () => {
+  it("loads only the hidden extent while leaving all other vectors lazy", async () => {
     const project = await buildGeoLibreProject({
       ...location,
       fetchFeatureCollection: successfulFetch,
     });
 
-    expect(project.metadata.layerLoading.stage).toBe("demographic");
+    expect(project.metadata.layerLoading.stage).toBe("base-map");
     expect(
       project.layers
         .filter(
@@ -561,7 +562,7 @@ describe("GeoLibre 2.6 project generation", () => {
             ![
               "corestack-administrative_boundaries",
               "corestack-demographics",
-            ].includes(layer.id)
+                    ].includes(layer.id)
         )
         .every((layer) => layer.metadata.loadState === "unloaded")
     ).toBe(true);
@@ -574,8 +575,7 @@ describe("GeoLibre 2.6 project generation", () => {
         .filter((layer) => layer.visible)
         .map((layer) => layer.id)
     ).toEqual([
-      "corestack-demographics",
-      "corestack-administrative_boundaries",
+      "corestack-lulc_level_1_24_25",
     ]);
     expect(successfulFetch.mock.calls[0][0].typeName).toBe(
       "panchayat_boundaries:cachar_lakhipur"
@@ -676,7 +676,7 @@ describe("GeoLibre 2.6 project generation", () => {
     });
     expect(
       [...nregaLayers].reverse().map((item) => item.name)
-    ).toEqual(GEOLIBRE_NREGA_CATEGORIES.map((category, i) => i === 0 ? category.label : `NREGA Works: ${category.label}`));
+    ).toEqual(GEOLIBRE_NREGA_CATEGORIES.map(category => category.label));
     expect(
       [...nregaLayers].reverse().map((item) => item.style.markerShape)
     ).toEqual(GEOLIBRE_NREGA_CATEGORIES.map((category) => category.markerShape));
@@ -758,7 +758,7 @@ describe("GeoLibre 2.6 project generation", () => {
     expect(retriedProject.metadata.layerLoading.lazyLoadFailures).toEqual([]);
   });
 
-  it("requires the socioeconomic extent", async () => {
+  it("requires the administrative extent", async () => {
     const failedFetch = jest.fn(async () => {
       throw new Error("offline");
     });
@@ -767,6 +767,6 @@ describe("GeoLibre 2.6 project generation", () => {
         ...location,
         fetchFeatureCollection: failedFetch,
       })
-    ).rejects.toThrow(/socio-economic profile.*offline/i);
+    ).rejects.toThrow(/administrative boundary.*offline/i);
   });
 });
