@@ -47,6 +47,7 @@ export const resolveGeoLibreViewer = (config = GEOLIBRE_CONFIG) => {
   const url = new URL(resolvedTemplate);
   url.searchParams.set("embed", "1");
   url.searchParams.set("welcome", "0");
+  url.searchParams.set("corestack", "1");
   return { url: url.toString(), origin: url.origin, versionPinned };
 };
 

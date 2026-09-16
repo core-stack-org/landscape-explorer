@@ -1,0 +1,107 @@
+--- a/apps/geolibre-desktop/src/components/panels/StylePanel.tsx
++++ b/apps/geolibre-desktop/src/components/panels/StylePanel.tsx
+@@ -1,3 +1,4 @@
++import { recolorCoreStackExpression } from "../../lib/corestack-expression-style";
+ import {
+   BLEND_MODES,
+   DEFAULT_BLEND_MODE,
+@@ -1025,7 +1026,7 @@
+   const projectName = useAppStore((s) => s.projectName);
+   // Style starts on its rail on every platform and remains there until the
+   // user explicitly expands it.
+-  const [internalCollapsed, setInternalCollapsed] = useState(true);
++  const [internalCollapsed, setInternalCollapsed] = useState(() => new URLSearchParams(window.location.search).get("corestack") !== "1");
+   // In the shared right-sidebar mode the parent owns collapse (controlled);
+   // otherwise the panel manages it locally. `setIsCollapsed` routes to whichever
+   // owner applies so every existing call site keeps working.
+@@ -2726,6 +2727,30 @@
+               </div>
+             ))}
+           </div>
++        </div>
++      )}
++      {draftVectorStyleMode === "expression" && Boolean(layer.metadata?.corestack) && (
++        <div className="space-y-2">
++          <Label>Source fields</Label>
++          <p className="break-words text-xs">{draftVectorStyleProperty}</p>
++          <Label>Classes (fixed thresholds)</Label>
++          <Input type="number" value={draftVectorStyleClassCount} readOnly />
++          {(layer.metadata.corestack as { paletteId?: string })?.paletteId && (
++            <>
++              <Label htmlFor="corestackExpressionRamp">{t("style.symbology.colormap")}</Label>
++              <ColorRampSelect
++                id="corestackExpressionRamp"
++                value={draftVectorStyleColorRamp}
++                ramps={VECTOR_COLOR_RAMPS}
++                onValueChange={(palette) => {
++                  const expression = recolorCoreStackExpression(draftVectorStyleExpression, palette, layer.id === "corestack-cropping_intensity");
++                  if (expression === null) return;
++                  setDraftVectorStyleColorRamp(palette);
++                  setDraftVectorStyleExpression(expression);
++                }}
++              />
++            </>
++          )}
+         </div>
+       )}
+       {draftVectorStyleMode === "expression" && (
+--- a/packages/core/src/vector-color.ts
++++ b/packages/core/src/vector-color.ts
+@@ -315,33 +315,24 @@
+   const property = styleValue(style, "vectorStyleProperty").trim();
+   if (!property) return fallbackColor;
+ 
++  const present = ["all", ["has", property], ["!=", ["get", property], null], ["!=", ["to-string", ["get", property]], ""]];
++  const missing = "#3b3b3b";
+   if (mode === "categorized") {
+     const stops = styleValue(style, "vectorStyleStops").filter(
+       (stop) => String(stop.value).trim().length > 0 && isHexColor(stop.color),
+     );
+-    if (stops.length === 0) return fallbackColor;
+-
+-    return [
+-      "match",
+-      ["to-string", ["get", property]],
+-      ...stops.flatMap((stop) => [String(stop.value).trim(), stop.color]),
+-      fallbackColor,
+-    ];
+-  }
+-
++    if (stops.length === 0) return missing;
++    return ["case", present, ["match", ["to-string", ["get", property]],
++      ...stops.flatMap((stop) => [String(stop.value).trim(), stop.color]), missing], missing];
++  }
+   const stops = graduatedStops(style);
+-  if (stops.length < 2) return fallbackColor;
+-
+-  // `step` outputs the base color below the first break, then switches at each
+-  // subsequent break, so every feature lands in exactly one class and features
+-  // under the lowest break keep the first class's color (matching how the SLD
+-  // exporter writes its leading `< first` rule).
+-  return [
+-    "step",
+-    ["to-number", ["get", property], stops[0].value],
+-    stops[0].color,
+-    ...stops.slice(1).flatMap((stop) => [stop.value, stop.color]),
+-  ];
++  if (stops.length === 0) return missing;
++  const numeric = ["all", present,
++    ["in", ["typeof", ["get", property]], ["literal", ["number", "string"]]],
++    ["!=", ["to-number", ["get", property], -1e308], -1e308]];
++  const color = stops.length === 1 ? stops[0].color : ["step", ["to-number", ["get", property]],
++    stops[0].color, ...stops.slice(1).flatMap((stop) => [stop.value, stop.color])];
++  return ["case", numeric, color, missing];
+ }
+ 
+ /**
+--- a/packages/core/src/types.ts
++++ b/packages/core/src/types.ts
+@@ -644,7 +644,7 @@
+ export const DEFAULT_LAYER_STYLE: LayerStyle = {
+   minZoom: 0,
+   maxZoom: 24,
+-  fillColor: "#3b82f6",
++  fillColor: "#3b3b3b",
+   strokeColor: "#1e40af",
+   strokeWidth: 2,
+   strokeWidthUnit: "pixels",

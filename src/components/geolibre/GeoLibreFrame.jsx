@@ -83,6 +83,10 @@ const GeoLibreFrame = ({
   const [viewerIssue, setViewerIssue] = useState("");
   const [viewerVersion, setViewerVersion] = useState("");
   const [readyGeneration, setReadyGeneration] = useState(0);
+  const [mapBounds, setMapBounds] = useState(null);
+  const projectScopeRef = useRef("");
+  projectScopeRef.current = project?.metadata?.scope
+    ? [project.metadata.scope.state, project.metadata.scope.district, project.metadata.scope.tehsil].join("|") : "";
 
   const viewer = useMemo(() => {
     try {
@@ -191,6 +195,12 @@ const GeoLibreFrame = ({
         });
         onProjectState?.(event.data.project);
       }
+      if (event.data.type === "corestack:map-bounds" && event.data.seq === sequenceRef.current && event.data.scopeKey === projectScopeRef.current) {
+        const bounds = event.data.bounds;
+        if (bounds && [bounds.x, bounds.y, bounds.width, bounds.height].every(Number.isFinite) && bounds.width > 0 && bounds.height > 0) {
+          setMapBounds(bounds);
+        }
+      }
     };
 
     window.addEventListener("message", handleMessage);
@@ -268,6 +278,16 @@ const GeoLibreFrame = ({
     setViewerState("loaded");
   }, [addTechnicalLog, project, readyGeneration, viewer.origin, viewerState]);
 
+  useEffect(() => {
+    if (!viewerVersion || !project) return undefined;
+    const connect = () => frameRef.current?.contentWindow?.postMessage({
+      type: "corestack:connect", seq: sequenceRef.current, scopeKey: projectScopeRef.current,
+    }, viewer.origin);
+    connect();
+    const timer = window.setInterval(connect, 1000);
+    return () => window.clearInterval(timer);
+  }, [project, viewer.origin, viewerVersion]);
+
   const activeIssue = viewer.error
     ? "unavailable"
     : preparationError
@@ -315,7 +335,7 @@ const GeoLibreFrame = ({
       )}
 
       {!userIssue && viewerState === "loaded" && (
-        <GeoLibreLegend legends={legends} />
+        <GeoLibreLegend legends={legends} mapBounds={mapBounds} />
       )}
 
       {!userIssue && viewerVersion && (

@@ -686,6 +686,10 @@ const coreStackMetadata = (layer, layerName, sourceUrl, style, baseUrl) => ({
   liveSource: sourceUrl,
   geoserverStyle: buildGeoServerStyleSource(baseUrl, layer, layerName),
   year: layer.year || null,
+  ...(layer.sourceType !== "wms" ? {
+    missingDataColor: MISSING_DATA_COLOR,
+    paletteId: ["demographics", "facilities", "antyodaya", "livestock", "mws", "waterbodies", "cropping_intensity"].includes(layer.styleProfile) ? style.vectorStyleColorRamp : null,
+  } : {}),
   ...(layer.sourceType === "wms" ? { legend: layerLegend(layer, style) } : {}),
   styleContract:
     layer.sourceType === "wms"
@@ -847,6 +851,7 @@ const coreStackPluginState = (currentPlugins) => ({
         "maplibre-layer-control",
         "maplibre-atmosphere-effects",
         "maplibre-deckgl-viz",
+        "corestack-embed",
       ]
     )
   ).filter((pluginId) => !DISABLED_PROJECT_PLUGIN_IDS.has(pluginId)),
