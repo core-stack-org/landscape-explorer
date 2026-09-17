@@ -105,7 +105,7 @@ describe("GeoLibre 2.6 project generation", () => {
     expect(layer.style.strokeColor).toBe("#05081c");
     expect(layer.style.diagramType).toBe("bar");
     expect(layer.style.diagramFields).toEqual([{ property: "__delta_g_mm_2025-06-16", label: "2025-06-16", color: "#f7f7f7" }]);
-    expect(layer.style).toMatchObject({ vectorStyleMode: "single", vectorStyleProperty: "", vectorStyleStops: [], vectorStyleExpression: "", fillOpacity: 0 });
+    expect(layer.style).toMatchObject({ vectorStyleMode: "single", vectorStyleProperty: "", vectorStyleStops: [], vectorStyleExpression: "", fillOpacity: 0, diagramSizeMode: "sum", diagramSize: 60, diagramDeclutter: false });
     expect(layer.metadata.corestack.fortnightBarSeries).toMatchObject({ units: "mm", measurement: "DeltaG" });
   });
   it("evaluates finalized thresholds and missing-data guards in the real MapLibre expression engine", async () => {
