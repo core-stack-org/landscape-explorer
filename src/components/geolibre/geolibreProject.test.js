@@ -2,10 +2,13 @@ import {
   activeGeoLibreLegends,
   buildGeoLibreProject,
   DEFAULT_GEOLIBRE_BASEMAP_STYLE,
+  FORTNIGHT_DATE_FIELD,
+  FORTNIGHT_VALUE_FIELD,
   formatGeoServerName,
   geoJsonBounds,
   hydrateGeoLibreVectorLayer,
   mapViewFromBounds,
+  prepareFortnightData,
   sanitizeGeoLibreProjectPlugins,
 } from "./geolibreProject";
 import {
@@ -88,6 +91,8 @@ describe("GeoLibre 2.6 project generation", () => {
     const layer = result.layers.find(item => item.id === "corestack-mws_layers_fortnight");
     expect(layer.name).toBe("Fortnightly Water Balance");
     expect(layer.style.strokeColor).toBe("#05081c");
+    expect(layer.style.diagramType).toBe("bar");
+    expect(layer.style.diagramFields).toEqual([{ property: "__delta_g_mm_2025-06-16", label: "2025-06-16", color: "#2166ac" }]);
     expect(layer.metadata.corestack.timeSeries).toMatchObject({ date: "2025-06-16", units: "mm" });
     const compiled = createExpression(JSON.parse(layer.style.vectorStyleExpression), "layers[0].paint.fill-color");
     expect(compiled.result).toBe("success");
@@ -277,6 +282,9 @@ describe("GeoLibre 2.6 project generation", () => {
       latestLulc.metadata.corestack.geoserverStyle.legendJsonUrl
     ).toContain("FORMAT=application%2Fjson");
     expect(latestLulc.source.url).toContain("request=GetCoverage");
+    expect(latestLulc.source.url).toContain("tiling=false");
+    const sameYear = project.layers.filter(item => item.id.match(/^corestack-lulc_level_[123]_24_25$/));
+    expect(new Set(sameYear.map(item => item.source.url)).size).toBe(1);
     expect(latestLulc.source.url).toContain(
       "CoverageId=LULC_level_3%3ALULC_24_25_cachar_lakhipur_level_3"
     );
@@ -792,5 +800,26 @@ describe("GeoLibre 2.6 project generation", () => {
         fetchFeatureCollection: failedFetch,
       })
     ).rejects.toThrow(/administrative boundary.*offline/i);
+  });
+});
+
+describe("Fortnightly Water Balance time series", () => {
+  it("parses every date for diagrams and starts at the earliest observation", () => {
+    const data = { type: "FeatureCollection", features: [
+      { geometry: { type: "Point", coordinates: [1, 2] }, properties: { "2025-06-01": '{"DeltaG": 12}', "2025-06-16": '{"DeltaG": 0}' } },
+      { properties: { "2025-06-01": { DeltaG: 9 } } },
+      { properties: { "2025-06-16": "bad JSON", "2025-02-31": { DeltaG: 50 } } },
+    ] };
+    const result = prepareFortnightData(data);
+    expect(result.dates).toEqual(["2025-06-01", "2025-06-16"]);
+    expect(result.data.features.map(feature => feature.properties[FORTNIGHT_VALUE_FIELD])).toEqual([12, 9, null]);
+    expect(result.data.features.every(feature => feature.properties[FORTNIGHT_DATE_FIELD] === "2025-06-01")).toBe(true);
+    expect(result.fields.map(field => field.date)).toEqual(result.dates);
+    expect(result.data.features[0].properties[`${FORTNIGHT_VALUE_FIELD}_2025-06-16`]).toBe(0);
+    expect(result.data.features[1].properties[`${FORTNIGHT_VALUE_FIELD}_2025-06-16`]).toBeNull();
+    expect(result.data.features[0].geometry).toBe(data.features[0].geometry);
+    expect(result.data.features[0].properties["2025-06-16"]).toBe('{"DeltaG": 0}');
+    expect(data.features[0].properties[FORTNIGHT_VALUE_FIELD]).toBeUndefined();
+    expect(prepareFortnightData(data, "2025-06-01").data.features[1].properties[FORTNIGHT_VALUE_FIELD]).toBe(9);
   });
 });

@@ -464,7 +464,7 @@ export const GEOLIBRE_LULC_LAYERS = LULC_LEVELS.flatMap((level, index) =>
     useGlobalWms: true,
     year: year.value,
     defaultVisible: year.value === LATEST_GEOLIBRE_LULC_YEAR,
-    startupDelayMs: year.value === LATEST_GEOLIBRE_LULC_YEAR ? index * 300 : 0,
+    startupDelayMs: year.value === LATEST_GEOLIBRE_LULC_YEAR ? index * 1000 : 0,
     layerName: ({ district, tehsil }) =>
       `LULC_${year.value}_${district}_${tehsil}_level_3`,
   }))
