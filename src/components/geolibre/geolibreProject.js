@@ -1,6 +1,5 @@
 import { interpolateRampColors } from "@geolibre/core";
-import { FORTNIGHT_VALUE_FIELD, prepareFortnightData } from "./geolibreFortnight";
-import { applyMissingDataStyle, boundaryColorForLayer, hasLayerData, MISSING_DATA_COLOR, fixedPaletteExpression, naturalBreaksStyle, paletteCategories } from "./geolibreStyleUtils";
+import { applyMissingDataStyle, boundaryColorForLayer, finiteMeasurement, hasLayerData, MISSING_DATA_COLOR, fixedPaletteExpression, naturalBreaksStyle, paletteCategories } from "./geolibreStyleUtils";
 import {
   GEOLIBRE_CONFIG,
   GEOLIBRE_PROJECT_FORMAT_VERSION,
@@ -43,6 +42,41 @@ const EMPTY_FEATURE_COLLECTION = Object.freeze({
   type: "FeatureCollection",
   features: [],
 });
+
+// Fortnightly Water Balance (mws_layers_fortnight) is date-keyed: each feature
+// carries one record per observation date, e.g. properties["2025-06-16"] =
+// '{"DeltaG": 120}'. Keep every observation and expose numeric fields to
+// native bar diagrams; the temporal adapter selects a date without duplicating geometry.
+export const FORTNIGHT_VALUE_FIELD = "__delta_g_mm";
+export const FORTNIGHT_DATE_FIELD = "__observation_date";
+const isDate = value => /^\d{4}-\d{2}-\d{2}$/.test(value) && Number.isFinite(Date.parse(value)) && new Date(value).toISOString().slice(0, 10) === value;
+const measurement = value => {
+  try {
+    const record = typeof value === "string" ? JSON.parse(value) : value;
+    return finiteMeasurement(record?.DeltaG);
+  } catch { return null; }
+};
+
+/** Parse the full date axis, retaining original date-keyed properties and geometry.
+ * MapLibre expressions cannot parse JSON strings, so parsing happens on ingest.
+ */
+export const prepareFortnightData = (data, requestedDate) => {
+  const dates = [...new Set((data?.features || []).flatMap(feature => Object.keys(feature.properties || {}).filter(isDate)))].sort();
+  const date = dates.includes(requestedDate) ? requestedDate : dates[0] || null;
+  const fields = dates.map(date => ({ date, property: `${FORTNIGHT_VALUE_FIELD}_${date}` }));
+  return {
+    dates, date, fields,
+    data: { ...data, features: (data?.features || []).map(feature => ({
+      ...feature,
+      properties: {
+        ...feature.properties,
+        ...Object.fromEntries(fields.map(({ date, property }) => [property, measurement(feature.properties?.[date])])),
+        [FORTNIGHT_DATE_FIELD]: date,
+        [FORTNIGHT_VALUE_FIELD]: date ? measurement(feature.properties?.[date]) : null,
+      },
+    })) },
+  };
+};
 
 const BASE_STYLE = {
   minZoom: 0,
@@ -509,6 +543,7 @@ const buildWcsUrl = (baseUrl, layer, layerName) =>
     ["CoverageId", `${layer.workspace}:${layerName}`],
     ["format", "geotiff"],
     ["compression", "LZW"],
+    ...(layer.baseId?.startsWith("lulc_") ? [["tiling", "false"]] : []),
   ]);
 
 const validBounds = (bounds) =>
@@ -889,14 +924,22 @@ const hydrateLayerWithData = (layer, data) => {
   return applyMissingDataStyle({
     ...layer,
     geojson: data,
-    style,
+    style: timeSeries ? {
+      ...style,
+      diagramType: "bar",
+      diagramFields: timeSeries.fields.map(({ date, property }) => ({ property, label: date, color: "#2166ac" })),
+      diagramSize: 120,
+      diagramSizeMode: "fixed",
+      diagramDeclutter: true,
+      fillOpacity: 0.12,
+    } : style,
     metadata: {
       ...metadata,
       featureCount: data.features.length,
       loadState: "loaded",
       corestack: {
         ...metadata.corestack,
-        ...(timeSeries ? { timeSeries: { date: timeSeries.date, dates: timeSeries.dates, valueProperty: FORTNIGHT_VALUE_FIELD, units: "mm", measurement: "DeltaG", mode: "one-observation-per-MWS" } } : {}),
+        ...(timeSeries ? { timeSeries: { date: timeSeries.date, dates: timeSeries.dates, fields: timeSeries.fields, dateProperty: FORTNIGHT_DATE_FIELD, valueProperty: FORTNIGHT_VALUE_FIELD, units: "mm", measurement: "DeltaG", mode: "date-keyed-series" } } : {}),
         loadState: "loaded",
       },
     },

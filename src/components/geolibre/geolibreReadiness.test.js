@@ -3,8 +3,8 @@ import { GeoLibreReadiness } from "./geolibreReadiness";
 const scope = { state: "S", district: "D", tehsil: "T" };
 const project = { metadata: { scope }, mapView: { bbox: [0, 0, 1, 1] }, layers: [
   { id: "level1", type: "raster", visible: true },
-  { id: "level2", type: "raster", visible: false, metadata: { startupDelayMs: 300 } },
-  { id: "level3", type: "raster", visible: false, metadata: { startupDelayMs: 600 } },
+  { id: "level2", type: "raster", visible: false, metadata: { startupDelayMs: 1000 } },
+  { id: "level3", type: "raster", visible: false, metadata: { startupDelayMs: 2000 } },
 ] };
 let bridge, post, update, log, onReady, onProjectState;
 const reply = (method, value = null) => {
@@ -15,7 +15,7 @@ const reply = (method, value = null) => {
 const acknowledge = () => bridge.receive({ type: "geolibre:state", seq: bridge.sequence, project });
 const handshake = () => bridge.receive({ type: "geolibre:ready", version: "3.0.0" });
 const initialize = () => { acknowledge(); reply("getView", { center: [0.5, 0.5] }); reply("fitBounds"); };
-const enableRefinements = () => { jest.advanceTimersByTime(300); reply("setVisibility"); jest.advanceTimersByTime(300); reply("setVisibility"); };
+const enableRefinements = () => { jest.advanceTimersByTime(1000); reply("setVisibility"); jest.advanceTimersByTime(1000); reply("setVisibility"); };
 beforeEach(() => {
   jest.useFakeTimers();
   post = jest.fn(); update = jest.fn(); log = jest.fn(); onReady = jest.fn(); onProjectState = jest.fn();
@@ -46,7 +46,7 @@ test("fits a live map, staggers refinements, and records only a correlated rende
   bridge.receive({ type: "corestack:map-rendered", seq: 1, scopeKey: "wrong" });
   expect(onReady).not.toHaveBeenCalled();
   bridge.receive({ type: "corestack:map-rendered", seq: 1, scopeKey: "S|D|T" });
-  expect(onReady).toHaveBeenCalledWith(expect.objectContaining({ renderVerified: true, handshakeToRenderMs: 600 }));
+  expect(onReady).toHaveBeenCalledWith(expect.objectContaining({ renderVerified: true, handshakeToRenderMs: 2000 }));
   expect(update).toHaveBeenLastCalledWith({ state: "loaded", issue: "" });
   expect(log).toHaveBeenCalledWith("map_render_confirmed", expect.any(Object));
 });

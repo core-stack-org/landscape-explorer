@@ -100,7 +100,7 @@ export class GeoLibreReadiness {
         this.liveProject = { ...this.liveProject, layers: this.liveProject.layers.map(item => item.id === layer.id ? { ...item, visible: true } : item) };
         this.log("startup_layer_enabled", { layerId: layer.id, sequence: this.sequence });
         this.startNextLayer();
-      }), 300);
+      }), 1000);
       return;
     }
     this.awaitingRender = true;

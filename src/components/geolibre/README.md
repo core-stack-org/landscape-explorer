@@ -203,7 +203,7 @@ application.
 |---|---|
 | `../../config/geolibre.config.js` | Viewer application version, URL resolution, strict handshake compatibility |
 | `../../config/geolibreLayers.js` | GeoServer names, deployed domains, all LULC years and named WMS styles |
-| `geolibreProject.js` | Project generation, legends, Google imagery, vector hydration, GeoServer style/WFS/WMS/WCS references and bbox camera |
+| `geolibreProject.js` | Project generation, legends, Google imagery, vector hydration, GeoServer style/WFS/WMS/WCS references, bbox camera, and full Fortnightly Water Balance bar-series parsing |
 | `GeoLibreFrame.jsx` | Iframe bridge, one-time bbox fit, human error states and downloadable bounded technical log |
 | `../../pages/LandscapeExplorer.jsx` | Route-to-project orchestration and fetch-on-first-toggle vector cache; no duplicate map or layer UI |
 
