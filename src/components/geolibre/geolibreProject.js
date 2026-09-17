@@ -43,40 +43,20 @@ const EMPTY_FEATURE_COLLECTION = Object.freeze({
   features: [],
 });
 
-// Fortnightly Water Balance (mws_layers_fortnight) is date-keyed: each feature
-// carries one record per observation date, e.g. properties["2025-06-16"] =
-// '{"DeltaG": 120}'. Keep every observation and expose numeric fields to
-// native bar diagrams; the temporal adapter selects a date without duplicating geometry.
-export const FORTNIGHT_VALUE_FIELD = "__delta_g_mm";
-export const FORTNIGHT_DATE_FIELD = "__observation_date";
-const isDate = value => /^\d{4}-\d{2}-\d{2}$/.test(value) && Number.isFinite(Date.parse(value)) && new Date(value).toISOString().slice(0, 10) === value;
-const measurement = value => {
-  try {
-    const record = typeof value === "string" ? JSON.parse(value) : value;
-    return finiteMeasurement(record?.DeltaG);
-  } catch { return null; }
-};
-
-/** Parse the full date axis, retaining original date-keyed properties and geometry.
- * MapLibre expressions cannot parse JSON strings, so parsing happens on ingest.
- */
-export const prepareFortnightData = (data, requestedDate) => {
-  const dates = [...new Set((data?.features || []).flatMap(feature => Object.keys(feature.properties || {}).filter(isDate)))].sort();
-  const date = dates.includes(requestedDate) ? requestedDate : dates[0] || null;
-  const fields = dates.map(date => ({ date, property: `${FORTNIGHT_VALUE_FIELD}_${date}` }));
-  return {
-    dates, date, fields,
-    data: { ...data, features: (data?.features || []).map(feature => ({
-      ...feature,
-      properties: {
-        ...feature.properties,
-        ...Object.fromEntries(fields.map(({ date, property }) => [property, measurement(feature.properties?.[date])])),
-        [FORTNIGHT_DATE_FIELD]: date,
-        [FORTNIGHT_VALUE_FIELD]: date ? measurement(feature.properties?.[date]) : null,
-      },
-    })) },
-  };
-};
+// Decode date-keyed JSON records for inspection without adding chart fields.
+// Keep malformed values unchanged so missing/invalid data is not turned into zero.
+export const parseFortnightRecords = data => ({
+  ...data,
+  features: (data?.features || []).map(feature => ({
+    ...feature,
+    properties: Object.fromEntries(Object.entries(feature.properties || {}).map(([key, value]) => {
+      if (/^\d{4}-\d{2}-\d{2}$/.test(key) && typeof value === "string") {
+        try { return [key, JSON.parse(value)]; } catch { /* Retain the source value. */ }
+      }
+      return [key, value];
+    })),
+  })),
+});
 
 const BASE_STYLE = {
   minZoom: 0,
@@ -158,9 +138,6 @@ const STYLE_PROFILES = {
     ...thematicStyle, fields: ["Net2020_25"], value: numericProperty("Net2020_25"),
     thresholds: [-10, -5, -1, 1, 5, 10], palette: "rdbu", fillOpacity: 0.65,
   }),
-  // Fortnightly Water Balance is visualized solely through its per-MWS bar
-  // chart. A polygon classifier would create a stale, unrelated native legend.
-  fortnight: { ...BASE_STYLE, strokeColor: "#05081c", strokeWidth: 0.5, fillOpacity: 0, vectorStyleMode: "single" },
   drainage: categoryStyle(
     "ORDER",
     [
@@ -696,7 +673,7 @@ const coreStackMetadata = (layer, layerName, sourceUrl, style, baseUrl) => ({
   year: layer.year || null,
   ...(layer.sourceType !== "wms" ? {
     missingDataColor: MISSING_DATA_COLOR,
-    paletteId: ["demographics", "facilities", "antyodaya", "livestock", "mws", "fortnight", "waterbodies", "cropping_intensity"].includes(layer.styleProfile) ? style.vectorStyleColorRamp : null,
+    paletteId: ["demographics", "facilities", "antyodaya", "livestock", "mws", "waterbodies", "cropping_intensity"].includes(layer.styleProfile) ? style.vectorStyleColorRamp : null,
   } : {}),
   ...(layer.sourceType === "wms" ? { legend: layerLegend(layer, style) } : {}),
   styleContract:
@@ -793,11 +770,6 @@ const buildRasterLayer = ({ catalogLayer, layerName, baseUrl, bounds }) => {
           baseUrl
         ),
         wcsDownloadUrl,
-        rasterDownload: {
-          kind: "full-coverage-geotiff",
-          url: wcsDownloadUrl,
-          bytePreservingInGeoLibre: true,
-        },
       },
     },
     sourcePath: wcsDownloadUrl,
@@ -839,6 +811,8 @@ export const activeGeoLibreLegends = (project) =>
     : [];
 
 const DISABLED_PROJECT_PLUGIN_IDS = new Set([
+  // Discard the retired custom-viewer plugin from older project snapshots.
+  "corestack-embed",
   // GeoLibre's Components plugin enables every component control by default,
   // including its own Swipe control. The native legend is a separate core panel;
   // KYL supplements it with raster legends only.
@@ -861,7 +835,6 @@ const coreStackPluginState = (currentPlugins) => ({
         "maplibre-layer-control",
         "maplibre-atmosphere-effects",
         "maplibre-deckgl-viz",
-        "corestack-embed",
       ]
     )
   ).filter((pluginId) => !DISABLED_PROJECT_PLUGIN_IDS.has(pluginId)),
@@ -914,8 +887,7 @@ const hydrateLayerWithData = (layer, data) => {
   const { initialLoadError: _initialLoadError, ...metadata } =
     layer.metadata || {};
   const catalogLayer = GEOLIBRE_LAYERS.find(item => `corestack-${item.id}` === layer.id);
-  const fortnightBars = catalogLayer?.id === "mws_layers_fortnight" ? prepareFortnightData(data) : null;
-  if (fortnightBars) data = fortnightBars.data;
+  if (catalogLayer?.id === "mws_layers_fortnight") data = parseFortnightRecords(data);
   const outline = catalogLayer && boundaryColorForLayer(catalogLayer.id);
   const initialStyle = catalogLayer && { ...layerStyle(catalogLayer), ...(outline ? { strokeColor: outline, simpleStyleEnabled: true } : {}) };
   const style = initialStyle && Object.entries(initialStyle).every(([key, value]) => JSON.stringify(layer.style?.[key]) === JSON.stringify(value))
@@ -923,27 +895,13 @@ const hydrateLayerWithData = (layer, data) => {
   return applyMissingDataStyle({
     ...layer,
     geojson: data,
-    style: fortnightBars ? {
-      ...style,
-      vectorStyleMode: "single",
-      vectorStyleProperty: "",
-      vectorStyleStops: [],
-      vectorStyleExpression: "",
-      diagramType: "bar",
-      // The viewer supplies Red–Blue ramp colours from the parsed value itself.
-      diagramFields: fortnightBars.fields.map(({ date, property }) => ({ property, label: date, color: "#f7f7f7" })),
-      diagramSize: 60,
-      diagramSizeMode: "sum",
-      diagramDeclutter: false,
-      fillOpacity: 0,
-    } : style,
+    style,
     metadata: {
       ...metadata,
       featureCount: data.features.length,
       loadState: "loaded",
       corestack: {
         ...metadata.corestack,
-        ...(fortnightBars ? { fortnightBarSeries: { dates: fortnightBars.dates, fields: fortnightBars.fields, units: "mm", measurement: "DeltaG" } } : {}),
         loadState: "loaded",
       },
     },

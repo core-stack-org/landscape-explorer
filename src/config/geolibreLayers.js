@@ -165,7 +165,7 @@ const LAYERS = [
     geometryType: "polygon",
     layerName: ({ district, tehsil }) =>
       `deltaG_fortnight_${district}_${tehsil}`,
-    styleProfile: "fortnight",
+    styleProfile: "boundary",
   },
   {
     id: "terrain_vector",

@@ -88,7 +88,6 @@ const GeoLibreFrame = ({
   const [viewerState, setViewerState] = useState("loading");
   const [viewerIssue, setViewerIssue] = useState("");
   const [viewerVersion, setViewerVersion] = useState("");
-  const [mapBounds, setMapBounds] = useState(null);
   const [backgroundIssue, setBackgroundIssue] = useState("");
 
   const viewer = useMemo(() => {
@@ -144,8 +143,6 @@ const GeoLibreFrame = ({
       },
       onProjectState: snapshot => callbacksRef.current.onProjectState?.(snapshot),
       onReady: timing => callbacksRef.current.onWorkspaceReady?.(timing),
-      onBounds: setMapBounds,
-      requireRenderConfirmation: GEOLIBRE_CONFIG.requireRenderConfirmation,
     });
     bridgeRef.current = bridge;
     const handleMessage = event => {
@@ -211,7 +208,7 @@ const GeoLibreFrame = ({
       )}
 
       {!userIssue && viewerState === "loaded" && (
-        <GeoLibreLegend legends={legends} mapBounds={mapBounds} />
+        <GeoLibreLegend legends={legends} />
       )}
 
       {!userIssue && viewerVersion && (
@@ -266,9 +263,7 @@ const GeoLibreFrame = ({
                 <p className="mt-1 text-sm text-slate-600">
                   {!viewerVersion
                     ? "Connecting to GeoLibre. This may take a little longer while the service is busy."
-                    : viewerState === "rendering"
-                      ? "Drawing the map and its starting layers…"
-                      : "Preparing your map…"}
+                    : "Preparing your map…"}
                 </p>
               </>
             )}

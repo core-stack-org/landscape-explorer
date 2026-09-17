@@ -5,11 +5,11 @@ export const projectScopeKey = project => {
   return scope ? [scope.state, scope.district, scope.tehsil].join("|") : "";
 };
 
-// Handshake, project acknowledgement, map creation and rendering are separate
-// events. A successful postMessage is not evidence that any of them completed.
+// The public bridge confirms project acknowledgement and live map commands.
+// It does not expose tile completion; readiness never claims verified rendering.
 export class GeoLibreReadiness {
-  constructor({ post, log, update, onProjectState, onReady, onBounds, requireRenderConfirmation = false, now = () => performance.now() }) {
-    Object.assign(this, { post, log, update, onProjectState, onReady, onBounds, requireRenderConfirmation, now });
+  constructor({ post, log, update, onProjectState, onReady, now = () => performance.now() }) {
+    Object.assign(this, { post, log, update, onProjectState, onReady, now });
     this.sequence = 0;
     this.commandCount = 0;
     this.pendingCommands = new Map();
@@ -25,14 +25,14 @@ export class GeoLibreReadiness {
     clearTimeout(this.timeout);
     this.timeout = setTimeout(() => {
       this.log(`${phase}_timeout`, { sequence: this.sequence, timeoutMs: 90000 });
-      if (!this.bootComplete) this.fail("delayed");
-      else this.renderTimedOut = true;
+      this.fail("delayed");
     }, 90000);
   }
 
   fail(issue, details) {
     if (details) this.log("viewer_failed", details);
     this.failed = true;
+    clearTimeout(this.timeout);
     clearTimeout(this.stageTimer);
     this.pendingCommands.clear();
     if (this.bootComplete) this.update({ backgroundIssue: "A layer could not finish loading. Toggle it off and on to retry." });
@@ -49,17 +49,14 @@ export class GeoLibreReadiness {
     this.liveProject = project;
     this.acknowledged = false;
     this.mapChecked = false;
-    this.awaitingRender = false;
     this.interactive = false;
-    this.rendered = false;
     this.failed = false;
-    this.renderTimedOut = false;
     this.projectSentAt = this.now();
     this.deferred = project.layers.filter(layer => layer.metadata?.startupDelayMs && !this.startedLayers.has(`${this.scopeKey}:${layer.id}`)).sort((a, b) => a.metadata.startupDelayMs - b.metadata.startupDelayMs);
     if (!this.bootComplete) this.update({ state: "preparing", issue: "" });
     this.post({ type: "geolibre:load-project", project, seq: this.sequence });
     this.log("project_sent", { sequence: this.sequence, layerCount: project.layers.length });
-    this.armTimeout("map_render");
+    this.armTimeout("map_initialization");
     this.poll();
   }
 
@@ -70,8 +67,7 @@ export class GeoLibreReadiness {
   }
 
   poll() {
-    if (!this.handshake || !this.project || this.failed || this.rendered || this.renderTimedOut) return;
-    this.post({ type: "corestack:connect", seq: this.sequence, scopeKey: this.scopeKey });
+    if (!this.handshake || !this.project || this.failed || this.interactive) return;
     if (!this.acknowledged) {
       this.post({ type: "geolibre:request-state" });
     } else if (!this.mapChecked && ![...this.pendingCommands.values()].some(command => command.method === "getView")) {
@@ -89,7 +85,6 @@ export class GeoLibreReadiness {
         } else afterFit();
       });
     }
-    if (this.awaitingRender) this.requestRender();
   }
 
   startNextLayer() {
@@ -103,22 +98,10 @@ export class GeoLibreReadiness {
       }), 1000);
       return;
     }
-    this.awaitingRender = true;
-    if (!this.bootComplete) this.update({ state: "rendering", issue: "" });
-    this.requestRender();
-    if (!this.requireRenderConfirmation) {
-      this.interactive = true;
-      this.log("workspace_interactive", { sequence: this.sequence, renderVerified: false });
-      this.completeStartup({ renderVerified: false, handshakeToMapMs: Math.round(this.now() - this.handshakeAt) });
-    }
-  }
-
-  requestRender() {
-    const expectedLayerIds = this.liveProject.layers.filter(layer =>
-      layer.visible &&
-      (layer.type === "raster" || (layer.type === "geojson" && layer.geojson?.features?.length))
-    ).map(layer => layer.id);
-    this.post({ type: "corestack:await-render", seq: this.sequence, scopeKey: this.scopeKey, expectedLayerIds });
+    this.interactive = true;
+    clearTimeout(this.timeout);
+    this.log("workspace_interactive", { sequence: this.sequence, renderVerified: false });
+    this.completeStartup({ renderVerified: false, handshakeToMapMs: Math.round(this.now() - this.handshakeAt) });
   }
 
   completeStartup(timing) {
@@ -163,19 +146,6 @@ export class GeoLibreReadiness {
       this.onProjectState?.(data.project);
       this.poll();
       return;
-    }
-    if (!this.sequence || data.seq !== this.sequence || data.scopeKey !== this.scopeKey) return;
-    if (data.type === "corestack:map-bounds") {
-      const bounds = data.bounds;
-      if (bounds && [bounds.x, bounds.y, bounds.width, bounds.height].every(Number.isFinite) && bounds.width > 0 && bounds.height > 0) this.onBounds?.(bounds);
-    }
-    if (data.type === "corestack:render-error" && this.awaitingRender) this.fail("unavailable", { message: data.message, sourceId: data.sourceId });
-    if (data.type === "corestack:map-rendered" && this.awaitingRender && !this.rendered && !this.failed) {
-      this.rendered = true;
-      clearTimeout(this.timeout);
-      const timing = { sequence: this.sequence, handshakeToRenderMs: Math.round(this.now() - this.handshakeAt), projectToRenderMs: Math.round(this.now() - this.projectSentAt), totalMs: Math.round(this.now() - this.startedAt), renderVerified: true };
-      this.log("map_render_confirmed", timing);
-      this.completeStartup(timing);
     }
   }
 

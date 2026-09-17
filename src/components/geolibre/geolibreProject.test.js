@@ -2,13 +2,11 @@ import {
   activeGeoLibreLegends,
   buildGeoLibreProject,
   DEFAULT_GEOLIBRE_BASEMAP_STYLE,
-  FORTNIGHT_DATE_FIELD,
-  FORTNIGHT_VALUE_FIELD,
   formatGeoServerName,
   geoJsonBounds,
   hydrateGeoLibreVectorLayer,
   mapViewFromBounds,
-  prepareFortnightData,
+  parseFortnightRecords,
   sanitizeGeoLibreProjectPlugins,
 } from "./geolibreProject";
 import {
@@ -95,18 +93,20 @@ describe("GeoLibre 2.6 project generation", () => {
     expect(expression.result).toBe("success");
     categories.forEach((category) => expect(expression.value.evaluate({ zoom: 10 }, { properties: { uid: "12_332857", class: category, code: 2 }, type: 3 })).not.toBe("#3b3b3b"));
   });
-  it("hydrates Fortnightly Water Balance as a full-series bar plot without a polygon legend", async () => {
+  it("shows fortnightly boundaries only and parses date records without adding fields", async () => {
     const project = await buildGeoLibreProject({ ...location, fetchFeatureCollection: successfulFetch });
     const result = await hydrateGeoLibreVectorLayer({ project, layerId: "corestack-mws_layers_fortnight", fetchFeatureCollection: async () => ({
-      type: "FeatureCollection", features: [{ type: "Feature", geometry: { type: "Polygon", coordinates: [] }, properties: { "2025-06-16": '{"DeltaG": 120}' } }],
+      type: "FeatureCollection", features: [{ type: "Feature", geometry: { type: "Polygon", coordinates: [] }, properties: { "2025-06-16": '{"DeltaG": -120}' } }],
     }) });
     const layer = result.layers.find(item => item.id === "corestack-mws_layers_fortnight");
     expect(layer.name).toBe("Fortnightly Water Balance");
     expect(layer.style.strokeColor).toBe("#05081c");
-    expect(layer.style.diagramType).toBe("bar");
-    expect(layer.style.diagramFields).toEqual([{ property: "__delta_g_mm_2025-06-16", label: "2025-06-16", color: "#f7f7f7" }]);
-    expect(layer.style).toMatchObject({ vectorStyleMode: "single", vectorStyleProperty: "", vectorStyleStops: [], vectorStyleExpression: "", fillOpacity: 0, diagramSizeMode: "sum", diagramSize: 60, diagramDeclutter: false });
-    expect(layer.metadata.corestack.fortnightBarSeries).toMatchObject({ units: "mm", measurement: "DeltaG" });
+    const admin = result.layers.find(item => item.id === "corestack-administrative_boundaries");
+    expect(layer.style).toEqual({ ...admin.style, strokeColor: "#05081c" });
+    expect(layer.style.diagramType).toBeUndefined();
+    expect(layer.style.diagramFields).toBeUndefined();
+    expect(layer.style).toMatchObject({ vectorStyleMode: "single", vectorStyleProperty: "", vectorStyleStops: [], vectorStyleExpression: "", fillOpacity: 0 });
+    expect(layer.geojson.features[0].properties).toEqual({ "2025-06-16": { DeltaG: -120 }, stroke: "#05081c" });
   });
   it("evaluates finalized thresholds and missing-data guards in the real MapLibre expression engine", async () => {
     const project = await buildGeoLibreProject({ ...location, fetchFeatureCollection: successfulFetch });
@@ -271,10 +271,6 @@ describe("GeoLibre 2.6 project generation", () => {
             assignment: "named-style",
             renderingMode: "server-rendered-wms",
           },
-          rasterDownload: {
-            kind: "full-coverage-geotiff",
-            bytePreservingInGeoLibre: true,
-          },
         },
       },
     });
@@ -330,7 +326,6 @@ describe("GeoLibre 2.6 project generation", () => {
       metadata: {
         corestack: {
           geoserverWorkspace: "dem",
-          rasterDownload: { kind: "full-coverage-geotiff" },
         },
       },
     });
@@ -475,6 +470,7 @@ describe("GeoLibre 2.6 project generation", () => {
         ...project.plugins,
         activePluginIds: [
           ...project.plugins.activePluginIds,
+          "corestack-embed",
           "maplibre-gl-components",
           "maplibre-gl-swipe",
         ],
@@ -506,6 +502,7 @@ describe("GeoLibre 2.6 project generation", () => {
       "maplibre-gl-components"
     );
     expect(reset.plugins.activePluginIds).not.toContain("maplibre-gl-swipe");
+    expect(reset.plugins.activePluginIds).not.toContain("corestack-embed");
     expect(
       reset.plugins.mapControlPositions["maplibre-gl-components"]
     ).toBeUndefined();
@@ -813,23 +810,21 @@ describe("GeoLibre 2.6 project generation", () => {
   });
 });
 
-describe("Fortnightly Water Balance time series", () => {
-  it("parses every date for diagrams and starts at the earliest observation", () => {
-    const data = { type: "FeatureCollection", features: [
-      { geometry: { type: "Point", coordinates: [1, 2] }, properties: { "2025-06-01": '{"DeltaG": 12}', "2025-06-16": '{"DeltaG": 0}' } },
-      { properties: { "2025-06-01": { DeltaG: 9 } } },
-      { properties: { "2025-06-16": "bad JSON", "2025-02-31": { DeltaG: 50 } } },
-    ] };
-    const result = prepareFortnightData(data);
-    expect(result.dates).toEqual(["2025-06-01", "2025-06-16"]);
-    expect(result.data.features.map(feature => feature.properties[FORTNIGHT_VALUE_FIELD])).toEqual([12, 9, null]);
-    expect(result.data.features.every(feature => feature.properties[FORTNIGHT_DATE_FIELD] === "2025-06-01")).toBe(true);
-    expect(result.fields.map(field => field.date)).toEqual(result.dates);
-    expect(result.data.features[0].properties[`${FORTNIGHT_VALUE_FIELD}_2025-06-16`]).toBe(0);
-    expect(result.data.features[1].properties[`${FORTNIGHT_VALUE_FIELD}_2025-06-16`]).toBeNull();
-    expect(result.data.features[0].geometry).toBe(data.features[0].geometry);
-    expect(result.data.features[0].properties["2025-06-16"]).toBe('{"DeltaG": 0}');
-    expect(data.features[0].properties[FORTNIGHT_VALUE_FIELD]).toBeUndefined();
-    expect(prepareFortnightData(data, "2025-06-01").data.features[1].properties[FORTNIGHT_VALUE_FIELD]).toBe(9);
+describe("Fortnightly Water Balance records", () => {
+  it("preserves names, geometry, signs, zero, missing values and malformed JSON", () => {
+    const geometry = { type: "Point", coordinates: [1, 2] };
+    const data = { type: "FeatureCollection", features: [{ geometry, properties: {
+      uid: "12_301304", "2025-06-01": '{"DeltaG": -12, "Precipitation": 4}',
+      "2025-06-16": '{"DeltaG": 0}', "2025-07-01": { DeltaG: 9 },
+      "2025-07-16": "bad JSON", "2025-08-01": null,
+    } }] };
+    const parsed = parseFortnightRecords(data);
+    expect(parsed.features[0].properties).toEqual({
+      uid: "12_301304", "2025-06-01": { DeltaG: -12, Precipitation: 4 },
+      "2025-06-16": { DeltaG: 0 }, "2025-07-01": { DeltaG: 9 },
+      "2025-07-16": "bad JSON", "2025-08-01": null,
+    });
+    expect(parsed.features[0].geometry).toBe(geometry);
+    expect(data.features[0].properties["2025-06-01"]).toBe('{"DeltaG": -12, "Precipitation": 4}');
   });
 });

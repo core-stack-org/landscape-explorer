@@ -37,7 +37,7 @@ describe("GeoLibre legend", () => {
   });
 });
 
-test("legend stays inside a map that shrinks, grows, or moves beside panels", () => {
+test("legend stays inside the iframe area as it resizes", () => {
   const size = { width: 288, height: 200 };
   expect(legendPosition({ width: 1000, height: 600 }, size)).toMatchObject({ left: 700, top: 388 });
   expect(legendPosition({ width: 500, height: 400 }, size)).toMatchObject({ left: 200, top: 188 });
