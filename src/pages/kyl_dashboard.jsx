@@ -161,6 +161,7 @@ const KYLDashboardPage = () => {
   const [selectedWaterbodyForTehsil, setSelectedWaterbodyForTehsil] = useRecoilState(selectedWaterbodyForTehsilAtom);
   const [showWB, setShowWB] = useState(false);
   const [showConnectivity, setShowConnectivity] = useState(false);
+  const [showFarmBoundaries, setShowFarmBoundaries] = useState(false);
   const [selectedWaterbodyIds, setSelectedWaterbodyIds] = useState(new Set([]));
   const [isWBVisualizeOn, setIsWBVisualizeOn] = useState(false);
   const [activeWBVisualize, setActiveWBVisualize] = useState(null);
@@ -2577,6 +2578,8 @@ const wb_id = props?.UID ?? props?.id ?? props?.wb_id;
           villageNameIndex={villageNameIndex}
           setManualSelectedMWS={setManualSelectedMWS}
           handleRemoveMWS={handleRemoveMWS}
+          showFarmBoundaries={showFarmBoundaries}
+          setShowFarmBoundaries={setShowFarmBoundaries}
         />
       </div>
     </div>

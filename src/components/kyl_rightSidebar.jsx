@@ -20,8 +20,10 @@ import { buildIntersections } from '../components/utils/dataIndexes.js';
 import { FILTER_BY_NAME } from '../components/utils/filtersIndex.js';
 import StewardIcon from "../assets/steward_icon_final.png";
 import planIcon from "../assets/plan_icon_final.png";
+import getFarmBoundariesLayer from '../actions/getFarmBoundariesLayer.js';
 
-
+import Overlay from 'ol/Overlay';
+import getFarmTimeseries from '../actions/getFarmTimeseries.js';
 
 const KYLRightSidebar = ({
   state,
@@ -68,6 +70,8 @@ const KYLRightSidebar = ({
   setShowPlans,
   showStewards,
   setShowStewards,
+  showFarmBoundaries,
+  setShowFarmBoundaries,
   mwsIndex,
   villageNameIndex,
   setManualSelectedMWS,
@@ -84,6 +88,37 @@ const KYLRightSidebar = ({
   const plansLayerRef = React.useRef(null);
   const [stewards, setStewards] = React.useState([]);
   const [selectedStewardProfile, setSelectedStewardProfile] = React.useState(null);
+  const farmBoundariesLayerRef = React.useRef(null);
+  const [farmBoundariesLoading, setFarmBoundariesLoading] = React.useState(false);
+
+  const farmPopupOverlayRef = React.useRef(null);
+  const showFarmDetailsRef = React.useRef(() => {});
+  const [selectedFarmProperties, setSelectedFarmProperties] = React.useState(null);
+  const [showFarmDetailsModal, setShowFarmDetailsModal] = React.useState(false);
+  const [farmTimeseries, setFarmTimeseries] = React.useState(null);
+  const [farmTimeseriesLoading, setFarmTimeseriesLoading] = React.useState(false);
+  const [farmTimeseriesError, setFarmTimeseriesError] = React.useState(null);
+  const [timeseriesView, setTimeseriesView] = React.useState('yearly'); // 'yearly' | 'monthly'
+  const [selectedTimeseriesYear, setSelectedTimeseriesYear] = React.useState(null);
+
+  showFarmDetailsRef.current = async () => {
+    if (!selectedFarmProperties?.farm_id) return;
+    farmPopupOverlayRef.current?.setPosition(undefined);
+    setShowFarmDetailsModal(true);
+    setTimeseriesView('yearly');
+    setFarmTimeseriesLoading(true);
+    setFarmTimeseriesError(null);
+    try {
+      const data = await getFarmTimeseries(state.label, district.label, block.label, selectedFarmProperties.farm_id);
+      setFarmTimeseries(data);
+      setSelectedTimeseriesYear(data.annual?.[0]?.year ?? null);
+    } catch (err) {
+      console.error('Failed to fetch farm timeseries:', err);
+      setFarmTimeseriesError('Could not load farm details. Please try again.');
+    } finally {
+      setFarmTimeseriesLoading(false);
+    }
+  };
 
   const stewardsLayerRef = React.useRef(null);
 
@@ -265,35 +300,112 @@ const KYLRightSidebar = ({
   };
 
   const allSelectedMWSIds = React.useMemo(() => {
-  const ids = new Set();
-  (selectedMWS || []).forEach(id => ids.add(String(id)));
-  (manualSelectedMWS || []).forEach(id => ids.add(String(id)));
-  return Array.from(ids);
-}, [selectedMWS, manualSelectedMWS]);
+    const ids = new Set();
+    (selectedMWS || []).forEach(id => ids.add(String(id)));
+    (manualSelectedMWS || []).forEach(id => ids.add(String(id)));
+    return Array.from(ids);
+  }, [selectedMWS, manualSelectedMWS]);
 
 
-useEffect(() => {
-  if (plansLayerRef.current && mapRef.current) {
-    mapRef.current.removeLayer(plansLayerRef.current);
-    plansLayerRef.current = null;
-  }
+  useEffect(() => {
+    if (plansLayerRef.current && mapRef.current) {
+      mapRef.current.removeLayer(plansLayerRef.current);
+      plansLayerRef.current = null;
+    }
 
-  setPlans([]);
-  setSelectedPlanProfile(null);
-  setShowPlans(false);
-}, [state, district, block]);
+    setPlans([]);
+    setSelectedPlanProfile(null);
+    setShowPlans(false);
+  }, [state, district, block]);
 
-useEffect(() => {
-  if (stewardsLayerRef.current && mapRef.current) {
-    mapRef.current.removeLayer(stewardsLayerRef.current);
-    stewardsLayerRef.current = null;
-  }
+  useEffect(() => {
+    if (farmBoundariesLayerRef.current && mapRef.current) {
+      mapRef.current.removeLayer(farmBoundariesLayerRef.current);
+      farmBoundariesLayerRef.current = null;
+    }
+    setShowFarmBoundaries(false);
+  }, [state, district, block]);
 
-  setStewards([]);
-  setSelectedStewardProfile(null);
-  setShowStewards(false);
-}, [state, district, block]);
+  useEffect(() => {
+    if (stewardsLayerRef.current && mapRef.current) {
+      mapRef.current.removeLayer(stewardsLayerRef.current);
+      stewardsLayerRef.current = null;
+    }
 
+    setStewards([]);
+    setSelectedStewardProfile(null);
+    setShowStewards(false);
+  }, [state, district, block]);
+
+  useEffect(() => {
+    if (!mapRef.current || farmPopupOverlayRef.current) return;
+
+    const container = document.createElement('div');
+    container.style.cssText = `
+      background:#fff;border-radius:10px;box-shadow:0 4px 14px rgba(0,0,0,0.18);
+      padding:10px 12px;font-size:12px;min-width:170px;display:none;
+    `;
+
+    const overlay = new Overlay({
+      element: container,
+      offset: [14, -14],
+      positioning: 'bottom-left',
+      stopEvent: true, // lets clicks inside the popup (the button) register normally
+    });
+
+    mapRef.current.addOverlay(overlay);
+    farmPopupOverlayRef.current = overlay;
+  }, [mapRef.current]);
+
+  const showFarmPopup = (coordinate, properties) => {
+    const overlay = farmPopupOverlayRef.current;
+    if (!overlay) return;
+    const el = overlay.getElement();
+
+    el.innerHTML = `
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:6px;">
+        <div style="font-weight:600;color:#111827;">Farm ${properties.farm_id ?? '--'}</div>
+        <button id="farm-popup-close" style="border:none;background:none;color:#9ca3af;cursor:pointer;font-size:14px;line-height:1;">×</button>
+      </div>
+      <div style="color:#6b7280;margin-bottom:8px;">
+        Area: ${properties.area_m2 != null ? Number(properties.area_m2).toLocaleString() + ' m²' : '--'}
+      </div>
+      <button id="farm-popup-details" style="width:100%;padding:6px 0;border-radius:6px;border:1px solid #c7d2fe;background:#eef2ff;color:#4f46e5;font-size:11px;font-weight:600;cursor:pointer;">
+        Show Details
+      </button>
+    `;
+    el.style.display = 'block';
+
+    el.querySelector('#farm-popup-close').onclick = () => overlay.setPosition(undefined);
+    el.querySelector('#farm-popup-details').onclick = () => showFarmDetailsRef.current();
+
+    overlay.setPosition(coordinate);
+  };
+
+  useEffect(() => {
+    if (!mapRef.current) return;
+
+    const handleFarmClick = (evt) => {
+      if (!showFarmBoundaries || !farmBoundariesLayerRef.current) return;
+
+      const feature = mapRef.current.forEachFeatureAtPixel(
+        evt.pixel,
+        (feat, layer) => (layer === farmBoundariesLayerRef.current ? feat : undefined)
+      );
+
+      if (!feature) {
+        farmPopupOverlayRef.current?.setPosition(undefined);
+        return;
+      }
+
+      const properties = feature.getProperties();
+      setSelectedFarmProperties(properties);
+      showFarmPopup(evt.coordinate, properties);
+    };
+
+    mapRef.current.on('singleclick', handleFarmClick);
+    return () => mapRef.current?.un('singleclick', handleFarmClick);
+  }, [showFarmBoundaries]);
 
   const manualSelectionDetails = React.useMemo(() => {
     if (!manualSelectedMWS?.length || !dataJson?.length) return [];
@@ -469,6 +581,36 @@ useEffect(() => {
     setShowConnectivity(prev => !prev);
   };
 
+  const toggleFarmBoundaries = async () => {
+    if (showFarmBoundaries) {
+      if (farmBoundariesLayerRef.current) mapRef.current.removeLayer(farmBoundariesLayerRef.current);
+      farmPopupOverlayRef.current?.setPosition(undefined);
+      setSelectedFarmProperties(null);
+      setShowFarmBoundaries(false);
+      return;
+    }
+
+    if (farmBoundariesLayerRef.current) {
+      mapRef.current.addLayer(farmBoundariesLayerRef.current);
+      setShowFarmBoundaries(true);
+      return;
+    }
+
+    setFarmBoundariesLoading(true);
+    try {
+      const layer = await getFarmBoundariesLayer(state.label, district.label, block.label);
+      layer.setZIndex(20);
+      farmBoundariesLayerRef.current = layer;
+      mapRef.current.addLayer(layer);
+      setShowFarmBoundaries(true);
+    } catch (err) {
+      console.error('Failed to load farm boundaries:', err);
+      toast.error('Farm boundaries not generated for this location.');
+    } finally {
+      setFarmBoundariesLoading(false);
+    }
+  };
+
   const fetchPlansByTehsil = async (block) => {
   const res = await fetch(
     `${process.env.REACT_APP_API_URL}/watershed/plans/?tehsil=${block}&filter_test_plan=true`,
@@ -520,237 +662,263 @@ useEffect(() => {
     }
   };
 
-const showPlansOnMap = (plansData) => {
-  if (!mapRef.current) return;
+  const showPlansOnMap = (plansData) => {
+    if (!mapRef.current) return;
 
-  // Remove previous plans layer
-  if (plansLayerRef.current) {
-    mapRef.current.removeLayer(plansLayerRef.current);
-    plansLayerRef.current = null;
-  }
+    // Remove previous plans layer
+    if (plansLayerRef.current) {
+      mapRef.current.removeLayer(plansLayerRef.current);
+      plansLayerRef.current = null;
+    }
 
-  const features = plansData
-    .filter(
-      (plan) =>
-        plan.latitude !== null &&
-        plan.longitude !== null &&
-        plan.latitude !== undefined &&
-        plan.longitude !== undefined
-    )
-    .map((plan) => {
-      const feature = new Feature({
-        geometry: new Point([
-          Number(plan.longitude),
-          Number(plan.latitude),
-        ]),
+    const features = plansData
+      .filter(
+        (plan) =>
+          plan.latitude !== null &&
+          plan.longitude !== null &&
+          plan.latitude !== undefined &&
+          plan.longitude !== undefined
+      )
+      .map((plan) => {
+        const feature = new Feature({
+          geometry: new Point([
+            Number(plan.longitude),
+            Number(plan.latitude),
+          ]),
+        });
+
+        feature.set("plan", plan);
+        feature.set("planDetails", plan);
+
+    const status = getPlanStatus(plan);
+
+      feature.setStyle(PLAN_ICON_DEFAULT(status));
+
+        return feature;
       });
 
-      feature.set("plan", plan);
-      feature.set("planDetails", plan);
-
-  const status = getPlanStatus(plan);
-
-    feature.setStyle(PLAN_ICON_DEFAULT(status));
-
-      return feature;
+    const layer = new VectorLayer({
+      source: new VectorSource({
+        features,
+      }),
+      zIndex: 9999,
     });
 
-  const layer = new VectorLayer({
-    source: new VectorSource({
-      features,
-    }),
-    zIndex: 9999,
+    plansLayerRef.current = layer;
+
+    mapRef.current.addLayer(layer);
+
+    if (features.length > 0) {
+      mapRef.current.getView().fit(
+        layer.getSource().getExtent(),
+        {
+          padding: [40, 40, 40, 40],
+          duration: 500,
+          maxZoom: 16,
+        }
+      );
+    }
+  };
+
+  const showStewardsOnMap = (stewardsData) => {
+    if (!mapRef.current) return;
+
+    // Remove old steward layer
+    if (stewardsLayerRef.current) {
+      mapRef.current.removeLayer(stewardsLayerRef.current);
+      stewardsLayerRef.current = null;
+    }
+
+    const features = stewardsData
+      .map((steward) => {
+        const firstPlan = steward.plans?.find(
+          (plan) =>
+            plan.latitude != null &&
+            plan.longitude != null
+        );
+
+        if (!firstPlan) return null;
+
+        if (
+          firstPlan.latitude == null ||
+          firstPlan.longitude == null
+        ) {
+          return null;
+        }
+
+    const feature = new Feature({
+    geometry: new Point([
+      Number(firstPlan.longitude),
+      Number(firstPlan.latitude),
+    ]),
   });
+      feature.set("stewardDetails", steward); 
+      feature.setStyle(STEWARD_DOT_DEFAULT());
+      return feature;
+      })
+      .filter(Boolean);
 
-  plansLayerRef.current = layer;
+    const layer = new VectorLayer({
+      source: new VectorSource({
+        features,
+      }),
+    });
 
-  mapRef.current.addLayer(layer);
+    stewardsLayerRef.current = layer;
 
-  if (features.length > 0) {
-    mapRef.current.getView().fit(
-      layer.getSource().getExtent(),
+    mapRef.current.addLayer(layer);
+  };
+
+  const handleStewardsClick = async () => {
+    try {
+      // Hide stewards if already visible
+      if (showStewards) {
+        if (stewardsLayerRef.current) {
+          mapRef.current.removeLayer(stewardsLayerRef.current);
+          stewardsLayerRef.current = null;
+        }
+
+        setShowStewards(false);
+        return;
+      }
+
+      // Already fetched, just show again
+      if (stewards.length > 0) {
+        showStewardsOnMap(stewards);
+        setShowStewards(true);
+        return;
+      }
+
+      const response = await fetchStewardsByTehsil(block.block_id);
+
+      setStewards(response.stewards || []);
+      showStewardsOnMap(response.stewards || []);
+
+      setShowStewards(true);
+    } catch (err) {
+      console.error("Error fetching stewards:", err);
+    } finally {
+      console.log("Stewards Fetched")
+    }
+  };
+
+  const fetchStewardsByTehsil = async (block) => {
+    const res = await fetch(
+      `${process.env.REACT_APP_API_URL}/watershed/plans/steward-listing/?tehsil=${block}`,
       {
-        padding: [40, 40, 40, 40],
-        duration: 500,
-        maxZoom: 16,
+        headers: {
+          "Content-Type": "application/json",
+          "ngrok-skip-browser-warning": "1",
+          "X-API-Key": process.env.REACT_APP_API_KEY,
+        },
       }
     );
-  }
-};
 
-const showStewardsOnMap = (stewardsData) => {
-  if (!mapRef.current) return;
+    if (!res.ok) {
+      throw new Error(`API Error ${res.status}`);
+    }
 
-  // Remove old steward layer
-  if (stewardsLayerRef.current) {
-    mapRef.current.removeLayer(stewardsLayerRef.current);
-    stewardsLayerRef.current = null;
-  }
+    return res.json();
+  };
 
-  const features = stewardsData
-    .map((steward) => {
-      const firstPlan = steward.plans?.find(
-        (plan) =>
-          plan.latitude != null &&
-          plan.longitude != null
+  useEffect(() => {
+    if (!mapRef.current) return;
+
+    let hoveredFeature = null;
+
+    const handlePointerMove = (evt) => {
+      if (!showPlans || !plansLayerRef.current) return;
+
+      const feature = mapRef.current.forEachFeatureAtPixel(
+        evt.pixel,
+        (feature, layer) => {
+          if (layer === plansLayerRef.current) {
+            return feature;
+          }
+        }
       );
 
-      if (!firstPlan) return null;
-
-      if (
-        firstPlan.latitude == null ||
-        firstPlan.longitude == null
-      ) {
-        return null;
+      // Restore previous hovered feature
+      if (hoveredFeature && hoveredFeature !== feature) {
+        const status = getFeatureStatus(hoveredFeature);
+        hoveredFeature.setStyle(PLAN_ICON_DEFAULT(status));
+        hoveredFeature = null;
       }
 
-  const feature = new Feature({
-  geometry: new Point([
-    Number(firstPlan.longitude),
-    Number(firstPlan.latitude),
-  ]),
-});
-    feature.set("stewardDetails", steward); 
-    feature.setStyle(STEWARD_DOT_DEFAULT());
-    return feature;
-    })
-    .filter(Boolean);
-
-  const layer = new VectorLayer({
-    source: new VectorSource({
-      features,
-    }),
-  });
-
-  stewardsLayerRef.current = layer;
-
-  mapRef.current.addLayer(layer);
-};
-
-const handleStewardsClick = async () => {
-  try {
-    // Hide stewards if already visible
-    if (showStewards) {
-      if (stewardsLayerRef.current) {
-        mapRef.current.removeLayer(stewardsLayerRef.current);
-        stewardsLayerRef.current = null;
+      // Apply hover style
+      if (feature && feature !== hoveredFeature) {
+        const status = getFeatureStatus(feature);
+        feature.setStyle(PLAN_ICON_HOVERED(status));
+        hoveredFeature = feature;
       }
 
-      setShowStewards(false);
-      return;
-    }
+      mapRef.current.getTargetElement().style.cursor = feature ? "pointer" : "";
+    };
 
-    // Already fetched, just show again
-    if (stewards.length > 0) {
-      showStewardsOnMap(stewards);
-      setShowStewards(true);
-      return;
-    }
+    const handlePlanClick = (evt) => {
+      if (!showPlans || !plansLayerRef.current) return;
 
-    const response = await fetchStewardsByTehsil(block.block_id);
-
-    setStewards(response.stewards || []);
-    showStewardsOnMap(response.stewards || []);
-
-    setShowStewards(true);
-  } catch (err) {
-    console.error("Error fetching stewards:", err);
-  } finally {
-    console.log("Stewards Fetched")
-  }
-};
-
-const fetchStewardsByTehsil = async (block) => {
-  const res = await fetch(
-    `${process.env.REACT_APP_API_URL}/watershed/plans/steward-listing/?tehsil=${block}`,
-    {
-      headers: {
-        "Content-Type": "application/json",
-        "ngrok-skip-browser-warning": "1",
-        "X-API-Key": process.env.REACT_APP_API_KEY,
-      },
-    }
-  );
-
-  if (!res.ok) {
-    throw new Error(`API Error ${res.status}`);
-  }
-
-  return res.json();
-};
-
-React.useEffect(() => {
-  if (!mapRef.current) return;
-
-  let hoveredFeature = null;
-
-  const handlePointerMove = (evt) => {
-    if (!showPlans || !plansLayerRef.current) return;
-
-    const feature = mapRef.current.forEachFeatureAtPixel(
-      evt.pixel,
-      (feature, layer) => {
-        if (layer === plansLayerRef.current) {
-          return feature;
+      const feature = mapRef.current.forEachFeatureAtPixel(
+        evt.pixel,
+        (feature, layer) => {
+          if (layer === plansLayerRef.current) {
+            return feature;
+          }
         }
+      );
+
+      if (!feature) return;
+
+      const plan = feature.get("planDetails");
+
+      if (!plan) return;
+
+      setSelectedPlanProfile(plan);
+    };
+
+    mapRef.current.on("pointermove", handlePointerMove);
+    mapRef.current.on("singleclick", handlePlanClick);
+
+    return () => {
+      if (mapRef.current) {
+        mapRef.current.un("pointermove", handlePointerMove);
+        mapRef.current.un("singleclick", handlePlanClick);
       }
-    );
+    };
+  }, [showPlans, navigate]);
 
-    // Restore previous hovered feature
-    if (hoveredFeature && hoveredFeature !== feature) {
-      const status = getFeatureStatus(hoveredFeature);
-      hoveredFeature.setStyle(PLAN_ICON_DEFAULT(status));
-      hoveredFeature = null;
-    }
+  useEffect(() => {
+    if (!mapRef.current) return;
 
-    // Apply hover style
-    if (feature && feature !== hoveredFeature) {
-      const status = getFeatureStatus(feature);
-      feature.setStyle(PLAN_ICON_HOVERED(status));
-      hoveredFeature = feature;
-    }
+    let hoveredFeature = null;
 
-    mapRef.current.getTargetElement().style.cursor = feature ? "pointer" : "";
-  };
-
-  const handlePlanClick = (evt) => {
-    if (!showPlans || !plansLayerRef.current) return;
-
-    const feature = mapRef.current.forEachFeatureAtPixel(
-      evt.pixel,
-      (feature, layer) => {
-        if (layer === plansLayerRef.current) {
-          return feature;
+    const handleStewardHover = (evt) => {
+      const feature = mapRef.current.forEachFeatureAtPixel(
+        evt.pixel,
+        (feature, layer) => {
+          if (layer === stewardsLayerRef.current) {
+            return feature;
+          }
         }
+      );
+
+      if (hoveredFeature && hoveredFeature !== feature) {
+        hoveredFeature.setStyle(STEWARD_DOT_DEFAULT());
+        hoveredFeature = null;
       }
-    );
 
-    if (!feature) return;
+      if (feature && feature !== hoveredFeature) {
+        feature.setStyle(STEWARD_DOT_HOVERED());
+        hoveredFeature = feature;
+      }
 
-    const plan = feature.get("planDetails");
+      mapRef.current.getTargetElement().style.cursor =
+        feature ? "pointer" : "";
+    };
 
-    if (!plan) return;
+    const handleStewardClick = (evt) => {
+    if (!showStewards || !stewardsLayerRef.current) return;
 
-    setSelectedPlanProfile(plan);
-  };
-
-  mapRef.current.on("pointermove", handlePointerMove);
-  mapRef.current.on("singleclick", handlePlanClick);
-
-  return () => {
-    if (mapRef.current) {
-      mapRef.current.un("pointermove", handlePointerMove);
-      mapRef.current.un("singleclick", handlePlanClick);
-    }
-  };
-}, [showPlans, navigate]);
-
-React.useEffect(() => {
-  if (!mapRef.current) return;
-
-  let hoveredFeature = null;
-
-  const handleStewardHover = (evt) => {
     const feature = mapRef.current.forEachFeatureAtPixel(
       evt.pixel,
       (feature, layer) => {
@@ -760,791 +928,747 @@ React.useEffect(() => {
       }
     );
 
-    if (hoveredFeature && hoveredFeature !== feature) {
-      hoveredFeature.setStyle(STEWARD_DOT_DEFAULT());
-      hoveredFeature = null;
-    }
+    if (!feature) return;
 
-    if (feature && feature !== hoveredFeature) {
-      feature.setStyle(STEWARD_DOT_HOVERED());
-      hoveredFeature = feature;
-    }
+    const steward = feature.get("stewardDetails");
 
-    mapRef.current.getTargetElement().style.cursor =
-      feature ? "pointer" : "";
+    if (!steward) return;
+
+    setSelectedStewardProfile(steward);
   };
 
-  const handleStewardClick = (evt) => {
-  if (!showStewards || !stewardsLayerRef.current) return;
+    mapRef.current.on("pointermove", handleStewardHover);
+    mapRef.current.on("singleclick", handleStewardClick);
 
-  const feature = mapRef.current.forEachFeatureAtPixel(
-    evt.pixel,
-    (feature, layer) => {
-      if (layer === stewardsLayerRef.current) {
-        return feature;
-      }
-    }
-  );
+    return () => {
+      mapRef.current?.un("pointermove", handleStewardHover);
+      mapRef.current?.un("singleclick", handleStewardClick);
+    };
+  }, [showStewards]);
 
-  if (!feature) return;
+  useEffect(() => {
+    farmPopupOverlayRef.current?.setPosition(undefined);
+    setSelectedFarmProperties(null);
+    setShowFarmDetailsModal(false);
+    setFarmTimeseries(null);
+    setTimeseriesView('yearly');
+    setSelectedTimeseriesYear(null);
+  }, [state, district, block]);
 
-  const steward = feature.get("stewardDetails");
-
-  if (!steward) return;
-
-  setSelectedStewardProfile(steward);
-};
-
-  mapRef.current.on("pointermove", handleStewardHover);
-  mapRef.current.on("singleclick", handleStewardClick);
-
-  return () => {
-    mapRef.current?.un("pointermove", handleStewardHover);
-    mapRef.current?.un("singleclick", handleStewardClick);
-  };
-}, [showStewards]);
 
 // ── PLAN DOT STYLES ──────────────────────────────────────────────────────────
 
-const PLAN_STATUS_COLORS = {
-  in_progress: {fill: "#FF0000",stroke: "#8B0000",},
-  dpr_completed: {fill: "#FFFF00",stroke: "#B8B800", },
-  dpr_approved: {fill: "#00FF00",stroke: "#008000",},
-};
-
-const getPlanStatus = (plan) => {
-  if (!plan) return "in_progress";
-  if (plan.is_dpr_reviewed) return "dpr_completed";
-  return "in_progress";
-};
-
-const getFeatureStatus = (feature) => getPlanStatus(feature.get("planDetails"));
-
-const PLAN_ICON_DEFAULT = (status = "in_progress") => [
-  // Status ring
-  new Style({
-    image: new CircleStyle({
-      radius: 15,
-      fill: new Fill({
-        color: "transparent",
-      }),
-      stroke: new Stroke({
-        color: PLAN_STATUS_COLORS[status].fill,
-        width: 3,
-      }),
-    }),
-  }),
-
-  // Plan icon
-  new Style({
-    image: new Icon({
-      src: planIcon,
-      scale: 0.085,
-      anchor: [0.5, 0.5],
-      anchorXUnits: "fraction",
-      anchorYUnits: "fraction",
-    }),
-  }),
-];
-
-
-const PLAN_ICON_HOVERED = (status = "in_progress") => [
-  // Bigger status ring
-  new Style({
-    image: new CircleStyle({
-      radius: 17,
-      fill: new Fill({
-        color: "transparent",
-      }),
-      stroke: new Stroke({
-        color: PLAN_STATUS_COLORS[status].fill,
-        width: 3,
-      }),
-    }),
-  }),
-
-  // Bigger plan icon
-  new Style({
-    image: new Icon({
-      src: planIcon,
-      scale: 0.10,
-      anchor: [0.5, 0.5],
-      anchorXUnits: "fraction",
-      anchorYUnits: "fraction",
-    }),
-  }),
-];
-
-
-const PLAN_ICON_SELECTED = (status = "in_progress") => [
-  // Selected status ring
-  new Style({
-    image: new CircleStyle({
-      radius: 17,
-      fill: new Fill({
-        color: "transparent",
-      }),
-      stroke: new Stroke({
-        color: PLAN_STATUS_COLORS[status].fill,
-        width: 3.5,
-      }),
-    }),
-  }),
-
-  // Plan icon
-  new Style({
-    image: new Icon({
-      src: planIcon,
-      scale: 0.10,
-      anchor: [0.5, 0.5],
-      anchorXUnits: "fraction",
-      anchorYUnits: "fraction",
-    }),
-  }),
-];
-
-
-const STEWARD_DOT_DEFAULT = () =>
-  [
-    // White circular border
-    new Style({
-      image: new CircleStyle({
-        radius: 18,
-        fill: new Fill({
-          color: "#ffffff",
-        }),
-      }),
-    }),
-
-    // Steward icon
-    new Style({
-      image: new Icon({
-        src: StewardIcon,
-        scale: 0.12,
-        anchor: [0.5, 0.5],
-        anchorXUnits: "fraction",
-        anchorYUnits: "fraction",
-      }),
-    }),
-  ];
-
-const STEWARD_DOT_HOVERED = () =>
-  [
-    // White circular border
-    new Style({
-      image: new CircleStyle({
-        radius: 21,
-        fill: new Fill({
-          color: "#ffffff",
-        }),
-      }),
-    }),
-
-    // Slightly bigger steward icon on hover
-    new Style({
-      image: new Icon({
-        src: StewardIcon,
-        scale: 0.14,
-        anchor: [0.5, 0.5],
-        anchorXUnits: "fraction",
-        anchorYUnits: "fraction",
-      }),
-    }),
-  ];
-
-  const handleTehsilReport = () => {
-    const reportURL = `${process.env.REACT_APP_API_URL}/generate_tehsil_report/?state=${transformName(state?.label)}&district=${transformName(district?.label)}&block=${transformName(block?.label)}`;
-    window.open(reportURL, '_blank', 'noopener,noreferrer');
+  const PLAN_STATUS_COLORS = {
+    in_progress: {fill: "#FF0000",stroke: "#8B0000",},
+    dpr_completed: {fill: "#FFFF00",stroke: "#B8B800", },
+    dpr_approved: {fill: "#00FF00",stroke: "#008000",},
   };
 
-  const generateSelectionTableData = () => {
-    const mwsData = [];
-    const villageData = [];
+  const getPlanStatus = (plan) => {
+    if (!plan) return "in_progress";
+    if (plan.is_dpr_reviewed) return "dpr_completed";
+    return "in_progress";
+  };
 
-    if (allSelectedMWSIds && allSelectedMWSIds.length > 0) {
-      allSelectedMWSIds.forEach((mwsId, index) => {
-        mwsData.push({ id: `${mwsId}-${index}`, name: String(mwsId) });
-      });
-    }
+  const getFeatureStatus = (feature) => getPlanStatus(feature.get("planDetails"));
 
-    if (selectedVillages && selectedVillages.size > 0) {
-      let villageIndex = 0;
-      selectedVillages.forEach((villageId) => {
-        const villageIdStr = String(villageId);
-        const vName = villageNameIndex.get(villageIdStr) || '';
-        villageData.push({
-          id: `village-${villageIdStr}-${villageIndex}`,
-          villageId: villageIdStr,
-          villageName: vName || 'Unknown Village',
+  const PLAN_ICON_DEFAULT = (status = "in_progress") => [
+    // Status ring
+    new Style({
+      image: new CircleStyle({
+        radius: 15,
+        fill: new Fill({
+          color: "transparent",
+        }),
+        stroke: new Stroke({
+          color: PLAN_STATUS_COLORS[status].fill,
+          width: 3,
+        }),
+      }),
+    }),
+
+    // Plan icon
+    new Style({
+      image: new Icon({
+        src: planIcon,
+        scale: 0.085,
+        anchor: [0.5, 0.5],
+        anchorXUnits: "fraction",
+        anchorYUnits: "fraction",
+      }),
+    }),
+  ];
+
+
+  const PLAN_ICON_HOVERED = (status = "in_progress") => [
+    // Bigger status ring
+    new Style({
+      image: new CircleStyle({
+        radius: 17,
+        fill: new Fill({
+          color: "transparent",
+        }),
+        stroke: new Stroke({
+          color: PLAN_STATUS_COLORS[status].fill,
+          width: 3,
+        }),
+      }),
+    }),
+
+    // Bigger plan icon
+    new Style({
+      image: new Icon({
+        src: planIcon,
+        scale: 0.10,
+        anchor: [0.5, 0.5],
+        anchorXUnits: "fraction",
+        anchorYUnits: "fraction",
+      }),
+    }),
+  ];
+
+
+  const STEWARD_DOT_DEFAULT = () =>
+    [
+      // White circular border
+      new Style({
+        image: new CircleStyle({
+          radius: 18,
+          fill: new Fill({
+            color: "#ffffff",
+          }),
+        }),
+      }),
+
+      // Steward icon
+      new Style({
+        image: new Icon({
+          src: StewardIcon,
+          scale: 0.12,
+          anchor: [0.5, 0.5],
+          anchorXUnits: "fraction",
+          anchorYUnits: "fraction",
+        }),
+      }),
+    ];
+
+  const STEWARD_DOT_HOVERED = () =>
+    [
+      // White circular border
+      new Style({
+        image: new CircleStyle({
+          radius: 21,
+          fill: new Fill({
+            color: "#ffffff",
+          }),
+        }),
+      }),
+
+      // Slightly bigger steward icon on hover
+      new Style({
+        image: new Icon({
+          src: StewardIcon,
+          scale: 0.14,
+          anchor: [0.5, 0.5],
+          anchorXUnits: "fraction",
+          anchorYUnits: "fraction",
+        }),
+      }),
+    ];
+
+    const handleTehsilReport = () => {
+      const reportURL = `${process.env.REACT_APP_API_URL}/generate_tehsil_report/?state=${transformName(state?.label)}&district=${transformName(district?.label)}&block=${transformName(block?.label)}`;
+      window.open(reportURL, '_blank', 'noopener,noreferrer');
+    };
+
+    const generateSelectionTableData = () => {
+      const mwsData = [];
+      const villageData = [];
+
+      if (allSelectedMWSIds && allSelectedMWSIds.length > 0) {
+        allSelectedMWSIds.forEach((mwsId, index) => {
+          mwsData.push({ id: `${mwsId}-${index}`, name: String(mwsId) });
         });
-        villageIndex++;
-      });
-    }
-
-    return { mwsData, villageData };
-  };
-
-  const displayVillages = React.useMemo(() => {
-    // Manual MWS selection
-    if (manualSelectedMWS?.length > 0) {
-      return [
-        ...new Map(
-          manualSelectionDetails
-            .flatMap((mws) => mws.villages)
-            .map((v) => [v.villageId, v])
-        ).values(),
-      ];
-    }
-
-    // Filter selection
-    const { villageData } = generateSelectionTableData();
-    return villageData;
-  }, [
-    manualSelectedMWS,
-    manualSelectionDetails,
-    selectedVillages,
-    villageJson,
-  ]);
-
-  // ─── WB property display resolver — uses cached precomputed props ───
-  const getWBDisplayValue = (filterName, swb) => {
-  if (filterName === "waterbody_type") {
-    const raw = swb.waterbody_type;
-    if (raw === undefined || raw === null) return "N/A";
-    return raw === "river" ? "On River" : "Off River";
-  }
-
-  if (filterName === "drainage_line") {
-    // Use pre-computed if available, else compute from raw
-    if (swb.wbDrainage === "onDrainage") return "On Drainage";
-    if (swb.wbDrainage === "offDrainage") return "Off Drainage";
-    const val = Number(swb.on_drainage_line ?? null);
-    if (!isNaN(val) && swb.on_drainage_line !== null && swb.on_drainage_line !== undefined) {
-      return val === 1 ? "On Drainage" : "Off Drainage";
-    }
-    return "N/A";
-  }
-
-  if (filterName === "surface_water_trend") {
-    // Use pre-computed if available
-    if (swb.wbTrend) {
-      return swb.wbTrend.charAt(0).toUpperCase() + swb.wbTrend.slice(1);
-    }
-    // Compute from raw area_ fields using Mann-Kendall
-    const areas = Object.keys(swb)
-      .filter(k => k.startsWith("area_") && k !== "area_ored")
-      .sort()
-      .map(k => Number(swb[k] ?? 0));
-    if (areas.length < 2) return "N/A";
-    let S = 0;
-    for (let i = 0; i < areas.length - 1; i++) {
-      for (let j = i + 1; j < areas.length; j++) {
-        if (areas[j] > areas[i]) S++;
-        else if (areas[j] < areas[i]) S--;
       }
-    }
-    if (S > 0) return "Positive";
-    if (S < 0) return "Negative";
-    return "Steady";
-  }
 
-  if (filterName === "waterbody_size") {
-    // Use pre-computed if available
-    if (swb.wbSizeCategory) {
-      const map = {
-        small: "Small (<1 ha)",
-        medium: "Medium (1–5 ha)",
-        large: "Large (5–10 ha)",
-        veryLarge: "Very Large (>10 ha)",
-      };
-      return map[swb.wbSizeCategory] || "N/A";
-    }
-    // Compute from raw area
-    const area = Number(swb.area_ored ?? swb.AREA_HA ?? swb.area ?? swb.Area ?? 0);
-    if (isNaN(area)) return "N/A";
-    if (area < 1) return "Small (<1 ha)";
-    if (area < 5) return "Medium (1–5 ha)";
-    if (area < 10) return "Large (5–10 ha)";
-    return "Very Large (>10 ha)";
-  }
-
-  return "N/A";
-};
-
-  const downloadPDF = async () => {
-    if (isDownloading) return;
-    setIsDownloading(true);
-    try {
-      const { mwsData, villageData } = generateSelectionTableData();
-
-      let mapImageData = null;
-      try {
-        const map = mapRef.current;
-        if (map) {
-          mapImageData = await new Promise((resolve) => {
-            map.render();
-            map.once('rendercomplete', () => {
-              try {
-                const mapCanvas = document.createElement('canvas');
-                const size = map.getSize();
-                mapCanvas.width = size[0];
-                mapCanvas.height = size[1];
-                const ctx = mapCanvas.getContext('2d');
-                const viewport = map.getViewport();
-                viewport.querySelectorAll('canvas').forEach((layerCanvas) => {
-                  if (layerCanvas.width > 0) {
-                    const parentOpacity = layerCanvas.parentNode.style.opacity;
-                    ctx.globalAlpha = parentOpacity !== "" ? parseFloat(parentOpacity) : 1;
-                    const transform = layerCanvas.style.transform;
-                    if (transform) {
-                      const matrix = transform.match(/^matrix\(([^)]*)\)$/)?.[1].split(',').map(Number);
-                      if (matrix) ctx.setTransform(...matrix);
-                    } else {
-                      ctx.setTransform(1, 0, 0, 1, 0, 0);
-                    }
-                    ctx.drawImage(layerCanvas, 0, 0);
-                  }
-                });
-                ctx.globalAlpha = 1;
-                ctx.setTransform(1, 0, 0, 1, 0, 0);
-                resolve(mapCanvas.toDataURL('image/jpeg', 0.9));
-              } catch (e) {
-                console.warn('Canvas composite failed:', e);
-                resolve(null);
-              }
-            });
-            map.renderSync();
+      if (selectedVillages && selectedVillages.size > 0) {
+        let villageIndex = 0;
+        selectedVillages.forEach((villageId) => {
+          const villageIdStr = String(villageId);
+          const vName = villageNameIndex.get(villageIdStr) || '';
+          villageData.push({
+            id: `village-${villageIdStr}-${villageIndex}`,
+            villageId: villageIdStr,
+            villageName: vName || 'Unknown Village',
           });
+          villageIndex++;
+        });
+      }
+
+      return { mwsData, villageData };
+    };
+
+    const displayVillages = React.useMemo(() => {
+      // Manual MWS selection
+      if (manualSelectedMWS?.length > 0) {
+        return [
+          ...new Map(
+            manualSelectionDetails
+              .flatMap((mws) => mws.villages)
+              .map((v) => [v.villageId, v])
+          ).values(),
+        ];
+      }
+
+      // Filter selection
+      const { villageData } = generateSelectionTableData();
+      return villageData;
+    }, [
+      manualSelectedMWS,
+      manualSelectionDetails,
+      selectedVillages,
+      villageJson,
+    ]);
+
+    // ─── WB property display resolver — uses cached precomputed props ───
+    const getWBDisplayValue = (filterName, swb) => {
+    if (filterName === "waterbody_type") {
+      const raw = swb.waterbody_type;
+      if (raw === undefined || raw === null) return "N/A";
+      return raw === "river" ? "On River" : "Off River";
+    }
+
+    if (filterName === "drainage_line") {
+      // Use pre-computed if available, else compute from raw
+      if (swb.wbDrainage === "onDrainage") return "On Drainage";
+      if (swb.wbDrainage === "offDrainage") return "Off Drainage";
+      const val = Number(swb.on_drainage_line ?? null);
+      if (!isNaN(val) && swb.on_drainage_line !== null && swb.on_drainage_line !== undefined) {
+        return val === 1 ? "On Drainage" : "Off Drainage";
+      }
+      return "N/A";
+    }
+
+    if (filterName === "surface_water_trend") {
+      // Use pre-computed if available
+      if (swb.wbTrend) {
+        return swb.wbTrend.charAt(0).toUpperCase() + swb.wbTrend.slice(1);
+      }
+      // Compute from raw area_ fields using Mann-Kendall
+      const areas = Object.keys(swb)
+        .filter(k => k.startsWith("area_") && k !== "area_ored")
+        .sort()
+        .map(k => Number(swb[k] ?? 0));
+      if (areas.length < 2) return "N/A";
+      let S = 0;
+      for (let i = 0; i < areas.length - 1; i++) {
+        for (let j = i + 1; j < areas.length; j++) {
+          if (areas[j] > areas[i]) S++;
+          else if (areas[j] < areas[i]) S--;
         }
-      } catch (mapErr) {
-        console.warn('Map capture failed:', mapErr);
       }
+      if (S > 0) return "Positive";
+      if (S < 0) return "Negative";
+      return "Steady";
+    }
 
-      const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
-      const pageW = doc.internal.pageSize.width;
+    if (filterName === "waterbody_size") {
+      // Use pre-computed if available
+      if (swb.wbSizeCategory) {
+        const map = {
+          small: "Small (<1 ha)",
+          medium: "Medium (1–5 ha)",
+          large: "Large (5–10 ha)",
+          veryLarge: "Very Large (>10 ha)",
+        };
+        return map[swb.wbSizeCategory] || "N/A";
+      }
+      // Compute from raw area
+      const area = Number(swb.area_ored ?? swb.AREA_HA ?? swb.area ?? swb.Area ?? 0);
+      if (isNaN(area)) return "N/A";
+      if (area < 1) return "Small (<1 ha)";
+      if (area < 5) return "Medium (1–5 ha)";
+      if (area < 10) return "Large (5–10 ha)";
+      return "Very Large (>10 ha)";
+    }
 
-      doc.setFontSize(18);
-      doc.setFont('helvetica', 'bold');
-      doc.setTextColor(30, 30, 30);
-      doc.text('KYL Dashboard Report', 14, 14);
-      doc.setDrawColor(180, 180, 180);
-      doc.line(14, 17, pageW - 14, 17);
-      doc.setFontSize(8);
-      doc.setFont('helvetica', 'normal');
-      doc.setTextColor(140, 140, 140);
-      doc.text(`Generated: ${new Date().toLocaleString()}`, pageW - 14, 14, { align: 'right' });
+    return "N/A";
+  };
 
-      let yPos = 23;
-      doc.setFillColor(245, 247, 255);
-      doc.roundedRect(14, yPos - 3, pageW - 28, 14, 2, 2, 'F');
-      doc.setFontSize(9);
-      doc.setFont('helvetica', 'bold');
-      doc.setTextColor(60, 60, 60);
-      doc.text('Location:', 18, yPos + 4);
-      doc.setFont('helvetica', 'normal');
-      doc.text(`State: ${state?.label || 'N/A'}`, 50, yPos + 4);
-      doc.text(`District: ${district?.label || 'N/A'}`, 110, yPos + 4);
-      doc.text(`Block / Tehsil: ${block?.label || 'N/A'}`, 185, yPos + 4);
-      yPos += 18;
+    const downloadPDF = async () => {
+      if (isDownloading) return;
+      setIsDownloading(true);
+      try {
+        const { mwsData, villageData } = generateSelectionTableData();
 
-      const selectedFilters = getFormattedSelectedFilters();
-      const selectedPatterns = getFormattedSelectedPatterns();
+        let mapImageData = null;
+        try {
+          const map = mapRef.current;
+          if (map) {
+            mapImageData = await new Promise((resolve) => {
+              map.render();
+              map.once('rendercomplete', () => {
+                try {
+                  const mapCanvas = document.createElement('canvas');
+                  const size = map.getSize();
+                  mapCanvas.width = size[0];
+                  mapCanvas.height = size[1];
+                  const ctx = mapCanvas.getContext('2d');
+                  const viewport = map.getViewport();
+                  viewport.querySelectorAll('canvas').forEach((layerCanvas) => {
+                    if (layerCanvas.width > 0) {
+                      const parentOpacity = layerCanvas.parentNode.style.opacity;
+                      ctx.globalAlpha = parentOpacity !== "" ? parseFloat(parentOpacity) : 1;
+                      const transform = layerCanvas.style.transform;
+                      if (transform) {
+                        const matrix = transform.match(/^matrix\(([^)]*)\)$/)?.[1].split(',').map(Number);
+                        if (matrix) ctx.setTransform(...matrix);
+                      } else {
+                        ctx.setTransform(1, 0, 0, 1, 0, 0);
+                      }
+                      ctx.drawImage(layerCanvas, 0, 0);
+                    }
+                  });
+                  ctx.globalAlpha = 1;
+                  ctx.setTransform(1, 0, 0, 1, 0, 0);
+                  resolve(mapCanvas.toDataURL('image/jpeg', 0.9));
+                } catch (e) {
+                  console.warn('Canvas composite failed:', e);
+                  resolve(null);
+                }
+              });
+              map.renderSync();
+            });
+          }
+        } catch (mapErr) {
+          console.warn('Map capture failed:', mapErr);
+        }
 
-      doc.setFontSize(11);
-      doc.setFont('helvetica', 'bold');
-      doc.setTextColor(30, 30, 120);
-      doc.text('Selected Filters / Indicators', 14, yPos);
-      yPos += 2;
+        const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+        const pageW = doc.internal.pageSize.width;
 
-      if (selectedFilters.length > 0) {
-        autoTable(doc, {
-          startY: yPos,
-          head: [['#', 'Filter Name', 'Value(s)']],
-          body: selectedFilters.map((f, i) => [i + 1, f.filterName || f.name || '', (f.values || []).join(', ')]),
-          theme: 'grid',
-          headStyles: { fillColor: [63, 81, 181], fontSize: 9 },
-          bodyStyles: { fontSize: 8 },
-          columnStyles: { 0: { cellWidth: 12, halign: 'center' }, 1: { cellWidth: 70 } },
-          margin: { left: 14, right: 14 },
-        });
-        yPos = doc.lastAutoTable.finalY + 4;
-      } else {
+        doc.setFontSize(18);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(30, 30, 30);
+        doc.text('KYL Dashboard Report', 14, 14);
+        doc.setDrawColor(180, 180, 180);
+        doc.line(14, 17, pageW - 14, 17);
+        doc.setFontSize(8);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(140, 140, 140);
+        doc.text(`Generated: ${new Date().toLocaleString()}`, pageW - 14, 14, { align: 'right' });
+
+        let yPos = 23;
+        doc.setFillColor(245, 247, 255);
+        doc.roundedRect(14, yPos - 3, pageW - 28, 14, 2, 2, 'F');
         doc.setFontSize(9);
-        doc.setFont('helvetica', 'italic');
-        doc.setTextColor(160, 160, 160);
-        doc.text('No filters selected.', 18, yPos + 4);
-        yPos += 10;
-      }
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(60, 60, 60);
+        doc.text('Location:', 18, yPos + 4);
+        doc.setFont('helvetica', 'normal');
+        doc.text(`State: ${state?.label || 'N/A'}`, 50, yPos + 4);
+        doc.text(`District: ${district?.label || 'N/A'}`, 110, yPos + 4);
+        doc.text(`Block / Tehsil: ${block?.label || 'N/A'}`, 185, yPos + 4);
+        yPos += 18;
 
-      if (selectedPatterns.length > 0) {
-        autoTable(doc, {
-          startY: yPos,
-          head: [['#', 'Pattern']],
-          body: selectedPatterns.map((p, i) => [i + 1, p.category || p.patternName || '']),
-          theme: 'grid',
-          headStyles: { fillColor: [76, 175, 80], fontSize: 9 },
-          bodyStyles: { fontSize: 8 },
-          columnStyles: { 0: { cellWidth: 12, halign: 'center' } },
-          margin: { left: 14, right: 14 },
-        });
-        yPos = doc.lastAutoTable.finalY + 4;
-      }
+        const selectedFilters = getFormattedSelectedFilters();
+        const selectedPatterns = getFormattedSelectedPatterns();
 
-      doc.setFontSize(11);
-      doc.setFont('helvetica', 'bold');
-      doc.setTextColor(30, 30, 30);
-      doc.text('Map View', 14, yPos + 6);
-      yPos += 8;
+        doc.setFontSize(11);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(30, 30, 120);
+        doc.text('Selected Filters / Indicators', 14, yPos);
+        yPos += 2;
 
-      if (mapImageData) {
-        const imgProps = doc.getImageProperties(mapImageData);
-        const maxW = pageW - 28;
-        const remainingH = doc.internal.pageSize.height - yPos - 20;
-        const maxH = Math.max(remainingH, 60);
-        const ratio = Math.min(maxW / imgProps.width, maxH / imgProps.height);
-        const imgW = imgProps.width * ratio;
-        const imgH = imgProps.height * ratio;
-        if (yPos + imgH > doc.internal.pageSize.height - 15) { doc.addPage(); yPos = 20; }
-        doc.addImage(mapImageData, 'JPEG', 14, yPos, imgW, imgH);
-        yPos += imgH + 8;
-      } else {
-        doc.setFontSize(9);
-        doc.setFont('helvetica', 'italic');
-        doc.setTextColor(160, 160, 160);
-        doc.text('(Map screenshot could not be captured)', 14, yPos + 4);
-        yPos += 12;
-      }
+        if (selectedFilters.length > 0) {
+          autoTable(doc, {
+            startY: yPos,
+            head: [['#', 'Filter Name', 'Value(s)']],
+            body: selectedFilters.map((f, i) => [i + 1, f.filterName || f.name || '', (f.values || []).join(', ')]),
+            theme: 'grid',
+            headStyles: { fillColor: [63, 81, 181], fontSize: 9 },
+            bodyStyles: { fontSize: 8 },
+            columnStyles: { 0: { cellWidth: 12, halign: 'center' }, 1: { cellWidth: 70 } },
+            margin: { left: 14, right: 14 },
+          });
+          yPos = doc.lastAutoTable.finalY + 4;
+        } else {
+          doc.setFontSize(9);
+          doc.setFont('helvetica', 'italic');
+          doc.setTextColor(160, 160, 160);
+          doc.text('No filters selected.', 18, yPos + 4);
+          yPos += 10;
+        }
 
-      if (mwsData.length > 0 || villageData.length > 0) {
-        if (yPos > doc.internal.pageSize.height - 50) { doc.addPage(); yPos = 20; }
+        if (selectedPatterns.length > 0) {
+          autoTable(doc, {
+            startY: yPos,
+            head: [['#', 'Pattern']],
+            body: selectedPatterns.map((p, i) => [i + 1, p.category || p.patternName || '']),
+            theme: 'grid',
+            headStyles: { fillColor: [76, 175, 80], fontSize: 9 },
+            bodyStyles: { fontSize: 8 },
+            columnStyles: { 0: { cellWidth: 12, halign: 'center' } },
+            margin: { left: 14, right: 14 },
+          });
+          yPos = doc.lastAutoTable.finalY + 4;
+        }
+
         doc.setFontSize(11);
         doc.setFont('helvetica', 'bold');
         doc.setTextColor(30, 30, 30);
-        doc.text(
-          `Selected Items: ${mwsData.length + villageData.length} total  (MWS: ${mwsData.length} | Villages: ${villageData.length})`,
-          14, yPos
-        );
-        yPos += 4;
+        doc.text('Map View', 14, yPos + 6);
+        yPos += 8;
 
-        if (mwsData.length > 0) {
-          doc.setFontSize(10);
+        if (mapImageData) {
+          const imgProps = doc.getImageProperties(mapImageData);
+          const maxW = pageW - 28;
+          const remainingH = doc.internal.pageSize.height - yPos - 20;
+          const maxH = Math.max(remainingH, 60);
+          const ratio = Math.min(maxW / imgProps.width, maxH / imgProps.height);
+          const imgW = imgProps.width * ratio;
+          const imgH = imgProps.height * ratio;
+          if (yPos + imgH > doc.internal.pageSize.height - 15) { doc.addPage(); yPos = 20; }
+          doc.addImage(mapImageData, 'JPEG', 14, yPos, imgW, imgH);
+          yPos += imgH + 8;
+        } else {
+          doc.setFontSize(9);
+          doc.setFont('helvetica', 'italic');
+          doc.setTextColor(160, 160, 160);
+          doc.text('(Map screenshot could not be captured)', 14, yPos + 4);
+          yPos += 12;
+        }
+
+        if (mwsData.length > 0 || villageData.length > 0) {
+          if (yPos > doc.internal.pageSize.height - 50) { doc.addPage(); yPos = 20; }
+          doc.setFontSize(11);
           doc.setFont('helvetica', 'bold');
-          doc.setTextColor(37, 99, 235);
-          doc.text(`Micro-watersheds (${mwsData.length})`, 14, yPos + 6);
-          autoTable(doc, {
-            startY: yPos + 8,
-            head: [['#', 'Micro-watershed ID', 'Intersecting Villages', 'Intersecting Waterbodies']],
-            body: mwsData.map((item, i) => {
-              const mwsGroup = mwsVillageIntersections.find(g => g.mwsId === item.name);
-              const villagesStr = mwsGroup ? mwsGroup.villages.map(v => `${v.villageName || 'Unknown'} (${v.villageId})`).join(', ') : 'None';
-              const swbStr = mwsGroup && mwsGroup.waterbodies?.length > 0
-                ? mwsGroup.waterbodies.map(swb => swb.swbName ? `${swb.swbName} (${swb.swbId})` : swb.swbId).join(', ')
-                : 'None';
-              return [i + 1, item.name, villagesStr, swbStr];
-            }),
-            theme: 'grid',
-            headStyles: { fillColor: [37, 99, 235], fontSize: 9 },
-            bodyStyles: { fontSize: 8 },
-            columnStyles: { 0: { cellWidth: 12, halign: 'center' }, 1: { cellWidth: 40 }, 2: { cellWidth: 70 }, 3: { cellWidth: 'auto' } },
-            margin: { left: 14, right: 14 },
-          });
-          yPos = doc.lastAutoTable.finalY + 8;
-        }
+          doc.setTextColor(30, 30, 30);
+          doc.text(
+            `Selected Items: ${mwsData.length + villageData.length} total  (MWS: ${mwsData.length} | Villages: ${villageData.length})`,
+            14, yPos
+          );
+          yPos += 4;
 
-        if (villageData.length > 0) {
-          if (yPos > doc.internal.pageSize.height - 40) { doc.addPage(); yPos = 20; }
-          doc.setFontSize(10);
-          doc.setFont('helvetica', 'bold');
-          doc.setTextColor(22, 163, 74);
-          doc.text(`Villages (${villageData.length})`, 14, yPos);
-          autoTable(doc, {
-            startY: yPos + 4,
-            head: [['S.No.', 'Village ID', 'Village Name']],
-            body: villageData.map((item, i) => [i + 1, item.villageId, item.villageName]),
-            theme: 'striped',
-            headStyles: { fillColor: [22, 163, 74], fontSize: 9 },
-            bodyStyles: { fontSize: 8 },
-            columnStyles: { 0: { cellWidth: 15, halign: 'center' }, 1: { cellWidth: 35 }, 2: { cellWidth: 'auto' } },
-            margin: { left: 14, right: 14 },
-          });
-          yPos = doc.lastAutoTable.finalY + 8;
-        }
-      }
-
-      const pageCount = doc.internal.getNumberOfPages();
-      for (let i = 1; i <= pageCount; i++) {
-        doc.setPage(i);
-        doc.setFontSize(8);
-        doc.setTextColor(150, 150, 150);
-        doc.text(`Page ${i} of ${pageCount}`, pageW / 2, doc.internal.pageSize.height - 8, { align: 'center' });
-      }
-
-      doc.save(`kyl_report_${transformName(state?.label) || 'report'}_${new Date().toISOString().split('T')[0]}.pdf`);
-    } catch (error) {
-      console.error('PDF generation error:', error);
-      alert('Error generating PDF. Please try again.');
-    } finally {
-      setIsDownloading(false);
-    }
-  };
-
-  const downloadExcel = () => {
-    try {
-      const { mwsData, villageData } = generateSelectionTableData();
-      const selectedFilters = getFormattedSelectedFilters();
-
-      const mwsFilters = [];
-      const villageFilters = [];
-      const waterbodyFilters = [];
-
-      selectedFilters.forEach(f => {
-        const namespace = FILTER_BY_NAME.get(f.name)?.namespace;
-        if (namespace === "MWS") mwsFilters.push(f);
-        if (namespace === "Village") villageFilters.push(f);
-        if (namespace === "Waterbody") waterbodyFilters.push(f);
-      });
-
-      const getLabelFromValue = (filterName, value) => {
-        const filterObj = FILTER_BY_NAME.get(filterName);
-        if (filterObj && filterObj.type === 1) {
-          const match = filterObj.values.find(v => String(v.value) === String(value));
-          return match ? match.label : value;
-        }
-        return value;
-      };
-
-      // Sheet 0 — Selected Filters
-      const sheet0Data = [
-        {
-          "S.NO": "",
-          "INDICATOR NAME": "State",
-          "SELECTED VALUES": state?.label || "N/A",
-        },
-        {
-          "S.NO": "",
-          "INDICATOR NAME": "District",
-          "SELECTED VALUES": district?.label || "N/A",
-        },
-        {
-          "S.NO": "",
-          "INDICATOR NAME": "Block / Tehsil",
-          "SELECTED VALUES": block?.label || "N/A",
-        },
-        {
-          "S.NO": "",
-          "INDICATOR NAME": "",
-          "SELECTED VALUES": "",
-        }, // blank separator row
-        ...selectedFilters.map((f, i) => ({
-          "S.NO": i + 1,
-          "INDICATOR NAME": f.filterName || f.name,
-          "SELECTED VALUES": (f.values || []).join(", "),
-        })),
-      ];
-
-      // Sheet 1 — Selected MWS
-      const sheet1Data = mwsData.map(item => {
-        const row = { "MICRO-WATERSHED ID": item.name };
-        if (dataJson && Array.isArray(dataJson)) {
-          const mRecord = dataJson.find(m => String(m.mws_id) === String(item.name));
-          if (mRecord) {
-            mwsFilters.forEach(f => {
-              let val = mRecord[f.name];
-              if (val === undefined || val === null) val = "N/A";
-              else {
-                val = getLabelFromValue(f.name, val);
-                if (typeof val === "number") val = Number(val.toFixed(3));
-              }
-              row[(f.filterName || f.name).toUpperCase()] = val;
+          if (mwsData.length > 0) {
+            doc.setFontSize(10);
+            doc.setFont('helvetica', 'bold');
+            doc.setTextColor(37, 99, 235);
+            doc.text(`Micro-watersheds (${mwsData.length})`, 14, yPos + 6);
+            autoTable(doc, {
+              startY: yPos + 8,
+              head: [['#', 'Micro-watershed ID', 'Intersecting Villages', 'Intersecting Waterbodies']],
+              body: mwsData.map((item, i) => {
+                const mwsGroup = mwsVillageIntersections.find(g => g.mwsId === item.name);
+                const villagesStr = mwsGroup ? mwsGroup.villages.map(v => `${v.villageName || 'Unknown'} (${v.villageId})`).join(', ') : 'None';
+                const swbStr = mwsGroup && mwsGroup.waterbodies?.length > 0
+                  ? mwsGroup.waterbodies.map(swb => swb.swbName ? `${swb.swbName} (${swb.swbId})` : swb.swbId).join(', ')
+                  : 'None';
+                return [i + 1, item.name, villagesStr, swbStr];
+              }),
+              theme: 'grid',
+              headStyles: { fillColor: [37, 99, 235], fontSize: 9 },
+              bodyStyles: { fontSize: 8 },
+              columnStyles: { 0: { cellWidth: 12, halign: 'center' }, 1: { cellWidth: 40 }, 2: { cellWidth: 70 }, 3: { cellWidth: 'auto' } },
+              margin: { left: 14, right: 14 },
             });
+            yPos = doc.lastAutoTable.finalY + 8;
+          }
+
+          if (villageData.length > 0) {
+            if (yPos > doc.internal.pageSize.height - 40) { doc.addPage(); yPos = 20; }
+            doc.setFontSize(10);
+            doc.setFont('helvetica', 'bold');
+            doc.setTextColor(22, 163, 74);
+            doc.text(`Villages (${villageData.length})`, 14, yPos);
+            autoTable(doc, {
+              startY: yPos + 4,
+              head: [['S.No.', 'Village ID', 'Village Name']],
+              body: villageData.map((item, i) => [i + 1, item.villageId, item.villageName]),
+              theme: 'striped',
+              headStyles: { fillColor: [22, 163, 74], fontSize: 9 },
+              bodyStyles: { fontSize: 8 },
+              columnStyles: { 0: { cellWidth: 15, halign: 'center' }, 1: { cellWidth: 35 }, 2: { cellWidth: 'auto' } },
+              margin: { left: 14, right: 14 },
+            });
+            yPos = doc.lastAutoTable.finalY + 8;
           }
         }
-        return row;
-      });
 
-      // Sheet 2 — Selected Villages
-      const sheet2Data = villageData.map(item => {
-        const row = { "VILLAGE ID": item.villageId, "VILLAGE NAME": item.villageName };
-        if (villageJson && Array.isArray(villageJson)) {
-          const vRecord = villageJson.find(v => String(v.village_id || v.vill_ID) === String(item.villageId));
-          if (vRecord) {
-            villageFilters.forEach(f => {
-              let val = vRecord[f.name];
-              if (val === undefined || val === null) val = "N/A";
-              else {
-                val = getLabelFromValue(f.name, val);
-                if (typeof val === "number") val = Number(val.toFixed(3));
-              }
-              row[(f.filterName || f.name).toUpperCase()] = val;
-            });
-          }
+        const pageCount = doc.internal.getNumberOfPages();
+        for (let i = 1; i <= pageCount; i++) {
+          doc.setPage(i);
+          doc.setFontSize(8);
+          doc.setTextColor(150, 150, 150);
+          doc.text(`Page ${i} of ${pageCount}`, pageW / 2, doc.internal.pageSize.height - 8, { align: 'center' });
         }
-        return row;
-      });
 
-      // Sheet 3 — Selected Waterbodies
-      const uniqueSwbs = new Map();
+        doc.save(`kyl_report_${transformName(state?.label) || 'report'}_${new Date().toISOString().split('T')[0]}.pdf`);
+      } catch (error) {
+        console.error('PDF generation error:', error);
+        alert('Error generating PDF. Please try again.');
+      } finally {
+        setIsDownloading(false);
+      }
+    };
 
-      if (selectedMWS && selectedMWS.length > 0 && waterbodyFilters.length > 0 && showWB) {
-        // MWS + WB filter — intersect from mwsVillageIntersections
-        mwsVillageIntersections.forEach(group => {
-          group.waterbodies.forEach(swb => {
-            if (!uniqueSwbs.has(swb.swbId) && selectedWaterbodyIds && selectedWaterbodyIds.has(String(swb.swbId))) {
-              let enriched = selectedWaterbodyData.find(d => String(d.swbId) === String(swb.swbId));
-              if (!enriched && waterbodiesLayerRef?.current) {
-                try {
-                  const feature = waterbodiesLayerRef.current.getSource().getFeatures().find(f => {
-                    const p = f.getProperties();
-                    return String(p.UID ?? p.swb_id ?? p.SWB_UID ?? p.uid ?? '') === String(swb.swbId);
-                  });
-                  if (feature) enriched = feature.getProperties();
-                } catch (_) {}
+    const downloadExcel = () => {
+      try {
+        const { mwsData, villageData } = generateSelectionTableData();
+        const selectedFilters = getFormattedSelectedFilters();
+
+        const mwsFilters = [];
+        const villageFilters = [];
+        const waterbodyFilters = [];
+
+        selectedFilters.forEach(f => {
+          const namespace = FILTER_BY_NAME.get(f.name)?.namespace;
+          if (namespace === "MWS") mwsFilters.push(f);
+          if (namespace === "Village") villageFilters.push(f);
+          if (namespace === "Waterbody") waterbodyFilters.push(f);
+        });
+
+        const getLabelFromValue = (filterName, value) => {
+          const filterObj = FILTER_BY_NAME.get(filterName);
+          if (filterObj && filterObj.type === 1) {
+            const match = filterObj.values.find(v => String(v.value) === String(value));
+            return match ? match.label : value;
+          }
+          return value;
+        };
+
+        // Sheet 0 — Selected Filters
+        const sheet0Data = [
+          {
+            "S.NO": "",
+            "INDICATOR NAME": "State",
+            "SELECTED VALUES": state?.label || "N/A",
+          },
+          {
+            "S.NO": "",
+            "INDICATOR NAME": "District",
+            "SELECTED VALUES": district?.label || "N/A",
+          },
+          {
+            "S.NO": "",
+            "INDICATOR NAME": "Block / Tehsil",
+            "SELECTED VALUES": block?.label || "N/A",
+          },
+          {
+            "S.NO": "",
+            "INDICATOR NAME": "",
+            "SELECTED VALUES": "",
+          }, // blank separator row
+          ...selectedFilters.map((f, i) => ({
+            "S.NO": i + 1,
+            "INDICATOR NAME": f.filterName || f.name,
+            "SELECTED VALUES": (f.values || []).join(", "),
+          })),
+        ];
+
+        // Sheet 1 — Selected MWS
+        const sheet1Data = mwsData.map(item => {
+          const row = { "MICRO-WATERSHED ID": item.name };
+          if (dataJson && Array.isArray(dataJson)) {
+            const mRecord = dataJson.find(m => String(m.mws_id) === String(item.name));
+            if (mRecord) {
+              mwsFilters.forEach(f => {
+                let val = mRecord[f.name];
+                if (val === undefined || val === null) val = "N/A";
+                else {
+                  val = getLabelFromValue(f.name, val);
+                  if (typeof val === "number") val = Number(val.toFixed(3));
+                }
+                row[(f.filterName || f.name).toUpperCase()] = val;
+              });
+            }
+          }
+          return row;
+        });
+
+        // Sheet 2 — Selected Villages
+        const sheet2Data = villageData.map(item => {
+          const row = { "VILLAGE ID": item.villageId, "VILLAGE NAME": item.villageName };
+          if (villageJson && Array.isArray(villageJson)) {
+            const vRecord = villageJson.find(v => String(v.village_id || v.vill_ID) === String(item.villageId));
+            if (vRecord) {
+              villageFilters.forEach(f => {
+                let val = vRecord[f.name];
+                if (val === undefined || val === null) val = "N/A";
+                else {
+                  val = getLabelFromValue(f.name, val);
+                  if (typeof val === "number") val = Number(val.toFixed(3));
+                }
+                row[(f.filterName || f.name).toUpperCase()] = val;
+              });
+            }
+          }
+          return row;
+        });
+
+        // Sheet 3 — Selected Waterbodies
+        const uniqueSwbs = new Map();
+
+        if (selectedMWS && selectedMWS.length > 0 && waterbodyFilters.length > 0 && showWB) {
+          // MWS + WB filter — intersect from mwsVillageIntersections
+          mwsVillageIntersections.forEach(group => {
+            group.waterbodies.forEach(swb => {
+              if (!uniqueSwbs.has(swb.swbId) && selectedWaterbodyIds && selectedWaterbodyIds.has(String(swb.swbId))) {
+                let enriched = selectedWaterbodyData.find(d => String(d.swbId) === String(swb.swbId));
+                if (!enriched && waterbodiesLayerRef?.current) {
+                  try {
+                    const feature = waterbodiesLayerRef.current.getSource().getFeatures().find(f => {
+                      const p = f.getProperties();
+                      return String(p.UID ?? p.swb_id ?? p.SWB_UID ?? p.uid ?? '') === String(swb.swbId);
+                    });
+                    if (feature) enriched = feature.getProperties();
+                  } catch (_) {}
+                }
+                enriched = enriched || swb;
+                const row = {
+                  "SWB ID": swb.swbId,
+                  "WATERBODY NAME": swb.swbName || enriched.swbName || "Unknown",
+                  "LATITUDE": swb.latitude || enriched.latitude || 0,
+                  "LONGITUDE": swb.longitude || enriched.longitude || 0,
+                };
+                waterbodyFilters.forEach(f => {
+                  row[(f.filterName || f.name).toUpperCase()] = getWBDisplayValue(f.name, enriched);
+                });
+                uniqueSwbs.set(swb.swbId, row);
               }
-              enriched = enriched || swb;
+            });
+          });
+        } else if ((!selectedMWS || selectedMWS.length === 0) && waterbodyFilters.length > 0 && showWB) {
+          // WB-only filter — use selectedWaterbodyData directly (already has all computed props)
+          selectedWaterbodyData.forEach(swb => {
+            if (!uniqueSwbs.has(swb.swbId)) {
               const row = {
                 "SWB ID": swb.swbId,
-                "WATERBODY NAME": swb.swbName || enriched.swbName || "Unknown",
-                "LATITUDE": swb.latitude || enriched.latitude || 0,
-                "LONGITUDE": swb.longitude || enriched.longitude || 0,
+                "WATERBODY NAME": swb.swbName || "Unknown",
+                "LATITUDE": swb.latitude || 0,
+                "LONGITUDE": swb.longitude || 0,
               };
               waterbodyFilters.forEach(f => {
-                row[(f.filterName || f.name).toUpperCase()] = getWBDisplayValue(f.name, enriched);
+                row[(f.filterName || f.name).toUpperCase()] = getWBDisplayValue(f.name, swb);
               });
               uniqueSwbs.set(swb.swbId, row);
             }
           });
-        });
-      } else if ((!selectedMWS || selectedMWS.length === 0) && waterbodyFilters.length > 0 && showWB) {
-        // WB-only filter — use selectedWaterbodyData directly (already has all computed props)
-        selectedWaterbodyData.forEach(swb => {
-          if (!uniqueSwbs.has(swb.swbId)) {
-            const row = {
-              "SWB ID": swb.swbId,
-              "WATERBODY NAME": swb.swbName || "Unknown",
-              "LATITUDE": swb.latitude || 0,
-              "LONGITUDE": swb.longitude || 0,
-            };
-            waterbodyFilters.forEach(f => {
-              row[(f.filterName || f.name).toUpperCase()] = getWBDisplayValue(f.name, swb);
+        }
+
+        const sheet3Data = Array.from(uniqueSwbs.values());
+
+        // Sheet 4 — MWS-Village Intersections
+        const hasVillagePattern = getFormattedSelectedPatterns().some(p => p.level);
+
+        const sheet4Data = [];
+        mwsVillageIntersections.forEach(group => {
+          group.villages.forEach(v => {
+            const villageIdStr = String(v.villageId);
+
+            let isSelected = false;
+            if (villageFilters.length > 0 || hasVillagePattern) {
+              if (selectedVillages instanceof Set) {
+                isSelected =
+                  selectedVillages.has(villageIdStr) ||
+                  selectedVillages.has(Number(v.villageId));
+              } else if (Array.isArray(selectedVillages)) {
+                isSelected = selectedVillages.some(sid => String(sid) === villageIdStr);
+              }
+            }
+
+            if (!isSelected) return; // skip non-matching villages
+
+            sheet4Data.push({
+              "MICRO-WATERSHED ID": group.mwsId,
+              "VILLAGE ID": villageIdStr,
+              "VILLAGE NAME": v.villageName,
             });
-            uniqueSwbs.set(swb.swbId, row);
-          }
+          });
         });
-      }
 
-      const sheet3Data = Array.from(uniqueSwbs.values());
+        // Sheet 5 — MWS-Waterbody Intersections
+        const sheet5Data = [];
+        mwsVillageIntersections.forEach(group => {
+          group.waterbodies.forEach(swb => {
+            const swbIdStr = String(swb.swbId);
 
-      // Sheet 4 — MWS-Village Intersections
-      const hasVillagePattern = getFormattedSelectedPatterns().some(p => p.level);
+            const isFilterMatched =
+              waterbodyFilters.length > 0 &&
+              selectedWaterbodyIds &&
+              selectedWaterbodyIds.has(swbIdStr);
 
-      const sheet4Data = [];
-      mwsVillageIntersections.forEach(group => {
-        group.villages.forEach(v => {
-          const villageIdStr = String(v.villageId);
+            if (!isFilterMatched) return;
 
-          let isSelected = false;
-          if (villageFilters.length > 0 || hasVillagePattern) {
-            if (selectedVillages instanceof Set) {
-              isSelected =
-                selectedVillages.has(villageIdStr) ||
-                selectedVillages.has(Number(v.villageId));
-            } else if (Array.isArray(selectedVillages)) {
-              isSelected = selectedVillages.some(sid => String(sid) === villageIdStr);
+            sheet5Data.push({
+              "MICRO-WATERSHED ID": group.mwsId,
+              "SWB ID": swbIdStr,
+              "WATERBODY NAME": swb.swbName || "",
+            });
+          });
+        });
+
+        const workbook = XLSX.utils.book_new();
+        const boldStyle = { font: { bold: true } };
+
+        const activeSheets = [
+          { sheet: XLSX.utils.json_to_sheet(sheet0Data), name: "Selected Filters", width: [{ wch: 8 }, { wch: 40 }, { wch: 60 }] },
+        ];
+
+        const mWidths = [{ wch: 25 }];
+        mwsFilters.forEach(() => mWidths.push({ wch: 20 }));
+        activeSheets.push({ sheet: XLSX.utils.json_to_sheet(sheet1Data), name: "Matching MWS", width: mWidths });
+
+        if (villageFilters.length > 0) {
+          const vWidths = [{ wch: 25 }, { wch: 40 }];
+          villageFilters.forEach(() => vWidths.push({ wch: 20 }));
+          activeSheets.push({ sheet: XLSX.utils.json_to_sheet(sheet2Data), name: "Matching Villages", width: vWidths });
+        }
+
+        if (sheet3Data.length > 0) {
+          // All WB filter columns included — no skip needed since getWBDisplayValue handles all
+          const wbWidths = [{ wch: 25 }, { wch: 40 }, { wch: 18 }, { wch: 18 }];
+          waterbodyFilters.forEach(() => wbWidths.push({ wch: 22 }));
+          activeSheets.push({ sheet: XLSX.utils.json_to_sheet(sheet3Data), name: "Matching Waterbodies", width: wbWidths });
+        }
+
+        activeSheets.push({ sheet: XLSX.utils.json_to_sheet(sheet4Data), name: "MWS-Village Intersects", width: [{ wch: 25 }, { wch: 25 }, { wch: 40 }] });
+        activeSheets.push({ sheet: XLSX.utils.json_to_sheet(sheet5Data), name: "MWS-Waterbody Intersects", width: [{ wch: 25 }, { wch: 25 }, { wch: 40 }] });
+
+        const greenStyle = {
+          fill: { patternType: "solid", fgColor: { rgb: "10B981" } }, // emerald-500
+          font: { color: { rgb: "FFFFFF" }, bold: true },
+        };
+
+        activeSheets.forEach(({ sheet, name, width, highlightRows }) => {
+          if (sheet["!ref"]) {
+            const range = XLSX.utils.decode_range(sheet["!ref"]);
+            for (let C = range.s.c; C <= range.e.c; ++C) {
+              const addr = XLSX.utils.encode_cell({ r: 0, c: C });
+              if (sheet[addr]) sheet[addr].s = boldStyle;
+            }
+
+            // Highlight filter-matched waterbody rows in green
+            if (highlightRows && highlightRows.length > 0) {
+              highlightRows.forEach(dataRowIdx => {
+                const r = dataRowIdx + 1; // +1 because row 0 is the header
+                for (let C = range.s.c; C <= range.e.c; ++C) {
+                  const addr = XLSX.utils.encode_cell({ r, c: C });
+                  if (sheet[addr]) sheet[addr].s = greenStyle;
+                }
+              });
             }
           }
-
-          if (!isSelected) return; // skip non-matching villages
-
-          sheet4Data.push({
-            "MICRO-WATERSHED ID": group.mwsId,
-            "VILLAGE ID": villageIdStr,
-            "VILLAGE NAME": v.villageName,
-          });
+          sheet["!cols"] = width;
+          XLSX.utils.book_append_sheet(workbook, sheet, name);
         });
-      });
 
-      // Sheet 5 — MWS-Waterbody Intersections
-      const sheet5Data = [];
-      mwsVillageIntersections.forEach(group => {
-        group.waterbodies.forEach(swb => {
-          const swbIdStr = String(swb.swbId);
-
-          const isFilterMatched =
-            waterbodyFilters.length > 0 &&
-            selectedWaterbodyIds &&
-            selectedWaterbodyIds.has(swbIdStr);
-
-          if (!isFilterMatched) return;
-
-          sheet5Data.push({
-            "MICRO-WATERSHED ID": group.mwsId,
-            "SWB ID": swbIdStr,
-            "WATERBODY NAME": swb.swbName || "",
-          });
-        });
-      });
-
-      const workbook = XLSX.utils.book_new();
-      const boldStyle = { font: { bold: true } };
-
-      const activeSheets = [
-        { sheet: XLSX.utils.json_to_sheet(sheet0Data), name: "Selected Filters", width: [{ wch: 8 }, { wch: 40 }, { wch: 60 }] },
-      ];
-
-      const mWidths = [{ wch: 25 }];
-      mwsFilters.forEach(() => mWidths.push({ wch: 20 }));
-      activeSheets.push({ sheet: XLSX.utils.json_to_sheet(sheet1Data), name: "Matching MWS", width: mWidths });
-
-      if (villageFilters.length > 0) {
-        const vWidths = [{ wch: 25 }, { wch: 40 }];
-        villageFilters.forEach(() => vWidths.push({ wch: 20 }));
-        activeSheets.push({ sheet: XLSX.utils.json_to_sheet(sheet2Data), name: "Matching Villages", width: vWidths });
+        XLSX.writeFile(workbook, `kyl_selection_report_${new Date().toISOString().split('T')[0]}_${transformName(block?.label)}.xlsx`);
+      } catch (error) {
+        console.error('Excel generation error:', error);
+        alert('Error generating Excel file.');
       }
-
-      if (sheet3Data.length > 0) {
-        // All WB filter columns included — no skip needed since getWBDisplayValue handles all
-        const wbWidths = [{ wch: 25 }, { wch: 40 }, { wch: 18 }, { wch: 18 }];
-        waterbodyFilters.forEach(() => wbWidths.push({ wch: 22 }));
-        activeSheets.push({ sheet: XLSX.utils.json_to_sheet(sheet3Data), name: "Matching Waterbodies", width: wbWidths });
-      }
-
-      activeSheets.push({ sheet: XLSX.utils.json_to_sheet(sheet4Data), name: "MWS-Village Intersects", width: [{ wch: 25 }, { wch: 25 }, { wch: 40 }] });
-      activeSheets.push({ sheet: XLSX.utils.json_to_sheet(sheet5Data), name: "MWS-Waterbody Intersects", width: [{ wch: 25 }, { wch: 25 }, { wch: 40 }] });
-
-      const greenStyle = {
-        fill: { patternType: "solid", fgColor: { rgb: "10B981" } }, // emerald-500
-        font: { color: { rgb: "FFFFFF" }, bold: true },
-      };
-
-      activeSheets.forEach(({ sheet, name, width, highlightRows }) => {
-        if (sheet["!ref"]) {
-          const range = XLSX.utils.decode_range(sheet["!ref"]);
-          for (let C = range.s.c; C <= range.e.c; ++C) {
-            const addr = XLSX.utils.encode_cell({ r: 0, c: C });
-            if (sheet[addr]) sheet[addr].s = boldStyle;
-          }
-
-          // Highlight filter-matched waterbody rows in green
-          if (highlightRows && highlightRows.length > 0) {
-            highlightRows.forEach(dataRowIdx => {
-              const r = dataRowIdx + 1; // +1 because row 0 is the header
-              for (let C = range.s.c; C <= range.e.c; ++C) {
-                const addr = XLSX.utils.encode_cell({ r, c: C });
-                if (sheet[addr]) sheet[addr].s = greenStyle;
-              }
-            });
-          }
-        }
-        sheet["!cols"] = width;
-        XLSX.utils.book_append_sheet(workbook, sheet, name);
-      });
-
-      XLSX.writeFile(workbook, `kyl_selection_report_${new Date().toISOString().split('T')[0]}_${transformName(block?.label)}.xlsx`);
-    } catch (error) {
-      console.error('Excel generation error:', error);
-      alert('Error generating Excel file.');
-    }
-  };
+    };
 
 
   // ─── Selection Popup ─────────────────────────────────────────────────────
@@ -2044,6 +2168,171 @@ const sheet5Count =
   
   };
 
+
+  //Farm Popup
+  const FarmDetailsModal = () => {
+    if (!showFarmDetailsModal) return null;
+
+    const availableYears = farmTimeseries?.annual?.map((row) => row.year) || [];
+    const monthlyRows = (farmTimeseries?.monthly || [])
+      .filter((row) => row.year === selectedTimeseriesYear)
+      .slice()
+      .sort((a, b) => new Date(a.date) - new Date(b.date));
+
+    const formatMonth = (dateStr) => {
+      const d = new Date(dateStr);
+      return d.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+    };
+
+    return (
+      <div
+        className="fixed inset-0 bg-black/60 backdrop-blur-[2px] flex items-center justify-center z-50"
+        onClick={() => setShowFarmDetailsModal(false)}
+      >
+        <div
+          className="bg-white rounded-xl shadow-2xl w-full max-w-3xl max-h-[85vh] overflow-hidden flex flex-col mx-4"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gradient-to-r from-slate-50 to-white flex-shrink-0">
+            <div>
+              <h3 className="text-base font-bold text-gray-800 tracking-tight">Farm Details</h3>
+              <p className="text-xs text-gray-400 mt-0.5">Farm ID: {selectedFarmProperties?.farm_id || '--'}</p>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <div className="flex gap-1 bg-gray-100 p-1 rounded-lg">
+                {['yearly', 'monthly'].map((view) => (
+                  <button
+                    key={view}
+                    onClick={() => setTimeseriesView(view)}
+                    className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all duration-150 capitalize ${
+                      timeseriesView === view ? 'bg-white text-gray-800 shadow-sm' : 'text-gray-500 hover:text-gray-700'
+                    }`}
+                  >
+                    {view}
+                  </button>
+                ))}
+              </div>
+
+              {timeseriesView === 'monthly' && availableYears.length > 0 && (
+                <select
+                  value={selectedTimeseriesYear ?? ''}
+                  onChange={(e) => setSelectedTimeseriesYear(Number(e.target.value))}
+                  className="text-xs font-semibold border border-gray-200 rounded-lg px-2 py-1.5 text-gray-700 bg-white"
+                >
+                  {availableYears.map((year) => (
+                    <option key={year} value={year}>{year}</option>
+                  ))}
+                </select>
+              )}
+
+              <button
+                onClick={() => setShowFarmDetailsModal(false)}
+                className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+
+          <div className="overflow-y-auto flex-1 p-4 bg-gray-50/50">
+            {farmTimeseriesLoading ? (
+              <div className="flex flex-col items-center justify-center py-16 text-gray-400">
+                <Loader2 className="w-6 h-6 animate-spin mb-2" />
+                <p className="text-sm">Loading farm timeseries…</p>
+              </div>
+            ) : farmTimeseriesError ? (
+              <div className="flex flex-col items-center justify-center py-16 text-red-400">
+                <p className="text-sm font-medium">{farmTimeseriesError}</p>
+              </div>
+            ) : timeseriesView === 'yearly' ? (
+              farmTimeseries?.annual?.length > 0 ? (
+                <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
+                  <table className="w-full text-xs">
+                    <thead>
+                      <tr className="bg-gradient-to-r from-indigo-600 to-indigo-500 text-white">
+                        <th className="text-left px-3 py-2.5 font-semibold">Year</th>
+                        <th className="text-left px-3 py-2.5 font-semibold">Area (Ha)</th>
+                        <th className="text-left px-3 py-2.5 font-semibold">AET Annual</th>
+                        <th className="text-left px-3 py-2.5 font-semibold">PET Annual</th>
+                        <th className="text-left px-3 py-2.5 font-semibold">MAI Annual</th>
+                        <th className="text-left px-3 py-2.5 font-semibold">Kharif MAI</th>
+                        <th className="text-left px-3 py-2.5 font-semibold">Kharif Water Stress</th>
+                        <th className="text-left px-3 py-2.5 font-semibold">Kharif Severe Stress</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100">
+                      {farmTimeseries.annual.map((row) => (
+                        <tr key={row.year} className="hover:bg-indigo-50/30 transition-colors">
+                          <td className="px-3 py-2 font-medium text-gray-800">{row.year}</td>
+                          <td className="px-3 py-2 text-gray-600">{row.areaInHa?.toFixed(3)}</td>
+                          <td className="px-3 py-2 text-gray-600">{row.aetAnnual?.toFixed(2)}</td>
+                          <td className="px-3 py-2 text-gray-600">{row.petAnnual?.toFixed(2)}</td>
+                          <td className="px-3 py-2 text-gray-600">{row.maiAnnual?.toFixed(3)}</td>
+                          <td className="px-3 py-2 text-gray-600">{row.kharifMai?.toFixed(3)}</td>
+                          <td className="px-3 py-2">
+                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${row.kharifWaterStress ? 'bg-amber-100 text-amber-700' : 'bg-gray-100 text-gray-500'}`}>
+                              {row.kharifWaterStress ? 'Yes' : 'No'}
+                            </span>
+                          </td>
+                          <td className="px-3 py-2">
+                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${row.kharifSevereStress ? 'bg-red-100 text-red-700' : 'bg-gray-100 text-gray-500'}`}>
+                              {row.kharifSevereStress ? 'Yes' : 'No'}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center py-16 text-gray-400">
+                  <p className="text-sm font-medium">No yearly data available for this farm.</p>
+                </div>
+              )
+            ) : monthlyRows.length > 0 ? (
+              <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
+                <table className="w-full text-xs">
+                  <thead>
+                    <tr className="bg-gradient-to-r from-emerald-600 to-emerald-500 text-white">
+                      <th className="text-left px-3 py-2.5 font-semibold">Month</th>
+                      <th className="text-left px-3 py-2.5 font-semibold">AET</th>
+                      <th className="text-left px-3 py-2.5 font-semibold">PET</th>
+                      <th className="text-left px-3 py-2.5 font-semibold">MAI</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100">
+                    {monthlyRows.map((row) => (
+                      <tr key={row.date} className="hover:bg-emerald-50/30 transition-colors">
+                        <td className="px-3 py-2 font-medium text-gray-800">{formatMonth(row.date)}</td>
+                        <td className="px-3 py-2 text-gray-600">{row.aet?.toFixed(3)}</td>
+                        <td className="px-3 py-2 text-gray-600">{row.pet?.toFixed(3)}</td>
+                        <td className="px-3 py-2 text-gray-600">{row.mai?.toFixed(3)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-16 text-gray-400">
+                <p className="text-sm font-medium">No monthly data available for {selectedTimeseriesYear}.</p>
+              </div>
+            )}
+          </div>
+
+          <div className="px-6 py-3 border-t border-gray-100 bg-white flex justify-end flex-shrink-0">
+            <button
+              onClick={() => setShowFarmDetailsModal(false)}
+              className="px-6 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold rounded-lg transition-colors shadow-sm"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   // ─── Shared section header component ─────────────────────────────────────
   const SectionHeader = ({ title, count, action }) => (
     <div className="flex items-center justify-between mb-2">
@@ -2060,6 +2349,7 @@ const sheet5Count =
   return (
     <div className="w-[320px] shrink-0 h-full flex flex-col gap-2 overflow-y-auto pr-1 custom-scrollbar">
       <SelectionPopup />
+      <FarmDetailsModal />
 
       {/* Universal Back Button */}
       {showBothPanels && (
@@ -2467,23 +2757,47 @@ const sheet5Count =
                   </div>
                
 
-                <button
-                  onClick={toggleConnectivity}
-                  disabled={isLoading || !mwsLayerRef?.current}
-                  className={`w-full flex items-center justify-center gap-1.5 py-2 text-xs font-semibold rounded-lg transition-colors border ${
-                    (isLoading || !mwsLayerRef?.current)
-                      ? 'opacity-50 cursor-not-allowed pointer-events-none bg-gray-100 text-gray-400 border-gray-200'
-                      : showConnectivity
-                        ? 'text-red-600 bg-red-50 hover:bg-red-100 border-red-100'
-                        : 'text-indigo-600 bg-indigo-50 hover:bg-indigo-100 border-indigo-100'
-                  }`}
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <circle cx="5" cy="12" r="2" /><circle cx="19" cy="5" r="2" /><circle cx="19" cy="19" r="2" />
-                    <line x1="7" y1="12" x2="17" y2="6" /><line x1="7" y1="12" x2="17" y2="18" />
-                  </svg>
-                  {showConnectivity ? "Hide MWS Connectivity" : "Show MWS Connectivity"}
-                </button>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    onClick={toggleConnectivity}
+                    disabled={isLoading || !mwsLayerRef?.current}
+                    className={`flex items-center justify-center gap-1.5 py-2 text-xs font-semibold rounded-lg transition-colors border ${
+                      (isLoading || !mwsLayerRef?.current)
+                        ? 'opacity-50 cursor-not-allowed pointer-events-none bg-gray-100 text-gray-400 border-gray-200'
+                        : showConnectivity
+                          ? 'text-red-600 bg-red-50 hover:bg-red-100 border-red-100'
+                          : 'text-indigo-600 bg-indigo-50 hover:bg-indigo-100 border-indigo-100'
+                    }`}
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <circle cx="5" cy="12" r="2" /><circle cx="19" cy="5" r="2" /><circle cx="19" cy="19" r="2" />
+                      <line x1="7" y1="12" x2="17" y2="6" /><line x1="7" y1="12" x2="17" y2="18" />
+                    </svg>
+                    {showConnectivity ? "Hide Connectivity" : "MWS Connectivity"}
+                  </button>
+
+                  <button
+                    onClick={toggleFarmBoundaries}
+                    disabled={isLoading || !mwsLayerRef?.current || farmBoundariesLoading}
+                    className={`flex items-center justify-center gap-1.5 py-2 text-xs font-semibold rounded-lg transition-colors border ${
+                      (isLoading || !mwsLayerRef?.current)
+                        ? 'opacity-50 cursor-not-allowed pointer-events-none bg-gray-100 text-gray-400 border-gray-200'
+                        : showFarmBoundaries
+                          ? 'text-red-600 bg-red-50 hover:bg-red-100 border-red-100'
+                          : 'text-indigo-600 bg-indigo-50 hover:bg-indigo-100 border-indigo-100'
+                    }`}
+                  >
+                    {farmBoundariesLoading ? (
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    ) : (
+                      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <rect x="3" y="3" width="18" height="18" rx="2" />
+                        <path d="M3 9h18M9 21V9" />
+                      </svg>
+                    )}
+                    {farmBoundariesLoading ? 'Loading…' : showFarmBoundaries ? 'Hide Farm Boundaries' : 'Show Farm Boundaries'}
+                  </button>
+                </div>
               </div>
             )}
           </div>
