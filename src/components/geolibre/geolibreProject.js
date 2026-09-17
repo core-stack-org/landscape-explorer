@@ -932,9 +932,9 @@ const hydrateLayerWithData = (layer, data) => {
       diagramType: "bar",
       // The viewer supplies Red–Blue ramp colours from the parsed value itself.
       diagramFields: fortnightBars.fields.map(({ date, property }) => ({ property, label: date, color: "#f7f7f7" })),
-      diagramSize: 120,
-      diagramSizeMode: "fixed",
-      diagramDeclutter: true,
+      diagramSize: 60,
+      diagramSizeMode: "sum",
+      diagramDeclutter: false,
       fillOpacity: 0,
     } : style,
     metadata: {
