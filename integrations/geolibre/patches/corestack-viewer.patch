@@ -1,5 +1,5 @@
 diff --git a/apps/geolibre-desktop/src/components/layout/DesktopShell.tsx b/apps/geolibre-desktop/src/components/layout/DesktopShell.tsx
-index ac8773b..bc55bce 100644
+index ac8773b..d23b08b 100644
 --- a/apps/geolibre-desktop/src/components/layout/DesktopShell.tsx
 +++ b/apps/geolibre-desktop/src/components/layout/DesktopShell.tsx
 @@ -1,3 +1,4 @@
@@ -11,7 +11,7 @@ index ac8773b..bc55bce 100644
    useProjectPluginTrust,
    useSwipeSplitViewExclusivity,
    useTimeSliderAutoClose,
-+  useCoreStackSources,
++  useCoreStackRasterDownloads,
  } from "../../hooks/usePlugins";
  import type { DataUrlLoadState } from "../../hooks/useDataUrlLoader";
  import { registerKmlSuperOverlayProtocol } from "../../lib/kml-super-overlay";
@@ -19,7 +19,7 @@ index ac8773b..bc55bce 100644
    // Close a binding-opened Time Slider once the last temporal layer is gone
    // (#1512), so the dock does not linger over a map with no timeline.
    useTimeSliderAutoClose(mapControllerRef);
-+  useCoreStackSources(mapControllerRef);
++  useCoreStackRasterDownloads();
    // Live-collaboration session. Owned here (rather than in TopToolbar) so both
    // the Collaborate dialog and the on-canvas status badge share one socket, and
    // so the dialog stays mounted in toolbar-hidden layouts.
@@ -87,18 +87,16 @@ index 1d5ca8f..c3e9bb6 100644
          <div className="space-y-2">
            <div className="flex items-center justify-between gap-2">
 diff --git a/apps/geolibre-desktop/src/hooks/usePlugins.ts b/apps/geolibre-desktop/src/hooks/usePlugins.ts
-index e1260ed..55cf671 100644
+index e1260ed..c63a37d 100644
 --- a/apps/geolibre-desktop/src/hooks/usePlugins.ts
 +++ b/apps/geolibre-desktop/src/hooks/usePlugins.ts
-@@ -855,6 +855,106 @@ export function useTimeSliderAutoClose(mapControllerRef: RefObject<MapEngine | n
+@@ -855,6 +855,61 @@ export function useTimeSliderAutoClose(mapControllerRef: RefObject<MapEngine | n
    }, [mapControllerRef]);
  }
  
-+// CoRE Stack date-keyed vectors keep one geometry per feature. Register their
-+// parsed axis after lazy hydration rather than binding a single synthetic date.
-+export function useCoreStackSources(mapControllerRef: RefObject<MapEngine | null>): void {
++// Keep one full GeoTIFF byte response per LULC year for all three styled levels.
++export function useCoreStackRasterDownloads(): void {
 +  useEffect(() => {
-+    const adapters = new Map<string, { key: string; detach: () => void }>();
 +    const files = new Map<string, { controller: AbortController; blob?: string }>();
 +    let disposed = false;
 +    let reconciling = false;
@@ -107,51 +105,9 @@ index e1260ed..55cf671 100644
 +      reconciling = true;
 +      try {
 +        const store = useAppStore.getState();
-+        for (const [id, entry] of adapters) {
-+          if (!store.layers.some(layer => layer.id === id)) { entry.detach(); adapters.delete(id); }
-+        }
 +        const activeUrls = new Set<string>();
 +        for (const layer of store.layers) {
 +          const core = layer.metadata?.corestack as any;
-+          const series = core?.timeSeries;
-+          if (series?.mode === "date-keyed-series" && series.dates?.length && layer.geojson?.features.length) {
-+            const key = JSON.stringify([layer.source, series.dates]);
-+            if (adapters.get(layer.id)?.key !== key) {
-+              adapters.get(layer.id)?.detach();
-+              const adapter: TemporalLayerAdapter = {
-+                dimension: series.dateProperty,
-+                granularity: "day", displayUnits: ["day"],
-+                getTimeValues: () => series.dates,
-+                setTime: date => {
-+                  const current = useAppStore.getState().layers.find(item => item.id === layer.id);
-+                  if (!current?.geojson) return;
-+                  const selected = series.dates.reduce((a: string, b: string) =>
-+                    Math.abs(Date.parse(a) - date.getTime()) <= Math.abs(Date.parse(b) - date.getTime()) ? a : b);
-+                  const field = series.fields.find((item: any) => item.date === selected)?.property;
-+                  const geojson = { ...current.geojson, features: current.geojson.features.map(feature => {
-+                    const properties = { ...feature.properties };
-+                    const previous = properties.__corestack_missing_style;
-+                    if (previous) {
-+                      for (const name of ["fill", "stroke", "marker-color"]) {
-+                        if (Object.prototype.hasOwnProperty.call(previous, name)) properties[name] = previous[name];
-+                        else delete properties[name];
-+                      }
-+                      delete properties.__corestack_missing_style;
-+                    }
-+                    properties[series.dateProperty] = selected;
-+                    properties[series.valueProperty] = field ? properties[field] ?? null : null;
-+                    properties.stroke = "#05081c";
-+                    return { ...feature, properties };
-+                  }) };
-+                  const metadata = { ...current.metadata, corestack: { ...(current.metadata.corestack as any), timeSeries: { ...series, date: selected } } };
-+                  useAppStore.getState().updateLayer(layer.id, { geojson, metadata, timeFilter: undefined });
-+                },
-+              };
-+              const detach = registerTemporalLayer(layer.id, adapter);
-+              adapters.set(layer.id, { key, detach });
-+              bindTemporalLayer(layer.id, adapter, mapControllerRef);
-+            }
-+          }
 +          const url = core?.rasterDownload?.url;
 +          if (!core?.year || !core?.geoserverLayer?.startsWith("LULC_") || typeof url !== "string") continue;
 +          activeUrls.add(url);
@@ -188,10 +144,9 @@ index e1260ed..55cf671 100644
 +    return () => {
 +      disposed = true;
 +      unsubscribe();
-+      for (const entry of adapters.values()) entry.detach();
 +      for (const entry of files.values()) { entry.controller.abort(); if (entry.blob) URL.revokeObjectURL(entry.blob); }
 +    };
-+  }, [mapControllerRef]);
++  }, []);
 +}
 +
  export function createAppAPI(mapControllerRef?: RefObject<MapEngine | null>) {
@@ -313,17 +268,41 @@ index 47ad1b3..9370e2d 100644
  
  /**
 diff --git a/packages/plugins/src/plugins/deckgl-viz/diagrams.ts b/packages/plugins/src/plugins/deckgl-viz/diagrams.ts
-index 93fc1ab..f9f0ec3 100644
+index 93fc1ab..a91906c 100644
 --- a/packages/plugins/src/plugins/deckgl-viz/diagrams.ts
 +++ b/packages/plugins/src/plugins/deckgl-viz/diagrams.ts
-@@ -345,7 +345,28 @@ function buildAtlas(layer: GeoLibreLayer, diagramData: DiagramData): DiagramAtla
+@@ -3,6 +3,7 @@ import {
+   collectDiagramData,
+   diagramPixelSize,
+   diagramsSuppressedByPointRenderer,
++  interpolateRampColors,
+   isDiagramStyleEnabled,
+   styleValue,
+   type DiagramData,
+@@ -40,6 +41,15 @@ export const MAX_ATLAS_HEIGHT = 8192;
+ const DONUT_INNER_RATIO = 0.5;
+ // Stacked bars are columns: narrower than the square pie/bar box.
+ const STACKED_BAR_WIDTH_RATIO = 0.45;
++const FORTNIGHT_RAMP = interpolateRampColors("rdbu", 7);
++const fortnightColor = (value: number): string =>
++  value < -100 ? FORTNIGHT_RAMP[0]
++    : value < -50 ? FORTNIGHT_RAMP[1]
++      : value < -10 ? FORTNIGHT_RAMP[2]
++        : value <= 10 ? FORTNIGHT_RAMP[3]
++          : value <= 50 ? FORTNIGHT_RAMP[4]
++            : value <= 100 ? FORTNIGHT_RAMP[5]
++              : FORTNIGHT_RAMP[6];
+ 
+ /**
+  * Whether a store layer has diagrams to render: an in-memory GeoJSON vector
+@@ -345,7 +355,28 @@ function buildAtlas(layer: GeoLibreLayer, diagramData: DiagramData): DiagramAtla
      const x = cell.x + CELL_PAD;
      const y = cell.y + CELL_PAD;
      if (type === "bar") {
 -      drawBars(ctx, x, y, cell.width, cell.height, datum.values, diagramData.maxFieldValue, colors);
 +      const fields = styleValue(style, "diagramFields");
 +      if (fields.every(field => field.property.startsWith("__delta_g_mm_"))) {
-+        // Shared symmetric millimetre scale; no clamping of deficits to zero.
++        // DeltaG retains its natural sign: deficits fall below zero and gains rise above it.
 +        const mid = y + cell.height / 2;
 +        const scale = (cell.height / 2 - 12 * DPR) / Math.max(1, diagramData.maxFieldValue);
 +        const barWidth = cell.width / datum.values.length;
@@ -333,7 +312,7 @@ index 93fc1ab..f9f0ec3 100644
 +        ctx.fillRect(x, mid, cell.width, DPR / 2);
 +        datum.values.forEach((value, index) => {
 +          if (!Number.isFinite(value)) return;
-+          ctx.fillStyle = value < 0 ? "#b2182b" : colors[index];
++          ctx.fillStyle = fortnightColor(value);
 +          ctx.fillRect(x + index * barWidth, mid - Math.max(0, value) * scale, barWidth * 0.8, Math.max(DPR / 2, Math.abs(value) * scale));
 +        });
 +        ctx.fillStyle = "#222222";
@@ -346,48 +325,3 @@ index 93fc1ab..f9f0ec3 100644
      } else if (type === "stacked-bar") {
        drawStackedBar(ctx, x, y, cell.width, cell.height, datum.values, datum.total, colors);
      } else {
-diff --git a/packages/plugins/src/plugins/maplibre-time-slider.ts b/packages/plugins/src/plugins/maplibre-time-slider.ts
-index 58f12e2..7bab001 100644
---- a/packages/plugins/src/plugins/maplibre-time-slider.ts
-+++ b/packages/plugins/src/plugins/maplibre-time-slider.ts
-@@ -481,6 +481,7 @@ let preBindingRange: {
-   end: string | undefined;
-   granularity: TimeBinding["granularity"];
-   granularities: TimeGranularity[];
-+  dates: TimeSliderConfig["dates"];
- } | null = null;
- // Guards our own timeFilter writes from re-entering the store subscription.
- let applyingBoundFilters = false;
-@@ -832,7 +833,10 @@ function reconcileBoundLayers(control: TimeSliderControl): void {
-       selectors.map(({ binding }) => binding),
-       granularity,
-     );
--    const rangeKey = `${min}|${max}|${granularity}|${orderedDisplayUnits?.join(",") ?? ""}`;
-+    const dates = selectors.length && !bound.length && !frames.length
-+      ? [...new Set(selectors.flatMap(({ adapter }) => [...adapter.getTimeValues()].map(value => new Date(value instanceof Date ? value.getTime() : value).toISOString())))].sort()
-+      : undefined;
-+    const rangeKey = `${min}|${max}|${granularity}|${orderedDisplayUnits?.join(",") ?? ""}|${dates?.join(",") ?? ""}`;
-     if (rangeKey !== lastBoundRangeKey) {
-       // Capture the range the control had before any binding overrode it, so it
-       // can be restored when every binding is later removed.
-@@ -843,10 +847,12 @@ function reconcileBoundLayers(control: TimeSliderControl): void {
-           end: config.endDate,
-           granularity: config.granularity,
-           granularities: [...(config.granularities ?? TIME_GRANULARITIES)],
-+          dates: config.dates,
-         };
-       }
-       lastBoundRangeKey = rangeKey;
-       control.setRange(new Date(min), new Date(max), undefined, granularity);
-+      control.setConfig({ ...control.getConfig(), dates, ...(dates?.length ? { currentDate: dates[0] } : {}) });
-       control.setGranularities(
-         orderedDisplayUnits
-           ? orderedDisplayUnits
-@@ -865,6 +871,7 @@ function reconcileBoundLayers(control: TimeSliderControl): void {
-         preBindingRange.granularity,
-       );
-       control.setGranularities(preBindingRange.granularities);
-+      control.setConfig({ ...control.getConfig(), dates: preBindingRange.dates });
-     }
-     preBindingRange = null;
-     lastBoundRangeKey = null;
