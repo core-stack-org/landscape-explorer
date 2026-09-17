@@ -95,7 +95,7 @@ describe("GeoLibre 2.6 project generation", () => {
     expect(expression.result).toBe("success");
     categories.forEach((category) => expect(expression.value.evaluate({ zoom: 10 }, { properties: { uid: "12_332857", class: category, code: 2 }, type: 3 })).not.toBe("#3b3b3b"));
   });
-  it("hydrates Fortnightly Water Balance with a dated DeltaG style without renaming the dataset", async () => {
+  it("hydrates Fortnightly Water Balance as a full-series bar plot without a polygon legend", async () => {
     const project = await buildGeoLibreProject({ ...location, fetchFeatureCollection: successfulFetch });
     const result = await hydrateGeoLibreVectorLayer({ project, layerId: "corestack-mws_layers_fortnight", fetchFeatureCollection: async () => ({
       type: "FeatureCollection", features: [{ type: "Feature", geometry: { type: "Polygon", coordinates: [] }, properties: { "2025-06-16": '{"DeltaG": 120}' } }],
@@ -104,11 +104,9 @@ describe("GeoLibre 2.6 project generation", () => {
     expect(layer.name).toBe("Fortnightly Water Balance");
     expect(layer.style.strokeColor).toBe("#05081c");
     expect(layer.style.diagramType).toBe("bar");
-    expect(layer.style.diagramFields).toEqual([{ property: "__delta_g_mm_2025-06-16", label: "2025-06-16", color: "#2166ac" }]);
-    expect(layer.metadata.corestack.timeSeries).toMatchObject({ date: "2025-06-16", units: "mm" });
-    const compiled = createExpression(JSON.parse(layer.style.vectorStyleExpression), "layers[0].paint.fill-color");
-    expect(compiled.result).toBe("success");
-    expect(compiled.value.evaluate({ zoom: 10 }, { properties: layer.geojson.features[0].properties, type: 3 })).toBe("#2166ac");
+    expect(layer.style.diagramFields).toEqual([{ property: "__delta_g_mm_2025-06-16", label: "2025-06-16", color: "#f7f7f7" }]);
+    expect(layer.style).toMatchObject({ vectorStyleMode: "single", vectorStyleProperty: "", vectorStyleStops: [], vectorStyleExpression: "", fillOpacity: 0 });
+    expect(layer.metadata.corestack.fortnightBarSeries).toMatchObject({ units: "mm", measurement: "DeltaG" });
   });
   it("evaluates finalized thresholds and missing-data guards in the real MapLibre expression engine", async () => {
     const project = await buildGeoLibreProject({ ...location, fetchFeatureCollection: successfulFetch });

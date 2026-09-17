@@ -158,10 +158,9 @@ const STYLE_PROFILES = {
     ...thematicStyle, fields: ["Net2020_25"], value: numericProperty("Net2020_25"),
     thresholds: [-10, -5, -1, 1, 5, 10], palette: "rdbu", fillOpacity: 0.65,
   }),
-  fortnight: fixedPaletteExpression({
-    ...thematicStyle, fields: [FORTNIGHT_VALUE_FIELD], value: numericProperty(FORTNIGHT_VALUE_FIELD),
-    thresholds: [-100, -50, -10, 10, 50, 100], palette: "rdbu", fillOpacity: 0.65,
-  }),
+  // Fortnightly Water Balance is visualized solely through its per-MWS bar
+  // chart. A polygon classifier would create a stale, unrelated native legend.
+  fortnight: { ...BASE_STYLE, strokeColor: "#05081c", strokeWidth: 0.5, fillOpacity: 0, vectorStyleMode: "single" },
   drainage: categoryStyle(
     "ORDER",
     [
@@ -915,8 +914,8 @@ const hydrateLayerWithData = (layer, data) => {
   const { initialLoadError: _initialLoadError, ...metadata } =
     layer.metadata || {};
   const catalogLayer = GEOLIBRE_LAYERS.find(item => `corestack-${item.id}` === layer.id);
-  const timeSeries = catalogLayer?.id === "mws_layers_fortnight" ? prepareFortnightData(data, layer.metadata?.corestack?.timeSeries?.date) : null;
-  if (timeSeries) data = timeSeries.data;
+  const fortnightBars = catalogLayer?.id === "mws_layers_fortnight" ? prepareFortnightData(data) : null;
+  if (fortnightBars) data = fortnightBars.data;
   const outline = catalogLayer && boundaryColorForLayer(catalogLayer.id);
   const initialStyle = catalogLayer && { ...layerStyle(catalogLayer), ...(outline ? { strokeColor: outline, simpleStyleEnabled: true } : {}) };
   const style = initialStyle && Object.entries(initialStyle).every(([key, value]) => JSON.stringify(layer.style?.[key]) === JSON.stringify(value))
@@ -924,14 +923,19 @@ const hydrateLayerWithData = (layer, data) => {
   return applyMissingDataStyle({
     ...layer,
     geojson: data,
-    style: timeSeries ? {
+    style: fortnightBars ? {
       ...style,
+      vectorStyleMode: "single",
+      vectorStyleProperty: "",
+      vectorStyleStops: [],
+      vectorStyleExpression: "",
       diagramType: "bar",
-      diagramFields: timeSeries.fields.map(({ date, property }) => ({ property, label: date, color: "#2166ac" })),
+      // The viewer supplies Red–Blue ramp colours from the parsed value itself.
+      diagramFields: fortnightBars.fields.map(({ date, property }) => ({ property, label: date, color: "#f7f7f7" })),
       diagramSize: 120,
       diagramSizeMode: "fixed",
       diagramDeclutter: true,
-      fillOpacity: 0.12,
+      fillOpacity: 0,
     } : style,
     metadata: {
       ...metadata,
@@ -939,7 +943,7 @@ const hydrateLayerWithData = (layer, data) => {
       loadState: "loaded",
       corestack: {
         ...metadata.corestack,
-        ...(timeSeries ? { timeSeries: { date: timeSeries.date, dates: timeSeries.dates, fields: timeSeries.fields, dateProperty: FORTNIGHT_DATE_FIELD, valueProperty: FORTNIGHT_VALUE_FIELD, units: "mm", measurement: "DeltaG", mode: "date-keyed-series" } } : {}),
+        ...(fortnightBars ? { fortnightBarSeries: { dates: fortnightBars.dates, fields: fortnightBars.fields, units: "mm", measurement: "DeltaG" } } : {}),
         loadState: "loaded",
       },
     },
