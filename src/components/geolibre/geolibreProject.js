@@ -1,5 +1,5 @@
 import { interpolateRampColors } from "@geolibre/core";
-import { applyMissingDataStyle, boundaryColorForLayer, finiteMeasurement, hasLayerData, MISSING_DATA_COLOR, fixedPaletteExpression, naturalBreaksStyle, paletteCategories } from "./geolibreStyleUtils";
+import { applyMissingDataStyle, boundaryColorForLayer, hasLayerData, MISSING_DATA_COLOR, fixedPaletteExpression, naturalBreaksStyle, paletteCategories } from "./geolibreStyleUtils";
 import {
   GEOLIBRE_CONFIG,
   GEOLIBRE_PROJECT_FORMAT_VERSION,
