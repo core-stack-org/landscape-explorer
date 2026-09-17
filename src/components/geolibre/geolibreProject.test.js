@@ -83,6 +83,18 @@ beforeEach(() => {
 });
 
 describe("GeoLibre 2.6 project generation", () => {
+  it("matches every published Stage of Groundwater Extraction class exactly", async () => {
+    const project = await buildGeoLibreProject({ ...location, fetchFeatureCollection: successfulFetch });
+    const layer = project.layers.find(item => item.id === "corestack-soge");
+    const categories = ["Safe", "Semi-Critical", "Critical", "Over Exploited"];
+    expect(layer.style.vectorStyleStops.map(stop => stop.value)).toEqual(categories);
+    const expression = createExpression(
+      ["match", ["to-string", ["get", "class"]], ...layer.style.vectorStyleStops.flatMap(stop => [stop.value, stop.color]), "#3b3b3b"],
+      "layers[0].paint.fill-color"
+    );
+    expect(expression.result).toBe("success");
+    categories.forEach((category) => expect(expression.value.evaluate({ zoom: 10 }, { properties: { uid: "12_332857", class: category, code: 2 }, type: 3 })).not.toBe("#3b3b3b"));
+  });
   it("hydrates Fortnightly Water Balance with a dated DeltaG style without renaming the dataset", async () => {
     const project = await buildGeoLibreProject({ ...location, fetchFeatureCollection: successfulFetch });
     const result = await hydrateGeoLibreVectorLayer({ project, layerId: "corestack-mws_layers_fortnight", fetchFeatureCollection: async () => ({
