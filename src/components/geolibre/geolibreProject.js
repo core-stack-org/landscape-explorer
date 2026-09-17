@@ -185,12 +185,12 @@ const STYLE_PROFILES = {
   soge: categoryStyle(
     "class",
     [
-      ["Safe", "#ffffff", "Safe"],
-      ["Semi-critical", "#e0f3f8", "Semi-critical"],
-      ["Critical", "#4575b4", "Critical"],
-      ["Over Exploited", "#313695", "Over Exploited"],
+      ["Safe", "#b6c4e8", "Safe"],
+      ["Semi-critical", "#e6c2b5", "Semi-critical"],
+      ["Critical", "#e77c6a", "Critical"],
+      ["Over Exploited", "#b40426", "Over Exploited"],
     ],
-    { fillColor: "#9ca3af", strokeColor: "#232323", fillOpacity: 0.72 }
+    { fillColor: "#3b3b3b", strokeColor: "#232323", fillOpacity: 0.72 }
   ),
   aquifer: categoryStyle(
     "Principal_",
