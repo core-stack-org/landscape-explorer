@@ -186,7 +186,7 @@ const STYLE_PROFILES = {
     "class",
     [
       ["Safe", "#b6c4e8", "Safe"],
-      ["Semi-critical", "#e6c2b5", "Semi-critical"],
+      ["Semi-Critical", "#e6c2b5", "Semi-Critical"],
       ["Critical", "#e77c6a", "Critical"],
       ["Over Exploited", "#b40426", "Over Exploited"],
     ],
