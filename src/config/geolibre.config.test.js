@@ -15,7 +15,7 @@ const config = {
 describe("GeoLibre application configuration", () => {
   it("resolves a versioned viewer URL and embed parameters", () => {
     expect(resolveGeoLibreViewer(config)).toEqual({
-      url: "https://viewer.example/geolibre/2.6.0/?embed=1&welcome=0&corestack=1",
+      url: "https://viewer.example/geolibre/2.6.0/?embed=1&welcome=0",
       origin: "https://viewer.example",
       versionPinned: true,
     });

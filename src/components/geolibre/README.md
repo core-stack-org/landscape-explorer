@@ -8,9 +8,11 @@ KYL map, layer selector, or project panel.
 CoRE Stack datasets are available under
 [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
 
-The implementation targets
-[GeoLibre v2.6.0](https://github.com/opengeos/GeoLibre/releases/tag/v2.6.0)
-and uses its supported embed bridge and WFS project representation.
+The app embeds the public viewer at `https://web.geolibre.app/` using its
+supported bridge and WFS project representation. It does not build or modify
+GeoLibre itself. `npm run build` compiles Landscape Explorer, including its
+project builder and imported `@geolibre/core` helpers; the viewer loads separately.
+No custom viewer checkout, patch, plugin, or deployment is needed.
 
 ## Runtime flow
 
@@ -19,23 +21,26 @@ and uses its supported embed bridge and WFS project representation.
 2. `geolibreProject.js` fetches the shared Demographic WFS source once. It creates
    **Administrative Boundaries** and **Socio-Economic Profile** from that data,
    derives the complete tehsil bounding box, and immediately opens GeoLibre.
-3. Both default Demographic layers start visible at opacity `0.8`, in that
-   display order.
-4. Every vector outside the two default Demographic entries starts listed,
+3. Administrative Boundaries and Socio-Economic Profile start hidden. Latest-year
+   LULC Level 1 starts first; Levels 2 and 3 follow at one-second intervals.
+4. Every vector outside the two Demographic entries starts listed,
    hidden, and empty. Its first visibility toggle asks KYL to fetch that WFS
    source and send the hydrated layer back to GeoLibre. The hydrated layer is
    retained, so later off/on toggles do not repeat its WFS request.
-5. Raster layers also start listed and hidden. GeoLibre requests their styled
-   WMS tiles only after the first visibility toggle and retains the live raster
+5. Other raster layers start listed and hidden. GeoLibre requests their styled
+   WMS tiles when enabled and retains the live raster
    source for later toggles; normal browser and MapLibre tile caches reuse tiles
    that have already been fetched.
 6. The iframe reports `geolibre:ready`; KYL verifies its application version,
    sends the initial project, and fits the exact tehsil bounds once. Lazy
    project updates preserve the user's live map view and never fit it again.
+   Startup completes after acknowledged map initialization and staged visibility
+   commands. The public bridge does not confirm tile completion; the log records
+   `renderVerified: false`.
 7. A generated project omits `mapLayout` and `secondaryMapViews`, which is
    GeoLibre's native single-map representation. It also omits GeoLibre's
    Components plugin because that plugin's default control set includes Swipe;
-   KYL already supplies the on-map legend itself. The standalone Swipe plugin
+   KYL supplies a separate raster legend. The standalone Swipe plugin
    is omitted too. KYL never simulates a split layout or overrides a layout the
    user later selects from the View menu.
 
@@ -61,7 +66,7 @@ flowchart LR
     D --> C
     C --> E[GeoLibre project]
     E --> F[Trusted iframe bridge]
-    F --> G[GeoLibre 2.x]
+    F --> G[Public GeoLibre viewer]
     G --> H[Lazy WFS vectors]
     G --> I[WMS display and WCS downloads]
 ```
@@ -94,8 +99,7 @@ sequenceDiagram
    Every layer exposes live GeoServer SLD and JSON/PNG legend endpoints. The
    finalized vector profiles remain in the project as a visual-parity safeguard
    because GeoLibre project JSON cannot attach a remote SLD to a predeclared
-   WFS layer. Matching color labels are shown in KYL's on-map legend only while
-   the corresponding layer is visible.
+   WFS layer. GeoLibre handles native vector legends; KYL provides raster legends.
 5. **Loading:** only the shared default WFS is fetched at startup. Other
    vectors hydrate once on first toggle; rasters remain native lazy WMS layers.
 6. **Download:** vector data remains available through GeoLibre and complete
@@ -145,9 +149,11 @@ attribution. A deployment can replace it with another valid MapLibre style:
 REACT_APP_GEOLIBRE_BASEMAP_STYLE_URL=https://maps.example.org/style.json
 ```
 
-KYL renders one minimized on-map legend control over the bottom-right map corner.
+KYL renders one movable raster legend card over the iframe. It is constrained to
+the iframe area; the public bridge does not expose the internal map rectangle
+to exclude native side panels. Vector legends use GeoLibre's native controls.
 Its selector is updated directly from GeoLibre state snapshots and contains the
-currently visible layers. A newly enabled layer becomes the selected legend, so
+currently visible raster layers. A newly enabled layer becomes the selected legend, so
 Level 1, Level 2, and Level 3 LULC styles each immediately show their own class
 palette. This update does not send the full project back to the iframe, preserving
 GeoLibre's native raster sources and avoiding redundant tile reloads. The
@@ -203,14 +209,14 @@ application.
 |---|---|
 | `../../config/geolibre.config.js` | Viewer application version, URL resolution, strict handshake compatibility |
 | `../../config/geolibreLayers.js` | GeoServer names, deployed domains, all LULC years and named WMS styles |
-| `geolibreProject.js` | Project generation, legends, Google imagery, vector hydration, GeoServer style/WFS/WMS/WCS references, bbox camera, and full Fortnightly Water Balance bar-series parsing |
+| `geolibreProject.js` | Project generation, legends, Google imagery, vector hydration, GeoServer style/WFS/WMS/WCS references, bbox camera, and date-record JSON parsing |
 | `GeoLibreFrame.jsx` | Iframe bridge, one-time bbox fit, human error states and downloadable bounded technical log |
 | `../../pages/LandscapeExplorer.jsx` | Route-to-project orchestration and fetch-on-first-toggle vector cache; no duplicate map or layer UI |
 
 The current project contains 55 entries: 22 vector entries, 24 LULC year/style
 entries backed by 8 Level 3 yearly rasters, and 9 other rasters. Initial startup
-performs exactly one distinct WFS request for the shared Demographic data and no
-WMS request. Each other vector makes its own WFS request only on its first
+performs one distinct WFS request for the shared Demographic data, then enables
+the latest LULC WMS layers. Each other vector makes its own WFS request only on its first
 toggle. Hidden rasters make no WMS tile request.
 
 ## Error handling
@@ -224,6 +230,17 @@ events. Browsers require this explicit user download and cannot silently write
 a log file to the user's filesystem.
 
 ## Styling contract
+
+Fortnightly Water Balance uses the standard boundary profile, with transparent
+fill and the MWS stroke color `#05081c`. Date-keyed JSON strings are decoded for
+attribute inspection with their field names and full records retained. It adds
+no derived measurement fields, diagrams, time controls, thematic coloring, or
+custom legend.
+
+Native style controls belong to public GeoLibre. KYL does not automatically open
+the Style panel, add palette controls, or change GeoLibre's internal treatment of
+missing values after native style edits. The generated project still supplies its
+initial vector styles and missing-data guards.
 
 - Style delivery no longer depends on GitHub-hosted QML files. Each layer's
   `metadata.corestack.geoserverStyle` contains public GeoServer `GetStyles` and
@@ -260,7 +277,7 @@ No backend patch, generated project file, vendored GeoLibre bundle, or local
 
 ```bash
 git fetch origin
-git switch feat/geolibre-cog-download
+git switch feat/geolibre_loading
 git pull --ff-only
 cp .env.example .env
 npm install

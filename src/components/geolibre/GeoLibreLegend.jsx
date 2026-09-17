@@ -11,23 +11,22 @@ export const legendPosition = (bounds, size, fraction = { x: 1, y: 1 }) => {
   };
 };
 
-const GeoLibreLegend = ({ legends = [], mapBounds }) => {
+const GeoLibreLegend = ({ legends = [] }) => {
   const [collapsed, setCollapsed] = useState(false);
   const [selectedTitle, setSelectedTitle] = useState("");
   const previousTitlesRef = useRef([]);
   const containerRef = useRef(null);
   const cardRef = useRef(null);
   const dragRef = useRef(null);
-  const [fallbackBounds, setFallbackBounds] = useState({ x: 0, y: 0, width: 0, height: 0 });
+  const [bounds, setBounds] = useState({ x: 0, y: 0, width: 0, height: 0 });
   const [size, setSize] = useState({ width: 288, height: 200 });
   const [fraction, setFraction] = useState({ x: 1, y: 1 });
-  const bounds = mapBounds || fallbackBounds;
   const position = legendPosition(bounds, size, fraction);
 
   useEffect(() => {
     const measure = () => {
       const parent = containerRef.current?.parentElement;
-      if (parent) setFallbackBounds({ x: 0, y: 0, width: parent.clientWidth, height: parent.clientHeight });
+      if (parent) setBounds({ x: 0, y: 0, width: parent.clientWidth, height: parent.clientHeight });
       const card = cardRef.current;
       if (card) setSize({ width: card.offsetWidth, height: card.offsetHeight });
     };
@@ -37,7 +36,7 @@ const GeoLibreLegend = ({ legends = [], mapBounds }) => {
     if (cardRef.current) observer?.observe(cardRef.current);
     window.addEventListener("resize", measure);
     return () => { observer?.disconnect(); window.removeEventListener("resize", measure); };
-  }, [collapsed, legends.length, mapBounds]);
+  }, [collapsed, legends.length]);
 
   const moveBy = (x, y) => setFraction(current => ({
     x: Math.min(1, Math.max(0, current.x + x / Math.max(1, position.width - size.width))),

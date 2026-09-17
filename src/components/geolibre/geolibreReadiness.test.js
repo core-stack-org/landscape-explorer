@@ -19,7 +19,7 @@ const enableRefinements = () => { jest.advanceTimersByTime(1000); reply("setVisi
 beforeEach(() => {
   jest.useFakeTimers();
   post = jest.fn(); update = jest.fn(); log = jest.fn(); onReady = jest.fn(); onProjectState = jest.fn();
-  bridge = new GeoLibreReadiness({ post, update, log, onReady, onProjectState, requireRenderConfirmation: true });
+  bridge = new GeoLibreReadiness({ post, update, log, onReady, onProjectState });
   bridge.load(project);
 });
 afterEach(() => { bridge.dispose(); jest.useRealTimers(); });
@@ -36,19 +36,19 @@ test("neither sending a project nor its acknowledgement means the map is rendere
   expect(update).toHaveBeenLastCalledWith({ state: "error", issue: "delayed" });
 });
 
-test("fits a live map, staggers refinements, and records only a correlated render event", () => {
+test("fits a live map and staggers refinements using only the public bridge", () => {
   handshake(); initialize();
+  expect(onReady).not.toHaveBeenCalled();
   expect(post.mock.calls.filter(([data]) => data.method === "setVisibility")).toHaveLength(0);
   enableRefinements();
   expect(post.mock.calls.filter(([data]) => data.method === "setVisibility").map(([data]) => data.params.layerId)).toEqual(["level2", "level3"]);
-  expect(post).toHaveBeenCalledWith(expect.objectContaining({ type: "corestack:await-render", expectedLayerIds: ["level1", "level2", "level3"] }));
-  bridge.receive({ type: "corestack:map-rendered", seq: 0, scopeKey: "S|D|T" });
-  bridge.receive({ type: "corestack:map-rendered", seq: 1, scopeKey: "wrong" });
-  expect(onReady).not.toHaveBeenCalled();
-  bridge.receive({ type: "corestack:map-rendered", seq: 1, scopeKey: "S|D|T" });
-  expect(onReady).toHaveBeenCalledWith(expect.objectContaining({ renderVerified: true, handshakeToRenderMs: 2000 }));
+  expect(post.mock.calls.every(([data]) => data.type.startsWith("geolibre:"))).toBe(true);
+  expect(onReady).toHaveBeenCalledWith(expect.objectContaining({ renderVerified: false, handshakeToMapMs: 2000 }));
   expect(update).toHaveBeenLastCalledWith({ state: "loaded", issue: "" });
-  expect(log).toHaveBeenCalledWith("map_render_confirmed", expect.any(Object));
+  const sentCount = post.mock.calls.length;
+  jest.advanceTimersByTime(90000);
+  expect(post).toHaveBeenCalledTimes(sentCount);
+  expect(onReady).toHaveBeenCalledTimes(1);
 });
 
 test("ignores old snapshots and command responses after replacing a project", () => {
@@ -69,19 +69,20 @@ test("hydration does not refit or turn back on a default layer that the user dis
   jest.advanceTimersByTime(1000);
   expect(post.mock.calls.filter(([data]) => data.method === "fitBounds")).toHaveLength(1);
   expect(post.mock.calls.filter(([data]) => data.method === "setVisibility")).toHaveLength(2);
-  expect(post.mock.calls.filter(([data]) => data.type === "corestack:await-render").at(-1)[0].expectedLayerIds).toEqual(["level1"]);
+  expect(bridge.liveProject.layers.filter(layer => layer.visible).map(layer => layer.id)).toEqual(["level1"]);
 });
 
-test("tile errors cannot be followed by a false successful render", () => {
-  handshake(); initialize(); enableRefinements();
-  bridge.receive({ type: "corestack:render-error", seq: 1, scopeKey: "S|D|T", message: "WMS failed" });
-  bridge.receive({ type: "corestack:map-rendered", seq: 1, scopeKey: "S|D|T" });
+test("a failed public command cannot complete startup", () => {
+  handshake(); initialize();
+  jest.advanceTimersByTime(1000);
+  const command = post.mock.calls.map(([data]) => data).find(data => data.method === "setVisibility");
+  bridge.receive({ type: "geolibre:result", requestId: command.requestId, ok: false, error: "Layer unavailable" });
+  jest.advanceTimersByTime(90000);
   expect(onReady).not.toHaveBeenCalled();
   expect(update).toHaveBeenLastCalledWith({ state: "error", issue: "unavailable" });
 });
 
-test("the public-host fallback confirms map creation without claiming tile completion", () => {
-  bridge.requireRenderConfirmation = false;
+test("the public host confirms map creation without claiming tile completion", () => {
   handshake(); initialize(); enableRefinements();
   expect(update).toHaveBeenLastCalledWith({ state: "loaded", issue: "" });
   expect(onReady).toHaveBeenCalledTimes(1);
@@ -91,7 +92,6 @@ test("the public-host fallback confirms map creation without claiming tile compl
 });
 
 test("later layer hydration never reopens the completed startup overlay", () => {
-  bridge.requireRenderConfirmation = false;
   handshake(); initialize(); enableRefinements();
   update.mockClear();
   bridge.load({ ...project, name: "hydrated" });
