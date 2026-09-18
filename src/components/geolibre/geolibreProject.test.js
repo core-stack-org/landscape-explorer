@@ -81,6 +81,27 @@ beforeEach(() => {
 });
 
 describe("GeoLibre 2.6 project generation", () => {
+  it("gives every raster an explicit rasterStyle contract", () => {
+    expect(
+      GEOLIBRE_LAYERS.filter((layer) => layer.sourceType === "wms")
+    ).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: "terrain",
+          rasterStyle: "Terrain_Style_11_Classes",
+        }),
+        expect.objectContaining({
+          id: "lulc_level_3_24_25",
+          rasterStyle: "lulc_land_use_KYL",
+        }),
+      ])
+    );
+    expect(
+      GEOLIBRE_LAYERS.filter((layer) => layer.sourceType === "wms")
+        .every((layer) => typeof layer.rasterStyle === "string")
+    ).toBe(true);
+  });
+
   it("matches every published Stage of Groundwater Extraction class exactly", async () => {
     const project = await buildGeoLibreProject({ ...location, fetchFeatureCollection: successfulFetch });
     const layer = project.layers.find(item => item.id === "corestack-soge");
@@ -175,7 +196,7 @@ describe("GeoLibre 2.6 project generation", () => {
     );
   });
 
-  it("starts only latest LULC with staged refinements", async () => {
+  it("starts terrain and uses catalog raster styles in WMS requests", async () => {
     const project = await buildGeoLibreProject({
       ...location,
       fetchFeatureCollection: successfulFetch,
@@ -183,7 +204,7 @@ describe("GeoLibre 2.6 project generation", () => {
 
     expect(project.version).toBe("0.2.0");
     expect(project.layers).toHaveLength(GEOLIBRE_LAYERS.length);
-    expect(project.layers).toHaveLength(62);
+    expect(project.layers).toHaveLength(46);
     expect(project.layers.every(layer => layer.name === GEOLIBRE_LAYERS.find(item => `corestack-${item.id}` === layer.id)?.label)).toBe(true);
     expect(project.mapView.bbox).toEqual([92.9, 24.7, 93.2, 25]);
     expect(project.mapLayout).toBeUndefined();
@@ -228,7 +249,7 @@ describe("GeoLibre 2.6 project generation", () => {
 
     const visibleLayers = project.layers.filter((layer) => layer.visible);
     expect(visibleLayers.map((layer) => layer.id)).toEqual([
-      "corestack-lulc_level_1_24_25",
+      "corestack-terrain",
     ]);
     expect(
       visibleLayers.every((layer) => layer.opacity === 1)
@@ -257,8 +278,8 @@ describe("GeoLibre 2.6 project generation", () => {
       geojson: { type: "FeatureCollection", features: [] },
     });
 
-    const latestLulc = project.layers.find(
-      (layer) => layer.id === "corestack-lulc_level_3_24_25"
+    const latestLulc = project.layers.find((layer) =>
+      layer.id === "corestack-lulc_level_3_24_25"
     );
     expect(latestLulc).toMatchObject({
       type: "raster",
@@ -267,7 +288,7 @@ describe("GeoLibre 2.6 project generation", () => {
         service: "wms",
         corestack: {
           geoserverStyle: {
-            name: "lulc_level_3_style",
+            name: "lulc_land_use_KYL",
             assignment: "named-style",
             renderingMode: "server-rendered-wms",
           },
@@ -280,6 +301,9 @@ describe("GeoLibre 2.6 project generation", () => {
     expect(latestLulc.source.tiles[0]).toContain(
       "BBOX={bbox-epsg-3857}"
     );
+    expect(latestLulc.source.tiles[0]).toContain(
+      "STYLES=lulc_land_use_KYL"
+    );
     expect(latestLulc.source.wmsUrl).toContain("/geoserver/wms");
     expect(latestLulc.metadata.corestack.geoserverStyle.sldUrl).toContain(
       "REQUEST=GetStyles"
@@ -289,31 +313,15 @@ describe("GeoLibre 2.6 project generation", () => {
     ).toContain("FORMAT=application%2Fjson");
     expect(latestLulc.source.url).toContain("request=GetCoverage");
     expect(latestLulc.source.url).toContain("tiling=false");
-    const sameYear = project.layers.filter(item => item.id.match(/^corestack-lulc_level_[123]_24_25$/));
-    expect(new Set(sameYear.map(item => item.source.url)).size).toBe(1);
     expect(latestLulc.source.url).toContain(
       "CoverageId=LULC_level_3%3ALULC_24_25_cachar_lakhipur_level_3"
     );
-    const latestLulcStyles = [1, 2, 3].map((level) =>
-      project.layers.find(
-        (layer) => layer.id === `corestack-lulc_level_${level}_24_25`
-      )
-    );
-    expect(latestLulcStyles.map((layer) => layer.source.layers)).toEqual([
-      "LULC_level_3:LULC_24_25_cachar_lakhipur_level_3",
-      "LULC_level_3:LULC_24_25_cachar_lakhipur_level_3",
-      "LULC_level_3:LULC_24_25_cachar_lakhipur_level_3",
-    ]);
-    expect(latestLulcStyles.map((layer) => layer.source.url)).toEqual([
-      latestLulc.source.url,
-      latestLulc.source.url,
-      latestLulc.source.url,
-    ]);
-    expect(latestLulcStyles.map((layer) => layer.source.styles)).toEqual([
-      "lulc_level_1_style",
-      "lulc_level_2_style",
-      "lulc_level_3_style",
-    ]);
+    expect(project.layers.filter((item) => item.id.startsWith("corestack-lulc_"))).toHaveLength(8);
+    expect(latestLulc.source.styles).toBe("lulc_land_use_KYL");
+
+    const terrain = project.layers.find((layer) => layer.id === "corestack-terrain");
+    expect(terrain.source.styles).toBe("Terrain_Style_11_Classes");
+    expect(terrain.source.tiles[0]).toContain("STYLES=Terrain_Style_11_Classes");
 
     const dem = project.layers.find((layer) => layer.id === "corestack-dem");
     expect(dem).toMatchObject({
@@ -397,9 +405,7 @@ describe("GeoLibre 2.6 project generation", () => {
       "demographic",
       "village-data",
       "hydrology",
-      "lulc-3",
-      "lulc-2",
-      "lulc-1",
+      "lulc",
       "land",
       "agriculture",
       "restoration",
@@ -453,7 +459,7 @@ describe("GeoLibre 2.6 project generation", () => {
     const legends = activeGeoLibreLegends(project);
     expect(project.legend.panelVisible).toBe(true);
     expect(project.legend.collapsed).toBe(false);
-    expect(legends.map(item => item.title)).toEqual(["LULC Level 1 legend"]);
+    expect(legends.map(item => item.title)).toEqual(["Terrain legend"]);
     expect(project.layers.filter(layer => layer.type === "geojson").every(layer => !layer.metadata.corestack.legend)).toBe(true);
   });
 
@@ -529,10 +535,7 @@ describe("GeoLibre 2.6 project generation", () => {
     const synced = sanitizeGeoLibreProjectPlugins(withVisibleLayers);
     const legends = activeGeoLibreLegends(synced);
 
-    expect(legends.map((entry) => entry.title)).toEqual([
-      "LULC Level 1 legend",
-      "Terrain legend",
-    ]);
+    expect(legends.map((entry) => entry.title)).toEqual(["Terrain legend"]);
 
     const drainageHidden = {
       ...synced,
@@ -543,13 +546,10 @@ describe("GeoLibre 2.6 project generation", () => {
       ),
     };
     const resynced = sanitizeGeoLibreProjectPlugins(drainageHidden);
-    expect(activeGeoLibreLegends(resynced).map((entry) => entry.title)).toEqual([
-      "LULC Level 1 legend",
-      "Terrain legend",
-    ]);
+    expect(activeGeoLibreLegends(resynced).map((entry) => entry.title)).toEqual(["Terrain legend"]);
   });
 
-  it("returns a separate active legend for every visible LULC style", async () => {
+  it("returns the 12-class LULC legend for a visible LULC year", async () => {
     const project = await buildGeoLibreProject({
       ...location,
       fetchFeatureCollection: successfulFetch,
@@ -557,33 +557,16 @@ describe("GeoLibre 2.6 project generation", () => {
     const withLulcStyles = {
       ...project,
       layers: project.layers.map((layer) =>
-        [
-          "corestack-lulc_level_1_17_18",
-          "corestack-lulc_level_2_17_18",
-          "corestack-lulc_level_3_17_18",
-        ].includes(layer.id)
+        layer.id === "corestack-lulc_level_3_17_18"
           ? { ...layer, visible: true }
           : layer
       ),
     };
 
     const legends = activeGeoLibreLegends(withLulcStyles);
-    expect(legends.map((legend) => legend.title)).toEqual(
-      expect.arrayContaining([
-        "LULC Level 1 legend",
-        "LULC Level 2 legend",
-        "LULC Level 3 legend",
-      ])
-    );
-    expect(
-      legends.find((legend) => legend.title === "LULC Level 1 legend").items
-    ).toHaveLength(5);
-    expect(
-      legends.find((legend) => legend.title === "LULC Level 2 legend").items
-    ).toHaveLength(2);
-    expect(
-      legends.find((legend) => legend.title === "LULC Level 3 legend").items
-    ).toHaveLength(4);
+    const lulcLegend = legends.find((legend) => legend.title === "LULC legend");
+    expect(lulcLegend.items).toHaveLength(12);
+    expect(lulcLegend.items.map((item) => item.label)).toContain("Kharif, Rabi and Zaid Water");
   });
 
   it("loads only the hidden extent while leaving all other vectors lazy", async () => {
@@ -614,7 +597,7 @@ describe("GeoLibre 2.6 project generation", () => {
         .filter((layer) => layer.visible)
         .map((layer) => layer.id)
     ).toEqual([
-      "corestack-lulc_level_1_24_25",
+      "corestack-terrain",
     ]);
     expect(successfulFetch.mock.calls[0][0].typeName).toBe(
       "panchayat_boundaries:cachar_lakhipur"

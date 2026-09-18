@@ -309,10 +309,18 @@ const LEGEND_PROFILES = {
     ["Crops", "#fad36f"],
   ],
   lulc_level_3: [
-    ["Single Kharif", "#d9f0a3"],
-    ["Single non-Kharif", "#a6d96a"],
-    ["Double cropping", "#4daf4a"],
-    ["Triple cropping", "#006d2c"],
+    ["Background", "#000000"],
+    ["Built Up", "#c94c4c"],
+    ["Kharif Water", "#74ccf4"],
+    ["Kharif and Rabi Water", "#1ca3ec"],
+    ["Kharif, Rabi and Zaid Water", "#0f5e9c"],
+    ["Trees / Forests", "#1b5e20"],
+    ["Barren Lands", "#a9a9a9"],
+    ["Single Kharif", "#f0f4a3"],
+    ["Single Non-Kharif", "#d6e96b"],
+    ["Double Cropping", "#b7d43a"],
+    ["Triple Cropping", "#7faf2e"],
+    ["Shrubs and Scrubs", "#8c7a4f"],
   ],
 };
 
@@ -358,9 +366,7 @@ const GROUPS_TOP_FIRST = [
   { id: "demographic", name: "Demographic", collapsed: false },
   { id: "village-data", name: "Village Data", collapsed: true },
   { id: "hydrology", name: "Hydrology", collapsed: true },
-  { id: "lulc-3", name: "LULC · Level 3 by year", collapsed: true },
-  { id: "lulc-2", name: "LULC · Level 2 by year", collapsed: true },
-  { id: "lulc-1", name: "LULC · Level 1 by year", collapsed: true },
+  { id: "lulc", name: "LULC by year", collapsed: true },
   { id: "land", name: "Land", collapsed: true },
   { id: "agriculture", name: "Agriculture", collapsed: true },
   { id: "restoration", name: "Restoration", collapsed: true },
@@ -438,7 +444,7 @@ const wmsEndpointFor = (baseUrl, layer) =>
 const buildGeoServerStyleSource = (baseUrl, layer, layerName) => {
   const endpoint = wmsEndpointFor(baseUrl, layer);
   const qualifiedName = `${layer.workspace}:${layerName}`;
-  const namedStyle = layer.wmsStyle || "";
+  const namedStyle = layer.rasterStyle || "";
   const getStylesEntry = namedStyle ? [["STYLES", namedStyle]] : [];
   const legendStyleEntry = namedStyle ? [["STYLE", namedStyle]] : [];
   const common = [
@@ -478,7 +484,7 @@ const buildGeoServerStyleSource = (baseUrl, layer, layerName) => {
 };
 
 const buildWmsSource = (baseUrl, layer, layerName, bounds) => {
-  // Cross-workspace LULC styles are available through GeoServer's global WMS,
+  // Some named LULC styles are available through GeoServer's global WMS,
   // while other catalog layers retain their workspace-scoped endpoints.
   const endpoint = wmsEndpointFor(baseUrl, layer);
   const qualifiedName = `${layer.workspace}:${layerName}`;
@@ -490,7 +496,7 @@ const buildWmsSource = (baseUrl, layer, layerName, bounds) => {
         ["REQUEST", "GetMap"],
         ["VERSION", "1.1.1"],
         ["LAYERS", qualifiedName],
-        ["STYLES", layer.wmsStyle || ""],
+        ["STYLES", layer.rasterStyle || ""],
         ["FORMAT", "image/png"],
         ["TRANSPARENT", "TRUE"],
         ["SRS", "EPSG:3857"],
@@ -502,7 +508,7 @@ const buildWmsSource = (baseUrl, layer, layerName, bounds) => {
     tileSize: 256,
     url: endpoint,
     layers: qualifiedName,
-    styles: layer.wmsStyle || "",
+    styles: layer.rasterStyle || "",
     format: "image/png",
     transparent: true,
     version: "1.1.1",
@@ -779,7 +785,7 @@ const buildRasterLayer = ({ catalogLayer, layerName, baseUrl, bounds }) => {
 
 const displayOrderForGroup = (groupId, layers) => {
   const matching = layers.filter((layer) => layer.groupId === groupId);
-  return groupId.startsWith("lulc-") ? [...matching].reverse() : matching;
+  return groupId === "lulc" ? [...matching].reverse() : matching;
 };
 
 export const orderGeoLibreLayers = (layers) => {
@@ -1174,7 +1180,7 @@ export const buildGeoLibreProject = async ({
           stage: "base-map",
           order: [
             "Administrative extent (hidden)",
-            "Latest LULC Level 1, then Levels 2 and 3",
+            "Terrain raster",
             "All other vector layers on first visibility toggle",
             "Raster tiles on visibility toggle",
           ],
@@ -1182,7 +1188,7 @@ export const buildGeoLibreProject = async ({
           lazyLoadFailures: [],
         },
         geoserverStyleContract:
-          "Raster symbology is rendered by named GeoServer WMS styles. Vector layers retain the verified GeoLibre parity profiles and expose live GeoServer GetStyles and GetLegendGraphic endpoints without depending on GitHub-hosted QML files.",
+          "Raster symbology is rendered by each catalog rasterStyle through GeoServer WMS. An empty rasterStyle uses the GeoServer layer default. Vector layers retain the verified GeoLibre parity profiles and expose live GeoServer GetStyles and GetLegendGraphic endpoints without depending on GitHub-hosted QML files.",
       },
     };
   };
