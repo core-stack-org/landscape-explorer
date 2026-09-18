@@ -14,61 +14,55 @@ export const GEOLIBRE_LULC_YEARS = [
 export const LATEST_GEOLIBRE_LULC_YEAR =
   GEOLIBRE_LULC_YEARS[GEOLIBRE_LULC_YEARS.length - 1].value;
 
+// Colors match the CoRE Stack workToColorMapping. A category with no entry
+// in that mapping (irrigation_non_rwh) uses its Default fallback color.
 export const GEOLIBRE_NREGA_CATEGORIES = Object.freeze([
   {
     id: "land_restoration",
     label: "Land restoration",
-    color: "#e68600",
-    markerShape: "square",
+    color: "#FFA500",
     values: ["Agri Impact - HH,  Community"],
   },
   {
     id: "livelihood",
     label: "Household livelihood",
-    color: "#c45a87",
-    markerShape: "circle",
+    color: "#C2678D",
     values: ["Household Livelihood"],
   },
   {
     id: "irrigation_site",
     label: "Irrigation — site-level impact",
-    color: "#087f8c",
-    markerShape: "pin",
+    color: "#1A759F",
     values: ["Irrigation - Site level impact"],
   },
   {
     id: "irrigation_non_rwh",
     label: "Irrigation — non-RWH",
-    color: "#16a6b6",
-    markerShape: "diamond",
+    color: "#EAAC8B",
     values: ["Irrigation Site level - Non RWH"],
   },
   {
     id: "community",
     label: "Community assets",
-    color: "#3d4e78",
-    markerShape: "cross",
+    color: "#355070",
     values: ["Others - HH, Community"],
   },
   {
     id: "plantation",
     label: "Plantation and forestry",
-    color: "#2d8f5b",
-    markerShape: "triangle",
+    color: "#52B69A",
     values: ["Plantation"],
   },
   {
     id: "soil_water_conservation",
     label: "Soil and water conservation",
-    color: "#4169b1",
-    markerShape: "star",
+    color: "#6495ED",
     values: ["SWC - Landscape level impact"],
   },
   {
     id: "unclassified",
     label: "Other or unclassified",
-    color: "#6b7280",
-    markerShape: "circle",
+    color: "#6D597A",
     values: ["", "Un Identified"],
     fallback: true,
   },
@@ -80,7 +74,6 @@ const LAYERS = [
     label: "Administrative Boundaries",
     domain: "Demographic",
     loadGroup: "demographic",
-    defaultVisible: true,
     sourceType: "wfs",
     workspace: "panchayat_boundaries",
     geometryType: "polygon",
@@ -92,7 +85,6 @@ const LAYERS = [
     label: "Socio-Economic Profile",
     domain: "Demographic",
     loadGroup: "demographic",
-    defaultVisible: true,
     sourceType: "wfs",
     workspace: "panchayat_boundaries",
     geometryType: "polygon",
@@ -167,7 +159,7 @@ const LAYERS = [
     geometryType: "polygon",
     layerName: ({ district, tehsil }) =>
       `deltaG_fortnight_${district}_${tehsil}`,
-    styleProfile: "boundary",
+    styleProfile: "mws_fortnight",
   },
   {
     id: "terrain_vector",
@@ -179,6 +171,17 @@ const LAYERS = [
     geometryType: "polygon",
     layerName: ({ district, tehsil }) => `${district}_${tehsil}_cluster`,
     styleProfile: "terrain_vector",
+  },
+  {
+    id: "soil_type",
+    label: "Soil Type Vector",
+    domain: "Land",
+    loadGroup: "land",
+    sourceType: "wfs",
+    workspace: "soil_type",
+    geometryType: "polygon",
+    layerName: ({ district, tehsil }) => `soil_type_${district}_${tehsil}`,
+    styleProfile: "soil_type",
   },
   {
     id: "drainage",
@@ -341,7 +344,10 @@ const LAYERS = [
     sourceType: "wms",
     workspace: "terrain",
     layerName: ({ district, tehsil }) => `${district}_${tehsil}_terrain_raster`,
-    wmsStyle: "terrain:terrain_raster",
+    // An empty rasterStyle uses this GeoServer layer's published default style.
+    // Named styles are passed to WMS as STYLES for every display request.
+    rasterStyle: "Terrain_Style_11_Classes",
+    defaultVisible: true,
   },
   {
     id: "dem",
@@ -351,7 +357,67 @@ const LAYERS = [
     sourceType: "wms",
     workspace: "dem",
     layerName: ({ district, tehsil }) => `${district}_${tehsil}_dem_raster`,
-    wmsStyle: "dem_grayscale",
+    rasterStyle: "dem_grayscale",
+  },
+  {
+    id: "soil_health_raster_n",
+    label: "Soil Nitrogen Levels",
+    domain: "Land",
+    loadGroup: "land",
+    sourceType: "wms",
+    workspace: "soil_health_raster",
+    layerName: ({ district, tehsil }) =>
+      `${district}_${tehsil}_soil_health_raster_N`,
+    rasterStyle: "Soil_Health_Nitrogen",
+    defaultVisible: false,
+  },
+  {
+    id: "soil_health_raster_P",
+    label: "Soil Phosphorus Levels",
+    domain: "Land",
+    loadGroup: "land",
+    sourceType: "wms",
+    workspace: "soil_health_raster",
+    layerName: ({ district, tehsil }) =>
+      `${district}_${tehsil}_soil_health_raster_P`,
+    rasterStyle: "Soil_Health_Phosphorus",
+    defaultVisible: false,
+  },
+  {
+    id: "soil_health_raster_K",
+    label: "Soil Potassium Levels",
+    domain: "Land",
+    loadGroup: "land",
+    sourceType: "wms",
+    workspace: "soil_health_raster",
+    layerName: ({ district, tehsil }) =>
+      `${district}_${tehsil}_soil_health_raster_K`,
+    rasterStyle: "Soil_Health_Potassium",
+    defaultVisible: false,
+  },
+  {
+    id: "soil_health_raster_OC",
+    label: "Soil Organic Carbon Concentration",
+    domain: "Land",
+    loadGroup: "land",
+    sourceType: "wms",
+    workspace: "soil_health_raster",
+    layerName: ({ district, tehsil }) =>
+      `${district}_${tehsil}_soil_health_raster_OC`,
+    rasterStyle: "Soil_Health_Organic_carbon",
+    defaultVisible: false,
+  },
+  {
+    id: "soil_health_raster_OC_OLM",
+    label: "Soil Organic Carbon Concentration for Various Forest Systems",
+    domain: "Land",
+    loadGroup: "land",
+    sourceType: "wms",
+    workspace: "soil_health_raster",
+    layerName: ({ district, tehsil }) =>
+      `${district}_${tehsil}_soil_health_raster_OC_OLM`,
+    rasterStyle: "Soil_Health_OC_OLM",
+    defaultVisible: false,
   },
   {
     id: "clart",
@@ -361,7 +427,7 @@ const LAYERS = [
     sourceType: "wms",
     workspace: "clart",
     layerName: ({ district, tehsil }) => `${district}_${tehsil}_clart`,
-    wmsStyle: "clart:testClart",
+    rasterStyle: "",
   },
   {
     id: "afforestation",
@@ -372,7 +438,7 @@ const LAYERS = [
     workspace: "change_detection",
     layerName: ({ district, tehsil }) =>
       `change_${district}_${tehsil}_Afforestation`,
-    wmsStyle: "change_detection:afforestation",
+    rasterStyle: "",
   },
   {
     id: "deforestation",
@@ -383,7 +449,7 @@ const LAYERS = [
     workspace: "change_detection",
     layerName: ({ district, tehsil }) =>
       `change_${district}_${tehsil}_Deforestation`,
-    wmsStyle: "change_detection:deforestation",
+    rasterStyle: "",
   },
   {
     id: "degradation",
@@ -394,7 +460,7 @@ const LAYERS = [
     workspace: "change_detection",
     layerName: ({ district, tehsil }) =>
       `change_${district}_${tehsil}_Degradation`,
-    wmsStyle: "change_detection:degradation",
+    rasterStyle: "",
   },
   {
     id: "urbanization",
@@ -405,7 +471,7 @@ const LAYERS = [
     workspace: "change_detection",
     layerName: ({ district, tehsil }) =>
       `change_${district}_${tehsil}_Urbanization`,
-    wmsStyle: "change_detection:urbanization",
+    rasterStyle: "",
   },
   {
     id: "cropintensity",
@@ -416,7 +482,7 @@ const LAYERS = [
     workspace: "change_detection",
     layerName: ({ district, tehsil }) =>
       `change_${district}_${tehsil}_CropIntensity`,
-    wmsStyle: "change_detection:cropintensity",
+    rasterStyle: "cropintensity",
   },
   {
     id: "restoration",
@@ -427,48 +493,24 @@ const LAYERS = [
     workspace: "restoration",
     layerName: ({ district, tehsil }) =>
       `restoration_${district}_${tehsil}_raster`,
-    wmsStyle: "restoration:restoration_style",
+    rasterStyle: "restoration_style",
   },
 ];
 
-const LULC_LEVELS = [
-  {
-    id: "lulc_level_1",
-    label: "LULC Level 1",
-    domain: "Land",
-    workspace: LULC_SOURCE_WORKSPACE,
-    wmsStyle: "lulc_level_1_style",
-  },
-  {
-    id: "lulc_level_2",
-    label: "LULC Level 2",
-    domain: "Land",
-    workspace: LULC_SOURCE_WORKSPACE,
-    wmsStyle: "lulc_level_2_style",
-  },
-  {
-    id: "lulc_level_3",
-    label: "LULC Level 3",
-    domain: "Agriculture",
-    workspace: LULC_SOURCE_WORKSPACE,
-    wmsStyle: "lulc_level_3_style",
-  },
-];
-
-export const GEOLIBRE_LULC_LAYERS = LULC_LEVELS.flatMap((level, index) =>
-  GEOLIBRE_LULC_YEARS.map((year) => ({
-    ...level,
-    id: `${level.id}_${year.value}`,
-    baseId: level.id,
-    label: `${level.label} · ${year.label}`,
-    loadGroup: `lulc-${index + 1}`,
-    sourceType: "wms",
-    useGlobalWms: true,
-    year: year.value,
-    layerName: ({ district, tehsil }) =>
-      `LULC_${year.value}_${district}_${tehsil}_level_3`,
-  }))
-);
+export const GEOLIBRE_LULC_LAYERS = GEOLIBRE_LULC_YEARS.map((year) => ({
+  id: `lulc_level_3_${year.value}`,
+  baseId: "lulc_level_3",
+  label: `LULC · ${year.label}`,
+  domain: "Land",
+  workspace: LULC_SOURCE_WORKSPACE,
+  rasterStyle: "lulc_land_use_KYL",
+  loadGroup: "lulc",
+  sourceType: "wms",
+  useGlobalWms: true,
+  year: year.value,
+  layerName: ({ district, tehsil }) =>
+    `LULC_${year.value}_${district}_${tehsil}_level_3`,
+}));
 
 export const GEOLIBRE_LAYERS = Object.freeze([
   ...LAYERS,

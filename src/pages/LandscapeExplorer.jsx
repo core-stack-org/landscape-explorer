@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useRecoilValue } from "recoil";
 import GeoLibreFrame from "../components/geolibre/GeoLibreFrame";
+import { applyMissingDataStyle } from "../components/geolibre/geolibreStyleUtils";
 import {
   activeGeoLibreLegends,
   buildGeoLibreProject,
@@ -16,7 +17,6 @@ import {
 } from "../store/locationStore";
 import {
   initializeAnalytics,
-  trackEvent,
   trackPageView,
 } from "../services/analytics";
 
@@ -35,6 +35,8 @@ const mergeHydratedVectorLayers = (viewerProject, hydratedLayers) => ({
     return {
       ...layer,
       geojson: hydrated.geojson,
+      style: layer.metadata?.loadState !== "loaded" && !layer.style?.vectorStyleStops?.length
+        ? hydrated.style : layer.style,
       metadata: {
         ...layer.metadata,
         ...hydrated.metadata,
@@ -65,7 +67,6 @@ const LandscapeExplorer = () => {
   const routeLocation = useLocation();
   const [project, setProject] = useState(null);
   const [legends, setLegends] = useState([]);
-  const [progress, setProgress] = useState("Starting GeoLibre…");
   const [error, setError] = useState("");
   const [retryKey, setRetryKey] = useState(0);
   const currentScopeKeyRef = useRef("");
@@ -73,6 +74,7 @@ const LandscapeExplorer = () => {
   const lazyStateSequenceRef = useRef(0);
   const hydratedLayersRef = useRef(new Map());
   const hydrationDirtyRef = useRef(false);
+  const lazyAbortRef = useRef(null);
 
   const scope = useMemo(() => {
     const params = new URLSearchParams(routeLocation.search);
@@ -92,13 +94,16 @@ const LandscapeExplorer = () => {
   const scopeKey = [scope.state, scope.district, scope.tehsil].join("|");
 
   useEffect(() => {
+    lazyAbortRef.current?.abort();
+    lazyAbortRef.current = new AbortController();
     currentScopeKeyRef.current = scopeKey;
     lazyStateSequenceRef.current += 1;
     lazyQueueRef.current = Promise.resolve();
     hydratedLayersRef.current = new Map();
     hydrationDirtyRef.current = false;
     setLegends([]);
-  }, [scopeKey]);
+    return () => lazyAbortRef.current?.abort();
+  }, [scopeKey, retryKey]);
 
   useEffect(() => {
     initializeAnalytics();
@@ -110,7 +115,6 @@ const LandscapeExplorer = () => {
     const controller = new AbortController();
     setProject(null);
     setError("");
-    setProgress(`Loading the Socio-Economic Profile for ${scope.tehsil}…`);
 
     buildGeoLibreProject({
       ...scope,
@@ -119,16 +123,11 @@ const LandscapeExplorer = () => {
         width: Math.max(window.innerWidth - 340, 320),
         height: Math.max(window.innerHeight - 100, 320),
       },
-      onProgress: ({ message }) => {
-        if (!controller.signal.aborted) setProgress(message);
-      },
     })
       .then((nextProject) => {
         if (controller.signal.aborted) return;
         setProject(nextProject);
         setLegends(activeGeoLibreLegends(nextProject));
-        setProgress("Overview is ready. Toggle another layer to load it.");
-        trackEvent("GeoLibre", "open_workspace", scope.tehsil);
       })
       .catch((buildError) => {
         if (controller.signal.aborted) return;
@@ -144,6 +143,7 @@ const LandscapeExplorer = () => {
 
   const handleProjectState = useCallback((viewerProject) => {
     const viewerScopeKey = scopeKeyOf(viewerProject);
+    if (viewerScopeKey !== currentScopeKeyRef.current) return;
     if (viewerScopeKey === currentScopeKeyRef.current) {
       setLegends(activeGeoLibreLegends(viewerProject));
     }
@@ -153,13 +153,17 @@ const LandscapeExplorer = () => {
     lazyQueueRef.current = lazyQueueRef.current
       .catch(() => undefined)
       .then(async () => {
-        if (viewerScopeKey !== currentScopeKeyRef.current) return;
+        const controller = lazyAbortRef.current;
+        if (viewerScopeKey !== currentScopeKeyRef.current || controller?.signal.aborted) return;
 
         const mergedProject = mergeHydratedVectorLayers(
           viewerProject,
           hydratedLayersRef.current
         );
         let nextProject = mergedProject;
+        const styledLayers = nextProject.layers.map(applyMissingDataStyle);
+        const missingStyleChanged = styledLayers.some((layer, index) => layer !== nextProject.layers[index]);
+        if (missingStyleChanged) nextProject = { ...nextProject, layers: styledLayers };
         const layersToLoad = nextProject.layers.filter(
           (layer) =>
             layer.type === "geojson" &&
@@ -171,7 +175,9 @@ const LandscapeExplorer = () => {
           nextProject = await hydrateGeoLibreVectorLayer({
             project: nextProject,
             layerId: layer.id,
+            signal: controller?.signal,
           });
+          if (controller?.signal.aborted) return;
           // One NREGA request hydrates every independently toggleable work-type
           // layer. Remember every hydrated sibling so a later visibility event
           // cannot merge against stale empty data.
@@ -185,7 +191,7 @@ const LandscapeExplorer = () => {
         if (
           viewerScopeKey !== currentScopeKeyRef.current ||
           sequence !== lazyStateSequenceRef.current ||
-          (!layersToLoad.length && !hydrationDirtyRef.current)
+          (!layersToLoad.length && !hydrationDirtyRef.current && !missingStyleChanged)
         ) {
           return;
         }
@@ -195,8 +201,14 @@ const LandscapeExplorer = () => {
         // source and make an already-loaded WMS layer fetch its tiles again.
         // Only replace the project when lazy vector hydration supplied new data.
         nextProject = sanitizeGeoLibreProjectPlugins(nextProject);
+        nextProject.styles = Object.fromEntries(nextProject.layers.map(layer => [layer.id, layer.style]));
+        rememberHydratedVectorLayers(nextProject, hydratedLayersRef.current);
         hydrationDirtyRef.current = false;
         setProject(nextProject);
+      }).catch(loadError => {
+        if (loadError?.name !== "AbortError" && viewerScopeKey === currentScopeKeyRef.current) {
+          setError(loadError instanceof Error ? loadError.message : "A layer could not be prepared.");
+        }
       });
   }, []);
 
@@ -238,8 +250,8 @@ const LandscapeExplorer = () => {
     <div className="flex h-screen flex-col overflow-hidden bg-white">
       <LandingNavbar downloadScope={scope} />
       <GeoLibreFrame
+        key={`${scopeKey}:${retryKey}`}
         project={project}
-        preparationMessage={progress}
         preparationError={error}
         warning={warning}
         legends={legends}

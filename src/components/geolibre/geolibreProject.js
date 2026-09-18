@@ -1,3 +1,5 @@
+import { interpolateRampColors } from "@geolibre/core";
+import { applyMissingDataStyle, boundaryColorForLayer, finiteMeasurement, hasLayerData, MISSING_DATA_COLOR, fixedPaletteExpression, naturalBreaksStyle, paletteCategories } from "./geolibreStyleUtils";
 import {
   GEOLIBRE_CONFIG,
   GEOLIBRE_PROJECT_FORMAT_VERSION,
@@ -41,10 +43,100 @@ const EMPTY_FEATURE_COLLECTION = Object.freeze({
   features: [],
 });
 
+const ANNUAL_WATER_BALANCE_YEAR_KEY = /^\d{4}_\d{4}$/;
+
+// Average the DeltaG carried in each year-keyed JSON record so the layer can
+// be colored on the full multi-year trend instead of one precomputed net
+// field. A feature with no readable year record keeps a null average rather
+// than a misleading zero.
+export const withAverageDeltaG = (data) => ({
+  ...data,
+  features: (data?.features || []).map((feature) => {
+    const properties = feature.properties || {};
+    const deltaGValues = Object.entries(properties)
+      .filter(([key]) => ANNUAL_WATER_BALANCE_YEAR_KEY.test(key))
+      .map(([, value]) => {
+        if (typeof value !== "string") return null;
+        try {
+          return finiteMeasurement(JSON.parse(value)?.DeltaG);
+        } catch {
+          return null;
+        }
+      })
+      .filter((value) => value !== null);
+    const avg_delta_g = deltaGValues.length
+      ? deltaGValues.reduce((sum, value) => sum + value, 0) / deltaGValues.length
+      : null;
+    return { ...feature, properties: { ...properties, avg_delta_g } };
+  }),
+});
+
+// Earlier- and later-generated Terrain Clusters layers publish the same
+// cluster id under two field names: "terrainClu" or "terrainClusters".
+// Normalize every feature onto "terrainClu", the field the categorized style
+// keys on, so both schemas classify and color identically.
+export const withNormalizedTerrainCluster = (data) => ({
+  ...data,
+  features: (data?.features || []).map((feature) => {
+    const properties = feature.properties || {};
+    if (Object.prototype.hasOwnProperty.call(properties, "terrainClu")) return feature;
+    if (!Object.prototype.hasOwnProperty.call(properties, "terrainClusters")) return feature;
+    return { ...feature, properties: { ...properties, terrainClu: properties.terrainClusters } };
+  }),
+});
+
+// 13 published subsoil texture classes bin into 4 CoRE Stack soil-texture
+// groups. Bin here into one derived field instead of listing all 13 raw
+// values as separate categorized stops, so GeoLibre's native legend shows
+// each of the 4 group labels once instead of repeating it per raw value.
+export const SOIL_TEXTURE_BINS = [
+  { label: "Coarse / Sandy", color: "#f5deb3", values: ["sand", "Loamy sand", "sandy loam"] },
+  { label: "Medium / Loamy", color: "#d2b48c", values: ["Loam", "Silt loam", "Silt"] },
+  { label: "Moderately Fine / Clay Loam", color: "#b5651d", values: ["Sandy clay loam", "Clay loam", "Silty clay loam"] },
+  { label: "Fine / Clayey", color: "#8b4513", values: ["Sandy clay", "Silty clay", "Clay", "Clay (heavy)"] },
+];
+const SOIL_TEXTURE_CLASS_BY_VALUE = new Map(
+  SOIL_TEXTURE_BINS.flatMap((bin) => bin.values.map((value) => [value, bin.label]))
+);
+
+export const withSoilTextureClass = (data) => ({
+  ...data,
+  features: (data?.features || []).map((feature) => {
+    const properties = feature.properties || {};
+    const soil_texture_class = SOIL_TEXTURE_CLASS_BY_VALUE.get(properties.subsoil_texture) ?? null;
+    return { ...feature, properties: { ...properties, soil_texture_class } };
+  }),
+});
+
+const FORTNIGHT_DATE_KEY = /^\d{4}-\d{2}-\d{2}$/;
+
+// Decode date-keyed JSON records for inspection, then average their DeltaG so
+// the layer can be colored on the full fortnightly trend. Keep malformed or
+// missing values unchanged/excluded so missing data is never turned into zero.
+export const parseFortnightRecords = data => ({
+  ...data,
+  features: (data?.features || []).map(feature => {
+    const properties = Object.fromEntries(Object.entries(feature.properties || {}).map(([key, value]) => {
+      if (FORTNIGHT_DATE_KEY.test(key) && typeof value === "string") {
+        try { return [key, JSON.parse(value)]; } catch { /* Retain the source value. */ }
+      }
+      return [key, value];
+    }));
+    const deltaGValues = Object.entries(properties)
+      .filter(([key]) => FORTNIGHT_DATE_KEY.test(key))
+      .map(([, value]) => finiteMeasurement(value?.DeltaG))
+      .filter(value => value !== null);
+    const avg_delta_g = deltaGValues.length
+      ? deltaGValues.reduce((sum, value) => sum + value, 0) / deltaGValues.length
+      : null;
+    return { ...feature, properties: { ...properties, avg_delta_g } };
+  }),
+});
+
 const BASE_STYLE = {
   minZoom: 0,
   maxZoom: 24,
-  fillColor: "#8b5cf6",
+  fillColor: MISSING_DATA_COLOR,
   strokeColor: "#4c1d95",
   strokeWidth: 1.5,
   strokeWidthUnit: "pixels",
@@ -73,7 +165,9 @@ const RASTER_STYLE = {
 const categoryStyle = (property, stops, overrides = {}) => ({
   ...BASE_STYLE,
   ...overrides,
+  fillColor: MISSING_DATA_COLOR,
   vectorStyleMode: "categorized",
+  vectorStyleClassificationScheme: "first-values",
   vectorStyleProperty: property,
   vectorStyleClassCount: stops.length,
   vectorStyleStops: stops.map(([value, color, label]) => ({
@@ -83,54 +177,12 @@ const categoryStyle = (property, stops, overrides = {}) => ({
   })),
 });
 
-const expressionStyle = (expression, overrides = {}) => ({
-  ...BASE_STYLE,
-  ...overrides,
-  vectorStyleMode: "expression",
-  vectorStyleExpression: JSON.stringify(expression),
-});
-
-const numericProperty = (property, fallback = 0) => [
-  "to-number",
-  ["get", property],
-  fallback,
-];
-
-const croppingIntensityAverage = [
-  "/",
-  [
-    "+",
-    ...Array.from({ length: 8 }, (_, index) =>
-      numericProperty(`cropping_intensity_${2017 + index}`)
-    ),
-  ],
-  8,
-];
-
-const droughtOccurrences = (year, category) => [
-  "-",
-  [
-    "length",
-    ["split", ["to-string", ["get", `drlb_${year}`]], String(category)],
-  ],
-  1,
-];
-
-const droughtYearFlag = (year) => [
-  "case",
-  [
-    ">=",
-    ["+", droughtOccurrences(year, 2), droughtOccurrences(year, 3)],
-    5,
-  ],
-  1,
-  0,
-];
-
-const droughtYearCount = [
-  "+",
-  ...Array.from({ length: 8 }, (_, index) => droughtYearFlag(2017 + index)),
-];
+const numericProperty = (field) => ["to-number", ["get", field], 0];
+const cropFields = Array.from({ length: 8 }, (_, i) => `cropping_intensity_${2017 + i}`);
+// Published drought data runs 2017-2022 only; there is no w_mod_2023 or later.
+const DROUGHT_YEAR_COUNT = 6;
+const droughtFields = Array.from({ length: DROUGHT_YEAR_COUNT }, (_, i) => [`w_mod_${2017 + i}`, `w_sev_${2017 + i}`]).flat();
+const thematicStyle = { ...BASE_STYLE, strokeColor: "#232323", strokeWidth: 0.5 };
 
 const STYLE_PROFILES = {
   boundary: {
@@ -140,59 +192,15 @@ const STYLE_PROFILES = {
     strokeColor: "#111827",
     strokeWidth: 1.5,
   },
-  demographics: expressionStyle(
-    [
-      "step",
-      [
-        "*",
-        [
-          "/",
-          numericProperty("P_LIT"),
-          ["max", numericProperty("TOT_P", 1), 1],
-        ],
-        100,
-      ],
-      "#98fb98",
-      46,
-      "#32cd32",
-      59,
-      "#228b22",
-      70,
-      "#006400",
-    ],
-    { fillColor: "#98fb98", strokeColor: "#111827", fillOpacity: 0.65 }
-  ),
-  facilities: expressionStyle(
-    [
-      "step",
-      numericProperty("l2_essential_education_distance_km"),
-      "#fff9c4",
-      2,
-      "#ffc107",
-    ],
-    { fillColor: "#fff9c4", strokeColor: "#232323", fillOpacity: 0.8 }
-  ),
-  antyodaya: categoryStyle(
-    "road_connectivity_cat_cluster",
-    [
-      ["LOW", "#dc143c", "Poor road connectivity"],
-      ["MEDIUM", "#ffd700", "Moderate road connectivity"],
-      ["HIGH", "#90ee90", "Strong road connectivity"],
-    ],
-    { fillColor: "#ffd700", strokeColor: "#232323", fillOpacity: 0.8 }
-  ),
-  livestock: expressionStyle(
-    [
-      "step",
-      numericProperty("small_animals_total"),
-      "#dc143c",
-      201,
-      "#ffd700",
-      501,
-      "#90ee90",
-    ],
-    { fillColor: "#ffd700", strokeColor: "#232323", fillOpacity: 0.8 }
-  ),
+  demographics: fixedPaletteExpression({
+    ...thematicStyle, fields: ["P_LIT", "TOT_P"],
+    value: ["*", ["/", numericProperty("P_LIT"), ["max", numericProperty("TOT_P"), 1]], 100],
+    guard: ["all", [">", numericProperty("TOT_P"), 0], [">=", numericProperty("P_LIT"), 0]],
+    thresholds: [50, 60, 70, 80, 90], palette: "rdbu", fillOpacity: 0.8,
+  }),
+  facilities: naturalBreaksStyle("l2_essential_education_distance_km", "coolwarm", null, { ...thematicStyle, fillOpacity: 0.8 }),
+  antyodaya: paletteCategories("maternal_child_health_cat_cluster", ["LOW", "MEDIUM", "HIGH"], "rdbu", { ...thematicStyle, fillOpacity: 0.8 }),
+  livestock: naturalBreaksStyle("large_animals_total", "rdbu", null, { ...thematicStyle, fillOpacity: 0.8 }),
   terrain_vector: categoryStyle(
     "terrainClu",
     [
@@ -203,20 +211,19 @@ const STYLE_PROFILES = {
     ],
     { fillColor: "#e5e059", strokeColor: "#232323", fillOpacity: 0.75 }
   ),
-  mws: expressionStyle(
-    [
-      "step",
-      numericProperty("Net2018_23"),
-      "#ff0000",
-      -5,
-      "#ffff00",
-      -1,
-      "#25b63c",
-      1,
-      "#1017f8",
-    ],
-    { fillColor: "#25b63c", strokeColor: "#232323", fillOpacity: 0.55 }
+  soil_type: categoryStyle(
+    "soil_texture_class",
+    SOIL_TEXTURE_BINS.map((bin) => [bin.label, bin.color, bin.label]),
+    { fillColor: "#d2b48c", strokeColor: "#3a2412", fillOpacity: 0.8 }
   ),
+  mws: fixedPaletteExpression({
+    ...thematicStyle, fields: ["avg_delta_g"], value: numericProperty("avg_delta_g"),
+    thresholds: [-50, -15, 0, 15, 50], palette: "rdbu", fillOpacity: 0.65,
+  }),
+  mws_fortnight: fixedPaletteExpression({
+    ...thematicStyle, fields: ["avg_delta_g"], value: numericProperty("avg_delta_g"),
+    thresholds: [-15, -5, 0, 5, 15], palette: "rdbu", fillOpacity: 0.65,
+  }),
   drainage: categoryStyle(
     "ORDER",
     [
@@ -231,36 +238,21 @@ const STYLE_PROFILES = {
     ],
     { fillColor: "#03045e", strokeColor: "#03045e", strokeWidth: 2 }
   ),
-  river: {
-    ...BASE_STYLE,
-    fillColor: "#2b93fa",
-    strokeColor: "#2b93fa",
-    strokeWidth: 2,
-    fillOpacity: 0.8,
-  },
-  canal: {
-    ...BASE_STYLE,
-    fillColor: "#2b93fa",
-    strokeColor: "#2b93fa",
-    strokeWidth: 2,
-    fillOpacity: 0.8,
-  },
-  waterbodies: {
-    ...BASE_STYLE,
-    fillColor: "#6495ed",
-    fillOpacity: 0.5,
-    strokeColor: "#2563eb",
-    strokeWidth: 2,
-  },
+  river: { ...BASE_STYLE, fillColor: "#1d4ed8", strokeColor: "#1d4ed8", strokeWidth: 1.5, fillOpacity: 0.8 },
+  canal: { ...BASE_STYLE, fillColor: "#0891b2", strokeColor: "#0891b2", strokeWidth: 1.5, fillOpacity: 0.8 },
+  waterbodies: fixedPaletteExpression({
+    ...thematicStyle, fields: ["area_ored"], value: numericProperty("area_ored"),
+    thresholds: [0.05, 0.1, 0.5, 1, 5], palette: "blues", fillOpacity: 0.75, strokeWidth: 0.25,
+  }),
   soge: categoryStyle(
     "class",
     [
-      ["Safe", "#ffffff", "Safe"],
-      ["Semi-critical", "#e0f3f8", "Semi-critical"],
-      ["Critical", "#4575b4", "Critical"],
-      ["Over Exploited", "#313695", "Over Exploited"],
+      ["Safe", "#b6c4e8", "Safe"],
+      ["Semi-Critical", "#e6c2b5", "Semi-Critical"],
+      ["Critical", "#e77c6a", "Critical"],
+      ["Over Exploited", "#b40426", "Over Exploited"],
     ],
-    { fillColor: "#9ca3af", strokeColor: "#232323", fillOpacity: 0.72 }
+    { fillColor: "#3b3b3b", strokeColor: "#232323", fillOpacity: 0.72 }
   ),
   aquifer: categoryStyle(
     "Principal_",
@@ -282,30 +274,15 @@ const STYLE_PROFILES = {
     ],
     { fillColor: "#57d2ff", strokeColor: "#232323", fillOpacity: 0.72 }
   ),
-  cropping_intensity: expressionStyle(
-    [
-      "step",
-      croppingIntensityAverage,
-      "#ff9371",
-      1,
-      "#ffa500",
-      2,
-      "#bad93e",
-    ],
-    { fillColor: "#ffa500", strokeColor: "#232323", fillOpacity: 0.7 }
-  ),
-  drought: expressionStyle(
-    [
-      "step",
-      droughtYearCount,
-      "#f4d03f",
-      1,
-      "#eb984e",
-      2,
-      "#e74c3c",
-    ],
-    { fillColor: "#eb984e", strokeColor: "#232323", fillOpacity: 0.5 }
-  ),
+  cropping_intensity: fixedPaletteExpression({
+    ...thematicStyle, fields: cropFields, value: ["/", ["+", ...cropFields.map(numericProperty)], 8],
+    thresholds: [1, 2], palette: "rdylgn", colors: interpolateRampColors("rdylgn", 6).slice(2, 5), fillOpacity: 0.7,
+  }),
+  drought: fixedPaletteExpression({
+    ...thematicStyle, fields: droughtFields,
+    value: ["+", ...Array.from({ length: DROUGHT_YEAR_COUNT }, (_, i) => ["case", [">", ["+", numericProperty(`w_mod_${2017 + i}`), numericProperty(`w_sev_${2017 + i}`)], 5], 1, 0])],
+    thresholds: [1, 2], colors: ["#f4d03f", "#eb984e", "#e74c3c"], fillOpacity: 0.5,
+  }),
   green_credit: {
     ...BASE_STYLE,
     fillColor: "#14d11d",
@@ -323,46 +300,6 @@ const STYLE_PROFILES = {
 };
 
 const LEGEND_PROFILES = {
-  boundary: [["Administrative or hydrological boundary", "#111827", "line"]],
-  demographics: [
-    ["Literacy below 46%", "#98fb98"],
-    ["Literacy 46% to below 59%", "#32cd32"],
-    ["Literacy 59% to below 70%", "#228b22"],
-    ["Literacy 70% or above", "#006400"],
-  ],
-  facilities: [
-    ["Primary education within 2 km", "#fff9c4"],
-    ["Primary education more than 2 km away", "#ffc107"],
-  ],
-  antyodaya: [
-    ["Poor road connectivity", "#dc143c"],
-    ["Moderate road connectivity", "#ffd700"],
-    ["Strong road connectivity", "#90ee90"],
-  ],
-  livestock: [
-    ["Bovine population 0 to 200", "#dc143c"],
-    ["Bovine population 201 to 500", "#ffd700"],
-    ["Bovine population above 500", "#90ee90"],
-  ],
-  mws: [
-    ["Net groundwater change below -5", "#ff0000"],
-    ["Net groundwater change -5 to below -1", "#ffff00"],
-    ["Net groundwater change -1 to below 1", "#25b63c"],
-    ["Net groundwater change 1 or above", "#1017f8"],
-  ],
-  waterbodies: [["Surface waterbody", "#6495ed"]],
-  river: [["River", "#2b93fa", "line"]],
-  canal: [["Canal", "#2b93fa", "line"]],
-  cropping_intensity: [
-    ["Average cropping intensity below 1", "#ff9371"],
-    ["Average cropping intensity 1 to below 2", "#ffa500"],
-    ["Average cropping intensity 2 or above", "#bad93e"],
-  ],
-  drought: [
-    ["No recurrent drought year", "#f4d03f"],
-    ["One recurrent drought year", "#eb984e"],
-    ["Two or more recurrent drought years", "#e74c3c"],
-  ],
   terrain: [
     ["V-shaped river valleys and deep narrow canyons", "#313695"],
     ["Lateral midslope drainage and local valleys", "#4575b4"],
@@ -396,6 +333,40 @@ const LEGEND_PROFILES = {
     ["620 m", "#8b5e3c"],
     ["660 m", "#c4a882"],
     ["700 m or above", "#f5f0e8"],
+  ],
+  soil_health_raster_n: [
+    ["0", "#8B0000"],
+    ["50", "#D73027"],
+    ["100", "#F46D43"],
+    ["150", "#FDAE61"],
+    ["200", "#FEE08B"],
+    ["250", "#FFFFBF"],
+    ["300", "#D9EF8B"],
+    ["350", "#A6D96A"],
+    ["400", "#66BD63"],
+    ["450", "#1A9850"],
+    ["500", "#006837"],
+  ],
+  soil_health_raster_P: [
+    ["Low (<10)", "#D73027"],
+    ["Medium (10-25)", "#FEE08B"],
+    ["High (>25)", "#1A9850"],
+  ],
+  soil_health_raster_K: [
+    ["Low (<120 kg/ha)", "#FF0000"],
+    ["Medium (120-280 kg/ha)", "#EEE05D"],
+    ["High (>280 kg/ha)", "#73BB53"],
+  ],
+  soil_health_raster_OC: [
+    ["Low (0-120 kg/ha)", "#C8E6C9"],
+    ["Medium (120-280 kg/ha)", "#66BB6A"],
+    ["High (>280 kg/ha)", "#2E7D32"],
+  ],
+  soil_health_raster_OC_OLM: [
+    ["<=1% (Scrubs / Degraded land)", "#EF5350"],
+    ["1-2% (Open Forests)", "#FFCA28"],
+    ["2-3% (Moderately Dense Forest)", "#81C784"],
+    [">3% (Very Dense Forest)", "#66BB6A"],
   ],
   clart: [
     ["Good recharge", "#4ee323"],
@@ -431,30 +402,21 @@ const LEGEND_PROFILES = {
     ["Barren or shrubs and scrubs to built-up", "#a9a9a9"],
   ],
   cropintensity: [
-    ["Double to single cropping", "#ff6347"],
-    ["Triple, annual or perennial to single", "#ff4500"],
-    ["Triple, annual or perennial to double", "#ff0000"],
-    ["Single to double cropping", "#00ff00"],
-    ["Single to triple, annual or perennial", "#32cd32"],
-    ["Double to triple, annual or perennial", "#228b22"],
-    ["Single to single cropping", "#4227f5"],
-    ["Double to double cropping", "#712103"],
-    ["Triple, annual or perennial unchanged", "#ad27f5"],
+    ["Double-Single", "#f7fcf5"],
+    ["Tripple_or_annual_or_perennial-Single", "#ff4500"],
+    ["Tripple_or_annual_or_perennial-Double", "#ff0000"],
+    ["Single-Double", "#00ff00"],
+    ["Single-Tripple_or_annual_or_perennial", "#32cd32"],
+    ["Double-Tripple_or_annual_or_perennial", "#228b22"],
+    ["Single-Single", "#4227f5"],
+    ["Double-Double", "#712103"],
+    ["Tripple_or_annual_or_perennial-Tripple_or_annual_or_perennial", "#ad27f5"],
   ],
   restoration: [
     ["Mosaic restoration", "#d79b0f"],
     ["Wide-scale restoration", "#0f077c"],
     ["Protection", "#4fbc14"],
   ],
-  green_credit: [["Green Credit project area", "#14d11d"]],
-  land_conflicts: [["Reported land conflict", "#ff0000", "circle"]],
-  industry: [["Industry or CSR site", "#ff0000", "circle"]],
-  mining: [["Mining site", "#ff0000", "circle"]],
-  nrega: GEOLIBRE_NREGA_CATEGORIES.map((category) => [
-    category.label,
-    category.color,
-    category.markerShape,
-  ]),
   lulc_level_1: [
     ["Built-up", "#ff0000"],
     ["Water", "#1ca3ec"],
@@ -467,10 +429,18 @@ const LEGEND_PROFILES = {
     ["Crops", "#fad36f"],
   ],
   lulc_level_3: [
-    ["Single Kharif", "#d9f0a3"],
-    ["Single non-Kharif", "#a6d96a"],
-    ["Double cropping", "#4daf4a"],
-    ["Triple cropping", "#006d2c"],
+    ["Background", "#000000"],
+    ["Built Up", "#c94c4c"],
+    ["Kharif Water", "#74ccf4"],
+    ["Kharif and Rabi Water", "#1ca3ec"],
+    ["Kharif, Rabi and Zaid Water", "#0f5e9c"],
+    ["Trees / Forests", "#1b5e20"],
+    ["Barren Lands", "#a9a9a9"],
+    ["Single Kharif", "#f0f4a3"],
+    ["Single Non-Kharif", "#d6e96b"],
+    ["Double Cropping", "#b7d43a"],
+    ["Triple Cropping", "#7faf2e"],
+    ["Shrubs and Scrubs", "#8c7a4f"],
   ],
 };
 
@@ -482,6 +452,7 @@ const legendShape = (catalogLayer) =>
       : "square";
 
 const layerLegend = (catalogLayer, style) => {
+  if (catalogLayer.sourceType !== "wms") return undefined;
   const profile =
     LEGEND_PROFILES[catalogLayer.id] ||
     LEGEND_PROFILES[catalogLayer.baseId] ||
@@ -515,9 +486,7 @@ const GROUPS_TOP_FIRST = [
   { id: "demographic", name: "Demographic", collapsed: false },
   { id: "village-data", name: "Village Data", collapsed: true },
   { id: "hydrology", name: "Hydrology", collapsed: true },
-  { id: "lulc-3", name: "LULC · Level 3 by year", collapsed: true },
-  { id: "lulc-2", name: "LULC · Level 2 by year", collapsed: true },
-  { id: "lulc-1", name: "LULC · Level 1 by year", collapsed: true },
+  { id: "lulc", name: "LULC by year", collapsed: true },
   { id: "land", name: "Land", collapsed: true },
   { id: "agriculture", name: "Agriculture", collapsed: true },
   { id: "restoration", name: "Restoration", collapsed: true },
@@ -595,7 +564,7 @@ const wmsEndpointFor = (baseUrl, layer) =>
 const buildGeoServerStyleSource = (baseUrl, layer, layerName) => {
   const endpoint = wmsEndpointFor(baseUrl, layer);
   const qualifiedName = `${layer.workspace}:${layerName}`;
-  const namedStyle = layer.wmsStyle || "";
+  const namedStyle = layer.rasterStyle || "";
   const getStylesEntry = namedStyle ? [["STYLES", namedStyle]] : [];
   const legendStyleEntry = namedStyle ? [["STYLE", namedStyle]] : [];
   const common = [
@@ -635,7 +604,7 @@ const buildGeoServerStyleSource = (baseUrl, layer, layerName) => {
 };
 
 const buildWmsSource = (baseUrl, layer, layerName, bounds) => {
-  // Cross-workspace LULC styles are available through GeoServer's global WMS,
+  // Some named LULC styles are available through GeoServer's global WMS,
   // while other catalog layers retain their workspace-scoped endpoints.
   const endpoint = wmsEndpointFor(baseUrl, layer);
   const qualifiedName = `${layer.workspace}:${layerName}`;
@@ -647,7 +616,7 @@ const buildWmsSource = (baseUrl, layer, layerName, bounds) => {
         ["REQUEST", "GetMap"],
         ["VERSION", "1.1.1"],
         ["LAYERS", qualifiedName],
-        ["STYLES", layer.wmsStyle || ""],
+        ["STYLES", layer.rasterStyle || ""],
         ["FORMAT", "image/png"],
         ["TRANSPARENT", "TRUE"],
         ["SRS", "EPSG:3857"],
@@ -659,7 +628,7 @@ const buildWmsSource = (baseUrl, layer, layerName, bounds) => {
     tileSize: 256,
     url: endpoint,
     layers: qualifiedName,
-    styles: layer.wmsStyle || "",
+    styles: layer.rasterStyle || "",
     format: "image/png",
     transparent: true,
     version: "1.1.1",
@@ -676,6 +645,7 @@ const buildWcsUrl = (baseUrl, layer, layerName) =>
     ["CoverageId", `${layer.workspace}:${layerName}`],
     ["format", "geotiff"],
     ["compression", "LZW"],
+    ...(layer.baseId?.startsWith("lulc_") ? [["tiling", "false"]] : []),
   ]);
 
 const validBounds = (bounds) =>
@@ -790,25 +760,29 @@ const nregaLayerStyle = (categoryId) => {
   );
   return {
     ...BASE_STYLE,
-    fillColor: category?.color || "#6b7280",
+    fillColor: category?.color || MISSING_DATA_COLOR,
     strokeColor: "#ffffff",
     strokeWidth: 1,
     fillOpacity: 0.9,
-    circleRadius: 4,
-    markerEnabled: true,
-    markerShape: category?.markerShape || "circle",
-    markerColor: category?.color || "#6b7280",
-    markerSize: 14,
-    pointRenderer: "single",
+    circleRadius: 5,
+    simpleStyleEnabled: true,
+    vectorStyleProperty: "WorkCatego",
   };
 };
 
-const layerStyle = (layer) =>
+const layerStyle = (layer, data) =>
   layer.sourceType === "wms"
     ? { ...RASTER_STYLE }
     : layer.nregaCategoryId
       ? nregaLayerStyle(layer.nregaCategoryId)
-      : { ...(STYLE_PROFILES[layer.styleProfile] || BASE_STYLE) };
+      : ["facilities", "livestock"].includes(layer.styleProfile)
+        ? naturalBreaksStyle(
+            STYLE_PROFILES[layer.styleProfile].vectorStyleProperty,
+            STYLE_PROFILES[layer.styleProfile].vectorStyleColorRamp,
+            { features: (data?.features || []).filter(feature => hasLayerData(layer.id, feature.properties)) },
+            STYLE_PROFILES[layer.styleProfile]
+          )
+        : { ...(STYLE_PROFILES[layer.styleProfile] || BASE_STYLE) };
 
 const coreStackMetadata = (layer, layerName, sourceUrl, style, baseUrl) => ({
   domain: layer.domain,
@@ -818,7 +792,11 @@ const coreStackMetadata = (layer, layerName, sourceUrl, style, baseUrl) => ({
   liveSource: sourceUrl,
   geoserverStyle: buildGeoServerStyleSource(baseUrl, layer, layerName),
   year: layer.year || null,
-  legend: layerLegend(layer, style),
+  ...(layer.sourceType !== "wms" ? {
+    missingDataColor: MISSING_DATA_COLOR,
+    paletteId: ["demographics", "facilities", "antyodaya", "livestock", "mws", "mws_fortnight", "waterbodies", "cropping_intensity"].includes(layer.styleProfile) ? style.vectorStyleColorRamp : null,
+  } : {}),
+  ...(layer.sourceType === "wms" ? { legend: layerLegend(layer, style) } : {}),
   styleContract:
     layer.sourceType === "wms"
       ? "GeoServer renders the published named style through WMS."
@@ -834,10 +812,11 @@ const buildVectorLayer = ({
   loaded = false,
   baseUrl,
 }) => {
-  const style = layerStyle(catalogLayer);
+  const outline = boundaryColorForLayer(catalogLayer.id);
+  const style = { ...layerStyle(catalogLayer, data), ...(outline ? { strokeColor: outline, simpleStyleEnabled: true } : {}) };
   const isDefaultDisplay = catalogLayer.defaultVisible === true;
   const loadState = failure ? "error" : loaded ? "loaded" : "unloaded";
-  return {
+  return applyMissingDataStyle({
     id: `corestack-${catalogLayer.id}`,
     name: catalogLayer.label,
     type: "geojson",
@@ -851,7 +830,7 @@ const buildVectorLayer = ({
       srsName: request.srsName,
     },
     visible: isDefaultDisplay,
-    opacity: isDefaultDisplay ? 0.8 : 1,
+    opacity: 1,
     style,
     metadata: {
       featureCount: data.features.length,
@@ -877,7 +856,7 @@ const buildVectorLayer = ({
     geojson: data,
     sourcePath: request.url,
     groupId: catalogLayer.loadGroup,
-  };
+  });
 };
 
 const buildRasterLayer = ({ catalogLayer, layerName, baseUrl, bounds }) => {
@@ -897,11 +876,12 @@ const buildRasterLayer = ({ catalogLayer, layerName, baseUrl, bounds }) => {
     name: catalogLayer.label,
     type: "raster",
     source,
-    visible: false,
+    visible: catalogLayer.defaultVisible === true && !catalogLayer.startupDelayMs,
     opacity: 1,
     style,
     metadata: {
       service: "wms",
+      ...(catalogLayer.defaultVisible && catalogLayer.startupDelayMs ? { startupDelayMs: catalogLayer.startupDelayMs } : {}),
       corestack: {
         ...coreStackMetadata(
           catalogLayer,
@@ -911,11 +891,6 @@ const buildRasterLayer = ({ catalogLayer, layerName, baseUrl, bounds }) => {
           baseUrl
         ),
         wcsDownloadUrl,
-        rasterDownload: {
-          kind: "full-coverage-geotiff",
-          url: wcsDownloadUrl,
-          bytePreservingInGeoLibre: true,
-        },
       },
     },
     sourcePath: wcsDownloadUrl,
@@ -925,7 +900,7 @@ const buildRasterLayer = ({ catalogLayer, layerName, baseUrl, bounds }) => {
 
 const displayOrderForGroup = (groupId, layers) => {
   const matching = layers.filter((layer) => layer.groupId === groupId);
-  return groupId.startsWith("lulc-") ? [...matching].reverse() : matching;
+  return groupId === "lulc" ? [...matching].reverse() : matching;
 };
 
 export const orderGeoLibreLayers = (layers) => {
@@ -953,13 +928,15 @@ const mapLegendEntries = (orderedLayers) => {
 
 export const activeGeoLibreLegends = (project) =>
   project?.layers
-    ? mapLegendEntries(project.layers.filter((layer) => layer.visible))
+    ? mapLegendEntries(project.layers.filter((layer) => layer.visible && layer.type === "raster"))
     : [];
 
 const DISABLED_PROJECT_PLUGIN_IDS = new Set([
+  // Discard the retired custom-viewer plugin from older project snapshots.
+  "corestack-embed",
   // GeoLibre's Components plugin enables every component control by default,
-  // including its own Swipe control. KYL renders the legend outside the iframe,
-  // so the entire redundant component grid can be omitted from this project.
+  // including its own Swipe control. The native legend is a separate core panel;
+  // KYL supplements it with raster legends only.
   "maplibre-gl-components",
   "maplibre-gl-swipe",
 ]);
@@ -1013,6 +990,25 @@ const nregaCategoryForLayer = (layer) =>
       category.id === layer.metadata?.corestack?.nregaCategoryId
   );
 
+// Earlier-generated NREGA layers publish the clipped GeoServer field name
+// "WorkCatego"; newer layers publish the full "WorkCategory". Both carry the
+// same values, so read whichever is present instead of assuming one schema.
+const workCategoryOf = (properties) =>
+  properties?.WorkCatego ?? properties?.WorkCategory ?? "";
+
+// Normalize every feature onto the "WorkCatego" key GeoLibre's style and
+// missing-data guard already key on, so downstream code never needs to know
+// which schema a given tehsil's dataset was generated with.
+const withNormalizedWorkCategory = (data) => ({
+  ...data,
+  features: (data?.features || []).map((feature) => {
+    const properties = feature.properties || {};
+    return Object.prototype.hasOwnProperty.call(properties, "WorkCatego")
+      ? feature
+      : { ...feature, properties: { ...properties, WorkCatego: workCategoryOf(properties) } };
+  }),
+});
+
 const nregaFeaturesForCategory = (features, category) => {
   const knownValues = new Set(
     GEOLIBRE_NREGA_CATEGORIES.filter((item) => !item.fallback).flatMap(
@@ -1020,7 +1016,7 @@ const nregaFeaturesForCategory = (features, category) => {
     )
   );
   return features.filter((feature) => {
-    const value = feature?.properties?.WorkCatego ?? "";
+    const value = workCategoryOf(feature?.properties);
     return category.fallback
       ? !knownValues.has(value)
       : category.values.includes(value);
@@ -1030,9 +1026,19 @@ const nregaFeaturesForCategory = (features, category) => {
 const hydrateLayerWithData = (layer, data) => {
   const { initialLoadError: _initialLoadError, ...metadata } =
     layer.metadata || {};
-  return {
+  const catalogLayer = GEOLIBRE_LAYERS.find(item => `corestack-${item.id}` === layer.id);
+  if (catalogLayer?.id === "mws_layers_fortnight") data = parseFortnightRecords(data);
+  if (catalogLayer?.id === "mws_layers") data = withAverageDeltaG(data);
+  if (catalogLayer?.id === "terrain_vector") data = withNormalizedTerrainCluster(data);
+  if (catalogLayer?.id === "soil_type") data = withSoilTextureClass(data);
+  const outline = catalogLayer && boundaryColorForLayer(catalogLayer.id);
+  const initialStyle = catalogLayer && { ...layerStyle(catalogLayer), ...(outline ? { strokeColor: outline, simpleStyleEnabled: true } : {}) };
+  const style = initialStyle && Object.entries(initialStyle).every(([key, value]) => JSON.stringify(layer.style?.[key]) === JSON.stringify(value))
+    ? layerStyle(catalogLayer, data) : layer.style;
+  return applyMissingDataStyle({
     ...layer,
     geojson: data,
+    style,
     metadata: {
       ...metadata,
       featureCount: data.features.length,
@@ -1042,7 +1048,7 @@ const hydrateLayerWithData = (layer, data) => {
         loadState: "loaded",
       },
     },
-  };
+  });
 };
 
 const withLazyLoadFailure = (project, layerId, failure) => {
@@ -1088,8 +1094,9 @@ export const hydrateGeoLibreVectorLayer = async ({
   }
 
   try {
-    const data = await fetchFeatureCollection(request, { signal });
+    const rawData = await fetchFeatureCollection(request, { signal });
     const category = nregaCategoryForLayer(layer);
+    const data = category ? withNormalizedWorkCategory(rawData) : rawData;
     const hydratedProject = category
       ? {
           ...project,
@@ -1110,6 +1117,7 @@ export const hydrateGeoLibreVectorLayer = async ({
           layerId,
           hydrateLayerWithData(layer, data)
         );
+    hydratedProject.styles = Object.fromEntries(hydratedProject.layers.map(item => [item.id, item.style]));
     return withLazyLoadFailure(
       hydratedProject,
       layerId,
@@ -1213,7 +1221,7 @@ export const buildGeoLibreProject = async ({
       };
       if (required) {
         throw new Error(
-          `Could not load the Socio-Economic Profile needed to locate ${tehsil}: ${failure.message}`
+          `Could not load the administrative boundary needed to locate ${tehsil}: ${failure.message}`
         );
       }
       failures.push(failure);
@@ -1234,14 +1242,13 @@ export const buildGeoLibreProject = async ({
   const administrative = GEOLIBRE_VECTOR_LAYERS.find(
     (layer) => layer.id === "administrative_boundaries"
   );
-  const socioeconomicData = await loadVector(socioeconomic, true);
-  // Both default Demographic entries use the same GeoServer source. The request cache
-  // makes this a metadata/style duplication, not a second network download.
-  await loadVector(administrative, true, false);
-  const bounds = geoJsonBounds(socioeconomicData);
+  const administrativeData = await loadVector(administrative, true);
+  // Reuse the extent request for the separately styled, initially hidden layer.
+  await loadVector(socioeconomic, true, false);
+  const bounds = geoJsonBounds(administrativeData);
   if (!bounds) {
     throw new Error(
-      `The Socio-Economic Profile for ${tehsil} has no usable geographic extent.`
+      `The administrative boundary for ${tehsil} has no usable geographic extent.`
     );
   }
 
@@ -1286,6 +1293,8 @@ export const buildGeoLibreProject = async ({
       preferences: projectPreferences,
       plugins: coreStackPluginState(),
       legend: {
+        panelVisible: true,
+        collapsed: false,
         title: `${tehsil} CoRE Stack layers`,
         groupByLayer: true,
         order: [...orderedLayers].reverse().map((layer) => layer.id),
@@ -1306,9 +1315,10 @@ export const buildGeoLibreProject = async ({
           viewerUrl: viewer.url,
         },
         layerLoading: {
-          stage: "demographic",
+          stage: "base-map",
           order: [
-            "Administrative Boundaries and Socio-Economic Profile",
+            "Administrative extent (hidden)",
+            "Terrain raster",
             "All other vector layers on first visibility toggle",
             "Raster tiles on visibility toggle",
           ],
@@ -1316,7 +1326,7 @@ export const buildGeoLibreProject = async ({
           lazyLoadFailures: [],
         },
         geoserverStyleContract:
-          "Raster symbology is rendered by named GeoServer WMS styles. Vector layers retain the verified GeoLibre parity profiles and expose live GeoServer GetStyles and GetLegendGraphic endpoints without depending on GitHub-hosted QML files.",
+          "Raster symbology is rendered by each catalog rasterStyle through GeoServer WMS. An empty rasterStyle uses the GeoServer layer default. Vector layers retain the verified GeoLibre parity profiles and expose live GeoServer GetStyles and GetLegendGraphic endpoints without depending on GitHub-hosted QML files.",
       },
     };
   };
