@@ -339,7 +339,10 @@ const LAYERS = [
     sourceType: "wms",
     workspace: "terrain",
     layerName: ({ district, tehsil }) => `${district}_${tehsil}_terrain_raster`,
-    wmsStyle: "terrain:terrain_raster",
+    // An empty rasterStyle uses this GeoServer layer's published default style.
+    // Named styles are passed to WMS as STYLES for every display request.
+    rasterStyle: "Terrain_Style_11_Classes",
+    defaultVisible: true,
   },
   {
     id: "dem",
@@ -349,7 +352,7 @@ const LAYERS = [
     sourceType: "wms",
     workspace: "dem",
     layerName: ({ district, tehsil }) => `${district}_${tehsil}_dem_raster`,
-    wmsStyle: "dem_grayscale",
+    rasterStyle: "dem_grayscale",
   },
   {
     id: "clart",
@@ -359,7 +362,7 @@ const LAYERS = [
     sourceType: "wms",
     workspace: "clart",
     layerName: ({ district, tehsil }) => `${district}_${tehsil}_clart`,
-    wmsStyle: "clart:testClart",
+    rasterStyle: "",
   },
   {
     id: "afforestation",
@@ -370,7 +373,7 @@ const LAYERS = [
     workspace: "change_detection",
     layerName: ({ district, tehsil }) =>
       `change_${district}_${tehsil}_Afforestation`,
-    wmsStyle: "change_detection:afforestation",
+    rasterStyle: "",
   },
   {
     id: "deforestation",
@@ -381,7 +384,7 @@ const LAYERS = [
     workspace: "change_detection",
     layerName: ({ district, tehsil }) =>
       `change_${district}_${tehsil}_Deforestation`,
-    wmsStyle: "change_detection:deforestation",
+    rasterStyle: "",
   },
   {
     id: "degradation",
@@ -392,7 +395,7 @@ const LAYERS = [
     workspace: "change_detection",
     layerName: ({ district, tehsil }) =>
       `change_${district}_${tehsil}_Degradation`,
-    wmsStyle: "change_detection:degradation",
+    rasterStyle: "",
   },
   {
     id: "urbanization",
@@ -403,7 +406,7 @@ const LAYERS = [
     workspace: "change_detection",
     layerName: ({ district, tehsil }) =>
       `change_${district}_${tehsil}_Urbanization`,
-    wmsStyle: "change_detection:urbanization",
+    rasterStyle: "",
   },
   {
     id: "cropintensity",
@@ -414,7 +417,7 @@ const LAYERS = [
     workspace: "change_detection",
     layerName: ({ district, tehsil }) =>
       `change_${district}_${tehsil}_CropIntensity`,
-    wmsStyle: "change_detection:cropintensity",
+    rasterStyle: "",
   },
   {
     id: "restoration",
@@ -425,50 +428,24 @@ const LAYERS = [
     workspace: "restoration",
     layerName: ({ district, tehsil }) =>
       `restoration_${district}_${tehsil}_raster`,
-    wmsStyle: "restoration:restoration_style",
+    rasterStyle: "restoration_style",
   },
 ];
 
-const LULC_LEVELS = [
-  {
-    id: "lulc_level_1",
-    label: "LULC Level 1",
-    domain: "Land",
-    workspace: LULC_SOURCE_WORKSPACE,
-    wmsStyle: "lulc_level_1_style",
-  },
-  {
-    id: "lulc_level_2",
-    label: "LULC Level 2",
-    domain: "Land",
-    workspace: LULC_SOURCE_WORKSPACE,
-    wmsStyle: "lulc_level_2_style",
-  },
-  {
-    id: "lulc_level_3",
-    label: "LULC Level 3",
-    domain: "Agriculture",
-    workspace: LULC_SOURCE_WORKSPACE,
-    wmsStyle: "lulc_level_3_style",
-  },
-];
-
-export const GEOLIBRE_LULC_LAYERS = LULC_LEVELS.flatMap((level, index) =>
-  GEOLIBRE_LULC_YEARS.map((year) => ({
-    ...level,
-    id: `${level.id}_${year.value}`,
-    baseId: level.id,
-    label: `${level.label} · ${year.label}`,
-    loadGroup: `lulc-${index + 1}`,
-    sourceType: "wms",
-    useGlobalWms: true,
-    year: year.value,
-    defaultVisible: year.value === LATEST_GEOLIBRE_LULC_YEAR,
-    startupDelayMs: year.value === LATEST_GEOLIBRE_LULC_YEAR ? index * 1000 : 0,
-    layerName: ({ district, tehsil }) =>
-      `LULC_${year.value}_${district}_${tehsil}_level_3`,
-  }))
-);
+export const GEOLIBRE_LULC_LAYERS = GEOLIBRE_LULC_YEARS.map((year) => ({
+  id: `lulc_level_3_${year.value}`,
+  baseId: "lulc_level_3",
+  label: `LULC · ${year.label}`,
+  domain: "Land",
+  workspace: LULC_SOURCE_WORKSPACE,
+  rasterStyle: "lulc_land_use_KYL",
+  loadGroup: "lulc",
+  sourceType: "wms",
+  useGlobalWms: true,
+  year: year.value,
+  layerName: ({ district, tehsil }) =>
+    `LULC_${year.value}_${district}_${tehsil}_level_3`,
+}));
 
 export const GEOLIBRE_LAYERS = Object.freeze([
   ...LAYERS,

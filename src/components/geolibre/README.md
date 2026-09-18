@@ -21,8 +21,8 @@ No custom viewer checkout, patch, plugin, or deployment is needed.
 2. `geolibreProject.js` fetches the shared Demographic WFS source once. It creates
    **Administrative Boundaries** and **Socio-Economic Profile** from that data,
    derives the complete tehsil bounding box, and immediately opens GeoLibre.
-3. Administrative Boundaries and Socio-Economic Profile start hidden. Latest-year
-   LULC Level 1 starts first; Levels 2 and 3 follow at one-second intervals.
+3. Administrative Boundaries and Socio-Economic Profile start hidden. Terrain
+   starts visible; all LULC years remain available as hidden layers.
 4. Every vector outside the two Demographic entries starts listed,
    hidden, and empty. Its first visibility toggle asks KYL to fetch that WFS
    source and send the hydrated layer back to GeoLibre. The hydrated layer is
@@ -115,23 +115,20 @@ ordered top-first as:
 1. Demographic (Administrative Boundaries, Socio-Economic Profile)
 2. Village Data (facilities access, Mission Antyodaya and livestock)
 3. Hydrology (including micro-watersheds, rivers, canals and hydrological variables)
-4. LULC Level 3 by year
-5. LULC Level 2 by year
-6. LULC Level 1 by year
-7. Land (including terrain and the Digital Elevation Model)
-8. Agriculture
-9. Restoration
-10. Industry
-11. NREGA
+4. LULC by year
+5. Land (including terrain and the Digital Elevation Model)
+6. Agriculture
+7. Restoration
+8. Industry
+9. NREGA
 
-The remaining groups are collapsed. Every layer outside the two default
-Demographic entries is toggle-to-load. Each LULC group shows 2024-2025 first
-while retaining every available year back to 2017-2018. The three LULC levels
-are presentation choices over the same Level 3 coverage for each year: GeoLibre
-uses `lulc_level_1_style`, `lulc_level_2_style`, or `lulc_level_3_style` without
-requesting separate Level 1 and Level 2 raster datasets. These cross-workspace
-styles are rendered through GeoServer's global WMS endpoint; downloads continue
-to use the single Level 3 WCS coverage.
+The remaining groups are collapsed. Terrain is the one visible data layer at
+startup; every other layer is toggle-to-load. LULC has one Level 3 raster per
+year, with 2024-2025 listed first and every year back to 2017-2018 retained.
+It uses `lulc_land_use_KYL`, the published 12-class GeoServer style, rather than
+creating separate Level 1, Level 2, and Level 3 presentations. This named style
+is rendered through GeoServer's global WMS endpoint; downloads continue to use
+the single Level 3 WCS coverage.
 
 The project camera is calculated from the Socio-Economic geometry using a
 padded Web Mercator fit. `mapView.bbox` is also retained in project metadata,
@@ -208,16 +205,16 @@ application.
 | File | Responsibility |
 |---|---|
 | `../../config/geolibre.config.js` | Viewer application version, URL resolution, strict handshake compatibility |
-| `../../config/geolibreLayers.js` | GeoServer names, deployed domains, all LULC years and named WMS styles |
+| `../../config/geolibreLayers.js` | GeoServer names, deployed domains, raster `rasterStyle` values, and all LULC years |
 | `geolibreProject.js` | Project generation, legends, Google imagery, vector hydration, GeoServer style/WFS/WMS/WCS references, bbox camera, and date-record JSON parsing |
 | `GeoLibreFrame.jsx` | Iframe bridge, one-time bbox fit, human error states and downloadable bounded technical log |
 | `../../pages/LandscapeExplorer.jsx` | Route-to-project orchestration and fetch-on-first-toggle vector cache; no duplicate map or layer UI |
 
-The current project contains 55 entries: 22 vector entries, 24 LULC year/style
-entries backed by 8 Level 3 yearly rasters, and 9 other rasters. Initial startup
-performs one distinct WFS request for the shared Demographic data, then enables
-the latest LULC WMS layers. Each other vector makes its own WFS request only on its first
-toggle. Hidden rasters make no WMS tile request.
+The current project contains 46 entries: 29 vector entries, 8 LULC yearly
+rasters, and 9 other rasters. Initial startup performs one distinct WFS request
+for the shared Demographic data, then displays Terrain. Each other vector makes
+its own WFS request only on its first toggle. Hidden rasters make no WMS tile
+request.
 
 ## Error handling
 
@@ -245,8 +242,10 @@ initial vector styles and missing-data guards.
 - Style delivery no longer depends on GitHub-hosted QML files. Each layer's
   `metadata.corestack.geoserverStyle` contains public GeoServer `GetStyles` and
   `GetLegendGraphic` URLs for SLD, JSON legend, and PNG legend access.
-- Named raster styles are applied by GeoServer in every WMS tile request, so
-  the rendered pixels and published server style remain one contract.
+- Every raster catalog entry has a `rasterStyle` key. A non-empty value is sent
+  as the WMS `STYLES` parameter; `""` deliberately asks GeoServer to use the
+  layer's published default. Named raster styles keep rendered pixels and the
+  published server style in one contract.
 - WFS returns geometry and attributes, not cartography. GeoLibre 2.6 can import
   an SLD interactively, but its project format cannot associate a remote SLD
   URL with an already declared WFS layer. The finalized GeoLibre vector styles
