@@ -14,61 +14,55 @@ export const GEOLIBRE_LULC_YEARS = [
 export const LATEST_GEOLIBRE_LULC_YEAR =
   GEOLIBRE_LULC_YEARS[GEOLIBRE_LULC_YEARS.length - 1].value;
 
+// Colors match the CoRE Stack workToColorMapping. A category with no entry
+// in that mapping (irrigation_non_rwh) uses its Default fallback color.
 export const GEOLIBRE_NREGA_CATEGORIES = Object.freeze([
   {
     id: "land_restoration",
     label: "Land restoration",
-    color: "#e68600",
-    markerShape: "square",
+    color: "#FFA500",
     values: ["Agri Impact - HH,  Community"],
   },
   {
     id: "livelihood",
     label: "Household livelihood",
-    color: "#c45a87",
-    markerShape: "circle",
+    color: "#C2678D",
     values: ["Household Livelihood"],
   },
   {
     id: "irrigation_site",
     label: "Irrigation — site-level impact",
-    color: "#087f8c",
-    markerShape: "pin",
+    color: "#1A759F",
     values: ["Irrigation - Site level impact"],
   },
   {
     id: "irrigation_non_rwh",
     label: "Irrigation — non-RWH",
-    color: "#16a6b6",
-    markerShape: "diamond",
+    color: "#EAAC8B",
     values: ["Irrigation Site level - Non RWH"],
   },
   {
     id: "community",
     label: "Community assets",
-    color: "#3d4e78",
-    markerShape: "cross",
+    color: "#355070",
     values: ["Others - HH, Community"],
   },
   {
     id: "plantation",
     label: "Plantation and forestry",
-    color: "#2d8f5b",
-    markerShape: "triangle",
+    color: "#52B69A",
     values: ["Plantation"],
   },
   {
     id: "soil_water_conservation",
     label: "Soil and water conservation",
-    color: "#4169b1",
-    markerShape: "star",
+    color: "#6495ED",
     values: ["SWC - Landscape level impact"],
   },
   {
     id: "unclassified",
     label: "Other or unclassified",
-    color: "#6b7280",
-    markerShape: "circle",
+    color: "#6D597A",
     values: ["", "Un Identified"],
     fallback: true,
   },
@@ -165,7 +159,7 @@ const LAYERS = [
     geometryType: "polygon",
     layerName: ({ district, tehsil }) =>
       `deltaG_fortnight_${district}_${tehsil}`,
-    styleProfile: "boundary",
+    styleProfile: "mws_fortnight",
   },
   {
     id: "terrain_vector",
@@ -177,6 +171,17 @@ const LAYERS = [
     geometryType: "polygon",
     layerName: ({ district, tehsil }) => `${district}_${tehsil}_cluster`,
     styleProfile: "terrain_vector",
+  },
+  {
+    id: "soil_type",
+    label: "Soil Type Vector",
+    domain: "Land",
+    loadGroup: "land",
+    sourceType: "wfs",
+    workspace: "soil_type",
+    geometryType: "polygon",
+    layerName: ({ district, tehsil }) => `soil_type_${district}_${tehsil}`,
+    styleProfile: "soil_type",
   },
   {
     id: "drainage",
@@ -355,6 +360,66 @@ const LAYERS = [
     rasterStyle: "dem_grayscale",
   },
   {
+    id: "soil_health_raster_n",
+    label: "Soil Nitrogen Levels",
+    domain: "Land",
+    loadGroup: "land",
+    sourceType: "wms",
+    workspace: "soil_health_raster",
+    layerName: ({ district, tehsil }) =>
+      `${district}_${tehsil}_soil_health_raster_N`,
+    rasterStyle: "Soil_Health_Nitrogen",
+    defaultVisible: false,
+  },
+  {
+    id: "soil_health_raster_P",
+    label: "Soil Phosphorus Levels",
+    domain: "Land",
+    loadGroup: "land",
+    sourceType: "wms",
+    workspace: "soil_health_raster",
+    layerName: ({ district, tehsil }) =>
+      `${district}_${tehsil}_soil_health_raster_P`,
+    rasterStyle: "Soil_Health_Phosphorus",
+    defaultVisible: false,
+  },
+  {
+    id: "soil_health_raster_K",
+    label: "Soil Potassium Levels",
+    domain: "Land",
+    loadGroup: "land",
+    sourceType: "wms",
+    workspace: "soil_health_raster",
+    layerName: ({ district, tehsil }) =>
+      `${district}_${tehsil}_soil_health_raster_K`,
+    rasterStyle: "Soil_Health_Potassium",
+    defaultVisible: false,
+  },
+  {
+    id: "soil_health_raster_OC",
+    label: "Soil Organic Carbon Concentration",
+    domain: "Land",
+    loadGroup: "land",
+    sourceType: "wms",
+    workspace: "soil_health_raster",
+    layerName: ({ district, tehsil }) =>
+      `${district}_${tehsil}_soil_health_raster_OC`,
+    rasterStyle: "Soil_Health_Organic_carbon",
+    defaultVisible: false,
+  },
+  {
+    id: "soil_health_raster_OC_OLM",
+    label: "Soil Organic Carbon Concentration for Various Forest Systems",
+    domain: "Land",
+    loadGroup: "land",
+    sourceType: "wms",
+    workspace: "soil_health_raster",
+    layerName: ({ district, tehsil }) =>
+      `${district}_${tehsil}_soil_health_raster_OC_OLM`,
+    rasterStyle: "Soil_Health_OC_OLM",
+    defaultVisible: false,
+  },
+  {
     id: "clart",
     label: "CLART",
     domain: "Hydrology",
@@ -417,7 +482,7 @@ const LAYERS = [
     workspace: "change_detection",
     layerName: ({ district, tehsil }) =>
       `change_${district}_${tehsil}_CropIntensity`,
-    rasterStyle: "",
+    rasterStyle: "cropintensity",
   },
   {
     id: "restoration",

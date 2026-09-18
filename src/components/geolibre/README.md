@@ -210,8 +210,8 @@ application.
 | `GeoLibreFrame.jsx` | Iframe bridge, one-time bbox fit, human error states and downloadable bounded technical log |
 | `../../pages/LandscapeExplorer.jsx` | Route-to-project orchestration and fetch-on-first-toggle vector cache; no duplicate map or layer UI |
 
-The current project contains 46 entries: 29 vector entries, 8 LULC yearly
-rasters, and 9 other rasters. Initial startup performs one distinct WFS request
+The current project contains 52 entries: 30 vector entries, 8 LULC yearly
+rasters, and 14 other rasters. Initial startup performs one distinct WFS request
 for the shared Demographic data, then displays Terrain. Each other vector makes
 its own WFS request only on its first toggle. Hidden rasters make no WMS tile
 request.
@@ -228,11 +228,34 @@ a log file to the user's filesystem.
 
 ## Styling contract
 
-Fortnightly Water Balance uses the standard boundary profile, with transparent
-fill and the MWS stroke color `#05081c`. Date-keyed JSON strings are decoded for
-attribute inspection with their field names and full records retained. It adds
-no derived measurement fields, diagrams, time controls, thematic coloring, or
-custom legend.
+Fortnightly Water Balance and Annual Water Balance share the same `rdbu`
+diverging palette, with red for net depletion and blue for net recharge. Each
+layer colors on the mean `DeltaG` across its own embedded date-keyed or
+year-keyed JSON records (`avg_delta_g`), computed client-side at hydration;
+GeoServer never returns a precomputed net field. Fortnightly's thresholds are
+narrower than Annual's because averaging many fortnights per feature yields
+much smaller magnitudes than averaging a handful of annual sums. Date-keyed
+JSON strings are decoded for attribute inspection with their field names and
+full records retained; only the derived `avg_delta_g` average is added. The
+MWS stroke color `#05081c` is retained for both layers. It adds no diagrams,
+time controls, or custom legend beyond GeoLibre's native vector legend.
+
+NREGA work-category assets are colored per category from one shared point
+source, pre-filtered client-side into each logical layer. GeoServer has
+published this source under two field names over time: earlier layers use the
+clipped `WorkCatego`, newer layers publish the full `WorkCategory`. Hydration
+reads whichever field a feature has and normalizes it onto `WorkCatego` before
+categorizing or styling, so both schemas render identically without knowing in
+advance which one a given tehsil's dataset uses. Each category renders as a
+plain filled circle (`circleRadius`/`fillColor`, no marker/icon symbol) using
+the CoRE Stack `workToColorMapping`; a category absent from that mapping falls
+back to its `Default` color.
+
+Terrain Clusters has the same two-schema situation on its cluster id field:
+earlier layers publish `terrainClu`, later layers publish `terrainClusters`.
+Hydration normalizes every feature onto `terrainClu`, the field the
+categorized style keys on, before classification, so both schemas classify
+and color identically.
 
 Native style controls belong to public GeoLibre. KYL does not automatically open
 the Style panel, add palette controls, or change GeoLibre's internal treatment of

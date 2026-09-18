@@ -1,5 +1,5 @@
 import { interpolateRampColors } from "@geolibre/core";
-import { applyMissingDataStyle, boundaryColorForLayer, hasLayerData, MISSING_DATA_COLOR, fixedPaletteExpression, naturalBreaksStyle, paletteCategories } from "./geolibreStyleUtils";
+import { applyMissingDataStyle, boundaryColorForLayer, finiteMeasurement, hasLayerData, MISSING_DATA_COLOR, fixedPaletteExpression, naturalBreaksStyle, paletteCategories } from "./geolibreStyleUtils";
 import {
   GEOLIBRE_CONFIG,
   GEOLIBRE_PROJECT_FORMAT_VERSION,
@@ -43,19 +43,94 @@ const EMPTY_FEATURE_COLLECTION = Object.freeze({
   features: [],
 });
 
-// Decode date-keyed JSON records for inspection without adding chart fields.
-// Keep malformed values unchanged so missing/invalid data is not turned into zero.
+const ANNUAL_WATER_BALANCE_YEAR_KEY = /^\d{4}_\d{4}$/;
+
+// Average the DeltaG carried in each year-keyed JSON record so the layer can
+// be colored on the full multi-year trend instead of one precomputed net
+// field. A feature with no readable year record keeps a null average rather
+// than a misleading zero.
+export const withAverageDeltaG = (data) => ({
+  ...data,
+  features: (data?.features || []).map((feature) => {
+    const properties = feature.properties || {};
+    const deltaGValues = Object.entries(properties)
+      .filter(([key]) => ANNUAL_WATER_BALANCE_YEAR_KEY.test(key))
+      .map(([, value]) => {
+        if (typeof value !== "string") return null;
+        try {
+          return finiteMeasurement(JSON.parse(value)?.DeltaG);
+        } catch {
+          return null;
+        }
+      })
+      .filter((value) => value !== null);
+    const avg_delta_g = deltaGValues.length
+      ? deltaGValues.reduce((sum, value) => sum + value, 0) / deltaGValues.length
+      : null;
+    return { ...feature, properties: { ...properties, avg_delta_g } };
+  }),
+});
+
+// Earlier- and later-generated Terrain Clusters layers publish the same
+// cluster id under two field names: "terrainClu" or "terrainClusters".
+// Normalize every feature onto "terrainClu", the field the categorized style
+// keys on, so both schemas classify and color identically.
+export const withNormalizedTerrainCluster = (data) => ({
+  ...data,
+  features: (data?.features || []).map((feature) => {
+    const properties = feature.properties || {};
+    if (Object.prototype.hasOwnProperty.call(properties, "terrainClu")) return feature;
+    if (!Object.prototype.hasOwnProperty.call(properties, "terrainClusters")) return feature;
+    return { ...feature, properties: { ...properties, terrainClu: properties.terrainClusters } };
+  }),
+});
+
+// 13 published subsoil texture classes bin into 4 CoRE Stack soil-texture
+// groups. Bin here into one derived field instead of listing all 13 raw
+// values as separate categorized stops, so GeoLibre's native legend shows
+// each of the 4 group labels once instead of repeating it per raw value.
+export const SOIL_TEXTURE_BINS = [
+  { label: "Coarse / Sandy", color: "#f5deb3", values: ["sand", "Loamy sand", "sandy loam"] },
+  { label: "Medium / Loamy", color: "#d2b48c", values: ["Loam", "Silt loam", "Silt"] },
+  { label: "Moderately Fine / Clay Loam", color: "#b5651d", values: ["Sandy clay loam", "Clay loam", "Silty clay loam"] },
+  { label: "Fine / Clayey", color: "#8b4513", values: ["Sandy clay", "Silty clay", "Clay", "Clay (heavy)"] },
+];
+const SOIL_TEXTURE_CLASS_BY_VALUE = new Map(
+  SOIL_TEXTURE_BINS.flatMap((bin) => bin.values.map((value) => [value, bin.label]))
+);
+
+export const withSoilTextureClass = (data) => ({
+  ...data,
+  features: (data?.features || []).map((feature) => {
+    const properties = feature.properties || {};
+    const soil_texture_class = SOIL_TEXTURE_CLASS_BY_VALUE.get(properties.subsoil_texture) ?? null;
+    return { ...feature, properties: { ...properties, soil_texture_class } };
+  }),
+});
+
+const FORTNIGHT_DATE_KEY = /^\d{4}-\d{2}-\d{2}$/;
+
+// Decode date-keyed JSON records for inspection, then average their DeltaG so
+// the layer can be colored on the full fortnightly trend. Keep malformed or
+// missing values unchanged/excluded so missing data is never turned into zero.
 export const parseFortnightRecords = data => ({
   ...data,
-  features: (data?.features || []).map(feature => ({
-    ...feature,
-    properties: Object.fromEntries(Object.entries(feature.properties || {}).map(([key, value]) => {
-      if (/^\d{4}-\d{2}-\d{2}$/.test(key) && typeof value === "string") {
+  features: (data?.features || []).map(feature => {
+    const properties = Object.fromEntries(Object.entries(feature.properties || {}).map(([key, value]) => {
+      if (FORTNIGHT_DATE_KEY.test(key) && typeof value === "string") {
         try { return [key, JSON.parse(value)]; } catch { /* Retain the source value. */ }
       }
       return [key, value];
-    })),
-  })),
+    }));
+    const deltaGValues = Object.entries(properties)
+      .filter(([key]) => FORTNIGHT_DATE_KEY.test(key))
+      .map(([, value]) => finiteMeasurement(value?.DeltaG))
+      .filter(value => value !== null);
+    const avg_delta_g = deltaGValues.length
+      ? deltaGValues.reduce((sum, value) => sum + value, 0) / deltaGValues.length
+      : null;
+    return { ...feature, properties: { ...properties, avg_delta_g } };
+  }),
 });
 
 const BASE_STYLE = {
@@ -104,7 +179,9 @@ const categoryStyle = (property, stops, overrides = {}) => ({
 
 const numericProperty = (field) => ["to-number", ["get", field], 0];
 const cropFields = Array.from({ length: 8 }, (_, i) => `cropping_intensity_${2017 + i}`);
-const droughtFields = Array.from({ length: 8 }, (_, i) => [`w_mod_${2017 + i}`, `w_sev_${2017 + i}`]).flat();
+// Published drought data runs 2017-2022 only; there is no w_mod_2023 or later.
+const DROUGHT_YEAR_COUNT = 6;
+const droughtFields = Array.from({ length: DROUGHT_YEAR_COUNT }, (_, i) => [`w_mod_${2017 + i}`, `w_sev_${2017 + i}`]).flat();
 const thematicStyle = { ...BASE_STYLE, strokeColor: "#232323", strokeWidth: 0.5 };
 
 const STYLE_PROFILES = {
@@ -134,9 +211,18 @@ const STYLE_PROFILES = {
     ],
     { fillColor: "#e5e059", strokeColor: "#232323", fillOpacity: 0.75 }
   ),
+  soil_type: categoryStyle(
+    "soil_texture_class",
+    SOIL_TEXTURE_BINS.map((bin) => [bin.label, bin.color, bin.label]),
+    { fillColor: "#d2b48c", strokeColor: "#3a2412", fillOpacity: 0.8 }
+  ),
   mws: fixedPaletteExpression({
-    ...thematicStyle, fields: ["Net2020_25"], value: numericProperty("Net2020_25"),
-    thresholds: [-10, -5, -1, 1, 5, 10], palette: "rdbu", fillOpacity: 0.65,
+    ...thematicStyle, fields: ["avg_delta_g"], value: numericProperty("avg_delta_g"),
+    thresholds: [-50, -15, 0, 15, 50], palette: "rdbu", fillOpacity: 0.65,
+  }),
+  mws_fortnight: fixedPaletteExpression({
+    ...thematicStyle, fields: ["avg_delta_g"], value: numericProperty("avg_delta_g"),
+    thresholds: [-15, -5, 0, 5, 15], palette: "rdbu", fillOpacity: 0.65,
   }),
   drainage: categoryStyle(
     "ORDER",
@@ -194,7 +280,7 @@ const STYLE_PROFILES = {
   }),
   drought: fixedPaletteExpression({
     ...thematicStyle, fields: droughtFields,
-    value: ["+", ...Array.from({ length: 8 }, (_, i) => ["case", [">=", ["+", numericProperty(`w_mod_${2017 + i}`), numericProperty(`w_sev_${2017 + i}`)], 5], 1, 0])],
+    value: ["+", ...Array.from({ length: DROUGHT_YEAR_COUNT }, (_, i) => ["case", [">", ["+", numericProperty(`w_mod_${2017 + i}`), numericProperty(`w_sev_${2017 + i}`)], 5], 1, 0])],
     thresholds: [1, 2], colors: ["#f4d03f", "#eb984e", "#e74c3c"], fillOpacity: 0.5,
   }),
   green_credit: {
@@ -248,6 +334,40 @@ const LEGEND_PROFILES = {
     ["660 m", "#c4a882"],
     ["700 m or above", "#f5f0e8"],
   ],
+  soil_health_raster_n: [
+    ["0", "#8B0000"],
+    ["50", "#D73027"],
+    ["100", "#F46D43"],
+    ["150", "#FDAE61"],
+    ["200", "#FEE08B"],
+    ["250", "#FFFFBF"],
+    ["300", "#D9EF8B"],
+    ["350", "#A6D96A"],
+    ["400", "#66BD63"],
+    ["450", "#1A9850"],
+    ["500", "#006837"],
+  ],
+  soil_health_raster_P: [
+    ["Low (<10)", "#D73027"],
+    ["Medium (10-25)", "#FEE08B"],
+    ["High (>25)", "#1A9850"],
+  ],
+  soil_health_raster_K: [
+    ["Low (<120 kg/ha)", "#FF0000"],
+    ["Medium (120-280 kg/ha)", "#EEE05D"],
+    ["High (>280 kg/ha)", "#73BB53"],
+  ],
+  soil_health_raster_OC: [
+    ["Low (0-120 kg/ha)", "#C8E6C9"],
+    ["Medium (120-280 kg/ha)", "#66BB6A"],
+    ["High (>280 kg/ha)", "#2E7D32"],
+  ],
+  soil_health_raster_OC_OLM: [
+    ["<=1% (Scrubs / Degraded land)", "#EF5350"],
+    ["1-2% (Open Forests)", "#FFCA28"],
+    ["2-3% (Moderately Dense Forest)", "#81C784"],
+    [">3% (Very Dense Forest)", "#66BB6A"],
+  ],
   clart: [
     ["Good recharge", "#4ee323"],
     ["Moderate recharge", "#f3ff33"],
@@ -282,15 +402,15 @@ const LEGEND_PROFILES = {
     ["Barren or shrubs and scrubs to built-up", "#a9a9a9"],
   ],
   cropintensity: [
-    ["Double to single cropping", "#ff6347"],
-    ["Triple, annual or perennial to single", "#ff4500"],
-    ["Triple, annual or perennial to double", "#ff0000"],
-    ["Single to double cropping", "#00ff00"],
-    ["Single to triple, annual or perennial", "#32cd32"],
-    ["Double to triple, annual or perennial", "#228b22"],
-    ["Single to single cropping", "#4227f5"],
-    ["Double to double cropping", "#712103"],
-    ["Triple, annual or perennial unchanged", "#ad27f5"],
+    ["Double-Single", "#f7fcf5"],
+    ["Tripple_or_annual_or_perennial-Single", "#ff4500"],
+    ["Tripple_or_annual_or_perennial-Double", "#ff0000"],
+    ["Single-Double", "#00ff00"],
+    ["Single-Tripple_or_annual_or_perennial", "#32cd32"],
+    ["Double-Tripple_or_annual_or_perennial", "#228b22"],
+    ["Single-Single", "#4227f5"],
+    ["Double-Double", "#712103"],
+    ["Tripple_or_annual_or_perennial-Tripple_or_annual_or_perennial", "#ad27f5"],
   ],
   restoration: [
     ["Mosaic restoration", "#d79b0f"],
@@ -644,14 +764,9 @@ const nregaLayerStyle = (categoryId) => {
     strokeColor: "#ffffff",
     strokeWidth: 1,
     fillOpacity: 0.9,
-    circleRadius: 4,
+    circleRadius: 5,
     simpleStyleEnabled: true,
     vectorStyleProperty: "WorkCatego",
-    markerEnabled: true,
-    markerShape: category?.markerShape || "circle",
-    markerColor: category?.color || MISSING_DATA_COLOR,
-    markerSize: 14,
-    pointRenderer: "single",
   };
 };
 
@@ -679,7 +794,7 @@ const coreStackMetadata = (layer, layerName, sourceUrl, style, baseUrl) => ({
   year: layer.year || null,
   ...(layer.sourceType !== "wms" ? {
     missingDataColor: MISSING_DATA_COLOR,
-    paletteId: ["demographics", "facilities", "antyodaya", "livestock", "mws", "waterbodies", "cropping_intensity"].includes(layer.styleProfile) ? style.vectorStyleColorRamp : null,
+    paletteId: ["demographics", "facilities", "antyodaya", "livestock", "mws", "mws_fortnight", "waterbodies", "cropping_intensity"].includes(layer.styleProfile) ? style.vectorStyleColorRamp : null,
   } : {}),
   ...(layer.sourceType === "wms" ? { legend: layerLegend(layer, style) } : {}),
   styleContract:
@@ -875,6 +990,25 @@ const nregaCategoryForLayer = (layer) =>
       category.id === layer.metadata?.corestack?.nregaCategoryId
   );
 
+// Earlier-generated NREGA layers publish the clipped GeoServer field name
+// "WorkCatego"; newer layers publish the full "WorkCategory". Both carry the
+// same values, so read whichever is present instead of assuming one schema.
+const workCategoryOf = (properties) =>
+  properties?.WorkCatego ?? properties?.WorkCategory ?? "";
+
+// Normalize every feature onto the "WorkCatego" key GeoLibre's style and
+// missing-data guard already key on, so downstream code never needs to know
+// which schema a given tehsil's dataset was generated with.
+const withNormalizedWorkCategory = (data) => ({
+  ...data,
+  features: (data?.features || []).map((feature) => {
+    const properties = feature.properties || {};
+    return Object.prototype.hasOwnProperty.call(properties, "WorkCatego")
+      ? feature
+      : { ...feature, properties: { ...properties, WorkCatego: workCategoryOf(properties) } };
+  }),
+});
+
 const nregaFeaturesForCategory = (features, category) => {
   const knownValues = new Set(
     GEOLIBRE_NREGA_CATEGORIES.filter((item) => !item.fallback).flatMap(
@@ -882,7 +1016,7 @@ const nregaFeaturesForCategory = (features, category) => {
     )
   );
   return features.filter((feature) => {
-    const value = feature?.properties?.WorkCatego ?? "";
+    const value = workCategoryOf(feature?.properties);
     return category.fallback
       ? !knownValues.has(value)
       : category.values.includes(value);
@@ -894,6 +1028,9 @@ const hydrateLayerWithData = (layer, data) => {
     layer.metadata || {};
   const catalogLayer = GEOLIBRE_LAYERS.find(item => `corestack-${item.id}` === layer.id);
   if (catalogLayer?.id === "mws_layers_fortnight") data = parseFortnightRecords(data);
+  if (catalogLayer?.id === "mws_layers") data = withAverageDeltaG(data);
+  if (catalogLayer?.id === "terrain_vector") data = withNormalizedTerrainCluster(data);
+  if (catalogLayer?.id === "soil_type") data = withSoilTextureClass(data);
   const outline = catalogLayer && boundaryColorForLayer(catalogLayer.id);
   const initialStyle = catalogLayer && { ...layerStyle(catalogLayer), ...(outline ? { strokeColor: outline, simpleStyleEnabled: true } : {}) };
   const style = initialStyle && Object.entries(initialStyle).every(([key, value]) => JSON.stringify(layer.style?.[key]) === JSON.stringify(value))
@@ -957,8 +1094,9 @@ export const hydrateGeoLibreVectorLayer = async ({
   }
 
   try {
-    const data = await fetchFeatureCollection(request, { signal });
+    const rawData = await fetchFeatureCollection(request, { signal });
     const category = nregaCategoryForLayer(layer);
+    const data = category ? withNormalizedWorkCategory(rawData) : rawData;
     const hydratedProject = category
       ? {
           ...project,
