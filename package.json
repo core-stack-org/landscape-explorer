@@ -7,6 +7,7 @@
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.1",
     "@floating-ui/dom": "^1.7.4",
+    "@geolibre/core": "3.0.0",
     "@mui/icons-material": "^7.3.4",
     "@mui/material": "^7.3.4",
     "@testing-library/jest-dom": "^5.17.0",
@@ -72,5 +73,13 @@
   },
   "devDependencies": {
     "tailwindcss": "^3.4.1"
+  },
+  "jest": {
+    "moduleNameMapper": {
+      "^@geolibre/core$": "<rootDir>/node_modules/@geolibre/core/dist/index.mjs"
+    },
+    "transformIgnorePatterns": [
+      "node_modules/(?!(@geolibre/core|uuid)/)"
+    ]
   }
 }

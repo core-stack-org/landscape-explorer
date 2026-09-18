@@ -6,12 +6,17 @@ import {
   geoJsonBounds,
   hydrateGeoLibreVectorLayer,
   mapViewFromBounds,
+  parseFortnightRecords,
   sanitizeGeoLibreProjectPlugins,
+  withAverageDeltaG,
+  withNormalizedTerrainCluster,
+  withSoilTextureClass,
 } from "./geolibreProject";
 import {
   GEOLIBRE_LAYERS,
   GEOLIBRE_NREGA_CATEGORIES,
 } from "../../config/geolibreLayers";
+import { createExpression } from "@maplibre/maplibre-gl-style-spec";
 
 const location = {
   state: "Assam",
@@ -79,6 +84,158 @@ beforeEach(() => {
 });
 
 describe("GeoLibre 2.6 project generation", () => {
+  it("gives every raster an explicit rasterStyle contract", () => {
+    expect(
+      GEOLIBRE_LAYERS.filter((layer) => layer.sourceType === "wms")
+    ).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: "terrain",
+          rasterStyle: "Terrain_Style_11_Classes",
+        }),
+        expect.objectContaining({
+          id: "lulc_level_3_24_25",
+          rasterStyle: "lulc_land_use_KYL",
+        }),
+      ])
+    );
+    expect(
+      GEOLIBRE_LAYERS.filter((layer) => layer.sourceType === "wms")
+        .every((layer) => typeof layer.rasterStyle === "string")
+    ).toBe(true);
+  });
+
+  it("matches every published Stage of Groundwater Extraction class exactly", async () => {
+    const project = await buildGeoLibreProject({ ...location, fetchFeatureCollection: successfulFetch });
+    const layer = project.layers.find(item => item.id === "corestack-soge");
+    const categories = ["Safe", "Semi-Critical", "Critical", "Over Exploited"];
+    expect(layer.style.vectorStyleStops.map(stop => stop.value)).toEqual(categories);
+    const expression = createExpression(
+      ["match", ["to-string", ["get", "class"]], ...layer.style.vectorStyleStops.flatMap(stop => [stop.value, stop.color]), "#3b3b3b"],
+      "layers[0].paint.fill-color"
+    );
+    expect(expression.result).toBe("success");
+    categories.forEach((category) => expect(expression.value.evaluate({ zoom: 10 }, { properties: { uid: "12_332857", class: category, code: 2 }, type: 3 })).not.toBe("#3b3b3b"));
+  });
+  it("lists the 4 soil-texture groups exactly once each in the native categorized legend", async () => {
+    const project = await buildGeoLibreProject({ ...location, fetchFeatureCollection: successfulFetch });
+    const layer = project.layers.find(item => item.id === "corestack-soil_type");
+    expect(layer.style.vectorStyleProperty).toBe("soil_texture_class");
+    expect(layer.style.vectorStyleStops.map(stop => stop.value)).toEqual([
+      "Coarse / Sandy", "Medium / Loamy", "Moderately Fine / Clay Loam", "Fine / Clayey",
+    ]);
+    expect(new Set(layer.style.vectorStyleStops.map(stop => stop.value)).size).toBe(
+      layer.style.vectorStyleStops.length
+    );
+  });
+  it("bins all 13 published subsoil texture classes into the 4 CoRE Stack soil-texture groups on hydration", async () => {
+    const project = await buildGeoLibreProject({ ...location, fetchFeatureCollection: successfulFetch });
+    const rawValues = [
+      "sand", "Loamy sand", "sandy loam",
+      "Loam", "Silt loam", "Silt",
+      "Sandy clay loam", "Clay loam", "Silty clay loam",
+      "Sandy clay", "Silty clay", "Clay", "Clay (heavy)",
+      "Medium", null,
+    ];
+    const result = await hydrateGeoLibreVectorLayer({
+      project, layerId: "corestack-soil_type",
+      fetchFeatureCollection: async () => ({
+        type: "FeatureCollection",
+        features: rawValues.map((subsoil_texture, index) => ({
+          type: "Feature", id: `soil-${index}`,
+          properties: { uid: `soil-${index}`, subsoil_texture },
+          geometry: { type: "Polygon", coordinates: [] },
+        })),
+      }),
+    });
+    const layer = result.layers.find(item => item.id === "corestack-soil_type");
+    const classesByRawValue = Object.fromEntries(
+      layer.geojson.features.map(feature => [feature.properties.subsoil_texture, feature.properties.soil_texture_class])
+    );
+    expect(classesByRawValue).toEqual({
+      sand: "Coarse / Sandy", "Loamy sand": "Coarse / Sandy", "sandy loam": "Coarse / Sandy",
+      Loam: "Medium / Loamy", "Silt loam": "Medium / Loamy", Silt: "Medium / Loamy",
+      "Sandy clay loam": "Moderately Fine / Clay Loam", "Clay loam": "Moderately Fine / Clay Loam", "Silty clay loam": "Moderately Fine / Clay Loam",
+      "Sandy clay": "Fine / Clayey", "Silty clay": "Fine / Clayey", Clay: "Fine / Clayey", "Clay (heavy)": "Fine / Clayey",
+      Medium: null, null: null,
+    });
+    const expression = createExpression(
+      ["match", ["to-string", ["get", "soil_texture_class"]], ...layer.style.vectorStyleStops.flatMap(stop => [stop.value, stop.color]), "#3b3b3b"],
+      "layers[0].paint.fill-color"
+    );
+    expect(expression.result).toBe("success");
+    expect(expression.value.evaluate({ zoom: 10 }, { properties: { soil_texture_class: "Fine / Clayey" }, type: 3 })).toBe("#8b4513");
+    expect(expression.value.evaluate({ zoom: 10 }, { properties: { soil_texture_class: null }, type: 3 })).toBe("#3b3b3b");
+  });
+  it("colors Fortnightly Water Balance on its averaged DeltaG and still parses date records", async () => {
+    const project = await buildGeoLibreProject({ ...location, fetchFeatureCollection: successfulFetch });
+    const result = await hydrateGeoLibreVectorLayer({ project, layerId: "corestack-mws_layers_fortnight", fetchFeatureCollection: async () => ({
+      type: "FeatureCollection", features: [{ type: "Feature", geometry: { type: "Polygon", coordinates: [] }, properties: { "2025-06-16": '{"DeltaG": -120}' } }],
+    }) });
+    const layer = result.layers.find(item => item.id === "corestack-mws_layers_fortnight");
+    expect(layer.name).toBe("Fortnightly Water Balance");
+    expect(layer.style.strokeColor).toBe("#05081c");
+    expect(layer.style.diagramType).toBeUndefined();
+    expect(layer.style.diagramFields).toBeUndefined();
+    expect(layer.style).toMatchObject({ vectorStyleMode: "expression", vectorStyleProperty: "avg_delta_g", fillOpacity: 0.65 });
+    expect(layer.geojson.features[0].properties).toEqual({ "2025-06-16": { DeltaG: -120 }, avg_delta_g: -120, stroke: "#05081c" });
+    const expression = createExpression(JSON.parse(layer.style.vectorStyleExpression), "layers[0].paint.fill-color");
+    expect(expression.result).toBe("success");
+    expect(expression.value.evaluate({ zoom: 10 }, { properties: { avg_delta_g: -120 }, type: 3 })).toBe("#b2182b");
+    expect(expression.value.evaluate({ zoom: 10 }, { properties: {}, type: 3 })).toBe("#3b3b3b");
+  });
+  it("evaluates finalized thresholds and missing-data guards in the real MapLibre expression engine", async () => {
+    const project = await buildGeoLibreProject({ ...location, fetchFeatureCollection: successfulFetch });
+    const color = (id, properties) => {
+      const expression = createExpression(JSON.parse(project.styles[`corestack-${id}`].vectorStyleExpression), "layers[0].paint.fill-color");
+      expect(expression.result).toBe("success");
+      return expression.value.evaluate({ zoom: 10 }, { properties, type: 3 });
+    };
+    expect(color("demographics", { P_LIT: 90, TOT_P: 100 })).toBe("#2166ac");
+    expect(color("demographics", { P_LIT: 0, TOT_P: 100 })).toBe("#b2182b");
+    expect(color("demographics", { P_LIT: 0, TOT_P: 0 })).toBe("#3b3b3b");
+    expect(color("mws_layers", { avg_delta_g: 0 })).toBe("#bdd8e7");
+    expect(color("mws_layers", { avg_delta_g: -60 })).toBe("#b2182b");
+    expect(color("mws_layers", { avg_delta_g: 60 })).toBe("#2166ac");
+    expect(color("mws_layers", { Net2020_25: 2 })).toBe("#3b3b3b");
+    expect(color("remote_sensed_waterbodies", { area_ored: 5 })).toBe("#1e3a8a");
+    const crop = Object.fromEntries(Array.from({ length: 8 }, (_, i) => [`cropping_intensity_${2017 + i}`, 2]));
+    expect(color("cropping_intensity", crop)).toBe("#52ac5a");
+    expect(color("cropping_intensity", { ...crop, cropping_intensity_2024: null })).toBe("#3b3b3b");
+    const drought = Object.fromEntries(Array.from({ length: 6 }, (_, i) => [[`w_mod_${2017 + i}`, 0], [`w_sev_${2017 + i}`, 0]]).flat());
+    expect(color("drought", drought)).toBe("#f4d03f");
+    expect(color("drought", { ...drought, w_mod_2017: 5 })).toBe("#f4d03f");
+    expect(color("drought", { ...drought, w_mod_2017: 6 })).toBe("#eb984e");
+    expect(color("drought", { ...drought, w_mod_2017: 6, w_sev_2018: 6 })).toBe("#e74c3c");
+    expect(color("drought", { ...drought, w_sev_2018: "" })).toBe("#3b3b3b");
+    expect(color("drought", { ...drought, w_mod_2023: 6, w_sev_2023: 6 })).toBe("#f4d03f");
+  });
+  it("classifies hydrated facilities using computed observations and serializes the same style", async () => {
+    const project = await buildGeoLibreProject({ ...location, fetchFeatureCollection: successfulFetch });
+    const layer = project.layers.find(item => item.id === "corestack-facilities");
+    layer.style = { ...layer.style, nativeDefaultAddedDuringRoundTrip: true };
+    const hydrated = await hydrateGeoLibreVectorLayer({ project, layerId: layer.id, fetchFeatureCollection: async () => ({
+      type: "FeatureCollection", features: [0, 1, 2, 3, 5, 8, null, "", 999].map((value, index) => ({
+        type: "Feature", geometry: null, properties: { l2_essential_education_distance_km: value, data_availability_status: index === 8 ? "pending" : "computed" },
+      })),
+    }) });
+    const result = hydrated.layers.find(item => item.id === layer.id);
+    expect(result.style.vectorStyleStops.map(stop => stop.value)).toEqual([0, 1, 2, 3, 5, 8]);
+    expect(hydrated.styles[layer.id]).toEqual(result.style);
+    expect(result.geojson.features.slice(6).map(feature => feature.properties.fill)).toEqual(["#3b3b3b", "#3b3b3b", "#3b3b3b"]);
+    expect(result.geojson.features[0].properties.fill).toBeUndefined();
+  });
+  it("classifies source facilities status when GeoServer has not published the common status alias", async () => {
+    const project = await buildGeoLibreProject({ ...location, fetchFeatureCollection: successfulFetch });
+    const layer = project.layers.find(item => item.id === "corestack-facilities");
+    const hydrated = await hydrateGeoLibreVectorLayer({ project, layerId: layer.id, fetchFeatureCollection: async () => ({
+      type: "FeatureCollection", features: [1, 2, null].map((value, index) => ({
+        type: "Feature", geometry: null, properties: { l2_essential_education_distance_km: value, facilities_status: index === 2 ? "no village id available" : "computed" },
+      })),
+    }) });
+    const result = hydrated.layers.find(item => item.id === layer.id);
+    expect(result.geojson.features.map(feature => feature.properties.fill)).toEqual([undefined, undefined, "#3b3b3b"]);
+  });
   it("normalizes KYL location labels for GeoServer layer names", () => {
     expect(formatGeoServerName("  Banas Kantha (Palanpur) ")).toBe(
       "banas_kantha_palanpur"
@@ -98,7 +255,7 @@ describe("GeoLibre 2.6 project generation", () => {
     );
   });
 
-  it("builds default Demographic WFS layers and downloadable, lazy styled rasters", async () => {
+  it("starts terrain and uses catalog raster styles in WMS requests", async () => {
     const project = await buildGeoLibreProject({
       ...location,
       fetchFeatureCollection: successfulFetch,
@@ -106,7 +263,8 @@ describe("GeoLibre 2.6 project generation", () => {
 
     expect(project.version).toBe("0.2.0");
     expect(project.layers).toHaveLength(GEOLIBRE_LAYERS.length);
-    expect(project.layers).toHaveLength(62);
+    expect(project.layers).toHaveLength(52);
+    expect(project.layers.every(layer => layer.name === GEOLIBRE_LAYERS.find(item => `corestack-${item.id}` === layer.id)?.label)).toBe(true);
     expect(project.mapView.bbox).toEqual([92.9, 24.7, 93.2, 25]);
     expect(project.mapLayout).toBeUndefined();
     expect(project.secondaryMapViews).toBeUndefined();
@@ -124,8 +282,8 @@ describe("GeoLibre 2.6 project generation", () => {
     );
     expect(socioeconomic).toMatchObject({
       type: "geojson",
-      visible: true,
-      opacity: 0.8,
+      visible: false,
+      opacity: 1,
       source: {
         type: "geojson",
         service: "wfs",
@@ -150,11 +308,10 @@ describe("GeoLibre 2.6 project generation", () => {
 
     const visibleLayers = project.layers.filter((layer) => layer.visible);
     expect(visibleLayers.map((layer) => layer.id)).toEqual([
-      "corestack-demographics",
-      "corestack-administrative_boundaries",
+      "corestack-terrain",
     ]);
     expect(
-      visibleLayers.every((layer) => layer.opacity === 0.8)
+      visibleLayers.every((layer) => layer.opacity === 1)
     ).toBe(true);
     expect(
       project.layers
@@ -180,8 +337,8 @@ describe("GeoLibre 2.6 project generation", () => {
       geojson: { type: "FeatureCollection", features: [] },
     });
 
-    const latestLulc = project.layers.find(
-      (layer) => layer.id === "corestack-lulc_level_3_24_25"
+    const latestLulc = project.layers.find((layer) =>
+      layer.id === "corestack-lulc_level_3_24_25"
     );
     expect(latestLulc).toMatchObject({
       type: "raster",
@@ -190,13 +347,9 @@ describe("GeoLibre 2.6 project generation", () => {
         service: "wms",
         corestack: {
           geoserverStyle: {
-            name: "lulc_level_3_style",
+            name: "lulc_land_use_KYL",
             assignment: "named-style",
             renderingMode: "server-rendered-wms",
-          },
-          rasterDownload: {
-            kind: "full-coverage-geotiff",
-            bytePreservingInGeoLibre: true,
           },
         },
       },
@@ -207,6 +360,9 @@ describe("GeoLibre 2.6 project generation", () => {
     expect(latestLulc.source.tiles[0]).toContain(
       "BBOX={bbox-epsg-3857}"
     );
+    expect(latestLulc.source.tiles[0]).toContain(
+      "STYLES=lulc_land_use_KYL"
+    );
     expect(latestLulc.source.wmsUrl).toContain("/geoserver/wms");
     expect(latestLulc.metadata.corestack.geoserverStyle.sldUrl).toContain(
       "REQUEST=GetStyles"
@@ -215,29 +371,16 @@ describe("GeoLibre 2.6 project generation", () => {
       latestLulc.metadata.corestack.geoserverStyle.legendJsonUrl
     ).toContain("FORMAT=application%2Fjson");
     expect(latestLulc.source.url).toContain("request=GetCoverage");
+    expect(latestLulc.source.url).toContain("tiling=false");
     expect(latestLulc.source.url).toContain(
       "CoverageId=LULC_level_3%3ALULC_24_25_cachar_lakhipur_level_3"
     );
-    const latestLulcStyles = [1, 2, 3].map((level) =>
-      project.layers.find(
-        (layer) => layer.id === `corestack-lulc_level_${level}_24_25`
-      )
-    );
-    expect(latestLulcStyles.map((layer) => layer.source.layers)).toEqual([
-      "LULC_level_3:LULC_24_25_cachar_lakhipur_level_3",
-      "LULC_level_3:LULC_24_25_cachar_lakhipur_level_3",
-      "LULC_level_3:LULC_24_25_cachar_lakhipur_level_3",
-    ]);
-    expect(latestLulcStyles.map((layer) => layer.source.url)).toEqual([
-      latestLulc.source.url,
-      latestLulc.source.url,
-      latestLulc.source.url,
-    ]);
-    expect(latestLulcStyles.map((layer) => layer.source.styles)).toEqual([
-      "lulc_level_1_style",
-      "lulc_level_2_style",
-      "lulc_level_3_style",
-    ]);
+    expect(project.layers.filter((item) => item.id.startsWith("corestack-lulc_"))).toHaveLength(8);
+    expect(latestLulc.source.styles).toBe("lulc_land_use_KYL");
+
+    const terrain = project.layers.find((layer) => layer.id === "corestack-terrain");
+    expect(terrain.source.styles).toBe("Terrain_Style_11_Classes");
+    expect(terrain.source.tiles[0]).toContain("STYLES=Terrain_Style_11_Classes");
 
     const dem = project.layers.find((layer) => layer.id === "corestack-dem");
     expect(dem).toMatchObject({
@@ -250,13 +393,113 @@ describe("GeoLibre 2.6 project generation", () => {
       metadata: {
         corestack: {
           geoserverWorkspace: "dem",
-          rasterDownload: { kind: "full-coverage-geotiff" },
         },
       },
     });
     expect(dem.source.url).toContain(
       "CoverageId=dem%3Acachar_lakhipur_dem_raster"
     );
+
+    const soilNitrogen = project.layers.find((layer) => layer.id === "corestack-soil_health_raster_n");
+    expect(soilNitrogen).toMatchObject({
+      type: "raster",
+      name: "Soil Nitrogen Levels",
+      visible: false,
+      source: {
+        layers: "soil_health_raster:cachar_lakhipur_soil_health_raster_N",
+        styles: "Soil_Health_Nitrogen",
+      },
+      metadata: {
+        corestack: {
+          geoserverWorkspace: "soil_health_raster",
+        },
+      },
+    });
+    expect(soilNitrogen.source.tiles[0]).toContain("STYLES=Soil_Health_Nitrogen");
+    expect(soilNitrogen.source.url).toContain(
+      "CoverageId=soil_health_raster%3Acachar_lakhipur_soil_health_raster_N"
+    );
+
+    const soilPhosphorus = project.layers.find((layer) => layer.id === "corestack-soil_health_raster_P");
+    expect(soilPhosphorus).toMatchObject({
+      type: "raster",
+      name: "Soil Phosphorus Levels",
+      visible: false,
+      source: {
+        layers: "soil_health_raster:cachar_lakhipur_soil_health_raster_P",
+        styles: "Soil_Health_Phosphorus",
+      },
+      metadata: {
+        corestack: {
+          geoserverWorkspace: "soil_health_raster",
+        },
+      },
+    });
+    expect(soilPhosphorus.source.tiles[0]).toContain("STYLES=Soil_Health_Phosphorus");
+    expect(soilPhosphorus.source.url).toContain(
+      "CoverageId=soil_health_raster%3Acachar_lakhipur_soil_health_raster_P"
+    );
+
+    const soilPotassium = project.layers.find((layer) => layer.id === "corestack-soil_health_raster_K");
+    expect(soilPotassium).toMatchObject({
+      type: "raster",
+      name: "Soil Potassium Levels",
+      visible: false,
+      source: {
+        layers: "soil_health_raster:cachar_lakhipur_soil_health_raster_K",
+        styles: "Soil_Health_Potassium",
+      },
+      metadata: {
+        corestack: {
+          geoserverWorkspace: "soil_health_raster",
+        },
+      },
+    });
+    expect(soilPotassium.source.tiles[0]).toContain("STYLES=Soil_Health_Potassium");
+    expect(soilPotassium.source.url).toContain(
+      "CoverageId=soil_health_raster%3Acachar_lakhipur_soil_health_raster_K"
+    );
+
+    const soilOrganicCarbon = project.layers.find((layer) => layer.id === "corestack-soil_health_raster_OC");
+    expect(soilOrganicCarbon).toMatchObject({
+      type: "raster",
+      name: "Soil Organic Carbon Concentration",
+      visible: false,
+      source: {
+        layers: "soil_health_raster:cachar_lakhipur_soil_health_raster_OC",
+        styles: "Soil_Health_Organic_carbon",
+      },
+      metadata: {
+        corestack: {
+          geoserverWorkspace: "soil_health_raster",
+        },
+      },
+    });
+    expect(soilOrganicCarbon.source.tiles[0]).toContain("STYLES=Soil_Health_Organic_carbon");
+    expect(soilOrganicCarbon.source.url).toContain(
+      "CoverageId=soil_health_raster%3Acachar_lakhipur_soil_health_raster_OC"
+    );
+
+    const soilOrganicCarbonOlm = project.layers.find((layer) => layer.id === "corestack-soil_health_raster_OC_OLM");
+    expect(soilOrganicCarbonOlm).toMatchObject({
+      type: "raster",
+      name: "Soil Organic Carbon Concentration for Various Forest Systems",
+      visible: false,
+      source: {
+        layers: "soil_health_raster:cachar_lakhipur_soil_health_raster_OC_OLM",
+        styles: "Soil_Health_OC_OLM",
+      },
+      metadata: {
+        corestack: {
+          geoserverWorkspace: "soil_health_raster",
+        },
+      },
+    });
+    expect(soilOrganicCarbonOlm.source.tiles[0]).toContain("STYLES=Soil_Health_OC_OLM");
+    expect(soilOrganicCarbonOlm.source.url).toContain(
+      "CoverageId=soil_health_raster%3Acachar_lakhipur_soil_health_raster_OC_OLM"
+    );
+
     expect(
       project.layers.every(
         (layer) =>
@@ -307,8 +550,7 @@ describe("GeoLibre 2.6 project generation", () => {
         .filter((layer) =>
           [
             "corestack-mws_layers",
-            "corestack-hydrological_boundaries",
-            "corestack-mws_layers_fortnight",
+                  "corestack-mws_layers_fortnight",
           ].includes(layer.id)
         )
         .every((layer) => layer.groupId === "hydrology")
@@ -323,9 +565,7 @@ describe("GeoLibre 2.6 project generation", () => {
       "demographic",
       "village-data",
       "hydrology",
-      "lulc-3",
-      "lulc-2",
-      "lulc-1",
+      "lulc",
       "land",
       "agriculture",
       "restoration",
@@ -359,15 +599,15 @@ describe("GeoLibre 2.6 project generation", () => {
       "corestack-mining": "mining:cachar_lakhipur_mining",
     });
 
-    expect(project.styles["corestack-facilities"].vectorStyleExpression).toContain(
+    expect(project.styles["corestack-facilities"].vectorStyleProperty).toContain(
       "l2_essential_education_distance_km"
     );
     expect(project.styles["corestack-antyodaya"]).toMatchObject({
       vectorStyleMode: "categorized",
-      vectorStyleProperty: "road_connectivity_cat_cluster",
+      vectorStyleProperty: "maternal_child_health_cat_cluster",
     });
-    expect(project.styles["corestack-livestock"].vectorStyleExpression).toContain(
-      "small_animals_total"
+    expect(project.styles["corestack-livestock"].vectorStyleProperty).toContain(
+      "large_animals_total"
     );
   });
 
@@ -377,27 +617,10 @@ describe("GeoLibre 2.6 project generation", () => {
       fetchFeatureCollection: successfulFetch,
     });
     const legends = activeGeoLibreLegends(project);
-    const legend = legends[0];
-
-    expect(project.plugins.activePluginIds).not.toContain(
-      "maplibre-gl-components"
-    );
-    expect(project.plugins.activePluginIds).not.toContain("maplibre-gl-swipe");
-    expect(project.plugins.settings["maplibre-gl-components"]).toBeUndefined();
-    expect(project.plugins.settings["maplibre-gl-swipe"]).toBeUndefined();
-    expect(legend).toMatchObject({
-      title: "Socio-Economic Profile legend",
-    });
-    expect(legend.items).toContainEqual({
-      label: "Literacy 70% or above",
-      color: "#006400",
-      shape: "square",
-    });
-    expect(legend.legendPosition).toBe("bottom-right");
-    expect(legends.map((entry) => entry.title)).toEqual([
-      "Socio-Economic Profile legend",
-      "Administrative Boundaries legend",
-    ]);
+    expect(project.legend.panelVisible).toBe(true);
+    expect(project.legend.collapsed).toBe(false);
+    expect(legends.map(item => item.title)).toEqual(["Terrain legend"]);
+    expect(project.layers.filter(layer => layer.type === "geojson").every(layer => !layer.metadata.corestack.legend)).toBe(true);
   });
 
   it("does not override a user-selected split-map layout", async () => {
@@ -413,6 +636,7 @@ describe("GeoLibre 2.6 project generation", () => {
         ...project.plugins,
         activePluginIds: [
           ...project.plugins.activePluginIds,
+          "corestack-embed",
           "maplibre-gl-components",
           "maplibre-gl-swipe",
         ],
@@ -444,6 +668,7 @@ describe("GeoLibre 2.6 project generation", () => {
       "maplibre-gl-components"
     );
     expect(reset.plugins.activePluginIds).not.toContain("maplibre-gl-swipe");
+    expect(reset.plugins.activePluginIds).not.toContain("corestack-embed");
     expect(
       reset.plugins.mapControlPositions["maplibre-gl-components"]
     ).toBeUndefined();
@@ -470,12 +695,7 @@ describe("GeoLibre 2.6 project generation", () => {
     const synced = sanitizeGeoLibreProjectPlugins(withVisibleLayers);
     const legends = activeGeoLibreLegends(synced);
 
-    expect(legends.map((entry) => entry.title)).toEqual([
-      "Socio-Economic Profile legend",
-      "Administrative Boundaries legend",
-      "Drainage Lines legend",
-      "Terrain legend",
-    ]);
+    expect(legends.map((entry) => entry.title)).toEqual(["Terrain legend"]);
 
     const drainageHidden = {
       ...synced,
@@ -486,14 +706,10 @@ describe("GeoLibre 2.6 project generation", () => {
       ),
     };
     const resynced = sanitizeGeoLibreProjectPlugins(drainageHidden);
-    expect(activeGeoLibreLegends(resynced).map((entry) => entry.title)).toEqual([
-      "Socio-Economic Profile legend",
-      "Administrative Boundaries legend",
-      "Terrain legend",
-    ]);
+    expect(activeGeoLibreLegends(resynced).map((entry) => entry.title)).toEqual(["Terrain legend"]);
   });
 
-  it("returns a separate active legend for every visible LULC style", async () => {
+  it("returns the 12-class LULC legend for a visible LULC year", async () => {
     const project = await buildGeoLibreProject({
       ...location,
       fetchFeatureCollection: successfulFetch,
@@ -501,42 +717,172 @@ describe("GeoLibre 2.6 project generation", () => {
     const withLulcStyles = {
       ...project,
       layers: project.layers.map((layer) =>
-        [
-          "corestack-lulc_level_1_17_18",
-          "corestack-lulc_level_2_17_18",
-          "corestack-lulc_level_3_17_18",
-        ].includes(layer.id)
+        layer.id === "corestack-lulc_level_3_17_18"
           ? { ...layer, visible: true }
           : layer
       ),
     };
 
     const legends = activeGeoLibreLegends(withLulcStyles);
-    expect(legends.map((legend) => legend.title)).toEqual(
-      expect.arrayContaining([
-        "LULC Level 1 legend",
-        "LULC Level 2 legend",
-        "LULC Level 3 legend",
-      ])
-    );
-    expect(
-      legends.find((legend) => legend.title === "LULC Level 1 legend").items
-    ).toHaveLength(5);
-    expect(
-      legends.find((legend) => legend.title === "LULC Level 2 legend").items
-    ).toHaveLength(2);
-    expect(
-      legends.find((legend) => legend.title === "LULC Level 3 legend").items
-    ).toHaveLength(4);
+    const lulcLegend = legends.find((legend) => legend.title === "LULC legend");
+    expect(lulcLegend.items).toHaveLength(12);
+    expect(lulcLegend.items.map((item) => item.label)).toContain("Kharif, Rabi and Zaid Water");
   });
 
-  it("loads only the shared Demographic source during project creation", async () => {
+  it("matches the published Change Detection: Crop Intensity legend exactly", async () => {
+    const project = await buildGeoLibreProject({
+      ...location,
+      fetchFeatureCollection: successfulFetch,
+    });
+    const withCropIntensityVisible = {
+      ...project,
+      layers: project.layers.map((layer) =>
+        layer.id === "corestack-cropintensity"
+          ? { ...layer, visible: true }
+          : layer
+      ),
+    };
+    const legends = activeGeoLibreLegends(withCropIntensityVisible);
+    const cropIntensityLegend = legends.find((legend) => legend.title === "Change Detection: Crop Intensity legend");
+    expect(cropIntensityLegend.items).toEqual([
+      { label: "Double-Single", color: "#f7fcf5", shape: "square" },
+      { label: "Tripple_or_annual_or_perennial-Single", color: "#ff4500", shape: "square" },
+      { label: "Tripple_or_annual_or_perennial-Double", color: "#ff0000", shape: "square" },
+      { label: "Single-Double", color: "#00ff00", shape: "square" },
+      { label: "Single-Tripple_or_annual_or_perennial", color: "#32cd32", shape: "square" },
+      { label: "Double-Tripple_or_annual_or_perennial", color: "#228b22", shape: "square" },
+      { label: "Single-Single", color: "#4227f5", shape: "square" },
+      { label: "Double-Double", color: "#712103", shape: "square" },
+      { label: "Tripple_or_annual_or_perennial-Tripple_or_annual_or_perennial", color: "#ad27f5", shape: "square" },
+    ]);
+  });
+
+  it("matches the published Soil Nitrogen Levels legend exactly", async () => {
+    const project = await buildGeoLibreProject({
+      ...location,
+      fetchFeatureCollection: successfulFetch,
+    });
+    const withSoilNitrogenVisible = {
+      ...project,
+      layers: project.layers.map((layer) =>
+        layer.id === "corestack-soil_health_raster_n"
+          ? { ...layer, visible: true }
+          : layer
+      ),
+    };
+    const legends = activeGeoLibreLegends(withSoilNitrogenVisible);
+    const soilNitrogenLegend = legends.find((legend) => legend.title === "Soil Nitrogen Levels legend");
+    expect(soilNitrogenLegend.items).toEqual([
+      { label: "0", color: "#8B0000", shape: "square" },
+      { label: "50", color: "#D73027", shape: "square" },
+      { label: "100", color: "#F46D43", shape: "square" },
+      { label: "150", color: "#FDAE61", shape: "square" },
+      { label: "200", color: "#FEE08B", shape: "square" },
+      { label: "250", color: "#FFFFBF", shape: "square" },
+      { label: "300", color: "#D9EF8B", shape: "square" },
+      { label: "350", color: "#A6D96A", shape: "square" },
+      { label: "400", color: "#66BD63", shape: "square" },
+      { label: "450", color: "#1A9850", shape: "square" },
+      { label: "500", color: "#006837", shape: "square" },
+    ]);
+  });
+
+  it("matches the published Soil Phosphorus Levels legend exactly", async () => {
+    const project = await buildGeoLibreProject({
+      ...location,
+      fetchFeatureCollection: successfulFetch,
+    });
+    const withSoilPhosphorusVisible = {
+      ...project,
+      layers: project.layers.map((layer) =>
+        layer.id === "corestack-soil_health_raster_P"
+          ? { ...layer, visible: true }
+          : layer
+      ),
+    };
+    const legends = activeGeoLibreLegends(withSoilPhosphorusVisible);
+    const soilPhosphorusLegend = legends.find((legend) => legend.title === "Soil Phosphorus Levels legend");
+    expect(soilPhosphorusLegend.items).toEqual([
+      { label: "Low (<10)", color: "#D73027", shape: "square" },
+      { label: "Medium (10-25)", color: "#FEE08B", shape: "square" },
+      { label: "High (>25)", color: "#1A9850", shape: "square" },
+    ]);
+  });
+
+  it("matches the published Soil Potassium Levels legend exactly", async () => {
+    const project = await buildGeoLibreProject({
+      ...location,
+      fetchFeatureCollection: successfulFetch,
+    });
+    const withSoilPotassiumVisible = {
+      ...project,
+      layers: project.layers.map((layer) =>
+        layer.id === "corestack-soil_health_raster_K"
+          ? { ...layer, visible: true }
+          : layer
+      ),
+    };
+    const legends = activeGeoLibreLegends(withSoilPotassiumVisible);
+    const soilPotassiumLegend = legends.find((legend) => legend.title === "Soil Potassium Levels legend");
+    expect(soilPotassiumLegend.items).toEqual([
+      { label: "Low (<120 kg/ha)", color: "#FF0000", shape: "square" },
+      { label: "Medium (120-280 kg/ha)", color: "#EEE05D", shape: "square" },
+      { label: "High (>280 kg/ha)", color: "#73BB53", shape: "square" },
+    ]);
+  });
+
+  it("matches the published Soil Organic Carbon Concentration legend exactly", async () => {
+    const project = await buildGeoLibreProject({
+      ...location,
+      fetchFeatureCollection: successfulFetch,
+    });
+    const withSoilOrganicCarbonVisible = {
+      ...project,
+      layers: project.layers.map((layer) =>
+        layer.id === "corestack-soil_health_raster_OC"
+          ? { ...layer, visible: true }
+          : layer
+      ),
+    };
+    const legends = activeGeoLibreLegends(withSoilOrganicCarbonVisible);
+    const soilOrganicCarbonLegend = legends.find((legend) => legend.title === "Soil Organic Carbon Concentration legend");
+    expect(soilOrganicCarbonLegend.items).toEqual([
+      { label: "Low (0-120 kg/ha)", color: "#C8E6C9", shape: "square" },
+      { label: "Medium (120-280 kg/ha)", color: "#66BB6A", shape: "square" },
+      { label: "High (>280 kg/ha)", color: "#2E7D32", shape: "square" },
+    ]);
+  });
+
+  it("matches the published Soil Organic Carbon Concentration for Various Forest Systems legend exactly", async () => {
+    const project = await buildGeoLibreProject({
+      ...location,
+      fetchFeatureCollection: successfulFetch,
+    });
+    const withSoilOrganicCarbonOlmVisible = {
+      ...project,
+      layers: project.layers.map((layer) =>
+        layer.id === "corestack-soil_health_raster_OC_OLM"
+          ? { ...layer, visible: true }
+          : layer
+      ),
+    };
+    const legends = activeGeoLibreLegends(withSoilOrganicCarbonOlmVisible);
+    const soilOrganicCarbonOlmLegend = legends.find((legend) => legend.title === "Soil Organic Carbon Concentration for Various Forest Systems legend");
+    expect(soilOrganicCarbonOlmLegend.items).toEqual([
+      { label: "<=1% (Scrubs / Degraded land)", color: "#EF5350", shape: "square" },
+      { label: "1-2% (Open Forests)", color: "#FFCA28", shape: "square" },
+      { label: "2-3% (Moderately Dense Forest)", color: "#81C784", shape: "square" },
+      { label: ">3% (Very Dense Forest)", color: "#66BB6A", shape: "square" },
+    ]);
+  });
+
+  it("loads only the hidden extent while leaving all other vectors lazy", async () => {
     const project = await buildGeoLibreProject({
       ...location,
       fetchFeatureCollection: successfulFetch,
     });
 
-    expect(project.metadata.layerLoading.stage).toBe("demographic");
+    expect(project.metadata.layerLoading.stage).toBe("base-map");
     expect(
       project.layers
         .filter(
@@ -545,7 +891,7 @@ describe("GeoLibre 2.6 project generation", () => {
             ![
               "corestack-administrative_boundaries",
               "corestack-demographics",
-            ].includes(layer.id)
+                    ].includes(layer.id)
         )
         .every((layer) => layer.metadata.loadState === "unloaded")
     ).toBe(true);
@@ -558,8 +904,7 @@ describe("GeoLibre 2.6 project generation", () => {
         .filter((layer) => layer.visible)
         .map((layer) => layer.id)
     ).toEqual([
-      "corestack-demographics",
-      "corestack-administrative_boundaries",
+      "corestack-terrain",
     ]);
     expect(successfulFetch.mock.calls[0][0].typeName).toBe(
       "panchayat_boundaries:cachar_lakhipur"
@@ -651,19 +996,16 @@ describe("GeoLibre 2.6 project generation", () => {
     expect(nrega.style).toMatchObject({
       vectorStyleMode: "single",
       fillOpacity: 0.9,
-      circleRadius: 4,
-      markerEnabled: true,
-      markerShape: "square",
-      markerColor: "#e68600",
-      markerSize: 14,
-      pointRenderer: "single",
+      circleRadius: 5,
+      fillColor: "#FFA500",
+      strokeColor: "#ffffff",
     });
     expect(
       [...nregaLayers].reverse().map((item) => item.name)
-    ).toEqual(GEOLIBRE_NREGA_CATEGORIES.map((category) => category.label));
+    ).toEqual(GEOLIBRE_NREGA_CATEGORIES.map(category => category.label));
     expect(
-      [...nregaLayers].reverse().map((item) => item.style.markerShape)
-    ).toEqual(GEOLIBRE_NREGA_CATEGORIES.map((category) => category.markerShape));
+      [...nregaLayers].reverse().map((item) => item.style.fillColor)
+    ).toEqual(GEOLIBRE_NREGA_CATEGORIES.map((category) => category.color));
     expect(
       nregaLayers.every((item) => item.metadata.loadState === "loaded")
     ).toBe(true);
@@ -679,11 +1021,7 @@ describe("GeoLibre 2.6 project generation", () => {
         0
       )
     ).toBe(nregaFeatureCollection.features.length);
-    expect(
-      nrega.metadata.corestack.legend.items.map((item) => item.shape)
-    ).toEqual(
-      GEOLIBRE_NREGA_CATEGORIES.map((category) => category.markerShape)
-    );
+    expect(nrega.metadata.corestack.legend).toBeUndefined();
     expect(nrega.style.labels).toBeUndefined();
     expect(nrega.style.diagramType).toBeUndefined();
 
@@ -712,6 +1050,59 @@ describe("GeoLibre 2.6 project generation", () => {
         .every((item) => item.visible)
     ).toBe(true);
     expect(nregaFetch).toHaveBeenCalledTimes(1);
+  });
+  it("classifies NREGA features published with the newer unclipped WorkCategory field", async () => {
+    const project = await buildGeoLibreProject({
+      ...location,
+      fetchFeatureCollection: successfulFetch,
+    });
+    const layerId = "corestack-nrega_plantation";
+    const newSchemaFeatures = {
+      type: "FeatureCollection",
+      features: ["Plantation", "SWC - Landscape level impact", "Un Identified"].map(
+        (WorkCategory, index) => ({
+          type: "Feature",
+          id: `nrega-new-${index}`,
+          properties: { WorkCategory, "Work Type": `Work type ${index}` },
+          geometry: { type: "Point", coordinates: [92.92 + index * 0.02, 24.72 + index * 0.02] },
+        })
+      ),
+    };
+    const nregaFetch = jest.fn(async () => newSchemaFeatures);
+
+    const hydratedProject = await hydrateGeoLibreVectorLayer({
+      project,
+      layerId,
+      fetchFeatureCollection: nregaFetch,
+    });
+    const plantation = hydratedProject.layers.find((layer) => layer.id === layerId);
+    expect(plantation.geojson.features).toHaveLength(1);
+    expect(plantation.geojson.features[0].properties).toMatchObject({
+      WorkCategory: "Plantation",
+      WorkCatego: "Plantation",
+    });
+    const swc = hydratedProject.layers.find((layer) => layer.id === "corestack-nrega_soil_water_conservation");
+    expect(swc.geojson.features).toHaveLength(1);
+    const unclassified = hydratedProject.layers.find((layer) => layer.id === "corestack-nrega_unclassified");
+    expect(unclassified.geojson.features).toHaveLength(1);
+  });
+  it("classifies Terrain Clusters features published with the older unclipped terrainClusters field", async () => {
+    const project = await buildGeoLibreProject({ ...location, fetchFeatureCollection: successfulFetch });
+    const legacySchemaFeatures = {
+      type: "FeatureCollection",
+      features: [{
+        type: "Feature",
+        properties: { uid: "12_307609", area_in_ha: 2116.4, plain_area: 66.0, terrainClusters: 3 },
+        geometry: { type: "Polygon", coordinates: [] },
+      }],
+    };
+    const result = await hydrateGeoLibreVectorLayer({
+      project, layerId: "corestack-terrain_vector",
+      fetchFeatureCollection: async () => legacySchemaFeatures,
+    });
+    const terrain = result.layers.find((layer) => layer.id === "corestack-terrain_vector");
+    expect(terrain.style.vectorStyleProperty).toBe("terrainClu");
+    expect(terrain.geojson.features[0].properties).toMatchObject({ terrainClusters: 3, terrainClu: 3 });
   });
 
   it("keeps a failed lazy vector available for a later toggle retry", async () => {
@@ -746,7 +1137,7 @@ describe("GeoLibre 2.6 project generation", () => {
     expect(retriedProject.metadata.layerLoading.lazyLoadFailures).toEqual([]);
   });
 
-  it("requires the socioeconomic extent", async () => {
+  it("requires the administrative extent", async () => {
     const failedFetch = jest.fn(async () => {
       throw new Error("offline");
     });
@@ -755,6 +1146,93 @@ describe("GeoLibre 2.6 project generation", () => {
         ...location,
         fetchFeatureCollection: failedFetch,
       })
-    ).rejects.toThrow(/socio-economic profile.*offline/i);
+    ).rejects.toThrow(/administrative boundary.*offline/i);
+  });
+});
+
+describe("Fortnightly Water Balance records", () => {
+  it("preserves names, geometry, signs, zero, missing values and malformed JSON", () => {
+    const geometry = { type: "Point", coordinates: [1, 2] };
+    const data = { type: "FeatureCollection", features: [{ geometry, properties: {
+      uid: "12_301304", "2025-06-01": '{"DeltaG": -12, "Precipitation": 4}',
+      "2025-06-16": '{"DeltaG": 0}', "2025-07-01": { DeltaG: 9 },
+      "2025-07-16": "bad JSON", "2025-08-01": null,
+    } }] };
+    const parsed = parseFortnightRecords(data);
+    expect(parsed.features[0].properties).toEqual({
+      uid: "12_301304", "2025-06-01": { DeltaG: -12, Precipitation: 4 },
+      "2025-06-16": { DeltaG: 0 }, "2025-07-01": { DeltaG: 9 },
+      "2025-07-16": "bad JSON", "2025-08-01": null,
+      avg_delta_g: -1,
+    });
+    expect(parsed.features[0].geometry).toBe(geometry);
+    expect(data.features[0].properties["2025-06-01"]).toBe('{"DeltaG": -12, "Precipitation": 4}');
+  });
+  it("keeps the average null, not zero, when no date record has a readable DeltaG", () => {
+    const data = { type: "FeatureCollection", features: [{ geometry: null, properties: {
+      "2025-06-01": "bad JSON", "2025-06-16": null, not_a_date: '{"DeltaG": 5}',
+    } }] };
+    expect(parseFortnightRecords(data).features[0].properties.avg_delta_g).toBeNull();
+  });
+});
+
+describe("Annual Water Balance records", () => {
+  it("averages DeltaG across year-keyed records and ignores non-year and malformed fields", () => {
+    const data = { type: "FeatureCollection", features: [{ geometry: null, properties: {
+      uid: "14_63507",
+      "2017_2018": '{"DeltaG": 60, "ET": 486}',
+      "2018_2019": '{"DeltaG": -120}',
+      "2019_2020": "bad JSON",
+      "Net2018_23": 1.69,
+      area_in_ha: 1396.9,
+    } }] };
+    const parsed = withAverageDeltaG(data);
+    expect(parsed.features[0].properties.avg_delta_g).toBe(-30);
+    expect(parsed.features[0].properties).toMatchObject({ uid: "14_63507", Net2018_23: 1.69, area_in_ha: 1396.9 });
+  });
+  it("keeps the average null, not zero, when no year record has a readable DeltaG", () => {
+    const data = { type: "FeatureCollection", features: [{ geometry: null, properties: {
+      "2017_2018": "bad JSON", "2018_2019": null, not_a_year: '{"DeltaG": 5}',
+    } }] };
+    expect(withAverageDeltaG(data).features[0].properties.avg_delta_g).toBeNull();
+  });
+});
+
+describe("Terrain Clusters field normalization", () => {
+  it("copies terrainClusters onto terrainClu when the clipped field is absent", () => {
+    const data = { type: "FeatureCollection", features: [{ geometry: null, properties: {
+      uid: "12_307609", plain_area: 66.0, terrainClusters: 3,
+    } }] };
+    expect(withNormalizedTerrainCluster(data).features[0].properties).toMatchObject({
+      terrainClusters: 3, terrainClu: 3,
+    });
+  });
+  it("leaves an already-clipped feature unchanged", () => {
+    const data = { type: "FeatureCollection", features: [{ geometry: null, properties: {
+      uid: "12_108325", terrainClu: 0,
+    } }] };
+    const parsed = withNormalizedTerrainCluster(data);
+    expect(parsed.features[0]).toBe(data.features[0]);
+    expect(parsed.features[0].properties.terrainClusters).toBeUndefined();
+  });
+  it("leaves a feature with neither field unchanged", () => {
+    const data = { type: "FeatureCollection", features: [{ geometry: null, properties: { uid: "1" } }] };
+    const parsed = withNormalizedTerrainCluster(data);
+    expect(parsed.features[0]).toBe(data.features[0]);
+  });
+});
+
+describe("Soil Type texture binning", () => {
+  it("bins a raw subsoil_texture value into its CoRE Stack soil-texture group", () => {
+    const data = { type: "FeatureCollection", features: [{ geometry: null, properties: {
+      uid: "12_57237", subsoil_texture: "Silty clay loam",
+    } }] };
+    expect(withSoilTextureClass(data).features[0].properties.soil_texture_class).toBe("Moderately Fine / Clay Loam");
+  });
+  it("keeps the class null, not a made-up bin, for a missing or unrecognized texture", () => {
+    const missing = { type: "FeatureCollection", features: [{ geometry: null, properties: { uid: "1", subsoil_texture: null } }] };
+    const unrecognized = { type: "FeatureCollection", features: [{ geometry: null, properties: { uid: "2", subsoil_texture: "Medium" } }] };
+    expect(withSoilTextureClass(missing).features[0].properties.soil_texture_class).toBeNull();
+    expect(withSoilTextureClass(unrecognized).features[0].properties.soil_texture_class).toBeNull();
   });
 });

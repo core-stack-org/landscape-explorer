@@ -89,13 +89,11 @@ const LandingNavbar = ({ downloadScope = null }) => {
                   <button
                     type="button"
                     onClick={() => setShowGeoLibreTour(true)}
-                    className="flex items-center gap-2 rounded-lg border border-purple-300 bg-purple-700 px-4 py-2 text-white transition-all duration-200 hover:bg-purple-800"
+                    className="flex items-center justify-center rounded-lg border border-purple-300 bg-purple-50 px-4 py-2 text-sm font-medium text-purple-800 transition-colors duration-200 hover:bg-purple-100 focus:outline-none"
                     aria-label="Start the GeoLibre quick tour"
                   >
                     <Compass className="h-4 w-4" />
-                    <span className="text-sm font-semibold sm:text-base">
-                      Quick Tour
-                    </span>
+                    <span className="ml-2">Quick Tour</span>
                   </button>
                 </HeaderTooltip>
 

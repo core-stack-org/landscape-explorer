@@ -1,30 +1,36 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   GEOLIBRE_CONFIG,
-  geoLibreVersionStatus,
   resolveGeoLibreViewer,
 } from "../../config/geolibre.config";
 import GeoLibreLegend from "./GeoLibreLegend";
+import { GeoLibreReadiness } from "./geolibreReadiness";
 
 const MAX_TECHNICAL_LOG_ENTRIES = 40;
 
-const USER_ISSUES = {
+const SUPPORT_EMAIL = "support@core-stack.org";
+
+const COMMON_RECOVERY_STEPS =
+  "If the problem continues, clear your browser cache and try again. Try using a different browser or device if the issue persists.";
+
+export const USER_ISSUES = Object.freeze({
   preparation: {
     title: "We couldn’t prepare this tehsil’s map",
-    message:
-      "Please try again. If the problem continues, select the tehsil again or share the technical log with the CoRE Stack team.",
+    message: [
+      "Please try again. Start with freshly reloading your tab.",
+      COMMON_RECOVERY_STEPS,
+      `If you are a KYL partner, contact your KYL technical support representative for assistance; otherwise, contact support at ${SUPPORT_EMAIL}.`
+    ].join(" "),
   },
   delayed: {
     title: "The map is taking longer than expected",
-    message:
-      "Check your internet connection and try again. If the problem continues, download the technical log and share it with the CoRE Stack team.",
+    message: `Check your internet connection and try again. ${COMMON_RECOVERY_STEPS}`,
   },
   unavailable: {
     title: "The map is temporarily unavailable",
-    message:
-      "Please try again in a moment. If the problem continues, download the technical log and share it with the CoRE Stack team.",
+    message: `Please try again in a moment. ${COMMON_RECOVERY_STEPS}`,
   },
-};
+});
 
 export const formatGeoLibreLog = (entries) =>
   [
@@ -66,23 +72,23 @@ export const geoLibreProjectLoadSignature = (project) =>
 
 const GeoLibreFrame = ({
   project,
-  preparationMessage,
   preparationError,
   warning,
   legends,
   onRetry,
   onProjectState,
+  onWorkspaceReady,
 }) => {
   const frameRef = useRef(null);
-  const fitTimerRef = useRef(null);
-  const fittedScopeRef = useRef("");
-  const sentProjectSignatureRef = useRef("");
-  const sequenceRef = useRef(0);
+  const bridgeRef = useRef(null);
+  const sentSignatureRef = useRef("");
   const technicalLogRef = useRef([]);
+  const callbacksRef = useRef({ onProjectState, onWorkspaceReady });
+  callbacksRef.current = { onProjectState, onWorkspaceReady };
   const [viewerState, setViewerState] = useState("loading");
   const [viewerIssue, setViewerIssue] = useState("");
   const [viewerVersion, setViewerVersion] = useState("");
-  const [readyGeneration, setReadyGeneration] = useState(0);
+  const [backgroundIssue, setBackgroundIssue] = useState("");
 
   const viewer = useMemo(() => {
     try {
@@ -100,13 +106,10 @@ const GeoLibreFrame = ({
   }, []);
 
   const addTechnicalLog = useCallback((event, details) => {
+    const entry = { timestamp: new Date().toISOString(), event, ...(details ? { details } : {}) };
     technicalLogRef.current = [
       ...technicalLogRef.current,
-      {
-        timestamp: new Date().toISOString(),
-        event,
-        ...(details ? { details } : {}),
-      },
+      entry,
     ].slice(-MAX_TECHNICAL_LOG_ENTRIES);
   }, []);
 
@@ -129,144 +132,38 @@ const GeoLibreFrame = ({
   useEffect(() => {
     if (!viewer.url) return undefined;
     const frame = frameRef.current;
-    if (!frame) return undefined;
-
-    let handshakeTimer = window.setTimeout(() => {
-      addTechnicalLog("iframe_handshake_timeout", {
-        expectedVersion: GEOLIBRE_CONFIG.version,
-        viewerUrl: viewer.url,
-        timeoutMs: 90000,
-      });
-      setViewerIssue("delayed");
-      setViewerState("error");
-    }, 90000);
-
-    const handleMessage = (event) => {
-      if (
-        event.origin !== viewer.origin ||
-        event.source !== frame.contentWindow ||
-        !event.data ||
-        typeof event.data !== "object"
-      ) {
-        return;
-      }
-
-      if (event.data.type === "geolibre:ready") {
-        window.clearTimeout(handshakeTimer);
-        handshakeTimer = null;
-        const status = geoLibreVersionStatus(event.data.version);
-        if (!status.compatible) {
-          addTechnicalLog("viewer_version_rejected", {
-            actualVersion: event.data.version,
-            reason: status.message,
-          });
-          setViewerIssue("unavailable");
-          setViewerState("error");
-          return;
-        }
-        addTechnicalLog("iframe_ready", {
-          actualVersion: event.data.version,
-        });
-        setViewerVersion(String(event.data.version));
-        sentProjectSignatureRef.current = "";
-        setViewerIssue("");
-        setViewerState("ready");
-        setReadyGeneration((generation) => generation + 1);
-        return;
-      }
-
-      if (event.data.type === "geolibre:error") {
-        addTechnicalLog("viewer_reported_error", {
-          message:
-            event.data.message || "GeoLibre could not load the generated project.",
-        });
-        setViewerIssue("unavailable");
-        setViewerState("error");
-        return;
-      }
-
-      if (event.data.type === "geolibre:state" && event.data.project) {
-        addTechnicalLog("project_state_received", {
-          layerCount: event.data.project.layers?.length || 0,
-        });
-        onProjectState?.(event.data.project);
-      }
+    const bridge = new GeoLibreReadiness({
+      post: message => frame?.contentWindow?.postMessage(message, viewer.origin),
+      log: addTechnicalLog,
+      update: ({ state, issue, version, backgroundIssue: layerIssue }) => {
+        if (layerIssue !== undefined) setBackgroundIssue(layerIssue);
+        if (state) setViewerState(state);
+        if (issue !== undefined) setViewerIssue(issue);
+        if (version) setViewerVersion(version);
+      },
+      onProjectState: snapshot => callbacksRef.current.onProjectState?.(snapshot),
+      onReady: timing => callbacksRef.current.onWorkspaceReady?.(timing),
+    });
+    bridgeRef.current = bridge;
+    const handleMessage = event => {
+      if (event.origin !== viewer.origin || event.source !== frame?.contentWindow || !event.data || typeof event.data !== "object") return;
+      bridge.receive(event.data);
     };
-
     window.addEventListener("message", handleMessage);
     return () => {
       window.removeEventListener("message", handleMessage);
-      if (handshakeTimer !== null) window.clearTimeout(handshakeTimer);
+      bridge.dispose();
+      bridgeRef.current = null;
+      sentSignatureRef.current = "";
     };
-  }, [addTechnicalLog, onProjectState, viewer.origin, viewer.url]);
-
-  useEffect(
-    () => () => {
-      if (fitTimerRef.current !== null) {
-        window.clearTimeout(fitTimerRef.current);
-      }
-    },
-    []
-  );
+  }, [addTechnicalLog, viewer.origin, viewer.url]);
 
   useEffect(() => {
-    const target = frameRef.current?.contentWindow;
-    const projectSignature = geoLibreProjectLoadSignature(project);
-    if (
-      !target ||
-      !project ||
-      !["ready", "loaded"].includes(viewerState) ||
-      sentProjectSignatureRef.current === projectSignature
-    ) {
-      return;
-    }
-
-    sequenceRef.current += 1;
-    const sequence = sequenceRef.current;
-    target.postMessage(
-      {
-        type: "geolibre:load-project",
-        project,
-        seq: sequence,
-      },
-      viewer.origin
-    );
-    addTechnicalLog("project_sent", {
-      sequence,
-      projectName: project.name,
-      layerCount: project.layers?.length || 0,
-    });
-    sentProjectSignatureRef.current = projectSignature;
-    const bounds = project.mapView?.bbox;
-    const scope = project.metadata?.scope;
-    const scopeKey = scope
-      ? [scope.state, scope.district, scope.tehsil].join("|")
-      : project.name || "default";
-    if (
-      Array.isArray(bounds) &&
-      bounds.length === 4 &&
-      fittedScopeRef.current !== scopeKey
-    ) {
-      fittedScopeRef.current = scopeKey;
-      if (fitTimerRef.current !== null) {
-        window.clearTimeout(fitTimerRef.current);
-      }
-      fitTimerRef.current = window.setTimeout(() => {
-        target.postMessage(
-          {
-            type: "geolibre:command",
-            requestId: `kyl-fit-bounds-${sequence}`,
-            method: "fitBounds",
-            params: { bounds },
-          },
-          viewer.origin
-        );
-        addTechnicalLog("initial_bounds_fit_requested", { bounds });
-        fitTimerRef.current = null;
-      }, 1500);
-    }
-    setViewerState("loaded");
-  }, [addTechnicalLog, project, readyGeneration, viewer.origin, viewerState]);
+    const signature = geoLibreProjectLoadSignature(project);
+    if (!bridgeRef.current || sentSignatureRef.current === signature) return;
+    sentSignatureRef.current = signature;
+    bridgeRef.current.load(project);
+  }, [project]);
 
   const activeIssue = viewer.error
     ? "unavailable"
@@ -274,7 +171,7 @@ const GeoLibreFrame = ({
       ? "preparation"
       : viewerIssue;
   const userIssue = activeIssue ? USER_ISSUES[activeIssue] : null;
-  const showProgress = !userIssue && (!project || viewerState === "loading");
+  const showProgress = !userIssue && (!project || viewerState !== "loaded");
 
   const downloadTechnicalLog = () => {
     const blob = new Blob([formatGeoLibreLog(technicalLogRef.current)], {
@@ -305,11 +202,7 @@ const GeoLibreFrame = ({
           data-geolibre-version={viewerVersion || undefined}
           onLoad={() => {
             addTechnicalLog("iframe_loaded", { viewerUrl: viewer.url });
-            fittedScopeRef.current = "";
-            setViewerVersion("");
-            setViewerState((current) =>
-              current === "loaded" ? current : "loading"
-            );
+            // The DOM load event can follow the app handshake; it is not map readiness.
           }}
         />
       )}
@@ -319,13 +212,13 @@ const GeoLibreFrame = ({
       )}
 
       {!userIssue && viewerVersion && (
-        <div
-          className="pointer-events-none absolute bottom-3 left-3 rounded-md border border-slate-300 bg-white/95 px-2 py-1 text-[11px] font-medium text-slate-700 shadow-sm"
-          title={`Loaded from ${viewer.url}`}
-          role="status"
+        <button type="button"
+          className="absolute bottom-3 left-3 rounded-md border border-slate-300 bg-white/95 px-2 py-1 text-[11px] font-medium text-slate-700 shadow-sm"
+          title="Download map loading log"
+          onClick={downloadTechnicalLog}
         >
           GeoLibre {viewerVersion} · {viewer.versionPinned ? "pinned" : "rolling host"}
-        </div>
+        </button>
       )}
 
       {(showProgress || userIssue) && (
@@ -365,11 +258,12 @@ const GeoLibreFrame = ({
               <>
                 <div className="mx-auto h-9 w-9 animate-spin rounded-full border-4 border-purple-100 border-t-purple-700" />
                 <h1 className="mt-4 text-base font-semibold text-slate-900">
-                  Preparing GeoLibre
+                  GeoLibre is loading
                 </h1>
                 <p className="mt-1 text-sm text-slate-600">
-                  {preparationMessage ||
-                    `Starting GeoLibre ${GEOLIBRE_CONFIG.version}…`}
+                  {!viewerVersion
+                    ? "Connecting to GeoLibre. This may take a little longer while the service is busy."
+                    : "Preparing your map…"}
                 </p>
               </>
             )}
@@ -377,12 +271,12 @@ const GeoLibreFrame = ({
         </div>
       )}
 
-      {!userIssue && warning && viewerState === "loaded" && (
+      {!userIssue && (warning || backgroundIssue) && viewerState === "loaded" && (
         <div
           className="absolute bottom-4 left-1/2 max-w-[calc(100%-2rem)] -translate-x-1/2 rounded-lg border border-amber-300 bg-amber-50/95 px-4 py-2 text-sm text-amber-950 shadow-lg"
           role="status"
         >
-          {warning}
+          {warning || backgroundIssue}
         </div>
       )}
     </main>
