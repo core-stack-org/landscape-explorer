@@ -210,7 +210,7 @@ application.
 | `GeoLibreFrame.jsx` | Iframe bridge, one-time bbox fit, human error states and downloadable bounded technical log |
 | `../../pages/LandscapeExplorer.jsx` | Route-to-project orchestration and fetch-on-first-toggle vector cache; no duplicate map or layer UI |
 
-The current project contains 52 entries: 30 vector entries, 8 LULC yearly
+The current project contains 51 entries: 29 vector entries, 8 LULC yearly
 rasters, and 14 other rasters. Initial startup performs one distinct WFS request
 for the shared Demographic data, then displays Terrain. Each other vector makes
 its own WFS request only on its first toggle. Hidden rasters make no WMS tile
