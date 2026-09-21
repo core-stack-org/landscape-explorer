@@ -1104,10 +1104,10 @@
     "namespace": "Waterbody",
     "category": "Waterbody",
     "source": "wb-feature",
-    "layer_store": ["waterbodies"],
-    "layer_name": ["waterbodies"],
+    "layer_store": [],
+    "layer_name": [],
     "rasterStyle": "",
-    "styleKey": "waterbody_type",
+    "styleKey": "static",
     "bins": [
       {
         "label": "On river",
@@ -1126,8 +1126,8 @@
     "namespace": "Waterbody",
     "category": "Waterbody",
     "source": "wb-feature",
-    "layer_store": ["waterbodies"],
-    "layer_name": ["waterbodies"],
+    "layer_store": [],
+    "layer_name": [],
     "rasterStyle": "",
     "styleKey": "static",
     "bins": [
@@ -1160,10 +1160,10 @@
     "namespace": "Waterbody",
     "category": "Waterbody",
     "source": "wb-feature",
-    "layer_store": ["waterbodies"],
-    "layer_name": ["waterbodies"],
+    "layer_store": [],
+    "layer_name": [],
     "rasterStyle": "",
-    "styleKey": "surface_water_trend",
+    "styleKey": "static",
     "bins": [
       {
         "label": "Positive Trend",
@@ -1186,10 +1186,10 @@
     "namespace": "Waterbody",
     "category": "Waterbody",
     "source": "wb-feature",
-    "layer_store": ["waterbodies"],
-    "layer_name": ["waterbodies"],
+    "layer_store": [],
+    "layer_name": [],
     "rasterStyle": "",
-    "styleKey": "drainage_line",
+    "styleKey": "static",
     "bins": [
       {
         "label": "On drainage line",
