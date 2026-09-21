@@ -36,12 +36,6 @@ export const GEOLIBRE_NREGA_CATEGORIES = Object.freeze([
     values: ["Irrigation - Site level impact"],
   },
   {
-    id: "irrigation_non_rwh",
-    label: "Irrigation — non-RWH",
-    color: "#EAAC8B",
-    values: ["Irrigation Site level - Non RWH"],
-  },
-  {
     id: "community",
     label: "Community assets",
     color: "#355070",
