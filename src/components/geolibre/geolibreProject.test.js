@@ -263,7 +263,7 @@ describe("GeoLibre 2.6 project generation", () => {
 
     expect(project.version).toBe("0.2.0");
     expect(project.layers).toHaveLength(GEOLIBRE_LAYERS.length);
-    expect(project.layers).toHaveLength(52);
+    expect(project.layers).toHaveLength(51);
     expect(project.layers.every(layer => layer.name === GEOLIBRE_LAYERS.find(item => `corestack-${item.id}` === layer.id)?.label)).toBe(true);
     expect(project.mapView.bbox).toEqual([92.9, 24.7, 93.2, 25]);
     expect(project.mapLayout).toBeUndefined();
@@ -773,17 +773,9 @@ describe("GeoLibre 2.6 project generation", () => {
     const legends = activeGeoLibreLegends(withSoilNitrogenVisible);
     const soilNitrogenLegend = legends.find((legend) => legend.title === "Soil Nitrogen Levels legend");
     expect(soilNitrogenLegend.items).toEqual([
-      { label: "0", color: "#8B0000", shape: "square" },
-      { label: "50", color: "#D73027", shape: "square" },
-      { label: "100", color: "#F46D43", shape: "square" },
-      { label: "150", color: "#FDAE61", shape: "square" },
-      { label: "200", color: "#FEE08B", shape: "square" },
-      { label: "250", color: "#FFFFBF", shape: "square" },
-      { label: "300", color: "#D9EF8B", shape: "square" },
-      { label: "350", color: "#A6D96A", shape: "square" },
-      { label: "400", color: "#66BD63", shape: "square" },
-      { label: "450", color: "#1A9850", shape: "square" },
-      { label: "500", color: "#006837", shape: "square" },
+      { label: "High (>560 kg/ha)", color: "#73BB53", shape: "square" },
+      { label: "Medium (280-560 kg/ha)", color: "#EEE05D", shape: "square" },
+      { label: "Low (<280 kg/ha)", color: "#FF0000", shape: "square" },
     ]);
   });
 
