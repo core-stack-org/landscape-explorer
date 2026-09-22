@@ -78,6 +78,31 @@ export const withAverageDeltaG = (data) => ({
   }),
 });
 
+// Same six rdbu-diverging bins/colors the expression style already used,
+// now as a derived, unit-labeled field so GeoLibre's native legend lists
+// each class (in mm) instead of nothing, which is what expression-mode
+// fill color leaves.
+export const MWS_BINS = [
+  { max: -50, label: "Less than -50 mm", color: "#b2182b" },
+  { max: -15, label: "-50 to -15 mm", color: "#e37357" },
+  { max: 0, label: "-15 to 0 mm", color: "#f4cbbb" },
+  { max: 15, label: "0 to 15 mm", color: "#bdd8e7" },
+  { max: 50, label: "15 to 50 mm", color: "#599cc8" },
+  { max: Infinity, label: "More than 50 mm", color: "#2166ac" },
+];
+
+export const withMwsClass = (data) => ({
+  ...data,
+  features: (data?.features || []).map((feature) => {
+    const properties = feature.properties || {};
+    const avg_delta_g = finiteMeasurement(properties.avg_delta_g);
+    const avg_delta_g_class = avg_delta_g === null
+      ? null
+      : MWS_BINS.find((bin) => avg_delta_g < bin.max).label;
+    return { ...feature, properties: { ...properties, avg_delta_g_class } };
+  }),
+});
+
 // Earlier- and later-generated Terrain Clusters layers publish the same
 // cluster id under two field names: "terrainClu" or "terrainClusters".
 // Normalize every feature onto "terrainClu", the field the categorized style
@@ -115,6 +140,142 @@ export const withSoilTextureClass = (data) => ({
   }),
 });
 
+// Bin the raw total_aff hectare measurement into one derived, unit-labeled
+// field so GeoLibre's native legend shows these 3 classes (with their unit)
+// instead of nothing, which is what an expression-mode fill color leaves.
+export const AFFORESTATION_BINS = [
+  { max: 50, label: "Less than 50 hac", color: "#ff0000" },
+  { max: 100, label: "Between 50 to 100 hac", color: "#eee05d" },
+  { max: Infinity, label: "More than 100 hac", color: "#73bb53" },
+];
+
+export const withAfforestationClass = (data) => ({
+  ...data,
+  features: (data?.features || []).map((feature) => {
+    const properties = feature.properties || {};
+    const total_aff = finiteMeasurement(properties.total_aff);
+    const total_aff_class = total_aff === null
+      ? null
+      : AFFORESTATION_BINS.find((bin) => total_aff < bin.max).label;
+    return { ...feature, properties: { ...properties, total_aff_class } };
+  }),
+});
+
+// Same 3-class hectare binning as afforestation, but colors run the opposite
+// direction: more deforestation is worse, so red marks the largest areas.
+export const DEFORESTATION_BINS = [
+  { max: 50, label: "Less than 50 hac", color: "#73bb53" },
+  { max: 100, label: "Between 50 to 100 hac", color: "#eee05d" },
+  { max: Infinity, label: "More than 100 hac", color: "#ff0000" },
+];
+
+export const withDeforestationClass = (data) => ({
+  ...data,
+  features: (data?.features || []).map((feature) => {
+    const properties = feature.properties || {};
+    const total_def = finiteMeasurement(properties.total_def);
+    const total_def_class = total_def === null
+      ? null
+      : DEFORESTATION_BINS.find((bin) => total_def < bin.max).label;
+    return { ...feature, properties: { ...properties, total_def_class } };
+  }),
+});
+
+// Same sparse thresholds as the earlier fixed-expression forest fringe style,
+// now as a derived field so GeoLibre's native legend lists the 4 classes
+// (with their hectare unit) instead of nothing.
+export const FOREST_FRINGE_BINS = [
+  { max: 10, label: "Less than 10 hac", color: "#f0fdf4" },
+  { max: 50, label: "Between 10 to 50 hac", color: "#86efac" },
+  { max: 150, label: "Between 50 to 150 hac", color: "#16a34a" },
+  { max: Infinity, label: "More than 150 hac", color: "#14532d" },
+];
+
+export const withForestFringeClass = (data) => ({
+  ...data,
+  features: (data?.features || []).map((feature) => {
+    const properties = feature.properties || {};
+    const forest_fringe_area_in_ha = finiteMeasurement(properties.forest_fringe_area_in_ha);
+    const forest_fringe_area_class = forest_fringe_area_in_ha === null
+      ? null
+      : FOREST_FRINGE_BINS.find((bin) => forest_fringe_area_in_ha < bin.max).label;
+    return { ...feature, properties: { ...properties, forest_fringe_area_class } };
+  }),
+});
+
+// Same 3-class hectare binning as afforestation/deforestation: more cropping
+// degradation is worse, so red marks the largest degraded area.
+export const DEGRADATION_BINS = [
+  { max: 30, label: "Less than 30 hac", color: "#73bb53" },
+  { max: 90, label: "Between 30 to 90 hac", color: "#eee05d" },
+  { max: Infinity, label: "More than 90 hac", color: "#ff0000" },
+];
+
+export const withDegradationClass = (data) => ({
+  ...data,
+  features: (data?.features || []).map((feature) => {
+    const properties = feature.properties || {};
+    const total_deg = finiteMeasurement(properties.total_deg);
+    const total_deg_class = total_deg === null
+      ? null
+      : DEGRADATION_BINS.find((bin) => total_deg < bin.max).label;
+    return { ...feature, properties: { ...properties, total_deg_class } };
+  }),
+});
+
+// Same bins and colors as Cropping Degradation: more urbanized area is
+// worse, so red marks the largest converted area.
+export const URBANIZATION_BINS = [
+  { max: 30, label: "Less than 30 hac", color: "#73bb53" },
+  { max: 90, label: "Between 30 to 90 hac", color: "#eee05d" },
+  { max: Infinity, label: "More than 90 hac", color: "#ff0000" },
+];
+
+export const withUrbanizationClass = (data) => ({
+  ...data,
+  features: (data?.features || []).map((feature) => {
+    const properties = feature.properties || {};
+    const total_urb = finiteMeasurement(properties.total_urb);
+    const total_urb_class = total_urb === null
+      ? null
+      : URBANIZATION_BINS.find((bin) => total_urb < bin.max).label;
+    return { ...feature, properties: { ...properties, total_urb_class } };
+  }),
+});
+
+// Same bins and colors as the other Change stats layers.
+export const CROP_INTENSITY_CHANGE_BINS = [
+  { max: 30, label: "Less than 30 hac", color: "#73bb53" },
+  { max: 90, label: "Between 30 to 90 hac", color: "#eee05d" },
+  { max: Infinity, label: "More than 90 hac", color: "#ff0000" },
+];
+
+export const withCropIntensityChangeClass = (data) => ({
+  ...data,
+  features: (data?.features || []).map((feature) => {
+    const properties = feature.properties || {};
+    const total_change = finiteMeasurement(properties.total_change);
+    const total_change_class = total_change === null
+      ? null
+      : CROP_INTENSITY_CHANGE_BINS.find((bin) => total_change < bin.max).label;
+    return { ...feature, properties: { ...properties, total_change_class } };
+  }),
+});
+
+// Same bins and colors as the other Change stats layers; source field is
+// "Excluded A" (with a space, like the raw GeoServer property name).
+export const withExcludedAreaClass = (data) => ({
+  ...data,
+  features: (data?.features || []).map((feature) => {
+    const properties = feature.properties || {};
+    const excluded_area = finiteMeasurement(properties["Excluded A"]);
+    const excluded_area_class = excluded_area === null
+      ? null
+      : CROP_INTENSITY_CHANGE_BINS.find((bin) => excluded_area < bin.max).label;
+    return { ...feature, properties: { ...properties, excluded_area_class } };
+  }),
+});
+
 const FORTNIGHT_DATE_KEY = /^\d{4}-\d{2}-\d{2}$/;
 
 // Decode date-keyed JSON records for inspection, then average their DeltaG so
@@ -137,6 +298,29 @@ export const parseFortnightRecords = data => ({
       ? deltaGValues.reduce((sum, value) => sum + value, 0) / deltaGValues.length
       : null;
     return { ...feature, properties: { ...properties, avg_delta_g } };
+  }),
+});
+
+// Same six rdbu-diverging colors as Annual Water Balance, but narrower bins
+// since fortnightly averages cluster much closer to zero than annual sums.
+export const MWS_FORTNIGHT_BINS = [
+  { max: -15, label: "Less than -15 mm", color: "#b2182b" },
+  { max: -5, label: "-15 to -5 mm", color: "#e37357" },
+  { max: 0, label: "-5 to 0 mm", color: "#f4cbbb" },
+  { max: 5, label: "0 to 5 mm", color: "#bdd8e7" },
+  { max: 15, label: "5 to 15 mm", color: "#599cc8" },
+  { max: Infinity, label: "More than 15 mm", color: "#2166ac" },
+];
+
+export const withMwsFortnightClass = (data) => ({
+  ...data,
+  features: (data?.features || []).map((feature) => {
+    const properties = feature.properties || {};
+    const avg_delta_g = finiteMeasurement(properties.avg_delta_g);
+    const avg_delta_g_class = avg_delta_g === null
+      ? null
+      : MWS_FORTNIGHT_BINS.find((bin) => avg_delta_g < bin.max).label;
+    return { ...feature, properties: { ...properties, avg_delta_g_class } };
   }),
 });
 
@@ -264,21 +448,67 @@ const STYLE_PROFILES = {
     SOIL_TEXTURE_BINS.map((bin) => [bin.label, bin.color, bin.label]),
     { fillColor: "#d2b48c", strokeColor: "#3a2412", fillOpacity: 0.8 }
   ),
-  mws: fixedPaletteExpression({
-    ...thematicStyle, fields: ["avg_delta_g"], value: numericProperty("avg_delta_g"),
-    thresholds: [-50, -15, 0, 15, 50], palette: "rdbu", fillOpacity: 0.65,
-  }),
-  mws_fortnight: fixedPaletteExpression({
-    ...thematicStyle, fields: ["avg_delta_g"], value: numericProperty("avg_delta_g"),
-    thresholds: [-15, -5, 0, 5, 15], palette: "rdbu", fillOpacity: 0.65,
-  }),
+  mws: categoryStyle(
+    "avg_delta_g_class",
+    MWS_BINS.map((bin) => [bin.label, bin.color, bin.label]),
+    { ...thematicStyle, fillOpacity: 0.65 }
+  ),
+  mws_fortnight: categoryStyle(
+    "avg_delta_g_class",
+    MWS_FORTNIGHT_BINS.map((bin) => [bin.label, bin.color, bin.label]),
+    { ...thematicStyle, fillOpacity: 0.65 }
+  ),
   ndvi: fixedPaletteExpression({
     ...thematicStyle, fields: ["avg_ndvi"], value: numericProperty("avg_ndvi"),
     thresholds: [-0.2, 0, 0.2, 0.4, 0.6], palette: "rdylgn", fillOpacity: 0.65,
   }),
   drought_causality: naturalBreaksStyle("avg_dryspell", "reds", null, { ...thematicStyle, fillOpacity: 0.7 }, "weeks"),
-  tree_in_grassland: { ...BASE_STYLE, fillColor: "#84cc16", strokeColor: "#3f6212", fillOpacity: 0.5 },
-  forest_fringe: { ...BASE_STYLE, fillColor: "#15803d", strokeColor: "#14532d", fillOpacity: 0.48 },
+  tree_in_grassland: naturalBreaksStyle("tree_in_shrubs_trees_area_in_ha", "greens", null, { ...thematicStyle, fillOpacity: 0.7 }, "ha"),
+  // Fixed, sparse thresholds instead of 6-way natural breaks: forest fringe
+  // area is dominated by many small patches, and auto breaks over that data
+  // packed the classes too close together to read at a glance.
+  forest_fringe: categoryStyle(
+    "forest_fringe_area_class",
+    FOREST_FRINGE_BINS.map((bin) => [bin.label, bin.color, bin.label]),
+    { fillColor: "#16a34a", strokeColor: "#14532d", fillOpacity: 0.6 }
+  ),
+  degradation_stats: categoryStyle(
+    "total_deg_class",
+    DEGRADATION_BINS.map((bin) => [bin.label, bin.color, bin.label]),
+    { fillColor: "#eee05d", strokeColor: "#232323", fillOpacity: 0.6 }
+  ),
+  urbanization_stats: categoryStyle(
+    "total_urb_class",
+    URBANIZATION_BINS.map((bin) => [bin.label, bin.color, bin.label]),
+    { fillColor: "#eee05d", strokeColor: "#232323", fillOpacity: 0.6 }
+  ),
+  cropintensity_stats: categoryStyle(
+    "total_change_class",
+    CROP_INTENSITY_CHANGE_BINS.map((bin) => [bin.label, bin.color, bin.label]),
+    { fillColor: "#eee05d", strokeColor: "#232323", fillOpacity: 0.6 }
+  ),
+  // Same source field, bins, and colors as Crop Intensity change; reuses the
+  // same derived-class logic rather than duplicating an identical helper.
+  shrubland_diversion_stats: categoryStyle(
+    "total_change_class",
+    CROP_INTENSITY_CHANGE_BINS.map((bin) => [bin.label, bin.color, bin.label]),
+    { fillColor: "#eee05d", strokeColor: "#232323", fillOpacity: 0.6 }
+  ),
+  restoration_stats: categoryStyle(
+    "excluded_area_class",
+    CROP_INTENSITY_CHANGE_BINS.map((bin) => [bin.label, bin.color, bin.label]),
+    { fillColor: "#eee05d", strokeColor: "#232323", fillOpacity: 0.6 }
+  ),
+  afforestation_stats: categoryStyle(
+    "total_aff_class",
+    AFFORESTATION_BINS.map((bin) => [bin.label, bin.color, bin.label]),
+    { fillColor: "#eee05d", strokeColor: "#232323", fillOpacity: 0.6 }
+  ),
+  deforestation_stats: categoryStyle(
+    "total_def_class",
+    DEFORESTATION_BINS.map((bin) => [bin.label, bin.color, bin.label]),
+    { fillColor: "#eee05d", strokeColor: "#232323", fillOpacity: 0.6 }
+  ),
   drainage: categoryStyle(
     "ORDER",
     [
@@ -361,13 +591,13 @@ const LEGEND_PROFILES = {
     ["500–1000 m", "#eb8115"], ["1000–2000 m", "#dd0f08"], [">2000 m", "#7d0b1b"],
   ],
   catchment_area: [
-    ["≤2", "#440154"], ["2–50", "#45317c"], ["50–100", "#375a8c"],
-    ["100–200", "#287b8e"], ["200–500", "#219889"],
-    ["500–1000", "#4cbe6c"], ["1000–2000", "#e6e32e"], [">2000", "#fde725"],
+    ["≤2 hac", "#440154"], ["2–50 hac", "#45317c"], ["50–100 hac", "#375a8c"],
+    ["100–200 hac", "#287b8e"], ["200–500 hac", "#219889"],
+    ["500–1000 hac", "#4cbe6c"], ["1000–2000 hac", "#e6e32e"], [">2000 hac", "#fde725"],
   ],
   natural_depression: [
-    ["≤1", "#ffffcc"], ["1–3", "#a1dab4"], ["3–5", "#2c7fb8"],
-    ["5–10", "#253494"], ["10–20", "#2e004f"], ["20–50", "#67001f"], [">50", "#990000"],
+    ["≤1 m", "#ffffcc"], ["1–3 m", "#a1dab4"], ["3–5 m", "#2c7fb8"],
+    ["5–10 m", "#253494"], ["10–20 m", "#2e004f"], ["20–50 m", "#67001f"], [">50 m", "#990000"],
   ],
   tree_canopy_density: [
     ["Low density", "#FFA500"], ["High density", "#007500"], ["Missing", "#000000"],
@@ -549,14 +779,14 @@ const layerLegend = (catalogLayer, style) => {
       : catalogLayer.label);
   return {
     key: catalogLayer.baseId || catalogLayer.id,
-    title: `${baseTitle}${["catchment_area", "natural_depression"].includes(catalogLayer.id) ? " (unit unconfirmed)" : ""} legend`,
+    title: `${baseTitle} legend`,
     items,
     legendPosition: "bottom-right",
   };
 };
 
 const GROUPS_TOP_FIRST = Array.from(
-  new Map(PRESENTATION.map(entry => [entry.groupId, { id: entry.groupId, name: entry.groupName, collapsed: true }])).values()
+  new Map(PRESENTATION.map(entry => [entry.groupId, { id: entry.groupId, name: entry.groupName, collapsed: entry.groupId !== "land" }])).values()
 );
 
 const projectPreferences = {
@@ -914,13 +1144,13 @@ const layerStyle = (layer, data) =>
     ? { ...RASTER_STYLE }
     : layer.nregaCategoryId
       ? nregaLayerStyle(layer.nregaCategoryId)
-      : ["facilities", "livestock", "drought_causality"].includes(layer.styleProfile)
+      : ["facilities", "livestock", "drought_causality", "tree_in_grassland"].includes(layer.styleProfile)
         ? naturalBreaksStyle(
             STYLE_PROFILES[layer.styleProfile].vectorStyleProperty,
             STYLE_PROFILES[layer.styleProfile].vectorStyleColorRamp,
             { features: (data?.features || []).filter(feature => hasLayerData(layer.id, feature.properties)) },
             STYLE_PROFILES[layer.styleProfile],
-            { facilities: "km", livestock: "count", drought_causality: "weeks" }[layer.styleProfile]
+            { facilities: "km", livestock: "count", drought_causality: "weeks", tree_in_grassland: "ha" }[layer.styleProfile]
           )
         : { ...(STYLE_PROFILES[layer.styleProfile] || BASE_STYLE) };
 
@@ -932,13 +1162,16 @@ const coreStackMetadata = (layer, layerName, sourceUrl, style, baseUrl) => ({
     demographics: "percent", facilities: "km", livestock: "count",
     mws: "mm", mws_fortnight: "mm", ndvi: "dimensionless",
     waterbodies: "ha", cropping_intensity: "dimensionless",
-    drought: "years", drought_causality: "weeks",
+    drought: "years", drought_causality: "weeks", tree_in_grassland: "ha",
+    forest_fringe: "ha", afforestation_stats: "ha", deforestation_stats: "ha", degradation_stats: "ha",
+    urbanization_stats: "ha", cropintensity_stats: "ha", shrubland_diversion_stats: "ha",
+    restoration_stats: "ha",
   }[layer.styleProfile] || ({
     distance_to_drainage_line: "m", dem: "m",
     soil_health_raster_n: "kg/ha", soil_health_raster_P: "kg/ha",
     soil_health_raster_K: "kg/ha", soil_health_raster_OC: "kg/ha",
     soil_health_raster_OC_OLM: "percent",
-    catchment_area: "unknown", natural_depression: "unknown",
+    catchment_area: "hac", natural_depression: "m",
   }[layer.id] || "NA"),
   ...(layer.unitSources ? { unitSources: layer.unitSources } : {}),
   geoserverWorkspace: layer.workspace,
@@ -950,7 +1183,7 @@ const coreStackMetadata = (layer, layerName, sourceUrl, style, baseUrl) => ({
   year: layer.year || null,
   ...(layer.sourceType !== "wms" ? {
     missingDataColor: MISSING_DATA_COLOR,
-    paletteId: ["demographics", "facilities", "antyodaya", "livestock", "mws", "mws_fortnight", "waterbodies", "cropping_intensity"].includes(layer.styleProfile) ? style.vectorStyleColorRamp : null,
+    paletteId: ["demographics", "facilities", "antyodaya", "livestock", "waterbodies", "cropping_intensity"].includes(layer.styleProfile) ? style.vectorStyleColorRamp : null,
   } : {}),
   ...(layer.sourceType === "wms" ? { legend: layerLegend(layer, style) } : {}),
   styleContract:
@@ -1225,10 +1458,18 @@ const hydrateLayerWithData = (layer, data) => {
   const { initialLoadError: _initialLoadError, ...metadata } =
     layer.metadata || {};
   const catalogLayer = GEOLIBRE_LAYERS.find(item => `corestack-${item.id}` === layer.id);
-  if (catalogLayer?.id === "mws_layers_fortnight") data = parseFortnightRecords(data);
-  if (catalogLayer?.id === "mws_layers") data = withAverageDeltaG(data);
+  if (catalogLayer?.id === "mws_layers_fortnight") data = withMwsFortnightClass(parseFortnightRecords(data));
+  if (catalogLayer?.id === "mws_layers") data = withMwsClass(withAverageDeltaG(data));
   if (catalogLayer?.id === "terrain_vector") data = withNormalizedTerrainCluster(data);
   if (catalogLayer?.id === "soil_type") data = withSoilTextureClass(data);
+  if (catalogLayer?.id === "afforestation_stats") data = withAfforestationClass(data);
+  if (catalogLayer?.id === "deforestation_stats") data = withDeforestationClass(data);
+  if (catalogLayer?.id === "forest_fringe") data = withForestFringeClass(data);
+  if (catalogLayer?.id === "degradation_stats") data = withDegradationClass(data);
+  if (catalogLayer?.id === "urbanization_stats") data = withUrbanizationClass(data);
+  if (catalogLayer?.id === "cropintensity_stats") data = withCropIntensityChangeClass(data);
+  if (catalogLayer?.id === "shrubland_diversion_stats") data = withCropIntensityChangeClass(data);
+  if (catalogLayer?.id === "restoration_stats") data = withExcludedAreaClass(data);
   if (catalogLayer?.id?.startsWith("ndvi_")) data = withAverageNdvi(data);
   const outline = catalogLayer && boundaryColorForLayer(catalogLayer.id);
   const initialStyle = catalogLayer && { ...layerStyle(catalogLayer), ...(outline ? { strokeColor: outline, simpleStyleEnabled: true } : {}) };

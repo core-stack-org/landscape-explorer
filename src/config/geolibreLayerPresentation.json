@@ -88,7 +88,7 @@
     "sourcePattern": "mws_layers:deltaG_well_depth_{district}_{tehsil}",
     "style": "mws",
     "defaultVisible": false,
-    "defaultProperty": "avg_delta_g"
+    "defaultProperty": "avg_delta_g_class"
   },
   {
     "id": "mws_layers_fortnight",
@@ -101,7 +101,7 @@
     "sourcePattern": "mws_layers:deltaG_fortnight_{district}_{tehsil}",
     "style": "mws_fortnight",
     "defaultVisible": false,
-    "defaultProperty": "avg_delta_g"
+    "defaultProperty": "avg_delta_g_class"
   },
   {
     "id": "drainage",
@@ -725,7 +725,7 @@
     "sourcePattern": "tree_in_grassland:{district}_{tehsil}_tree_in_grassland",
     "style": "tree_in_grassland",
     "defaultVisible": false,
-    "defaultProperty": "None (single colour)"
+    "defaultProperty": "tree_in_shrubs_trees_area_in_ha"
   },
   {
     "id": "forest_fringe",
@@ -738,7 +738,7 @@
     "sourcePattern": "forest_fringes:{district}_{tehsil}_forest_fringe",
     "style": "forest_fringe",
     "defaultVisible": false,
-    "defaultProperty": "None (single colour)"
+    "defaultProperty": "forest_fringe_area_class"
   },
   {
     "id": "afforestation",
@@ -762,9 +762,9 @@
     "sourceType": "wfs",
     "workspace": "change_detection",
     "sourcePattern": "change_detection:change_vector_{district}_{tehsil}_Afforestation",
-    "style": "boundary",
+    "style": "afforestation_stats",
     "defaultVisible": false,
-    "defaultProperty": "None (boundary only)"
+    "defaultProperty": "total_aff_class"
   },
   {
     "id": "deforestation",
@@ -788,9 +788,9 @@
     "sourceType": "wfs",
     "workspace": "change_detection",
     "sourcePattern": "change_detection:change_vector_{district}_{tehsil}_Deforestation",
-    "style": "boundary",
+    "style": "deforestation_stats",
     "defaultVisible": false,
-    "defaultProperty": "None (boundary only)"
+    "defaultProperty": "total_def_class"
   },
   {
     "id": "cropping_intensity",
@@ -879,9 +879,9 @@
     "sourceType": "wfs",
     "workspace": "change_detection",
     "sourcePattern": "change_detection:change_vector_{district}_{tehsil}_Degradation",
-    "style": "boundary",
+    "style": "degradation_stats",
     "defaultVisible": false,
-    "defaultProperty": "None (boundary only)"
+    "defaultProperty": "total_deg_class"
   },
   {
     "id": "urbanization",
@@ -905,9 +905,9 @@
     "sourceType": "wfs",
     "workspace": "change_detection",
     "sourcePattern": "change_detection:change_vector_{district}_{tehsil}_Urbanization",
-    "style": "boundary",
+    "style": "urbanization_stats",
     "defaultVisible": false,
-    "defaultProperty": "None (boundary only)"
+    "defaultProperty": "total_urb_class"
   },
   {
     "id": "cropintensity",
@@ -931,9 +931,9 @@
     "sourceType": "wfs",
     "workspace": "change_detection",
     "sourcePattern": "change_detection:change_vector_{district}_{tehsil}_CropIntensity",
-    "style": "boundary",
+    "style": "cropintensity_stats",
     "defaultVisible": false,
-    "defaultProperty": "None (boundary only)"
+    "defaultProperty": "total_change_class"
   },
   {
     "id": "shrubland_diversion_base",
@@ -957,9 +957,9 @@
     "sourceType": "wfs",
     "workspace": "change_detection",
     "sourcePattern": "change_detection:change_vector_{district}_{tehsil}_ShrubChange",
-    "style": "boundary",
+    "style": "shrubland_diversion_stats",
     "defaultVisible": false,
-    "defaultProperty": "None (boundary only)"
+    "defaultProperty": "total_change_class"
   },
   {
     "id": "restoration",
@@ -983,9 +983,9 @@
     "sourceType": "wfs",
     "workspace": "restoration",
     "sourcePattern": "restoration:restoration_{district}_{tehsil}_vector",
-    "style": "boundary",
+    "style": "restoration_stats",
     "defaultVisible": false,
-    "defaultProperty": "None (boundary only)"
+    "defaultProperty": "excluded_area_class"
   },
   {
     "id": "land_conflicts",
