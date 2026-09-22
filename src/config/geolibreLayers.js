@@ -682,7 +682,7 @@ const LAYERS = [
     { id: "ndvi_crop_stats", label: "NDVI · Cropland", suffix: "_crop" },
     { id: "ndvi_shrub_stats", label: "NDVI · Shrubland", suffix: "_shrub" },
     { id: "ndvi_tree_stats", label: "NDVI · Tree Cover", suffix: "_tree" },
-    { id: "ndvi_combined_stats", label: "NDVI · Combined", suffix: "" },
+    { id: "ndvi_combined_stats", label: "NDVI · Fortnight", suffix: "" },
   ].map((entry) => ({
     id: entry.id,
     label: entry.label,

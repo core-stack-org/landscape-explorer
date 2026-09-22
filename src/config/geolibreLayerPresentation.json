@@ -495,7 +495,7 @@
   },
   {
     "id": "ndvi_combined_stats",
-    "label": "NDVI: Combined",
+    "label": "NDVI: Fortnight",
     "category": "Stats",
     "groupId": "land",
     "groupName": "Land",
