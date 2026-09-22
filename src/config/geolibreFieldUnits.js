@@ -18,6 +18,9 @@ const NREGA_ALIASES = {
 };
 
 export const fieldDefinitionFor = (layer, field, fieldMetadata) => {
+  if (layer?.id === "drought" && (field === "avg_dryspell" || /^drysp_20\d{2}$/.test(field))) {
+    return { unit: "weeks", description: "Maximum consecutive dry weeks" };
+  }
   const sources = layer?.unitSources || [];
   const exact = sources.map((source) => fieldMetadata[source]?.[field]).find(Boolean);
   if (exact) return exact;
@@ -45,6 +48,7 @@ export const fieldDefinitionFor = (layer, field, fieldMetadata) => {
   }
   if (layer?.id === "drought_causality") {
     if (field === "area_in_ha") return { unit: "ha", description: "Area of the mapped polygon" };
+    if (field === "avg_dryspell") return { unit: "weeks", description: "Mean annual maximum dry spell length joined from drought data by MWS uid" };
     if (/^(se_mo|mild)_20\d{2}$/.test(field)) {
       return { unit: "mixed", description: "Drought causality record; nested measures require field-specific interpretation" };
     }

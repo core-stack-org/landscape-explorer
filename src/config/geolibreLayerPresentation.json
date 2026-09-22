@@ -793,19 +793,6 @@
     "defaultProperty": "None (boundary only)"
   },
   {
-    "id": "nrega_plantation",
-    "label": "Plantation and forestry",
-    "category": "NA",
-    "groupId": "trees",
-    "groupName": "Trees",
-    "sourceType": "wfs",
-    "workspace": "nrega_assets",
-    "sourcePattern": "nrega_assets:{district}_{tehsil}",
-    "style": "nrega",
-    "defaultVisible": false,
-    "defaultProperty": "WorkCatego"
-  },
-  {
     "id": "cropping_intensity",
     "label": "Cropping Intensity",
     "category": "Stats",
@@ -842,7 +829,7 @@
     "sourcePattern": "drought_causality:{district}_{tehsil}_drought_causality",
     "style": "drought_causality",
     "defaultVisible": false,
-    "defaultProperty": "None (single colour)"
+    "defaultProperty": "avg_dryspell"
   },
   {
     "id": "ndvi_crop_stats",
@@ -1081,6 +1068,19 @@
   {
     "id": "nrega_community",
     "label": "Community assets",
+    "category": "NA",
+    "groupId": "nrega",
+    "groupName": "NREGA",
+    "sourceType": "wfs",
+    "workspace": "nrega_assets",
+    "sourcePattern": "nrega_assets:{district}_{tehsil}",
+    "style": "nrega",
+    "defaultVisible": false,
+    "defaultProperty": "WorkCatego"
+  },
+  {
+    "id": "nrega_plantation",
+    "label": "Plantation and forestry",
     "category": "NA",
     "groupId": "nrega",
     "groupName": "NREGA",
