@@ -132,7 +132,7 @@ ordered top-first as:
 9. Industry
 10. NREGA
 
-All groups are collapsed. Terrain is the one visible data layer at
+All groups are collapsed except Land, which starts expanded. Terrain is the one visible data layer at
 startup; every other layer is toggle-to-load. LULC has one Level 3 raster per
 year, with 2024-2025 listed first and every year back to 2017-2018 retained.
 It uses `lulc_land_use_KYL`, the published 12-class GeoServer style, rather than
@@ -280,13 +280,16 @@ Fortnightly Water Balance and Annual Water Balance share the same `rdbu`
 diverging palette, with red for net depletion and blue for net recharge. Each
 layer colors on the mean `DeltaG` across its own embedded date-keyed or
 year-keyed JSON records (`avg_delta_g`), computed client-side at hydration;
-GeoServer never returns a precomputed net field. Fortnightly's thresholds are
-narrower than Annual's because averaging many fortnights per feature yields
-much smaller magnitudes than averaging a handful of annual sums. Date-keyed
-JSON strings are decoded for attribute inspection with their field names and
-full records retained; only the derived `avg_delta_g` average is added. The
-MWS stroke color `#05081c` is retained for both layers. It adds no diagrams,
-time controls, or custom legend beyond GeoLibre's native vector legend.
+GeoServer never returns a precomputed net field. A second derived field,
+`avg_delta_g_class`, bins that average into one of 6 mm-labeled classes so
+GeoLibre's native legend lists each class instead of nothing, which is what
+an expression-mode fill color leaves. Fortnightly's thresholds are narrower
+than Annual's because averaging many fortnights per feature yields much
+smaller magnitudes than averaging a handful of annual sums. Date-keyed JSON
+strings are decoded for attribute inspection with their field names and full
+records retained; only the two derived fields above are added. The MWS
+stroke color `#05081c` is retained for both layers. It adds no diagrams or
+time controls beyond GeoLibre's native vector legend.
 
 NREGA work-category assets are colored per category from one shared point
 source, pre-filtered client-side into each logical layer. GeoServer has
