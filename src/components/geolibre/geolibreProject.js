@@ -8,8 +8,10 @@ import {
 import {
   GEOLIBRE_LAYERS,
   GEOLIBRE_NREGA_CATEGORIES,
-  GEOLIBRE_VECTOR_LAYERS,
 } from "../../config/geolibreLayers";
+import { fieldDefinitionFor } from "../../config/geolibreFieldUnits";
+import GEOLIBRE_FIELD_METADATA from "../../config/geolibreFieldMetadata.json";
+import PRESENTATION from "../../config/geolibreLayerPresentation.json";
 
 const DEFAULT_GEOSERVER_URL =
   "https://geoserver.core-stack.org:8443/geoserver/";
@@ -42,6 +44,11 @@ const EMPTY_FEATURE_COLLECTION = Object.freeze({
   type: "FeatureCollection",
   features: [],
 });
+
+const displayLayerName = (layer) =>
+  layer.category && layer.category !== "NA"
+    ? `${layer.label} · ${layer.category}`
+    : layer.label;
 
 const ANNUAL_WATER_BALANCE_YEAR_KEY = /^\d{4}_\d{4}$/;
 
@@ -130,6 +137,24 @@ export const parseFortnightRecords = data => ({
       ? deltaGValues.reduce((sum, value) => sum + value, 0) / deltaGValues.length
       : null;
     return { ...feature, properties: { ...properties, avg_delta_g } };
+  }),
+});
+
+// Like the fortnightly layer, the NDVI time-series layers are colored by a
+// feature-level mean of their published dated measurements. Retain every
+// original field and leave missing observations as null rather than zero.
+export const withAverageNdvi = data => ({
+  ...data,
+  features: (data?.features || []).map(feature => {
+    const properties = feature.properties || {};
+    const values = Object.entries(properties)
+      .filter(([key]) => /^(crop_|shrub_|tree_)?\d{4}-\d{2}-\d{2}$/.test(key))
+      .map(([, value]) => finiteMeasurement(value))
+      .filter(value => value !== null);
+    const avg_ndvi = values.length
+      ? values.reduce((sum, value) => sum + value, 0) / values.length
+      : null;
+    return { ...feature, properties: { ...properties, avg_ndvi } };
   }),
 });
 
@@ -224,6 +249,13 @@ const STYLE_PROFILES = {
     ...thematicStyle, fields: ["avg_delta_g"], value: numericProperty("avg_delta_g"),
     thresholds: [-15, -5, 0, 5, 15], palette: "rdbu", fillOpacity: 0.65,
   }),
+  ndvi: fixedPaletteExpression({
+    ...thematicStyle, fields: ["avg_ndvi"], value: numericProperty("avg_ndvi"),
+    thresholds: [-0.2, 0, 0.2, 0.4, 0.6], palette: "rdylgn", fillOpacity: 0.65,
+  }),
+  drought_causality: { ...BASE_STYLE, fillColor: "#d97706", strokeColor: "#92400e", fillOpacity: 0.45 },
+  tree_in_grassland: { ...BASE_STYLE, fillColor: "#84cc16", strokeColor: "#3f6212", fillOpacity: 0.5 },
+  forest_fringe: { ...BASE_STYLE, fillColor: "#15803d", strokeColor: "#14532d", fillOpacity: 0.48 },
   drainage: categoryStyle(
     "ORDER",
     [
@@ -300,6 +332,32 @@ const STYLE_PROFILES = {
 };
 
 const LEGEND_PROFILES = {
+  distance_to_drainage_line: [
+    ["0 m", "#0e10c7"], ["1–60 m", "#5fbcf6"], ["60–120 m", "#145626"],
+    ["120–240 m", "#3df03c"], ["240–500 m", "#f0ee26"],
+    ["500–1000 m", "#eb8115"], ["1000–2000 m", "#dd0f08"], [">2000 m", "#7d0b1b"],
+  ],
+  catchment_area: [
+    ["≤2", "#440154"], ["2–50", "#45317c"], ["50–100", "#375a8c"],
+    ["100–200", "#287b8e"], ["200–500", "#219889"],
+    ["500–1000", "#4cbe6c"], ["1000–2000", "#e6e32e"], [">2000", "#fde725"],
+  ],
+  natural_depression: [
+    ["≤1", "#ffffcc"], ["1–3", "#a1dab4"], ["3–5", "#2c7fb8"],
+    ["5–10", "#253494"], ["10–20", "#2e004f"], ["20–50", "#67001f"], [">50", "#990000"],
+  ],
+  tree_canopy_density: [
+    ["Low density", "#FFA500"], ["High density", "#007500"], ["Missing", "#000000"],
+  ],
+  tree_height: [
+    ["Short", "#FFA500"], ["Medium", "#DEE64C"], ["Tall", "#007500"], ["Missing", "#000000"],
+  ],
+  forest_change: [
+    ["Deforestation", "#ff0000"], ["Degradation", "#ffa500"], ["No change", "#ffffff"],
+    ["Improvement", "#8AFF8A"], ["Afforestation", "#007500"],
+    ["Partially degraded", "#DEE64C"], ["Missing", "#000000"],
+  ],
+  shrubland_diversion_base: [["Classes pending GeoServer publication", "#9ca3af"]],
   terrain: [
     ["V-shaped river valleys and deep narrow canyons", "#313695"],
     ["Lateral midslope drainage and local valleys", "#4575b4"],
@@ -474,17 +532,9 @@ const layerLegend = (catalogLayer, style) => {
   };
 };
 
-const GROUPS_TOP_FIRST = [
-  { id: "demographic", name: "Demographic", collapsed: false },
-  { id: "village-data", name: "Village Data", collapsed: true },
-  { id: "hydrology", name: "Hydrology", collapsed: true },
-  { id: "lulc", name: "LULC by year", collapsed: true },
-  { id: "land", name: "Land", collapsed: true },
-  { id: "agriculture", name: "Agriculture", collapsed: true },
-  { id: "restoration", name: "Restoration", collapsed: true },
-  { id: "industry", name: "Industry", collapsed: true },
-  { id: "nrega", name: "NREGA", collapsed: true },
-];
+const GROUPS_TOP_FIRST = Array.from(
+  new Map(PRESENTATION.map(entry => [entry.groupId, { id: entry.groupId, name: entry.groupName, collapsed: true }])).values()
+);
 
 const projectPreferences = {
   map: {
@@ -746,6 +796,80 @@ export const fetchWfsFeatureCollection = async (request, { signal } = {}) => {
   return data;
 };
 
+const childElement = (element, name) =>
+  Array.from(element?.children || []).find(
+    (child) => child.localName === name
+  );
+
+const childText = (element, name) => childElement(element, name)?.textContent?.trim();
+
+// GeoServer advertises raster extents in WMS GetCapabilities.  Using the
+// coverage's EX_GeographicBoundingBox keeps the initial camera tied to the
+// Terrain raster rather than a separately preloaded vector source.
+export const rasterBoundsFromWmsCapabilities = (xml, layerName) => {
+  if (typeof DOMParser === "undefined") {
+    throw new Error("This browser cannot read GeoServer WMS capabilities.");
+  }
+  const document = new DOMParser().parseFromString(xml, "application/xml");
+  if (document.querySelector("parsererror")) {
+    throw new Error("GeoServer returned invalid WMS capabilities.");
+  }
+
+  const acceptedNames = new Set([layerName, `terrain:${layerName}`]);
+  const layer = Array.from(document.getElementsByTagName("Layer")).find(
+    (candidate) => acceptedNames.has(childText(candidate, "Name"))
+  );
+  if (!layer) {
+    throw new Error(`Terrain coverage ${layerName} was not advertised by GeoServer.`);
+  }
+
+  const geographicBounds = childElement(layer, "EX_GeographicBoundingBox");
+  const bounds = geographicBounds
+    ? [
+        Number(childText(geographicBounds, "westBoundLongitude")),
+        Number(childText(geographicBounds, "southBoundLatitude")),
+        Number(childText(geographicBounds, "eastBoundLongitude")),
+        Number(childText(geographicBounds, "northBoundLatitude")),
+      ]
+    : (() => {
+        const legacyBounds = childElement(layer, "LatLonBoundingBox");
+        return legacyBounds
+          ? [
+              Number(legacyBounds.getAttribute("minx")),
+              Number(legacyBounds.getAttribute("miny")),
+              Number(legacyBounds.getAttribute("maxx")),
+              Number(legacyBounds.getAttribute("maxy")),
+            ]
+          : null;
+      })();
+
+  if (!validBounds(bounds)) {
+    throw new Error(`Terrain coverage ${layerName} has no usable geographic extent.`);
+  }
+  return bounds;
+};
+
+export const fetchGeoServerRasterBounds = async ({
+  baseUrl,
+  layer,
+  layerName,
+  signal,
+}) => {
+  const endpoint = wmsEndpointFor(baseUrl, layer);
+  const response = await fetch(
+    appendQuery(endpoint, [
+      ["service", "WMS"],
+      ["version", "1.3.0"],
+      ["request", "GetCapabilities"],
+    ]),
+    { signal, headers: { Accept: "application/xml, text/xml" } }
+  );
+  if (!response.ok) {
+    throw new Error(`GeoServer WMS capabilities failed with HTTP ${response.status}.`);
+  }
+  return rasterBoundsFromWmsCapabilities(await response.text(), layerName);
+};
+
 const nregaLayerStyle = (categoryId) => {
   const category = GEOLIBRE_NREGA_CATEGORIES.find(
     (item) => item.id === categoryId
@@ -778,11 +902,15 @@ const layerStyle = (layer, data) =>
 
 const coreStackMetadata = (layer, layerName, sourceUrl, style, baseUrl) => ({
   domain: layer.domain,
+  category: layer.category,
+  defaultProperty: layer.defaultProperty,
+  ...(layer.unitSources ? { unitSources: layer.unitSources } : {}),
   geoserverWorkspace: layer.workspace,
   geoserverLayer: layerName,
   sourceType: layer.sourceType,
   liveSource: sourceUrl,
   geoserverStyle: buildGeoServerStyleSource(baseUrl, layer, layerName),
+  ...(layer.stylePublicationPending ? { stylePublicationPending: true } : {}),
   year: layer.year || null,
   ...(layer.sourceType !== "wms" ? {
     missingDataColor: MISSING_DATA_COLOR,
@@ -791,7 +919,9 @@ const coreStackMetadata = (layer, layerName, sourceUrl, style, baseUrl) => ({
   ...(layer.sourceType === "wms" ? { legend: layerLegend(layer, style) } : {}),
   styleContract:
     layer.sourceType === "wms"
-      ? "GeoServer renders the published named style through WMS."
+      ? layer.stylePublicationPending
+        ? "This raster source and proposed GeoServer style are pending publication."
+        : "GeoServer renders the published named style through WMS."
       : "GeoLibre retains the finalized vector profile while the live GeoServer SLD and legend endpoints provide the server style contract.",
 });
 
@@ -810,7 +940,7 @@ const buildVectorLayer = ({
   const loadState = failure ? "error" : loaded ? "loaded" : "unloaded";
   return applyMissingDataStyle({
     id: `corestack-${catalogLayer.id}`,
-    name: catalogLayer.label,
+    name: displayLayerName(catalogLayer),
     type: "geojson",
     source: {
       type: "geojson",
@@ -865,7 +995,7 @@ const buildRasterLayer = ({ catalogLayer, layerName, baseUrl, bounds }) => {
   const style = layerStyle(catalogLayer);
   return {
     id: `corestack-${catalogLayer.id}`,
-    name: catalogLayer.label,
+    name: displayLayerName(catalogLayer),
     type: "raster",
     source,
     visible: catalogLayer.defaultVisible === true && !catalogLayer.startupDelayMs,
@@ -891,8 +1021,7 @@ const buildRasterLayer = ({ catalogLayer, layerName, baseUrl, bounds }) => {
 };
 
 const displayOrderForGroup = (groupId, layers) => {
-  const matching = layers.filter((layer) => layer.groupId === groupId);
-  return groupId === "lulc" ? [...matching].reverse() : matching;
+  return layers.filter((layer) => layer.groupId === groupId);
 };
 
 export const orderGeoLibreLayers = (layers) => {
@@ -1015,6 +1144,47 @@ const nregaFeaturesForCategory = (features, category) => {
   });
 };
 
+const isStructuredRecord = (value) => {
+  if (value !== null && typeof value === "object") return true;
+  if (typeof value !== "string" || !value.trim().startsWith("{")) return false;
+  try {
+    return typeof JSON.parse(value) === "object";
+  } catch (_error) {
+    return false;
+  }
+};
+
+export const vectorFieldPresentation = (catalogLayer, data) => {
+  const observed = new Map();
+  for (const feature of data.features || []) {
+    for (const [field, value] of Object.entries(feature.properties || {})) {
+      if (!observed.has(field) || observed.get(field) == null) observed.set(field, value);
+    }
+  }
+  const fields = Object.fromEntries([...observed].map(([field, value]) => {
+    const sourceDefinition = fieldDefinitionFor(catalogLayer, field, GEOLIBRE_FIELD_METADATA);
+    const unit = isStructuredRecord(value)
+      ? "mixed"
+      : typeof value === "string" && value.trim() !== "" && !Number.isFinite(Number(value))
+        && sourceDefinition?.unit && !["NA", "unknown", "boolean", "year", "dimensionless"].includes(sourceDefinition.unit)
+        ? "NA"
+      : sourceDefinition?.unit || (typeof value === "number" ? "unknown" : "NA");
+    return [field, {
+      unit,
+      ...(sourceDefinition?.description ? { description: sourceDefinition.description } : {}),
+    }];
+  }));
+  const popup = {
+    fields: Object.entries(fields).map(([field, definition]) => ({
+      field,
+      label: definition.unit === "NA" || definition.unit === "mixed"
+        ? field
+        : `${field} (${definition.unit === "unknown" ? "unit unknown" : definition.unit})`,
+    })),
+  };
+  return { fields, popup };
+};
+
 const hydrateLayerWithData = (layer, data) => {
   const { initialLoadError: _initialLoadError, ...metadata } =
     layer.metadata || {};
@@ -1023,14 +1193,17 @@ const hydrateLayerWithData = (layer, data) => {
   if (catalogLayer?.id === "mws_layers") data = withAverageDeltaG(data);
   if (catalogLayer?.id === "terrain_vector") data = withNormalizedTerrainCluster(data);
   if (catalogLayer?.id === "soil_type") data = withSoilTextureClass(data);
+  if (catalogLayer?.id?.startsWith("ndvi_")) data = withAverageNdvi(data);
   const outline = catalogLayer && boundaryColorForLayer(catalogLayer.id);
   const initialStyle = catalogLayer && { ...layerStyle(catalogLayer), ...(outline ? { strokeColor: outline, simpleStyleEnabled: true } : {}) };
   const style = initialStyle && Object.entries(initialStyle).every(([key, value]) => JSON.stringify(layer.style?.[key]) === JSON.stringify(value))
     ? layerStyle(catalogLayer, data) : layer.style;
+  const { fields, popup } = vectorFieldPresentation(catalogLayer, data);
   return applyMissingDataStyle({
     ...layer,
     geojson: data,
     style,
+    popup,
     metadata: {
       ...metadata,
       featureCount: data.features.length,
@@ -1038,6 +1211,7 @@ const hydrateLayerWithData = (layer, data) => {
       corestack: {
         ...metadata.corestack,
         loadState: "loaded",
+        fields,
       },
     },
   });
@@ -1151,7 +1325,7 @@ export const buildGeoLibreProject = async ({
   geoserverUrl = process.env.REACT_APP_GEOSERVER_URL || DEFAULT_GEOSERVER_URL,
   signal,
   onProgress = () => {},
-  fetchFeatureCollection = fetchWfsFeatureCollection,
+  fetchRasterBounds = fetchGeoServerRasterBounds,
 }) => {
   if (!state || !district || !tehsil) {
     throw new Error("Select a state, district, and tehsil first.");
@@ -1162,102 +1336,38 @@ export const buildGeoLibreProject = async ({
     district: formatGeoServerName(district),
     tehsil: formatGeoServerName(tehsil),
   };
-  const requestCache = new Map();
-  const vectorResults = new Map();
   const failures = [];
-
-  const requestFor = (catalogLayer) => {
-    const layerName = catalogLayer.layerName(scope);
-    return {
-      layerName,
-      request: buildWfsRequest(baseUrl, catalogLayer, layerName),
-    };
-  };
-
-  const loadVector = async (
-    catalogLayer,
-    required = false,
-    reportProgress = true
-  ) => {
-    const { layerName, request } = requestFor(catalogLayer);
-    if (reportProgress) {
-      onProgress({
-        phase: catalogLayer.id,
-        message: `Loading ${catalogLayer.label}…`,
-      });
-    }
-
-    if (!requestCache.has(request.url)) {
-      requestCache.set(
-        request.url,
-        fetchFeatureCollection(request, { signal })
-      );
-    }
-
-    try {
-      const data = await requestCache.get(request.url);
-      vectorResults.set(catalogLayer.id, {
-        data,
-        layerName,
-        request,
-        loaded: true,
-      });
-      return data;
-    } catch (error) {
-      if (signal?.aborted) throw error;
-      const failure = {
-        layerId: catalogLayer.id,
-        layerName: catalogLayer.label,
-        sourceUrl: request.url,
-        message: readableError(error),
-      };
-      if (required) {
-        throw new Error(
-          `Could not load the administrative boundary needed to locate ${tehsil}: ${failure.message}`
-        );
-      }
-      failures.push(failure);
-      vectorResults.set(catalogLayer.id, {
-        data: EMPTY_FEATURE_COLLECTION,
-        layerName,
-        request,
-        failure,
-        loaded: false,
-      });
-      return EMPTY_FEATURE_COLLECTION;
-    }
-  };
-
-  const socioeconomic = GEOLIBRE_VECTOR_LAYERS.find(
-    (layer) => layer.id === "demographics"
-  );
-  const administrative = GEOLIBRE_VECTOR_LAYERS.find(
-    (layer) => layer.id === "administrative_boundaries"
-  );
-  const administrativeData = await loadVector(administrative, true);
-  // Reuse the extent request for the separately styled, initially hidden layer.
-  await loadVector(socioeconomic, true, false);
-  const bounds = geoJsonBounds(administrativeData);
-  if (!bounds) {
+  const terrain = GEOLIBRE_LAYERS.find((layer) => layer.id === "terrain");
+  const terrainLayerName = terrain?.layerName(scope);
+  if (!terrain || !terrainLayerName) {
+    throw new Error("Terrain is not configured for this GeoLibre project.");
+  }
+  onProgress({ phase: "terrain", message: "Locating Terrain coverage…" });
+  let bounds;
+  try {
+    bounds = await fetchRasterBounds({
+      baseUrl,
+      layer: terrain,
+      layerName: terrainLayerName,
+      signal,
+    });
+  } catch (error) {
+    if (signal?.aborted) throw error;
     throw new Error(
-      `The administrative boundary for ${tehsil} has no usable geographic extent.`
+      `Could not load the Terrain extent needed to locate ${tehsil}: ${readableError(error)}`
     );
   }
-
   const createProject = () => {
     const layers = GEOLIBRE_LAYERS.map((catalogLayer) => {
       const layerName = catalogLayer.layerName(scope);
       if (catalogLayer.sourceType === "wfs") {
-        const result = vectorResults.get(catalogLayer.id);
         return buildVectorLayer({
           catalogLayer,
           layerName,
           baseUrl,
-          ...(result || {
-            data: EMPTY_FEATURE_COLLECTION,
-            request: buildWfsRequest(baseUrl, catalogLayer, layerName),
-            loaded: false,
-          }),
+          data: EMPTY_FEATURE_COLLECTION,
+          request: buildWfsRequest(baseUrl, catalogLayer, layerName),
+          loaded: false,
         });
       }
       return buildRasterLayer({ catalogLayer, layerName, baseUrl, bounds });
@@ -1276,7 +1386,9 @@ export const buildGeoLibreProject = async ({
       basemapVisible: true,
       basemapOpacity: 1,
       layers: orderedLayers,
-      layerGroups: GROUPS_TOP_FIRST.map((group) => ({
+      layerGroups: GROUPS_TOP_FIRST.filter((group) =>
+        orderedLayers.some((layer) => layer.groupId === group.id)
+      ).map((group) => ({
         ...group,
         visible: true,
         opacity: 1,
@@ -1309,8 +1421,7 @@ export const buildGeoLibreProject = async ({
         layerLoading: {
           stage: "base-map",
           order: [
-            "Administrative extent (hidden)",
-            "Terrain raster",
+            "Terrain GeoServer extent and raster",
             "All other vector layers on first visibility toggle",
             "Raster tiles on visibility toggle",
           ],

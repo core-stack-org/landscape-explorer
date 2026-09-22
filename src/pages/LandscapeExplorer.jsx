@@ -35,6 +35,7 @@ const mergeHydratedVectorLayers = (viewerProject, hydratedLayers) => ({
     return {
       ...layer,
       geojson: hydrated.geojson,
+      popup: hydrated.popup,
       style: layer.metadata?.loadState !== "loaded" && !layer.style?.vectorStyleStops?.length
         ? hydrated.style : layer.style,
       metadata: {
