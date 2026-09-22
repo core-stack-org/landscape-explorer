@@ -521,7 +521,7 @@ const LAYERS = [
     geometryType: "polygon",
     layerName: ({ district, tehsil }) =>
       `change_vector_${district}_${tehsil}_Afforestation`,
-    styleProfile: "boundary",
+    styleProfile: "afforestation_stats",
   },
   {
     id: "deforestation",
@@ -545,7 +545,7 @@ const LAYERS = [
     geometryType: "polygon",
     layerName: ({ district, tehsil }) =>
       `change_vector_${district}_${tehsil}_Deforestation`,
-    styleProfile: "boundary",
+    styleProfile: "deforestation_stats",
   },
   {
     id: "degradation",
@@ -569,7 +569,7 @@ const LAYERS = [
     geometryType: "polygon",
     layerName: ({ district, tehsil }) =>
       `change_vector_${district}_${tehsil}_Degradation`,
-    styleProfile: "boundary",
+    styleProfile: "degradation_stats",
   },
   {
     id: "urbanization",
@@ -593,7 +593,7 @@ const LAYERS = [
     geometryType: "polygon",
     layerName: ({ district, tehsil }) =>
       `change_vector_${district}_${tehsil}_Urbanization`,
-    styleProfile: "boundary",
+    styleProfile: "urbanization_stats",
   },
   {
     id: "cropintensity",
@@ -617,7 +617,7 @@ const LAYERS = [
     geometryType: "polygon",
     layerName: ({ district, tehsil }) =>
       `change_vector_${district}_${tehsil}_CropIntensity`,
-    styleProfile: "boundary",
+    styleProfile: "cropintensity_stats",
   },
   {
     id: "shrubland_diversion_stats",
@@ -629,7 +629,7 @@ const LAYERS = [
     geometryType: "polygon",
     layerName: ({ district, tehsil }) =>
       `change_vector_${district}_${tehsil}_ShrubChange`,
-    styleProfile: "boundary",
+    styleProfile: "shrubland_diversion_stats",
   },
   {
     id: "shrubland_diversion_base",
@@ -664,7 +664,7 @@ const LAYERS = [
     geometryType: "polygon",
     layerName: ({ district, tehsil }) =>
       `restoration_${district}_${tehsil}_vector`,
-    styleProfile: "boundary",
+    styleProfile: "restoration_stats",
   },
   {
     id: "lulc_stats",
