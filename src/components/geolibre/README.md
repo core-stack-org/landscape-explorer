@@ -18,13 +18,15 @@ No custom viewer checkout, patch, plugin, or deployment is needed.
 
 1. The KYL homepage carries the selected state, district, and tehsil to
    `/explore_data` as query parameters.
-2. `geolibreProject.js` fetches the shared Demographic WFS source once. It creates
-   **Administrative Boundaries** and **Socio-Economic Profile** from that data,
-   derives the complete tehsil bounding box, and immediately opens GeoLibre.
-3. Administrative Boundaries and Socio-Economic Profile start hidden. Terrain
-   starts visible; all LULC years remain available as hidden layers.
-4. Every vector outside the two Demographic entries starts listed,
-   hidden, and empty. Its first visibility toggle asks KYL to fetch that WFS
+2. `geolibreProject.js` requests the configured Terrain coverage's WMS
+   GetCapabilities document, derives the complete tehsil bounding box from that
+   coverage's advertised geographic extent, then opens the fixed GeoLibre
+   catalog. Representative GeoServer listings inform catalog additions offline;
+   they do not trigger startup probes or remove finalized layers by tehsil.
+3. Terrain starts visible; all vector layers, including Administrative
+   Boundaries and Socio-Economic Profile, start hidden and unloaded. All LULC
+   years remain available as hidden layers.
+4. Every catalog vector starts listed, hidden, and empty. Its first visibility toggle asks KYL to fetch that WFS
    source and send the hydrated layer back to GeoLibre. The hydrated layer is
    retained, so later off/on toggles do not repeat its WFS request.
 5. Other raster layers start listed and hidden. GeoLibre requests their styled
@@ -91,8 +93,8 @@ sequenceDiagram
 
 1. **Scope:** state, district, and tehsil are read from the route so a project
    is reproducible and shareable.
-2. **Extent:** the shared panchayat-boundary WFS response supplies both default
-   Demographic layers and the authoritative tehsil bbox.
+2. **Extent:** the Terrain WMS GetCapabilities response supplies the
+   authoritative extent for the configured Terrain coverage.
 3. **Catalog:** `geolibreLayers.js` is the single layer inventory. It assigns
    the deployed KYL domain, GeoServer source, year, and order.
 4. **Cartography:** named raster styles are rendered directly by GeoServer WMS.
@@ -100,11 +102,18 @@ sequenceDiagram
    finalized vector profiles remain in the project as a visual-parity safeguard
    because GeoLibre project JSON cannot attach a remote SLD to a predeclared
    WFS layer. GeoLibre handles native vector legends; KYL provides raster legends.
-5. **Loading:** only the shared default WFS is fetched at startup. Other
-   vectors hydrate once on first toggle; rasters remain native lazy WMS layers.
-6. **Download:** vector data remains available through GeoLibre and complete
+5. **Loading:** only Terrain's WMS capabilities run at startup. Feature data is never preloaded; every
+   vector hydrates once on first toggle, and rasters remain native lazy WMS layers.
+6. **Units:** the public field dictionary comes from the local STAC unit CSV,
+   with documented corrections and conservative year/field-name rules. Exact
+   GeoServer column names remain unchanged. After hydration, units appear in
+   popup labels and `metadata.corestack.fields`; structured records are `mixed`
+   and unresolved numeric measures are explicitly `unknown`. The public
+   viewer's attribute-table headers remain raw names because its project
+   format does not expose a field-header alias contract.
+7. **Download:** vector data remains available through GeoLibre and complete
    raster coverage is exposed through WCS for **GeoTIFF (COG)** export.
-7. **Failure handling:** users receive short recovery guidance. A bounded
+8. **Failure handling:** users receive short recovery guidance. A bounded
    technical trace can be downloaded as a `.log` file when support needs it.
 
 ## Native layer organization
@@ -115,14 +124,15 @@ ordered top-first as:
 1. Demographic (Administrative Boundaries, Socio-Economic Profile)
 2. Village Data (facilities access, Mission Antyodaya and livestock)
 3. Hydrology (including micro-watersheds, rivers, canals and hydrological variables)
-4. LULC by year
+4. Land Use Land Cover
 5. Land (including terrain and the Digital Elevation Model)
-6. Agriculture
-7. Restoration
-8. Industry
-9. NREGA
+6. Trees
+7. Agriculture
+8. Restoration
+9. Industry
+10. NREGA
 
-The remaining groups are collapsed. Terrain is the one visible data layer at
+All groups are collapsed. Terrain is the one visible data layer at
 startup; every other layer is toggle-to-load. LULC has one Level 3 raster per
 year, with 2024-2025 listed first and every year back to 2017-2018 retained.
 It uses `lulc_land_use_KYL`, the published 12-class GeoServer style, rather than
@@ -130,8 +140,29 @@ creating separate Level 1, Level 2, and Level 3 presentations. This named style
 is rendered through GeoServer's global WMS endpoint; downloads continue to use
 the single Level 3 WCS coverage.
 
-The project camera is calculated from the Socio-Economic geometry using a
-padded Web Mercator fit. `mapView.bbox` is also retained in project metadata,
+The catalog has 86 entries: 41 WMS rasters and 45 vector presentations.
+Trees contains canopy density and height for every published year (2017–2023,
+newest first), tree-cover NDVI, forest change, grassland trees, forest fringe,
+afforestation/deforestation base/statistics pairs, and NREGA plantation assets.
+Base/statistics partners appear consecutively in the top-first layer list for
+Terrain, Soil Health, five Change Detection themes, Restoration Atlas, and the
+LULC statistics after the yearly rasters. Suffixes follow the finalized CSV;
+reference layers have no suffix. Shrubland Diversion has a pending raster
+entry and a published statistics vector. The four NDVI variants are included
+as specified by the CSV; combined NDVI was observed in only one of four
+sample tehsils and may fail to load where unpublished. Dated NDVI columns and
+their derived display mean are dimensionless. The private
+`.local/units/layers_used_sugestions.csv` records source patterns and style
+publication status.
+
+To refresh the public unit dictionary after editing the local source CSV, run
+`python3 scripts/geolibre/generateFieldMetadata.py`. To recheck publication
+and field coverage in the four sample tehsils, run
+`node scripts/geolibre/auditFieldCoverage.mjs`. Neither command copies feature
+values or the private source CSV into the public bundle.
+
+The project camera is calculated from the Terrain coverage's GeoServer-advertised
+geographic extent using a padded Web Mercator fit. `mapView.bbox` is also retained in project metadata,
 and the iframe receives one `fitBounds` command after its initial load, so the
 initial map contains the full tehsil rather than a generic India extent. Layer
 toggles and lazy hydration do not issue another fit command.
@@ -206,15 +237,32 @@ application.
 |---|---|
 | `../../config/geolibre.config.js` | Viewer application version, URL resolution, strict handshake compatibility |
 | `../../config/geolibreLayers.js` | GeoServer names, deployed domains, raster `rasterStyle` values, and all LULC years |
+| `../../config/geolibreLayerPresentation.json` | Checked-in deployment copy of the finalized private layer CSV order, labels, suffixes, and groups |
 | `geolibreProject.js` | Project generation, legends, Google imagery, vector hydration, GeoServer style/WFS/WMS/WCS references, bbox camera, and date-record JSON parsing |
 | `GeoLibreFrame.jsx` | Iframe bridge, one-time bbox fit, human error states and downloadable bounded technical log |
 | `../../pages/LandscapeExplorer.jsx` | Route-to-project orchestration and fetch-on-first-toggle vector cache; no duplicate map or layer UI |
 
-The current project contains 51 entries: 29 vector entries, 8 LULC yearly
-rasters, and 14 other rasters. Initial startup performs one distinct WFS request
-for the shared Demographic data, then displays Terrain. Each other vector makes
-its own WFS request only on its first toggle. Hidden rasters make no WMS tile
+The current project contains 86 entries: 45 vector entries, 8 LULC yearly
+rasters, and 33 other rasters. Initial startup performs one Terrain WMS
+GetCapabilities request, then displays Terrain. Each vector makes its own WFS
+request only on its first toggle. Hidden rasters make no WMS tile
 request.
+
+The private `.local/units/layers_used_sugestions.csv` is the presentation
+source of truth. The public JSON manifest preserves its exact row order,
+grouping, names, and suffixes in deployments where `.local` is excluded.
+`npm start`, `npm run build`, and `npm test` automatically synchronize the
+manifest when the private CSV exists. To synchronize explicitly, run
+`node scripts/geolibre/syncLayerPresentation.cjs`. Deployments without `.local`
+use the committed manifest. The catalog validates source IDs and patterns
+against it; styles and default visibility are read from it as well.
+The CSV includes `changes_made`, `Default property shown`, and a populated
+style availability/action for every row marked `new`. A boundary or single
+colour profile explicitly records that no thematic property is selected.
+The additional six published rasters use GeoServer's named styles. The
+Shrubland Diversion raster and proposed `change_shrubland_diversion_style`
+remain unpublished; its one legend item is only a placeholder, not a binning
+specification.
 
 ## Error handling
 
@@ -365,7 +413,7 @@ refreshed or shared on the same KYL host because the location is URL-backed.
 
 For a release upgrade, verify all of the following before changing the default
 version: the ready handshake reports the expected release, the project loads
-without `geolibre:error`, both default Demographic layers are visible at `0.8`,
+without `geolibre:error`, only Terrain is initially visible,
 the full tehsil fits exactly once, Hydrology and other vectors hydrate
 only when toggled and are then reused, WMS tiles appear only when enabled, and GeoLibre
 can save/export the resulting project.
