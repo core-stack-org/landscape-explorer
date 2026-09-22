@@ -1,3 +1,5 @@
+import PRESENTATION from "./geolibreLayerPresentation.json";
+
 const LULC_SOURCE_WORKSPACE = "LULC_level_3";
 
 export const GEOLIBRE_LULC_YEARS = [
@@ -158,6 +160,7 @@ const LAYERS = [
   {
     id: "terrain_vector",
     label: "Terrain Clusters",
+    pairAfter: "terrain",
     domain: "Land",
     loadGroup: "land",
     sourceType: "wfs",
@@ -269,6 +272,17 @@ const LAYERS = [
     layerName: ({ district, tehsil }) => `${district}_${tehsil}_drought`,
     styleProfile: "drought",
   },
+  {
+    id: "drought_causality",
+    label: "Drought Causality",
+    domain: "Agriculture",
+    loadGroup: "agriculture",
+    sourceType: "wfs",
+    workspace: "drought_causality",
+    geometryType: "polygon",
+    layerName: ({ district, tehsil }) => `${district}_${tehsil}_drought_causality`,
+    styleProfile: "drought_causality",
+  },
   ...GEOLIBRE_NREGA_CATEGORIES.map((category) => ({
     id: `nrega_${category.id}`,
     baseId: "nrega",
@@ -294,6 +308,28 @@ const LAYERS = [
     layerName: ({ district, tehsil }) =>
       `${district}_${tehsil}_green_credit`,
     styleProfile: "green_credit",
+  },
+  {
+    id: "tree_in_grassland",
+    label: "Tree in Grassland",
+    domain: "Restoration",
+    loadGroup: "restoration",
+    sourceType: "wfs",
+    workspace: "tree_in_grassland",
+    geometryType: "polygon",
+    layerName: ({ district, tehsil }) => `${district}_${tehsil}_tree_in_grassland`,
+    styleProfile: "tree_in_grassland",
+  },
+  {
+    id: "forest_fringe",
+    label: "Forest Fringe",
+    domain: "Restoration",
+    loadGroup: "restoration",
+    sourceType: "wfs",
+    workspace: "forest_fringes",
+    geometryType: "polygon",
+    layerName: ({ district, tehsil }) => `${district}_${tehsil}_forest_fringe`,
+    styleProfile: "forest_fringe",
   },
   {
     id: "land_conflicts",
@@ -342,6 +378,19 @@ const LAYERS = [
     // Named styles are passed to WMS as STYLES for every display request.
     rasterStyle: "Terrain_Style_11_Classes",
     defaultVisible: true,
+  },
+  {
+    id: "soil_health_vector",
+    label: "Soil Health",
+    pairAfter: "soil_health_raster_OC_OLM",
+    domain: "Land",
+    loadGroup: "land",
+    sourceType: "wfs",
+    workspace: "soil_health_vector",
+    geometryType: "polygon",
+    layerName: ({ district, tehsil }) =>
+      `${district}_${tehsil}_soil_health_vector`,
+    styleProfile: "boundary",
   },
   {
     id: "dem",
@@ -423,6 +472,33 @@ const LAYERS = [
     layerName: ({ district, tehsil }) => `${district}_${tehsil}_clart`,
     rasterStyle: "",
   },
+  ...[
+    { id: "distance_to_drainage_line", label: "Distance to Drainage Line", workspace: "distance_nearest_upstream_DL", style: "distance_nearest_upstream_DL", name: ({ district, tehsil }) => `distance_to_drainage_line_${district}_${tehsil}_raster` },
+    { id: "catchment_area", label: "Catchment Area", workspace: "catchment_area_singleflow", style: "catchment_area_singleflow", name: ({ district, tehsil }) => `catchment_area_${district}_${tehsil}_raster` },
+    { id: "natural_depression", label: "Natural Depression", workspace: "natural_depression", style: "natural_depression", name: ({ district, tehsil }) => `natural_depression_${district}_${tehsil}_raster` },
+  ].map((entry) => ({
+    id: entry.id, label: entry.label, domain: "Hydrology", loadGroup: "hydrology",
+    sourceType: "wms", workspace: entry.workspace, layerName: entry.name,
+    rasterStyle: entry.style,
+  })),
+  // Both workspaces publish 2017–2023. Years are separate selectable rasters.
+  ...[
+    { id: "tree_canopy_density", label: "Canopy Cover Density", workspace: "tree_ccd_raster", style: "tree_ccd_style", prefix: "ccd" },
+    { id: "tree_height", label: "Tree Height", workspace: "tree_ch_raster", style: "tree_ch_style", prefix: "ch" },
+  ].flatMap(entry => Array.from({ length: 7 }, (_, i) => {
+    const year = 2023 - i;
+    return {
+      id: `${entry.id}_${year}`, baseId: entry.id, label: `${entry.label} (${year})`,
+      domain: "Trees", loadGroup: "trees", sourceType: "wms",
+      workspace: entry.workspace, rasterStyle: entry.style, year: String(year),
+      layerName: ({ district, tehsil }) => `${entry.prefix}_raster_${district}_${tehsil}_${year}`,
+    };
+  })),
+  {
+    id: "forest_change", label: "Forest Change", domain: "Trees", loadGroup: "trees",
+    sourceType: "wms", workspace: "tree_overall_raster", rasterStyle: "tree_overall_style",
+    layerName: ({ district, tehsil }) => `overall_change_raster_${district}_${tehsil}`,
+  },
   {
     id: "afforestation",
     label: "Change Detection: Afforestation",
@@ -433,6 +509,19 @@ const LAYERS = [
     layerName: ({ district, tehsil }) =>
       `change_${district}_${tehsil}_Afforestation`,
     rasterStyle: "",
+  },
+  {
+    id: "afforestation_stats",
+    label: "Change Detection: Afforestation",
+    pairAfter: "afforestation",
+    domain: "Restoration",
+    loadGroup: "restoration",
+    sourceType: "wfs",
+    workspace: "change_detection",
+    geometryType: "polygon",
+    layerName: ({ district, tehsil }) =>
+      `change_vector_${district}_${tehsil}_Afforestation`,
+    styleProfile: "boundary",
   },
   {
     id: "deforestation",
@@ -446,6 +535,19 @@ const LAYERS = [
     rasterStyle: "",
   },
   {
+    id: "deforestation_stats",
+    label: "Change Detection: Deforestation",
+    pairAfter: "deforestation",
+    domain: "Restoration",
+    loadGroup: "restoration",
+    sourceType: "wfs",
+    workspace: "change_detection",
+    geometryType: "polygon",
+    layerName: ({ district, tehsil }) =>
+      `change_vector_${district}_${tehsil}_Deforestation`,
+    styleProfile: "boundary",
+  },
+  {
     id: "degradation",
     label: "Change Detection: Degradation",
     domain: "Restoration",
@@ -455,6 +557,19 @@ const LAYERS = [
     layerName: ({ district, tehsil }) =>
       `change_${district}_${tehsil}_Degradation`,
     rasterStyle: "",
+  },
+  {
+    id: "degradation_stats",
+    label: "Change Detection: Degradation",
+    pairAfter: "degradation",
+    domain: "Restoration",
+    loadGroup: "restoration",
+    sourceType: "wfs",
+    workspace: "change_detection",
+    geometryType: "polygon",
+    layerName: ({ district, tehsil }) =>
+      `change_vector_${district}_${tehsil}_Degradation`,
+    styleProfile: "boundary",
   },
   {
     id: "urbanization",
@@ -468,6 +583,19 @@ const LAYERS = [
     rasterStyle: "",
   },
   {
+    id: "urbanization_stats",
+    label: "Change Detection: Urbanization",
+    pairAfter: "urbanization",
+    domain: "Restoration",
+    loadGroup: "restoration",
+    sourceType: "wfs",
+    workspace: "change_detection",
+    geometryType: "polygon",
+    layerName: ({ district, tehsil }) =>
+      `change_vector_${district}_${tehsil}_Urbanization`,
+    styleProfile: "boundary",
+  },
+  {
     id: "cropintensity",
     label: "Change Detection: Crop Intensity",
     domain: "Restoration",
@@ -477,6 +605,42 @@ const LAYERS = [
     layerName: ({ district, tehsil }) =>
       `change_${district}_${tehsil}_CropIntensity`,
     rasterStyle: "cropintensity",
+  },
+  {
+    id: "cropintensity_stats",
+    label: "Change Detection: Crop Intensity",
+    pairAfter: "cropintensity",
+    domain: "Restoration",
+    loadGroup: "restoration",
+    sourceType: "wfs",
+    workspace: "change_detection",
+    geometryType: "polygon",
+    layerName: ({ district, tehsil }) =>
+      `change_vector_${district}_${tehsil}_CropIntensity`,
+    styleProfile: "boundary",
+  },
+  {
+    id: "shrubland_diversion_stats",
+    label: "Change: Shrubland Diversion",
+    domain: "Restoration",
+    loadGroup: "restoration",
+    sourceType: "wfs",
+    workspace: "change_detection",
+    geometryType: "polygon",
+    layerName: ({ district, tehsil }) =>
+      `change_vector_${district}_${tehsil}_ShrubChange`,
+    styleProfile: "boundary",
+  },
+  {
+    id: "shrubland_diversion_base",
+    label: "Change: Shrubland Diversion",
+    domain: "Restoration",
+    loadGroup: "restoration",
+    sourceType: "wms",
+    workspace: "change_detection",
+    layerName: ({ district, tehsil }) => `change_${district}_${tehsil}_ShrubChange`,
+    rasterStyle: "change_shrubland_diversion_style",
+    stylePublicationPending: true,
   },
   {
     id: "restoration",
@@ -489,6 +653,47 @@ const LAYERS = [
       `restoration_${district}_${tehsil}_raster`,
     rasterStyle: "restoration_style",
   },
+  {
+    id: "restoration_stats",
+    label: "Restoration Opportunities",
+    pairAfter: "restoration",
+    domain: "Restoration",
+    loadGroup: "restoration",
+    sourceType: "wfs",
+    workspace: "restoration",
+    geometryType: "polygon",
+    layerName: ({ district, tehsil }) =>
+      `restoration_${district}_${tehsil}_vector`,
+    styleProfile: "boundary",
+  },
+  {
+    id: "lulc_stats",
+    label: "LULC",
+    pairAfter: `lulc_level_3_${LATEST_GEOLIBRE_LULC_YEAR}`,
+    domain: "Land",
+    loadGroup: "lulc",
+    sourceType: "wfs",
+    workspace: "lulc_vector",
+    geometryType: "polygon",
+    layerName: ({ district, tehsil }) => `lulc_vector_${district}_${tehsil}`,
+    styleProfile: "boundary",
+  },
+  ...[
+    { id: "ndvi_crop_stats", label: "NDVI · Cropland", suffix: "_crop" },
+    { id: "ndvi_shrub_stats", label: "NDVI · Shrubland", suffix: "_shrub" },
+    { id: "ndvi_tree_stats", label: "NDVI · Tree Cover", suffix: "_tree" },
+    { id: "ndvi_combined_stats", label: "NDVI · Combined", suffix: "" },
+  ].map((entry) => ({
+    id: entry.id,
+    label: entry.label,
+    domain: "Land",
+    loadGroup: "lulc",
+    sourceType: "wfs",
+    workspace: "ndvi_timeseries",
+    geometryType: "polygon",
+    layerName: ({ district, tehsil }) => `ndvi_timeseries_${district}_${tehsil}${entry.suffix}`,
+    styleProfile: "ndvi",
+  })),
 ];
 
 export const GEOLIBRE_LULC_LAYERS = GEOLIBRE_LULC_YEARS.map((year) => ({
@@ -506,10 +711,81 @@ export const GEOLIBRE_LULC_LAYERS = GEOLIBRE_LULC_YEARS.map((year) => ({
     `LULC_${year.value}_${district}_${tehsil}_level_3`,
 }));
 
-export const GEOLIBRE_LAYERS = Object.freeze([
+const UNIT_SOURCES_BY_ID = {
+  administrative_boundaries: ["admin_boundary"],
+  demographics: ["admin_boundary"],
+  facilities: ["facilities_proximity"],
+  antyodaya: ["cs_antyodaya_2020"],
+  livestock: ["cs_village_livestock_census_20"],
+  hydrological_boundaries: ["well_depth_net_value", "filtered_delta_g_annual_uid"],
+  mws_layers: ["well_depth_net_value", "filtered_delta_g_annual_uid"],
+  mws_layers_fortnight: ["filtered_delta_g_fortnight_uid"],
+  terrain_vector: ["terrain_clusters"],
+  soil_type: ["soil_type"],
+  drainage: ["drainage_lines"],
+  river: ["river_vector"],
+  canal: ["canal_vector"],
+  remote_sensed_waterbodies: ["swb3"],
+  soge: ["soge_vector"],
+  aquifer: ["aquifer_vector"],
+  cropping_intensity: ["cropping_intensity_2017-23"],
+  drought: ["drought_2017_2022"],
+  green_credit: ["green_credits_vector"],
+  land_conflicts: ["land_conflict_watch_vector"],
+  industry: ["factory_csr_vector"],
+  mining: ["mining_vector"],
+  soil_health_vector: ["soil_health_vector"],
+  afforestation_stats: ["change_vector_Afforestation"],
+  deforestation_stats: ["change_vector_Deforestation"],
+  degradation_stats: ["change_vector_Degradation"],
+  urbanization_stats: ["change_vector_Urbanization"],
+  cropintensity_stats: ["change_vector_CropIntensity"],
+  shrubland_diversion_stats: ["change_vector_ShrubChange"],
+  restoration_stats: ["restoration_vector"],
+  lulc_stats: ["lulc_vector"],
+  ndvi_crop_stats: ["ndvi_timeseries"],
+  ndvi_shrub_stats: ["ndvi_timeseries"],
+  ndvi_tree_stats: ["ndvi_timeseries"],
+  ndvi_combined_stats: ["ndvi_timeseries"],
+  drought_causality: ["drought_causality"],
+  tree_in_grassland: ["tree_in_grassland"],
+  forest_fringe: ["forest_fringe"],
+};
+
+const PRESENTATION_BY_ID = new Map(PRESENTATION.map((entry, index) => [entry.id, { ...entry, index }]));
+const catalog = [
   ...LAYERS,
   ...GEOLIBRE_LULC_LAYERS,
-]);
+];
+if (PRESENTATION_BY_ID.size !== PRESENTATION.length ||
+    catalog.length !== PRESENTATION.length ||
+    catalog.some((layer) => !PRESENTATION_BY_ID.has(layer.id))) {
+  throw new Error("GeoLibre catalog and finalized layer presentation are out of sync.");
+}
+for (const layer of catalog) {
+  const presentation = PRESENTATION_BY_ID.get(layer.id);
+  const sourcePattern = `${layer.workspace}:${layer.layerName({ district: "{district}", tehsil: "{tehsil}" })}`;
+  if (presentation.sourceType !== layer.sourceType ||
+      presentation.workspace !== layer.workspace || presentation.sourcePattern !== sourcePattern) {
+    throw new Error(`GeoLibre source and CSV disagree for ${layer.id}.`);
+  }
+}
+export const GEOLIBRE_LAYERS = Object.freeze(catalog.map((layer) => ({
+  ...layer,
+  label: PRESENTATION_BY_ID.get(layer.id).label,
+  category: PRESENTATION_BY_ID.get(layer.id).category,
+  loadGroup: PRESENTATION_BY_ID.get(layer.id).groupId,
+  groupName: PRESENTATION_BY_ID.get(layer.id).groupName,
+  domain: PRESENTATION_BY_ID.get(layer.id).groupName,
+  defaultVisible: PRESENTATION_BY_ID.get(layer.id).defaultVisible,
+  defaultProperty: PRESENTATION_BY_ID.get(layer.id).defaultProperty,
+  ...(layer.sourceType === "wms"
+    ? { rasterStyle: PRESENTATION_BY_ID.get(layer.id).style }
+    : { styleProfile: PRESENTATION_BY_ID.get(layer.id).style }),
+  ...(layer.sourceType === "wfs" ? {
+    unitSources: UNIT_SOURCES_BY_ID[layer.id] || (layer.baseId === "nrega" ? ["nrega_assets"] : []),
+  } : {}),
+})).sort((a, b) => PRESENTATION_BY_ID.get(a.id).index - PRESENTATION_BY_ID.get(b.id).index));
 
 export const GEOLIBRE_VECTOR_LAYERS = GEOLIBRE_LAYERS.filter(
   (layer) => layer.sourceType === "wfs"

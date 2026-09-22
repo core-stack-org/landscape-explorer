@@ -55,6 +55,7 @@ export const geoLibreProjectLoadSignature = (project) =>
         bbox: project.mapView?.bbox,
         mapLayout: project.mapLayout,
         secondaryMapViews: project.secondaryMapViews,
+        layerGroups: (project.layerGroups || []).map(({ id, name, parentId }) => ({ id, name, parentId })),
         layers: (project.layers || []).map((layer) => ({
           id: layer.id,
           name: layer.name,
@@ -63,6 +64,7 @@ export const geoLibreProjectLoadSignature = (project) =>
           sourcePath: layer.sourcePath,
           groupId: layer.groupId,
           style: layer.style,
+          popup: layer.popup,
           loadState: layer.metadata?.loadState,
           featureCount:
             layer.metadata?.featureCount ?? layer.geojson?.features?.length,
