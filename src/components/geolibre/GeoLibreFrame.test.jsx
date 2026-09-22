@@ -46,6 +46,12 @@ describe("GeoLibre iframe bridge", () => {
   beforeEach(() => jest.useFakeTimers());
   afterEach(() => jest.useRealTimers());
 
+  it("reloads when only a group name changes", () => {
+    const before = { ...project, layerGroups: [{ id: "lulc", name: "LULC by year", collapsed: true }] };
+    const after = { ...before, layerGroups: [{ ...before.layerGroups[0], name: "Land Use Land Cover" }] };
+    expect(geoLibreProjectLoadSignature(after)).not.toBe(geoLibreProjectLoadSignature(before));
+  });
+
   it("treats a map-layout reset as a project reload", () => {
     const splitProject = {
       ...project,
