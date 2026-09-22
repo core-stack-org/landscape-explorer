@@ -14,6 +14,15 @@ import {
   withDroughtDryspellMean,
   withNormalizedTerrainCluster,
   withSoilTextureClass,
+  withAfforestationClass,
+  withDeforestationClass,
+  withForestFringeClass,
+  withDegradationClass,
+  withUrbanizationClass,
+  withCropIntensityChangeClass,
+  withExcludedAreaClass,
+  withMwsClass,
+  withMwsFortnightClass,
   vectorFieldPresentation,
 } from "./geolibreProject";
 import GEOLIBRE_FIELD_METADATA from "../../config/geolibreFieldMetadata.json";
@@ -123,6 +132,10 @@ describe("GeoLibre 2.6 project generation", () => {
       [...new Set(PRESENTATION.map(entry => entry.groupName))]
     );
     expect(project.layerGroups.find(group => group.id === "lulc")?.name).toBe("Land Use Land Cover");
+    expect(project.layerGroups.find(group => group.id === "land")?.collapsed).toBe(false);
+    expect(
+      project.layerGroups.filter(group => group.id !== "land").every(group => group.collapsed === true)
+    ).toBe(true);
     // Exercise the viewer's real panel ordering, not just our reversed array.
     const units = buildLayerPanelUnits(project.layers, project.layerGroups);
     expect(units.flatMap(unit => unit.layers.map(layer => layer.id))).toEqual(
@@ -162,8 +175,12 @@ describe("GeoLibre 2.6 project generation", () => {
       expect(byId(id).source.typeName).toContain(":");
     }
     expect(byId("ndvi_tree_stats").style.vectorStyleMode).not.toBe("single");
-    expect(byId("catchment_area").metadata.corestack.legend.title).toContain("unit unconfirmed");
-    expect(byId("natural_depression").metadata.corestack.legend.title).toContain("unit unconfirmed");
+    expect(byId("catchment_area").metadata.corestack.legend.title).not.toContain("unit unconfirmed");
+    expect(byId("catchment_area").metadata.corestack.legend.items.every(item => item.label.endsWith(" hac"))).toBe(true);
+    expect(byId("catchment_area").metadata.corestack.defaultStyleUnit).toBe("hac");
+    expect(byId("natural_depression").metadata.corestack.legend.title).not.toContain("unit unconfirmed");
+    expect(byId("natural_depression").metadata.corestack.legend.items.every(item => item.label.endsWith(" m"))).toBe(true);
+    expect(byId("natural_depression").metadata.corestack.defaultStyleUnit).toBe("m");
     expect(byId("soil_health_raster_P").metadata.corestack.legend.items[0].label).toContain("kg/ha");
     expect(byId("facilities").metadata.corestack.defaultStyleUnit).toBe("km");
     expect(byId("livestock").metadata.corestack.defaultStyleUnit).toBe("count");
@@ -292,6 +309,326 @@ describe("GeoLibre 2.6 project generation", () => {
     expect(expression.value.evaluate({ zoom: 10 }, { properties: { soil_texture_class: "Fine / Clayey" }, type: 3 })).toBe("#8b4513");
     expect(expression.value.evaluate({ zoom: 10 }, { properties: { soil_texture_class: null }, type: 3 })).toBe("#3b3b3b");
   });
+  it("lists the 3 Tree Cover Increase classes with their hectare unit in the native legend", async () => {
+    const project = await buildGeoLibreProject({ ...location, fetchFeatureCollection: successfulFetch });
+    const layer = project.layers.find(item => item.id === "corestack-afforestation_stats");
+    expect(layer.style.vectorStyleProperty).toBe("total_aff_class");
+    expect(layer.style.vectorStyleStops).toEqual([
+      { value: "Less than 50 hac", color: "#ff0000", label: "Less than 50 hac" },
+      { value: "Between 50 to 100 hac", color: "#eee05d", label: "Between 50 to 100 hac" },
+      { value: "More than 100 hac", color: "#73bb53", label: "More than 100 hac" },
+    ]);
+  });
+  it("bins total_aff into its hectare class on hydration", async () => {
+    const project = await buildGeoLibreProject({ ...location, fetchFeatureCollection: successfulFetch });
+    const rawValues = [20, 50, 99.9, 100, 250, null, ""];
+    const result = await hydrateGeoLibreVectorLayer({
+      project, layerId: "corestack-afforestation_stats",
+      fetchFeatureCollection: async () => ({
+        type: "FeatureCollection",
+        features: rawValues.map((total_aff, index) => ({
+          type: "Feature", id: `aff-${index}`,
+          properties: { uid: `aff-${index}`, total_aff },
+          geometry: { type: "Polygon", coordinates: [] },
+        })),
+      }),
+    });
+    const layer = result.layers.find(item => item.id === "corestack-afforestation_stats");
+    expect(layer.geojson.features.map(feature => feature.properties.total_aff_class)).toEqual([
+      "Less than 50 hac", "Between 50 to 100 hac", "Between 50 to 100 hac",
+      "More than 100 hac", "More than 100 hac", null, null,
+    ]);
+    const expression = createExpression(
+      ["match", ["to-string", ["get", "total_aff_class"]], ...layer.style.vectorStyleStops.flatMap(stop => [stop.value, stop.color]), "#3b3b3b"],
+      "layers[0].paint.fill-color"
+    );
+    expect(expression.result).toBe("success");
+    expect(expression.value.evaluate({ zoom: 10 }, { properties: { total_aff_class: "More than 100 hac" }, type: 3 })).toBe("#73bb53");
+    expect(expression.value.evaluate({ zoom: 10 }, { properties: { total_aff_class: null }, type: 3 })).toBe("#3b3b3b");
+  });
+  it("lists the 3 Tree Cover Decrease classes with their hectare unit in the native legend", async () => {
+    const project = await buildGeoLibreProject({ ...location, fetchFeatureCollection: successfulFetch });
+    const layer = project.layers.find(item => item.id === "corestack-deforestation_stats");
+    expect(layer.style.vectorStyleProperty).toBe("total_def_class");
+    expect(layer.style.vectorStyleStops).toEqual([
+      { value: "Less than 50 hac", color: "#73bb53", label: "Less than 50 hac" },
+      { value: "Between 50 to 100 hac", color: "#eee05d", label: "Between 50 to 100 hac" },
+      { value: "More than 100 hac", color: "#ff0000", label: "More than 100 hac" },
+    ]);
+  });
+  it("bins total_def into its hectare class on hydration", async () => {
+    const project = await buildGeoLibreProject({ ...location, fetchFeatureCollection: successfulFetch });
+    const rawValues = [20, 50, 99.9, 100, 250, null, ""];
+    const result = await hydrateGeoLibreVectorLayer({
+      project, layerId: "corestack-deforestation_stats",
+      fetchFeatureCollection: async () => ({
+        type: "FeatureCollection",
+        features: rawValues.map((total_def, index) => ({
+          type: "Feature", id: `def-${index}`,
+          properties: { uid: `def-${index}`, total_def },
+          geometry: { type: "Polygon", coordinates: [] },
+        })),
+      }),
+    });
+    const layer = result.layers.find(item => item.id === "corestack-deforestation_stats");
+    expect(layer.geojson.features.map(feature => feature.properties.total_def_class)).toEqual([
+      "Less than 50 hac", "Between 50 to 100 hac", "Between 50 to 100 hac",
+      "More than 100 hac", "More than 100 hac", null, null,
+    ]);
+    const expression = createExpression(
+      ["match", ["to-string", ["get", "total_def_class"]], ...layer.style.vectorStyleStops.flatMap(stop => [stop.value, stop.color]), "#3b3b3b"],
+      "layers[0].paint.fill-color"
+    );
+    expect(expression.result).toBe("success");
+    expect(expression.value.evaluate({ zoom: 10 }, { properties: { total_def_class: "More than 100 hac" }, type: 3 })).toBe("#ff0000");
+    expect(expression.value.evaluate({ zoom: 10 }, { properties: { total_def_class: null }, type: 3 })).toBe("#3b3b3b");
+  });
+  it("lists the 4 Forest Fringe area classes with their hectare unit in the native legend", async () => {
+    const project = await buildGeoLibreProject({ ...location, fetchFeatureCollection: successfulFetch });
+    const layer = project.layers.find(item => item.id === "corestack-forest_fringe");
+    expect(layer.style.vectorStyleProperty).toBe("forest_fringe_area_class");
+    expect(layer.style.vectorStyleStops).toEqual([
+      { value: "Less than 10 hac", color: "#f0fdf4", label: "Less than 10 hac" },
+      { value: "Between 10 to 50 hac", color: "#86efac", label: "Between 10 to 50 hac" },
+      { value: "Between 50 to 150 hac", color: "#16a34a", label: "Between 50 to 150 hac" },
+      { value: "More than 150 hac", color: "#14532d", label: "More than 150 hac" },
+    ]);
+  });
+  it("bins forest_fringe_area_in_ha into its hectare class on hydration", async () => {
+    const project = await buildGeoLibreProject({ ...location, fetchFeatureCollection: successfulFetch });
+    const rawValues = [5, 10, 49.9, 50, 149.9, 150, null, ""];
+    const result = await hydrateGeoLibreVectorLayer({
+      project, layerId: "corestack-forest_fringe",
+      fetchFeatureCollection: async () => ({
+        type: "FeatureCollection",
+        features: rawValues.map((forest_fringe_area_in_ha, index) => ({
+          type: "Feature", id: `ff-${index}`,
+          properties: { uid: `ff-${index}`, forest_fringe_area_in_ha },
+          geometry: { type: "Polygon", coordinates: [] },
+        })),
+      }),
+    });
+    const layer = result.layers.find(item => item.id === "corestack-forest_fringe");
+    expect(layer.geojson.features.map(feature => feature.properties.forest_fringe_area_class)).toEqual([
+      "Less than 10 hac", "Between 10 to 50 hac", "Between 10 to 50 hac",
+      "Between 50 to 150 hac", "Between 50 to 150 hac", "More than 150 hac", null, null,
+    ]);
+    const expression = createExpression(
+      ["match", ["to-string", ["get", "forest_fringe_area_class"]], ...layer.style.vectorStyleStops.flatMap(stop => [stop.value, stop.color]), "#3b3b3b"],
+      "layers[0].paint.fill-color"
+    );
+    expect(expression.result).toBe("success");
+    expect(expression.value.evaluate({ zoom: 10 }, { properties: { forest_fringe_area_class: "More than 150 hac" }, type: 3 })).toBe("#14532d");
+    expect(expression.value.evaluate({ zoom: 10 }, { properties: { forest_fringe_area_class: null }, type: 3 })).toBe("#3b3b3b");
+  });
+  it("lists the 3 Cropping Degradation classes with their hectare unit in the native legend", async () => {
+    const project = await buildGeoLibreProject({ ...location, fetchFeatureCollection: successfulFetch });
+    const layer = project.layers.find(item => item.id === "corestack-degradation_stats");
+    expect(layer.style.vectorStyleProperty).toBe("total_deg_class");
+    expect(layer.style.vectorStyleStops).toEqual([
+      { value: "Less than 30 hac", color: "#73bb53", label: "Less than 30 hac" },
+      { value: "Between 30 to 90 hac", color: "#eee05d", label: "Between 30 to 90 hac" },
+      { value: "More than 90 hac", color: "#ff0000", label: "More than 90 hac" },
+    ]);
+  });
+  it("bins total_deg into its hectare class on hydration", async () => {
+    const project = await buildGeoLibreProject({ ...location, fetchFeatureCollection: successfulFetch });
+    const rawValues = [10, 30, 89.9, 90, 200, null, ""];
+    const result = await hydrateGeoLibreVectorLayer({
+      project, layerId: "corestack-degradation_stats",
+      fetchFeatureCollection: async () => ({
+        type: "FeatureCollection",
+        features: rawValues.map((total_deg, index) => ({
+          type: "Feature", id: `deg-${index}`,
+          properties: { uid: `deg-${index}`, total_deg },
+          geometry: { type: "Polygon", coordinates: [] },
+        })),
+      }),
+    });
+    const layer = result.layers.find(item => item.id === "corestack-degradation_stats");
+    expect(layer.geojson.features.map(feature => feature.properties.total_deg_class)).toEqual([
+      "Less than 30 hac", "Between 30 to 90 hac", "Between 30 to 90 hac",
+      "More than 90 hac", "More than 90 hac", null, null,
+    ]);
+    const expression = createExpression(
+      ["match", ["to-string", ["get", "total_deg_class"]], ...layer.style.vectorStyleStops.flatMap(stop => [stop.value, stop.color]), "#3b3b3b"],
+      "layers[0].paint.fill-color"
+    );
+    expect(expression.result).toBe("success");
+    expect(expression.value.evaluate({ zoom: 10 }, { properties: { total_deg_class: "More than 90 hac" }, type: 3 })).toBe("#ff0000");
+    expect(expression.value.evaluate({ zoom: 10 }, { properties: { total_deg_class: null }, type: 3 })).toBe("#3b3b3b");
+  });
+  it("lists the 3 Urbanization classes with their hectare unit in the native legend", async () => {
+    const project = await buildGeoLibreProject({ ...location, fetchFeatureCollection: successfulFetch });
+    const layer = project.layers.find(item => item.id === "corestack-urbanization_stats");
+    expect(layer.style.vectorStyleProperty).toBe("total_urb_class");
+    expect(layer.style.vectorStyleStops).toEqual([
+      { value: "Less than 30 hac", color: "#73bb53", label: "Less than 30 hac" },
+      { value: "Between 30 to 90 hac", color: "#eee05d", label: "Between 30 to 90 hac" },
+      { value: "More than 90 hac", color: "#ff0000", label: "More than 90 hac" },
+    ]);
+  });
+  it("bins total_urb into its hectare class on hydration", async () => {
+    const project = await buildGeoLibreProject({ ...location, fetchFeatureCollection: successfulFetch });
+    const rawValues = [10, 30, 89.9, 90, 200, null, ""];
+    const result = await hydrateGeoLibreVectorLayer({
+      project, layerId: "corestack-urbanization_stats",
+      fetchFeatureCollection: async () => ({
+        type: "FeatureCollection",
+        features: rawValues.map((total_urb, index) => ({
+          type: "Feature", id: `urb-${index}`,
+          properties: { uid: `urb-${index}`, total_urb },
+          geometry: { type: "Polygon", coordinates: [] },
+        })),
+      }),
+    });
+    const layer = result.layers.find(item => item.id === "corestack-urbanization_stats");
+    expect(layer.geojson.features.map(feature => feature.properties.total_urb_class)).toEqual([
+      "Less than 30 hac", "Between 30 to 90 hac", "Between 30 to 90 hac",
+      "More than 90 hac", "More than 90 hac", null, null,
+    ]);
+    const expression = createExpression(
+      ["match", ["to-string", ["get", "total_urb_class"]], ...layer.style.vectorStyleStops.flatMap(stop => [stop.value, stop.color]), "#3b3b3b"],
+      "layers[0].paint.fill-color"
+    );
+    expect(expression.result).toBe("success");
+    expect(expression.value.evaluate({ zoom: 10 }, { properties: { total_urb_class: "More than 90 hac" }, type: 3 })).toBe("#ff0000");
+    expect(expression.value.evaluate({ zoom: 10 }, { properties: { total_urb_class: null }, type: 3 })).toBe("#3b3b3b");
+  });
+  it("lists the 3 Crop Intensity change classes with their hectare unit in the native legend", async () => {
+    const project = await buildGeoLibreProject({ ...location, fetchFeatureCollection: successfulFetch });
+    const layer = project.layers.find(item => item.id === "corestack-cropintensity_stats");
+    expect(layer.style.vectorStyleProperty).toBe("total_change_class");
+    expect(layer.style.vectorStyleStops).toEqual([
+      { value: "Less than 30 hac", color: "#73bb53", label: "Less than 30 hac" },
+      { value: "Between 30 to 90 hac", color: "#eee05d", label: "Between 30 to 90 hac" },
+      { value: "More than 90 hac", color: "#ff0000", label: "More than 90 hac" },
+    ]);
+  });
+  it("bins total_change into its hectare class on hydration", async () => {
+    const project = await buildGeoLibreProject({ ...location, fetchFeatureCollection: successfulFetch });
+    const rawValues = [10, 30, 89.9, 90, 200, null, ""];
+    const result = await hydrateGeoLibreVectorLayer({
+      project, layerId: "corestack-cropintensity_stats",
+      fetchFeatureCollection: async () => ({
+        type: "FeatureCollection",
+        features: rawValues.map((total_change, index) => ({
+          type: "Feature", id: `ci-${index}`,
+          properties: { uid: `ci-${index}`, total_change },
+          geometry: { type: "Polygon", coordinates: [] },
+        })),
+      }),
+    });
+    const layer = result.layers.find(item => item.id === "corestack-cropintensity_stats");
+    expect(layer.geojson.features.map(feature => feature.properties.total_change_class)).toEqual([
+      "Less than 30 hac", "Between 30 to 90 hac", "Between 30 to 90 hac",
+      "More than 90 hac", "More than 90 hac", null, null,
+    ]);
+    const expression = createExpression(
+      ["match", ["to-string", ["get", "total_change_class"]], ...layer.style.vectorStyleStops.flatMap(stop => [stop.value, stop.color]), "#3b3b3b"],
+      "layers[0].paint.fill-color"
+    );
+    expect(expression.result).toBe("success");
+    expect(expression.value.evaluate({ zoom: 10 }, { properties: { total_change_class: "More than 90 hac" }, type: 3 })).toBe("#ff0000");
+    expect(expression.value.evaluate({ zoom: 10 }, { properties: { total_change_class: null }, type: 3 })).toBe("#3b3b3b");
+  });
+  it("lists the 3 Shrubland Diversion change classes with their hectare unit in the native legend", async () => {
+    const project = await buildGeoLibreProject({ ...location, fetchFeatureCollection: successfulFetch });
+    const layer = project.layers.find(item => item.id === "corestack-shrubland_diversion_stats");
+    expect(layer.style.vectorStyleProperty).toBe("total_change_class");
+    expect(layer.style.vectorStyleStops).toEqual([
+      { value: "Less than 30 hac", color: "#73bb53", label: "Less than 30 hac" },
+      { value: "Between 30 to 90 hac", color: "#eee05d", label: "Between 30 to 90 hac" },
+      { value: "More than 90 hac", color: "#ff0000", label: "More than 90 hac" },
+    ]);
+  });
+  it("bins total_change into its hectare class on Shrubland Diversion hydration", async () => {
+    const project = await buildGeoLibreProject({ ...location, fetchFeatureCollection: successfulFetch });
+    const rawValues = [10, 30, 89.9, 90, 200, null, ""];
+    const result = await hydrateGeoLibreVectorLayer({
+      project, layerId: "corestack-shrubland_diversion_stats",
+      fetchFeatureCollection: async () => ({
+        type: "FeatureCollection",
+        features: rawValues.map((total_change, index) => ({
+          type: "Feature", id: `shrub-${index}`,
+          properties: { uid: `shrub-${index}`, total_change },
+          geometry: { type: "Polygon", coordinates: [] },
+        })),
+      }),
+    });
+    const layer = result.layers.find(item => item.id === "corestack-shrubland_diversion_stats");
+    expect(layer.geojson.features.map(feature => feature.properties.total_change_class)).toEqual([
+      "Less than 30 hac", "Between 30 to 90 hac", "Between 30 to 90 hac",
+      "More than 90 hac", "More than 90 hac", null, null,
+    ]);
+    const expression = createExpression(
+      ["match", ["to-string", ["get", "total_change_class"]], ...layer.style.vectorStyleStops.flatMap(stop => [stop.value, stop.color]), "#3b3b3b"],
+      "layers[0].paint.fill-color"
+    );
+    expect(expression.result).toBe("success");
+    expect(expression.value.evaluate({ zoom: 10 }, { properties: { total_change_class: "More than 90 hac" }, type: 3 })).toBe("#ff0000");
+    expect(expression.value.evaluate({ zoom: 10 }, { properties: { total_change_class: null }, type: 3 })).toBe("#3b3b3b");
+  });
+  it("lists the 3 Restoration Atlas excluded-area classes with their hectare unit in the native legend", async () => {
+    const project = await buildGeoLibreProject({ ...location, fetchFeatureCollection: successfulFetch });
+    const layer = project.layers.find(item => item.id === "corestack-restoration_stats");
+    expect(layer.style.vectorStyleProperty).toBe("excluded_area_class");
+    expect(layer.style.vectorStyleStops).toEqual([
+      { value: "Less than 30 hac", color: "#73bb53", label: "Less than 30 hac" },
+      { value: "Between 30 to 90 hac", color: "#eee05d", label: "Between 30 to 90 hac" },
+      { value: "More than 90 hac", color: "#ff0000", label: "More than 90 hac" },
+    ]);
+  });
+  it("bins the space-named Excluded A field into its hectare class on hydration", async () => {
+    const project = await buildGeoLibreProject({ ...location, fetchFeatureCollection: successfulFetch });
+    const rawValues = [10, 30, 89.9, 90, 200, null, ""];
+    const result = await hydrateGeoLibreVectorLayer({
+      project, layerId: "corestack-restoration_stats",
+      fetchFeatureCollection: async () => ({
+        type: "FeatureCollection",
+        features: rawValues.map((value, index) => ({
+          type: "Feature", id: `rst-${index}`,
+          properties: { uid: `rst-${index}`, "Excluded A": value },
+          geometry: { type: "Polygon", coordinates: [] },
+        })),
+      }),
+    });
+    const layer = result.layers.find(item => item.id === "corestack-restoration_stats");
+    expect(layer.geojson.features.map(feature => feature.properties.excluded_area_class)).toEqual([
+      "Less than 30 hac", "Between 30 to 90 hac", "Between 30 to 90 hac",
+      "More than 90 hac", "More than 90 hac", null, null,
+    ]);
+    const expression = createExpression(
+      ["match", ["to-string", ["get", "excluded_area_class"]], ...layer.style.vectorStyleStops.flatMap(stop => [stop.value, stop.color]), "#3b3b3b"],
+      "layers[0].paint.fill-color"
+    );
+    expect(expression.result).toBe("success");
+    expect(expression.value.evaluate({ zoom: 10 }, { properties: { excluded_area_class: "More than 90 hac" }, type: 3 })).toBe("#ff0000");
+    expect(expression.value.evaluate({ zoom: 10 }, { properties: { excluded_area_class: null }, type: 3 })).toBe("#3b3b3b");
+  });
+  it("lists the 6 Annual and Fortnightly Water Balance mm classes in their native legends", async () => {
+    const project = await buildGeoLibreProject({ ...location, fetchFeatureCollection: successfulFetch });
+    const mws = project.layers.find(item => item.id === "corestack-mws_layers");
+    expect(mws.style.vectorStyleProperty).toBe("avg_delta_g_class");
+    expect(mws.style.vectorStyleStops).toEqual([
+      { value: "Less than -50 mm", color: "#b2182b", label: "Less than -50 mm" },
+      { value: "-50 to -15 mm", color: "#e37357", label: "-50 to -15 mm" },
+      { value: "-15 to 0 mm", color: "#f4cbbb", label: "-15 to 0 mm" },
+      { value: "0 to 15 mm", color: "#bdd8e7", label: "0 to 15 mm" },
+      { value: "15 to 50 mm", color: "#599cc8", label: "15 to 50 mm" },
+      { value: "More than 50 mm", color: "#2166ac", label: "More than 50 mm" },
+    ]);
+    const fortnight = project.layers.find(item => item.id === "corestack-mws_layers_fortnight");
+    expect(fortnight.style.vectorStyleProperty).toBe("avg_delta_g_class");
+    expect(fortnight.style.vectorStyleStops).toEqual([
+      { value: "Less than -15 mm", color: "#b2182b", label: "Less than -15 mm" },
+      { value: "-15 to -5 mm", color: "#e37357", label: "-15 to -5 mm" },
+      { value: "-5 to 0 mm", color: "#f4cbbb", label: "-5 to 0 mm" },
+      { value: "0 to 5 mm", color: "#bdd8e7", label: "0 to 5 mm" },
+      { value: "5 to 15 mm", color: "#599cc8", label: "5 to 15 mm" },
+      { value: "More than 15 mm", color: "#2166ac", label: "More than 15 mm" },
+    ]);
+  });
   it("colors Fortnightly Water Balance on its averaged DeltaG and still parses date records", async () => {
     const project = await buildGeoLibreProject({ ...location, fetchFeatureCollection: successfulFetch });
     const result = await hydrateGeoLibreVectorLayer({ project, layerId: "corestack-mws_layers_fortnight", fetchFeatureCollection: async () => ({
@@ -302,11 +639,16 @@ describe("GeoLibre 2.6 project generation", () => {
     expect(layer.style.strokeColor).toBe("#05081c");
     expect(layer.style.diagramType).toBeUndefined();
     expect(layer.style.diagramFields).toBeUndefined();
-    expect(layer.style).toMatchObject({ vectorStyleMode: "expression", vectorStyleProperty: "avg_delta_g", fillOpacity: 0.65 });
-    expect(layer.geojson.features[0].properties).toEqual({ "2025-06-16": { DeltaG: -120 }, avg_delta_g: -120, stroke: "#05081c" });
-    const expression = createExpression(JSON.parse(layer.style.vectorStyleExpression), "layers[0].paint.fill-color");
+    expect(layer.style).toMatchObject({ vectorStyleMode: "categorized", vectorStyleProperty: "avg_delta_g_class", fillOpacity: 0.65 });
+    expect(layer.geojson.features[0].properties).toEqual({
+      "2025-06-16": { DeltaG: -120 }, avg_delta_g: -120, avg_delta_g_class: "Less than -15 mm", stroke: "#05081c",
+    });
+    const expression = createExpression(
+      ["match", ["to-string", ["get", "avg_delta_g_class"]], ...layer.style.vectorStyleStops.flatMap(stop => [stop.value, stop.color]), "#3b3b3b"],
+      "layers[0].paint.fill-color"
+    );
     expect(expression.result).toBe("success");
-    expect(expression.value.evaluate({ zoom: 10 }, { properties: { avg_delta_g: -120 }, type: 3 })).toBe("#b2182b");
+    expect(expression.value.evaluate({ zoom: 10 }, { properties: { avg_delta_g_class: "Less than -15 mm" }, type: 3 })).toBe("#b2182b");
     expect(expression.value.evaluate({ zoom: 10 }, { properties: {}, type: 3 })).toBe("#3b3b3b");
   });
   it("evaluates finalized thresholds and missing-data guards in the real MapLibre expression engine", async () => {
@@ -319,10 +661,6 @@ describe("GeoLibre 2.6 project generation", () => {
     expect(color("demographics", { P_LIT: 90, TOT_P: 100 })).toBe("#2166ac");
     expect(color("demographics", { P_LIT: 0, TOT_P: 100 })).toBe("#b2182b");
     expect(color("demographics", { P_LIT: 0, TOT_P: 0 })).toBe("#3b3b3b");
-    expect(color("mws_layers", { avg_delta_g: 0 })).toBe("#bdd8e7");
-    expect(color("mws_layers", { avg_delta_g: -60 })).toBe("#b2182b");
-    expect(color("mws_layers", { avg_delta_g: 60 })).toBe("#2166ac");
-    expect(color("mws_layers", { Net2020_25: 2 })).toBe("#3b3b3b");
     expect(color("remote_sensed_waterbodies", { area_ored: 5 })).toBe("#1e3a8a");
     const crop = Object.fromEntries(Array.from({ length: 8 }, (_, i) => [`cropping_intensity_${2017 + i}`, 2]));
     expect(color("cropping_intensity", crop)).toBe("#52ac5a");
@@ -348,6 +686,22 @@ describe("GeoLibre 2.6 project generation", () => {
     expect(result.style.vectorStyleStops.map(stop => stop.value)).toEqual([0, 1, 2, 3, 5, 8]);
     expect(hydrated.styles[layer.id]).toEqual(result.style);
     expect(result.geojson.features.slice(6).map(feature => feature.properties.fill)).toEqual(["#3b3b3b", "#3b3b3b", "#3b3b3b"]);
+    expect(result.geojson.features[0].properties.fill).toBeUndefined();
+  });
+  it("classifies Tree in Grassland by its stats area and labels breaks in hectares", async () => {
+    const project = await buildGeoLibreProject({ ...location, fetchFeatureCollection: successfulFetch });
+    const layer = project.layers.find(item => item.id === "corestack-tree_in_grassland");
+    expect(layer.style.vectorStyleProperty).toBe("tree_in_shrubs_trees_area_in_ha");
+    expect(layer.style.vectorStyleColorRamp).toBe("greens");
+    const hydrated = await hydrateGeoLibreVectorLayer({ project, layerId: layer.id, fetchFeatureCollection: async () => ({
+      type: "FeatureCollection", features: [0.5, 2, 5, 10, 25, 60, null, ""].map((value, index) => ({
+        type: "Feature", geometry: null, properties: { uid: `tree-${index}`, tree_in_shrubs_trees_area_in_ha: value },
+      })),
+    }) });
+    const result = hydrated.layers.find(item => item.id === layer.id);
+    expect(result.style.vectorStyleStops.length).toBeGreaterThan(0);
+    expect(result.style.vectorStyleStops.every(stop => stop.label.endsWith(" ha"))).toBe(true);
+    expect(result.geojson.features.slice(6).map(feature => feature.properties.fill)).toEqual(["#3b3b3b", "#3b3b3b"]);
     expect(result.geojson.features[0].properties.fill).toBeUndefined();
   });
   it("classifies source facilities status when GeoServer has not published the common status alias", async () => {
@@ -1437,5 +1791,144 @@ describe("Soil Type texture binning", () => {
     const unrecognized = { type: "FeatureCollection", features: [{ geometry: null, properties: { uid: "2", subsoil_texture: "Medium" } }] };
     expect(withSoilTextureClass(missing).features[0].properties.soil_texture_class).toBeNull();
     expect(withSoilTextureClass(unrecognized).features[0].properties.soil_texture_class).toBeNull();
+  });
+});
+
+describe("Afforestation stats hectare binning", () => {
+  it("bins total_aff at its boundaries", () => {
+    const data = { type: "FeatureCollection", features: [49.9, 50, 99.9, 100, 100.1].map((total_aff, index) => ({
+      geometry: null, properties: { uid: `${index}`, total_aff },
+    })) };
+    expect(withAfforestationClass(data).features.map(feature => feature.properties.total_aff_class)).toEqual([
+      "Less than 50 hac", "Between 50 to 100 hac", "Between 50 to 100 hac",
+      "More than 100 hac", "More than 100 hac",
+    ]);
+  });
+  it("keeps the class null, not a made-up bin, for a missing total_aff", () => {
+    const data = { type: "FeatureCollection", features: [{ geometry: null, properties: { uid: "1", total_aff: null } }] };
+    expect(withAfforestationClass(data).features[0].properties.total_aff_class).toBeNull();
+  });
+});
+
+describe("Deforestation stats hectare binning", () => {
+  it("bins total_def at its boundaries", () => {
+    const data = { type: "FeatureCollection", features: [49.9, 50, 99.9, 100, 100.1].map((total_def, index) => ({
+      geometry: null, properties: { uid: `${index}`, total_def },
+    })) };
+    expect(withDeforestationClass(data).features.map(feature => feature.properties.total_def_class)).toEqual([
+      "Less than 50 hac", "Between 50 to 100 hac", "Between 50 to 100 hac",
+      "More than 100 hac", "More than 100 hac",
+    ]);
+  });
+  it("keeps the class null, not a made-up bin, for a missing total_def", () => {
+    const data = { type: "FeatureCollection", features: [{ geometry: null, properties: { uid: "1", total_def: null } }] };
+    expect(withDeforestationClass(data).features[0].properties.total_def_class).toBeNull();
+  });
+});
+
+describe("Forest Fringe hectare binning", () => {
+  it("bins forest_fringe_area_in_ha at its boundaries", () => {
+    const data = { type: "FeatureCollection", features: [9.9, 10, 49.9, 50, 149.9, 150].map((forest_fringe_area_in_ha, index) => ({
+      geometry: null, properties: { uid: `${index}`, forest_fringe_area_in_ha },
+    })) };
+    expect(withForestFringeClass(data).features.map(feature => feature.properties.forest_fringe_area_class)).toEqual([
+      "Less than 10 hac", "Between 10 to 50 hac", "Between 10 to 50 hac",
+      "Between 50 to 150 hac", "Between 50 to 150 hac", "More than 150 hac",
+    ]);
+  });
+  it("keeps the class null, not a made-up bin, for a missing forest_fringe_area_in_ha", () => {
+    const data = { type: "FeatureCollection", features: [{ geometry: null, properties: { uid: "1", forest_fringe_area_in_ha: null } }] };
+    expect(withForestFringeClass(data).features[0].properties.forest_fringe_area_class).toBeNull();
+  });
+});
+
+describe("Cropping Degradation hectare binning", () => {
+  it("bins total_deg at its boundaries", () => {
+    const data = { type: "FeatureCollection", features: [29.9, 30, 89.9, 90, 90.1].map((total_deg, index) => ({
+      geometry: null, properties: { uid: `${index}`, total_deg },
+    })) };
+    expect(withDegradationClass(data).features.map(feature => feature.properties.total_deg_class)).toEqual([
+      "Less than 30 hac", "Between 30 to 90 hac", "Between 30 to 90 hac",
+      "More than 90 hac", "More than 90 hac",
+    ]);
+  });
+  it("keeps the class null, not a made-up bin, for a missing total_deg", () => {
+    const data = { type: "FeatureCollection", features: [{ geometry: null, properties: { uid: "1", total_deg: null } }] };
+    expect(withDegradationClass(data).features[0].properties.total_deg_class).toBeNull();
+  });
+});
+
+describe("Urbanization hectare binning", () => {
+  it("bins total_urb at its boundaries", () => {
+    const data = { type: "FeatureCollection", features: [29.9, 30, 89.9, 90, 90.1].map((total_urb, index) => ({
+      geometry: null, properties: { uid: `${index}`, total_urb },
+    })) };
+    expect(withUrbanizationClass(data).features.map(feature => feature.properties.total_urb_class)).toEqual([
+      "Less than 30 hac", "Between 30 to 90 hac", "Between 30 to 90 hac",
+      "More than 90 hac", "More than 90 hac",
+    ]);
+  });
+  it("keeps the class null, not a made-up bin, for a missing total_urb", () => {
+    const data = { type: "FeatureCollection", features: [{ geometry: null, properties: { uid: "1", total_urb: null } }] };
+    expect(withUrbanizationClass(data).features[0].properties.total_urb_class).toBeNull();
+  });
+});
+
+describe("Crop Intensity change hectare binning", () => {
+  it("bins total_change at its boundaries", () => {
+    const data = { type: "FeatureCollection", features: [29.9, 30, 89.9, 90, 90.1].map((total_change, index) => ({
+      geometry: null, properties: { uid: `${index}`, total_change },
+    })) };
+    expect(withCropIntensityChangeClass(data).features.map(feature => feature.properties.total_change_class)).toEqual([
+      "Less than 30 hac", "Between 30 to 90 hac", "Between 30 to 90 hac",
+      "More than 90 hac", "More than 90 hac",
+    ]);
+  });
+  it("keeps the class null, not a made-up bin, for a missing total_change", () => {
+    const data = { type: "FeatureCollection", features: [{ geometry: null, properties: { uid: "1", total_change: null } }] };
+    expect(withCropIntensityChangeClass(data).features[0].properties.total_change_class).toBeNull();
+  });
+});
+
+describe("Restoration Atlas excluded-area hectare binning", () => {
+  it("bins the space-named Excluded A field at its boundaries", () => {
+    const data = { type: "FeatureCollection", features: [29.9, 30, 89.9, 90, 90.1].map((value, index) => ({
+      geometry: null, properties: { uid: `${index}`, "Excluded A": value },
+    })) };
+    expect(withExcludedAreaClass(data).features.map(feature => feature.properties.excluded_area_class)).toEqual([
+      "Less than 30 hac", "Between 30 to 90 hac", "Between 30 to 90 hac",
+      "More than 90 hac", "More than 90 hac",
+    ]);
+  });
+  it("keeps the class null, not a made-up bin, for a missing Excluded A", () => {
+    const data = { type: "FeatureCollection", features: [{ geometry: null, properties: { uid: "1", "Excluded A": null } }] };
+    expect(withExcludedAreaClass(data).features[0].properties.excluded_area_class).toBeNull();
+  });
+});
+
+describe("Water Balance mm binning", () => {
+  it("bins Annual avg_delta_g at its boundaries", () => {
+    const data = { type: "FeatureCollection", features: [-50.1, -50, -15, 0, 15, 50, 50.1].map((avg_delta_g, index) => ({
+      geometry: null, properties: { uid: `${index}`, avg_delta_g },
+    })) };
+    expect(withMwsClass(data).features.map(feature => feature.properties.avg_delta_g_class)).toEqual([
+      "Less than -50 mm", "-50 to -15 mm", "-15 to 0 mm", "0 to 15 mm", "15 to 50 mm", "More than 50 mm", "More than 50 mm",
+    ]);
+  });
+  it("keeps the Annual class null, not a made-up bin, for a missing avg_delta_g", () => {
+    const data = { type: "FeatureCollection", features: [{ geometry: null, properties: { uid: "1", avg_delta_g: null } }] };
+    expect(withMwsClass(data).features[0].properties.avg_delta_g_class).toBeNull();
+  });
+  it("bins Fortnightly avg_delta_g at its narrower boundaries", () => {
+    const data = { type: "FeatureCollection", features: [-15.1, -15, -5, 0, 5, 15, 15.1].map((avg_delta_g, index) => ({
+      geometry: null, properties: { uid: `${index}`, avg_delta_g },
+    })) };
+    expect(withMwsFortnightClass(data).features.map(feature => feature.properties.avg_delta_g_class)).toEqual([
+      "Less than -15 mm", "-15 to -5 mm", "-5 to 0 mm", "0 to 5 mm", "5 to 15 mm", "More than 15 mm", "More than 15 mm",
+    ]);
+  });
+  it("keeps the Fortnightly class null, not a made-up bin, for a missing avg_delta_g", () => {
+    const data = { type: "FeatureCollection", features: [{ geometry: null, properties: { uid: "1", avg_delta_g: null } }] };
+    expect(withMwsFortnightClass(data).features[0].properties.avg_delta_g_class).toBeNull();
   });
 });
