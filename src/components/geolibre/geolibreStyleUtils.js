@@ -79,7 +79,7 @@ export const fixedPaletteExpression = ({ fields, value, thresholds, palette, col
   };
 };
 
-export const naturalBreaksStyle = (field, palette, data, overrides = {}) => {
+export const naturalBreaksStyle = (field, palette, data, overrides = {}, unit = "") => {
   const values = (data?.features || []).map((feature) => finiteMeasurement(feature.properties?.[field])).filter((value) => value !== null);
   const breaks = createGraduatedClassBreaks(values, 6, "natural-breaks");
   const colors = interpolateRampColors(palette, breaks.length);
@@ -92,7 +92,7 @@ export const naturalBreaksStyle = (field, palette, data, overrides = {}) => {
     vectorStyleColorRamp: palette,
     vectorStyleClassCount: 6,
     vectorStyleClassificationScheme: "natural-breaks",
-    vectorStyleStops: breaks.map((value, index) => ({ value, color: colors[index], label: String(value) })),
+    vectorStyleStops: breaks.map((value, index) => ({ value, color: colors[index], label: unit ? `${value} ${unit}` : String(value) })),
     vectorStyleExpression: "",
   };
 };

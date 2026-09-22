@@ -11,6 +11,7 @@ import {
   sanitizeGeoLibreProjectPlugins,
   withAverageDeltaG,
   withAverageNdvi,
+  withDroughtDryspellMean,
   withNormalizedTerrainCluster,
   withSoilTextureClass,
   vectorFieldPresentation,
@@ -121,6 +122,7 @@ describe("GeoLibre 2.6 project generation", () => {
     expect(project.layerGroups.map(group => group.name)).toEqual(
       [...new Set(PRESENTATION.map(entry => entry.groupName))]
     );
+    expect(project.layerGroups.find(group => group.id === "lulc")?.name).toBe("Land Use Land Cover");
     // Exercise the viewer's real panel ordering, not just our reversed array.
     const units = buildLayerPanelUnits(project.layers, project.layerGroups);
     expect(units.flatMap(unit => unit.layers.map(layer => layer.id))).toEqual(
@@ -135,6 +137,9 @@ describe("GeoLibre 2.6 project generation", () => {
         entry.defaultProperty.startsWith("None (") ? "None" : entry.defaultProperty
       );
     }
+    expect(project.layers.filter(layer => layer.id.startsWith("corestack-nrega_"))).toHaveLength(GEOLIBRE_NREGA_CATEGORIES.length);
+    expect(project.layers.filter(layer => layer.id.startsWith("corestack-nrega_")).every(layer => layer.groupId === "nrega")).toBe(true);
+    expect(project.layers.find(layer => layer.id === "corestack-nrega_plantation").name).toBe("Plantation and forestry");
   });
 
   it("uses published raster styles and native vector profiles for added layers", async () => {
@@ -157,6 +162,52 @@ describe("GeoLibre 2.6 project generation", () => {
       expect(byId(id).source.typeName).toContain(":");
     }
     expect(byId("ndvi_tree_stats").style.vectorStyleMode).not.toBe("single");
+    expect(byId("catchment_area").metadata.corestack.legend.title).toContain("unit unconfirmed");
+    expect(byId("natural_depression").metadata.corestack.legend.title).toContain("unit unconfirmed");
+    expect(byId("soil_health_raster_P").metadata.corestack.legend.items[0].label).toContain("kg/ha");
+    expect(byId("facilities").metadata.corestack.defaultStyleUnit).toBe("km");
+    expect(byId("livestock").metadata.corestack.defaultStyleUnit).toBe("count");
+  });
+
+  it("colors drought causality from the joined mean dry spell and preserves the drought style", async () => {
+    const project = await buildGeoLibreProject({ ...location });
+    const originalDrought = project.layers.find(layer => layer.id === "corestack-drought");
+    const fetchFeatureCollection = jest.fn(async ({ typeName }) => ({
+      type: "FeatureCollection",
+      features: (typeName.includes("drought_causality")
+        ? [1, 2, 3, 4, 5, 6, 7].map((n) => ({ properties: { uid: `mws-${n}`, mild_2024: "B" }, geometry: null }))
+        : [1, 2, 3, 4, 5, 6, 7].map((n) => ({ properties: { uid: `mws-${n}`, avg_dryspell: 2 + n / 2 }, geometry: null }))),
+    }));
+    const hydrated = await hydrateGeoLibreVectorLayer({
+      project, layerId: "corestack-drought_causality", fetchFeatureCollection,
+    });
+    const causality = hydrated.layers.find(layer => layer.id === "corestack-drought_causality");
+    expect(fetchFeatureCollection).toHaveBeenCalledTimes(2);
+    expect(causality.metadata.loadState).toBe("loaded");
+    expect(causality.style.vectorStyleProperty).toBe("avg_dryspell");
+    expect(causality.style.vectorStyleColorRamp).toBe("reds");
+    expect(causality.style.vectorStyleClassCount).toBe(6);
+    expect(causality.style.vectorStyleStops).toHaveLength(6);
+    expect(causality.style.vectorStyleStops.every(stop => stop.label.endsWith("weeks"))).toBe(true);
+    expect(causality.geojson.features[0].properties).toMatchObject({ uid: "mws-1", mild_2024: "B", avg_dryspell: 2.5 });
+    expect(causality.metadata.corestack.fields.avg_dryspell.unit).toBe("weeks");
+    const drought = hydrated.layers.find(layer => layer.id === "corestack-drought");
+    expect(drought.style).toEqual(originalDrought.style);
+    expect(drought.metadata.loadState).toBe("unloaded");
+  });
+
+  it("keeps missing drought matches null and source cause fields intact", () => {
+    const causality = { type: "FeatureCollection", features: [
+      { properties: { uid: "one", mild_2024: "N" } },
+      { properties: { uid: "two", mild_2024: "B" } },
+    ] };
+    const drought = { type: "FeatureCollection", features: [
+      { properties: { uid: "one", avg_dryspell: 0 } },
+    ] };
+    expect(withDroughtDryspellMean(causality, drought).features.map(feature => feature.properties)).toEqual([
+      { uid: "one", mild_2024: "N", avg_dryspell: 0 },
+      { uid: "two", mild_2024: "B", avg_dryspell: null },
+    ]);
   });
   it("gives every raster an explicit rasterStyle contract", () => {
     expect(
@@ -950,9 +1001,9 @@ describe("GeoLibre 2.6 project generation", () => {
     const legends = activeGeoLibreLegends(withSoilPhosphorusVisible);
     const soilPhosphorusLegend = legends.find((legend) => legend.title === "Soil Phosphorus Levels legend");
     expect(soilPhosphorusLegend.items).toEqual([
-      { label: "Low (<10)", color: "#D73027", shape: "square" },
-      { label: "Medium (10-25)", color: "#FEE08B", shape: "square" },
-      { label: "High (>25)", color: "#1A9850", shape: "square" },
+      { label: "Low (<10 kg/ha)", color: "#D73027", shape: "square" },
+      { label: "Medium (10-25 kg/ha)", color: "#FEE08B", shape: "square" },
+      { label: "High (>25 kg/ha)", color: "#1A9850", shape: "square" },
     ]);
   });
 

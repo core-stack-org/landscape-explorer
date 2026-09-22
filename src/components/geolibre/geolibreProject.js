@@ -158,6 +158,29 @@ export const withAverageNdvi = data => ({
   }),
 });
 
+// Causality polygons contain labels, while the drought source publishes the
+// measured multi-year mean. Join by MWS uid and keep all original properties.
+export const withDroughtDryspellMean = (causality, drought) => {
+  const byUid = new Map();
+  for (const feature of drought?.features || []) {
+    const uid = feature.properties?.uid;
+    if (uid == null) continue;
+    const key = String(uid);
+    if (byUid.has(key)) throw new Error(`Duplicate drought MWS uid: ${key}`);
+    byUid.set(key, finiteMeasurement(feature.properties.avg_dryspell));
+  }
+  return {
+    ...causality,
+    features: (causality?.features || []).map(feature => ({
+      ...feature,
+      properties: {
+        ...feature.properties,
+        avg_dryspell: byUid.get(String(feature.properties?.uid)) ?? null,
+      },
+    })),
+  };
+};
+
 const BASE_STYLE = {
   minZoom: 0,
   maxZoom: 24,
@@ -223,9 +246,9 @@ const STYLE_PROFILES = {
     guard: ["all", [">", numericProperty("TOT_P"), 0], [">=", numericProperty("P_LIT"), 0]],
     thresholds: [50, 60, 70, 80, 90], palette: "rdbu", fillOpacity: 0.8,
   }),
-  facilities: naturalBreaksStyle("l2_essential_education_distance_km", "coolwarm", null, { ...thematicStyle, fillOpacity: 0.8 }),
+  facilities: naturalBreaksStyle("l2_essential_education_distance_km", "coolwarm", null, { ...thematicStyle, fillOpacity: 0.8 }, "km"),
   antyodaya: paletteCategories("maternal_child_health_cat_cluster", ["LOW", "MEDIUM", "HIGH"], "rdbu", { ...thematicStyle, fillOpacity: 0.8 }),
-  livestock: naturalBreaksStyle("large_animals_total", "rdbu", null, { ...thematicStyle, fillOpacity: 0.8 }),
+  livestock: naturalBreaksStyle("large_animals_total", "rdbu", null, { ...thematicStyle, fillOpacity: 0.8 }, "count"),
   terrain_vector: categoryStyle(
     "terrainClu",
     [
@@ -253,7 +276,7 @@ const STYLE_PROFILES = {
     ...thematicStyle, fields: ["avg_ndvi"], value: numericProperty("avg_ndvi"),
     thresholds: [-0.2, 0, 0.2, 0.4, 0.6], palette: "rdylgn", fillOpacity: 0.65,
   }),
-  drought_causality: { ...BASE_STYLE, fillColor: "#d97706", strokeColor: "#92400e", fillOpacity: 0.45 },
+  drought_causality: naturalBreaksStyle("avg_dryspell", "reds", null, { ...thematicStyle, fillOpacity: 0.7 }, "weeks"),
   tree_in_grassland: { ...BASE_STYLE, fillColor: "#84cc16", strokeColor: "#3f6212", fillOpacity: 0.5 },
   forest_fringe: { ...BASE_STYLE, fillColor: "#15803d", strokeColor: "#14532d", fillOpacity: 0.48 },
   drainage: categoryStyle(
@@ -398,9 +421,9 @@ const LEGEND_PROFILES = {
     ["Low (<280 kg/ha)", "#FF0000"],
   ],
   soil_health_raster_P: [
-    ["Low (<10)", "#D73027"],
-    ["Medium (10-25)", "#FEE08B"],
-    ["High (>25)", "#1A9850"],
+    ["Low (<10 kg/ha)", "#D73027"],
+    ["Medium (10-25 kg/ha)", "#FEE08B"],
+    ["High (>25 kg/ha)", "#1A9850"],
   ],
   soil_health_raster_K: [
     ["Low (<120 kg/ha)", "#FF0000"],
@@ -526,7 +549,7 @@ const layerLegend = (catalogLayer, style) => {
       : catalogLayer.label);
   return {
     key: catalogLayer.baseId || catalogLayer.id,
-    title: `${baseTitle} legend`,
+    title: `${baseTitle}${["catchment_area", "natural_depression"].includes(catalogLayer.id) ? " (unit unconfirmed)" : ""} legend`,
     items,
     legendPosition: "bottom-right",
   };
@@ -891,12 +914,13 @@ const layerStyle = (layer, data) =>
     ? { ...RASTER_STYLE }
     : layer.nregaCategoryId
       ? nregaLayerStyle(layer.nregaCategoryId)
-      : ["facilities", "livestock"].includes(layer.styleProfile)
+      : ["facilities", "livestock", "drought_causality"].includes(layer.styleProfile)
         ? naturalBreaksStyle(
             STYLE_PROFILES[layer.styleProfile].vectorStyleProperty,
             STYLE_PROFILES[layer.styleProfile].vectorStyleColorRamp,
             { features: (data?.features || []).filter(feature => hasLayerData(layer.id, feature.properties)) },
-            STYLE_PROFILES[layer.styleProfile]
+            STYLE_PROFILES[layer.styleProfile],
+            { facilities: "km", livestock: "count", drought_causality: "weeks" }[layer.styleProfile]
           )
         : { ...(STYLE_PROFILES[layer.styleProfile] || BASE_STYLE) };
 
@@ -904,6 +928,18 @@ const coreStackMetadata = (layer, layerName, sourceUrl, style, baseUrl) => ({
   domain: layer.domain,
   category: layer.category,
   defaultProperty: layer.defaultProperty,
+  defaultStyleUnit: {
+    demographics: "percent", facilities: "km", livestock: "count",
+    mws: "mm", mws_fortnight: "mm", ndvi: "dimensionless",
+    waterbodies: "ha", cropping_intensity: "dimensionless",
+    drought: "years", drought_causality: "weeks",
+  }[layer.styleProfile] || ({
+    distance_to_drainage_line: "m", dem: "m",
+    soil_health_raster_n: "kg/ha", soil_health_raster_P: "kg/ha",
+    soil_health_raster_K: "kg/ha", soil_health_raster_OC: "kg/ha",
+    soil_health_raster_OC_OLM: "percent",
+    catchment_area: "unknown", natural_depression: "unknown",
+  }[layer.id] || "NA"),
   ...(layer.unitSources ? { unitSources: layer.unitSources } : {}),
   geoserverWorkspace: layer.workspace,
   geoserverLayer: layerName,
@@ -1262,7 +1298,24 @@ export const hydrateGeoLibreVectorLayer = async ({
   try {
     const rawData = await fetchFeatureCollection(request, { signal });
     const category = nregaCategoryForLayer(layer);
-    const data = category ? withNormalizedWorkCategory(rawData) : rawData;
+    let data = category ? withNormalizedWorkCategory(rawData) : rawData;
+    if (layerId === "corestack-drought_causality") {
+      const droughtLayer = project.layers.find(item => item.id === "corestack-drought");
+      if (!droughtLayer) throw new Error("The drought measurements layer is unavailable.");
+      const droughtData = droughtLayer.metadata?.loadState === "loaded"
+        ? droughtLayer.geojson
+        : await fetchFeatureCollection({
+            url: droughtLayer.source.url,
+            typeName: droughtLayer.source.typeName,
+            version: droughtLayer.source.version,
+            outputFormat: droughtLayer.source.outputFormat,
+            srsName: droughtLayer.source.srsName,
+          }, { signal });
+      data = withDroughtDryspellMean(data, droughtData);
+      if (data.features.length && data.features.every(feature => feature.properties.avg_dryspell === null)) {
+        throw new Error("No causality MWS uid matched the drought mean dry spell data.");
+      }
+    }
     const hydratedProject = category
       ? {
           ...project,
