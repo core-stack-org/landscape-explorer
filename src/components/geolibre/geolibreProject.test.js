@@ -7,16 +7,22 @@ import {
   hydrateGeoLibreVectorLayer,
   mapViewFromBounds,
   parseFortnightRecords,
+  rasterBoundsFromWmsCapabilities,
   sanitizeGeoLibreProjectPlugins,
   withAverageDeltaG,
+  withAverageNdvi,
   withNormalizedTerrainCluster,
   withSoilTextureClass,
+  vectorFieldPresentation,
 } from "./geolibreProject";
+import GEOLIBRE_FIELD_METADATA from "../../config/geolibreFieldMetadata.json";
+import PRESENTATION from "../../config/geolibreLayerPresentation.json";
 import {
   GEOLIBRE_LAYERS,
   GEOLIBRE_NREGA_CATEGORIES,
 } from "../../config/geolibreLayers";
 import { createExpression } from "@maplibre/maplibre-gl-style-spec";
+import { resolvePopupRows, buildLayerPanelUnits } from "@geolibre/core";
 
 const location = {
   state: "Assam",
@@ -76,14 +82,82 @@ const nregaFeatureCollection = {
 
 const successfulFetch = jest.fn();
 
+const terrainCapabilities = `<?xml version="1.0" encoding="UTF-8"?>
+<WMS_Capabilities><Capability><Layer><Layer>
+  <Name>cachar_lakhipur_terrain_raster</Name>
+  <EX_GeographicBoundingBox>
+    <westBoundLongitude>92.9</westBoundLongitude>
+    <eastBoundLongitude>93.2</eastBoundLongitude>
+    <southBoundLatitude>24.7</southBoundLatitude>
+    <northBoundLatitude>25</northBoundLatitude>
+  </EX_GeographicBoundingBox>
+</Layer></Layer></Capability></WMS_Capabilities>`;
+
 beforeEach(() => {
   successfulFetch.mockReset();
   successfulFetch.mockImplementation(async (request) =>
     polygonFeatureCollection(request)
   );
+  global.fetch = jest.fn(async (url) => {
+    if (url.includes("GetCapabilities")) {
+      return { ok: true, text: async () => terrainCapabilities };
+    }
+    throw new Error(`Unexpected startup request: ${url}`);
+  });
 });
 
 describe("GeoLibre 2.6 project generation", () => {
+  it("matches the finalized CSV presentation manifest exactly", async () => {
+    const project = await buildGeoLibreProject({ ...location });
+    expect([...project.layers].reverse().map(layer => ({
+      id: layer.id.replace(/^corestack-/, ""),
+      name: layer.name,
+      groupId: layer.groupId,
+    }))).toEqual(PRESENTATION.map(entry => ({
+      id: entry.id,
+      name: entry.category === "NA" ? entry.label : `${entry.label} · ${entry.category}`,
+      groupId: entry.groupId,
+    })));
+    expect(project.layerGroups.map(group => group.name)).toEqual(
+      [...new Set(PRESENTATION.map(entry => entry.groupName))]
+    );
+    // Exercise the viewer's real panel ordering, not just our reversed array.
+    const units = buildLayerPanelUnits(project.layers, project.layerGroups);
+    expect(units.flatMap(unit => unit.layers.map(layer => layer.id))).toEqual(
+      PRESENTATION.map(entry => `corestack-${entry.id}`)
+    );
+    expect(units.map(unit => project.layerGroups.find(group => group.id === unit.groupId).name)).toEqual(
+      [...new Set(PRESENTATION.map(entry => entry.groupName))]
+    );
+    for (const layer of project.layers.filter(layer => layer.type === "geojson")) {
+      const entry = PRESENTATION.find(item => layer.id === `corestack-${item.id}`);
+      expect(layer.style.vectorStyleProperty || "None").toBe(
+        entry.defaultProperty.startsWith("None (") ? "None" : entry.defaultProperty
+      );
+    }
+  });
+
+  it("uses published raster styles and native vector profiles for added layers", async () => {
+    const project = await buildGeoLibreProject({ ...location });
+    const byId = id => project.layers.find(layer => layer.id === `corestack-${id}`);
+    for (const [id, style] of [
+      ["distance_to_drainage_line", "distance_nearest_upstream_DL"],
+      ["catchment_area", "catchment_area_singleflow"],
+      ["natural_depression", "natural_depression"],
+      ["tree_canopy_density_2023", "tree_ccd_style"],
+      ["tree_height_2019", "tree_ch_style"],
+      ["forest_change", "tree_overall_style"],
+    ]) {
+      expect(byId(id).source.styles).toBe(style);
+      expect(byId(id).metadata.corestack.legend.items.length).toBeGreaterThan(0);
+    }
+    expect(byId("shrubland_diversion_base").source.styles).toBe("change_shrubland_diversion_style");
+    for (const id of ["drought_causality", "tree_in_grassland", "forest_fringe"]) {
+      expect(byId(id).style.fillOpacity).toBeGreaterThan(0);
+      expect(byId(id).source.typeName).toContain(":");
+    }
+    expect(byId("ndvi_tree_stats").style.vectorStyleMode).not.toBe("single");
+  });
   it("gives every raster an explicit rasterStyle contract", () => {
     expect(
       GEOLIBRE_LAYERS.filter((layer) => layer.sourceType === "wms")
@@ -255,6 +329,83 @@ describe("GeoLibre 2.6 project generation", () => {
     );
   });
 
+  it("derives the Terrain extent from its GeoServer WMS capabilities", async () => {
+    expect(
+      rasterBoundsFromWmsCapabilities(
+        terrainCapabilities,
+        "cachar_lakhipur_terrain_raster"
+      )
+    ).toEqual([92.9, 24.7, 93.2, 25]);
+
+    await buildGeoLibreProject({ ...location });
+    expect(global.fetch).toHaveBeenCalledWith(
+      expect.stringContaining("terrain/wms?service=WMS&version=1.3.0&request=GetCapabilities"),
+      expect.objectContaining({ headers: { Accept: "application/xml, text/xml" } })
+    );
+    expect(global.fetch).toHaveBeenCalledTimes(1);
+  });
+
+  it("keeps each published base and statistics pair adjacent in display order", async () => {
+    const project = await buildGeoLibreProject({ ...location });
+    const displayIds = project.layers.map((layer) => layer.id).reverse();
+    for (const [base, stats] of [
+      ["terrain", "terrain_vector"],
+      ["soil_health_raster_OC_OLM", "soil_health_vector"],
+      ["afforestation", "afforestation_stats"],
+      ["deforestation", "deforestation_stats"],
+      ["degradation", "degradation_stats"],
+      ["urbanization", "urbanization_stats"],
+      ["cropintensity", "cropintensity_stats"],
+      ["restoration", "restoration_stats"],
+    ]) {
+      expect(displayIds.indexOf(`corestack-${stats}`)).toBe(displayIds.indexOf(`corestack-${base}`) + 1);
+      expect(project.layers.find((layer) => layer.id === `corestack-${base}`).name).toContain("Base Layer");
+      expect(project.layers.find((layer) => layer.id === `corestack-${stats}`).name).toContain("Stats");
+    }
+    expect(displayIds.indexOf("corestack-lulc_stats")).toBe(
+      displayIds.indexOf("corestack-lulc_level_3_17_18") + 1
+    );
+  });
+
+  it("preserves field names and shows source-backed units for every hydrated column", () => {
+    const restoration = GEOLIBRE_LAYERS.find((layer) => layer.id === "restoration_stats");
+    const properties = { uid: "12_301304", area_in_ha: 716.1, "Wide-scale": 186.9, new_measure: 4 };
+    const { fields, popup } = vectorFieldPresentation(restoration, {
+      features: [{ properties }],
+    });
+    expect(Object.keys(fields)).toEqual(Object.keys(properties));
+    expect(fields["Wide-scale"].unit).toBe("ha");
+    expect(fields.new_measure.unit).toBe("unknown");
+    expect(resolvePopupRows(properties, { popup }).map((row) => row.label)).toEqual([
+      "uid", "area_in_ha (ha)", "Wide-scale (ha)", "new_measure (unit unknown)",
+    ]);
+    expect(GEOLIBRE_FIELD_METADATA.change_vector_ShrubChange.total_change.unit).toBe("ha");
+    expect(GEOLIBRE_FIELD_METADATA.soil_type.subsoil_organic_carbon.unit).toBe("unknown");
+    expect(GEOLIBRE_LAYERS.filter((layer) => layer.sourceType === "wfs")
+      .every((layer) => layer.unitSources.length > 0)).toBe(true);
+  });
+
+  it("extends units to newly published years without guessing ambiguous measures", () => {
+    const byId = (id, properties) => vectorFieldPresentation(
+      GEOLIBRE_LAYERS.find((layer) => layer.id === id),
+      { features: [{ properties }] }
+    ).fields;
+    expect(byId("facilities", { l3_school_primary_distance_km: 2.5, l3_school_primary_inside_scope: true })
+      .l3_school_primary_distance_km.unit).toBe("km");
+    expect(byId("cropping_intensity", { cropping_intensity_2024: 1.88, doubly_cropped_area_2024: 432 })
+      .cropping_intensity_2024.unit).toBe("dimensionless");
+    expect(byId("drought", { "rd24-6-12": -12.5, frth0_2024: 4 })
+      .frth0_2024.unit).toBe("weeks");
+    expect(byId("mws_layers_fortnight", { "2024-01-13": '{"delta_g":12}' })
+      ["2024-01-13"].unit).toBe("mixed");
+    expect(byId("aquifer", { total_weighted_yield: 3 })
+      .total_weighted_yield.unit).toBe("unknown");
+    expect(byId("ndvi_crop_stats", { "2024-07-13": 0.74 })
+      ["2024-07-13"].unit).toBe("dimensionless");
+    expect(byId("remote_sensed_waterbodies", { water_body_name: "A pond" })
+      .water_body_name.unit).toBe("NA");
+  });
+
   it("starts terrain and uses catalog raster styles in WMS requests", async () => {
     const project = await buildGeoLibreProject({
       ...location,
@@ -263,8 +414,11 @@ describe("GeoLibre 2.6 project generation", () => {
 
     expect(project.version).toBe("0.2.0");
     expect(project.layers).toHaveLength(GEOLIBRE_LAYERS.length);
-    expect(project.layers).toHaveLength(51);
-    expect(project.layers.every(layer => layer.name === GEOLIBRE_LAYERS.find(item => `corestack-${item.id}` === layer.id)?.label)).toBe(true);
+    expect(project.layers).toHaveLength(86);
+    expect(project.layers.every(layer => {
+      const catalog = GEOLIBRE_LAYERS.find(item => `corestack-${item.id}` === layer.id);
+      return layer.name === `${catalog.label}${catalog.category === "NA" ? "" : ` · ${catalog.category}`}`;
+    })).toBe(true);
     expect(project.mapView.bbox).toEqual([92.9, 24.7, 93.2, 25]);
     expect(project.mapLayout).toBeUndefined();
     expect(project.secondaryMapViews).toBeUndefined();
@@ -293,8 +447,8 @@ describe("GeoLibre 2.6 project generation", () => {
       metadata: {
         sourceKind: "wfs-getfeature",
         service: "wfs",
-        featureCount: 1,
-        loadState: "loaded",
+        featureCount: 0,
+        loadState: "unloaded",
         corestack: {
           geoserverStyle: {
             provider: "GeoServer",
@@ -304,7 +458,7 @@ describe("GeoLibre 2.6 project generation", () => {
         },
       },
     });
-    expect(socioeconomic.geojson.type).toBe("FeatureCollection");
+    expect(socioeconomic.geojson).toEqual({ type: "FeatureCollection", features: [] });
 
     const visibleLayers = project.layers.filter((layer) => layer.visible);
     expect(visibleLayers.map((layer) => layer.id)).toEqual([
@@ -375,7 +529,7 @@ describe("GeoLibre 2.6 project generation", () => {
     expect(latestLulc.source.url).toContain(
       "CoverageId=LULC_level_3%3ALULC_24_25_cachar_lakhipur_level_3"
     );
-    expect(project.layers.filter((item) => item.id.startsWith("corestack-lulc_"))).toHaveLength(8);
+    expect(project.layers.filter((item) => item.id.startsWith("corestack-lulc_level_3_"))).toHaveLength(8);
     expect(latestLulc.source.styles).toBe("lulc_land_use_KYL");
 
     const terrain = project.layers.find((layer) => layer.id === "corestack-terrain");
@@ -403,7 +557,7 @@ describe("GeoLibre 2.6 project generation", () => {
     const soilNitrogen = project.layers.find((layer) => layer.id === "corestack-soil_health_raster_n");
     expect(soilNitrogen).toMatchObject({
       type: "raster",
-      name: "Soil Nitrogen Levels",
+      name: "Soil Nitrogen Levels · Base Layer",
       visible: false,
       source: {
         layers: "soil_health_raster:cachar_lakhipur_soil_health_raster_N",
@@ -423,7 +577,7 @@ describe("GeoLibre 2.6 project generation", () => {
     const soilPhosphorus = project.layers.find((layer) => layer.id === "corestack-soil_health_raster_P");
     expect(soilPhosphorus).toMatchObject({
       type: "raster",
-      name: "Soil Phosphorus Levels",
+      name: "Soil Phosphorus Levels · Base Layer",
       visible: false,
       source: {
         layers: "soil_health_raster:cachar_lakhipur_soil_health_raster_P",
@@ -443,7 +597,7 @@ describe("GeoLibre 2.6 project generation", () => {
     const soilPotassium = project.layers.find((layer) => layer.id === "corestack-soil_health_raster_K");
     expect(soilPotassium).toMatchObject({
       type: "raster",
-      name: "Soil Potassium Levels",
+      name: "Soil Potassium Levels · Base Layer",
       visible: false,
       source: {
         layers: "soil_health_raster:cachar_lakhipur_soil_health_raster_K",
@@ -463,7 +617,7 @@ describe("GeoLibre 2.6 project generation", () => {
     const soilOrganicCarbon = project.layers.find((layer) => layer.id === "corestack-soil_health_raster_OC");
     expect(soilOrganicCarbon).toMatchObject({
       type: "raster",
-      name: "Soil Organic Carbon Concentration",
+      name: "SoC over Cropping Areas · Base Layer",
       visible: false,
       source: {
         layers: "soil_health_raster:cachar_lakhipur_soil_health_raster_OC",
@@ -483,7 +637,7 @@ describe("GeoLibre 2.6 project generation", () => {
     const soilOrganicCarbonOlm = project.layers.find((layer) => layer.id === "corestack-soil_health_raster_OC_OLM");
     expect(soilOrganicCarbonOlm).toMatchObject({
       type: "raster",
-      name: "Soil Organic Carbon Concentration for Various Forest Systems",
+      name: "SoC over Forest And Shrub Areas · Base Layer",
       visible: false,
       source: {
         layers: "soil_health_raster:cachar_lakhipur_soil_health_raster_OC_OLM",
@@ -508,7 +662,7 @@ describe("GeoLibre 2.6 project generation", () => {
           )
       )
     ).toBe(true);
-    expect(successfulFetch).toHaveBeenCalledTimes(1);
+    expect(successfulFetch).not.toHaveBeenCalled();
   });
 
   it("uses the deployed domain taxonomy while preserving the preferred order", async () => {
@@ -541,7 +695,7 @@ describe("GeoLibre 2.6 project generation", () => {
         "MicroWatershed Boundaries",
       "corestack-mws_layers": "Annual Water Balance",
       "corestack-mws_layers_fortnight": "Fortnightly Water Balance",
-      "corestack-terrain_vector": "Terrain Clusters",
+      "corestack-terrain_vector": "Terrain · Stats",
       "corestack-drainage": "Drainage Lines",
       "corestack-remote_sensed_waterbodies": "Surface Water Bodies",
     });
@@ -567,6 +721,7 @@ describe("GeoLibre 2.6 project generation", () => {
       "hydrology",
       "lulc",
       "land",
+      "trees",
       "agriculture",
       "restoration",
       "industry",
@@ -724,7 +879,7 @@ describe("GeoLibre 2.6 project generation", () => {
     };
 
     const legends = activeGeoLibreLegends(withLulcStyles);
-    const lulcLegend = legends.find((legend) => legend.title === "LULC legend");
+    const lulcLegend = legends.find((legend) => legend.title === "LULC: 2017-2018 legend");
     expect(lulcLegend.items).toHaveLength(12);
     expect(lulcLegend.items.map((item) => item.label)).toContain("Kharif, Rabi and Zaid Water");
   });
@@ -743,7 +898,7 @@ describe("GeoLibre 2.6 project generation", () => {
       ),
     };
     const legends = activeGeoLibreLegends(withCropIntensityVisible);
-    const cropIntensityLegend = legends.find((legend) => legend.title === "Change Detection: Crop Intensity legend");
+    const cropIntensityLegend = legends.find((legend) => legend.title === "Change: Crop Intensity legend");
     expect(cropIntensityLegend.items).toEqual([
       { label: "Double-Single", color: "#f7fcf5", shape: "square" },
       { label: "Tripple_or_annual_or_perennial-Single", color: "#ff4500", shape: "square" },
@@ -837,7 +992,7 @@ describe("GeoLibre 2.6 project generation", () => {
       ),
     };
     const legends = activeGeoLibreLegends(withSoilOrganicCarbonVisible);
-    const soilOrganicCarbonLegend = legends.find((legend) => legend.title === "Soil Organic Carbon Concentration legend");
+    const soilOrganicCarbonLegend = legends.find((legend) => legend.title === "SoC over Cropping Areas legend");
     expect(soilOrganicCarbonLegend.items).toEqual([
       { label: "Low (0-120 kg/ha)", color: "#C8E6C9", shape: "square" },
       { label: "Medium (120-280 kg/ha)", color: "#66BB6A", shape: "square" },
@@ -859,7 +1014,7 @@ describe("GeoLibre 2.6 project generation", () => {
       ),
     };
     const legends = activeGeoLibreLegends(withSoilOrganicCarbonOlmVisible);
-    const soilOrganicCarbonOlmLegend = legends.find((legend) => legend.title === "Soil Organic Carbon Concentration for Various Forest Systems legend");
+    const soilOrganicCarbonOlmLegend = legends.find((legend) => legend.title === "SoC over Forest And Shrub Areas legend");
     expect(soilOrganicCarbonOlmLegend.items).toEqual([
       { label: "<=1% (Scrubs / Degraded land)", color: "#EF5350", shape: "square" },
       { label: "1-2% (Open Forests)", color: "#FFCA28", shape: "square" },
@@ -868,7 +1023,7 @@ describe("GeoLibre 2.6 project generation", () => {
     ]);
   });
 
-  it("loads only the hidden extent while leaving all other vectors lazy", async () => {
+  it("preloads only Terrain's extent while leaving every vector lazy", async () => {
     const project = await buildGeoLibreProject({
       ...location,
       fetchFeatureCollection: successfulFetch,
@@ -877,14 +1032,7 @@ describe("GeoLibre 2.6 project generation", () => {
     expect(project.metadata.layerLoading.stage).toBe("base-map");
     expect(
       project.layers
-        .filter(
-          (layer) =>
-            layer.type === "geojson" &&
-            ![
-              "corestack-administrative_boundaries",
-              "corestack-demographics",
-                    ].includes(layer.id)
-        )
+        .filter((layer) => layer.type === "geojson")
         .every((layer) => layer.metadata.loadState === "unloaded")
     ).toBe(true);
     expect(
@@ -898,10 +1046,8 @@ describe("GeoLibre 2.6 project generation", () => {
     ).toEqual([
       "corestack-terrain",
     ]);
-    expect(successfulFetch.mock.calls[0][0].typeName).toBe(
-      "panchayat_boundaries:cachar_lakhipur"
-    );
-    expect(successfulFetch).toHaveBeenCalledTimes(1);
+    expect(successfulFetch).not.toHaveBeenCalled();
+    expect(global.fetch.mock.calls.filter(([url]) => url.includes("GetCapabilities"))).toHaveLength(1);
   });
 
   it("loads a toggled vector once and reuses its hydrated data", async () => {
@@ -930,8 +1076,8 @@ describe("GeoLibre 2.6 project generation", () => {
       visible: true,
       metadata: { loadState: "loaded", featureCount: 1 },
     });
-    expect(successfulFetch.mock.calls[1][0].typeName).toContain("drainage");
-    expect(successfulFetch).toHaveBeenCalledTimes(2);
+    expect(successfulFetch.mock.calls[0][0].typeName).toContain("drainage");
+    expect(successfulFetch).toHaveBeenCalledTimes(1);
 
     const reusedProject = await hydrateGeoLibreVectorLayer({
       project: hydratedProject,
@@ -939,7 +1085,7 @@ describe("GeoLibre 2.6 project generation", () => {
       fetchFeatureCollection: successfulFetch,
     });
     expect(reusedProject).toBe(hydratedProject);
-    expect(successfulFetch).toHaveBeenCalledTimes(2);
+    expect(successfulFetch).toHaveBeenCalledTimes(1);
   });
 
   it("hydrates separately selectable NREGA work types with small native markers", async () => {
@@ -956,7 +1102,7 @@ describe("GeoLibre 2.6 project generation", () => {
     const toggledProject = {
       ...project,
       layers: project.layers.map((layer) =>
-        layer.groupId === "nrega"
+        layer.id.startsWith("corestack-nrega_")
           ? { ...layer, visible: selectedLayerIds.has(layer.id) }
           : layer
       ),
@@ -968,9 +1114,9 @@ describe("GeoLibre 2.6 project generation", () => {
       layerId,
       fetchFeatureCollection: nregaFetch,
     });
-    const nregaLayers = hydratedProject.layers.filter(
-      (layer) => layer.groupId === "nrega"
-    );
+    const nregaLayers = GEOLIBRE_NREGA_CATEGORIES.map(category =>
+      hydratedProject.layers.find(layer => layer.id === `corestack-nrega_${category.id}`)
+    ).reverse();
     const nrega = nregaLayers.find((layer) => layer.id === layerId);
 
     expect(nregaFetch).toHaveBeenCalledTimes(1);
@@ -994,7 +1140,7 @@ describe("GeoLibre 2.6 project generation", () => {
     });
     expect(
       [...nregaLayers].reverse().map((item) => item.name)
-    ).toEqual(GEOLIBRE_NREGA_CATEGORIES.map(category => category.label));
+    ).toEqual(GEOLIBRE_NREGA_CATEGORIES.map(category => category.id === "irrigation_site" ? "Irrigation: site-level impact" : category.label));
     expect(
       [...nregaLayers].reverse().map((item) => item.style.fillColor)
     ).toEqual(GEOLIBRE_NREGA_CATEGORIES.map((category) => category.color));
@@ -1028,7 +1174,7 @@ describe("GeoLibre 2.6 project generation", () => {
     const allVisibleProject = {
       ...hydratedProject,
       layers: hydratedProject.layers.map((layer) =>
-        layer.groupId === "nrega" ? { ...layer, visible: true } : layer
+        layer.id.startsWith("corestack-nrega_") ? { ...layer, visible: true } : layer
       ),
     };
     const allVisibleResult = await hydrateGeoLibreVectorLayer({
@@ -1038,7 +1184,7 @@ describe("GeoLibre 2.6 project generation", () => {
     });
     expect(
       allVisibleResult.layers
-        .filter((item) => item.groupId === "nrega")
+        .filter((item) => item.id.startsWith("corestack-nrega_"))
         .every((item) => item.visible)
     ).toBe(true);
     expect(nregaFetch).toHaveBeenCalledTimes(1);
@@ -1129,16 +1275,18 @@ describe("GeoLibre 2.6 project generation", () => {
     expect(retriedProject.metadata.layerLoading.lazyLoadFailures).toEqual([]);
   });
 
-  it("requires the administrative extent", async () => {
+  it("does not preload the administrative or demographic WFS layers", async () => {
     const failedFetch = jest.fn(async () => {
       throw new Error("offline");
     });
-    await expect(
-      buildGeoLibreProject({
-        ...location,
-        fetchFeatureCollection: failedFetch,
-      })
-    ).rejects.toThrow(/administrative boundary.*offline/i);
+    const project = await buildGeoLibreProject({
+      ...location,
+      fetchFeatureCollection: failedFetch,
+    });
+    expect(project.layers.filter((layer) => layer.type === "geojson").every(
+      (layer) => layer.metadata.loadState === "unloaded"
+    )).toBe(true);
+    expect(failedFetch).not.toHaveBeenCalled();
   });
 });
 
@@ -1187,6 +1335,18 @@ describe("Annual Water Balance records", () => {
       "2017_2018": "bad JSON", "2018_2019": null, not_a_year: '{"DeltaG": 5}',
     } }] };
     expect(withAverageDeltaG(data).features[0].properties.avg_delta_g).toBeNull();
+  });
+});
+
+describe("NDVI time-series records", () => {
+  it("averages dated numeric values without renaming source columns", () => {
+    const data = { type: "FeatureCollection", features: [{
+      type: "Feature", properties: { "tree_2024-07-13": 0.4, "shrub_2024-07-13": 0.6, uid: "x" },
+      geometry: null,
+    }] };
+    expect(withAverageNdvi(data).features[0].properties).toEqual({
+      "tree_2024-07-13": 0.4, "shrub_2024-07-13": 0.6, uid: "x", avg_ndvi: 0.5,
+    });
   });
 });
 
