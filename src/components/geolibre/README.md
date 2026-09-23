@@ -104,8 +104,9 @@ sequenceDiagram
    WFS layer. GeoLibre handles native vector legends; KYL provides raster legends.
 5. **Loading:** only Terrain's WMS capabilities run at startup. Feature data is never preloaded; every
    vector hydrates once on first toggle, and rasters remain native lazy WMS layers.
-6. **Units:** the public field dictionary comes from the local STAC unit CSV,
-   with documented corrections and conservative year/field-name rules. Exact
+6. **Descriptions and units:** `src/config/geolibreCatalog.json` is the editable
+   source for display wording. Its field dictionary comes from the column sheet
+   of `stac_specs.xlsx`, with authored catalog edits retained. Exact
    GeoServer column names remain unchanged. After hydration, units appear in
    popup labels and `metadata.corestack.fields`; structured records are `mixed`
    and unresolved numeric measures are explicitly `unknown`. The public
@@ -169,6 +170,28 @@ Hover follows the finalized CSV field selection, expands matching field patterns
 and uses source descriptions as labels when available. LULC statistics show
 their own measured area shares, and Terrain Clusters shows area ratios from its
 published fields. Raster layers retain their existing identify behavior.
+
+Edit field descriptions in `fieldMetadataBySource` in `geolibreCatalog.json`.
+The popup uses the description verbatim and appends the unit in parentheses;
+without a description it uses the original field name. Matching an older
+year or an equivalent source field reuses that catalog description unchanged.
+There are no generated description overrides in JavaScript. `area_in_ha`
+uses `Total Area of MWS in Hectares`; the `common` dictionary provides it for
+sources without their own entry. Floating columns use GeoLibre's native
+`kind: "number", format: { decimals: 3 }`; source properties stay unchanged.
+Graduated legend labels also show at most three decimals.
+
+Layer descriptions reference `layerDescriptionsBySource` through each layer's
+`descriptionKey`. That dictionary contains the workbook's first sheet. Layers
+without a matching workbook entry have a short, editable `description` in the
+same catalog file.
+
+The project requests `popup.maxWidth: 480`. GeoLibre's current hover renderer
+still caps its shell at 280px and prevents labels from shrinking; the width
+setting currently affects click popups. `upstream/hover-tooltip-layout.patch`
+adds wrapping and honors the configured width in the public viewer's MapLibre,
+Mapbox and Cesium hover paths. The hosted viewer needs that upstream change
+before wider, wrapping hover tooltips can take effect.
 
 `droughtPresentation.js` adds display summaries after GeoServer data loads:
 

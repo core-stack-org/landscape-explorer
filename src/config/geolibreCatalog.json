@@ -78,7 +78,7 @@
           "*_cat_cluster"
         ]
       },
-      "description": "Village-level Mission Antyodaya indicators and qualitative categories for the selected area."
+      "description": "Village-level Mission Antyodaya indicators and classes."
     },
     {
       "id": "livestock",
@@ -100,7 +100,7 @@
           "small_animals_total"
         ]
       },
-      "description": "Village livestock counts for the selected area."
+      "description": "Village livestock counts."
     },
     {
       "id": "hydrological_boundaries",
@@ -114,7 +114,7 @@
       "style": "boundary",
       "defaultVisible": false,
       "defaultProperty": "None (boundary only)",
-      "description": "Micro watershed boundaries with watershed UID, area, basin code, sub-basin code and watershed hierarchy code.",
+      "description": "Micro watershed boundaries.",
       "tooltip": {
         "titleExpression": "[\"concat\",\"MWS ID: \",[\"to-string\",[\"get\",\"uid\"]]]",
         "fields": []
@@ -138,7 +138,7 @@
           "avg_delta_g_class"
         ]
       },
-      "description": "Annual microwatershed water balance and groundwater measurements. The map summarizes readable annual DeltaG observations."
+      "descriptionKey": "change_in_well_depth_vector"
     },
     {
       "id": "mws_layers_fortnight",
@@ -158,7 +158,7 @@
           "avg_delta_g_class"
         ]
       },
-      "description": "Fortnightly microwatershed water balance observations. The map summarizes readable fortnightly DeltaG records."
+      "descriptionKey": "water_balance_fortnightly_vector"
     },
     {
       "id": "drainage",
@@ -198,7 +198,7 @@
           "ripcode"
         ]
       },
-      "description": "Mapped river geometry with the published river name and attributes."
+      "description": "River names and geometry."
     },
     {
       "id": "canal",
@@ -216,7 +216,7 @@
         "titleExpression": "[\"concat\",[\"get\",\"canname\"],\" . Total Area: \",[\"to-string\",[\"get\",\"area_in_ha\"]],\" ha\"]",
         "fields": []
       },
-      "description": "Mapped canal geometry with the published canal name and area attributes."
+      "description": "Canal names and areas."
     },
     {
       "id": "remote_sensed_waterbodies",
@@ -238,7 +238,7 @@
           "area_*"
         ]
       },
-      "description": "Remote-sensed surface-waterbody areas and seasonal observations."
+      "descriptionKey": "surface_water_bodies_vector"
     },
     {
       "id": "soge",
@@ -474,7 +474,7 @@
       "style": "lulc_stats",
       "defaultVisible": false,
       "defaultProperty": "built_up_fraction",
-      "description": "Mean annual land-cover area shares within each micro watershed, calculated from source area fields and area_in_ha.",
+      "description": "Land use and land cover areas within each MWS.",
       "tooltip": {
         "titleExpression": "[\"concat\",\"MWS ID: \",[\"to-string\",[\"get\",\"uid\"]]]",
         "fields": [
@@ -498,7 +498,7 @@
       "style": "Terrain_Style_11_Classes",
       "defaultVisible": true,
       "defaultProperty": "Raster values (GeoServer style)",
-      "description": "Terrain landform classes."
+      "descriptionKey": "terrain_raster"
     },
     {
       "id": "terrain_vector",
@@ -523,7 +523,7 @@
           "valley_are/area_in_ha"
         ]
       },
-      "description": "Microwatershed terrain-cluster areas and dominant terrain category."
+      "descriptionKey": "terrain_vector"
     },
     {
       "id": "dem",
@@ -537,7 +537,7 @@
       "style": "dem_grayscale",
       "defaultVisible": false,
       "defaultProperty": "Raster values (GeoServer style)",
-      "description": "Digital elevation model values."
+      "description": "Elevation."
     },
     {
       "id": "soil_type",
@@ -560,7 +560,7 @@
           "soil_texture_class"
         ]
       },
-      "description": "Published soil texture categories for the selected area."
+      "description": "Soil texture classes."
     },
     {
       "id": "soil_health_raster_n",
@@ -574,7 +574,7 @@
       "style": "Soil_Health_Nitrogen",
       "defaultVisible": false,
       "defaultProperty": "Raster values (GeoServer style)",
-      "description": "Soil n measurements."
+      "description": "Soil nitrogen."
     },
     {
       "id": "soil_health_raster_P",
@@ -588,7 +588,7 @@
       "style": "Soil_Health_Phosphorus",
       "defaultVisible": false,
       "defaultProperty": "Raster values (GeoServer style)",
-      "description": "Mean soil phosphorus value for the MWS"
+      "description": "Soil phosphorus."
     },
     {
       "id": "soil_health_raster_K",
@@ -602,7 +602,7 @@
       "style": "Soil_Health_Potassium",
       "defaultVisible": false,
       "defaultProperty": "Raster values (GeoServer style)",
-      "description": "Soil K measurements."
+      "description": "Soil potassium."
     },
     {
       "id": "soil_health_raster_OC",
@@ -616,7 +616,7 @@
       "style": "Soil_Health_Organic_carbon",
       "defaultVisible": false,
       "defaultProperty": "Raster values (GeoServer style)",
-      "description": "Soil Organic Carbon measurements."
+      "description": "Soil organic carbon."
     },
     {
       "id": "soil_health_raster_OC_OLM",
@@ -630,7 +630,7 @@
       "style": "Soil_Health_OC_OLM",
       "defaultVisible": false,
       "defaultProperty": "Raster values (GeoServer style)",
-      "description": "Soil Organic Carbon measurements."
+      "description": "Soil organic carbon from OpenLandMap."
     },
     {
       "id": "soil_health_vector",
@@ -644,7 +644,7 @@
       "style": "soil_health_vector",
       "defaultVisible": false,
       "defaultProperty": "OC_OLM_mean",
-      "description": "Micro watershed mean soil nutrient and organic carbon measurements. The default map shows OpenLandMap organic carbon in percent.",
+      "description": "Mean soil nutrient and organic carbon values for each MWS.",
       "tooltip": {
         "titleExpression": "[\"concat\",\"MWS ID: \",[\"to-string\",[\"get\",\"uid\"]]]",
         "fields": [
@@ -670,7 +670,7 @@
           "avg_ndvi"
         ]
       },
-      "description": "Dated Normalized Difference Vegetation Index observations and their mean for the mapped area."
+      "description": "NDVI of shrubs."
     },
     {
       "id": "tree_canopy_density_2023",
@@ -684,7 +684,7 @@
       "style": "tree_ccd_style",
       "defaultVisible": false,
       "defaultProperty": "Raster values (GeoServer style)",
-      "description": "Tree canopy-cover density for 2023,."
+      "descriptionKey": "tree_canopy_cover_density_raster"
     },
     {
       "id": "tree_canopy_density_2022",
@@ -698,7 +698,7 @@
       "style": "tree_ccd_style",
       "defaultVisible": false,
       "defaultProperty": "Raster values (GeoServer style)",
-      "description": "Tree canopy-cover density for 2022,."
+      "descriptionKey": "tree_canopy_cover_density_raster"
     },
     {
       "id": "tree_canopy_density_2021",
@@ -712,7 +712,7 @@
       "style": "tree_ccd_style",
       "defaultVisible": false,
       "defaultProperty": "Raster values (GeoServer style)",
-      "description": "Tree canopy-cover density for 2021,."
+      "descriptionKey": "tree_canopy_cover_density_raster"
     },
     {
       "id": "tree_canopy_density_2020",
@@ -726,7 +726,7 @@
       "style": "tree_ccd_style",
       "defaultVisible": false,
       "defaultProperty": "Raster values (GeoServer style)",
-      "description": "Tree canopy-cover density for 2020,."
+      "descriptionKey": "tree_canopy_cover_density_raster"
     },
     {
       "id": "tree_canopy_density_2019",
@@ -740,7 +740,7 @@
       "style": "tree_ccd_style",
       "defaultVisible": false,
       "defaultProperty": "Raster values (GeoServer style)",
-      "description": "Tree canopy-cover density for 2019,."
+      "descriptionKey": "tree_canopy_cover_density_raster"
     },
     {
       "id": "tree_canopy_density_2018",
@@ -754,7 +754,7 @@
       "style": "tree_ccd_style",
       "defaultVisible": false,
       "defaultProperty": "Raster values (GeoServer style)",
-      "description": "Tree canopy-cover density for 2018,."
+      "descriptionKey": "tree_canopy_cover_density_raster"
     },
     {
       "id": "tree_canopy_density_2017",
@@ -768,7 +768,7 @@
       "style": "tree_ccd_style",
       "defaultVisible": false,
       "defaultProperty": "Raster values (GeoServer style)",
-      "description": "Tree canopy-cover density for 2017,."
+      "descriptionKey": "tree_canopy_cover_density_raster"
     },
     {
       "id": "tree_height_2023",
@@ -782,7 +782,7 @@
       "style": "tree_ch_style",
       "defaultVisible": false,
       "defaultProperty": "Raster values (GeoServer style)",
-      "description": "Tree height classes for 2023,."
+      "descriptionKey": "tree_canopy_height_raster"
     },
     {
       "id": "tree_height_2022",
@@ -796,7 +796,7 @@
       "style": "tree_ch_style",
       "defaultVisible": false,
       "defaultProperty": "Raster values (GeoServer style)",
-      "description": "Tree height classes for 2022,."
+      "descriptionKey": "tree_canopy_height_raster"
     },
     {
       "id": "tree_height_2021",
@@ -810,7 +810,7 @@
       "style": "tree_ch_style",
       "defaultVisible": false,
       "defaultProperty": "Raster values (GeoServer style)",
-      "description": "Tree height classes for 2021,."
+      "descriptionKey": "tree_canopy_height_raster"
     },
     {
       "id": "tree_height_2020",
@@ -824,7 +824,7 @@
       "style": "tree_ch_style",
       "defaultVisible": false,
       "defaultProperty": "Raster values (GeoServer style)",
-      "description": "Tree height classes for 2020,."
+      "descriptionKey": "tree_canopy_height_raster"
     },
     {
       "id": "tree_height_2019",
@@ -838,7 +838,7 @@
       "style": "tree_ch_style",
       "defaultVisible": false,
       "defaultProperty": "Raster values (GeoServer style)",
-      "description": "Tree height classes for 2019,."
+      "descriptionKey": "tree_canopy_height_raster"
     },
     {
       "id": "tree_height_2018",
@@ -852,7 +852,7 @@
       "style": "tree_ch_style",
       "defaultVisible": false,
       "defaultProperty": "Raster values (GeoServer style)",
-      "description": "Tree height classes for 2018,."
+      "descriptionKey": "tree_canopy_height_raster"
     },
     {
       "id": "tree_height_2017",
@@ -866,7 +866,7 @@
       "style": "tree_ch_style",
       "defaultVisible": false,
       "defaultProperty": "Raster values (GeoServer style)",
-      "description": "Tree height classes for 2017,."
+      "descriptionKey": "tree_canopy_height_raster"
     },
     {
       "id": "ndvi_tree_stats",
@@ -886,7 +886,7 @@
           "avg_ndvi"
         ]
       },
-      "description": "Dated Normalized Difference Vegetation Index observations and their mean for the mapped area."
+      "description": "NDVI of trees."
     },
     {
       "id": "forest_change",
@@ -900,7 +900,7 @@
       "style": "tree_overall_style",
       "defaultVisible": false,
       "defaultProperty": "Raster values (GeoServer style)",
-      "description": "Published forest-cover change classes."
+      "description": "Forest cover change."
     },
     {
       "id": "tree_in_grassland",
@@ -924,7 +924,7 @@
           "tree_loss_in_tree_in_shrub_area_in_ha"
         ]
       },
-      "description": "Area of trees mapped in grassland within each microwatershed."
+      "description": "Shrub and tree cover areas."
     },
     {
       "id": "forest_fringe",
@@ -950,7 +950,7 @@
           "tree_degradation_mws_area_in_ha"
         ]
       },
-      "description": "Forest-fringe area within each mapped polygon."
+      "description": "Forest fringe areas."
     },
     {
       "id": "afforestation",
@@ -964,7 +964,7 @@
       "style": "",
       "defaultVisible": false,
       "defaultProperty": "Raster values (GeoServer style)",
-      "description": "Tree-cover increase classes."
+      "descriptionKey": "change_tree_cover_gain_raster"
     },
     {
       "id": "afforestation_stats",
@@ -990,7 +990,7 @@
           "sc_fo"
         ]
       },
-      "description": "Mapped area of tree-cover increase classes."
+      "descriptionKey": "change_tree_cover_gain_vector"
     },
     {
       "id": "deforestation",
@@ -1004,7 +1004,7 @@
       "style": "",
       "defaultVisible": false,
       "defaultProperty": "Raster values (GeoServer style)",
-      "description": "Tree-cover decrease classes."
+      "descriptionKey": "change_tree_cover_loss_raster"
     },
     {
       "id": "deforestation_stats",
@@ -1030,7 +1030,7 @@
           "fo_sc"
         ]
       },
-      "description": "Mapped area of tree-cover decrease classes."
+      "descriptionKey": "change_tree_cover_loss_vector"
     },
     {
       "id": "cropping_intensity",
@@ -1080,7 +1080,6 @@
       "style": "drought",
       "defaultVisible": false,
       "defaultProperty": "drought_peak_intensity",
-      "description": "Highest recorded weekly drought intensity across observed years; annual classes and moderate plus severe week counts remain available.",
       "tooltip": {
         "titleExpression": "[\"concat\",\"MWS ID: \",[\"to-string\",[\"get\",\"uid\"]]]",
         "fields": [
@@ -1112,7 +1111,8 @@
           "w_mld_2024",
           "w_no_2024"
         ]
-      }
+      },
+      "descriptionKey": "drought_frequency_vector"
     },
     {
       "id": "drought_causality",
@@ -1126,7 +1126,7 @@
       "style": "drought_causality",
       "defaultVisible": false,
       "defaultProperty": "drought_dominant_impact",
-      "description": "Dominant recorded moderate or severe drought impact pathway across observed years. Pathway records contain only the published top three combinations per year.",
+      "description": "Drought triggers and impact indicators.",
       "tooltip": {
         "titleExpression": "[\"concat\",\"MWS ID: \",[\"to-string\",[\"get\",\"uid\"]]]",
         "fields": [
@@ -1176,7 +1176,7 @@
           "avg_ndvi"
         ]
       },
-      "description": "Dated Normalized Difference Vegetation Index observations and their mean for the mapped area."
+      "description": "NDVI of cropland."
     },
     {
       "id": "green_credit",
@@ -1210,7 +1210,7 @@
       "style": "",
       "defaultVisible": false,
       "defaultProperty": "Raster values (GeoServer style)",
-      "description": "Cropping degradation classes."
+      "descriptionKey": "change_cropping_reduction_raster"
     },
     {
       "id": "degradation_stats",
@@ -1235,7 +1235,7 @@
           "f_sc"
         ]
       },
-      "description": "Mapped area of cropping degradation classes."
+      "descriptionKey": "change_cropping_reduction_vector"
     },
     {
       "id": "urbanization",
@@ -1249,7 +1249,7 @@
       "style": "",
       "defaultVisible": false,
       "defaultProperty": "Raster values (GeoServer style)",
-      "description": "Urbanization change classes."
+      "descriptionKey": "change_urbanization_raster"
     },
     {
       "id": "urbanization_stats",
@@ -1274,7 +1274,7 @@
           "b_bu"
         ]
       },
-      "description": "Mapped area of urbanization change classes."
+      "descriptionKey": "change_urbanization_vector"
     },
     {
       "id": "cropintensity",
@@ -1288,7 +1288,7 @@
       "style": "cropintensity",
       "defaultVisible": false,
       "defaultProperty": "Raster values (GeoServer style)",
-      "description": "Crop-intensity change classes."
+      "descriptionKey": "change_cropping_intensity_raster"
     },
     {
       "id": "cropintensity_stats",
@@ -1317,7 +1317,7 @@
           "tr_tr"
         ]
       },
-      "description": "Mapped area of crop-intensity change classes."
+      "descriptionKey": "change_cropping_intensity_vector"
     },
     {
       "id": "shrubland_diversion_base",
@@ -1331,7 +1331,7 @@
       "style": "change_shrubland_diversion_style",
       "defaultVisible": false,
       "defaultProperty": "Raster values (GeoServer style)",
-      "description": "Shrubland-diversion change classes; source or style may be pending publication."
+      "description": "Shrubland cover change."
     },
     {
       "id": "shrubland_diversion_stats",
@@ -1357,7 +1357,7 @@
           "sh_ba"
         ]
       },
-      "description": "Mapped area of shrubland-diversion change classes."
+      "description": "Areas of shrubland cover change."
     },
     {
       "id": "restoration",
@@ -1416,7 +1416,7 @@
           "Link to conflict"
         ]
       },
-      "description": "Published land-conflict features for the selected area."
+      "description": "Land conflicts."
     },
     {
       "id": "industry",
@@ -1460,7 +1460,7 @@
           "village"
         ]
       },
-      "description": "Published mining features for the selected area."
+      "description": "Mining areas."
     },
     {
       "id": "nrega_land_restoration",
@@ -1811,7 +1811,7 @@
       },
       "area_in_ha": {
         "unit": "ha",
-        "description": "area in hectares"
+        "description": "Total Area of MWS in Hectares"
       },
       "id": {
         "unit": "NA",
@@ -2406,7 +2406,7 @@
       },
       "area_in_ha": {
         "unit": "ha",
-        "description": "area in hectares identified as Tree Cover Gain"
+        "description": "Total Area of MWS in Hectares"
       },
       "fa_fo": {
         "unit": "ha",
@@ -2463,7 +2463,7 @@
       },
       "area_in_ha": {
         "unit": "ha",
-        "description": "area in hectares identified for analysis"
+        "description": "Total Area of MWS in Hectares"
       },
       "do_tr": {
         "unit": "ha",
@@ -2508,7 +2508,7 @@
       },
       "area_in_ha": {
         "unit": "ha",
-        "description": "area in hectares identified as tree cover loss"
+        "description": "Total Area of MWS in Hectares"
       },
       "fo_sc": {
         "unit": "ha",
@@ -2545,7 +2545,7 @@
       },
       "area_in_ha": {
         "unit": "ha",
-        "description": "area in hectares which is idenitified as Cropping reduction"
+        "description": "Total Area of MWS in Hectares"
       },
       "total_deg": {
         "unit": "ha",
@@ -2586,7 +2586,7 @@
       },
       "area_in_ha": {
         "unit": "ha",
-        "description": "area in hectares identifed as urbanized"
+        "description": "Total Area of MWS in Hectares"
       },
       "id": {
         "unit": "NA",
@@ -2687,7 +2687,7 @@
       },
       "area_in_ha": {
         "unit": "ha",
-        "description": "area in hectares idenfied for analysis"
+        "description": "Total Area of MWS in Hectares"
       },
       "single_cropped_area_2020": {
         "unit": "ha",
@@ -3511,7 +3511,7 @@
       },
       "area_in_ha": {
         "unit": "ha",
-        "description": "area in hectares"
+        "description": "Total Area of MWS in Hectares"
       },
       "rd17-5-28": {
         "unit": "percent",
@@ -3805,7 +3805,7 @@
       },
       "area_in_ha": {
         "unit": "ha",
-        "description": "area in hectares"
+        "description": "Total Area of MWS in Hectares"
       },
       "Excluded Areas": {
         "unit": "ha",
@@ -3890,7 +3890,7 @@
       },
       "area_in_ha": {
         "unit": "ha",
-        "description": "area in hectares"
+        "description": "Total Area of MWS in Hectares"
       },
       "sgw_dev_pe": {
         "unit": "percent",
@@ -4199,7 +4199,7 @@
       },
       "area_in_ha": {
         "unit": "ha",
-        "description": "area in hectares"
+        "description": "Total Area of MWS in Hectares"
       },
       "single_non_kharif_cropped_area_2023": {
         "unit": "ha",
@@ -4360,7 +4360,7 @@
       },
       "area_in_ha": {
         "unit": "ha",
-        "description": "area in hectares"
+        "description": "Total Area of MWS in Hectares"
       },
       "id": {
         "unit": "NA",
@@ -4389,7 +4389,7 @@
       },
       "area_in_ha": {
         "unit": "ha",
-        "description": "area in hectares"
+        "description": "Total Area of MWS in Hectares"
       },
       "valley_are": {
         "unit": "ha",
@@ -4446,7 +4446,7 @@
       },
       "area_in_ha": {
         "unit": "ha",
-        "description": "area in hectares"
+        "description": "Total Area of MWS in Hectares"
       },
       "sum": {
         "unit": "NA",
@@ -4491,7 +4491,7 @@
       },
       "area_in_ha": {
         "unit": "ha",
-        "description": "area in hectares"
+        "description": "Total Area of MWS in Hectares"
       },
       "Partially_Degraded": {
         "unit": "NA",
@@ -4532,7 +4532,7 @@
       },
       "area_in_ha": {
         "unit": "ha",
-        "description": "area in hectares"
+        "description": "Total Area of MWS in Hectares"
       },
       "2023_2024": {
         "unit": "m",
@@ -4609,7 +4609,7 @@
       },
       "area_in_ha": {
         "unit": "ha",
-        "description": "area in hectares"
+        "description": "Total Area of MWS in Hectares"
       },
       "id": {
         "unit": "NA",
@@ -4648,7 +4648,7 @@
       },
       "area_in_ha": {
         "unit": "ha",
-        "description": "area in hectares"
+        "description": "Total Area of MWS in Hectares"
       },
       "2023_2024": {
         "unit": "m"
@@ -5516,7 +5516,7 @@
       },
       "area_in_ha": {
         "unit": "ha",
-        "description": "area in hectares"
+        "description": "Total Area of MWS in Hectares"
       },
       "system:index": {
         "unit": "NA"
@@ -7508,7 +7508,7 @@
       },
       "area_in_ha": {
         "unit": "ha",
-        "description": "area in hectares"
+        "description": "Total Area of MWS in Hectares"
       },
       "id": {
         "unit": "NA",
@@ -8054,7 +8054,7 @@
       },
       "area_in_ha": {
         "unit": "ha",
-        "description": "total area of the micro watershed associated with the canal feature in hectares (ha)"
+        "description": "Total Area of MWS in Hectares"
       },
       "st_length": {
         "unit": "NA",
@@ -8332,7 +8332,7 @@
       },
       "area_in_ha": {
         "unit": "ha",
-        "description": "area of the micro watershed associated with the river feature in hectares (ha)"
+        "description": "Total Area of MWS in Hectares"
       }
     },
     "land_conflict_watch_vector": {
@@ -8568,7 +8568,7 @@
       },
       "area_in_ha": {
         "unit": "ha",
-        "description": "total area of mws in hectares"
+        "description": "Total Area of MWS in Hectares"
       },
       "id": {
         "unit": "NA",
@@ -8825,7 +8825,7 @@
     "drainage_density_vector": {
       "area_in_ha": {
         "unit": "ha",
-        "description": "total area of micro watershed in hectares(ha)"
+        "description": "Total Area of MWS in Hectares"
       },
       "bacode": {
         "unit": "NA",
@@ -9883,7 +9883,7 @@
       },
       "area_in_ha": {
         "unit": "ha",
-        "description": "total area of the micro watershed in hectares (ha)"
+        "description": "Total Area of MWS in Hectares"
       },
       "bacode": {
         "unit": "NA",
@@ -9925,7 +9925,7 @@
       },
       "area_in_ha": {
         "unit": "ha",
-        "description": "total area of the micro watershed in hectares (ha)"
+        "description": "Total Area of MWS in Hectares"
       },
       "bacode": {
         "unit": "NA",
@@ -10203,7 +10203,7 @@
       },
       "area_in_ha": {
         "unit": "ha",
-        "description": "total area of the micro watershed in hectares (ha)"
+        "description": "Total Area of MWS in Hectares"
       },
       "bacode": {
         "unit": "NA",
@@ -10289,7 +10289,7 @@
       },
       "area_in_ha": {
         "unit": "ha",
-        "description": "total area of the micro watershed in hectares (ha)"
+        "description": "Total Area of MWS in Hectares"
       },
       "bacode": {
         "unit": "NA",
@@ -10623,7 +10623,8 @@
         "description": "unique identifier for the micro watershed"
       },
       "area_in_ha": {
-        "unit": "ha"
+        "unit": "ha",
+        "description": "Total Area of MWS in Hectares"
       },
       "isolated_shrub_area_in_ha": {
         "unit": "ha",
@@ -10703,7 +10704,7 @@
       },
       "area_in_ha": {
         "unit": "ha",
-        "description": "Micro watershed area in hectares"
+        "description": "Total Area of MWS in Hectares"
       },
       "bacode": {
         "unit": "NA",
@@ -10726,6 +10727,12 @@
       "avg_ndvi": {
         "description": "Mean of available dated NDVI measurements",
         "unit": "dimensionless"
+      }
+    },
+    "common": {
+      "area_in_ha": {
+        "unit": "ha",
+        "description": "Total Area of MWS in Hectares"
       }
     }
   },
@@ -10751,7 +10758,7 @@
     "nrega_vector": "Mahatma Gandhi National Rural Employment Guarantee Act (MGNREGA) assets categorization map for India. Permissible works under the scheme have been categorized from the natural resource management (NRM) lens through keyword matching, with the goal of helping in examining the current distribution of assets and facilitate the planning of new assets to ensure water security and sustainable livelihoods in rural India. \n\nThe Pan India map is available from 2017 onwards. These are the classes in the current version of the map:\n1. Soil and water conservation\n2. Irrigation on farms\n3. Other on-farm works\n4. Plantations\n5. Land restoration\n6. Off-farm livelihood assets\n7. Community assets\n\nInput to the keyword matching algorithm is MGNREGS permissible work list and MGNREGA assets obtained from Bhuvan. Details of methodology can be found in the technical manual and the codebase on [github](https://github.com/core-stack-org/core-stack-backend/blob/main/computing/misc/nrega.py).",
     "admin_boundaries_vector": "Administration boundaries map of India. State and district boundaries data is taken from Survey of India. Administrative block boundaries are generated for 15 states by using village shapefiles from NASA SEDAC website, and village to panchayat mapping obtained from the Local Government Directory data.  Additionally, the village level data is compiled with village level household variables of census 2011 and the Aggregate Development Index (ADI) of 2001, 2011 and 2019. Resolution of villages between 2001 and 2011 is done using SHRUG IDs.\nDetails of methodology can be found in the technical manual and the codebase on [github](https://github.com/core-stack-org/core-stack-backend/blob/main/computing/misc/admin_boundary.py).",
     "drought_frequency_vector": "Drought frequency map for India. The Department of Agriculture, Cooperation & Farmers Welfare under the Ministry of Agriculture & Farmers Welfare, Government of India released the \"Manual for Drought Management\" in 2016 for the prevention, mitigation and management of droughts in India. The manual introduces scientific indices and parameters such as Vegetation Condition Index (VCI) for more accurate determination and assessment of drought. This map is an attempt to implement the methodology of the drought manual using various remote sensing products.\n\nFollowing are the output classes in the model: \n1. Severe\n2. Moderate\n3. Mild\n\nInput to the model is Rainfall data  (CHIRPS), Vegetation data (Landsat), Crop data (MODIS), Land use land cover (IndiaSAT). Details of methodology can be found in the technical manual and the codebase on [github](https://github.com/core-stack-org/core-stack-backend/tree/main/computing/drought).",
-    "surface_water_bodies_vector": "Surface water bodies map for India. Surface Water is any body of water above ground, including streams, rivers, and lakes. To generate this map, water pixels from the Land Use Land Cover model (IndiaSAT) for each year are taken and converted into a vector layer. Given the intra annual classes for water availability based on India’s agriculture calendar in IndiaSAT, water availability in each season of the year (kharif, rabi, zaid) for each of the waterbodies is computed. This data is also combined with waterbody census data (2023) to additionally get a capacity map for the waterbodies.  Details of methodology can be found in the technical manual and the codebase on [github](https://github.com/core-stack-org/core-stack-backend/tree/main/computing/surface_water_bodies).",
+    "surface_water_bodies_vector": "Surface water bodies map for India. Surface Water is any body of water above ground, including streams, rivers, and lakes. To generate this map, water pixels from the Land Use Land Cover model (IndiaSAT) for each year are taken and converted into a vector layer. Given the intra annual classes for water availability based on India’s agriculture calendar in IndiaSAT, water availability in each season of the year (kharif, rabi, zaid) for each of the waterbodies is computed. This data is also combined with waterbody census data (2023) to additionally get a capacity map for the waterbodies.  Details of methodology can be found in the technical manual and the codebase on [github](https://github.com/core-stack-org/core-stack-backend/tree/main/computing/surface_water_bodies). ",
     "water_balance_fortnightly_vector": "Water balance with fortnightly temporal resolution for India. The vertical flux for a micro-watershed is computed as: Water Balance (ΔG) = Precipitation (P) - Runoff (Qout) - Evapotranspiration (ET). \n\nPrecipitation data has been obtained from JAXA's Global Satellite Mapping of Precipitation (GSMaP), Evapotranspiration data from FLDAS Noah land Surface model by NASA and USGS, and runoff has been computed on a per-pixel using slope-adjusted CN numbers, the hydrological soil group, and LULC. Note that this only computes the vertical flux and does not account for sub-surface flows from adjacent micro-watersheds. \n\nThe vector data contains timeseries of fortnightly mean precipitation (in mm), runoff (in mm), evapotranspiration (in mm), water balance (in mm), and cumulative water balance since 2017 as an indicator of cumulative surplus or deficit, for each microwatershed.\n\nDetails of methodology can be found in the technical manual and the codebase on [github](https://github.com/core-stack-org/core-stack-backend/tree/main/computing/mws).",
     "change_in_well_depth_vector": "Annual water balance map for India. Data to compute the water balance for each microwatershed as rainfall - evapotranspiration - runoff, along with the specific yield obtained from aquifer data are used to estimate the change in depth to water. Note that this only takes the vertical flux into account and hence is likely to suffer from accuracy issues in the absence of accounting for lateral flow through the underlying aquifer. \n\nThe vector data contains timeseries of annual mean precipitation (in mm), runoff (in mm), evapotranspiration (in mm), water balance (in mm), and cumulative water balance since 2017 as an indicator of cumulative surplus or deficit, for each microwatershed.\n\nDetails of methodology can be found in the technical manual and the codebase on [github](https://github.com/core-stack-org/core-stack-backend/blob/main/computing/mws/well_depth.py).",
     "cropping_intensity_vector": "Cropping intensity map for India. Cropping intensity is computed on the IndiaSAT Land Use Land Cover outputs by taking the weighted average of the area under single cropping, double cropping, and tripple/annual/perennial cropping. The vector map is available from 2017 onwards. Details of methodology can be found in the technical manual and the codebase on [github](https://github.com/core-stack-org/core-stack-backend/tree/main/computing/cropping_intensity).",
@@ -10767,7 +10774,7 @@
     "change_urbanization_vector": "Change detection map for India. The various change detection maps are Change in Land use layers are computing by using IndiaSAT Land Use Land Cover outputs and computing the change in pixel classes across the years. \nCurrently the layer is computed for the period of 2017-2024 and two composite images are generated using the mode of the first three years (2017-2019) and the last three years (2022-2024) and a transition matrix is prepared for the classes for these outputs. \n\nDetails of methodology can be found in the [technical manual](https://drive.google.com/file/d/1ZxovdpPThkN09cB1TcUYSE2BImI7M3k_/view) and the codebase on [github](https://github.com/core-stack-org/core-stack-backend/blob/main/computing/change_detection/change_detection.py).",
     "facilities_proximity_vector": "This Layer helps us to get the proximity of 25 types of nearest facilities from each of the villages across India. The data was downloaded from multiple resources, primarily on Gram Manchitra. Distances of a village (from its centroid) to the nearest facility was computed offline to build the final [dataset](https://drive.google.com/file/d/10vwjga8friz5kaTRAD-3VzNNBbRczaOY/view)",
     "site_suitability_raster": "The plantation site suitability layer is built using a GIS-based assessment to identify regions ideal for agroforestry to combat land degradation and soil erosion, using a Multi-Criteria Analysis (MCA) framework that integrates 24 environmental and socioeconomic variables across five thematic criteria - Climate (default weight: 35%), Topography (25%), Soil (20%), Ecology (10%), and Socioeconomic Factors (10%) - each of which is itself a weighted mean of its underlying variables. These variables are reclassified into suitability classes and combined using a Weighted Overlay method. The final score per pixel ranges from 1 (Very Good) to 5 (Unsuitable): \n\n - Climate: annual precipitation, mean annual temperature, aridity index, reference evapotranspiration. \n - Topography: elevation, slope, aspect. \n - Soil: topsoil and subsoil pH, organic carbon, cation exchange capacity (CEC), texture, bulk density, drainage class, and available water capacity (AWC). \n - Ecology: NDVI (canopy greenness) and LULC forest cover (prioritising barren or sparsely forested land). \n - Socioeconomic Factors: proximity to roads, settlements, and drainage networks. \n\nWeights are configurable at the criterion, subcriterion, and variable level. The layer can be generated for any user-defined region of interest via the CoRE Stack Dashboard.",
-    "green_credits_vector": "Dataset of land parcels registered under India's Green Credit Programme (GCP) sourced from the MoEFCC Green Credit Registry - [Land Inventory Portal](https://www.moefcc-gcp.in/registry/land-inventory).\nEach feature represents a land parcel available for afforestation or ecosystem restoration, administered by forest departments at the state and district level. Parcel boundaries are derived from KML files published on the registry and are suitable for restoration planning, ecological indicator computation (tree cover gain, soil type, proximity to settlements), and integration into landscape restoration applications.",
+    "green_credits_vector": "Dataset of land parcels registered under India's Green Credit Programme (GCP) sourced from the MoEFCC Green Credit Registry - [Land Inventory Portal](https://www.moefcc-gcp.in/registry/land-inventory).\nEach feature represents a land parcel available for afforestation or ecosystem restoration, administered by forest departments at the state and district level. Parcel boundaries are derived from KML files published on the registry and are suitable for restoration planning, ecological indicator computation (tree cover gain, soil type, proximity to settlements), and integration into landscape restoration applications.\n",
     "factory_csr_vector": "The dataset is derived from the Annual Survey of Industries (ASI) 2018 data frame by the Ministry of Statistics and Programme Implementation (MOSPI), Government of India. It contains information on registered industrial units across Indian districts, including details like state, district, industry code (NIC 2008), total persons engaged, and factory name. Geographic coordinates were obtained by geocoding the address. Suitable for spatial analysis of industrial presence, workforce distribution, proximity-based assessments, and binary filtering of villages or planning units by factory presence.",
     "agroecological_vector": "Dataset created by the Consortium of Agroecological Transformation (CAT) of organisations actively engaged in agroecological practices, representing civil society organisations, non-profits, and grassroots groups working across rural blocks and districts. Contains information about the organisation's operational location and includes attributes such as organisation name, type, the agroecological domains they work in (e.g. cultivation practices, soil conservation, livestock management, seed management, watershed management), contact details, and the date of registration. Suitable for mapping civil society presence, identifying agroecological practice coverage, and supporting planning of landscape restoration initiatives."
   }
