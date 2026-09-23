@@ -271,7 +271,7 @@
     },
     {
       "id": "aquifer",
-      "label": "Aquifer Stats",
+      "label": "Aquifer",
       "category": "Stats",
       "groupId": "hydrology",
       "groupName": "Hydrology",
@@ -8903,87 +8903,87 @@
       },
       "institutionalization_cat_cluster": {
         "unit": "NA",
-        "description": "Institutionalization Category Cluster Class"
+        "description": "Institutionalization Class"
       },
       "social_protection_cat_cluster": {
         "unit": "NA",
-        "description": "Social Protection Category Cluster Class"
+        "description": "Social Protection Class"
       },
       "civic_infrastructure_cat_cluster": {
         "unit": "NA",
-        "description": "Civic Infrastructure Category Cluster Class"
+        "description": "Civic Infrastructure Class"
       },
       "financial_inclusion_cat_cluster": {
         "unit": "NA",
-        "description": "Financial Inclusion Category Cluster Class"
+        "description": "Financial Inclusion Class"
       },
       "energy_access_cat_cluster": {
         "unit": "NA",
-        "description": "Energy Access Category Cluster Class"
+        "description": "Energy Access Class"
       },
       "road_connectivity_cat_cluster": {
         "unit": "NA",
-        "description": "Road Connectivity Category Cluster Class"
+        "description": "Road Connectivity Class"
       },
       "housing_quality_cat_cluster": {
         "unit": "NA",
-        "description": "Housing Quality Category Cluster Class"
+        "description": "Housing Quality Class"
       },
       "maternal_child_health_cat_cluster": {
         "unit": "NA",
-        "description": "Maternal Child Health Category Cluster Class"
+        "description": "Maternal Child Health Class"
       },
       "water_sanitation_cat_cluster": {
         "unit": "boolean",
-        "description": "Water Sanitation Category Cluster Class"
+        "description": "Water Sanitation Class"
       },
       "livelihoods_cottage_traditional_industry_cat_cluster": {
         "unit": "NA",
-        "description": "Livelihoods Cottage Traditional Industry Category Cluster Class"
+        "description": "Livelihoods Cottage Traditional Industry Class"
       },
       "livelihoods_employment_cat_cluster": {
         "unit": "NA",
-        "description": "Livelihoods Employment Category Cluster Class"
+        "description": "Livelihoods Employment Class"
       },
       "livelihoods_forest_resources_cat_cluster": {
         "unit": "NA",
-        "description": "Livelihoods Forest Resources Category Cluster Class"
+        "description": "Livelihoods Forest Resources Class"
       },
       "livelihoods_common_resources_cat_cluster": {
         "unit": "NA",
-        "description": "Livelihoods Common Resources Category Cluster Class"
+        "description": "Livelihoods Common Resources Class"
       },
       "livelihoods_alternative_farming_cat_cluster": {
         "unit": "NA",
-        "description": "Livelihoods Alternative Farming Category Cluster Class"
+        "description": "Livelihoods Alternative Farming Class"
       },
       "livelihoods_fisheries_cat_cluster": {
         "unit": "NA",
-        "description": "Livelihoods Fisheries Category Cluster Class"
+        "description": "Livelihoods Fisheries Class"
       },
       "livestock_veterinary_cat_cluster": {
         "unit": "count",
-        "description": "Livestock Veterinary Category Cluster Class"
+        "description": "Livestock Veterinary Class"
       },
       "agriculture_land_cultivation_cat_cluster": {
         "unit": "NA",
-        "description": "Agriculture Land Cultivation Category Cluster Class"
+        "description": "Agriculture Land Cultivation Class"
       },
       "agriculture_irrigation_watershed_cat_cluster": {
         "unit": "NA",
-        "description": "Agriculture Irrigation Watershed Category Cluster Class"
+        "description": "Agriculture Irrigation Watershed Class"
       },
       "agriculture_organic_farming_cat_cluster": {
         "unit": "NA",
-        "description": "Agriculture Organic Farming Category Cluster Class"
+        "description": "Agriculture Organic Farming Class"
       },
       "agriculture_support_services_cat_cluster": {
         "unit": "NA",
-        "description": "Agriculture Support Services Category Cluster Class"
+        "description": "Agriculture Support Services Class"
       },
       "agricultural_markets_cat_cluster": {
         "unit": "NA",
-        "description": "Agricultural Markets Category Cluster Class"
+        "description": "Agricultural Markets Class"
       },
       "institutionalization_cat_value": {
         "unit": "dimensionless",
