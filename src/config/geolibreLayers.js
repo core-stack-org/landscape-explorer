@@ -264,7 +264,7 @@ const LAYERS = [
   },
   {
     id: "drought",
-    label: "Drought",
+    label: "Drought Severity",
     domain: "Agriculture",
     loadGroup: "agriculture",
     sourceType: "wfs",
