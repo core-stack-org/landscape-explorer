@@ -679,6 +679,21 @@ const LAYERS = [
     layerName: ({ district, tehsil }) => `lulc_vector_${district}_${tehsil}`,
     styleProfile: "lulc_stats",
   },
+  ...[
+    { id: "ndvi_crop_stats", label: "NDVI · Cropland", suffix: "_crop" },
+    { id: "ndvi_shrub_stats", label: "NDVI · Shrubland", suffix: "_shrub" },
+    { id: "ndvi_tree_stats", label: "NDVI · Tree Cover", suffix: "_tree" },
+  ].map((entry) => ({
+    id: entry.id,
+    label: entry.label,
+    domain: "Land",
+    loadGroup: "lulc",
+    sourceType: "wfs",
+    workspace: "ndvi_timeseries",
+    geometryType: "polygon",
+    layerName: ({ district, tehsil }) => `ndvi_timeseries_${district}_${tehsil}${entry.suffix}`,
+    styleProfile: "ndvi",
+  })),
 ];
 
 export const GEOLIBRE_LULC_LAYERS = GEOLIBRE_LULC_YEARS.map((year) => ({
@@ -728,6 +743,9 @@ const UNIT_SOURCES_BY_ID = {
   shrubland_diversion_stats: ["change_vector_ShrubChange"],
   restoration_stats: ["restoration_vector"],
   lulc_stats: ["lulc_vector"],
+  ndvi_crop_stats: ["ndvi_timeseries"],
+  ndvi_shrub_stats: ["ndvi_timeseries"],
+  ndvi_tree_stats: ["ndvi_timeseries"],
   drought_causality: ["drought_causality"],
   tree_in_grassland: ["tree_in_grassland"],
   forest_fringe: ["forest_fringe"],

@@ -653,6 +653,26 @@
       }
     },
     {
+      "id": "ndvi_shrub_stats",
+      "label": "NDVI: Shrubland",
+      "category": "Stats",
+      "groupId": "land",
+      "groupName": "Land",
+      "sourceType": "wfs",
+      "workspace": "ndvi_timeseries",
+      "sourcePattern": "ndvi_timeseries:ndvi_timeseries_{district}_{tehsil}_shrub",
+      "style": "ndvi",
+      "defaultVisible": false,
+      "defaultProperty": "avg_ndvi",
+      "tooltip": {
+        "titleExpression": "[\"concat\",\"MWS ID: \",[\"to-string\",[\"get\",\"uid\"]]]",
+        "fields": [
+          "avg_ndvi"
+        ]
+      },
+      "description": "Dated Normalized Difference Vegetation Index observations and their mean for the mapped area."
+    },
+    {
       "id": "tree_canopy_density_2023",
       "label": "Canopy Cover Density (2023)",
       "category": "Base Layer",
@@ -847,6 +867,26 @@
       "defaultVisible": false,
       "defaultProperty": "Raster values (GeoServer style)",
       "description": "Tree height classes for 2017,."
+    },
+    {
+      "id": "ndvi_tree_stats",
+      "label": "NDVI: Tree Cover",
+      "category": "Stats",
+      "groupId": "trees",
+      "groupName": "Trees",
+      "sourceType": "wfs",
+      "workspace": "ndvi_timeseries",
+      "sourcePattern": "ndvi_timeseries:ndvi_timeseries_{district}_{tehsil}_tree",
+      "style": "ndvi",
+      "defaultVisible": false,
+      "defaultProperty": "avg_ndvi",
+      "tooltip": {
+        "titleExpression": "[\"concat\",\"MWS ID: \",[\"to-string\",[\"get\",\"uid\"]]]",
+        "fields": [
+          "avg_ndvi"
+        ]
+      },
+      "description": "Dated Normalized Difference Vegetation Index observations and their mean for the mapped area."
     },
     {
       "id": "forest_change",
@@ -1118,6 +1158,26 @@
           "mild_2017"
         ]
       }
+    },
+    {
+      "id": "ndvi_crop_stats",
+      "label": "NDVI: Cropland",
+      "category": "Stats",
+      "groupId": "agriculture",
+      "groupName": "Agriculture",
+      "sourceType": "wfs",
+      "workspace": "ndvi_timeseries",
+      "sourcePattern": "ndvi_timeseries:ndvi_timeseries_{district}_{tehsil}_crop",
+      "style": "ndvi",
+      "defaultVisible": false,
+      "defaultProperty": "avg_ndvi",
+      "tooltip": {
+        "titleExpression": "[\"concat\",\"MWS ID: \",[\"to-string\",[\"get\",\"uid\"]]]",
+        "fields": [
+          "avg_ndvi"
+        ]
+      },
+      "description": "Dated Normalized Difference Vegetation Index observations and their mean for the mapped area."
     },
     {
       "id": "green_credit",
@@ -10661,6 +10721,12 @@
       "wsconc": {
         "unit": "NA",
         "description": "Concatenated watershed hierarchy code"
+      }
+    },
+    "ndvi_timeseries": {
+      "avg_ndvi": {
+        "description": "Mean of available dated NDVI measurements",
+        "unit": "dimensionless"
       }
     }
   },
