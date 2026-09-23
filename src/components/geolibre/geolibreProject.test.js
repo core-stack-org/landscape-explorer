@@ -12,6 +12,7 @@ import {
   withAverageDeltaG,
   withAverageNdvi,
   withDroughtDryspellMean,
+  withLulcBuiltUpFraction,
   withNormalizedTerrainCluster,
   withSoilTextureClass,
   withAfforestationClass,
@@ -1931,4 +1932,16 @@ describe("Water Balance mm binning", () => {
     const data = { type: "FeatureCollection", features: [{ geometry: null, properties: { uid: "1", avg_delta_g: null } }] };
     expect(withMwsFortnightClass(data).features[0].properties.avg_delta_g_class).toBeNull();
   });
+});
+
+it("normalizes mean built-up area and keeps missing/zero-area polygons missing", () => {
+  const input = { features: [
+    { properties: { area_in_ha: 100, "built-up_area_2017": 10, "built-up_area_2024": "30", "built-up_area_2023": "" } },
+    { properties: { area_in_ha: 0, "built-up_area_2024": 3 } },
+    { properties: { area_in_ha: 10, "built-up_area_2024": 0 } },
+    { properties: { area_in_ha: 10 } },
+  ] };
+  expect(withLulcBuiltUpFraction(input).features.map(f => f.properties.built_up_fraction)).toEqual([0.2, null, 0, null]);
+  expect(withLulcBuiltUpFraction(input).features[0].properties.built_up_year_count).toBe(2);
+  expect(input.features[0].properties.built_up_fraction).toBeUndefined();
 });

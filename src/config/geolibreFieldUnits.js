@@ -21,6 +21,10 @@ export const fieldDefinitionFor = (layer, field, fieldMetadata) => {
   if (layer?.id === "drought" && (field === "avg_dryspell" || /^drysp_20\d{2}$/.test(field))) {
     return { unit: "weeks", description: "Maximum consecutive dry weeks" };
   }
+  if (layer?.id === "lulc_stats") {
+    if (field === "built_up_fraction") return { unit: "dimensionless", description: "Mean available annual built-up area divided by area_in_ha" };
+    if (field === "built_up_year_count") return { unit: "count", description: "Number of valid annual built-up area observations" };
+  }
   const sources = layer?.unitSources || [];
   const exact = sources.map((source) => fieldMetadata[source]?.[field]).find(Boolean);
   if (exact) return exact;

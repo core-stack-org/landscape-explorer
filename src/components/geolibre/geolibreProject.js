@@ -342,6 +342,24 @@ export const withAverageNdvi = data => ({
   }),
 });
 
+// Mean annual built-up area divided by polygon area; retain source fields.
+export const withLulcBuiltUpFraction = data => ({
+  ...data,
+  features: (data?.features || []).map(feature => {
+    const properties = feature.properties || {};
+    const values = Object.entries(properties)
+      .filter(([key]) => /^built-up_area_\d{4}$/.test(key))
+      .map(([, value]) => finiteMeasurement(value))
+      .filter(value => value !== null && value >= 0);
+    const area = finiteMeasurement(properties.area_in_ha);
+    const mean = values.length ? values.reduce((sum, value) => sum + value, 0) / values.length : null;
+    return { ...feature, properties: { ...properties,
+      built_up_fraction: area > 0 && mean !== null ? mean / area : null,
+      built_up_year_count: values.length,
+    } };
+  }),
+});
+
 // Causality polygons contain labels, while the drought source publishes the
 // measured multi-year mean. Join by MWS uid and keep all original properties.
 export const withDroughtDryspellMean = (causality, drought) => {
@@ -417,6 +435,7 @@ const droughtFields = Array.from({ length: DROUGHT_YEAR_COUNT }, (_, i) => [`w_m
 const thematicStyle = { ...BASE_STYLE, strokeColor: "#232323", strokeWidth: 0.5 };
 
 const STYLE_PROFILES = {
+  lulc_stats: naturalBreaksStyle("built_up_fraction", "oranges", null, { ...thematicStyle, fillOpacity: 0.7 }, "dimensionless"),
   boundary: {
     ...BASE_STYLE,
     fillColor: "#ffffff",
@@ -1144,13 +1163,13 @@ const layerStyle = (layer, data) =>
     ? { ...RASTER_STYLE }
     : layer.nregaCategoryId
       ? nregaLayerStyle(layer.nregaCategoryId)
-      : ["facilities", "livestock", "drought_causality", "tree_in_grassland"].includes(layer.styleProfile)
+      : ["facilities", "livestock", "drought_causality", "tree_in_grassland", "lulc_stats"].includes(layer.styleProfile)
         ? naturalBreaksStyle(
             STYLE_PROFILES[layer.styleProfile].vectorStyleProperty,
             STYLE_PROFILES[layer.styleProfile].vectorStyleColorRamp,
             { features: (data?.features || []).filter(feature => hasLayerData(layer.id, feature.properties)) },
             STYLE_PROFILES[layer.styleProfile],
-            { facilities: "km", livestock: "count", drought_causality: "weeks", tree_in_grassland: "ha" }[layer.styleProfile]
+            { lulc_stats: "dimensionless", facilities: "km", livestock: "count", drought_causality: "weeks", tree_in_grassland: "ha" }[layer.styleProfile]
           )
         : { ...(STYLE_PROFILES[layer.styleProfile] || BASE_STYLE) };
 
@@ -1161,7 +1180,7 @@ const coreStackMetadata = (layer, layerName, sourceUrl, style, baseUrl) => ({
   defaultStyleUnit: {
     demographics: "percent", facilities: "km", livestock: "count",
     mws: "mm", mws_fortnight: "mm", ndvi: "dimensionless",
-    waterbodies: "ha", cropping_intensity: "dimensionless",
+    lulc_stats: "dimensionless", waterbodies: "ha", cropping_intensity: "dimensionless",
     drought: "years", drought_causality: "weeks", tree_in_grassland: "ha",
     forest_fringe: "ha", afforestation_stats: "ha", deforestation_stats: "ha", degradation_stats: "ha",
     urbanization_stats: "ha", cropintensity_stats: "ha", shrubland_diversion_stats: "ha",
@@ -1471,6 +1490,7 @@ const hydrateLayerWithData = (layer, data) => {
   if (catalogLayer?.id === "shrubland_diversion_stats") data = withCropIntensityChangeClass(data);
   if (catalogLayer?.id === "restoration_stats") data = withExcludedAreaClass(data);
   if (catalogLayer?.id?.startsWith("ndvi_")) data = withAverageNdvi(data);
+  if (catalogLayer?.id === "lulc_stats") data = withLulcBuiltUpFraction(data);
   const outline = catalogLayer && boundaryColorForLayer(catalogLayer.id);
   const initialStyle = catalogLayer && { ...layerStyle(catalogLayer), ...(outline ? { strokeColor: outline, simpleStyleEnabled: true } : {}) };
   const style = initialStyle && Object.entries(initialStyle).every(([key, value]) => JSON.stringify(layer.style?.[key]) === JSON.stringify(value))
