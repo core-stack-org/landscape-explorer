@@ -13,6 +13,7 @@ import {
   withAverageNdvi,
   withLulcAreaFractions,
   withNormalizedTerrainCluster,
+  withTerrainAreaFractions,
   withSoilTextureClass,
   withAfforestationClass,
   withDeforestationClass,
@@ -33,7 +34,7 @@ import {
   GEOLIBRE_NREGA_CATEGORIES,
 } from "../../config/geolibreLayers";
 import { createExpression } from "@maplibre/maplibre-gl-style-spec";
-import { resolvePopupRows, buildLayerPanelUnits } from "@geolibre/core";
+import { resolvePopupRows, resolvePopupTitle, buildLayerPanelUnits } from "@geolibre/core";
 
 const location = {
   state: "Assam",
@@ -118,7 +119,7 @@ beforeEach(() => {
 });
 
 describe("GeoLibre 2.6 project generation", () => {
-  it("matches the finalized CSV presentation manifest exactly", async () => {
+  it("matches the checked-in presentation catalog exactly", async () => {
     const project = await buildGeoLibreProject({ ...location });
     expect([...project.layers].reverse().map(layer => ({
       id: layer.id.replace(/^corestack-/, ""),
@@ -756,7 +757,7 @@ describe("GeoLibre 2.6 project generation", () => {
     expect(fields["Wide-scale"].unit).toBe("ha");
     expect(fields.new_measure.unit).toBe("unknown");
     expect(resolvePopupRows(properties, { popup }).map((row) => row.label)).toEqual([
-      "uid", "area_in_ha (ha)", "Wide-scale (ha)", "new_measure (unit unknown)",
+      "area in hectares (ha)", "Wide-scale (ha)", "unique identifier", "new_measure (unit unknown)",
     ]);
     expect(GEOLIBRE_FIELD_METADATA.change_vector_ShrubChange.total_change.unit).toBe("ha");
     expect(GEOLIBRE_FIELD_METADATA.soil_type.subsoil_organic_carbon.unit).toBe("unknown");
@@ -793,7 +794,7 @@ describe("GeoLibre 2.6 project generation", () => {
 
     expect(project.version).toBe("0.2.0");
     expect(project.layers).toHaveLength(GEOLIBRE_LAYERS.length);
-    expect(project.layers).toHaveLength(86);
+    expect(project.layers).toHaveLength(85);
     expect(project.layers.every(layer => {
       const catalog = GEOLIBRE_LAYERS.find(item => `corestack-${item.id}` === layer.id);
       return layer.name === `${catalog.label}${catalog.category === "NA" ? "" : ` · ${catalog.category}`}`;
@@ -1937,16 +1938,55 @@ test("MWS boundary uses its published source, carries field meaning, hover and U
     wsconc: { description: "Concatenated watershed hierarchy code" },
   });
   expect(ready.popup.hover).toBe(true);
-  expect(resolvePopupRows(properties, { popup: ready.popup, hover: true }).map(row => row.field)).toEqual(["uid", "bacode", "sbcode", "wsconc"]);
+  expect(resolvePopupRows(properties, { popup: ready.popup, hover: true })).toEqual([]);
+  expect(resolvePopupTitle(ready.name, properties, ready.popup)).toBe("MWS ID: 12_317834");
 });
 
-test("all vector layers carry configured hover fields and preserve click attributes", async () => {
+test("all vector layers carry finalized hover titles or fields and preserve click attributes", async () => {
   const project = await buildGeoLibreProject({ ...location });
   const vectors = project.layers.filter(layer => layer.type === "geojson");
-  expect(vectors).toHaveLength(45);
-  expect(vectors.every(layer => layer.popup?.hover && layer.popup.fields.some(field => field.hover))).toBe(true);
+  expect(vectors).toHaveLength(44);
+  expect(vectors.every(layer => layer.popup?.hover && (layer.popup.fields.some(field => field.hover) || layer.popup.titleExpression))).toBe(true);
+  expect(vectors.some(layer => layer.id === "corestack-ndvi_combined_stats")).toBe(false);
   const admin = vectors.find(layer => layer.id === "corestack-administrative_boundaries");
-  expect(JSON.parse(admin.popup.titleExpression)).toEqual(["concat", ["get", "vill_name"], " (VillageID: ", ["to-string", ["get", "vill_ID"]], ")"]);
+  expect(JSON.parse(admin.popup.titleExpression)[0]).toBe("case");
+  expect(resolvePopupTitle(admin.name, { vill_name: "A", vill_ID: 0 }, admin.popup)).toBe("A");
+  expect(resolvePopupTitle(admin.name, { vill_name: "A", vill_ID: 12 }, admin.popup)).toBe("A (VillageID: 12)");
+  expect(admin.popup.fields).toEqual([]);
+});
+
+test("finalized hover patterns, year order, and terrain ratios use verified fields", () => {
+  const presentation = (id, properties) => vectorFieldPresentation(
+    GEOLIBRE_LAYERS.find(layer => layer.id === id), { features: [{ properties }] }
+  ).popup;
+  const hover = (properties, popup) => resolvePopupRows(properties, { popup, hover: true }).map(row => row.field);
+
+  const facilities = { village_id: 23, village_name: "B", l2_school_distance_km: 2, l2_health_distance_km: 4, l3_school_distance_km: 1 };
+  const facilitiesPopup = presentation("facilities", facilities);
+  expect(hover(facilities, facilitiesPopup)).toEqual(["l2_school_distance_km", "l2_health_distance_km"]);
+  expect(resolvePopupTitle("Facilities", facilities, facilitiesPopup)).toBe("B (VillageID: 23)");
+
+  const waterbody = { UID: "WB1", waterbody_type: "Pond", area_ored: 3, "area_17-18": 2, "area_24-25": 4, "area_23-24": 5 };
+  const waterbodyPopup = presentation("remote_sensed_waterbodies", waterbody);
+  expect(hover(waterbody, waterbodyPopup)).toEqual(["waterbody_type", "area_ored", "area_24-25", "area_23-24", "area_17-18"]);
+  expect(resolvePopupTitle("Waterbody", waterbody, waterbodyPopup)).toBe("WaterBodyID: WB1");
+
+  const terrain = withTerrainAreaFractions({ features: [{ properties: { uid: "M1", area_in_ha: 100, terrainClu: 2, hill_slope: 20, plain_area: 50, ridge_area: 10, slopy_area: 15, valley_are: 5 } }] }).features[0].properties;
+  const terrainPopup = presentation("terrain_vector", terrain);
+  expect(hover(terrain, terrainPopup)).toEqual(["terrainClu", "hill_slope/area_in_ha", "plain_area/area_in_ha", "ridge_area/area_in_ha", "slopy_area/area_in_ha", "valley_are/area_in_ha"]);
+  expect(terrain["hill_slope/area_in_ha"]).toBe(0.2);
+  expect(resolvePopupTitle("Terrain", terrain, terrainPopup)).toBe("MWS ID: M1");
+  expect(withTerrainAreaFractions({ features: [{ properties: { area_in_ha: 0, hill_slope: 2 } }] })
+    .features[0].properties["hill_slope/area_in_ha"]).toBeNull();
+
+  const canal = { canname: "Canal A", area_in_ha: 12 };
+  const canalPopup = presentation("canal", canal);
+  expect(hover(canal, canalPopup)).toEqual([]);
+  expect(resolvePopupTitle("Canal", canal, canalPopup)).toBe("Canal A . Total Area: 12 ha");
+  const river = { rivname: "River A", ripcode: "R1" };
+  const riverPopup = presentation("river", river);
+  expect(resolvePopupTitle("River", river, riverPopup)).toBe("River");
+  expect(hover(river, riverPopup)).toEqual(["rivname", "ripcode"]);
 });
 
 test("LULC tooltip uses five measured area shares and legend omits unit text", async () => {

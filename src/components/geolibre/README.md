@@ -140,7 +140,7 @@ creating separate Level 1, Level 2, and Level 3 presentations. This named style
 is rendered through GeoServer's global WMS endpoint; downloads continue to use
 the single Level 3 WCS coverage.
 
-The catalog has 86 entries: 41 WMS rasters and 45 vector presentations.
+The catalog has 85 entries: 41 WMS rasters and 44 vector presentations.
 Trees contains canopy density and height for every published year (2017–2023,
 newest first), tree-cover NDVI, forest change, grassland trees, forest fringe,
 afforestation/deforestation base/statistics pairs, and NREGA plantation assets.
@@ -148,9 +148,9 @@ Base/statistics partners appear consecutively in the top-first layer list for
 Terrain, Soil Health, five Change Detection themes, Restoration Atlas, and the
 LULC statistics after the yearly rasters. Suffixes follow the finalized CSV;
 reference layers have no suffix. Shrubland Diversion has a pending raster
-entry and a published statistics vector. The four NDVI variants are included
-as specified by the CSV; combined NDVI was observed in only one of four
-sample tehsils and may fail to load where unpublished. Dated NDVI columns and
+entry and a published statistics vector. The three published NDVI variants
+remain; the combined NDVI entry was removed as requested in the finalized CSV.
+Dated NDVI columns and
 their derived display mean are dimensionless.
 
 The checked-in `src/config/geolibreCatalog.json` contains presentation and
@@ -164,10 +164,12 @@ units take precedence where workbook units conflict with live field semantics.
 MicroWatershed Boundaries reads `mws:mws_{district}_{tehsil}` through the
 workspace WFS endpoint. Its published WMS map is a view of the same feature
 type. The vector source supplies `uid` labels and the basin and watershed
-attributes used by the hover tooltip. All 45 vector presentations configure
-hover fields; the click popup continues to expose the full attributes. Long
-records stay in the click popup while hover shows a small selection (five
-area shares for LULC). Raster layers retain their existing identify behavior.
+attributes used by the hover tooltip. All 44 vector presentations configure
+hover titles or fields; the click popup continues to expose the full attributes.
+Hover follows the finalized CSV field selection, expands matching field patterns,
+and uses source descriptions as labels when available. LULC statistics show
+their own measured area shares, and Terrain Clusters shows area ratios from its
+published fields. Raster layers retain their existing identify behavior.
 
 `drought_peak_intensity`, annual peaks and stress-week sums are computed in
 `droughtPresentation.js` when drought features first load. That module also
@@ -260,7 +262,7 @@ application.
 | `GeoLibreFrame.jsx` | Iframe bridge, one-time bbox fit, human error states and downloadable bounded technical log |
 | `../../pages/LandscapeExplorer.jsx` | Route-to-project orchestration and fetch-on-first-toggle vector cache; no duplicate map or layer UI |
 
-The current project contains 86 entries: 45 vector entries, 8 LULC yearly
+The current project contains 85 entries: 44 vector entries, 8 LULC yearly
 rasters, and 33 other rasters. Initial startup performs one Terrain WMS
 GetCapabilities request, then displays Terrain. Each vector makes its own WFS
 request only on its first toggle. Hidden rasters make no WMS tile

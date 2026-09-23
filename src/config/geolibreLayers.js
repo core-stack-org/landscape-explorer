@@ -683,7 +683,6 @@ const LAYERS = [
     { id: "ndvi_crop_stats", label: "NDVI · Cropland", suffix: "_crop" },
     { id: "ndvi_shrub_stats", label: "NDVI · Shrubland", suffix: "_shrub" },
     { id: "ndvi_tree_stats", label: "NDVI · Tree Cover", suffix: "_tree" },
-    { id: "ndvi_combined_stats", label: "NDVI · Fortnight", suffix: "" },
   ].map((entry) => ({
     id: entry.id,
     label: entry.label,
@@ -747,7 +746,6 @@ const UNIT_SOURCES_BY_ID = {
   ndvi_crop_stats: ["ndvi_timeseries"],
   ndvi_shrub_stats: ["ndvi_timeseries"],
   ndvi_tree_stats: ["ndvi_timeseries"],
-  ndvi_combined_stats: ["ndvi_timeseries"],
   drought_causality: ["drought_causality"],
   tree_in_grassland: ["tree_in_grassland"],
   forest_fringe: ["forest_fringe"],

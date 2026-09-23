@@ -18,6 +18,9 @@ const NREGA_ALIASES = {
 };
 
 export const fieldDefinitionFor = (layer, field, fieldMetadata) => {
+  if (layer?.id === "terrain_vector" && /^(hill_slope|plain_area|ridge_area|slopy_area|valley_are)\/area_in_ha$/.test(field)) {
+    return { unit: "dimensionless", description: `${field.split("/")[0]} share of mapped area` };
+  }
   if (layer?.id === "drought" && (field === "avg_dryspell" || /^drysp_20\d{2}$/.test(field))) {
     return { unit: "weeks", description: "Maximum consecutive dry weeks" };
   }

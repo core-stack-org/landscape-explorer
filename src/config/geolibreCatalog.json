@@ -14,11 +14,8 @@
       "defaultProperty": "None (boundary only)",
       "descriptionKey": "admin_boundaries_vector",
       "tooltip": {
-        "titleExpression": "[\"concat\",[\"get\",\"vill_name\"],\" (VillageID: \",[\"to-string\",[\"get\",\"vill_ID\"]],\")\"]",
-        "fields": [
-          "vill_name",
-          "vill_ID"
-        ]
+        "titleExpression": "[\"case\",[\"!=\",[\"get\",\"vill_ID\"],0],[\"concat\",[\"get\",\"vill_name\"],\" (VillageID: \",[\"to-string\",[\"get\",\"vill_ID\"]],\")\"],[\"get\",\"vill_name\"]]",
+        "fields": []
       }
     },
     {
@@ -35,7 +32,7 @@
       "defaultProperty": "P_LIT; TOT_P",
       "descriptionKey": "admin_boundaries_vector",
       "tooltip": {
-        "titleField": "vill_name",
+        "titleExpression": "[\"case\",[\"!=\",[\"get\",\"vill_ID\"],0],[\"concat\",[\"get\",\"vill_name\"],\" (VillageID: \",[\"to-string\",[\"get\",\"vill_ID\"]],\")\"],[\"get\",\"vill_name\"]]",
         "fields": [
           "ADI_2019",
           "P_LIT",
@@ -57,10 +54,9 @@
       "defaultProperty": "l2_essential_education_distance_km",
       "descriptionKey": "facilities_proximity_vector",
       "tooltip": {
-        "titleField": "censusname",
+        "titleExpression": "[\"case\",[\"!=\",[\"get\",\"village_id\"],0],[\"concat\",[\"get\",\"village_name\"],\" (VillageID: \",[\"to-string\",[\"get\",\"village_id\"]],\")\"],[\"get\",\"village_name\"]]",
         "fields": [
-          "l2_essential_education_distance_km",
-          "core_admin_uid"
+          "l2_*_distance_km"
         ]
       }
     },
@@ -77,10 +73,9 @@
       "defaultVisible": false,
       "defaultProperty": "maternal_child_health_cat_cluster",
       "tooltip": {
-        "titleField": "village_name",
+        "titleExpression": "[\"case\",[\"!=\",[\"get\",\"village_id\"],0],[\"concat\",[\"get\",\"village_name\"],\" (VillageID: \",[\"to-string\",[\"get\",\"village_id\"]],\")\"],[\"get\",\"village_name\"]]",
         "fields": [
-          "maternal_child_health_cat_cluster",
-          "village_id"
+          "*_cat_cluster"
         ]
       },
       "description": "Village-level Mission Antyodaya indicators and qualitative categories for the selected area."
@@ -98,10 +93,11 @@
       "defaultVisible": false,
       "defaultProperty": "large_animals_total",
       "tooltip": {
-        "titleField": "village_name",
+        "titleExpression": "[\"case\",[\"!=\",[\"get\",\"village_id\"],0],[\"concat\",[\"get\",\"village_name\"],\" (VillageID: \",[\"to-string\",[\"get\",\"village_id\"]],\")\"],[\"get\",\"village_name\"]]",
         "fields": [
+          "all_livestock_total",
           "large_animals_total",
-          "village_id"
+          "small_animals_total"
         ]
       },
       "description": "Village livestock counts for the selected area."
@@ -120,13 +116,8 @@
       "defaultProperty": "None (boundary only)",
       "description": "Micro watershed boundaries with watershed UID, area, basin code, sub-basin code and watershed hierarchy code.",
       "tooltip": {
-        "titleField": "uid",
-        "fields": [
-          "uid",
-          "bacode",
-          "sbcode",
-          "wsconc"
-        ]
+        "titleExpression": "[\"concat\",\"MWS ID: \",[\"to-string\",[\"get\",\"uid\"]]]",
+        "fields": []
       }
     },
     {
@@ -142,7 +133,7 @@
       "defaultVisible": false,
       "defaultProperty": "avg_delta_g_class",
       "tooltip": {
-        "titleField": "uid",
+        "titleExpression": "[\"concat\",\"MWS ID: \",[\"to-string\",[\"get\",\"uid\"]]]",
         "fields": [
           "avg_delta_g_class"
         ]
@@ -162,7 +153,7 @@
       "defaultVisible": false,
       "defaultProperty": "avg_delta_g_class",
       "tooltip": {
-        "titleField": "uid",
+        "titleExpression": "[\"concat\",\"MWS ID: \",[\"to-string\",[\"get\",\"uid\"]]]",
         "fields": [
           "avg_delta_g_class"
         ]
@@ -202,9 +193,9 @@
       "defaultVisible": false,
       "defaultProperty": "None (single colour)",
       "tooltip": {
-        "titleField": "rivname",
         "fields": [
-          "rivname"
+          "rivname",
+          "ripcode"
         ]
       },
       "description": "Mapped river geometry with the published river name and attributes."
@@ -222,11 +213,8 @@
       "defaultVisible": false,
       "defaultProperty": "None (single colour)",
       "tooltip": {
-        "titleField": "canname",
-        "fields": [
-          "canname",
-          "area_in_ha"
-        ]
+        "titleExpression": "[\"concat\",[\"get\",\"canname\"],\" . Total Area: \",[\"to-string\",[\"get\",\"area_in_ha\"]],\" ha\"]",
+        "fields": []
       },
       "description": "Mapped canal geometry with the published canal name and area attributes."
     },
@@ -243,10 +231,11 @@
       "defaultVisible": false,
       "defaultProperty": "area_ored",
       "tooltip": {
-        "titleField": "basin_name",
+        "titleExpression": "[\"concat\",\"WaterBodyID: \",[\"to-string\",[\"get\",\"UID\"]]]",
         "fields": [
-          "area_21-22",
-          "sub_basin_name"
+          "waterbody_type",
+          "area_ored",
+          "area_*"
         ]
       },
       "description": "Remote-sensed surface-waterbody areas and seasonal observations."
@@ -265,9 +254,18 @@
       "defaultProperty": "class",
       "descriptionKey": "stage_of_groundwater_extraction_vector",
       "tooltip": {
-        "titleField": "uid",
+        "titleExpression": "[\"concat\",\"MWS ID: \",[\"to-string\",[\"get\",\"uid\"]]]",
         "fields": [
-          "class"
+          "class",
+          "agwd_dom_i",
+          "agwd_irr",
+          "agwd_tot",
+          "ar_gwr_tot",
+          "max_intersection_area_ha",
+          "na_gwa",
+          "nat_discha",
+          "pct_area_soge",
+          "sgw_dev_pe"
         ]
       }
     },
@@ -285,10 +283,14 @@
       "defaultProperty": "Principal_",
       "descriptionKey": "aquifer_vector",
       "tooltip": {
-        "titleField": "uid",
+        "titleExpression": "[\"concat\",\"MWS ID: \",[\"to-string\",[\"get\",\"uid\"]]]",
         "fields": [
           "aquifer_class",
-          "%_area_aquifer"
+          "Principal_",
+          "%_area_aquifer",
+          "Major_Aqui",
+          "Age",
+          "yeild__"
         ]
       }
     },
@@ -474,7 +476,7 @@
       "defaultProperty": "built_up_fraction",
       "description": "Mean annual land-cover area shares within each micro watershed, calculated from source area fields and area_in_ha.",
       "tooltip": {
-        "titleField": "uid",
+        "titleExpression": "[\"concat\",\"MWS ID: \",[\"to-string\",[\"get\",\"uid\"]]]",
         "fields": [
           "built_up_fraction",
           "k_water_fraction",
@@ -511,11 +513,14 @@
       "defaultVisible": false,
       "defaultProperty": "terrainClu",
       "tooltip": {
-        "titleField": "uid",
+        "titleExpression": "[\"concat\",\"MWS ID: \",[\"to-string\",[\"get\",\"uid\"]]]",
         "fields": [
           "terrainClu",
-          "valley_area",
-          "hill_slopes_area"
+          "hill_slope/area_in_ha",
+          "plain_area/area_in_ha",
+          "ridge_area/area_in_ha",
+          "slopy_area/area_in_ha",
+          "valley_are/area_in_ha"
         ]
       },
       "description": "Microwatershed terrain-cluster areas and dominant terrain category."
@@ -547,8 +552,11 @@
       "defaultVisible": false,
       "defaultProperty": "soil_texture_class",
       "tooltip": {
-        "titleField": "uid",
+        "titleExpression": "[\"concat\",\"MWS ID: \",[\"to-string\",[\"get\",\"uid\"]]]",
         "fields": [
+          "soil_drainage_classes",
+          "subsoil_texture",
+          "topsoil_texture",
           "soil_texture_class"
         ]
       },
@@ -638,9 +646,9 @@
       "defaultProperty": "OC_OLM_mean",
       "description": "Micro watershed mean soil nutrient and organic carbon measurements. The default map shows OpenLandMap organic carbon in percent.",
       "tooltip": {
-        "titleField": "uid",
+        "titleExpression": "[\"concat\",\"MWS ID: \",[\"to-string\",[\"get\",\"uid\"]]]",
         "fields": [
-          "OC_OLM_mean"
+          "*_mean"
         ]
       }
     },
@@ -657,27 +665,7 @@
       "defaultVisible": false,
       "defaultProperty": "avg_ndvi",
       "tooltip": {
-        "titleField": "uid",
-        "fields": [
-          "avg_ndvi"
-        ]
-      },
-      "description": "Dated Normalized Difference Vegetation Index observations and their mean for the mapped area."
-    },
-    {
-      "id": "ndvi_combined_stats",
-      "label": "NDVI: Fortnight",
-      "category": "Stats",
-      "groupId": "land",
-      "groupName": "Land",
-      "sourceType": "wfs",
-      "workspace": "ndvi_timeseries",
-      "sourcePattern": "ndvi_timeseries:ndvi_timeseries_{district}_{tehsil}",
-      "style": "ndvi",
-      "defaultVisible": false,
-      "defaultProperty": "avg_ndvi",
-      "tooltip": {
-        "titleField": "uid",
+        "titleExpression": "[\"concat\",\"MWS ID: \",[\"to-string\",[\"get\",\"uid\"]]]",
         "fields": [
           "avg_ndvi"
         ]
@@ -893,7 +881,7 @@
       "defaultVisible": false,
       "defaultProperty": "avg_ndvi",
       "tooltip": {
-        "titleField": "uid",
+        "titleExpression": "[\"concat\",\"MWS ID: \",[\"to-string\",[\"get\",\"uid\"]]]",
         "fields": [
           "avg_ndvi"
         ]
@@ -927,9 +915,13 @@
       "defaultVisible": false,
       "defaultProperty": "tree_in_shrubs_trees_area_in_ha",
       "tooltip": {
-        "titleField": "uid",
+        "titleExpression": "[\"concat\",\"MWS ID: \",[\"to-string\",[\"get\",\"uid\"]]]",
         "fields": [
-          "tree_in_shrubs_trees_area_in_ha"
+          "isolated_shrub_area_in_ha",
+          "shrubland_area_in_ha",
+          "shrubs_trees_area_in_ha",
+          "tree_in_shrubs_trees_area_in_ha",
+          "tree_loss_in_tree_in_shrub_area_in_ha"
         ]
       },
       "description": "Area of trees mapped in grassland within each microwatershed."
@@ -947,9 +939,15 @@
       "defaultVisible": false,
       "defaultProperty": "forest_fringe_area_class",
       "tooltip": {
-        "titleField": "uid",
+        "titleExpression": "[\"concat\",\"MWS ID: \",[\"to-string\",[\"get\",\"uid\"]]]",
         "fields": [
-          "forest_fringe_area_class"
+          "forest_fringe_area_class",
+          "forest_fringe_area_in_ha",
+          "mws_area_in_ha",
+          "tree_deforestation_fringe_area_in_ha",
+          "tree_deforestation_mws_area_in_ha",
+          "tree_degradation_fringe_area_in_ha",
+          "tree_degradation_mws_area_in_ha"
         ]
       },
       "description": "Forest-fringe area within each mapped polygon."
@@ -981,9 +979,15 @@
       "defaultVisible": false,
       "defaultProperty": "total_aff_class",
       "tooltip": {
-        "titleField": "uid",
+        "titleExpression": "[\"concat\",\"MWS ID: \",[\"to-string\",[\"get\",\"uid\"]]]",
         "fields": [
-          "total_aff_class"
+          "total_aff_class",
+          "total_aff",
+          "fo_fo",
+          "bu_fo",
+          "fa_fo",
+          "ba_fo",
+          "sc_fo"
         ]
       },
       "description": "Mapped area of tree-cover increase classes."
@@ -1015,9 +1019,15 @@
       "defaultVisible": false,
       "defaultProperty": "total_def_class",
       "tooltip": {
-        "titleField": "uid",
+        "titleExpression": "[\"concat\",\"MWS ID: \",[\"to-string\",[\"get\",\"uid\"]]]",
         "fields": [
-          "total_def_class"
+          "area_in_ha",
+          "total_def",
+          "fo_fo",
+          "fo_bu",
+          "fo_fa",
+          "fo_ba",
+          "fo_sc"
         ]
       },
       "description": "Mapped area of tree-cover decrease classes."
@@ -1036,9 +1046,25 @@
       "defaultProperty": "cropping_intensity_2017; cropping_intensity_2018; cropping_intensity_2019; cropping_intensity_2020; cropping_intensity_2021; cropping_intensity_2022; cropping_intensity_2023; cropping_intensity_2024",
       "descriptionKey": "cropping_intensity_vector",
       "tooltip": {
-        "titleField": "uid",
+        "titleExpression": "[\"concat\",\"MWS ID: \",[\"to-string\",[\"get\",\"uid\"]]]",
         "fields": [
-          "cropping_intensity_2024"
+          "id",
+          "area_in_ha",
+          "total_cropable_area_ever_hydroyear_2017_2024",
+          "sum",
+          "cropping_intensity_2024",
+          "cropping_intensity_2023",
+          "cropping_intensity_2022",
+          "cropping_intensity_2021",
+          "cropping_intensity_2020",
+          "cropping_intensity_2019",
+          "cropping_intensity_2018",
+          "cropping_intensity_2017",
+          "doubly_cropped_area_2024",
+          "single_cropped_area_2024",
+          "triply_cropped_area_2024",
+          "single_kharif_cropped_area_2024",
+          "single_non_kharif_cropped_area_2024"
         ]
       }
     },
@@ -1056,10 +1082,36 @@
       "defaultProperty": "drought_peak_intensity",
       "description": "Highest recorded weekly drought intensity across observed years; annual classes and moderate plus severe week counts remain available.",
       "tooltip": {
-        "titleField": "uid",
+        "titleExpression": "[\"concat\",\"MWS ID: \",[\"to-string\",[\"get\",\"uid\"]]]",
         "fields": [
           "drought_peak_intensity",
-          "drought_observed_years"
+          "drought_peak_2017",
+          "drought_peak_2018",
+          "drought_peak_2019",
+          "drought_peak_2020",
+          "drought_peak_2021",
+          "drought_peak_2022",
+          "drought_peak_2023",
+          "drought_peak_2024",
+          "drought_stress_weeks_2024",
+          "drlb_2024",
+          "drysp_2024",
+          "frth0_2024",
+          "frth1_2024",
+          "frth2_2024",
+          "frth3_2024",
+          "inth0_2024",
+          "inth1_2024",
+          "inth2_2024",
+          "inth3_2024",
+          "kh_cr_2024",
+          "m_ons_2024",
+          "pcr_k_2024",
+          "t_wks_2024",
+          "w_sev_2024",
+          "w_mod_2024",
+          "w_mld_2024",
+          "w_no_2024"
         ]
       }
     },
@@ -1077,10 +1129,33 @@
       "defaultProperty": "drought_dominant_impact",
       "description": "Dominant recorded moderate or severe drought impact pathway across observed years. Pathway records contain only the published top three combinations per year.",
       "tooltip": {
-        "titleField": "uid",
+        "titleExpression": "[\"concat\",\"MWS ID: \",[\"to-string\",[\"get\",\"uid\"]]]",
         "fields": [
           "drought_dominant_impact",
-          "drought_impact_observed_years"
+          "drought_impact_2024",
+          "drought_impact_2023",
+          "drought_impact_2022",
+          "drought_impact_2021",
+          "drought_impact_2020",
+          "drought_impact_2019",
+          "drought_impact_2018",
+          "drought_impact_2017",
+          "se_mo_2024",
+          "se_mo_2023",
+          "se_mo_2022",
+          "se_mo_2021",
+          "se_mo_2020",
+          "se_mo_2019",
+          "se_mo_2018",
+          "se_mo_2017",
+          "mild_2024",
+          "mild_2023",
+          "mild_2022",
+          "mild_2021",
+          "mild_2020",
+          "mild_2019",
+          "mild_2018",
+          "mild_2017"
         ]
       }
     },
@@ -1097,7 +1172,7 @@
       "defaultVisible": false,
       "defaultProperty": "avg_ndvi",
       "tooltip": {
-        "titleField": "uid",
+        "titleExpression": "[\"concat\",\"MWS ID: \",[\"to-string\",[\"get\",\"uid\"]]]",
         "fields": [
           "avg_ndvi"
         ]
@@ -1118,10 +1193,9 @@
       "defaultProperty": "None (single colour)",
       "descriptionKey": "green_credits_vector",
       "tooltip": {
-        "titleField": "district",
         "fields": [
           "land_info",
-          "division"
+          "range"
         ]
       }
     },
@@ -1152,9 +1226,14 @@
       "defaultVisible": false,
       "defaultProperty": "total_deg_class",
       "tooltip": {
-        "titleField": "uid",
+        "titleExpression": "[\"concat\",\"MWS ID: \",[\"to-string\",[\"get\",\"uid\"]]]",
         "fields": [
-          "total_deg_class"
+          "total_deg",
+          "area_in_ha",
+          "f_f",
+          "f_bu",
+          "f_ba",
+          "f_sc"
         ]
       },
       "description": "Mapped area of cropping degradation classes."
@@ -1186,9 +1265,14 @@
       "defaultVisible": false,
       "defaultProperty": "total_urb_class",
       "tooltip": {
-        "titleField": "uid",
+        "titleExpression": "[\"concat\",\"MWS ID: \",[\"to-string\",[\"get\",\"uid\"]]]",
         "fields": [
-          "total_urb_class"
+          "total_urb",
+          "area_in_ha",
+          "bu_bu",
+          "w_bu",
+          "tr_bu",
+          "b_bu"
         ]
       },
       "description": "Mapped area of urbanization change classes."
@@ -1220,9 +1304,18 @@
       "defaultVisible": false,
       "defaultProperty": "total_change_class",
       "tooltip": {
-        "titleField": "uid",
+        "titleExpression": "[\"concat\",\"MWS ID: \",[\"to-string\",[\"get\",\"uid\"]]]",
         "fields": [
-          "total_change_class"
+          "total_change",
+          "do_si",
+          "tr_si",
+          "tr_do",
+          "si_do",
+          "si_tr",
+          "do_tr",
+          "si_si",
+          "do_do",
+          "tr_tr"
         ]
       },
       "description": "Mapped area of crop-intensity change classes."
@@ -1254,9 +1347,15 @@
       "defaultVisible": false,
       "defaultProperty": "total_change_class",
       "tooltip": {
-        "titleField": "uid",
+        "titleExpression": "[\"concat\",\"MWS ID: \",[\"to-string\",[\"get\",\"uid\"]]]",
         "fields": [
-          "total_change_class"
+          "total_change",
+          "sh_sh",
+          "sh_fa",
+          "sh_tr",
+          "sh_bu",
+          "sh_wa",
+          "sh_ba"
         ]
       },
       "description": "Mapped area of shrubland-diversion change classes."
@@ -1289,9 +1388,13 @@
       "defaultProperty": "excluded_area_class",
       "descriptionKey": "wri_restoration_raster",
       "tooltip": {
-        "titleField": "uid",
+        "titleExpression": "[\"concat\",\"MWS ID: \",[\"to-string\",[\"get\",\"uid\"]]]",
         "fields": [
-          "excluded_area_class"
+          "area_in_ha",
+          "Excluded A",
+          "Mosaic Res",
+          "Protection",
+          "Wide-scale"
         ]
       }
     },
@@ -1308,10 +1411,10 @@
       "defaultVisible": false,
       "defaultProperty": "None (single colour)",
       "tooltip": {
-        "titleField": "Title of Conflict",
         "fields": [
           "Title of Conflict",
-          "Date of publish"
+          "Date of publish",
+          "Link to conflict"
         ]
       },
       "description": "Published land-conflict features for the selected area."
@@ -1330,10 +1433,10 @@
       "defaultProperty": "None (single colour)",
       "descriptionKey": "factory_csr_vector",
       "tooltip": {
-        "titleField": "COMPANY NA",
         "fields": [
           "COMPANY NA",
-          "LOCATION T"
+          "LOCATION T",
+          "ADDRESS"
         ]
       }
     },
@@ -1350,9 +1453,11 @@
       "defaultVisible": false,
       "defaultProperty": "None (single colour)",
       "tooltip": {
-        "titleField": "company_na",
         "fields": [
           "company_na",
+          "company_ty",
+          "sector_moe",
+          "proposal",
           "village"
         ]
       },
@@ -1372,7 +1477,6 @@
       "defaultProperty": "WorkCatego",
       "descriptionKey": "nrega_vector",
       "tooltip": {
-        "titleField": "Work Name",
         "fields": [
           "Work Type",
           "Work_start",
@@ -1394,7 +1498,6 @@
       "defaultProperty": "WorkCatego",
       "descriptionKey": "nrega_vector",
       "tooltip": {
-        "titleField": "Work Name",
         "fields": [
           "Work Type",
           "Work_start",
@@ -1416,7 +1519,6 @@
       "defaultProperty": "WorkCatego",
       "descriptionKey": "nrega_vector",
       "tooltip": {
-        "titleField": "Work Name",
         "fields": [
           "Work Type",
           "Work_start",
@@ -1438,7 +1540,6 @@
       "defaultProperty": "WorkCatego",
       "descriptionKey": "nrega_vector",
       "tooltip": {
-        "titleField": "Work Name",
         "fields": [
           "Work Type",
           "Work_start",
@@ -1460,7 +1561,6 @@
       "defaultProperty": "WorkCatego",
       "descriptionKey": "nrega_vector",
       "tooltip": {
-        "titleField": "Work Name",
         "fields": [
           "Work Type",
           "Work_start",
@@ -1482,7 +1582,6 @@
       "defaultProperty": "WorkCatego",
       "descriptionKey": "nrega_vector",
       "tooltip": {
-        "titleField": "Work Name",
         "fields": [
           "Work Type",
           "Work_start",
@@ -1504,7 +1603,6 @@
       "defaultProperty": "WorkCatego",
       "descriptionKey": "nrega_vector",
       "tooltip": {
-        "titleField": "Work Name",
         "fields": [
           "Work Type",
           "Work_start",
