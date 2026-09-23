@@ -120,6 +120,23 @@ export const withNormalizedTerrainCluster = (data) => ({
   }),
 });
 
+// Keep the published area columns intact and add the ratios selected for the
+// Terrain Clusters hover. A missing or zero total area has no defined ratio.
+export const withTerrainAreaFractions = (data) => ({
+  ...data,
+  features: (data?.features || []).map((feature) => {
+    const properties = feature.properties || {};
+    const total = finiteMeasurement(properties.area_in_ha);
+    const ratios = Object.fromEntries(
+      ["hill_slope", "plain_area", "ridge_area", "slopy_area", "valley_are"].map((field) => {
+        const area = finiteMeasurement(properties[field]);
+        return [`${field}/area_in_ha`, total > 0 && area !== null ? area / total : null];
+      })
+    );
+    return { ...feature, properties: { ...properties, ...ratios } };
+  }),
+});
+
 // 13 published subsoil texture classes bin into 4 CoRE Stack soil-texture
 // groups. Bin here into one derived field instead of listing all 13 raw
 // values as separate categorized stops, so GeoLibre's native legend shows
@@ -1447,6 +1464,20 @@ const isStructuredRecord = (value) => {
   }
 };
 
+const hoverFieldsFor = (requested, observed) => {
+  const available = [...observed.keys()];
+  return [...new Set(requested.flatMap((field) => {
+    if (field === "area_*") {
+      return available.filter((name) => /^area_\d{2}-\d{2}$/.test(name))
+        .sort((a, b) => b.localeCompare(a));
+    }
+    if (!field.includes("*")) return observed.has(field) ? [field] : [];
+    const escaped = field.split("*").map((part) => part.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
+    const pattern = new RegExp(`^${escaped.join(".*")}$`);
+    return available.filter((name) => pattern.test(name));
+  }))];
+};
+
 export const vectorFieldPresentation = (catalogLayer, data) => {
   const observed = new Map();
   for (const feature of data.features || []) {
@@ -1467,20 +1498,25 @@ export const vectorFieldPresentation = (catalogLayer, data) => {
       ...(sourceDefinition?.description ? { description: sourceDefinition.description } : {}),
     }];
   }));
-  const hoverFields = (catalogLayer?.tooltip?.fields || []).filter(field => observed.has(field));
+  const hoverFields = hoverFieldsFor(catalogLayer?.tooltip?.fields || [], observed);
   const ordered = [...hoverFields, ...[...observed.keys()].filter(field => !hoverFields.includes(field))];
   const popup = {
     click: true,
-    hover: hoverFields.length > 0,
+    hover: hoverFields.length > 0 || Boolean(catalogLayer?.tooltip?.titleExpression || catalogLayer?.tooltip?.titleField),
     ...(catalogLayer?.tooltip?.titleExpression ? { titleExpression: catalogLayer.tooltip.titleExpression } : {}),
     ...(observed.has(catalogLayer?.tooltip?.titleField) ? { titleField: catalogLayer.tooltip.titleField } : {}),
-    fields: ordered.map(field => ({
-      field,
-      hover: hoverFields.includes(field),
-      label: fields[field].unit === "NA" || fields[field].unit === "mixed"
-        ? field
-        : `${field} (${fields[field].unit === "unknown" ? "unit unknown" : fields[field].unit})`,
-    })),
+    fields: ordered.map(field => {
+      const description = fields[field].description;
+      const unit = fields[field].unit;
+      const label = description && !(unit === "ha" && /^percent(age)?$/i.test(description.trim()))
+        ? description : field;
+      return {
+        field,
+        hover: hoverFields.includes(field),
+        label: unit === "NA" || unit === "mixed"
+          ? label : `${label} (${unit === "unknown" ? "unit unknown" : unit})`,
+      };
+    }),
   };
   return { fields, popup };
 };
@@ -1491,7 +1527,7 @@ const hydrateLayerWithData = (layer, data) => {
   const catalogLayer = GEOLIBRE_LAYERS.find(item => `corestack-${item.id}` === layer.id);
   if (catalogLayer?.id === "mws_layers_fortnight") data = withMwsFortnightClass(parseFortnightRecords(data));
   if (catalogLayer?.id === "mws_layers") data = withMwsClass(withAverageDeltaG(data));
-  if (catalogLayer?.id === "terrain_vector") data = withNormalizedTerrainCluster(data);
+  if (catalogLayer?.id === "terrain_vector") data = withTerrainAreaFractions(withNormalizedTerrainCluster(data));
   if (catalogLayer?.id === "soil_type") data = withSoilTextureClass(data);
   if (catalogLayer?.id === "afforestation_stats") data = withAfforestationClass(data);
   if (catalogLayer?.id === "deforestation_stats") data = withDeforestationClass(data);
