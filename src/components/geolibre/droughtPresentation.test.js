@@ -15,6 +15,19 @@ test.each([[0, 0, 0, 0], [1, null, 0, 0], [1, "", 0, 0], [1, -1, 0, 0], [1, 0.5,
 test("reports coverage for partial data", () => {
   expect(derive({ ...counts(2024, [1, null, 0, 0]), ...counts(2023, [23, 0, 0, 0]) })).toMatchObject({ drought_peak_2024: null, drought_peak_intensity: "None", drought_observed_years: "2023" });
 });
+test("reads published weekly classes and threshold-two frequency directly", () => {
+  expect(derive({ drlb_2024: "[0,1,2,3]", frth2_2024: 2 })).toMatchObject({
+    drought_peak_2024: "Severe", drought_peak_intensity: "Severe",
+    drought_stress_weeks_2024: 2, drought_observed_years: "2024",
+  });
+  expect(derive({ drlb_2024: "[0,1,2,3]" }).drought_stress_weeks_2024).toBe(2);
+});
+test("falls back to published counts for malformed weekly records", () => {
+  expect(derive({ drlb_2024: "bad JSON", ...counts(2024, [1, 2, 3, 0]) })).toMatchObject({
+    drought_peak_2024: "Moderate", drought_stress_weeks_2024: 3,
+  });
+  expect(derive({ drlb_2024: "[0,4]" }).drought_peak_2024).toBeNull();
+});
 
 const { withDroughtImpact, droughtPathImpact } = require("./droughtPresentation");
 const impact = properties => withDroughtImpact({ features: [{ properties }] }).features[0].properties;

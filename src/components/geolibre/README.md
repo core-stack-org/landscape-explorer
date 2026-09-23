@@ -169,11 +169,19 @@ and uses source descriptions as labels when available. LULC statistics show
 their own measured area shares, and Terrain Clusters shows area ratios from its
 published fields. Raster layers retain their existing identify behavior.
 
-`drought_peak_intensity`, annual peaks and stress-week sums are computed in
-`droughtPresentation.js` when drought features first load. That module also
-groups the published top-three annual causality pathways into recorded impact
-categories; ties and missing records remain distinct. These summaries do not
-declare official drought. `withLulcAreaFractions` in `geolibreProject.js`
+`droughtPresentation.js` adds display summaries after GeoServer data loads:
+
+| Display field | Direct source and calculation |
+|---|---|
+| `drought_peak_<year>` | Highest class in the published `drlb_<year>` weekly JSON array: 0 None, 1 Mild, 2 Moderate, 3 Severe. If that array is unavailable, use the highest class with a positive `w_no/mld/mod/sev_<year>` count. |
+| `drought_stress_weeks_<year>` | Published `frth2_<year>`, the number of weeks with weekly class at least 2. Fall back to counting `drlb` entries 2 or 3, then to `w_mod_<year> + w_sev_<year>`. |
+| `drought_peak_intensity` | Highest valid annual peak across the available years. This annual maximum is a GeoLibre summary, not a published classification or drought declaration. |
+| `drought_impact_<year>` | Parse `se_mo_<year>`, which contains up to three published moderate/severe pathway counts. Combine the documented path IDs into crop/soil/vegetation impact groups, then show the group with the largest recorded count; preserve ties. |
+| `drought_dominant_impact` | Sum those recorded group counts across valid years and select the largest group. This grouping and cross-year summary are GeoLibre presentation choices, not source fields or an official causal finding. |
+
+The documented potential drought-year screen of more than five moderate plus
+severe weeks is not applied to the map style; a field decision is still needed
+for an official declaration. `withLulcAreaFractions` in `geolibreProject.js`
 divides mean annual class areas by `area_in_ha`; the seasonal water share
 requires all three water classes in a given year. Original source fields and
 names remain intact. GeoLibre styles and tooltips consume these local derived
@@ -260,7 +268,7 @@ application.
 | `GeoLibreFrame.jsx` | Iframe bridge, one-time bbox fit, human error states and downloadable bounded technical log |
 | `../../pages/LandscapeExplorer.jsx` | Route-to-project orchestration and fetch-on-first-toggle vector cache; no duplicate map or layer UI |
 
-The current project contains 85 entries: 44 vector entries, 8 LULC yearly
+The current project contains 82 entries: 41 vector entries, 8 LULC yearly
 rasters, and 33 other rasters. Initial startup performs one Terrain WMS
 GetCapabilities request, then displays Terrain. Each vector makes its own WFS
 request only on its first toggle. Hidden rasters make no WMS tile
