@@ -1480,9 +1480,12 @@ const hoverFieldsFor = (requested, observed) => {
 
 export const vectorFieldPresentation = (catalogLayer, data) => {
   const observed = new Map();
+  const fractionalFields = new Set();
   for (const feature of data.features || []) {
     for (const [field, value] of Object.entries(feature.properties || {})) {
       if (!observed.has(field) || observed.get(field) == null) observed.set(field, value);
+      const number = finiteMeasurement(value);
+      if (number !== null && !Number.isInteger(number)) fractionalFields.add(field);
     }
   }
   const fields = Object.fromEntries([...observed].map(([field, value]) => {
@@ -1502,19 +1505,20 @@ export const vectorFieldPresentation = (catalogLayer, data) => {
   const ordered = [...hoverFields, ...[...observed.keys()].filter(field => !hoverFields.includes(field))];
   const popup = {
     click: true,
+    maxWidth: 480,
     hover: hoverFields.length > 0 || Boolean(catalogLayer?.tooltip?.titleExpression || catalogLayer?.tooltip?.titleField),
     ...(catalogLayer?.tooltip?.titleExpression ? { titleExpression: catalogLayer.tooltip.titleExpression } : {}),
     ...(observed.has(catalogLayer?.tooltip?.titleField) ? { titleField: catalogLayer.tooltip.titleField } : {}),
     fields: ordered.map(field => {
       const description = fields[field].description;
       const unit = fields[field].unit;
-      const label = description && !(unit === "ha" && /^percent(age)?$/i.test(description.trim()))
-        ? description : field;
+      const label = description || field;
       return {
         field,
         hover: hoverFields.includes(field),
+        ...(fractionalFields.has(field) ? { kind: "number", format: { decimals: 3 } } : {}),
         label: unit === "NA" || unit === "mixed"
-          ? label : `${label} (${unit === "unknown" ? "unit unknown" : unit})`,
+          ? label : `${label} (${unit})`,
       };
     }),
   };
