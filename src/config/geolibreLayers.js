@@ -676,7 +676,7 @@ const LAYERS = [
     workspace: "lulc_vector",
     geometryType: "polygon",
     layerName: ({ district, tehsil }) => `lulc_vector_${district}_${tehsil}`,
-    styleProfile: "boundary",
+    styleProfile: "lulc_stats",
   },
   ...[
     { id: "ndvi_crop_stats", label: "NDVI · Cropland", suffix: "_crop" },

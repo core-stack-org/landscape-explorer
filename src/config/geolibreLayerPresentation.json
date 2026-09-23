@@ -346,9 +346,9 @@
     "sourceType": "wfs",
     "workspace": "lulc_vector",
     "sourcePattern": "lulc_vector:lulc_vector_{district}_{tehsil}",
-    "style": "boundary",
+    "style": "lulc_stats",
     "defaultVisible": false,
-    "defaultProperty": "None (boundary only)"
+    "defaultProperty": "built_up_fraction"
   },
   {
     "id": "terrain",
