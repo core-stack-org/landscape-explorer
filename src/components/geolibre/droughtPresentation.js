@@ -9,23 +9,40 @@ const prefixes = ["w_no", "w_mld", "w_mod", "w_sev"];
 const yearKeys = (properties, pattern) => [...new Set(Object.keys(properties)
   .map(key => key.match(pattern)?.[1]).filter(Boolean))].sort();
 
+const weeklyClasses = value => {
+  let labels = value;
+  if (typeof labels === "string") {
+    try { labels = JSON.parse(labels); } catch { return null; }
+  }
+  return Array.isArray(labels) && labels.length > 0
+    && labels.every(label => Number.isInteger(label) && label >= 0 && label < intensityNames.length)
+    ? labels : null;
+};
+
 // Peak is a presentation summary of the published weekly classes, not a new
 // drought-declaration threshold. Never interpret missing counts as zero.
 export const withDroughtIntensity = data => ({
   ...data,
   features: (data?.features || []).map(feature => {
     const properties = { ...feature.properties };
-    const years = yearKeys(properties, /^w_(?:no|mld|mod|sev)_(\d{4})$/);
+    const years = yearKeys(properties, /^(?:drlb|frth2|w_(?:no|mld|mod|sev))_(\d{4})$/);
     const validYears = [];
     let peak = -1;
     for (const year of years) {
+      const labels = weeklyClasses(properties[`drlb_${year}`]);
       const counts = prefixes.map(prefix => finiteMeasurement(properties[`${prefix}_${year}`]));
-      const valid = counts.every(n => n !== null && Number.isInteger(n) && n >= 0)
+      const validCounts = counts.every(n => n !== null && Number.isInteger(n) && n >= 0)
         && counts.some(n => n > 0);
-      const annualPeak = valid ? counts.reduce((highest, n, i) => n > 0 ? i : highest, -1) : -1;
-      properties[`drought_peak_${year}`] = valid ? intensityNames[annualPeak] : null;
-      properties[`drought_stress_weeks_${year}`] = valid ? counts[2] + counts[3] : null;
-      if (valid) { validYears.push(year); peak = Math.max(peak, annualPeak); }
+      const annualPeak = labels ? Math.max(...labels)
+        : validCounts ? counts.reduce((highest, n, i) => n > 0 ? i : highest, -1) : -1;
+      const publishedStressWeeks = finiteMeasurement(properties[`frth2_${year}`]);
+      const validPublishedStressWeeks = publishedStressWeeks !== null
+        && Number.isInteger(publishedStressWeeks) && publishedStressWeeks >= 0;
+      properties[`drought_peak_${year}`] = annualPeak >= 0 ? intensityNames[annualPeak] : null;
+      properties[`drought_stress_weeks_${year}`] = validPublishedStressWeeks ? publishedStressWeeks
+        : labels ? labels.filter(label => label >= 2).length
+        : validCounts ? counts[2] + counts[3] : null;
+      if (annualPeak >= 0) { validYears.push(year); peak = Math.max(peak, annualPeak); }
     }
     properties.drought_peak_intensity = peak >= 0 ? intensityNames[peak] : null;
     properties.drought_observed_years = validYears.join(", ");
