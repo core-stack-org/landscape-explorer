@@ -1652,8 +1652,7 @@
       "FC_2011": {"unit": "percent", "description": "Households by cooking fuel, 2011"},
       "M_ILL": {"unit": "count", "description": "illiterate male population"},
       "system:index": {"unit": "NA"},
-      "FID": {"unit": "NA"},
-      "the_geom": {"unit": "NA"}
+      "FID": {"unit": "NA"}
     },
     "aquifer_vector": {
       "weighted_contribution": {"unit": "dimensionless", "description": "final contributions of each factor after mutiplying by its y_value"},
@@ -1703,8 +1702,7 @@
       "principle_aq_Sandstone_percent": {"unit": "percent", "description": "Sandstone"},
       "principle_aq_Schist_percent": {"unit": "percent", "description": "Schist"},
       "principle_aq_Shale_percent": {"unit": "percent", "description": "Shale"},
-      "total_weighted_yield": {"unit": "unknown"},
-      "geom": {"unit": "NA"}
+      "total_weighted_yield": {"unit": "unknown"}
     },
     "drainage_lines": {
       "end_node": {"unit": "NA", "description": "unique identifier for the downstream point of drainage lines"},
@@ -1716,8 +1714,7 @@
       "system:index": {"unit": "NA"},
       "type_code": {"unit": "NA", "description": "Drainage feature type code"},
       "network": {"unit": "NA"},
-      "FID": {"unit": "NA"},
-      "geom": {"unit": "NA"}
+      "FID": {"unit": "NA"}
     },
     "swb3": {
       "no_town_cities_benefited": {"unit": "count", "description": "number of town/cities benefited from water body"},
@@ -1823,8 +1820,7 @@
       "river_objectid": {"unit": "NA"},
       "village_name": {"unit": "NA"},
       "waterbody_type": {"unit": "NA"},
-      "waterbody_type_name": {"unit": "NA"},
-      "geom": {"unit": "NA"}
+      "waterbody_type_name": {"unit": "NA"}
     },
     "change_vector_Afforestation": {
       "uid": {"unit": "NA", "description": "unique identifier"},
@@ -1840,8 +1836,7 @@
       "FID": {"unit": "NA"},
       "bacode": {"unit": "NA"},
       "sbcode": {"unit": "NA"},
-      "wsconc": {"unit": "NA"},
-      "geom": {"unit": "NA"}
+      "wsconc": {"unit": "NA"}
     },
     "change_vector_CropIntensity": {
       "tr_si": {"unit": "ha", "description": "Tripple/annual/perennial Cropping to Single Cropping"},
@@ -1862,8 +1857,7 @@
       "wsconc": {"unit": "NA"},
       "si_si": {"unit": "NA"},
       "do_do": {"unit": "NA"},
-      "tr_tr": {"unit": "NA"},
-      "geom": {"unit": "NA"}
+      "tr_tr": {"unit": "NA"}
     },
     "change_vector_Deforestation": {
       "fo_fa": {"unit": "ha", "description": "Trees to Crops"},
@@ -1879,8 +1873,7 @@
       "FID": {"unit": "NA"},
       "bacode": {"unit": "NA"},
       "sbcode": {"unit": "NA"},
-      "wsconc": {"unit": "NA"},
-      "geom": {"unit": "NA"}
+      "wsconc": {"unit": "NA"}
     },
     "change_vector_Degradation": {
       "uid": {"unit": "NA", "description": "unique identifier"},
@@ -1895,8 +1888,7 @@
       "FID": {"unit": "NA"},
       "bacode": {"unit": "NA"},
       "sbcode": {"unit": "NA"},
-      "wsconc": {"unit": "NA"},
-      "geom": {"unit": "NA"}
+      "wsconc": {"unit": "NA"}
     },
     "change_vector_Urbanization": {
       "uid": {"unit": "NA", "description": "unique identifier"},
@@ -1911,8 +1903,7 @@
       "FID": {"unit": "NA"},
       "bacode": {"unit": "NA"},
       "sbcode": {"unit": "NA"},
-      "wsconc": {"unit": "NA"},
-      "geom": {"unit": "NA"}
+      "wsconc": {"unit": "NA"}
     },
     "cropping_intensity_2017-23": {
       "single_cropped_area_2018": {"unit": "ha", "description": "single cropped area for 2018"},
@@ -1970,8 +1961,7 @@
       "single_kharif_cropped_area_2024": {"unit": "ha", "description": "single kharif cropped area for 2024"},
       "single_non_kharif_cropped_area_2024": {"unit": "ha", "description": "single non kharif cropped area for 2024"},
       "total_cropable_area_ever_hydroyear_2017_2024": {"unit": "ha", "description": "Area cropable at least once, 2017–2024"},
-      "triply_cropped_area_2024": {"unit": "ha", "description": "tripple cropped crea for 2024"},
-      "geom": {"unit": "NA"}
+      "triply_cropped_area_2024": {"unit": "ha", "description": "tripple cropped crea for 2024"}
     },
     "drought_2017_2022": {
       "rd21-6-26": {"unit": "percent", "description": "rainfall deviation"},
@@ -2307,7 +2297,6 @@
       "w_no_2024": {"unit": "count", "description": "number of weeks in no drought for 2024"},
       "w_sev_2023": {"unit": "count", "description": "number of weeks in severe drought for 2023"},
       "w_sev_2024": {"unit": "count", "description": "number of weeks in severe drought for 2024"},
-      "geom": {"unit": "NA"},
       "drought_peak_intensity": {"unit": "NA", "description": "Peak drought class"},
       "drought_peak_2017": {"unit": "NA", "description": "Peak drought class 2017"},
       "drought_peak_2018": {"unit": "NA", "description": "Peak drought class 2018"},
@@ -2330,8 +2319,7 @@
       "Excluded A": {"description": "percent", "unit": "ha"},
       "Mosaic Res": {"description": "percent", "unit": "ha"},
       "Wide-scale": {"description": "percent", "unit": "ha"},
-      "FID": {"unit": "NA"},
-      "the_geom": {"unit": "NA"}
+      "FID": {"unit": "NA"}
     },
     "soge_vector": {
       "code": {"unit": "NA", "description": "Groundwater category code"},
@@ -2362,8 +2350,7 @@
       "id": {"unit": "NA", "description": "identifier"},
       "geometry": {"unit": "NA", "description": "geometry"},
       "id ": {"description": "NA", "unit": "NA"},
-      "FID": {"unit": "NA"},
-      "geom": {"unit": "NA"}
+      "FID": {"unit": "NA"}
     },
     "lulc_vector": {
       "single_kharif_cropped_area_2019": {"unit": "ha", "description": "single kharif cropped area for 2019"},
@@ -2471,7 +2458,6 @@
       "doubly_cropped_area_2024": {"unit": "ha", "description": "double cropping area for 2024"},
       "triply_cropped_area_2024": {"unit": "ha", "description": "tripple/annual/perennial cropping area for 2024"},
       "shrub_scrub_area_2024": {"unit": "ha", "description": "shrubs and shrubs area for 2024"},
-      "geom": {"unit": "NA"},
       "built_up_fraction": {"unit": "dimensionless", "description": "Built-up area share"},
       "k_water_fraction": {"unit": "dimensionless", "description": "Seasonal water area share"},
       "cropland_fraction": {"unit": "dimensionless", "description": "Cropland area share"},
@@ -2493,7 +2479,6 @@
       "hill_slope": {"unit": "ha", "description": "hill slope area"},
       "terrainClu": {"unit": "NA", "description": "terrain cluster id"},
       "FID": {"unit": "NA", "description": "identifier"},
-      "the_geom": {"unit": "NA", "description": "geometry"},
       "hill_slope/area_in_ha": {"unit": "dimensionless", "description": "Hill Slope area share"},
       "plain_area/area_in_ha": {"unit": "dimensionless", "description": "Plain Area area share"},
       "ridge_area/area_in_ha": {"unit": "dimensionless", "description": "Ridge Area area share"},
@@ -2519,8 +2504,7 @@
       "Net2020_25": {"unit": "m", "description": "net change in depth to water between 2020 to 2025"},
       "2024_2025": {"unit": "mm", "description": "Annual water balance"},
       "avg_delta_g": {"description": "Mean annual DeltaG across readable year records", "unit": "mm"},
-      "FID": {"unit": "NA"},
-      "the_geom": {"unit": "NA"}
+      "FID": {"unit": "NA"}
     },
     "filtered_delta_g_annual_uid": {
       "uid": {"unit": "NA", "description": "unique identifier"},
@@ -2959,7 +2943,6 @@
       "2025-06-16": {"description": "mm", "unit": "mm"},
       "avg_delta_g": {"description": "Mean fortnightly DeltaG across readable date records", "unit": "mm"},
       "FID": {"unit": "NA"},
-      "the_geom": {"unit": "NA"},
       "2024-06-22": {"unit": "mixed", "description": "Fortnightly water balance 2024-06-22"},
       "2024-07-06": {"unit": "mixed", "description": "Fortnightly water balance 2024-07-06"},
       "2024-07-20": {"unit": "mixed", "description": "Fortnightly water balance 2024-07-20"},
@@ -2989,7 +2972,6 @@
     },
     "nrega_assets": {
       "FID": {"unit": "NA", "description": "identifier"},
-      "the_geom": {"unit": "NA", "description": "geometry"},
       "State": {"unit": "NA", "description": "state name"},
       "District": {"unit": "NA", "description": "district name"},
       "Block": {"unit": "NA", "description": "block name"},
@@ -3046,8 +3028,7 @@
       "id": {"unit": "NA", "description": "identifier"},
       "area_in_ha": {"unit": "ha", "description": "Total Area of MWS in Hectares"},
       "st_length": {"unit": "NA", "description": "computed geometric length of the canal feature along its alignment in metres."},
-      "FID": {"unit": "NA"},
-      "geom": {"unit": "NA"}
+      "FID": {"unit": "NA"}
     },
     "river_vector": {
       "bacode": {"unit": "NA", "description": "Basin Code"},
@@ -3061,16 +3042,14 @@
       "st_length": {"unit": "NA", "description": "River Length within MWS"},
       "uid": {"unit": "NA", "description": "MicroWatershed unique ID"},
       "area_in_ha": {"unit": "ha", "description": "MicroWatershed Area"},
-      "FID": {"unit": "NA"},
-      "geom": {"unit": "NA"}
+      "FID": {"unit": "NA"}
     },
     "land_conflict_watch_vector": {
       "Date of publish": {"unit": "NA", "description": "Date the Conflict was Published"},
       "Link to conflict": {"unit": "NA", "description": "URL link to the Conflict"},
       "Title of Conflict": {"unit": "NA", "description": "Title of the conflict"},
       "FID": {"unit": "NA"},
-      "uid": {"unit": "NA"},
-      "geom": {"unit": "NA"}
+      "uid": {"unit": "NA"}
     },
     "mining_vector": {
       "company_na": {"unit": "NA", "description": "company name"},
@@ -3085,8 +3064,7 @@
       "tehsil": {"unit": "NA", "description": "Tehsil name"},
       "village": {"unit": "NA", "description": "Village Name"},
       "FID": {"unit": "NA"},
-      "id": {"unit": "NA"},
-      "geom": {"unit": "NA"}
+      "id": {"unit": "NA"}
     },
     "green_credits_vector": {
       "range": {"unit": "NA", "description": "Range of Division"},
@@ -3096,12 +3074,11 @@
       "land_info": {"unit": "NA", "description": "Land information"},
       "kml_url": {"unit": "NA", "description": "Link to KML file for specific Green Credit area"},
       "FID": {"unit": "NA"},
-      "uid": {"unit": "NA"},
-      "geom": {"unit": "NA"}
+      "uid": {"unit": "NA"}
     },
     "facilities_proximity": {
-      "FID": {"unit": "NA", "description": "Feature ID"},
-      "index": {"unit": "NA", "description": "Row index of the village in the Core Stack standard admin boundary"},
+      "FID": {"unit": "NA"},
+      "index": {"unit": "NA", "description": "Row Index"},
       "state_id": {"unit": "NA", "description": "Census 2011 State ID"},
       "district_id": {"unit": "NA", "description": "Census 2011 District ID"},
       "tehsil_id": {"unit": "NA", "description": "Census 2011 sub-district ID"},
@@ -3231,8 +3208,7 @@
       "l3_agri_industry_agri_support_infrastructure_facility_uid": {"unit": "NA", "description": "Unique ID of nearest Agriculture Support Infrastructure facility"},
       "l3_agri_industry_agri_support_infrastructure_inside_scope": {"unit": "boolean", "description": "Whether nearest Agriculture Support Infrastructure facility lies inside village boundary"},
       "facilities_layer_kind": {"unit": "NA"},
-      "title": {"unit": "NA"},
-      "geom": {"unit": "NA"}
+      "title": {"unit": "NA"}
     },
     "factory_csr_vector": {
       "COMPANY NA": {"unit": "NA", "description": "Name of the industrial unit or factory"},
@@ -3246,11 +3222,10 @@
       "LNG": {"unit": "degrees", "description": "longitude of the district centroid"},
       "uid": {"unit": "NA", "description": "State and district ID"},
       "Unnamed_ 9": {"unit": "NA"},
-      "FID": {"unit": "NA"},
-      "geom": {"unit": "NA"}
+      "FID": {"unit": "NA"}
     },
     "cs_antyodaya_2020": {
-      "index": {"unit": "NA", "description": "Row index of the village in the Core Stack standard admin boundary."},
+      "index": {"unit": "NA", "description": "Row Index"},
       "state_id": {"unit": "NA", "description": "Census 2011 State ID"},
       "district_id": {"unit": "NA", "description": "Census 2011 District ID"},
       "tehsil_id": {"unit": "NA", "description": "Census 2011 sub-district ID"},
@@ -3476,11 +3451,10 @@
       "availability_of_market": {"unit": "NA", "description": "Availability of markets"},
       "availability_of_food_storage_warehouse": {"unit": "NA", "description": "Availability of warehouse for Food Grain Storage"},
       "FID": {"unit": "NA"},
-      "antyodaya_status": {"unit": "NA"},
-      "geom": {"unit": "NA"}
+      "antyodaya_status": {"unit": "NA"}
     },
     "cs_village_livestock_census_20": {
-      "index": {"unit": "NA", "description": "Row index of the village in the Core Stack standard admin boundary."},
+      "index": {"unit": "NA", "description": "Row index"},
       "state_id": {"unit": "NA", "description": "Census 2011 State ID"},
       "district_id": {"unit": "NA", "description": "Census 2011 District ID"},
       "tehsil_id": {"unit": "NA", "description": "Census 2011 sub-district ID"},
@@ -3508,8 +3482,7 @@
       "pig_total": {"unit": "count", "description": "Pigs Count"},
       "pig_female": {"unit": "count", "description": "Female Pig count"},
       "pig_male": {"unit": "count", "description": "Male Pig count"},
-      "FID": {"unit": "NA"},
-      "geom": {"unit": "NA"}
+      "FID": {"unit": "NA"}
     },
     "change_vector_ShrubChange": {
       "uid": {"unit": "NA", "description": "MicroWatershed unique ID"},
@@ -3528,8 +3501,7 @@
       "sh_ba": {"unit": "ha", "description": "Percentage of Shrub area that transitioned to barren land"},
       "total_change": {"unit": "ha", "description": "Total percentage of shrub area that changed to any other class"},
       "FID": {"unit": "NA"},
-      "id": {"unit": "NA"},
-      "geom": {"unit": "NA"}
+      "id": {"unit": "NA"}
     },
     "soil_type": {
       "uid": {"unit": "NA", "description": "MicroWatershed unique ID"},
@@ -3554,8 +3526,7 @@
       "topsoil_texture": {"unit": "percent", "description": "Topsoil texture, 0–30 cm"},
       "soil_texture_class": {"description": "Grouped Soil Texture Class", "unit": "NA"},
       "FID": {"unit": "NA"},
-      "id": {"unit": "NA"},
-      "geom": {"unit": "NA"}
+      "id": {"unit": "NA"}
     },
     "soil_health_vector": {
       "uid": {"unit": "NA", "description": "MicroWatershed unique ID"},
@@ -3568,74 +3539,73 @@
       "TEHSIL": {"unit": "NA", "description": "Tehsil name"},
       "N_count": {"unit": "count"},
       "N_mean": {"unit": "mg/kg", "description": "Mean soil nitrogen availability"},
-      "N_p05": {"unit": "mg/kg", "description": "5th percentile of the Nitrogen"},
-      "N_p10": {"unit": "mg/kg", "description": "10th percentile of the Nitrogen"},
-      "N_p20": {"unit": "mg/kg", "description": "20th percentile of the Nitrogen"},
-      "N_p30": {"unit": "mg/kg", "description": "30th percentile of the Nitrogen"},
-      "N_p40": {"unit": "mg/kg", "description": "40th percentile of the Nitrogen"},
-      "N_p50": {"unit": "mg/kg", "description": "50th percentile of the Nitrogen or median nitrogen"},
-      "N_p60": {"unit": "mg/kg", "description": "60th percentile of the Nitrogen"},
-      "N_p70": {"unit": "mg/kg", "description": "70th percentile of the Nitrogen"},
-      "N_p80": {"unit": "mg/kg", "description": "80th percentile of the Nitrogen"},
-      "N_p90": {"unit": "mg/kg", "description": "90th percentile of the Nitrogen"},
-      "N_p95": {"unit": "mg/kg", "description": "95th percentile of the Nitrogen"},
+      "N_p05": {"unit": "mg/kg", "description": "5th percentile value of Soil Nitrogen"},
+      "N_p10": {"unit": "mg/kg", "description": "10th percentile value of Soil Nitrogen"},
+      "N_p20": {"unit": "mg/kg", "description": "20th percentile value of Soil Nitrogen"},
+      "N_p30": {"unit": "mg/kg", "description": "30th percentile value of Soil Nitrogen"},
+      "N_p40": {"unit": "mg/kg", "description": "40th percentile value of Soil Nitrogen"},
+      "N_p50": {"unit": "mg/kg", "description": "50th percentile value of Soil Nitrogen"},
+      "N_p60": {"unit": "mg/kg", "description": "60th percentile value of Soil Nitrogen"},
+      "N_p70": {"unit": "mg/kg", "description": "70th percentile value of Soil Nitrogen"},
+      "N_p80": {"unit": "mg/kg", "description": "80th percentile value of Soil Nitrogen"},
+      "N_p90": {"unit": "mg/kg", "description": "90th percentile value of Soil Nitrogen"},
+      "N_p95": {"unit": "mg/kg", "description": "95th percentile value of Soil Nitrogen"},
       "K_count": {"unit": "count"},
       "K_mean": {"unit": "kg/ha", "description": "Mean soil potassium availability"},
-      "K_p05": {"unit": "kg/ha", "description": "5th percentile of the Potassium"},
-      "K_p10": {"unit": "kg/ha", "description": "10th percentile of the Potassium"},
-      "K_p20": {"unit": "kg/ha", "description": "20th percentile of the Potassium"},
-      "K_p30": {"unit": "kg/ha", "description": "30th percentile of the Potassium"},
-      "K_p40": {"unit": "kg/ha", "description": "40th percentile of the Potassium"},
-      "K_p50": {"unit": "kg/ha", "description": "50th percentile or median Potassium"},
-      "K_p60": {"unit": "kg/ha", "description": "60th percentile of the Potassium"},
-      "K_p70": {"unit": "kg/ha", "description": "70th percentile of the Potassium"},
-      "K_p80": {"unit": "kg/ha", "description": "80th percentile of the Potassium"},
-      "K_p90": {"unit": "kg/ha", "description": "90th percentile of the Potassium"},
-      "K_p95": {"unit": "kg/ha", "description": "95th percentile of the Potassium"},
+      "K_p05": {"unit": "kg/ha", "description": "5th percentile value of Soil Potassium"},
+      "K_p10": {"unit": "kg/ha", "description": "10th percentile value of Soil Potassium"},
+      "K_p20": {"unit": "kg/ha", "description": "20th percentile value of Soil Potassium"},
+      "K_p30": {"unit": "kg/ha", "description": "30th percentile value of Soil Potassium"},
+      "K_p40": {"unit": "kg/ha", "description": "40th percentile value of Soil Potassium"},
+      "K_p50": {"unit": "kg/ha", "description": "50th percentile value of Soil Potassium"},
+      "K_p60": {"unit": "kg/ha", "description": "60th percentile value of Soil Potassium"},
+      "K_p70": {"unit": "kg/ha", "description": "70th percentile value of Soil Potassium"},
+      "K_p80": {"unit": "kg/ha", "description": "80th percentile value of Soil Potassium"},
+      "K_p90": {"unit": "kg/ha", "description": "90th percentile value of Soil Potassium"},
+      "K_p95": {"unit": "kg/ha", "description": "95th percentile value of Soil Potassium"},
       "P_count": {"unit": "count"},
       "P_mean": {"unit": "kg/ha", "description": "Mean soil phosphorus availability"},
-      "P_p05": {"unit": "kg/ha", "description": "5th percentile of the Phosphorus"},
-      "P_p10": {"unit": "kg/ha", "description": "10th percentile of the Phosphorus"},
-      "P_p20": {"unit": "kg/ha", "description": "20th percentile of the Phosphorus"},
-      "P_p30": {"unit": "kg/ha", "description": "30th percentile of the Phosphorus"},
-      "P_p40": {"unit": "kg/ha", "description": "40th percentile of the Phosphorus"},
-      "P_p50": {"unit": "kg/ha", "description": "50th percentile or median Phosphorus"},
-      "P_p60": {"unit": "kg/ha", "description": "60th percentile of the Phosphorus"},
-      "P_p70": {"unit": "kg/ha", "description": "70th percentile of the Phosphorus"},
-      "P_p80": {"unit": "kg/ha", "description": "80th percentile of the Phosphorus"},
-      "P_p90": {"unit": "kg/ha", "description": "90th percentile of the Phosphorus"},
-      "P_p95": {"unit": "kg/ha", "description": "95th percentile of the Phosphorus"},
+      "P_p05": {"unit": "kg/ha", "description": "5th percentile value of Phosphorus"},
+      "P_p10": {"unit": "kg/ha", "description": "10th percentile value of Phosphorus"},
+      "P_p20": {"unit": "kg/ha", "description": "20th percentile value of Phosphorus"},
+      "P_p30": {"unit": "kg/ha", "description": "30th percentile value of Phosphorus"},
+      "P_p40": {"unit": "kg/ha", "description": "40th percentile value of Phosphorus"},
+      "P_p50": {"unit": "kg/ha", "description": "50th percentile value of Soil Phosphorus"},
+      "P_p60": {"unit": "kg/ha", "description": "60th percentile value of Phosphorus"},
+      "P_p70": {"unit": "kg/ha", "description": "70th percentile value of Phosphorus"},
+      "P_p80": {"unit": "kg/ha", "description": "80th percentile value of Phosphorus"},
+      "P_p90": {"unit": "kg/ha", "description": "90th percentile value of Phosphorus"},
+      "P_p95": {"unit": "kg/ha", "description": "95th percentile value of Phosphorus"},
       "OC_count": {"unit": "count"},
       "OC_mean": {"unit": "percent", "description": "Mean organic carbon availability"},
-      "OC_p05": {"unit": "percent", "description": "5th percentile of the Organic carbon"},
-      "OC_p10": {"unit": "percent", "description": "10th percentile of the Organic carbon"},
-      "OC_p20": {"unit": "percent", "description": "20th percentile of the Organic carbon"},
-      "OC_p30": {"unit": "percent", "description": "30th percentile of the Organic carbon"},
-      "OC_p40": {"unit": "percent", "description": "40th percentile of the Organic carbon"},
-      "OC_p50": {"unit": "percent", "description": "50th percentile or median Organic carbon"},
-      "OC_p60": {"unit": "percent", "description": "60th percentile of the Organic carbon"},
-      "OC_p70": {"unit": "percent", "description": "70th percentile of the Organic carbon"},
-      "OC_p80": {"unit": "percent", "description": "80th percentile of the Organic carbon"},
-      "OC_p90": {"unit": "percent", "description": "90th percentile of the Organic carbon"},
-      "OC_p95": {"unit": "percent", "description": "95th percentile of the Organic carbon"},
+      "OC_p05": {"unit": "percent", "description": "5th percentile value of Soil Organic carbon"},
+      "OC_p10": {"unit": "percent", "description": "10th percentile value of Soil Organic carbon"},
+      "OC_p20": {"unit": "percent", "description": "20th percentile value of Soil Organic carbon"},
+      "OC_p30": {"unit": "percent", "description": "30th percentile value of Soil Organic carbon"},
+      "OC_p40": {"unit": "percent", "description": "40th percentile value of Soil Organic carbon"},
+      "OC_p50": {"unit": "percent", "description": "50th percentile value of Soil Organic carbon"},
+      "OC_p60": {"unit": "percent", "description": "60th percentile value of Soil Organic carbon"},
+      "OC_p70": {"unit": "percent", "description": "70th percentile value of Soil Organic carbon"},
+      "OC_p80": {"unit": "percent", "description": "80th percentile value of Soil Organic carbon"},
+      "OC_p90": {"unit": "percent", "description": "90th percentile value of Soil Organic carbon"},
+      "OC_p95": {"unit": "percent", "description": "95th percentile value of Soil Organic carbon"},
       "OC_OLM_count": {"unit": "count"},
       "OC_OLM_mean": {"unit": "percent", "description": "Mean organic carbon availability"},
-      "OC_OLM_p05": {"unit": "percent", "description": "5th percentile of the Organic carbon"},
-      "OC_OLM_p10": {"unit": "percent", "description": "10th percentile of the Organic carbon"},
-      "OC_OLM_p20": {"unit": "percent", "description": "20th percentile of the Organic carbon"},
-      "OC_OLM_p30": {"unit": "percent", "description": "30th percentile of the Organic carbon"},
-      "OC_OLM_p40": {"unit": "percent", "description": "40th percentile of the Organic carbon"},
-      "OC_OLM_p50": {"unit": "percent", "description": "50th percentile or median Organic carbon"},
-      "OC_OLM_p60": {"unit": "percent", "description": "60th percentile of the Organic carbon"},
-      "OC_OLM_p70": {"unit": "percent", "description": "70th percentile of the Organic carbon"},
-      "OC_OLM_p80": {"unit": "percent", "description": "80th percentile of the Organic carbon"},
-      "OC_OLM_p90": {"unit": "percent", "description": "90th percentile of the Organic carbon"},
-      "OC_OLM_p95": {"unit": "percent", "description": "95th percentile of the Organic carbon"},
+      "OC_OLM_p05": {"unit": "percent", "description": "5th percentile value of Soil Organic carbon"},
+      "OC_OLM_p10": {"unit": "percent", "description": "10th percentile value of Soil Organic carbon"},
+      "OC_OLM_p20": {"unit": "percent", "description": "20th percentile value of Soil Organic carbon"},
+      "OC_OLM_p30": {"unit": "percent", "description": "30th percentile value of Soil Organic carbon"},
+      "OC_OLM_p40": {"unit": "percent", "description": "40th percentile value of Soil Organic carbon"},
+      "OC_OLM_p50": {"unit": "percent", "description": "50th percentile or median Soil Organic carbon"},
+      "OC_OLM_p60": {"unit": "percent", "description": "60th percentile value of Soil Organic carbon"},
+      "OC_OLM_p70": {"unit": "percent", "description": "70th percentile value of Soil Organic carbon"},
+      "OC_OLM_p80": {"unit": "percent", "description": "80th percentile value of Soil Organic carbon"},
+      "OC_OLM_p90": {"unit": "percent", "description": "90th percentile value of Soil Organic carbon"},
+      "OC_OLM_p95": {"unit": "percent", "description": "95th percentile value of Soil Organic carbon"},
       "crop_cover_area": {"unit": "ha", "description": "Total Crop Area"},
       "tree_shrub_area": {"unit": "ha", "description": "Total Tree and Shrub Area"},
       "FID": {"unit": "NA"},
-      "id": {"unit": "NA"},
-      "geom": {"unit": "NA"}
+      "id": {"unit": "NA"}
     },
     "forest_fringe": {
       "id": {"unit": "NA", "description": "identifier"},
@@ -3646,8 +3616,7 @@
       "tree_degradation_fringe_area_in_ha": {"unit": "ha", "description": "Area of tree degradation within the forest fringe zone"},
       "tree_degradation_mws_area_in_ha": {"unit": "ha", "description": "Area of tree degradation across the MicroWatershed"},
       "uid": {"unit": "NA", "description": "MicroWatershed unique ID"},
-      "FID": {"unit": "NA"},
-      "geom": {"unit": "NA"}
+      "FID": {"unit": "NA"}
     },
     "tree_in_grassland": {
       "id": {"unit": "NA", "description": "identifier"},
@@ -3664,8 +3633,7 @@
       "tree_in_tree_in_shrub_to_kharif_rabi_zaid_water_area_in_ha": {"unit": "ha", "description": "Area of tree-in-shrub-tree cover that has transitioned to land cropped across Kharif, Rabi, and Zaid seasons"},
       "tree_in_tree_in_shrub_to_kharif_water_area_in_ha": {"unit": "ha", "description": "Area of tree-in-shrub-tree cover that has transitioned to land cropped only during the Kharif season"},
       "tree_loss_in_tree_in_shrub_area_in_ha": {"unit": "ha", "description": "Area where tree cover has been lost within the tree-in-shrub-tree zone"},
-      "FID": {"unit": "NA"},
-      "geom": {"unit": "NA"}
+      "FID": {"unit": "NA"}
     },
     "mws": {
       "uid": {"unit": "NA", "description": "MicroWatershed unique ID"},
@@ -3675,8 +3643,7 @@
       "id": {"unit": "NA", "description": "Source record identifier"},
       "sbcode": {"unit": "NA", "description": "Sub-Basin code"},
       "wsconc": {"unit": "NA", "description": "Concatenated Watershed hierarchy Code"},
-      "FID": {"unit": "NA"},
-      "geom": {"unit": "NA"}
+      "FID": {"unit": "NA"}
     },
     "ndvi_timeseries": {
       "avg_ndvi": {"description": "Mean of available dated NDVI measurements", "unit": "NA"},
@@ -3890,15 +3857,13 @@
       "2025-05-24": {"unit": "dimensionless", "description": "NDVI 2025-05-24"},
       "2025-06-07": {"unit": "dimensionless", "description": "NDVI 2025-06-07"},
       "2025-06-21": {"unit": "dimensionless", "description": "NDVI 2025-06-21"},
-      "uid": {"unit": "NA"},
-      "geom": {"unit": "NA"}
+      "uid": {"unit": "NA"}
     },
     "common": {
       "area_in_ha": {"unit": "ha", "description": "MicroWatershed Area"}
     },
     "drought_causality": {
       "FID": {"unit": "NA"},
-      "the_geom": {"unit": "NA"},
       "uid": {"unit": "NA"},
       "se_mo_2017": {"unit": "mixed", "description": "Moderate/severe pathways 2017"},
       "mild_2017": {"unit": "mixed", "description": "Mild drought indicators 2017"},
