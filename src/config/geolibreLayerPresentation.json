@@ -820,7 +820,7 @@
   },
   {
     "id": "drought_causality",
-    "label": "Drought Causality",
+    "label": "Drought Causality · Recorded Impacts",
     "category": "Stats",
     "groupId": "agriculture",
     "groupName": "Agriculture",
@@ -829,7 +829,7 @@
     "sourcePattern": "drought_causality:{district}_{tehsil}_drought_causality",
     "style": "drought_causality",
     "defaultVisible": false,
-    "defaultProperty": "avg_dryspell"
+    "defaultProperty": "drought_dominant_impact"
   },
   {
     "id": "ndvi_crop_stats",

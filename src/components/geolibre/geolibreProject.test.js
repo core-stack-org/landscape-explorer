@@ -11,7 +11,6 @@ import {
   sanitizeGeoLibreProjectPlugins,
   withAverageDeltaG,
   withAverageNdvi,
-  withDroughtDryspellMean,
   withLulcBuiltUpFraction,
   withNormalizedTerrainCluster,
   withSoilTextureClass,
@@ -187,46 +186,25 @@ describe("GeoLibre 2.6 project generation", () => {
     expect(byId("livestock").metadata.corestack.defaultStyleUnit).toBe("count");
   });
 
-  it("colors drought causality from the joined mean dry spell and preserves the drought style", async () => {
+  it("hydrates complementary drought maps independently and preserves source records", async () => {
     const project = await buildGeoLibreProject({ ...location });
-    const originalDrought = project.layers.find(layer => layer.id === "corestack-drought");
-    const fetchFeatureCollection = jest.fn(async ({ typeName }) => ({
-      type: "FeatureCollection",
-      features: (typeName.includes("drought_causality")
-        ? [1, 2, 3, 4, 5, 6, 7].map((n) => ({ properties: { uid: `mws-${n}`, mild_2024: "B" }, geometry: null }))
-        : [1, 2, 3, 4, 5, 6, 7].map((n) => ({ properties: { uid: `mws-${n}`, avg_dryspell: 2 + n / 2 }, geometry: null }))),
-    }));
-    const hydrated = await hydrateGeoLibreVectorLayer({
-      project, layerId: "corestack-drought_causality", fetchFeatureCollection,
-    });
+    const raw = { se_mo_2024: '{"moderate_drought_path3":7}', mild_2024: '{"mild_drought_spi_score":3}' };
+    const fetchFeatureCollection = jest.fn(async () => ({ type: "FeatureCollection", features: [{ properties: raw, geometry: null }] }));
+    const hydrated = await hydrateGeoLibreVectorLayer({ project, layerId: "corestack-drought_causality", fetchFeatureCollection });
     const causality = hydrated.layers.find(layer => layer.id === "corestack-drought_causality");
-    expect(fetchFeatureCollection).toHaveBeenCalledTimes(2);
+    expect(fetchFeatureCollection).toHaveBeenCalledTimes(1);
     expect(causality.metadata.loadState).toBe("loaded");
-    expect(causality.style.vectorStyleProperty).toBe("avg_dryspell");
-    expect(causality.style.vectorStyleColorRamp).toBe("reds");
-    expect(causality.style.vectorStyleClassCount).toBe(6);
-    expect(causality.style.vectorStyleStops).toHaveLength(6);
-    expect(causality.style.vectorStyleStops.every(stop => stop.label.endsWith("weeks"))).toBe(true);
-    expect(causality.geojson.features[0].properties).toMatchObject({ uid: "mws-1", mild_2024: "B", avg_dryspell: 2.5 });
-    expect(causality.metadata.corestack.fields.avg_dryspell.unit).toBe("weeks");
-    const drought = hydrated.layers.find(layer => layer.id === "corestack-drought");
-    expect(drought.style).toEqual(originalDrought.style);
-    expect(drought.metadata.loadState).toBe("unloaded");
+    expect(causality.style.vectorStyleProperty).toBe("drought_dominant_impact");
+    expect(causality.style.vectorStyleMode).toBe("categorized");
+    expect(causality.geojson.features[0].properties).toMatchObject({ ...raw, drought_dominant_impact: "Crop area + soil moisture stress" });
+    expect(causality.metadata.corestack.defaultStyleUnit).toBe("category");
+    expect(hydrated.layers.find(layer => layer.id === "corestack-drought").metadata.loadState).toBe("unloaded");
+    const severity = await hydrateGeoLibreVectorLayer({ project, layerId: "corestack-drought", fetchFeatureCollection: async () => ({ features: [{ properties: { w_no_2024: 0, w_mld_2024: 10, w_mod_2024: 12, w_sev_2024: 1 } }] }) });
+    const drought = severity.layers.find(layer => layer.id === "corestack-drought");
+    expect(drought.geojson.features[0].properties.drought_peak_intensity).toBe("Severe");
+    expect(drought.style.vectorStyleStops.map(stop => stop.label)).toEqual(["None", "Mild", "Moderate", "Severe"]);
   });
 
-  it("keeps missing drought matches null and source cause fields intact", () => {
-    const causality = { type: "FeatureCollection", features: [
-      { properties: { uid: "one", mild_2024: "N" } },
-      { properties: { uid: "two", mild_2024: "B" } },
-    ] };
-    const drought = { type: "FeatureCollection", features: [
-      { properties: { uid: "one", avg_dryspell: 0 } },
-    ] };
-    expect(withDroughtDryspellMean(causality, drought).features.map(feature => feature.properties)).toEqual([
-      { uid: "one", mild_2024: "N", avg_dryspell: 0 },
-      { uid: "two", mild_2024: "B", avg_dryspell: null },
-    ]);
-  });
   it("gives every raster an explicit rasterStyle contract", () => {
     expect(
       GEOLIBRE_LAYERS.filter((layer) => layer.sourceType === "wms")

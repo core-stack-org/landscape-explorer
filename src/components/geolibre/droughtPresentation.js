@@ -33,3 +33,69 @@ export const withDroughtIntensity = data => ({
     return { ...feature, properties };
   }),
 });
+
+export const DROUGHT_IMPACT_CLASSES = [
+  ["No recorded moderate/severe pathway", "#e5e7eb"],
+  ["Crop area + soil moisture stress", "#e69f00"],
+  ["Crop area + vegetation stress", "#009e73"],
+  ["Soil moisture + vegetation stress", "#0072b2"],
+  ["Combined crop, soil and vegetation stress", "#cc79a7"],
+  ["Mixed / tied impacts", "#8c6d31"],
+];
+const impactNames = DROUGHT_IMPACT_CLASSES.map(([name]) => name);
+
+// Verified against getWeekVector in computing/drought/drought_causality.py.
+// Within each group of three paths, the trigger changes (dry spell / rainfall
+// deviation / SPI); the impact combination stays the same.
+export const droughtPathImpact = key => {
+  const match = key.match(/^(moderate|severe)_drought_path(\d+)$/);
+  if (!match) return null;
+  const path = Number(match[2]);
+  if (match[1] === "severe") return path >= 1 && path <= 3 ? 4 : null;
+  return path >= 1 && path <= 18 ? Math.ceil(path / 6) : null;
+};
+const readPathScores = value => {
+  let record = value;
+  if (typeof record === "string") {
+    try { record = JSON.parse(record); } catch { return null; }
+  }
+  if (!record || typeof record !== "object" || Array.isArray(record)) return null;
+  const scores = [0, 0, 0, 0, 0];
+  for (const [key, raw] of Object.entries(record)) {
+    const group = droughtPathImpact(key);
+    const count = finiteMeasurement(raw);
+    // Unknown keys make the record uninterpretable, rather than silently
+    // assigning a known but potentially weaker pathway as the dominant one.
+    if (group === null || count === null || count < 0 || !Number.isInteger(count)) return null;
+    scores[group] += count;
+  }
+  return scores;
+};
+const dominantImpact = scores => {
+  const max = Math.max(...scores);
+  if (!max) return impactNames[0];
+  const winners = scores.map((value, index) => value === max ? index : -1).filter(index => index >= 0);
+  return winners.length === 1 ? impactNames[winners[0]] : impactNames[5];
+};
+
+export const withDroughtImpact = data => ({
+  ...data,
+  features: (data?.features || []).map(feature => {
+    const properties = { ...feature.properties };
+    const years = yearKeys(properties, /^se_mo_(\d{4})$/);
+    const validYears = [];
+    const totals = [0, 0, 0, 0, 0];
+    for (const year of years) {
+      const scores = readPathScores(properties[`se_mo_${year}`]);
+      properties[`drought_impact_${year}`] = scores ? dominantImpact(scores) : null;
+      if (scores) {
+        validYears.push(year);
+        scores.forEach((count, i) => { totals[i] += count; });
+      }
+    }
+    properties.drought_dominant_impact = validYears.length ? dominantImpact(totals) : null;
+    properties.drought_impact_observed_years = validYears.join(", ");
+    properties.drought_impact_year_count = validYears.length;
+    return { ...feature, properties };
+  }),
+});
