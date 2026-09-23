@@ -344,24 +344,6 @@ export const withMwsFortnightClass = (data) => ({
   }),
 });
 
-// Like the fortnightly layer, the NDVI time-series layers are colored by a
-// feature-level mean of their published dated measurements. Retain every
-// original field and leave missing observations as null rather than zero.
-export const withAverageNdvi = data => ({
-  ...data,
-  features: (data?.features || []).map(feature => {
-    const properties = feature.properties || {};
-    const values = Object.entries(properties)
-      .filter(([key]) => /^(crop_|shrub_|tree_)?\d{4}-\d{2}-\d{2}$/.test(key))
-      .map(([, value]) => finiteMeasurement(value))
-      .filter(value => value !== null);
-    const avg_ndvi = values.length
-      ? values.reduce((sum, value) => sum + value, 0) / values.length
-      : null;
-    return { ...feature, properties: { ...properties, avg_ndvi } };
-  }),
-});
-
 // Mean annual area shares from published hectares. Water's three seasonal
 // classes are summed only when all three values exist for a year.
 export const withLulcAreaFractions = data => ({
@@ -483,10 +465,6 @@ const STYLE_PROFILES = {
     MWS_FORTNIGHT_BINS.map((bin) => [bin.label, bin.color, bin.label]),
     { ...thematicStyle, fillOpacity: 0.65 }
   ),
-  ndvi: fixedPaletteExpression({
-    ...thematicStyle, fields: ["avg_ndvi"], value: numericProperty("avg_ndvi"),
-    thresholds: [-0.2, 0, 0.2, 0.4, 0.6], palette: "rdylgn", fillOpacity: 0.65,
-  }),
   drought_causality: categoryStyle("drought_dominant_impact",
     DROUGHT_IMPACT_CLASSES.map(([label, color]) => [label, color, label]),
     { ...thematicStyle, fillOpacity: 0.7 }),
@@ -1194,7 +1172,7 @@ const coreStackMetadata = (layer, layerName, sourceUrl, style, baseUrl) => ({
   defaultProperty: layer.defaultProperty,
   defaultStyleUnit: {
     demographics: "percent", facilities: "km", livestock: "count",
-    mws: "mm", mws_fortnight: "mm", ndvi: "dimensionless",
+    mws: "mm", mws_fortnight: "mm",
     soil_health_vector: "percent", waterbodies: "ha", cropping_intensity: "dimensionless",
     drought: "category", drought_causality: "category", tree_in_grassland: "ha",
     forest_fringe: "ha", afforestation_stats: "ha", deforestation_stats: "ha", degradation_stats: "ha",
@@ -1537,7 +1515,6 @@ const hydrateLayerWithData = (layer, data) => {
   if (catalogLayer?.id === "cropintensity_stats") data = withCropIntensityChangeClass(data);
   if (catalogLayer?.id === "shrubland_diversion_stats") data = withCropIntensityChangeClass(data);
   if (catalogLayer?.id === "restoration_stats") data = withExcludedAreaClass(data);
-  if (catalogLayer?.id?.startsWith("ndvi_")) data = withAverageNdvi(data);
   if (catalogLayer?.id === "lulc_stats") data = withLulcAreaFractions(data);
   if (catalogLayer?.id === "drought") data = withDroughtIntensity(data);
   if (catalogLayer?.id === "drought_causality") data = withDroughtImpact(data);

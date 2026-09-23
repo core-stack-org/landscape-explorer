@@ -140,18 +140,16 @@ creating separate Level 1, Level 2, and Level 3 presentations. This named style
 is rendered through GeoServer's global WMS endpoint; downloads continue to use
 the single Level 3 WCS coverage.
 
-The catalog has 85 entries: 41 WMS rasters and 44 vector presentations.
+The catalog has 82 entries: 41 WMS rasters and 41 vector presentations.
 Trees contains canopy density and height for every published year (2017–2023,
-newest first), tree-cover NDVI, forest change, grassland trees, forest fringe,
+newest first), forest change, grassland trees, forest fringe,
 afforestation/deforestation base/statistics pairs, and NREGA plantation assets.
 Base/statistics partners appear consecutively in the top-first layer list for
 Terrain, Soil Health, five Change Detection themes, Restoration Atlas, and the
 LULC statistics after the yearly rasters. Suffixes follow the finalized CSV;
 reference layers have no suffix. Shrubland Diversion has a pending raster
-entry and a published statistics vector. The three published NDVI variants
-remain; the combined NDVI entry was removed as requested in the finalized CSV.
-Dated NDVI columns and
-their derived display mean are dimensionless.
+entry and a published statistics vector. GeoLibre does not load the NDVI
+time-series vectors.
 
 The checked-in `src/config/geolibreCatalog.json` contains presentation and
 source-backed field definitions. The private workbook and authoring CSV are
@@ -164,7 +162,7 @@ units take precedence where workbook units conflict with live field semantics.
 MicroWatershed Boundaries reads `mws:mws_{district}_{tehsil}` through the
 workspace WFS endpoint. Its published WMS map is a view of the same feature
 type. The vector source supplies `uid` labels and the basin and watershed
-attributes used by the hover tooltip. All 44 vector presentations configure
+attributes used by the hover tooltip. All 41 vector presentations configure
 hover titles or fields; the click popup continues to expose the full attributes.
 Hover follows the finalized CSV field selection, expands matching field patterns,
 and uses source descriptions as labels when available. LULC statistics show
