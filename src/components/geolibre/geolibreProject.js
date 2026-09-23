@@ -11,8 +11,10 @@ import {
   GEOLIBRE_NREGA_CATEGORIES,
 } from "../../config/geolibreLayers";
 import { fieldDefinitionFor } from "../../config/geolibreFieldUnits";
-import GEOLIBRE_FIELD_METADATA from "../../config/geolibreFieldMetadata.json";
-import PRESENTATION from "../../config/geolibreLayerPresentation.json";
+import CATALOG from "../../config/geolibreCatalog.json";
+
+const PRESENTATION = CATALOG.layers;
+const GEOLIBRE_FIELD_METADATA = CATALOG.fieldMetadataBySource;
 
 const DEFAULT_GEOSERVER_URL =
   "https://geoserver.core-stack.org:8443/geoserver/";
@@ -343,21 +345,32 @@ export const withAverageNdvi = data => ({
   }),
 });
 
-// Mean annual built-up area divided by polygon area; retain source fields.
-export const withLulcBuiltUpFraction = data => ({
+// Mean annual area shares from published hectares. Water's three seasonal
+// classes are summed only when all three values exist for a year.
+export const withLulcAreaFractions = data => ({
   ...data,
   features: (data?.features || []).map(feature => {
     const properties = feature.properties || {};
-    const values = Object.entries(properties)
-      .filter(([key]) => /^built-up_area_\d{4}$/.test(key))
-      .map(([, value]) => finiteMeasurement(value))
-      .filter(value => value !== null && value >= 0);
     const area = finiteMeasurement(properties.area_in_ha);
-    const mean = values.length ? values.reduce((sum, value) => sum + value, 0) / values.length : null;
-    return { ...feature, properties: { ...properties,
-      built_up_fraction: area > 0 && mean !== null ? mean / area : null,
-      built_up_year_count: values.length,
-    } };
+    const fields = {
+      built_up_fraction: ["built-up_area"],
+      k_water_fraction: ["k_water_area", "kr_water_area", "krz_water_area"],
+      cropland_fraction: ["cropland_area"],
+      barrenlands_fraction: ["barrenlands_area"],
+      tree_forest_fraction: ["tree_forest_area"],
+    };
+    const derived = {};
+    for (const [target, sources] of Object.entries(fields)) {
+      const years = [...new Set(Object.keys(properties).map(key => key.match(/^.+_(\d{4})$/)?.[1]).filter(Boolean))];
+      const values = years.map(year => sources.map(source => finiteMeasurement(properties[`${source}_${year}`])))
+        .filter(measures => measures.every(value => value !== null && value >= 0))
+        .map(measures => measures.reduce((sum, value) => sum + value, 0));
+      derived[target] = area > 0 && values.length
+        ? values.reduce((sum, value) => sum + value, 0) / values.length / area
+        : null;
+      if (target === "built_up_fraction") derived.built_up_year_count = values.length;
+    }
+    return { ...feature, properties: { ...properties, ...derived } };
   }),
 });
 
@@ -411,6 +424,7 @@ const thematicStyle = { ...BASE_STYLE, strokeColor: "#232323", strokeWidth: 0.5 
 
 const STYLE_PROFILES = {
   lulc_stats: naturalBreaksStyle("built_up_fraction", "oranges", null, { ...thematicStyle, fillOpacity: 0.7 }, "dimensionless"),
+  soil_health_vector: naturalBreaksStyle("OC_OLM_mean", "greens", null, { ...thematicStyle, fillOpacity: 0.7 }, "%"),
   boundary: {
     ...BASE_STYLE,
     fillColor: "#ffffff",
@@ -1133,29 +1147,38 @@ const nregaLayerStyle = (categoryId) => {
   };
 };
 
-const layerStyle = (layer, data) =>
-  layer.sourceType === "wms"
+const layerStyle = (layer, data) => {
+  const style = layer.sourceType === "wms"
     ? { ...RASTER_STYLE }
     : layer.nregaCategoryId
       ? nregaLayerStyle(layer.nregaCategoryId)
-      : ["facilities", "livestock", "tree_in_grassland", "lulc_stats"].includes(layer.styleProfile)
+      : ["facilities", "livestock", "tree_in_grassland", "lulc_stats", "soil_health_vector"].includes(layer.styleProfile)
         ? naturalBreaksStyle(
             STYLE_PROFILES[layer.styleProfile].vectorStyleProperty,
             STYLE_PROFILES[layer.styleProfile].vectorStyleColorRamp,
             { features: (data?.features || []).filter(feature => hasLayerData(layer.id, feature.properties)) },
             STYLE_PROFILES[layer.styleProfile],
-            { lulc_stats: "dimensionless", facilities: "km", livestock: "count", tree_in_grassland: "ha" }[layer.styleProfile]
+            { lulc_stats: "", soil_health_vector: "%", facilities: "km", livestock: "count", tree_in_grassland: "ha" }[layer.styleProfile]
           )
         : { ...(STYLE_PROFILES[layer.styleProfile] || BASE_STYLE) };
+  return layer.id === "hydrological_boundaries"
+    ? { ...style, labels: {
+        enabled: true, field: "uid", placement: "point", minZoom: 11,
+        maxZoom: 24, size: 12, color: "#111827", haloColor: "#ffffff",
+        haloWidth: 1.5, allowOverlap: false,
+      } }
+    : style;
+};
 
 const coreStackMetadata = (layer, layerName, sourceUrl, style, baseUrl) => ({
   domain: layer.domain,
   category: layer.category,
+  description: layer.description,
   defaultProperty: layer.defaultProperty,
   defaultStyleUnit: {
     demographics: "percent", facilities: "km", livestock: "count",
     mws: "mm", mws_fortnight: "mm", ndvi: "dimensionless",
-    lulc_stats: "dimensionless", waterbodies: "ha", cropping_intensity: "dimensionless",
+    soil_health_vector: "percent", waterbodies: "ha", cropping_intensity: "dimensionless",
     drought: "category", drought_causality: "category", tree_in_grassland: "ha",
     forest_fringe: "ha", afforestation_stats: "ha", deforestation_stats: "ha", degradation_stats: "ha",
     urbanization_stats: "ha", cropintensity_stats: "ha", shrubland_diversion_stats: "ha",
@@ -1204,6 +1227,7 @@ const buildVectorLayer = ({
   return applyMissingDataStyle({
     id: `corestack-${catalogLayer.id}`,
     name: displayLayerName(catalogLayer),
+    description: catalogLayer.description,
     type: "geojson",
     source: {
       type: "geojson",
@@ -1217,6 +1241,11 @@ const buildVectorLayer = ({
     visible: isDefaultDisplay,
     opacity: 1,
     style,
+    ...(catalogLayer.tooltip ? { popup: { click: true, hover: true,
+      ...(catalogLayer.tooltip.titleExpression ? { titleExpression: catalogLayer.tooltip.titleExpression } : {}),
+      ...(catalogLayer.tooltip.titleField ? { titleField: catalogLayer.tooltip.titleField } : {}),
+      fields: catalogLayer.tooltip.fields.map(field => ({ field, hover: true })),
+    } } : {}),
     metadata: {
       featureCount: data.features.length,
       service: "wfs",
@@ -1259,6 +1288,7 @@ const buildRasterLayer = ({ catalogLayer, layerName, baseUrl, bounds }) => {
   return {
     id: `corestack-${catalogLayer.id}`,
     name: displayLayerName(catalogLayer),
+    description: catalogLayer.description,
     type: "raster",
     source,
     visible: catalogLayer.defaultVisible === true && !catalogLayer.startupDelayMs,
@@ -1437,12 +1467,19 @@ export const vectorFieldPresentation = (catalogLayer, data) => {
       ...(sourceDefinition?.description ? { description: sourceDefinition.description } : {}),
     }];
   }));
+  const hoverFields = (catalogLayer?.tooltip?.fields || []).filter(field => observed.has(field));
+  const ordered = [...hoverFields, ...[...observed.keys()].filter(field => !hoverFields.includes(field))];
   const popup = {
-    fields: Object.entries(fields).map(([field, definition]) => ({
+    click: true,
+    hover: hoverFields.length > 0,
+    ...(catalogLayer?.tooltip?.titleExpression ? { titleExpression: catalogLayer.tooltip.titleExpression } : {}),
+    ...(observed.has(catalogLayer?.tooltip?.titleField) ? { titleField: catalogLayer.tooltip.titleField } : {}),
+    fields: ordered.map(field => ({
       field,
-      label: definition.unit === "NA" || definition.unit === "mixed"
+      hover: hoverFields.includes(field),
+      label: fields[field].unit === "NA" || fields[field].unit === "mixed"
         ? field
-        : `${field} (${definition.unit === "unknown" ? "unit unknown" : definition.unit})`,
+        : `${field} (${fields[field].unit === "unknown" ? "unit unknown" : fields[field].unit})`,
     })),
   };
   return { fields, popup };
@@ -1465,7 +1502,7 @@ const hydrateLayerWithData = (layer, data) => {
   if (catalogLayer?.id === "shrubland_diversion_stats") data = withCropIntensityChangeClass(data);
   if (catalogLayer?.id === "restoration_stats") data = withExcludedAreaClass(data);
   if (catalogLayer?.id?.startsWith("ndvi_")) data = withAverageNdvi(data);
-  if (catalogLayer?.id === "lulc_stats") data = withLulcBuiltUpFraction(data);
+  if (catalogLayer?.id === "lulc_stats") data = withLulcAreaFractions(data);
   if (catalogLayer?.id === "drought") data = withDroughtIntensity(data);
   if (catalogLayer?.id === "drought_causality") data = withDroughtImpact(data);
   const outline = catalogLayer && boundaryColorForLayer(catalogLayer.id);
