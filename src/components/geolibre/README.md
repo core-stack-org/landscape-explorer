@@ -151,15 +151,33 @@ reference layers have no suffix. Shrubland Diversion has a pending raster
 entry and a published statistics vector. The four NDVI variants are included
 as specified by the CSV; combined NDVI was observed in only one of four
 sample tehsils and may fail to load where unpublished. Dated NDVI columns and
-their derived display mean are dimensionless. The private
-`.local/units/layers_used_sugestions.csv` records source patterns and style
-publication status.
+their derived display mean are dimensionless.
 
-To refresh the public unit dictionary after editing the local source CSV, run
-`python3 scripts/geolibre/generateFieldMetadata.py`. To recheck publication
-and field coverage in the four sample tehsils, run
-`node scripts/geolibre/auditFieldCoverage.mjs`. Neither command copies feature
-values or the private source CSV into the public bundle.
+The checked-in `src/config/geolibreCatalog.json` contains presentation and
+source-backed field definitions. The private workbook and authoring CSV are
+not loaded by the application or its start, test, and build commands.
+The workbook supplied descriptions for 2,093 vector-column records and 40
+source layers; other catalog descriptions are limited to what the published
+layer names, fields, and established methods support. Previously reviewed
+units take precedence where workbook units conflict with live field semantics.
+
+MicroWatershed Boundaries reads `mws:mws_{district}_{tehsil}` through the
+workspace WFS endpoint. Its published WMS map is a view of the same feature
+type. The vector source supplies `uid` labels and the basin and watershed
+attributes used by the hover tooltip. All 45 vector presentations configure
+hover fields; the click popup continues to expose the full attributes. Long
+records stay in the click popup while hover shows a small selection (five
+area shares for LULC). Raster layers retain their existing identify behavior.
+
+`drought_peak_intensity`, annual peaks and stress-week sums are computed in
+`droughtPresentation.js` when drought features first load. That module also
+groups the published top-three annual causality pathways into recorded impact
+categories; ties and missing records remain distinct. These summaries do not
+declare official drought. `withLulcAreaFractions` in `geolibreProject.js`
+divides mean annual class areas by `area_in_ha`; the seasonal water share
+requires all three water classes in a given year. Original source fields and
+names remain intact. GeoLibre styles and tooltips consume these local derived
+properties after hydration.
 
 The project camera is calculated from the Terrain coverage's GeoServer-advertised
 geographic extent using a padded Web Mercator fit. `mapView.bbox` is also retained in project metadata,
@@ -237,7 +255,7 @@ application.
 |---|---|
 | `../../config/geolibre.config.js` | Viewer application version, URL resolution, strict handshake compatibility |
 | `../../config/geolibreLayers.js` | GeoServer names, deployed domains, raster `rasterStyle` values, and all LULC years |
-| `../../config/geolibreLayerPresentation.json` | Checked-in deployment copy of the finalized private layer CSV order, labels, suffixes, and groups |
+| `../../config/geolibreCatalog.json` | Checked-in layer presentation, descriptions, and field definitions |
 | `geolibreProject.js` | Project generation, legends, Google imagery, vector hydration, GeoServer style/WFS/WMS/WCS references, bbox camera, and date-record JSON parsing |
 | `GeoLibreFrame.jsx` | Iframe bridge, one-time bbox fit, human error states and downloadable bounded technical log |
 | `../../pages/LandscapeExplorer.jsx` | Route-to-project orchestration and fetch-on-first-toggle vector cache; no duplicate map or layer UI |
@@ -248,17 +266,11 @@ GetCapabilities request, then displays Terrain. Each vector makes its own WFS
 request only on its first toggle. Hidden rasters make no WMS tile
 request.
 
-The private `.local/units/layers_used_sugestions.csv` is the presentation
-source of truth. The public JSON manifest preserves its exact row order,
-grouping, names, and suffixes in deployments where `.local` is excluded.
-`npm start`, `npm run build`, and `npm test` automatically synchronize the
-manifest when the private CSV exists. To synchronize explicitly, run
-`node scripts/geolibre/syncLayerPresentation.cjs`. Deployments without `.local`
-use the committed manifest. The catalog validates source IDs and patterns
-against it; styles and default visibility are read from it as well.
-The CSV includes `changes_made`, `Default property shown`, and a populated
-style availability/action for every row marked `new`. A boundary or single
-colour profile explicitly records that no thematic property is selected.
+The checked-in catalog is the application source of truth for layer order,
+names, sources, descriptions, units, styles, and tooltip definitions. The
+private workbook and CSV can inform deliberate catalog edits, but never run
+as part of the application lifecycle. The catalog validates source IDs and
+patterns against the layer definitions.
 The additional six published rasters use GeoServer's named styles. The
 Shrubland Diversion raster and proposed `change_shrubland_diversion_style`
 remain unpublished; its one legend item is only a placeholder, not a binning

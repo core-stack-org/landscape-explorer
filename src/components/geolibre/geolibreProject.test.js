@@ -11,7 +11,7 @@ import {
   sanitizeGeoLibreProjectPlugins,
   withAverageDeltaG,
   withAverageNdvi,
-  withLulcBuiltUpFraction,
+  withLulcAreaFractions,
   withNormalizedTerrainCluster,
   withSoilTextureClass,
   withAfforestationClass,
@@ -25,8 +25,9 @@ import {
   withMwsFortnightClass,
   vectorFieldPresentation,
 } from "./geolibreProject";
-import GEOLIBRE_FIELD_METADATA from "../../config/geolibreFieldMetadata.json";
-import PRESENTATION from "../../config/geolibreLayerPresentation.json";
+import CATALOG from "../../config/geolibreCatalog.json";
+const GEOLIBRE_FIELD_METADATA = CATALOG.fieldMetadataBySource;
+const PRESENTATION = CATALOG.layers;
 import {
   GEOLIBRE_LAYERS,
   GEOLIBRE_NREGA_CATEGORIES,
@@ -1913,7 +1914,56 @@ it("normalizes mean built-up area and keeps missing/zero-area polygons missing",
     { properties: { area_in_ha: 10, "built-up_area_2024": 0 } },
     { properties: { area_in_ha: 10 } },
   ] };
-  expect(withLulcBuiltUpFraction(input).features.map(f => f.properties.built_up_fraction)).toEqual([0.2, null, 0, null]);
-  expect(withLulcBuiltUpFraction(input).features[0].properties.built_up_year_count).toBe(2);
+  expect(withLulcAreaFractions(input).features.map(f => f.properties.built_up_fraction)).toEqual([0.2, null, 0, null]);
+  expect(withLulcAreaFractions(input).features[0].properties.built_up_year_count).toBe(2);
   expect(input.features[0].properties.built_up_fraction).toBeUndefined();
+});
+
+test("MWS boundary uses its published source, carries field meaning, hover and UID labels", async () => {
+  const project = await buildGeoLibreProject({ ...location });
+  const layer = project.layers.find(item => item.id === "corestack-hydrological_boundaries");
+  expect(layer.source.typeName).toBe("mws:mws_cachar_lakhipur");
+  expect(layer.source.url).toContain("/mws/ows");
+  expect(layer.style.labels).toMatchObject({ enabled: true, field: "uid" });
+  expect(layer.metadata.corestack.description).toContain("Micro watershed boundaries");
+  const properties = { uid: "12_317834", area_in_ha: 1566.88, bacode: "2A", sbcode: "BHG", wsconc: "C2ABHG01" };
+  const hydrated = await hydrateGeoLibreVectorLayer({ project, layerId: layer.id, fetchFeatureCollection: async () => ({ features: [{ properties, geometry: null }] }) });
+  const ready = hydrated.layers.find(item => item.id === layer.id);
+  expect(ready.metadata.corestack.fields).toMatchObject({
+    uid: { description: "Main micro watershed UID" },
+    area_in_ha: { unit: "ha" },
+    bacode: { description: "River basin code" },
+    sbcode: { description: "Sub-basin code" },
+    wsconc: { description: "Concatenated watershed hierarchy code" },
+  });
+  expect(ready.popup.hover).toBe(true);
+  expect(resolvePopupRows(properties, { popup: ready.popup, hover: true }).map(row => row.field)).toEqual(["uid", "bacode", "sbcode", "wsconc"]);
+});
+
+test("all vector layers carry configured hover fields and preserve click attributes", async () => {
+  const project = await buildGeoLibreProject({ ...location });
+  const vectors = project.layers.filter(layer => layer.type === "geojson");
+  expect(vectors).toHaveLength(45);
+  expect(vectors.every(layer => layer.popup?.hover && layer.popup.fields.some(field => field.hover))).toBe(true);
+  const admin = vectors.find(layer => layer.id === "corestack-administrative_boundaries");
+  expect(JSON.parse(admin.popup.titleExpression)).toEqual(["concat", ["get", "vill_name"], " (VillageID: ", ["to-string", ["get", "vill_ID"]], ")"]);
+});
+
+test("LULC tooltip uses five measured area shares and legend omits unit text", async () => {
+  const project = await buildGeoLibreProject({ ...location });
+  const data = { features: [{ properties: {
+    uid: "one", area_in_ha: 100, "built-up_area_2024": 10,
+    k_water_area_2024: 2, kr_water_area_2024: 3, krz_water_area_2024: 5,
+    cropland_area_2024: 20, barrenlands_area_2024: 30, tree_forest_area_2024: 40,
+  }, geometry: null }] };
+  const derived = withLulcAreaFractions(data).features[0].properties;
+  expect([derived.built_up_fraction, derived.k_water_fraction, derived.cropland_fraction, derived.barrenlands_fraction, derived.tree_forest_fraction]).toEqual([0.1, 0.1, 0.2, 0.3, 0.4]);
+  expect(withLulcAreaFractions({ features: [{ properties: { area_in_ha: 100, k_water_area_2024: 2, kr_water_area_2024: 3 } }] }).features[0].properties.k_water_fraction).toBeNull();
+  const hydrated = await hydrateGeoLibreVectorLayer({ project, layerId: "corestack-lulc_stats", fetchFeatureCollection: async () => data });
+  const layer = hydrated.layers.find(item => item.id === "corestack-lulc_stats");
+  expect(resolvePopupRows(layer.geojson.features[0].properties, { popup: layer.popup, hover: true }).map(row => row.field)).toEqual([
+    "built_up_fraction", "k_water_fraction", "cropland_fraction", "barrenlands_fraction", "tree_forest_fraction",
+  ]);
+  expect(layer.style.vectorStyleStops.every(stop => !stop.label.includes("dimensionless"))).toBe(true);
+  expect(layer.metadata.corestack.fields.built_up_fraction.unit).toBe("dimensionless");
 });
