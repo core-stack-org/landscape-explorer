@@ -1,3 +1,4 @@
+import { DROUGHT_INTENSITY_CLASSES, withDroughtIntensity } from "./droughtPresentation";
 import { interpolateRampColors } from "@geolibre/core";
 import { applyMissingDataStyle, boundaryColorForLayer, finiteMeasurement, hasLayerData, MISSING_DATA_COLOR, fixedPaletteExpression, naturalBreaksStyle, paletteCategories } from "./geolibreStyleUtils";
 import {
@@ -429,9 +430,6 @@ const categoryStyle = (property, stops, overrides = {}) => ({
 
 const numericProperty = (field) => ["to-number", ["get", field], 0];
 const cropFields = Array.from({ length: 8 }, (_, i) => `cropping_intensity_${2017 + i}`);
-// Published drought data runs 2017-2022 only; there is no w_mod_2023 or later.
-const DROUGHT_YEAR_COUNT = 6;
-const droughtFields = Array.from({ length: DROUGHT_YEAR_COUNT }, (_, i) => [`w_mod_${2017 + i}`, `w_sev_${2017 + i}`]).flat();
 const thematicStyle = { ...BASE_STYLE, strokeColor: "#232323", strokeWidth: 0.5 };
 
 const STYLE_PROFILES = {
@@ -582,11 +580,9 @@ const STYLE_PROFILES = {
     ...thematicStyle, fields: cropFields, value: ["/", ["+", ...cropFields.map(numericProperty)], 8],
     thresholds: [1, 2], palette: "rdylgn", colors: interpolateRampColors("rdylgn", 6).slice(2, 5), fillOpacity: 0.7,
   }),
-  drought: fixedPaletteExpression({
-    ...thematicStyle, fields: droughtFields,
-    value: ["+", ...Array.from({ length: DROUGHT_YEAR_COUNT }, (_, i) => ["case", [">", ["+", numericProperty(`w_mod_${2017 + i}`), numericProperty(`w_sev_${2017 + i}`)], 5], 1, 0])],
-    thresholds: [1, 2], colors: ["#f4d03f", "#eb984e", "#e74c3c"], fillOpacity: 0.5,
-  }),
+  drought: categoryStyle("drought_peak_intensity",
+    DROUGHT_INTENSITY_CLASSES.map(([label, color]) => [label, color, label]),
+    { ...thematicStyle, fillOpacity: 0.7 }),
   green_credit: {
     ...BASE_STYLE,
     fillColor: "#14d11d",
@@ -1181,7 +1177,7 @@ const coreStackMetadata = (layer, layerName, sourceUrl, style, baseUrl) => ({
     demographics: "percent", facilities: "km", livestock: "count",
     mws: "mm", mws_fortnight: "mm", ndvi: "dimensionless",
     lulc_stats: "dimensionless", waterbodies: "ha", cropping_intensity: "dimensionless",
-    drought: "years", drought_causality: "weeks", tree_in_grassland: "ha",
+    drought: "category", drought_causality: "weeks", tree_in_grassland: "ha",
     forest_fringe: "ha", afforestation_stats: "ha", deforestation_stats: "ha", degradation_stats: "ha",
     urbanization_stats: "ha", cropintensity_stats: "ha", shrubland_diversion_stats: "ha",
     restoration_stats: "ha",
@@ -1491,6 +1487,7 @@ const hydrateLayerWithData = (layer, data) => {
   if (catalogLayer?.id === "restoration_stats") data = withExcludedAreaClass(data);
   if (catalogLayer?.id?.startsWith("ndvi_")) data = withAverageNdvi(data);
   if (catalogLayer?.id === "lulc_stats") data = withLulcBuiltUpFraction(data);
+  if (catalogLayer?.id === "drought") data = withDroughtIntensity(data);
   const outline = catalogLayer && boundaryColorForLayer(catalogLayer.id);
   const initialStyle = catalogLayer && { ...layerStyle(catalogLayer), ...(outline ? { strokeColor: outline, simpleStyleEnabled: true } : {}) };
   const style = initialStyle && Object.entries(initialStyle).every(([key, value]) => JSON.stringify(layer.style?.[key]) === JSON.stringify(value))

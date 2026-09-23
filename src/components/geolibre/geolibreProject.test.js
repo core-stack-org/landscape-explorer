@@ -666,13 +666,7 @@ describe("GeoLibre 2.6 project generation", () => {
     const crop = Object.fromEntries(Array.from({ length: 8 }, (_, i) => [`cropping_intensity_${2017 + i}`, 2]));
     expect(color("cropping_intensity", crop)).toBe("#52ac5a");
     expect(color("cropping_intensity", { ...crop, cropping_intensity_2024: null })).toBe("#3b3b3b");
-    const drought = Object.fromEntries(Array.from({ length: 6 }, (_, i) => [[`w_mod_${2017 + i}`, 0], [`w_sev_${2017 + i}`, 0]]).flat());
-    expect(color("drought", drought)).toBe("#f4d03f");
-    expect(color("drought", { ...drought, w_mod_2017: 5 })).toBe("#f4d03f");
-    expect(color("drought", { ...drought, w_mod_2017: 6 })).toBe("#eb984e");
-    expect(color("drought", { ...drought, w_mod_2017: 6, w_sev_2018: 6 })).toBe("#e74c3c");
-    expect(color("drought", { ...drought, w_sev_2018: "" })).toBe("#3b3b3b");
-    expect(color("drought", { ...drought, w_mod_2023: 6, w_sev_2023: 6 })).toBe("#f4d03f");
+
   });
   it("classifies hydrated facilities using computed observations and serializes the same style", async () => {
     const project = await buildGeoLibreProject({ ...location, fetchFeatureCollection: successfulFetch });
