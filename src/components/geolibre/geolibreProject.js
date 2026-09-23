@@ -1489,7 +1489,7 @@ export const vectorFieldPresentation = (catalogLayer, data) => {
     }
   }
   const fields = Object.fromEntries([...observed].map(([field, value]) => {
-    const sourceDefinition = fieldDefinitionFor(catalogLayer, field, GEOLIBRE_FIELD_METADATA);
+    const sourceDefinition = fieldDefinitionFor(catalogLayer, field, GEOLIBRE_FIELD_METADATA, CATALOG.fieldPatternsBySource);
     const unit = isStructuredRecord(value)
       ? "mixed"
       : typeof value === "string" && value.trim() !== "" && !Number.isFinite(Number(value))
@@ -1503,24 +1503,43 @@ export const vectorFieldPresentation = (catalogLayer, data) => {
   }));
   const hoverFields = hoverFieldsFor(catalogLayer?.tooltip?.fields || [], observed);
   const ordered = [...hoverFields, ...[...observed.keys()].filter(field => !hoverFields.includes(field))];
+  const labelModes = CATALOG.popupLabelModes || {};
+  const maxDescriptionLength = labelModes.autoMaxLength ?? 20;
+  const resolveLabelMode = (requestedMode, selectedFields) => requestedMode === "auto"
+    ? selectedFields.every(field => (fields[field].description || "").length <= maxDescriptionLength)
+      ? "description" : "field_name"
+    : requestedMode;
+  const hoverLabelMode = resolveLabelMode(
+    catalogLayer?.tooltip?.hoverLabelMode || labelModes.hover || "field_name", hoverFields,
+  );
+  const identifyLabelMode = resolveLabelMode(
+    catalogLayer?.identifyLabelMode || labelModes.identify || "description", ordered,
+  );
+  const fieldLabel = (field, mode) => {
+    const { description, unit } = fields[field];
+    const name = mode === "field_name" ? field : description || field;
+    return unit === "NA" || unit === "mixed" ? name : `${name} (${unit})`;
+  };
+  const popupFields = ordered.flatMap(field => {
+    const display = {
+      field,
+      ...(fractionalFields.has(field) ? { kind: "number", format: { decimals: 3 } } : {}),
+    };
+    const clickLabel = fieldLabel(field, identifyLabelMode);
+    const hoverLabel = fieldLabel(field, hoverLabelMode);
+    if (!hoverFields.includes(field)) return [{ ...display, label: clickLabel }];
+    if (clickLabel === hoverLabel) return [{ ...display, label: clickLabel, hover: true }];
+    // GeoLibre skips the first entry for hover and deduplicates by field for
+    // click, allowing each view to use a different label for the same value.
+    return [{ ...display, label: clickLabel }, { ...display, label: hoverLabel, hover: true }];
+  });
   const popup = {
     click: true,
     maxWidth: 480,
     hover: hoverFields.length > 0 || Boolean(catalogLayer?.tooltip?.titleExpression || catalogLayer?.tooltip?.titleField),
     ...(catalogLayer?.tooltip?.titleExpression ? { titleExpression: catalogLayer.tooltip.titleExpression } : {}),
     ...(observed.has(catalogLayer?.tooltip?.titleField) ? { titleField: catalogLayer.tooltip.titleField } : {}),
-    fields: ordered.map(field => {
-      const description = fields[field].description;
-      const unit = fields[field].unit;
-      const label = description || field;
-      return {
-        field,
-        hover: hoverFields.includes(field),
-        ...(fractionalFields.has(field) ? { kind: "number", format: { decimals: 3 } } : {}),
-        label: unit === "NA" || unit === "mixed"
-          ? label : `${label} (${unit})`,
-      };
-    }),
+    fields: popupFields,
   };
   return { fields, popup };
 };

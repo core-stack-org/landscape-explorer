@@ -758,7 +758,7 @@ describe("GeoLibre 2.6 project generation", () => {
     expect(fields["Wide-scale"].unit).toBe("ha");
     expect(fields.new_measure.unit).toBe("unknown");
     expect(resolvePopupRows(properties, { popup }).map((row) => row.label)).toEqual([
-      "Total Area of MWS in Hectares (ha)", "percent (ha)", "unique identifier", "new_measure (unknown)",
+      `${fields.area_in_ha.description} (ha)`, "percent (ha)", "unique identifier", "new_measure (unknown)",
     ]);
     expect(GEOLIBRE_FIELD_METADATA.change_vector_ShrubChange.total_change.unit).toBe("ha");
     expect(GEOLIBRE_FIELD_METADATA.soil_type.subsoil_organic_carbon.unit).toBe("unknown");
@@ -1932,11 +1932,11 @@ test("MWS boundary uses its published source, carries field meaning, hover and U
   const hydrated = await hydrateGeoLibreVectorLayer({ project, layerId: layer.id, fetchFeatureCollection: async () => ({ features: [{ properties, geometry: null }] }) });
   const ready = hydrated.layers.find(item => item.id === layer.id);
   expect(ready.metadata.corestack.fields).toMatchObject({
-    uid: { description: "Main micro watershed UID" },
+    uid: { description: GEOLIBRE_FIELD_METADATA.mws.uid.description },
     area_in_ha: { unit: "ha" },
-    bacode: { description: "River basin code" },
-    sbcode: { description: "Sub-basin code" },
-    wsconc: { description: "Concatenated watershed hierarchy code" },
+    bacode: { description: GEOLIBRE_FIELD_METADATA.mws.bacode.description },
+    sbcode: { description: GEOLIBRE_FIELD_METADATA.mws.sbcode.description },
+    wsconc: { description: GEOLIBRE_FIELD_METADATA.mws.wsconc.description },
   });
   expect(ready.popup.hover).toBe(true);
   expect(resolvePopupRows(properties, { popup: ready.popup, hover: true })).toEqual([]);
@@ -2009,16 +2009,16 @@ test("LULC tooltip uses five measured area shares and legend omits unit text", a
   expect(layer.metadata.corestack.fields.built_up_fraction.unit).toBe("dimensionless");
 });
 
-test("catalog descriptions pass through unchanged for exact fields and year aliases", () => {
+test("catalog descriptions pass through unchanged for exact fields", () => {
   const metadata = { sample: {
     area_2023: { unit: "ha", description: "Short area name" },
     drought_peak_intensity: { unit: "NA", description: "Peak" },
   } };
   const layer = { id: "drought", unitSources: ["sample"] };
-  expect(fieldDefinitionFor(layer, "area_2024", metadata)).toBe(metadata.sample.area_2023);
+  expect(fieldDefinitionFor(layer, "area_2024", metadata)).toBeNull();
   expect(fieldDefinitionFor(layer, "drought_peak_intensity", metadata)).toBe(metadata.sample.drought_peak_intensity);
-  metadata.sample.area_2023.description = "My edited description";
-  expect(fieldDefinitionFor(layer, "area_2024", metadata).description).toBe("My edited description");
+  metadata.sample.drought_peak_intensity.description = "My edited description";
+  expect(fieldDefinitionFor(layer, "drought_peak_intensity", metadata).description).toBe("My edited description");
 });
 
 test("popup formats floating measurements to three decimals while preserving source values and identifiers", () => {
@@ -2028,9 +2028,39 @@ test("popup formats floating measurements to three decimals while preserving sou
   const before = JSON.stringify(data);
   const { popup } = vectorFieldPresentation(layer, data);
   const rows = Object.fromEntries(resolvePopupRows(properties, { popup }).map(row => [row.field, row]));
-  expect(rows.area_in_ha).toMatchObject({ label: "Total Area of MWS in Hectares (ha)", text: "168.451" });
+  expect(rows.area_in_ha).toMatchObject({ label: `${CATALOG.fieldMetadataBySource.tree_in_grassland.area_in_ha.description} (ha)`, text: "168.451" });
   expect(rows.shrubland_area_in_ha).toMatchObject({ label: `${CATALOG.fieldMetadataBySource.tree_in_grassland.shrubland_area_in_ha.description} (ha)`, text: "80.387" });
   expect(rows.isolated_shrub_area_in_ha.text).toBe("2.000");
   expect(rows.uid.text).toBe("001234");
   expect(JSON.stringify(data)).toBe(before);
+});
+
+test("hover uses field names while click uses authored descriptions for the same source field", () => {
+  const layer = GEOLIBRE_LAYERS.find(item => item.id === "tree_in_grassland");
+  const properties = { uid: "4_77213", isolated_shrub_area_in_ha: 75.66128 };
+  const { popup } = vectorFieldPresentation(layer, { features: [{ properties }] });
+  const clicked = resolvePopupRows(properties, { popup });
+  const hovered = resolvePopupRows(properties, { popup, hover: true });
+  expect(clicked.find(row => row.field === "isolated_shrub_area_in_ha")).toMatchObject({
+    label: `${CATALOG.fieldMetadataBySource.tree_in_grassland.isolated_shrub_area_in_ha.description} (ha)`,
+    text: "75.661",
+  });
+  expect(hovered.find(row => row.field === "isolated_shrub_area_in_ha")).toMatchObject({
+    label: "isolated_shrub_area_in_ha (ha)", text: "75.661",
+  });
+  expect(hovered.map(row => row.field)).toEqual(["isolated_shrub_area_in_ha"]);
+});
+
+test("auto hover mode uses descriptions only when every selected description fits", () => {
+  const layer = GEOLIBRE_LAYERS.find(item => item.id === "tree_in_grassland");
+  const withAuto = { ...layer, tooltip: { ...layer.tooltip, hoverLabelMode: "auto" } };
+  const long = { uid: "4_77213", isolated_shrub_area_in_ha: 4 };
+  const { popup } = vectorFieldPresentation(withAuto, { features: [{ properties: long }] });
+  expect(resolvePopupRows(long, { popup, hover: true })[0].label).toBe("isolated_shrub_area_in_ha (ha)");
+  const shortLayer = { ...layer, tooltip: { fields: ["area_in_ha"], hoverLabelMode: "auto" } };
+  const short = { area_in_ha: 4 };
+  const shortPopup = vectorFieldPresentation(shortLayer, { features: [{ properties: short }] }).popup;
+  expect(resolvePopupRows(short, { popup: shortPopup, hover: true })[0].label).toBe(
+    `${CATALOG.fieldMetadataBySource.tree_in_grassland.area_in_ha.description} (ha)`,
+  );
 });
