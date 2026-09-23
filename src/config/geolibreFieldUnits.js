@@ -25,6 +25,12 @@ export const fieldDefinitionFor = (layer, field, fieldMetadata) => {
     if (field === "built_up_fraction") return { unit: "dimensionless", description: "Mean available annual built-up area divided by area_in_ha" };
     if (field === "built_up_year_count") return { unit: "count", description: "Number of valid annual built-up area observations" };
   }
+  if (layer?.id === "drought") {
+    if (field === "drought_peak_intensity" || /^drought_peak_\d{4}$/.test(field)) return { unit: "NA", description: "Highest recorded weekly intensity across valid observed years (or the named year); not an official drought declaration" };
+    if (/^drought_stress_weeks_\d{4}$/.test(field)) return { unit: "weeks", description: "Moderate plus severe drought weeks in this year" };
+    if (field === "drought_observed_years") return { unit: "NA", description: "Years with complete valid weekly class counts used in the peak" };
+    if (field === "drought_year_count") return { unit: "count", description: "Number of valid observed years" };
+  }
   const sources = layer?.unitSources || [];
   const exact = sources.map((source) => fieldMetadata[source]?.[field]).find(Boolean);
   if (exact) return exact;

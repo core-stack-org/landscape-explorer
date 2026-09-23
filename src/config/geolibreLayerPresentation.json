@@ -807,7 +807,7 @@
   },
   {
     "id": "drought",
-    "label": "Drought",
+    "label": "Drought · Peak Intensity",
     "category": "Stats",
     "groupId": "agriculture",
     "groupName": "Agriculture",
@@ -816,7 +816,7 @@
     "sourcePattern": "drought:{district}_{tehsil}_drought",
     "style": "drought",
     "defaultVisible": false,
-    "defaultProperty": "w_mod_2017; w_sev_2017; w_mod_2018; w_sev_2018; w_mod_2019; w_sev_2019; w_mod_2020; w_sev_2020; w_mod_2021; w_sev_2021; w_mod_2022; w_sev_2022"
+    "defaultProperty": "drought_peak_intensity"
   },
   {
     "id": "drought_causality",
