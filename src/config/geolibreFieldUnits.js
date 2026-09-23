@@ -64,6 +64,9 @@ export const fieldDefinitionFor = (layer, field, fieldMetadata) => {
   if (layer?.id === "mws_layers_fortnight" && /^\d{4}-\d{2}-\d{2}$/.test(field)) {
     return { unit: "mixed", description: "Fortnightly water-balance record with separately unit-bearing measures" };
   }
+  if (layer?.id?.startsWith("ndvi_") && /^(crop_|shrub_|tree_)?\d{4}-\d{2}-\d{2}$/.test(field)) {
+    return { unit: "dimensionless", description: "Normalised Difference Vegetation Index for this date" };
+  }
   if (layer?.id === "drought_causality") {
     if (field === "area_in_ha") return { unit: "ha", description: "Area of the mapped polygon" };
     if (field === "avg_dryspell") return { unit: "weeks", description: "Published mean dry spell length" };

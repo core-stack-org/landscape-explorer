@@ -10,6 +10,7 @@ import {
   rasterBoundsFromWmsCapabilities,
   sanitizeGeoLibreProjectPlugins,
   withAverageDeltaG,
+  withAverageNdvi,
   withLulcAreaFractions,
   withNormalizedTerrainCluster,
   withTerrainAreaFractions,
@@ -175,6 +176,7 @@ describe("GeoLibre 2.6 project generation", () => {
       expect(byId(id).style.fillOpacity).toBeGreaterThan(0);
       expect(byId(id).source.typeName).toContain(":");
     }
+    expect(byId("ndvi_tree_stats").style.vectorStyleMode).not.toBe("single");
     expect(byId("catchment_area").metadata.corestack.legend.title).not.toContain("unit unconfirmed");
     expect(byId("catchment_area").metadata.corestack.legend.items.every(item => item.label.endsWith(" hac"))).toBe(true);
     expect(byId("catchment_area").metadata.corestack.defaultStyleUnit).toBe("hac");
@@ -778,6 +780,8 @@ describe("GeoLibre 2.6 project generation", () => {
       ["2024-01-13"].unit).toBe("mixed");
     expect(byId("aquifer", { total_weighted_yield: 3 })
       .total_weighted_yield.unit).toBe("unknown");
+    expect(byId("ndvi_crop_stats", { "2024-07-13": 0.74 })
+      ["2024-07-13"].unit).toBe("dimensionless");
     expect(byId("remote_sensed_waterbodies", { water_body_name: "A pond" })
       .water_body_name.unit).toBe("NA");
   });
@@ -790,7 +794,7 @@ describe("GeoLibre 2.6 project generation", () => {
 
     expect(project.version).toBe("0.2.0");
     expect(project.layers).toHaveLength(GEOLIBRE_LAYERS.length);
-    expect(project.layers).toHaveLength(82);
+    expect(project.layers).toHaveLength(85);
     expect(project.layers.every(layer => {
       const catalog = GEOLIBRE_LAYERS.find(item => `corestack-${item.id}` === layer.id);
       return layer.name === `${catalog.label}${catalog.category === "NA" ? "" : ` · ${catalog.category}`}`;
@@ -1714,6 +1718,18 @@ describe("Annual Water Balance records", () => {
   });
 });
 
+describe("NDVI time-series records", () => {
+  it("averages dated numeric values without renaming source columns", () => {
+    const data = { type: "FeatureCollection", features: [{
+      type: "Feature", properties: { "tree_2024-07-13": 0.4, "shrub_2024-07-13": 0.6, uid: "x" },
+      geometry: null,
+    }] };
+    expect(withAverageNdvi(data).features[0].properties).toEqual({
+      "tree_2024-07-13": 0.4, "shrub_2024-07-13": 0.6, uid: "x", avg_ndvi: 0.5,
+    });
+  });
+});
+
 describe("Terrain Clusters field normalization", () => {
   it("copies terrainClusters onto terrainClu when the clipped field is absent", () => {
     const data = { type: "FeatureCollection", features: [{ geometry: null, properties: {
@@ -1929,9 +1945,9 @@ test("MWS boundary uses its published source, carries field meaning, hover and U
 test("all vector layers carry finalized hover titles or fields and preserve click attributes", async () => {
   const project = await buildGeoLibreProject({ ...location });
   const vectors = project.layers.filter(layer => layer.type === "geojson");
-  expect(vectors).toHaveLength(41);
+  expect(vectors).toHaveLength(44);
   expect(vectors.every(layer => layer.popup?.hover && (layer.popup.fields.some(field => field.hover) || layer.popup.titleExpression))).toBe(true);
-  expect(vectors.some(layer => /^corestack-ndvi_.*_stats$/.test(layer.id))).toBe(false);
+  expect(vectors.some(layer => layer.id === "corestack-ndvi_combined_stats")).toBe(false);
   const admin = vectors.find(layer => layer.id === "corestack-administrative_boundaries");
   expect(JSON.parse(admin.popup.titleExpression)[0]).toBe("case");
   expect(resolvePopupTitle(admin.name, { vill_name: "A", vill_ID: 0 }, admin.popup)).toBe("A");
