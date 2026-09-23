@@ -31,6 +31,11 @@ export const fieldDefinitionFor = (layer, field, fieldMetadata) => {
     if (field === "drought_observed_years") return { unit: "NA", description: "Years with complete valid weekly class counts used in the peak" };
     if (field === "drought_year_count") return { unit: "count", description: "Number of valid observed years" };
   }
+  if (layer?.id === "drought_causality") {
+    if (field === "drought_dominant_impact" || /^drought_impact_\d{4}$/.test(field)) return { unit: "NA", description: "Dominant impact combination among published top-three moderate/severe pathways; ties explicit; not proof of root cause" };
+    if (field === "drought_impact_observed_years") return { unit: "NA", description: "Years with interpretable pathway records used in this summary" };
+    if (field === "drought_impact_year_count") return { unit: "count", description: "Number of interpretable annual pathway records" };
+  }
   const sources = layer?.unitSources || [];
   const exact = sources.map((source) => fieldMetadata[source]?.[field]).find(Boolean);
   if (exact) return exact;
@@ -58,7 +63,7 @@ export const fieldDefinitionFor = (layer, field, fieldMetadata) => {
   }
   if (layer?.id === "drought_causality") {
     if (field === "area_in_ha") return { unit: "ha", description: "Area of the mapped polygon" };
-    if (field === "avg_dryspell") return { unit: "weeks", description: "Mean annual maximum dry spell length joined from drought data by MWS uid" };
+    if (field === "avg_dryspell") return { unit: "weeks", description: "Published mean dry spell length" };
     if (/^(se_mo|mild)_20\d{2}$/.test(field)) {
       return { unit: "mixed", description: "Drought causality record; nested measures require field-specific interpretation" };
     }

@@ -1,4 +1,4 @@
-import { DROUGHT_INTENSITY_CLASSES, withDroughtIntensity } from "./droughtPresentation";
+import { DROUGHT_INTENSITY_CLASSES, withDroughtIntensity, DROUGHT_IMPACT_CLASSES, withDroughtImpact } from "./droughtPresentation";
 import { interpolateRampColors } from "@geolibre/core";
 import { applyMissingDataStyle, boundaryColorForLayer, finiteMeasurement, hasLayerData, MISSING_DATA_COLOR, fixedPaletteExpression, naturalBreaksStyle, paletteCategories } from "./geolibreStyleUtils";
 import {
@@ -361,29 +361,6 @@ export const withLulcBuiltUpFraction = data => ({
   }),
 });
 
-// Causality polygons contain labels, while the drought source publishes the
-// measured multi-year mean. Join by MWS uid and keep all original properties.
-export const withDroughtDryspellMean = (causality, drought) => {
-  const byUid = new Map();
-  for (const feature of drought?.features || []) {
-    const uid = feature.properties?.uid;
-    if (uid == null) continue;
-    const key = String(uid);
-    if (byUid.has(key)) throw new Error(`Duplicate drought MWS uid: ${key}`);
-    byUid.set(key, finiteMeasurement(feature.properties.avg_dryspell));
-  }
-  return {
-    ...causality,
-    features: (causality?.features || []).map(feature => ({
-      ...feature,
-      properties: {
-        ...feature.properties,
-        avg_dryspell: byUid.get(String(feature.properties?.uid)) ?? null,
-      },
-    })),
-  };
-};
-
 const BASE_STYLE = {
   minZoom: 0,
   maxZoom: 24,
@@ -479,7 +456,9 @@ const STYLE_PROFILES = {
     ...thematicStyle, fields: ["avg_ndvi"], value: numericProperty("avg_ndvi"),
     thresholds: [-0.2, 0, 0.2, 0.4, 0.6], palette: "rdylgn", fillOpacity: 0.65,
   }),
-  drought_causality: naturalBreaksStyle("avg_dryspell", "reds", null, { ...thematicStyle, fillOpacity: 0.7 }, "weeks"),
+  drought_causality: categoryStyle("drought_dominant_impact",
+    DROUGHT_IMPACT_CLASSES.map(([label, color]) => [label, color, label]),
+    { ...thematicStyle, fillOpacity: 0.7 }),
   tree_in_grassland: naturalBreaksStyle("tree_in_shrubs_trees_area_in_ha", "greens", null, { ...thematicStyle, fillOpacity: 0.7 }, "ha"),
   // Fixed, sparse thresholds instead of 6-way natural breaks: forest fringe
   // area is dominated by many small patches, and auto breaks over that data
@@ -1159,13 +1138,13 @@ const layerStyle = (layer, data) =>
     ? { ...RASTER_STYLE }
     : layer.nregaCategoryId
       ? nregaLayerStyle(layer.nregaCategoryId)
-      : ["facilities", "livestock", "drought_causality", "tree_in_grassland", "lulc_stats"].includes(layer.styleProfile)
+      : ["facilities", "livestock", "tree_in_grassland", "lulc_stats"].includes(layer.styleProfile)
         ? naturalBreaksStyle(
             STYLE_PROFILES[layer.styleProfile].vectorStyleProperty,
             STYLE_PROFILES[layer.styleProfile].vectorStyleColorRamp,
             { features: (data?.features || []).filter(feature => hasLayerData(layer.id, feature.properties)) },
             STYLE_PROFILES[layer.styleProfile],
-            { lulc_stats: "dimensionless", facilities: "km", livestock: "count", drought_causality: "weeks", tree_in_grassland: "ha" }[layer.styleProfile]
+            { lulc_stats: "dimensionless", facilities: "km", livestock: "count", tree_in_grassland: "ha" }[layer.styleProfile]
           )
         : { ...(STYLE_PROFILES[layer.styleProfile] || BASE_STYLE) };
 
@@ -1177,7 +1156,7 @@ const coreStackMetadata = (layer, layerName, sourceUrl, style, baseUrl) => ({
     demographics: "percent", facilities: "km", livestock: "count",
     mws: "mm", mws_fortnight: "mm", ndvi: "dimensionless",
     lulc_stats: "dimensionless", waterbodies: "ha", cropping_intensity: "dimensionless",
-    drought: "category", drought_causality: "weeks", tree_in_grassland: "ha",
+    drought: "category", drought_causality: "category", tree_in_grassland: "ha",
     forest_fringe: "ha", afforestation_stats: "ha", deforestation_stats: "ha", degradation_stats: "ha",
     urbanization_stats: "ha", cropintensity_stats: "ha", shrubland_diversion_stats: "ha",
     restoration_stats: "ha",
@@ -1488,6 +1467,7 @@ const hydrateLayerWithData = (layer, data) => {
   if (catalogLayer?.id?.startsWith("ndvi_")) data = withAverageNdvi(data);
   if (catalogLayer?.id === "lulc_stats") data = withLulcBuiltUpFraction(data);
   if (catalogLayer?.id === "drought") data = withDroughtIntensity(data);
+  if (catalogLayer?.id === "drought_causality") data = withDroughtImpact(data);
   const outline = catalogLayer && boundaryColorForLayer(catalogLayer.id);
   const initialStyle = catalogLayer && { ...layerStyle(catalogLayer), ...(outline ? { strokeColor: outline, simpleStyleEnabled: true } : {}) };
   const style = initialStyle && Object.entries(initialStyle).every(([key, value]) => JSON.stringify(layer.style?.[key]) === JSON.stringify(value))
@@ -1557,23 +1537,6 @@ export const hydrateGeoLibreVectorLayer = async ({
     const rawData = await fetchFeatureCollection(request, { signal });
     const category = nregaCategoryForLayer(layer);
     let data = category ? withNormalizedWorkCategory(rawData) : rawData;
-    if (layerId === "corestack-drought_causality") {
-      const droughtLayer = project.layers.find(item => item.id === "corestack-drought");
-      if (!droughtLayer) throw new Error("The drought measurements layer is unavailable.");
-      const droughtData = droughtLayer.metadata?.loadState === "loaded"
-        ? droughtLayer.geojson
-        : await fetchFeatureCollection({
-            url: droughtLayer.source.url,
-            typeName: droughtLayer.source.typeName,
-            version: droughtLayer.source.version,
-            outputFormat: droughtLayer.source.outputFormat,
-            srsName: droughtLayer.source.srsName,
-          }, { signal });
-      data = withDroughtDryspellMean(data, droughtData);
-      if (data.features.length && data.features.every(feature => feature.properties.avg_dryspell === null)) {
-        throw new Error("No causality MWS uid matched the drought mean dry spell data.");
-      }
-    }
     const hydratedProject = category
       ? {
           ...project,
