@@ -33,14 +33,9 @@ export const fieldDefinitionFor = (layer, field, fieldMetadata) => {
   }
   if (layer?.id === "drought") {
     if (field === "drought_peak_intensity" || /^drought_peak_\d{4}$/.test(field)) return { unit: "NA", description: "Highest recorded weekly intensity across valid observed years (or the named year)" };
-    if (/^drought_stress_weeks_\d{4}$/.test(field)) return { unit: "weeks", description: "Moderate plus severe drought weeks in this year" };
-    if (field === "drought_observed_years") return { unit: "NA", description: "Years with complete valid weekly class counts used in the peak" };
-    if (field === "drought_year_count") return { unit: "count", description: "Number of valid observed years" };
   }
   if (layer?.id === "drought_causality") {
     if (field === "drought_dominant_impact" || /^drought_impact_\d{4}$/.test(field)) return { unit: "NA", description: "Dominant impact combination among published top-three moderate/severe pathways; ties explicit; not proof of root cause" };
-    if (field === "drought_impact_observed_years") return { unit: "NA", description: "Years with interpretable pathway records used in this summary" };
-    if (field === "drought_impact_year_count") return { unit: "count", description: "Number of interpretable annual pathway records" };
   }
   const sources = layer?.unitSources || [];
   const exact = sources.map((source) => fieldMetadata[source]?.[field]).find(Boolean);

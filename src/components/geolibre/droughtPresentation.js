@@ -1,11 +1,10 @@
 import { finiteMeasurement } from "./geolibreStyleUtils";
 
 export const DROUGHT_INTENSITY_CLASSES = [
-  ["None", "#e5f5e0"], ["Mild", "#fee08b"],
-  ["Moderate", "#f46d43"], ["Severe", "#a50026"],
+  ["No drought", "#e5f5e0"], ["Mild drought", "#fee08b"],
+  ["Moderate drought", "#f46d43"], ["Severe drought", "#a50026"],
 ];
 const intensityNames = DROUGHT_INTENSITY_CLASSES.map(([name]) => name);
-const prefixes = ["w_no", "w_mld", "w_mod", "w_sev"];
 const yearKeys = (properties, pattern) => [...new Set(Object.keys(properties)
   .map(key => key.match(pattern)?.[1]).filter(Boolean))].sort();
 
@@ -20,44 +19,31 @@ const weeklyClasses = value => {
 };
 
 // Peak is a presentation summary of the published weekly classes, not a new
-// drought-declaration threshold. Never interpret missing counts as zero.
+// drought-declaration threshold. Missing or malformed records stay missing.
 export const withDroughtIntensity = data => ({
   ...data,
   features: (data?.features || []).map(feature => {
     const properties = { ...feature.properties };
-    const years = yearKeys(properties, /^(?:drlb|frth2|w_(?:no|mld|mod|sev))_(\d{4})$/);
-    const validYears = [];
+    const years = yearKeys(properties, /^drlb_(\d{4})$/);
     let peak = -1;
     for (const year of years) {
       const labels = weeklyClasses(properties[`drlb_${year}`]);
-      const counts = prefixes.map(prefix => finiteMeasurement(properties[`${prefix}_${year}`]));
-      const validCounts = counts.every(n => n !== null && Number.isInteger(n) && n >= 0)
-        && counts.some(n => n > 0);
-      const annualPeak = labels ? Math.max(...labels)
-        : validCounts ? counts.reduce((highest, n, i) => n > 0 ? i : highest, -1) : -1;
-      const publishedStressWeeks = finiteMeasurement(properties[`frth2_${year}`]);
-      const validPublishedStressWeeks = publishedStressWeeks !== null
-        && Number.isInteger(publishedStressWeeks) && publishedStressWeeks >= 0;
+      const annualPeak = labels ? Math.max(...labels) : -1;
       properties[`drought_peak_${year}`] = annualPeak >= 0 ? intensityNames[annualPeak] : null;
-      properties[`drought_stress_weeks_${year}`] = validPublishedStressWeeks ? publishedStressWeeks
-        : labels ? labels.filter(label => label >= 2).length
-        : validCounts ? counts[2] + counts[3] : null;
-      if (annualPeak >= 0) { validYears.push(year); peak = Math.max(peak, annualPeak); }
+      if (annualPeak >= 0) peak = Math.max(peak, annualPeak);
     }
     properties.drought_peak_intensity = peak >= 0 ? intensityNames[peak] : null;
-    properties.drought_observed_years = validYears.join(", ");
-    properties.drought_year_count = validYears.length;
     return { ...feature, properties };
   }),
 });
 
 export const DROUGHT_IMPACT_CLASSES = [
   ["No recorded moderate/severe pathway", "#e5e7eb"],
-  ["Crop area + soil moisture stress", "#e69f00"],
-  ["Crop area + vegetation stress", "#009e73"],
-  ["Soil moisture + vegetation stress", "#0072b2"],
-  ["Combined crop, soil and vegetation stress", "#cc79a7"],
-  ["Mixed / tied impacts", "#8c6d31"],
+  ["Moderate: VCI Fair/Good, MAI Severe, cropped area Severe", "#e69f00"],
+  ["Moderate: VCI Poor, MAI Moderate/Mild, cropped area Severe", "#009e73"],
+  ["Moderate: VCI Poor, MAI Severe, cropped area Moderate/Mild", "#0072b2"],
+  ["Severe: VCI Poor, MAI Severe, cropped area Severe", "#cc79a7"],
+  ["Mixed / tied pathways", "#8c6d31"],
 ];
 const impactNames = DROUGHT_IMPACT_CLASSES.map(([name]) => name);
 
@@ -111,8 +97,6 @@ export const withDroughtImpact = data => ({
       }
     }
     properties.drought_dominant_impact = validYears.length ? dominantImpact(totals) : null;
-    properties.drought_impact_observed_years = validYears.join(", ");
-    properties.drought_impact_year_count = validYears.length;
     return { ...feature, properties };
   }),
 });

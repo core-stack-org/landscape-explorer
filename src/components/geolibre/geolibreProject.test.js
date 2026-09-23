@@ -198,13 +198,13 @@ describe("GeoLibre 2.6 project generation", () => {
     expect(causality.metadata.loadState).toBe("loaded");
     expect(causality.style.vectorStyleProperty).toBe("drought_dominant_impact");
     expect(causality.style.vectorStyleMode).toBe("categorized");
-    expect(causality.geojson.features[0].properties).toMatchObject({ ...raw, drought_dominant_impact: "Crop area + soil moisture stress" });
+    expect(causality.geojson.features[0].properties).toMatchObject({ ...raw, drought_dominant_impact: "Moderate: VCI Fair/Good, MAI Severe, cropped area Severe" });
     expect(causality.metadata.corestack.defaultStyleUnit).toBe("category");
     expect(hydrated.layers.find(layer => layer.id === "corestack-drought").metadata.loadState).toBe("unloaded");
-    const severity = await hydrateGeoLibreVectorLayer({ project, layerId: "corestack-drought", fetchFeatureCollection: async () => ({ features: [{ properties: { w_no_2024: 0, w_mld_2024: 10, w_mod_2024: 12, w_sev_2024: 1 } }] }) });
+    const severity = await hydrateGeoLibreVectorLayer({ project, layerId: "corestack-drought", fetchFeatureCollection: async () => ({ features: [{ properties: { drlb_2024: "[1,2,3]" } }] }) });
     const drought = severity.layers.find(layer => layer.id === "corestack-drought");
-    expect(drought.geojson.features[0].properties.drought_peak_intensity).toBe("Severe");
-    expect(drought.style.vectorStyleStops.map(stop => stop.label)).toEqual(["None", "Mild", "Moderate", "Severe"]);
+    expect(drought.geojson.features[0].properties.drought_peak_intensity).toBe("Severe drought");
+    expect(drought.style.vectorStyleStops.map(stop => stop.label)).toEqual(["No drought", "Mild drought", "Moderate drought", "Severe drought"]);
   });
 
   it("gives every raster an explicit rasterStyle contract", () => {

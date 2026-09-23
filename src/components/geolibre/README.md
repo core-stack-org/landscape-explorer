@@ -174,11 +174,16 @@ published fields. Raster layers retain their existing identify behavior.
 
 | Display field | Direct source and calculation |
 |---|---|
-| `drought_peak_<year>` | Highest class in the published `drlb_<year>` weekly JSON array: 0 None, 1 Mild, 2 Moderate, 3 Severe. If that array is unavailable, use the highest class with a positive `w_no/mld/mod/sev_<year>` count. |
-| `drought_stress_weeks_<year>` | Published `frth2_<year>`, the number of weeks with weekly class at least 2. Fall back to counting `drlb` entries 2 or 3, then to `w_mod_<year> + w_sev_<year>`. |
+| `drought_peak_<year>` | Highest class in the published `drlb_<year>` weekly JSON array: 0 No drought, 1 Mild drought, 2 Moderate drought, 3 Severe drought. Missing or malformed weekly data produces no class. |
 | `drought_peak_intensity` | Highest valid annual peak across the available years. This annual maximum is a GeoLibre summary, not a published classification or drought declaration. |
 | `drought_impact_<year>` | Parse `se_mo_<year>`, which contains up to three published moderate/severe pathway counts. Combine the documented path IDs into crop/soil/vegetation impact groups, then show the group with the largest recorded count; preserve ties. |
 | `drought_dominant_impact` | Sum those recorded group counts across valid years and select the largest group. This grouping and cross-year summary are GeoLibre presentation choices, not source fields or an official causal finding. |
+
+`frth2_<year>` is the published number of moderate or severe weeks, so the
+tooltip uses that field directly. The causality legend names the VCI, MAI and
+cropped-area combinations in the source pathway definitions. Annual and
+cross-year peak/impact fields are display summaries; no alternate source
+fields are used when a published JSON record is missing or malformed.
 
 The documented potential drought-year screen of more than five moderate plus
 severe weeks is not applied to the map style; a field decision is still needed
