@@ -1,5 +1,6 @@
 import { act, render, screen } from "@testing-library/react";
 import GeoLibreFrame, {
+  applyGlobalHoverState,
   formatGeoLibreLog,
   geoLibreProjectLoadSignature,
 } from "./GeoLibreFrame";
@@ -45,6 +46,110 @@ const initializeMap = (frame, postMessage, snapshot = project) => {
 describe("GeoLibre iframe bridge", () => {
   beforeEach(() => jest.useFakeTimers());
   afterEach(() => jest.useRealTimers());
+
+  it("disables every layer hover without changing its popup fields", () => {
+    const layers = [
+      { id: "on", popup: { click: true, hover: true, fields: [{ field: "uid", hover: true }] } },
+      { id: "off", popup: { click: true, hover: false, fields: [{ field: "name" }] } },
+      { id: "plain" },
+    ];
+    const hoverStates = new Map([["on", true], ["off", false]]);
+    const disabled = applyGlobalHoverState({ ...project, layers }, false, hoverStates);
+
+    expect(disabled.layers).toEqual([
+      { id: "on", popup: { click: true, hover: false, fields: [{ field: "uid", hover: true }] } },
+      layers[1],
+      layers[2],
+    ]);
+    expect(applyGlobalHoverState(disabled, true, hoverStates).layers).toEqual(layers);
+  });
+
+  it("starts with all hovers off and can restore each previous layer setting", () => {
+    const hoverProject = {
+      ...project,
+      layers: [
+        { id: "hover-on", popup: { click: true, hover: true, fields: [{ field: "uid", hover: true }] } },
+        { id: "hover-off", popup: { click: true, hover: false, fields: [{ field: "name" }] } },
+      ],
+    };
+    const { rerender } = render(<GeoLibreFrame project={hoverProject} />);
+    const frame = screen.getByTitle("GeoLibre GIS workspace");
+    const postMessage = jest.spyOn(frame.contentWindow, "postMessage");
+
+    act(() => announceReady(frame));
+    const initialLoad = postMessage.mock.calls
+      .map(([message]) => message)
+      .filter((message) => message.type === "geolibre:load-project")
+      .at(-1);
+    expect(initialLoad.project.layers.map((layer) => layer.popup.hover)).toEqual([false, false]);
+
+    initializeMap(frame, postMessage, initialLoad.project);
+    expect(screen.queryByRole("button", { name: /Hover:/ })).toBeNull();
+    rerender(<GeoLibreFrame project={hoverProject} hoverEnabled />);
+
+    const enabledLoad = postMessage.mock.calls
+      .map(([message]) => message)
+      .filter((message) => message.type === "geolibre:load-project")
+      .at(-1);
+    expect(enabledLoad.project.layers.map((layer) => layer.popup.hover)).toEqual([true, false]);
+  });
+
+  it("keeps the latest live layer state while hovers are toggled globally", () => {
+    const hoverProject = {
+      ...project,
+      layers: [{ id: "hover-on", visible: false, opacity: 1, popup: { click: true, hover: true, fields: [] } }],
+    };
+    const { rerender } = render(<GeoLibreFrame project={hoverProject} />);
+    const frame = screen.getByTitle("GeoLibre GIS workspace");
+    const postMessage = jest.spyOn(frame.contentWindow, "postMessage");
+    act(() => announceReady(frame));
+    const initialLoad = postMessage.mock.calls
+      .map(([message]) => message)
+      .filter((message) => message.type === "geolibre:load-project")
+      .at(-1);
+    initializeMap(frame, postMessage, initialLoad.project);
+
+    rerender(<GeoLibreFrame project={hoverProject} hoverEnabled />);
+    const enabledLoad = postMessage.mock.calls
+      .map(([message]) => message)
+      .filter((message) => message.type === "geolibre:load-project")
+      .at(-1);
+    receive(frame, {
+      type: "geolibre:state",
+      seq: enabledLoad.seq,
+      project: {
+        ...enabledLoad.project,
+        layers: enabledLoad.project.layers.map((layer) => ({
+          ...layer,
+          visible: true,
+          opacity: 0.6,
+          popup: { ...layer.popup, hover: false },
+        })),
+      },
+    });
+
+    rerender(<GeoLibreFrame project={hoverProject} />);
+    const disabledLoad = postMessage.mock.calls
+      .map(([message]) => message)
+      .filter((message) => message.type === "geolibre:load-project")
+      .at(-1);
+    expect(disabledLoad.project.layers[0]).toEqual(expect.objectContaining({
+      visible: true,
+      opacity: 0.6,
+      popup: expect.objectContaining({ hover: false }),
+    }));
+
+    rerender(<GeoLibreFrame project={hoverProject} hoverEnabled />);
+    const restoredLoad = postMessage.mock.calls
+      .map(([message]) => message)
+      .filter((message) => message.type === "geolibre:load-project")
+      .at(-1);
+    expect(restoredLoad.project.layers[0]).toEqual(expect.objectContaining({
+      visible: true,
+      opacity: 0.6,
+      popup: expect.objectContaining({ hover: false }),
+    }));
+  });
 
   it("reloads when only a group name changes", () => {
     const before = { ...project, layerGroups: [{ id: "lulc", name: "LULC by year", collapsed: true }] };
