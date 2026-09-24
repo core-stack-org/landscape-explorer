@@ -11,8 +11,9 @@ import {
   sanitizeGeoLibreProjectPlugins,
   withAverageDeltaG,
   withAverageNdvi,
-  withDroughtDryspellMean,
+  withLulcAreaFractions,
   withNormalizedTerrainCluster,
+  withTerrainAreaFractions,
   withSoilTextureClass,
   withAfforestationClass,
   withDeforestationClass,
@@ -25,14 +26,16 @@ import {
   withMwsFortnightClass,
   vectorFieldPresentation,
 } from "./geolibreProject";
-import GEOLIBRE_FIELD_METADATA from "../../config/geolibreFieldMetadata.json";
-import PRESENTATION from "../../config/geolibreLayerPresentation.json";
+import CATALOG from "../../config/geolibreCatalog.json";
+import { fieldDefinitionFor } from "../../config/geolibreFieldUnits";
+const GEOLIBRE_FIELD_METADATA = CATALOG.fieldMetadataBySource;
+const PRESENTATION = CATALOG.layers;
 import {
   GEOLIBRE_LAYERS,
   GEOLIBRE_NREGA_CATEGORIES,
 } from "../../config/geolibreLayers";
 import { createExpression } from "@maplibre/maplibre-gl-style-spec";
-import { resolvePopupRows, buildLayerPanelUnits } from "@geolibre/core";
+import { resolvePopupRows, resolvePopupTitle, buildLayerPanelUnits } from "@geolibre/core";
 
 const location = {
   state: "Assam",
@@ -117,7 +120,7 @@ beforeEach(() => {
 });
 
 describe("GeoLibre 2.6 project generation", () => {
-  it("matches the finalized CSV presentation manifest exactly", async () => {
+  it("matches the checked-in presentation catalog exactly", async () => {
     const project = await buildGeoLibreProject({ ...location });
     expect([...project.layers].reverse().map(layer => ({
       id: layer.id.replace(/^corestack-/, ""),
@@ -186,46 +189,25 @@ describe("GeoLibre 2.6 project generation", () => {
     expect(byId("livestock").metadata.corestack.defaultStyleUnit).toBe("count");
   });
 
-  it("colors drought causality from the joined mean dry spell and preserves the drought style", async () => {
+  it("hydrates complementary drought maps independently and preserves source records", async () => {
     const project = await buildGeoLibreProject({ ...location });
-    const originalDrought = project.layers.find(layer => layer.id === "corestack-drought");
-    const fetchFeatureCollection = jest.fn(async ({ typeName }) => ({
-      type: "FeatureCollection",
-      features: (typeName.includes("drought_causality")
-        ? [1, 2, 3, 4, 5, 6, 7].map((n) => ({ properties: { uid: `mws-${n}`, mild_2024: "B" }, geometry: null }))
-        : [1, 2, 3, 4, 5, 6, 7].map((n) => ({ properties: { uid: `mws-${n}`, avg_dryspell: 2 + n / 2 }, geometry: null }))),
-    }));
-    const hydrated = await hydrateGeoLibreVectorLayer({
-      project, layerId: "corestack-drought_causality", fetchFeatureCollection,
-    });
+    const raw = { se_mo_2024: '{"moderate_drought_path3":7}', mild_2024: '{"mild_drought_spi_score":3}' };
+    const fetchFeatureCollection = jest.fn(async () => ({ type: "FeatureCollection", features: [{ properties: raw, geometry: null }] }));
+    const hydrated = await hydrateGeoLibreVectorLayer({ project, layerId: "corestack-drought_causality", fetchFeatureCollection });
     const causality = hydrated.layers.find(layer => layer.id === "corestack-drought_causality");
-    expect(fetchFeatureCollection).toHaveBeenCalledTimes(2);
+    expect(fetchFeatureCollection).toHaveBeenCalledTimes(1);
     expect(causality.metadata.loadState).toBe("loaded");
-    expect(causality.style.vectorStyleProperty).toBe("avg_dryspell");
-    expect(causality.style.vectorStyleColorRamp).toBe("reds");
-    expect(causality.style.vectorStyleClassCount).toBe(6);
-    expect(causality.style.vectorStyleStops).toHaveLength(6);
-    expect(causality.style.vectorStyleStops.every(stop => stop.label.endsWith("weeks"))).toBe(true);
-    expect(causality.geojson.features[0].properties).toMatchObject({ uid: "mws-1", mild_2024: "B", avg_dryspell: 2.5 });
-    expect(causality.metadata.corestack.fields.avg_dryspell.unit).toBe("weeks");
-    const drought = hydrated.layers.find(layer => layer.id === "corestack-drought");
-    expect(drought.style).toEqual(originalDrought.style);
-    expect(drought.metadata.loadState).toBe("unloaded");
+    expect(causality.style.vectorStyleProperty).toBe("drought_dominant_impact");
+    expect(causality.style.vectorStyleMode).toBe("categorized");
+    expect(causality.geojson.features[0].properties).toMatchObject({ ...raw, drought_dominant_impact: "Moderate: VCI Fair/Good, MAI Severe, cropped area Severe" });
+    expect(causality.metadata.corestack.defaultStyleUnit).toBe("category");
+    expect(hydrated.layers.find(layer => layer.id === "corestack-drought").metadata.loadState).toBe("unloaded");
+    const severity = await hydrateGeoLibreVectorLayer({ project, layerId: "corestack-drought", fetchFeatureCollection: async () => ({ features: [{ properties: { drlb_2024: "[1,2,3]" } }] }) });
+    const drought = severity.layers.find(layer => layer.id === "corestack-drought");
+    expect(drought.geojson.features[0].properties.drought_peak_intensity).toBe("Severe drought");
+    expect(drought.style.vectorStyleStops.map(stop => stop.label)).toEqual(["No drought", "Mild drought", "Moderate drought", "Severe drought"]);
   });
 
-  it("keeps missing drought matches null and source cause fields intact", () => {
-    const causality = { type: "FeatureCollection", features: [
-      { properties: { uid: "one", mild_2024: "N" } },
-      { properties: { uid: "two", mild_2024: "B" } },
-    ] };
-    const drought = { type: "FeatureCollection", features: [
-      { properties: { uid: "one", avg_dryspell: 0 } },
-    ] };
-    expect(withDroughtDryspellMean(causality, drought).features.map(feature => feature.properties)).toEqual([
-      { uid: "one", mild_2024: "N", avg_dryspell: 0 },
-      { uid: "two", mild_2024: "B", avg_dryspell: null },
-    ]);
-  });
   it("gives every raster an explicit rasterStyle contract", () => {
     expect(
       GEOLIBRE_LAYERS.filter((layer) => layer.sourceType === "wms")
@@ -665,13 +647,7 @@ describe("GeoLibre 2.6 project generation", () => {
     const crop = Object.fromEntries(Array.from({ length: 8 }, (_, i) => [`cropping_intensity_${2017 + i}`, 2]));
     expect(color("cropping_intensity", crop)).toBe("#52ac5a");
     expect(color("cropping_intensity", { ...crop, cropping_intensity_2024: null })).toBe("#3b3b3b");
-    const drought = Object.fromEntries(Array.from({ length: 6 }, (_, i) => [[`w_mod_${2017 + i}`, 0], [`w_sev_${2017 + i}`, 0]]).flat());
-    expect(color("drought", drought)).toBe("#f4d03f");
-    expect(color("drought", { ...drought, w_mod_2017: 5 })).toBe("#f4d03f");
-    expect(color("drought", { ...drought, w_mod_2017: 6 })).toBe("#eb984e");
-    expect(color("drought", { ...drought, w_mod_2017: 6, w_sev_2018: 6 })).toBe("#e74c3c");
-    expect(color("drought", { ...drought, w_sev_2018: "" })).toBe("#3b3b3b");
-    expect(color("drought", { ...drought, w_mod_2023: 6, w_sev_2023: 6 })).toBe("#f4d03f");
+
   });
   it("classifies hydrated facilities using computed observations and serializes the same style", async () => {
     const project = await buildGeoLibreProject({ ...location, fetchFeatureCollection: successfulFetch });
@@ -700,7 +676,7 @@ describe("GeoLibre 2.6 project generation", () => {
     }) });
     const result = hydrated.layers.find(item => item.id === layer.id);
     expect(result.style.vectorStyleStops.length).toBeGreaterThan(0);
-    expect(result.style.vectorStyleStops.every(stop => stop.label.endsWith(" ha"))).toBe(true);
+    expect(result.style.vectorStyleStops.every(stop => stop.label.endsWith(" (ha)"))).toBe(true);
     expect(result.geojson.features.slice(6).map(feature => feature.properties.fill)).toEqual(["#3b3b3b", "#3b3b3b"]);
     expect(result.geojson.features[0].properties.fill).toBeUndefined();
   });
@@ -782,7 +758,7 @@ describe("GeoLibre 2.6 project generation", () => {
     expect(fields["Wide-scale"].unit).toBe("ha");
     expect(fields.new_measure.unit).toBe("unknown");
     expect(resolvePopupRows(properties, { popup }).map((row) => row.label)).toEqual([
-      "uid", "area_in_ha (ha)", "Wide-scale (ha)", "new_measure (unit unknown)",
+      `${fields.area_in_ha.description} (ha)`, "percent (ha)", "unique identifier", "new_measure (unknown)",
     ]);
     expect(GEOLIBRE_FIELD_METADATA.change_vector_ShrubChange.total_change.unit).toBe("ha");
     expect(GEOLIBRE_FIELD_METADATA.soil_type.subsoil_organic_carbon.unit).toBe("unknown");
@@ -819,7 +795,7 @@ describe("GeoLibre 2.6 project generation", () => {
 
     expect(project.version).toBe("0.2.0");
     expect(project.layers).toHaveLength(GEOLIBRE_LAYERS.length);
-    expect(project.layers).toHaveLength(86);
+    expect(project.layers).toHaveLength(85);
     expect(project.layers.every(layer => {
       const catalog = GEOLIBRE_LAYERS.find(item => `corestack-${item.id}` === layer.id);
       return layer.name === `${catalog.label}${catalog.category === "NA" ? "" : ` · ${catalog.category}`}`;
@@ -1931,4 +1907,160 @@ describe("Water Balance mm binning", () => {
     const data = { type: "FeatureCollection", features: [{ geometry: null, properties: { uid: "1", avg_delta_g: null } }] };
     expect(withMwsFortnightClass(data).features[0].properties.avg_delta_g_class).toBeNull();
   });
+});
+
+it("normalizes mean built-up area and keeps missing/zero-area polygons missing", () => {
+  const input = { features: [
+    { properties: { area_in_ha: 100, "built-up_area_2017": 10, "built-up_area_2024": "30", "built-up_area_2023": "" } },
+    { properties: { area_in_ha: 0, "built-up_area_2024": 3 } },
+    { properties: { area_in_ha: 10, "built-up_area_2024": 0 } },
+    { properties: { area_in_ha: 10 } },
+  ] };
+  expect(withLulcAreaFractions(input).features.map(f => f.properties.built_up_fraction)).toEqual([0.2, null, 0, null]);
+  expect(withLulcAreaFractions(input).features[0].properties.built_up_year_count).toBe(2);
+  expect(input.features[0].properties.built_up_fraction).toBeUndefined();
+});
+
+test("MWS boundary uses its published source, carries field meaning, hover and UID labels", async () => {
+  const project = await buildGeoLibreProject({ ...location });
+  const layer = project.layers.find(item => item.id === "corestack-hydrological_boundaries");
+  expect(layer.source.typeName).toBe("mws:mws_cachar_lakhipur");
+  expect(layer.source.url).toContain("/mws/ows");
+  expect(layer.style.labels).toMatchObject({ enabled: true, field: "uid" });
+  expect(layer.metadata.corestack.description).toContain("Micro watershed boundaries");
+  const properties = { uid: "12_317834", area_in_ha: 1566.88, bacode: "2A", sbcode: "BHG", wsconc: "C2ABHG01" };
+  const hydrated = await hydrateGeoLibreVectorLayer({ project, layerId: layer.id, fetchFeatureCollection: async () => ({ features: [{ properties, geometry: null }] }) });
+  const ready = hydrated.layers.find(item => item.id === layer.id);
+  expect(ready.metadata.corestack.fields).toMatchObject({
+    uid: { description: GEOLIBRE_FIELD_METADATA.mws.uid.description },
+    area_in_ha: { unit: "ha" },
+    bacode: { description: GEOLIBRE_FIELD_METADATA.mws.bacode.description },
+    sbcode: { description: GEOLIBRE_FIELD_METADATA.mws.sbcode.description },
+    wsconc: { description: GEOLIBRE_FIELD_METADATA.mws.wsconc.description },
+  });
+  expect(ready.popup.hover).toBe(true);
+  expect(resolvePopupRows(properties, { popup: ready.popup, hover: true })).toEqual([]);
+  expect(resolvePopupTitle(ready.name, properties, ready.popup)).toBe("MWS ID: 12_317834");
+});
+
+test("all vector layers carry finalized hover titles or fields and preserve click attributes", async () => {
+  const project = await buildGeoLibreProject({ ...location });
+  const vectors = project.layers.filter(layer => layer.type === "geojson");
+  expect(vectors).toHaveLength(44);
+  expect(vectors.every(layer => layer.popup?.hover && (layer.popup.fields.some(field => field.hover) || layer.popup.titleExpression))).toBe(true);
+  expect(vectors.some(layer => layer.id === "corestack-ndvi_combined_stats")).toBe(false);
+  const admin = vectors.find(layer => layer.id === "corestack-administrative_boundaries");
+  expect(JSON.parse(admin.popup.titleExpression)[0]).toBe("case");
+  expect(resolvePopupTitle(admin.name, { vill_name: "A", vill_ID: 0 }, admin.popup)).toBe("A");
+  expect(resolvePopupTitle(admin.name, { vill_name: "A", vill_ID: 12 }, admin.popup)).toBe("A (VillageID: 12)");
+  expect(admin.popup.fields).toEqual([]);
+});
+
+test("finalized hover patterns, year order, and terrain ratios use verified fields", () => {
+  const presentation = (id, properties) => vectorFieldPresentation(
+    GEOLIBRE_LAYERS.find(layer => layer.id === id), { features: [{ properties }] }
+  ).popup;
+  const hover = (properties, popup) => resolvePopupRows(properties, { popup, hover: true }).map(row => row.field);
+
+  const facilities = { village_id: 23, village_name: "B", l2_school_distance_km: 2, l2_health_distance_km: 4, l3_school_distance_km: 1 };
+  const facilitiesPopup = presentation("facilities", facilities);
+  expect(hover(facilities, facilitiesPopup)).toEqual(["l2_school_distance_km", "l2_health_distance_km"]);
+  expect(resolvePopupTitle("Facilities", facilities, facilitiesPopup)).toBe("B (VillageID: 23)");
+
+  const waterbody = { UID: "WB1", waterbody_type: "Pond", area_ored: 3, "area_17-18": 2, "area_24-25": 4, "area_23-24": 5 };
+  const waterbodyPopup = presentation("remote_sensed_waterbodies", waterbody);
+  expect(hover(waterbody, waterbodyPopup)).toEqual(["waterbody_type", "area_ored", "area_24-25", "area_23-24", "area_17-18"]);
+  expect(resolvePopupTitle("Waterbody", waterbody, waterbodyPopup)).toBe("WaterBodyID: WB1");
+
+  const terrain = withTerrainAreaFractions({ features: [{ properties: { uid: "M1", area_in_ha: 100, terrainClu: 2, hill_slope: 20, plain_area: 50, ridge_area: 10, slopy_area: 15, valley_are: 5 } }] }).features[0].properties;
+  const terrainPopup = presentation("terrain_vector", terrain);
+  expect(hover(terrain, terrainPopup)).toEqual(["terrainClu", "hill_slope/area_in_ha", "plain_area/area_in_ha", "ridge_area/area_in_ha", "slopy_area/area_in_ha", "valley_are/area_in_ha"]);
+  expect(terrain["hill_slope/area_in_ha"]).toBe(0.2);
+  expect(resolvePopupTitle("Terrain", terrain, terrainPopup)).toBe("MWS ID: M1");
+  expect(withTerrainAreaFractions({ features: [{ properties: { area_in_ha: 0, hill_slope: 2 } }] })
+    .features[0].properties["hill_slope/area_in_ha"]).toBeNull();
+
+  const canal = { canname: "Canal A", area_in_ha: 12 };
+  const canalPopup = presentation("canal", canal);
+  expect(hover(canal, canalPopup)).toEqual([]);
+  expect(resolvePopupTitle("Canal", canal, canalPopup)).toBe("Canal A . Total Area: 12 ha");
+  const river = { rivname: "River A", ripcode: "R1" };
+  const riverPopup = presentation("river", river);
+  expect(resolvePopupTitle("River", river, riverPopup)).toBe("River");
+  expect(hover(river, riverPopup)).toEqual(["rivname", "ripcode"]);
+});
+
+test("LULC tooltip uses five measured area shares and legend omits unit text", async () => {
+  const project = await buildGeoLibreProject({ ...location });
+  const data = { features: [{ properties: {
+    uid: "one", area_in_ha: 100, "built-up_area_2024": 10,
+    k_water_area_2024: 2, kr_water_area_2024: 3, krz_water_area_2024: 5,
+    cropland_area_2024: 20, barrenlands_area_2024: 30, tree_forest_area_2024: 40,
+  }, geometry: null }] };
+  const derived = withLulcAreaFractions(data).features[0].properties;
+  expect([derived.built_up_fraction, derived.k_water_fraction, derived.cropland_fraction, derived.barrenlands_fraction, derived.tree_forest_fraction]).toEqual([0.1, 0.1, 0.2, 0.3, 0.4]);
+  expect(withLulcAreaFractions({ features: [{ properties: { area_in_ha: 100, k_water_area_2024: 2, kr_water_area_2024: 3 } }] }).features[0].properties.k_water_fraction).toBeNull();
+  const hydrated = await hydrateGeoLibreVectorLayer({ project, layerId: "corestack-lulc_stats", fetchFeatureCollection: async () => data });
+  const layer = hydrated.layers.find(item => item.id === "corestack-lulc_stats");
+  expect(resolvePopupRows(layer.geojson.features[0].properties, { popup: layer.popup, hover: true }).map(row => row.field)).toEqual([
+    "built_up_fraction", "k_water_fraction", "cropland_fraction", "barrenlands_fraction", "tree_forest_fraction",
+  ]);
+  expect(layer.style.vectorStyleStops.every(stop => !stop.label.includes("dimensionless"))).toBe(true);
+  expect(layer.metadata.corestack.fields.built_up_fraction.unit).toBe("dimensionless");
+});
+
+test("catalog descriptions pass through unchanged for exact fields", () => {
+  const metadata = { sample: {
+    area_2023: { unit: "ha", description: "Short area name" },
+    drought_peak_intensity: { unit: "NA", description: "Peak" },
+  } };
+  const layer = { id: "drought", unitSources: ["sample"] };
+  expect(fieldDefinitionFor(layer, "area_2024", metadata)).toBeNull();
+  expect(fieldDefinitionFor(layer, "drought_peak_intensity", metadata)).toBe(metadata.sample.drought_peak_intensity);
+  metadata.sample.drought_peak_intensity.description = "My edited description";
+  expect(fieldDefinitionFor(layer, "drought_peak_intensity", metadata).description).toBe("My edited description");
+});
+
+test("popup formats floating measurements to three decimals while preserving source values and identifiers", () => {
+  const layer = GEOLIBRE_LAYERS.find(item => item.id === "tree_in_grassland");
+  const properties = { uid: "001234", area_in_ha: 168.450584, shrubland_area_in_ha: "80.386653", isolated_shrub_area_in_ha: 2 };
+  const data = { features: [{ properties }, { properties: { isolated_shrub_area_in_ha: 2.123456 } }] };
+  const before = JSON.stringify(data);
+  const { popup } = vectorFieldPresentation(layer, data);
+  const rows = Object.fromEntries(resolvePopupRows(properties, { popup }).map(row => [row.field, row]));
+  expect(rows.area_in_ha).toMatchObject({ label: `${CATALOG.fieldMetadataBySource.tree_in_grassland.area_in_ha.description} (ha)`, text: "168.451" });
+  expect(rows.shrubland_area_in_ha).toMatchObject({ label: `${CATALOG.fieldMetadataBySource.tree_in_grassland.shrubland_area_in_ha.description} (ha)`, text: "80.387" });
+  expect(rows.isolated_shrub_area_in_ha.text).toBe("2.000");
+  expect(rows.uid.text).toBe("001234");
+  expect(JSON.stringify(data)).toBe(before);
+});
+
+test("hover uses field names while click uses authored descriptions for the same source field", () => {
+  const layer = GEOLIBRE_LAYERS.find(item => item.id === "tree_in_grassland");
+  const properties = { uid: "4_77213", isolated_shrub_area_in_ha: 75.66128 };
+  const { popup } = vectorFieldPresentation(layer, { features: [{ properties }] });
+  const clicked = resolvePopupRows(properties, { popup });
+  const hovered = resolvePopupRows(properties, { popup, hover: true });
+  expect(clicked.find(row => row.field === "isolated_shrub_area_in_ha")).toMatchObject({
+    label: `${CATALOG.fieldMetadataBySource.tree_in_grassland.isolated_shrub_area_in_ha.description} (ha)`,
+    text: "75.661",
+  });
+  expect(hovered.find(row => row.field === "isolated_shrub_area_in_ha")).toMatchObject({
+    label: "isolated_shrub_area_in_ha (ha)", text: "75.661",
+  });
+  expect(hovered.map(row => row.field)).toEqual(["isolated_shrub_area_in_ha"]);
+});
+
+test("auto hover mode uses descriptions only when every selected description fits", () => {
+  const layer = GEOLIBRE_LAYERS.find(item => item.id === "tree_in_grassland");
+  const withAuto = { ...layer, tooltip: { ...layer.tooltip, hoverLabelMode: "auto" } };
+  const long = { uid: "4_77213", isolated_shrub_area_in_ha: 4 };
+  const { popup } = vectorFieldPresentation(withAuto, { features: [{ properties: long }] });
+  expect(resolvePopupRows(long, { popup, hover: true })[0].label).toBe("isolated_shrub_area_in_ha (ha)");
+  const shortLayer = { ...layer, tooltip: { fields: ["area_in_ha"], hoverLabelMode: "auto" } };
+  const short = { area_in_ha: 4 };
+  const shortPopup = vectorFieldPresentation(shortLayer, { features: [{ properties: short }] }).popup;
+  expect(resolvePopupRows(short, { popup: shortPopup, hover: true })[0].label).toBe(
+    `${CATALOG.fieldMetadataBySource.tree_in_grassland.area_in_ha.description} (ha)`,
+  );
 });

@@ -104,8 +104,9 @@ sequenceDiagram
    WFS layer. GeoLibre handles native vector legends; KYL provides raster legends.
 5. **Loading:** only Terrain's WMS capabilities run at startup. Feature data is never preloaded; every
    vector hydrates once on first toggle, and rasters remain native lazy WMS layers.
-6. **Units:** the public field dictionary comes from the local STAC unit CSV,
-   with documented corrections and conservative year/field-name rules. Exact
+6. **Descriptions and units:** `src/config/geolibreCatalog.json` is the editable
+   source for display wording. Its field dictionary comes from the column sheet
+   of `stac_specs.xlsx`, with authored catalog edits retained. Exact
    GeoServer column names remain unchanged. After hydration, units appear in
    popup labels and `metadata.corestack.fields`; structured records are `mixed`
    and unresolved numeric measures are explicitly `unknown`. The public
@@ -140,7 +141,7 @@ creating separate Level 1, Level 2, and Level 3 presentations. This named style
 is rendered through GeoServer's global WMS endpoint; downloads continue to use
 the single Level 3 WCS coverage.
 
-The catalog has 86 entries: 41 WMS rasters and 45 vector presentations.
+The catalog has 85 entries: 41 WMS rasters and 44 vector presentations.
 Trees contains canopy density and height for every published year (2017–2023,
 newest first), tree-cover NDVI, forest change, grassland trees, forest fringe,
 afforestation/deforestation base/statistics pairs, and NREGA plantation assets.
@@ -148,18 +149,72 @@ Base/statistics partners appear consecutively in the top-first layer list for
 Terrain, Soil Health, five Change Detection themes, Restoration Atlas, and the
 LULC statistics after the yearly rasters. Suffixes follow the finalized CSV;
 reference layers have no suffix. Shrubland Diversion has a pending raster
-entry and a published statistics vector. The four NDVI variants are included
-as specified by the CSV; combined NDVI was observed in only one of four
-sample tehsils and may fail to load where unpublished. Dated NDVI columns and
-their derived display mean are dimensionless. The private
-`.local/units/layers_used_sugestions.csv` records source patterns and style
-publication status.
+entry and a published statistics vector. The three published NDVI variants
+remain; the combined NDVI entry was removed as requested in the finalized CSV.
+Dated NDVI columns and their derived display mean are dimensionless.
 
-To refresh the public unit dictionary after editing the local source CSV, run
-`python3 scripts/geolibre/generateFieldMetadata.py`. To recheck publication
-and field coverage in the four sample tehsils, run
-`node scripts/geolibre/auditFieldCoverage.mjs`. Neither command copies feature
-values or the private source CSV into the public bundle.
+The checked-in `src/config/geolibreCatalog.json` contains presentation and
+source-backed field definitions. The private workbook and authoring CSV are
+not loaded by the application or its start, test, and build commands.
+The workbook supplied descriptions for 2,093 vector-column records and 40
+source layers; other catalog descriptions are limited to what the published
+layer names, fields, and established methods support. Previously reviewed
+units take precedence where workbook units conflict with live field semantics.
+
+MicroWatershed Boundaries reads `mws:mws_{district}_{tehsil}` through the
+workspace WFS endpoint. Its published WMS map is a view of the same feature
+type. The vector source supplies `uid` labels and the basin and watershed
+attributes used by the hover tooltip. All 44 vector presentations configure
+hover titles or fields; the click popup continues to expose the full attributes.
+Hover follows the finalized CSV field selection, expands matching field patterns,
+and uses source descriptions as labels when available. LULC statistics show
+their own measured area shares, and Terrain Clusters shows area ratios from its
+published fields. Raster layers retain their existing identify behavior.
+
+Edit field descriptions in `fieldMetadataBySource` in `geolibreCatalog.json`.
+The popup uses the description verbatim and appends the unit in parentheses;
+without a description it uses the original field name. Matching an older
+year or an equivalent source field reuses that catalog description unchanged.
+There are no generated description overrides in JavaScript. `area_in_ha`
+uses `Total Area of MWS in Hectares`; the `common` dictionary provides it for
+sources without their own entry. Floating columns use GeoLibre's native
+`kind: "number", format: { decimals: 3 }`; source properties stay unchanged.
+Graduated legend labels also show at most three decimals.
+
+Layer descriptions reference `layerDescriptionsBySource` through each layer's
+`descriptionKey`. That dictionary contains the workbook's first sheet. Layers
+without a matching workbook entry have a short, editable `description` in the
+same catalog file.
+
+The project requests `popup.maxWidth: 480`. GeoLibre's current hover renderer
+still caps its shell at 280px and prevents labels from shrinking; the width
+setting currently affects click popups. `upstream/hover-tooltip-layout.patch`
+adds wrapping and honors the configured width in the public viewer's MapLibre,
+Mapbox and Cesium hover paths. The hosted viewer needs that upstream change
+before wider, wrapping hover tooltips can take effect.
+
+`droughtPresentation.js` adds display summaries after GeoServer data loads:
+
+| Display field | Direct source and calculation |
+|---|---|
+| `drought_peak_<year>` | Highest class in the published `drlb_<year>` weekly JSON array: 0 No drought, 1 Mild drought, 2 Moderate drought, 3 Severe drought. Missing or malformed weekly data produces no class. |
+| `drought_peak_intensity` | Highest valid annual peak across the available years. This annual maximum is a GeoLibre summary, not a published classification or drought declaration. |
+| `drought_impact_<year>` | Parse `se_mo_<year>`, which contains up to three published moderate/severe pathway counts. Combine the documented path IDs into crop/soil/vegetation impact groups, then show the group with the largest recorded count; preserve ties. |
+| `drought_dominant_impact` | Sum those recorded group counts across valid years and select the largest group. This grouping and cross-year summary are GeoLibre presentation choices, not source fields or an official causal finding. |
+
+`frth2_<year>` is the published number of moderate or severe weeks, so the
+tooltip uses that field directly. The causality legend names the VCI, MAI and
+cropped-area combinations in the source pathway definitions. Annual and
+cross-year peak/impact fields are display summaries; no alternate source
+fields are used when a published JSON record is missing or malformed.
+
+The documented potential drought-year screen of more than five moderate plus
+severe weeks is not applied to the map style; a field decision is still needed
+for an official declaration. `withLulcAreaFractions` in `geolibreProject.js`
+divides mean annual class areas by `area_in_ha`; the seasonal water share
+requires all three water classes in a given year. Original source fields and
+names remain intact. GeoLibre styles and tooltips consume these local derived
+properties after hydration.
 
 The project camera is calculated from the Terrain coverage's GeoServer-advertised
 geographic extent using a padded Web Mercator fit. `mapView.bbox` is also retained in project metadata,
@@ -237,28 +292,22 @@ application.
 |---|---|
 | `../../config/geolibre.config.js` | Viewer application version, URL resolution, strict handshake compatibility |
 | `../../config/geolibreLayers.js` | GeoServer names, deployed domains, raster `rasterStyle` values, and all LULC years |
-| `../../config/geolibreLayerPresentation.json` | Checked-in deployment copy of the finalized private layer CSV order, labels, suffixes, and groups |
+| `../../config/geolibreCatalog.json` | Checked-in layer presentation, descriptions, and field definitions |
 | `geolibreProject.js` | Project generation, legends, Google imagery, vector hydration, GeoServer style/WFS/WMS/WCS references, bbox camera, and date-record JSON parsing |
 | `GeoLibreFrame.jsx` | Iframe bridge, one-time bbox fit, human error states and downloadable bounded technical log |
 | `../../pages/LandscapeExplorer.jsx` | Route-to-project orchestration and fetch-on-first-toggle vector cache; no duplicate map or layer UI |
 
-The current project contains 86 entries: 45 vector entries, 8 LULC yearly
+The current project contains 85 entries: 44 vector entries, 8 LULC yearly
 rasters, and 33 other rasters. Initial startup performs one Terrain WMS
 GetCapabilities request, then displays Terrain. Each vector makes its own WFS
 request only on its first toggle. Hidden rasters make no WMS tile
 request.
 
-The private `.local/units/layers_used_sugestions.csv` is the presentation
-source of truth. The public JSON manifest preserves its exact row order,
-grouping, names, and suffixes in deployments where `.local` is excluded.
-`npm start`, `npm run build`, and `npm test` automatically synchronize the
-manifest when the private CSV exists. To synchronize explicitly, run
-`node scripts/geolibre/syncLayerPresentation.cjs`. Deployments without `.local`
-use the committed manifest. The catalog validates source IDs and patterns
-against it; styles and default visibility are read from it as well.
-The CSV includes `changes_made`, `Default property shown`, and a populated
-style availability/action for every row marked `new`. A boundary or single
-colour profile explicitly records that no thematic property is selected.
+The checked-in catalog is the application source of truth for layer order,
+names, sources, descriptions, units, styles, and tooltip definitions. The
+private workbook and CSV can inform deliberate catalog edits, but never run
+as part of the application lifecycle. The catalog validates source IDs and
+patterns against the layer definitions.
 The additional six published rasters use GeoServer's named styles. The
 Shrubland Diversion raster and proposed `change_shrubland_diversion_style`
 remain unpublished; its one legend item is only a placeholder, not a binning

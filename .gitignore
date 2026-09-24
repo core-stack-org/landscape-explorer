@@ -5,3 +5,12 @@ build/
 bun.lock
 
 src/pages/DemContourMap.jsx
+
+.kilo/
+.local/
+.tests/
+artifacts/
+docs/
+scripts/
+.integrations/
+.codex/
