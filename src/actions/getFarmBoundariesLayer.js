@@ -12,7 +12,7 @@ const BUCKET_URL = 'https://corestack-farm-dataset.s3.ap-south-1.amazonaws.com';
 // when both are on screen at once.
 const farmStyle = new Style({
   stroke: new Stroke({ color: 'rgba(255, 179, 0, 1)', width: 1.5 }),
-  fill: new Fill({ color: 'rgba(255, 179, 0, 0.12)' }),
+  fill: new Fill({ color: 'rgba(255, 179, 0, 0.01)' }),
 });
 
 function buildPmtilesUrl(stateLabel, districtLabel, blockLabel) {
@@ -31,7 +31,7 @@ export default async function getFarmBoundariesLayer(stateLabel, districtLabel, 
   // as a toggle error.
   await pmtilesFile.getHeader();
 
-  const tileGrid = createXYZ({ minZoom: 4, maxZoom: 14 });
+  const tileGrid = createXYZ({ minZoom: 8, maxZoom: 16 });
 
   const source = new VectorTileSource({
     format: new MVT(),
@@ -39,18 +39,48 @@ export default async function getFarmBoundariesLayer(stateLabel, districtLabel, 
     tileUrlFunction: (tileCoord) => tileCoord.join('/'),
     tileLoadFunction: (tile) => {
       const [z, x, y] = tile.getTileCoord();
+
+      const start = performance.now();
+
       pmtilesFile.getZxy(z, x, y)
         .then((response) => {
-          if (!response?.data) { tile.setFeatures([]); return; }
-          const tileExtent = tileGrid.getTileCoordExtent(tile.getTileCoord());
+
+          const afterFetch = performance.now();
+
+          if (!response?.data) {
+            tile.setFeatures([]);
+            return;
+          }
+
+          const tileExtent =
+            tileGrid.getTileCoordExtent(tile.getTileCoord());
+
           const features = new MVT().readFeatures(response.data, {
             extent: tileExtent,
             featureProjection: 'EPSG:3857',
           });
+
+          const afterDecode = performance.now();
+
           tile.setFeatures(features);
+
+          const afterSet = performance.now();
+
+          console.log({
+            tile: [z, x, y],
+            bytes: response.data.byteLength,
+            features: features.length,
+            fetchMs: afterFetch - start,
+            decodeMs: afterDecode - afterFetch,
+            setFeaturesMs: afterSet - afterDecode,
+            totalMs: afterSet - start,
+          });
         })
-        .catch(() => tile.setFeatures([]));
-    },
+        .catch((error) => {
+          console.error('PMTiles tile error', error);
+          tile.setFeatures([]);
+        });
+      }
   });
 
   return new VectorTileLayer({

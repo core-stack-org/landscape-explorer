@@ -25,6 +25,7 @@ import getFarmBoundariesLayer from '../actions/getFarmBoundariesLayer.js';
 import Overlay from 'ol/Overlay';
 import getFarmTimeseries from '../actions/getFarmTimeseries.js';
 
+
 const KYLRightSidebar = ({
   state,
   district,
@@ -88,8 +89,11 @@ const KYLRightSidebar = ({
   const plansLayerRef = React.useRef(null);
   const [stewards, setStewards] = React.useState([]);
   const [selectedStewardProfile, setSelectedStewardProfile] = React.useState(null);
+
   const farmBoundariesLayerRef = React.useRef(null);
   const [farmBoundariesLoading, setFarmBoundariesLoading] = React.useState(false);
+  const farmAreaThresholdRef = React.useRef(0);
+  const [farmAreaThreshold, setFarmAreaThreshold] = React.useState(0);
 
   const farmPopupOverlayRef = React.useRef(null);
   const showFarmDetailsRef = React.useRef(() => {});
@@ -324,6 +328,8 @@ const KYLRightSidebar = ({
       farmBoundariesLayerRef.current = null;
     }
     setShowFarmBoundaries(false);
+    farmAreaThresholdRef.current = 0;
+    setFarmAreaThreshold(0);
   }, [state, district, block]);
 
   useEffect(() => {
@@ -587,6 +593,8 @@ const KYLRightSidebar = ({
       farmPopupOverlayRef.current?.setPosition(undefined);
       setSelectedFarmProperties(null);
       setShowFarmBoundaries(false);
+      farmAreaThresholdRef.current = 0;
+      setFarmAreaThreshold(0);
       return;
     }
 
@@ -600,6 +608,18 @@ const KYLRightSidebar = ({
     try {
       const layer = await getFarmBoundariesLayer(state.label, district.label, block.label);
       layer.setZIndex(20);
+
+      const farmStyle = new Style({
+        stroke: new Stroke({ color: 'rgba(255, 179, 0, 1)', width: 1.5 }),
+        fill: new Fill({ color: 'rgba(255, 179, 0, 0.12)' }),
+      });
+
+      layer.setStyle((feature) => {
+        const area = feature.get('area_m2');
+        if (area == null || area < farmAreaThresholdRef.current) return null;
+        return farmStyle;
+      });
+
       farmBoundariesLayerRef.current = layer;
       mapRef.current.addLayer(layer);
       setShowFarmBoundaries(true);
@@ -609,6 +629,13 @@ const KYLRightSidebar = ({
     } finally {
       setFarmBoundariesLoading(false);
     }
+  };
+
+  const handleFarmAreaThresholdChange = (e) => {
+    const value = Number(e.target.value);
+    farmAreaThresholdRef.current = value;
+    setFarmAreaThreshold(value);
+    farmBoundariesLayerRef.current?.changed();
   };
 
   const fetchPlansByTehsil = async (block) => {
@@ -2625,7 +2652,7 @@ const sheet5Count =
                     Tehsil Report
                   </button>
 
-                        <button
+                  <button
                     onClick={toggleWaterbodies}
                     disabled={isLoading || !mwsLayerRef?.current}
                     className={`flex items-center justify-center gap-1.5 py-2 text-xs font-semibold rounded-lg transition-colors border ${
@@ -2703,8 +2730,8 @@ const sheet5Count =
                     {showPlans ? "Hide Plans" : "Plans"}
                     </button>
 
-                         <button
-                  onClick={handleStewardsClick}
+                  <button
+                    onClick={handleStewardsClick}
                     disabled={isLoading || !mwsLayerRef?.current}
                     className={`flex items-center justify-center gap-1.5 py-2 text-xs font-semibold rounded-lg transition-colors border ${
                       (isLoading || !mwsLayerRef?.current)
@@ -2798,6 +2825,24 @@ const sheet5Count =
                     {farmBoundariesLoading ? 'Loading…' : showFarmBoundaries ? 'Hide Farm Boundaries' : 'Show Farm Boundaries'}
                   </button>
                 </div>
+
+                {showFarmBoundaries && (
+                  <div className="mt-2 px-1">
+                    <div className="flex justify-between items-center mb-1">
+                      <label className="text-[11px] font-semibold text-gray-500">Min Farm Area</label>
+                      <span className="text-[11px] font-semibold text-indigo-600">{farmAreaThreshold} m²</span>
+                    </div>
+                    <input
+                      type="range"
+                      min={0}
+                      max={5000}
+                      step={100}
+                      value={farmAreaThreshold}
+                      onChange={handleFarmAreaThresholdChange}
+                      className="w-full accent-indigo-600"
+                    />
+                  </div>
+                )}
               </div>
             )}
           </div>
