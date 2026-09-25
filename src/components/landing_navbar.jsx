@@ -125,7 +125,7 @@ const LandingNavbar = ({ downloadScope = null }) => {
                   </a>
                 </HeaderTooltip>
 
-                <HeaderTooltip text="Learn how to download CoRE Stack layers and open them in QGIS.">
+                <HeaderTooltip text="Learn how to use GeoLibre with CoRE Stack.">
                   <a
                     href="https://docs.google.com/document/d/11wW9kKSCGzXQk4WAvPsKXkOMLWVYuZX_BmxS7xLLaQg/"
                     target="_blank"
