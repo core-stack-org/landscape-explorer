@@ -42,6 +42,30 @@ export const formatGeoLibreLog = (entries) =>
     ),
   ].join("\n");
 
+const rememberLayerHoverStates = (project, hoverStates, overwrite) => {
+  for (const layer of project?.layers || []) {
+    if (!layer.popup || (!overwrite && hoverStates.has(layer.id))) continue;
+    hoverStates.set(layer.id, layer.popup.hover === true);
+  }
+};
+
+// Keep the global switch UI-agnostic. The host can expose this later by
+// controlling `hoverEnabled`; until then the default keeps every hover off.
+export const applyGlobalHoverState = (project, enabled, hoverStates) => {
+  if (!project?.layers) return project;
+  let changed = false;
+  const layers = project.layers.map((layer) => {
+    if (!layer.popup) return layer;
+    const hover = enabled
+      ? hoverStates.get(layer.id) ?? layer.popup.hover === true
+      : false;
+    if (layer.popup.hover === hover) return layer;
+    changed = true;
+    return { ...layer, popup: { ...layer.popup, hover } };
+  });
+  return changed ? { ...project, layers } : project;
+};
+
 // Visibility and opacity are live viewer state. They must not cause a full
 // project replacement, because GeoLibre would tear down and recreate native
 // raster sources that are already resident in the map. Keep only fields that
@@ -80,11 +104,17 @@ const GeoLibreFrame = ({
   onRetry,
   onProjectState,
   onWorkspaceReady,
+  hoverEnabled = false,
 }) => {
   const frameRef = useRef(null);
   const bridgeRef = useRef(null);
   const sentSignatureRef = useRef("");
   const technicalLogRef = useRef([]);
+  const liveProjectRef = useRef(project);
+  const hoverStatesRef = useRef(new Map());
+  const hoverEnabledRef = useRef(hoverEnabled);
+  const previousHoverEnabledRef = useRef(hoverEnabled);
+  hoverEnabledRef.current = hoverEnabled;
   const callbacksRef = useRef({ onProjectState, onWorkspaceReady });
   callbacksRef.current = { onProjectState, onWorkspaceReady };
   const [viewerState, setViewerState] = useState("loading");
@@ -143,7 +173,24 @@ const GeoLibreFrame = ({
         if (issue !== undefined) setViewerIssue(issue);
         if (version) setViewerVersion(version);
       },
-      onProjectState: snapshot => callbacksRef.current.onProjectState?.(snapshot),
+      onProjectState: snapshot => {
+        rememberLayerHoverStates(
+          snapshot,
+          hoverStatesRef.current,
+          hoverEnabledRef.current
+        );
+        const effectiveProject = applyGlobalHoverState(
+          snapshot,
+          hoverEnabledRef.current,
+          hoverStatesRef.current
+        );
+        liveProjectRef.current = effectiveProject;
+        if (effectiveProject !== snapshot) {
+          sentSignatureRef.current = geoLibreProjectLoadSignature(effectiveProject);
+          bridgeRef.current?.load(effectiveProject);
+        }
+        callbacksRef.current.onProjectState?.(effectiveProject);
+      },
       onReady: timing => callbacksRef.current.onWorkspaceReady?.(timing),
     });
     bridgeRef.current = bridge;
@@ -161,11 +208,31 @@ const GeoLibreFrame = ({
   }, [addTechnicalLog, viewer.origin, viewer.url]);
 
   useEffect(() => {
-    const signature = geoLibreProjectLoadSignature(project);
+    const previousHoverEnabled = previousHoverEnabledRef.current;
+    const hoverSettingChanged = previousHoverEnabled !== hoverEnabled;
+    const sourceProject = hoverSettingChanged
+      ? liveProjectRef.current || project
+      : project;
+    if (previousHoverEnabled && !hoverEnabled) {
+      rememberLayerHoverStates(sourceProject, hoverStatesRef.current, true);
+    }
+    rememberLayerHoverStates(
+      sourceProject,
+      hoverStatesRef.current,
+      hoverEnabled && !hoverSettingChanged
+    );
+    const effectiveProject = applyGlobalHoverState(
+      sourceProject,
+      hoverEnabled,
+      hoverStatesRef.current
+    );
+    previousHoverEnabledRef.current = hoverEnabled;
+    liveProjectRef.current = effectiveProject;
+    const signature = geoLibreProjectLoadSignature(effectiveProject);
     if (!bridgeRef.current || sentSignatureRef.current === signature) return;
     sentSignatureRef.current = signature;
-    bridgeRef.current.load(project);
-  }, [project]);
+    bridgeRef.current.load(effectiveProject);
+  }, [hoverEnabled, project]);
 
   const activeIssue = viewer.error
     ? "unavailable"

@@ -1,4 +1,6 @@
-import PRESENTATION from "./geolibreLayerPresentation.json";
+import CATALOG from "./geolibreCatalog.json";
+
+const PRESENTATION = CATALOG.layers;
 
 const LULC_SOURCE_WORKSPACE = "LULC_level_3";
 
@@ -127,10 +129,9 @@ const LAYERS = [
     domain: "Hydrology",
     loadGroup: "hydrology",
     sourceType: "wfs",
-    workspace: "mws_layers",
+    workspace: "mws",
     geometryType: "polygon",
-    layerName: ({ district, tehsil }) =>
-      `deltaG_well_depth_${district}_${tehsil}`,
+    layerName: ({ district, tehsil }) => `mws_${district}_${tehsil}`,
     styleProfile: "boundary",
   },
   {
@@ -263,7 +264,7 @@ const LAYERS = [
   },
   {
     id: "drought",
-    label: "Drought",
+    label: "Drought Severity",
     domain: "Agriculture",
     loadGroup: "agriculture",
     sourceType: "wfs",
@@ -676,13 +677,12 @@ const LAYERS = [
     workspace: "lulc_vector",
     geometryType: "polygon",
     layerName: ({ district, tehsil }) => `lulc_vector_${district}_${tehsil}`,
-    styleProfile: "boundary",
+    styleProfile: "lulc_stats",
   },
   ...[
     { id: "ndvi_crop_stats", label: "NDVI · Cropland", suffix: "_crop" },
     { id: "ndvi_shrub_stats", label: "NDVI · Shrubland", suffix: "_shrub" },
     { id: "ndvi_tree_stats", label: "NDVI · Tree Cover", suffix: "_tree" },
-    { id: "ndvi_combined_stats", label: "NDVI · Fortnight", suffix: "" },
   ].map((entry) => ({
     id: entry.id,
     label: entry.label,
@@ -717,7 +717,7 @@ const UNIT_SOURCES_BY_ID = {
   facilities: ["facilities_proximity"],
   antyodaya: ["cs_antyodaya_2020"],
   livestock: ["cs_village_livestock_census_20"],
-  hydrological_boundaries: ["well_depth_net_value", "filtered_delta_g_annual_uid"],
+  hydrological_boundaries: ["mws"],
   mws_layers: ["well_depth_net_value", "filtered_delta_g_annual_uid"],
   mws_layers_fortnight: ["filtered_delta_g_fortnight_uid"],
   terrain_vector: ["terrain_clusters"],
@@ -746,7 +746,6 @@ const UNIT_SOURCES_BY_ID = {
   ndvi_crop_stats: ["ndvi_timeseries"],
   ndvi_shrub_stats: ["ndvi_timeseries"],
   ndvi_tree_stats: ["ndvi_timeseries"],
-  ndvi_combined_stats: ["ndvi_timeseries"],
   drought_causality: ["drought_causality"],
   tree_in_grassland: ["tree_in_grassland"],
   forest_fringe: ["forest_fringe"],
@@ -779,6 +778,10 @@ export const GEOLIBRE_LAYERS = Object.freeze(catalog.map((layer) => ({
   domain: PRESENTATION_BY_ID.get(layer.id).groupName,
   defaultVisible: PRESENTATION_BY_ID.get(layer.id).defaultVisible,
   defaultProperty: PRESENTATION_BY_ID.get(layer.id).defaultProperty,
+  tooltip: PRESENTATION_BY_ID.get(layer.id).tooltip || null,
+  description: PRESENTATION_BY_ID.get(layer.id).description
+    || CATALOG.layerDescriptionsBySource[PRESENTATION_BY_ID.get(layer.id).descriptionKey]
+    || null,
   ...(layer.sourceType === "wms"
     ? { rasterStyle: PRESENTATION_BY_ID.get(layer.id).style }
     : { styleProfile: PRESENTATION_BY_ID.get(layer.id).style }),

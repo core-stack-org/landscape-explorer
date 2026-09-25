@@ -92,7 +92,10 @@ export const naturalBreaksStyle = (field, palette, data, overrides = {}, unit = 
     vectorStyleColorRamp: palette,
     vectorStyleClassCount: 6,
     vectorStyleClassificationScheme: "natural-breaks",
-    vectorStyleStops: breaks.map((value, index) => ({ value, color: colors[index], label: unit ? `${value} ${unit}` : String(value) })),
+    vectorStyleStops: breaks.map((value, index) => {
+      const label = String(Number(value.toFixed(3)));
+      return { value, color: colors[index], label: unit ? `${label} (${unit})` : label };
+    }),
     vectorStyleExpression: "",
   };
 };

@@ -1,3 +1,4 @@
+import { DROUGHT_INTENSITY_CLASSES, withDroughtIntensity, DROUGHT_IMPACT_CLASSES, withDroughtImpact } from "./droughtPresentation";
 import { interpolateRampColors } from "@geolibre/core";
 import { applyMissingDataStyle, boundaryColorForLayer, finiteMeasurement, hasLayerData, MISSING_DATA_COLOR, fixedPaletteExpression, naturalBreaksStyle, paletteCategories } from "./geolibreStyleUtils";
 import {
@@ -10,8 +11,10 @@ import {
   GEOLIBRE_NREGA_CATEGORIES,
 } from "../../config/geolibreLayers";
 import { fieldDefinitionFor } from "../../config/geolibreFieldUnits";
-import GEOLIBRE_FIELD_METADATA from "../../config/geolibreFieldMetadata.json";
-import PRESENTATION from "../../config/geolibreLayerPresentation.json";
+import CATALOG from "../../config/geolibreCatalog.json";
+
+const PRESENTATION = CATALOG.layers;
+const GEOLIBRE_FIELD_METADATA = CATALOG.fieldMetadataBySource;
 
 const DEFAULT_GEOSERVER_URL =
   "https://geoserver.core-stack.org:8443/geoserver/";
@@ -114,6 +117,23 @@ export const withNormalizedTerrainCluster = (data) => ({
     if (Object.prototype.hasOwnProperty.call(properties, "terrainClu")) return feature;
     if (!Object.prototype.hasOwnProperty.call(properties, "terrainClusters")) return feature;
     return { ...feature, properties: { ...properties, terrainClu: properties.terrainClusters } };
+  }),
+});
+
+// Keep the published area columns intact and add the ratios selected for the
+// Terrain Clusters hover. A missing or zero total area has no defined ratio.
+export const withTerrainAreaFractions = (data) => ({
+  ...data,
+  features: (data?.features || []).map((feature) => {
+    const properties = feature.properties || {};
+    const total = finiteMeasurement(properties.area_in_ha);
+    const ratios = Object.fromEntries(
+      ["hill_slope", "plain_area", "ridge_area", "slopy_area", "valley_are"].map((field) => {
+        const area = finiteMeasurement(properties[field]);
+        return [`${field}/area_in_ha`, total > 0 && area !== null ? area / total : null];
+      })
+    );
+    return { ...feature, properties: { ...properties, ...ratios } };
   }),
 });
 
@@ -342,28 +362,34 @@ export const withAverageNdvi = data => ({
   }),
 });
 
-// Causality polygons contain labels, while the drought source publishes the
-// measured multi-year mean. Join by MWS uid and keep all original properties.
-export const withDroughtDryspellMean = (causality, drought) => {
-  const byUid = new Map();
-  for (const feature of drought?.features || []) {
-    const uid = feature.properties?.uid;
-    if (uid == null) continue;
-    const key = String(uid);
-    if (byUid.has(key)) throw new Error(`Duplicate drought MWS uid: ${key}`);
-    byUid.set(key, finiteMeasurement(feature.properties.avg_dryspell));
-  }
-  return {
-    ...causality,
-    features: (causality?.features || []).map(feature => ({
-      ...feature,
-      properties: {
-        ...feature.properties,
-        avg_dryspell: byUid.get(String(feature.properties?.uid)) ?? null,
-      },
-    })),
-  };
-};
+// Mean annual area shares from published hectares. Water's three seasonal
+// classes are summed only when all three values exist for a year.
+export const withLulcAreaFractions = data => ({
+  ...data,
+  features: (data?.features || []).map(feature => {
+    const properties = feature.properties || {};
+    const area = finiteMeasurement(properties.area_in_ha);
+    const fields = {
+      built_up_fraction: ["built-up_area"],
+      k_water_fraction: ["k_water_area", "kr_water_area", "krz_water_area"],
+      cropland_fraction: ["cropland_area"],
+      barrenlands_fraction: ["barrenlands_area"],
+      tree_forest_fraction: ["tree_forest_area"],
+    };
+    const derived = {};
+    for (const [target, sources] of Object.entries(fields)) {
+      const years = [...new Set(Object.keys(properties).map(key => key.match(/^.+_(\d{4})$/)?.[1]).filter(Boolean))];
+      const values = years.map(year => sources.map(source => finiteMeasurement(properties[`${source}_${year}`])))
+        .filter(measures => measures.every(value => value !== null && value >= 0))
+        .map(measures => measures.reduce((sum, value) => sum + value, 0));
+      derived[target] = area > 0 && values.length
+        ? values.reduce((sum, value) => sum + value, 0) / values.length / area
+        : null;
+      if (target === "built_up_fraction") derived.built_up_year_count = values.length;
+    }
+    return { ...feature, properties: { ...properties, ...derived } };
+  }),
+});
 
 const BASE_STYLE = {
   minZoom: 0,
@@ -411,12 +437,11 @@ const categoryStyle = (property, stops, overrides = {}) => ({
 
 const numericProperty = (field) => ["to-number", ["get", field], 0];
 const cropFields = Array.from({ length: 8 }, (_, i) => `cropping_intensity_${2017 + i}`);
-// Published drought data runs 2017-2022 only; there is no w_mod_2023 or later.
-const DROUGHT_YEAR_COUNT = 6;
-const droughtFields = Array.from({ length: DROUGHT_YEAR_COUNT }, (_, i) => [`w_mod_${2017 + i}`, `w_sev_${2017 + i}`]).flat();
 const thematicStyle = { ...BASE_STYLE, strokeColor: "#232323", strokeWidth: 0.5 };
 
 const STYLE_PROFILES = {
+  lulc_stats: naturalBreaksStyle("built_up_fraction", "oranges", null, { ...thematicStyle, fillOpacity: 0.7 }, "dimensionless"),
+  soil_health_vector: naturalBreaksStyle("OC_OLM_mean", "greens", null, { ...thematicStyle, fillOpacity: 0.7 }, "%"),
   boundary: {
     ...BASE_STYLE,
     fillColor: "#ffffff",
@@ -462,7 +487,9 @@ const STYLE_PROFILES = {
     ...thematicStyle, fields: ["avg_ndvi"], value: numericProperty("avg_ndvi"),
     thresholds: [-0.2, 0, 0.2, 0.4, 0.6], palette: "rdylgn", fillOpacity: 0.65,
   }),
-  drought_causality: naturalBreaksStyle("avg_dryspell", "reds", null, { ...thematicStyle, fillOpacity: 0.7 }, "weeks"),
+  drought_causality: categoryStyle("drought_dominant_impact",
+    DROUGHT_IMPACT_CLASSES.map(([label, color]) => [label, color, label]),
+    { ...thematicStyle, fillOpacity: 0.7 }),
   tree_in_grassland: naturalBreaksStyle("tree_in_shrubs_trees_area_in_ha", "greens", null, { ...thematicStyle, fillOpacity: 0.7 }, "ha"),
   // Fixed, sparse thresholds instead of 6-way natural breaks: forest fringe
   // area is dominated by many small patches, and auto breaks over that data
@@ -563,11 +590,9 @@ const STYLE_PROFILES = {
     ...thematicStyle, fields: cropFields, value: ["/", ["+", ...cropFields.map(numericProperty)], 8],
     thresholds: [1, 2], palette: "rdylgn", colors: interpolateRampColors("rdylgn", 6).slice(2, 5), fillOpacity: 0.7,
   }),
-  drought: fixedPaletteExpression({
-    ...thematicStyle, fields: droughtFields,
-    value: ["+", ...Array.from({ length: DROUGHT_YEAR_COUNT }, (_, i) => ["case", [">", ["+", numericProperty(`w_mod_${2017 + i}`), numericProperty(`w_sev_${2017 + i}`)], 5], 1, 0])],
-    thresholds: [1, 2], colors: ["#f4d03f", "#eb984e", "#e74c3c"], fillOpacity: 0.5,
-  }),
+  drought: categoryStyle("drought_peak_intensity",
+    DROUGHT_INTENSITY_CLASSES.map(([label, color]) => [label, color, label]),
+    { ...thematicStyle, fillOpacity: 0.7 }),
   green_credit: {
     ...BASE_STYLE,
     fillColor: "#14d11d",
@@ -1139,30 +1164,39 @@ const nregaLayerStyle = (categoryId) => {
   };
 };
 
-const layerStyle = (layer, data) =>
-  layer.sourceType === "wms"
+const layerStyle = (layer, data) => {
+  const style = layer.sourceType === "wms"
     ? { ...RASTER_STYLE }
     : layer.nregaCategoryId
       ? nregaLayerStyle(layer.nregaCategoryId)
-      : ["facilities", "livestock", "drought_causality", "tree_in_grassland"].includes(layer.styleProfile)
+      : ["facilities", "livestock", "tree_in_grassland", "lulc_stats", "soil_health_vector"].includes(layer.styleProfile)
         ? naturalBreaksStyle(
             STYLE_PROFILES[layer.styleProfile].vectorStyleProperty,
             STYLE_PROFILES[layer.styleProfile].vectorStyleColorRamp,
             { features: (data?.features || []).filter(feature => hasLayerData(layer.id, feature.properties)) },
             STYLE_PROFILES[layer.styleProfile],
-            { facilities: "km", livestock: "count", drought_causality: "weeks", tree_in_grassland: "ha" }[layer.styleProfile]
+            { lulc_stats: "", soil_health_vector: "%", facilities: "km", livestock: "count", tree_in_grassland: "ha" }[layer.styleProfile]
           )
         : { ...(STYLE_PROFILES[layer.styleProfile] || BASE_STYLE) };
+  return layer.id === "hydrological_boundaries"
+    ? { ...style, labels: {
+        enabled: true, field: "uid", placement: "point", minZoom: 11,
+        maxZoom: 24, size: 12, color: "#111827", haloColor: "#ffffff",
+        haloWidth: 1.5, allowOverlap: false,
+      } }
+    : style;
+};
 
 const coreStackMetadata = (layer, layerName, sourceUrl, style, baseUrl) => ({
   domain: layer.domain,
   category: layer.category,
+  description: layer.description,
   defaultProperty: layer.defaultProperty,
   defaultStyleUnit: {
     demographics: "percent", facilities: "km", livestock: "count",
     mws: "mm", mws_fortnight: "mm", ndvi: "dimensionless",
-    waterbodies: "ha", cropping_intensity: "dimensionless",
-    drought: "years", drought_causality: "weeks", tree_in_grassland: "ha",
+    soil_health_vector: "percent", waterbodies: "ha", cropping_intensity: "dimensionless",
+    drought: "category", drought_causality: "category", tree_in_grassland: "ha",
     forest_fringe: "ha", afforestation_stats: "ha", deforestation_stats: "ha", degradation_stats: "ha",
     urbanization_stats: "ha", cropintensity_stats: "ha", shrubland_diversion_stats: "ha",
     restoration_stats: "ha",
@@ -1210,6 +1244,7 @@ const buildVectorLayer = ({
   return applyMissingDataStyle({
     id: `corestack-${catalogLayer.id}`,
     name: displayLayerName(catalogLayer),
+    description: catalogLayer.description,
     type: "geojson",
     source: {
       type: "geojson",
@@ -1223,6 +1258,11 @@ const buildVectorLayer = ({
     visible: isDefaultDisplay,
     opacity: 1,
     style,
+    ...(catalogLayer.tooltip ? { popup: { click: true, hover: true,
+      ...(catalogLayer.tooltip.titleExpression ? { titleExpression: catalogLayer.tooltip.titleExpression } : {}),
+      ...(catalogLayer.tooltip.titleField ? { titleField: catalogLayer.tooltip.titleField } : {}),
+      fields: catalogLayer.tooltip.fields.map(field => ({ field, hover: true })),
+    } } : {}),
     metadata: {
       featureCount: data.features.length,
       service: "wfs",
@@ -1265,6 +1305,7 @@ const buildRasterLayer = ({ catalogLayer, layerName, baseUrl, bounds }) => {
   return {
     id: `corestack-${catalogLayer.id}`,
     name: displayLayerName(catalogLayer),
+    description: catalogLayer.description,
     type: "raster",
     source,
     visible: catalogLayer.defaultVisible === true && !catalogLayer.startupDelayMs,
@@ -1423,15 +1464,32 @@ const isStructuredRecord = (value) => {
   }
 };
 
+const hoverFieldsFor = (requested, observed) => {
+  const available = [...observed.keys()];
+  return [...new Set(requested.flatMap((field) => {
+    if (field === "area_*") {
+      return available.filter((name) => /^area_\d{2}-\d{2}$/.test(name))
+        .sort((a, b) => b.localeCompare(a));
+    }
+    if (!field.includes("*")) return observed.has(field) ? [field] : [];
+    const escaped = field.split("*").map((part) => part.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
+    const pattern = new RegExp(`^${escaped.join(".*")}$`);
+    return available.filter((name) => pattern.test(name));
+  }))];
+};
+
 export const vectorFieldPresentation = (catalogLayer, data) => {
   const observed = new Map();
+  const fractionalFields = new Set();
   for (const feature of data.features || []) {
     for (const [field, value] of Object.entries(feature.properties || {})) {
       if (!observed.has(field) || observed.get(field) == null) observed.set(field, value);
+      const number = finiteMeasurement(value);
+      if (number !== null && !Number.isInteger(number)) fractionalFields.add(field);
     }
   }
   const fields = Object.fromEntries([...observed].map(([field, value]) => {
-    const sourceDefinition = fieldDefinitionFor(catalogLayer, field, GEOLIBRE_FIELD_METADATA);
+    const sourceDefinition = fieldDefinitionFor(catalogLayer, field, GEOLIBRE_FIELD_METADATA, CATALOG.fieldPatternsBySource);
     const unit = isStructuredRecord(value)
       ? "mixed"
       : typeof value === "string" && value.trim() !== "" && !Number.isFinite(Number(value))
@@ -1443,13 +1501,45 @@ export const vectorFieldPresentation = (catalogLayer, data) => {
       ...(sourceDefinition?.description ? { description: sourceDefinition.description } : {}),
     }];
   }));
-  const popup = {
-    fields: Object.entries(fields).map(([field, definition]) => ({
+  const hoverFields = hoverFieldsFor(catalogLayer?.tooltip?.fields || [], observed);
+  const ordered = [...hoverFields, ...[...observed.keys()].filter(field => !hoverFields.includes(field))];
+  const labelModes = CATALOG.popupLabelModes || {};
+  const maxDescriptionLength = labelModes.autoMaxLength ?? 20;
+  const resolveLabelMode = (requestedMode, selectedFields) => requestedMode === "auto"
+    ? selectedFields.every(field => (fields[field].description || "").length <= maxDescriptionLength)
+      ? "description" : "field_name"
+    : requestedMode;
+  const hoverLabelMode = resolveLabelMode(
+    catalogLayer?.tooltip?.hoverLabelMode || labelModes.hover || "field_name", hoverFields,
+  );
+  const identifyLabelMode = resolveLabelMode(
+    catalogLayer?.identifyLabelMode || labelModes.identify || "description", ordered,
+  );
+  const fieldLabel = (field, mode) => {
+    const { description, unit } = fields[field];
+    const name = mode === "field_name" ? field : description || field;
+    return unit === "NA" || unit === "mixed" ? name : `${name} (${unit})`;
+  };
+  const popupFields = ordered.flatMap(field => {
+    const display = {
       field,
-      label: definition.unit === "NA" || definition.unit === "mixed"
-        ? field
-        : `${field} (${definition.unit === "unknown" ? "unit unknown" : definition.unit})`,
-    })),
+      ...(fractionalFields.has(field) ? { kind: "number", format: { decimals: 3 } } : {}),
+    };
+    const clickLabel = fieldLabel(field, identifyLabelMode);
+    const hoverLabel = fieldLabel(field, hoverLabelMode);
+    if (!hoverFields.includes(field)) return [{ ...display, label: clickLabel }];
+    if (clickLabel === hoverLabel) return [{ ...display, label: clickLabel, hover: true }];
+    // GeoLibre skips the first entry for hover and deduplicates by field for
+    // click, allowing each view to use a different label for the same value.
+    return [{ ...display, label: clickLabel }, { ...display, label: hoverLabel, hover: true }];
+  });
+  const popup = {
+    click: true,
+    maxWidth: 480,
+    hover: hoverFields.length > 0 || Boolean(catalogLayer?.tooltip?.titleExpression || catalogLayer?.tooltip?.titleField),
+    ...(catalogLayer?.tooltip?.titleExpression ? { titleExpression: catalogLayer.tooltip.titleExpression } : {}),
+    ...(observed.has(catalogLayer?.tooltip?.titleField) ? { titleField: catalogLayer.tooltip.titleField } : {}),
+    fields: popupFields,
   };
   return { fields, popup };
 };
@@ -1460,7 +1550,7 @@ const hydrateLayerWithData = (layer, data) => {
   const catalogLayer = GEOLIBRE_LAYERS.find(item => `corestack-${item.id}` === layer.id);
   if (catalogLayer?.id === "mws_layers_fortnight") data = withMwsFortnightClass(parseFortnightRecords(data));
   if (catalogLayer?.id === "mws_layers") data = withMwsClass(withAverageDeltaG(data));
-  if (catalogLayer?.id === "terrain_vector") data = withNormalizedTerrainCluster(data);
+  if (catalogLayer?.id === "terrain_vector") data = withTerrainAreaFractions(withNormalizedTerrainCluster(data));
   if (catalogLayer?.id === "soil_type") data = withSoilTextureClass(data);
   if (catalogLayer?.id === "afforestation_stats") data = withAfforestationClass(data);
   if (catalogLayer?.id === "deforestation_stats") data = withDeforestationClass(data);
@@ -1471,6 +1561,9 @@ const hydrateLayerWithData = (layer, data) => {
   if (catalogLayer?.id === "shrubland_diversion_stats") data = withCropIntensityChangeClass(data);
   if (catalogLayer?.id === "restoration_stats") data = withExcludedAreaClass(data);
   if (catalogLayer?.id?.startsWith("ndvi_")) data = withAverageNdvi(data);
+  if (catalogLayer?.id === "lulc_stats") data = withLulcAreaFractions(data);
+  if (catalogLayer?.id === "drought") data = withDroughtIntensity(data);
+  if (catalogLayer?.id === "drought_causality") data = withDroughtImpact(data);
   const outline = catalogLayer && boundaryColorForLayer(catalogLayer.id);
   const initialStyle = catalogLayer && { ...layerStyle(catalogLayer), ...(outline ? { strokeColor: outline, simpleStyleEnabled: true } : {}) };
   const style = initialStyle && Object.entries(initialStyle).every(([key, value]) => JSON.stringify(layer.style?.[key]) === JSON.stringify(value))
@@ -1540,23 +1633,6 @@ export const hydrateGeoLibreVectorLayer = async ({
     const rawData = await fetchFeatureCollection(request, { signal });
     const category = nregaCategoryForLayer(layer);
     let data = category ? withNormalizedWorkCategory(rawData) : rawData;
-    if (layerId === "corestack-drought_causality") {
-      const droughtLayer = project.layers.find(item => item.id === "corestack-drought");
-      if (!droughtLayer) throw new Error("The drought measurements layer is unavailable.");
-      const droughtData = droughtLayer.metadata?.loadState === "loaded"
-        ? droughtLayer.geojson
-        : await fetchFeatureCollection({
-            url: droughtLayer.source.url,
-            typeName: droughtLayer.source.typeName,
-            version: droughtLayer.source.version,
-            outputFormat: droughtLayer.source.outputFormat,
-            srsName: droughtLayer.source.srsName,
-          }, { signal });
-      data = withDroughtDryspellMean(data, droughtData);
-      if (data.features.length && data.features.every(feature => feature.properties.avg_dryspell === null)) {
-        throw new Error("No causality MWS uid matched the drought mean dry spell data.");
-      }
-    }
     const hydratedProject = category
       ? {
           ...project,
