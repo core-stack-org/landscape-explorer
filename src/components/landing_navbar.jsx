@@ -127,14 +127,14 @@ const LandingNavbar = ({ downloadScope = null }) => {
 
                 <HeaderTooltip text="Learn how to download CoRE Stack layers and open them in QGIS.">
                   <a
-                    href="https://docs.google.com/document/d/1jet4EEBbbKgpNrPnuNJJDRuAJUiR2pIMFQp9JTlygAQ/edit?usp=sharing"
+                    href="https://docs.google.com/document/d/11wW9kKSCGzXQk4WAvPsKXkOMLWVYuZX_BmxS7xLLaQg/"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="flex items-center gap-2 rounded-lg border border-purple-200 bg-purple-50 px-4 py-2 transition-all duration-200 hover:bg-purple-100"
-                    aria-label="Open QGIS Documentation in a new tab"
+                    aria-label="Open Geolibre Usage Guide in a new tab"
                   >
                     <span className="text-sm font-medium text-purple-700 sm:text-base">
-                      QGIS Documentation
+                      Geolibre Usage Guide
                     </span>
                     <ExternalLink className="h-4 w-4 text-purple-600" />
                   </a>
