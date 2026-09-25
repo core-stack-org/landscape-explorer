@@ -335,22 +335,29 @@ const extractMwsUidList = (mwsUidString) => {
     });
   }, [zoiFeatures, activeSelectedWaterbody]);
 
-  const hasNdviData = useMemo(() => {
-    if (!isTehsilMode) {
-      return true;
-    }
+ const hasNdviData = useMemo(() => {
+  if (!isTehsilMode) {
+    return true;
+  }
 
-    const props = matchedZoiFeature.getProperties?.() || {};
+  if (!matchedZoiFeature) {
+    return false;
+  }
+
+    const props = matchedZoiFeature.getProperties;
 
     return Object.entries(props).some(([key, value]) => {
       if (!key.startsWith("NDVI_")) return false;
 
-      return value !== null &&
-            value !== undefined &&
-            value !== "" &&
-            Number.isFinite(Number(value));
-    });
-  }, [isTehsilMode, matchedZoiFeature]);
+    return (
+      value !== null &&
+      value !== undefined &&
+      value !== "" &&
+      Number.isFinite(Number(value))
+    );
+  });
+}, [isTehsilMode, matchedZoiFeature]);
+
   
   const zoiAreaFromFeature = matchedZoiFeature
   ? Number(matchedZoiFeature.get("zoi_area")) || 0
