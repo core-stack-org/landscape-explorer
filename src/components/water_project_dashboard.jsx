@@ -344,7 +344,7 @@ const extractMwsUidList = (mwsUidString) => {
     return false;
   }
 
-    const props = matchedZoiFeature.getProperties;
+  const props = matchedZoiFeature.getProperties;
 
     return Object.entries(props).some(([key, value]) => {
       if (!key.startsWith("NDVI_")) return false;
