@@ -335,18 +335,26 @@ const extractMwsUidList = (mwsUidString) => {
     });
   }, [zoiFeatures, activeSelectedWaterbody]);
 
-  const hasNdviData = useMemo(() => {
-    if (isTehsilMode && !matchedZoiFeature) return false;
+ const hasNdviData = useMemo(() => {
+  if (!isTehsilMode) {
+    return true;
+  }
+
+  if (!matchedZoiFeature) {
+    return false;
+  }
 
   const props = matchedZoiFeature.getProperties?.() || {};
 
   return Object.entries(props).some(([key, value]) => {
     if (!key.startsWith("NDVI_")) return false;
 
-    return value !== null &&
-           value !== undefined &&
-           value !== "" &&
-           Number.isFinite(Number(value));
+    return (
+      value !== null &&
+      value !== undefined &&
+      value !== "" &&
+      Number.isFinite(Number(value))
+    );
   });
 }, [isTehsilMode, matchedZoiFeature]);
   
