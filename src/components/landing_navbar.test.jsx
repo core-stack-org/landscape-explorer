@@ -13,7 +13,7 @@ jest.mock("./landscape-explorer/utils/downloadHelper", () => ({
 }));
 
 describe("Explore Data navigation help", () => {
-  it("shows the quick tour, datasheet download, and QGIS documentation", async () => {
+  it("shows the quick tour, datasheet download, notebooks, and Geolibre usage guide", async () => {
     render(
       <LandingNavbar
         downloadScope={{ state: "BIHAR", district: "BANKA", tehsil: "BANKA" }}
@@ -33,10 +33,17 @@ describe("Explore Data navigation help", () => {
     );
     expect(
       screen
-        .getByRole("link", { name: /Open QGIS Documentation/i })
+        .getByRole("link", { name: /Open Geolibre Usage Guide/i })
         .getAttribute("href")
     ).toBe(
-      "https://docs.google.com/document/d/1jet4EEBbbKgpNrPnuNJJDRuAJUiR2pIMFQp9JTlygAQ/edit?usp=sharing"
+      "https://docs.google.com/document/d/11wW9kKSCGzXQk4WAvPsKXkOMLWVYuZX_BmxS7xLLaQg/"
+    );
+    expect(
+      screen
+        .getByRole("link", { name: /Open CoRE Stack Notebooks in Google Colab/i })
+        .getAttribute("href")
+    ).toBe(
+      "https://drive.google.com/drive/u/3/folders/1QZ28euPmgq2tOdx8tvAei92nZ2MFHY7z"
     );
 
     fireEvent.click(
