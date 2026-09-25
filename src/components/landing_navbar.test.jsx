@@ -39,6 +39,11 @@ describe("Explore Data navigation help", () => {
       "https://docs.google.com/document/d/11wW9kKSCGzXQk4WAvPsKXkOMLWVYuZX_BmxS7xLLaQg/"
     );
     expect(
+      screen.getByRole("tooltip", {
+        name: /Learn how to use GeoLibre with CoRE Stack/i,
+      })
+    ).toBeTruthy();
+    expect(
       screen
         .getByRole("link", { name: /Open CoRE Stack Notebooks in Google Colab/i })
         .getAttribute("href")
