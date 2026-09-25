@@ -5,45 +5,250 @@
                 {
                     "Name": "groundwater_stress",
                     "Category": "Groundwater stress",
-                    "Characteristics": "Stage of groundwater extraction is unsafe, Water balance is negative",
+                    "Characteristics": "Stage of groundwater extraction is unsafe, Rainfall is low",
                     "level": 0,
-                    "logic": "OR",
+                    "logic": "sig_01 OR sig_02 AND (sig_03 OR sig_04 OR sig_05)",
                     "Values": [
-                        { "label": "SOGE is not safe", "Key": "soge_class", "type": 3, "value": 0 },
-                        { "label": "trend(G) is -ve", "Key": "trend_g", "type": 1, "value": "-1" }
+                        {
+                        "signal": "sig_01",
+                        "label": "SOGE is not safe",
+                        "Key": "soge_class",
+                        "operator": "!=",
+                        "value": 0
+                        },
+                         {
+                        "signal": "sig_02",
+                        "label": "Average precipitation is less than 1000 mm",
+                        "Key": "avg_precipitation",
+                        "operator": "<",
+                        "value": 1200
+                        },
+                        {
+                        "signal": "sig_03",
+                        "label": "Soil drainage is poorly drained",
+                        "Key": "soil_drainage",
+                        "operator": "==",
+                        "value": 3
+                        },
+                        {
+                        "signal": "sig_04",
+                        "label": "Aquifer type is hard rock",
+                        "Key": "aquifer_class",
+                        "operator": "==",
+                        "value": 0
+                        },
+                         {
+                        "signal": "sig_05",
+                        "label": "No river, no canal and drainage density is greater than 1.5",
+                        "Key": "river_available",
+                        "operator": "==",
+                        "value": false,
+                        "additionalConditions": [
+                            {
+                            "Key": "canal_available",
+                            "operator": "==",
+                            "value": false
+                            },
+                            {
+                            "Key": "lulc_crop_percent",
+                            "operator": ">",
+                            "value": 60
+                            }
+                        ],
+                        "logic": "AND"
+                        }
                     ]
-                },
+                    },
                 {
-                    "Name": "high_drought_incidence",
-                    "Category": "High drought incidence",
+                    "Name": "high_drought_risk",
+                    "Category": "High drought risk",
                     "Characteristics": "Drought frequency is high, Dry spells length is long",
                     "level": 0,
-                    "logic": "OR",
+                    "logic": "sig_01 OR sig_02 AND (sig_03 OR sig_04 OR sig_05)",
                     "Values": [
+                        {
+                        "signal": "sig_01",
+                        "label": "Drought week exceed 5 weeks",
+                        "Key": "max(drought_weeks_severe)+max(drought_weeks_moderate)",
+                        "operator": ">",
+                        "value": 5
+                        },
+                        {
+                        "signal": "sig_02",
+                        "label": "Dry spell weeks exceed 5 weeks",
+                        "Key": "max(dry_spell_weeks)",
+                        "operator": ">",
+                        "value": 5
+                        },
+                        {
+                        "signal": "sig_03",
+                        "label": "Rainfall stress",
+                        "logic": "sig_03_01 OR sig_03_02 OR sig_03_03",
+                        "conditions": [
+                            {
+                            "signal": "sig_03_01",
+                            "Key": "annual_rainfall",
+                            "function": "mean",
+                            "operator": "<",
+                            "value": 950
+                            },
+                            {
+                            "signal": "sig_03_02",
+                            "expression": "mean(kharif_rainfall) / mean(annual_rainfall)",
+                            "operator": "<",
+                            "value": 0.75
+                            },
+                            {
+                            "signal": "sig_03_03",
+                            "Key": "annual_rainfall",
+                            "function": "trend",
+                            "operator": "<",
+                            "value": 0
+                            }
+                        ]
+                        },
+                        {
+                        "signal": "sig_04",
+                        "label": "Monsoon onset variability exceeds 14 days",
+                        "expression": "max(day_of_year(monsoon_onset_date)) - min(day_of_year(monsoon_onset_date))",
+                        "operator": ">",
+                        "value": 14
+                        },
+                        {
+                        "signal": "sig_05",
+                        "label": "Cropping intensity is below 1.25",
+                        "Key": "cropping_intensity",
+                        "operator": "<",
+                        "value": 1.25
+                        },
                         { "label": "Kharif drought frequency >= 2", "Key": "drought_category", "type": 2, "value": { "lower": 2, "upper": 99999 } },
                         { "label": "Dry spell length >= 2", "Key": "avg_number_dry_spell", "type": 2, "value": { "lower": 2, "upper": 99999 } }
                     ]
                 },
                 {
-                    "Name": "high_irrigation_risk",
-                    "Category": "High Irrigation Risk",
+                    "Name": "high_irrigation_difficulties",
+                    "Category": "High Irrigation Difficulties",
                     "Characteristics": "Surface water during Rabi is low, Surface water trends over the years are negative",
                     "level": 0,
-                    "logic": "OR",
+                    "logic": "sig_01 AND (sig_02 + sig_03 + sig_04 + sig_05 >= 2)",
                     "Values": [
-                        { "label": "Rabi water availability < 30%", "Key": "avg_rabi_surface_water_mws", "type": 2, "value": { "lower": 0, "upper": 30 } },
-                        { "label": "trend(surface water availability) is -ve", "Key": "trend_g", "type": 1, "value": "-1" }
+                        {
+                        "signal": "sig_01",
+                        "label": "Kharif-rabi water surface area ratio is below 30%",
+                        "Key": "mean(kharif_rabi_water_surface_area / kharif_water_surface_area)",
+                        "operator": "<",
+                        "value": 0.30
+                        },
+                        {
+                        "signal": "sig_02",
+                        "label": "Water surface area trend is below 1 ha",
+                        "Key": "trend(water_surface_area)",
+                        "operator": "<",
+                        "value": 1
+                        },
+                        {
+                        "signal": "sig_03",
+                        "label": "Groundwater stress",
+                        "logic": "sig_03_01 OR sig_03_02 AND (sig_03_03 OR sig_03_04)",
+                        "conditions": [
+                            {
+                            "signal": "sig_03_01",
+                            "label": "SOGE is not safe",
+                            "Key": "soge_class_name",
+                            "operator": "not in",
+                            "value": ["Safe"]
+                            },
+                            {
+                            "signal": "sig_03_02",
+                            "label": "Mean annual groundwater delta is below 50 mm",
+                            "Key": "mean_annual_delta_g_mm",
+                            "operator": "<",
+                            "value": 50
+                            },
+                            {
+                            "signal": "sig_03_03",
+                            "label": "No upstream MWS",
+                            "Key": "len(upstream_mws)",
+                            "operator": "==",
+                            "value": 0
+                            },
+                            {
+                            "signal": "sig_03_04",
+                            "label": "Aquifer type is Hard rock",
+                            "Key": "aquifer_type",
+                            "operator": "==",
+                            "value": "Hard rock"
+                            }
+                        ]
+                        },
+                        {
+                        "signal": "sig_04",
+                        "label": "No canal and no river",
+                        "logic": "sig_04_01 AND sig_04_02",
+                        "conditions": [
+                            {
+                            "signal": "sig_04_01",
+                            "label": "No canal",
+                            "Key": "canal",
+                            "operator": "is",
+                            "value": null
+                            },
+                            {
+                            "signal": "sig_04_02",
+                            "label": "No river",
+                            "Key": "river",
+                            "operator": "is",
+                            "value": null
+                            }
+                        ]
+                        },
+                        {
+                        "signal": "sig_05",
+                        "label": "NREGA irrigation count is below 50",
+                        "Key": "nrega_count['irrigation']",
+                        "operator": "<",
+                        "value": 50
+                        }
                     ]
-                },
+                }
+            ]
+        },
+        {
+             "Soil": [
                 {
-                    "Name": "siltation",
-                    "Category": "Siltation in Waterbodies",
-                    "Characteristics": "Surface water during Rabi is low, Surface water trends over the years are negative",
+                    "Name": "soil_health",
+                    "Category": "Soil Health",
+                    "Characteristics": "Soil Health is poor, Soil organic carbon is low, Soil erosion is high",
                     "level": 0,
-                    "logic": "OR",
-                    "Values": [
-                        { "label": "Rabi water availability < 30%", "Key": "avg_rabi_surface_water_mws", "type": 2, "value": { "lower": 0, "upper": 30 } },
-                        { "label": "trend(surface water availability) is -ve", "Key": "trend_g", "type": 1, "value": "-1" }
+                    "logic": "sig_01 + sig_02 + sig_03 + sig_04 >= 2",
+                    "Values": [{
+                                "signal": "sig_01",
+                                "label": "Low nitrogen area exceeds 50% of cropping area",
+                                "Key": "nitrogen_area['low'] / cropping_area",
+                                "operator": ">",
+                                "value": 0.50
+                                },
+                                {
+                                "signal": "sig_02",
+                                "label": "Low phosphorus area exceeds 50% of cropping area",
+                                "Key": "phosphorus_area['low'] / cropping_area",
+                                "operator": ">",
+                                "value": 0.50
+                                },
+                                {
+                                "signal": "sig_03",
+                                "label": "Low potassium area exceeds 50% of cropping area",
+                                "Key": "potassium_area['low'] / cropping_area",
+                                "operator": ">",
+                                "value": 0.50
+                                },
+                                {
+                                "signal": "sig_04",
+                                "label": "Low organic carbon area exceeds 50% of cropping area",
+                                "Key": "organic_carbon_area['low'] / cropping_area",
+                                "operator": ">",
+                                "value": 0.50
+                                }
                     ]
                 }
             ]
@@ -51,15 +256,56 @@
         {
             "Yield": [
                 {
-                    "Name": "low_yield",
-                    "Category": "Low yield",
+                    "Name": "decreasing_productivity",
+                    "Category": "Decreasing Productivity",
                     "Characteristics": "Reduction in cropping area over the years is more than 30ha",
                     "level": 0,
                     "logic": "OR",
                     "Values": [
-                        { "label": "Cropping degradation > 30 hectares", "Key": "degradation_land_area", "type": 2, "value": { "lower": 30, "upper": 999999999 } }
+                         {
+                        "signal": "sig_01",
+                        "label": "Cropping to shrub area exceeds 30 hectares",
+                        "Key": "cropping_to_shrub_area",
+                        "operator": ">",
+                        "value": 30
+                        },
+                        {
+                        "signal": "sig_02",
+                        "label": "Cropping intensity trend is below 10%",
+                        "Key": "cropping_intensity",
+                        "function": "trend",
+                        "operator": "<",
+                        "value": 0.10
+                        }
                     ]
                 }
+            ]
+        },
+        {
+            "Waterbodies": [
+                            {
+                    "Name": "siltation",
+                    "Category": "Siltation in Waterbodies",
+                    "Characteristics": "Surface water during Rabi is low, Surface water trends over the years are negative",
+                    "level": 0,
+                    "logic": "sig_01 OR sig_02",
+                    "Values": [
+                        {
+                        "signal": "sig_01",
+                        "label": "Rabi water availability is below 30%",
+                        "Key": "avg_rabi_surface_water_mws",
+                        "operator": "<",
+                        "value": 30
+                        },
+                        {
+                        "signal": "sig_02",
+                        "label": "Surface water availability trend is negative",
+                        "Key": "trend_g",
+                        "operator": "==",
+                        "value": "-1"
+                        }
+                        ]
+                    }
             ]
         }
     ],
@@ -71,20 +317,81 @@
                     "Category": "Water scarcity",
                     "Characteristics": "Surface water during Rabi is low, Surface water trends over the years are negative",
                     "level": 0,
-                    "logic": "OR",
+                    "logic": "sig_03 AND (sig_01 OR (sig_02 AND (sig_04 OR sig_05)))",
                     "Values": [
-                        { "label": "Rabi water availability < 30%", "Key": "avg_rabi_surface_water_mws", "type": 2, "value": { "lower": 0, "upper": 30 } },
-                        { "label": "trend(surface water availability) is -ve", "Key": "trend_swb", "type": 1, "value": "-1" }
+                        {
+                        "signal": "sig_01",
+                        "label": "Kharif-rabi water surface area ratio is below 30%",
+                        "Key": "mean(kharif_rabi_water_surface_area / kharif_water_surface_area)",
+                        "operator": "<",
+                        "value": 0.30
+                        },
+                        {
+                        "signal": "sig_02",
+                        "label": "Water surface area trend is below 1 ha",
+                        "Key": "trend(water_surface_area)",
+                        "operator": "<",
+                        "value": 1
+                        },
+                        {
+                        "signal": "sig_03",
+                        "label": "Livestock water requirement exceeds 300",
+                        "Key": "max(village[\"large_animals\"] * 3 + village[\"small_animals\"] for village in villages)",
+                        "operator": ">",
+                        "value": 300
+                        },
+                        {
+                        "signal": "sig_04",
+                        "label": "NREGA SWC count is below 50",
+                        "Key": "nrega_count['swc']",
+                        "operator": "<",
+                        "value": 50
+                        },
+                        {
+                        "signal": "sig_05",
+                        "label": "No river",
+                        "Key": "river",
+                        "operator": "is",
+                        "value": null
+                        }
                     ]
                 },
                 {
-                    "Name": "overgrazing",
-                    "Category": "Overgrazing",
+                    "Name": "fodder_risk",
+                    "Category": "Fodder Risk",
                     "Characteristics": "Reduction in tree cover over the years is more than 50ha",
                     "level": 0,
-                    "logic": "OR",
+                    "logic": "sig_04 AND (sig_01 OR sig_02 OR sig_03)",
                     "Values": [
-                        { "label": "Reduction in tree cover > 50 ha", "Key": "decrease_in_tree_cover", "type": 2, "value": { "lower": 50, "upper": 999999999 } }
+                        {
+                        "signal": "sig_01",
+                        "label": "Trees in grassland loss exceeds 30 hectares",
+                        "Key": "trees_in_grassland_loss",
+                        "operator": ">",
+                        "value": 30
+                        },
+                        {
+                        "signal": "sig_02",
+                        "label": "Trees in forest fringe loss exceeds 30 hectares",
+                        "Key": "trees_in_forest_fringe_loss",
+                        "operator": ">",
+                        "value": 30
+                        },
+                        {
+                        "signal": "sig_03",
+                        "label": "Shrub NDVI trend is decreasing",
+                        "Key": "ndvi['shrubs']",
+                        "function": "trend",
+                        "operator": "<",
+                        "value": 0
+                        },
+                        {
+                        "signal": "sig_04",
+                        "label": "Livestock water requirement exceeds 300",
+                        "Key": "max(village[\"large_animals\"] * 3 + village[\"small_animals\"] for village in villages)",
+                        "operator": ">",
+                        "value": 300
+                        }
                     ]
                 }
             ]

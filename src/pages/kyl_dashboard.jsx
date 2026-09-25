@@ -181,6 +181,11 @@ const KYLDashboardPage = () => {
   const getFormattedSelectedFilters = () => getFormattedFilters(filterSelections);
   const getFormattedSelectedPatterns = () => getFormattedPatterns(patternSelections);
   const handlePatternSelection = (pattern, isSelected) => {
+      console.log("===== PATTERN SELECTED =====");
+  console.log("Pattern:", pattern);
+  console.log("Logic:", pattern.logic);
+  console.log("Values:", pattern.values);
+  console.log("Is Selected:", isSelected);
     setManualSelectedMWS([]);
     setPatternSelections(selectPattern(pattern, isSelected, patternSelections));
   };
@@ -1492,6 +1497,19 @@ const KYLDashboardPage = () => {
   
       setDataJsonError(null);
       setDataJson(result);
+      if (process.env.NODE_ENV === "development") {
+        localStorage.setItem(
+          "actualMWSData",
+          JSON.stringify(result)
+        );
+      }
+      window.actualMWSData = result;
+
+      console.log("Actual MWS count:", result?.length);
+      localStorage.setItem(
+  "actualMWSData",
+  JSON.stringify(result)
+);
   
     } finally {
       setIsLoading(false);

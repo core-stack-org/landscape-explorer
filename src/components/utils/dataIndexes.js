@@ -96,31 +96,204 @@ function matchFilters(selections, index) {
   return result;
 }
 
+// function conditionMatches(record, condition) {
+//   if (condition.type === 2) return inRange(record, condition.key, condition.value.lower, condition.value.upper);
+//   if (condition.type === 1) return String(record[condition.key]) === String(condition.value);
+//   if (condition.type === 3) return String(record[condition.key]) !== String(condition.value);
+//   return false;
+// }
+
 function conditionMatches(record, condition) {
-  if (condition.type === 2) return inRange(record, condition.key, condition.value.lower, condition.value.upper);
-  if (condition.type === 1) return String(record[condition.key]) === String(condition.value);
-  if (condition.type === 3) return String(record[condition.key]) !== String(condition.value);
-  return false;
+  if (!condition) return false;
+
+  const rawValue = record?.[condition.key];
+  const operator = condition.operator;
+
+  let result = false;
+
+  switch (operator) {
+    case "==":
+      result = rawValue == condition.value;
+      break;
+
+    case "!=":
+      result = rawValue != condition.value;
+      break;
+
+    case "<":
+      result = Number(rawValue) < Number(condition.value);
+      break;
+
+    case "<=":
+      result = Number(rawValue) <= Number(condition.value);
+      break;
+
+    case ">":
+      result = Number(rawValue) > Number(condition.value);
+      break;
+
+    case ">=":
+      result = Number(rawValue) >= Number(condition.value);
+      break;
+
+    case "length":
+      result = Array.isArray(rawValue)
+        ? rawValue.length === Number(condition.value)
+        : false;
+      break;
+
+    default:
+      result = false;
+  }
+
+  // Additional conditions, e.g. sig_05:
+  // cropping_intensity > 1.5
+  // AND river == null
+  // AND canal == null
+  if (result && condition.additionalConditions?.length) {
+    const additionalResults = condition.additionalConditions.map(
+      (additional) => conditionMatches(record, additional)
+    );
+
+    result =
+      condition.logic === "OR"
+        ? additionalResults.some(Boolean)
+        : additionalResults.every(Boolean);
+  }
+
+  return result;
+}
+
+function evaluateLogicExpression(expression, signals) {
+  if (!expression) return false;
+
+  const tokens = expression.match(
+    /sig_\d+|\(|\)|AND|OR/gi
+  ) || [];
+
+  let position = 0;
+
+  function parseExpression() {
+    let value = parseTerm();
+
+    while (
+      position < tokens.length &&
+      tokens[position].toUpperCase() === "OR"
+    ) {
+      position++;
+      value = value || parseTerm();
+    }
+
+    return value;
+  }
+
+  function parseTerm() {
+    let value = parseFactor();
+
+    while (
+      position < tokens.length &&
+      tokens[position].toUpperCase() === "AND"
+    ) {
+      position++;
+      value = value && parseFactor();
+    }
+
+    return value;
+  }
+
+  function parseFactor() {
+    const token = tokens[position];
+
+    if (!token) return false;
+
+    if (token === "(") {
+      position++;
+      const value = parseExpression();
+
+      if (tokens[position] === ")") {
+        position++;
+      }
+
+      return value;
+    }
+
+    position++;
+
+    return Boolean(signals[token]);
+  }
+
+  return parseExpression();
 }
 
 // OR across a pattern's own conditions, AND across selected patterns —
 // confirmed intentional (screening heuristic: "any condition true enough
 // to flag this MWS/village").
-function matchPatterns(selections, byId) {
+// function matchPatterns(selections, byId) {
+//   let result = null;
+//   for (const pattern of Object.values(selections || {})) {
+//     if (!pattern) continue;
+
+//     const matched = new Set();
+//     for (const [id, record] of byId) {
+//       const isMatch = pattern.logic === 'AND'
+//         ? pattern.conditions.every((c) => conditionMatches(record, c))
+//         : pattern.conditions.some((c) => conditionMatches(record, c));
+//       if (isMatch) matched.add(id);
+//     }
+
+//     result = result === null ? matched : new Set([...result].filter((id) => matched.has(id)));
+//   }
+//   return result;
+// }
+
+export function matchPatterns(selections, byId) {
   let result = null;
+
   for (const pattern of Object.values(selections || {})) {
     if (!pattern) continue;
 
     const matched = new Set();
+
     for (const [id, record] of byId) {
-      const isMatch = pattern.logic === 'AND'
-        ? pattern.conditions.every((c) => conditionMatches(record, c))
-        : pattern.conditions.some((c) => conditionMatches(record, c));
-      if (isMatch) matched.add(id);
+      const signals = {};
+
+      // Evaluate every signal separately
+      for (const condition of pattern.conditions || []) {
+        if (!condition.signal) continue;
+
+        signals[condition.signal] = conditionMatches(
+          record,
+          condition
+        );
+      }
+
+      // Evaluate the complete nested expression
+      const isMatch = evaluateLogicExpression(
+        pattern.logic,
+        signals
+      );
+
+      if (pattern.name === "groundwater_stress") {
+  console.log("===== Pattern EVALUATION =====");
+  console.log("MWS ID:", id);
+  console.log("Signals:", signals);
+  console.log("Logic:", pattern.logic);
+  console.log("FINAL RESULT:", isMatch);
+}
+
+      if (isMatch) {
+        matched.add(id);
+      }
     }
 
-    result = result === null ? matched : new Set([...result].filter((id) => matched.has(id)));
+    result =
+      result === null
+        ? matched
+        : new Set(
+            [...result].filter((id) => matched.has(id))
+          );
   }
+
   return result;
 }
 

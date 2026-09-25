@@ -21,7 +21,14 @@ for (const category of CATEGORIES) {
         // OR across a pattern's own conditions, AND across selected patterns —
         // confirmed intentional (screening heuristic, not strict AND).
         logic: p.logic,
-        conditions: p.Values.map((v) => ({ key: v.Key, type: v.type, value: v.value })),
+        conditions: p.Values.map((v) => ({
+          signal: v.signal,
+          key: v.Key,
+          operator: v.operator,
+          value: v.value,
+          additionalConditions: v.additionalConditions || [],
+          logic: v.logic || 'AND',
+        })),
       }));
       PATTERNS_BY_KEY.set(`${category}::${subcategory}`, patterns);
     }
