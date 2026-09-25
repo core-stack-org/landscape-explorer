@@ -405,24 +405,105 @@
                     "level": 0,
                     "logic": "OR",
                     "Values": [
-                        { "label": "Rabi water availability > 30%", "Key": "avg_rabi_surface_water_mws", "type": 2, "value": { "lower": 30, "upper": 999999 } },
-                        { "label": "Zaid water availability > 30%", "Key": "avg_zaid_surface_water_mws", "type": 2, "value": { "lower": 30, "upper": 999999 } },
-                        { "label": "trend(surface water availability) is not -ve", "Key": "trend_swb", "type": 3, "value": "-1" }
+                         {
+                        "signal": "sig_01",
+                        "label": "Kharif-Rabi water surface area availability is >= 50%",
+                        "Key": "kharif_rabi_water_surface_area / kharif_water_surface_area",
+                        "function": "mean",
+                        "operator": ">=",
+                        "value": 0.50
+                        },
+                        {
+                            "signal": "sig_02",
+                            "label": "Water surface area trend is >= 1 hectare",
+                            "Key": "water_surface_area",
+                            "function": "trend",
+                            "operator": ">=",
+                            "value": 1
+                        },
+                        {
+                            "signal": "sig_03",
+                            "label": "NREGA SWC count is >= 50",
+                            "Key": "nrega_count['swc']",
+                            "operator": ">=",
+                            "value": 50
+                        },
+                        {
+                            "signal": "sig_04",
+                            "label": "Cropping intensity is < 1.25",
+                            "Key": "cropping_intensity",
+                            "operator": "<",
+                            "value": 1.25
+                        },
+                        {
+                        "signal": "sig_05",
+                        "label": "SHG penetration is > 70%",
+                        "Key": "shg_penetration",
+                        "operator": ">",
+                        "value": 0.70
+                        }                    
                     ]
                 }
             ]
         },
         {
             "Agroforestry": [
-                {
-                    "Name": "transition_from_crops_to_agroforestry",
-                    "Category": "Transition from Crops to Agroforestry",
-                    "Characteristics": "Reduction in cropping area over the years is more than 30ha",
-                    "level": 0,
-                    "logic": "OR",
-                    "Values": [
-                        { "label": "Cropping degradation > 30 hectares", "Key": "degradation_land_area", "type": 2, "value": { "lower": 30, "upper": 999999 } }
-                    ]
+              {
+                "Name": "transition_from_crops_to_agroforestry",
+                "Category": "Transition from Crops to Agroforestry",
+                "Characteristics": "Reduction in cropping area over the years is more than 30ha",
+                "level": 0,
+                "logic": "sig_01 OR sig_02",
+                "Values": [
+                            {
+                                "signal": "sig_01",
+                                "label": "Cropping to shrub area exceeds 30 hectares",
+                                "Key": "cropping_to_shrub_area",
+                                "operator": ">",
+                                "value": 30
+                            },
+                            {
+                                "signal": "sig_02",
+                                "label": "Cropping intensity trend is below 10%",
+                                "Key": "cropping_intensity",
+                                "function": "trend",
+                                "operator": "<",
+                                "value": 0.10
+                            },
+                            {
+                                "signal": "sig_03",
+                                "label": "NREGA plantation count is >= 5",
+                                "Key": "nrega_count['plantations']",
+                                "operator": ">=",
+                                "value": 5
+                            },
+                            {
+                                "signal": "sig_04",
+                                "label": "SHG penetration is > 70%",
+                                "Key": "shg_penetration",
+                                "operator": ">",
+                                "value": 0.70
+                            },
+                    {
+                        "signal": "sig_05",
+                        "label": "Distance to FPOs or cooperatives is < 5 km",
+                        "logic": "sig_05_01 OR sig_05_02",
+                        "conditions": [
+                            {
+                                "signal": "sig_05_01",
+                                "Key": "dist_fpos",
+                                "operator": "<",
+                                "value": 5
+                            },
+                            {
+                                "signal": "sig_05_02",
+                                "Key": "dist_coops",
+                                "operator": "<",
+                                "value": 5
+                            }
+                        ]
+                    }
+                ]
                 }
             ]
         }
@@ -435,9 +516,43 @@
                     "Category": "Forest Degradation",
                     "Characteristics": "Reduction in tree cover over the years is more than 50ha",
                     "level": 0,
-                    "logic": "OR",
+                    "logic": "sig_01 OR sig_02",
                     "Values": [
-                        { "label": "Reduction in tree cover > 50 ha", "Key": "decrease_in_tree_cover", "type": 2, "value": { "lower": 50, "upper": 9999999 } }
+                        {
+                            "signal": "sig_01",
+                            "label": "Trees in forest loss or degradation in forests exceeds 30 hectares",
+                            "Key": "trees_in_forest_loss OR degradation_in_forests",
+                            "operator": ">",
+                            "value": 30
+                        },
+                        {
+                            "signal": "sig_02",
+                            "label": "Tree cover area is greater than 20ha and tree cover gain is less than 75% of tree cover loss, and LTP to STP tree cover is below 10%",
+                            "Key": "tree_cover_area > 20ha AND tree_cover_gain_ha < tree_cover_loss_ha * 0.75 AND ltp_to_stp_ha > tree_cover_ha * 0.10",
+                            "operator": "...",
+                            "value": "..."
+                        },
+                        {
+                            "signal": "sig_03",
+                            "label": "Terrain cluster is not plain",
+                            "Key": "terrain_cluster",
+                            "operator": "!=",
+                            "value": "plain"
+                        },
+                        {
+                            "signal": "sig_04",
+                            "label": "Forest to farm conversion exceeds 20 hectares",
+                            "Key": "forest_to_farm",
+                            "operator": ">",
+                            "value": 20
+                        },
+                        {
+                            "signal": "sig_05",
+                            "label": "ST population exceeds 33%",
+                            "Key": "st_population",
+                            "operator": ">",
+                            "value": 33
+                        }
                     ]
                 }
             ]
@@ -447,24 +562,47 @@
         {
             "Socio-economic": [
                 {
-                    "Name": "caste",
-                    "Category": "Caste",
+                    "Name": "multi_sector_vulnerability",
+                    "Category": "Mult-sector vulnerability",
                     "Characteristics": "SC or ST population is high",
                     "level": 1,
-                    "logic": "OR",
+                    "logic": "sig_01 + sig_02 + sig_03 + sig_04 + sig_05 >= 3",
                     "Values": [
-                        { "label": "ST population > 33%", "Key": "percent_st_population", "type": 2, "value": { "lower": 33, "upper": 999999 } },
-                        { "label": "SC population > 17%", "Key": "percent_sc_population", "type": 2, "value": { "lower": 17, "upper": 999999 } }
-                    ]
-                },
-                {
-                    "Name": "nrega",
-                    "Category": "NREGA",
-                    "Characteristics": "Number of NREGA works done is low",
-                    "level": 1,
-                    "logic": "OR",
-                    "Values": [
-                        { "label": "NREGA works < 100", "Key": "total_assets", "type": 2, "value": { "lower": 0, "upper": 100 } }
+                        {
+                            "signal": "sig_01",
+                            "label": "ST population + SC population > 45%",
+                            "expression": "st_population + sc_population",
+                            "operator": ">",
+                            "value": 45
+                        },
+                        {
+                            "signal": "sig_02",
+                            "label": "NREGA works count is < 100",
+                            "Key": "nrega_works_count",
+                            "operator": "<",
+                            "value": 100
+                        },
+                        {
+                            "signal": "sig_03",
+                            "label": "Distance to bank is > 1 km",
+                            "Key": "dist_to_bank",
+                            "operator": ">",
+                            "value": 1
+                        },
+                        {
+                            "signal": "sig_04",
+                            "label": "Literacy rate is < 55%",
+                            "Key": "literacy_rate",
+                            "operator": "<",
+                            "value": 55
+                        },
+                        {
+                            "signal": "sig_05",
+                            "label": "SHG penetration is > 50%",
+                            "Key": "shg_penetration",
+                            "operator": ">",
+                            "value": 50
+                        }
                     ]
                 }
             ]
@@ -472,14 +610,104 @@
         {
             "Health": [
                 {
-                    "Name": "water_pollution",
-                    "Category": "Water Pollution",
-                    "Characteristics": "Mines are present",
-                    "level": 0,
-                    "logic": "OR",
+                    "Name": "health_vulnerability",
+                    "Category": "Health Vulnerability",
+                    "Characteristics": "Distance to health facility is high, Health facility availability is low",
+                    "level": 1,
+                    "logic": "sig_01 OR sig_03 AND (sig_02 OR sig_04 OR sig_05)",
                     "Values": [
-                        { "label": "Mining presence", "Key": "mining", "type": 1, "value": 1 }
-                    ]
+                                {
+                                    "signal": "sig_01",
+                                    "label": "Mining is present",
+                                    "Key": "mining",
+                                    "operator": "==",
+                                    "value": 1
+                                },
+                                {
+                                    "signal": "sig_02",
+                                    "label": "Terrain is not plain, forest loss exceeds 30 hectares, and cropping intensity is below 1.25",
+                                    "logic": "sig_02_01 AND sig_02_02 AND sig_02_03",
+                                    "conditions": [
+                                        {
+                                            "signal": "sig_02_01",
+                                            "Key": "terrain",
+                                            "operator": "!=",
+                                            "value": "plain"
+                                        },
+                                        {
+                                            "signal": "sig_02_02",
+                                            "Key": "tree_in_forest_loss",
+                                            "operator": ">",
+                                            "value": 30
+                                        },
+                                        {
+                                            "signal": "sig_02_03",
+                                            "Key": "cropping_intensity",
+                                            "operator": "<",
+                                            "value": 1.25
+                                        }
+                                    ]
+                                },
+                                {
+                                    "signal": "sig_03",
+                                    "label": "Kharif-Rabi water surface area availability is below 50%",
+                                    "Key": "kharif_rabi_water_surface_area / kharif_water_surface_area",
+                                    "function": "mean",
+                                    "operator": "<",
+                                    "value": 0.50
+                                },
+                                {
+                                    "signal": "sig_04",
+                                    "label": "Groundwater stress conditions are present",
+                                    "logic": "sig_04_01 OR (sig_04_02 AND sig_04_03) OR sig_04_04",
+                                    "conditions": [
+                                        {
+                                            "signal": "sig_04_01",
+                                            "Key": "soge_class_name",
+                                            "operator": "not in",
+                                            "value": ["Safe"]
+                                        },
+                                        {
+                                            "signal": "sig_04_02",
+                                            "Key": "mean_annual_delta_g_mm",
+                                            "operator": "<",
+                                            "value": 50
+                                        },
+                                        {
+                                            "signal": "sig_04_03",
+                                            "Key": "len(upstream_mws)",
+                                            "operator": "==",
+                                            "value": 0
+                                        },
+                                        {
+                                            "signal": "sig_04_04",
+                                            "Key": "aquifer_type",
+                                            "operator": "==",
+                                            "value": "Hard rock"
+                                        }
+                                    ]
+                                },
+                                {
+                                    "signal": "sig_05",
+                                    "label": "Water surface area trend is below 1 hectare and NREGA SWC count is below 50",
+                                    "logic": "sig_05_01 AND sig_05_02",
+                                    "conditions": [
+                                        {
+                                            "signal": "sig_05_01",
+                                            "Key": "water_surface_area",
+                                            "function": "trend",
+                                            "operator": "<",
+                                            "value": 1
+                                        },
+                                        {
+                                            "signal": "sig_05_02",
+                                            "Key": "nrega_count['swc']",
+                                            "operator": "<",
+                                            "value": 50
+                                        }
+                                    ]
+                                }
+                            ]
                 }
             ]
         }
