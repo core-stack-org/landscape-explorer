@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import newLogo from "../assets/newlogoWhite.png";
 import { useLocation } from "react-router-dom";
-import { Compass, ExternalLink, FileSpreadsheet, Info } from "lucide-react";
+import { BookOpen, Compass, ExternalLink, FileSpreadsheet, Info } from "lucide-react";
 import GeoLibreTour from "./geolibre/GeoLibreTour";
 import { downloadExcel } from "./landscape-explorer/utils/downloadHelper";
 
@@ -110,6 +110,19 @@ const LandingNavbar = ({ downloadScope = null }) => {
                       {isDownloadingDataSheet ? "Downloading…" : "Download Excel"}
                     </span>
                   </button>
+                </HeaderTooltip>
+
+                <HeaderTooltip text="Open the CoRE Stack notebooks in Google Colab.">
+                  <a
+                    href="https://drive.google.com/drive/u/3/folders/1QZ28euPmgq2tOdx8tvAei92nZ2MFHY7z"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center justify-center rounded-lg border border-[#F9AB00] bg-[#FFF7E0] px-4 py-2 text-sm font-medium text-[#9A5B00] transition-colors duration-200 hover:bg-[#FDE7B2] focus:outline-none"
+                    aria-label="Open CoRE Stack Notebooks in Google Colab"
+                  >
+                    <BookOpen className="h-4 w-4" />
+                    <span className="ml-2">CoRE Stack Notebooks</span>
+                  </a>
                 </HeaderTooltip>
 
                 <HeaderTooltip text="Learn how to download CoRE Stack layers and open them in QGIS.">
