@@ -489,7 +489,7 @@ const KYLDashboardPage = () => {
         }
       });
 
-      if (hasAttrFilter && !hasMWSFilter) {
+      if (hasAttrFilter) {
         const wbData = [];
         wbFeatures.forEach(f => {
           if (f.get('wbMatch') === 1) {
@@ -539,7 +539,9 @@ const KYLDashboardPage = () => {
         setSelectedWaterbodyData([]);
       }
 
-      // Set selectedWaterbodyIds here — only place wbMatch is guaranteed fresh
+      // Set selectedWaterbodyIds here — only place wbMatch is guaranteed fresh.
+      // wbMatch already accounts for the MWS geometric intersection above, so no
+      // need to re-check against the (possibly stale) precomputed mws_intersect_swb index.
       if (hasAttrFilter) {
         const ids = new Set();
         wbFeatures.forEach(f => {
@@ -547,12 +549,6 @@ const KYLDashboardPage = () => {
           const p = f.getProperties();
           const wbId = String(p.UID ?? p.swb_id ?? p.SWB_UID ?? p.swb_uid ?? p.uid ?? p.id ?? '');
           if (!wbId) return;
-          if (hasMWSFilter) {
-            const inMWS = mwsIds.some(mwsId =>
-              (mwsIndex.mwsToSWB.get(mwsId) || []).some(swb => swb.swbId === wbId)
-            );
-            if (!inMWS) return;
-          }
           ids.add(wbId);
         });
         setSelectedWaterbodyIds(ids);
