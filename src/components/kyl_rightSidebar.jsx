@@ -876,34 +876,6 @@ const PLAN_ICON_HOVERED = (status = "in_progress") => [
 ];
 
 
-const PLAN_ICON_SELECTED = (status = "in_progress") => [
-  // Selected status ring
-  new Style({
-    image: new CircleStyle({
-      radius: 17,
-      fill: new Fill({
-        color: "transparent",
-      }),
-      stroke: new Stroke({
-        color: PLAN_STATUS_COLORS[status].fill,
-        width: 3.5,
-      }),
-    }),
-  }),
-
-  // Plan icon
-  new Style({
-    image: new Icon({
-      src: planIcon,
-      scale: 0.10,
-      anchor: [0.5, 0.5],
-      anchorXUnits: "fraction",
-      anchorYUnits: "fraction",
-    }),
-  }),
-];
-
-
 const STEWARD_DOT_DEFAULT = () =>
   [
     // White circular border
@@ -1385,39 +1357,12 @@ const STEWARD_DOT_HOVERED = () =>
       // Sheet 3 — Selected Waterbodies
       const uniqueSwbs = new Map();
 
-      if (selectedMWS && selectedMWS.length > 0 && waterbodyFilters.length > 0 && showWB) {
-        // MWS + WB filter — intersect from mwsVillageIntersections
-        mwsVillageIntersections.forEach(group => {
-          group.waterbodies.forEach(swb => {
-            if (!uniqueSwbs.has(swb.swbId) && selectedWaterbodyIds && selectedWaterbodyIds.has(String(swb.swbId))) {
-              let enriched = selectedWaterbodyData.find(d => String(d.swbId) === String(swb.swbId));
-              if (!enriched && waterbodiesLayerRef?.current) {
-                try {
-                  const feature = waterbodiesLayerRef.current.getSource().getFeatures().find(f => {
-                    const p = f.getProperties();
-                    return String(p.UID ?? p.swb_id ?? p.SWB_UID ?? p.uid ?? '') === String(swb.swbId);
-                  });
-                  if (feature) enriched = feature.getProperties();
-                } catch (_) {}
-              }
-              enriched = enriched || swb;
-              const row = {
-                "SWB ID": swb.swbId,
-                "WATERBODY NAME": swb.swbName || enriched.swbName || "Unknown",
-                "LATITUDE": swb.latitude || enriched.latitude || 0,
-                "LONGITUDE": swb.longitude || enriched.longitude || 0,
-              };
-              waterbodyFilters.forEach(f => {
-                row[(f.filterName || f.name).toUpperCase()] = getWBDisplayValue(f.name, enriched);
-              });
-              uniqueSwbs.set(swb.swbId, row);
-            }
-          });
-        });
-      } else if ((!selectedMWS || selectedMWS.length === 0) && waterbodyFilters.length > 0 && showWB) {
-        // WB-only filter — use selectedWaterbodyData directly (already has all computed props)
+      if (waterbodyFilters.length > 0 && showWB) {
+        // selectedWaterbodyData already has all computed props and already accounts
+        // for the MWS geometric intersection (see applyWaterbodyFilters in
+        // kyl_dashboard.jsx), so use it directly for both the WB-only and MWS+WB cases.
         selectedWaterbodyData.forEach(swb => {
-          if (!uniqueSwbs.has(swb.swbId)) {
+          if (!uniqueSwbs.has(swb.swbId) && (!selectedWaterbodyIds || selectedWaterbodyIds.has(String(swb.swbId)))) {
             const row = {
               "SWB ID": swb.swbId,
               "WATERBODY NAME": swb.swbName || "Unknown",
@@ -1568,19 +1513,16 @@ const STEWARD_DOT_HOVERED = () =>
 
     const uniqueSwbs = new Map();
 
-    if (selectedMWS && selectedMWS.length > 0 && hasWaterbodyFilter && showWB) {
-      // MWS + WB filter — intersect from mwsVillageIntersections
-      mwsVillageIntersections.forEach(group => {
-        group.waterbodies.forEach(swb => {
-          if (!uniqueSwbs.has(swb.swbId) && selectedWaterbodyIds && selectedWaterbodyIds.has(String(swb.swbId))) {
-            uniqueSwbs.set(swb.swbId, swb);
-          }
-        });
-      });
-    } else if ((!selectedMWS || selectedMWS.length === 0) && hasWaterbodyFilter && showWB) {
-      // WB-only filter — use selectedWaterbodyData from applyToFeatures
+    if (hasWaterbodyFilter && showWB) {
+      // selectedWaterbodyData/selectedWaterbodyIds already account for the MWS
+      // geometric intersection (when an MWS filter is also active) — see
+      // applyWaterbodyFilters in kyl_dashboard.jsx. Re-intersecting here against
+      // the precomputed mws_intersect_swb index caused it to disagree with what's
+      // actually shown on the map, so just use the already-matched data directly.
       selectedWaterbodyData.forEach(swb => {
-        if (!uniqueSwbs.has(swb.swbId)) uniqueSwbs.set(swb.swbId, swb);
+        if (!uniqueSwbs.has(swb.swbId) && (!selectedWaterbodyIds || selectedWaterbodyIds.has(String(swb.swbId)))) {
+          uniqueSwbs.set(swb.swbId, swb);
+        }
       });
     }
 
