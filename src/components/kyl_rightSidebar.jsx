@@ -22,7 +22,6 @@ import StewardIcon from "../assets/steward_icon_final.png";
 import planIcon from "../assets/plan_icon_final.png";
 import getFarmBoundariesLayer from '../actions/getFarmBoundariesLayer.js';
 
-import Overlay from 'ol/Overlay';
 import getFarmTimeseries from '../actions/getFarmTimeseries.js';
 
 
@@ -95,27 +94,26 @@ const KYLRightSidebar = ({
   const farmAreaThresholdRef = React.useRef(0);
   const [farmAreaThreshold, setFarmAreaThreshold] = React.useState(0);
 
-  const farmPopupOverlayRef = React.useRef(null);
-  const showFarmDetailsRef = React.useRef(() => {});
+  const selectedFarmIdRef = React.useRef(null);
+  const fetchFarmDetailsRef = React.useRef(() => {});
   const [selectedFarmProperties, setSelectedFarmProperties] = React.useState(null);
-  const [showFarmDetailsModal, setShowFarmDetailsModal] = React.useState(false);
+  const [showFarmDetails, setShowFarmDetails] = React.useState(false);
   const [farmTimeseries, setFarmTimeseries] = React.useState(null);
   const [farmTimeseriesLoading, setFarmTimeseriesLoading] = React.useState(false);
   const [farmTimeseriesError, setFarmTimeseriesError] = React.useState(null);
   const [timeseriesView, setTimeseriesView] = React.useState('yearly'); // 'yearly' | 'monthly'
   const [selectedTimeseriesYear, setSelectedTimeseriesYear] = React.useState(null);
 
-  showFarmDetailsRef.current = async () => {
-    if (!selectedFarmProperties?.farm_id) return;
-    farmPopupOverlayRef.current?.setPosition(undefined);
-    setShowFarmDetailsModal(true);
+  fetchFarmDetailsRef.current = async (farmId) => {
+    if (!farmId) return;
+    setShowFarmDetails(true);
     setTimeseriesView('yearly');
     setFarmTimeseriesLoading(true);
     setFarmTimeseriesError(null);
     try {
-      const data = await getFarmTimeseries(state.label, district.label, block.label, selectedFarmProperties.farm_id);
+      const data = await getFarmTimeseries(state.label, district.label, block.label, farmId);
       setFarmTimeseries(data);
-      setSelectedTimeseriesYear(data.annual?.[0]?.year ?? null);
+      setSelectedTimeseriesYear(data.annual?.[data.annual.length - 1]?.year ?? null);
     } catch (err) {
       console.error('Failed to fetch farm timeseries:', err);
       setFarmTimeseriesError('Could not load farm details. Please try again.');
@@ -344,51 +342,6 @@ const KYLRightSidebar = ({
   }, [state, district, block]);
 
   useEffect(() => {
-    if (!mapRef.current || farmPopupOverlayRef.current) return;
-
-    const container = document.createElement('div');
-    container.style.cssText = `
-      background:#fff;border-radius:10px;box-shadow:0 4px 14px rgba(0,0,0,0.18);
-      padding:10px 12px;font-size:12px;min-width:170px;display:none;
-    `;
-
-    const overlay = new Overlay({
-      element: container,
-      offset: [14, -14],
-      positioning: 'bottom-left',
-      stopEvent: true, // lets clicks inside the popup (the button) register normally
-    });
-
-    mapRef.current.addOverlay(overlay);
-    farmPopupOverlayRef.current = overlay;
-  }, [mapRef.current]);
-
-  const showFarmPopup = (coordinate, properties) => {
-    const overlay = farmPopupOverlayRef.current;
-    if (!overlay) return;
-    const el = overlay.getElement();
-
-    el.innerHTML = `
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:6px;">
-        <div style="font-weight:600;color:#111827;">Farm ${properties.farm_id ?? '--'}</div>
-        <button id="farm-popup-close" style="border:none;background:none;color:#9ca3af;cursor:pointer;font-size:14px;line-height:1;">×</button>
-      </div>
-      <div style="color:#6b7280;margin-bottom:8px;">
-        Area: ${properties.area_m2 != null ? Number(properties.area_m2).toLocaleString() + ' m²' : '--'}
-      </div>
-      <button id="farm-popup-details" style="width:100%;padding:6px 0;border-radius:6px;border:1px solid #c7d2fe;background:#eef2ff;color:#4f46e5;font-size:11px;font-weight:600;cursor:pointer;">
-        Show Details
-      </button>
-    `;
-    el.style.display = 'block';
-
-    el.querySelector('#farm-popup-close').onclick = () => overlay.setPosition(undefined);
-    el.querySelector('#farm-popup-details').onclick = () => showFarmDetailsRef.current();
-
-    overlay.setPosition(coordinate);
-  };
-
-  useEffect(() => {
     if (!mapRef.current) return;
 
     const handleFarmClick = (evt) => {
@@ -399,14 +352,13 @@ const KYLRightSidebar = ({
         (feat, layer) => (layer === farmBoundariesLayerRef.current ? feat : undefined)
       );
 
-      if (!feature) {
-        farmPopupOverlayRef.current?.setPosition(undefined);
-        return;
-      }
+      if (!feature) return;
 
       const properties = feature.getProperties();
       setSelectedFarmProperties(properties);
-      showFarmPopup(evt.coordinate, properties);
+      selectedFarmIdRef.current = properties.farm_id;
+      farmBoundariesLayerRef.current.changed();
+      fetchFarmDetailsRef.current(properties.farm_id);
     };
 
     mapRef.current.on('singleclick', handleFarmClick);
@@ -590,8 +542,10 @@ const KYLRightSidebar = ({
   const toggleFarmBoundaries = async () => {
     if (showFarmBoundaries) {
       if (farmBoundariesLayerRef.current) mapRef.current.removeLayer(farmBoundariesLayerRef.current);
-      farmPopupOverlayRef.current?.setPosition(undefined);
       setSelectedFarmProperties(null);
+      selectedFarmIdRef.current = null;
+      setShowFarmDetails(false);
+      setFarmTimeseries(null);
       setShowFarmBoundaries(false);
       farmAreaThresholdRef.current = 0;
       setFarmAreaThreshold(0);
@@ -613,10 +567,17 @@ const KYLRightSidebar = ({
         stroke: new Stroke({ color: 'rgba(255, 179, 0, 1)', width: 1.5 }),
         fill: new Fill({ color: 'rgba(255, 179, 0, 0.12)' }),
       });
+      const farmSelectedStyle = new Style({
+        stroke: new Stroke({ color: 'rgba(220, 38, 38, 1)', width: 2.5 }),
+        fill: new Fill({ color: 'rgba(220, 38, 38, 0.25)' }),
+      });
 
       layer.setStyle((feature) => {
         const area = feature.get('area_m2');
         if (area == null || area < farmAreaThresholdRef.current) return null;
+        if (selectedFarmIdRef.current != null && String(feature.get('farm_id')) === String(selectedFarmIdRef.current)) {
+          return farmSelectedStyle;
+        }
         return farmStyle;
       });
 
@@ -974,9 +935,10 @@ const KYLRightSidebar = ({
   }, [showStewards]);
 
   useEffect(() => {
-    farmPopupOverlayRef.current?.setPosition(undefined);
     setSelectedFarmProperties(null);
-    setShowFarmDetailsModal(false);
+    selectedFarmIdRef.current = null;
+    farmBoundariesLayerRef.current?.changed();
+    setShowFarmDetails(false);
     setFarmTimeseries(null);
     setTimeseriesView('yearly');
     setSelectedTimeseriesYear(null);
@@ -2196,168 +2158,15 @@ const sheet5Count =
   };
 
 
-  //Farm Popup
-  const FarmDetailsModal = () => {
-    if (!showFarmDetailsModal) return null;
-
-    const availableYears = farmTimeseries?.annual?.map((row) => row.year) || [];
-    const monthlyRows = (farmTimeseries?.monthly || [])
-      .filter((row) => row.year === selectedTimeseriesYear)
-      .slice()
-      .sort((a, b) => new Date(a.date) - new Date(b.date));
-
-    const formatMonth = (dateStr) => {
-      const d = new Date(dateStr);
-      return d.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
-    };
-
-    return (
-      <div
-        className="fixed inset-0 bg-black/60 backdrop-blur-[2px] flex items-center justify-center z-50"
-        onClick={() => setShowFarmDetailsModal(false)}
-      >
-        <div
-          className="bg-white rounded-xl shadow-2xl w-full max-w-3xl max-h-[85vh] overflow-hidden flex flex-col mx-4"
-          onClick={(e) => e.stopPropagation()}
-        >
-          <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gradient-to-r from-slate-50 to-white flex-shrink-0">
-            <div>
-              <h3 className="text-base font-bold text-gray-800 tracking-tight">Farm Details</h3>
-              <p className="text-xs text-gray-400 mt-0.5">Farm ID: {selectedFarmProperties?.farm_id || '--'}</p>
-            </div>
-
-            <div className="flex items-center gap-2">
-              <div className="flex gap-1 bg-gray-100 p-1 rounded-lg">
-                {['yearly', 'monthly'].map((view) => (
-                  <button
-                    key={view}
-                    onClick={() => setTimeseriesView(view)}
-                    className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all duration-150 capitalize ${
-                      timeseriesView === view ? 'bg-white text-gray-800 shadow-sm' : 'text-gray-500 hover:text-gray-700'
-                    }`}
-                  >
-                    {view}
-                  </button>
-                ))}
-              </div>
-
-              {timeseriesView === 'monthly' && availableYears.length > 0 && (
-                <select
-                  value={selectedTimeseriesYear ?? ''}
-                  onChange={(e) => setSelectedTimeseriesYear(Number(e.target.value))}
-                  className="text-xs font-semibold border border-gray-200 rounded-lg px-2 py-1.5 text-gray-700 bg-white"
-                >
-                  {availableYears.map((year) => (
-                    <option key={year} value={year}>{year}</option>
-                  ))}
-                </select>
-              )}
-
-              <button
-                onClick={() => setShowFarmDetailsModal(false)}
-                className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-          </div>
-
-          <div className="overflow-y-auto flex-1 p-4 bg-gray-50/50">
-            {farmTimeseriesLoading ? (
-              <div className="flex flex-col items-center justify-center py-16 text-gray-400">
-                <Loader2 className="w-6 h-6 animate-spin mb-2" />
-                <p className="text-sm">Loading farm timeseries…</p>
-              </div>
-            ) : farmTimeseriesError ? (
-              <div className="flex flex-col items-center justify-center py-16 text-red-400">
-                <p className="text-sm font-medium">{farmTimeseriesError}</p>
-              </div>
-            ) : timeseriesView === 'yearly' ? (
-              farmTimeseries?.annual?.length > 0 ? (
-                <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
-                  <table className="w-full text-xs">
-                    <thead>
-                      <tr className="bg-gradient-to-r from-indigo-600 to-indigo-500 text-white">
-                        <th className="text-left px-3 py-2.5 font-semibold">Year</th>
-                        <th className="text-left px-3 py-2.5 font-semibold">Area (Ha)</th>
-                        <th className="text-left px-3 py-2.5 font-semibold">AET Annual</th>
-                        <th className="text-left px-3 py-2.5 font-semibold">PET Annual</th>
-                        <th className="text-left px-3 py-2.5 font-semibold">MAI Annual</th>
-                        <th className="text-left px-3 py-2.5 font-semibold">Kharif MAI</th>
-                        <th className="text-left px-3 py-2.5 font-semibold">Kharif Water Stress</th>
-                        <th className="text-left px-3 py-2.5 font-semibold">Kharif Severe Stress</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-100">
-                      {farmTimeseries.annual.map((row) => (
-                        <tr key={row.year} className="hover:bg-indigo-50/30 transition-colors">
-                          <td className="px-3 py-2 font-medium text-gray-800">{row.year}</td>
-                          <td className="px-3 py-2 text-gray-600">{row.areaInHa?.toFixed(3)}</td>
-                          <td className="px-3 py-2 text-gray-600">{row.aetAnnual?.toFixed(2)}</td>
-                          <td className="px-3 py-2 text-gray-600">{row.petAnnual?.toFixed(2)}</td>
-                          <td className="px-3 py-2 text-gray-600">{row.maiAnnual?.toFixed(3)}</td>
-                          <td className="px-3 py-2 text-gray-600">{row.kharifMai?.toFixed(3)}</td>
-                          <td className="px-3 py-2">
-                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${row.kharifWaterStress ? 'bg-amber-100 text-amber-700' : 'bg-gray-100 text-gray-500'}`}>
-                              {row.kharifWaterStress ? 'Yes' : 'No'}
-                            </span>
-                          </td>
-                          <td className="px-3 py-2">
-                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${row.kharifSevereStress ? 'bg-red-100 text-red-700' : 'bg-gray-100 text-gray-500'}`}>
-                              {row.kharifSevereStress ? 'Yes' : 'No'}
-                            </span>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              ) : (
-                <div className="flex flex-col items-center justify-center py-16 text-gray-400">
-                  <p className="text-sm font-medium">No yearly data available for this farm.</p>
-                </div>
-              )
-            ) : monthlyRows.length > 0 ? (
-              <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
-                <table className="w-full text-xs">
-                  <thead>
-                    <tr className="bg-gradient-to-r from-emerald-600 to-emerald-500 text-white">
-                      <th className="text-left px-3 py-2.5 font-semibold">Month</th>
-                      <th className="text-left px-3 py-2.5 font-semibold">AET</th>
-                      <th className="text-left px-3 py-2.5 font-semibold">PET</th>
-                      <th className="text-left px-3 py-2.5 font-semibold">MAI</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-100">
-                    {monthlyRows.map((row) => (
-                      <tr key={row.date} className="hover:bg-emerald-50/30 transition-colors">
-                        <td className="px-3 py-2 font-medium text-gray-800">{formatMonth(row.date)}</td>
-                        <td className="px-3 py-2 text-gray-600">{row.aet?.toFixed(3)}</td>
-                        <td className="px-3 py-2 text-gray-600">{row.pet?.toFixed(3)}</td>
-                        <td className="px-3 py-2 text-gray-600">{row.mai?.toFixed(3)}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            ) : (
-              <div className="flex flex-col items-center justify-center py-16 text-gray-400">
-                <p className="text-sm font-medium">No monthly data available for {selectedTimeseriesYear}.</p>
-              </div>
-            )}
-          </div>
-
-          <div className="px-6 py-3 border-t border-gray-100 bg-white flex justify-end flex-shrink-0">
-            <button
-              onClick={() => setShowFarmDetailsModal(false)}
-              className="px-6 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold rounded-lg transition-colors shadow-sm"
-            >
-              Close
-            </button>
-          </div>
-        </div>
-      </div>
-    );
+  const handleCloseFarmDetails = () => {
+    setShowFarmDetails(false);
+    setSelectedFarmProperties(null);
+    selectedFarmIdRef.current = null;
+    farmBoundariesLayerRef.current?.changed();
+    setFarmTimeseries(null);
+    setTimeseriesView('yearly');
+    setSelectedTimeseriesYear(null);
+    setFarmTimeseriesError(null);
   };
 
   // ─── Shared section header component ─────────────────────────────────────
@@ -2374,9 +2183,8 @@ const sheet5Count =
   );
 
   return (
-    <div className="w-[320px] shrink-0 h-full flex flex-col gap-2 overflow-y-auto pr-1 custom-scrollbar">
+    <div className="w-[360px] shrink-0 h-full flex flex-col gap-2 overflow-y-auto pr-1 custom-scrollbar">
       <SelectionPopup />
-      <FarmDetailsModal />
 
       {/* Universal Back Button */}
       {showBothPanels && (
@@ -2407,7 +2215,20 @@ const sheet5Count =
           onResetSelection={onResetMWSSelection} 
           onRemoveMWS={handleRemoveMWS}
           onOpenSelection={() => setShowSelectionPopup(true)}
-          intersectingVillages={displayVillages}  
+          intersectingVillages={displayVillages}
+          showFarmDetails={showFarmDetails}
+          farmDetailsProps={{
+            farmId: selectedFarmProperties?.farm_id,
+            annual: farmTimeseries?.annual,
+            monthly: farmTimeseries?.monthly,
+            loading: farmTimeseriesLoading,
+            error: farmTimeseriesError,
+            view: timeseriesView,
+            setView: setTimeseriesView,
+            selectedYear: selectedTimeseriesYear,
+            setSelectedYear: setSelectedTimeseriesYear,
+            onClose: handleCloseFarmDetails,
+          }}
       />
 
       ) : null}

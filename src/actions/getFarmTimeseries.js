@@ -12,6 +12,14 @@ const FARM_TIMESERIES_QUERY = `
         kharifMai
         kharifWaterStress
         kharifSevereStress
+        crop1
+        conf1
+        crop2
+        conf2
+        crop3
+        conf3
+        cropStartDate
+        cropEndDate
       }
       monthly {
         year
