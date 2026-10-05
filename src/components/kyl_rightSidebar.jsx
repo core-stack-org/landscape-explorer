@@ -355,6 +355,13 @@ const KYLRightSidebar = ({
       if (!feature) return;
 
       const properties = feature.getProperties();
+
+      // Clicking the already-selected farm again deselects it.
+      if (selectedFarmIdRef.current != null && String(selectedFarmIdRef.current) === String(properties.farm_id)) {
+        handleCloseFarmDetails();
+        return;
+      }
+
       setSelectedFarmProperties(properties);
       selectedFarmIdRef.current = properties.farm_id;
       farmBoundariesLayerRef.current.changed();
@@ -600,23 +607,23 @@ const KYLRightSidebar = ({
   };
 
   const fetchPlansByTehsil = async (block) => {
-  const res = await fetch(
-    `${process.env.REACT_APP_API_URL}/watershed/plans/?tehsil=${block}&filter_test_plan=true`,
-    {
-      headers: {
-        "Content-Type": "application/json",
-        "ngrok-skip-browser-warning": "1",
-        "X-API-Key": process.env.REACT_APP_API_KEY,
-      },
+    const res = await fetch(
+      `${process.env.REACT_APP_API_URL}/watershed/plans/?tehsil=${block}&filter_test_plan=true`,
+      {
+        headers: {
+          "Content-Type": "application/json",
+          "ngrok-skip-browser-warning": "1",
+          "X-API-Key": process.env.REACT_APP_API_KEY,
+        },
+      }
+    );
+
+    if (!res.ok) {
+      throw new Error(`API Error ${res.status}`);
     }
-  );
 
-  if (!res.ok) {
-    throw new Error(`API Error ${res.status}`);
-  }
-
-  return res.json();
-};
+    return res.json();
+  };
 
   const handlePlansClick = async () => {
     try {
@@ -2204,6 +2211,7 @@ const sheet5Count =
           mwsData={selectedMWSProfile}
           onBack={() => {
             onResetMWS();
+            handleCloseFarmDetails();
             setSelectedPlanProfile(null);
             setSelectedStewardProfile(null);
           }}

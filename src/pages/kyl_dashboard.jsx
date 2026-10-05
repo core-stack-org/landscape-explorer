@@ -2272,23 +2272,17 @@ const wb_id = props?.UID ?? props?.id ?? props?.wb_id;
 
       const uid = feature.get("uid");
 
+      // Clicking only ever adds/selects an MWS and switches the profile
+      // shown to it — it never deselects. Removing an MWS from the
+      // selection is a deliberate action (the panel's remove button or a
+      // manual reset), never a side effect of clicking elsewhere on the map.
       setManualSelectedMWS((prev) => {
-        const updated = prev.includes(uid)
-          ? prev.filter((id) => id !== uid)
-          : [...prev, uid];
-
+        const updated = prev.includes(uid) ? prev : [...prev, uid];
         updateSelectedMWSStyle(updated);
-
-        if (updated.length === 0) {
-          setSelectedMWSProfile(null);
-          setHighlightMWS(null);
-        } else {
-          setSelectedMWSProfile(feature.getProperties());
-          setHighlightMWS(uid);
-        }
-
         return updated;
       });
+      setSelectedMWSProfile(feature.getProperties());
+      setHighlightMWS(uid);
 
       if (toastId) {
         toast.dismiss(toastId);
