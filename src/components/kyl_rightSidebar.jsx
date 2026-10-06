@@ -91,8 +91,6 @@ const KYLRightSidebar = ({
 
   const farmBoundariesLayerRef = React.useRef(null);
   const [farmBoundariesLoading, setFarmBoundariesLoading] = React.useState(false);
-  const farmAreaThresholdRef = React.useRef(0);
-  const [farmAreaThreshold, setFarmAreaThreshold] = React.useState(0);
 
   const selectedFarmIdRef = React.useRef(null);
   const fetchFarmDetailsRef = React.useRef(() => {});
@@ -101,19 +99,15 @@ const KYLRightSidebar = ({
   const [farmTimeseries, setFarmTimeseries] = React.useState(null);
   const [farmTimeseriesLoading, setFarmTimeseriesLoading] = React.useState(false);
   const [farmTimeseriesError, setFarmTimeseriesError] = React.useState(null);
-  const [timeseriesView, setTimeseriesView] = React.useState('yearly'); // 'yearly' | 'monthly'
-  const [selectedTimeseriesYear, setSelectedTimeseriesYear] = React.useState(null);
 
   fetchFarmDetailsRef.current = async (farmId) => {
     if (!farmId) return;
     setShowFarmDetails(true);
-    setTimeseriesView('yearly');
     setFarmTimeseriesLoading(true);
     setFarmTimeseriesError(null);
     try {
       const data = await getFarmTimeseries(state.label, district.label, block.label, farmId);
       setFarmTimeseries(data);
-      setSelectedTimeseriesYear(data.annual?.[data.annual.length - 1]?.year ?? null);
     } catch (err) {
       console.error('Failed to fetch farm timeseries:', err);
       setFarmTimeseriesError('Could not load farm details. Please try again.');
@@ -326,8 +320,6 @@ const KYLRightSidebar = ({
       farmBoundariesLayerRef.current = null;
     }
     setShowFarmBoundaries(false);
-    farmAreaThresholdRef.current = 0;
-    setFarmAreaThreshold(0);
   }, [state, district, block]);
 
   useEffect(() => {
@@ -554,8 +546,6 @@ const KYLRightSidebar = ({
       setShowFarmDetails(false);
       setFarmTimeseries(null);
       setShowFarmBoundaries(false);
-      farmAreaThresholdRef.current = 0;
-      setFarmAreaThreshold(0);
       return;
     }
 
@@ -580,8 +570,6 @@ const KYLRightSidebar = ({
       });
 
       layer.setStyle((feature) => {
-        const area = feature.get('area_m2');
-        if (area == null || area < farmAreaThresholdRef.current) return null;
         if (selectedFarmIdRef.current != null && String(feature.get('farm_id')) === String(selectedFarmIdRef.current)) {
           return farmSelectedStyle;
         }
@@ -597,13 +585,6 @@ const KYLRightSidebar = ({
     } finally {
       setFarmBoundariesLoading(false);
     }
-  };
-
-  const handleFarmAreaThresholdChange = (e) => {
-    const value = Number(e.target.value);
-    farmAreaThresholdRef.current = value;
-    setFarmAreaThreshold(value);
-    farmBoundariesLayerRef.current?.changed();
   };
 
   const fetchPlansByTehsil = async (block) => {
@@ -947,8 +928,6 @@ const KYLRightSidebar = ({
     farmBoundariesLayerRef.current?.changed();
     setShowFarmDetails(false);
     setFarmTimeseries(null);
-    setTimeseriesView('yearly');
-    setSelectedTimeseriesYear(null);
   }, [state, district, block]);
 
 
@@ -2171,8 +2150,6 @@ const sheet5Count =
     selectedFarmIdRef.current = null;
     farmBoundariesLayerRef.current?.changed();
     setFarmTimeseries(null);
-    setTimeseriesView('yearly');
-    setSelectedTimeseriesYear(null);
     setFarmTimeseriesError(null);
   };
 
@@ -2231,10 +2208,6 @@ const sheet5Count =
             monthly: farmTimeseries?.monthly,
             loading: farmTimeseriesLoading,
             error: farmTimeseriesError,
-            view: timeseriesView,
-            setView: setTimeseriesView,
-            selectedYear: selectedTimeseriesYear,
-            setSelectedYear: setSelectedTimeseriesYear,
             onClose: handleCloseFarmDetails,
           }}
       />
@@ -2654,24 +2627,6 @@ const sheet5Count =
                     {farmBoundariesLoading ? 'Loading…' : showFarmBoundaries ? 'Hide Farm Boundaries' : 'Show Farm Boundaries'}
                   </button>
                 </div>
-
-                {showFarmBoundaries && (
-                  <div className="mt-2 px-1">
-                    <div className="flex justify-between items-center mb-1">
-                      <label className="text-[11px] font-semibold text-gray-500">Min Farm Area</label>
-                      <span className="text-[11px] font-semibold text-indigo-600">{farmAreaThreshold} m²</span>
-                    </div>
-                    <input
-                      type="range"
-                      min={0}
-                      max={5000}
-                      step={100}
-                      value={farmAreaThreshold}
-                      onChange={handleFarmAreaThresholdChange}
-                      className="w-full accent-indigo-600"
-                    />
-                  </div>
-                )}
               </div>
             )}
           </div>

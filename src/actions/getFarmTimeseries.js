@@ -9,9 +9,6 @@ const FARM_TIMESERIES_QUERY = `
         aetAnnual
         petAnnual
         maiAnnual
-        kharifMai
-        kharifWaterStress
-        kharifSevereStress
         crop1
         conf1
         crop2

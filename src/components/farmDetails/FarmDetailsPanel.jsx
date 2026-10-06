@@ -1,74 +1,108 @@
-import { Loader2, X, ChevronDown } from 'lucide-react';
-import FarmYearlyView from './FarmYearlyView';
-import FarmMonthlyView from './FarmMonthlyView';
-import { colorBorder, colorPrimaryLight, colorTextPrimary, colorTextSecondary, colorTextMuted, colorConfidenceLow } from './farmDetailsTokens';
+import { useEffect, useState } from 'react';
+import { ChevronIcon, CloseIcon, TrendIcon } from './icons';
+import CropHeroCard from './CropHeroCard';
+import FieldSizeCard from './FieldSizeCard';
+import CroppingHistory from './CroppingHistory';
+import WaterBalanceCard from './WaterBalanceCard';
+import OtherCropsCard from './OtherCropsCard';
+import FarmTrendsModal from './FarmTrendsModal';
+import { sortedByYear, buildCroppingHistory } from './farmDetailsUtils';
+import { colorBorder, colorPageBg, colorSurface, colorInk, colorMuted, colorFaint, colorPrimary, colorBad } from './farmDetailsTokens';
 
-export default function FarmDetailsPanel({ farmId, annual, monthly, loading, error, view, setView, selectedYear, setSelectedYear, onClose }) {
-  const availableYears = (annual || []).map((r) => r.year);
+function Skeleton() {
+  return (
+    <div className="space-y-3 animate-pulse py-2">
+      {[120, 56, 180, 140].map((h, i) => (
+        <div key={i} className="rounded-2xl" style={{ height: h, background: colorBorder }} />
+      ))}
+    </div>
+  );
+}
+
+export default function FarmDetailsPanel({ farmId, annual, monthly, loading, error, onClose }) {
+  const [trendsOpen, setTrendsOpen] = useState(false);
+
+  useEffect(() => {
+    setTrendsOpen(false);
+  }, [farmId]);
+
+  const rows = sortedByYear(annual);
+  const latest = rows[rows.length - 1];
+  const hasHistory = rows.length > 0;
+  const latestCycle = hasHistory ? buildCroppingHistory(rows).at(-1) : null;
 
   return (
-    <div className="bg-white rounded-xl p-4 shadow-sm" style={{ border: `1px solid ${colorBorder}` }}>
-      <div className="flex items-center justify-between gap-2">
-        <div className="min-w-0">
-          <h3 className="text-[13px] font-semibold" style={{ color: colorTextPrimary }}>Farm Details</h3>
-          <p className="text-[11px] mt-0.5 truncate" style={{ color: colorTextSecondary }}>Farm ID &nbsp;{farmId || '--'}</p>
+    <div className="flex flex-col rounded-xl overflow-hidden" style={{ background: colorPageBg, border: `1px solid ${colorBorder}` }}>
+      <div className="flex items-center gap-2.5 px-3.5 py-3" style={{ background: colorSurface, borderBottom: `1px solid ${colorBorder}` }}>
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label="Back"
+          className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 hover:bg-gray-50"
+          style={{ border: `1px solid ${colorBorder}`, color: colorInk }}
+        >
+          <ChevronIcon size={14} direction="left" stroke={colorInk} strokeWidth={2.2} />
+        </button>
+        <div className="flex-1 min-w-0">
+          <div className="text-[16px] font-bold leading-tight" style={{ color: colorInk }}>This farm</div>
+          <div className="text-[11px] mt-0.5 truncate" style={{ color: colorFaint }}>Farm ID {farmId || '--'}</div>
         </div>
         <button
+          type="button"
           onClick={onClose}
-          className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors flex-shrink-0"
-          style={{ color: colorTextSecondary }}
+          aria-label="Close farm details"
+          className="w-7 h-7 rounded-md flex items-center justify-center hover:bg-gray-100 flex-shrink-0"
+          style={{ color: colorMuted }}
         >
-          <X className="w-4 h-4" />
+          <CloseIcon size={16} />
         </button>
       </div>
 
-      <div className="mt-3 flex items-center gap-2 flex-wrap">
-        <div className="inline-flex rounded-lg p-[3px]" style={{ background: colorPrimaryLight }}>
-          {['yearly', 'monthly'].map((v) => (
-            <button
-              key={v}
-              onClick={() => setView(v)}
-              className={`px-3 py-1.5 rounded-md text-[11px] font-semibold capitalize transition-colors ${view === v ? 'bg-white shadow-sm' : ''}`}
-              style={{ color: view === v ? colorTextPrimary : colorTextSecondary }}
-            >
-              {v}
-            </button>
-          ))}
-        </div>
-
-        {availableYears.length > 0 && (
-          <div className="relative">
-            <select
-              value={selectedYear ?? ''}
-              onChange={(e) => setSelectedYear(e.target.value)}
-              className="appearance-none text-[11px] font-semibold rounded-lg pl-2.5 pr-7 py-1.5 bg-white"
-              style={{ border: `1px solid ${colorBorder}`, color: colorTextPrimary }}
-            >
-              {availableYears.map((y) => (
-                <option key={y} value={y}>{y}</option>
-              ))}
-            </select>
-            <ChevronDown className="w-3 h-3 absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: colorTextSecondary }} />
-          </div>
-        )}
-      </div>
-
-      <div className="mt-4">
+      <div className="px-3.5 py-3.5 space-y-3.5 overflow-y-auto" style={{ maxHeight: '65vh' }}>
         {loading ? (
-          <div className="flex flex-col items-center justify-center py-10" style={{ color: colorTextMuted }}>
-            <Loader2 className="w-5 h-5 animate-spin mb-2" />
-            <p className="text-[11px]">Loading farm details&hellip;</p>
-          </div>
+          <Skeleton />
         ) : error ? (
-          <div className="flex flex-col items-center justify-center py-10 text-xs text-center" style={{ color: colorConfidenceLow }}>
-            {error}
-          </div>
-        ) : view === 'yearly' ? (
-          <FarmYearlyView annual={annual} selectedYear={selectedYear} />
+          <p className="text-[12px] text-center py-8" style={{ color: colorBad }}>{error}</p>
+        ) : !hasHistory ? (
+          <p className="text-[12px] text-center py-8" style={{ color: colorMuted }}>No farm data is available yet.</p>
         ) : (
-          <FarmMonthlyView annual={annual} monthly={monthly} selectedYear={selectedYear} />
+          <>
+            <CropHeroCard record={latest} cycle={latestCycle} year={latest.year} />
+            <FieldSizeCard areaInHa={latest.areaInHa} />
+            <CroppingHistory annual={rows} />
+            <WaterBalanceCard record={latest} />
+            <OtherCropsCard record={latest} />
+          </>
         )}
       </div>
+
+      {!loading && !error && hasHistory && (
+        <div className="p-3.5" style={{ background: colorSurface, borderTop: `1px solid ${colorBorder}` }}>
+          <button
+            type="button"
+            onClick={() => setTrendsOpen(true)}
+            className="w-full flex items-center gap-3 rounded-xl px-3.5 py-3 text-left transition-colors hover:brightness-95"
+            style={{ background: colorPrimary, color: '#FFFFFF' }}
+          >
+            <span className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: 'rgba(255,255,255,0.18)' }}>
+              <TrendIcon size={16} stroke="#FFFFFF" />
+            </span>
+            <span className="flex-1 min-w-0">
+              <span className="block text-[13px] font-bold">See year-by-year trends</span>
+              <span className="block text-[11px] opacity-90">Water use and dry months across all years</span>
+            </span>
+            <ChevronIcon size={14} stroke="#FFFFFF" strokeWidth={2.2} />
+          </button>
+        </div>
+      )}
+
+      <FarmTrendsModal
+        open={trendsOpen}
+        onClose={() => setTrendsOpen(false)}
+        annual={rows}
+        monthly={monthly}
+        farmId={farmId}
+      />
     </div>
   );
 }
