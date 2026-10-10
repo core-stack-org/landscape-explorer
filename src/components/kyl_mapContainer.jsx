@@ -175,10 +175,6 @@ const MapLegend = ({ showMWS, showVillages, currentLayer, showConnectivity,showP
 
   const activeWBType = activeWBLayer?.name;
 
-  const isWaterbodyVisualizeActive = currentLayer?.some(
-    (layer) => layer.name === "waterbody_type"
-  );
-
   const toggleCollapse = () => {
     setIsCollapsed(!isCollapsed);
   };
@@ -221,10 +217,10 @@ const MapLegend = ({ showMWS, showVillages, currentLayer, showConnectivity,showP
 
   const lulcLegendItems = [
   { color: "#A9A9A9", label: "Barren Lands" },
-  { color: "#F0F4A3", label: "Single Kharif" },
-  { color: "#D6E96B", label: "Single Non-Kharif" },
-  { color: "#B7D43A", label: "Double Cropping" },
-  { color: "#7FAF2E", label: "Triple Cropping" },
+  { color: "#F5F8BF", label: "Single Kharif" },
+  { color: "#FEC016", label: "Single Non-Kharif" },
+  { color: "#7FAF2E", label: "Double Cropping" },
+  { color: "#73861D", label: "Triple Cropping" },
   { color: "#8C7A4F", label: "Shrubs and Scrubs" },
 ];
 
