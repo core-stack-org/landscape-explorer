@@ -1,6 +1,28 @@
 import { Line } from 'react-chartjs-2';
 import './chartSetup';
-import { colorPrimary, colorDataWarm, colorBorderSoft, colorMuted, colorFaint } from '../farmDetailsTokens';
+import { colorPrimary, colorDataWarm, colorBorderSoft, colorMuted } from '../farmDetailsTokens';
+
+const ODD_YEAR_BAND = '#FBFAFE';
+
+const yearBandsPlugin = {
+  id: 'yearBands',
+  beforeDatasetsDraw(chart, _args, opts) {
+    const { ctx, chartArea, scales } = chart;
+    const { x } = scales;
+    const years = opts.years || [];
+    if (!x || !chartArea) return;
+    ctx.save();
+    years.forEach((_y, k) => {
+      if (k % 2 === 0) return;
+      const startIdx = k * 12;
+      const left = x.getPixelForValue(startIdx - 0.5);
+      const right = x.getPixelForValue(startIdx + 11.5);
+      ctx.fillStyle = ODD_YEAR_BAND;
+      ctx.fillRect(left, chartArea.top, right - left, chartArea.bottom - chartArea.top);
+    });
+    ctx.restore();
+  },
+};
 
 const yearBoundaryPlugin = {
   id: 'yearBoundaries',
@@ -25,7 +47,7 @@ const yearBoundaryPlugin = {
         ctx.stroke();
       }
       ctx.fillStyle = colorMuted;
-      ctx.font = '10px sans-serif';
+      ctx.font = '600 11px sans-serif';
       ctx.textAlign = 'center';
       ctx.fillText(y.label, (left + right) / 2, chartArea.bottom + 22);
     });
@@ -33,11 +55,21 @@ const yearBoundaryPlugin = {
   },
 };
 
+export function WaterChartLegend() {
+  return (
+    <div className="flex items-center gap-4 flex-wrap flex-shrink-0">
+      <div className="flex items-center gap-1.5"><span className="w-3 h-0.5" style={{ background: colorPrimary }} /><span className="text-[10px]" style={{ color: colorMuted }}>AET</span></div>
+      <div className="flex items-center gap-1.5"><span className="w-3 h-0.5" style={{ background: colorDataWarm }} /><span className="text-[10px]" style={{ color: colorMuted }}>PET</span></div>
+      <div className="flex items-center gap-1.5"><span className="w-3 h-2.5 rounded-sm" style={{ background: 'rgba(204,107,0,0.13)' }} /><span className="text-[10px]" style={{ color: colorMuted }}>Shortfall</span></div>
+    </div>
+  );
+}
+
 export default function WaterChart({ series }) {
   const labels = [];
   const aet = [];
   const pet = [];
-  series.forEach(({ yearLabel, points }) => {
+  series.forEach(({ points }) => {
     points.forEach((p) => {
       labels.push(p.label);
       aet.push(p.aet);
@@ -49,7 +81,7 @@ export default function WaterChart({ series }) {
     labels,
     datasets: [
       {
-        label: 'Used (AET)',
+        label: 'AET',
         data: aet,
         borderColor: colorPrimary,
         backgroundColor: colorPrimary,
@@ -59,7 +91,7 @@ export default function WaterChart({ series }) {
         tension: 0,
       },
       {
-        label: 'Needed (PET)',
+        label: 'PET',
         data: pet,
         borderColor: colorDataWarm,
         borderWidth: 2,
@@ -72,6 +104,8 @@ export default function WaterChart({ series }) {
     ],
   };
 
+  const yearOpt = { years: series.map((s) => ({ label: s.yearLabel })) };
+
   const options = {
     responsive: true,
     maintainAspectRatio: false,
@@ -79,7 +113,8 @@ export default function WaterChart({ series }) {
     layout: { padding: { bottom: 28 } },
     plugins: {
       legend: { display: false },
-      yearBoundaries: { years: series.map((s) => ({ label: s.yearLabel })) },
+      yearBands: yearOpt,
+      yearBoundaries: yearOpt,
       tooltip: {
         callbacks: {
           title: (items) => {
@@ -98,12 +133,12 @@ export default function WaterChart({ series }) {
     },
     scales: {
       x: {
-        ticks: { autoSkip: false, maxRotation: 0, color: colorFaint, font: { size: 9 }, callback: (_v, i) => labels[i]?.charAt(0) },
+        ticks: { display: false },
         grid: { display: false },
       },
       y: {
         title: { display: true, text: 'mm', color: colorMuted, font: { size: 10 } },
-        ticks: { color: colorFaint, font: { size: 10 } },
+        ticks: { color: colorMuted, font: { size: 10 } },
         grid: { color: colorBorderSoft },
         beginAtZero: true,
       },
@@ -111,15 +146,8 @@ export default function WaterChart({ series }) {
   };
 
   return (
-    <div>
-      <div className="relative h-[220px]">
-        <Line data={data} options={options} plugins={[yearBoundaryPlugin]} />
-      </div>
-      <div className="flex items-center gap-4 mt-2 flex-wrap">
-        <div className="flex items-center gap-1.5"><span className="w-3 h-0.5" style={{ background: colorPrimary }} /><span className="text-[10px]" style={{ color: colorMuted }}>Used (AET)</span></div>
-        <div className="flex items-center gap-1.5"><span className="w-3 h-0.5" style={{ background: colorDataWarm }} /><span className="text-[10px]" style={{ color: colorMuted }}>Needed (PET)</span></div>
-        <div className="flex items-center gap-1.5"><span className="w-3 h-2.5 rounded-sm" style={{ background: 'rgba(204,107,0,0.13)' }} /><span className="text-[10px]" style={{ color: colorMuted }}>Shortfall</span></div>
-      </div>
+    <div className="relative h-[240px]">
+      <Line data={data} options={options} plugins={[yearBandsPlugin, yearBoundaryPlugin]} />
     </div>
   );
 }

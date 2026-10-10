@@ -13,7 +13,7 @@ export default function OtherCropsCard({ record }) {
 
   return (
     <section className="rounded-2xl px-4 py-3" style={{ background: colorSurface, border: `1px solid ${colorBorder}` }}>
-      <div className="text-[10px] font-semibold uppercase tracking-wide mb-1" style={{ color: colorFaint }}>Other possible crops</div>
+      <div className="text-[10px] font-semibold uppercase tracking-wide mb-1" style={{ color: colorMuted }}>Other possible crops</div>
       {rows.map((r, i) => (
         <div key={r.name} className="flex items-center justify-between py-2" style={{ borderTop: i === 0 ? 'none' : `1px solid ${colorBorderSoft}` }}>
           <span className="text-[12px] font-semibold" style={{ color: colorInk }}>{r.name.trim()}</span>

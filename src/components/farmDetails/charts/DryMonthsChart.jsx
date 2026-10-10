@@ -1,21 +1,41 @@
 import { Bar } from 'react-chartjs-2';
 import './chartSetup';
-import { colorPrimary, colorBorderSoft, colorMuted, colorFaint, colorInk } from '../farmDetailsTokens';
+import { colorKharif, colorPrimary, colorDataWarm, colorBorderSoft, colorMuted, colorInk } from '../farmDetailsTokens';
 import { average } from '../farmDetailsUtils';
 
-const valueLabelPlugin = {
-  id: 'dryValueLabels',
+const SEASON_COLORS = { Kharif: colorKharif, Rabi: colorPrimary, Zaid: colorDataWarm };
+// Stacking order bottom-to-top matches this order.
+const SEASON_ORDER = ['Kharif', 'Rabi', 'Zaid'];
+
+export function DryMonthsChartLegend() {
+  return (
+    <div className="flex items-center gap-4 flex-wrap flex-shrink-0">
+      {SEASON_ORDER.map((season) => (
+        <div key={season} className="flex items-center gap-1.5">
+          <span className="w-2.5 h-2.5 rounded-sm" style={{ background: SEASON_COLORS[season] }} />
+          <span className="text-[10px]" style={{ color: colorMuted }}>{season}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// Labels the total (the full stack height) above each bar, reading it off
+// the topmost dataset's bar coordinates since chart.js already positions
+// those at the top of the stack.
+const stackedTotalLabelPlugin = {
+  id: 'stackedTotalLabels',
   afterDatasetsDraw(chart) {
-    const { ctx } = chart;
-    const meta = chart.getDatasetMeta(0);
+    const { ctx, data } = chart;
+    const topMeta = chart.getDatasetMeta(data.datasets.length - 1);
     ctx.save();
     ctx.font = '600 10px sans-serif';
     ctx.fillStyle = colorInk;
     ctx.textAlign = 'center';
-    meta.data.forEach((bar, i) => {
-      const v = chart.data.datasets[0].data[i];
-      if (v === null || v === undefined) return;
-      ctx.fillText(String(v), bar.x, bar.y - 4);
+    topMeta.data.forEach((bar, i) => {
+      const total = data.datasets.reduce((sum, ds) => (ds.data[i] == null ? sum : sum + ds.data[i]), null);
+      if (total === null) return;
+      ctx.fillText(String(total), bar.x, bar.y - 4);
     });
     ctx.restore();
   },
@@ -23,20 +43,18 @@ const valueLabelPlugin = {
 
 export default function DryMonthsChart({ counts }) {
   const labels = counts.map((c) => (c.count === null ? [c.yearLabel, 'no data'] : c.yearLabel));
-  const values = counts.map((c) => c.count);
-  const avg = average(values);
+  const totals = counts.map((c) => c.count);
+  const avg = average(totals);
   const showAverage = avg !== null && counts.filter((c) => c.count !== null).length > 1;
 
   const data = {
     labels,
-    datasets: [{
-      label: 'Dry months',
-      data: values,
-      backgroundColor: colorPrimary,
-      borderRadius: 4,
-      borderSkipped: 'bottom',
+    datasets: SEASON_ORDER.map((season) => ({
+      label: season,
+      data: counts.map((c) => (c.count === null ? null : c.bySeason[season])),
+      backgroundColor: SEASON_COLORS[season],
       maxBarThickness: 36,
-    }],
+    })),
   };
 
   const options = {
@@ -50,12 +68,15 @@ export default function DryMonthsChart({ counts }) {
           title: (items) => counts[items[0].dataIndex].yearLabel,
           label: (item) => {
             const c = counts[item.dataIndex];
-            if (c.count === null) return 'No valid monthly data';
-            return `${c.count} dry of ${c.validMonths} valid months`;
+            const months = c?.dryMonthsBySeason?.[item.dataset.label] ?? [];
+            return months.length
+              ? `${item.dataset.label}: ${item.raw} (${months.join(', ')})`
+              : `${item.dataset.label}: ${item.raw}`;
           },
-          afterLabel: (item) => {
-            const c = counts[item.dataIndex];
-            return c.dryMonths.length ? `Dry: ${c.dryMonths.join(', ')}` : '';
+          afterBody: (items) => {
+            const c = counts[items[0].dataIndex];
+            if (c.count === null) return 'No valid monthly data';
+            return `Total: ${c.count} of ${c.validMonths} valid months`;
           },
         },
       },
@@ -71,12 +92,13 @@ export default function DryMonthsChart({ counts }) {
                 borderDash: [4, 4],
                 label: {
                   display: true,
-                  content: `avg ${avg.toFixed(1)}`,
-                  position: 'end',
+                  content: `average ${avg.toFixed(1)}`,
+                  position: 'start',
                   backgroundColor: 'transparent',
                   color: colorMuted,
-                  font: { size: 10 },
-                  yAdjust: -8,
+                  font: { size: 10, weight: '600' },
+                  yAdjust: -10,
+                  xAdjust: 28,
                 },
               },
             },
@@ -84,11 +106,12 @@ export default function DryMonthsChart({ counts }) {
         : {},
     },
     scales: {
-      x: { ticks: { color: colorMuted, font: { size: 10 }, autoSkip: false }, grid: { display: false } },
+      x: { stacked: true, ticks: { color: colorMuted, font: { size: 10 }, autoSkip: false }, grid: { display: false } },
       y: {
+        stacked: true,
         min: 0,
         max: 12,
-        ticks: { stepSize: 3, color: colorFaint, font: { size: 10 } },
+        ticks: { stepSize: 3, color: colorMuted, font: { size: 10 } },
         title: { display: true, text: 'months', color: colorMuted, font: { size: 10 } },
         grid: { color: colorBorderSoft },
       },
@@ -97,7 +120,7 @@ export default function DryMonthsChart({ counts }) {
 
   return (
     <div className="relative h-[200px]">
-      <Bar data={data} options={options} plugins={[valueLabelPlugin]} />
+      <Bar data={data} options={options} plugins={[stackedTotalLabelPlugin]} />
     </div>
   );
 }

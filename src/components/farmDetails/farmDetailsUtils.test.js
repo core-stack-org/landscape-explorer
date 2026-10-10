@@ -45,9 +45,18 @@ describe('agri-year boundaries (July = 0, June = 11)', () => {
     expect(agriMonthIndex(new Date(2023, 6, 1))).toBe(0);
     expect(agriMonthIndex(new Date(2024, 5, 30))).toBe(11);
   });
-  it('places 1 July at 0 and 1 June at 11', () => {
-    expect(fracPosition(new Date(2023, 6, 1))).toBe(0);
-    expect(fracPosition(new Date(2024, 5, 1))).toBe(11);
+  it('places 1 July at 0 and 1 June at 11, measured against that window\'s own start year', () => {
+    expect(fracPosition(new Date(2023, 6, 1), 2023)).toBe(0);
+    expect(fracPosition(new Date(2024, 5, 1), 2023)).toBe(11);
+  });
+  it('does not wrap a date that has rolled into the following window', () => {
+    // August 2021 against the 2020 window (Jul 2020 - Jun 2021) is one month
+    // past the window's end, not "early in the same window".
+    const frac = fracPosition(new Date(2021, 7, 2), 2020);
+    expect(frac).toBeGreaterThan(12);
+  });
+  it('returns a negative value for a date before the window starts', () => {
+    expect(fracPosition(new Date(2023, 5, 15), 2023)).toBeLessThan(0);
   });
 });
 
@@ -85,6 +94,37 @@ describe('buildCroppingHistory', () => {
     const [row] = buildCroppingHistory([{ year: 2023, crop1: 'Rice', cropStartDate: '28/06/2023', cropEndDate: '28/12/2023' }]);
     expect(row.sowBeforeWindow).toBe(true);
   });
+  it('clamps a harvest that rolled into the next window to the right edge, instead of wrapping it before the sowing', () => {
+    // Real farm data: the year=2020 record's own cycle runs 14/05/2021 to
+    // 02/08/2021 — the harvest falls one month into the 2021 window. Before
+    // the fix this produced endFrac < startFrac, a negative-width bar, and
+    // nothing rendered even though hasCycle was true.
+    const [row] = buildCroppingHistory([{
+      year: 2020, crop1: 'RICE', conf1: 0.4, cropStartDate: '14/05/2021', cropEndDate: '02/08/2021',
+    }]);
+    expect(row.startFrac).toBeCloseTo(10.42, 1);
+    expect(row.endFrac).toBe(12);
+    expect(row.endFrac).toBeGreaterThan(row.startFrac);
+  });
+  it('flags a harvest that rolled into the next window, symmetrically with sowBeforeWindow', () => {
+    // Sown 29/03/2025 (before the 2025 window starts) and harvested 27/11/2025
+    // (inside it) — only the start is out of window here.
+    const [row] = buildCroppingHistory([{
+      year: 2025, crop1: 'Rice', conf1: 0.6, cropStartDate: '29/03/2025', cropEndDate: '27/11/2025',
+    }]);
+    expect(row.sowBeforeWindow).toBe(true);
+    expect(row.harvestAfterWindow).toBe(false);
+    expect(row.startFrac).toBe(0);
+    expect(row.endFrac).toBeGreaterThan(0);
+  });
+  it('treats NO_PREDICTION as no crop, but keeps UNKNOWN_CROP as a real (if unidentified) cycle', () => {
+    const [noPrediction] = buildCroppingHistory([{ year: 2023, crop1: 'NO_PREDICTION', cropStartDate: null, cropEndDate: null }]);
+    expect(noPrediction.crop).toBeNull();
+
+    const [unknown] = buildCroppingHistory([{ year: 2023, crop1: 'UNKNOWN_CROP', conf1: 0.3, cropStartDate: '01/08/2023', cropEndDate: '01/12/2023' }]);
+    expect(unknown.crop).toBe('UNKNOWN_CROP');
+    expect(unknown.startFrac).not.toBeNull();
+  });
 });
 
 describe('monthlyPointsByYear and countDryMonths', () => {
@@ -99,6 +139,18 @@ describe('monthlyPointsByYear and countDryMonths', () => {
     expect(year.points[1].mai).toBeNull();
     expect(year.points[1].aet).toBeNull();
   });
+  it('converts aet/pet from mm/day to a monthly total using that month\'s day count', () => {
+    const [year] = monthlyPointsByYear(monthly);
+    // July has 31 days, September has 30.
+    expect(year.points[0].aet).toBeCloseTo(2 * 31);
+    expect(year.points[0].pet).toBeCloseTo(6 * 31);
+    expect(year.points[2].aet).toBeCloseTo(3 * 30);
+    expect(year.points[2].pet).toBeCloseTo(4 * 30);
+  });
+  it('does not scale mai, which is already a 0-1 index, not a daily rate', () => {
+    const [year] = monthlyPointsByYear(monthly);
+    expect(year.points[0].mai).toBe(0.3);
+  });
   it('excludes sentinel months from the dry count and reports validMonths', () => {
     const [year] = countDryMonths(monthly);
     expect(year.validMonths).toBe(2);
@@ -109,6 +161,32 @@ describe('monthlyPointsByYear and countDryMonths', () => {
     const [year] = countDryMonths([{ year: 2024, date: '2024-07-01', aet: null, pet: null, mai: -9999 }]);
     expect(year.count).toBeNull();
     expect(year.validMonths).toBe(0);
+  });
+  it('buckets dry months into Kharif (Jul-Oct), Rabi (Nov-Feb) and Zaid (Mar-Jun), summing back to the total', () => {
+    const allDry = [
+      { year: 2023, date: '2023-07-01', mai: 0.1 }, // Kharif
+      { year: 2023, date: '2023-10-01', mai: 0.2 }, // Kharif
+      { year: 2023, date: '2023-12-01', mai: 0.1 }, // Rabi
+      { year: 2023, date: '2024-02-01', mai: 0.3 }, // Rabi
+      { year: 2023, date: '2024-03-01', mai: 0.4 }, // Zaid
+      { year: 2023, date: '2023-08-01', mai: 0.9 }, // not dry
+    ];
+    const [year] = countDryMonths(allDry);
+    expect(year.bySeason).toEqual({ Kharif: 2, Rabi: 2, Zaid: 1 });
+    expect(year.bySeason.Kharif + year.bySeason.Rabi + year.bySeason.Zaid).toBe(year.count);
+  });
+  it('names only each season\'s own dry months, not the whole year\'s list', () => {
+    const allDry = [
+      { year: 2023, date: '2023-07-01', mai: 0.1 }, // Kharif
+      { year: 2023, date: '2023-10-01', mai: 0.2 }, // Kharif
+      { year: 2023, date: '2023-12-01', mai: 0.1 }, // Rabi
+      { year: 2023, date: '2024-03-01', mai: 0.4 }, // Zaid
+      { year: 2023, date: '2023-08-01', mai: 0.9 }, // not dry
+    ];
+    const [year] = countDryMonths(allDry);
+    expect(year.dryMonthsBySeason.Kharif).toEqual(['Jul', 'Oct']);
+    expect(year.dryMonthsBySeason.Rabi).toEqual(['Dec']);
+    expect(year.dryMonthsBySeason.Zaid).toEqual(['Mar']);
   });
 });
 

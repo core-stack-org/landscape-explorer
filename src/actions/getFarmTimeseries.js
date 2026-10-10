@@ -1,4 +1,4 @@
-const GRAPHQL_URL = 'http://0.0.0.0:8000/graphql/v1';
+const GRAPHQL_URL = 'http://0.0.0.0:8080/graphql/v1';
 
 const FARM_TIMESERIES_QUERY = `
   query FarmTimeseries($state: String!, $district: String!, $block: String!, $farmId: String!) {
@@ -49,6 +49,8 @@ export default async function getFarmTimeseries(stateLabel, districtLabel, block
   }
 
   const json = await response.json();
+
+  console.log(json)
   if (json.errors?.length) {
     throw new Error(json.errors.map((e) => e.message).join('; '));
   }

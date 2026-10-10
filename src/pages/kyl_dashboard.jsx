@@ -29,6 +29,8 @@ import getImageLayer from "../actions/getImageLayers.js";
 
 import KYLLeftSidebar from "../components/kyl_leftSidebar";
 import KYLRightSidebar from "../components/kyl_rightSidebar.jsx";
+import useMapHits from "../components/rightSidebar/useMapHits.js";
+import { layerRegistry } from "../components/rightSidebar/layerRegistry.js";
 import KYLMapContainer from "../components/kyl_mapContainer.jsx";
 
 import { toast, Toaster } from "react-hot-toast";
@@ -113,6 +115,17 @@ const KYLDashboardPage = () => {
   const boundaryLayerRef = useRef(null);
   const mwsLayerRef = useRef(null);
   const waterbodiesLayerRef = useRef(null);
+
+  useMapHits(mapRef);
+  useEffect(() => {
+    const offMws = layerRegistry.register("mws", () => mwsLayerRef.current);
+    const offWaterbody = layerRegistry.register("waterbody", () => waterbodiesLayerRef.current);
+    return () => {
+      offMws();
+      offWaterbody();
+    };
+  }, []);
+
   const mwsConnectivityLayerRef = useRef(null);
   const mwsCentroidLayerRef = useRef(null);
   const mwsArrowLayerRef = useRef(null);
