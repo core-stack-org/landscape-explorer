@@ -688,19 +688,25 @@ const SoilTexture = [
   {
     fill: "rgba(255, 215, 0, 0.8)",
     stroke: "rgba(218, 165, 32, 1)",
-    label: "Low intensity (>0 and <=0.5)"
+    label: "Low intensity (>0 and <=2)"
   },
   {
     fill: "rgba(255, 140, 0, 0.8)",
     stroke: "rgba(230, 81, 0, 1)",
-    label: "Medium intensity (>0.5 and <=5)"
+    label: "Medium intensity (>2 and <=10)"
   },
   {
     fill: "rgba(220, 20, 60, 0.8)",
     stroke: "rgba(139, 0, 0, 1)",
-    label: "High intensity (>5)"
+    label: "High intensity (>10)"
   }
 ];
+
+  const shrubtrend = [
+    { color: "#22C55E", label: "Increasing" },
+    { color: "#EF4444", label: "Decreasing" },
+    { color: "#9CA3AF", label: "No Trend" },
+  ]
 
 
 
@@ -1045,6 +1051,10 @@ const SoilTexture = [
   )
   const isForestFireIntensity = currentLayer?.some(
     (layer) => layer.name.includes("forest_fire_mean_intensity")
+  )
+
+  const isShrubTrendActive = currentLayer?.some(
+    (layer) => layer.name.includes("shrub_trend")
   )
 
 
@@ -2577,7 +2587,28 @@ const SoilTexture = [
                   ))}
                 </div>
               )}
-
+              {isShrubTrendActive && (
+                <div className="space-y-2">
+                  <h4 className="text-xs font-medium text-gray-600">Shrub Cover Trend</h4>
+                  {shrubtrend.map((item, index) => (
+                    <div
+                      key={`trend-${index}`}
+                      className="flex items-center gap-2"
+                    >
+                      <div
+                        className="w-4 h-4 rounded"
+                        style={{
+                          backgroundColor: item.color,
+                          border: `1px solid rgba(0,0,0,0.2)`,
+                        }}
+                      />
+                      <span className="text-sm text-gray-600">
+                        {item.label}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
               
               
 

@@ -82,6 +82,7 @@ export const STYLE_RESOLVERS = {
   relief: { get: (f, { mwsIndex }) => mwsIndex.byId.get(f.get('uid'))?.relief },
   increase_canopy_density_height: { get: (f, { mwsIndex }) => mwsIndex.byId.get(f.get('uid'))?.increase_canopy_density_height },
   reduction_canopy_density_height: { get: (f, { mwsIndex }) => mwsIndex.byId.get(f.get('uid'))?.reduction_canopy_density_height },
+  shrub_trend : { get: (f, { mwsIndex }) => mwsIndex.byId.get(f.get('uid'))?.shrub_trend },
 
   aquifer_class: {
     dualPath: true,

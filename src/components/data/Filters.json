@@ -1054,28 +1054,29 @@
         "stroke": "rgba(60, 179, 113, 1)"
       },
       {
-        "label": "Low intensity (>0 and <=0.5)",
+        "label": "Low intensity (>0 and <=2)",
         "lower": 0,
-        "upper": 0.5,
+        "upper": 2,
         "fill": "rgba(255, 215, 0, 0.8)",
         "stroke": "rgba(218, 165, 32, 1)"
       },
       {
-        "label": "Medium intensity (>0.5 and <=5)",
-        "lower": 0.5,
-        "upper": 5,
+        "label": "Medium intensity (>2 and <=10)",
+        "lower": 2,
+        "upper": 10,
         "fill": "rgba(255, 140, 0, 0.8)",
         "stroke": "rgba(230, 81, 0, 1)"
       },
       {
-        "label": "High intensity (>5)",
-        "lower": 5,
+        "label": "High intensity (>10)",
+        "lower": 10,
         "upper": 9999999,
         "fill": "rgba(220, 20, 60, 0.8)",
         "stroke": "rgba(139, 0, 0, 1)"
       }
     ]
   },
+  
   {
     "name": "green_credit",
     "label": "Green Credits",
@@ -1134,6 +1135,38 @@
         "upper": 9999999999,
         "fill": "rgba(220, 20, 60, 0.8)",
         "stroke": "rgba(220, 20, 60, 1)"
+      }
+    ]
+  },
+  {
+    "name": "shrub_trend",
+    "label": "Shrub Cover Over the Years",
+    "type": 1,
+    "namespace": "MWS",
+    "category": "Shrublands",
+    "source": "mws",
+    "layer_store": ["mws_layers"],
+    "layer_name": ["deltaG_well_depth"],
+    "rasterStyle": "",
+    "styleKey": "shrub_trend",
+    "bins": [
+      {
+        "label": "Increasing",
+        "value": 1,
+        "fill": "rgba(34, 197, 94, 0.8)",
+        "stroke": "rgba(34, 197, 94, 1)"
+      },
+      {
+        "label": "Decreasing",
+        "value": -1,
+        "fill": "rgba(239, 68, 68, 0.8)",
+        "stroke": "rgba(239, 68, 68, 1)"
+      },
+      {
+        "label": "No Trend",
+        "value": 0,
+        "fill": "rgba(156, 163, 175, 0.8)",
+        "stroke": "rgba(156, 163, 175, 1)"
       }
     ]
   },
