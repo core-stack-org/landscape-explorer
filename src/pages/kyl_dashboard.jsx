@@ -103,7 +103,10 @@ const LAYER_LOADERS = {
   soil_health_raster_K : { fetch: 'image', buildLayerName: (f, i, ctx) => `${ctx.dist}_${ctx.blk}_soil_health_raster_K`, selfStyled: true },
   soil_health_raster_OC : { fetch: 'image', buildLayerName: (f, i, ctx) => `${ctx.dist}_${ctx.blk}_soil_health_raster_OC`, selfStyled: true },
   soil_health_raster_OC_OLM : { fetch: 'image', buildLayerName: (f, i, ctx) => `${ctx.dist}_${ctx.blk}_soil_health_raster_OC_OLM`, selfStyled: true },
-  soil_type :  { fetch: 'vector', buildLayerName: (f, i, ctx) => `soil_type_${ctx.dist}_${ctx.blk}`, selfStyled: false }
+  soil_type :  { fetch: 'vector', buildLayerName: (f, i, ctx) => `soil_type_${ctx.dist}_${ctx.blk}`, selfStyled: false },
+  forest_fringes :  { fetch: 'vector', buildLayerName: (f, i, ctx) => `${ctx.dist}_${ctx.blk}_forest_fringe`, selfStyled: false },
+  tree_in_grassland : { fetch: 'vector', buildLayerName: (f, i, ctx) => `${ctx.dist}_${ctx.blk}_tree_in_grassland`, selfStyled: false },
+  forest_fire : { fetch: 'vector', buildLayerName: (f, i, ctx) => `${ctx.dist}_${ctx.blk}_forest_fire`, selfStyled: false },
 };
 
 const KYLDashboardPage = () => {

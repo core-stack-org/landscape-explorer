@@ -965,6 +965,118 @@
     ]
   },
   {
+    "name": "trees_in_forest_fringe_loss",
+    "label": "Reduction in tree cover along forest fringes",
+    "type": 2,
+    "namespace": "MWS",
+    "category": "Restoration",
+    "source": "mws",
+    "layer_store": ["forest_fringes"],
+    "layer_name": ["forest_fringe"],
+    "rasterStyle": "",
+    "styleKey": "tree_reduce_fringe",
+    "bins": [
+      {
+        "label": "Low (<=15 Ha)",
+        "lower": 0,
+        "upper": 15,
+        "fill": "rgba(144, 238, 144, 0.8)",
+        "stroke": "rgba(144, 238, 144, 1)"
+      },
+      {
+        "label": "Moderate (15-40 ha)",
+        "lower": 15,
+        "upper": 40,
+        "fill": "rgba(255, 215, 0, 0.8)",
+        "stroke": "rgba(255, 215, 0, 1)"
+      },
+      {
+        "label": "High (>40 ha)",
+        "lower": 41,
+        "upper": 9999999,
+        "fill": "rgba(220, 20, 60, 0.8)",
+        "stroke": "rgba(220, 20, 60, 1)"
+      }
+    ]
+  },
+  {
+    "name": "trees_in_grassland_loss",
+    "label": "Reduction in tree cover present in shrub areas",
+    "type": 2,
+    "namespace": "MWS",
+    "category": "Restoration",
+    "source": "mws",
+    "layer_store": ["tree_in_grassland"],
+    "layer_name": ["tree_in_grassland"],
+    "rasterStyle": "",
+    "styleKey": "trees_in_grassland_loss",
+    "bins": [
+      {
+        "label": "Low (<=5 Ha)",
+        "lower": 0,
+        "upper": 5,
+        "fill": "rgba(144, 238, 144, 0.8)",
+        "stroke": "rgba(144, 238, 144, 1)"
+      },
+      {
+        "label": "Moderate (16-40 ha)",
+        "lower": 5,
+        "upper": 15,
+        "fill": "rgba(255, 215, 0, 0.8)",
+        "stroke": "rgba(255, 215, 0, 1)"
+      },
+      {
+        "label": "High (>15 ha)",
+        "lower": 15,
+        "upper": 9999999,
+        "fill": "rgba(220, 20, 60, 0.8)",
+        "stroke": "rgba(220, 20, 60, 1)"
+      }
+    ]
+  },
+  {
+    "name": "forest_fire_mean_intensity",
+    "label": "Typical Forest Fire Intensity",
+    "type": 2,
+    "namespace": "MWS",
+    "category": "Restoration",
+    "source": "mws",
+    "layer_store": ["forest_fire"],
+    "layer_name": ["forest_fire"],
+    "rasterStyle": "",
+    "styleKey": "forest_fire_mean_intensity",
+    "bins": [
+      {
+        "label": "No detected Fire Radiative Power (0)",
+        "lower": 0,
+        "upper": 0,
+        "fill": "rgba(144, 238, 144, 0.8)",
+        "stroke": "rgba(60, 179, 113, 1)"
+      },
+      {
+        "label": "Low intensity (>0 and <=0.5)",
+        "lower": 0,
+        "upper": 0.5,
+        "fill": "rgba(255, 215, 0, 0.8)",
+        "stroke": "rgba(218, 165, 32, 1)"
+      },
+      {
+        "label": "Medium intensity (>0.5 and <=5)",
+        "lower": 0.5,
+        "upper": 5,
+        "fill": "rgba(255, 140, 0, 0.8)",
+        "stroke": "rgba(230, 81, 0, 1)"
+      },
+      {
+        "label": "High intensity (>5)",
+        "lower": 5,
+        "upper": 9999999,
+        "fill": "rgba(220, 20, 60, 0.8)",
+        "stroke": "rgba(139, 0, 0, 1)"
+      }
+    ]
+  },
+  {
     "name": "green_credit",
     "label": "Green Credits",
     "type": 1,
