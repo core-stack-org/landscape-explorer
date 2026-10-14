@@ -69,7 +69,9 @@ export function buildVillageIndex(villageJson) {
 function inRange(record, field, lower, upper) {
   const num = Number(record[field]);
   if (isNaN(num) || MISSING_VALUE_SENTINELS.has(num)) return false;
-  return num >= lower && num <= upper;
+  if(lower == upper)
+    return num == lower
+  return num > lower && num <= upper;
 }
 
 function matchFilters(selections, index) {

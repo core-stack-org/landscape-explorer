@@ -223,6 +223,67 @@ export const withForestFringeClass = (data) => ({
   }),
 });
 
+// Same forest_fringes source as Forest Fringe above, binned on tree
+// deforestation within the fringe zone instead of total fringe area.
+export const FOREST_FRINGE_DEFORESTATION_BINS = [
+  { max: 15, label: "Low (<=15 ha)", color: "#73BB53" },
+  { max: 40, label: "Moderate (15-40 ha)", color: "#EEE05D" },
+  { max: Infinity, label: "High (>40 ha)", color: "#FF0000" },
+];
+
+export const withForestFringeDeforestationClass = (data) => ({
+  ...data,
+  features: (data?.features || []).map((feature) => {
+    const properties = feature.properties || {};
+    const tree_deforestation_fringe_area_in_ha = finiteMeasurement(properties.tree_deforestation_fringe_area_in_ha);
+    const tree_deforestation_fringe_class = tree_deforestation_fringe_area_in_ha === null
+      ? null
+      : FOREST_FRINGE_DEFORESTATION_BINS.find((bin) => tree_deforestation_fringe_area_in_ha <= bin.max).label;
+    return { ...feature, properties: { ...properties, tree_deforestation_fringe_class } };
+  }),
+});
+
+// Same tree_in_grassland source as Tree in Grassland above, binned on tree
+// loss within the tree-in-shrub-tree zone instead of total tree-in-shrub area.
+export const TREE_IN_GRASSLAND_LOSS_BINS = [
+  { max: 5, label: "Low (<=5 ha)", color: "#73BB53" },
+  { max: 15, label: "Moderate (5-15 ha)", color: "#EEE05D" },
+  { max: Infinity, label: "High (>15 ha)", color: "#FF0000" },
+];
+
+export const withTreeInGrasslandLossClass = (data) => ({
+  ...data,
+  features: (data?.features || []).map((feature) => {
+    const properties = feature.properties || {};
+    const tree_loss_in_tree_in_shrub_area_in_ha = finiteMeasurement(properties.tree_loss_in_tree_in_shrub_area_in_ha);
+    const tree_loss_in_tree_in_shrub_class = tree_loss_in_tree_in_shrub_area_in_ha === null
+      ? null
+      : TREE_IN_GRASSLAND_LOSS_BINS.find((bin) => tree_loss_in_tree_in_shrub_area_in_ha <= bin.max).label;
+    return { ...feature, properties: { ...properties, tree_loss_in_tree_in_shrub_class } };
+  }),
+});
+
+// Mean fire radiative power (MW) binned into 4 intensity classes, as a
+// derived field so GeoLibre's native legend lists each class with its unit.
+export const FOREST_FIRE_BINS = [
+  { test: (value) => value === 0, label: "No detected Fire Radiative Power (0)MW", color: "#90EE90" },
+  { test: (value) => value > 0 && value <= 2, label: "Low intensity (>0 and <=2)MW", color: "#FFD700" },
+  { test: (value) => value > 2 && value <= 10, label: "Medium intensity (>2 and <=10)MW", color: "#FF8C00" },
+  { test: (value) => value > 10, label: "High intensity (>10)MW", color: "#DC143C" },
+];
+
+export const withForestFireClass = (data) => ({
+  ...data,
+  features: (data?.features || []).map((feature) => {
+    const properties = feature.properties || {};
+    const fire_frp_mean = finiteMeasurement(properties.fire_frp_mean);
+    const fire_intensity_class = fire_frp_mean === null
+      ? null
+      : FOREST_FIRE_BINS.find((bin) => bin.test(fire_frp_mean)).label;
+    return { ...feature, properties: { ...properties, fire_intensity_class } };
+  }),
+});
+
 // Same 3-class hectare binning as afforestation/deforestation: more cropping
 // degradation is worse, so red marks the largest degraded area.
 export const DEGRADATION_BINS = [
@@ -498,6 +559,25 @@ const STYLE_PROFILES = {
     "forest_fringe_area_class",
     FOREST_FRINGE_BINS.map((bin) => [bin.label, bin.color, bin.label]),
     { fillColor: "#16a34a", strokeColor: "#14532d", fillOpacity: 0.6 }
+  ),
+  forest_fringe_deforestation: categoryStyle(
+    "tree_deforestation_fringe_class",
+    FOREST_FRINGE_DEFORESTATION_BINS.map((bin) => [bin.label, bin.color, bin.label]),
+    { fillColor: "#EEE05D", strokeColor: "#232323", fillOpacity: 0.8 }
+  ),
+  tree_in_grassland_loss: categoryStyle(
+    "tree_loss_in_tree_in_shrub_class",
+    TREE_IN_GRASSLAND_LOSS_BINS.map((bin) => [bin.label, bin.color, bin.label]),
+    { fillColor: "#EEE05D", strokeColor: "#232323", fillOpacity: 0.8 }
+  ),
+  // The source gives each class its own fill/stroke pair, but the shared
+  // vector style helpers only support one stroke color per layer (same
+  // limitation as Soil Type and Forest Fringe); the highest-intensity
+  // stroke is kept as the single outline color.
+  forest_fire: categoryStyle(
+    "fire_intensity_class",
+    FOREST_FIRE_BINS.map((bin) => [bin.label, bin.color, bin.label]),
+    { fillColor: "#FF8C00", strokeColor: "#8B0000", fillOpacity: 0.8 }
   ),
   degradation_stats: categoryStyle(
     "total_deg_class",
@@ -1197,9 +1277,10 @@ const coreStackMetadata = (layer, layerName, sourceUrl, style, baseUrl) => ({
     mws: "mm", mws_fortnight: "mm", ndvi: "dimensionless",
     soil_health_vector: "percent", waterbodies: "ha", cropping_intensity: "dimensionless",
     drought: "category", drought_causality: "category", tree_in_grassland: "ha",
-    forest_fringe: "ha", afforestation_stats: "ha", deforestation_stats: "ha", degradation_stats: "ha",
+    forest_fringe: "ha", forest_fringe_deforestation: "ha", tree_in_grassland_loss: "ha",
+    afforestation_stats: "ha", deforestation_stats: "ha", degradation_stats: "ha",
     urbanization_stats: "ha", cropintensity_stats: "ha", shrubland_diversion_stats: "ha",
-    restoration_stats: "ha",
+    restoration_stats: "ha", forest_fire: "MW",
   }[layer.styleProfile] || ({
     distance_to_drainage_line: "m", dem: "m",
     soil_health_raster_n: "kg/ha", soil_health_raster_P: "kg/ha",
@@ -1555,6 +1636,9 @@ const hydrateLayerWithData = (layer, data) => {
   if (catalogLayer?.id === "afforestation_stats") data = withAfforestationClass(data);
   if (catalogLayer?.id === "deforestation_stats") data = withDeforestationClass(data);
   if (catalogLayer?.id === "forest_fringe") data = withForestFringeClass(data);
+  if (catalogLayer?.id === "forest_fringe_deforestation") data = withForestFringeDeforestationClass(data);
+  if (catalogLayer?.id === "tree_in_grassland_loss") data = withTreeInGrasslandLossClass(data);
+  if (catalogLayer?.id === "forest_fire") data = withForestFireClass(data);
   if (catalogLayer?.id === "degradation_stats") data = withDegradationClass(data);
   if (catalogLayer?.id === "urbanization_stats") data = withUrbanizationClass(data);
   if (catalogLayer?.id === "cropintensity_stats") data = withCropIntensityChangeClass(data);

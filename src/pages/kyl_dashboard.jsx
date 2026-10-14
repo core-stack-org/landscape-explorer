@@ -292,7 +292,7 @@ const KYLDashboardPage = () => {
 
 
   const handleFilterSelection = (name, option, isChecked) => {
-     if (showConnectivityRef.current) {
+    if (showConnectivityRef.current) {
       toast.error("Please turn off MWS Connectivity before applying filters.");
       return;
     }
@@ -2187,7 +2187,7 @@ const KYLDashboardPage = () => {
       setTimeout(() => (waterbodyClickedRef.current = false), 150);
 
       const props = wbFeature.getProperties();
-const wb_id = props?.UID ?? props?.id ?? props?.wb_id;
+      const wb_id = props?.UID ?? props?.id ?? props?.wb_id;
       if (!wb_id) return;
 
       const geojson = new GeoJSON();

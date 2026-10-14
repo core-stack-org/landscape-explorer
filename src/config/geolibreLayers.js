@@ -322,6 +322,20 @@ const LAYERS = [
     styleProfile: "tree_in_grassland",
   },
   {
+    // Same physical tree_in_grassland source as "tree_in_grassland" above,
+    // styled on a different property. Data identity is shared; only the
+    // presentation differs.
+    id: "tree_in_grassland_loss",
+    label: "Tree in Grassland: Loss",
+    domain: "Trees",
+    loadGroup: "trees",
+    sourceType: "wfs",
+    workspace: "tree_in_grassland",
+    geometryType: "polygon",
+    layerName: ({ district, tehsil }) => `${district}_${tehsil}_tree_in_grassland`,
+    styleProfile: "tree_in_grassland_loss",
+  },
+  {
     id: "forest_fringe",
     label: "Forest Fringe",
     domain: "Restoration",
@@ -331,6 +345,30 @@ const LAYERS = [
     geometryType: "polygon",
     layerName: ({ district, tehsil }) => `${district}_${tehsil}_forest_fringe`,
     styleProfile: "forest_fringe",
+  },
+  {
+    // Same physical forest_fringes source as "forest_fringe" above, styled
+    // on a different property. Data identity is shared; only the presentation differs.
+    id: "forest_fringe_deforestation",
+    label: "Forest Fringe: Deforestation",
+    domain: "Trees",
+    loadGroup: "trees",
+    sourceType: "wfs",
+    workspace: "forest_fringes",
+    geometryType: "polygon",
+    layerName: ({ district, tehsil }) => `${district}_${tehsil}_forest_fringe`,
+    styleProfile: "forest_fringe_deforestation",
+  },
+  {
+    id: "forest_fire",
+    label: "Forest Fire",
+    domain: "Trees",
+    loadGroup: "trees",
+    sourceType: "wfs",
+    workspace: "forest_fire",
+    geometryType: "polygon",
+    layerName: ({ district, tehsil }) => `${district}_${tehsil}_forest_fire`,
+    styleProfile: "forest_fire",
   },
   {
     id: "land_conflicts",
@@ -748,7 +786,10 @@ const UNIT_SOURCES_BY_ID = {
   ndvi_tree_stats: ["ndvi_timeseries"],
   drought_causality: ["drought_causality"],
   tree_in_grassland: ["tree_in_grassland"],
+  tree_in_grassland_loss: ["tree_in_grassland"],
   forest_fringe: ["forest_fringe"],
+  forest_fringe_deforestation: ["forest_fringe"],
+  forest_fire: ["forest_fire"],
 };
 
 const PRESENTATION_BY_ID = new Map(PRESENTATION.map((entry, index) => [entry.id, { ...entry, index }]));
