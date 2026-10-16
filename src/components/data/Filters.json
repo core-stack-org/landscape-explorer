@@ -814,21 +814,21 @@
     "styleKey": "increase_canopy_density_height",
     "bins": [
       {
-        "label": "<20%: Minimal",
+        "label": "Minimal : <20%",
         "lower": 0,
         "upper": 20,
         "fill": "rgba(255, 0, 0, 0.8)",
         "stroke": "rgba(255, 0, 0, 1)"
       },
       {
-        "label": "Between 20-40%: Considerable",
+        "label": "Considerable : Between 20-40%",
         "lower": 20,
         "upper": 40,
         "fill": "rgba(238, 224, 93, 0.8)",
         "stroke": "rgba(238, 224, 93, 1)"
       },
       {
-        "label": ">40%: Huge",
+        "label": "Huge : >40%",
         "lower": 40,
         "upper": 9999999,
         "fill": "rgba(115, 187, 83, 0.8)",
@@ -907,6 +907,41 @@
     ]
   },
   {
+    "name": "trees_in_forest_fringe_loss",
+    "label": "Reduction in tree cover along forest fringes",
+    "type": 2,
+    "namespace": "MWS",
+    "category": "Tree Cover",
+    "source": "mws",
+    "layer_store": ["forest_fringes"],
+    "layer_name": ["forest_fringe"],
+    "rasterStyle": "",
+    "styleKey": "tree_reduce_fringe",
+    "bins": [
+      {
+        "label": "Low (<=15 Ha)",
+        "lower": 0,
+        "upper": 15,
+        "fill": "rgba(144, 238, 144, 0.8)",
+        "stroke": "rgba(144, 238, 144, 1)"
+      },
+      {
+        "label": "Moderate (15-40 ha)",
+        "lower": 15,
+        "upper": 40,
+        "fill": "rgba(255, 215, 0, 0.8)",
+        "stroke": "rgba(255, 215, 0, 1)"
+      },
+      {
+        "label": "High (>40 ha)",
+        "lower": 41,
+        "upper": 9999999,
+        "fill": "rgba(220, 20, 60, 0.8)",
+        "stroke": "rgba(220, 20, 60, 1)"
+      }
+    ]
+  },
+  {
     "name": "area_wide_scale_restoration",
     "label": "Area with potential for wide-scale restoration",
     "type": 2,
@@ -965,6 +1000,42 @@
     ]
   },
   {
+    "name": "trees_in_grassland_loss",
+    "label": "Reduction in tree cover present in shrub areas",
+    "type": 2,
+    "namespace": "MWS",
+    "category": "Shrublands",
+    "source": "mws",
+    "layer_store": ["tree_in_grassland"],
+    "layer_name": ["tree_in_grassland"],
+    "rasterStyle": "",
+    "styleKey": "trees_in_grassland_loss",
+    "bins": [
+      {
+        "label": "Low (<=5 Ha)",
+        "lower": 0,
+        "upper": 5,
+        "fill": "rgba(144, 238, 144, 0.8)",
+        "stroke": "rgba(144, 238, 144, 1)"
+      },
+      {
+        "label": "Moderate (5-15 ha)",
+        "lower": 5,
+        "upper": 15,
+        "fill": "rgba(255, 215, 0, 0.8)",
+        "stroke": "rgba(255, 215, 0, 1)"
+      },
+      {
+        "label": "High (>15 ha)",
+        "lower": 15,
+        "upper": 9999999,
+        "fill": "rgba(220, 20, 60, 0.8)",
+        "stroke": "rgba(220, 20, 60, 1)"
+      }
+    ]
+  },
+  
+  {
     "name": "green_credit",
     "label": "Green Credits",
     "type": 1,
@@ -1022,6 +1093,38 @@
         "upper": 9999999999,
         "fill": "rgba(220, 20, 60, 0.8)",
         "stroke": "rgba(220, 20, 60, 1)"
+      }
+    ]
+  },
+  {
+    "name": "shrub_trend",
+    "label": "Shrubland greenness",
+    "type": 1,
+    "namespace": "MWS",
+    "category": "Shrublands",
+    "source": "mws",
+    "layer_store": ["mws_layers"],
+    "layer_name": ["deltaG_well_depth"],
+    "rasterStyle": "",
+    "styleKey": "shrub_trend",
+    "bins": [
+      {
+        "label": "Increasing",
+        "value": 1,
+        "fill": "rgba(34, 197, 94, 0.8)",
+        "stroke": "rgba(34, 197, 94, 1)"
+      },
+      {
+        "label": "Decreasing",
+        "value": -1,
+        "fill": "rgba(239, 68, 68, 0.8)",
+        "stroke": "rgba(239, 68, 68, 1)"
+      },
+      {
+        "label": "No Trend",
+        "value": 0,
+        "fill": "rgba(156, 163, 175, 0.8)",
+        "stroke": "rgba(156, 163, 175, 1)"
       }
     ]
   },

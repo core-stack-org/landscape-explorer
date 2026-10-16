@@ -18,6 +18,9 @@ import {
   withAfforestationClass,
   withDeforestationClass,
   withForestFringeClass,
+  withForestFringeDeforestationClass,
+  withTreeInGrasslandLossClass,
+  withForestFireClass,
   withDegradationClass,
   withUrbanizationClass,
   withCropIntensityChangeClass,
@@ -402,6 +405,121 @@ describe("GeoLibre 2.6 project generation", () => {
     expect(expression.result).toBe("success");
     expect(expression.value.evaluate({ zoom: 10 }, { properties: { forest_fringe_area_class: "More than 150 hac" }, type: 3 })).toBe("#14532d");
     expect(expression.value.evaluate({ zoom: 10 }, { properties: { forest_fringe_area_class: null }, type: 3 })).toBe("#3b3b3b");
+  });
+  it("lists the 3 Forest Fringe Deforestation classes with their hectare unit in the native legend", async () => {
+    const project = await buildGeoLibreProject({ ...location, fetchFeatureCollection: successfulFetch });
+    const layer = project.layers.find(item => item.id === "corestack-forest_fringe_deforestation");
+    expect(layer.style.vectorStyleProperty).toBe("tree_deforestation_fringe_class");
+    expect(layer.style.vectorStyleStops).toEqual([
+      { value: "Low (<=15 ha)", color: "#73BB53", label: "Low (<=15 ha)" },
+      { value: "Moderate (15-40 ha)", color: "#EEE05D", label: "Moderate (15-40 ha)" },
+      { value: "High (>40 ha)", color: "#FF0000", label: "High (>40 ha)" },
+    ]);
+  });
+  it("bins tree_deforestation_fringe_area_in_ha into its hectare class on hydration", async () => {
+    const project = await buildGeoLibreProject({ ...location, fetchFeatureCollection: successfulFetch });
+    const rawValues = [5, 15, 15.1, 40, 40.1, 100, null, ""];
+    const result = await hydrateGeoLibreVectorLayer({
+      project, layerId: "corestack-forest_fringe_deforestation",
+      fetchFeatureCollection: async () => ({
+        type: "FeatureCollection",
+        features: rawValues.map((tree_deforestation_fringe_area_in_ha, index) => ({
+          type: "Feature", id: `ffd-${index}`,
+          properties: { uid: `ffd-${index}`, tree_deforestation_fringe_area_in_ha },
+          geometry: { type: "Polygon", coordinates: [] },
+        })),
+      }),
+    });
+    const layer = result.layers.find(item => item.id === "corestack-forest_fringe_deforestation");
+    expect(layer.geojson.features.map(feature => feature.properties.tree_deforestation_fringe_class)).toEqual([
+      "Low (<=15 ha)", "Low (<=15 ha)", "Moderate (15-40 ha)",
+      "Moderate (15-40 ha)", "High (>40 ha)", "High (>40 ha)", null, null,
+    ]);
+    const expression = createExpression(
+      ["match", ["to-string", ["get", "tree_deforestation_fringe_class"]], ...layer.style.vectorStyleStops.flatMap(stop => [stop.value, stop.color]), "#3b3b3b"],
+      "layers[0].paint.fill-color"
+    );
+    expect(expression.result).toBe("success");
+    expect(expression.value.evaluate({ zoom: 10 }, { properties: { tree_deforestation_fringe_class: "High (>40 ha)" }, type: 3 })).toBe("#FF0000");
+    expect(expression.value.evaluate({ zoom: 10 }, { properties: { tree_deforestation_fringe_class: null }, type: 3 })).toBe("#3b3b3b");
+  });
+  it("lists the 3 Tree in Grassland Loss classes with their hectare unit in the native legend", async () => {
+    const project = await buildGeoLibreProject({ ...location, fetchFeatureCollection: successfulFetch });
+    const layer = project.layers.find(item => item.id === "corestack-tree_in_grassland_loss");
+    expect(layer.style.vectorStyleProperty).toBe("tree_loss_in_tree_in_shrub_class");
+    expect(layer.style.vectorStyleStops).toEqual([
+      { value: "Low (<=5 ha)", color: "#73BB53", label: "Low (<=5 ha)" },
+      { value: "Moderate (5-15 ha)", color: "#EEE05D", label: "Moderate (5-15 ha)" },
+      { value: "High (>15 ha)", color: "#FF0000", label: "High (>15 ha)" },
+    ]);
+  });
+  it("bins tree_loss_in_tree_in_shrub_area_in_ha into its hectare class on hydration", async () => {
+    const project = await buildGeoLibreProject({ ...location, fetchFeatureCollection: successfulFetch });
+    const rawValues = [2, 5, 5.1, 15, 15.1, 50, null, ""];
+    const result = await hydrateGeoLibreVectorLayer({
+      project, layerId: "corestack-tree_in_grassland_loss",
+      fetchFeatureCollection: async () => ({
+        type: "FeatureCollection",
+        features: rawValues.map((tree_loss_in_tree_in_shrub_area_in_ha, index) => ({
+          type: "Feature", id: `tigl-${index}`,
+          properties: { uid: `tigl-${index}`, tree_loss_in_tree_in_shrub_area_in_ha },
+          geometry: { type: "Polygon", coordinates: [] },
+        })),
+      }),
+    });
+    const layer = result.layers.find(item => item.id === "corestack-tree_in_grassland_loss");
+    expect(layer.geojson.features.map(feature => feature.properties.tree_loss_in_tree_in_shrub_class)).toEqual([
+      "Low (<=5 ha)", "Low (<=5 ha)", "Moderate (5-15 ha)",
+      "Moderate (5-15 ha)", "High (>15 ha)", "High (>15 ha)", null, null,
+    ]);
+    const expression = createExpression(
+      ["match", ["to-string", ["get", "tree_loss_in_tree_in_shrub_class"]], ...layer.style.vectorStyleStops.flatMap(stop => [stop.value, stop.color]), "#3b3b3b"],
+      "layers[0].paint.fill-color"
+    );
+    expect(expression.result).toBe("success");
+    expect(expression.value.evaluate({ zoom: 10 }, { properties: { tree_loss_in_tree_in_shrub_class: "High (>15 ha)" }, type: 3 })).toBe("#FF0000");
+    expect(expression.value.evaluate({ zoom: 10 }, { properties: { tree_loss_in_tree_in_shrub_class: null }, type: 3 })).toBe("#3b3b3b");
+  });
+  it("lists the 4 Forest Fire intensity classes with their MW unit in the native legend", async () => {
+    const project = await buildGeoLibreProject({ ...location, fetchFeatureCollection: successfulFetch });
+    const layer = project.layers.find(item => item.id === "corestack-forest_fire");
+    expect(layer.style.vectorStyleProperty).toBe("fire_intensity_class");
+    expect(layer.style.vectorStyleStops).toEqual([
+      { value: "No detected Fire Radiative Power (0)MW", color: "#90EE90", label: "No detected Fire Radiative Power (0)MW" },
+      { value: "Low intensity (>0 and <=2)MW", color: "#FFD700", label: "Low intensity (>0 and <=2)MW" },
+      { value: "Medium intensity (>2 and <=10)MW", color: "#FF8C00", label: "Medium intensity (>2 and <=10)MW" },
+      { value: "High intensity (>10)MW", color: "#DC143C", label: "High intensity (>10)MW" },
+    ]);
+  });
+  it("bins fire_frp_mean into its MW intensity class on hydration", async () => {
+    const project = await buildGeoLibreProject({ ...location, fetchFeatureCollection: successfulFetch });
+    const rawValues = [0, 1, 2, 5, 10, 10.1, 46, null, ""];
+    const result = await hydrateGeoLibreVectorLayer({
+      project, layerId: "corestack-forest_fire",
+      fetchFeatureCollection: async () => ({
+        type: "FeatureCollection",
+        features: rawValues.map((fire_frp_mean, index) => ({
+          type: "Feature", id: `fire-${index}`,
+          properties: { uid: `fire-${index}`, fire_frp_mean, fire_frp_max: 46, fire_count_per_year: 0.05 },
+          geometry: { type: "Polygon", coordinates: [] },
+        })),
+      }),
+    });
+    const layer = result.layers.find(item => item.id === "corestack-forest_fire");
+    expect(layer.geojson.features.map(feature => feature.properties.fire_intensity_class)).toEqual([
+      "No detected Fire Radiative Power (0)MW",
+      "Low intensity (>0 and <=2)MW", "Low intensity (>0 and <=2)MW",
+      "Medium intensity (>2 and <=10)MW", "Medium intensity (>2 and <=10)MW",
+      "High intensity (>10)MW", "High intensity (>10)MW",
+      null, null,
+    ]);
+    const expression = createExpression(
+      ["match", ["to-string", ["get", "fire_intensity_class"]], ...layer.style.vectorStyleStops.flatMap(stop => [stop.value, stop.color]), "#3b3b3b"],
+      "layers[0].paint.fill-color"
+    );
+    expect(expression.result).toBe("success");
+    expect(expression.value.evaluate({ zoom: 10 }, { properties: { fire_intensity_class: "High intensity (>10)MW" }, type: 3 })).toBe("#DC143C");
+    expect(expression.value.evaluate({ zoom: 10 }, { properties: { fire_intensity_class: null }, type: 3 })).toBe("#3b3b3b");
   });
   it("lists the 3 Cropping Degradation classes with their hectare unit in the native legend", async () => {
     const project = await buildGeoLibreProject({ ...location, fetchFeatureCollection: successfulFetch });
@@ -795,7 +913,7 @@ describe("GeoLibre 2.6 project generation", () => {
 
     expect(project.version).toBe("0.2.0");
     expect(project.layers).toHaveLength(GEOLIBRE_LAYERS.length);
-    expect(project.layers).toHaveLength(85);
+    expect(project.layers).toHaveLength(88);
     expect(project.layers.every(layer => {
       const catalog = GEOLIBRE_LAYERS.find(item => `corestack-${item.id}` === layer.id);
       return layer.name === `${catalog.label}${catalog.category === "NA" ? "" : ` · ${catalog.category}`}`;
@@ -1818,6 +1936,54 @@ describe("Forest Fringe hectare binning", () => {
   });
 });
 
+describe("Forest Fringe Deforestation hectare binning", () => {
+  it("bins tree_deforestation_fringe_area_in_ha at its boundaries", () => {
+    const data = { type: "FeatureCollection", features: [15, 15.1, 40, 40.1].map((tree_deforestation_fringe_area_in_ha, index) => ({
+      geometry: null, properties: { uid: `${index}`, tree_deforestation_fringe_area_in_ha },
+    })) };
+    expect(withForestFringeDeforestationClass(data).features.map(feature => feature.properties.tree_deforestation_fringe_class)).toEqual([
+      "Low (<=15 ha)", "Moderate (15-40 ha)", "Moderate (15-40 ha)", "High (>40 ha)",
+    ]);
+  });
+  it("keeps the class null, not a made-up bin, for a missing tree_deforestation_fringe_area_in_ha", () => {
+    const data = { type: "FeatureCollection", features: [{ geometry: null, properties: { uid: "1", tree_deforestation_fringe_area_in_ha: null } }] };
+    expect(withForestFringeDeforestationClass(data).features[0].properties.tree_deforestation_fringe_class).toBeNull();
+  });
+});
+
+describe("Tree in Grassland Loss hectare binning", () => {
+  it("bins tree_loss_in_tree_in_shrub_area_in_ha at its boundaries", () => {
+    const data = { type: "FeatureCollection", features: [5, 5.1, 15, 15.1].map((tree_loss_in_tree_in_shrub_area_in_ha, index) => ({
+      geometry: null, properties: { uid: `${index}`, tree_loss_in_tree_in_shrub_area_in_ha },
+    })) };
+    expect(withTreeInGrasslandLossClass(data).features.map(feature => feature.properties.tree_loss_in_tree_in_shrub_class)).toEqual([
+      "Low (<=5 ha)", "Moderate (5-15 ha)", "Moderate (5-15 ha)", "High (>15 ha)",
+    ]);
+  });
+  it("keeps the class null, not a made-up bin, for a missing tree_loss_in_tree_in_shrub_area_in_ha", () => {
+    const data = { type: "FeatureCollection", features: [{ geometry: null, properties: { uid: "1", tree_loss_in_tree_in_shrub_area_in_ha: null } }] };
+    expect(withTreeInGrasslandLossClass(data).features[0].properties.tree_loss_in_tree_in_shrub_class).toBeNull();
+  });
+});
+
+describe("Forest Fire MW intensity binning", () => {
+  it("bins fire_frp_mean at its boundaries, including the exact-zero class", () => {
+    const data = { type: "FeatureCollection", features: [0, 0.1, 2, 2.1, 10, 10.1].map((fire_frp_mean, index) => ({
+      geometry: null, properties: { uid: `${index}`, fire_frp_mean },
+    })) };
+    expect(withForestFireClass(data).features.map(feature => feature.properties.fire_intensity_class)).toEqual([
+      "No detected Fire Radiative Power (0)MW",
+      "Low intensity (>0 and <=2)MW", "Low intensity (>0 and <=2)MW",
+      "Medium intensity (>2 and <=10)MW", "Medium intensity (>2 and <=10)MW",
+      "High intensity (>10)MW",
+    ]);
+  });
+  it("keeps the class null, not a made-up bin, for a missing fire_frp_mean", () => {
+    const data = { type: "FeatureCollection", features: [{ geometry: null, properties: { uid: "1", fire_frp_mean: null } }] };
+    expect(withForestFireClass(data).features[0].properties.fire_intensity_class).toBeNull();
+  });
+});
+
 describe("Cropping Degradation hectare binning", () => {
   it("bins total_deg at its boundaries", () => {
     const data = { type: "FeatureCollection", features: [29.9, 30, 89.9, 90, 90.1].map((total_deg, index) => ({
@@ -1946,7 +2112,7 @@ test("MWS boundary uses its published source, carries field meaning, hover and U
 test("all vector layers carry finalized hover titles or fields and preserve click attributes", async () => {
   const project = await buildGeoLibreProject({ ...location });
   const vectors = project.layers.filter(layer => layer.type === "geojson");
-  expect(vectors).toHaveLength(44);
+  expect(vectors).toHaveLength(47);
   expect(vectors.every(layer => layer.popup?.hover && (layer.popup.fields.some(field => field.hover) || layer.popup.titleExpression))).toBe(true);
   expect(vectors.some(layer => layer.id === "corestack-ndvi_combined_stats")).toBe(false);
   const admin = vectors.find(layer => layer.id === "corestack-administrative_boundaries");
