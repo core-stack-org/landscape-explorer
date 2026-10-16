@@ -20,7 +20,7 @@ export const colorNeutralCrop = '#7C7691';
 
 // Dry-months-by-season stacked bars. Rabi reuses colorPrimary and Zaid
 // reuses colorDataWarm; Kharif needs its own hue, distinct from both.
-export const colorKharif = '#0E7490';
+export const colorKharif = '#077BAB';
 
 // One colour per supported crop type, for the cropping-history bars and legend.
 export const CROP_COLORS = {

@@ -85,3 +85,13 @@ export function VegetativeIcon({ size = 14, stroke = '#006400', strokeWidth = 2.
     </svg>
   );
 }
+
+// Four arrows to the corners: opens a dialog, so it is not a chevron.
+export function ExpandIcon({ size = 14, stroke = 'currentColor', strokeWidth = 2 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={stroke}
+         strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round">
+      <path d="M9 3H3v6M3 3l7 7M15 3h6v6M21 3l-7 7M9 21H3v-6M3 21l7-7M15 21h6v-6M21 21l-7-7" />
+    </svg>
+  );
+}

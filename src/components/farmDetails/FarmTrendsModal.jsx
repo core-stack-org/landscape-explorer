@@ -107,7 +107,7 @@ export default function FarmTrendsModal({ open, onClose, annual, monthly, farmId
         aria-modal="true"
         aria-labelledby="farm-trends-title"
         tabIndex={-1}
-        className="w-full max-w-[716px] max-h-[90vh] flex flex-col rounded-[18px] overflow-hidden outline-none"
+        className="w-full max-w-[980px] max-h-[90vh] flex flex-col rounded-[18px] overflow-hidden outline-none"
         style={{ background: colorPageBg }}
         onClick={(e) => e.stopPropagation()}
       >

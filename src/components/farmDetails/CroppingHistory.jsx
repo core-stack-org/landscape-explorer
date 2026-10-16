@@ -48,7 +48,7 @@ function Edge({ side, open, markerDirection }) {
 // Hover bubble, anchored above its own segment so it centers on just that
 // bar rather than the whole track. CSS-only (Tailwind's group-hover), so it
 // needs no component state.
-function SegmentTooltip({ crop, sowDate, harvestDate, note }) {
+function SegmentTooltip({ crop, confidence, sowDate, harvestDate, note }) {
   return (
     <div
       className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 z-20 opacity-0 group-hover:opacity-100 transition-opacity duration-150 pointer-events-none whitespace-nowrap rounded-lg px-2.5 py-1.5 text-[10px] leading-snug shadow-lg"
@@ -56,6 +56,7 @@ function SegmentTooltip({ crop, sowDate, harvestDate, note }) {
       role="tooltip"
     >
       <div className="font-semibold">{crop}</div>
+      {confidence && <div>{confidence} confidence</div>}
       <div>Sown {formatDate(sowDate)}</div>
       <div>Harvested {formatDate(harvestDate)}</div>
       {note && <div className="mt-0.5" style={{ color: 'rgba(255,255,255,0.7)' }}>{note}</div>}
@@ -67,7 +68,7 @@ function SegmentTooltip({ crop, sowDate, harvestDate, note }) {
   );
 }
 
-function Segment({ startFrac, endFrac, color, flatLeft, flatRight, crop, sowDate, harvestDate, note }) {
+function Segment({ startFrac, endFrac, color, flatLeft, flatRight, crop, confidence, sowDate, harvestDate, note }) {
   return (
     <div className="absolute top-1/2 -translate-y-1/2 h-[14px] group" style={{
       left: `${(startFrac / 12) * 100}%`,
@@ -81,7 +82,7 @@ function Segment({ startFrac, endFrac, color, flatLeft, flatRight, crop, sowDate
     >
       <Edge side="left" open={flatLeft} markerDirection="up" />
       <Edge side="right" open={flatRight} markerDirection="down" />
-      <SegmentTooltip crop={crop} sowDate={sowDate} harvestDate={harvestDate} note={note} />
+      <SegmentTooltip crop={crop} confidence={confidence} sowDate={sowDate} harvestDate={harvestDate} note={note} />
     </div>
   );
 }
@@ -108,10 +109,10 @@ export default function CroppingHistory({ annual }) {
     const prev = rowsByYear.get(row.year - 1);
     const next = rowsByYear.get(row.year + 1);
     const prevSpill = prev && prev.harvestAfterWindow
-      ? { crop: prev.crop, start: 0, end: Math.min(12, prev.rawEndFrac - 12), sowDate: prev.sowDate, harvestDate: prev.harvestDate }
+      ? { crop: prev.crop, confidence: prev.confidence, start: 0, end: Math.min(12, prev.rawEndFrac - 12), sowDate: prev.sowDate, harvestDate: prev.harvestDate }
       : null;
     const nextSpill = next && next.sowBeforeWindow
-      ? { crop: next.crop, start: Math.max(0, 12 + next.rawStartFrac), end: 12, sowDate: next.sowDate, harvestDate: next.harvestDate }
+      ? { crop: next.crop, confidence: next.confidence, start: Math.max(0, 12 + next.rawStartFrac), end: 12, sowDate: next.sowDate, harvestDate: next.harvestDate }
       : null;
     return { row, hasBar, prevSpill, nextSpill, hasAnySegment: hasBar || !!prevSpill || !!nextSpill };
   });
@@ -168,6 +169,7 @@ export default function CroppingHistory({ annual }) {
                     flatLeft
                     flatRight={false}
                     crop={prevSpill.crop}
+                    confidence={prevSpill.confidence}
                     sowDate={prevSpill.sowDate}
                     harvestDate={prevSpill.harvestDate}
                     note="Continues from the row above"
@@ -182,6 +184,7 @@ export default function CroppingHistory({ annual }) {
                     flatLeft={row.sowBeforeWindow}
                     flatRight={row.harvestAfterWindow}
                     crop={row.crop}
+                    confidence={row.confidence}
                     sowDate={row.sowDate}
                     harvestDate={row.harvestDate}
                     note={
@@ -204,6 +207,7 @@ export default function CroppingHistory({ annual }) {
                     flatLeft={false}
                     flatRight
                     crop={nextSpill.crop}
+                    confidence={nextSpill.confidence}
                     sowDate={nextSpill.sowDate}
                     harvestDate={nextSpill.harvestDate}
                     note="Continues into the row below"
