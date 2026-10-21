@@ -82,6 +82,7 @@ export const STYLE_RESOLVERS = {
   relief: { get: (f, { mwsIndex }) => mwsIndex.byId.get(f.get('uid'))?.relief },
   increase_canopy_density_height: { get: (f, { mwsIndex }) => mwsIndex.byId.get(f.get('uid'))?.increase_canopy_density_height },
   reduction_canopy_density_height: { get: (f, { mwsIndex }) => mwsIndex.byId.get(f.get('uid'))?.reduction_canopy_density_height },
+  shrub_trend : { get: (f, { mwsIndex }) => mwsIndex.byId.get(f.get('uid'))?.shrub_trend },
 
   aquifer_class: {
     dualPath: true,
@@ -112,6 +113,10 @@ export const STYLE_RESOLVERS = {
 
   soil_ph : { dualPath: true, get: (f) => f.get('topsoil_ph') },
   reduction_in_shrubland_cover : { dualPath: false, get: (f) => f.get('total_change') },
+  tree_reduce_fringe : { dualPath: false, get: (f) => f.get('tree_deforestation_fringe_area_in_ha') },
+  trees_in_grassland_loss : { dualPath: false, get: (f) => f.get('tree_loss_in_tree_in_shrub_area_in_ha') },
+  forest_fire_count : { dualPath: false, get: (f) => f.get('fire_count_per_year') },
+
   soil_drainage : { dualPath: true, get: (f) => f.get('soil_drainage_classes') },
   soil_texture : { dualPath: true, get: (f) => f.get('subsoil_texture') },
 };
