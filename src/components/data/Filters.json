@@ -942,6 +942,48 @@
     ]
   },
   {
+    "name": "fire_count_per_year",
+    "label": "Fire Count Per Year",
+    "type": 2,
+    "namespace": "MWS",
+    "category": "Tree Cover",
+    "source": "mws",
+    "layer_store": ["forest_fire"],
+    "layer_name": ["forest_fire"],
+    "rasterStyle": "",
+    "styleKey": "forest_fire_count",
+    "bins": [
+      {
+        "label": "No Observed Fire",
+        "lower": 0,
+        "upper": 0,
+        "fill": "rgba(144, 238, 144, 0.8)",
+        "stroke": "rgba(60, 179, 113, 1)"
+      },
+      {
+        "label": "Low (> 0 to 2 fire days per year)",
+        "lower": 0,
+        "upper": 2,
+        "fill": "rgba(255, 215, 0, 0.8)",
+        "stroke": "rgba(218, 165, 32, 1)"
+      },
+      {
+        "label": "Moderate (>2 to 5 fire days per year)",
+        "lower": 2,
+        "upper": 5,
+        "fill": "rgba(255, 140, 0, 0.8)",
+        "stroke": "rgba(230, 81, 0, 1)"
+      },
+      {
+        "label": "High (> 5 fire days per year)",
+        "lower": 5,
+        "upper": 9999999,
+        "fill": "rgba(220, 20, 60, 0.8)",
+        "stroke": "rgba(139, 0, 0, 1)"
+      }
+    ]
+  },
+  {
     "name": "area_wide_scale_restoration",
     "label": "Area with potential for wide-scale restoration",
     "type": 2,
@@ -1001,7 +1043,7 @@
   },
   {
     "name": "trees_in_grassland_loss",
-    "label": "Reduction in tree cover present in shrub areas",
+    "label": "Reduction in tree cover in shrub areas",
     "type": 2,
     "namespace": "MWS",
     "category": "Shrublands",

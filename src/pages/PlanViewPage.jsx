@@ -408,8 +408,8 @@ const WellDetailCard = ({ w, onClose }) => (
         <DataRow label="Settlement"  value={w.beneficiary_settlement} />
         <DataRow label="Well Type"   value={w.well_type}              />
         <DataRow label="Owner"       value={w.owner}                  />
-        <DataRow label="Beneficiary" value={w.beneficiary_name}       />
-        <DataRow label="Father Name" value={w.beneficiary_father_name}/>
+        {/*<DataRow label="Beneficiary" value={w.beneficiary_name}       />*/}
+        {/*<DataRow label="Father Name" value={w.beneficiary_father_name}/>*/}
         <DataRow label="Caste Uses"  value={w.caste_uses}             />
       </div>
       <div>
@@ -455,33 +455,36 @@ const WaterbodyDetailCard = ({ w, onClose }) => (
   </div>
 );
 
-const NrmDetailCard = ({ n, onClose }) => (
-  <div className="rounded-2xl p-5 shadow-sm relative"
-    style={{ border: `1px solid ${P.border}`, background: P.lighter }}>
-    <button onClick={onClose}
-      className="absolute top-3 right-3 w-6 h-6 rounded-full flex items-center
-                 justify-center text-xs transition-all hover:bg-white"
-      style={{ color: P.muted }}>✕</button>
-    <p className="text-xs font-semibold uppercase tracking-widest mb-3" style={{ color: P.muted }}>
-      {n.work_category ?? n.structure_type ?? "Detail"}
-    </p>
-    <div className="grid grid-cols-2 gap-x-6">
-      <div>
-        <DataRow label="Demand Type" value={n.demand_type || n.work_demand}      />
-        <DataRow label="Work Demand" value={n.work_demand || n.structure_type}   />
-        <DataRow label="Settlement"  value={n.beneficiary_settlement}            />
-        <DataRow label="Beneficiary" value={n.beneficiary_name}                  />
-      </div>
-      <div>
-        <DataRow label="Father Name" value={n.beneficiary_father_name}           />
-        <DataRow label="Gender"      value={n.gender}                            />
-        <DataRow label="Repair"      value={n.repair_activities}                 />
-        <DataRow label="Coordinates"
-          value={n.latitude && n.longitude ? `${n.latitude}, ${n.longitude}` : "--"} />
+const NrmDetailCard = ({ n, onClose }) => {
+  console.log(n)
+  return(
+    <div className="rounded-2xl p-5 shadow-sm relative"
+      style={{ border: `1px solid ${P.border}`, background: P.lighter }}>
+      <button onClick={onClose}
+        className="absolute top-3 right-3 w-6 h-6 rounded-full flex items-center
+                  justify-center text-xs transition-all hover:bg-white"
+        style={{ color: P.muted }}>✕</button>
+      <p className="text-xs font-semibold uppercase tracking-widest mb-3" style={{ color: P.muted }}>
+        {n.work_category ?? n.structure_type ?? "Detail"}
+      </p>
+      <div className="grid grid-cols-2 gap-x-6">
+        <div>
+          <DataRow label="Demand Type" value={n.demand_type || n.work_demand}      />
+          <DataRow label="Work Demand" value={n.work_demand || n.structure_type}   />
+          <DataRow label="Settlement"  value={n.beneficiary_settlement}            />
+          {/*<DataRow label="Beneficiary" value={n.beneficiary_name}                  />*/}
+        </div>
+        <div>
+        {/*<DataRow label="Father Name" value={n.beneficiary_father_name}           />*/}
+          <DataRow label="Gender"      value={n.gender}                            />
+          <DataRow label="Repair"      value={n.repair_activities}                 />
+          <DataRow label="Coordinates"
+            value={n.latitude && n.longitude ? `${n.latitude}, ${n.longitude}` : "--"} />
+        </div>
       </div>
     </div>
-  </div>
-);
+  )
+};
 
 const LivelihoodDetailCard = ({ l, onClose }) => (
   <div className="rounded-2xl p-5 shadow-sm relative"
@@ -501,9 +504,9 @@ const LivelihoodDetailCard = ({ l, onClose }) => (
         <DataRow label="Settlement"  value={l.beneficiary_settlement} />
       </div>
       <div>
-        <DataRow label="Beneficiary" value={l.beneficiary_name}        />
-        <DataRow label="Father Name" value={l.beneficiary_father_name} />
-        <DataRow label="Gender"      value={l.gender}                  />
+        {/*<DataRow label="Beneficiary" value={l.beneficiary_name}        />*/}
+        {/*<DataRow label="Father Name" value={l.beneficiary_father_name} />*/}
+        {/*<DataRow label="Gender"      value={l.gender}                  />*/}
         <DataRow label="Total Acres" value={l.total_acres}             />
         <DataRow label="Coordinates"
           value={l.latitude && l.longitude ? `${l.latitude}, ${l.longitude}` : "--"} />
@@ -1462,7 +1465,7 @@ const PlanViewPage = () => {
                     const getSubtitle = (item) => worksSubTab === "nrm"
                       ? `${item.beneficiary_settlement} · ${item.work_category}`
                       : `${item.beneficiary_settlement} · ${item.structure_type}`;
-                    const getTitle = (item) => item.beneficiary_name || item.work_demand || "--";
+                    const getTitle = (item) =>  item.work_demand || "--";
                     const getId = (item, i) => item.id ?? `${worksSubTab}-${i}`;
 
                     return items.length === 0 ? (

@@ -115,7 +115,7 @@ export const STYLE_RESOLVERS = {
   reduction_in_shrubland_cover : { dualPath: false, get: (f) => f.get('total_change') },
   tree_reduce_fringe : { dualPath: false, get: (f) => f.get('tree_deforestation_fringe_area_in_ha') },
   trees_in_grassland_loss : { dualPath: false, get: (f) => f.get('tree_loss_in_tree_in_shrub_area_in_ha') },
-  forest_fire_mean_intensity : { dualPath: false, get: (f) => f.get('fire_frp_mean') },
+  forest_fire_count : { dualPath: false, get: (f) => f.get('fire_count_per_year') },
 
   soil_drainage : { dualPath: true, get: (f) => f.get('soil_drainage_classes') },
   soil_texture : { dualPath: true, get: (f) => f.get('subsoil_texture') },

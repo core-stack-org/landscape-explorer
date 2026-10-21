@@ -683,22 +683,22 @@ const SoilTexture = [
   {
     fill: "rgba(144, 238, 144, 0.8)",
     stroke: "rgba(60, 179, 113, 1)",
-    label: "No detected Fire Radiative Power (0)MW"
+    label: "No Observed Fire"
   },
   {
     fill: "rgba(255, 215, 0, 0.8)",
     stroke: "rgba(218, 165, 32, 1)",
-    label: "Low intensity (>0 and <=2)MW"
+    label: "Low (> 0 to 2 fire days per year)"
   },
   {
     fill: "rgba(255, 140, 0, 0.8)",
     stroke: "rgba(230, 81, 0, 1)",
-    label: "Medium intensity (>2 and <=10)MW"
+    label: "Moderate (>2 to 5 fire days per year)"
   },
   {
     fill: "rgba(220, 20, 60, 0.8)",
     stroke: "rgba(139, 0, 0, 1)",
-    label: "High intensity (>10)MW"
+    label: "High (> 5 fire days per year)"
   }
 ];
 
@@ -1050,7 +1050,7 @@ const SoilTexture = [
     (layer) => layer.name.includes("trees_in_grassland_loss")
   )
   const isForestFireIntensity = currentLayer?.some(
-    (layer) => layer.name.includes("forest_fire_mean_intensity")
+    (layer) => layer.name.includes("fire_count_per_year")
   )
 
   const isShrubTrendActive = currentLayer?.some(
