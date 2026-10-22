@@ -1,4 +1,4 @@
-const DEFAULT_VIEWER_URL = "https://web.geolibre.app/";
+const DEFAULT_VIEWER_URL = "https://geolibre.core-stack.org/";
 
 /**
  * The preferred GeoLibre application version for a versioned deployment.
