@@ -181,8 +181,8 @@ const MapLegend = ({ showMWS, showVillages, currentLayer, showConnectivity,showP
 
   const mwsLegendItems = [
     {
-      color: "rgba(255, 99, 132, 0.6)",
-      border: "rgb(255, 99, 132)",
+      color: "rgba(85, 152, 229, 0.6)",
+      border: "rgb(85, 152, 229)",
       name: "Matched MWS",
       type: "mws",
     },
@@ -1093,9 +1093,9 @@ const SoilTexture = [
       <div
         className={`bg-white rounded-lg shadow-md overflow-hidden transition-opacity duration-300 ${isCollapsed
           ? "w-10 h-48 opacity-80 hover:opacity-100"
-          : "w-72 opacity-100"
+          : "w-64 opacity-100"
           }`}
-        style={!isCollapsed ? { maxHeight: 'calc(100vh - 220px)' } : {}}
+        style={!isCollapsed ? { maxHeight: 'calc(80vh - 220px)' } : {}}
       >
         {/* Collapsed state - vertical "Legend" text */}
         {isCollapsed && (
@@ -1114,19 +1114,15 @@ const SoilTexture = [
               {/* MWS Legend Section */}
               {showMWS && (
                 <div className="space-y-2">
-                  <h4 className="text-xs font-medium text-gray-600">
-                    MWS Layers
-                  </h4>
                   {mwsLegendItems.map((item, index) => (
                     <div
                       key={`mws-${index}`}
                       className="flex items-center gap-2"
                     >
                       <div
-                        className="w-4 h-4 rounded"
+                        className="w-4 h-0"
                         style={{
-                          backgroundColor: item.color,
-                          border: `2px solid ${item.border}`,
+                          borderTop: `5px solid ${item.border}`,
                         }}
                       />
                       <span className="text-sm text-gray-600">{item.name}</span>
@@ -1138,19 +1134,15 @@ const SoilTexture = [
               {/* Village Boundaries Legend Section */}
               {showVillages && (
                 <div className="space-y-2">
-                  <h4 className="text-xs font-medium text-gray-600">
-                    Administrative Boundaries
-                  </h4>
                   {villageLegendItems.map((item, index) => (
                     <div
                       key={`village-${index}`}
                       className="flex items-center gap-2"
                     >
                       <div
-                        className="w-4 h-4 rounded"
+                        className="w-4 h-0"
                         style={{
-                          backgroundColor: item.color,
-                          border: `2px solid ${item.border}`,
+                          borderTop: `5px solid ${item.border}`,
                         }}
                       />
                       <span className="text-sm text-gray-600">{item.name}</span>
