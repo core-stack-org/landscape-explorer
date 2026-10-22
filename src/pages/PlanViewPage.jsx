@@ -437,8 +437,8 @@ const WaterbodyDetailCard = ({ w, onClose }) => (
       <div>
         <DataRow label="Settlement"  value={w.beneficiary_settlement} />
         <DataRow label="Owner"       value={w.owner}                  />
-        <DataRow label="Beneficiary" value={w.beneficiary_name}       />
-        <DataRow label="Father Name" value={w.beneficiary_father_name}/>
+        {/*<DataRow label="Beneficiary" value={w.beneficiary_name}       />*/}
+        {/*<DataRow label="Father Name" value={w.beneficiary_father_name}/>*/}
         <DataRow label="Managed By"  value={w.who_manages}            />
         <DataRow label="Caste Users" value={w.caste_who_uses}         />
       </div>
@@ -1358,7 +1358,7 @@ const PlanViewPage = () => {
                           <div className="flex items-center gap-3 min-w-0">
                             <img src={WellIcon} alt="" className="w-5 h-5 flex-shrink-0" />
                             <div className="min-w-0">
-                              <p className="text-sm font-semibold truncate" style={{ color: P.text }}>{w.beneficiary_name || w.owner || "--"}</p>
+                              <p className="text-sm font-semibold truncate" style={{ color: P.text }}>{w.owner || "--"}</p>
                               <p className="text-xs truncate" style={{ color: P.muted }}>{w.beneficiary_settlement} · {w.well_type}</p>
                             </div>
                           </div>
@@ -1410,7 +1410,7 @@ const PlanViewPage = () => {
                           <div className="flex items-center gap-3 min-w-0">
                             <img src={WaterStructureIcon} alt="" className="w-5 h-5 flex-shrink-0" />
                             <div className="min-w-0">
-                              <p className="text-sm font-semibold truncate" style={{ color: P.text }}>{w.beneficiary_name || w.owner || "--"}</p>
+                              <p className="text-sm font-semibold truncate" style={{ color: P.text }}>{w.owner || "--"}</p>
                               <p className="text-xs truncate" style={{ color: P.muted }}>{w.beneficiary_settlement} · {w.water_structure_type}</p>
                             </div>
                           </div>
@@ -1547,7 +1547,6 @@ const PlanViewPage = () => {
                           <div className="flex items-center gap-3 min-w-0">
                             <img src={LivelihoodIcon} alt="" className="w-5 h-5 flex-shrink-0" />
                             <div className="min-w-0">
-                              <p className="text-sm font-semibold truncate" style={{ color: P.text }}>{l.beneficiary_name || "--"}</p>
                               <p className="text-xs truncate" style={{ color: P.muted }}>{l.beneficiary_settlement} · {l.livelihood_work}</p>
                             </div>
                           </div>
