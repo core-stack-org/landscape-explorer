@@ -41,7 +41,7 @@ export default function DetailHost({ hits, activeTab, onSelectTab, onBack, layer
                     <span className="text-[14px]" aria-hidden="true">{MISSING_ICON[type]}</span>
                   </div>
                   <div className="flex-1 min-w-0">
-                    <div className="text-[13px] font-bold" style={{ color: colorInk }}>{TAB_LABELS[type]} {type === 'farm' ? 'boundaries' : 'layer'} are off</div>
+                    <div className="text-[13px] font-bold" style={{ color: colorInk }}>{TAB_LABELS[type]} {type === 'farm' ? 'boundaries are' : 'layer is'} off</div>
                     <div className="text-[11px]" style={{ color: colorMuted }}>{MISSING_COPY[type]}</div>
                   </div>
                   <button

@@ -1,6 +1,6 @@
 import { Line } from 'react-chartjs-2';
 import './chartSetup';
-import { colorPrimary, colorDataWarm, colorBorderSoft, colorMuted } from '../farmDetailsTokens';
+import { colorPrimary, colorBorderSoft, colorMuted } from '../farmDetailsTokens';
 
 const ODD_YEAR_BAND = '#FBFAFE';
 
@@ -59,8 +59,6 @@ export function WaterChartLegend() {
   return (
     <div className="flex items-center gap-4 flex-wrap flex-shrink-0">
       <div className="flex items-center gap-1.5"><span className="w-3 h-0.5" style={{ background: colorPrimary }} /><span className="text-[10px]" style={{ color: colorMuted }}>AET</span></div>
-      <div className="flex items-center gap-1.5"><span className="w-3 h-0.5" style={{ background: colorDataWarm }} /><span className="text-[10px]" style={{ color: colorMuted }}>PET</span></div>
-      <div className="flex items-center gap-1.5"><span className="w-3 h-2.5 rounded-sm" style={{ background: 'rgba(204,107,0,0.13)' }} /><span className="text-[10px]" style={{ color: colorMuted }}>Shortfall</span></div>
     </div>
   );
 }
@@ -68,12 +66,10 @@ export function WaterChartLegend() {
 export default function WaterChart({ series }) {
   const labels = [];
   const aet = [];
-  const pet = [];
   series.forEach(({ points }) => {
     points.forEach((p) => {
       labels.push(p.label);
       aet.push(p.aet);
-      pet.push(p.pet);
     });
   });
 
@@ -89,17 +85,6 @@ export default function WaterChart({ series }) {
         pointRadius: 0,
         pointHoverRadius: 3,
         tension: 0,
-      },
-      {
-        label: 'PET',
-        data: pet,
-        borderColor: colorDataWarm,
-        borderWidth: 2,
-        pointRadius: 0,
-        pointHoverRadius: 3,
-        tension: 0,
-        fill: '-1',
-        backgroundColor: 'rgba(204,107,0,0.13)',
       },
     ],
   };
@@ -122,12 +107,7 @@ export default function WaterChart({ series }) {
             const s = series[Math.floor(i / 12)];
             return `${items[0].label} · ${s ? s.yearLabel : ''}`;
           },
-          afterBody: (items) => {
-            const a = items.find((it) => it.datasetIndex === 0)?.parsed.y;
-            const p = items.find((it) => it.datasetIndex === 1)?.parsed.y;
-            if (a == null || p == null) return 'No valid reading this month';
-            return `Gap: ${(p - a).toFixed(1)} mm`;
-          },
+          label: (item) => (item.raw == null ? 'No valid reading this month' : `AET: ${item.raw.toFixed(1)} mm`),
         },
       },
     },
