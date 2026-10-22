@@ -919,21 +919,21 @@
     "styleKey": "tree_reduce_fringe",
     "bins": [
       {
-        "label": "Low (<=15 Ha)",
+        "label": "Low: Less than 15 hectares",
         "lower": 0,
         "upper": 15,
         "fill": "rgba(144, 238, 144, 0.8)",
         "stroke": "rgba(144, 238, 144, 1)"
       },
       {
-        "label": "Moderate (15-40 ha)",
+        "label": "Moderate: Between 15 to 40 hectares",
         "lower": 15,
         "upper": 40,
         "fill": "rgba(255, 215, 0, 0.8)",
         "stroke": "rgba(255, 215, 0, 1)"
       },
       {
-        "label": "High (>40 ha)",
+        "label": "High: More than 40 hectares",
         "lower": 41,
         "upper": 9999999,
         "fill": "rgba(220, 20, 60, 0.8)",
@@ -961,21 +961,21 @@
         "stroke": "rgba(60, 179, 113, 1)"
       },
       {
-        "label": "Low (> 0 to 2 fire days per year)",
+        "label": "Low (Less than 2 fire days per year)",
         "lower": 0,
         "upper": 2,
         "fill": "rgba(255, 215, 0, 0.8)",
         "stroke": "rgba(218, 165, 32, 1)"
       },
       {
-        "label": "Moderate (>2 to 5 fire days per year)",
+        "label": "Moderate (Between 2 to 5 fire days per year)",
         "lower": 2,
         "upper": 5,
         "fill": "rgba(255, 140, 0, 0.8)",
         "stroke": "rgba(230, 81, 0, 1)"
       },
       {
-        "label": "High (> 5 fire days per year)",
+        "label": "High (More than 5 fire days per year)",
         "lower": 5,
         "upper": 9999999,
         "fill": "rgba(220, 20, 60, 0.8)",
