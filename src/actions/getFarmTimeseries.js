@@ -1,4 +1,4 @@
-const GRAPHQL_URL = 'http://act4dws6.cse.iitd.ac.in/corelens/graphql/v1';
+const GRAPHQL_URL = 'https://www.cse.iitd.ernet.in/act4dws6/corelens/graphql/v1';
 
 const FARM_TIMESERIES_QUERY = `
   query FarmTimeseries($state: String!, $district: String!, $block: String!, $farmId: String!) {

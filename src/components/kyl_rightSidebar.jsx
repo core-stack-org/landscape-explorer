@@ -364,6 +364,8 @@ const KYLRightSidebar = ({
 
       const properties = feature.getProperties();
 
+      console.log(properties)
+
       // Clicking the already-selected farm again deselects it.
       if (selectedFarmIdRef.current != null && String(selectedFarmIdRef.current) === String(properties.farm_id)) {
         handleCloseFarmDetails();

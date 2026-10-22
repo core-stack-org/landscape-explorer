@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import AetPetSparkline from './AetPetSparkline';
+import DroughtStats from './DroughtStats';
 import FieldSizeCard from './FieldSizeCard';
 import CroppingHistory from './CroppingHistory';
 import FarmTrendsModal from './FarmTrendsModal';
@@ -17,7 +18,7 @@ function Skeleton() {
 }
 
 // Body only: the surrounding detail shell owns the header and tab strip.
-export default function FarmDetailsPanel({ farmId, annual, monthly, loading, error }) {
+export default function FarmDetailsPanel({ farmId, annual, monthly, loading, error, frequency, intensity }) {
   const [trendsOpen, setTrendsOpen] = useState(false);
 
   useEffect(() => {
@@ -44,6 +45,7 @@ export default function FarmDetailsPanel({ farmId, annual, monthly, loading, err
       ) : (
         <>
           <AetPetSparkline series={series} onOpen={() => setTrendsOpen(true)} />
+          <DroughtStats frequency={frequency} intensity={intensity} />
           <FieldSizeCard areaInHa={latest.areaInHa} />
           <CroppingHistory annual={rows} />
         </>

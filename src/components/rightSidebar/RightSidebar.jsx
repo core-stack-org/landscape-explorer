@@ -29,7 +29,16 @@ export default function RightSidebar({
 
   const renderBody = (type) => {
     if (type === 'mws' && hits.mws) return <MwsTab {...mws} uid={hits.mws.uid} />;
-    if (type === 'farm' && hits.farm) return <FarmDetailsPanel {...farm} farmId={hits.farm.farmId} />;
+    if (type === 'farm' && hits.farm) {
+      return (
+        <FarmDetailsPanel
+          {...farm}
+          farmId={hits.farm.farmId}
+          frequency={hits.farm.properties?.frequency}
+          intensity={hits.farm.properties?.intensity}
+        />
+      );
+    }
     if (type === 'waterbody' && hits.waterbody) {
       const wb = hits.waterbody;
       return <WaterbodyTab waterbody={{ id: wb.id, properties: wb.properties, dashboardUrl: ctx.waterbodyUrl?.(wb.id) }} />;
