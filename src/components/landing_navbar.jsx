@@ -2,7 +2,6 @@ import React, { useState } from "react";
 import newLogo from "../assets/newlogoWhite.png";
 import { useLocation } from "react-router-dom";
 import { BookOpen, Compass, ExternalLink, FileSpreadsheet, Info } from "lucide-react";
-import GeoLibreTour from "./geolibre/GeoLibreTour";
 import { downloadExcel } from "./landscape-explorer/utils/downloadHelper";
 
 const HeaderTooltip = ({ children, text }) => (
@@ -23,7 +22,6 @@ const LandingNavbar = ({ downloadScope = null }) => {
   const isHomePage = location.pathname === "/";
   const isKylDashboard = location.pathname === "/kyl_dashboard";
   const [showTooltip, setShowTooltip] = useState(false);
-  const [showGeoLibreTour, setShowGeoLibreTour] = useState(false);
   const [isDownloadingDataSheet, setIsDownloadingDataSheet] = useState(false);
 
   const canDownloadDataSheet = Boolean(
@@ -85,16 +83,17 @@ const LandingNavbar = ({ downloadScope = null }) => {
           <div className="flex flex-wrap gap-3 items-center justify-center">
             {isExploreDataPage && (
               <>
-                <HeaderTooltip text="New to the map? See where to find layers and try a few useful ways to explore your landscape.">
-                  <button
-                    type="button"
-                    onClick={() => setShowGeoLibreTour(true)}
-                    className="flex items-center justify-center rounded-lg border border-purple-300 bg-purple-50 px-4 py-2 text-sm font-medium text-purple-800 transition-colors duration-200 hover:bg-purple-100 focus:outline-none"
-                    aria-label="Start the GeoLibre quick tour"
+                <HeaderTooltip text="Learn how to use CoRE Stack STAC specs with Geolibre">
+                  <a
+                    href="https://docs.google.com/document/d/1Wxdmq2LfMZ1rmPFLR6YJXT4tR_XPEoIk6Er6jaug0z0/edit?pli=1&tab=t.0"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center justify-center rounded-lg border border-[#F9AB00] bg-[#FFF7E0] px-4 py-2 text-sm font-medium text-[#9A5B00] transition-colors duration-200 hover:bg-[#FDE7B2] focus:outline-none"
+                    aria-label="Open CoRE Stack Notebooks in Google Colab"
                   >
-                    <Compass className="h-4 w-4" />
-                    <span className="ml-2">Quick Tour</span>
-                  </button>
+                    <BookOpen className="h-4 w-4" />
+                    <span className="ml-2">STAC Usage Guide</span>
+                  </a>
                 </HeaderTooltip>
 
                 <HeaderTooltip text={canDownloadDataSheet ? "Download the Excel datasheet for the selected tehsil." : "Select a state, district, and tehsil to download its datasheet."}>
@@ -151,7 +150,31 @@ const LandingNavbar = ({ downloadScope = null }) => {
                   className="flex items-center gap-2 px-4 py-2 rounded-lg bg-purple-50 hover:bg-purple-100 transition-all duration-200 border border-purple-200 group"
                 >
                   <span className="text-sm sm:text-base font-medium text-purple-700 group-hover:text-purple-800">
-                    Explore GEE App
+                    GEE App
+                  </span>
+                  <ExternalLink className="h-4 w-4 text-purple-600 group-hover:scale-110 transition-transform" />
+                </a>
+
+                <a
+                  href="https://tower.core-stack.org/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 px-4 py-2 rounded-lg bg-purple-50 hover:bg-purple-100 transition-all duration-200 border border-purple-200 group"
+                >
+                  <span className="text-sm sm:text-base font-medium text-purple-700 group-hover:text-purple-800">
+                    Tower services 
+                  </span>
+                  <ExternalLink className="h-4 w-4 text-purple-600 group-hover:scale-110 transition-transform" />
+                </a>
+
+                <a
+                  href="https://play.google.com/store/apps/details?id=com.corestack.commonsconnect&hl=en_IN"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 px-4 py-2 rounded-lg bg-purple-50 hover:bg-purple-100 transition-all duration-200 border border-purple-200 group"
+                >
+                  <span className="text-sm sm:text-base font-medium text-purple-700 group-hover:text-purple-800">
+                    Download Commons Connect  
                   </span>
                   <ExternalLink className="h-4 w-4 text-purple-600 group-hover:scale-110 transition-transform" />
                 </a>
@@ -196,10 +219,6 @@ const LandingNavbar = ({ downloadScope = null }) => {
           </div>
         </div>
       </div>
-      <GeoLibreTour
-        open={showGeoLibreTour}
-        onClose={() => setShowGeoLibreTour(false)}
-      />
     </nav>
   );
 };
