@@ -1,5 +1,5 @@
 import { FILTER_BY_NAME, ALL_FILTERS } from './filtersIndex';
-import { PATTERN_BY_NAME } from './patternsIndex';
+import { PATTERN_BY_NAME,PATTERN_VALUE_MAP} from './patternsIndex';
 
 // Backend sentinel values meaning "no data" — excluded from range matching.
 const MISSING_VALUE_SENTINELS = new Set([-1, -9999]);
@@ -44,8 +44,65 @@ function buildFieldIndexes(records, idField, fields) {
   return { byId, fieldIndex };
 }
 
+// Fields the backend doesn't send, calculated once from fields it does.
+// Fields the backend doesn't send, calculated once from fields it does.
+// Returns a new object, because the incoming records are frozen.
+function addMWSDerivedFields(record) {
+  const annual = Number(record.avg_precipitation);
+  const kharif = Number(record.avg_kharif_rainfall);
+  const maxDay = Number(record.max_monsoon_onset_day);
+  const minDay = Number(record.min_monsoon_onset_day);
+
+  return {
+    ...record,
+    mean_rainfall: annual > 0 ? kharif / annual : undefined,
+    monsoon_onset_day: maxDay > 0 && minDay > 0 ? maxDay - minDay : undefined,
+  };
+}
+
+const VILLAGE_AGGREGATES = [
+  { name: 'st_sc_percent', source: 'st_sc_percent', how: 'max' },
+];
+
+function combine(values, how) {
+  if (!values.length) return undefined;
+  if (how === 'max') return Math.max(...values);
+  if (how === 'min') return Math.min(...values);
+  return values.reduce((a, b) => a + b, 0) / values.length;
+}
+
+function addVillageAggregates(mwsIndex, villageIndex) {
+  const byId = new Map();
+  for (const [id, record] of mwsIndex.byId) {
+    const villages = (record.mws_intersect_villages || [])
+      .map((vId) => villageIndex.byId.get(vId))
+      .filter(Boolean);
+
+    const extra = {};
+    for (const { name, source, how } of VILLAGE_AGGREGATES) {
+      const values = villages
+        .map((v) => v[source])
+        .filter((x) => typeof x === 'number' && !isNaN(x));
+      extra[name] = combine(values, how);
+    }
+    byId.set(id, { ...record, ...extra });
+  }
+  return { ...mwsIndex, byId };
+}
+
+// Village-level fields the backend doesn't send.
+function addVillageDerivedFields(record) {
+  const st = Number(record.percent_st_population);
+  const sc = Number(record.percent_sc_population);
+  return {
+    ...record,
+    st_sc_percent: !isNaN(st) && !isNaN(sc) ? st + sc : undefined,
+  };
+}
+
 export function buildMWSIndex(dataJson) {
-  const { byId, fieldIndex } = buildFieldIndexes(dataJson, 'mws_id', MWS_INDEXED_FIELDS);
+  const records = (dataJson || []).map(addMWSDerivedFields);
+  const { byId, fieldIndex } = buildFieldIndexes(records, 'mws_id', MWS_INDEXED_FIELDS);
 
   const mwsToVillages = new Map();
   const mwsToSWB = new Map();
@@ -62,8 +119,13 @@ export function buildMWSIndex(dataJson) {
   return { byId, fieldIndex, mwsToVillages, mwsToSWB };
 }
 
+// export function buildVillageIndex(villageJson) {
+//   return buildFieldIndexes(villageJson, 'village_id', VILLAGE_INDEXED_FIELDS);
+// }
+
 export function buildVillageIndex(villageJson) {
-  return buildFieldIndexes(villageJson, 'village_id', VILLAGE_INDEXED_FIELDS);
+  const records = (villageJson || []).map(addVillageDerivedFields);
+  return buildFieldIndexes(records, 'village_id', VILLAGE_INDEXED_FIELDS);
 }
 
 function inRange(record, field, lower, upper) {
@@ -96,204 +158,54 @@ function matchFilters(selections, index) {
   return result;
 }
 
-// function conditionMatches(record, condition) {
-//   if (condition.type === 2) return inRange(record, condition.key, condition.value.lower, condition.value.upper);
-//   if (condition.type === 1) return String(record[condition.key]) === String(condition.value);
-//   if (condition.type === 3) return String(record[condition.key]) !== String(condition.value);
-//   return false;
-// }
+function readValue(record, key) {
+  const raw = record[key];
+  return typeof raw === 'boolean' ? (raw ? 1 : 0) : raw;
+}
+
+function mapValue(key, value) {
+  const mapped = PATTERN_VALUE_MAP[key]?.[value];
+  return mapped !== undefined ? mapped : value;
+}
 
 function conditionMatches(record, condition) {
-  if (!condition) return false;
-
-  const rawValue = record?.[condition.key];
-  const operator = condition.operator;
-
-  let result = false;
-
-  switch (operator) {
-    case "==":
-      result = rawValue == condition.value;
-      break;
-
-    case "!=":
-      result = rawValue != condition.value;
-      break;
-
-    case "<":
-      result = Number(rawValue) < Number(condition.value);
-      break;
-
-    case "<=":
-      result = Number(rawValue) <= Number(condition.value);
-      break;
-
-    case ">":
-      result = Number(rawValue) > Number(condition.value);
-      break;
-
-    case ">=":
-      result = Number(rawValue) >= Number(condition.value);
-      break;
-
-    case "length":
-      result = Array.isArray(rawValue)
-        ? rawValue.length === Number(condition.value)
-        : false;
-      break;
-
-    default:
-      result = false;
-  }
-
-  // Additional conditions, e.g. sig_05:
-  // cropping_intensity > 1.5
-  // AND river == null
-  // AND canal == null
-  if (result && condition.additionalConditions?.length) {
-    const additionalResults = condition.additionalConditions.map(
-      (additional) => conditionMatches(record, additional)
-    );
-
-    result =
-      condition.logic === "OR"
-        ? additionalResults.some(Boolean)
-        : additionalResults.every(Boolean);
-  }
-
-  return result;
+  if (condition.type === 2) return inRange(record, condition.key, condition.value.lower, condition.value.upper);
+  if (condition.type === 1) return String(readValue(record, condition.key)) === String(mapValue(condition.key, condition.value));
+  if (condition.type === 3) return String(readValue(record, condition.key)) !== String(mapValue(condition.key, condition.value));
+  return false;
 }
 
-function evaluateLogicExpression(expression, signals) {
-  if (!expression) return false;
-
-  const tokens = expression.match(
-    /sig_\d+|\(|\)|AND|OR/gi
-  ) || [];
-
-  let position = 0;
-
-  function parseExpression() {
-    let value = parseTerm();
-
-    while (
-      position < tokens.length &&
-      tokens[position].toUpperCase() === "OR"
-    ) {
-      position++;
-      value = value || parseTerm();
-    }
-
-    return value;
+function evaluateNode(record, node) {
+  if (!node.children) return conditionMatches(record, node);
+  if (node.logic === 'COUNT') {
+    const trueCount = node.children.filter((child) => evaluateNode(record, child)).length;
+    return trueCount >= node.minTrue;
   }
-
-  function parseTerm() {
-    let value = parseFactor();
-
-    while (
-      position < tokens.length &&
-      tokens[position].toUpperCase() === "AND"
-    ) {
-      position++;
-      value = value && parseFactor();
-    }
-
-    return value;
-  }
-
-  function parseFactor() {
-    const token = tokens[position];
-
-    if (!token) return false;
-
-    if (token === "(") {
-      position++;
-      const value = parseExpression();
-
-      if (tokens[position] === ")") {
-        position++;
-      }
-
-      return value;
-    }
-
-    position++;
-
-    return Boolean(signals[token]);
-  }
-
-  return parseExpression();
+  return node.logic === 'AND'
+    ? node.children.every((child) => evaluateNode(record, child))
+    : node.children.some((child) => evaluateNode(record, child));
 }
+
 
 // OR across a pattern's own conditions, AND across selected patterns —
 // confirmed intentional (screening heuristic: "any condition true enough
 // to flag this MWS/village").
-// function matchPatterns(selections, byId) {
-//   let result = null;
-//   for (const pattern of Object.values(selections || {})) {
-//     if (!pattern) continue;
-
-//     const matched = new Set();
-//     for (const [id, record] of byId) {
-//       const isMatch = pattern.logic === 'AND'
-//         ? pattern.conditions.every((c) => conditionMatches(record, c))
-//         : pattern.conditions.some((c) => conditionMatches(record, c));
-//       if (isMatch) matched.add(id);
-//     }
-
-//     result = result === null ? matched : new Set([...result].filter((id) => matched.has(id)));
-//   }
-//   return result;
-// }
-
-export function matchPatterns(selections, byId) {
+function matchPatterns(selections, byId) {
   let result = null;
-
   for (const pattern of Object.values(selections || {})) {
     if (!pattern) continue;
 
     const matched = new Set();
-
     for (const [id, record] of byId) {
-      const signals = {};
-
-      // Evaluate every signal separately
-      for (const condition of pattern.conditions || []) {
-        if (!condition.signal) continue;
-
-        signals[condition.signal] = conditionMatches(
-          record,
-          condition
-        );
-      }
-
-      // Evaluate the complete nested expression
-      const isMatch = evaluateLogicExpression(
-        pattern.logic,
-        signals
-      );
-
-      if (pattern.name === "groundwater_stress") {
-  console.log("===== Pattern EVALUATION =====");
-  console.log("MWS ID:", id);
-  console.log("Signals:", signals);
-  console.log("Logic:", pattern.logic);
-  console.log("FINAL RESULT:", isMatch);
-}
-
-      if (isMatch) {
-        matched.add(id);
-      }
+            const isMatch = evaluateNode(record, pattern.root);
+      // const isMatch = pattern.logic === 'AND'
+      //   ? pattern.conditions.every((c) => conditionMatches(record, c))
+      //   : pattern.conditions.some((c) => conditionMatches(record, c));
+      if (isMatch) matched.add(id);
     }
 
-    result =
-      result === null
-        ? matched
-        : new Set(
-            [...result].filter((id) => matched.has(id))
-          );
+    result = result === null ? matched : new Set([...result].filter((id) => matched.has(id)));
   }
-
   return result;
 }
 
@@ -302,6 +214,7 @@ export function deriveSelection({ filterSelections, patternSelections, manualSel
     const villageIdList = new Set();
     const selectedWaterbodyIds = new Set();
     for (const mwsId of manualSelectedMWS) {
+      console.log(mwsIndex.byId.values().next().value);
       (mwsIndex.mwsToVillages.get(mwsId) || []).forEach((v) => villageIdList.add(v));
       (mwsIndex.mwsToSWB.get(mwsId) || []).forEach((swb) => selectedWaterbodyIds.add(swb.swbId));
     }
@@ -309,7 +222,9 @@ export function deriveSelection({ filterSelections, patternSelections, manualSel
   }
 
   const mwsFilterResult = matchFilters(filterSelections.selectedMWSValues, mwsIndex);
-  const mwsPatternResult = matchPatterns(patternSelections.selectedMWSPatterns, mwsIndex.byId);
+  // const mwsPatternResult = matchPatterns(patternSelections.selectedMWSPatterns, mwsIndex.byId);
+    const mwsWithVillageData = addVillageAggregates(mwsIndex, villageIndex);
+  const mwsPatternResult = matchPatterns(patternSelections.selectedMWSPatterns, mwsWithVillageData.byId);
   const hasMwsSelection = mwsFilterResult !== null || mwsPatternResult !== null;
 
   const selectedMWSSet = !hasMwsSelection

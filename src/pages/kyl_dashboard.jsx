@@ -180,12 +180,8 @@ const KYLDashboardPage = () => {
 
   const getFormattedSelectedFilters = () => getFormattedFilters(filterSelections);
   const getFormattedSelectedPatterns = () => getFormattedPatterns(patternSelections);
+  
   const handlePatternSelection = (pattern, isSelected) => {
-      console.log("===== PATTERN SELECTED =====");
-  console.log("Pattern:", pattern);
-  console.log("Logic:", pattern.logic);
-  console.log("Values:", pattern.values);
-  console.log("Is Selected:", isSelected);
     setManualSelectedMWS([]);
     setPatternSelections(selectPattern(pattern, isSelected, patternSelections));
   };

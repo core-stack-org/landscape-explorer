@@ -1,0 +1,178 @@
+{
+    "Production_system": {
+        "Agriculture": {
+            "observed_stresses": {
+                "Water": [
+                    {
+                        "Name": "groundwater_stress",
+                        "Category": "Groundwater stress",
+                        "Characteristics": "Stage of groundwater extraction is unsafe, Water balance is negative",
+                        "level":"mws",
+                        "Trigger":{
+                            "Trigger_Exp": "sig_01 OR sig_02 AND (sig_03 OR sig_04 OR sig_05)",
+                            "type": "logic",
+                            "logic": "OR",
+                            "Trigger_Values": [
+                                {
+                                    "id": "sig_01",
+                                    "type": "not_equal",
+                                    "Key": "soge_class",
+                                    "value": "safe",
+                                    "template": "SOGE not being safe is a clear and validated indicator of groundwater stress." 
+                                },
+                                {
+                                    "type": "logic",
+                                    "logic": "AND",
+                                    "Values": [
+                                        {
+                                            "id": "sig_02",
+                                            "type": "range",
+                                            "Key": "mean_annual_delta_g_mm",
+                                            "value": {"lower": -99999, "upper": 50},
+                                            "template":"Since SOGE data is available only at the block level, the water balance being negative indicates further stress at the micro-watershed level." 
+                                        },
+                                        {
+                                            "type": "logic",
+                                            "logic": "OR",
+                                            "Values": [
+                                                {
+                                                    "id": "sig_03",
+                                                    "type": "equal",
+                                                    "Key": "upstream_mws_count",
+                                                    "value": 0,
+                                                    "template": "The micro-watershed is at the head, i.e. it does not get runoff from upstream micro-watersheds."
+                                                },
+                                                {
+                                                    "id": "sig_04",
+                                                    "type": "equal",
+                                                    "Key": "aquifer_class",
+                                                    "value": "Hard Rock",
+                                                    "template": "The aquifer type is hard-rock, and these aquifers have low storage anyway." 
+
+                                                },
+                                                {
+                                                    "id": "sig_05",
+                                                    "type": "logic",
+                                                    "logic": "AND",
+                                                    "Values": [
+                                                        {
+                                                            "type": "range",
+                                                            "Key": "cropping_intensity_avg",
+                                                            "value": {"lower": 1.5, "upper": 99999}
+                                                        },
+                                                        {
+                                                            "type": "equal",
+                                                            "Key": "river_available",
+                                                            "value": "False"
+                                                        },
+                                                        {
+                                                            "type": "equal",
+                                                            "Key": "canal_available",
+                                                            "value": "False"
+                                                        }
+                                                    ],
+                                                    "template": "The cropping intensity is high and likely fueled by groundwater in the absence of other irrigation sources."
+                                                }
+                                            ]
+                                        }
+                                    ]
+                                }
+                            ]
+                        },
+                        "Intensity": {
+                            "Intensity_Exp":"sig_01 + sig_02 AND sig_03 + sig_02 AND sig_04 + sig_02 AND sig_05 [out of 4]",
+                            "type": "logic",
+                            "logic": "COUNT_TRUE",
+                            "Intensity_Values": [
+                                {
+                                    "type": "logic",
+                                    "logic": "OR",
+                                    "Values": [
+                                        {
+                                            "id": "sig_01",
+                                            "type": "not_equal",
+                                            "Key": "soge_class",
+                                            "value": "safe",
+                                            "template": "SOGE not being safe is a clear and validated indicator of groundwater stress."
+                                        },
+                                        {
+                                            "id": "sig_02",
+                                            "type": "range",
+                                            "Key": "mean_annual_delta_g_mm",
+                                            "value": { "lower": -99999, "upper": 50 },
+                                            "template":"Since SOGE data is available only at the block level, the water balance being negative indicates further stress at the micro-watershed level." 
+                                        }
+                                    ]
+                                },
+                                {
+                                    "type": "logic",
+                                    "logic": "OR",
+                                    "Values": [
+                                        {
+                                            "id": "sig_03",
+                                            "type": "equal",
+                                            "Key": "upstream_mws_count",
+                                            "value": 0,
+                                            "template": "The micro-watershed is at the head, i.e. it does not get runoff from upstream micro-watersheds."
+                                        },
+                                        {
+                                            "id": "sig_02",
+                                            "type": "range",
+                                            "Key": "mean_annual_delta_g_mm",
+                                            "value": { "lower": -99999, "upper": 50 },
+                                            "template":"Since SOGE data is available only at the block level, the water balance being negative indicates further stress at the micro-watershed level."
+                                        }
+                                    ]
+                                },
+                                {
+                                    "type": "logic",
+                                    "logic": "OR",
+                                    "Values": [
+                                        {
+                                            "id": "sig_04",
+                                            "type": "equal",
+                                            "Key": "aquifer_class",
+                                            "value": "Hard Rock",
+                                            "template": "The aquifer type is hard-rock, and these aquifers have low storage anyway." 
+                                        },
+                                        {
+                                            "id": "sig_02",
+                                            "type": "range",
+                                            "Key": "mean_annual_delta_g_mm",
+                                            "value": { "lower": -99999, "upper": 50 },
+                                            "template":"Since SOGE data is available only at the block level, the water balance being negative indicates further stress at the micro-watershed level."
+                                        }
+                                    ]
+                                },
+                                {
+                                    "id": "sig_05",
+                                    "type": "logic",
+                                    "logic": "AND",
+                                    "Values": [
+                                        {
+                                            "type": "range",
+                                            "Key": "cropping_intensity_avg",
+                                            "value": { "lower": 1.5, "upper": 99999 }
+                                        },
+                                        {
+                                            "type": "equal",
+                                            "Key": "river_available",
+                                            "value": "False"
+                                        },
+                                        {
+                                            "type": "equal",
+                                            "Key": "canal_available",
+                                            "value": "False"
+                                        }
+                                    ],
+                                    "template": "The cropping intensity is high and likely fueled by groundwater in the absence of other irrigation sources."
+                                }
+                            ]
+                        },
+                        "Comment" : "Further validation should be done via community interactions and documented on Commons Connect, to check for dropping water levels in the wells (sure sign of groundwater stress), borewell density (higher implies likely groundwater stress), and few NREGA works for groundwater recharge. "
+                    }
+                ]
+            }
+        }
+    }
+}

@@ -1,0 +1,668 @@
+{
+    "Production_system": {
+        "Agriculture": {
+            "observed_stresses": {
+                "Water": [
+                    {
+                        "Name": "groundwater_stress",
+                        "Category": "Groundwater stress",
+                        "Characteristics": "Stage of groundwater extraction is unsafe, Water balance is negative",
+                        "level":"mws",
+                        "type": "logic",
+                        "logic": "OR",
+                        "Values": [
+                            {
+                                "type": "not_equal",
+                                "Key": "soge_class",
+                                "value": 0 
+                            },
+                            {
+                                "type": "logic",
+                                "logic": "AND",
+                                "Values": [
+                                    {
+                                        "type": "range",
+                                        "Key": "mean_annual_delta_g_mm",
+                                        "value": {"lower": -99999, "upper": 50}
+                                    },
+                                    {
+                                        "type": "logic",
+                                        "logic": "OR",
+                                        "Values": [
+                                            {
+                                                "type": "equal",
+                                                "Key": "upstream_mws_count",
+                                                "value": 0
+                                            },
+                                            {
+                                                "type": "equal",
+                                                "Key": "aquifer_class",
+                                                "value": 0
+                                            },
+                                            {
+                                                "type": "logic",
+                                                "logic": "AND",
+                                                "Values": [
+                                                    {
+                                                        "type": "range",
+                                                        "Key": "cropping_intensity_avg",
+                                                        "value": {"lower": 1.5, "upper": 99999}
+                                                    },
+                                                    {
+                                                        "type": "equal",
+                                                        "Key": "river_available",
+                                                        "value": 0
+                                                    },
+                                                    {
+                                                        "type": "equal",
+                                                        "Key": "canal_available",
+                                                        "value": 0
+                                                    }
+                                                ]
+                                            }
+                                        ]
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    {
+                        "Name": "high_irrigation_difficulties",
+                        "Category": "High irrigation difficulties",
+                        "Characteristics": "High Irrigation Risk",
+                        "level":"mws",
+                        "type": "logic",
+                        "logic": "AND",
+                        "Values": [
+                            {
+                                "type": "range",
+                                "Key": "mean_kharif_rabi_ratio",
+                                "value": {"lower": 0,"upper": 30}
+                            },
+                            {
+                                "type": "logic",
+                                "logic": "COUNT",
+                                "min_true": 2,
+                                "Values": [
+                                    {
+                                        "type": "equal",
+                                        "Key": "trend_water_surface_area_value",
+                                        "value": { "lower": -99999, "upper": 1 }
+                                    },
+                                    {
+                                        "type": "logic",
+                                        "logic": "OR",
+                                        "Values": [
+                                            {
+                                                "type": "not_equal",
+                                                "Key": "soge_class",
+                                                "value": 0
+                                            },
+                                            {
+                                                "type": "logic",
+                                                "logic": "AND",
+                                                "Values": [
+                                                    {
+                                                        "type": "range",
+                                                        "Key": "mean_annual_delta_g_mm",
+                                                        "value": {"lower": -99999,"upper": 50}
+                                                    },
+                                                    {
+                                                        "type": "logic",
+                                                        "logic": "OR",
+                                                        "Values": [
+                                                            {
+                                                                "type": "equal",
+                                                                "Key": "upstream_mws_count",
+                                                                "value": 0
+                                                            },
+                                                            {
+                                                                "type": "equal",
+                                                                "Key": "aquifer_class",
+                                                                "value": 0
+                                                            }
+                                                        ]
+                                                    }
+                                                ]
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "type": "logic",
+                                        "logic": "AND",
+                                        "Values": [
+                                            {
+                                                "type": "equal",
+                                                "Key": "canal_available",
+                                                "value": 0
+                                            },
+                                            {
+                                                "type": "equal",
+                                                "Key": "river_available",
+                                                "value": 0
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "type": "range",
+                                        "Key": "nrega_irrigation_count",
+                                        "value": {"lower": -99999, "upper": 50}
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    {
+                        "Name": "high_drought_risk",
+                        "Category": "High drought risk",
+                        "Characteristics": "Meteorological or agricultural drought reducing water availability during the cropping season",
+                        "level":"mws",
+                        "type": "logic",
+                        "logic": "OR",
+                        "Values": [
+                            {
+                                "type": "range",
+                                "Key": "max_drought_weeks",
+                                "value": {"lower": 5,"upper": 99999}
+                            },
+                            {
+                                "type": "logic",
+                                "logic": "AND",
+                                "Values": [
+                                    {
+                                        "type": "range",
+                                        "Key": "max_dry_spell_weeks",
+                                        "value": {"lower": 5,"upper": 99999}
+                                    },
+                                    {
+                                        "type": "logic",
+                                        "logic": "OR",
+                                        "Values": [
+                                            {
+                                                "type": "logic",
+                                                "logic": "OR",
+                                                "Values": [
+                                                    {
+                                                        "type": "range",
+                                                        "Key": "avg_precipitation",
+                                                        "value": {"lower": -99999,"upper": 950}
+                                                    },
+                                                    {
+                                                        "type": "range",
+                                                        "Key": "kharif_annual_rainfall_ratio",
+                                                        "value": {"lower": -99999,"upper": 0.75}
+                                                    },
+                                                    {
+                                                        "type": "equal",
+                                                        "Key": "trend_annual_rainfall",
+                                                        "value": 0
+                                                    }
+                                                ]
+                                            },
+                                            {
+                                                "type": "range",
+                                                "Key": "monsoon_onset_day_range",
+                                                "value": {"lower": 14,"upper": 99999}
+                                            },
+                                            {
+                                                "type": "range",
+                                                "Key": "cropping_intensity_avg",
+                                                "value": {"lower": -99999,"upper": 1.25}
+                                            }
+                                        ]
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                ],
+                "Soil": [
+                    {
+                        "Name": "soil_health",
+                        "Category": "Soil health",
+                        "Characteristics": "Low nutrient levels across the cropped area",
+                        "level":"mws",
+                        "type": "logic",
+                        "logic": "COUNT",
+                        "min_true": 2,
+                        "Values": [
+                            {
+                                "type": "range",
+                                "Key": "nitrogen_levels",
+                                "value": { "lower": 0.5, "upper": 99999 }
+                            },
+                            {
+                                "type": "range",
+                                "Key": "phosphorus_levels",
+                                "value": { "lower": 0.5, "upper": 99999 }
+                            },
+                            {
+                                "type": "range",
+                                "Key": "potassium_levels",
+                                "value": { "lower": 0.5, "upper": 99999 }
+                            },
+                            {
+                                "type": "range",
+                                "Key": "organic_carbon",
+                                "value": { "lower": 0.5, "upper": 99999 }
+                            }
+                        ]
+                    }
+                ],
+                "Yield": [
+                    {
+                        "Name": "low_yield",
+                        "Category": "Low yield",
+                        "Characteristics": "Yield is below the threshold for the crop",
+                        "level":"mws",
+                        "type": "logic",
+                        "logic": "OR",
+                        "Values": [
+                            {
+                                "type": "range",
+                                "Key": "cropping_to_shrub_area",
+                                "value": { "lower": 30, "upper": 99999 }
+                            },
+                            {
+                                "type": "range",
+                                "Key": "cropping_intensity_trend_value",
+                                "value": { "lower": -99999, "upper": 10 }
+                            }
+                        ]
+                    }
+                ],
+                "Waterbodies": [
+                    {
+                        "Name": "siltation",
+                        "Category": "Siltation in Waterbodies",
+                        "Characteristics": "Siltation in waterbodies",
+                        "level": "mws",
+                        "type": "logic",
+                        "logic": "OR",
+                        "Values": [
+                            {
+                                "type": "range",
+                                "Key": "mean_kharif_rabi_ratio",
+                                "value": { "lower": 0, "upper": 50 }
+                            },
+                            {
+                                "type": "equal",
+                                "Key": "trend_water_surface_area_value",
+                                "value": 1
+                            }
+                        ]
+                    }
+                ]
+            }
+        },
+        "Livelihood": {
+            "observed_stresses": {
+                "Livestock": [
+                    {
+                        "Name": "water_scarcity",
+                        "Category": "Water scarcity",
+                        "Characteristics": "Livestock describes water scarcity",
+                        "level":"mws",
+                        "type": "logic",
+                        "logic": "AND",
+                        "Values": [
+                            {
+                                "type": "range",
+                                "Key": "max_livestock_score",
+                                "value": {"lower": 300,"upper": 99999}
+                            },
+                            {
+                                "type": "logic",
+                                "logic": "OR",
+                                "Values": [
+                                    {
+                                        "type": "range",
+                                        "Key": "mean_kharif_rabi_ratio",
+                                        "value": {"lower": 0,"upper": 30}
+                                    },
+                                    {
+                                        "type": "logic",
+                                        "logic": "AND",
+                                        "Values": [
+                                            {
+                                                "type": "equal",
+                                                "Key": "trend_water_surface_area_value",
+                                                "value": 1
+                                            },
+                                            {
+                                                "type": "logic",
+                                                "logic": "OR",
+                                                "Values": [
+                                                    {
+                                                        "type": "range",
+                                                        "Key": "nrega_swc_count",
+                                                        "value": {"lower": -99999,"upper": 50}
+                                                    },
+                                                    {
+                                                        "type": "equal",
+                                                        "Key": "river_available",
+                                                        "value": 0
+                                                    }
+                                                ]
+                                            }
+                                        ]
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    {
+                        "Name": "fodder_risk",
+                        "Category": "Fodder risk",
+                        "Characteristics": "Fodder risk due to water scarcity",
+                        "level": "mws",
+                        "type": "logic",
+                        "logic": "AND",
+                        "Values": [
+                            {
+                                "type": "range",
+                                "Key": "max_livestock_score",
+                                "value": { "lower": 300, "upper": 99999 }
+                            },
+                            {
+                                "type": "logic",
+                                "logic": "OR",
+                                "Values": [
+                                    {
+                                        "type": "range",
+                                        "Key": "trees_in_grassland_loss",
+                                        "value": { "lower": 30, "upper": 99999 }
+                                    },
+                                    {
+                                        "type": "range",
+                                        "Key": "trees_in_forest_fringe_loss",
+                                        "value": { "lower": 30, "upper": 99999 }
+                                    },
+                                    {
+                                        "type": "range",
+                                        "Key": "trend_ndvi_shrubs",
+                                        "value": { "lower": -99999, "upper": 0 }
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                ],
+                "Fishery": [
+                    {
+                        "Name": "good_water_potential",
+                        "Category": "Good Water Potential",
+                        "Characteristics": "Good water potential for fishery",
+                        "level": "mws",
+                        "type": "logic",
+                        "logic": "AND",
+                        "Values": [
+                            {
+                                "type": "range",
+                                "Key": "mean_kharif_rabi_ratio",
+                                "value": { "lower": 50, "upper": 99999 }
+                            },
+                            {
+                                "type": "logic",
+                                "logic": "OR",
+                                "Values": [
+                                    {
+                                        "type": "range",
+                                        "Key": "trend_water_surface_area_value",
+                                        "value": { "lower": 1, "upper": 99999 }
+                                    },
+                                    {
+                                        "type": "range",
+                                        "Key": "nrega_swb_count",
+                                        "value": { "lower": 50, "upper": 99999 }
+                                    },
+                                    {
+                                        "type": "range",
+                                        "Key": "cropping_intensity",
+                                        "value": { "lower": -99999, "upper": 1.25 }
+                                    },
+                                    {
+                                        "type": "range",
+                                        "Key": "shg_penetration",
+                                        "value": { "lower": 70, "upper": 99999 }
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                ],
+                "Agroforestry": [
+                    {
+                        "Name": "transition_from_crops_to_agroforestry",
+                        "Category": "Transition from Crops to Agroforestry",
+                        "Characteristics": "Transition from crops to agroforestry",
+                        "level": "mws",
+                        "type": "logic",
+                        "logic": "OR",
+                        "Values": [
+                            {
+                                "type": "range",
+                                "Key": "cropping_to_shrub_area",
+                                "value": { "lower": 30, "upper": 99999 }
+                            },
+                            {
+                                "type": "range",
+                                "Key": "cropping_intensity_trend_value",
+                                "value": { "lower": -99999, "upper": 10 }
+                            }
+                        ]
+                    }
+                ]
+            }
+        },
+        "Forest Biodiversity": {
+            "observed_stresses": {
+                "Forest": [
+                    {
+                        "Name": "forest_degradation",
+                        "Category": "Forest degradation",
+                        "Characteristics": "Degradation of forest cover",
+                        "level": "mws",
+                        "type": "logic",
+                        "logic": "OR",
+                        "Values": [
+                            {
+                                "type": "logic",
+                                "logic": "OR",
+                                "Values": [
+                                    {
+                                        "type": "range",
+                                        "Key": "trees_in_forest_loss",
+                                        "value": { "lower": 30, "upper": 99999 }
+                                    },
+                                    {
+                                        "type": "range",
+                                        "Key": "degradation_in_forests",
+                                        "value": { "lower": 30, "upper": 99999 }
+                                    }
+                                ]
+                            },
+                            {
+                                "type": "logic",
+                                "logic": "AND",
+                                "Values": [
+                                    {
+                                        "type": "range",
+                                        "Key": "tree_cover_area",
+                                        "value": { "lower": 20, "upper": 99999 }
+                                    },
+                                    {
+                                        "type": "range",
+                                        "Key": "tree_cover_area",
+                                        "value": { "lower": -99999, "upper": 0 }
+                                    },
+                                    {
+                                        "type": "range",
+                                        "Key": "tree_cover_area",
+                                        "value": { "lower": 0, "upper": 99999 }
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            }
+        },
+        "Socio-economic": {
+            "observed_stresses": {
+                "Socio-economic": [
+                    {
+                        "Name": "multi_Sector_vulnerability",
+                        "Category": "Multi-sector vulnerability",
+                        "Characteristics": "Socio-economic vulnerability across multiple indicators",
+                        "level": "mws",
+                        "type": "logic",
+                        "logic": "COUNT",
+                        "min_true": 3,
+                        "Values": [
+                            {
+                                "type": "range",
+                                "Key": "percent_sc_st_population",
+                                "value": { "lower": 45, "upper": 99999 }
+                            },
+                            {
+                                "type": "range",
+                                "Key": "total_nrega_assets",
+                                "value": { "lower": -99999, "upper": 100 }
+                            },
+                            {
+                                "type": "range",
+                                "Key": "distance_to_bank",
+                                "value": { "lower": 1, "upper": 99999 }
+                            },
+                            {
+                                "type": "range",
+                                "Key": "literacy_rate",
+                                "value": { "lower": -99999, "upper": 55 }
+                            },
+                            {
+                                "type": "range",
+                                "Key": "shg_penetration",
+                                "value": { "lower": 50, "upper": 99999 }
+                            }
+                        ]
+                    }
+                ],
+                "Health": [
+                    {
+                        "Name": "water_security_safety_domestic_use",
+                        "Category": "Water Security and Safety for domestic use",
+                        "Characteristics": "Health risk due to water scarcity and poor sanitation",
+                        "level": "mws",
+                        "type": "logic",
+                        "logic": "AND",
+                        "Values": [
+                                    {
+                                        "type": "equal",
+                                        "Key": "mining",
+                                        "value": 1
+                                    },
+                                    {
+                                        "type": "logic",
+                                        "logic": "AND",
+                                        "Values": [
+                                            {
+                                                "type": "range",
+                                                "Key": "mean_kharif_rabi_ratio",
+                                                "value": { "lower": 0, "upper": 50 }
+                                            },
+                                            {
+                                                "type": "logic",
+                                                "logic": "OR",
+                                                "Values": [
+                                                    {
+                                                        "type": "logic",
+                                                        "logic": "AND",
+                                                        "Values": [
+                                                          {
+                                                                "type": "not_equal",
+                                                                "Key": "terrainCluster_ID",
+                                                                "value": 1
+                                                            },
+                                                            {
+                                                                "type": "not_equal",
+                                                                "Key": "terrainCluster_ID",
+                                                                "value": 3
+                                                            },
+                                                            {
+                                                                "type": "range",
+                                                                "Key": "trees_in_forest_loss",
+                                                                "value": { "lower": 30, "upper": 99999 }
+                                                            },
+                                                            {
+                                                                "type": "range",
+                                                                "Key": "cropping_intensity_avg",
+                                                                "value": { "lower": -99999, "upper": 1.25 }
+                                                            }
+                                                        ]
+                                                    },
+                                                    {
+                                                        "type": "logic",
+                                                        "logic": "OR",
+                                                        "Values": [
+                                                            {
+                                                                "type": "not_equal",
+                                                                "Key": "soge_class",
+                                                                "value": 0
+                                                            },
+                                                            {
+                                                                "type": "logic",
+                                                                "logic": "AND",
+                                                                "Values": [
+                                                                    {
+                                                                        "type": "range",
+                                                                        "Key": "mean_annual_delta_g_mm",
+                                                                        "value": { "lower": -99999, "upper": 50 }
+                                                                    },
+                                                                    {
+                                                                        "type": "logic",
+                                                                        "logic": "OR",
+                                                                        "Values": [
+                                                                            {
+                                                                                "type": "equal",
+                                                                                "Key": "upstream_mws_count",
+                                                                                "value": 0
+                                                                            },
+                                                                            {
+                                                                                "type": "equal",
+                                                                                "Key": "aquifer_class",
+                                                                                "value": 0
+                                                                            }
+                                                                        ]
+                                                                    }
+                                                                ]
+                                                            }
+                                                        ]
+                                                    },
+                                                    {
+                                                        "type": "logic",
+                                                        "logic": "AND",
+                                                        "Values": [
+                                                            {
+                                                                "type": "equal",
+                                                                "Key": "trend_water_surface_area_value",
+                                                                "value": 1
+                                                            },
+                                                            {
+                                                                "type": "range",
+                                                                "Key": "nrega_swb_count",
+                                                                "value": { "lower": -99999, "upper": 50 }
+                                                            }
+                                                        ]
+                                                    }
+                                                ]
+                                            }
+                                        ]
+                                    }
+                                ]
+                    }
+                ]
+            }
+        }
+    }
+}
