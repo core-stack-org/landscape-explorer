@@ -130,7 +130,16 @@ async function loadPointFeatures(url, layer_name, layer_store, vectorSource, ext
   try {
     const features = vectorSource.getFormat().readFeatures(json).map((item) => {
       if (layer_store === 'nrega_assets') {
-        const fieldValue = item.values_[colorConfig.field];
+        // const fieldValue = item.values_[colorConfig.field];
+        const properties = item.getProperties();
+
+        const fieldValue =
+          properties.WorkCatego ??
+          properties.WorkCategory;
+
+        item.set('itemColor',
+          colorConfig.mapping[fieldValue] ?? colorConfig.mapping['Default']
+        );
         item.values_.itemColor =
           colorConfig.mapping[fieldValue] ?? colorConfig.mapping['Default'];
       } else {
