@@ -18,4 +18,8 @@ export const colorSelectedBorder = '#14532D';
 export const colorUnselected = '#4A90E2';
 export const colorUnselectedBorder = '#1769A8';
 export const colorDataWarm = '#CC6B00';
+// Tree cover gain/loss: blue/orange, not green/red — green and red separate by
+// ΔE 1.1 under deuteranopia, which is indistinguishable (kyl-sidebar plan §3.5).
+export const colorDataCool = '#0052B7';
+export const colorWater = '#077BAB';
 export const colorBad = '#B91C1C';

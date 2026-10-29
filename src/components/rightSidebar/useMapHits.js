@@ -25,12 +25,24 @@ function firstFeatureOn(map, layer, tolerance = 0, pixel) {
 }
 
 export function collectHits(map, evt, registry = layerRegistry) {
-  const hits = { mws: null, farm: null, waterbody: null, plan: null, steward: null };
+  const hits = { mws: null, village: null, farm: null, waterbody: null, plan: null, steward: null };
 
   const mwsLayer = registry.get('mws');
   if (isOnMap(map, mwsLayer)) {
     const feature = mwsLayer.getSource()?.getFeaturesAtCoordinate(evt.coordinate)?.[0];
     if (feature) hits.mws = { uid: feature.get('uid'), properties: feature.getProperties() };
+  }
+
+  // Same WebGL-polygon source shape as mws (both built by getWebGlPolygonLayers),
+  // so the same getFeaturesAtCoordinate lookup applies.
+  const villageLayer = registry.get('village');
+  if (isOnMap(map, villageLayer)) {
+    const feature = villageLayer.getSource()?.getFeaturesAtCoordinate(evt.coordinate)?.[0];
+    if (feature) {
+      const properties = feature.getProperties();
+      const id = properties?.vill_ID ?? properties?.village_id;
+      if (id != null) hits.village = { id, properties };
+    }
   }
 
   const farmLayer = registry.get('farm');
@@ -69,20 +81,21 @@ export function collectHits(map, evt, registry = layerRegistry) {
   return hits;
 }
 
-// Clicking the farm that is already selected deselects it; the other hits from
-// that click still apply.
+// Clicking the farm (or village) that is already selected deselects it; the
+// other hits from that click still apply.
 export function applyClickToHits(prev, hits) {
   const repeatedFarm = hits.farm && prev.farm && String(prev.farm.farmId) === String(hits.farm.farmId);
+  const repeatedVillage = hits.village && prev.village && String(prev.village.id) === String(hits.village.id);
   return {
     ...prev,
     ...hits,
     farm: repeatedFarm ? null : hits.farm,
+    village: repeatedVillage ? null : hits.village,
     clickId: prev.clickId + 1,
   };
 }
 
-// Mount once where the map exists. Writes mapHitsAtom on every single click;
-// nothing reads the atom yet, so this adds no visible behaviour.
+// Mount once where the map exists. Writes mapHitsAtom on every single click.
 export default function useMapHits(mapRef) {
   const setHits = useSetRecoilState(mapHitsAtom);
 

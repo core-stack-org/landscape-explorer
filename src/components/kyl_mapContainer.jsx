@@ -160,12 +160,12 @@ const MapZoomControls = ({ mapRef }) => {
 };
 
 // Updated MapLegend component
-const MapLegend = ({ showMWS, showVillages, currentLayer, showConnectivity,showPlans,setShowPlans }) => {
+const MapLegend = ({ showMWS, showVillages, currentLayer, showConnectivity,showPlans,setShowPlans, showFarmBoundaries }) => {
   // Add state for collapsed status
   const [isCollapsed, setIsCollapsed] = useState(false);
 
   // If no layers are shown, don't display legend
-  if (!showMWS && !showVillages && !showPlans && (!currentLayer || currentLayer.length === 0))
+  if (!showMWS && !showVillages && !showPlans && !showFarmBoundaries && (!currentLayer || currentLayer.length === 0))
     return null;
 
   const activeWBLayer = currentLayer?.find((layer) =>
@@ -175,18 +175,14 @@ const MapLegend = ({ showMWS, showVillages, currentLayer, showConnectivity,showP
 
   const activeWBType = activeWBLayer?.name;
 
-  const isWaterbodyVisualizeActive = currentLayer?.some(
-    (layer) => layer.name === "waterbody_type"
-  );
-
   const toggleCollapse = () => {
     setIsCollapsed(!isCollapsed);
   };
 
   const mwsLegendItems = [
     {
-      color: "rgba(255, 99, 132, 0.6)",
-      border: "rgb(255, 99, 132)",
+      color: "rgba(85, 152, 229, 0.6)",
+      border: "rgb(85, 152, 229)",
       name: "Matched MWS",
       type: "mws",
     },
@@ -199,6 +195,17 @@ const MapLegend = ({ showMWS, showVillages, currentLayer, showConnectivity,showP
       name: "Village Boundaries",
       type: "village",
     },
+  ];
+
+  // Matches DROUGHT_FREQUENCY_BINS in kyl_rightSidebar.jsx's toggleFarmBoundaries
+  // exactly — same colours, same thresholds.
+  const farmDroughtFrequencyLegendItems = [
+    { color: "rgba(255, 237, 160, 0.55)", border: "rgba(204, 189, 128, 1)", label: "1-2 droughts" },
+    { color: "rgba(254, 178, 76, 0.55)", border: "rgba(203, 142, 61, 1)", label: "2-3 droughts" },
+    { color: "rgba(253, 141, 60, 0.55)", border: "rgba(202, 113, 48, 1)", label: "3-4.5 droughts" },
+    { color: "rgba(227, 26, 28, 0.55)", border: "rgba(182, 21, 22, 1)", label: "4.5-6 droughts" },
+    { color: "rgba(128, 0, 38, 0.55)", border: "rgba(102, 0, 30, 1)", label: "6-8 droughts" },
+    { color: "rgba(150, 150, 150, 0.12)", border: "rgba(150, 150, 150, 1)", label: "No data" },
   ];
 
   const planLegendItems = [
@@ -221,10 +228,10 @@ const MapLegend = ({ showMWS, showVillages, currentLayer, showConnectivity,showP
 
   const lulcLegendItems = [
   { color: "#A9A9A9", label: "Barren Lands" },
-  { color: "#F0F4A3", label: "Single Kharif" },
-  { color: "#D6E96B", label: "Single Non-Kharif" },
-  { color: "#B7D43A", label: "Double Cropping" },
-  { color: "#7FAF2E", label: "Triple Cropping" },
+  { color: "#F5F8BF", label: "Single Kharif" },
+  { color: "#FEC016", label: "Single Non-Kharif" },
+  { color: "#7FAF2E", label: "Double Cropping" },
+  { color: "#73861D", label: "Triple Cropping" },
   { color: "#8C7A4F", label: "Shrubs and Scrubs" },
 ];
 
@@ -671,6 +678,47 @@ const SoilTexture = [
     { fill: "rgba(255, 0, 0, 0.8)", stroke: "rgba(255, 0, 0, 1)", label: "High (>120 ha)" },
   ]
 
+  const treeCoverFringes = [
+    { fill: "rgba(115, 187, 83, 0.8)", stroke: "rgba(115, 187, 83, 1)", label: "Low (<=15 ha)" },
+    { fill: "rgba(238, 224, 93, 0.8)", stroke: "rgba(238, 224, 93, 1)", label: "Moderate (15-40 ha)" },
+    { fill: "rgba(255, 0, 0, 0.8)", stroke: "rgba(255, 0, 0, 1)", label: "High (>40 ha)" },
+  ]
+
+  const treeGrasslandLoss = [
+    { fill: "rgba(115, 187, 83, 0.8)", stroke: "rgba(115, 187, 83, 1)", label: "Low (<=5 ha)" },
+    { fill: "rgba(238, 224, 93, 0.8)", stroke: "rgba(238, 224, 93, 1)", label: "Moderate (5-15 ha)" },
+    { fill: "rgba(255, 0, 0, 0.8)", stroke: "rgba(255, 0, 0, 1)", label: "High (>15 ha)" },
+  ]
+
+  const forestFireIntensity = [
+  {
+    fill: "rgba(144, 238, 144, 0.8)",
+    stroke: "rgba(60, 179, 113, 1)",
+    label: "No Observed Fire"
+  },
+  {
+    fill: "rgba(255, 215, 0, 0.8)",
+    stroke: "rgba(218, 165, 32, 1)",
+    label: "Low (> 0 to 2 fire days per year)"
+  },
+  {
+    fill: "rgba(255, 140, 0, 0.8)",
+    stroke: "rgba(230, 81, 0, 1)",
+    label: "Moderate (>2 to 5 fire days per year)"
+  },
+  {
+    fill: "rgba(220, 20, 60, 0.8)",
+    stroke: "rgba(139, 0, 0, 1)",
+    label: "High (> 5 fire days per year)"
+  }
+];
+
+  const shrubtrend = [
+    { color: "#22C55E", label: "Increasing" },
+    { color: "#EF4444", label: "Decreasing" },
+    { color: "#9CA3AF", label: "No Trend" },
+  ]
+
 
 
   const isExcludedLulc = (name) => {
@@ -1005,6 +1053,21 @@ const SoilTexture = [
     (layer) => layer.name.includes("reduction_in_shrubland_cover")
   )
 
+  const isTreeCoverFringe = currentLayer?.some(
+    (layer) => layer.name.includes("trees_in_forest_fringe_loss")
+  )
+
+  const isGrasslandLoss = currentLayer?.some(
+    (layer) => layer.name.includes("trees_in_grassland_loss")
+  )
+  const isForestFireIntensity = currentLayer?.some(
+    (layer) => layer.name.includes("fire_count_per_year")
+  )
+
+  const isShrubTrendActive = currentLayer?.some(
+    (layer) => layer.name.includes("shrub_trend")
+  )
+
 
   return (
     <div
@@ -1041,9 +1104,9 @@ const SoilTexture = [
       <div
         className={`bg-white rounded-lg shadow-md overflow-hidden transition-opacity duration-300 ${isCollapsed
           ? "w-10 h-48 opacity-80 hover:opacity-100"
-          : "w-72 opacity-100"
+          : "w-64 opacity-100"
           }`}
-        style={!isCollapsed ? { maxHeight: 'calc(100vh - 220px)' } : {}}
+        style={!isCollapsed ? { maxHeight: 'calc(80vh - 220px)' } : {}}
       >
         {/* Collapsed state - vertical "Legend" text */}
         {isCollapsed && (
@@ -1062,19 +1125,15 @@ const SoilTexture = [
               {/* MWS Legend Section */}
               {showMWS && (
                 <div className="space-y-2">
-                  <h4 className="text-xs font-medium text-gray-600">
-                    MWS Layers
-                  </h4>
                   {mwsLegendItems.map((item, index) => (
                     <div
                       key={`mws-${index}`}
                       className="flex items-center gap-2"
                     >
                       <div
-                        className="w-4 h-4 rounded"
+                        className="w-4 h-0"
                         style={{
-                          backgroundColor: item.color,
-                          border: `2px solid ${item.border}`,
+                          borderTop: `5px solid ${item.border}`,
                         }}
                       />
                       <span className="text-sm text-gray-600">{item.name}</span>
@@ -1086,22 +1145,44 @@ const SoilTexture = [
               {/* Village Boundaries Legend Section */}
               {showVillages && (
                 <div className="space-y-2">
-                  <h4 className="text-xs font-medium text-gray-600">
-                    Administrative Boundaries
-                  </h4>
                   {villageLegendItems.map((item, index) => (
                     <div
                       key={`village-${index}`}
                       className="flex items-center gap-2"
                     >
                       <div
-                        className="w-4 h-4 rounded"
+                        className="w-4 h-0"
                         style={{
-                          backgroundColor: item.color,
-                          border: `2px solid ${item.border}`,
+                          borderTop: `5px solid ${item.border}`,
                         }}
                       />
                       <span className="text-sm text-gray-600">{item.name}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Farm Boundaries Legend Section */}
+              {showFarmBoundaries && (
+                <div className="space-y-2">
+                  <h4 className="text-xs font-medium text-gray-600">
+                    Farms — Drought Frequency
+                  </h4>
+                  {farmDroughtFrequencyLegendItems.map((item, index) => (
+                    <div
+                      key={`farm-drought-${index}`}
+                      className="flex items-center gap-2"
+                    >
+                      <div
+                        className="w-4 h-4 rounded"
+                        style={{
+                          backgroundColor: item.color,
+                          border: `1px solid ${item.border}`,
+                        }}
+                      />
+                      <span className="text-sm text-gray-600">
+                        {item.label}
+                      </span>
                     </div>
                   ))}
                 </div>
@@ -2501,6 +2582,63 @@ const SoilTexture = [
                 </div>
               )}
 
+              {isTreeCoverFringe && (
+                <div className="space-y-2">
+                  <h4 className="text-xs font-medium text-gray-600">Reduction in tree cover along forest fringes</h4>
+                  {treeCoverFringes.map((item, index) => (
+                    <div key={`fac-live-${index}`} className="flex items-center gap-2">
+                      <div className="w-4 h-4 rounded" style={{ backgroundColor: item.fill, border: `1px solid ${item.stroke}` }} />
+                      <span className="text-sm text-gray-600">{item.label}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {isGrasslandLoss && (
+                <div className="space-y-2">
+                  <h4 className="text-xs font-medium text-gray-600">Reduction in tree cover present in shrub areas</h4>
+                  {treeGrasslandLoss.map((item, index) => (
+                    <div key={`fac-live-${index}`} className="flex items-center gap-2">
+                      <div className="w-4 h-4 rounded" style={{ backgroundColor: item.fill, border: `1px solid ${item.stroke}` }} />
+                      <span className="text-sm text-gray-600">{item.label}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {isForestFireIntensity && (
+                <div className="space-y-2">
+                  <h4 className="text-xs font-medium text-gray-600">Typical Forest Fire Intensity</h4>
+                  {forestFireIntensity.map((item, index) => (
+                    <div key={`fac-live-${index}`} className="flex items-center gap-2">
+                      <div className="w-4 h-4 rounded" style={{ backgroundColor: item.fill, border: `1px solid ${item.stroke}` }} />
+                      <span className="text-sm text-gray-600">{item.label}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {isShrubTrendActive && (
+                <div className="space-y-2">
+                  <h4 className="text-xs font-medium text-gray-600">Shrub Cover Trend</h4>
+                  {shrubtrend.map((item, index) => (
+                    <div
+                      key={`trend-${index}`}
+                      className="flex items-center gap-2"
+                    >
+                      <div
+                        className="w-4 h-4 rounded"
+                        style={{
+                          backgroundColor: item.color,
+                          border: `1px solid rgba(0,0,0,0.2)`,
+                        }}
+                      />
+                      <span className="text-sm text-gray-600">
+                        {item.label}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+              
               
 
 
@@ -2692,6 +2830,7 @@ const KYLMapContainer = ({
   showPlans,
    selectionMode,
   setSelectionMode,
+  showFarmBoundaries,
 }) => {
   const areMWSLayersAvailable = mwsLayerRef?.current !== null;
   const areVillageLayersAvailable = boundaryLayerRef?.current !== null;
@@ -2738,6 +2877,7 @@ const KYLMapContainer = ({
         currentLayer={currentLayer}
         showConnectivity={showConnectivity}
         showPlans={showPlans}
+        showFarmBoundaries={showFarmBoundaries}
       />
 
       {/* Search Bar */}

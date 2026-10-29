@@ -7,6 +7,7 @@ export const mapHitsAtom = atom({
   default: {
     clickId: 0,
     mws: null,
+    village: null,
     farm: null,
     waterbody: null,
     plan: null,

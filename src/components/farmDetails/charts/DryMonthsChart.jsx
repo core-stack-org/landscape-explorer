@@ -1,11 +1,15 @@
 import { Bar } from 'react-chartjs-2';
 import './chartSetup';
 import { colorKharif, colorPrimary, colorDataWarm, colorBorderSoft, colorMuted, colorInk } from '../farmDetailsTokens';
-import { average } from '../farmDetailsUtils';
 
 const SEASON_COLORS = { Kharif: colorKharif, Rabi: colorPrimary, Zaid: colorDataWarm };
 // Stacking order bottom-to-top matches this order.
 const SEASON_ORDER = ['Kharif', 'Rabi', 'Zaid'];
+// Left-to-right bar order within each year's group.
+const BANDS = [
+  { key: 'moderate', label: 'Moderate' },
+  { key: 'severe', label: 'Severe' },
+];
 
 export function DryMonthsChartLegend() {
   return (
@@ -20,90 +24,78 @@ export function DryMonthsChartLegend() {
   );
 }
 
-// Labels the total (the full stack height) above each bar, reading it off
-// the topmost dataset's bar coordinates since chart.js already positions
-// those at the top of the stack.
+// Labels the total (the full stack height) above each bar in every stack
+// group, reading it off that group's topmost dataset's bar coordinates since
+// chart.js already positions those at the top of the stack.
 const stackedTotalLabelPlugin = {
   id: 'stackedTotalLabels',
   afterDatasetsDraw(chart) {
     const { ctx, data } = chart;
-    const topMeta = chart.getDatasetMeta(data.datasets.length - 1);
+    const stacks = [...new Set(data.datasets.map((ds) => ds.stack))];
     ctx.save();
     ctx.font = '600 10px sans-serif';
     ctx.fillStyle = colorInk;
     ctx.textAlign = 'center';
-    topMeta.data.forEach((bar, i) => {
-      const total = data.datasets.reduce((sum, ds) => (ds.data[i] == null ? sum : sum + ds.data[i]), null);
-      if (total === null) return;
-      ctx.fillText(String(total), bar.x, bar.y - 4);
+    stacks.forEach((stack) => {
+      const indexed = data.datasets
+        .map((ds, i) => ({ ds, i }))
+        .filter(({ ds }) => ds.stack === stack);
+      if (indexed.length === 0) return;
+      const topMeta = chart.getDatasetMeta(indexed[indexed.length - 1].i);
+      topMeta.data.forEach((bar, i) => {
+        const total = indexed.reduce((sum, { ds }) => (ds.data[i] == null ? sum : sum + ds.data[i]), null);
+        if (total === null) return;
+        ctx.fillText(String(total), bar.x, bar.y - 4);
+      });
     });
     ctx.restore();
   },
 };
 
 export default function DryMonthsChart({ counts }) {
-  const labels = counts.map((c) => (c.count === null ? [c.yearLabel, 'no data'] : c.yearLabel));
-  const totals = counts.map((c) => c.count);
-  const avg = average(totals);
-  const showAverage = avg !== null && counts.filter((c) => c.count !== null).length > 1;
+  const labels = counts.map((c) => (c.validMonths === 0 ? [c.yearLabel, 'no data'] : c.yearLabel));
 
   const data = {
     labels,
-    datasets: SEASON_ORDER.map((season) => ({
+    datasets: BANDS.flatMap(({ key }) => SEASON_ORDER.map((season) => ({
       label: season,
-      data: counts.map((c) => (c.count === null ? null : c.bySeason[season])),
+      stack: key,
+      data: counts.map((c) => (c[key] === null ? null : c[key].bySeason[season])),
       backgroundColor: SEASON_COLORS[season],
-      maxBarThickness: 36,
-    })),
+      maxBarThickness: 18,
+    }))),
   };
 
   const options = {
     responsive: true,
     maintainAspectRatio: false,
     layout: { padding: { top: 12 } },
+    interaction: { mode: 'point', intersect: true },
     plugins: {
       legend: { display: false },
       tooltip: {
         callbacks: {
-          title: (items) => counts[items[0].dataIndex].yearLabel,
+          title: (items) => {
+            const c = counts[items[0].dataIndex];
+            const band = BANDS.find((b) => b.key === items[0].dataset.stack);
+            return `${c.yearLabel} — ${band?.label ?? ''}`;
+          },
           label: (item) => {
             const c = counts[item.dataIndex];
-            const months = c?.dryMonthsBySeason?.[item.dataset.label] ?? [];
+            const band = c?.[item.dataset.stack];
+            const months = band?.monthsBySeason?.[item.dataset.label] ?? [];
             return months.length
               ? `${item.dataset.label}: ${item.raw} (${months.join(', ')})`
               : `${item.dataset.label}: ${item.raw}`;
           },
           afterBody: (items) => {
             const c = counts[items[0].dataIndex];
-            if (c.count === null) return 'No valid monthly data';
-            return `Total: ${c.count} of ${c.validMonths} valid months`;
+            if (c.validMonths === 0) return 'No valid monthly data';
+            const band = c[items[0].dataset.stack];
+            return `Total: ${band.count} of ${c.validMonths} valid months`;
           },
         },
       },
-      annotation: showAverage
-        ? {
-            annotations: {
-              avg: {
-                type: 'line',
-                yMin: avg,
-                yMax: avg,
-                borderColor: colorMuted,
-                borderWidth: 1,
-                borderDash: [4, 4],
-                label: {
-                  display: true,
-                  content: `average ${avg.toFixed(1)}`,
-                  position: 'start',
-                  backgroundColor: 'transparent',
-                  color: colorMuted,
-                  font: { size: 10, weight: '600' },
-                  yAdjust: -10,
-                  xAdjust: 28,
-                },
-              },
-            },
-          }
-        : {},
     },
     scales: {
       x: { stacked: true, ticks: { color: colorMuted, font: { size: 10 }, autoSkip: false }, grid: { display: false } },

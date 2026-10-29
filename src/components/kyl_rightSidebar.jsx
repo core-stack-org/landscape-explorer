@@ -578,20 +578,43 @@ const KYLRightSidebar = ({
       const layer = await getFarmBoundariesLayer(state.label, district.label, block.label);
       layer.setZIndex(20);
 
-      const farmStyle = new Style({
-        stroke: new Stroke({ color: 'rgba(255, 179, 0, 1)', width: 1.5 }),
-        fill: new Fill({ color: 'rgba(255, 179, 0, 0.12)' }),
+      // Drought frequency (times droughted, 2017-24) runs roughly 1-8 across
+      // farms. 5-class sequential scale (ColorBrewer YlOrRd), low = rare, dark
+      // red = frequent. Styles are built once and reused — not per feature.
+      const DROUGHT_FREQUENCY_BINS = [
+        { max: 2,        fill: 'rgba(255, 237, 160, 0.55)', stroke: 'rgba(204, 189, 128, 1)' },
+        { max: 3,        fill: 'rgba(254, 178, 76, 0.55)',  stroke: 'rgba(203, 142, 61, 1)' },
+        { max: 4.5,      fill: 'rgba(253, 141, 60, 0.55)',  stroke: 'rgba(202, 113, 48, 1)' },
+        { max: 6,        fill: 'rgba(227, 26, 28, 0.55)',   stroke: 'rgba(182, 21, 22, 1)' },
+        { max: Infinity, fill: 'rgba(128, 0, 38, 0.55)',    stroke: 'rgba(102, 0, 30, 1)' },
+      ];
+      const droughtFrequencyStyles = DROUGHT_FREQUENCY_BINS.map((b) => new Style({
+        stroke: new Stroke({ color: b.stroke, width: 1.2 }),
+        fill: new Fill({ color: b.fill }),
+      }));
+      const noFrequencyStyle = new Style({
+        stroke: new Stroke({ color: 'rgba(150, 150, 150, 1)', width: 1 }),
+        fill: new Fill({ color: 'rgba(150, 150, 150, 0.12)' }),
       });
+      // Purple, not red, so the selected farm never reads as just another
+      // high-drought-frequency farm.
       const farmSelectedStyle = new Style({
-        stroke: new Stroke({ color: 'rgba(220, 38, 38, 1)', width: 2.5 }),
-        fill: new Fill({ color: 'rgba(220, 38, 38, 0.25)' }),
+        stroke: new Stroke({ color: 'rgba(124, 58, 237, 1)', width: 2.8 }),
+        fill: new Fill({ color: 'rgba(124, 58, 237, 0.22)' }),
       });
+
+      const styleForDroughtFrequency = (freq) => {
+        const n = Number(freq);
+        if (freq === null || freq === undefined || !Number.isFinite(n) || n < 0) return noFrequencyStyle;
+        const idx = DROUGHT_FREQUENCY_BINS.findIndex((b) => n <= b.max);
+        return droughtFrequencyStyles[idx === -1 ? droughtFrequencyStyles.length - 1 : idx];
+      };
 
       layer.setStyle((feature) => {
         if (selectedFarmIdRef.current != null && String(feature.get('farm_id')) === String(selectedFarmIdRef.current)) {
           return farmSelectedStyle;
         }
-        return farmStyle;
+        return styleForDroughtFrequency(feature.get('frequency'));
       });
 
       farmBoundariesLayerRef.current = layer;
@@ -2176,7 +2199,7 @@ const sheet5Count =
   const [activeTab, setActiveTab] = useRecoilState(activeTabAtom);
 
   const clearDetail = () => {
-    setMapHits((prev) => ({ ...prev, mws: null, farm: null, waterbody: null, plan: null, steward: null }));
+    setMapHits((prev) => ({ ...prev, mws: null, village: null, farm: null, waterbody: null, plan: null, steward: null }));
     setActiveTab(null);
     onResetMWS();
     onResetWaterbody();
@@ -2237,7 +2260,18 @@ const sheet5Count =
     error: farmTimeseriesError,
   };
 
-  const layersOn = { mws: true, farm: showFarmBoundaries, waterbody: showWB, plan: showPlans, steward: showStewards };
+  const villageRecord = mapHits.village
+    ? villageJson?.find((v) => String(v.village_id) === String(mapHits.village.id)) ?? null
+    : null;
+  const villageBundle = {
+    record: villageRecord,
+    // vill_name lives on the clicked vector-tile feature, not villageJson.
+    name: mapHits.village?.properties?.vill_name ?? null,
+    villageId: mapHits.village?.id ?? null,
+    buildVillageReportUrl,
+  };
+
+  const layersOn = { mws: true, village: true, farm: showFarmBoundaries, waterbody: showWB, plan: showPlans, steward: showStewards };
 
 
   return (
@@ -2252,6 +2286,7 @@ const sheet5Count =
         onEnableLayer={enableLayer}
         scope={scopeNode}
         mws={mwsBundle}
+        village={villageBundle}
         farm={farmBundle}
         ctx={ctx}
       />

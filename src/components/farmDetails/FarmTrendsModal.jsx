@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import { CloseIcon } from './icons';
 import WaterChart, { WaterChartLegend } from './charts/WaterChart';
 import DryMonthsChart, { DryMonthsChartLegend } from './charts/DryMonthsChart';
-import { monthlyPointsByYear, countDryMonths, waterBalanceSummary, agriYearLabel, hasText } from './farmDetailsUtils';
+import { monthlyPointsByYear, countStressMonths, waterBalanceSummary, agriYearLabel, hasText } from './farmDetailsUtils';
 import { colorBorder, colorSurface, colorPageBg, colorInk, colorMuted, colorPrimary } from './farmDetailsTokens';
 
 function waterTakeaway(annual) {
@@ -43,7 +43,7 @@ export default function FarmTrendsModal({ open, onClose, annual, monthly, farmId
   }, [annual]);
 
   const series = useMemo(() => monthlyPointsByYear(monthly), [monthly]);
-  const counts = useMemo(() => countDryMonths(monthly), [monthly]);
+  const counts = useMemo(() => countStressMonths(monthly), [monthly]);
   const firstCalendarYear = series[0]?.year;
 
   useEffect(() => {
@@ -108,7 +108,7 @@ export default function FarmTrendsModal({ open, onClose, annual, monthly, farmId
 
           <ChartCard
             title="Months of stress by season"
-            subtitle="Months where soil moisture stayed below 0.5, split across the three cropping seasons."
+            subtitle="Moderate (MAI 0.26–0.50) and severe (MAI 0–0.25) stress months, split across the three cropping seasons."
             legend={counts.length > 0 && <DryMonthsChartLegend />}
           >
             {counts.length > 0 ? (

@@ -1,5 +1,5 @@
-const GRAPHQL_URL = 'https://www.cse.iitd.ernet.in/act4dws6/corelens/graphql/v1';
-
+//const GRAPHQL_URL = 'https://www.cse.iitd.ernet.in/act4dws6/corelens/graphql/v1';
+const GRAPHQL_URL = 'http://0.0.0.0:8080/graphql/v1'
 const FARM_TIMESERIES_QUERY = `
   query FarmTimeseries($state: String!, $district: String!, $block: String!, $farmId: String!) {
     farmTimeseries(state: $state, district: $district, block: $block, farmId: $farmId) {
@@ -17,6 +17,7 @@ const FARM_TIMESERIES_QUERY = `
         conf3
         cropStartDate
         cropEndDate
+        cropIntensity
       }
       monthly {
         year

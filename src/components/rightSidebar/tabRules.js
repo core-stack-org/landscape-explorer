@@ -1,6 +1,10 @@
-export const TAB_ORDER = ['mws', 'farm', 'waterbody'];
+// Board order is Micro-watershed / Village / Farm / Waterbody — see
+// kyl-sidebar-mws-village-plan.md §2 (the MWS-only mock that drops Village
+// is stale; build from this list, not from either board).
+export const TAB_ORDER = ['mws', 'village', 'farm', 'waterbody'];
 export const TAB_LABELS = {
   mws: 'Micro‑watershed',
+  village: 'Village',
   farm: 'Farm',
   waterbody: 'Waterbody',
 };
@@ -26,7 +30,7 @@ export function missingLayerTypes(tabs, layersOn) {
   return TAB_ORDER.filter((type) => !tabs.includes(type) && !layersOn?.[type]);
 }
 
-export const HIT_TYPES = ['mws', 'farm', 'waterbody', 'plan', 'steward'];
+export const HIT_TYPES = ['mws', 'village', 'farm', 'waterbody', 'plan', 'steward'];
 
 // clickId is a counter, not a hit; counting it would show the detail area on load.
 export function hasAnyHit(hits) {

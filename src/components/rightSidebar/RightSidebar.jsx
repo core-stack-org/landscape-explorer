@@ -1,6 +1,7 @@
 import DetailHost from './DetailHost';
 import { hasAnyHit } from './tabRules';
 import MwsTab from './tabs/MwsTab';
+import VillageTab from './tabs/VillageTab';
 import WaterbodyTab from './tabs/WaterbodyTab';
 import FarmDetailsPanel from '../farmDetails/FarmDetailsPanel';
 import PlanCard from './cards/PlanCard';
@@ -18,6 +19,7 @@ export default function RightSidebar({
   onEnableLayer,
   scope,
   mws,
+  village,
   farm,
   ctx,
 }) {
@@ -29,6 +31,7 @@ export default function RightSidebar({
 
   const renderBody = (type) => {
     if (type === 'mws' && hits.mws) return <MwsTab {...mws} uid={hits.mws.uid} />;
+    if (type === 'village' && hits.village) return <VillageTab {...village} />;
     if (type === 'farm' && hits.farm) {
       return (
         <FarmDetailsPanel

@@ -7,6 +7,9 @@ describe('deriveTabs', () => {
   it('ignores null hits', () => {
     expect(deriveTabs({ mws: {}, farm: null })).toEqual(['mws']);
   });
+  it('places village between mws and farm', () => {
+    expect(deriveTabs({ farm: {}, village: {}, mws: {} })).toEqual(['mws', 'village', 'farm']);
+  });
 });
 
 describe('shouldShowTabStrip', () => {

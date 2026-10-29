@@ -31,6 +31,7 @@ import KYLLeftSidebar from "../components/kyl_leftSidebar";
 import KYLRightSidebar from "../components/kyl_rightSidebar.jsx";
 import useMapHits from "../components/rightSidebar/useMapHits.js";
 import { layerRegistry } from "../components/rightSidebar/layerRegistry.js";
+import { mapHitsAtom } from "../components/rightSidebar/atoms.js";
 import KYLMapContainer from "../components/kyl_mapContainer.jsx";
 
 import { toast, Toaster } from "react-hot-toast";
@@ -120,9 +121,11 @@ const KYLDashboardPage = () => {
   useEffect(() => {
     const offMws = layerRegistry.register("mws", () => mwsLayerRef.current);
     const offWaterbody = layerRegistry.register("waterbody", () => waterbodiesLayerRef.current);
+    const offVillage = layerRegistry.register("village", () => boundaryLayerRef.current);
     return () => {
       offMws();
       offWaterbody();
+      offVillage();
     };
   }, []);
 
@@ -628,6 +631,17 @@ const KYLDashboardPage = () => {
     if (!mwsLayerRef.current) return;
     mwsLayerRef.current.updateStyleVariables({ highlightMWS: highlightMWS ?? -1 });
   }, [highlightMWS]);
+
+  // The village under the last click — distinct from boundaryLayer's existing
+  // yellow "isSelected" (villages intersecting the MWS selection); this is
+  // specifically the one the Village tab is showing.
+  const mapHits = useRecoilValue(mapHitsAtom);
+  const clickedVillageId = mapHits.village?.id ?? null;
+  useEffect(() => {
+    if (!boundaryLayerRef.current) return;
+    boundaryLayerRef.current.updateStyleVariables({ clickedVillageId: clickedVillageId ?? -1 });
+    boundaryLayerRef.current.getSource()?.changed();
+  }, [clickedVillageId]);
 
   useEffect(() => {
     if (!mwsArrowLayerRef.current) return;
@@ -1241,10 +1255,15 @@ const KYLDashboardPage = () => {
       boundaryLayerRef.current = boundaryLayer;
         
       // ── 3. Style boundary ────────────────────────────────────────────────────
+      // clickedVillageId (purple) is the single village the Village tab is
+      // showing; isSelected (yellow) is the broader set intersecting the MWS
+      // selection. Purple takes priority so the clicked one is never read as
+      // just another intersecting village.
       boundaryLayer.setStyle({
-        variables: { hasSelection: false, isVisualizeOn: false },
+        variables: { hasSelection: false, isVisualizeOn: false, clickedVillageId: -1 },
         "stroke-color": [
           "case",
+          ["==", ["get", "vill_ID"], ["var", "clickedVillageId"]], [124, 58, 237, 1],
           ["var", "isVisualizeOn"],       [0, 0, 0, 1],
           ["==", ["get", "isSelected"], 1], [255, 225, 0, 1],
           ["==", ["get", "isSelected"], 0], [
@@ -1252,8 +1271,17 @@ const KYLDashboardPage = () => {
           ],
           [0, 0, 0, 1],
         ],
-        "stroke-width": ["case", ["==", ["get", "isSelected"], 1], 2.0, 1.2],
-        "fill-color": [255, 255, 0, 0.001],
+        "stroke-width": [
+          "case",
+          ["==", ["get", "vill_ID"], ["var", "clickedVillageId"]], 2.6,
+          ["==", ["get", "isSelected"], 1], 2.0,
+          1.2,
+        ],
+        "fill-color": [
+          "case",
+          ["==", ["get", "vill_ID"], ["var", "clickedVillageId"]], [124, 58, 237, 0.25],
+          [255, 255, 0, 0.001],
+        ],
       });
   
       // ── 4. Zoom animation ────────────────────────────────────────────────────
@@ -2396,7 +2424,18 @@ const wb_id = props?.UID ?? props?.id ?? props?.wb_id;
       if (currentLayer !== null) {
         let tempArr = currentLayer;
         for (let i = 0; i < tempArr.length; ++i) {
-          if (tempArr[i].name === "avg_double_cropped" || tempArr[i].name === "lulc_crop_percent" || tempArr[i].name === "lulc_forest_percent" || tempArr[i].name === "lulc_shrub_percent") {
+          if (tempArr[i].name === "avg_double_cropped") {
+            mapRef.current.removeLayer(tempArr[i].layerRef[0]);
+            const tempLayer = await getImageLayer(
+              `LULC_level_3`,
+              `LULC_${lulcYear}_${transformName(district.label)}_${transformName(block.label)}_level_3`,
+              true,
+              "lulc_level_3_style"
+            );
+            mapRef.current.addLayer(tempLayer);
+            tempArr[i].layerRef[0] = tempLayer;
+          }
+          else {
             mapRef.current.removeLayer(tempArr[i].layerRef[0]);
             const tempLayer = await getImageLayer(
               `LULC_level_3`,
@@ -2519,11 +2558,12 @@ const wb_id = props?.UID ?? props?.id ?? props?.wb_id;
             currentLayer={currentLayer}
             setSearchLatLong={setSearchLatLong}
             showConnectivity={showConnectivity}
-            showPlans={showPlans} 
+            showPlans={showPlans}
             setShowPlans={setShowPlans}
           selectionMode={selectionMode}
           setSelectionMode={setSelectionMode}
           showStewards
+          showFarmBoundaries={showFarmBoundaries}
           />
           <LayerErrorToast
             errors={layerErrors}

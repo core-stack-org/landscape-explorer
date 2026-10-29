@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import AetPetSparkline from './AetPetSparkline';
 import DroughtStats from './DroughtStats';
 import FieldSizeCard from './FieldSizeCard';
+import CroppingIntensity from './CroppingIntensity';
 import CroppingHistory from './CroppingHistory';
 import FarmTrendsModal from './FarmTrendsModal';
 import { sortedByYear, monthlyPointsByYear } from './farmDetailsUtils';
@@ -47,6 +48,7 @@ export default function FarmDetailsPanel({ farmId, annual, monthly, loading, err
           <AetPetSparkline series={series} onOpen={() => setTrendsOpen(true)} />
           <DroughtStats frequency={frequency} intensity={intensity} />
           <FieldSizeCard areaInHa={latest.areaInHa} />
+          <CroppingIntensity annual={rows} />
           <CroppingHistory annual={rows} />
         </>
       )}

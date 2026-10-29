@@ -1,7 +1,7 @@
 import { collectHits, applyClickToHits } from './useMapHits';
 
 describe('applyClickToHits', () => {
-  const empty = { clickId: 0, mws: null, farm: null, waterbody: null, plan: null, steward: null };
+  const empty = { clickId: 0, mws: null, village: null, farm: null, waterbody: null, plan: null, steward: null };
 
   it('clears the farm when the same farm is clicked again', () => {
     const prev = { ...empty, farm: { farmId: 'F1', properties: {} } };
@@ -22,6 +22,18 @@ describe('applyClickToHits', () => {
     expect(next.farm).toBeNull();
     expect(next.mws.uid).toBe('M1');
   });
+
+  it('clears the village when the same village is clicked again', () => {
+    const prev = { ...empty, village: { id: 'V1', properties: {} } };
+    const next = applyClickToHits(prev, { ...empty, village: { id: 'V1', properties: {} } });
+    expect(next.village).toBeNull();
+  });
+
+  it('selects a different village', () => {
+    const prev = { ...empty, village: { id: 'V1', properties: {} } };
+    const next = applyClickToHits(prev, { ...empty, village: { id: 'V2', properties: {} } });
+    expect(next.village.id).toBe('V2');
+  });
 });
 
 function feature(props) {
@@ -41,6 +53,12 @@ function makeMap({ onMap, featuresByLayer = new Map(), mwsFeature = null }) {
     calls,
   };
   return { map, mwsLayer: { getSource: () => ({ getFeaturesAtCoordinate: () => (mwsFeature ? [mwsFeature] : []) }) } };
+}
+
+// Same getFeaturesAtCoordinate shape mws uses; built standalone (not through
+// makeMap) so the same object identity goes into both onMap and the registry.
+function makeCoordinateLayer(foundFeature) {
+  return { getSource: () => ({ getFeaturesAtCoordinate: () => (foundFeature ? [foundFeature] : []) }) };
 }
 
 function registry(layers) {
@@ -96,5 +114,13 @@ describe('collectHits', () => {
       featuresByLayer: new Map([[wb, [feature({ name: 'no id' })]]]),
     });
     expect(collectHits(map, evt, registry({ waterbody: wb })).waterbody).toBeNull();
+  });
+
+  it('collects a village hit the same way as mws', () => {
+    const villageLayer = makeCoordinateLayer(feature({ vill_ID: 'V1', TOT_P: 500 }));
+    const { map } = makeMap({ onMap: [villageLayer] });
+    const hits = collectHits(map, evt, registry({ village: villageLayer }));
+    expect(hits.village.id).toBe('V1');
+    expect(hits.village.properties.TOT_P).toBe(500);
   });
 });

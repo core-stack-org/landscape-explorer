@@ -1,5 +1,8 @@
 export const AGRI_MONTHS = ['Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'];
 export const DRY_MAI_THRESHOLD = 0.5;
+// Severe is MAI 0-0.25, moderate is the rest of the dry range, 0.25-0.5.
+export const MAI_SEVERE_MAX = 0.25;
+export const MAI_MODERATE_MAX = DRY_MAI_THRESHOLD;
 
 // Cropping seasons, as month indices into AGRI_MONTHS (Jul = 0). The three
 // ranges exactly partition the 12 months — every month belongs to one and
@@ -179,6 +182,38 @@ export function countDryMonths(monthly, threshold = DRY_MAI_THRESHOLD) {
       dryMonths: dry.map((p) => p.label),
       dryMonthsBySeason,
       bySeason,
+    };
+  });
+}
+
+function bandBySeason(months) {
+  const entries = Object.entries(SEASONS).map(([season, indices]) => [
+    season,
+    months.filter((p) => indices.includes(p.monthIndex)),
+  ]);
+  return {
+    count: months.length,
+    months: months.map((p) => p.label),
+    bySeason: Object.fromEntries(entries.map(([season, ms]) => [season, ms.length])),
+    monthsBySeason: Object.fromEntries(entries.map(([season, ms]) => [season, ms.map((p) => p.label)])),
+  };
+}
+
+// Splits the same dry range countDryMonths covers (MAI < 0.5) into two
+// severity bands — severe (0-0.25) and moderate (0.25-0.5) — each bucketed
+// by season like countDryMonths. moderate/severe are null, not zeroed out,
+// for a year with no valid MAI at all, same convention as countDryMonths.count.
+export function countStressMonths(monthly) {
+  return monthlyPointsByYear(monthly).map(({ year, yearLabel, points }) => {
+    const valid = points.filter((p) => p.mai !== null);
+    const severe = valid.filter((p) => p.mai <= MAI_SEVERE_MAX);
+    const moderate = valid.filter((p) => p.mai > MAI_SEVERE_MAX && p.mai < MAI_MODERATE_MAX);
+    return {
+      year,
+      yearLabel,
+      validMonths: valid.length,
+      severe: valid.length === 0 ? null : bandBySeason(severe),
+      moderate: valid.length === 0 ? null : bandBySeason(moderate),
     };
   });
 }
