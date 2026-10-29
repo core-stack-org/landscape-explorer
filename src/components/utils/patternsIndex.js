@@ -90,7 +90,6 @@ for (const category of CATEGORIES) {
         // conditions: p.Signals.map((s) => ({ key: s.Key, type: s.type, value: s.value })),
       };
     });
-    console.log(`Patterns for ${category}::${subcategory}:`, patterns);
     PATTERNS_BY_KEY.set(`${category}::${subcategory}`, patterns);
   }
   SUBCATS_BY_CATEGORY.set(category, subcategories);
