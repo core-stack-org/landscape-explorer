@@ -175,7 +175,7 @@ function conditionMatches(record, condition) {
   return false;
 }
 
-function evaluateNode(record, node) {
+export function evaluateNode(record, node) {
   if (!node.children) return conditionMatches(record, node);
   if (node.logic === 'COUNT') {
     const trueCount = node.children.filter((child) => evaluateNode(record, child)).length;

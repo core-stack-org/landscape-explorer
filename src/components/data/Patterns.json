@@ -158,7 +158,7 @@
                             {
                                 "id": "sig_01",
                                 "type": "range",
-                                "Key": "drought_weeks_severe_moderate",
+                                "Key": "max_drought_weeks",
                                 "value": {
                                     "lower": 5,
                                     "upper": 99999
@@ -605,7 +605,7 @@
                             {
                                 "id": "sig_02",
                                 "type": "range",
-                                "Key": "trend_cropping_intensity",
+                                "Key": "cropping_intensity_trend_value",
                                 "value": {
                                     "lower": 0,
                                     "upper": 10
