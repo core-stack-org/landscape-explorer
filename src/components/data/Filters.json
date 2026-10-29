@@ -1221,7 +1221,7 @@
   {
     "name": "mining",
     "label": "Mining",
-    "type": 2,
+    "type": 1,
     "namespace": "MWS",
     "category": "Industry",
     "source": "mws",
@@ -1232,13 +1232,11 @@
     "bins": [
       {
         "label": "Areas with mining sites",
-        "lower": 1,
-        "upper": 9999
+        "value" : 1
       },
       {
         "label": "Areas with no known mining sites",
-        "lower": -9999,
-        "upper": 0
+        "value" : 0
       }
     ]
   },
