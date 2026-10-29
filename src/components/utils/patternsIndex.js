@@ -48,12 +48,14 @@ for (const patterns of PATTERNS_BY_KEY.values()) {
 
 export function getFormattedSelectedPatterns(patternSelections) {
   const result = [];
-  const collect = (selections) => {
-    for (const name of Object.keys(selections || {})) {
-      const pattern = PATTERN_BY_NAME.get(name);
-      if (pattern) result.push(pattern);
+ const collect = (selections) => {
+    for (const [name, selectedPattern] of Object.entries(selections || {})) {
+        if (!selectedPattern) continue;
+
+        const pattern = PATTERN_BY_NAME.get(name);
+        if (pattern) result.push(pattern);
     }
-  };
+};
   collect(patternSelections.selectedMWSPatterns);
   collect(patternSelections.selectedVillagePatterns);
   return result;
