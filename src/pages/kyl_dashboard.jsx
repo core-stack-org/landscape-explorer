@@ -2054,21 +2054,43 @@ const KYLDashboardPage = () => {
     else if (setter === setDistrict) { setBlock(null); }
   };
 
-  const handlePatternRemoval = (pattern) => {
+  // const handlePatternRemoval = (pattern) => {
+  //   setManualSelectedMWS([]);
+  //   const key = pattern.patternName || pattern.name;
+  //   if (pattern.level) {
+  //     setPatternSelections((prev) => ({
+  //       ...prev,
+  //       selectedVillagePatterns: { ...prev.selectedVillagePatterns, [key]: null },
+  //     }));
+  //   } else {
+  //     setPatternSelections((prev) => ({
+  //       ...prev,
+  //       selectedMWSPatterns: { ...prev.selectedMWSPatterns, [key]: null },
+  //     }));
+  //   }
+  // };
+
+
+const handlePatternRemoval = (pattern) => {
     setManualSelectedMWS([]);
-    const key = pattern.patternName || pattern.name;
-    if (pattern.level) {
-      setPatternSelections((prev) => ({
-        ...prev,
-        selectedVillagePatterns: { ...prev.selectedVillagePatterns, [key]: null },
-      }));
-    } else {
-      setPatternSelections((prev) => ({
-        ...prev,
-        selectedMWSPatterns: { ...prev.selectedMWSPatterns, [key]: null },
-      }));
-    }
-  };
+
+    const key = pattern.name || pattern.patternName;
+    const levelKey =
+        pattern.level === 0
+            ? "selectedMWSPatterns"
+            : "selectedVillagePatterns";
+
+    setPatternSelections((prev) => {
+        const updatedPatterns = { ...prev[levelKey] };
+        delete updatedPatterns[key];
+
+        return {
+            ...prev,
+            [levelKey]: updatedPatterns,
+        };
+    });
+};
+
 
   const resetAllStates = () => {
     if (currentLayer.length > 0 && mapRef.current) {
