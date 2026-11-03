@@ -4,9 +4,10 @@ import { useRecoilValue } from 'recoil';
 import { useEffect, useState } from 'react';
 import { trackEvent } from "../services/analytics.js";
 import { CheckCircle2, Layers3,Table } from "lucide-react";
+import FarmDetailsPanel from './farmDetails/FarmDetailsPanel.jsx';
 
 const KYLMWSProfilePanel = ({ mwsData, onBack, hideBackButton = false, onResetMWS,onOpenSelection,
-  selectedMWS = [],  intersectingVillages = [],onRemoveMWS }) => {
+  selectedMWS = [],  intersectingVillages = [],onRemoveMWS, showFarmDetails = false, farmDetailsProps }) => {
   const state = useRecoilValue(stateAtom);
   const district = useRecoilValue(districtAtom);
   const block = useRecoilValue(blockAtom);
@@ -270,6 +271,12 @@ const KYLMWSProfilePanel = ({ mwsData, onBack, hideBackButton = false, onResetMW
     </button>
   ))}
 </div>
+  </div>
+)}
+
+{showFarmDetails && farmDetailsProps && (
+  <div className="mt-5">
+    <FarmDetailsPanel {...farmDetailsProps} />
   </div>
 )}
     </div>
