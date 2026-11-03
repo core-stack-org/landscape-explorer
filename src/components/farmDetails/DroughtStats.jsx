@@ -27,7 +27,7 @@ export default function DroughtStats({ frequency, intensity }) {
         <StatCard
           label="How often"
           value={hasFrequency ? Number(frequency).toFixed(2) : '--'}
-          caption="drought frequency"
+          caption="Low MAI Episodes"
         />
         <StatCard
           label="How hard"

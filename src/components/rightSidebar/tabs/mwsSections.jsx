@@ -1,4 +1,4 @@
-import { findBin, bandWord, bandCaption, severityColor, isValid } from '../mwsFieldMaps.js';
+import { findBin, bandWord, bandCaption, severityColor, isValid, isValidSigned } from '../mwsFieldMaps.js';
 import {
   colorInk, colorMuted, colorBorder, colorBorderSoft, colorSurface, colorPageBg, colorTrack,
   colorDataWarm, colorDataCool, colorWater,
@@ -83,7 +83,7 @@ function PercentBar({ label, value, band }) {
 }
 
 function fmt(v, digits = 0) {
-  return isValid(v) ? Number(v).toFixed(digits) : null;
+  return isValidSigned(v) ? Number(v).toFixed(digits) : null;
 }
 
 // ── 3.2 What this place is ─────────────────────────────────────────────────
@@ -128,7 +128,9 @@ export function WaterSection({ record }) {
   const rainfallCaption = bandCaption('avg_precipitation', record.avg_precipitation);
   const runoffCaption = bandCaption('avg_runoff', record.avg_runoff);
 
-  const hasWaterBalance = isValid(record.mean_annual_delta_g_mm);
+  // Signed field — a declining water balance is a legitimate negative value,
+  // not a missing-data sentinel, so this can't use the >-1 isValid check.
+  const hasWaterBalance = isValidSigned(record.mean_annual_delta_g_mm);
   const waterBalancePositive = hasWaterBalance && Number(record.mean_annual_delta_g_mm) >= 0;
   const waterBalance = hasWaterBalance
     ? `${waterBalancePositive ? '+' : ''}${fmt(record.mean_annual_delta_g_mm)} mm/yr`

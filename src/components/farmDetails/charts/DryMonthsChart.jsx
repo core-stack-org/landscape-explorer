@@ -11,15 +11,33 @@ const BANDS = [
   { key: 'severe', label: 'Severe' },
 ];
 
-export function DryMonthsChartLegend() {
+// Each chip toggles that season's bars on/off — Kharif-only by default
+// (FarmTrendsModal owns the selection, shared with the chart below it).
+export function DryMonthsChartLegend({ visibleSeasons, onToggle }) {
   return (
-    <div className="flex items-center gap-4 flex-wrap flex-shrink-0">
-      {SEASON_ORDER.map((season) => (
-        <div key={season} className="flex items-center gap-1.5">
-          <span className="w-2.5 h-2.5 rounded-sm" style={{ background: SEASON_COLORS[season] }} />
-          <span className="text-[10px]" style={{ color: colorMuted }}>{season}</span>
-        </div>
-      ))}
+    <div className="flex items-center gap-1.5 flex-wrap flex-shrink-0">
+      {SEASON_ORDER.map((season) => {
+        const active = visibleSeasons.includes(season);
+        return (
+          <button
+            key={season}
+            type="button"
+            onClick={() => onToggle(season)}
+            aria-pressed={active}
+            className="flex items-center gap-1.5 px-2 py-0.5 rounded-full border transition-colors"
+            style={{
+              borderColor: active ? SEASON_COLORS[season] : colorBorderSoft,
+              background: active ? SEASON_COLORS[season] : 'transparent',
+            }}
+          >
+            <span
+              className="w-2.5 h-2.5 rounded-sm flex-shrink-0"
+              style={{ background: active ? '#FFFFFF' : SEASON_COLORS[season], opacity: active ? 1 : 0.5 }}
+            />
+            <span className="text-[10px] font-medium" style={{ color: active ? '#FFFFFF' : colorMuted }}>{season}</span>
+          </button>
+        );
+      })}
     </div>
   );
 }
@@ -52,12 +70,13 @@ const stackedTotalLabelPlugin = {
   },
 };
 
-export default function DryMonthsChart({ counts }) {
+export default function DryMonthsChart({ counts, visibleSeasons }) {
   const labels = counts.map((c) => (c.validMonths === 0 ? [c.yearLabel, 'no data'] : c.yearLabel));
+  const seasons = SEASON_ORDER.filter((s) => visibleSeasons.includes(s));
 
   const data = {
     labels,
-    datasets: BANDS.flatMap(({ key }) => SEASON_ORDER.map((season) => ({
+    datasets: BANDS.flatMap(({ key }) => seasons.map((season) => ({
       label: season,
       stack: key,
       data: counts.map((c) => (c[key] === null ? null : c[key].bySeason[season])),

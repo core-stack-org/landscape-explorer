@@ -23,3 +23,12 @@ export const colorDataWarm = '#CC6B00';
 export const colorDataCool = '#0052B7';
 export const colorWater = '#077BAB';
 export const colorBad = '#B91C1C';
+// Waterbody surface-water-area bars: latest year vs. prior years.
+export const colorAreaLatest = '#077BAB';
+export const colorAreaPrior = '#9CC9DC';
+// Waterbody season ramp, lightness-ordered (kyl-sidebar plan §8) — nested,
+// not stacked: Kharif is the outer/lightest band, Zaid the inner/darkest.
+export const colorSeasonKharif = '#A3D3E6';
+export const colorSeasonRabi = '#6BAFCB';
+export const colorSeasonZaid = '#07628B';
+export const colorSeasonTrack = '#EFF3F5';

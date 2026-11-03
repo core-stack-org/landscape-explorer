@@ -578,15 +578,12 @@ const KYLRightSidebar = ({
       const layer = await getFarmBoundariesLayer(state.label, district.label, block.label);
       layer.setZIndex(20);
 
-      // Drought frequency (times droughted, 2017-24) runs roughly 1-8 across
-      // farms. 5-class sequential scale (ColorBrewer YlOrRd), low = rare, dark
-      // red = frequent. Styles are built once and reused — not per feature.
+      // Low-MAI episode count (2017-24). 3-class scale: none = calm green,
+      // 1-2 = amber, 3+ = red. Styles are built once and reused — not per feature.
       const DROUGHT_FREQUENCY_BINS = [
-        { max: 2,        fill: 'rgba(255, 237, 160, 0.55)', stroke: 'rgba(204, 189, 128, 1)' },
-        { max: 3,        fill: 'rgba(254, 178, 76, 0.55)',  stroke: 'rgba(203, 142, 61, 1)' },
-        { max: 4.5,      fill: 'rgba(253, 141, 60, 0.55)',  stroke: 'rgba(202, 113, 48, 1)' },
-        { max: 6,        fill: 'rgba(227, 26, 28, 0.55)',   stroke: 'rgba(182, 21, 22, 1)' },
-        { max: Infinity, fill: 'rgba(128, 0, 38, 0.55)',    stroke: 'rgba(102, 0, 30, 1)' },
+        { max: 0,        fill: 'rgba(200, 230, 201, 0.55)', stroke: 'rgba(102, 187, 106, 1)' },
+        { max: 2,        fill: 'rgba(254, 178, 76, 0.55)',  stroke: 'rgba(203, 142, 61, 1)' },
+        { max: Infinity, fill: 'rgba(227, 26, 28, 0.55)',   stroke: 'rgba(182, 21, 22, 1)' },
       ];
       const droughtFrequencyStyles = DROUGHT_FREQUENCY_BINS.map((b) => new Style({
         stroke: new Stroke({ color: b.stroke, width: 1.2 }),

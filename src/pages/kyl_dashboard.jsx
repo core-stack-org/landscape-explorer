@@ -639,7 +639,13 @@ const KYLDashboardPage = () => {
   const clickedVillageId = mapHits.village?.id ?? null;
   useEffect(() => {
     if (!boundaryLayerRef.current) return;
-    boundaryLayerRef.current.updateStyleVariables({ clickedVillageId: clickedVillageId ?? -1 });
+    // hasClickedVillage gates the match explicitly — villages with no data
+    // encode a missing vill_ID attribute as 0 in the WebGL buffer, which must
+    // never be read as "the clicked village" when nothing is actually selected.
+    boundaryLayerRef.current.updateStyleVariables({
+      clickedVillageId: clickedVillageId ?? -1,
+      hasClickedVillage: clickedVillageId !== null,
+    });
     boundaryLayerRef.current.getSource()?.changed();
   }, [clickedVillageId]);
 
@@ -1260,10 +1266,10 @@ const KYLDashboardPage = () => {
       // selection. Purple takes priority so the clicked one is never read as
       // just another intersecting village.
       boundaryLayer.setStyle({
-        variables: { hasSelection: false, isVisualizeOn: false, clickedVillageId: -1 },
+        variables: { hasSelection: false, isVisualizeOn: false, clickedVillageId: -1, hasClickedVillage: false },
         "stroke-color": [
           "case",
-          ["==", ["get", "vill_ID"], ["var", "clickedVillageId"]], [124, 58, 237, 1],
+          ["all", ["var", "hasClickedVillage"], ["==", ["get", "vill_ID"], ["var", "clickedVillageId"]]], [124, 58, 237, 1],
           ["var", "isVisualizeOn"],       [0, 0, 0, 1],
           ["==", ["get", "isSelected"], 1], [255, 225, 0, 1],
           ["==", ["get", "isSelected"], 0], [
@@ -1273,13 +1279,13 @@ const KYLDashboardPage = () => {
         ],
         "stroke-width": [
           "case",
-          ["==", ["get", "vill_ID"], ["var", "clickedVillageId"]], 2.6,
+          ["all", ["var", "hasClickedVillage"], ["==", ["get", "vill_ID"], ["var", "clickedVillageId"]]], 2.6,
           ["==", ["get", "isSelected"], 1], 2.0,
           1.2,
         ],
         "fill-color": [
           "case",
-          ["==", ["get", "vill_ID"], ["var", "clickedVillageId"]], [124, 58, 237, 0.25],
+          ["all", ["var", "hasClickedVillage"], ["==", ["get", "vill_ID"], ["var", "clickedVillageId"]]], [124, 58, 237, 0.25],
           [255, 255, 0, 0.001],
         ],
       });

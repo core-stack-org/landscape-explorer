@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { CloseIcon } from './icons';
 import WaterChart, { WaterChartLegend } from './charts/WaterChart';
@@ -45,6 +45,14 @@ export default function FarmTrendsModal({ open, onClose, annual, monthly, farmId
   const series = useMemo(() => monthlyPointsByYear(monthly), [monthly]);
   const counts = useMemo(() => countStressMonths(monthly), [monthly]);
   const firstCalendarYear = series[0]?.year;
+
+  // Kharif-only by default; Rabi/Zaid are opt-in via the legend chips.
+  const [visibleSeasons, setVisibleSeasons] = useState(['Kharif']);
+  const toggleSeason = (season) => {
+    setVisibleSeasons((prev) => (
+      prev.includes(season) ? prev.filter((s) => s !== season) : [...prev, season]
+    ));
+  };
 
   useEffect(() => {
     if (!open) return undefined;
@@ -108,11 +116,11 @@ export default function FarmTrendsModal({ open, onClose, annual, monthly, farmId
 
           <ChartCard
             title="Months of stress by season"
-            subtitle="Moderate (MAI 0.26–0.50) and severe (MAI 0–0.25) stress months, split across the three cropping seasons."
-            legend={counts.length > 0 && <DryMonthsChartLegend />}
+            subtitle="Moderate (MAI 0.26–0.50) and severe (MAI 0–0.25) stress months. Kharif is shown by default — tap Rabi or Zaid to add them."
+            legend={counts.length > 0 && <DryMonthsChartLegend visibleSeasons={visibleSeasons} onToggle={toggleSeason} />}
           >
             {counts.length > 0 ? (
-              <DryMonthsChart counts={counts} />
+              <DryMonthsChart counts={counts} visibleSeasons={visibleSeasons} />
             ) : (
               <p className="text-[12px] py-10 text-center" style={{ color: colorMuted }}>No monthly data for this farm.</p>
             )}

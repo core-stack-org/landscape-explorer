@@ -183,7 +183,7 @@ const MapLegend = ({ showMWS, showVillages, currentLayer, showConnectivity,showP
     {
       color: "rgba(85, 152, 229, 0.6)",
       border: "rgb(85, 152, 229)",
-      name: "Matched MWS",
+      name: "MWS Boundaries",
       type: "mws",
     },
   ];
@@ -200,11 +200,9 @@ const MapLegend = ({ showMWS, showVillages, currentLayer, showConnectivity,showP
   // Matches DROUGHT_FREQUENCY_BINS in kyl_rightSidebar.jsx's toggleFarmBoundaries
   // exactly — same colours, same thresholds.
   const farmDroughtFrequencyLegendItems = [
-    { color: "rgba(255, 237, 160, 0.55)", border: "rgba(204, 189, 128, 1)", label: "1-2 droughts" },
-    { color: "rgba(254, 178, 76, 0.55)", border: "rgba(203, 142, 61, 1)", label: "2-3 droughts" },
-    { color: "rgba(253, 141, 60, 0.55)", border: "rgba(202, 113, 48, 1)", label: "3-4.5 droughts" },
-    { color: "rgba(227, 26, 28, 0.55)", border: "rgba(182, 21, 22, 1)", label: "4.5-6 droughts" },
-    { color: "rgba(128, 0, 38, 0.55)", border: "rgba(102, 0, 30, 1)", label: "6-8 droughts" },
+    { color: "rgba(200, 230, 201, 0.55)", border: "rgba(102, 187, 106, 1)", label: "No Episodes" },
+    { color: "rgba(254, 178, 76, 0.55)", border: "rgba(203, 142, 61, 1)", label: "<= 2 Episodes" },
+    { color: "rgba(227, 26, 28, 0.55)", border: "rgba(182, 21, 22, 1)", label: "> 2 Episodes" },
     { color: "rgba(150, 150, 150, 0.12)", border: "rgba(150, 150, 150, 1)", label: "No data" },
   ];
 
@@ -1166,7 +1164,7 @@ const SoilTexture = [
               {showFarmBoundaries && (
                 <div className="space-y-2">
                   <h4 className="text-xs font-medium text-gray-600">
-                    Farms — Drought Frequency
+                    Farms — Low MAI Episodes
                   </h4>
                   {farmDroughtFrequencyLegendItems.map((item, index) => (
                     <div

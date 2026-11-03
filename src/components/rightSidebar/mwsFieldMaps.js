@@ -4,6 +4,14 @@ export function isValid(v) {
   return v !== null && v !== undefined && Number.isFinite(Number(v)) && Number(v) > -1;
 }
 
+// For fields that are legitimately signed (e.g. mean_annual_delta_g_mm, which
+// is a negative number for a declining water balance) — isValid's `> -1` cutoff
+// would wrongly reject those as the sentinel. Only the actual sentinel is invalid.
+const SENTINEL = -9999;
+export function isValidSigned(v) {
+  return v !== null && v !== undefined && Number.isFinite(Number(v)) && Number(v) !== SENTINEL;
+}
+
 // Same matching rule as styleRegistry.js's findBin: exact match on `value`
 // bins (int codes), range match on `lower`/`upper` bins (binned numerics).
 // First match wins — bins are checked in declared order.
