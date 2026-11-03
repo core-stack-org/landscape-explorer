@@ -985,20 +985,6 @@ const KYLRightSidebar = ({
 
   const getFeatureStatus = (feature) => getPlanStatus(feature.get("planDetails"));
 
-const PLAN_STATUS_COLORS = {
-  in_progress: {fill: "#FF0000",stroke: "#8B0000",},
-  dpr_completed: {fill: "#FFFF00",stroke: "#B8B800", },
-  dpr_approved: {fill: "#00FF00",stroke: "#008000",},
-};
-
-const getPlanStatus = (plan) => {
-  if (!plan) return "in_progress";
-  if (plan.is_dpr_reviewed) return "dpr_completed";
-  return "in_progress";
-};
-
-const getFeatureStatus = (feature) => getPlanStatus(feature.get("planDetails"));
-
 const PLAN_ICON_DEFAULT = (status = "in_progress") => [
   // Status ring
   new Style({
@@ -1027,63 +1013,6 @@ const PLAN_ICON_DEFAULT = (status = "in_progress") => [
 ];
 
 
-const PLAN_ICON_HOVERED = (status = "in_progress") => [
-  // Bigger status ring
-  new Style({
-    image: new CircleStyle({
-      radius: 17,
-      fill: new Fill({
-        color: "transparent",
-      }),
-      stroke: new Stroke({
-        color: PLAN_STATUS_COLORS[status].fill,
-        width: 3,
-      }),
-    }),
-  }),
-
-  // Bigger plan icon
-  new Style({
-    image: new Icon({
-      src: planIcon,
-      scale: 0.10,
-      anchor: [0.5, 0.5],
-      anchorXUnits: "fraction",
-      anchorYUnits: "fraction",
-    }),
-  }),
-];
-
-
-const STEWARD_DOT_DEFAULT = () =>
-  [
-    // White circular border
-    new Style({
-      image: new CircleStyle({
-        radius: 15,
-        fill: new Fill({
-          color: "transparent",
-        }),
-        stroke: new Stroke({
-          color: PLAN_STATUS_COLORS[status].fill,
-          width: 3,
-        }),
-      }),
-    }),
-
-    // Plan icon
-    new Style({
-      image: new Icon({
-        src: planIcon,
-        scale: 0.085,
-        anchor: [0.5, 0.5],
-        anchorXUnits: "fraction",
-        anchorYUnits: "fraction",
-      }),
-    }),
-  ];
-
-
   const PLAN_ICON_HOVERED = (status = "in_progress") => [
     // Bigger status ring
     new Style({
@@ -1110,7 +1039,6 @@ const STEWARD_DOT_DEFAULT = () =>
       }),
     }),
   ];
-
 
   const STEWARD_DOT_DEFAULT = () =>
     [
@@ -1589,6 +1517,8 @@ const STEWARD_DOT_DEFAULT = () =>
           }
           return row;
         });
+
+        const uniqueSwbs = new Map();
 
       if (waterbodyFilters.length > 0 && showWB) {
         // selectedWaterbodyData already has all computed props and already accounts
