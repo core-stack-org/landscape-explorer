@@ -44,22 +44,6 @@ function buildFieldIndexes(records, idField, fields) {
   return { byId, fieldIndex };
 }
 
-// Fields the backend doesn't send, calculated once from fields it does.
-// Fields the backend doesn't send, calculated once from fields it does.
-// Returns a new object, because the incoming records are frozen.
-function addMWSDerivedFields(record) {
-  const annual = Number(record.avg_precipitation);
-  const kharif = Number(record.avg_kharif_rainfall);
-  const maxDay = Number(record.max_monsoon_onset_day);
-  const minDay = Number(record.min_monsoon_onset_day);
-
-  return {
-    ...record,
-    mean_rainfall: annual > 0 ? kharif / annual : undefined,
-    monsoon_onset_day: maxDay > 0 && minDay > 0 ? maxDay - minDay : undefined,
-  };
-}
-
 const VILLAGE_AGGREGATES = [
   { name: 'st_sc_percent', source: 'st_sc_percent', how: 'max' },
 ];
@@ -90,18 +74,8 @@ function addVillageAggregates(mwsIndex, villageIndex) {
   return { ...mwsIndex, byId };
 }
 
-// Village-level fields the backend doesn't send.
-function addVillageDerivedFields(record) {
-  const st = Number(record.percent_st_population);
-  const sc = Number(record.percent_sc_population);
-  return {
-    ...record,
-    st_sc_percent: !isNaN(st) && !isNaN(sc) ? st + sc : undefined,
-  };
-}
-
 export function buildMWSIndex(dataJson) {
-  const records = (dataJson || []).map(addMWSDerivedFields);
+  const records = dataJson || [];
   const { byId, fieldIndex } = buildFieldIndexes(records, 'mws_id', MWS_INDEXED_FIELDS);
 
   const mwsToVillages = new Map();
@@ -124,7 +98,7 @@ export function buildMWSIndex(dataJson) {
 // }
 
 export function buildVillageIndex(villageJson) {
-  const records = (villageJson || []).map(addVillageDerivedFields);
+  const records = villageJson || [];
   return buildFieldIndexes(records, 'village_id', VILLAGE_INDEXED_FIELDS);
 }
 

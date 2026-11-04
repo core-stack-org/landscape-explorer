@@ -56,6 +56,9 @@ import { selectPattern, isPatternSelected } from "../components/utils/patternSel
 import { buildMWSIndex, buildVillageIndex, deriveSelection, buildVillageNameIndex } from "../components/utils/dataIndexes.js";
 import { createFeatureStyleFn } from "../components/utils/styleRegistry.js";
 
+import dummyData from "../components/data/dummy.json";
+import village_dummy_data from "../components/data/village_dummy.json";
+
 const DEFAULT_LOADER = {
   fetch: 'vector',
   buildLayerName: (filter, i, ctx) => `${filter.layer_name[i]}_${ctx.dist}_${ctx.blk}`,
@@ -186,7 +189,8 @@ const KYLDashboardPage = () => {
     setPatternSelections(selectPattern(pattern, isSelected, patternSelections));
   };
   const [boundaryLoadedVersion, setBoundaryLoadedVersion] = useState(0);
-
+  const USE_DUMMY_DATA = true;
+  const USE_DUMMY_VILLAGE_DATA = true;
 
   const mwsIndex = useMemo(() => buildMWSIndex(dataJson), [dataJson]);
   const villageIndex = useMemo(() => buildVillageIndex(villageJson), [villageJson]);
@@ -1443,36 +1447,111 @@ const KYLDashboardPage = () => {
     view.animate({ center: INDIA_CENTER, zoom: INDIA_ZOOM, duration: 400 });
   }
 
-  const fetchDataJson = async () => {
-    if (!process.env.REACT_APP_API_URL) {
-      console.error('[fetchDataJson] REACT_APP_API_URL is not set');
-      return;
-    }
+//   const fetchDataJson = async () => {
+//     if (!process.env.REACT_APP_API_URL) {
+//       console.error('[fetchDataJson] REACT_APP_API_URL is not set');
+//       return;
+//     }
   
-    const endpoint =
-      `${process.env.REACT_APP_API_URL}/download_kyl_data/` +
-      `?state=${transformName(state.label)}` +
-      `&district=${transformName(district.label)}` +
-      `&block=${transformName(block.label)}` +
-      `&file_type=json`;
+//     const endpoint =
+//       `${process.env.REACT_APP_API_URL}/download_kyl_data/` +
+//       `?state=${transformName(state.label)}` +
+//       `&district=${transformName(district.label)}` +
+//       `&block=${transformName(block.label)}` +
+//       `&file_type=json`;
   
-    setDataJsonError(null);
-    setIsLoading(true);
+//     setDataJsonError(null);
+//     setIsLoading(true);
   
-    try {
+//     try {
+//       let response;
+//       try {
+//         response = await fetch(endpoint);
+//       } catch (networkError) {
+//         // Console log for debugging — no emitLayerError, no toast.
+//         // The sidebar banner (FiltersDisabledBanner) is the single source
+//         // of truth for telling the user MWS data failed to load.
+//         console.error('[fetchDataJson] Network error:', networkError);
+//         setDataJson(null);
+//         setDataJsonError('network');
+//         return;
+//       }
+  
+//       if (!response.ok) {
+//         const is404 = response.status === 404;
+//         console.error(`[fetchDataJson] HTTP ${response.status} from ${endpoint}`);
+//         setDataJson(null);
+//         setDataJsonError(is404 ? 'not_found' : 'network');
+//         return;
+//       }
+  
+//       let result;
+//       try {
+//         result = await response.json();
+//       } catch (parseError) {
+//         console.error('[fetchDataJson] Parse error:', parseError);
+//         setDataJson(null);
+//         setDataJsonError('parse');
+//         return;
+//       }
+  
+//       setDataJsonError(null);
+//       setDataJson(result);
+//       if (process.env.NODE_ENV === "development") {
+//         localStorage.setItem(
+//           "actualMWSData",
+//           JSON.stringify(result)
+//         );
+//       }
+//       window.actualMWSData = result;
+
+//       console.log("Actual MWS count:", result?.length);
+//       localStorage.setItem(
+//   "actualMWSData",
+//   JSON.stringify(result)
+// );
+  
+//     } finally {
+//       setIsLoading(false);
+//     }
+//   };
+
+
+
+const fetchDataJson = async () => {
+  if (!process.env.REACT_APP_API_URL) {
+    console.error('[fetchDataJson] REACT_APP_API_URL is not set');
+    return;
+  }
+
+  const endpoint =
+    `${process.env.REACT_APP_API_URL}/download_kyl_data/` +
+    `?state=${transformName(state.label)}` +
+    `&district=${transformName(district.label)}` +
+    `&block=${transformName(block.label)}` +
+    `&file_type=json`;
+
+  setDataJsonError(null);
+  setIsLoading(true);
+
+  try {
+    let result;
+
+    if (USE_DUMMY_DATA) {
+      console.log('[fetchDataJson] Using dummy data');
+      result = dummyData;
+    } else {
       let response;
+
       try {
         response = await fetch(endpoint);
       } catch (networkError) {
-        // Console log for debugging — no emitLayerError, no toast.
-        // The sidebar banner (FiltersDisabledBanner) is the single source
-        // of truth for telling the user MWS data failed to load.
         console.error('[fetchDataJson] Network error:', networkError);
         setDataJson(null);
         setDataJsonError('network');
         return;
       }
-  
+
       if (!response.ok) {
         const is404 = response.status === 404;
         console.error(`[fetchDataJson] HTTP ${response.status} from ${endpoint}`);
@@ -1480,8 +1559,7 @@ const KYLDashboardPage = () => {
         setDataJsonError(is404 ? 'not_found' : 'network');
         return;
       }
-  
-      let result;
+
       try {
         result = await response.json();
       } catch (parseError) {
@@ -1490,75 +1568,133 @@ const KYLDashboardPage = () => {
         setDataJsonError('parse');
         return;
       }
-  
-      setDataJsonError(null);
-      setDataJson(result);
-      if (process.env.NODE_ENV === "development") {
-        localStorage.setItem(
-          "actualMWSData",
-          JSON.stringify(result)
-        );
-      }
-      window.actualMWSData = result;
+    }
 
-      console.log("Actual MWS count:", result?.length);
+    setDataJsonError(null);
+    setDataJson(result);
+
+    if (process.env.NODE_ENV === "development") {
       localStorage.setItem(
-  "actualMWSData",
-  JSON.stringify(result)
-);
-  
-    } finally {
-      setIsLoading(false);
+        "actualMWSData",
+        JSON.stringify(result)
+      );
     }
-  };
 
-  const fetchVillageJson = async () => {
-    if (!process.env.REACT_APP_API_URL) {
-      console.error('[fetchVillageJson] REACT_APP_API_URL is not set');
-      return;
-    }
-  
-    const endpoint =
-      `${process.env.REACT_APP_API_URL}/download_kyl_village_data` +
-      `?state=${transformName(state.label)}` +
-      `&district=${transformName(district.label)}` +
-      `&block=${transformName(block.label)}` +
-      `&file_type=json`;
-  
-    setVillageJsonError(null);
-  
-    let response;
-    try {
-      response = await fetch(endpoint);
-    } catch (networkError) {
-      // VillageFiltersBanner handles the message — no emitLayerError, no toast.
-      console.error('[fetchVillageJson] Network error:', networkError);
-      setVillageJson(null);
-      setVillageJsonError('network');
-      return;
-    }
-  
-    if (!response.ok) {
-      const is404 = response.status === 404;
-      console.error(`[fetchVillageJson] HTTP ${response.status} from ${endpoint}`);
-      setVillageJson(null);
-      setVillageJsonError(is404 ? 'not_found' : 'network');
-      return;
-    }
-  
+    window.actualMWSData = result;
+
+    console.log("Actual MWS count:", result?.length);
+
+    localStorage.setItem(
+      "actualMWSData",
+      JSON.stringify(result)
+    );
+
+  } finally {
+    setIsLoading(false);
+  }
+};
+
+const fetchVillageJson = async () => {
+  setVillageJsonError(null);
+
+  try {
     let result;
-    try {
-      result = await response.json();
-    } catch (parseError) {
-      console.error('[fetchVillageJson] Parse error:', parseError);
-      setVillageJson(null);
-      setVillageJsonError('parse');
-      return;
+
+    if (USE_DUMMY_VILLAGE_DATA) {
+      console.log('[fetchVillageJson] Using village dummy data');
+      result = village_dummy_data;
+    } else {
+      if (!process.env.REACT_APP_API_URL) {
+        console.error('[fetchVillageJson] REACT_APP_API_URL is not set');
+        return;
+      }
+
+      const endpoint =
+        `${process.env.REACT_APP_API_URL}/download_kyl_village_data` +
+        `?state=${transformName(state.label)}` +
+        `&district=${transformName(district.label)}` +
+        `&block=${transformName(block.label)}` +
+        `&file_type=json`;
+
+      const response = await fetch(endpoint);
+
+      if (!response.ok) {
+        const is404 = response.status === 404;
+        console.error(`[fetchVillageJson] HTTP ${response.status}`);
+        setVillageJson(null);
+        setVillageJsonError(is404 ? 'not_found' : 'network');
+        return;
+      }
+
+      try {
+        result = await response.json();
+      } catch (parseError) {
+        console.error('[fetchVillageJson] Parse error:', parseError);
+        setVillageJson(null);
+        setVillageJsonError('parse');
+        return;
+      }
     }
-  
+
     setVillageJsonError(null);
     setVillageJson(result);
-  };
+
+    console.log("Village count:", result?.length);
+
+  } catch (error) {
+    console.error('[fetchVillageJson] Error:', error);
+    setVillageJson(null);
+    setVillageJsonError('network');
+  }
+};
+
+  // const fetchVillageJson = async () => {
+  //   if (!process.env.REACT_APP_API_URL) {
+  //     console.error('[fetchVillageJson] REACT_APP_API_URL is not set');
+  //     return;
+  //   }
+  
+  //   const endpoint =
+  //     `${process.env.REACT_APP_API_URL}/download_kyl_village_data` +
+  //     `?state=${transformName(state.label)}` +
+  //     `&district=${transformName(district.label)}` +
+  //     `&block=${transformName(block.label)}` +
+  //     `&file_type=json`;
+  
+  //   setVillageJsonError(null);
+  
+  //   let response;
+  //   try {
+  //     response = await fetch(endpoint);
+  //   } catch (networkError) {
+  //     // VillageFiltersBanner handles the message — no emitLayerError, no toast.
+  //     console.error('[fetchVillageJson] Network error:', networkError);
+  //     setVillageJson(null);
+  //     setVillageJsonError('network');
+  //     return;
+  //   }
+  
+  //   if (!response.ok) {
+  //     const is404 = response.status === 404;
+  //     console.error(`[fetchVillageJson] HTTP ${response.status} from ${endpoint}`);
+  //     setVillageJson(null);
+  //     setVillageJsonError(is404 ? 'not_found' : 'network');
+  //     return;
+  //   }
+  
+  //   let result;
+  //   try {
+  //     result = await response.json();
+  //   } catch (parseError) {
+  //     console.error('[fetchVillageJson] Parse error:', parseError);
+  //     setVillageJson(null);
+  //     setVillageJsonError('parse');
+  //     return;
+  //   }
+  
+  //   setVillageJsonError(null);
+  //   setVillageJson(result);
+  // };
 
   function watchForImageLoadError(layerName, onError, timeoutMs = 8000) {
     let settled = false;
