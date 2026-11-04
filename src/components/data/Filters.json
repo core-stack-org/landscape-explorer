@@ -291,18 +291,18 @@
         "stroke": "rgba(244, 208, 63, 1)"
       },
       {
-        "label": "At least one drought year",
-        "lower": 1,
-        "upper": 9999,
-        "fill": "rgba(235, 152, 78, 0.8)",
-        "stroke": "rgba(235, 152, 78, 1)"
-      },
-      {
         "label": "At least two drought years",
         "lower": 2,
         "upper": 9999,
         "fill": "rgba(231, 76, 60, 0.8)",
         "stroke": "rgba(231, 76, 60, 1)"
+      },
+      {
+        "label": "At least one drought year",
+        "lower": 1,
+        "upper": 9999,
+        "fill": "rgba(235, 152, 78, 0.8)",
+        "stroke": "rgba(235, 152, 78, 1)"
       }
     ]
   },
