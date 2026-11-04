@@ -1209,8 +1209,8 @@ const KYLDashboardPage = () => {
           `${transformName(districtName)}_${transformName(blockName)}`
         ),
         getWebGlPolygonLayers(
-          "mws_layers",
-          `deltaG_well_depth_${transformName(district.label)}_${transformName(block.label)}`
+          "mws",
+          `mws_${transformName(district.label)}_${transformName(block.label)}`
         ),
       ]);
   
