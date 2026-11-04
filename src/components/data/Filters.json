@@ -326,18 +326,18 @@
         "stroke": "rgba(210, 180, 140, 1)"
       },
       {
-        "label": "At least one week of dry spell",
-        "lower": 1,
-        "upper": 999999999,
-        "fill": "rgba(139, 69, 19, 0.8)",
-        "stroke": "rgba(139, 69, 19, 1)"
-      },
-      {
         "label": "At least two weeks of dry spells",
         "lower": 2,
         "upper": 9999999999,
         "fill": "rgba(90, 46, 15, 0.8)",
         "stroke": "rgba(90, 46, 15, 1)"
+      },
+      {
+        "label": "At least one week of dry spell",
+        "lower": 1,
+        "upper": 999999999,
+        "fill": "rgba(139, 69, 19, 0.8)",
+        "stroke": "rgba(139, 69, 19, 1)"
       }
     ]
   },
@@ -961,11 +961,11 @@
         "stroke": "rgba(60, 179, 113, 1)"
       },
       {
-        "label": "Low (Less than 2 fire days per year)",
-        "lower": 0,
-        "upper": 2,
-        "fill": "rgba(255, 215, 0, 0.8)",
-        "stroke": "rgba(218, 165, 32, 1)"
+        "label": "High (More than 5 fire days per year)",
+        "lower": 5,
+        "upper": 9999999,
+        "fill": "rgba(220, 20, 60, 0.8)",
+        "stroke": "rgba(139, 0, 0, 1)"
       },
       {
         "label": "Moderate (Between 2 to 5 fire days per year)",
@@ -975,11 +975,11 @@
         "stroke": "rgba(230, 81, 0, 1)"
       },
       {
-        "label": "High (More than 5 fire days per year)",
-        "lower": 5,
-        "upper": 9999999,
-        "fill": "rgba(220, 20, 60, 0.8)",
-        "stroke": "rgba(139, 0, 0, 1)"
+        "label": "Low (Less than 2 fire days per year)",
+        "lower": 0,
+        "upper": 2,
+        "fill": "rgba(255, 215, 0, 0.8)",
+        "stroke": "rgba(218, 165, 32, 1)"
       }
     ]
   },
