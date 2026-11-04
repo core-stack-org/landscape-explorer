@@ -505,7 +505,7 @@
                             {
                                 "id": "sig_01",
                                 "type": "range",
-                                "Key": "nitrogen_low_ratio",
+                                "Key": "low_nitrogen_percent",
                                 "value": {
                                     "lower": 0.5,
                                     "upper": 99999
@@ -515,7 +515,7 @@
                             {
                                 "id": "sig_02",
                                 "type": "range",
-                                "Key": "phosphorus_low_ratio",
+                                "Key": "low_phosphorus_percent",
                                 "value": {
                                     "lower": 0.5,
                                     "upper": 99999
@@ -525,7 +525,7 @@
                             {
                                 "id": "sig_03",
                                 "type": "range",
-                                "Key": "potassium_low_ratio",
+                                "Key": "low_potassium_percent",
                                 "value": {
                                     "lower": 0.5,
                                     "upper": 99999
@@ -535,7 +535,7 @@
                             {
                                 "id": "sig_04",
                                 "type": "range",
-                                "Key": "organic_carbon_low_ratio",
+                                "Key": "low_organic_carbon_percent",
                                 "value": {
                                     "lower": 0.5,
                                     "upper": 99999
@@ -858,7 +858,7 @@
                             {
                                 "id": "sig_01",
                                 "type": "range",
-                                "Key": "tree_loss_in_tree_in_shrub_area_in_ha",
+                                "Key": "trees_in_grassland_loss",
                                 "value": {
                                     "lower": 30,
                                     "upper": 99999
@@ -878,7 +878,7 @@
                             {
                                 "id": "sig_03",
                                 "type": "range",
-                                "Key": "ndvi_shrubs_trend",
+                                "Key": "shrubs_trend",
                                 "value": {
                                     "lower": -1,
                                     "upper": 0
