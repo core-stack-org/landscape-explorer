@@ -71,7 +71,7 @@ function inRange(record, field, lower, upper) {
   if (isNaN(num) || MISSING_VALUE_SENTINELS.has(num)) return false;
   if(lower == upper)
     return num == lower
-  return num > lower && num <= upper;
+  return num >= lower && num <= upper;
 }
 
 function matchFilters(selections, index) {
