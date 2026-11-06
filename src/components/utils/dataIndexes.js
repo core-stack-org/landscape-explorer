@@ -173,6 +173,7 @@ function matchPatterns(selections, byId) {
 
     const matched = new Set();
     for (const [id, record] of byId) {
+      console.log(record, pattern.root);
             const isMatch = evaluateNode(record, pattern.root);
       // const isMatch = pattern.logic === 'AND'
       //   ? pattern.conditions.every((c) => conditionMatches(record, c))

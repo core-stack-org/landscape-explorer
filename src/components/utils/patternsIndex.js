@@ -70,6 +70,16 @@ function normalizeNode(node, signalsById) {
 //   SUBCATS_BY_CATEGORY.set(category, subcategories);
 // }
 
+const q = (v) => (typeof v === 'string' ? `'${v}'` : v);
+const signalToText = (s) => {
+  if (s.type === 'logic') return `(${s.Values.map(signalToText).join(` ${s.logic} `)})`;
+  if (s.type === 'equal') return `${s.Key} == ${q(s.value)}`;
+  if (s.type === 'not_equal') return `${s.Key} not in [${q(s.value)}]`;
+  if (s.type === 'range') return `${s.Key} between ${s.value.lower} and ${s.value.upper}`;
+  return s.Key;
+};
+
+
 for (const category of CATEGORIES) {
   const subcategories = [];
   const stresses = ROOT[category].observed_stresses || {};
@@ -83,6 +93,9 @@ for (const category of CATEGORIES) {
         name: p.Name,
         patternCategory: p.Category,
         characteristics: p.Characteristics,
+        comment: p.Comment,
+        signalTexts: Object.fromEntries((p.Signals || []).map((s) => [s.id, signalToText(s)])),
+        templates: (p.Signals || []).map((s) => s.template),
         level: LEVEL_CODE[p.level] ?? p.level,
         root: normalizeNode(p.Trigger, signalsById),
         logic: p.Trigger.logic,
