@@ -578,14 +578,21 @@ const KYLRightSidebar = ({
       const layer = await getFarmBoundariesLayer(state.label, district.label, block.label);
       layer.setZIndex(20);
 
-      // Low-MAI episode count (2017-24). 3-class scale: none = calm green,
-      // 1-2 = amber, 3+ = red. Styles are built once and reused — not per feature.
-      const DROUGHT_FREQUENCY_BINS = [
-        { max: 0,        fill: 'rgba(200, 230, 201, 0.55)', stroke: 'rgba(102, 187, 106, 1)' },
-        { max: 2,        fill: 'rgba(254, 178, 76, 0.55)',  stroke: 'rgba(203, 142, 61, 1)' },
-        { max: Infinity, fill: 'rgba(227, 26, 28, 0.55)',   stroke: 'rgba(182, 21, 22, 1)' },
+      // Drought return period (years between droughts), not a raw episode
+      // count: 0 = no drought observed (best), 1 = drought every year
+      // (worst), 2 = every 2 years (moderate), 3+ = every 3+ years (good —
+      // infrequent, though not quite "none"). Styles are built once and
+      // reused — not per feature.
+      // `frequency` arrives as a continuous number (e.g. 2.25), not a clean
+      // integer, so bins must cover ranges, not exact equality — a value
+      // like 2.25 has to land in the "2 yrs" bucket, not fall through.
+      const DROUGHT_RETURN_PERIOD_BINS = [
+        { match: (n) => n === 0,              fill: 'rgba(102, 187, 106, 0.55)', stroke: 'rgba(56, 142, 60, 1)' },
+        { match: (n) => n > 0 && n < 1.5,     fill: 'rgba(227, 26, 28, 0.55)',   stroke: 'rgba(182, 21, 22, 1)' },
+        { match: (n) => n >= 1.5 && n < 2.5,  fill: 'rgba(254, 178, 76, 0.55)',  stroke: 'rgba(203, 142, 61, 1)' },
+        { match: (n) => n >= 2.5,             fill: 'rgba(200, 230, 201, 0.55)', stroke: 'rgba(102, 187, 106, 1)' },
       ];
-      const droughtFrequencyStyles = DROUGHT_FREQUENCY_BINS.map((b) => new Style({
+      const droughtReturnPeriodStyles = DROUGHT_RETURN_PERIOD_BINS.map((b) => new Style({
         stroke: new Stroke({ color: b.stroke, width: 1.2 }),
         fill: new Fill({ color: b.fill }),
       }));
@@ -594,7 +601,7 @@ const KYLRightSidebar = ({
         fill: new Fill({ color: 'rgba(150, 150, 150, 0.12)' }),
       });
       // Purple, not red, so the selected farm never reads as just another
-      // high-drought-frequency farm.
+      // frequent-drought farm.
       const farmSelectedStyle = new Style({
         stroke: new Stroke({ color: 'rgba(124, 58, 237, 1)', width: 2.8 }),
         fill: new Fill({ color: 'rgba(124, 58, 237, 0.22)' }),
@@ -603,8 +610,8 @@ const KYLRightSidebar = ({
       const styleForDroughtFrequency = (freq) => {
         const n = Number(freq);
         if (freq === null || freq === undefined || !Number.isFinite(n) || n < 0) return noFrequencyStyle;
-        const idx = DROUGHT_FREQUENCY_BINS.findIndex((b) => n <= b.max);
-        return droughtFrequencyStyles[idx === -1 ? droughtFrequencyStyles.length - 1 : idx];
+        const idx = DROUGHT_RETURN_PERIOD_BINS.findIndex((b) => b.match(n));
+        return droughtReturnPeriodStyles[idx === -1 ? droughtReturnPeriodStyles.length - 1 : idx];
       };
 
       layer.setStyle((feature) => {
@@ -2203,6 +2210,44 @@ const sheet5Count =
   };
 
   const mwsRecord = mapHits.mws ? dataJson?.find((item) => String(item.mws_id) === String(mapHits.mws.uid)) ?? null : null;
+
+  // Villages intersecting every currently-selected MWS (allSelectedMWSIds —
+  // the same union mwsVillageIntersections is already built from), not just
+  // the single most-recently-clicked one, so the Village tab's list covers
+  // all of them when more than one MWS is selected. Deduplicated since the
+  // same village can intersect more than one selected MWS.
+  const currentMwsVillages = React.useMemo(() => {
+    const seen = new Map();
+    mwsVillageIntersections.forEach((mws) => {
+      mws.villages.forEach((v) => {
+        if (!seen.has(v.villageId)) seen.set(v.villageId, v);
+      });
+    });
+    return [...seen.values()];
+  }, [mwsVillageIntersections]);
+
+  // Village selection lives entirely here now — never set by a map click (see
+  // useMapHits.js). Picking a row in the Village tab's list sets it; "back to
+  // list" clears it. The purple map highlight already follows mapHits.village
+  // automatically (kyl_dashboard.jsx's clickedVillageId effect).
+  const handleSelectVillage = (villageId) => {
+    const name = villageNameIndex.get(String(villageId)) || null;
+    setMapHits((prev) => ({
+      ...prev,
+      village: { id: villageId, properties: { vill_name: name } },
+    }));
+  };
+  const handleBackToVillageList = () => {
+    setMapHits((prev) => ({ ...prev, village: null }));
+  };
+
+  const villageListBundle = {
+    villages: currentMwsVillages,
+    onSelectVillage: handleSelectVillage,
+    selectedMwsCount: allSelectedMWSIds.length,
+    mwsUid: mapHits.mws?.uid ?? null,
+  };
+
   const mwsBundle = {
     record: mwsRecord,
     selectedMws: manualSelectedMWS ?? [],
@@ -2230,10 +2275,13 @@ const sheet5Count =
     : null;
   const villageBundle = {
     record: villageRecord,
-    // vill_name lives on the clicked vector-tile feature, not villageJson.
+    // Set from villageNameIndex when picked off the Village tab's list
+    // (handleSelectVillage) — village is never a map-click hit any more.
     name: mapHits.village?.properties?.vill_name ?? null,
     villageId: mapHits.village?.id ?? null,
     buildVillageReportUrl,
+    onBackToList: handleBackToVillageList,
+    selectedMwsCount: allSelectedMWSIds.length,
   };
 
   const layersOn = { mws: true, village: true, farm: showFarmBoundaries, waterbody: showWB, plan: showPlans, steward: showStewards };
@@ -2252,6 +2300,7 @@ const sheet5Count =
         scope={scopeNode}
         mws={mwsBundle}
         village={villageBundle}
+        villageList={villageListBundle}
         farm={farmBundle}
         ctx={ctx}
       />

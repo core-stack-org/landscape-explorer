@@ -108,7 +108,7 @@ export function WhatThisPlaceIs({ record }) {
     || record.lulc_slope_category || record.lulc_plain_category || null;
 
   return (
-    <Card title="What this place is">
+    <Card title="Land Use">
       <StackedBar segments={segments} />
       <div>
         <Row label="Terrain" value={terrainLabel || '--'} />
@@ -151,8 +151,8 @@ export function WaterSection({ record }) {
   return (
     <Card title="Water">
       <div className="flex gap-2">
-        <Tile label="Rainfall" value={isValid(record.avg_precipitation) ? `${fmt(record.avg_precipitation)} mm` : '--'} band={rainfallCaption ? `${rainfallCaption} band` : null} />
-        <Tile label="Runoff" value={isValid(record.avg_runoff) ? `${fmt(record.avg_runoff)} mm` : '--'} band={runoffCaption ? `${runoffCaption} band` : null} />
+        <Tile label="Rainfall" value={isValid(record.avg_precipitation) ? `${fmt(record.avg_precipitation)} mm` : '--'} />
+        <Tile label="Runoff" value={isValid(record.avg_runoff) ? `${fmt(record.avg_runoff)} mm` : '--'} />
       </div>
 
       {hasSurfaceWater && (

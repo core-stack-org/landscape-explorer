@@ -34,7 +34,7 @@ import { layerRegistry } from "../components/rightSidebar/layerRegistry.js";
 import { mapHitsAtom } from "../components/rightSidebar/atoms.js";
 import KYLMapContainer from "../components/kyl_mapContainer.jsx";
 
-import { toast, Toaster } from "react-hot-toast";
+import { toast } from "react-hot-toast";
 import {
   trackPageView,
   initializeAnalytics,
@@ -2081,7 +2081,9 @@ const KYLDashboardPage = () => {
         tooltip.style.display = "block";
         overlay.setPosition(evt.coordinate);
 
-        map.getTargetElement().style.cursor = "pointer";
+        // Not "pointer" — the village boundary is hover-only now, it has no
+        // click interaction of its own (see useMapHits.js).
+        map.getTargetElement().style.cursor = "";
       } else {
         tooltip.style.display = "none";
         overlay.setPosition(undefined);
@@ -2331,6 +2333,16 @@ const handlePatternRemoval = (pattern) => {
     if (!mapRef.current) return;
 
     const handleMapClick = (event) => {
+      // Whether this click actually landed on a farm — the right sidebar's
+      // own click collector (useMapHits) follows the same rule to decide
+      // whether a farm click should select (not toggle) its MWS/Village.
+      const farmLayer = layerRegistry.get("farm");
+      const farmsOn = !!farmLayer && mapRef.current.getLayers().getArray().includes(farmLayer);
+      const clickedOnFarm = farmsOn && !!mapRef.current.forEachFeatureAtPixel(
+        event.pixel,
+        (feature, layer) => (layer === farmLayer ? feature : undefined),
+      );
+
       const mwsSource = mwsLayerRef.current?.getSource();
       const feature = mwsSource
         ? mwsSource.getFeaturesAtCoordinate(event.coordinate)[0]
@@ -2340,12 +2352,23 @@ const handlePatternRemoval = (pattern) => {
 
       const uid = feature.get("uid");
 
-      // Clicking only ever adds/selects an MWS and switches the profile
-      // shown to it — it never deselects. Removing an MWS from the
-      // selection is a deliberate action (the panel's remove button or a
-      // manual reset), never a side effect of clicking elsewhere on the map.
+      // A direct MWS click (farm layer off, or the click missed every farm)
+      // toggles the same MWS off on a repeat click, same as handleRemoveMWS
+      // does for the panel's remove button. A farm click always selects the
+      // MWS it sits in and never removes it, even on a repeat click.
+      if (!clickedOnFarm && manualSelectedMWS.includes(uid)) {
+        handleRemoveMWS(uid);
+        return;
+      }
+
+      if (manualSelectedMWS.includes(uid)) {
+        setSelectedMWSProfile(feature.getProperties());
+        setHighlightMWS(uid);
+        return;
+      }
+
       setManualSelectedMWS((prev) => {
-        const updated = prev.includes(uid) ? prev : [...prev, uid];
+        const updated = [...prev, uid];
         updateSelectedMWSStyle(updated);
         return updated;
       });
@@ -2365,7 +2388,7 @@ const handlePatternRemoval = (pattern) => {
         mapRef.current.un("click", handleMapClick);
       }
     };
-  }, [toastId, mapRef.current]);
+  }, [toastId, mapRef.current, manualSelectedMWS]);
 
 
  
@@ -2529,7 +2552,6 @@ const handlePatternRemoval = (pattern) => {
 
   return (
     <div className="h-screen bg-white flex flex-col overflow-hidden">
-      <Toaster />
       <div className="shrink-0 bg-white border-b border-gray-100">
         <LandingNavbar />
       </div>

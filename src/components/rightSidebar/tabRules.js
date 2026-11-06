@@ -10,8 +10,12 @@ export const TAB_LABELS = {
 };
 
 // Plan and steward are cards inside the tab area, not tabs (see Decisions).
+//
+// Village has no click interaction of its own any more — the tab shows up
+// whenever an MWS is selected (it lists that MWS's intersecting villages to
+// pick from), not only once a specific village has been chosen from that list.
 export function deriveTabs(hits) {
-  return TAB_ORDER.filter((type) => hits?.[type] != null);
+  return TAB_ORDER.filter((type) => (type === 'village' ? hits?.mws != null : hits?.[type] != null));
 }
 
 export function shouldShowTabStrip(tabs) {

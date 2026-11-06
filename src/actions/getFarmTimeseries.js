@@ -1,4 +1,4 @@
-const GRAPHQL_URL = 'https://www.cse.iitd.ernet.in/act4dws6/corelens/graphql/v1';
+const GRAPHQL_URL = 'https://www.cse.iitd.ac.in/act4dws6/corelens/graphql/v1';
 //const GRAPHQL_URL = 'http://act4dws6.cse.iitd.ac.in/corelens/graphql/v1'
 //const GRAPHQL_URL = 'http://0.0.0.0:8080/graphql/v1'
 const FARM_TIMESERIES_QUERY = `

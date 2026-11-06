@@ -2,10 +2,13 @@ import { isValid } from './farmDetailsUtils';
 import { colorBorder, colorSurface, colorInk, colorMuted } from './farmDetailsTokens';
 
 function StatCard({ label, value, caption }) {
+  // A text value (e.g. "No Drought Observed") wraps across several lines at
+  // the number size, so it gets a smaller size instead of the 22px numbers use.
+  const isTextValue = typeof value === 'string' && !/^-?[\d.]+$/.test(value.trim()) && value !== '--';
   return (
     <div className="flex-1 rounded-2xl px-4 py-3" style={{ background: colorSurface, border: `1px solid ${colorBorder}` }}>
       <div className="text-[11px]" style={{ color: colorMuted }}>{label}</div>
-      <div className="text-[22px] font-bold leading-tight mt-1" style={{ color: colorInk }}>{value}</div>
+      <div className={`font-bold leading-snug mt-1 ${isTextValue ? 'text-[14px]' : 'text-[22px]'}`} style={{ color: colorInk }}>{value}</div>
       <div className="text-[10px] mt-0.5" style={{ color: colorMuted }}>{caption}</div>
     </div>
   );
@@ -25,14 +28,12 @@ export default function DroughtStats({ frequency, intensity }) {
       </div>
       <div className="flex gap-3">
         <StatCard
-          label="How often"
-          value={hasFrequency ? Number(frequency).toFixed(2) : '--'}
-          caption="Low MAI Episodes"
+          label="Return Period"
+          value={hasFrequency ? (Number(frequency) === 0 ? 'No Drought Observed' : Number(frequency).toFixed(2)) : '--'}
         />
         <StatCard
-          label="How hard"
+          label="Intensity"
           value={hasIntensity ? Number(intensity).toFixed(2) : '--'}
-          caption="mean MAI, drought years"
         />
       </div>
     </section>

@@ -5,10 +5,16 @@ describe('deriveTabs', () => {
     expect(deriveTabs({ waterbody: {}, mws: {}, farm: {} })).toEqual(['mws', 'farm', 'waterbody']);
   });
   it('ignores null hits', () => {
-    expect(deriveTabs({ mws: {}, farm: null })).toEqual(['mws']);
+    expect(deriveTabs({ mws: null, farm: null })).toEqual([]);
   });
   it('places village between mws and farm', () => {
     expect(deriveTabs({ farm: {}, village: {}, mws: {} })).toEqual(['mws', 'village', 'farm']);
+  });
+  it('shows village whenever mws is selected, even with no village chosen yet', () => {
+    expect(deriveTabs({ mws: {}, village: null, farm: null })).toEqual(['mws', 'village']);
+  });
+  it('hides village when no mws is selected, even if a village hit somehow exists', () => {
+    expect(deriveTabs({ mws: null, village: {}, farm: null })).toEqual([]);
   });
 });
 

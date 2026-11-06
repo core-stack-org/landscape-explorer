@@ -200,12 +200,13 @@ const MapLegend = ({ showMWS, showVillages, currentLayer, showConnectivity,showP
     },
   ];
 
-  // Matches DROUGHT_FREQUENCY_BINS in kyl_rightSidebar.jsx's toggleFarmBoundaries
-  // exactly — same colours, same thresholds.
+  // Matches DROUGHT_RETURN_PERIOD_BINS in kyl_rightSidebar.jsx's
+  // toggleFarmBoundaries exactly — same colours, same thresholds.
   const farmDroughtFrequencyLegendItems = [
-    { color: "rgba(200, 230, 201, 0.55)", border: "rgba(102, 187, 106, 1)", label: "No Episodes" },
-    { color: "rgba(254, 178, 76, 0.55)", border: "rgba(203, 142, 61, 1)", label: "<= 2 Episodes" },
-    { color: "rgba(227, 26, 28, 0.55)", border: "rgba(182, 21, 22, 1)", label: "> 2 Episodes" },
+    { color: "rgba(102, 187, 106, 0.55)", border: "rgba(56, 142, 60, 1)", label: "No drought observed" },
+    { color: "rgba(227, 26, 28, 0.55)", border: "rgba(182, 21, 22, 1)", label: "Return period: 1 yr" },
+    { color: "rgba(254, 178, 76, 0.55)", border: "rgba(203, 142, 61, 1)", label: "Return period: 2 yrs" },
+    { color: "rgba(200, 230, 201, 0.55)", border: "rgba(102, 187, 106, 1)", label: "Return period: 3+ yrs" },
     { color: "rgba(150, 150, 150, 0.12)", border: "rgba(150, 150, 150, 1)", label: "No data" },
   ];
 
@@ -1167,7 +1168,7 @@ const SoilTexture = [
               {showFarmBoundaries && (
                 <div className="space-y-2">
                   <h4 className="text-xs font-medium text-gray-600">
-                    Farms — Low MAI Episodes
+                    Farms — Drought Return Period
                   </h4>
                   {farmDroughtFrequencyLegendItems.map((item, index) => (
                     <div
