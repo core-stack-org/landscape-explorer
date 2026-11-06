@@ -1,5 +1,8 @@
+import { Info } from 'lucide-react';
+
 const KYLPatternDisplay = ({ pattern, isDisabled, isSelected, onPatternSelect, handlePatternRemoval }) => {
     //const [isExpanded, setIsExpanded] = useState(false);
+    
 
     const handleApplyClick = () => {
         if (!isDisabled && !isSelected) {
@@ -15,29 +18,31 @@ const KYLPatternDisplay = ({ pattern, isDisabled, isSelected, onPatternSelect, h
             {/* Pattern Header - Always Visible */}
             <div className="space-y-2">
                 <div className="flex items-start justify-between">
+                    
                     <div className="flex-1">
                         <div className="flex items-center gap-2">
-                            <h3 className="text-sm font-semibold text-gray-800">
+                            <h3 className="text-xs font-semibold text-gray-800">
                                 {pattern.patternCategory}
                             </h3>
                         </div>
-                        <div className="flex items-center gap-2 mt-1">
-                            <div className="text-xs text-indigo-600 font-medium">
-                                {pattern.subcategory}
-                            </div>
-                            <span className="text-xs text-gray-400">•</span>
+                        {/* <div className="flex items-center gap-2 mt-1">
                             <div className="text-xs text-gray-500">
                                 {pattern.level === 0 ? 'MWS' : 'Village'}
                             </div>
-                        </div>
+                        </div> */}
                     </div>
+                     {pattern.triggerExp && (
+                        <div className="relative group shrink-0 ml-2">
+                            <Info className="w-4 h-4 text-gray-400 hover:text-indigo-600 cursor-pointer" />
+                            <div className="hidden group-hover:block absolute right-0 top-full mt-1 w-56 z-50 rounded-md bg-gray-800 text-white text-[11px] leading-snug px-3 py-2 shadow-lg">
+                                <span className="font-medium">Trigger: </span>
+                                {pattern.triggerExp}
+                            </div>
+                        </div>
+                    )}
                 </div>
 
-                {/* Characteristics - Always Visible */}
-                <div className="text-xs text-gray-600 leading-relaxed">
-                    <span className="font-medium text-gray-700">Characteristics: </span>
-                    {pattern.characteristics}
-                </div>
+           
             </div>
 
             {/* Apply Pattern Button */}

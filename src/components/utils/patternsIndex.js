@@ -100,6 +100,7 @@ for (const category of CATEGORIES) {
         root: normalizeNode(p.Trigger, signalsById),
         logic: p.Trigger.logic,
         conditions: p.Signals.flatMap(flattenSignal),
+        triggerExp: p.Trigger?.Trigger_Exp,
         // conditions: p.Signals.map((s) => ({ key: s.Key, type: s.type, value: s.value })),
       };
     });

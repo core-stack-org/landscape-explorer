@@ -281,6 +281,46 @@ export default function ScopePanel({
         )}
       </div>
 
+       {patterns.length > 0 && (
+        <div className="bg-white rounded-xl border border-gray-100 p-4 shadow-sm">
+          <SectionHeader title="Selected Patterns" count={patterns.length} />
+          <div className="max-h-[140px] overflow-y-auto pr-1 space-y-1.5">
+            {patterns.map((pattern, index) => (
+              <div key={index} className="flex items-start gap-2 bg-gray-50 rounded-lg px-3 py-2">
+                <div className="flex-1 min-w-0">
+                  <p className="text-[13px] font-semibold text-gray-700 break-words">
+                    {pattern.category} › {pattern.subcategory} › {pattern.patternCategory}
+                  </p>
+                  {/* <p className="text-[12px] text-gray-500 mt-1 leading-relaxed">
+                    {(pattern.comment || '').split(/(sig_\d+)/g).map((part, i) =>
+                      pattern.signalTexts?.[part] ? (
+                        <span
+                          key={i}
+                          title={pattern.signalTexts[part]}
+                          className="underline decoration-dotted cursor-pointer text-indigo-600"
+                        >
+                          {part}
+                        </span>
+                      ) : (
+                        part
+                      )
+                    )}
+                  </p> */}
+                </div>
+                <button
+                  onClick={() => handlePatternRemoval(pattern)}
+                  className={`text-gray-300 hover:text-red-400 transition-colors shrink-0 ${
+                    toggleStates[pattern.patternName] ? 'invisible' : ''
+                  }`}
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {displayVillages.length > 0 && (
         <div className="bg-white rounded-xl border border-gray-100 p-4 shadow-sm">
           <div className="flex items-center justify-between mb-3">
@@ -306,31 +346,7 @@ export default function ScopePanel({
         </div>
       )}
 
-      {patterns.length > 0 && (
-        <div className="bg-white rounded-xl border border-gray-100 p-4 shadow-sm">
-          <SectionHeader title="Selected Patterns" count={patterns.length} />
-          <div className="max-h-[140px] overflow-y-auto pr-1 space-y-1.5">
-            {patterns.map((pattern, index) => (
-              <div key={index} className="flex items-center gap-2 bg-gray-50 rounded-lg px-3 py-2">
-                <div className="flex-1 min-w-0">
-                  <p className="text-[11px] font-semibold text-gray-700 truncate">{pattern.category}</p>
-                  {pattern.patternName && pattern.patternName !== pattern.category && (
-                    <p className="text-[10px] text-gray-400 mt-0.5">{pattern.patternName}</p>
-                  )}
-                </div>
-                <button
-                  onClick={() => handlePatternRemoval(pattern)}
-                  className={`text-gray-300 hover:text-red-400 transition-colors shrink-0 ${
-                    toggleStates[pattern.patternName] ? 'invisible' : ''
-                  }`}
-                >
-                  <X className="w-3.5 h-3.5" />
-                </button>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
+     
     </div>
   );
 }
