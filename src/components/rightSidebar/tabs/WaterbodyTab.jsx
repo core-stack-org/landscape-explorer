@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
+import { ExternalLink } from 'lucide-react';
 import { ExpandIcon } from '../../farmDetails/icons';
 import WaterbodySeasonModal from './WaterbodySeasonModal';
 import {
-  colorBorder, colorBorderSoft, colorSurface, colorInk, colorMuted,
+  colorBorder, colorBorderSoft, colorSurface, colorInk, colorMuted, colorPrimaryHover,
   colorSeasonKharif, colorSeasonRabi, colorSeasonZaid,
 } from '../sidebarTokens';
 
@@ -108,6 +109,7 @@ export default function WaterbodyTab({ waterbody }) {
   const [seasonModalOpen, setSeasonModalOpen] = useState(false);
   const p = waterbody?.properties ?? {};
   const uid = p.UID ?? waterbody?.id;
+  const dashboardUrl = waterbody?.dashboardUrl;
 
   useEffect(() => {
     setSeasonModalOpen(false);
@@ -153,6 +155,18 @@ export default function WaterbodyTab({ waterbody }) {
           {position && <Row label="Position" value={position} />}
           {drainage && <Row label="Drainage" value={drainage} />}
         </div>
+
+        {dashboardUrl && (
+          <button
+            type="button"
+            onClick={() => window.open(dashboardUrl, '_blank')}
+            className="w-full flex items-center justify-center gap-2 py-2 rounded-lg text-[12px] font-semibold"
+            style={{ border: `1px solid ${colorBorder}`, color: colorPrimaryHover }}
+          >
+            <ExternalLink size={14} />
+            View Waterbody Profile
+          </button>
+        )}
       </div>
 
       {hasSeasonRows && (
