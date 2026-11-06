@@ -206,7 +206,7 @@ export default function ScopePanel({
                     <path d="M3 9h18M9 21V9" />
                   </svg>
                 )}
-                {farmBoundariesLoading ? 'Loading…' : showFarmBoundaries ? 'Hide Farm Boundaries' : 'Show Farm Boundaries'}
+                {farmBoundariesLoading ? 'Loading…' : showFarmBoundaries ? 'Hide Farm Boundaries' : 'Show Farm Boundaries (Experimental)'}
               </button>
             </div>
           </div>
