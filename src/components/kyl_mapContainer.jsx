@@ -160,12 +160,12 @@ const MapZoomControls = ({ mapRef }) => {
 };
 
 // Updated MapLegend component
-const MapLegend = ({ showMWS, showVillages, currentLayer, showConnectivity,showPlans,setShowPlans }) => {
+const MapLegend = ({ showMWS, showVillages, currentLayer, showConnectivity,showPlans,setShowPlans, showFarmBoundaries }) => {
   // Add state for collapsed status
   const [isCollapsed, setIsCollapsed] = useState(false);
 
   // If no layers are shown, don't display legend
-  if (!showMWS && !showVillages && !showPlans && (!currentLayer || currentLayer.length === 0))
+  if (!showMWS && !showVillages && !showPlans && !showFarmBoundaries && (!currentLayer || currentLayer.length === 0))
     return null;
 
   const activeWBLayer = currentLayer?.find((layer) =>
@@ -184,6 +184,9 @@ const MapLegend = ({ showMWS, showVillages, currentLayer, showConnectivity,showP
       color: "rgba(85, 152, 229, 0.6)",
       border: "rgb(85, 152, 229)",
       name: "Matched MWS",
+      color: "rgba(85, 152, 229, 0.6)",
+      border: "rgb(85, 152, 229)",
+      name: "Microwatershed Boundaries",
       type: "mws",
     },
   ];
@@ -195,6 +198,16 @@ const MapLegend = ({ showMWS, showVillages, currentLayer, showConnectivity,showP
       name: "Village Boundaries",
       type: "village",
     },
+  ];
+
+  // Matches DROUGHT_RETURN_PERIOD_BINS in kyl_rightSidebar.jsx's
+  // toggleFarmBoundaries exactly — same colours, same thresholds.
+  const farmDroughtFrequencyLegendItems = [
+    { color: "rgba(227, 26, 28, 0.55)", border: "rgba(182, 21, 22, 1)", label: "Returns Approx. Every Year" },
+    { color: "rgba(254, 178, 76, 0.55)", border: "rgba(203, 142, 61, 1)", label: "Returns Every 2 Years" },
+    { color: "rgba(200, 230, 201, 0.55)", border: "rgba(102, 187, 106, 1)", label: "Retruns After 3+ Years" },
+        { color: "rgba(102, 187, 106, 0.55)", border: "rgba(56, 142, 60, 1)", label: "No Drought Observed" },
+    { color: "rgba(150, 150, 150, 0.12)", border: "rgba(150, 150, 150, 1)", label: "No Data" },
   ];
 
   const planLegendItems = [
@@ -1146,6 +1159,32 @@ const SoilTexture = [
                         }}
                       />
                       <span className="text-sm text-gray-600">{item.name}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Farm Boundaries Legend Section */}
+              {showFarmBoundaries && (
+                <div className="space-y-2">
+                  <h4 className="text-xs font-medium text-gray-600">
+                    Farms — Drought Return Period
+                  </h4>
+                  {farmDroughtFrequencyLegendItems.map((item, index) => (
+                    <div
+                      key={`farm-drought-${index}`}
+                      className="flex items-center gap-2"
+                    >
+                      <div
+                        className="w-4 h-4 rounded"
+                        style={{
+                          backgroundColor: item.color,
+                          border: `1px solid ${item.border}`,
+                        }}
+                      />
+                      <span className="text-sm text-gray-600">
+                        {item.label}
+                      </span>
                     </div>
                   ))}
                 </div>
@@ -2793,6 +2832,7 @@ const KYLMapContainer = ({
   showPlans,
    selectionMode,
   setSelectionMode,
+  showFarmBoundaries,
 }) => {
   const areMWSLayersAvailable = mwsLayerRef?.current !== null;
   const areVillageLayersAvailable = boundaryLayerRef?.current !== null;
@@ -2839,6 +2879,7 @@ const KYLMapContainer = ({
         currentLayer={currentLayer}
         showConnectivity={showConnectivity}
         showPlans={showPlans}
+        showFarmBoundaries={showFarmBoundaries}
       />
 
       {/* Search Bar */}

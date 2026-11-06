@@ -29,9 +29,12 @@ import getImageLayer from "../actions/getImageLayers.js";
 
 import KYLLeftSidebar from "../components/kyl_leftSidebar";
 import KYLRightSidebar from "../components/kyl_rightSidebar.jsx";
+import useMapHits from "../components/rightSidebar/useMapHits.js";
+import { layerRegistry } from "../components/rightSidebar/layerRegistry.js";
+import { mapHitsAtom } from "../components/rightSidebar/atoms.js";
 import KYLMapContainer from "../components/kyl_mapContainer.jsx";
 
-import { toast, Toaster } from "react-hot-toast";
+import { toast } from "react-hot-toast";
 import {
   trackPageView,
   initializeAnalytics,
@@ -116,6 +119,19 @@ const KYLDashboardPage = () => {
   const boundaryLayerRef = useRef(null);
   const mwsLayerRef = useRef(null);
   const waterbodiesLayerRef = useRef(null);
+
+  useMapHits(mapRef);
+  useEffect(() => {
+    const offMws = layerRegistry.register("mws", () => mwsLayerRef.current);
+    const offWaterbody = layerRegistry.register("waterbody", () => waterbodiesLayerRef.current);
+    const offVillage = layerRegistry.register("village", () => boundaryLayerRef.current);
+    return () => {
+      offMws();
+      offWaterbody();
+      offVillage();
+    };
+  }, []);
+
   const mwsConnectivityLayerRef = useRef(null);
   const mwsCentroidLayerRef = useRef(null);
   const mwsArrowLayerRef = useRef(null);
@@ -164,6 +180,7 @@ const KYLDashboardPage = () => {
   const [selectedWaterbodyForTehsil, setSelectedWaterbodyForTehsil] = useRecoilState(selectedWaterbodyForTehsilAtom);
   const [showWB, setShowWB] = useState(false);
   const [showConnectivity, setShowConnectivity] = useState(false);
+  const [showFarmBoundaries, setShowFarmBoundaries] = useState(false);
   const [selectedWaterbodyIds, setSelectedWaterbodyIds] = useState(new Set([]));
   const [isWBVisualizeOn, setIsWBVisualizeOn] = useState(false);
   const [activeWBVisualize, setActiveWBVisualize] = useState(null);
@@ -613,6 +630,23 @@ const KYLDashboardPage = () => {
     if (!mwsLayerRef.current) return;
     mwsLayerRef.current.updateStyleVariables({ highlightMWS: highlightMWS ?? -1 });
   }, [highlightMWS]);
+
+  // The village under the last click — distinct from boundaryLayer's existing
+  // yellow "isSelected" (villages intersecting the MWS selection); this is
+  // specifically the one the Village tab is showing.
+  const mapHits = useRecoilValue(mapHitsAtom);
+  const clickedVillageId = mapHits.village?.id ?? null;
+  useEffect(() => {
+    if (!boundaryLayerRef.current) return;
+    // hasClickedVillage gates the match explicitly — villages with no data
+    // encode a missing vill_ID attribute as 0 in the WebGL buffer, which must
+    // never be read as "the clicked village" when nothing is actually selected.
+    boundaryLayerRef.current.updateStyleVariables({
+      clickedVillageId: clickedVillageId ?? -1,
+      hasClickedVillage: clickedVillageId !== null,
+    });
+    boundaryLayerRef.current.getSource()?.changed();
+  }, [clickedVillageId]);
 
   useEffect(() => {
     if (!mwsArrowLayerRef.current) return;
@@ -1226,10 +1260,15 @@ const KYLDashboardPage = () => {
       boundaryLayerRef.current = boundaryLayer;
         
       // ── 3. Style boundary ────────────────────────────────────────────────────
+      // clickedVillageId (purple) is the single village the Village tab is
+      // showing; isSelected (yellow) is the broader set intersecting the MWS
+      // selection. Purple takes priority so the clicked one is never read as
+      // just another intersecting village.
       boundaryLayer.setStyle({
-        variables: { hasSelection: false, isVisualizeOn: false },
+        variables: { hasSelection: false, isVisualizeOn: false, clickedVillageId: -1, hasClickedVillage: false },
         "stroke-color": [
           "case",
+          ["all", ["var", "hasClickedVillage"], ["==", ["get", "vill_ID"], ["var", "clickedVillageId"]]], [124, 58, 237, 1],
           ["var", "isVisualizeOn"],       [0, 0, 0, 1],
           ["==", ["get", "isSelected"], 1], [255, 225, 0, 1],
           ["==", ["get", "isSelected"], 0], [
@@ -1237,8 +1276,17 @@ const KYLDashboardPage = () => {
           ],
           [0, 0, 0, 1],
         ],
-        "stroke-width": ["case", ["==", ["get", "isSelected"], 1], 2.0, 1.2],
-        "fill-color": [255, 255, 0, 0.001],
+        "stroke-width": [
+          "case",
+          ["all", ["var", "hasClickedVillage"], ["==", ["get", "vill_ID"], ["var", "clickedVillageId"]]], 2.6,
+          ["==", ["get", "isSelected"], 1], 2.0,
+          1.2,
+        ],
+        "fill-color": [
+          "case",
+          ["all", ["var", "hasClickedVillage"], ["==", ["get", "vill_ID"], ["var", "clickedVillageId"]]], [124, 58, 237, 0.25],
+          [255, 255, 0, 0.001],
+        ],
       });
   
       // ── 4. Zoom animation ────────────────────────────────────────────────────
@@ -2033,7 +2081,9 @@ const KYLDashboardPage = () => {
         tooltip.style.display = "block";
         overlay.setPosition(evt.coordinate);
 
-        map.getTargetElement().style.cursor = "pointer";
+        // Not "pointer" — the village boundary is hover-only now, it has no
+        // click interaction of its own (see useMapHits.js).
+        map.getTargetElement().style.cursor = "";
       } else {
         tooltip.style.display = "none";
         overlay.setPosition(undefined);
@@ -2283,6 +2333,16 @@ const handlePatternRemoval = (pattern) => {
     if (!mapRef.current) return;
 
     const handleMapClick = (event) => {
+      // Whether this click actually landed on a farm — the right sidebar's
+      // own click collector (useMapHits) follows the same rule to decide
+      // whether a farm click should select (not toggle) its MWS/Village.
+      const farmLayer = layerRegistry.get("farm");
+      const farmsOn = !!farmLayer && mapRef.current.getLayers().getArray().includes(farmLayer);
+      const clickedOnFarm = farmsOn && !!mapRef.current.forEachFeatureAtPixel(
+        event.pixel,
+        (feature, layer) => (layer === farmLayer ? feature : undefined),
+      );
+
       const mwsSource = mwsLayerRef.current?.getSource();
       const feature = mwsSource
         ? mwsSource.getFeaturesAtCoordinate(event.coordinate)[0]
@@ -2292,23 +2352,28 @@ const handlePatternRemoval = (pattern) => {
 
       const uid = feature.get("uid");
 
+      // A direct MWS click (farm layer off, or the click missed every farm)
+      // toggles the same MWS off on a repeat click, same as handleRemoveMWS
+      // does for the panel's remove button. A farm click always selects the
+      // MWS it sits in and never removes it, even on a repeat click.
+      if (!clickedOnFarm && manualSelectedMWS.includes(uid)) {
+        handleRemoveMWS(uid);
+        return;
+      }
+
+      if (manualSelectedMWS.includes(uid)) {
+        setSelectedMWSProfile(feature.getProperties());
+        setHighlightMWS(uid);
+        return;
+      }
+
       setManualSelectedMWS((prev) => {
-        const updated = prev.includes(uid)
-          ? prev.filter((id) => id !== uid)
-          : [...prev, uid];
-
+        const updated = [...prev, uid];
         updateSelectedMWSStyle(updated);
-
-        if (updated.length === 0) {
-          setSelectedMWSProfile(null);
-          setHighlightMWS(null);
-        } else {
-          setSelectedMWSProfile(feature.getProperties());
-          setHighlightMWS(uid);
-        }
-
         return updated;
       });
+      setSelectedMWSProfile(feature.getProperties());
+      setHighlightMWS(uid);
 
       if (toastId) {
         toast.dismiss(toastId);
@@ -2323,7 +2388,7 @@ const handlePatternRemoval = (pattern) => {
         mapRef.current.un("click", handleMapClick);
       }
     };
-  }, [toastId, mapRef.current]);
+  }, [toastId, mapRef.current, manualSelectedMWS]);
 
 
  
@@ -2409,7 +2474,18 @@ const handlePatternRemoval = (pattern) => {
       if (currentLayer !== null) {
         let tempArr = currentLayer;
         for (let i = 0; i < tempArr.length; ++i) {
-          if (tempArr[i].name === "avg_double_cropped" || tempArr[i].name === "lulc_crop_percent" || tempArr[i].name === "lulc_forest_percent" || tempArr[i].name === "lulc_shrub_percent") {
+          if (tempArr[i].name === "avg_double_cropped") {
+            mapRef.current.removeLayer(tempArr[i].layerRef[0]);
+            const tempLayer = await getImageLayer(
+              `LULC_level_3`,
+              `LULC_${lulcYear}_${transformName(district.label)}_${transformName(block.label)}_level_3`,
+              true,
+              "lulc_level_3_style"
+            );
+            mapRef.current.addLayer(tempLayer);
+            tempArr[i].layerRef[0] = tempLayer;
+          }
+          else {
             mapRef.current.removeLayer(tempArr[i].layerRef[0]);
             const tempLayer = await getImageLayer(
               `LULC_level_3`,
@@ -2476,7 +2552,6 @@ const handlePatternRemoval = (pattern) => {
 
   return (
     <div className="h-screen bg-white flex flex-col overflow-hidden">
-      <Toaster />
       <div className="shrink-0 bg-white border-b border-gray-100">
         <LandingNavbar />
       </div>
@@ -2532,11 +2607,12 @@ const handlePatternRemoval = (pattern) => {
             currentLayer={currentLayer}
             setSearchLatLong={setSearchLatLong}
             showConnectivity={showConnectivity}
-            showPlans={showPlans} 
+            showPlans={showPlans}
             setShowPlans={setShowPlans}
           selectionMode={selectionMode}
           setSelectionMode={setSelectionMode}
           showStewards
+          showFarmBoundaries={showFarmBoundaries}
           />
           <LayerErrorToast
             errors={layerErrors}
@@ -2598,6 +2674,8 @@ const handlePatternRemoval = (pattern) => {
           villageNameIndex={villageNameIndex}
           setManualSelectedMWS={setManualSelectedMWS}
           handleRemoveMWS={handleRemoveMWS}
+          showFarmBoundaries={showFarmBoundaries}
+          setShowFarmBoundaries={setShowFarmBoundaries}
         />
       </div>
     </div>
