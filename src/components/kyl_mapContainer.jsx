@@ -186,7 +186,7 @@ const MapLegend = ({ showMWS, showVillages, currentLayer, showConnectivity,showP
       name: "Matched MWS",
       color: "rgba(85, 152, 229, 0.6)",
       border: "rgb(85, 152, 229)",
-      name: "MWS Boundaries",
+      name: "Microwatershed Boundaries",
       type: "mws",
     },
   ];
@@ -203,11 +203,11 @@ const MapLegend = ({ showMWS, showVillages, currentLayer, showConnectivity,showP
   // Matches DROUGHT_RETURN_PERIOD_BINS in kyl_rightSidebar.jsx's
   // toggleFarmBoundaries exactly — same colours, same thresholds.
   const farmDroughtFrequencyLegendItems = [
-    { color: "rgba(102, 187, 106, 0.55)", border: "rgba(56, 142, 60, 1)", label: "No drought observed" },
-    { color: "rgba(227, 26, 28, 0.55)", border: "rgba(182, 21, 22, 1)", label: "Return period: 1 yr" },
-    { color: "rgba(254, 178, 76, 0.55)", border: "rgba(203, 142, 61, 1)", label: "Return period: 2 yrs" },
-    { color: "rgba(200, 230, 201, 0.55)", border: "rgba(102, 187, 106, 1)", label: "Return period: 3+ yrs" },
-    { color: "rgba(150, 150, 150, 0.12)", border: "rgba(150, 150, 150, 1)", label: "No data" },
+    { color: "rgba(227, 26, 28, 0.55)", border: "rgba(182, 21, 22, 1)", label: "Returns Approx. Every Year" },
+    { color: "rgba(254, 178, 76, 0.55)", border: "rgba(203, 142, 61, 1)", label: "Returns Every 2 Years" },
+    { color: "rgba(200, 230, 201, 0.55)", border: "rgba(102, 187, 106, 1)", label: "Retruns After 3+ Years" },
+        { color: "rgba(102, 187, 106, 0.55)", border: "rgba(56, 142, 60, 1)", label: "No Drought Observed" },
+    { color: "rgba(150, 150, 150, 0.12)", border: "rgba(150, 150, 150, 1)", label: "No Data" },
   ];
 
   const planLegendItems = [
