@@ -14,3 +14,7 @@ docs/
 scripts/
 .integrations/
 .codex/
+
+
+src/components/data/dummy.json
+src/components/data/village_dummy.json
