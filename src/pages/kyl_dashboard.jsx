@@ -209,8 +209,8 @@ const KYLDashboardPage = () => {
     setPatternSelections(selectPattern(pattern, isSelected, patternSelections));
   };
   const [boundaryLoadedVersion, setBoundaryLoadedVersion] = useState(0);
-  const USE_DUMMY_DATA = true;
-  const USE_DUMMY_VILLAGE_DATA = true;
+  const USE_DUMMY_DATA = false;
+  const USE_DUMMY_VILLAGE_DATA = false;
 
   const mwsIndex = useMemo(() => buildMWSIndex(dataJson), [dataJson]);
   const villageIndex = useMemo(() => buildVillageIndex(villageJson), [villageJson]);
@@ -2799,11 +2799,13 @@ const handlePatternRemoval = (pattern) => {
           showStewards={showStewards}
           setShowStewards={setShowStewards}
           mwsIndex={mwsIndex}
+          villageIndex={villageIndex}
           villageNameIndex={villageNameIndex}
           setManualSelectedMWS={setManualSelectedMWS}
           handleRemoveMWS={handleRemoveMWS}
           showFarmBoundaries={showFarmBoundaries}
           setShowFarmBoundaries={setShowFarmBoundaries}
+
         />
       </div>
     </div>

@@ -1,7 +1,10 @@
+import { useEffect, useState } from 'react';
+import { ExternalLink } from 'lucide-react';
+import { ExpandIcon } from '../../farmDetails/icons';
 import {
   colorBorder, colorBorderSoft, colorSurface, colorInk, colorMuted,
   colorAreaLatest, colorAreaPrior, colorDataWarm,
-  colorSeasonKharif, colorSeasonRabi, colorSeasonZaid, colorSeasonTrack,
+  colorSeasonKharif, colorSeasonRabi, colorSeasonZaid, colorSeasonTrack,colorPrimaryHover
 } from '../sidebarTokens';
 
 // Field names come straight off the live waterbody vector-tile feature,
@@ -131,6 +134,7 @@ export default function WaterbodyTab({ waterbody }) {
   const p = waterbody?.properties ?? {};
   console.log(p)
   const uid = p.UID ?? waterbody?.id;
+  const dashboardUrl = waterbody?.dashboardUrl;
   const mwsUid = p.MWS_UID;
   const sizeLabel = p.wbSizeCategory
     ? `${humanize(p.wbSizeCategory)}${p.category_sq_m ? ` · ${p.category_sq_m}` : ''}`
@@ -189,6 +193,17 @@ export default function WaterbodyTab({ waterbody }) {
           {position && <Row label="Position" value={position} />}
           {drainage && <Row label="Drainage" value={drainage} />}
         </div>
+        {dashboardUrl && (
+          <button
+            type="button"
+            onClick={() => window.open(dashboardUrl, '_blank')}
+            className="w-full flex items-center justify-center gap-2 py-2 rounded-lg text-[12px] font-semibold"
+            style={{ border: `1px solid ${colorBorder}`, color: colorPrimaryHover }}
+          >
+            <ExternalLink size={14} />
+            View Waterbody Profile
+          </button>
+        )}
       </div>
 
       {hasAreaSeries && (

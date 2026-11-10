@@ -1,51 +1,127 @@
+
+import React, { useState, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { Info } from 'lucide-react';
 
-const KYLPatternDisplay = ({ pattern, isDisabled, isSelected, onPatternSelect, handlePatternRemoval }) => {
-    //const [isExpanded, setIsExpanded] = useState(false);
-    
+const KYLPatternDisplay = ({
+    pattern,
+    isDisabled,
+    isSelected,
+    onPatternSelect,
+    handlePatternRemoval
+}) => {
+    const [showTooltip, setShowTooltip] = useState(false);
+    const [tooltipPosition, setTooltipPosition] = useState({
+        top: 0,
+        left: 0
+    });
+
+    const hideTimeoutRef = useRef(null);
 
     const handleApplyClick = () => {
         if (!isDisabled && !isSelected) {
             onPatternSelect(pattern, !isSelected);
-        }
-        else{
-            handlePatternRemoval(pattern)
+        } else {
+            handlePatternRemoval(pattern);
         }
     };
 
+    const handleTooltipEnter = (event) => {
+        clearTimeout(hideTimeoutRef.current);
+
+        const rect = event.currentTarget.getBoundingClientRect();
+
+        const tooltipWidth = Math.min(360, window.innerWidth - 24);
+        const estimatedHeight = Math.min(
+            420,
+            window.innerHeight * 0.7
+        );
+
+        const left = Math.max(
+            12,
+            Math.min(rect.left, window.innerWidth - tooltipWidth - 12)
+        );
+
+        let top = rect.bottom + 8;
+
+        // If there isn't enough space below, show tooltip above.
+        if (top + estimatedHeight > window.innerHeight - 12) {
+            top = Math.max(12, rect.top - estimatedHeight - 8);
+        }
+
+        setTooltipPosition({ top, left });
+        setShowTooltip(true);
+    };
+
+    const handleTooltipLeave = () => {
+        hideTimeoutRef.current = setTimeout(() => {
+            setShowTooltip(false);
+        }, 150);
+    };
+
+    const hasTooltipContent = pattern.triggerExp || pattern.comment;
+
     return (
         <div className="bg-white rounded-lg border border-gray-200 p-4">
-            {/* Pattern Header - Always Visible */}
-            <div className="space-y-2">
-                <div className="flex items-start justify-between">
-                    
-                    <div className="flex-1">
-                        <div className="flex items-center gap-2">
-                            <h3 className="text-xs font-semibold text-gray-800">
-                                {pattern.patternCategory}
-                            </h3>
-                        </div>
-                        {/* <div className="flex items-center gap-2 mt-1">
-                            <div className="text-xs text-gray-500">
-                                {pattern.level === 0 ? 'MWS' : 'Village'}
-                            </div>
-                        </div> */}
-                    </div>
-                     {pattern.triggerExp && (
-                        <div className="relative group shrink-0 ml-2">
-                            <Info className="w-4 h-4 text-gray-400 hover:text-indigo-600 cursor-pointer" />
-                            <div className="hidden group-hover:block absolute right-0 top-full mt-1 w-56 z-50 rounded-md bg-gray-800 text-white text-[11px] leading-snug px-3 py-2 shadow-lg">
-                                <span className="font-medium">Trigger: </span>
-                                {pattern.triggerExp}
-                            </div>
-                        </div>
-                    )}
-                </div>
+            {/* Pattern Header */}
+            <div className="flex items-start justify-between">
+                <h3 className="text-xs font-semibold text-gray-800">
+                    {pattern.patternCategory}
+                </h3>
 
-           
+                {hasTooltipContent && (
+                    <div
+                        className="shrink-0 ml-2"
+                        onMouseEnter={handleTooltipEnter}
+                        onMouseLeave={handleTooltipLeave}
+                    >
+                        <Info className="w-4 h-4 text-gray-400 hover:text-indigo-600 cursor-pointer" />
+                    </div>
+                )}
             </div>
 
-            {/* Apply Pattern Button */}
+            {/* Hover Tooltip - Rendered outside sidebar */}
+            {showTooltip && createPortal(
+                <div
+                    onMouseEnter={() => clearTimeout(hideTimeoutRef.current)}
+                    onMouseLeave={handleTooltipLeave}
+                    style={{
+                        position: 'fixed',
+                        top: tooltipPosition.top,
+                        left: tooltipPosition.left,
+                        width: 'min(360px, calc(100vw - 24px)',
+                        maxHeight: '70vh',
+                        overflowY: 'auto',
+                        zIndex: 99999
+                    }}
+                    className="rounded-lg bg-gray-800 text-white p-4 shadow-2xl"
+                >
+                    {pattern.triggerExp && (
+                        <div className="mb-3">
+                            <p className="text-[11px] font-semibold mb-1">
+                                Trigger Expression
+                            </p>
+                            <p className="text-[11px] leading-relaxed break-words whitespace-pre-wrap">
+                                {pattern.triggerExp}
+                            </p>
+                        </div>
+                    )}
+
+                    {pattern.comment && (
+                        <div>
+                            <p className="text-[11px] font-semibold mb-1">
+                                Comment
+                            </p>
+                            <p className="text-[11px] leading-relaxed break-words whitespace-pre-wrap">
+                                {pattern.comment}
+                            </p>
+                        </div>
+                    )}
+                </div>,
+                document.body
+            )}
+
+            {/* Apply / Remove Pattern Button */}
             <div className="mt-3 pt-3 border-t border-gray-200">
                 <button
                     onClick={handleApplyClick}

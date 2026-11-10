@@ -68,9 +68,8 @@ export default function ScopePanel({
               <button
                 onClick={handleTehsilReport}
                 disabled={controlsDisabled}
-                className={`flex items-center justify-center gap-1.5 py-2 text-xs font-semibold rounded-lg transition-colors border ${
-                  controlsDisabled ? disabledClass : 'text-indigo-600 bg-indigo-50 hover:bg-indigo-100 border-indigo-100'
-                }`}
+                className={`flex items-center justify-center gap-1.5 py-2 text-xs font-semibold rounded-lg transition-colors border ${controlsDisabled ? disabledClass : 'text-indigo-600 bg-indigo-50 hover:bg-indigo-100 border-indigo-100'
+                  }`}
               >
                 <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -82,13 +81,12 @@ export default function ScopePanel({
               <button
                 onClick={toggleWaterbodies}
                 disabled={controlsDisabled}
-                className={`flex items-center justify-center gap-1.5 py-2 text-xs font-semibold rounded-lg transition-colors border ${
-                  controlsDisabled
+                className={`flex items-center justify-center gap-1.5 py-2 text-xs font-semibold rounded-lg transition-colors border ${controlsDisabled
                     ? disabledClass
                     : showWB
                       ? 'text-red-600 bg-red-50 hover:bg-red-100 border-red-100'
                       : 'text-indigo-600 bg-indigo-50 hover:bg-indigo-100 border-indigo-100'
-                }`}
+                  }`}
               >
                 {loadingWB ? (
                   <><Loader2 className="w-3.5 h-3.5 animate-spin" />Loading…</>
@@ -115,13 +113,12 @@ export default function ScopePanel({
               <button
                 onClick={handlePlansClick}
                 disabled={controlsDisabled}
-                className={`flex items-center justify-center gap-1.5 py-2 text-xs font-semibold rounded-lg transition-colors border ${
-                  controlsDisabled
+                className={`flex items-center justify-center gap-1.5 py-2 text-xs font-semibold rounded-lg transition-colors border ${controlsDisabled
                     ? disabledClass
                     : showPlans
                       ? 'text-red-600 bg-red-50 hover:bg-red-100 border-red-100'
                       : 'text-indigo-600 bg-indigo-50 hover:bg-indigo-100 border-indigo-100'
-                }`}
+                  }`}
               >
                 {showPlans ? (
                   <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -140,13 +137,12 @@ export default function ScopePanel({
               <button
                 onClick={handleStewardsClick}
                 disabled={controlsDisabled}
-                className={`flex items-center justify-center gap-1.5 py-2 text-xs font-semibold rounded-lg transition-colors border ${
-                  controlsDisabled
+                className={`flex items-center justify-center gap-1.5 py-2 text-xs font-semibold rounded-lg transition-colors border ${controlsDisabled
                     ? disabledClass
                     : showStewards
                       ? 'text-red-600 bg-red-50 hover:bg-red-100 border-red-100'
                       : 'text-indigo-600 bg-indigo-50 hover:bg-indigo-100 border-indigo-100'
-                }`}
+                  }`}
               >
                 {showStewards ? (
                   <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -172,13 +168,12 @@ export default function ScopePanel({
               <button
                 onClick={toggleConnectivity}
                 disabled={controlsDisabled}
-                className={`flex items-center justify-center gap-1.5 py-2 text-xs font-semibold rounded-lg transition-colors border ${
-                  controlsDisabled
+                className={`flex items-center justify-center gap-1.5 py-2 text-xs font-semibold rounded-lg transition-colors border ${controlsDisabled
                     ? disabledClass
                     : showConnectivity
                       ? 'text-red-600 bg-red-50 hover:bg-red-100 border-red-100'
                       : 'text-indigo-600 bg-indigo-50 hover:bg-indigo-100 border-indigo-100'
-                }`}
+                  }`}
               >
                 <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <circle cx="5" cy="12" r="2" /><circle cx="19" cy="5" r="2" /><circle cx="19" cy="19" r="2" />
@@ -190,13 +185,12 @@ export default function ScopePanel({
               <button
                 onClick={toggleFarmBoundaries}
                 disabled={controlsDisabled || farmBoundariesLoading}
-                className={`flex items-center justify-center gap-1.5 py-2 text-xs font-semibold rounded-lg transition-colors border ${
-                  controlsDisabled
+                className={`flex items-center justify-center gap-1.5 py-2 text-xs font-semibold rounded-lg transition-colors border ${controlsDisabled
                     ? disabledClass
                     : showFarmBoundaries
                       ? 'text-red-600 bg-red-50 hover:bg-red-100 border-red-100'
                       : 'text-indigo-600 bg-indigo-50 hover:bg-indigo-100 border-indigo-100'
-                }`}
+                  }`}
               >
                 {farmBoundariesLoading ? (
                   <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -245,9 +239,8 @@ export default function ScopePanel({
                   </div>
                   <button
                     onClick={() => handleIndicatorRemoval(filter)}
-                    className={`text-gray-300 hover:text-red-400 mt-0.5 transition-colors shrink-0 ${
-                      toggleStates[filter.name] && filter.layer_store?.[0] !== 'waterbody' ? 'invisible' : ''
-                    }`}
+                    className={`text-gray-300 hover:text-red-400 mt-0.5 transition-colors shrink-0 ${toggleStates[filter.name] && filter.layer_store?.[0] !== 'waterbody' ? 'invisible' : ''
+                      }`}
                   >
                     <X className="w-3.5 h-3.5" />
                   </button>
@@ -281,44 +274,59 @@ export default function ScopePanel({
         )}
       </div>
 
-       {patterns.length > 0 && (
+      {patterns.length > 0 && (
         <div className="bg-white rounded-xl border border-gray-100 p-4 shadow-sm">
           <SectionHeader title="Selected Patterns" count={patterns.length} />
           <div className="max-h-[140px] overflow-y-auto pr-1 space-y-1.5">
             {patterns.map((pattern, index) => (
               <div key={index} className="flex items-start gap-2 bg-gray-50 rounded-lg px-3 py-2">
                 <div className="flex-1 min-w-0">
-                  <p className="text-[13px] font-semibold text-gray-700 break-words">
+                  <p className="text-[11px] font-semibold text-gray-700 break-words">
                     {pattern.category} › {pattern.subcategory} › {pattern.patternCategory}
                   </p>
-                  {/* <p className="text-[12px] text-gray-500 mt-1 leading-relaxed">
-                    {(pattern.comment || '').split(/(sig_\d+)/g).map((part, i) =>
-                      pattern.signalTexts?.[part] ? (
-                        <span
-                          key={i}
-                          title={pattern.signalTexts[part]}
-                          className="underline decoration-dotted cursor-pointer text-indigo-600"
-                        >
-                          {part}
-                        </span>
-                      ) : (
-                        part
-                      )
-                    )}
-                  </p> */}
                 </div>
                 <button
                   onClick={() => handlePatternRemoval(pattern)}
-                  className={`text-gray-300 hover:text-red-400 transition-colors shrink-0 ${
-                    toggleStates[pattern.patternName] ? 'invisible' : ''
-                  }`}
+                  className={`text-gray-300 hover:text-red-400 transition-colors shrink-0 ${toggleStates[pattern.patternName] ? 'invisible' : ''
+                    }`}
                 >
                   <X className="w-3.5 h-3.5" />
                 </button>
               </div>
             ))}
+            </div>
+            {/* Combined MWS and Village counts after AND matching */}
+            <div className="mt-3 pt-3 border-t border-gray-100">
+              {selectedMWS !== null &&
+              selectedMWS.length === 0 &&
+              selectedVillages !== null &&
+              selectedVillages.size === 0 ? (
+                <p className="text-[11px] text-amber-600 bg-amber-50 px-3 py-2 rounded-lg border border-amber-100">
+                  No micro-watersheds or villages match the selected patterns.
+                </p>
+              ) : (
+                <div className="flex gap-2">
+                  <div className="flex-1 bg-blue-50 border border-blue-100 rounded-lg px-3 py-2 text-center">
+                    <p className="text-lg font-bold text-blue-600 leading-none">
+                      {selectedMWS?.length ?? 0}
+                    </p>
+                    <p className="text-[10px] text-blue-400 font-medium mt-0.5">
+                      Micro-Watershed
+                    </p>
+                  </div>
+
+                  <div className="flex-1 bg-emerald-50 border border-emerald-100 rounded-lg px-3 py-2 text-center">
+                    <p className="text-lg font-bold text-emerald-600 leading-none">
+                      {selectedVillages?.size ?? 0}
+                    </p>
+                    <p className="text-[10px] text-emerald-400 font-medium mt-0.5">
+                      Villages
+                    </p>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
-        </div>
       )}
 
       {displayVillages.length > 0 && (
@@ -346,7 +354,7 @@ export default function ScopePanel({
         </div>
       )}
 
-     
+
     </div>
   );
 }

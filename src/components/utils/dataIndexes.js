@@ -55,7 +55,7 @@ function combine(values, how) {
   return values.reduce((a, b) => a + b, 0) / values.length;
 }
 
-function addVillageAggregates(mwsIndex, villageIndex) {
+export function addVillageAggregates(mwsIndex, villageIndex) {
   const byId = new Map();
   for (const [id, record] of mwsIndex.byId) {
     const villages = (record.mws_intersect_villages || [])

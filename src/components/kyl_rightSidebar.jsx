@@ -20,7 +20,7 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import XLSX from 'xlsx-js-style';
 import toast from 'react-hot-toast';
-import { buildIntersections } from '../components/utils/dataIndexes.js';
+import { buildIntersections, addVillageAggregates, evaluateNode } from '../components/utils/dataIndexes.js';
 import { FILTER_BY_NAME } from '../components/utils/filtersIndex.js';
 import StewardIcon from "../assets/steward_icon_final.png";
 import planIcon from "../assets/plan_icon_final.png";
@@ -78,6 +78,7 @@ const KYLRightSidebar = ({
   showFarmBoundaries,
   setShowFarmBoundaries,
   mwsIndex,
+  villageIndex,
   villageNameIndex,
   setManualSelectedMWS,
   handleRemoveMWS,
@@ -2202,9 +2203,30 @@ const sheet5Count =
     waterbodyUrl: (id) => `/rwb?type=tehsil&state=${state?.label}&district=${district?.label}&block=${block?.label}&waterbody=${id}`,
   };
 
+  const appliedStressPatterns = React.useMemo(() => {
+  if (!mapHits.mws || !mwsIndex?.byId || !villageIndex?.byId) {
+    return [];
+  }
+
+  const enrichedMwsIndex = addVillageAggregates(mwsIndex, villageIndex);
+
+  const clickedMwsRecord = Array.from(enrichedMwsIndex.byId.entries())
+    .find(([id]) => String(id) === String(mapHits.mws.uid))?.[1];
+
+  if (!clickedMwsRecord) return [];
+
+  return (getFormattedSelectedPatterns?.() || []).filter(
+    (pattern) =>
+      pattern.level === 0 &&
+      pattern.root &&
+      evaluateNode(clickedMwsRecord, pattern.root)
+  );
+}, [mapHits.mws?.uid, mwsIndex, villageIndex, getFormattedSelectedPatterns]);
+
   const mwsRecord = mapHits.mws ? dataJson?.find((item) => String(item.mws_id) === String(mapHits.mws.uid)) ?? null : null;
   const mwsBundle = {
     record: mwsRecord,
+      appliedStressPatterns,
     selectedMws: manualSelectedMWS ?? [],
     intersectingVillages: displayVillages,
     onRemoveMws: handleRemoveMWS,
