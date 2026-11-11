@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react';
 import { ExternalLink } from 'lucide-react';
 import { ExpandIcon } from '../../farmDetails/icons';
+import WaterbodySeasonModal from './WaterbodySeasonModal';
 import {
-  colorBorder, colorBorderSoft, colorSurface, colorInk, colorMuted,
-  colorAreaLatest, colorAreaPrior, colorDataWarm,
-  colorSeasonKharif, colorSeasonRabi, colorSeasonZaid, colorSeasonTrack,colorPrimaryHover
+  colorBorder, colorBorderSoft, colorSurface, colorInk, colorMuted, colorPrimaryHover,
+  colorSeasonKharif, colorSeasonRabi, colorSeasonZaid,
 } from '../sidebarTokens';
 
 // Field names come straight off the live waterbody vector-tile feature,
@@ -56,72 +56,47 @@ function SectionHeading({ children }) {
   );
 }
 
-// Years run left to right; the last bar (the current year) is the only one
-// drawn in the dark "latest" colour. The dashed line is the largest extent on
-// record (area_ored) — never the max of just the 8 bars, which could be lower.
-function SurfaceWaterAreaChart({ areas, areaOred }) {
-  const maxValue = Math.max(areaOred ?? 0, ...areas.map((a) => a.value ?? 0), 0.01);
-  const oredPct = areaOred !== null ? Math.min(100, (areaOred / maxValue) * 100) : null;
-
+// Grouped (not nested/stacked) bars: each year gets 3 bars side by side —
+// Kharif, Kharif+Rabi, Kharif+Rabi+Zaid — each plotted at its own height on a
+// shared 0-100% scale, so a season held nothing (e.g. Zaid in 22-23) draws as
+// a near-invisible sliver rather than disappearing into a stack.
+export function SeasonGroupedBarChart({ rows }) {
   return (
-    <div className="relative h-[120px] mt-1" style={{ paddingTop: 4 }}>
-      {oredPct !== null && (
-        <div
-          className="absolute left-0 right-0 border-t border-dashed"
-          style={{ bottom: `${oredPct}%`, borderColor: colorDataWarm }}
-        />
-      )}
-      <div className="absolute inset-0 flex items-end gap-1.5">
-        {areas.map((a, i) => {
-          const isLatest = i === areas.length - 1;
-          const pct = a.value !== null ? Math.max(2, (a.value / maxValue) * 100) : 0;
-          return (
-            <div key={a.suffix} className="flex-1 flex flex-col items-center justify-end h-full" title={a.value !== null ? `${a.value.toFixed(2)} ha` : 'No data'}>
-              <div
-                className="w-full rounded-t"
-                style={{ height: `${pct}%`, background: isLatest ? colorAreaLatest : colorAreaPrior, minHeight: a.value !== null ? 3 : 0 }}
-              />
+    <div className="flex">
+      <div className="flex flex-col justify-between text-[10px] pr-1.5 h-[140px] pb-5" style={{ color: colorMuted }}>
+        <span>100%</span>
+        <span>50%</span>
+        <span>0%</span>
+      </div>
+      <div className="flex-1 flex items-end gap-2 h-[140px] border-l" style={{ borderColor: colorBorderSoft }}>
+        {rows.map((r) => (
+          <div key={r.suffix} className="flex-1 flex flex-col items-center">
+            <div className="w-full flex items-end justify-center gap-[2px] h-[120px]">
+              {[
+                { value: r.k, color: colorSeasonKharif, label: 'Kharif' },
+                { value: r.kr, color: colorSeasonRabi, label: 'Kharif + Rabi' },
+                { value: r.krz, color: colorSeasonZaid, label: 'Kharif + Rabi + Zaid' },
+              ].map((band) => (
+                <div
+                  key={band.label}
+                  className="flex-1 rounded-t-sm"
+                  style={{
+                    height: `${isValid(band.value) ? Math.max(band.value > 0 ? 2 : 0, band.value) : 0}%`,
+                    background: band.color,
+                  }}
+                  title={isValid(band.value) ? `${band.label}: ${band.value.toFixed(1)}%` : `${band.label}: no data`}
+                />
+              ))}
             </div>
-          );
-        })}
+            <span className="text-[10px] mt-1" style={{ color: colorMuted }}>{r.suffix.replace('-', '–')}</span>
+          </div>
+        ))}
       </div>
     </div>
   );
 }
 
-function NestedSeasonBar({ k, kr, krz }) {
-  // Nested, not stacked — k >= kr >= krz by construction. Each band is drawn
-  // from zero; later bands sit on top of (not after) the one before them. A
-  // native title on each band means hovering the visible strip of any of
-  // them (even where a narrower band sits on top) shows that band's own value.
-  return (
-    <div className="relative h-4 rounded-md overflow-hidden flex-1" style={{ background: colorSeasonTrack }}>
-      {isValid(k) && (
-        <div
-          className="absolute inset-y-0 left-0 rounded-md"
-          style={{ width: `${Math.min(100, k)}%`, background: colorSeasonKharif }}
-          title={`Kharif: ${k.toFixed(1)}%`}
-        />
-      )}
-      {isValid(kr) && (
-        <div
-          className="absolute inset-y-0 left-0 rounded-md"
-          style={{ width: `${Math.min(100, kr)}%`, background: colorSeasonRabi }}
-          title={`Through Rabi: ${kr.toFixed(1)}%`}
-        />
-      )}
-      {isValid(krz) && (
-        <div
-          className="absolute inset-y-0 left-0 rounded-md"
-          style={{ width: `${Math.min(100, krz)}%`, background: colorSeasonZaid }}
-          title={`Through Zaid: ${krz.toFixed(1)}%`}
-        />
-      )}
-    </div>
-  );
-}
-
-function LegendChip({ color, label }) {
+export function LegendChip({ color, label }) {
   return (
     <span className="flex items-center gap-1 text-[10px]" style={{ color: colorMuted }}>
       <span className="w-2.5 h-2.5 rounded-sm flex-shrink-0" style={{ background: color }} />
@@ -131,34 +106,20 @@ function LegendChip({ color, label }) {
 }
 
 export default function WaterbodyTab({ waterbody }) {
+  const [seasonModalOpen, setSeasonModalOpen] = useState(false);
   const p = waterbody?.properties ?? {};
-  console.log(p)
   const uid = p.UID ?? waterbody?.id;
   const dashboardUrl = waterbody?.dashboardUrl;
+
+  useEffect(() => {
+    setSeasonModalOpen(false);
+  }, [uid]);
   const mwsUid = p.MWS_UID;
   const sizeLabel = p.wbSizeCategory
     ? `${humanize(p.wbSizeCategory)}${p.category_sq_m ? ` · ${p.category_sq_m}` : ''}`
     : null;
   const position = positionLabel(p.wbCategory);
   const drainage = drainageLabel(p.wbDrainage);
-
-  const areas = YEAR_SUFFIXES.map((suffix) => ({
-    suffix,
-    yearLabel: `20${suffix}`,
-    value: isValid(p[`area_${suffix}`]) ? Number(p[`area_${suffix}`]) : null,
-  }));
-  const validAreas = areas.filter((a) => a.value !== null);
-  const hasAreaSeries = validAreas.length > 0;
-  const areaOred = isValid(p.area_ored) ? Number(p.area_ored) : null;
-  const latest = areas[areas.length - 1];
-
-  // Composed per plan §7: trend word from wbTrend, smallest year from a plain
-  // min() lookup over the series actually present.
-  const TREND_WORDS = { positive: 'up', negative: 'down' };
-  const trendWord = p.wbTrend ? (TREND_WORDS[String(p.wbTrend).toLowerCase()] ?? 'steady') : null;
-  const smallest = validAreas.length > 0
-    ? validAreas.reduce((min, a) => (a.value < min.value ? a : min))
-    : null;
 
   // k_YY/kr_YY/krz_YY are already 0-100 (e.g. k=93.33, kr=78.67, krz=2) — not
   // 0-1 shares, so no scaling. Each is the % of water still present going
@@ -172,6 +133,7 @@ export default function WaterbodyTab({ waterbody }) {
   }));
   const hasSeasonRows = seasonRows.some((r) => r.k !== null || r.kr !== null || r.krz !== null);
   const zeroZaidYears = seasonRows.filter((r) => r.krz === 0).map((r) => r.suffix);
+  const recentSeasonRows = seasonRows.slice(-4);
 
   return (
     <div className="space-y-3.5">
@@ -193,6 +155,7 @@ export default function WaterbodyTab({ waterbody }) {
           {position && <Row label="Position" value={position} />}
           {drainage && <Row label="Drainage" value={drainage} />}
         </div>
+
         {dashboardUrl && (
           <button
             type="button"
@@ -206,69 +169,47 @@ export default function WaterbodyTab({ waterbody }) {
         )}
       </div>
 
-      {hasAreaSeries && (
-        <section>
-          <SectionHeading>Surface water area · 2017-18 to 2024-25</SectionHeading>
-          <div className="rounded-xl p-3.5" style={{ background: colorSurface, border: `1px solid ${colorBorder}` }}>
-            <div className="flex items-baseline justify-between">
-              <span className="text-[12px]" style={{ color: colorMuted }}>{latest.yearLabel}</span>
-              <span className="text-[20px] font-bold" style={{ color: colorInk }}>
-                {latest.value !== null ? latest.value.toFixed(2) : '--'} <span className="text-[12px] font-medium" style={{ color: colorMuted }}>ha</span>
-              </span>
-            </div>
-
-            <SurfaceWaterAreaChart areas={areas} areaOred={areaOred} />
-
-            <div className="flex justify-between gap-1 text-[10px] mt-1" style={{ color: colorMuted }}>
-              {areas.map((a) => <span key={a.suffix} className="flex-1 text-center">{a.suffix.split('-')[0]}</span>)}
-            </div>
-
-            {areaOred !== null && (
-              <div className="flex items-center gap-1.5 mt-2">
-                <span className="w-3 border-t border-dashed" style={{ borderColor: colorDataWarm }} />
-                <span className="text-[10px]" style={{ color: colorMuted }}>Largest extent on record, {areaOred.toFixed(2)} ha</span>
-              </div>
-            )}
-
-            {(trendWord || smallest) && (
-              <p className="text-[12px] mt-2.5 pt-2.5" style={{ color: colorInk, borderTop: `1px solid ${colorBorderSoft}` }}>
-                {trendWord && <>Area is trending <strong>{trendWord}</strong>. </>}
-                {smallest && <>Smallest year was {smallest.suffix} at {smallest.value.toFixed(2)} ha.</>}
-              </p>
-            )}
-          </div>
-        </section>
-      )}
-
       {hasSeasonRows && (
         <section>
-          <SectionHeading>How long water holds</SectionHeading>
+          <SectionHeading>Seasonal water availability</SectionHeading>
           <div className="rounded-xl p-3.5" style={{ background: colorSurface, border: `1px solid ${colorBorder}` }}>
-            <div className="flex items-center gap-4 mb-2.5">
+            <div className="flex items-start justify-between gap-3 mb-2.5">
+              <p className="text-[12px]" style={{ color: colorMuted }}>
+                Percentage of water availability · {recentSeasonRows[0].suffix.replace('-', '–')} to {recentSeasonRows[recentSeasonRows.length - 1].suffix.replace('-', '–')}
+              </p>
+              <button
+                type="button"
+                onClick={() => setSeasonModalOpen(true)}
+                aria-label="Open all years of seasonal water availability"
+                className="w-[28px] h-[28px] rounded-lg flex items-center justify-center hover:bg-gray-50 flex-shrink-0"
+                style={{ border: `1px solid ${colorBorder}`, color: colorInk }}
+              >
+                <ExpandIcon size={13} />
+              </button>
+            </div>
+            <div className="flex items-center gap-4 mb-2.5 flex-wrap">
               <LegendChip color={colorSeasonKharif} label="Kharif" />
-              <LegendChip color={colorSeasonRabi} label="+ Rabi" />
-              <LegendChip color={colorSeasonZaid} label="+ Zaid" />
+              <LegendChip color={colorSeasonRabi} label="Kharif + Rabi" />
+              <LegendChip color={colorSeasonZaid} label="Kharif + Rabi + Zaid" />
             </div>
 
-            <div className="space-y-1.5">
-              {seasonRows.map((r) => (
-                <div key={r.suffix} className="flex items-center gap-2.5">
-                  <span className="text-[11px] w-10 flex-shrink-0" style={{ color: colorMuted }}>{r.suffix}</span>
-                  <NestedSeasonBar k={r.k} kr={r.kr} krz={r.krz} />
-                  <span className="text-[11px] font-semibold w-9 text-right flex-shrink-0" style={{ color: colorInk }}>
-                    {r.k !== null ? `${Math.round(r.k)}%` : '--'}
-                  </span>
-                </div>
-              ))}
-            </div>
+            <SeasonGroupedBarChart rows={recentSeasonRows} />
 
             <p className="text-[11px] mt-2.5 pt-2.5 leading-snug" style={{ color: colorMuted, borderTop: `1px solid ${colorBorderSoft}` }}>
-              Figures are the share held through each season, so each band sits inside the one before it.
+              Each bar is the share of water available through that season group, so Kharif + Rabi + Zaid can never exceed Kharif + Rabi.
               {zeroZaidYears.length > 0 && ` Held nothing through Zaid in ${zeroZaidYears.join(', ')}.`}
             </p>
           </div>
         </section>
       )}
+
+      <WaterbodySeasonModal
+        open={seasonModalOpen}
+        onClose={() => setSeasonModalOpen(false)}
+        rows={seasonRows}
+        uid={uid}
+        zeroZaidYears={zeroZaidYears}
+      />
 
       {mwsUid && (
         <p className="text-[11px] px-1" style={{ color: colorMuted }}>

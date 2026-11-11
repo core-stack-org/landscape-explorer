@@ -12,7 +12,7 @@ function waterTakeaway(annual) {
   if (s.aet === null) return 'Water use is unavailable for the latest year.';
   return (
     <>
-      In {agriYearLabel(latest.year)} the crop used <strong style={{ color: colorPrimary }}>{Math.round(s.aet).toLocaleString()} mm</strong> of water over the year.
+      Crop water consumption: <strong style={{ color: colorPrimary }}>{Math.round(s.aet).toLocaleString()} mm</strong> in {agriYearLabel(latest.year)}.
     </>
   );
 }
@@ -44,7 +44,8 @@ export default function FarmTrendsModal({ open, onClose, annual, monthly, farmId
 
   const series = useMemo(() => monthlyPointsByYear(monthly), [monthly]);
   const counts = useMemo(() => countStressMonths(monthly), [monthly]);
-  const firstCalendarYear = series[0]?.year;
+  const firstYearLabel = series[0]?.yearLabel;
+  const lastYearLabel = series[series.length - 1]?.yearLabel;
 
   // Kharif-only by default; Rabi/Zaid are opt-in via the legend chips.
   const [visibleSeasons, setVisibleSeasons] = useState(['Kharif']);
@@ -86,7 +87,7 @@ export default function FarmTrendsModal({ open, onClose, annual, monthly, farmId
           <div className="min-w-0">
             <h2 id="farm-trends-title" className="text-[20px] font-bold" style={{ color: colorInk }}>Year-by-year trends</h2>
             <p className="text-[12px] mt-0.5" style={{ color: colorMuted }}>
-              {latestCrop} · Farm {farmId || '--'} · agricultural years run July to June
+              Farm {farmId || '--'} · agricultural years run July to June
             </p>
           </div>
           <button
@@ -103,7 +104,7 @@ export default function FarmTrendsModal({ open, onClose, annual, monthly, farmId
         <div className="overflow-y-auto p-4 space-y-4">
           <ChartCard
             title="AET"
-            subtitle={`Every month since ${firstCalendarYear ?? ''}, grouped by year. AET is the water the crop actually used.`}
+            subtitle={firstYearLabel && lastYearLabel ? `Monthly AET from ${firstYearLabel} to ${lastYearLabel}` : undefined}
             legend={series.length > 0 && <WaterChartLegend />}
             takeaway={waterTakeaway(annual || [])}
           >

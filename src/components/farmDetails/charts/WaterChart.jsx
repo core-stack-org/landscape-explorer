@@ -2,28 +2,6 @@ import { Line } from 'react-chartjs-2';
 import './chartSetup';
 import { colorPrimary, colorBorderSoft, colorMuted } from '../farmDetailsTokens';
 
-const ODD_YEAR_BAND = '#FBFAFE';
-
-const yearBandsPlugin = {
-  id: 'yearBands',
-  beforeDatasetsDraw(chart, _args, opts) {
-    const { ctx, chartArea, scales } = chart;
-    const { x } = scales;
-    const years = opts.years || [];
-    if (!x || !chartArea) return;
-    ctx.save();
-    years.forEach((_y, k) => {
-      if (k % 2 === 0) return;
-      const startIdx = k * 12;
-      const left = x.getPixelForValue(startIdx - 0.5);
-      const right = x.getPixelForValue(startIdx + 11.5);
-      ctx.fillStyle = ODD_YEAR_BAND;
-      ctx.fillRect(left, chartArea.top, right - left, chartArea.bottom - chartArea.top);
-    });
-    ctx.restore();
-  },
-};
-
 const yearBoundaryPlugin = {
   id: 'yearBoundaries',
   afterDatasetsDraw(chart, _args, opts) {
@@ -98,7 +76,6 @@ export default function WaterChart({ series }) {
     layout: { padding: { bottom: 28 } },
     plugins: {
       legend: { display: false },
-      yearBands: yearOpt,
       yearBoundaries: yearOpt,
       tooltip: {
         callbacks: {
@@ -127,7 +104,7 @@ export default function WaterChart({ series }) {
 
   return (
     <div className="relative h-[240px]">
-      <Line data={data} options={options} plugins={[yearBandsPlugin, yearBoundaryPlugin]} />
+      <Line data={data} options={options} plugins={[yearBoundaryPlugin]} />
     </div>
   );
 }

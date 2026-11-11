@@ -1,4 +1,4 @@
-import { ExternalLink } from 'lucide-react';
+import { ExternalLink, ChevronLeft } from 'lucide-react';
 import {
   colorPrimaryHover, colorInk, colorMuted, colorBorder, colorBorderSoft,
   colorPageBg, colorSurface, colorWater,
@@ -36,26 +36,32 @@ function Section({ title, children }) {
   );
 }
 
+// Same 0-2 / 2-5 / 5+ km breakpoints Filters.json's own 3-bin distance
+// fields (e.g. essential_health_services) already use.
+function distanceColor(km) {
+  const n = Number(km);
+  if (n <= 2) return '#2E7D32';
+  if (n <= 5) return '#B88400';
+  return '#B91C1C';
+}
+
 function DistanceRow({ label, km }) {
   return (
     <div className="flex items-center justify-between gap-3 py-1.5" style={{ borderTop: `1px solid ${colorBorderSoft}` }}>
       <span className="text-[12px]" style={{ color: colorMuted }}>{label}</span>
-      <span className="text-[12px] font-semibold" style={{ color: colorInk }}>
+      <span className="text-[12px] font-semibold" style={{ color: isValid(km) ? distanceColor(km) : colorInk }}>
         {isValid(km) ? `${Number(km).toFixed(1)} km` : '--'}
       </span>
     </div>
   );
 }
 
-function DistanceGroup({ title, rows }) {
+function DistanceGroup({ rows }) {
   const shown = rows.filter((r) => isValid(r.km));
   if (shown.length === 0) return null;
   return (
-    <div>
-      <div className="text-[10px] font-semibold uppercase tracking-wide mb-1" style={{ color: colorMuted }}>{title}</div>
-      <div className="rounded-lg px-2.5" style={{ background: colorPageBg }}>
-        {shown.map((r) => <DistanceRow key={r.label} label={r.label} km={r.km} />)}
-      </div>
+    <div className="rounded-lg px-2.5" style={{ background: colorPageBg }}>
+      {shown.map((r) => <DistanceRow key={r.label} label={r.label} km={r.km} />)}
     </div>
   );
 }
@@ -68,7 +74,7 @@ function Chip({ children }) {
   );
 }
 
-export default function VillageTab({ record, name: clickedName, villageId, buildVillageReportUrl }) {
+export default function VillageTab({ record, name: clickedName, villageId, buildVillageReportUrl, onBackToList, selectedMwsCount = 0 }) {
   const r = record ?? {};
   // vill_name comes off the clicked vector-tile feature (confirmed real key);
   // villageJson's own name fields are the fallback if that wasn't captured.
@@ -85,14 +91,12 @@ export default function VillageTab({ record, name: clickedName, villageId, build
   const otherPct = scPct !== null && stPct !== null ? Math.max(0, 100 - scPct - stPct) : null;
   const literacyPct = isValid(r.literacy_level) ? Number(r.literacy_level) : null;
 
-  const withinReach = [
+  const distances = [
     { label: 'Public distribution system', km: r.public_distribution_system },
     { label: 'Market', km: r.agri_market_access },
     { label: 'Post-harvest processing', km: r.post_harvest_infra },
     { label: 'Primary school', km: r.essential_education_infra },
     { label: 'Health centre', km: r.essential_health_services },
-  ];
-  const farOff = [
     { label: 'Livestock services', km: r.livestock_management_centers },
     { label: 'Agri inputs & advisory', km: r.agricultural_support_infrastructure },
     { label: 'Farmer cooperative', km: r.farmer_cooperatives_access },
@@ -125,6 +129,18 @@ export default function VillageTab({ record, name: clickedName, villageId, build
 
   return (
     <div className="space-y-3">
+      {onBackToList && (
+        <button
+          type="button"
+          onClick={onBackToList}
+          className="flex items-center gap-1 text-[12px] font-semibold"
+          style={{ color: colorPrimaryHover }}
+        >
+          <ChevronLeft size={14} />
+          {selectedMwsCount > 1 ? 'All villages in the selected micro-watersheds' : 'All villages in this micro-watershed'}
+        </button>
+      )}
+
       <div className="flex items-center gap-2.5">
         <div className="w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: '#EDE9FE' }}>
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={colorPrimaryHover} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -138,7 +154,7 @@ export default function VillageTab({ record, name: clickedName, villageId, build
       </div>
 
       {hasPopulation && (
-        <Section title="Who lives here">
+        <Section>
           <Tile label="Population" value={Number(totalPopulation).toLocaleString()} />
 
           {scPct !== null && stPct !== null && (
@@ -175,10 +191,9 @@ export default function VillageTab({ record, name: clickedName, villageId, build
         </Section>
       )}
 
-      {(withinReach.some((d) => isValid(d.km)) || farOff.some((d) => isValid(d.km))) && (
-        <Section title="How far to things">
-          <DistanceGroup title="Within reach" rows={withinReach} />
-          <DistanceGroup title="A long way off" rows={farOff} />
+      {distances.some((d) => isValid(d.km)) && (
+        <Section title="Distances">
+          <DistanceGroup rows={distances} />
         </Section>
       )}
 
