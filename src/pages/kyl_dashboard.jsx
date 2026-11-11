@@ -59,8 +59,8 @@ import { selectPattern, isPatternSelected } from "../components/utils/patternSel
 import { buildMWSIndex, buildVillageIndex, deriveSelection, buildVillageNameIndex } from "../components/utils/dataIndexes.js";
 import { createFeatureStyleFn } from "../components/utils/styleRegistry.js";
 
-import dummyData from "../components/data/dummy.json";
-import village_dummy_data from "../components/data/village_dummy.json";
+// import dummyData from "../components/data/dummy.json";
+// import village_dummy_data from "../components/data/village_dummy.json";
 
 const DEFAULT_LOADER = {
   fetch: 'vector',
@@ -1588,10 +1588,10 @@ const fetchDataJson = async () => {
   try {
     let result;
 
-    if (USE_DUMMY_DATA) {
-      console.log('[fetchDataJson] Using dummy data');
-      result = dummyData;
-    } else {
+    // if (USE_DUMMY_DATA) {
+    //   console.log('[fetchDataJson] Using dummy data');
+    //   result = dummyData;
+    // } else {
       let response;
 
       try {
@@ -1619,7 +1619,7 @@ const fetchDataJson = async () => {
         setDataJsonError('parse');
         return;
       }
-    }
+    // }
 
     setDataJsonError(null);
     setDataJson(result);
@@ -1635,11 +1635,6 @@ const fetchDataJson = async () => {
 
     console.log("Actual MWS count:", result?.length);
 
-    localStorage.setItem(
-      "actualMWSData",
-      JSON.stringify(result)
-    );
-
   } finally {
     setIsLoading(false);
   }
@@ -1651,10 +1646,10 @@ const fetchVillageJson = async () => {
   try {
     let result;
 
-    if (USE_DUMMY_VILLAGE_DATA) {
-      console.log('[fetchVillageJson] Using village dummy data');
-      result = village_dummy_data;
-    } else {
+    // if (USE_DUMMY_VILLAGE_DATA) {
+    //   console.log('[fetchVillageJson] Using village dummy data');
+    //   result = village_dummy_data;
+    // } else {
       if (!process.env.REACT_APP_API_URL) {
         console.error('[fetchVillageJson] REACT_APP_API_URL is not set');
         return;
@@ -1685,7 +1680,7 @@ const fetchVillageJson = async () => {
         setVillageJsonError('parse');
         return;
       }
-    }
+    // }
 
     setVillageJsonError(null);
     setVillageJson(result);
