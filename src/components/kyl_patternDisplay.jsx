@@ -107,7 +107,7 @@ const KYLPatternDisplay = ({
                         </div>
                     )}
 
-                    {pattern.comment && (
+                    {/* {pattern.comment && (
                         <div>
                             <p className="text-[11px] font-semibold mb-1">
                                 Comment
@@ -116,7 +116,7 @@ const KYLPatternDisplay = ({
                                 {pattern.comment}
                             </p>
                         </div>
-                    )}
+                    )} */}
                 </div>,
                 document.body
             )}

@@ -207,95 +207,7 @@ export default function ScopePanel({
         )}
       </div>
 
-      <div className="bg-white rounded-xl border border-gray-100 p-4 shadow-sm">
-        <SectionHeader
-          title="Selected Indicators"
-          count={filters.length}
-          action={
-            filters.length > 0 && (
-              <button
-                onClick={() => setShowSelectionPopup(true)}
-                className="flex items-center gap-1 px-2 py-1 text-[11px] font-semibold text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors border border-indigo-100"
-              >
-                <Table className="w-3 h-3" />
-                View Selection
-              </button>
-            )
-          }
-        />
-
-        {filters.length > 0 ? (
-          <>
-            <div className="max-h-[160px] overflow-y-auto pr-1 space-y-1.5">
-              {filters.map((filter, index) => (
-                <div key={index} className="flex items-start gap-2 bg-gray-50 rounded-lg px-3 py-2 group">
-                  <div className="flex-1 min-w-0">
-                    <p className="text-[11px] font-semibold text-gray-700 truncate">{filter.filterName}</p>
-                    <div className="flex flex-wrap gap-1 mt-1">
-                      {filter.values.map((value, vi) => (
-                        <span key={vi} className="text-[10px] bg-indigo-100 text-indigo-700 px-1.5 py-0.5 rounded-full font-medium">{value}</span>
-                      ))}
-                    </div>
-                  </div>
-                  <button
-                    onClick={() => handleIndicatorRemoval(filter)}
-                    className={`text-gray-300 hover:text-red-400 mt-0.5 transition-colors shrink-0 ${toggleStates[filter.name] && filter.layer_store?.[0] !== 'waterbody' ? 'invisible' : ''
-                      }`}
-                  >
-                    <X className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-              ))}
-            </div>
-
-            <div className="mt-3 pt-3 border-t border-gray-100">
-              {selectedMWS !== null && selectedMWS.length === 0 && selectedVillages !== null && selectedVillages.size === 0 ? (
-                <p className="text-[11px] text-amber-600 bg-amber-50 px-3 py-2 rounded-lg border border-amber-100">
-                  No micro-watersheds or villages match the selected filters.
-                </p>
-              ) : (
-                <div className="flex gap-2">
-                  <div className="flex-1 bg-blue-50 border border-blue-100 rounded-lg px-3 py-2 text-center">
-                    <p className="text-lg font-bold text-blue-600 leading-none">{selectedMWS?.length ?? 0}</p>
-                    <p className="text-[10px] text-blue-400 font-medium mt-0.5">Micro-Watershed</p>
-                  </div>
-                  <div className="flex-1 bg-emerald-50 border border-emerald-100 rounded-lg px-3 py-2 text-center">
-                    <p className="text-lg font-bold text-emerald-600 leading-none">{selectedVillages?.size ?? 0}</p>
-                    <p className="text-[10px] text-emerald-400 font-medium mt-0.5">Villages</p>
-                  </div>
-                </div>
-              )}
-            </div>
-          </>
-        ) : (
-          <p className="text-[11px] text-gray-400 italic text-center py-3">
-            No indicators selected. Use the left panel to apply filters.
-          </p>
-        )}
-      </div>
-
-      {patterns.length > 0 && (
-        <div className="bg-white rounded-xl border border-gray-100 p-4 shadow-sm">
-          <SectionHeader title="Selected Patterns" count={patterns.length} />
-          <div className="max-h-[140px] overflow-y-auto pr-1 space-y-1.5">
-            {patterns.map((pattern, index) => (
-              <div key={index} className="flex items-start gap-2 bg-gray-50 rounded-lg px-3 py-2">
-                <div className="flex-1 min-w-0">
-                  <p className="text-[11px] font-semibold text-gray-700 break-words">
-                    {pattern.category} › {pattern.subcategory} › {pattern.patternCategory}
-                  </p>
-                </div>
-                <button
-                  onClick={() => handlePatternRemoval(pattern)}
-                  className={`text-gray-300 hover:text-red-400 transition-colors shrink-0 ${toggleStates[pattern.patternName] ? 'invisible' : ''
-                    }`}
-                >
-                  <X className="w-3.5 h-3.5" />
-                </button>
-              </div>
-            ))}
-            </div>
-            {/* Combined MWS and Village counts after AND matching */}
+       {/* Combined MWS and Village counts after AND matching */}
             <div className="mt-3 pt-3 border-t border-gray-100">
               {selectedMWS !== null &&
               selectedMWS.length === 0 &&
@@ -326,6 +238,97 @@ export default function ScopePanel({
                 </div>
               )}
             </div>
+
+      <div className="bg-white rounded-xl border border-gray-100 p-4 shadow-sm">
+        <SectionHeader
+          title="Selected Indicators"
+          count={filters.length}
+          action={
+            filters.length > 0 && (
+              <button
+                onClick={() => setShowSelectionPopup(true)}
+                className="flex items-center gap-1 px-2 py-1 text-[11px] font-semibold text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors border border-indigo-100"
+              >
+                <Table className="w-3 h-3" />
+                View Selection
+              </button>
+            )
+          }
+        />
+
+
+        {filters.length > 0 ? (
+          <>
+            <div className="max-h-[160px] overflow-y-auto pr-1 space-y-1.5">
+              {filters.map((filter, index) => (
+                <div key={index} className="flex items-start gap-2 bg-gray-50 rounded-lg px-3 py-2 group">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[11px] font-semibold text-gray-700 truncate">{filter.filterName}</p>
+                    <div className="flex flex-wrap gap-1 mt-1">
+                      {filter.values.map((value, vi) => (
+                        <span key={vi} className="text-[10px] bg-indigo-100 text-indigo-700 px-1.5 py-0.5 rounded-full font-medium">{value}</span>
+                      ))}
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => handleIndicatorRemoval(filter)}
+                    className={`text-gray-300 hover:text-red-400 mt-0.5 transition-colors shrink-0 ${toggleStates[filter.name] && filter.layer_store?.[0] !== 'waterbody' ? 'invisible' : ''
+                      }`}
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              ))}
+            </div>
+
+            {/* <div className="mt-3 pt-3 border-t border-gray-100">
+              {selectedMWS !== null && selectedMWS.length === 0 && selectedVillages !== null && selectedVillages.size === 0 ? (
+                <p className="text-[11px] text-amber-600 bg-amber-50 px-3 py-2 rounded-lg border border-amber-100">
+                  No micro-watersheds or villages match the selected filters.
+                </p>
+              ) : (
+                <div className="flex gap-2">
+                  <div className="flex-1 bg-blue-50 border border-blue-100 rounded-lg px-3 py-2 text-center">
+                    <p className="text-lg font-bold text-blue-600 leading-none">{selectedMWS?.length ?? 0}</p>
+                    <p className="text-[10px] text-blue-400 font-medium mt-0.5">Micro-Watershed</p>
+                  </div>
+                  <div className="flex-1 bg-emerald-50 border border-emerald-100 rounded-lg px-3 py-2 text-center">
+                    <p className="text-lg font-bold text-emerald-600 leading-none">{selectedVillages?.size ?? 0}</p>
+                    <p className="text-[10px] text-emerald-400 font-medium mt-0.5">Villages</p>
+                  </div>
+                </div>
+              )}
+            </div> */}
+          </>
+        ) : (
+          <p className="text-[11px] text-gray-400 italic text-center py-3">
+            No indicators selected. Use the left panel to apply filters.
+          </p>
+        )}
+      </div>
+
+      {patterns.length > 0 && (
+        <div className="bg-white rounded-xl border border-gray-100 p-4 shadow-sm">
+          <SectionHeader title="Selected Patterns" count={patterns.length} />
+          <div className="max-h-[140px] overflow-y-auto pr-1 space-y-1.5">
+            {patterns.map((pattern, index) => (
+              <div key={index} className="flex items-start gap-2 bg-gray-50 rounded-lg px-3 py-2">
+                <div className="flex-1 min-w-0">
+                  <p className="text-[11px] font-semibold text-gray-700 break-words">
+                    {pattern.category} › {pattern.subcategory} › {pattern.patternCategory}
+                  </p>
+                </div>
+                <button
+                  onClick={() => handlePatternRemoval(pattern)}
+                  className={`text-gray-300 hover:text-red-400 transition-colors shrink-0 ${toggleStates[pattern.patternName] ? 'invisible' : ''
+                    }`}
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            ))}
+            </div>
+           
           </div>
       )}
 
