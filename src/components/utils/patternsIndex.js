@@ -101,6 +101,7 @@ for (const category of CATEGORIES) {
         logic: p.Trigger.logic,
         conditions: p.Signals.flatMap(flattenSignal),
         triggerExp: p.Trigger?.Trigger_Exp,
+        descriptions: Object.fromEntries((p.Signals || []).map((s) => [s.id, s.description ?? signalToText(s)])),
         // conditions: p.Signals.map((s) => ({ key: s.Key, type: s.type, value: s.value })),
       };
     });

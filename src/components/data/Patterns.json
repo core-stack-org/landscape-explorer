@@ -14,7 +14,8 @@
                                 "type": "not_equal",
                                 "Key": "soge_class",
                                 "value": "safe",
-                                "template": "SOGE not being safe is a clear and validated indicator of groundwater stress."
+                                "template": "SOGE not being safe is a clear and validated indicator of groundwater stress.",
+                                "description": "Groundwater extraction stage (SOGE) is not Safe"
                             },
                             {
                                 "id": "sig_02",
@@ -24,21 +25,24 @@
                                     "lower": 0,
                                     "upper": 50
                                 },
-                                "template": "Since SOGE data is available only at the block level, the water balance being negative indicates further stress at the micro-watershed level."
+                                "template": "Since SOGE data is available only at the block level, the water balance being negative indicates further stress at the micro-watershed level.",
+                                "description": "Mean annual groundwater change is between 0 and 50 mm"
                             },
                             {
                                 "id": "sig_03",
                                 "type": "equal",
                                 "Key": "upstream_mws_count",
                                 "value": 0,
-                                "template": "The micro-watershed is at the head, i.e. it does not get runoff from upstream micro-watersheds."
+                                "template": "The micro-watershed is at the head, i.e. it does not get runoff from upstream micro-watersheds.",
+                                "description": "No upstream micro-watersheds (this micro-watershed is at the head)"
                             },
                             {
                                 "id": "sig_04",
                                 "type": "equal",
                                 "Key": "aquifer_class",
                                 "value": "Hard Rock",
-                                "template": "The aquifer type is hard-rock, and these aquifers have low storage anyway."
+                                "template": "The aquifer type is hard-rock, and these aquifers have low storage anyway.",
+                                "description": "Aquifer type is Hard Rock"
                             },
                             {
                                 "id": "sig_05",
@@ -64,7 +68,9 @@
                                         "value": "False"
                                     }
                                 ],
-                                "template": "The cropping intensity is high and likely fueled by groundwater in the absence of other irrigation sources."
+                                "template": "The cropping intensity is high and likely fueled by groundwater in the absence of other irrigation sources.",
+                                "description": "Cropping intensity is greater than 1.5, and no river or canal is available"
+
                             }
                         ],
                         "Trigger": {
@@ -163,7 +169,8 @@
                                     "lower": 5,
                                     "upper": 99999
                                 },
-                                "template": "Non-zero severe or moderate drought incidence, triggered through a combination of SPI (rainfall deviation from historical averages), MAI (leading indicator of crops being under stress, measured as AET/PET), and VCI (lagging indicator of crops actually being stressed when compared with historical averages), is a clear sign of drought risk."
+                                "template": "Non-zero severe or moderate drought incidence, triggered through a combination of SPI (rainfall deviation from historical averages), MAI (leading indicator of crops being under stress, measured as AET/PET), and VCI (lagging indicator of crops actually being stressed when compared with historical averages), is a clear sign of drought risk.",
+                                "description": "Drought lasted 5 weeks or more in a year (severe or moderate)"
                             },
                             {
                                 "id": "sig_02",
@@ -173,7 +180,8 @@
                                     "lower": 5,
                                     "upper": 99999
                                 },
-                                "template": "There is evidence of large dry spell durations in the past."
+                                "template": "There is evidence of large dry spell durations in the past.",
+                                "description": "Longest dry spell is 5 weeks or more"
                             },
                             {
                                 "id": "sig_03",
@@ -205,7 +213,8 @@
                                         }
                                     }
                                 ],
-                                "template": "Rainfall is low, has a decreasing trend, or is spread beyond the kharif season, indicating an arid climate or changing climatic conditions."
+                                "template": "Rainfall is low, has a decreasing trend, or is spread beyond the kharif season, indicating an arid climate or changing climatic conditions.",
+                                "description": "Any one of: average rainfall is below 950 mm, kharif rainfall is less than 75% of annual rainfall, or annual rainfall is decreasing over time"
                             },
                             {
                                 "id": "sig_04",
@@ -215,7 +224,8 @@
                                     "lower": 14,
                                     "upper": 99999
                                 },
-                                "template": "There is significant deviation in monsoon onset dates, indicating risk for rainfed agriculture."
+                                "template": "There is significant deviation in monsoon onset dates, indicating risk for rainfed agriculture.",
+                                "description": "Monsoon onset date varies by 14 days or more across years"
                             },
                             {
                                 "id": "sig_05",
@@ -225,7 +235,8 @@
                                     "lower": 0,
                                     "upper": 1.25
                                 },
-                                "template": "Cropping intensity is low, an observational indicator of natural reasons behind dependence on rainfall."
+                                "template": "Cropping intensity is low, an observational indicator of natural reasons behind dependence on rainfall.",
+                                "description": "Cropping intensity is below 1.25"
                             }
                         ],
                         "Trigger": {
@@ -324,7 +335,8 @@
                                     "lower": 0,
                                     "upper": 0.3
                                 },
-                                "template": "A significant amount of surface water drying up post monsoon likely indicates irrigation risk for cropping areas irrigated through pumping or lift irrigation from waterbodies, especially during the Rabi season."
+                                "template": "A significant amount of surface water drying up post monsoon likely indicates irrigation risk for cropping areas irrigated through pumping or lift irrigation from waterbodies, especially during the Rabi season.",
+                                "description": "Surface water in Rabi is low compared to Kharif (ratio is 0.3 or below)"
                             },
                             {
                                 "id": "sig_02",
@@ -334,7 +346,8 @@
                                     "lower": 0,
                                     "upper": 1
                                 },
-                                "template": "The area is not seeing any significant creation of new waterbodies or increase in surface water area."
+                                "template": "The area is not seeing any significant creation of new waterbodies or increase in surface water area.",
+                                "description": "Surface water area is not increasing over the years"
                             },
                             {
                                 "id": "sig_03",
@@ -377,7 +390,8 @@
                                         ]
                                     }
                                 ],
-                                "template": "The area is already groundwater stressed, and therefore groundwater may not be a reliable source for irrigation."
+                                "template": "The area is already groundwater stressed, and therefore groundwater may not be a reliable source for irrigation.",
+                                "description": "Groundwater extraction stage (SOGE) is not Safe, or groundwater change is between 0 and 50 mm per year with no upstream micro-watersheds or a Hard Rock aquifer"
                             },
                             {
                                 "id": "sig_04",
@@ -395,7 +409,8 @@
                                         "value": "False"
                                     }
                                 ],
-                                "template": "Canals and rivers are not present in the area to offer any resilience."
+                                "template": "Canals and rivers are not present in the area to offer any resilience.",
+                                "description": "No river or canal is available"
                             },
                             {
                                 "id": "sig_05",
@@ -405,7 +420,8 @@
                                     "lower": 0,
                                     "upper": 50
                                 },
-                                "template": "NREGA investment in irrigation works is also low."
+                                "template": "NREGA investment in irrigation works is also low.",
+                                "description": "NREGA irrigation works is not more than 50."
                             }
                         ],
                         "Trigger": {
@@ -510,7 +526,8 @@
                                     "lower": 0.5,
                                     "upper": 99999
                                 },
-                                "template": "Low levels of nitrogen in more than half of the cropping area."
+                                "template": "Low levels of nitrogen in more than half of the cropping area.",
+                                "description": "Low nitrogen in more than 50% of the cropping area."
                             },
                             {
                                 "id": "sig_02",
@@ -520,7 +537,8 @@
                                     "lower": 0.5,
                                     "upper": 99999
                                 },
-                                "template": "Low levels of phosphorus in more than half of the cropping area."
+                                "template": "Low levels of phosphorus in more than half of the cropping area.",
+                                "description": "Low phosphorus in more than 50% of the cropping area."
                             },
                             {
                                 "id": "sig_03",
@@ -530,7 +548,8 @@
                                     "lower": 0.5,
                                     "upper": 99999
                                 },
-                                "template": "Low levels of potassium in more than half of the cropping area."
+                                "template": "Low levels of potassium in more than half of the cropping area.",
+                                "description": "Low potassium in more than 50% of the cropping area."
                             },
                             {
                                 "id": "sig_04",
@@ -540,7 +559,8 @@
                                     "lower": 0.5,
                                     "upper": 99999
                                 },
-                                "template": "Low soil organic carbon in more than half of the cropping area."
+                                "template": "Low soil organic carbon in more than half of the cropping area.",
+                                "description": "Low soil organic carbon in more than 50% of the cropping area."
                             }
                         ],
                         "Trigger": {
@@ -600,7 +620,8 @@
                                     "lower": 30,
                                     "upper": 99999
                                 },
-                                "template": "Loss of cropping area to fallow land."
+                                "template": "Loss of cropping area to fallow land.",
+                                "description": "Cropping area converted to shrub or fallow land is greater than 30"
                             },
                             {
                                 "id": "sig_02",
@@ -610,7 +631,8 @@
                                     "lower": 0,
                                     "upper": 10
                                 },
-                                "template": "Reduction in cropping intensity over the years."
+                                "template": "Reduction in cropping intensity over the years.",
+                                "description": "Cropping intensity is declining over the years"
                             }
                         ],
                         "Trigger": {
@@ -657,7 +679,8 @@
                                     "lower": 0,
                                     "upper": 0.5
                                 },
-                                "template": "A significant amount of surface water is drying up post monsoon."
+                                "template": "A significant amount of surface water is drying up post monsoon.",
+                                "description": "A large share of surface water dries up after the monsoon (Rabi to Kharif ratio of 0.5 or below)"
                             },
                             {
                                 "id": "sig_02",
@@ -667,7 +690,8 @@
                                     "lower": 0,
                                     "upper": 1
                                 },
-                                "template": "There is a decreasing trend in surface water availability."
+                                "template": "There is a decreasing trend in surface water availability.",
+                                "description": "Surface water availability is not growing and may be declining over the years"
                             }
                         ],
                         "Trigger": {
@@ -718,7 +742,9 @@
                                     "lower": 0,
                                     "upper": 0.3
                                 },
-                                "template": "The area sees depleted surface water availability post the monsoon season."
+                                "template": "The area sees depleted surface water availability post the monsoon season.",
+                                "description": "Surface water in Rabi is low compared to Kharif (ratio is 0.3 or below)"
+
                             },
                             {
                                 "id": "sig_02",
@@ -728,7 +754,8 @@
                                     "lower": -1,
                                     "upper": 0
                                 },
-                                "template": "No new waterbodies or surface water increase has happened over the years."
+                                "template": "No new waterbodies or surface water increase has happened over the years.",
+                                "description": "Surface water area is declining over the years, with no new waterbodies added"
                             },
                             {
                                 "id": "sig_03",
@@ -738,7 +765,8 @@
                                     "lower": 300,
                                     "upper": 99999
                                 },
-                                "template": "The area has a high livestock population."
+                                "template": "The area has a high livestock population.",
+                                "description": "Livestock population count is greater than 300."
                             },
                             {
                                 "id": "sig_04",
@@ -748,14 +776,16 @@
                                     "lower": 0,
                                     "upper": 50
                                 },
-                                "template": "NREGA works for soil and water conservation are few."
+                                "template": "NREGA works for soil and water conservation are few.",
+                                "description": "Fewer than 50 NREGA soil and water conservation works"
                             },
                             {
                                 "id": "sig_05",
                                 "type": "equal",
                                 "Key": "river_available",
                                 "value": "False",
-                                "template": "Rivers are not flowing through the area."
+                                "template": "Rivers are not flowing through the area.",
+                                "description": "No river is available in the area"
                             }
                         ],
                         "Trigger": {
@@ -863,7 +893,8 @@
                                     "lower": 30,
                                     "upper": 99999
                                 },
-                                "template": "Trees have been lost on grasslands."
+                                "template": "Trees have been lost on grasslands.",
+                                "description": "Tree loss on grasslands is greater than 30ha"
                             },
                             {
                                 "id": "sig_02",
@@ -873,7 +904,8 @@
                                     "lower": 30,
                                     "upper": 99999
                                 },
-                                "template": "Trees have been lost on forest fringes."
+                                "template": "Trees have been lost on forest fringes.",
+                                "description": "Tree loss on forest fringes is greater than 30ha"
                             },
                             {
                                 "id": "sig_03",
@@ -883,7 +915,8 @@
                                     "lower": -1,
                                     "upper": 0
                                 },
-                                "template": "Grasslands themselves have degraded, as noticed by a decreasing trend in NDVI."
+                                "template": "Grasslands themselves have degraded, as noticed by a decreasing trend in NDVI.",
+                                "description": "Grassland health is declining over the years (decreasing NDVI trend)"
                             },
                             {
                                 "id": "sig_04",
@@ -893,7 +926,8 @@
                                     "lower": 300,
                                     "upper": 99999
                                 },
-                                "template": "The area has a high livestock population."
+                                "template": "The area has a high livestock population.",
+                                "description": "Livestock population score is greater than 300"
                             }
                         ],
                         "Trigger": {
@@ -982,7 +1016,9 @@
                                     "lower": 0.5,
                                     "upper": 99999
                                 },
-                                "template": "Surface water retention post the monsoon season is high, indicating sufficient water availability for long-duration fish cultivation."
+                                "template": "Surface water retention post the monsoon season is high, indicating sufficient water availability for long-duration fish cultivation.",
+                                "description": "Surface water in Rabi is low compared to Kharif (ratio is 0.3 or below)"
+
                             },
                             {
                                 "id": "sig_02",
@@ -992,7 +1028,8 @@
                                     "lower": 1,
                                     "upper": 99999
                                 },
-                                "template": "There has been a non-zero improvement in surface water availability due to new waterbodies being built in the area or improved rainfall."
+                                "template": "There has been a non-zero improvement in surface water availability due to new waterbodies being built in the area or improved rainfall.",
+                                "description": "Surface water area is increasing over the years (new waterbodies or better rainfall)"
                             },
                             {
                                 "id": "sig_03",
@@ -1002,7 +1039,8 @@
                                     "lower": 50,
                                     "upper": 99999
                                 },
-                                "template": "Significant NREGA works have been undertaken."
+                                "template": "Significant NREGA works have been undertaken.",
+                                "description": "More than 50 NREGA soil and water conservation works"
                             },
                             {
                                 "id": "sig_04",
@@ -1012,7 +1050,8 @@
                                     "lower": 0,
                                     "upper": 1.25
                                 },
-                                "template": "Cropping intensity is low, indicating an opportunity to transition communities towards other livelihood opportunities beyond agriculture."
+                                "template": "Cropping intensity is low, indicating an opportunity to transition communities towards other livelihood opportunities beyond agriculture.",
+                                "description": "Cropping intensity is below 1.25"
                             },
                             {
                                 "id": "sig_05",
@@ -1022,7 +1061,8 @@
                                     "lower": 70,
                                     "upper": 99999
                                 },
-                                "template": "SHG penetration is high, indicating a good capacity to take up new income opportunities."
+                                "template": "SHG penetration is high, indicating a good capacity to take up new income opportunities.",
+                                "description": "Self-help group (SHG) penetration is greater than 70%"
                             }
                         ],
                         "Trigger": {
@@ -1126,7 +1166,8 @@
                                     "lower": 30,
                                     "upper": 99999
                                 },
-                                "template": "Loss of cropping area to fallow land."
+                                "template": "Loss of cropping area to fallow land.",
+                                "description": "Cropping area converted to shrub or fallow land is greater than 30 ha"
                             },
                             {
                                 "id": "sig_02",
@@ -1136,7 +1177,8 @@
                                     "lower": 0,
                                     "upper": 10
                                 },
-                                "template": "Decrease in cropping intensity."
+                                "template": "Decrease in cropping intensity.",
+                                "description": "Cropping intensity is not more than 10"
                             },
                             {
                                 "id": "sig_03",
@@ -1146,7 +1188,8 @@
                                     "lower": 5,
                                     "upper": 99999
                                 },
-                                "template": "A few NREGA plantations have already been done in the area, indicating that experiments have already been done."
+                                "template": "A few NREGA plantations have already been done in the area, indicating that experiments have already been done.",
+                                "description": "At least 5 NREGA plantation works have already been done in the area"
                             },
                             {
                                 "id": "sig_04",
@@ -1156,7 +1199,8 @@
                                     "lower": 70,
                                     "upper": 99999
                                 },
-                                "template": "SHG penetration is high, indicating a good capacity to take up new income opportunities and downstream value addition on the produce."
+                                "template": "SHG penetration is high, indicating a good capacity to take up new income opportunities and downstream value addition on the produce.",
+                                "description": "Self-help group (SHG) penetration is greater than 70%"
                             },
                             {
                                 "id": "sig_05",
@@ -1180,7 +1224,8 @@
                                         }
                                     }
                                 ],
-                                "template": "Cooperatives and FPOs are present in the area, indicating scope for produce aggregation and market linkages."
+                                "template": "Cooperatives and FPOs are present in the area, indicating scope for produce aggregation and market linkages.",
+                                "description": "A farmer producer organisation (FPO) or cooperative is within 5 km"
                             }
                         ],
                         "Trigger": {
@@ -1267,7 +1312,8 @@
                                         }
                                     }
                                 ],
-                                "template": "Tree cover loss or degradation has happened deep inside forests."
+                                "template": "Tree cover loss or degradation has happened deep inside forests.",
+                                "description": "Tree loss inside forests is greater than 30, or forest degradation is greater than 30ha"
                             },
                             {
                                 "id": "sig_02",
@@ -1299,14 +1345,16 @@
                                         }
                                     }
                                 ],
-                                "template": "Compensatory afforestation is lagging behind deforestation and forests are getting fragmented over time."
+                                "template": "Compensatory afforestation is lagging behind deforestation and forests are getting fragmented over time.",
+                               "description": "Over 20 ha of tree cover, but trees gained are under 75% of trees lost, and tree area that has turned short-lived is over 10% of the total tree cover"
                             },
                             {
                                 "id": "sig_03",
                                 "type": "not_equal",
                                 "Key": "terrain_cluster",
                                 "value": "plain",
-                                "template": "The terrain in the area has slopes or hills, pointing to the possibility that forests on slopes have degraded or been lost, likely leading to soil erosion and water challenges in the long term."
+                                "template": "The terrain in the area has slopes or hills, pointing to the possibility that forests on slopes have degraded or been lost, likely leading to soil erosion and water challenges in the long term.",
+                                "description": "Terrain is not plain."
                             },
                             {
                                 "id": "sig_04",
@@ -1316,7 +1364,8 @@
                                     "lower": 20,
                                     "upper": 99999
                                 },
-                                "template": "A large part of the forest has been lost to cropping, indicating high encroachment pressure."
+                                "template": "A large part of the forest has been lost to cropping, indicating high encroachment pressure.",
+                                "description": "Forest area converted to farmland is greater than 20ha"
                             },
                             {
                                 "id": "sig_05",
@@ -1326,7 +1375,8 @@
                                     "lower": 33,
                                     "upper": 99999
                                 },
-                                "template": "The ST population is high, likely indicating a dependency on forest-based livelihood through NTFPs."
+                                "template": "The ST population is high, likely indicating a dependency on forest-based livelihood through NTFPs.",
+                                "description": "ST population is greater than 33%"
                             }
                         ],
                         "Trigger": {
@@ -1399,7 +1449,8 @@
                                     "lower": 45,
                                     "upper": 99999
                                 },
-                                "template": "The area has a high combined SC and ST population, indicating historical marginalization which may still be persisting."
+                                "template": "The area has a high combined SC and ST population, indicating historical marginalization which may still be persisting.",
+                                "description": "Combined SC and ST population is greater than 45%"
                             },
                             {
                                 "id": "sig_02",
@@ -1409,7 +1460,8 @@
                                     "lower": 0,
                                     "upper": 100
                                 },
-                                "template": "Few NREGA works have been done in the area, indicating low access or awareness or community mobilization to utilize social entitlements and welfare."
+                                "template": "Few NREGA works have been done in the area, indicating low access or awareness or community mobilization to utilize social entitlements and welfare.",
+                                "description": "Fewer than 100 NREGA assets in the area"
                             },
                             {
                                 "id": "sig_03",
@@ -1419,7 +1471,8 @@
                                     "lower": 1,
                                     "upper": 99999
                                 },
-                                "template": "Distance to banking facilities is high, indicating low connectivity with essential credit and working capital requirements for economic mobility."
+                                "template": "Distance to banking facilities is high, indicating low connectivity with essential credit and working capital requirements for economic mobility.",
+                                "description": "Nearest bank is more than 1 km away"
                             },
                             {
                                 "id": "sig_04",
@@ -1429,7 +1482,8 @@
                                     "lower": 0,
                                     "upper": 55
                                 },
-                                "template": "Literacy rate (census 2011) is low, indicating historically poor access to essential education, health, and economic opportunities."
+                                "template": "Literacy rate (census 2011) is low, indicating historically poor access to essential education, health, and economic opportunities.",
+                                "description": "Literacy rate is below 55% (Census 2011)"
                             },
                             {
                                 "id": "sig_05",
@@ -1439,7 +1493,8 @@
                                     "lower": 0,
                                     "upper": 50
                                 },
-                                "template": "SHG penetration is low, indicating low levels of collectivization."
+                                "template": "SHG penetration is low, indicating low levels of collectivization.",
+                                "description": "Self-help group (SHG) penetration is below 50%"
                             }
                         ],
                         "Trigger": {
@@ -1502,7 +1557,8 @@
                                 "type": "equal",
                                 "Key": "mining",
                                 "value": 1,
-                                "template": "Water quality for drinking and domestic purposes can be at risk as the area is near mining sites."
+                                "template": "Water quality for drinking and domestic purposes can be at risk as the area is near mining sites.",
+                                "description": "Mining is present near the area"
                             },
                             {
                                 "id": "sig_02",
@@ -1531,7 +1587,8 @@
                                         }
                                     }
                                 ],
-                                "template": "In hilly areas which have seen deforestation, likely leading to the drying up of what may have been perennial streams."
+                                "template": "In hilly areas which have seen deforestation, likely leading to the drying up of what may have been perennial streams.",
+                                "description": "Terrain is not plain, tree loss inside forests is greater than 30 ha, and cropping intensity is below 1.25"
                             },
                             {
                                 "id": "sig_03",
@@ -1541,7 +1598,9 @@
                                     "lower": 0,
                                     "upper": 0.5
                                 },
-                                "template": "The area is already seeing less surface water availability post monsoon."
+                                "template": "The area is already seeing less surface water availability post monsoon.",
+                                "description": "Surface water in Rabi is low compared to Kharif (ratio is 0.5 or below)"
+
                             },
                             {
                                 "id": "sig_04",
@@ -1584,7 +1643,8 @@
                                         ]
                                     }
                                 ],
-                                "template": "The area is already groundwater stressed, and this can lead to salination in pumped water."
+                                "template": "The area is already groundwater stressed, and this can lead to salination in pumped water.",
+                                "description": "Groundwater extraction stage (SOGE) is not Safe, or groundwater change is between 0 and 50 mm per year with no upstream micro-watersheds or a Hard Rock aquifer"
                             },
                             {
                                 "id": "sig_05",
@@ -1608,7 +1668,8 @@
                                         }
                                     }
                                 ],
-                                "template": "No new waterbodies or few NREGA works have been built to increase surface water availability."
+                                "template": "No new waterbodies or few NREGA works have been built to increase surface water availability.",
+                                "description": "Surface water area is not increasing, and fewer than 50 NREGA soil and water conservation works"
                             }
                         ],
                         "Trigger": {

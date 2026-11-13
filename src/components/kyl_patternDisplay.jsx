@@ -17,7 +17,7 @@ const KYLPatternDisplay = ({
     });
 
     const sigIds = [...new Set(pattern.triggerExp?.match(/sig_\d+/g) ?? [])];
-const signalLabels = pattern.signalTexts ?? {};
+const signalLabels = pattern.descriptions ?? {};
     const hideTimeoutRef = useRef(null);
 
     const handleApplyClick = () => {
