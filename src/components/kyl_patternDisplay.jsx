@@ -16,6 +16,8 @@ const KYLPatternDisplay = ({
         left: 0
     });
 
+    const sigIds = [...new Set(pattern.triggerExp?.match(/sig_\d+/g) ?? [])];
+const signalLabels = pattern.signalTexts ?? {};
     const hideTimeoutRef = useRef(null);
 
     const handleApplyClick = () => {
@@ -95,15 +97,31 @@ const KYLPatternDisplay = ({
                     className="rounded-lg bg-gray-800 text-white p-4 shadow-2xl"
                 >
                     {pattern.triggerExp && (
-                        <div className="mb-3">
-                            <p className="text-[11px] font-semibold mb-1">
-                                Trigger Expression
-                            </p>
-                            <p className="text-[11px] leading-relaxed break-words whitespace-pre-wrap">
-                                {pattern.triggerExp}
-                            </p>
-                        </div>
-                    )}
+    <div>
+        <p className="text-[11px] font-semibold mb-1">Trigger Expression</p>
+        <p className="text-[11px] leading-relaxed break-words whitespace-pre-wrap text-gray-300">
+            {pattern.triggerExp}
+        </p>
+
+        {sigIds.length > 0 && (
+            <div className="mt-3 pt-3 border-t border-gray-600">
+                <p className="text-[11px] font-semibold mb-2">What each signal means</p>
+                <ul className="space-y-2">
+                    {sigIds.map((id) => (
+                        <li key={id} className="flex items-start gap-2">
+                            <span className="shrink-0 font-mono text-[11px] bg-indigo-500/30 text-indigo-200 px-1.5 py-0.5 rounded">
+                                {id}
+                            </span>
+                            <span className="font-mono text-[11px] leading-snug break-words">
+                                {signalLabels[id] ?? 'Description not available'}
+                            </span>
+                        </li>
+                    ))}
+                </ul>
+            </div>
+        )}
+    </div>
+)}
 
                     {/* {pattern.comment && (
                         <div>
