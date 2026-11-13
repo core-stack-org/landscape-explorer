@@ -207,37 +207,18 @@ export default function ScopePanel({
         )}
       </div>
 
-       {/* Combined MWS and Village counts after AND matching */}
-            <div className="mt-3 pt-3 border-t border-gray-100">
-              {selectedMWS !== null &&
-              selectedMWS.length === 0 &&
-              selectedVillages !== null &&
-              selectedVillages.size === 0 ? (
-                <p className="text-[11px] text-amber-600 bg-amber-50 px-3 py-2 rounded-lg border border-amber-100">
-                  No micro-watersheds or villages match the selected patterns.
-                </p>
-              ) : (
-                <div className="flex gap-2">
-                  <div className="flex-1 bg-blue-50 border border-blue-100 rounded-lg px-3 py-2 text-center">
-                    <p className="text-lg font-bold text-blue-600 leading-none">
-                      {selectedMWS?.length ?? 0}
-                    </p>
-                    <p className="text-[10px] text-blue-400 font-medium mt-0.5">
-                      Micro-Watershed
-                    </p>
-                  </div>
-
-                  <div className="flex-1 bg-emerald-50 border border-emerald-100 rounded-lg px-3 py-2 text-center">
-                    <p className="text-lg font-bold text-emerald-600 leading-none">
-                      {selectedVillages?.size ?? 0}
-                    </p>
-                    <p className="text-[10px] text-emerald-400 font-medium mt-0.5">
-                      Villages
-                    </p>
-                  </div>
-                </div>
-              )}
-            </div>
+           {(filters.length > 0 || patterns.length > 0) && (
+        <div className="flex gap-2">
+          <div className="flex-1 bg-blue-50 border border-blue-100 rounded-lg px-3 py-2 text-center">
+            <p className="text-lg font-bold text-blue-600 leading-none">{selectedMWS?.length ?? 0}</p>
+            <p className="text-[10px] text-blue-400 font-medium mt-0.5">Micro-Watershed</p>
+          </div>
+          <div className="flex-1 bg-emerald-50 border border-emerald-100 rounded-lg px-3 py-2 text-center">
+            <p className="text-lg font-bold text-emerald-600 leading-none">{selectedVillages?.size ?? 0}</p>
+            <p className="text-[10px] text-emerald-400 font-medium mt-0.5">Villages</p>
+          </div>
+        </div>
+      )}
 
       <div className="bg-white rounded-xl border border-gray-100 p-4 shadow-sm">
         <SectionHeader

@@ -30,12 +30,10 @@ const KYLPatternDisplay = ({
         clearTimeout(hideTimeoutRef.current);
 
         const rect = event.currentTarget.getBoundingClientRect();
+        console.log({ rectTop: rect.top, rectBottom: rect.bottom, rectLeft: rect.left, innerHeight: window.innerHeight, innerWidth: window.innerWidth });
 
         const tooltipWidth = Math.min(360, window.innerWidth - 24);
-        const estimatedHeight = Math.min(
-            420,
-            window.innerHeight * 0.7
-        );
+        const estimatedHeight = 120;
 
         const left = Math.max(
             12,
@@ -89,7 +87,7 @@ const KYLPatternDisplay = ({
                         position: 'fixed',
                         top: tooltipPosition.top,
                         left: tooltipPosition.left,
-                        width: 'min(360px, calc(100vw - 24px)',
+                        width: 'min(360px, calc(100vw - 24px))',
                         maxHeight: '70vh',
                         overflowY: 'auto',
                         zIndex: 99999
