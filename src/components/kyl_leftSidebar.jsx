@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import KYLIndicatorFilter from './kyl_indicatorFilter';
 import KYLPatternDisplay from './kyl_patternDisplay';
-import { ChevronRight, ArrowLeft, AlertCircle, WifiOff, FileX, Loader2 } from 'lucide-react';
-
+import { ChevronRight, ChevronDown, ArrowLeft, AlertCircle, WifiOff, FileX, Loader2 } from 'lucide-react';
 import { getFiltersByCategory, CATEGORIES_BY_SECTION } from '../components/utils/filtersIndex.js';
 
 const DISABLED_REASON_META = {
@@ -102,6 +101,8 @@ const KYLLeftSidebar = ({
 }) => {
   const [activeTab, setActiveTab] = useState('Filters');
   const [selectedSubcategory, setSelectedSubcategory] = useState(null);
+  const [openNodes, setOpenNodes] = useState({});
+  const toggleNode = (key) => setOpenNodes((prev) => ({ ...prev, [key]: !prev[key] }));
 
   useEffect(() => {
     setActiveTab('Filters');
@@ -263,22 +264,63 @@ const KYLLeftSidebar = ({
                 </div>
               ))
             ) : (
-              (getAllPatternTypes?.() || []).map((category) => (
-                <button
-                  key={category}
-                  onClick={() => { setIndicatorType(category); setSelectedSubcategory(null); }}
-                  disabled={isDisabled}
-                  title={isDisabled && reasonKey ? DISABLED_REASON_META[reasonKey].label : undefined}
-                  className={`w-full flex items-center justify-between px-4 py-3 rounded-lg
-                    border text-sm font-medium text-left transition-all
-                    ${isDisabled
-                      ? 'bg-gray-50 text-gray-400 border-gray-100 cursor-not-allowed'
-                      : 'bg-white text-gray-700 border-gray-200 hover:border-indigo-300 hover:bg-indigo-50 hover:text-indigo-700'}`}
-                >
-                  <span className="text-left">{category}</span>
-                  <ChevronRight className="w-4 h-4 text-gray-400 shrink-0" />
-                </button>
-              ))
+             <div className="space-y-1.5">
+              {(getAllPatternTypes?.() || []).map((category) => {
+                const isCatOpen = !!openNodes[category];
+                return (
+                  <div key={category} className="rounded-lg border border-gray-200 bg-white overflow-hidden">
+                    <button
+                      onClick={() => toggleNode(category)}
+                      disabled={isDisabled}
+                      title={isDisabled && reasonKey ? DISABLED_REASON_META[reasonKey].label : undefined}
+                      className={`w-full flex items-center justify-between px-4 py-3 text-sm font-medium text-left transition-all focus:outline-none
+                        ${isDisabled
+                          ? 'bg-gray-50 text-gray-400 cursor-not-allowed'
+                          : 'text-gray-700 hover:bg-indigo-50 hover:text-indigo-700'}`}
+                    >
+                      <span className="text-left">{category}</span>
+                      {isCatOpen ? <ChevronDown className="w-4 h-4 text-gray-400 shrink-0" /> : <ChevronRight className="w-4 h-4 text-gray-400 shrink-0" />}
+                    </button>
+
+                    {isCatOpen && (
+                      <div className="px-3 pb-3 space-y-2">
+                        {(getSubcategoriesForCategory?.(category) || []).map((subcategory) => {
+                          const subKey = `${category}::${subcategory}`;
+                          const isSubOpen = !!openNodes[subKey];
+                          return (
+                            <div key={subKey} className="rounded-lg border border-gray-200 bg-gray-50 overflow-hidden">
+                              <button
+                                onClick={() => toggleNode(subKey)}
+                                disabled={isDisabled}
+                                className="w-full flex items-center justify-between px-3 py-2.5 text-xs font-medium text-left text-gray-600 hover:bg-indigo-50 hover:text-indigo-700 transition-all focus:outline-none"
+                              >
+                                <span className="flex-1">{subcategory}</span>
+                                {isSubOpen ? <ChevronDown className="w-4 h-4 text-gray-400 shrink-0" /> : <ChevronRight className="w-4 h-4 text-gray-400 shrink-0" />}
+                              </button>
+
+                              {isSubOpen && (
+                                <div className="px-3 pb-3 space-y-3">
+                                  {getPatternsForSubcategory?.(category, subcategory).map((pattern, index) => (
+                                    <KYLPatternDisplay
+                                      key={pattern.name || index}
+                                      pattern={pattern}
+                                      isDisabled={isDisabled}
+                                      isSelected={isPatternSelected?.(pattern.name, patternSelections)}
+                                      onPatternSelect={handlePatternSelection}
+                                      handlePatternRemoval={handlePatternRemoval}
+                                    />
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
             )}
           </div>
         )}

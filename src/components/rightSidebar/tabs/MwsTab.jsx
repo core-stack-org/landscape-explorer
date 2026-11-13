@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { ExternalLink, X } from 'lucide-react';
 import SearchableList from '../SearchableList';
-import { WhatThisPlaceIs, WaterSection, SoilSection, TreeCoverSection, FeaturesPressures } from './mwsSections';
+import { WhatThisPlaceIs, WaterSection, SoilSection, TreeCoverSection, FeaturesPressures,StressPatternsSection } from './mwsSections';
 import {
   colorPrimaryHover, colorPrimaryLight, colorInk, colorMuted, colorBorder, colorBorderSoft,
   colorSurface, colorSelected, colorSelectedBorder, colorUnselected, colorUnselectedBorder,
@@ -50,6 +50,7 @@ export default function MwsTab({
   uid,
   record,
   selectedMws,
+  appliedStressPatterns = [],
   intersectingVillages,
   onRemoveMws,
   onClearSelection,
@@ -72,7 +73,8 @@ export default function MwsTab({
           <SoilSection record={record} />
           <TreeCoverSection record={record} />
           <FeaturesPressures record={record} />
-
+          <StressPatternsSection patterns={appliedStressPatterns} />
+          
           <button
             type="button"
             onClick={() => onReport(uid)}

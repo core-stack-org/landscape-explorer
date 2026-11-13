@@ -362,3 +362,26 @@ export function FeaturesPressures({ record }) {
     </Card>
   );
 }
+
+export function StressPatternsSection({ patterns = [] }) {
+  if (!patterns.length) return null;
+
+  return (
+    <Card title="Matching Stress Patterns">
+      <div className="flex flex-wrap gap-1.5">
+        {patterns.map((pattern) => (
+          <Chip
+            key={pattern.name}
+            label={
+              pattern.patternCategory ||
+              pattern.subcategory ||
+              pattern.category ||
+              pattern.name
+            }
+            present={true}
+          />
+        ))}
+      </div>
+    </Card>
+  );
+}
