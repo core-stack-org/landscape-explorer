@@ -2819,8 +2819,8 @@ const SoilTexture = [
                     }}
                   />
                   <div className="flex justify-between text-[10px] text-gray-600">
-                    <span>No Stress Pattern</span>
-                    <span>Max Stress Pattern</span>
+                    <span>Not Stressed</span>
+                    <span>Highly Stressed</span>
                   </div>
                 </div>
               )}

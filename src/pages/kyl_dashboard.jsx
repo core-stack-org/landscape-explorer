@@ -2723,6 +2723,15 @@ const KYLDashboardPage = () => {
     updateFilteredMWS(selectedMWS);
   }, [selectedMWS]);
 
+    useEffect(() => {
+    if (!visualisedPattern) return;
+    if (!patternSelections.selectedMWSPatterns[visualisedPattern]) {
+      applyDefaultMWSStyle();
+      boundaryLayerRef.current?.updateStyleVariables({ isVisualizeOn: currentLayer.length > 0 });
+      setVisualisedPattern(null);
+    }
+  }, [patternSelections]);
+
   useEffect(() => {
     fetchAdminLayer([...villageIdList]);
   }, [villageIdList]);
