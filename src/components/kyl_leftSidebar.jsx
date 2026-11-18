@@ -98,6 +98,8 @@ const KYLLeftSidebar = ({
   isFilterProcessing,
   isLayerSelecting,
   showConnectivityRef,
+  onVisualise,
+  visualisedPattern
 }) => {
   const [activeTab, setActiveTab] = useState('Filters');
   const [selectedSubcategory, setSelectedSubcategory] = useState(null);
@@ -308,6 +310,8 @@ const KYLLeftSidebar = ({
                                       isSelected={isPatternSelected?.(pattern.name, patternSelections)}
                                       onPatternSelect={handlePatternSelection}
                                       handlePatternRemoval={handlePatternRemoval}
+                                      onVisualise={onVisualise}
+                                      isVisualised={visualisedPattern === pattern.name}
                                     />
                                   ))}
                                 </div>
