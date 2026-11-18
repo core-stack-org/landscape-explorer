@@ -38,6 +38,16 @@ function normalizeNode(node, signalsById) {
   return { key: node.Key, type: TYPE_CODE[node.type], value: node.value };
 }
 
+function normalizeIntensity(intensity, signalsById) {
+  if (!intensity) return null;
+  const items = intensity.Intensity_Values.map((item) => normalizeNode(item, signalsById));
+  const multiply = intensity.Intensity_Exp?.includes('*');
+  const max = multiply
+    ? items.reduce((m, i) => m * (i.children.length + (i.base ?? 0)), 1)
+    : items.length;
+  return { items, multiply, max };
+}
+
 // function normalizeNode(node) {
 //   if (node.type === 'logic') {
 //       return { logic: node.logic, minTrue: node.min_true, children: node.Values.map(normalizeNode) };
@@ -98,6 +108,7 @@ for (const category of CATEGORIES) {
         templates: (p.Signals || []).map((s) => s.template),
         level: LEVEL_CODE[p.level] ?? p.level,
         root: normalizeNode(p.Trigger, signalsById),
+        intensity: normalizeIntensity(p.Intensity, signalsById),
         logic: p.Trigger.logic,
         conditions: p.Signals.flatMap(flattenSignal),
         triggerExp: p.Trigger?.Trigger_Exp,
