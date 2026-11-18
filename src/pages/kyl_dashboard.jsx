@@ -2826,6 +2826,7 @@ const KYLDashboardPage = () => {
             setSelectionMode={setSelectionMode}
             showStewards
             showFarmBoundaries={showFarmBoundaries}
+            visualisedPattern={visualisedPattern}
           />
           <LayerErrorToast
             errors={layerErrors}

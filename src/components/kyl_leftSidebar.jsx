@@ -4,6 +4,8 @@ import KYLPatternDisplay from './kyl_patternDisplay';
 import { ChevronRight, ChevronDown, ArrowLeft, AlertCircle, WifiOff, FileX, Loader2 } from 'lucide-react';
 import { getFiltersByCategory, CATEGORIES_BY_SECTION } from '../components/utils/filtersIndex.js';
 
+const formatCategoryLabel = (category) => category.replace(/_/g, ' ');
+
 const DISABLED_REASON_META = {
   not_found: {
     Icon: FileX, bg: 'bg-amber-50', border: 'border-amber-200', iconCls: 'text-amber-500', textCls: 'text-amber-800',
@@ -214,12 +216,12 @@ const KYLLeftSidebar = ({
             {isDisabled && reasonKey
               ? <FiltersDisabledBanner reasonKey={reasonKey} />
               : activeTab === 'Filters' &&
-                Object.keys(filterSelections.selectedMWSValues).length === 0 &&
-                Object.keys(filterSelections.selectedVillageValues).length === 0 && (
-                  <p className="text-[11px] text-indigo-600 bg-indigo-50 px-3 py-2 rounded-lg mb-3 border border-indigo-100">
-                    Select a category below to apply filters
-                  </p>
-                )}
+              Object.keys(filterSelections.selectedMWSValues).length === 0 &&
+              Object.keys(filterSelections.selectedVillageValues).length === 0 && (
+                <p className="text-[11px] text-indigo-600 bg-indigo-50 px-3 py-2 rounded-lg mb-3 border border-indigo-100">
+                  Select a category below to apply filters
+                </p>
+              )}
 
             {activeTab === 'Patterns' && (
               <p className="text-[11px] text-indigo-600 bg-indigo-50 px-3 py-2 rounded-lg mb-3 border border-indigo-100">
@@ -250,7 +252,7 @@ const KYLLeftSidebar = ({
                               ? 'bg-gray-50 text-gray-400 border-gray-100 cursor-not-allowed'
                               : 'bg-white text-gray-700 border-gray-200 hover:border-indigo-300 hover:bg-indigo-50 hover:text-indigo-700'}`}
                         >
-                          <span className="text-left">{category}</span>
+                          <span className="text-left">{formatCategoryLabel(category)}</span>
                           <div className="flex items-center gap-2 shrink-0">
                             {activeCount > 0 && (
                               <span className="text-[10px] font-bold bg-indigo-600 text-white px-1.5 py-0.5 rounded-full leading-none">
@@ -266,65 +268,65 @@ const KYLLeftSidebar = ({
                 </div>
               ))
             ) : (
-             <div className="space-y-1.5">
-              {(getAllPatternTypes?.() || []).map((category) => {
-                const isCatOpen = !!openNodes[category];
-                return (
-                  <div key={category} className="rounded-lg border border-gray-200 bg-white overflow-hidden">
-                    <button
-                      onClick={() => toggleNode(category)}
-                      disabled={isDisabled}
-                      title={isDisabled && reasonKey ? DISABLED_REASON_META[reasonKey].label : undefined}
-                      className={`w-full flex items-center justify-between px-4 py-3 text-sm font-medium text-left transition-all focus:outline-none
+              <div className="space-y-1.5">
+                {(getAllPatternTypes?.() || []).map((category) => {
+                  const isCatOpen = !!openNodes[category];
+                  return (
+                    <div key={category} className="rounded-lg border border-gray-200 bg-white overflow-hidden">
+                      <button
+                        onClick={() => toggleNode(category)}
+                        disabled={isDisabled}
+                        title={isDisabled && reasonKey ? DISABLED_REASON_META[reasonKey].label : undefined}
+                        className={`w-full flex items-center justify-between px-4 py-3 text-sm font-medium text-left transition-all focus:outline-none
                         ${isDisabled
-                          ? 'bg-gray-50 text-gray-400 cursor-not-allowed'
-                          : 'text-gray-700 hover:bg-indigo-50 hover:text-indigo-700'}`}
-                    >
-                      <span className="text-left">{category}</span>
-                      {isCatOpen ? <ChevronDown className="w-4 h-4 text-gray-400 shrink-0" /> : <ChevronRight className="w-4 h-4 text-gray-400 shrink-0" />}
-                    </button>
+                            ? 'bg-gray-50 text-gray-400 cursor-not-allowed'
+                            : 'text-gray-700 hover:bg-indigo-50 hover:text-indigo-700'}`}
+                      >
+                        <span className="text-left">{formatCategoryLabel(category)}</span>
+                        {isCatOpen ? <ChevronDown className="w-4 h-4 text-gray-400 shrink-0" /> : <ChevronRight className="w-4 h-4 text-gray-400 shrink-0" />}
+                      </button>
 
-                    {isCatOpen && (
-                      <div className="px-3 pb-3 space-y-2">
-                        {(getSubcategoriesForCategory?.(category) || []).map((subcategory) => {
-                          const subKey = `${category}::${subcategory}`;
-                          const isSubOpen = !!openNodes[subKey];
-                          return (
-                            <div key={subKey} className="rounded-lg border border-gray-200 bg-gray-50 overflow-hidden">
-                              <button
-                                onClick={() => toggleNode(subKey)}
-                                disabled={isDisabled}
-                                className="w-full flex items-center justify-between px-3 py-2.5 text-xs font-medium text-left text-gray-600 hover:bg-indigo-50 hover:text-indigo-700 transition-all focus:outline-none"
-                              >
-                                <span className="flex-1">{subcategory}</span>
-                                {isSubOpen ? <ChevronDown className="w-4 h-4 text-gray-400 shrink-0" /> : <ChevronRight className="w-4 h-4 text-gray-400 shrink-0" />}
-                              </button>
+                      {isCatOpen && (
+                        <div className="px-3 pb-3 space-y-2">
+                          {(getSubcategoriesForCategory?.(category) || []).map((subcategory) => {
+                            const subKey = `${category}::${subcategory}`;
+                            const isSubOpen = !!openNodes[subKey];
+                            return (
+                              <div key={subKey} className="rounded-lg border border-gray-200 bg-gray-50 overflow-hidden">
+                                <button
+                                  onClick={() => toggleNode(subKey)}
+                                  disabled={isDisabled}
+                                  className="w-full flex items-center justify-between px-3 py-2.5 text-xs font-medium text-left text-gray-600 hover:bg-indigo-50 hover:text-indigo-700 transition-all focus:outline-none"
+                                >
+                                  <span className="flex-1">{formatCategoryLabel(subcategory)}</span>
+                                  {isSubOpen ? <ChevronDown className="w-4 h-4 text-gray-400 shrink-0" /> : <ChevronRight className="w-4 h-4 text-gray-400 shrink-0" />}
+                                </button>
 
-                              {isSubOpen && (
-                                <div className="px-3 pb-3 space-y-3">
-                                  {getPatternsForSubcategory?.(category, subcategory).map((pattern, index) => (
-                                    <KYLPatternDisplay
-                                      key={pattern.name || index}
-                                      pattern={pattern}
-                                      isDisabled={isDisabled}
-                                      isSelected={isPatternSelected?.(pattern.name, patternSelections)}
-                                      onPatternSelect={handlePatternSelection}
-                                      handlePatternRemoval={handlePatternRemoval}
-                                      onVisualise={onVisualise}
-                                      isVisualised={visualisedPattern === pattern.name}
-                                    />
-                                  ))}
-                                </div>
-                              )}
-                            </div>
-                          );
-                        })}
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
+                                {isSubOpen && (
+                                  <div className="px-3 pb-3 space-y-3">
+                                    {getPatternsForSubcategory?.(category, subcategory).map((pattern, index) => (
+                                      <KYLPatternDisplay
+                                        key={pattern.name || index}
+                                        pattern={pattern}
+                                        isDisabled={isDisabled}
+                                        isSelected={isPatternSelected?.(pattern.name, patternSelections)}
+                                        onPatternSelect={handlePatternSelection}
+                                        handlePatternRemoval={handlePatternRemoval}
+                                        onVisualise={onVisualise}
+                                        isVisualised={visualisedPattern === pattern.name}
+                                      />
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
             )}
           </div>
         )}

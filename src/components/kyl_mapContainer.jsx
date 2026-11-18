@@ -160,7 +160,7 @@ const MapZoomControls = ({ mapRef }) => {
 };
 
 // Updated MapLegend component
-const MapLegend = ({ showMWS, showVillages, currentLayer, showConnectivity,showPlans,setShowPlans, showFarmBoundaries }) => {
+const MapLegend = ({ showMWS, showVillages, currentLayer, showConnectivity,showPlans,setShowPlans, showFarmBoundaries, visualisedPattern }) => {
   // Add state for collapsed status
   const [isCollapsed, setIsCollapsed] = useState(false);
 
@@ -2804,6 +2804,26 @@ const SoilTexture = [
                   </div>
                 </div>
               )}
+
+                            {/* Pattern Intensity Legend Section */}
+              {visualisedPattern && (
+                <div className="space-y-2">
+                  <h4 className="text-xs font-medium text-gray-600">
+                    Stress Pattern Intensity
+                  </h4>
+                  <div
+                    className="h-3 rounded border border-gray-300"
+                    style={{
+                      background:
+                        "linear-gradient(to right, rgb(34,197,94), rgb(251,191,36), rgb(239,68,68))",
+                    }}
+                  />
+                  <div className="flex justify-between text-[10px] text-gray-600">
+                    <span>No Stress Pattern</span>
+                    <span>Max Stress Pattern</span>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         )}
@@ -2833,6 +2853,7 @@ const KYLMapContainer = ({
    selectionMode,
   setSelectionMode,
   showFarmBoundaries,
+  visualisedPattern
 }) => {
   const areMWSLayersAvailable = mwsLayerRef?.current !== null;
   const areVillageLayersAvailable = boundaryLayerRef?.current !== null;
@@ -2880,6 +2901,8 @@ const KYLMapContainer = ({
         showConnectivity={showConnectivity}
         showPlans={showPlans}
         showFarmBoundaries={showFarmBoundaries}
+        visualisedPattern={visualisedPattern}
+
       />
 
       {/* Search Bar */}
