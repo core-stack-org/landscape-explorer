@@ -1854,6 +1854,10 @@ const KYLDashboardPage = () => {
       alert("Please turn off MWS Connectivity before using Visualize.");
       return;
     }
+        if (visualisedPattern) {
+      toast.error("Please turn off Pattern Visualise before turning on a layer.");
+      return;
+    }
 
     setIsLayerSelecting(true);
     await new Promise(resolve => setTimeout(resolve, 0));
