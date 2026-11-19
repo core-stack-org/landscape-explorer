@@ -178,33 +178,6 @@ export function evaluateIntensity(record, intensity) {
 // OR across a pattern's own conditions, AND across selected patterns —
 // confirmed intentional (screening heuristic: "any condition true enough
 // to flag this MWS/village").
-// function matchPatterns(selections, byId, scoreSink) {
-//   let result = null;
-//   for (const pattern of Object.values(selections || {})) {
-//     if (!pattern) continue;
-
-//     const matched = new Set();
-//       const scores = [];
-//       const patternScores = new Map();
-//     for (const [id, record] of byId) {
-//             const isMatch = evaluateNode(record, pattern.root);
-//       // const isMatch = pattern.logic === 'AND'
-//       //   ? pattern.conditions.every((c) => conditionMatches(record, c))
-//       //   : pattern.conditions.some((c) => conditionMatches(record, c));
-
-//       const entry = { id, score: evaluateIntensity(record, pattern.intensity), max: pattern.intensity?.max }; // NEW
-//       scores.push(entry); 
-//       if (isMatch) matched.add(id);
-//       // scores.push({ id, score: evaluateIntensity(record, pattern.intensity), max: pattern.intensity?.max });
-//     }
-//     console.log(`[intensity] ${pattern.name}`);
-//     console.table(scores);
-//     scoreSink?.set(pattern.name, patternScores);
-
-//     result = result === null ? matched : new Set([...result].filter((id) => matched.has(id)));
-//   }
-//   return result;
-// }
 
 function matchPatterns(selections, byId, scoreSink) {
   let result = null;
