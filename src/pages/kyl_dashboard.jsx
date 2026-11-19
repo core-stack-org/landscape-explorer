@@ -1142,6 +1142,14 @@ const KYLDashboardPage = () => {
       setVisualisedPattern(null);
       return;
     }
+    if (visualisedPattern) {
+      toast.error("Please turn off the current pattern visualise before turning on a new one.");
+      return;
+    }
+    if (currentLayer.length > 0) {
+      toast.error("Please turn off the current layer before turning on Pattern Visualise.");
+      return;
+    }
     applyPatternScoreColor(pattern.name);
     boundaryLayerRef.current?.updateStyleVariables({ isVisualizeOn: true });
     setVisualisedPattern(pattern.name);
