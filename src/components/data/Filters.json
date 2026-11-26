@@ -273,7 +273,7 @@
   },
   {
     "name": "drought_category",
-    "label": "Number of drought years from 2017 to 2024",
+    "label": "Number of drought years from 2017 to 2025",
     "type": 2,
     "namespace": "MWS",
     "category": "Climate",
@@ -308,7 +308,7 @@
   },
   {
     "name": "avg_number_dry_spell",
-    "label": "Average number of weeks of dry spells over the years 2017 to 2024",
+    "label": "Average number of weeks of dry spells over the years 2017 to 2025",
     "type": 2,
     "namespace": "MWS",
     "category": "Climate",
