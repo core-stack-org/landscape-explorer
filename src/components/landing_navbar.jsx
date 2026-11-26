@@ -30,7 +30,7 @@ const LandingNavbar = ({ downloadScope = null }) => {
 
   const handleIndicatorsClick = () => {
     window.open(
-      "https://docs.google.com/document/d/13wht82tXmw0x-ORfVLYBnfUDkkabzqOxvqwmIXGRmpk/edit?usp=sharing",
+      "http://prod.explorer.s3-website.ap-south-1.amazonaws.com/#overview",
       '_blank',
       'noopener,noreferrer'
     );
