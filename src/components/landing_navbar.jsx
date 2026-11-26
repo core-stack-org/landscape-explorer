@@ -203,7 +203,7 @@ const LandingNavbar = ({ downloadScope = null }) => {
                 >
                   <Info className="h-4 w-4 sm:h-5 sm:w-5 text-purple-600 group-hover:scale-110 transition-transform" />
                   <span className="text-sm sm:text-base font-medium text-purple-700 group-hover:text-purple-800">
-                    KYL Indicators
+                    Know Your Landscape Playbook
                   </span>
                 </button>
 
