@@ -255,18 +255,23 @@ const KYLDashboardPage = () => {
     }
   };
 
+  // Reads manualSelectedMWS/highlightMWS directly (not via a setManualSelectedMWS
+  // functional updater) — this is always called from a fresh closure (a map
+  // click handler re-subscribed on every manualSelectedMWS change, or a prop
+  // passed down on every render), so the current render's state is already
+  // up to date. Calling other setters from inside a setState updater is an
+  // anti-pattern (updaters must be pure) and risks the selected/highlighted
+  // MWS and the panel it opens falling out of sync, so it's avoided here.
   const handleRemoveMWS = (uid) => {
-  setManualSelectedMWS((prev) => {
-    const updated = prev.filter((id) => id !== uid);
-
-    // Update MWS selection styling on map
+    const updated = manualSelectedMWS.filter((id) => id !== uid);
+    setManualSelectedMWS(updated);
     updateSelectedMWSStyle(updated);
 
     // If no MWS is left, close the profile
     if (updated.length === 0) {
       setSelectedMWSProfile(null);
       setHighlightMWS(null);
-      return updated;
+      return;
     }
 
     // If the currently highlighted MWS was removed,
@@ -286,10 +291,7 @@ const KYLDashboardPage = () => {
         setSelectedMWSProfile(nextFeature.getProperties());
       }
     }
-
-    return updated;
-  });
-};
+  };
 
   const handleResetMWSSelection = () => {
     setManualSelectedMWS([]);
@@ -2388,7 +2390,7 @@ const handlePatternRemoval = (pattern) => {
         mapRef.current.un("click", handleMapClick);
       }
     };
-  }, [toastId, mapRef.current, manualSelectedMWS]);
+  }, [toastId, mapRef.current, manualSelectedMWS, highlightMWS]);
 
 
  
