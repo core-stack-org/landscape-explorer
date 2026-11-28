@@ -24,10 +24,10 @@ export const withDroughtIntensity = data => ({
   ...data,
   features: (data?.features || []).map(feature => {
     const properties = { ...feature.properties };
-    const years = yearKeys(properties, /^drlb_(\d{4})$/);
+    const years = yearKeys(properties, /^drought_labels_(\d{4})$/);
     let peak = -1;
     for (const year of years) {
-      const labels = weeklyClasses(properties[`drlb_${year}`]);
+      const labels = weeklyClasses(properties[`drought_labels_${year}`]);
       const annualPeak = labels ? Math.max(...labels) : -1;
       properties[`drought_peak_${year}`] = annualPeak >= 0 ? intensityNames[annualPeak] : null;
       if (annualPeak >= 0) peak = Math.max(peak, annualPeak);
