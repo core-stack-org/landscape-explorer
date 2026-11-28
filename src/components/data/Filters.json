@@ -304,6 +304,26 @@
         "fill": "rgba(231, 76, 60, 0.8)",
         "stroke": "rgba(231, 76, 60, 1)"
       }
+    ],
+    "visualizeBins": [
+      {
+        "lower": 0,
+        "upper": 0,
+        "fill": "rgba(244, 208, 63, 0.8)",
+        "stroke": "rgba(244, 208, 63, 1)"
+      },
+      {
+        "lower": 2,
+        "upper": 9999,
+        "fill": "rgba(231, 76, 60, 0.8)",
+        "stroke": "rgba(231, 76, 60, 1)"
+      },
+      {
+        "lower": 1,
+        "upper": 9999,
+        "fill": "rgba(235, 152, 78, 0.8)",
+        "stroke": "rgba(235, 152, 78, 1)"
+      }
     ]
   },
   {

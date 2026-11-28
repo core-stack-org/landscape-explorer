@@ -121,6 +121,17 @@ export function WhatThisPlaceIs({ record }) {
   );
 }
 
+const findDrpughCategory = (filterName, value) => {
+  if(value == 0)
+      return "No Drought"
+  else if(value == 1)
+      return "At least 1 Drought year"
+  else if(value > 1)
+      return "At least 2 Drought year"
+  else
+    return "--"
+}
+
 // ── 3.3 Water ───────────────────────────────────────────────────────────────
 export function WaterSection({ record }) {
   if (!record) return null;
@@ -138,7 +149,7 @@ export function WaterSection({ record }) {
 
   const sogeLabel = findBin('soge_class', record.soge_class)?.label || '--';
   const aquiferLabel = findBin('aquifer_class', record.aquifer_class)?.label || '--';
-  const droughtLabel = findBin('drought_category', record.drought_category)?.label || '--';
+  const droughtLabel = findDrpughCategory('drought_category', record.drought_category);
   const sogeColor = severityColor('soge_class', record.soge_class);
   const droughtColor = severityColor('drought_category', record.drought_category);
 

@@ -4,7 +4,7 @@ const DEFAULT_STROKE = '#006400';
 const DEFAULT_FILL = 'rgba(144, 238, 144, 0.3)';
 
 const YEARS_RANGE = ['2017_2018', '2018_2019', '2019_2020', '2020_2021', '2021_2022', '2022_2023', '2023_2024', '2024_2025'];
-const YEARS = ['2017', '2018', '2019', '2020', '2021', '2022', '2023', '2024'];
+const YEARS = ['2017', '2018', '2019', '2020', '2021', '2022', '2023', '2024', '2025'];
 
 // Order matters — index = rock-type code. Unmatched value falls to index 13.
 const AQUIFER_TYPES = ['Alluvium', 'Laterite', 'Basalt', 'Sandstone', 'Shale', 'Limestone', 'Granite', 'Schist', 'Quartzite', 'Charnockite', 'Khondalite', 'Banded Gneissic Complex', 'Gneiss'];
@@ -29,8 +29,10 @@ function avgDrySpell(feature) {
 function countDroughtYears(feature) {
   let count = 0;
   for (const year of YEARS) {
-    const code = feature.get(`drlb_${year}`) || '';
-    const hits = (code.match(/2/g) || []).length + (code.match(/3/g) || []).length;
+    const moderate = feature.get(`freq_of_drought_${year}_at_threshold_2`) || '';
+    const severe = feature.get(`freq_of_drought_${year}_at_threshold_3`) || '';
+    //const hits = (code.match(/2/g) || []).length + (code.match(/3/g) || []).length;
+    const hits = moderate + severe
     if (hits >= 5) count++;
   }
   return count;
@@ -51,7 +53,7 @@ export const STYLE_RESOLVERS = {
   avg_precipitation: { get: (f) => avgYearlyField(f, 'Precipitation') },
   avg_runoff: { get: (f) => avgYearlyField(f, 'RunOff') },
   avg_number_dry_spell: { get: avgDrySpell },
-  drought_category: { get: countDroughtYears },
+  drought_category: {dualPath: true, get: countDroughtYears },
 
   total_population: { get: (f) => f.get('TOT_P') },
   percent_st_population: { get: (f) => percentOf(f, 'P_ST', 'TOT_P') },
